@@ -130,7 +130,7 @@ export function StudentAssignmentWorkspace() {
   const [queuedFiles, setQueuedFiles] = useState<File[]>([]);
   const { assignmentRows, isLoading } = useStudentAssignmentData();
 
-  console.log(assignmentRows, "ROWS")
+  // console.log(assignmentRows, "ROWS")
 
   useEffect(() => {
     replaceBreadcrumbs([

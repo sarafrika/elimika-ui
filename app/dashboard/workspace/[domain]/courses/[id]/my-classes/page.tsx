@@ -3,16 +3,16 @@ import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-d
 import { notFound } from 'next/navigation';
 
 type WorkspaceAvailableClassesPageProps = {
-  params: Promise<{ domain: string; id: string }>;
+    params: Promise<{ domain: string; id: string }>;
 };
 
 export default async function WorkspaceAvailableClassesPage({ params }: WorkspaceAvailableClassesPageProps) {
-  const { domain, id } = await params;
-  const normalizedDomain = normalizeStoredUserDomain(domain);
+    const { domain, id } = await params;
+    const normalizedDomain = normalizeStoredUserDomain(domain);
 
-  if (normalizedDomain !== 'student' && normalizedDomain !== 'instructor' && normalizedDomain !== 'course_creator') {
-    notFound();
-  }
+    if (normalizedDomain !== 'student' && normalizedDomain !== 'instructor' && normalizedDomain !== 'course_creator') {
+        notFound();
+    }
 
-  return <AvailableClassesPage courseId={id} instructorView={false} />;
+    return <AvailableClassesPage courseId={id} instructorView={true} />;
 }

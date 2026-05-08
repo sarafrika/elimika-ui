@@ -39,6 +39,7 @@ interface EnrollCourseCardProps {
   handleEnroll: (cls: BundledClass) => void;
   disableEnroll: boolean;
   variant?: 'full' | 'minimal';
+  instructorView?: boolean
 }
 
 export default function EnrollCourseCard({
@@ -48,6 +49,7 @@ export default function EnrollCourseCard({
   handleEnroll,
   disableEnroll,
   variant,
+  instructorView = false
 }: EnrollCourseCardProps) {
   const student = useStudent();
   const qc = useQueryClient();
@@ -189,18 +191,22 @@ export default function EnrollCourseCard({
                     {cls?.course?.name}
                   </p>
                 </div>
-                <Button
-                  size='sm'
-                  variant='secondary'
-                  className='rounded-full px-3 shadow-none'
-                  onClick={e => {
-                    e.stopPropagation();
-                    setSelectedClass(cls);
-                    setShowCartModal(true);
-                  }}
-                >
-                  <ShoppingCart className='h-4 w-4' />
-                </Button>
+
+                {!instructorView &&
+                  <Button
+                    size='sm'
+                    variant='secondary'
+                    className='rounded-full px-3 shadow-none'
+                    onClick={e => {
+                      e.stopPropagation();
+                      setSelectedClass(cls);
+                      setShowCartModal(true);
+                    }}
+                  >
+                    <ShoppingCart className='h-4 w-4' />
+                  </Button>}
+
+
               </div>
             </div>
           )}
@@ -308,44 +314,61 @@ export default function EnrollCourseCard({
             </div>
           )}
 
-          <div className='mt-auto pt-1'>
-            <Button
-              size='lg'
-              onClick={e => {
-                e.stopPropagation();
-                handleEnroll(cls);
-              }}
-              disabled={disableEnroll}
-              className={`w-full rounded-xl font-semibold shadow-none transition-all duration-300 ${disableEnroll
-                ? 'bg-success text-success-foreground hover:bg-success/90'
-                : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                }`}
+          {instructorView ? (<div className='mt-auto pt-1' >
+            <Link
+              href={`/dashboard/classes`}
             >
-              {disableEnroll ? (
-                <div className='flex items-center gap-2'>
-                  <CheckCircle className='h-5 w-5' />
-                  <span>Enrolled</span>
-                </div>
-              ) : (
-                <div className='flex items-center gap-2'>
-                  <span>Continue to Enroll</span>
-                  <svg
-                    className='h-4 w-4 transition-transform duration-300 group-hover:translate-x-1'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M9 5l7 7-7 7'
-                    />
-                  </svg>
-                </div>
-              )}
-            </Button>
-          </div>
+              <Button
+                size={"lg"}
+                className={`w-full rounded-xl font-semibold shadow-none transition-all duration-300 ${disableEnroll
+                  ? 'bg-success text-success-foreground hover:bg-success/90'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  }`}>
+                View Class schedule
+              </Button>
+            </Link>
+          </div>) :
+            (
+              <div className='mt-auto pt-1'>
+                <Button
+                  size='lg'
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleEnroll(cls);
+                  }}
+                  disabled={disableEnroll}
+                  className={`w-full rounded-xl font-semibold shadow-none transition-all duration-300 ${disableEnroll
+                    ? 'bg-success text-success-foreground hover:bg-success/90'
+                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    }`}
+                >
+                  {disableEnroll ? (
+                    <div className='flex items-center gap-2'>
+                      <CheckCircle className='h-5 w-5' />
+                      <span>Enrolled</span>
+                    </div>
+                  ) : (
+                    <div className='flex items-center gap-2'>
+                      <span>Continue to Enroll</span>
+                      <svg
+                        className='h-4 w-4 transition-transform duration-300 group-hover:translate-x-1'
+                        fill='none'
+                        viewBox='0 0 24 24'
+                        stroke='currentColor'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M9 5l7 7-7 7'
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </Button>
+              </div>
+            )
+          }
         </div>
       </Card>
 

@@ -185,7 +185,7 @@ export function useStudentLearningHubData(): LearningHubData {
     enabled: Boolean(student?.uuid),
   })
 
-  console.log(enrolledClassesResponse?.data?.content, "CLASSES ENROLLED")
+  // console.log(enrolledClassesResponse?.data?.content, "CLASSES ENROLLED")
 
   const { data: studentScheduleResponse, isLoading: scheduleLoading } = useQuery({
     ...getStudentScheduleOptions({
@@ -198,7 +198,7 @@ export function useStudentLearningHubData(): LearningHubData {
     enabled: Boolean(student?.uuid),
   });
 
-  console.log(studentScheduleResponse?.data, "SCHED")
+  // console.log(studentScheduleResponse?.data, "SCHED")
 
   const { data: studentCertificatesResponse, isLoading: certificatesLoading } = useQuery({
     ...getStudentCertificatesOptions({ path: { studentUuid: student?.uuid as string } }),
