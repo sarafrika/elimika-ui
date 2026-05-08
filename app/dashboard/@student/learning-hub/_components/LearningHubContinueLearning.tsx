@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronRight } from 'lucide-react';
+import { BookOpen, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import type { LearningHubClass } from './useStudentLearningHubData';
@@ -47,7 +47,7 @@ export function LearningHubContinueLearning({
         </Link>
       </div>
 
-      <div className='mt-3 grid gap-3 md:grid-cols-2 2xl:grid-cols-3'>
+      <div className='mt-3 grid gap-4 md:grid-cols-2 2xl:grid-cols-3'>
         {loading
           ? Array.from({ length: INITIAL_VISIBLE_CLASSES }).map((_, index) => (
             <article
@@ -68,8 +68,8 @@ export function LearningHubContinueLearning({
             </article>
           ))
           : visibleClasses.map(classItem => (
-            <article key={classItem.id} className='space-y-2 rounded-[10px]'>
-              <div className='border-border/60 h-[86px] overflow-hidden rounded-[8px] border'>
+            <article key={classItem.id} className='space-y-2 rounded-md'>
+              <div className='border-border/60 h-[86px] overflow-hidden rounded-md border'>
                 {classItem.bannerUrl ? (
                   <img
                     src={classItem.bannerUrl}
@@ -78,7 +78,7 @@ export function LearningHubContinueLearning({
                   />
                 ) : (
                   <div className='text-muted-foreground flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,white),white)] text-xs'>
-                    No image
+                    <BookOpen size={32} />
                   </div>
                 )}
               </div>

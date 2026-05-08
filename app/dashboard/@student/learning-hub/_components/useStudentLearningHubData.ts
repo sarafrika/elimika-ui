@@ -5,12 +5,18 @@ import {
   getAssignmentByUuidOptions,
   getAssignmentSchedulesOptions,
   getAssignmentSubmissionsOptions,
-  getClassEnrollmentsForStudentOptions,
+  getInstructorByUuidOptions,
   getPublishedCoursesOptions,
-  getStudentCertificatesOptions,
-  getStudentScheduleOptions,
+  getScheduledInstanceEnrollmentsForStudentOptions,
+  getStudentCertificatesOptions
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Assignment, AssignmentSubmission, Course } from '@/services/client/types.gen';
+import type {
+  Assignment,
+  AssignmentSubmission,
+  Course,
+  Instructor,
+  ScheduledInstance,
+} from '@/services/client/types.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
@@ -41,7 +47,16 @@ export type LearningHubLiveClass = {
   dateLabel: string;
   timeLabel: string;
   instructor: string;
-  secondaryInstructor: string;
+  locationLabel: string;
+  href: string;
+};
+
+export type LearningHubUpcomingClass = {
+  id: string;
+  title: string;
+  dateLabel: string;
+  timeLabel: string;
+  locationLabel: string;
   href: string;
 };
 
@@ -74,7 +89,8 @@ type LearningHubData = {
   firstName: string;
   stats: LearningHubStat[];
   continueLearning: LearningHubClass[];
-  scheduledLiveClass: LearningHubLiveClass | null;
+  liveClasses: LearningHubLiveClass[];
+  upcomingClasses: LearningHubUpcomingClass[];
   assignments: LearningHubAssignment[];
   recommendedCourses: LearningHubRecommendedCourse[];
   invite: LearningHubInvite | null;
@@ -180,25 +196,16 @@ export function useStudentLearningHubData(): LearningHubData {
     student ?? undefined
   );
 
-  const { data: enrolledClassesResponse } = useQuery({
-    ...getClassEnrollmentsForStudentOptions({ path: { studentUuid: student?.uuid as string }, query: { pageable: {} } }),
-    enabled: Boolean(student?.uuid),
-  })
-
-  // console.log(enrolledClassesResponse?.data?.content, "CLASSES ENROLLED")
-
-  const { data: studentScheduleResponse, isLoading: scheduleLoading } = useQuery({
-    ...getStudentScheduleOptions({
+  const {
+    data: studentScheduledInstanceEnrollmentsResponse,
+    isLoading: scheduledInstanceEnrollmentsLoading,
+  } = useQuery({
+    ...getScheduledInstanceEnrollmentsForStudentOptions({
       path: { studentUuid: student?.uuid as string },
-      query: {
-        start: new Date('2025-01-01'),
-        end: new Date('2027-12-31'),
-      },
+      query: { pageable: { size: 1000 } },
     }),
     enabled: Boolean(student?.uuid),
   });
-
-  // console.log(studentScheduleResponse?.data, "SCHED")
 
   const { data: studentCertificatesResponse, isLoading: certificatesLoading } = useQuery({
     ...getStudentCertificatesOptions({ path: { studentUuid: student?.uuid as string } }),
@@ -280,8 +287,6 @@ export function useStudentLearningHubData(): LearningHubData {
     return map;
   }, [assignmentIds, assignmentQueries]);
 
-  // console.log(assignmentsMap, "MAP")
-
   const submissionsMap = useMemo(() => {
     const map = new Map<string, AssignmentSubmission[]>();
 
@@ -299,7 +304,79 @@ export function useStudentLearningHubData(): LearningHubData {
 
   const certificates = studentCertificatesResponse?.data ?? [];
   const publishedCourses = publishedCoursesResponse?.data?.content ?? [];
-  const studentSchedule = studentScheduleResponse?.data ?? [];
+  const scheduledInstanceEnrollments =
+    studentScheduledInstanceEnrollmentsResponse?.data?.content ?? [];
+
+  const enrolledScheduledInstanceUuids = useMemo(
+    () =>
+      new Set(
+        scheduledInstanceEnrollments
+          .map(enrollment => enrollment.scheduled_instance_uuid)
+          .filter((value): value is string => Boolean(value))
+      ),
+    [scheduledInstanceEnrollments]
+  );
+
+  const studentScheduledInstances = useMemo(() => {
+    return classDefinitions.flatMap(classInfo => {
+      const classDetails = classInfo.classDetails;
+      const course = classInfo.course;
+      const classTitle = classDetails?.title ?? course?.name ?? 'Untitled class';
+
+      return (classInfo.schedules ?? [])
+        .filter((schedule): schedule is ScheduledInstance => Boolean(schedule?.uuid))
+        .filter(schedule => enrolledScheduledInstanceUuids.has(schedule.uuid as string))
+        .map(schedule => ({
+          ...schedule,
+          classDefinitionUuid: classInfo.uuid,
+          classTitle,
+          courseName: course?.name ?? 'Standalone class',
+          instructorUuid: schedule.instructor_uuid || classDetails?.default_instructor_uuid || '',
+          locationLabel:
+            schedule.location_name ??
+            classDetails?.location_name ??
+            classDetails?.title ??
+            'Location pending',
+          href: schedule.uuid ? `/dashboard/schedule/classes/${schedule.uuid}` : '/dashboard/schedule',
+        }));
+    });
+  }, [classDefinitions, enrolledScheduledInstanceUuids]);
+
+  const instructorUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          studentScheduledInstances
+            .map(instance => instance.instructorUuid)
+            .filter((value): value is string => Boolean(value))
+        )
+      ),
+    [studentScheduledInstances]
+  );
+
+  const instructorQueries = useQueries({
+    queries: instructorUuids.map(uuid => ({
+      ...getInstructorByUuidOptions({ path: { uuid } }),
+      enabled: Boolean(uuid),
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    })),
+  });
+
+  const instructorMap = useMemo(() => {
+    const map = new Map<string, Instructor>();
+
+    instructorQueries.forEach((query, index) => {
+      const instructor = query.data?.data;
+      const uuid = instructorUuids[index];
+
+      if (uuid && instructor) {
+        map.set(uuid, instructor);
+      }
+    });
+
+    return map;
+  }, [instructorQueries, instructorUuids]);
 
   const certificateMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -343,38 +420,95 @@ export function useStudentLearningHubData(): LearningHubData {
     });
   }, [certificateMap, classDefinitions]);
 
-  const upcomingSchedule = useMemo(
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
+  const upcomingClasses = useMemo(
     () =>
-      [...studentSchedule]
+      [...studentScheduledInstances]
         .filter(item => {
           const start = item.start_time ? new Date(item.start_time) : null;
-          return start && start.getTime() >= Date.now();
+
+          if (!start) return false;
+
+          const diff = start.getTime() - now;
+
+          // classes happening within the next 7 days
+          return diff >= 0 && diff <= ONE_WEEK_MS;
         })
         .sort(
           (a, b) => new Date(a.start_time ?? 0).getTime() - new Date(b.start_time ?? 0).getTime()
         ),
-    [studentSchedule]
+    [now, studentScheduledInstances]
   );
 
-  const scheduledLiveClass = useMemo<LearningHubLiveClass | null>(() => {
-    const item = upcomingSchedule[0];
-    if (!item) return null;
+  const liveClasses = useMemo<LearningHubLiveClass[]>(
+    () =>
+      upcomingClasses
+        .filter(item => {
+          const start = item.start_time ? new Date(item.start_time) : null;
 
-    const start = item.start_time ? new Date(item.start_time) : null;
-    const end = item.end_time ? new Date(item.end_time) : null;
+          if (!start) return false;
 
-    return {
-      id: item.scheduled_instance_uuid ?? 'upcoming-class',
-      title: item.title ?? 'Upcoming live class',
-      dateLabel: formatDate(start, { month: 'short', day: 'numeric', year: 'numeric' }),
-      timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
-      instructor: profile?.first_name ? `${profile.first_name} Johnson` : 'Sarah Johnson',
-      secondaryInstructor: 'Sarah Johnson',
-      href: item.scheduled_instance_uuid
-        ? `/dashboard/schedule/classes/${item.scheduled_instance_uuid}`
-        : '/dashboard/schedule',
-    };
-  }, [profile?.first_name, upcomingSchedule]);
+          const diff = start.getTime() - now;
+
+          return diff >= 0 && diff <= ONE_DAY_MS;
+        })
+        .map(item => {
+          const start = item.start_time ? new Date(item.start_time) : null;
+          const end = item.end_time ? new Date(item.end_time) : null;
+          const instructor = instructorMap.get(item.instructorUuid);
+
+          return {
+            id: item.uuid ?? item.classDefinitionUuid,
+            title: item.title ?? item.classTitle ?? 'Upcoming live class',
+            dateLabel: formatDate(start, {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            }),
+            timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
+            instructor: instructor?.full_name ?? 'Instructor',
+            locationLabel: item.locationLabel,
+            href: item.href,
+          };
+        }),
+    [instructorMap, now, upcomingClasses]
+  );
+
+  const upcomingClassesPreview = useMemo<LearningHubUpcomingClass[]>(
+    () =>
+      upcomingClasses
+        .filter(item => {
+          const start = item.start_time ? new Date(item.start_time) : null;
+
+          if (!start) return false;
+
+          const diff = start.getTime() - now;
+
+          return diff > ONE_DAY_MS && diff <= ONE_WEEK_MS;
+        })
+        .map(item => {
+          const start = item.start_time ? new Date(item.start_time) : null;
+          const end = item.end_time ? new Date(item.end_time) : null;
+
+          return {
+            id: item.uuid ?? item.classDefinitionUuid,
+            title: item.title ?? item.classTitle ?? 'Upcoming class',
+            dateLabel: formatDate(start, {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            }),
+            timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
+            locationLabel: item.locationLabel,
+            href: item.href,
+          };
+        }),
+    [now, upcomingClasses]
+  );
+
 
   const assignments = useMemo<LearningHubAssignment[]>(() => {
     const rows = assignmentSchedules
@@ -437,24 +571,19 @@ export function useStudentLearningHubData(): LearningHubData {
   }, [publishedCourses]);
 
   const invite = useMemo<LearningHubInvite | null>(() => {
-    const item = upcomingSchedule[1] ?? upcomingSchedule[0];
+    const item = upcomingClassesPreview[1] ?? upcomingClassesPreview[0];
     if (!item) return MOCK_INVITE;
 
-    const start = item.start_time ? new Date(item.start_time) : null;
-    const end = item.end_time ? new Date(item.end_time) : null;
-
     return {
-      id: item.scheduled_instance_uuid ?? 'invite-session',
+      id: item.id ?? 'invite-session',
       title: item.title ?? 'Vocal Training Level 2',
-      subtitle: item.location_name ?? 'Vocal Performance Practice',
-      timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
-      href: item.scheduled_instance_uuid
-        ? `/dashboard/schedule/classes/${item.scheduled_instance_uuid}`
-        : '/dashboard/schedule',
+      subtitle: item.locationLabel ?? 'Vocal Performance Practice',
+      timeLabel: `${item.dateLabel} · ${item.timeLabel}`,
+      href: item.href ?? '/dashboard/schedule',
     };
-  }, [upcomingSchedule]);
+  }, [upcomingClassesPreview]);
 
-  const weeklyMinutes = upcomingSchedule
+  const weeklyMinutes = upcomingClasses
     .slice(0, 7)
     .reduce((sum, item) => sum + toMinutes(item.duration_minutes), 0);
 
@@ -502,16 +631,19 @@ export function useStudentLearningHubData(): LearningHubData {
     firstName: profile?.first_name ?? 'Emma',
     stats,
     continueLearning,
-    scheduledLiveClass,
+    liveClasses,
+    upcomingClasses: upcomingClassesPreview,
     assignments,
     recommendedCourses,
     invite,
     loading:
       classDefinitionsLoading ||
-      scheduleLoading ||
+      scheduledInstanceEnrollmentsLoading ||
       certificatesLoading ||
       publishedCoursesLoading ||
+      instructorQueries.some(query => query.isLoading) ||
       assignmentScheduleQueries.some(query => query.isLoading) ||
-      assignmentQueries.some(query => query.isLoading),
+      assignmentQueries.some(query => query.isLoading) ||
+      assignmentSubmissionsQueries.some(query => query.isLoading),
   };
 }
