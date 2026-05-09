@@ -120,7 +120,7 @@ export function SchedulerFilters({
                 key={status}
                 className='text-muted-foreground flex w-full items-center gap-2 text-xs sm:text-sm'
               >
-              <Checkbox
+                <Checkbox
                   checked={values.statuses.includes(status)}
                   onCheckedChange={checked =>
                     updateStatus(status, checked === true)

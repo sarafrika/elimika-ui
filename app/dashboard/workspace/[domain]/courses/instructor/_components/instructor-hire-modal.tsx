@@ -433,13 +433,13 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
       <DialogContent className='max-h-[92vh] max-w-[calc(100vw-1rem)] overflow-hidden rounded-[20px] p-0 sm:max-w-5xl lg:max-w-6xl'>
         <div className='flex max-h-[92vh] flex-col'>
           <DialogHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-            <DialogTitle className='text-[1.1rem] font-semibold sm:text-[1.25rem]'>
+            <DialogTitle className='self-statrt text-start sm:text-center text-[1.1rem] font-semibold sm:text-[1.25rem]'>
               Hire {instructor.full_name || 'Instructor'}
             </DialogTitle>
           </DialogHeader>
 
           <div className='flex-1 overflow-y-auto p-5'>
-            <div className='space-y-4'>
+            <div className='space-y-8 sm:space-y-4'>
               <div className='bg-card shadow-none'>
                 <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
                   <div className='flex min-w-0 items-start gap-4'>
@@ -499,7 +499,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                     </div>
                   </div>
 
-                  <Card className='h-auto w-full max-w-[190px] rounded-[18px] border bg-background p-4 shadow-none sm:max-w-[300px]'>
+                  <Card className='h-auto w-full rounded-[18px] border bg-background p-4 shadow-none sm:max-w-[300px]'>
                     <div className='space-y-2'>
                       <p className='text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
                         AI Match Score
@@ -536,13 +536,16 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                 </div>
               </div>
 
-              <div className='flex items-center'>
+              <div className='grid grid-cols-2 gap-3 md:flex md:items-center'>
                 {stepItems.map((step, index) => {
                   const isActive = index + 1 === currentStep;
                   const isCompleted = index + 1 < currentStep;
 
                   return (
-                    <div key={step} className='flex w-full items-center'>
+                    <div
+                      key={step}
+                      className='flex items-center md:w-full'
+                    >
                       <div className='flex items-center gap-2'>
                         <div
                           className={[
@@ -559,16 +562,19 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
 
                         <span
                           className={[
-                            'whitespace-nowrap text-xs font-medium',
-                            isActive ? 'text-foreground' : 'text-muted-foreground',
+                            'text-xs font-medium',
+                            isActive
+                              ? 'text-foreground'
+                              : 'text-muted-foreground',
                           ].join(' ')}
                         >
                           {step}
                         </span>
                       </div>
 
+                      {/* connector line only on desktop */}
                       {index !== stepItems.length - 1 ? (
-                        <div className='relative mx-3 h-[2px] flex-1 bg-border'>
+                        <div className='relative mx-3 hidden h-[2px] flex-1 bg-border md:block'>
                           <div
                             className={[
                               'absolute left-0 top-0 h-full transition-all',
@@ -644,32 +650,37 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                           <p className='text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground'>
                             Approved Course
                           </p>
-                          <Select
-                            value={selectedCourseUuid}
-                            onValueChange={setSelectedCourseUuid}
-                            disabled={!allowedCourses.length}
-                          >
-                            <SelectTrigger className='h-10 min-w-0 rounded-[12px] text-sm'>
-                              <SelectValue
-                                placeholder={
-                                  allowedCourses.length ? 'Select course' : 'No approved courses available'
-                                }
-                              />
-                            </SelectTrigger>
-                            <SelectContent className='max-h-72 w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)] overflow-hidden'>
-                              {allowedCourses.map(course => (
-                                <SelectItem
-                                  key={course.uuid ?? course.name}
-                                  value={course.uuid ?? course.name ?? ''}
-                                  className='max-w-full'
-                                >
-                                  <span className='block max-w-[260px] truncate'>
-                                    {getCourseLabel(course)}
-                                  </span>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <div className='w-full min-w-0'>
+                            <Select
+                              value={selectedCourseUuid}
+                              onValueChange={setSelectedCourseUuid}
+                              disabled={!allowedCourses.length}
+                            >
+                              <SelectTrigger className='text-start h-10 w-full min-w-0 rounded-md text-sm'>
+                                <SelectValue
+                                  placeholder={
+                                    allowedCourses.length
+                                      ? 'Select course'
+                                      : 'No approved courses available'
+                                  }
+                                />
+                              </SelectTrigger>
+
+                              <SelectContent className='max-h-72 w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)] overflow-hidden'>
+                                {allowedCourses.map(course => (
+                                  <SelectItem
+                                    key={course.uuid ?? course.name}
+                                    value={course.uuid ?? course.name ?? ''}
+                                    className='min-w-0'
+                                  >
+                                    <span className='block w-full truncate'>
+                                      {getCourseLabel(course)}
+                                    </span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                           {allowedCourses.length ? (
                             <p className='text-muted-foreground text-xs'>
                               Courses approved for this instructor to train.
@@ -935,8 +946,8 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                   <div className='flex flex-col gap-2 sm:flex-row'>
                     <Button
                       type='button'
-                      variant='outline'
-                      className='h-10 rounded-xl px-5'
+                      variant='destructive'
+                      className='h-10 rounded-md px-5'
                       onClick={() => onOpenChange(false)}
                     >
                       Cancel
@@ -944,7 +955,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                     <Button
                       type='button'
                       variant='success'
-                      className='h-10 rounded-xl px-5'
+                      className='h-10 rounded-md px-5'
                       onClick={handleBookingSubmit}
                       disabled={confirmDisabled}
                     >

@@ -55,6 +55,18 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   const allInstructorSummaries = data.allInstructors.length > 0 ? data.allInstructors : data.instructors;
   const studentSummaries = data.students;
 
+  const EVENT_STATUSES = ['Scheduled', 'Ongoing', 'Completed', 'Cancelled'] as const;
+  const normalizeStatus = (status?: string) => {
+    if (!status) return 'Scheduled';
+    const s = status.toLowerCase();
+
+    if (s === 'ongoing') return 'Ongoing';
+    if (s === 'completed') return 'Completed';
+    if (s === 'cancelled') return 'Cancelled';
+
+    return 'Scheduled';
+  };
+
   const allEvents = useMemo(() => events, [events]);
   const filteredEvents = useMemo(
     () =>
@@ -63,7 +75,10 @@ export function SchedulerCalendarView({ profile, data }: Props) {
         if (filters.instructor && event.instructor !== filters.instructor) return false;
         if (filters.location && event.location !== filters.location) return false;
         if (filters.category && event.category !== filters.category) return false;
-        if (filters.statuses.length && !filters.statuses.includes(event.status || 'Scheduled')) {
+        if (
+          filters.statuses.length &&
+          !filters.statuses.includes(normalizeStatus(event.status))
+        ) {
           return false;
         }
         return true;
@@ -85,7 +100,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
       course: Array.from(new Set(allEvents.map(event => event.course).filter(Boolean))).sort(),
       instructor: Array.from(new Set(allEvents.map(event => event.instructor).filter(Boolean))).sort(),
       location: Array.from(new Set(allEvents.map(event => event.location).filter(Boolean))).sort(),
-      statuses: Array.from(new Set(allEvents.map(event => event.status || 'Scheduled').filter(Boolean))).sort(),
+      statuses: EVENT_STATUSES,
     }),
     [allEvents]
   );
