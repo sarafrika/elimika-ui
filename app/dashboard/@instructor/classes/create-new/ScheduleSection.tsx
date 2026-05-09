@@ -161,6 +161,14 @@ export const ScheduleSection = ({
     );
   };
 
+  const promoteGeneratedSessionsToCustom = (sessions: ScheduledSessionInstance[]) => {
+    onScheduleModeChange('custom');
+    onCustomSessionsChange(sessions);
+    setEditingIndex(null);
+    setEditStartTime('');
+    setEditEndTime('');
+  };
+
   const handleDefaultStartTimeChange = (value: string) => {
     setDefaultStartTime(value);
     updateAllCustomSessionTimes(value, defaultEndTime, allDay);
@@ -210,13 +218,36 @@ export const ScheduleSection = ({
     setEditingIndex(null);
   };
 
+  const handleGeneratedSessionEdit = (index: number) => {
+    setEditingIndex(index);
+    setEditStartTime(scheduleInstances[index].startTime);
+    setEditEndTime(scheduleInstances[index].endTime);
+  };
+
+  const handleGeneratedSessionSave = (index: number) => {
+    const nextSessions = [...scheduleInstances];
+    nextSessions[index] = {
+      ...nextSessions[index],
+      startTime: editStartTime,
+      endTime: editEndTime,
+      hours: calculateSessionHours(editStartTime, editEndTime),
+    };
+
+    promoteGeneratedSessionsToCustom(nextSessions);
+  };
+
+  const handleGeneratedSessionRemove = (index: number) => {
+    const nextSessions = scheduleInstances.filter((_, sessionIndex) => sessionIndex !== index);
+    promoteGeneratedSessionsToCustom(nextSessions);
+  };
+
   return (
     <Card className='overflow-hidden border pt-0 shadow-sm'>
-      <div className='bg-muted/50 border-b px-6 py-4'>
+      <div className='bg-muted/50 border-b px-4 py-4 sm:px-6'>
         <h3 className='text-foreground text-lg font-semibold'>Class Schedule</h3>
       </div>
 
-      <div className='border-b px-6 py-5'>
+      <div className='border-b px-4 py-4 sm:px-6 sm:py-5'>
         <div className='space-y-4'>
           <div>
             <p className='text-sm font-semibold'>Which schedule should be used?</p>
@@ -261,7 +292,7 @@ export const ScheduleSection = ({
       </div>
 
       {activeScheduleConflicts.length > 0 && (
-        <div className='border-b px-6 py-5'>
+        <div className='border-b px-4 py-4 sm:px-6 sm:py-5'>
           <Alert
             variant='destructive'
             className='border-destructive/30 bg-destructive/8 text-foreground rounded-xl border shadow-sm'
@@ -324,7 +355,7 @@ export const ScheduleSection = ({
                           academicPeriod: { ...data.academicPeriod, start: e.target.value },
                         })
                       }
-                      className='w-44'
+                      className='w-full max-w-44'
                     />
                     <span className='text-muted-foreground text-sm font-medium'>to</span>
                     <Input
@@ -335,7 +366,7 @@ export const ScheduleSection = ({
                           academicPeriod: { ...data.academicPeriod, end: e.target.value },
                         })
                       }
-                      className='w-44'
+                      className='w-full max-w-44'
                     />
                   </div>
                 </TableCell>
@@ -363,7 +394,7 @@ export const ScheduleSection = ({
                               },
                             })
                           }
-                          className='w-44'
+                          className='w-full max-w-44'
                         />
                       </div>
 
@@ -383,7 +414,7 @@ export const ScheduleSection = ({
                               },
                             })
                           }
-                          className='w-44'
+                          className='w-full max-w-44'
                         />
                       </div>
                     </div>
@@ -429,7 +460,7 @@ export const ScheduleSection = ({
                               },
                             })
                           }
-                          className='w-44'
+                          className='w-full max-w-44'
                           required
                         />
                       </div>
@@ -450,7 +481,7 @@ export const ScheduleSection = ({
                             })
                           }
                           disabled={data.allDay}
-                          className='w-44'
+                          className='w-full max-w-44'
                           required={!data.allDay}
                         />
                       </div>
@@ -471,7 +502,7 @@ export const ScheduleSection = ({
                             })
                           }
                           disabled={data.allDay}
-                          className='w-44'
+                          className='w-full max-w-44'
                           required={!data.allDay}
                         />
                       </div>
@@ -523,7 +554,7 @@ export const ScheduleSection = ({
                           })
                         }
                       >
-                        <SelectTrigger className='w-40'>
+                        <SelectTrigger className='w-full max-w-40'>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -594,7 +625,7 @@ export const ScheduleSection = ({
                           type='date'
                           value={data.endRepeat}
                           onChange={e => onChange({ endRepeat: e.target.value })}
-                          className='w-44'
+                          className='w-full max-w-44'
                           required
                         />
                       </div>
@@ -610,13 +641,12 @@ export const ScheduleSection = ({
             </TableBody>
           </Table>
 
-          <div className='border-t p-6'>
+          <div className='border-t p-4 sm:p-6'>
             <div className='bg-muted/30 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3'>
               <div>
                 <p className='text-sm font-semibold'>Generated class schedule instances</p>
                 <p className='text-muted-foreground text-sm'>
-                  This list previews the exact sessions that will be created from the recurring
-                  schedule.
+                  Edit or remove an instance to convert this schedule into a custom session list.
                 </p>
               </div>
               <div className='text-sm font-medium'>Currently selected</div>
@@ -626,6 +656,16 @@ export const ScheduleSection = ({
               sessions={scheduleInstances}
               title={`Class Schedule Instances (${scheduleInstances.length})`}
               emptyMessage='Complete the recurring schedule fields to preview generated class instances.'
+              editable
+              editingIndex={editingIndex}
+              editStartTime={editStartTime}
+              editEndTime={editEndTime}
+              onStartTimeChange={setEditStartTime}
+              onEndTimeChange={setEditEndTime}
+              onEdit={handleGeneratedSessionEdit}
+              onSave={handleGeneratedSessionSave}
+              onCancel={handleCancelEdit}
+              onRemove={handleGeneratedSessionRemove}
               getConflictMessage={session =>
                 getConflictMessage(session, classScheduleConflicts)
               }
@@ -633,7 +673,7 @@ export const ScheduleSection = ({
           </div>
         </>
       ) : (
-        <div className='border-t p-6'>
+        <div className='border-t p-4 sm:p-6'>
           <div className='bg-muted/30 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3'>
             <div>
               <p className='text-sm font-semibold'>Custom schedule sessions</p>

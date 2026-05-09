@@ -1437,13 +1437,13 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                     value={search}
                     onChange={event => setSearch(event.target.value)}
                     placeholder='Search job title, company, course, or location'
-                    className='h-11 rounded-xl pl-10'
+                    className='h-11 rounded-md pl-10'
                   />
                   <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
                 </label>
 
                 <Select value={statusFilter} onValueChange={value => setStatusFilter(value as JobFilter)}>
-                  <SelectTrigger className='h-11 rounded-xl border-border border-1 bg-background/80'>
+                  <SelectTrigger className='h-11 rounded-md border-border border-1 bg-background/80'>
                     <SelectValue placeholder='All statuses' />
                   </SelectTrigger>
                   <SelectContent>
@@ -1456,7 +1456,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 </Select>
 
                 <Select value={sortBy} onValueChange={value => setSortBy(value as JobSort)}>
-                  <SelectTrigger className='h-11 rounded-xl border-border border-1 bg-background/80'>
+                  <SelectTrigger className='h-11 rounded-md border-border border-1 bg-background/80'>
                     <SelectValue placeholder='Sort by' />
                   </SelectTrigger>
                   <SelectContent>
@@ -1488,7 +1488,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                       );
 
                   return (
-                    <TabsContent key={tab.id} value={tab.id} className='mt-0 space-y-4 px-4 py-4 sm:px-5'>
+                    <TabsContent key={tab.id} value={tab.id} className='mt-0 space-y-4 py-4 sm:px-5'>
                       <div className='gap-4 rounded-[16px] px-4 py-4'>
                         <div className='flex flex-wrap items-center justify-between gap-3 pb-4'>
                           <div className='text-foreground text-[1.05rem] font-medium'>

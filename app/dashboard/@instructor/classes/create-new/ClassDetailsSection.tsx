@@ -9,10 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { LOCATION_TYPE_OPTIONS, normalizeLocationType } from '@/lib/location-types';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, GraduationCap } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { LOCATION_TYPE_OPTIONS, normalizeLocationType } from '@/lib/location-types';
 import { Textarea } from '../../../../../components/ui/textarea';
 import { useInstructor } from '../../../../../context/instructor-context';
 import {
@@ -215,24 +215,25 @@ export const ClassDetailsSection = ({
 
   return (
     <Card className='overflow-hidden border pt-0 shadow-sm'>
-      <div className='bg-muted/50 border-b px-6 py-4'>
+      <div className='bg-muted/50 border-b px-4 py-4 sm:px-6'>
         <h3 className='text-foreground text-lg font-semibold'>Class Details</h3>
       </div>
 
       <div className='divide-y'>
-        {/* Class Type Selector (Course vs Program) */}
         {!data?.uuid && (
-          <div className='grid grid-cols-3 pb-4 hover:bg-transparent'>
-            <div className='bg-muted/30 px-6 font-semibold'>Create Class For *</div>
-            <div className='bg-card col-span-2 px-6'>
-              <div className='flex gap-4'>
+          <div className='grid gap-3 py-4 lg:grid-cols-[minmax(160px,0.85fr)_minmax(0,2.15fr)] lg:gap-4'>
+            <div className='bg-muted/30 px-4 font-semibold sm:px-6 lg:bg-transparent'>
+              Create Class For *
+            </div>
+            <div className='bg-card px-4 sm:px-6 lg:bg-transparent'>
+              <div className='grid gap-3 sm:grid-cols-2'>
                 {CLASS_FOR_OPTIONS.map(option => {
                   const Icon = option.icon;
                   return (
                     <button
                       key={option.value}
                       onClick={() => handleClassForChange(option.value as 'course' | 'program')}
-                      className={`flex flex-1 items-center gap-3 rounded-lg border-2 p-4 transition-all ${classFor === option.value
+                      className={`flex w-full items-center gap-3 rounded-lg border-2 p-4 text-left transition-all ${classFor === option.value
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50'
                         }`}
@@ -263,9 +264,11 @@ export const ClassDetailsSection = ({
         )}
 
         {/* Class Name/Category */}
-        <div className='grid grid-cols-3 hover:bg-transparent'>
-          <div className='bg-muted/30 px-6 py-4 font-semibold'>Class Name/Category *</div>
-          <div className='bg-card col-span-2 px-6 py-4'>
+        <div className='grid gap-3 py-4 lg:grid-cols-[minmax(160px,0.85fr)_minmax(0,2.15fr)] lg:gap-4'>
+          <div className='bg-muted/30 px-4 font-semibold sm:px-6 lg:bg-transparent'>
+            Class Name/Category *
+          </div>
+          <div className='bg-card px-4 sm:px-6 lg:bg-transparent'>
             <Input
               placeholder='Enter class title'
               value={data.title}
@@ -275,11 +278,11 @@ export const ClassDetailsSection = ({
         </div>
 
         {/* Course/Program Selection */}
-        <div className='grid grid-cols-3 hover:bg-transparent'>
-          <div className='bg-muted/30 px-6 py-4 font-semibold'>
+        <div className='grid gap-3 py-4 lg:grid-cols-[minmax(160px,0.85fr)_minmax(0,2.15fr)] lg:gap-4'>
+          <div className='bg-muted/30 px-4 font-semibold sm:px-6 lg:bg-transparent'>
             {classFor === 'course' ? 'Course/Subject' : 'Training Program'} *
           </div>
-          <div className='bg-card col-span-2 px-6 py-4'>
+          <div className='bg-card px-4 sm:px-6 lg:bg-transparent'>
             {classFor === 'course' ? (
               <Select
                 value={data.course_uuid}
@@ -333,9 +336,11 @@ export const ClassDetailsSection = ({
         </div>
 
         {/* Class Description */}
-        <div className='grid grid-cols-3 hover:bg-transparent'>
-          <div className='bg-muted/30 px-6 py-4 font-semibold'>Class Description</div>
-          <div className='bg-card col-span-2 px-6 py-4'>
+        <div className='grid gap-3 py-4 lg:grid-cols-[minmax(160px,0.85fr)_minmax(0,2.15fr)] lg:gap-4'>
+          <div className='bg-muted/30 px-4 font-semibold sm:px-6 lg:bg-transparent '>
+            Class Description
+          </div>
+          <div className='bg-card px-4 sm:px-6 lg:bg-transparent '>
             <Textarea
               placeholder='Enter class description'
               value={data.description}
@@ -346,9 +351,11 @@ export const ClassDetailsSection = ({
         </div>
 
         {/* Grade/Level */}
-        <div className='grid grid-cols-3 hover:bg-transparent'>
-          <div className='bg-muted/30 px-6 py-4 font-semibold'>Grade/Level</div>
-          <div className='bg-card text-muted-foreground col-span-2 grid grid-cols-3 gap-4 px-6 py-4 text-sm'>
+        <div className='grid gap-3 py-4 lg:grid-cols-[minmax(160px,0.85fr)_minmax(0,2.15fr)] lg:gap-4'>
+          <div className='bg-muted/30 px-4 font-semibold sm:px-6 lg:bg-transparent '>
+            Grade/Level
+          </div>
+          <div className='bg-card text-muted-foreground grid gap-3 px-4 py-4 text-sm sm:grid-cols-3 sm:gap-4 sm:px-6 lg:bg-transparent '>
             <div>{getDifficultyNameFromUUID(selectedItem?.difficulty_uuid || '') || '—'}</div>
 
             <div>{selectedItem?.class_limit ?? '—'} max participants</div>
@@ -358,10 +365,12 @@ export const ClassDetailsSection = ({
         </div>
 
         {/* Class Type (Group/Private) */}
-        <div className='grid grid-cols-3 hover:bg-transparent'>
-          <div className='bg-muted/30 px-6 py-4 font-semibold'>Class Type *</div>
-          <div className='bg-card col-span-2 px-6 py-4'>
-            <div className='flex gap-6'>
+        <div className='grid gap-3 py-4 lg:grid-cols-[minmax(160px,0.85fr)_minmax(0,2.15fr)] lg:gap-4'>
+          <div className='bg-muted/30 px-4 font-semibold sm:px-6 lg:bg-transparent '>
+            Class Type *
+          </div>
+          <div className='bg-card px-4 sm:px-6 lg:bg-transparent '>
+            <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-6'>
               {CLASS_TYPE_OPTIONS.map(option => (
                 <label key={option.value} className='flex cursor-pointer items-center gap-3'>
                   <input
@@ -380,10 +389,12 @@ export const ClassDetailsSection = ({
         </div>
 
         {/* Lecture Type (Online/In-person/Hybrid) */}
-        <div className='grid grid-cols-3 hover:bg-transparent'>
-          <div className='bg-muted/30 px-6 py-4 font-semibold'>Lecture Type *</div>
-          <div className='bg-card col-span-2 px-6 py-4'>
-            <div className='flex gap-6'>
+        <div className='grid gap-3 py-4 lg:grid-cols-[minmax(160px,0.85fr)_minmax(0,2.15fr)] lg:gap-4'>
+          <div className='bg-muted/30 px-4 font-semibold sm:px-6 lg:bg-transparent '>
+            Lecture Type *
+          </div>
+          <div className='bg-card px-4 sm:px-6 lg:bg-transparent '>
+            <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-6'>
               {LOCATION_TYPE_OPTIONS.map(option => (
                 <label key={option.value} className='flex cursor-pointer items-center gap-3'>
                   <input
@@ -402,10 +413,12 @@ export const ClassDetailsSection = ({
         </div>
 
         {/* Class Fee */}
-        <div className='grid grid-cols-3 hover:bg-transparent'>
-          <div className='bg-muted/30 px-6 py-4 font-semibold'>Class Fee</div>
-          <div className='bg-card col-span-2 px-6 py-4'>
-            <div className='border-input bg-muted flex h-10 w-full cursor-not-allowed items-center gap-2 rounded-md border px-3 text-sm'>
+        <div className='grid gap-3 py-4 lg:grid-cols-[minmax(160px,0.85fr)_minmax(0,2.15fr)] lg:gap-4'>
+          <div className='bg-muted/30 px-4 font-semibold sm:px-6 lg:bg-transparent '>
+            Class Fee
+          </div>
+          <div className='bg-card px-4 sm:px-6 lg:bg-transparent '>
+            <div className='border-input bg-muted flex min-h-10 w-full cursor-not-allowed flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-sm'>
               <span>
                 {data.rate_card || 'Select class type and lecture type to view class fee'}
               </span>
@@ -415,7 +428,7 @@ export const ClassDetailsSection = ({
               <span className='text-muted-foreground'>
                 per hour per head</span>
             </div>
-            <p className='text-muted-foreground mt-2 text-xs'>
+            <p className='text-muted-foreground mt-2 text-xs leading-relaxed'>
               Class fee is automatically set from the approved {classFor === 'course' ? 'course' : 'program'} rate card once class type and lecture type are selected.
             </p>
           </div>

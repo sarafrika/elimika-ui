@@ -2,10 +2,9 @@
 
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { normalizeLocationType, requiresPhysicalLocation } from '@/lib/location-types';
 import { Check, Copy } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ClassDetails } from './page';
 
 export const ClassInformationSection = ({
@@ -32,65 +31,67 @@ export const ClassInformationSection = ({
 
   return (
     <Card className='overflow-hidden border pt-0 shadow-sm'>
-      <div className='bg-muted/50 border-b px-6 py-4'>
+      <div className='bg-muted/50 border-b px-4 py-4 sm:px-6'>
         <h3 className='text-foreground text-lg font-semibold'>Class Information</h3>
       </div>
 
-      <Table>
-        <TableBody>
-          {showPhysicalLocation ? (
-            <TableRow className='border-b hover:bg-transparent'>
-              <TableCell className='bg-muted/30 py-4 font-semibold'>Class Location</TableCell>
-              <TableCell className='bg-card py-4'>
-                <Input
-                  value={data.location_name}
-                  onChange={e => onChange({ location_name: e.target.value })}
-                  placeholder='Enter Class Location or Room Name'
-                />
-              </TableCell>
-            </TableRow>
-          ) : null}
+      <div className='divide-y'>
+        {showPhysicalLocation ? (
+          <FieldRow label='Class Location'>
+            <Input
+              value={data.location_name}
+              onChange={e => onChange({ location_name: e.target.value })}
+              placeholder='Enter Class Location or Room Name'
+            />
+          </FieldRow>
+        ) : null}
 
-          <TableRow className='border-b hover:bg-transparent'>
-            <TableCell className='bg-muted/30 py-4 font-semibold'>Instructor</TableCell>
-            <TableCell className='bg-card py-4'>
-              <Input value={data?.instructorName} placeholder='Auto-filled from profile' disabled />
-            </TableCell>
-          </TableRow>
+        <FieldRow label='Instructor'>
+          <Input value={data?.instructorName} placeholder='Auto-filled from profile' disabled />
+        </FieldRow>
 
-          {showMeetingLink ? (
-            <TableRow className='border-b hover:bg-transparent'>
-              <TableCell className='bg-muted/30 w-1/3 py-4 font-semibold'>Meeting Link</TableCell>
-              <TableCell className='bg-card py-4'>
-                <Input
-                  value={data.meeting_link}
-                  onChange={e => onChange({ meeting_link: e.target.value })}
-                  placeholder='Enter meeting link'
-                />
-              </TableCell>
-            </TableRow>
-          ) : null}
+        {showMeetingLink ? (
+          <FieldRow label='Meeting Link'>
+            <Input
+              value={data.meeting_link}
+              onChange={e => onChange({ meeting_link: e.target.value })}
+              placeholder='Enter meeting link'
+            />
+          </FieldRow>
+        ) : null}
 
-          <TableRow className='hover:bg-transparent'>
-            <TableCell className='bg-muted/30 py-4 font-semibold'>Class Invite Link</TableCell>
-            <TableCell className='bg-card flex items-center gap-2 py-4'>
-              <Input value={inviteUrl} readOnly className='flex-1' />
-              <CopyInviteButton url={inviteUrl} />
-            </TableCell>
-          </TableRow>
+        <FieldRow label='Class Invite Link'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+            <Input value={inviteUrl} readOnly className='min-w-0 flex-1' />
+            <CopyInviteButton url={inviteUrl} />
+          </div>
+        </FieldRow>
 
-          <TableRow className='hover:bg-transparent'>
-            <TableCell className='bg-muted/30 py-4 font-semibold'>
-              Class Registration Link
-            </TableCell>
-            <TableCell className='bg-card flex items-center gap-2 py-4'>
-              <Input value={registrationUrl} readOnly className='flex-1' />
-              <CopyInviteButton url={registrationUrl} />
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
+        <FieldRow label='Class Registration Link'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+            <Input value={registrationUrl} readOnly className='min-w-0 flex-1' />
+            <CopyInviteButton url={registrationUrl} />
+          </div>
+        </FieldRow>
+      </div>
     </Card>
+  );
+};
+
+const FieldRow = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) => {
+  return (
+    <div className='grid gap-3 px-4 py-4 sm:px-6 lg:grid-cols-[minmax(150px,0.8fr)_minmax(0,2.2fr)] lg:items-center lg:gap-4'>
+      <div className='bg-muted/30 rounded-md px-3 py-2 text-sm font-semibold lg:bg-transparent lg:p-0'>
+        {label}
+      </div>
+      <div className='min-w-0'>{children}</div>
+    </div>
   );
 };
 
@@ -107,7 +108,13 @@ const CopyInviteButton = ({ url }: { url?: string }) => {
   };
 
   return (
-    <button onClick={handleCopy} disabled={!url}>
+    <button
+      type='button'
+      onClick={handleCopy}
+      disabled={!url}
+      className='inline-flex h-10 w-full items-center justify-center rounded-md border border-border bg-card px-3 text-foreground transition hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-10 sm:shrink-0'
+      aria-label='Copy link'
+    >
       {copied ? <Check className='text-success h-4 w-4' /> : <Copy className='h-4 w-4' />}
     </button>
   );

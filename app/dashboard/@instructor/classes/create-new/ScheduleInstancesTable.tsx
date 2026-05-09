@@ -54,14 +54,126 @@ export const ScheduleInstancesTable = ({
 
   return (
     <div className='space-y-2'>
-      <div className='flex items-center justify-between gap-4'>
+      <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
         <h5 className='text-sm font-semibold'>{title}</h5>
         <div className='text-muted-foreground text-sm'>
           {totalHoursLabel ?? `Total: ${totalHours.toFixed(1)} hours`}
         </div>
       </div>
 
-      <div className='overflow-hidden rounded-lg border'>
+      <div className='space-y-3 md:hidden'>
+        {sessions.map((session, index) => (
+          <div
+            key={`${session.date}-${index}`}
+            className={cn(
+              'rounded-lg border bg-card p-3',
+              getConflictMessage?.(session) && 'border-destructive/40 bg-destructive/5'
+            )}
+          >
+            <div className='flex items-start justify-between gap-3'>
+              <div className='min-w-0'>
+                <p className='text-sm font-semibold text-foreground'>
+                  {formatSessionDate(session.date)}
+                </p>
+                {getConflictMessage?.(session) ? (
+                  <Badge variant='destructive' className='mt-1'>
+                    Conflict
+                  </Badge>
+                ) : null}
+              </div>
+              <div className='shrink-0 text-right text-sm text-muted-foreground'>
+                <div>{session.hours.toFixed(1)} hrs</div>
+              </div>
+            </div>
+
+            <div className='mt-3 grid grid-cols-2 gap-3 text-sm'>
+              <div className='space-y-1'>
+                <div className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
+                  Start
+                </div>
+                {editable && editingIndex === index ? (
+                  <Input
+                    type='time'
+                    value={editStartTime}
+                    onChange={event => onStartTimeChange?.(event.target.value)}
+                    className='w-full'
+                  />
+                ) : (
+                  <div className='break-words'>{session.startTime}</div>
+                )}
+              </div>
+
+              <div className='space-y-1'>
+                <div className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
+                  End
+                </div>
+                {editable && editingIndex === index ? (
+                  <Input
+                    type='time'
+                    value={editEndTime}
+                    onChange={event => onEndTimeChange?.(event.target.value)}
+                    className='w-full'
+                  />
+                ) : (
+                  <div className='break-words'>{session.endTime}</div>
+                )}
+              </div>
+            </div>
+
+            {editable ? (
+              <div className='mt-3 flex flex-col gap-2'>
+                {editingIndex === index ? (
+                  <>
+                    <Button
+                      size='sm'
+                      variant='ghost'
+                      onClick={() => onSave?.(index)}
+                      className='h-9 w-full justify-center px-3'
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='ghost'
+                      onClick={() => onCancel?.()}
+                      className='h-9 w-full justify-center px-3'
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      size='sm'
+                      variant='ghost'
+                      onClick={() => onEdit?.(index)}
+                      className='h-9 w-full justify-center px-3'
+                    >
+                      <Edit2 className='h-4 w-4' />
+                      Edit
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='ghost'
+                      onClick={() => onRemove?.(index)}
+                      className='text-destructive hover:text-destructive h-9 w-full justify-center px-3'
+                    >
+                      <X className='h-4 w-4' />
+                      Remove
+                    </Button>
+                  </>
+                )}
+              </div>
+            ) : null}
+
+            {getConflictMessage?.(session) ? (
+              <p className='text-destructive mt-3 text-xs'>{getConflictMessage(session)}</p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+
+      <div className='hidden overflow-hidden rounded-lg border md:block'>
         <div className='overflow-x-auto'>
           <table className='w-full'>
             <thead className='bg-muted/50'>
