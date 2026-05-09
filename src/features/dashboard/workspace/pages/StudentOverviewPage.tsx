@@ -1,11 +1,11 @@
 'use client';
 
+import { EmptyState } from '@/components/ui/empty-state';
 import { StudentOverviewActiveCoursesCard } from '@/src/features/dashboard/workspace/student-overview/_components/StudentOverviewActiveCoursesCard';
 import { StudentOverviewHeroCard } from '@/src/features/dashboard/workspace/student-overview/_components/StudentOverviewHeroCard';
 import { StudentOverviewOpportunityCard } from '@/src/features/dashboard/workspace/student-overview/_components/StudentOverviewOpportunityCard';
 import { StudentOverviewSearchBar } from '@/src/features/dashboard/workspace/student-overview/_components/StudentOverviewSearchBar';
 import { StudentOverviewSkillsCard } from '@/src/features/dashboard/workspace/student-overview/_components/StudentOverviewSkillsCard';
-import { EmptyState } from '@/components/ui/empty-state';
 import { useStudentOverviewData } from '@/src/features/dashboard/workspace/student-overview/useStudentOverviewData';
 import { ArrowRight, Briefcase } from 'lucide-react';
 import Link from 'next/link';
@@ -45,7 +45,7 @@ export default function StudentOverviewPage() {
         <div className='grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.24fr)_minmax(0,0.76fr)]'>
           <StudentOverviewHeroCard firstName={data.firstName} />
 
-          <div className='grid min-w-0 gap-4'>
+          <div className='flex flex-col gap-4 min-w-0'>
             <StudentOverviewSkillsCard
               progress={data.skillsProgress}
               verifiedSkills={data.verifiedSkills}

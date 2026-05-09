@@ -48,7 +48,6 @@ import { toast } from 'sonner';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { CoursesCatalogCard } from './CoursesCatalogCard';
 import { CoursesCategoryFilters } from './CoursesCategoryFilters';
-import { CoursesCategoryTile } from './CoursesCategoryTile';
 import { CoursesHero } from './CoursesHero';
 import { CoursesRecommendationCard } from './CoursesRecommendationCard';
 import {
@@ -829,15 +828,15 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         <CoursesHero actions={heroActions} domain={domain} />
 
         <section className='space-y-4'>
-          <div className='flex items-center justify-between gap-3'>
-            <h2 className='text-foreground text-[clamp(1.1rem,1.5vw,1.35rem)] font-semibold tracking-[-0.02em]'>
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+            <h2 className='text-foreground text-lg sm:text-[clamp(1.1rem,1.5vw,1.35rem)] font-semibold tracking-[-0.02em]'>
               Browse by Category
             </h2>
-            <div className='flex items-center gap-2'>
+            <div className='flex flex-wrap items-center gap-2 sm:justify-end'>
               <div className='min-[1460px]:hidden'>
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant='outline' className='rounded-md text-sm shadow-none'>
+                    <Button variant='outline' className='h-9 rounded-md text-sm shadow-none'>
                       <Filter className='size-4' />
                       Filters
                     </Button>
@@ -891,24 +890,26 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                   ))}
                 </div>
               ) : (
-                <div className='scrollbar-hidden flex gap-3 overflow-x-auto pb-1'>
-                  {categoryTileData.map((tile, index) => (
-                    <CoursesCategoryTile
-                      key={tile.title}
-                      tile={tile}
-                      className='min-w-[168px] shrink-0 sm:min-w-[190px]'
-                      isActive={
-                        filters.category ===
-                        (categories[index]?.uuid ?? categories[index]?.name ?? '')
-                      }
-                      onClick={() => {
-                        const category = categories[index];
-                        if (category) {
-                          handleCategoryTileClick(category);
+                <div className='w-full min-w-0 overflow-hidden'>
+                  {/* <div className='scrollbar-hidden flex w-full min-w-0 gap-3 overflow-x-auto pb-1'>
+                    {categoryTileData.map((tile, index) => (
+                      <CoursesCategoryTile
+                        key={tile.title}
+                        tile={tile}
+                        className='w-[min(168px,70vw)] flex-none sm:w-[190px]'
+                        isActive={
+                          filters.category ===
+                          (categories[index]?.uuid ?? categories[index]?.name ?? '')
                         }
-                      }}
-                    />
-                  ))}
+                        onClick={() => {
+                          const category = categories[index];
+                          if (category) {
+                            handleCategoryTileClick(category);
+                          }
+                        }}
+                      />
+                    ))}
+                  </div> */}
                 </div>
               )}
 
@@ -931,7 +932,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                     ))}
                   </div>
 
-                  <div className='flex items-center gap-3'>
+                  <div className='flex flex-wrap items-center gap-3'>
                     <p className='text-muted-foreground text-xs font-medium sm:text-sm'>
                       {filteredItems.length} item{filteredItems.length === 1 ? '' : 's'}
                     </p>
@@ -1048,7 +1049,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         </section>
 
         <section className='space-y-4'>
-          <div className='flex items-center justify-between gap-3'>
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <h2 className='text-foreground text-[clamp(1.1rem,1.5vw,1.35rem)] font-semibold tracking-[-0.02em]'>
               Recommended for You
             </h2>
@@ -1094,7 +1095,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           <Button
             asChild
             variant='warning'
-            className='h-10 rounded-xl px-5 text-sm font-semibold shadow-none'
+            className='h-10 w-full rounded-xl px-5 text-sm font-semibold shadow-none sm:w-auto'
           >
             <Link href={buildWorkspaceAliasPath(domain, '/dashboard/skills-fund')}>Apply Now</Link>
           </Button>

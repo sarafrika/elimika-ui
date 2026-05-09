@@ -627,73 +627,106 @@ function AssessmentCard({
     : undefined;
 
   return (
-    <article className='border-border/70 bg-card rounded-md border shadow-xs'>
-      <div className='border-border/60 flex items-start justify-between gap-4 border-b p-4'>
-        <div className='min-w-0'>
-          <h3 className='truncate text-xl font-semibold'>{assessment.title}</h3>
-          <p className='text-muted-foreground mt-2 text-sm'>
+    <article className="border-border/70 bg-card w-full min-w-0 overflow-hidden rounded-md border shadow-xs">
+      <div className="border-border/60 flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-base font-semibold sm:text-xl">
+            {assessment.title}
+          </h3>
+
+          <p className="text-muted-foreground mt-2 text-xs sm:text-sm">
             Submitted by {assessment.learnerName} on {assessment.submittedAt}
           </p>
         </div>
-        <StatusBadge assessment={assessment} />
+
+        <div className="shrink-0">
+          <StatusBadge assessment={assessment} />
+        </div>
       </div>
-      <div className='border-border/60 space-y-4 border-b p-4'>
-        <p className='flex items-center gap-2'>
-          <Star className='text-warning fill-warning size-4 shrink-0' />
-          <div className='text-muted-foreground flex text-sm'>
+
+      <div className="border-border/60 space-y-4 border-b p-4">
+        <div className="flex min-w-0 items-start gap-2">
+          <Star className="text-warning fill-warning mt-0.5 size-4 shrink-0" />
+
+          <div className="text-muted-foreground min-w-0 text-sm">
             <RichTextPreview html={assessment.summary} />
           </div>
-        </p>
-        <div className='grid gap-3 md:grid-cols-[120px_minmax(0,1fr)_auto] md:items-center'>
-          <Badge className='bg-primary text-primary-foreground h-8 w-fit rounded-md px-4'>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-[120px_minmax(0,1fr)_auto] md:items-center">
+          <Badge className="bg-primary/15 text-primary inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium">
             {assessment.category}
           </Badge>
-          <div className='text-muted-foreground flex min-w-0 items-center gap-2 text-sm'>
-            <FileText className='text-primary size-4 shrink-0' />
-            <span className='text-foreground truncate font-medium'>{assessment.fileName}</span>
-            <span className='shrink-0'>({assessment.fileSize})</span>
+
+          <div className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-2 text-sm">
+            <FileText className="text-primary size-4 shrink-0" />
+
+            <span className="text-foreground min-w-0 truncate font-medium">
+              {assessment.fileName}
+            </span>
+
+            <span className="shrink-0">
+              ({assessment.fileSize})
+            </span>
           </div>
+
           {detailHref && role === 'instructor' ? (
-            <Button asChild className='h-9 rounded-md px-5' type='button'>
+            <Button
+              asChild
+              className="h-9 w-full rounded-md px-5 sm:w-auto"
+              type="button"
+            >
               <Link href={detailHref}>
                 {primaryAction}
-                <ArrowUpRight className='size-4' />
+                <ArrowUpRight className="size-4" />
               </Link>
             </Button>
           ) : (
             <Button
-              className='h-9 rounded-md px-5'
+              className="h-9 w-full rounded-md px-5 sm:w-auto"
               disabled={role === 'student' && assessment.score === null}
-              type='button'
+              type="button"
             >
               {primaryAction}
-              <ArrowUpRight className='size-4' />
+              <ArrowUpRight className="size-4" />
             </Button>
           )}
         </div>
       </div>
-      <footer className='flex flex-wrap items-center gap-x-6 gap-y-2 p-4 text-sm'>
-        <span className='text-muted-foreground'>
+
+      <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 p-4 text-xs sm:text-sm">
+        <span className="text-muted-foreground">
           Grade:{' '}
-          <span className='text-foreground font-medium'>
-            {assessment.gradeDisplay || `${assessment.score ?? '----'} / ${assessment.points}`}
+          <span className="text-foreground font-medium">
+            {assessment.gradeDisplay ||
+              `${assessment.score ?? '----'} / ${assessment.points}`}
           </span>
         </span>
+
         {typeof assessment.percentage === 'number' ? (
-          <span className='text-muted-foreground'>
-            Percentage: <span className='text-foreground font-medium'>{assessment.percentage}%</span>
+          <span className="text-muted-foreground">
+            Percentage:{' '}
+            <span className="text-foreground font-medium">
+              {assessment.percentage}%
+            </span>
           </span>
         ) : null}
+
         <span
           className={cn(
             'text-muted-foreground',
-            isAssessmentOverdue(assessment) && 'text-destructive font-medium'
+            isAssessmentOverdue(assessment) &&
+            'text-destructive font-medium'
           )}
         >
           {getAssessmentDueLabel(assessment)}
         </span>
-        <button className='text-muted-foreground hover:text-foreground ml-auto' type='button'>
-          <MoreHorizontal className='size-5' />
+
+        <button
+          className="text-muted-foreground hover:text-foreground ml-auto shrink-0"
+          type="button"
+        >
+          <MoreHorizontal className="size-5" />
         </button>
       </footer>
     </article>
