@@ -11,7 +11,7 @@ type OverviewCourseListPanelProps = {
 
 function SkillsProgressCard({ summary }: { summary: OverviewCourseSummary }) {
   return (
-    <div className='rounded-[10px] border border-border bg-card px-4 py-3 shadow-sm'>
+    <div className='rounded-[10px] bg-card p-2'>
       <div className='flex flex-wrap items-center justify-between gap-4'>
         <div className='space-y-1'>
           <div className='flex items-center gap-2 text-[1rem] font-medium text-foreground'>
@@ -38,7 +38,7 @@ function SkillsProgressCard({ summary }: { summary: OverviewCourseSummary }) {
         </div>
       </div>
 
-      <div className='mt-4 grid gap-2 sm:grid-cols-2'>
+      <div className='mt-4 flex gap-2 sm:flex-row items-center'>
         <ActionButton label={summary.primaryActionLabel} tone='muted' href={'/dashboard/classes'} />
         <ActionButton label={summary.secondaryActionLabel} tone='muted' href={'/dashboard/assignment'} />
       </div>
@@ -50,43 +50,44 @@ function CourseRow({ course }: { course: OverviewCourse }) {
   const Icon = course.icon;
 
   return (
-    <article className='rounded-[10px] border border-border bg-card px-3 py-3 shadow-sm'>
-      <div className='flex items-start gap-3'>
-        <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] bg-primary text-primary-foreground'>
-          <Icon className='size-4' />
-        </div>
+    <article className='w-full min-w-0 overflow-hidden rounded-[10px] border border-border bg-card p-3 shadow-sm'>
 
+      <div className='flex w-full min-w-0 gap-3'>
+
+        {/* icon */}
+
+
+        {/* content */}
         <div className='min-w-0 flex-1'>
-          {/* Header */}
-          <div className='flex items-start justify-between gap-3'>
+
+          <div className='flex flex-row items-center gap-2' >
+            <div className='shrink-0'>
+              <div className='flex h-9 w-9 items-center justify-center rounded-[8px] bg-primary text-primary-foreground'>
+                <Icon className='size-4' />
+              </div>
+            </div>
+
+            {/* title block */}
             <div className='min-w-0'>
-              <h3 className='truncate text-[1rem] font-semibold text-foreground sm:text-[1.05rem]'>
-                {course.title}
-              </h3>
-              <p className='truncate text-sm text-muted-foreground'>
+              <h3 className='block w-full min-w-0 truncate text-[1rem] font-semibold text-foreground sm:text-[1.05rem]'>              {course?.title}            </h3>
+
+              <p className='block w-full min-w-0 truncate text-sm text-muted-foreground'>
                 <span className='text-primary'>{course.provider}</span> | {course.level}
               </p>
             </div>
-            {/* 
-            <button
-              type='button'
-              aria-label={`${course.title} options`}
-              className='text-muted-foreground transition hover:text-foreground'
-            >
-              <EllipsisVertical className='size-4' />
-            </button> */}
           </div>
 
-          {/* Students + Progress */}
-          <div className='mt-3 flex items-center gap-3'>
-            <div className='flex items-center gap-1 text-foreground'>
-              <Users className='size-4 text-muted-foreground' />
-              <span className='text-[0.95rem] font-medium'>
+          {/* stats */}
+          <div className='mt-3 flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3'>
+
+            <div className='flex min-w-0 items-center gap-1'>
+              <Users className='size-4 shrink-0 text-muted-foreground' />
+              <span className='truncate text-[0.95rem] font-medium'>
                 {course.students} students
               </span>
             </div>
 
-            <div className='h-2 w-full max-w-[120px] overflow-hidden rounded-full bg-muted'>
+            <div className='h-2 w-full overflow-hidden rounded-full bg-muted sm:max-w-[120px]'>
               <div
                 className='h-full rounded-full bg-primary'
                 style={{ width: `${course.progress}%` }}
@@ -94,32 +95,45 @@ function CourseRow({ course }: { course: OverviewCourse }) {
             </div>
           </div>
 
-          {/* Action button (separate row) */}
-          <div className='mt-4 flex flex-wrap justify-end gap-2'>
+          {/* actions */}
+          <div className='mt-4 flex flex-row gap-2 sm:flex-row justify-end'>
             <ActionButton href={course.viewHref} label={course.actionLabel} />
+
             <Link
               href={course.editHref}
-              className='inline-flex h-8 items-center justify-center rounded-[6px] border border-border bg-card px-4 text-[0.82rem] font-medium text-foreground transition hover:bg-muted/50'
+              className='inline-flex h-8 items-center justify-center rounded-[6px] border border-border bg-card px-4 text-[0.82rem] font-medium text-foreground hover:bg-muted/50'
             >
               Edit Class
             </Link>
           </div>
+
         </div>
       </div>
     </article>
   );
 }
 
-export function OverviewCourseListPanel({ courses, summary }: OverviewCourseListPanelProps) {
+export function OverviewCourseListPanel({
+  courses,
+  summary,
+}: OverviewCourseListPanelProps) {
   return (
-    <>
-      <OverviewSectionShell title='Active Courses' trailingMode='none' onActionHref='#' >
+    <div className='space-y-4'>
+
+      <OverviewSectionShell
+        title='Active Courses'
+        trailingMode='none'
+      >
         <SkillsProgressCard summary={summary} />
       </OverviewSectionShell>
 
-      <OverviewSectionShell title='Active Courses' onActionLabel='See All' onActionHref='/dashboard/workspace/instructor/courses' >
+      <OverviewSectionShell
+        title='Active Courses'
+        onActionLabel='See All'
+        onActionHref='/dashboard/workspace/instructor/courses'
+      >
         {courses.length ? (
-          <div className='space-y-3'>
+          <div className='w-full min-w-0 space-y-3 overflow-hidden'>
             {courses.map(course => (
               <CourseRow key={course.id} course={course} />
             ))}
@@ -130,6 +144,7 @@ export function OverviewCourseListPanel({ courses, summary }: OverviewCourseList
           </p>
         )}
       </OverviewSectionShell>
-    </>
+
+    </div>
   );
 }

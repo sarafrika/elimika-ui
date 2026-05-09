@@ -60,7 +60,7 @@ export function MarketplaceRail({
         </div>
 
         <label className='relative block'>
-          <Input placeholder={searchJobsPlaceholder} className='rounded-xl pr-10' />
+          <Input placeholder={searchJobsPlaceholder} className='rounded-md pr-10' />
           <Search className='text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2' />
         </label>
         <Button className='rounded-xl'>{sendLabel}</Button>

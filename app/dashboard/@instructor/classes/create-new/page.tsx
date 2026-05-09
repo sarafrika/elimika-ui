@@ -15,7 +15,7 @@ import type { CreateClassDefinitionData } from '@/services/client/types.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
@@ -118,6 +118,60 @@ const RECURRENCE_TYPE_MAP: Record<string, string> = {
 type SubmitEventLike = {
   preventDefault(): void;
 };
+
+const createInitialClassDetails = (instructorName?: string): ClassDetails => ({
+  uuid: '',
+  course_uuid: '',
+  program_uuid: null,
+  title: '',
+  description: '',
+  categories: [],
+  class_type: '',
+  rate_card: '',
+  location_type: '',
+  location_name: '',
+  class_limit: 0,
+  targetAudience: '',
+  allDay: false,
+  endDate: '',
+  repeatUnit: '1',
+  startDate: '',
+  instructorName,
+  class_color: '',
+  classroom: '',
+  meeting_link: '',
+  reminder: '',
+});
+
+const createInitialScheduleSettings = (): ScheduleSettings => ({
+  academicPeriod: { start: '', end: '' },
+  registrationPeriod: { start: '', end: '', continuous: false },
+  startClass: { date: '', startTime: '', endTime: '' },
+  allDay: false,
+  repeat: {
+    interval: 1,
+    unit: 'week',
+    days: [],
+  },
+  endRepeat: '',
+  alertAttendee: false,
+  timetable: {
+    days: [],
+    time: { duration: '' },
+  },
+  recurringOptions: '',
+  timezone: '',
+  classType: '',
+  location: '',
+  pin: '',
+  classroom: '',
+  totalSlots: 0,
+});
+
+const createInitialNotificationSettings = (): NotificationSettings => ({
+  reminder: '',
+  classColour: '',
+});
 
 const normalizeClassDetailsForState = (details: Partial<ClassDetails>) => {
   const locationType = normalizeLocationType(details.location_type);
@@ -332,63 +386,22 @@ const ClassBuilderPage = ({
   const createClassDefinition = useMutation(createClassDefinitionMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
   const { classes: instructorClasses = [] } = useInstructorClassesWithSchedules(instructor?.uuid);
+  const skipNextDraftSaveRef = useRef(false);
 
   // Class Details State
-  const [classDetails, setClassDetails] = useState<ClassDetails>({
-    uuid: '',
-    course_uuid: '',
-    program_uuid: null,
-    title: '',
-    description: '',
-    categories: [],
-    class_type: '',
-    rate_card: '',
-    location_type: '',
-    location_name: '',
-    class_limit: 0,
-    targetAudience: '',
-    allDay: false,
-    endDate: '',
-    repeatUnit: '1',
-    startDate: '',
-    instructorName: instructor?.full_name,
-    class_color: '',
-    classroom: '',
-    meeting_link: '',
-    reminder: '',
-  });
+  const [classDetails, setClassDetails] = useState<ClassDetails>(() =>
+    createInitialClassDetails(instructor?.full_name)
+  );
 
   // Schedule Settings State
-  const [scheduleSettings, setScheduleSettings] = useState<ScheduleSettings>({
-    academicPeriod: { start: '', end: '' },
-    registrationPeriod: { start: '', end: '', continuous: false },
-    startClass: { date: '', startTime: '', endTime: '' },
-    allDay: false,
-    repeat: {
-      interval: 1,
-      unit: 'week',
-      days: [],
-    },
-    endRepeat: '',
-    alertAttendee: false,
-    timetable: {
-      days: [],
-      time: { duration: '' },
-    },
-    recurringOptions: '',
-    timezone: '',
-    classType: '',
-    location: '',
-    pin: '',
-    classroom: '',
-    totalSlots: 0,
-  });
+  const [scheduleSettings, setScheduleSettings] = useState<ScheduleSettings>(() =>
+    createInitialScheduleSettings()
+  );
 
   // Notification Settings State
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
-    reminder: '',
-    classColour: '',
-  });
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(() =>
+    createInitialNotificationSettings()
+  );
 
   const queryPrefillSlot = useMemo(() => {
     if (resolveId || initialSlot) return null;
@@ -584,6 +597,10 @@ const ClassBuilderPage = ({
 
   useEffect(() => {
     if (resolveId || !isDataInitialized || typeof window === 'undefined') return;
+    if (skipNextDraftSaveRef.current) {
+      skipNextDraftSaveRef.current = false;
+      return;
+    }
 
     const timeout = window.setTimeout(() => {
       window.localStorage.setItem(
@@ -609,6 +626,24 @@ const ClassBuilderPage = ({
     resolveId,
     isDataInitialized,
   ]);
+
+  const handleClearDraft = () => {
+    if (typeof window === 'undefined') return;
+
+    const shouldClear = window.confirm('Clear the saved draft and reset this form?');
+    if (!shouldClear) return;
+
+    skipNextDraftSaveRef.current = true;
+    window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
+    setClassDetails(createInitialClassDetails(instructor?.full_name));
+    setScheduleSettings(createInitialScheduleSettings());
+    setNotificationSettings(createInitialNotificationSettings());
+    setScheduleMode('class');
+    setCustomSessions([]);
+    setIsPreviewMode(false);
+    setSavedClassUuid(null);
+    setIsDataInitialized(true);
+  };
 
   // Calculate occurrence count
   const occurrenceCount = calculateOccurrences(
@@ -883,7 +918,7 @@ const ClassBuilderPage = ({
   const shouldShowSkeleton = isLoading || (resolveId && !isDataInitialized);
 
   return (
-    <div className={embedded ? 'bg-background px-1 py-1' : 'bg-background min-h-screen px-4 py-8'}>
+    <div className={embedded ? 'bg-background px-1 py-1' : 'bg-background min-h-screen px-3 py-4 sm:px-4 sm:py-8'}>
       <div className={embedded ? 'mx-auto max-w-5xl' : 'mx-auto max-w-5xl'}>
         {/* Header */}
         <div className={embedded ? 'mb-6' : 'mb-8'}>
@@ -901,14 +936,18 @@ const ClassBuilderPage = ({
         ) : (
           <>
             <form onSubmit={e => handleSubmit(e, false)} className='space-y-6'>
-              <div className='flex-end flex items-center justify-between'>
+              <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                 {embedded ? (
-                  <Button type='button' variant='outline' onClick={onCancel}>
+                  <Button type='button' variant='outline' onClick={onCancel} className='w-full sm:w-auto'>
                     <ArrowLeft />
                     Close
                   </Button>
                 ) : (
-                  <Button variant={'outline'} onClick={() => router.push('/dashboard/classes')}>
+                  <Button
+                    variant={'outline'}
+                    onClick={() => router.push('/dashboard/classes')}
+                    className='w-full sm:w-auto'
+                  >
                     <ArrowLeft />
                     Back
                   </Button>
@@ -916,15 +955,26 @@ const ClassBuilderPage = ({
                 <Button
                   type='button'
                   variant='outline'
+                  className='w-full sm:w-auto'
                   onClick={event => {
                     event.preventDefault();
                     handleSubmit(event, true);
                   }}
                   disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
-                >
-                  <Save className='mr-2 h-4 w-4' />
-                  Save as Draft
-                </Button>
+                  >
+                    <Save className='mr-2 h-4 w-4' />
+                    Save as Draft
+                  </Button>
+                {!resolveId ? (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    className='w-full sm:w-auto'
+                    onClick={handleClearDraft}
+                  >
+                    Clear Draft
+                  </Button>
+                ) : null}
               </div>
 
               {/* Class Details Section */}
@@ -973,11 +1023,12 @@ const ClassBuilderPage = ({
               )}
 
               {/* Action Buttons */}
-              <Card className='flex items-end justify-between gap-4 border p-6 shadow-sm'>
-                <div className='flex items-center gap-3'>
+              <Card className='flex flex-col gap-4 border p-4 shadow-sm sm:p-6'>
+                <div className='flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center'>
                   <Button
                     type='button'
                     variant='outline'
+                    className='w-full sm:w-auto'
                     onClick={() => setIsPreviewMode(!isPreviewMode)}
                   >
                     {isPreviewMode ? 'Hide Preview' : 'Show Preview'}
@@ -986,7 +1037,7 @@ const ClassBuilderPage = ({
                   <Button
                     type='submit'
                     disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
-                    className='px-8'
+                    className='w-full px-8 sm:w-auto'
                   >
                     {createClassDefinition.isPending || updateClassDefinition.isPending
                       ? 'Publishing...'
@@ -1009,40 +1060,40 @@ const ClassFormSkeleton = () => {
     <div className='animate-pulse space-y-6'>
       {/* Top Publish Button */}
       <div className='flex justify-end'>
-        <div className='bg-muted h-10 w-40 rounded-md' />
+        <div className='bg-muted h-10 w-full max-w-40 rounded-md' />
       </div>
 
       {/* Class Details Section */}
-      <Card className='space-y-4 p-6'>
+      <Card className='space-y-4 p-4 sm:p-6'>
         <div className='bg-muted h-5 w-1/3 rounded' />
         <div className='bg-muted h-10 w-full rounded' />
         <div className='bg-muted h-10 w-full rounded' />
       </Card>
 
       {/* Schedule Section */}
-      <Card className='space-y-4 p-6'>
+      <Card className='space-y-4 p-4 sm:p-6'>
         <div className='bg-muted h-5 w-1/4 rounded' />
         <div className='bg-muted h-10 w-full rounded' />
         <div className='bg-muted h-10 w-1/2 rounded' />
       </Card>
 
       {/* Class Information Section */}
-      <Card className='space-y-4 p-6'>
+      <Card className='space-y-4 p-4 sm:p-6'>
         <div className='bg-muted h-5 w-1/3 rounded' />
         <div className='bg-muted h-24 w-full rounded' />
       </Card>
 
       {/* Notification Section */}
-      <Card className='space-y-4 p-6'>
+      <Card className='space-y-4 p-4 sm:p-6'>
         <div className='bg-muted h-5 w-1/4 rounded' />
         <div className='bg-muted h-10 w-full rounded' />
       </Card>
 
       {/* Action Buttons */}
-      <Card className='flex justify-between p-6'>
-        <div className='flex gap-3'>
-          <div className='bg-muted h-10 w-36 rounded' />
-          <div className='bg-muted h-10 w-36 rounded' />
+      <Card className='flex flex-col gap-3 p-4 sm:flex-row sm:justify-between sm:p-6'>
+        <div className='flex flex-col gap-3 sm:flex-row'>
+          <div className='bg-muted h-10 w-full rounded sm:w-36' />
+          <div className='bg-muted h-10 w-full rounded sm:w-36' />
         </div>
       </Card>
     </div>

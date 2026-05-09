@@ -426,7 +426,7 @@ export function AssignmentPageClient() {
   }, [analyticsQuery, pendingGradingData?.data, taskCards]);
 
   return (
-    <main className='bg-background p-3 sm:p-4 md:p-6'>
+    <main className='bg-background p-3 sm:p-4 md:p-6 mb-10'>
       <div className='mx-auto space-y-4 sm:space-y-5'>
         <AssignmentHeader />
 

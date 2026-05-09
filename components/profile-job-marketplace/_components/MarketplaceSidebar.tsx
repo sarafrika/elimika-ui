@@ -28,7 +28,7 @@ export function MarketplaceSidebar({
 }: MarketplaceSidebarProps) {
   return (
     <aside className='space-y-4'>
-      <div className='gap-4 rounded-[18px] border-border border-1 space-y-4 px-4 py-4 shadow-sm'>
+      <div className='gap-4 rounded-md border-border border-1 space-y-4 px-4 py-4 shadow-sm'>
         <div className='border-b pb-4'>
           <h2 className='text-foreground text-lg font-semibold'>{heading}</h2>
           <p className='text-muted-foreground mt-1 text-sm'>{count}</p>

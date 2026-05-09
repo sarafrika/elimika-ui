@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { CalendarDays } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { BookingCard } from './BookingCard';
 import { LiveClassCard } from './LiveClassCard';
@@ -93,69 +94,82 @@ export function InstructorTrainingHubPage() {
         selectedType={selectedType}
       />
 
-      <section className='grid gap-4 min-[1380px]:grid-cols-[minmax(0,1fr)_300px]'>
-        <div className='grid gap-4 lg:grid-cols-[minmax(280px,0.92fr)_minmax(340px,1.18fr)] min-[1450px]:grid-cols-[minmax(300px,0.94fr)_minmax(420px,1.2fr)]'>
-          <div className='space-y-3'>
+      <section className='grid w-full min-w-0 max-w-full gap-4 overflow-hidden min-[1380px]:grid-cols-[minmax(0,1fr)_300px]'>
+        <div className='grid min-w-0 max-w-full gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'>
+          <div className='min-w-0 space-y-3 overflow-hidden'>
+
             <div className='flex flex-row items-center gap-1'>
               <TrainingHubSectionHeader title='Manage Courses' />
               <p className='text-sm text-muted-foreground'>
                 List of courses approved to train.
               </p>
             </div>
+
             <div className='space-y-3'>
               {filteredManagedCourses.map(course => (
                 <ManageCourseCard key={course.id} course={course} />
               ))}
+
               {!isLoadingManagedCourses &&
                 filteredManagedCourses.length === 0 &&
-                selectedType !== 'live-classes' ? (
-                <Card className='border-border/60 shadow-sm'>
-                  <CardContent className='py-10 text-center text-sm text-muted-foreground'>
-                    No approved courses matched your search.
-                  </CardContent>
-                </Card>
-              ) : null}
-              {isLoadingManagedCourses ? (
+                selectedType !== 'live-classes' && (
+                  <Card className='border-border/60 shadow-sm'>
+                    <CardContent className='py-10 text-center text-sm text-muted-foreground'>
+                      No approved courses matched your search.
+                    </CardContent>
+                  </Card>
+                )}
+
+              {isLoadingManagedCourses && (
                 <Card className='border-border/60 shadow-sm'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
                     Loading approved courses...
                   </CardContent>
                 </Card>
-              ) : null}
+              )}
             </div>
+
           </div>
 
-          <div className='space-y-3'>
+          <div className='min-w-0 space-y-3 overflow-hidden'>
+
             <TrainingHubSectionHeader
               actionLabel='View Classes'
               href='/dashboard/classes'
               title='Live Classes'
             />
+
             <div className='space-y-3'>
               {filteredLiveClasses.map(liveClass => (
                 <LiveClassCard key={liveClass.id} liveClass={liveClass} />
               ))}
+
               {!isLoadingManagedCourses &&
                 filteredLiveClasses.length === 0 &&
-                selectedType !== 'manage-courses' ? (
-                <Card className='border-border/60 shadow-sm'>
-                  <CardContent className='py-10 text-center text-sm text-muted-foreground'>
-                    No upcoming class instances matched your search.
-                  </CardContent>
-                </Card>
-              ) : null}
-              {isLoadingManagedCourses && selectedType !== 'manage-courses' ? (
+                selectedType !== 'manage-courses' && (
+                  <Card className='border-border/60 shadow-sm'>
+                    <CardContent className='py-10 text-center text-sm text-muted-foreground'>
+                      No upcoming class instances matched your search.
+                    </CardContent>
+                  </Card>
+                )}
+
+              {isLoadingManagedCourses && selectedType !== 'manage-courses' && (
                 <Card className='border-border/60 shadow-sm'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
                     Loading upcoming classes...
                   </CardContent>
                 </Card>
-              ) : null}
+              )}
             </div>
+
           </div>
+
         </div>
 
-        <aside className='space-y-5'>
+        {/* ASIDE */}
+        <aside className='min-w-0 space-y-5 overflow-hidden'>
+
           <section className='space-y-3'>
             <TrainingHubSectionHeader
               actionLabel={`Show All (${waitingList.length})`}
@@ -167,20 +181,6 @@ export function InstructorTrainingHubPage() {
               {filteredWaitingList.slice(0, 3).map(student => (
                 <WaitingListItem key={student.id} student={student} />
               ))}
-              {!isLoadingManagedCourses && filteredWaitingList.length === 0 ? (
-                <Card className='border-border/60 shadow-sm'>
-                  <CardContent className='flex min-h-[176px] items-center justify-center py-8 text-center text-sm text-muted-foreground'>
-                    No waitlisted students to show right now.
-                  </CardContent>
-                </Card>
-              ) : null}
-              {isLoadingManagedCourses ? (
-                <Card className='border-border/60 shadow-sm'>
-                  <CardContent className='py-10 text-center text-sm text-muted-foreground'>
-                    Loading waiting list...
-                  </CardContent>
-                </Card>
-              ) : null}
             </div>
           </section>
 
@@ -195,23 +195,20 @@ export function InstructorTrainingHubPage() {
               {filteredBookings.slice(0, 3).map(booking => (
                 <BookingCard key={booking.id} booking={booking} />
               ))}
-              {!isLoadingManagedCourses && filteredBookings.length === 0 ? (
-                <Card className='border-border/60 shadow-sm'>
-                  <CardContent className='flex min-h-[176px] items-center justify-center py-8 text-center text-sm text-muted-foreground'>
-                    No booking sessions matched your search.
-                  </CardContent>
-                </Card>
-              ) : null}
-              {isLoadingManagedCourses ? (
-                <Card className='border-border/60 shadow-sm'>
-                  <CardContent className='py-10 text-center text-sm text-muted-foreground'>
-                    Loading bookings...
-                  </CardContent>
-                </Card>
-              ) : null}
             </div>
           </section>
+
+          <button
+            type='button'
+            className='flex w-full items-center justify-center gap-3 rounded-[10px] bg-primary px-4 py-3 text-center text-[0.96rem] font-medium text-white transition hover:bg-cyan-700'
+          >
+            <CalendarDays className='size-4 shrink-0' />
+            <span className='truncate'>Invite Past Students</span>
+            <span aria-hidden='true'>›</span>
+          </button>
+
         </aside>
+
       </section>
     </main>
   );
