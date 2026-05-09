@@ -21,31 +21,43 @@ export function OverviewSectionShell({
   trailingMode = 'link',
 }: OverviewSectionShellProps) {
   return (
-    <section className={cn('rounded-[12px] border border-border bg-card', className)}>
-      <div className='flex items-center justify-between gap-3 px-4 py-3'>
-        <h2 className='text-[1.15rem] font-semibold text-foreground sm:text-[1.2rem]'>{title}</h2>
+    <section
+      className={cn(
+        'w-full min-w-0 overflow-hidden rounded-[12px] border border-border bg-card',
+        className
+      )}
+    >
+      <div className='flex min-w-0 items-center gap-2 px-3 py-3 sm:gap-3 sm:px-4'>
+        <h2 className='min-w-0 flex-1 truncate text-[1.1rem] font-semibold text-foreground sm:text-[1.2rem]'>
+          {title}
+        </h2>
+
         {trailingMode === 'ellipsis' ? (
           <button
             type='button'
             aria-label={`${title} options`}
-            className='text-muted-foreground transition hover:text-foreground'
+            className='shrink-0 text-muted-foreground transition hover:text-foreground'
           >
             <MoreHorizontal className='size-5' />
           </button>
         ) : null}
+
         {trailingMode === 'link' ? (
-          <Link href={onActionHref}>
+          <Link href={onActionHref} className='shrink-0'>
             <Button
               variant='ghost'
-              className='h-auto p-0 text-sm font-medium text-primary hover:bg-transparent hover:text-primary/80'
+              className='h-auto gap-1 p-0 text-[0.82rem] font-medium text-primary hover:bg-transparent hover:text-primary/80 sm:text-sm'
             >
               {onActionLabel}
-              <ChevronRight className='ml-1 size-4' />
+              <ChevronRight className='size-4' />
             </Button>
           </Link>
         ) : null}
       </div>
-      <div className='px-3 pb-3'>{children}</div>
+
+      <div className='w-full min-w-0 overflow-hidden px-3 pb-3'>
+        {children}
+      </div>
     </section>
   );
 }

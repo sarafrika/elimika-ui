@@ -19,7 +19,7 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
     useInstructorOverviewData();
 
   return (
-    <main className='w-full mb-6'>
+    <main className='w-full mb-20'>
       <div className='mx-auto max-w-[1480px] px-2 py-2 sm:px-3 lg:px-4'>
         <div className='space-y-3 border border-border bg-card p-3 sm:p-4 rounded-xl'>
           <OverviewHeader firstName={firstName} />
@@ -30,25 +30,36 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
             ))}
           </section>
 
-          <section className='grid gap-3 xl:grid-cols-[minmax(0,0.94fr)_minmax(0,0.94fr)_minmax(240px,0.72fr)] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(260px,0.78fr)]'>
-            <div className='space-y-3'>
-              <OverviewCourseListPanel courses={activeCourses} summary={courseSummary} />
+          <section
+            className='grid min-w-0 gap-3 overflow-x-hidden
+  xl:grid-cols-[minmax(0,0.94fr)_minmax(0,0.94fr)_minmax(240px,0.72fr)]
+  2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(260px,0.78fr)]'
+          >
+            {/* LEFT COLUMN */}
+            <div className='min-w-0 space-y-3 overflow-hidden'>
+              <OverviewCourseListPanel
+                courses={activeCourses}
+                summary={courseSummary}
+              />
             </div>
 
-            <div className='space-y-3'>
+            {/* MIDDLE COLUMN */}
+            <div className='min-w-0 space-y-3 overflow-hidden'>
               <OverviewLiveClassesPanel liveClasses={liveClasses} />
               <OverviewEarningPanel earningOverview={earningOverview} />
             </div>
 
-            <div className='grid gap-3'>
+            {/* RIGHT COLUMN */}
+            <div className='min-w-0 grid gap-3 overflow-hidden'>
               <OverviewUpcomingClassesPanel upcomingClasses={upcomingClasses} />
               <OverviewClassInvitesPanel invites={classInvites} />
+
               <button
                 type='button'
-                className='flex max-h-[48px] w-full items-center justify-center gap-3 rounded-[10px] bg-primary px-4 py-3 text-center text-[0.96rem] font-medium text-white transition hover:bg-cyan-700'
+                className='flex w-full items-center justify-center gap-3 rounded-[10px] bg-primary px-4 py-3 text-[0.96rem] font-medium text-white transition hover:bg-cyan-700'
               >
                 <CalendarDays className='size-4 shrink-0' />
-                <span>Invite Past Students</span>
+                <span className='truncate'>Invite Past Students</span>
                 <span aria-hidden='true'>›</span>
               </button>
             </div>

@@ -201,12 +201,14 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           />
         </label>
 
-        <div className='flex flex-wrap items-center gap-2'>
-          <Button className='h-10 rounded-md px-4 text-xs sm:text-sm' onClick={() => handleCreateSession()}>
-            <Plus className='h-4 w-4' />
-            {createLabel}
-          </Button>
-        </div>
+        {(profile === "instructor" || profile === "organization") &&
+          <div className='flex flex-wrap items-center gap-2 self-end'>
+            <Button className='h-10 rounded-md px-4 text-xs sm:text-sm' onClick={() => handleCreateSession()}>
+              <Plus className='h-4 w-4' />
+              {createLabel}
+            </Button>
+          </div>}
+
       </div>
 
       <header className='flex justify-end self-end'>
