@@ -1,7 +1,6 @@
 'use client';
 
 import PDFViewer from '@/app/dashboard/@student/_components/pdf-viewer';
-import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -10,6 +9,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { resolveLessonContentSource, type PreviewableLessonContent } from '@/lib/lesson-content-preview';
+import { useEffect, useRef, useState } from 'react';
+import { Badge } from '../ui/badge';
 
 type ContentTypeDetailsMap = Record<
   string,
@@ -24,6 +25,114 @@ export type LessonContentPreviewItem = PreviewableLessonContent & {
   content_type_uuid?: string | null;
   duration?: string | null;
 };
+
+export type LessonContentViewerType =
+  | 'text'
+  | 'pdf'
+  | 'video'
+  | 'audio'
+  | 'image'
+  | 'document'
+  | 'spreadsheet'
+  | 'presentation'
+  | 'file'
+  | 'link'
+  | 'office';
+
+function getFileExtension(source?: string | null) {
+  const value = source?.trim() ?? '';
+  if (!value) return '';
+
+  const cleanValue = value.split('?')[0]?.split('#')[0] ?? value;
+  const match = cleanValue.toLowerCase().match(/\.([a-z0-9]+)$/);
+  return match?.[1] ?? '';
+}
+
+export function inferLessonContentType(
+  content: LessonContentPreviewItem | null | undefined,
+  contentTypeDetailsMap?: ContentTypeDetailsMap
+): LessonContentViewerType {
+  const itemMimeType = content?.mime_type?.toLowerCase() ?? '';
+  const itemCategory = content?.content_category?.toLowerCase() ?? '';
+  const itemUrl = content?.file_url ?? content?.value ?? '';
+  const fileExtension = getFileExtension(itemUrl || content?.title || '');
+  const contentType = content?.content_type_uuid
+    ? contentTypeDetailsMap?.[content.content_type_uuid]
+    : undefined;
+  const normalizedName = contentType?.name?.trim().toUpperCase() ?? '';
+  const mimeTypes = contentType?.mime_types ?? [];
+  const mimeList = mimeTypes.join(' ').toLowerCase();
+  const officeExtensions = [
+    'doc',
+    'docx',
+    'docm',
+    'ppt',
+    'pptx',
+    'pptm',
+    'xls',
+    'xlsx',
+    'xlsm',
+    'odt',
+    'ods',
+    'odp',
+  ];
+
+  if (itemMimeType === 'application/pdf' || itemCategory.includes('pdf') || normalizedName === 'PDF') {
+    return 'pdf';
+  }
+
+  if (itemMimeType.includes('video/') || itemCategory.includes('video') || normalizedName.includes('VIDEO')) {
+    return 'video';
+  }
+
+  if (itemMimeType.includes('audio/') || itemCategory.includes('audio') || normalizedName.includes('AUDIO')) {
+    return 'audio';
+  }
+
+  if (itemMimeType.includes('image/') || itemCategory.includes('image') || normalizedName.includes('IMAGE')) {
+    return 'image';
+  }
+
+  if (itemMimeType.includes('text/') || itemCategory.includes('text') || normalizedName === 'TEXT') {
+    return 'text';
+  }
+
+  if (normalizedName === 'LINK') {
+    return 'link';
+  }
+
+  if (normalizedName === 'YOUTUBE') {
+    return 'video';
+  }
+
+  if (mimeTypes.some(type => type === 'application/pdf') || mimeList.includes('application/pdf')) {
+    return 'pdf';
+  }
+
+  if (officeExtensions.includes(fileExtension)) {
+    if (['doc', 'docx', 'odt'].includes(fileExtension)) return 'document';
+    if (['xls', 'xlsx', 'ods'].includes(fileExtension)) return 'spreadsheet';
+    if (['ppt', 'pptx', 'odp'].includes(fileExtension)) return 'presentation';
+    return 'office';
+  }
+
+  if (
+    mimeList.includes('application/vnd.openxmlformats-officedocument') ||
+    mimeList.includes('application/msword') ||
+    mimeList.includes('application/vnd.ms-excel') ||
+    mimeList.includes('application/vnd.ms-powerpoint')
+  ) {
+    if (mimeList.includes('presentation') || fileExtension.startsWith('ppt')) return 'presentation';
+    if (mimeList.includes('spreadsheet') || fileExtension.startsWith('xls')) return 'spreadsheet';
+    return 'document';
+  }
+
+  if (normalizedName.includes('DOCUMENT') || normalizedName.includes('WORD')) return 'document';
+  if (normalizedName.includes('SPREADSHEET') || normalizedName.includes('EXCEL')) return 'spreadsheet';
+  if (normalizedName.includes('PRESENTATION') || normalizedName.includes('POWERPOINT')) return 'presentation';
+
+  return 'file';
+}
 
 function looksLikeHtml(str: string) {
   return /<\/?[a-z][\s\S]*>/i.test(str);
@@ -59,45 +168,152 @@ function getContentTypeName(
   content: LessonContentPreviewItem | null | undefined,
   contentTypeDetailsMap?: ContentTypeDetailsMap
 ) {
-  const itemMimeType = content?.mime_type?.toLowerCase() ?? '';
-  const itemCategory = content?.content_category?.toLowerCase() ?? '';
+  return inferLessonContentType(content, contentTypeDetailsMap);
+}
 
-  if (itemMimeType === 'application/pdf') return 'pdf';
-  if (itemMimeType.includes('video/')) return 'video';
-  if (itemMimeType.includes('audio/')) return 'audio';
-  if (itemMimeType.includes('image/')) return 'image';
-  if (itemMimeType.includes('text/')) return 'text';
+function OfficeDocumentPreview({
+  source,
+  title,
+  type,
+}: {
+  source: string;
+  title: string;
+  type: Extract<LessonContentViewerType, 'document' | 'spreadsheet' | 'presentation' | 'office'>;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const fileExtension = getFileExtension(source);
+  const resolvedOfficeType =
+    type === 'office'
+      ? ['ppt', 'pptx', 'pptm', 'odp'].includes(fileExtension)
+        ? 'presentation'
+        : ['xls', 'xlsx', 'xlsm', 'ods'].includes(fileExtension)
+          ? 'spreadsheet'
+          : 'document'
+      : type;
 
-  if (itemCategory.includes('video')) return 'video';
-  if (itemCategory.includes('audio')) return 'audio';
-  if (itemCategory.includes('image')) return 'image';
-  if (itemCategory.includes('pdf')) return 'pdf';
-  if (itemCategory.includes('text')) return 'text';
+  useEffect(() => {
+    let cancelled = false;
+    const container = containerRef.current;
 
-  const contentType = content?.content_type_uuid
-    ? contentTypeDetailsMap?.[content.content_type_uuid]
-    : undefined;
+    if (!container) {
+      return undefined;
+    }
 
-  const normalizedName = contentType?.name?.trim().toUpperCase() ?? '';
-  const mimeTypes = contentType?.mime_types ?? [];
-  const mimeList = mimeTypes.join(' ').toLowerCase();
+    container.innerHTML = '';
+    setIsLoading(true);
+    setErrorMessage(null);
 
-  if (normalizedName === 'TEXT') return 'text';
-  if (normalizedName === 'PDF') return 'pdf';
-  if (normalizedName === 'LINK') return 'link';
-  if (normalizedName === 'YOUTUBE') return 'video';
+    const renderOfficeFile = async () => {
+      try {
+        const response = await fetch(source);
+        if (!response.ok) {
+          throw new Error(`Unable to load file (${response.status})`);
+        }
 
-  if (mimeTypes.some(type => type === 'application/pdf')) return 'pdf';
-  if (mimeList.includes('video/')) return 'video';
-  if (mimeList.includes('audio/')) return 'audio';
-  if (mimeList.includes('image/')) return 'image';
-  if (mimeList.includes('text/')) return 'text';
+        const arrayBuffer = await response.arrayBuffer();
+        if (cancelled || !containerRef.current) {
+          return;
+        }
 
-  if (normalizedName.includes('VIDEO')) return 'video';
-  if (normalizedName.includes('AUDIO')) return 'audio';
-  if (normalizedName.includes('IMAGE')) return 'image';
+        if (resolvedOfficeType === 'document') {
+          const { renderAsync } = await import('docx-preview');
+          await renderAsync(arrayBuffer, containerRef.current, containerRef.current, {
+            breakPages: true,
+            ignoreFonts: false,
+            ignoreHeight: false,
+            ignoreWidth: false,
+            useBase64URL: true,
+          });
+        } else if (resolvedOfficeType === 'spreadsheet') {
+          const XLSX = await import('xlsx');
+          const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
 
-  return normalizedName ? normalizedName.toLowerCase() : 'file';
+          if (!firstSheetName) {
+            throw new Error('No worksheets were found in this spreadsheet.');
+          }
+
+          const worksheet = workbook.Sheets[firstSheetName];
+          const html = XLSX.utils.sheet_to_html(worksheet);
+
+          if (cancelled || !containerRef.current) {
+            return;
+          }
+
+          containerRef.current.innerHTML = `
+            <div class="overflow-auto rounded-2xl border border-border/60">
+              ${html}
+            </div>
+          `;
+
+          const table = containerRef.current.querySelector('table');
+          if (table) {
+            table.className = 'min-w-full border-collapse text-sm';
+          }
+        } else {
+          const { init } = await import('pptx-preview');
+          const previewer = init(containerRef.current, {
+            width: containerRef.current.clientWidth || 960,
+            height: Math.max(containerRef.current.clientHeight || 0, 540),
+          });
+          await previewer.preview(arrayBuffer);
+        }
+
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setErrorMessage(error instanceof Error ? error.message : 'Unable to preview this file.');
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void renderOfficeFile();
+
+    return () => {
+      cancelled = true;
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
+    };
+  }, [source, resolvedOfficeType]);
+
+  if (errorMessage) {
+    return (
+      <div className='text-muted-foreground flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
+        {errorMessage}
+      </div>
+    );
+  }
+
+  return (
+    <div className='bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden rounded-[28px] border border-border/60 p-4'>
+      <div className='mb-3 flex items-center justify-between gap-3'>
+        <div>
+          <p className='text-sm font-semibold'>Office document</p>
+          <p className='text-muted-foreground text-sm'>
+            Viewing is embedded directly in the platform.
+          </p>
+        </div>
+        <Badge variant='secondary' className='rounded-full'>
+          {resolvedOfficeType.toUpperCase()}
+        </Badge>
+      </div>
+      {isLoading ? (
+        <div className='text-muted-foreground flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed text-sm'>
+          Loading {title || 'document'}...
+        </div>
+      ) : null}
+      <div
+        ref={containerRef}
+        className='lesson-content-office-preview min-h-[72vh] w-full overflow-auto rounded-2xl'
+      />
+    </div>
+  );
 }
 
 function getYouTubeEmbedUrl(source: string) {
@@ -364,7 +580,11 @@ export function LessonContentPreview({
     );
   }
 
-  const resolvedType = contentType?.toLowerCase() || getContentTypeName(content, contentTypeDetailsMap);
+  const explicitType = contentType?.toLowerCase() || '';
+  const resolvedType =
+    explicitType && explicitType !== 'file'
+      ? explicitType
+      : getContentTypeName(content, contentTypeDetailsMap);
   const resolvedSource = resolveLessonContentSource(content, resolvedType);
   const normalizedTextContent = normalizeLessonTextContent(content.content_text);
 
@@ -388,6 +608,20 @@ export function LessonContentPreview({
     ) : (
       <div className='text-muted-foreground flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
         This PDF is not available yet.
+      </div>
+    );
+  }
+
+  if (resolvedType === 'document' || resolvedType === 'spreadsheet' || resolvedType === 'presentation' || resolvedType === 'office') {
+    return resolvedSource ? (
+      <OfficeDocumentPreview
+        source={resolvedSource}
+        title={content.title || 'Office document'}
+        type={resolvedType}
+      />
+    ) : (
+      <div className='text-muted-foreground flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
+        This document is not available yet.
       </div>
     );
   }
@@ -451,20 +685,25 @@ export function LessonContentPreview({
   }
 
   return (
-    <div className='border-border/60 bg-background mb-20 w-full max-w-full min-w-0 rounded-[28px] border p-6'>
-      <div className='space-y-3'>
-        <p className='text-sm font-semibold'>File content</p>
+    <div className='border-border/60 bg-background mb-20 flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center overflow-hidden rounded-[28px] border p-6 text-center'>
+      <div className='max-w-lg space-y-3'>
+        <div className='flex items-center justify-center gap-2'>
+          <p className='text-sm font-semibold'>Preview unavailable</p>
+          <Badge variant='secondary' className='rounded-full'>
+            {resolvedType.toUpperCase()}
+          </Badge>
+        </div>
         <p className='text-muted-foreground text-sm'>
-          This material opens best in a new tab for teaching or sharing.
+          This file type cannot be rendered inline yet. If this is a Word, Excel, or PowerPoint
+          file, please make sure its extension and MIME type are recognized by the preview
+          pipeline.
         </p>
         {resolvedSource ? (
-          <Button asChild>
-            <a href={resolvedSource} target='_blank' rel='noreferrer'>
-              Open lesson file
-            </a>
-          </Button>
+          <p className='text-muted-foreground text-xs'>
+            File source was detected, but no inline preview could be generated.
+          </p>
         ) : (
-          <p className='text-muted-foreground text-sm'>No file source is available yet.</p>
+          <p className='text-muted-foreground text-xs'>No file source is available yet.</p>
         )}
       </div>
     </div>

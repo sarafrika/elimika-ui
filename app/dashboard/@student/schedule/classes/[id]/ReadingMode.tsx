@@ -5,7 +5,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   AlertCircle,
   BookOpen,
-  Download,
   FileText,
   Maximize,
   Minimize,
@@ -101,17 +100,14 @@ export function ReadingMode({
     } catch (err) {}
   };
 
-  const handleDownload = () => {
+  const handleOpenInNewTab = () => {
     if (contentType === 'pdf') {
-      window.open(content, '_blank');
+      window.open(content, '_blank', 'noopener,noreferrer');
     } else {
       const blob = new Blob([content], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${title || 'document'}.html`;
-      a.click();
-      URL.revokeObjectURL(url);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
     }
   };
 
@@ -128,9 +124,9 @@ export function ReadingMode({
             </div>
 
             <div className='flex items-center gap-1'>
-              <Button size='sm' variant='ghost' className='h-8 gap-1 px-3' onClick={handleDownload}>
-                <Download className='h-4 w-4' />
-                <span className='hidden text-xs sm:inline'>Download</span>
+              <Button size='sm' variant='ghost' className='h-8 gap-1 px-3' onClick={handleOpenInNewTab}>
+                <FileText className='h-4 w-4' />
+                <span className='hidden text-xs sm:inline'>Open in new tab</span>
               </Button>
 
               <Button size='sm' variant='ghost' onClick={onClose} className='h-8 w-8 p-0'>
@@ -160,12 +156,8 @@ export function ReadingMode({
                   <p className='text-muted-foreground mb-4 text-sm'>
                     The PDF viewer couldn't load this document.
                   </p>
-                  <Button
-                    onClick={() => window.open(content, '_blank')}
-                    variant='outline'
-                    className='gap-2'
-                  >
-                    <Download className='h-4 w-4' />
+                  <Button onClick={handleOpenInNewTab} variant='outline' className='gap-2'>
+                    <FileText className='h-4 w-4' />
                     Open in New Tab
                   </Button>
                 </div>
@@ -235,8 +227,8 @@ export function ReadingMode({
               </div>
 
               {/* Action Buttons */}
-              <Button size='sm' variant='ghost' className='h-9 w-9 p-0' onClick={handleDownload}>
-                <Download className='h-4 w-4' />
+              <Button size='sm' variant='ghost' className='h-9 w-9 p-0' onClick={handleOpenInNewTab}>
+                <FileText className='h-4 w-4' />
               </Button>
 
               <Button
