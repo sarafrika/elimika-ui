@@ -87,8 +87,8 @@ export function AttachmentResourceList({
                 </div>
                 <p className='text-muted-foreground text-xs'>
                   {isPdf
-                    ? 'Open in reading mode or download the file.'
-                    : 'Open or download this attachment.'}
+                    ? 'Open in file.'
+                    : 'Open attachment.'}
                 </p>
               </div>
 
