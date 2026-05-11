@@ -160,9 +160,9 @@ export default function DashboardTopBar() {
                 placeholder='Search courses, students, and more...'
                 className='border-border/70 bg-card/80 h-12 rounded-full pl-11 pr-16 shadow-sm'
               />
-              <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
+              {/* <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
                 Ctrl K
-              </span>
+              </span> */}
             </label>
           </div>
 
@@ -234,9 +234,9 @@ export default function DashboardTopBar() {
               placeholder='Search courses, students, and more...'
               className='border-border/70 bg-card/80 h-11 rounded-full pl-11 pr-14 shadow-sm'
             />
-            <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
+            {/* <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
               Ctrl K
-            </span>
+            </span> */}
           </label>
 
           <div className='mt-3 flex flex-wrap items-center gap-2'>
@@ -265,7 +265,7 @@ export default function DashboardTopBar() {
           </div>
         </div>
 
-        <div className='border-border/70 hidden border-t px-3 py-2 sm:px-5 lg:px-6 xl:block'>
+        <div className='border-border/70 hidden border-t px-3 py-1 sm:px-5 lg:px-6 xl:block'>
           <AppBreadcrumb className='text-muted-foreground text-sm' />
         </div>
       </div>
@@ -322,7 +322,7 @@ function DashboardProfileMenu({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align='end' className='border-border/70 w-80 rounded-2xl p-3 shadow-lg'>
-        <div className='flex items-center gap-3 rounded-xl bg-muted/40 p-3'>
+        <div className='flex items-center gap-3 rounded-md bg-muted/40 p-3'>
           <Avatar className='h-10 w-10'>
             <AvatarImage src={userImage} alt={profileName} />
             <AvatarFallback className='bg-primary/10 text-primary text-sm font-semibold'>
@@ -360,7 +360,7 @@ function DashboardProfileMenu({
               <DropdownMenuItem
                 key={domain}
                 className={cn(
-                  'flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5',
+                  'flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5',
                   isActive && 'bg-accent'
                 )}
                 onClick={() => onSwitch(domain)}
@@ -382,13 +382,13 @@ function DashboardProfileMenu({
 
         <div className='grid gap-1'>
           <DropdownMenuItem
-            className='cursor-pointer rounded-xl px-3 py-2.5'
+            className='cursor-pointer rounded-md px-3 py-2.5'
             onClick={onAddProfile}
           >
             Add another profile
           </DropdownMenuItem>
           <DropdownMenuItem
-            className='text-destructive cursor-pointer rounded-xl px-3 py-2.5'
+            className='text-destructive cursor-pointer rounded-md px-3 py-2.5'
             onClick={() => void onLogout()}
           >
             Sign out
