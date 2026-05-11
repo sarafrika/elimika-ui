@@ -2,9 +2,11 @@
 
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ArrowDownWideNarrow,
+  ArrowUpWideNarrow,
   BriefcaseBusiness,
+  Building2,
   CalendarDays,
-  ChevronDown,
   Filter,
   Globe2,
   GraduationCap,
@@ -52,6 +54,7 @@ import {
   cancelJobMutation,
   createJobMutation,
   getAllCoursesOptions,
+  getAllOrganisationsOptions,
   listJobApplicationsOptions,
   listJobsOptions,
   listJobsQueryKey,
@@ -67,6 +70,7 @@ import type {
   Course,
   CreateJobData,
   LocationTypeEnum,
+  Organisation,
   SessionFormatEnum,
   StatusEnum4,
   UpdateJobData
@@ -74,6 +78,7 @@ import type {
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
+import { extractPage } from '../../../lib/api-helpers';
 import { cn } from '../../../lib/utils';
 import type { JobMarketplaceRole } from '../data';
 import { getJobMarketplaceRoleConfig } from '../data';
@@ -83,7 +88,7 @@ import { MarketplaceTabs } from './MarketplaceTabs';
 
 type JobFilter = 'all' | StatusEnum4;
 type MarketplaceTabId = 'all' | 'full-time' | 'freelance' | 'internship' | 'remote';
-type JobSort = 'newest' | 'oldest' | 'title-asc' | 'title-desc';
+type JobSortDirection = 'newest' | 'oldest';
 
 type JobFormState = {
   organisation_uuid: string;
@@ -110,7 +115,7 @@ type JobFormState = {
   session_template_end_time: string;
 };
 
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 1000;
 const DEFAULT_LOCATION_LATITUDE = -1.286389;
 const DEFAULT_LOCATION_LONGITUDE = 36.817223;
 
@@ -122,12 +127,6 @@ const statusOptions: Array<{ label: string; value: JobFilter }> = [
   { label: 'Open', value: 'open' },
   { label: 'Filled', value: 'filled' },
   { label: 'Cancelled', value: 'cancelled' },
-];
-const sortOptions: Array<{ label: string; value: JobSort }> = [
-  { label: 'Most Recent', value: 'newest' },
-  { label: 'Oldest First', value: 'oldest' },
-  { label: 'Title A-Z', value: 'title-asc' },
-  { label: 'Title Z-A', value: 'title-desc' },
 ];
 const marketplaceTabs: Array<{
   id: MarketplaceTabId;
@@ -221,20 +220,14 @@ function getApplicationStatusLabel(status?: string | null) {
   return formatEnumLabel(status);
 }
 
-function sortJobs(jobs: ClassMarketplaceJob[], sortBy: JobSort) {
+function sortJobs(jobs: ClassMarketplaceJob[], sortBy: JobSortDirection) {
   return [...jobs].sort((left, right) => {
-    const leftTitle = (left.title ?? '').toLowerCase();
-    const rightTitle = (right.title ?? '').toLowerCase();
     const leftCreated = left.created_date ? new Date(left.created_date).getTime() : 0;
     const rightCreated = right.created_date ? new Date(right.created_date).getTime() : 0;
 
     switch (sortBy) {
       case 'oldest':
         return leftCreated - rightCreated;
-      case 'title-asc':
-        return leftTitle.localeCompare(rightTitle);
-      case 'title-desc':
-        return rightTitle.localeCompare(leftTitle);
       case 'newest':
       default:
         return rightCreated - leftCreated;
@@ -1197,31 +1190,27 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<JobFilter>(isOrganizationView ? 'all' : 'open');
-  const [visibilityFilter, setVisibilityFilter] = useState<'all' | ClassVisibilityEnum>('all');
   const [sessionFormatFilter, setSessionFormatFilter] = useState<'all' | SessionFormatEnum>('all');
   const [locationFilter, setLocationFilter] = useState<'all' | LocationTypeEnum>('all');
   const [marketplaceTab, setMarketplaceTab] = useState<MarketplaceTabId>('all');
-  const [sortBy, setSortBy] = useState<JobSort>('newest');
+  const [organisationFilter, setOrganisationFilter] = useState<'all' | string>('all');
+  const [courseFilter, setCourseFilter] = useState<'all' | string>('all');
+  const [sortDirection, setSortDirection] = useState<JobSortDirection>('newest');
   const [selectedJobUuid, setSelectedJobUuid] = useState<string | null>(null);
   const [pendingCancelJob, setPendingCancelJob] = useState<ClassMarketplaceJob | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<ClassMarketplaceJob | null>(null);
 
-  // const { data: jobsResponse, isLoading: isJobsLoading } = useQuery({
-  //   ...listJobsOptions({
-  //     query: {
-  //       pageable: {
-  //         page: 0,
-  //         size: PAGE_SIZE,
-  //         sort: ['created_date,desc'],
-  //       },
-  //       ...(isOrganizationView && organisationUuid ? { organisation_uuid: organisationUuid } : {}),
-  //     },
-  //   }),
-  //   enabled: true,
-  // });
   const { data: jobsResponse, isLoading: isJobsLoading } = useQuery({
-    ...listJobsOptions({ query: { pageable: {}, organisation_uuid: "ec237ec5-f13c-4248-bf70-8d0099cb3a15" } }),
+    ...listJobsOptions({
+      query: {
+        pageable: {
+          page: 0,
+          size: PAGE_SIZE,
+        },
+        ...(isOrganizationView && organisationUuid ? { organisation_uuid: organisationUuid } : {}),
+      },
+    }),
     enabled: true,
   });
   const jobs = jobsResponse?.data?.content ?? [];
@@ -1251,14 +1240,53 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         pageable: {
           page: 0,
           size: PAGE_SIZE,
-          sort: ['name,asc'],
+          // sort: ['name,asc'],
         },
       },
     }),
   });
 
+  const { data: organisationsResponse } = useQuery({
+    ...getAllOrganisationsOptions({
+      query: {
+        pageable: {
+          page: 0,
+          size: PAGE_SIZE,
+        },
+      },
+    }),
+    enabled: !isOrganizationView,
+  });
+
   const courses = coursesResponse?.data?.content ?? [];
+  const organisations = extractPage<Organisation>(organisationsResponse).items;
   const myApplications = myApplicationsQuery.data?.data?.content ?? [];
+  const organisationOptions = useMemo(() => {
+    const options = organisations
+      .filter(organisationItem => organisationItem.uuid)
+      .map(organisationItem => ({
+        label: organisationItem.name,
+        value: organisationItem.uuid as string,
+      }));
+
+    if (isOrganizationView && organisationUuid && organisationName) {
+      return [{ label: organisationName, value: organisationUuid }, ...options];
+    }
+
+    return options;
+  }, [isOrganizationView, organisationName, organisationUuid, organisations]);
+
+  const courseOptions = useMemo(
+    () =>
+      courses
+        .filter(course => course.uuid && course.active === true && course.admin_approved === true)
+        .map(course => ({
+          label: course.name,
+          value: course.uuid as string,
+        })),
+    [courses]
+  );
+
   const jobsByCourseId = useMemo(
     () =>
       new Map(
@@ -1313,19 +1341,28 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         .toLowerCase();
 
       const matchesSearch = !search.trim() || searchable.includes(search.trim().toLowerCase());
-      const matchesVisibility =
-        visibilityFilter === 'all' || job.class_visibility === visibilityFilter;
       const matchesSessionFormat =
         sessionFormatFilter === 'all' || job.session_format === sessionFormatFilter;
       const matchesLocation = locationFilter === 'all' || job.location_type === locationFilter;
+      const matchesOrganisation =
+        organisationFilter === 'all' || job.organisation_uuid === organisationFilter;
+      const matchesCourse = courseFilter === 'all' || job.course_uuid === courseFilter;
 
-      return matchesSearch && matchesVisibility && matchesSessionFormat && matchesLocation;
+      return (
+        matchesSearch &&
+        matchesOrganisation &&
+        matchesCourse &&
+        matchesSessionFormat &&
+        matchesLocation
+      );
     });
-  }, [jobs, locationFilter, search, sessionFormatFilter, visibilityFilter]);
+  }, [courseFilter, jobs, locationFilter, organisationFilter, search, sessionFormatFilter]);
 
   const filteredJobs = useMemo(() => {
     return jobsBeforeStatusFilter.filter(job => statusFilter === 'all' || job.status === statusFilter);
   }, [jobsBeforeStatusFilter, statusFilter]);
+
+  const sortedJobs = useMemo(() => sortJobs(filteredJobs, sortDirection), [filteredJobs, sortDirection]);
 
   const tabDefinitions = useMemo(
     () =>
@@ -1430,43 +1467,110 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 ) : null}
               </div>
 
-              <div className='grid gap-3 border-b px-5 py-4 lg:grid-cols-[minmax(0,1fr)_220px_180px]'>
-                <label className='relative block'>
+
+              <div className='px-5 pt-5'>
+                <label className='relative block min-w-0'>
                   <span className='sr-only'>Search jobs</span>
+
                   <Input
                     value={search}
                     onChange={event => setSearch(event.target.value)}
-                    placeholder='Search job title, company, course, or location'
-                    className='h-11 rounded-md pl-10'
+                    placeholder='Search job title, organisation, course, or location'
+                    className='h-10 rounded-md pl-10'
                   />
+
                   <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
                 </label>
+              </div>
 
-                <Select value={statusFilter} onValueChange={value => setStatusFilter(value as JobFilter)}>
-                  <SelectTrigger className='h-11 rounded-md border-border border-1 bg-background/80'>
-                    <SelectValue placeholder='All statuses' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className='flex sm:flex-row items-center gap-3 flex-wrap border-b px-5 py-4'>
+                {!isOrganizationView ? (
+                  <div className='min-w-[220px] flex-1'>
+                    <Select
+                      value={organisationFilter}
+                      onValueChange={value => setOrganisationFilter(value)}
+                    >
+                      <SelectTrigger className='h-11 w-full rounded-md border border-border bg-background/80'>
+                        <Building2 className='text-muted-foreground mr-2 size-4 shrink-0' />
+                        <SelectValue placeholder='All organisations' />
+                      </SelectTrigger>
 
-                <Select value={sortBy} onValueChange={value => setSortBy(value as JobSort)}>
-                  <SelectTrigger className='h-11 rounded-md border-border border-1 bg-background/80'>
-                    <SelectValue placeholder='Sort by' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      <SelectContent>
+                        <SelectItem value='all'>All organisations</SelectItem>
+
+                        {organisationOptions.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : null}
+
+                <div className='min-w-[220px] flex-1'>
+                  <Select value={courseFilter} onValueChange={value => setCourseFilter(value)}>
+                    <SelectTrigger className='h-11 w-full rounded-md border border-border bg-background/80'>
+                      <GraduationCap className='text-muted-foreground mr-2 size-4 shrink-0' />
+                      <SelectValue placeholder='All courses' />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value='all'>All courses</SelectItem>
+
+                      {courseOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className='min-w-[240px] flex-1'>
+                  <Select
+                    value={sessionFormatFilter}
+                    onValueChange={value =>
+                      setSessionFormatFilter(value as 'all' | SessionFormatEnum)
+                    }
+                  >
+                    <SelectTrigger className='h-11 w-full rounded-md border border-border bg-background/80'>
+                      <CalendarDays className='text-muted-foreground mr-2 size-4 shrink-0' />
+                      <SelectValue placeholder='All session formats' />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value='all'>All session formats</SelectItem>
+
+                      {sessionFormatOptions.map(option => (
+                        <SelectItem key={option} value={option}>
+                          {formatEnumLabel(option)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='h-11 shrink-0 whitespace-nowrap rounded-md border border-border bg-background/80 px-4'
+                  onClick={() =>
+                    setSortDirection(previous =>
+                      previous === 'newest' ? 'oldest' : 'newest'
+                    )
+                  }
+                >
+                  {sortDirection === 'newest' ? (
+                    <ArrowDownWideNarrow className='size-4 shrink-0' />
+                  ) : (
+                    <ArrowUpWideNarrow className='size-4 shrink-0' />
+                  )}
+
+                  <span>
+                    {sortDirection === 'newest' ? 'Newest first' : 'Oldest first'}
+                  </span>
+                </Button>
               </div>
 
               <Tabs
@@ -1481,10 +1585,10 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 {tabDefinitions.map(tab => {
                   const tabJobs =
                     tab.id === 'all'
-                      ? sortJobs(filteredJobs, sortBy)
+                      ? sortedJobs
                       : sortJobs(
                         filteredJobs.filter(job => matchesMarketplaceTab(job, tab.id)),
-                        sortBy
+                        sortDirection
                       );
 
                   return (
@@ -1495,23 +1599,6 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                             {tabJobs.length} active job posting{tabJobs.length === 1 ? '' : 's'}
                           </div>
                           <div className='flex flex-wrap items-center gap-2'>
-                            <Select value={statusFilter} onValueChange={value => setStatusFilter(value as JobFilter)}>
-                              <SelectTrigger className='h-9 w-[160px] rounded-md border-border border-1 bg-background/80'>
-                                <SelectValue placeholder='All statuses' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {statusOptions.map(option => (
-                                  <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <span className='text-muted-foreground text-sm'>Sort by</span>
-                            <Button variant='outline' size='sm' className='rounded-md border-border border-1 bg-background/80'>
-                              Most Recent
-                              <ChevronDown className='size-4' />
-                            </Button>
                             <Sheet>
                               <SheetTrigger asChild>
                                 <Button

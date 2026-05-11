@@ -1,6 +1,7 @@
 'use client';
 
 import { CalendarDays } from 'lucide-react';
+import { Button } from '../../../../components/ui/button';
 import { OverviewClassInvitesPanel } from './_components/OverviewClassInvitesPanel';
 import { OverviewCourseListPanel } from './_components/OverviewCourseListPanel';
 import { OverviewEarningPanel } from './_components/OverviewEarningPanel';
@@ -54,14 +55,14 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
               <OverviewUpcomingClassesPanel upcomingClasses={upcomingClasses} />
               <OverviewClassInvitesPanel invites={classInvites} />
 
-              <button
+              <Button
                 type='button'
-                className='flex w-full items-center justify-center gap-3 rounded-[10px] bg-primary px-4 py-3 text-[0.96rem] font-medium text-white transition hover:bg-cyan-700'
+                className='flex w-full items-center justify-center gap-3 rounded-md bg-primary px-4 py-3 text-[0.96rem] font-medium transition mt-4'
               >
                 <CalendarDays className='size-4 shrink-0' />
                 <span className='truncate'>Invite Past Students</span>
                 <span aria-hidden='true'>›</span>
-              </button>
+              </Button>
             </div>
           </section>
         </div>

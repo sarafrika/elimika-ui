@@ -1,7 +1,5 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import { type ReactNode, useMemo } from 'react';
 import CustomLoader from '@/components/custom-loader';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
@@ -21,6 +19,8 @@ import {
 } from '@/src/features/dashboard/context/dashboard-view-context';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { usePathname } from 'next/navigation';
+import { type ReactNode, useMemo } from 'react';
 
 export function DashboardClientLayout(dashboardProps: DashboardChildrenTypes) {
   return (
@@ -106,9 +106,10 @@ function DashboardLayoutContent(dashboardProps: DashboardChildrenTypes) {
         availableViews={normalizedAvailableViews.length ? normalizedAvailableViews : undefined}
       >
         <BreadcrumbProvider>
-          <div className='flex min-h-screen w-full overflow-hidden'>
+          <div className='flex h-screen w-full'>
             <AppSidebar activeDomain={sidebarDomain} />
-            <div className='flex min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto'>
+
+            <div className='flex min-w-0 flex-1 flex-col'>
               <DashboardMainContent>{currentDashboard}</DashboardMainContent>
             </div>
           </div>

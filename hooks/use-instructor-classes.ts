@@ -147,12 +147,12 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
     }));
   }, [classes, courseMap, instructorMap, schedules]);
 
-  const isCoursesLoading = courseQueries.some(q => q.isLoading || q.isFetching);
-  const isInstructorsLoading = instructorQueries.some(q => q.isLoading || q.isFetching);
-  const isSchedulesLoading = scheduleQueries.some(q => q.isLoading || q.isFetching);
+  const isCoursesLoading = courseQueries.some(q => q.isPending);
+  const isInstructorsLoading = instructorQueries.some(q => q.isPending);
+  const isSchedulesLoading = scheduleQueries.some(q => q.isPending);
 
-  const loading =
-    isLoading || isFetching || isCoursesLoading || isInstructorsLoading || isSchedulesLoading;
+  // const loading = isPending || isCoursesLoading || isInstructorsLoading || isSchedulesLoading;
+  const loading = isLoading
 
   return {
     classes: classesWithCourseAndInstructor,

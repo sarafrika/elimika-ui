@@ -133,7 +133,7 @@ export default {
   ],
   student: [
     {
-      title: 'Dashboard',
+      title: 'Home',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
     },
@@ -230,7 +230,7 @@ export default {
   ],
   instructor: [
     {
-      title: 'Dashboard',
+      title: 'Home',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
     },
@@ -337,7 +337,7 @@ export default {
   ],
   course_creator: [
     {
-      title: 'Overview',
+      title: 'Home',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
     },
@@ -430,7 +430,7 @@ export default {
   ],
   admin: [
     {
-      title: 'Dashboard',
+      title: 'Home',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
     },
@@ -523,7 +523,7 @@ export default {
   ],
   organisation_user: [
     {
-      title: 'Dashboard',
+      title: 'Home',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
     },

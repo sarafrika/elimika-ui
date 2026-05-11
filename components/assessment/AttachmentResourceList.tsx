@@ -1,9 +1,9 @@
 'use client';
 
-import { ReadingMode } from '@/app/dashboard/@student/schedule/classes/[id]/ReadingMode';
+import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Download, Eye, FileText } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type AttachmentItem = {
@@ -12,6 +12,11 @@ type AttachmentItem = {
   file_url?: string;
   mime_type?: string;
   file_size_bytes?: number;
+};
+
+type PreviewableAttachment = AttachmentItem & {
+  content_text?: string | null;
+  value?: string | null;
 };
 
 function formatFileSize(bytes?: number | bigint) {
@@ -30,11 +35,25 @@ function formatFileSize(bytes?: number | bigint) {
   return `${value >= 10 || unitIndex === 0 ? Math.round(value) : value.toFixed(1)} ${units[unitIndex]}`;
 }
 
-function isPdfAttachment(attachment: AttachmentItem) {
+function inferAttachmentContentType(attachment: AttachmentItem) {
   const mime = String(attachment.mime_type || '').toLowerCase();
   const fileName = String(attachment.original_filename || '').toLowerCase();
+  const extension = fileName.split('.').pop() || '';
+  const officeExtensions = ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'odt', 'ods', 'odp'];
 
-  return mime.includes('pdf') || fileName.endsWith('.pdf');
+  if (mime.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(fileName)) return 'image';
+  if (mime.startsWith('video/') || /\.(mp4|webm|mov|m4v|mkv)$/.test(fileName)) return 'video';
+  if (mime.startsWith('audio/') || /\.(mp3|wav|m4a|aac|ogg|flac)$/.test(fileName)) return 'audio';
+  if (mime.includes('pdf') || fileName.endsWith('.pdf')) return 'pdf';
+  if (mime.startsWith('text/') || /\.(txt|md|csv|html?|xml|json|rtf)$/.test(fileName)) return 'text';
+  if (officeExtensions.includes(extension)) {
+    if (['doc', 'docx', 'odt'].includes(extension)) return 'document';
+    if (['xls', 'xlsx', 'ods'].includes(extension)) return 'spreadsheet';
+    if (['ppt', 'pptx', 'odp'].includes(extension)) return 'presentation';
+    return 'office';
+  }
+
+  return 'file';
 }
 
 export function AttachmentResourceList({
@@ -61,11 +80,19 @@ export function AttachmentResourceList({
     return <p className='text-muted-foreground text-sm'>{emptyMessage}</p>;
   }
 
+  const previewContent: PreviewableAttachment | null = previewAttachment
+    ? {
+        ...previewAttachment,
+        title: previewAttachment.original_filename ?? 'Attachment',
+        content_text: null,
+        value: previewAttachment.file_url || null,
+      }
+    : null;
+
   return (
     <>
       <div className='space-y-2'>
         {preparedAttachments.map(attachment => {
-          const isPdf = isPdfAttachment(attachment);
           const fileSize = formatFileSize(attachment.file_size_bytes);
 
           return (
@@ -86,38 +113,21 @@ export function AttachmentResourceList({
                   {fileSize ? <Badge variant='outline'>{fileSize}</Badge> : null}
                 </div>
                 <p className='text-muted-foreground text-xs'>
-                  {isPdf
-                    ? 'Open in reading mode or download the file.'
-                    : 'Open or download this attachment.'}
+                  Open the attachment in the platform viewer.
                 </p>
               </div>
 
               <div className='flex flex-wrap gap-2'>
-                {isPdf ? (
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='outline'
-                    className='gap-2'
-                    onClick={() => setPreviewAttachment(attachment)}
-                  >
-                    <Eye className='h-4 w-4' />
-                    {previewLabel}
-                  </Button>
-                ) : null}
-
-                <Button asChild size='sm' variant='outline' className='gap-2'>
-                  <a href={attachment.file_url} rel='noreferrer' target='_blank'>
-                    <FileText className='h-4 w-4' />
-                    Open
-                  </a>
-                </Button>
-
-                <Button asChild size='sm' variant='outline' className='gap-2'>
-                  <a href={attachment.file_url} download={attachment.original_filename}>
-                    <Download className='h-4 w-4' />
-                    Download
-                  </a>
+                <Button
+                  type='button'
+                  size='sm'
+                  variant='outline'
+                  className='gap-2'
+                  onClick={() => setPreviewAttachment(attachment)}
+                  disabled={!attachment.file_url}
+                >
+                  <Eye className='h-4 w-4' />
+                  {previewLabel}
                 </Button>
               </div>
             </div>
@@ -125,13 +135,13 @@ export function AttachmentResourceList({
         })}
       </div>
 
-      <ReadingMode
-        isOpen={!!previewAttachment}
-        onClose={() => setPreviewAttachment(null)}
-        title={previewAttachment?.original_filename || 'Attachment preview'}
-        description={previewAttachment?.mime_type || 'Assignment resource'}
-        content={previewAttachment?.file_url || ''}
-        contentType='pdf'
+      <LessonContentViewerDialog
+        open={!!previewAttachment}
+        onOpenChange={open => {
+          if (!open) setPreviewAttachment(null);
+        }}
+        content={previewContent}
+        contentType={previewAttachment ? inferAttachmentContentType(previewAttachment) : undefined}
       />
     </>
   );

@@ -280,7 +280,9 @@ export function StudentAssignmentWorkspace() {
       return;
     }
 
-    if (!submissionText.trim() && queuedFiles.length === 0) {
+    const submissionContent = submissionText.trim();
+
+    if (!submissionContent && queuedFiles.length === 0) {
       toast.error('Add a written response or at least one attachment before submitting.');
       return;
     }
@@ -289,7 +291,8 @@ export function StudentAssignmentWorkspace() {
       const response = await submitAssignmentMut.mutateAsync({
         path: { assignmentUuid: selectedAssignment.assignment.uuid },
         query: {
-          content: submissionText.trim() || undefined,
+          // The Hey API contract requires `content`, even when the student submits files only.
+          content: submissionContent,
           enrollmentUuid: selectedAssignment.classMeta.enrollmentUuid,
         },
       });
@@ -696,11 +699,11 @@ export function StudentAssignmentWorkspace() {
                   </Card>
                 </div>
 
-                <Card className='border-border/60'>
+                <Card className='border-border/60 space-y-0'>
                   <CardHeader className='pb-3'>
                     <CardTitle className='text-base'>Resources from your instructor</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent >
                     <AttachmentResourceList
                       attachments={toAttachmentResourceItems(selectedAssignment.attachments)}
                       emptyMessage='No supporting files were attached to this assignment.'

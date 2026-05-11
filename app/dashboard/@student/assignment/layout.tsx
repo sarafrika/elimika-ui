@@ -8,7 +8,7 @@ interface AssignmentsLayoutProps {
 
 export default function AssignmentsLayout({ children }: AssignmentsLayoutProps) {
   return (
-    <div className='space-y-6 p-4 pb-16 md:p-10'>
+    <div className='space-y-6 p-4 pb-16 md:p-10 max-w-7xl'>
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-foreground text-2xl font-bold'>My Assignments</h1>
@@ -21,7 +21,7 @@ export default function AssignmentsLayout({ children }: AssignmentsLayoutProps) 
       <Separator />
 
       <div className='flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12'>
-        <div className='w-full flex-1'>{children}</div>
+        <div className='flex-1'>{children}</div>
       </div>
     </div>
   );

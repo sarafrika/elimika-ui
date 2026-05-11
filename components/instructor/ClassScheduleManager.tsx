@@ -3,6 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,8 +63,7 @@ import {
   ChevronUp,
   ClipboardList,
   Clock,
-  Download,
-  ExternalLink,
+  Eye,
   File,
   FileText,
   MapPin,
@@ -154,15 +154,25 @@ function getFileIcon(filename: string) {
   }
 }
 
-function downloadFile(url: string, filename?: string) {
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename ?? 'download';
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+function inferAttachmentContentType(attachment: AssignmentAttachment) {
+  const mime = String((attachment as { mime_type?: string }).mime_type ?? '').toLowerCase();
+  const filename = String(attachment.original_filename ?? '').toLowerCase();
+  const extension = filename.split('.').pop() || '';
+  const officeExtensions = ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'odt', 'ods', 'odp'];
+
+  if (mime.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(filename)) return 'image';
+  if (mime.startsWith('video/') || /\.(mp4|webm|mov|m4v|mkv)$/.test(filename)) return 'video';
+  if (mime.startsWith('audio/') || /\.(mp3|wav|m4a|aac|ogg|flac)$/.test(filename)) return 'audio';
+  if (mime.includes('pdf') || filename.endsWith('.pdf')) return 'pdf';
+  if (mime.startsWith('text/') || /\.(txt|md|csv|html?|xml|json|rtf)$/.test(filename)) return 'text';
+  if (officeExtensions.includes(extension)) {
+    if (['doc', 'docx', 'odt'].includes(extension)) return 'document';
+    if (['xls', 'xlsx', 'ods'].includes(extension)) return 'spreadsheet';
+    if (['ppt', 'pptx', 'odp'].includes(extension)) return 'presentation';
+    return 'office';
+  }
+
+  return 'file';
 }
 
 function humanizeEnum(value?: string) {
@@ -218,6 +228,7 @@ export function ClassScheduleManager({
   const [attendanceSearch, setAttendanceSearch] = useState('');
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
+  const [previewAttachment, setPreviewAttachment] = useState<AssignmentAttachment | null>(null);
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
   const [isAssignmentsSheetOpen, setIsAssignmentsSheetOpen] = useState(false);
   const [isQuizzesSheetOpen, setIsQuizzesSheetOpen] = useState(false);
@@ -1482,26 +1493,16 @@ export function ClassScheduleManager({
                                         </p>
                                         <p className='text-muted-foreground text-xs'>Attachment</p>
                                       </div>
-                                      <a
-                                        href={attachment.file_url}
-                                        target='_blank'
-                                        rel='noopener noreferrer'
-                                        className='hover:bg-muted rounded-lg p-2'
-                                      >
-                                        <ExternalLink className='text-muted-foreground h-4 w-4' />
-                                      </a>
-                                      <button
+                                      <Button
                                         type='button'
-                                        className='hover:bg-muted rounded-lg p-2'
-                                        onClick={() =>
-                                          downloadFile(
-                                            attachment.file_url,
-                                            attachment.original_filename
-                                          )
-                                        }
+                                        variant='ghost'
+                                        size='icon'
+                                        className='hover:bg-muted rounded-lg'
+                                        onClick={() => setPreviewAttachment(attachment)}
+                                        disabled={!attachment.file_url}
                                       >
-                                        <Download className='text-muted-foreground h-4 w-4' />
-                                      </button>
+                                        <Eye className='text-muted-foreground h-4 w-4' />
+                                      </Button>
                                     </div>
                                   );
                                 })}
@@ -1527,6 +1528,24 @@ export function ClassScheduleManager({
         onRemoveQuiz={(scheduleUuid: string) =>
           activeClassId && removeQuiz(activeClassId, scheduleUuid)
         }
+      />
+
+      <LessonContentViewerDialog
+        open={!!previewAttachment}
+        onOpenChange={open => {
+          if (!open) setPreviewAttachment(null);
+        }}
+        content={
+          previewAttachment
+            ? {
+                title: previewAttachment.original_filename ?? 'Attachment',
+                file_url: previewAttachment.file_url ?? null,
+                mime_type: (previewAttachment as { mime_type?: string }).mime_type ?? null,
+                value: previewAttachment.file_url ?? null,
+              }
+            : null
+        }
+        contentType={previewAttachment ? inferAttachmentContentType(previewAttachment) : undefined}
       />
     </div>
   );
