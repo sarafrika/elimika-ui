@@ -87,8 +87,7 @@ export default function DashboardTopBar() {
   const profileName = getProfileName(profile);
   const profileInitials = getInitials(profileName);
 
-  const walletOptions =
-    isCourseCreator && profile?.uuid ? getWalletOptions({ path: { userUuid: profile.uuid } }) : null;
+  const walletOptions = profile?.uuid ? getWalletOptions({ path: { userUuid: profile.uuid } }) : null;
 
   const walletQueryOptions = (walletOptions ?? {
     queryKey: ['dashboard-wallet', 'disabled'],
@@ -171,7 +170,7 @@ export default function DashboardTopBar() {
             {isCourseCreator && (
               <Button asChild size='sm' className='hidden rounded-full px-4 font-semibold md:inline-flex'>
                 <Link href={createCourseHref}>
-                  <Sparkles className='h-4 w-4' />
+                  <Sparkles className='h-7 w-4' />
                   Create Course
                   <ChevronDown className='h-4 w-4' />
                 </Link>
