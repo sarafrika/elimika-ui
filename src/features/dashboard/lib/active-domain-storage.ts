@@ -76,7 +76,7 @@ function splitDashboardPath(path: string) {
   };
 }
 
-function normalizeRequestedDashboardPath(path?: string | null) {
+export function normalizeRequestedDashboardPath(path?: string | null) {
   if (!path || !isInternalDashboardPath(path)) {
     return '/dashboard/overview';
   }

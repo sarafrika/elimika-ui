@@ -47,12 +47,26 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
     [classesQuery.data]
   );
 
+  const uniqueClasses = useMemo(() => {
+    const seen = new Set<string>();
+
+    return classes.filter((classItem): classItem is InstructorClass => {
+      const uuid = classItem.uuid;
+      if (!uuid || seen.has(uuid)) {
+        return false;
+      }
+
+      seen.add(uuid);
+      return true;
+    });
+  }, [classes]);
+
   const courseQueries = useQueries({
-    queries: classes.map(classItem => ({
+    queries: uniqueClasses.map(classItem => ({
       ...getCourseByUuidOptions({
         path: { uuid: classItem.course_uuid as string },
       }),
-      enabled: !!classItem.course_uuid,
+      enabled: Boolean(classItem.course_uuid),
       staleTime: 10 * 60 * 1000,
       gcTime: 60 * 60 * 1000,
       refetchOnMount: false,
@@ -62,7 +76,7 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
   });
 
   const enrollmentQueries = useQueries({
-    queries: classes.map(classItem => ({
+    queries: uniqueClasses.map(classItem => ({
       ...getEnrollmentsForClassOptions({
         path: { uuid: classItem.uuid as string },
       }),
@@ -76,10 +90,10 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
   });
 
   const scheduleQueries = useQueries({
-    queries: classes.map(classItem => ({
+    queries: uniqueClasses.map(classItem => ({
       ...getClassScheduleOptions({
         path: { uuid: classItem.uuid as string },
-        query: { pageable: { page: 0, size: 1000 } }
+        query: { pageable: { page: 0, size: 1000 } },
       }),
       enabled: !!classItem.uuid,
       staleTime: 10 * 60 * 1000,
@@ -92,13 +106,13 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
 
   const data = useMemo<InstructorClassWithSchedule[]>(
     () =>
-      classes.map((classItem, index) => ({
+      uniqueClasses.map((classItem, index) => ({
         ...classItem,
         course: courseQueries[index]?.data?.data ?? null,
         schedule: scheduleQueries[index]?.data?.data?.content ?? [],
-        enrollments: enrollmentQueries[index]?.data?.data ?? []
+        enrollments: enrollmentQueries[index]?.data?.data ?? [],
       })),
-    [classes, courseQueries, scheduleQueries, enrollmentQueries]
+    [uniqueClasses, courseQueries, scheduleQueries, enrollmentQueries]
   );
 
   return {

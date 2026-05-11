@@ -177,6 +177,8 @@ export default function DashboardTopBar() {
               </Button>
             )}
 
+            <ThemeSwitcher size='icon' />
+
             <Button
               variant='outline'
               size='icon'
@@ -188,7 +190,6 @@ export default function DashboardTopBar() {
               </Link>
             </Button>
 
-            <ThemeSwitcher size='icon' />
 
             {(
               <div className='border-border/70 bg-card/80 hidden items-center gap-2 rounded-md border px-3 py-2 shadow-sm xl:flex'>
