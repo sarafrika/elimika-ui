@@ -1,6 +1,8 @@
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import Link from 'next/link';
+import { Fragment } from 'react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,8 +11,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from './breadcrumb';
-import Link from 'next/link';
-import { Fragment } from 'react';
 
 interface AppBreadcrumbProps {
   className?: string;
@@ -31,7 +31,7 @@ export function AppBreadcrumb({ className, showHome = true }: AppBreadcrumbProps
           <>
             <BreadcrumbItem className='hidden md:block'>
               <BreadcrumbLink href={buildWorkspaceAliasPath(resolvedDomain, '/dashboard/overview')}>
-                Dashboard
+                Home
               </BreadcrumbLink>
             </BreadcrumbItem>
             {breadcrumbs.length > 0 && <BreadcrumbSeparator className='hidden md:block' />}

@@ -1,24 +1,23 @@
 'use client';
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import type * as React from 'react';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
+  SidebarMenuItem
 } from '@/components/ui/sidebar';
 import type { UserDomain } from '@/lib/types';
 import menu, { type MenuItem } from '@/src/features/dashboard/config/menu';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import type * as React from 'react';
 import { NavMain } from './nav-main';
 import { NavSecondary } from './nav-secondary';
 import { NavUser } from './nav-user';
@@ -48,7 +47,6 @@ export function AppSidebar({
       .map(part => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
 
-  // Label for the sidebar group
   const groupLabel = activeDomain ? `${formatDomainName(activeDomain)} Panel` : 'Panel';
 
   return (
@@ -80,7 +78,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroupContent>
-          <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
+          {/* <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel> */}
           <NavMain
             items={getMenuItems(activeDomain)}
             activeDomain={activeDomain}
@@ -89,7 +87,6 @@ export function AppSidebar({
           />
         </SidebarGroupContent>
 
-        {/* Secondary menu */}
         <NavSecondary items={menu?.secondary ?? []} className='mt-auto' />
       </SidebarContent>
       <SidebarFooter>
