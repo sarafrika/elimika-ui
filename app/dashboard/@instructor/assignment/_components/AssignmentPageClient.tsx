@@ -35,8 +35,24 @@ import type { AssignmentCardData, AssignmentStatus } from './assignment-types';
 type AssignmentScheduleWithClass = ClassAssignmentSchedule & { classUuid: string };
 type QuizScheduleWithClass = ClassQuizSchedule & { classUuid: string };
 
+const QUERY_STALE_TIME = 1000 * 60 * 30;
+const QUERY_GC_TIME = 1000 * 60 * 60 * 24;
+
 const isDefinedString = (value: unknown): value is string =>
   typeof value === 'string' && value.length > 0;
+
+function dedupeByKey<T>(items: T[], getKey: (item: T) => string | null | undefined) {
+  const seen = new Set<string>();
+  return items.filter(item => {
+    const key = getKey(item);
+    if (!key || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
 
 function formatDueLabel(value?: Date | string) {
   if (!value) return 'No due date';
@@ -69,39 +85,61 @@ export function AssignmentPageClient() {
   const instructorName = profile?.instructor?.full_name || profile?.full_name || 'Instructor';
 
   const { classes, loading } = useInstructorClassesWithDetails(instructorUuid);
+  const uniqueClasses = useMemo(() => dedupeByKey(classes, item => item.uuid ?? null), [classes]);
 
   const classEnrollmentQueries = useQueries({
-    queries: classes.map(item => ({
+    queries: uniqueClasses.map(item => ({
       ...getEnrollmentsForClassOptions({ path: { uuid: item.uuid as string } }),
       enabled: !!item.uuid,
-      staleTime: 60 * 1000,
+      staleTime: QUERY_STALE_TIME,
+      gcTime: QUERY_GC_TIME,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     })),
   });
 
+  const uniqueCourses = useMemo(
+    () => dedupeByKey(uniqueClasses, item => item.course_uuid ?? null),
+    [uniqueClasses]
+  );
+
   const lessonQueries = useQueries({
-    queries: classes.map(item => ({
+    queries: uniqueCourses.map(item => ({
       ...getCourseLessonsOptions({
         path: { courseUuid: item.course_uuid as string },
         query: { pageable: { page: 0, size: 100 } },
       }),
       enabled: !!item.course_uuid,
-      staleTime: 5 * 60 * 1000,
+      staleTime: QUERY_STALE_TIME,
+      gcTime: QUERY_GC_TIME,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     })),
   });
 
   const assignmentScheduleQueries = useQueries({
-    queries: classes.map(item => ({
+    queries: uniqueClasses.map(item => ({
       ...getAssignmentSchedulesOptions({ path: { classUuid: item.uuid as string } }),
       enabled: !!item.uuid,
-      staleTime: 60 * 1000,
+      staleTime: QUERY_STALE_TIME,
+      gcTime: QUERY_GC_TIME,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     })),
   });
 
   const quizScheduleQueries = useQueries({
-    queries: classes.map(item => ({
+    queries: uniqueClasses.map(item => ({
       ...getQuizSchedulesOptions({ path: { classUuid: item.uuid as string } }),
       enabled: !!item.uuid,
-      staleTime: 60 * 1000,
+      staleTime: QUERY_STALE_TIME,
+      gcTime: QUERY_GC_TIME,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     })),
   });
 
@@ -143,14 +181,22 @@ export function AssignmentPageClient() {
     queries: uniqueAssignmentUuids.map(uuid => ({
       ...getAssignmentByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
-      staleTime: 5 * 60 * 1000,
+      staleTime: QUERY_STALE_TIME,
+      gcTime: QUERY_GC_TIME,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     })),
   });
   const quizQueries = useQueries({
     queries: uniqueQuizUuids.map(uuid => ({
       ...getQuizByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
-      staleTime: 5 * 60 * 1000,
+      staleTime: QUERY_STALE_TIME,
+      gcTime: QUERY_GC_TIME,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     })),
   });
 
@@ -180,7 +226,11 @@ export function AssignmentPageClient() {
     queries: uniqueAssignmentUuids.map(uuid => ({
       ...getAssignmentSubmissionsOptions({ path: { assignmentUuid: uuid } }),
       enabled: !!uuid,
-      staleTime: 60 * 1000,
+      staleTime: QUERY_STALE_TIME,
+      gcTime: QUERY_GC_TIME,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     })),
   });
 
@@ -191,7 +241,11 @@ export function AssignmentPageClient() {
         query: { pageable: { page: 0, size: 100 } },
       }),
       enabled: !!uuid,
-      staleTime: 60 * 1000,
+      staleTime: QUERY_STALE_TIME,
+      gcTime: QUERY_GC_TIME,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     })),
   });
 
@@ -211,15 +265,18 @@ export function AssignmentPageClient() {
     return map;
   }, [quizAttemptQueries, uniqueQuizUuids]);
 
-  const classMap = useMemo(() => new Map(classes.map(item => [item.uuid as string, item])), [classes]);
+  const classMap = useMemo(
+    () => new Map(uniqueClasses.map(item => [item.uuid as string, item])),
+    [uniqueClasses]
+  );
 
   const enrollmentCountMap = useMemo(() => {
     const map = new Map<string, number>();
-    classes.forEach((item, index) => {
+    uniqueClasses.forEach((item, index) => {
       map.set(item.uuid as string, classEnrollmentQueries[index]?.data?.data?.length ?? 0);
     });
     return map;
-  }, [classEnrollmentQueries, classes]);
+  }, [classEnrollmentQueries, uniqueClasses]);
 
   const lessonMap = useMemo(() => {
     const map = new Map<
@@ -230,7 +287,7 @@ export function AssignmentPageClient() {
       }
     >();
 
-    classes.forEach((item, index) => {
+    uniqueClasses.forEach((item, index) => {
       const lessons = lessonQueries[index]?.data?.data?.content ?? [];
       lessons.forEach(lesson => {
         if (lesson.uuid) {
@@ -243,7 +300,7 @@ export function AssignmentPageClient() {
     });
 
     return map;
-  }, [classes, lessonQueries]);
+  }, [lessonQueries, uniqueClasses]);
 
   const taskCards = useMemo<AssignmentCardData[]>(() => {
     const assignmentCards = assignmentSchedules
@@ -393,14 +450,22 @@ export function AssignmentPageClient() {
   const { data: pendingGradingData } = useQuery({
     ...getPendingGradingOptions({ path: { instructorUuid: instructorUuid as string } }),
     enabled: !!instructorUuid,
-    staleTime: 60 * 1000,
+    staleTime: QUERY_STALE_TIME,
+    gcTime: QUERY_GC_TIME,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const analyticsQuery = useQueries({
     queries: uniqueAssignmentUuids.slice(0, 12).map(uuid => ({
       ...getSubmissionAnalyticsOptions({ path: { assignmentUuid: uuid } }),
       enabled: !!uuid,
-      staleTime: 60 * 1000,
+      staleTime: QUERY_STALE_TIME,
+      gcTime: QUERY_GC_TIME,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     })),
   });
 
@@ -426,8 +491,8 @@ export function AssignmentPageClient() {
   }, [analyticsQuery, pendingGradingData?.data, taskCards]);
 
   return (
-    <main className='bg-background p-3 sm:p-4 md:p-6 mb-10'>
-      <div className='mx-auto space-y-4 sm:space-y-5'>
+    <main className='bg-background mb-10 p-3 sm:p-4 md:p-6'>
+      <div className='mx-auto w-full max-w-screen-2xl space-y-4 sm:space-y-5'>
         <AssignmentHeader />
 
         <AssignmentToolbar
@@ -437,8 +502,8 @@ export function AssignmentPageClient() {
           setSearch={setSearch}
         />
 
-        <div className='grid gap-5 2xl:grid-cols-[minmax(0,1fr)_320px]'>
-          <section className='space-y-5'>
+        <div className='grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]'>
+          <section className='min-w-0 space-y-5'>
             {loading ? (
               <div className="border-border/60 bg-card rounded-xl border p-5 shadow-sm sm:p-6">
                 <div className="flex flex-col items-center gap-4">
@@ -457,17 +522,24 @@ export function AssignmentPageClient() {
                 </div>
               </div>
             ) : filteredAssignments.length > 0 ? (
-              <div className='grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2'>
+              <div
+                className='flex flex-row flex-wrap gap-4'
+              >
                 {filteredAssignments.map(assignment => (
-                  <AssignmentCard key={assignment.id} assignment={assignment} />
+                  <AssignmentCard
+                    key={assignment.id}
+                    assignment={assignment}
+                  />
                 ))}
               </div>
             ) : (
               <div className='border-border/70 bg-card rounded-xl border border-dashed p-4 text-xs text-muted-foreground shadow-sm sm:p-6 sm:text-sm'>
-                No lesson tasks with student submissions were found for this instructor yet.
+                No lesson tasks with student submissions were found for this instructor
+                yet.
               </div>
             )}
           </section>
+
 
           <aside className='space-y-4'>
             <AssignmentInsights insights={insights} />
