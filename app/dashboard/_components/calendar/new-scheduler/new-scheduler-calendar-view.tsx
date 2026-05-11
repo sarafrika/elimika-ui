@@ -186,7 +186,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   };
 
   return (
-    <main className='bg-background space-y-4 pb-8'>
+    <main className='bg-background space-y-4 pt-4 pb-8'>
       <div className='w-full'>
         <h1 className='text-foreground text-2xl font-semibold sm:text-3xl'>Calendar / Scheduler</h1>
         <p className='text-muted-foreground mt-1 text-sm'>Manage Classes, Venues &amp; Instructors</p>

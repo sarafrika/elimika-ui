@@ -120,7 +120,7 @@ export default function DashboardTopBar() {
   );
 
   return (
-    <header className='border-border/70 bg-background/90 sticky top-0 z-50 border-b backdrop-blur-md'>
+    <header className='bg-background/90 sticky top-0 z-50 backdrop-blur-md'>
       <div className='flex flex-col'>
         <div className='flex items-center gap-3 px-3 py-3 sm:px-5 lg:px-6'>
           <div className='flex min-w-0 items-center gap-3'>
@@ -177,6 +177,8 @@ export default function DashboardTopBar() {
               </Button>
             )}
 
+            <ThemeSwitcher size='icon' />
+
             <Button
               variant='outline'
               size='icon'
@@ -188,7 +190,6 @@ export default function DashboardTopBar() {
               </Link>
             </Button>
 
-            <ThemeSwitcher size='icon' />
 
             {(
               <div className='border-border/70 bg-card/80 hidden items-center gap-2 rounded-md border px-3 py-2 shadow-sm xl:flex'>
@@ -249,7 +250,7 @@ export default function DashboardTopBar() {
               </Button>
             )}
 
-            {isCourseCreator && (
+            {(
               <div className='border-border/70 bg-card/80 flex items-center gap-2 rounded-full border px-3 py-2 shadow-sm sm:hidden'>
                 <div className='bg-success/10 text-success flex size-7 items-center justify-center rounded-full'>
                   <Wallet className='h-3.5 w-3.5' />
@@ -265,8 +266,8 @@ export default function DashboardTopBar() {
           </div>
         </div>
 
-        <div className='border-border/70 hidden border-t px-3 py-1 sm:px-5 lg:px-6 xl:block'>
-          <AppBreadcrumb className='text-muted-foreground text-sm' />
+        <div className='hidden px-3 py-3 sm:px-5 lg:px-6 xl:block'>
+          <AppBreadcrumb className='text-muted-foreground text-sm border-none' />
         </div>
       </div>
     </header>
