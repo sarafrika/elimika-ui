@@ -334,9 +334,9 @@ function DashboardProfileMenu({
             <p className='text-foreground truncate text-sm font-semibold'>{profileName}</p>
             <p className='text-muted-foreground truncate text-xs'>{profileEmail ?? 'No email'}</p>
             <div className='mt-2 flex flex-wrap gap-2'>
-              <Badge variant='outline' className='rounded-full px-2 py-0 text-[10px] uppercase'>
+              {/* <Badge variant='outline' className='rounded-full px-2 py-0 text-[10px] uppercase'>
                 {roleLabel}
-              </Badge>
+              </Badge> */}
               <Badge variant='secondary' className='rounded-full px-2 py-0 text-[10px]'>
                 {activeDomainLabel}
               </Badge>

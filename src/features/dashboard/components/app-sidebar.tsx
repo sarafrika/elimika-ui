@@ -12,6 +12,7 @@ import {
 import type { UserDomain } from '@/lib/types';
 import menu, { type MenuItem } from '@/src/features/dashboard/config/menu';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { SettingsSupportWidget } from '@/src/features/dashboard/settings/_components/settings-support-widget';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import Image from 'next/image';
@@ -20,7 +21,6 @@ import { usePathname } from 'next/navigation';
 import type * as React from 'react';
 import { NavMain } from './nav-main';
 import { NavSecondary } from './nav-secondary';
-import { NavUser } from './nav-user';
 
 export function AppSidebar({
   activeDomain,
@@ -39,15 +39,6 @@ export function AppSidebar({
 
     return menu[menuKey] ?? [];
   };
-
-  const formatDomainName = (domain: string) =>
-    domain
-      .split('_')
-      .filter(Boolean)
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
-
-  const groupLabel = activeDomain ? `${formatDomainName(activeDomain)} Panel` : 'Panel';
 
   return (
     <Sidebar variant='inset' {...props}>
@@ -89,8 +80,17 @@ export function AppSidebar({
 
         <NavSecondary items={menu?.secondary ?? []} className='mt-auto' />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser items={menu?.user ?? []} />
+      <SidebarFooter className='gap-3 mb-3'>
+        {/* <NavUser items={menu?.user ?? []} /> */}
+
+        <SettingsSupportWidget
+          href={activeDomain === 'admin' ? '/dashboard/support' : '/help'}
+        />
+
+        <div className="flex justify-between rounded-md border border-border/70 bg-muted px-4 py-2 text-xs text-muted-foreground">
+          <p>© 2026 Elimika.</p>
+          <p>V.1.0.0</p>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
