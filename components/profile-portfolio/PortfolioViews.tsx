@@ -652,7 +652,7 @@ export function SharedPortfolioShell({ role }: { role: PortfolioRole }) {
 
   return (
     <main className='bg-muted/30 text-foreground min-h-screen px-3 py-4 sm:px-5 lg:px-7'>
-      <div className='mx-auto flex w-full max-w-7xl flex-col gap-4'>
+      <div className='flex w-full flex-col gap-4'>
         <header className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex flex-wrap items-center gap-x-4 gap-y-2'>
             <h1 className='text-foreground text-2xl font-semibold tracking-normal sm:text-3xl'>

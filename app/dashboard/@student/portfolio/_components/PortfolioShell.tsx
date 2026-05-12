@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { Search } from 'lucide-react';
+import { useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -70,7 +70,7 @@ export function PortfolioShell() {
 
   return (
     <main className='bg-muted/30 text-foreground min-h-screen px-3 py-4 sm:px-5 lg:px-7'>
-      <div className='mx-auto flex w-full max-w-7xl flex-col gap-4'>
+      <div className='flex w-full flex-col gap-4'>
         <header className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex flex-wrap items-center gap-x-4 gap-y-2'>
             <h1 className='text-foreground text-2xl font-semibold tracking-normal sm:text-3xl'>
@@ -83,7 +83,7 @@ export function PortfolioShell() {
           </div>
         </header>
 
-        <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_270px]'>
+        <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]'>
           <section className='bg-card min-w-0 rounded-lg border shadow-sm'>
             <nav
               className='scrollbar-hidden flex overflow-x-auto border-b px-3 sm:px-5'

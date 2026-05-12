@@ -11,7 +11,7 @@ export function StudentLearningHubPage() {
   const data = useStudentLearningHubData();
 
   return (
-    <main className='mx-auto w-full max-w-[1320px] py-3 sm:py-4'>
+    <main className='w-full py-3 sm:py-4'>
       <div className='space-y-4'>
         <LearningHubHero
           firstName={data.firstName}

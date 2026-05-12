@@ -419,33 +419,41 @@ export function StudentAssignmentWorkspace() {
           ))}
         </section>
 
-        <Card className={cx(getCardClasses(), 'p-0')}>
-          <CardContent className='space-y-4 p-5 sm:p-6'>
-            <div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
-              <div className='space-y-2'>
-                <Badge variant='outline' className='border-primary/20 bg-primary/10 text-primary'>
+        <Card className={cx(getCardClasses(), 'overflow-hidden p-0')}>
+          <CardContent className='space-y-4 p-4 sm:p-6'>
+            <div className='flex min-w-0 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
+              <div className='min-w-0 space-y-2'>
+                <Badge
+                  variant='outline'
+                  className='border-primary/20 bg-primary/10 text-primary w-fit'
+                >
                   <Sparkles className='mr-1 h-3.5 w-3.5' />
                   Submission progress
                 </Badge>
-                <div>
-                  <p className='text-foreground text-lg font-semibold'>
+
+                <div className='min-w-0'>
+                  <p className='text-foreground break-words text-lg font-semibold'>
                     {stats.progress}% of assigned work has a submission trail
                   </p>
+
                   <p className='text-muted-foreground text-sm'>
-                    Returned work is counted so you can track resubmissions that still need action.
+                    Returned work is counted so you can track resubmissions that still
+                    need action.
                   </p>
                 </div>
               </div>
 
-              <div className='flex w-full flex-col gap-3 sm:flex-row lg:w-auto'>
-                <div className='relative min-w-0 flex-1 sm:w-[280px]'>
+              <div className='flex min-w-0 w-full flex-col gap-3 lg:w-auto lg:min-w-[520px] lg:flex-row'>
+                <div className='relative min-w-0 flex-1'>
                   <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+
                   <Input
-                    className='pl-9'
+                    className='w-full pl-9 text-sm'
                     onChange={event => setSearchValue(event.target.value)}
                     placeholder='Search by assignment, class, or course'
                     value={searchValue}
                   />
+
                   {searchValue ? (
                     <button
                       className='text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition'
@@ -457,8 +465,12 @@ export function StudentAssignmentWorkspace() {
                   ) : null}
                 </div>
 
-                <Tabs onValueChange={value => setSortBy(value as SortKey)} value={sortBy}>
-                  <TabsList className='grid w-full grid-cols-3 sm:w-[280px]'>
+                <Tabs
+                  onValueChange={value => setSortBy(value as SortKey)}
+                  value={sortBy}
+                  className='min-w-0'
+                >
+                  <TabsList className='grid w-full grid-cols-3 lg:w-[280px]'>
                     <TabsTrigger value='due'>Due date</TabsTrigger>
                     <TabsTrigger value='course'>Course</TabsTrigger>
                     <TabsTrigger value='title'>Title</TabsTrigger>
@@ -469,14 +481,28 @@ export function StudentAssignmentWorkspace() {
 
             <Progress value={stats.progress} className='h-2.5' />
 
-            <Tabs onValueChange={value => setActiveTab(value as FilterTab)} value={activeTab}>
-              <TabsList className='grid w-full grid-cols-2 gap-2 sm:grid-cols-5'>
-                <TabsTrigger value='all'>All ({stats.total})</TabsTrigger>
-                <TabsTrigger value='pending'>Pending ({stats.pending})</TabsTrigger>
-                <TabsTrigger value='submitted'>Submitted ({stats.submitted})</TabsTrigger>
-                <TabsTrigger value='graded'>Graded ({stats.graded})</TabsTrigger>
-                <TabsTrigger value='returned'>Returned ({stats.returned})</TabsTrigger>
-              </TabsList>
+            <Tabs
+              onValueChange={value => setActiveTab(value as FilterTab)}
+              value={activeTab}
+              className='min-w-0'
+            >
+              <div className='overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/70 [&::-webkit-scrollbar-track]:bg-transparent'>
+                <TabsList className='inline-flex min-w-max gap-2'>
+                  <TabsTrigger value='all'>All ({stats.total})</TabsTrigger>
+                  <TabsTrigger value='pending'>
+                    Pending ({stats.pending})
+                  </TabsTrigger>
+                  <TabsTrigger value='submitted'>
+                    Submitted ({stats.submitted})
+                  </TabsTrigger>
+                  <TabsTrigger value='graded'>
+                    Graded ({stats.graded})
+                  </TabsTrigger>
+                  <TabsTrigger value='returned'>
+                    Returned ({stats.returned})
+                  </TabsTrigger>
+                </TabsList>
+              </div>
             </Tabs>
           </CardContent>
         </Card>
@@ -492,7 +518,7 @@ export function StudentAssignmentWorkspace() {
             </div>
           </div>
         ) : (
-          <div className='grid gap-4'>
+          <div className='grid gap-4 lg:grid-cols-2'>
             {processedRows.map(row => {
               const dueSummary = getDueSummary(row.schedule?.due_at ?? row.assignment?.due_date);
               const status = getStudentAssignmentSubmissionState(row);
@@ -504,7 +530,7 @@ export function StudentAssignmentWorkspace() {
                   className={cx(getCardClasses(), 'p-0 hover:-translate-y-0.5')}
                 >
                   <CardContent className='space-y-5 p-5 sm:p-6'>
-                    <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
+                    <div className='flex flex-col gap-4 xl:items-start xl:justify-between'>
                       <div className='space-y-3'>
                         <div className='flex flex-wrap items-center gap-2'>
                           <Badge variant='outline' className='border-border/70 bg-muted/40'>
@@ -537,32 +563,34 @@ export function StudentAssignmentWorkspace() {
                         ) : null}
                       </div>
 
-                      <div className='grid gap-3 sm:grid-cols-3 xl:w-[360px]'>
-                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                      <div className='border-border/60 bg-background/50 flex items-center divide-x rounded-xl border text-sm'>
+                        <div className='flex flex-1 flex-col px-3 py-2'>
+                          <span className='text-muted-foreground text-[11px] uppercase'>
                             Points
-                          </p>
-                          <p className='text-foreground mt-1 text-lg font-semibold'>
+                          </span>
+                          <span className='text-foreground font-semibold'>
                             {row.assignment?.points_display ||
                               row.assignment?.max_points ||
                               'Not set'}
-                          </p>
+                          </span>
                         </div>
-                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+
+                        <div className='flex flex-1 flex-col px-3 py-2'>
+                          <span className='text-muted-foreground text-[11px] uppercase'>
                             Resources
-                          </p>
-                          <p className='text-foreground mt-1 text-lg font-semibold'>
+                          </span>
+                          <span className='text-foreground font-semibold'>
                             {row.attachments.length}
-                          </p>
+                          </span>
                         </div>
-                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+
+                        <div className='flex flex-1 flex-col px-3 py-2'>
+                          <span className='text-muted-foreground text-[11px] uppercase'>
                             Score
-                          </p>
-                          <p className={cx('mt-1 text-lg font-semibold', getGradeTone(percentage))}>
+                          </span>
+                          <span className={cx('font-semibold', getGradeTone(percentage))}>
                             {percentage == null ? 'Pending' : `${Math.round(percentage)}%`}
-                          </p>
+                          </span>
                         </div>
                       </div>
                     </div>

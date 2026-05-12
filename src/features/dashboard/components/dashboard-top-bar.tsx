@@ -120,7 +120,7 @@ export default function DashboardTopBar() {
   );
 
   return (
-    <header className='bg-background/90 sticky top-0 z-50 backdrop-blur-md'>
+    <header className='bg-background/90 sticky top-0 z-50 backdrop-blur-md '>
       <div className='flex flex-col'>
         <div className='flex items-center gap-3 px-3 py-3 sm:px-5 lg:px-6'>
           <div className='flex min-w-0 items-center gap-3'>
@@ -158,7 +158,7 @@ export default function DashboardTopBar() {
               <Input
                 type='search'
                 placeholder='Search courses, students, and more...'
-                className='border-border/70 bg-card/80 h-12 rounded-full pl-11 pr-16 shadow-sm'
+                className='border-border/70 bg-card/80 h-12 rounded-full pl-11 pr-16 shadow-sm text-xs'
               />
               {/* <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
                 Ctrl K
@@ -233,7 +233,7 @@ export default function DashboardTopBar() {
             <Input
               type='search'
               placeholder='Search courses, students, and more...'
-              className='border-border/70 bg-card/80 h-11 rounded-full pl-11 pr-14 shadow-sm'
+              className='border-border/70 bg-card/80 h-11 rounded-full pl-11 pr-14 shadow-sm text-sm'
             />
             {/* <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
               Ctrl K
@@ -306,7 +306,7 @@ function DashboardProfileMenu({
       <DropdownMenuTrigger asChild>
         <Button
           variant='outline'
-          className='border-border/70 bg-card/80 h-12 rounded-md px-3 shadow-sm transition hover:border-primary/40'
+          className='border-border/70 bg-card/80 h-12 rounded-md px-3 shadow-sm transition hover:border-primary/40 hover:bg-primary/15'
         >
           <Avatar className='border-border/60 h-8 w-8 border'>
             <AvatarImage src={userImage} alt={profileName} />
@@ -361,12 +361,12 @@ function DashboardProfileMenu({
               <DropdownMenuItem
                 key={domain}
                 className={cn(
-                  'flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5',
-                  isActive && 'bg-accent'
+                  'flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 hover:bg-primary/25 focus:bg-primary/25',
+                  isActive && 'bg-primary/10'
                 )}
                 onClick={() => onSwitch(domain)}
               >
-                <div className={cn('flex size-8 items-center justify-center rounded-full', config.bgColor)}>
+                <div className={cn('flex size-8 items-center justify-center rounded-full hover:bg-primary/15', config.bgColor)}>
                   <Icon className={cn('h-4 w-4', config.color)} />
                 </div>
                 <div className='min-w-0 flex-1'>
@@ -383,13 +383,14 @@ function DashboardProfileMenu({
 
         <div className='grid gap-1'>
           <DropdownMenuItem
-            className='cursor-pointer rounded-md px-3 py-2.5'
+            className='cursor-pointer rounded-md px-3 py-2.5 hover:bg-primary/15 focus:bg-primary/15'
             onClick={onAddProfile}
           >
             Add another profile
           </DropdownMenuItem>
+
           <DropdownMenuItem
-            className='text-destructive cursor-pointer rounded-md px-3 py-2.5'
+            className='text-destructive cursor-pointer rounded-md px-3 py-2.5 hover:bg-primary/15 focus:bg-primary/15'
             onClick={() => void onLogout()}
           >
             Sign out

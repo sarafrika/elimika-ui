@@ -36,9 +36,9 @@ export function LearningHubHero({
   loading = false,
 }: LearningHubHeroProps) {
   return (
-    <Card className='border-border/70 bg-background relative overflow-hidden rounded-[26px] border p-0 shadow-[0_26px_56px_-48px_rgba(15,23,42,0.2)]'>
+    <Card className='bg-background relative overflow-hidden p-0 shadow-[0_26px_56px_-48px_rgba(15,23,42,0.2)]'>
       <div className="
-  relative min-h-[150px] overflow-hidden rounded-t-[26px]
+  relative min-h-[150px] overflow-hidden rounded-t-md
   bg-[linear-gradient(90deg,rgba(255,255,255,0.98),rgba(242,246,255,0.94),rgba(236,242,255,0.92))]
   dark:bg-[linear-gradient(90deg,rgba(17,24,39,0.98),rgba(30,41,59,0.95),rgba(51,65,85,0.92))]
   px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7
@@ -52,7 +52,7 @@ export function LearningHubHero({
               </>
             ) : (
               <>
-                <h1 className='text-foreground text-[2rem] leading-[1.08] font-semibold tracking-tight sm:text-[2.4rem] lg:text-[3rem]'>
+                <h1 className='text-foreground text-[2rem] leading-[1.08] font-semibold tracking-tight sm:text-[2.4rem] lg:text-[2rem]'>
                   Welcome back, {firstName}!
                 </h1>
                 <p className='text-muted-foreground text-[0.92rem] sm:text-[1rem] lg:text-[1.04rem]'>

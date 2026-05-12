@@ -51,12 +51,12 @@ export function SkillsFundHubPage({ role, profileName }: SkillsFundHubPageProps)
 
   return (
     <main className='w-full'>
-      <div className='mx-auto max-w-[1520px] px-2 py-2 sm:px-3 lg:px-4'>
-        <section className='overflow-hidden border border-border bg-card'>
+      <div className='px-2 py-2'>
+        <section className='overflow-hidden bg-card'>
           <SkillsFundHeader profileName={content.profileName} title={content.title} />
           <SkillsFundTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={content.tabs} />
 
-          <div className='grid gap-4 p-3 sm:p-4 xl:grid-cols-[minmax(0,1fr)_272px] xl:items-start 2xl:grid-cols-[minmax(0,1fr)_272px]'>
+          <div className='grid gap-4 p-3 sm:p-4 xl:grid-cols-[minmax(0,1fr)_350px] xl:items-start 2xl:grid-cols-[minmax(0,1fr)_350px]'>
             <div className='space-y-4'>
               <SkillsFundToolbar
                 filterCount={content.filterCount}

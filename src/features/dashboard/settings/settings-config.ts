@@ -46,10 +46,10 @@ const formatDomain = (domain?: UserDomain | string | string[] | null) => {
 
   return normalized
     ? normalized
-        .split('_')
-        .filter(Boolean)
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
+      .split('_')
+      .filter(Boolean)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
     : 'Account';
 };
 
@@ -98,10 +98,10 @@ export function getSettingsVariantConfig(
 ): SettingsVariantConfig {
   const titleByVariant: Record<DashboardSettingsVariant, string> = {
     admin: 'Settings & Configuration',
-    student: 'Settings & Preferences',
-    instructor: 'Settings & Profile',
+    student: 'Settings & Configuration',
+    instructor: 'Settings & Configuration',
     organisation: 'Settings & Configuration',
-    course_creator: 'Settings & Profile',
+    course_creator: 'Settings & Configuration',
   };
 
   const subtitleByVariant: Record<DashboardSettingsVariant, string> = {
@@ -125,26 +125,31 @@ export function getSettingsVariantConfig(
       { value: 'profile', label: 'Profile' },
       { value: 'access', label: 'Platform Access' },
       { value: 'support', label: 'Support' },
+      { value: 'advanced-settings', label: 'Advanced Settings' },
     ],
     student: [
       { value: 'profile', label: 'Profile' },
       { value: 'access', label: 'Learning Preferences' },
       { value: 'support', label: 'Support' },
+      { value: 'advanced-settings', label: 'Advanced Settings' },
     ],
     instructor: [
       { value: 'profile', label: 'Profile' },
       { value: 'access', label: 'Teaching Settings' },
       { value: 'support', label: 'Support' },
+      { value: 'advanced-settings', label: 'Advanced Settings' },
     ],
     organisation: [
       { value: 'profile', label: 'Profile' },
       { value: 'access', label: 'Workspace Rules' },
       { value: 'support', label: 'Support' },
+      { value: 'advanced-settings', label: 'Advanced Settings' },
     ],
     course_creator: [
       { value: 'profile', label: 'Profile' },
       { value: 'access', label: 'Publishing Rules' },
       { value: 'support', label: 'Support' },
+      { value: 'advanced-settings', label: 'Advanced Settings' },
     ],
   };
 
