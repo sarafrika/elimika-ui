@@ -602,6 +602,11 @@ export default {
       icon: ClipboardList,
       requiresAdmin: true,
     },
+    {
+      title: 'Settings',
+      url: '/dashboard/settings',
+      icon: Settings,
+    },
   ],
   parent: [
     {

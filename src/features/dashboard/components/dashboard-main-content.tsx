@@ -19,7 +19,7 @@ export default function DashboardMainContent({
       </div>
 
       <div className='flex-1 overflow-y-auto overflow-x-hidden'>
-        <div className='flex w-full min-w-0 flex-col gap-4 px-3 sm:px-5 lg:pl-4'>
+        <div className='flex w-full min-w-0 flex-col gap-5 self-start pb-6 pr-3 sm:gap-6 sm:pr-6'>
           <DomainAccessGate>{children}</DomainAccessGate>
         </div>
       </div>

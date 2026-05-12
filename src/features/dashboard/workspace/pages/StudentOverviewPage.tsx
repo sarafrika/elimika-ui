@@ -32,7 +32,7 @@ export default function StudentOverviewPage() {
   );
 
   return (
-    <div className='mx-auto mb-10 w-full max-w-[1480px] overflow-x-clip bg-background px-2 py-3 sm:px-3 sm:py-4 lg:px-4'>
+    <div className='mb-10 w-full max-w-[1480px] overflow-x-clip bg-background px-2 py-3 sm:px-3 sm:py-4 lg:px-4'>
       <div className='space-y-4 min-w-0'>
         <StudentOverviewSearchBar
           value={searchValue}

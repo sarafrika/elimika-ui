@@ -58,7 +58,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
     const shared = {
       instructor: {
         verified: Boolean(profile.instructor?.admin_verified),
-        allowedPrefixes: [PROFILE_PREFIX, ADD_PROFILE_PREFIX],
+        allowedPrefixes: [PROFILE_PREFIX, ADD_PROFILE_PREFIX, '/dashboard/settings'],
         fallback: `${PROFILE_PREFIX}/general`,
         title: 'Instructor verification pending',
         description:
@@ -68,7 +68,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
         verified: Boolean(
           courseCreator?.profile?.admin_verified ?? profile.courseCreator?.admin_verified
         ),
-        allowedPrefixes: [PROFILE_PREFIX, ADD_PROFILE_PREFIX],
+        allowedPrefixes: [PROFILE_PREFIX, ADD_PROFILE_PREFIX, '/dashboard/settings'],
         fallback: PROFILE_PREFIX,
         title: 'Course creator verification pending',
         description:
@@ -76,7 +76,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       },
       organisation: {
         verified: organisationVerified,
-        allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX, ADD_PROFILE_PREFIX],
+        allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX, ADD_PROFILE_PREFIX, '/dashboard/settings'],
         fallback: `${ACCOUNT_PREFIX}/training-center`,
         title: 'Organisation verification pending',
         description:
@@ -84,7 +84,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       },
       organisation_user: {
         verified: organisationVerified,
-        allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX, ADD_PROFILE_PREFIX],
+        allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX, ADD_PROFILE_PREFIX, '/dashboard/settings'],
         fallback: `${ACCOUNT_PREFIX}/training-center`,
         title: 'Organisation verification pending',
         description:
