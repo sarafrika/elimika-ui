@@ -40,7 +40,7 @@ export function ProjectDetailsView({ project }: ProjectDetailsViewProps) {
           </Button>
         </header>
 
-        <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_270px]'>
+        <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]'>
           <section className='bg-card min-w-0 overflow-hidden rounded-lg border shadow-sm'>
             <div className='grid gap-5 p-4 lg:grid-cols-[360px_minmax(0,1fr)] lg:p-5'>
               <ProjectThumbnail variant={project.accent} />

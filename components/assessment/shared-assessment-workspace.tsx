@@ -536,19 +536,20 @@ function SearchAndFilters({
   status: AssessmentStatusFilter;
 }) {
   return (
-    <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_140px_150px_130px]'>
+    <div className='grid items-center gap-3 md:grid-cols-[minmax(0,1fr)_140px_150px_130px]'>
       <div className='relative'>
         <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
         <Input
-          className='bg-background h-11 rounded-md pr-10 pl-10'
+          className='bg-background h-10 rounded-md pr-10 pl-10'
           onChange={event => onSearchChange(event.target.value)}
           placeholder='Search assessments...'
           value={search}
         />
         <Settings2 className='text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2' />
       </div>
+
       <Select value={skill} onValueChange={onSkillChange}>
-        <SelectTrigger className='bg-background h-11 w-full rounded-md'>
+        <SelectTrigger className='bg-background h-10 w-full rounded-md'>
           <SelectValue placeholder='All Skills' />
         </SelectTrigger>
         <SelectContent>
@@ -561,7 +562,7 @@ function SearchAndFilters({
         </SelectContent>
       </Select>
       <Select value={sort} onValueChange={value => onSortChange(value as AssessmentSort)}>
-        <SelectTrigger className='bg-background h-11 w-full rounded-md'>
+        <SelectTrigger className='bg-background h-10 w-full rounded-md'>
           <span className='inline-flex items-center gap-2'>
             <Menu className='size-4' />
             <SelectValue placeholder='Newest' />
@@ -577,7 +578,7 @@ function SearchAndFilters({
         value={status}
         onValueChange={value => onStatusChange(value as AssessmentStatusFilter)}
       >
-        <SelectTrigger className='bg-background h-11 w-full rounded-md'>
+        <SelectTrigger className='bg-background h-10 w-full rounded-md'>
           <span className='inline-flex items-center gap-2'>
             <ListFilter className='size-4' />
             <SelectValue placeholder='Filters' />
@@ -1074,8 +1075,8 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
   );
 
   return (
-    <main className='bg-muted/30 min-h-screen overflow-hidden'>
-      <section className='mx-auto w-full max-w-7xl space-y-5 px-4 py-4 sm:px-6 lg:px-8'>
+    <main className='min-h-screen overflow-hidden'>
+      <section className='w-full space-y-5 px-4 py-4 sm:px-6'>
         <div className='border-border/70 bg-card rounded-md border p-4 shadow-xs sm:p-5'>
           <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
             <div className='min-w-0 space-y-4'>
@@ -1112,7 +1113,7 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
           {activeTab === 'competencies' ? (
             <CompetenciesGrid items={filteredCompetencies} />
           ) : (
-            <div className='grid items-start gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]'>
+            <div className='grid items-start gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,380px)]'>
               <div className='flex flex-col gap-5'>
                 {isLoading ? (
                   Array.from({ length: 3 }).map((_, index) => (
@@ -1138,7 +1139,7 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
             </div>
           )}
 
-          <div className='grid gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]'>
+          <div className='grid gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,380px)]'>
             <CompetencyChart compact={activeTab !== 'competencies'} />
             <TopStudentsPanel />
           </div>

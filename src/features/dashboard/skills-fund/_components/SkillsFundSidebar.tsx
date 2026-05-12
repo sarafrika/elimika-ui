@@ -57,7 +57,7 @@ export function SkillsFundSidebar({
   walletUtilizationPercent,
 }: SkillsFundSidebarProps) {
   return (
-    <aside className='grid w-full gap-3 self-start sm:grid-cols-2 xl:ml-auto xl:max-w-[272px] xl:grid-cols-1'>
+    <aside className='grid w-full gap-3 self-start sm:grid-cols-2 xl:ml-auto xl:max-w-[400px] xl:grid-cols-1'>
       <SidebarSection title='Application Tracker'>
         <div className='rounded-[10px] border border-border bg-card p-3'>
           <div className='space-y-3'>
