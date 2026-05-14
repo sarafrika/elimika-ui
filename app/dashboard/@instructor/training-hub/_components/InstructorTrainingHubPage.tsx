@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { CalendarDays } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { Button } from '../../../../../components/ui/button';
 import { BookingCard } from './BookingCard';
 import { LiveClassCard } from './LiveClassCard';
 import { ManageCourseCard } from './ManageCourseCard';
@@ -169,7 +170,6 @@ export function InstructorTrainingHubPage() {
 
         {/* ASIDE */}
         <aside className='min-w-0 space-y-5 overflow-hidden'>
-
           <section className='space-y-3'>
             <TrainingHubSectionHeader
               actionLabel={`Show All (${waitingList.length})`}
@@ -177,11 +177,22 @@ export function InstructorTrainingHubPage() {
               title='Waiting List'
             />
 
-            <div className='space-y-3'>
-              {filteredWaitingList.slice(0, 3).map(student => (
-                <WaitingListItem key={student.id} student={student} />
-              ))}
-            </div>
+            {filteredWaitingList.length > 0 ? (
+              <div className='space-y-3'>
+                {filteredWaitingList.slice(0, 3).map(student => (
+                  <WaitingListItem key={student.id} student={student} />
+                ))}
+              </div>
+            ) : (
+              <div className='rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center'>
+                <p className='text-sm font-medium text-gray-900'>
+                  No students on the waiting list
+                </p>
+                <p className='mt-1 text-sm text-gray-500'>
+                  New waiting list requests will appear here.
+                </p>
+              </div>
+            )}
           </section>
 
           <section className='space-y-3'>
@@ -191,22 +202,32 @@ export function InstructorTrainingHubPage() {
               title='Bookings'
             />
 
-            <div className='space-y-3'>
-              {filteredBookings.slice(0, 3).map(booking => (
-                <BookingCard key={booking.id} booking={booking} />
-              ))}
-            </div>
+            {filteredBookings.length > 0 ? (
+              <div className='space-y-3'>
+                {filteredBookings.slice(0, 3).map(booking => (
+                  <BookingCard key={booking.id} booking={booking} />
+                ))}
+              </div>
+            ) : (
+              <div className='rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center'>
+                <p className='text-sm font-medium text-gray-900'>
+                  No upcoming bookings
+                </p>
+                <p className='mt-1 text-sm text-gray-500'>
+                  Upcoming bookings will appear here.
+                </p>
+              </div>
+            )}
           </section>
 
-          <button
+          <Button
             type='button'
-            className='flex w-full items-center justify-center gap-3 rounded-[10px] bg-primary px-4 py-3 text-center text-[0.96rem] font-medium text-white transition hover:bg-cyan-700'
+            className='flex w-full items-center justify-center gap-3 rounded-[10px] bg-primary px-4 py-3 text-center text-[0.96rem] font-medium text-primary-foreground transition-colors hover:bg-primary/90'
           >
             <CalendarDays className='size-4 shrink-0' />
             <span className='truncate'>Invite Past Students</span>
             <span aria-hidden='true'>›</span>
-          </button>
-
+          </Button>
         </aside>
 
       </section>

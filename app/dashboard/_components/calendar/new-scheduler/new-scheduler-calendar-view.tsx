@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
-import { CalendarDays, ChevronLeft, ChevronRight, Filter, Info, Plus, Search, Settings } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Filter, Info, Search, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import type { SchedulerCalendarData } from './calendar-utils';
@@ -186,7 +186,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   };
 
   return (
-    <main className='bg-background space-y-4 pt-4 pb-8'>
+    <main className='bg-background space-y-4 pt-4 pb-8 px-4'>
       <div className='w-full'>
         <h1 className='text-foreground text-2xl font-semibold sm:text-3xl'>Calendar / Scheduler</h1>
         <p className='text-muted-foreground mt-1 text-sm'>Manage Classes, Venues &amp; Instructors</p>
@@ -201,14 +201,13 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           />
         </label>
 
-        {(profile === "instructor" || profile === "organization") &&
+        {/* {(profile === "instructor" || profile === "organization") &&
           <div className='flex flex-wrap items-center gap-2 self-end'>
             <Button className='h-10 rounded-md px-4 text-xs sm:text-sm' onClick={() => handleCreateSession()}>
               <Plus className='h-4 w-4' />
               {createLabel}
             </Button>
-          </div>}
-
+          </div>} */}
       </div>
 
       <header className='flex justify-end self-end'>

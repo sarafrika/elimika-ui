@@ -18,7 +18,7 @@ import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { InstructorClassWithSchedule, useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import { startScheduledInstanceMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation } from '@tanstack/react-query';
-import { NotebookPen, PanelBottom, Plus, Search } from 'lucide-react';
+import { NotebookPen, PanelBottom, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -297,14 +297,6 @@ export default function NewClassPage() {
         <p className='text-foreground text-md leading-tight sm:text-lg'>
           {dateFilterDescriptions[dateFilter]} <span className='font-semibold'>Start training</span>
         </p>
-        <Button
-          type='button'
-          onClick={() => router.push('/dashboard/classes/create-new')}
-          className='inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-success px-8 text-sm font-semibold text-success-foreground transition hover:bg-success/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/30'
-        >
-          <Plus className='h-4 w-4' />
-          Create New class
-        </Button>
       </div>
 
       {hasClassesError ? (
