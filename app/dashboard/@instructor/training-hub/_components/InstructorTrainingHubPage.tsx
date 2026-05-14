@@ -184,11 +184,11 @@ export function InstructorTrainingHubPage() {
                 ))}
               </div>
             ) : (
-              <div className='rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center'>
-                <p className='text-sm font-medium text-gray-900'>
+              <div className='rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center'>
+                <p className='text-sm font-medium text-foreground'>
                   No students on the waiting list
                 </p>
-                <p className='mt-1 text-sm text-gray-500'>
+                <p className='mt-1 text-sm text-muted-foreground'>
                   New waiting list requests will appear here.
                 </p>
               </div>
@@ -209,11 +209,11 @@ export function InstructorTrainingHubPage() {
                 ))}
               </div>
             ) : (
-              <div className='rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center'>
-                <p className='text-sm font-medium text-gray-900'>
+              <div className='rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center'>
+                <p className='text-sm font-medium text-foreground'>
                   No upcoming bookings
                 </p>
-                <p className='mt-1 text-sm text-gray-500'>
+                <p className='mt-1 text-sm text-muted-foreground'>
                   Upcoming bookings will appear here.
                 </p>
               </div>
