@@ -33,7 +33,9 @@ import { SearchInstructorMetrics } from './search-instructor-metrics';
 import { SearchInstructorSidebar } from './search-instructor-sidebar';
 
 type SortBy = 'relevance' | 'rating' | 'experience' | 'alphabetical';
+type ActiveView = 'search' | 'saved' | 'hired';
 const PAGE_SIZE = 6;
+const SAVED_INSTRUCTORS_STORAGE_KEY = 'elimika.saved-training-instructors';
 
 type PaginationItemValue = number | 'ellipsis';
 
@@ -90,11 +92,13 @@ export default function StudentInstructorSearchPage() {
   const { activeDomain } = useUserDomain();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { data: trainingInstructors = [], loading } = useSearchTrainingInstructors();
+  const [activeView, setActiveView] = useState<ActiveView>('search');
   const [sortBy, setSortBy] = useState<SortBy>('relevance');
   const [selectedInstructorUuid, setSelectedInstructorUuid] = useState<string | null>(null);
   const [hireModalInstructorUuid, setHireModalInstructorUuid] = useState<string | null>(null);
   const [filters, setFilters] = useState<InstructorSearchFiltersState>(searchInstructorFiltersDefaults);
   const [page, setPage] = useState(1);
+  const [savedInstructorUuids, setSavedInstructorUuids] = useState<string[]>([]);
 
   // const { data: applications } = useQuery(
   //   courseId
@@ -113,7 +117,7 @@ export default function StudentInstructorSearchPage() {
   const { data: applications } = useQuery({
     ...listTrainingApplicationsOptions({
       path: { courseUuid: courseId as string },
-      query: { pageable: {} },
+      query: { pageable: {}, status: 'approved' },
     }),
     enabled: !!courseId,
   });
@@ -122,6 +126,32 @@ export default function StudentInstructorSearchPage() {
     applications?.data?.content
       ?.filter(application => application?.applicant_type === 'instructor')
       ?.map(application => application?.applicant_uuid) ?? [];
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(SAVED_INSTRUCTORS_STORAGE_KEY);
+      if (!stored) {
+        setSavedInstructorUuids([]);
+        return;
+      }
+
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        setSavedInstructorUuids(
+          parsed.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+        );
+      }
+    } catch {
+      setSavedInstructorUuids([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      SAVED_INSTRUCTORS_STORAGE_KEY,
+      JSON.stringify(savedInstructorUuids)
+    );
+  }, [savedInstructorUuids]);
 
   const { data: skillsResponse } = useQuery(
     searchSkillsOptions({ query: { pageable: {}, searchParams: {} } })
@@ -170,10 +200,31 @@ export default function StudentInstructorSearchPage() {
     );
   }, [approvedInstructorUuids, courseId, trainingInstructors]);
 
+  const savedInstructors = useMemo(
+    () => trainingInstructors.filter(instructor => savedInstructorUuids.includes(instructor.uuid)),
+    [savedInstructorUuids, trainingInstructors]
+  );
+
+  const hiredInstructors = useMemo(
+    () => trainingInstructors.filter(instructor => approvedInstructorUuids.includes(instructor.uuid)),
+    [approvedInstructorUuids, trainingInstructors]
+  );
+
+  const activeInstructorList =
+    activeView === 'saved'
+      ? savedInstructors
+      : activeView === 'hired'
+        ? hiredInstructors
+        : scopedInstructors;
+
   const filteredInstructors = useMemo(() => {
+    if (activeView !== 'search') {
+      return activeInstructorList;
+    }
+
     const query = filters.searchQuery.trim().toLowerCase();
 
-    const result = scopedInstructors.filter(instructor => {
+    const result = activeInstructorList.filter(instructor => {
       const searchTarget = [
         instructor.full_name,
         instructor.professional_headline,
@@ -273,7 +324,7 @@ export default function StudentInstructorSearchPage() {
     });
 
     return withScores.map(entry => entry.instructor);
-  }, [filters, scopedInstructors, sortBy]);
+  }, [activeInstructorList, activeView, filters, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filteredInstructors.length / PAGE_SIZE));
   const paginatedInstructors = useMemo(
@@ -284,20 +335,8 @@ export default function StudentInstructorSearchPage() {
 
 
   useEffect(() => {
-    if (!filteredInstructors.length) {
-      setSelectedInstructorUuid(null);
-      return;
-    }
-
-    const selectedExists = filteredInstructors.some(instructor => instructor.uuid === selectedInstructorUuid);
-    if (!selectedExists) {
-      setSelectedInstructorUuid(filteredInstructors[0]?.uuid ?? null);
-    }
-  }, [filteredInstructors, selectedInstructorUuid]);
-
-  useEffect(() => {
     setPage(1);
-  }, [courseId, filters, sortBy]);
+  }, [activeView, courseId, filters, sortBy]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -374,10 +413,28 @@ export default function StudentInstructorSearchPage() {
     setSelectedInstructorUuid(uuid);
 
     const selectedIndex = filteredInstructors.findIndex(instructor => instructor.uuid === uuid);
-    if (selectedIndex >= 0) {
+    if (selectedIndex >= 0 && activeView === 'search') {
       setPage(Math.floor(selectedIndex / PAGE_SIZE) + 1);
     }
   };
+
+  const toggleSavedInstructor = (uuid: string) => {
+    setSavedInstructorUuids(current =>
+      current.includes(uuid) ? current.filter(item => item !== uuid) : [...current, uuid]
+    );
+  };
+
+  useEffect(() => {
+    if (!filteredInstructors.length) {
+      setSelectedInstructorUuid(null);
+      return;
+    }
+
+    const selectedExists = filteredInstructors.some(instructor => instructor.uuid === selectedInstructorUuid);
+    if (!selectedExists) {
+      setSelectedInstructorUuid(filteredInstructors[0]?.uuid ?? null);
+    }
+  }, [filteredInstructors, selectedInstructorUuid]);
 
   return (
     <div className='space-y-2 px-3 py-4 sm:px-4 lg:px-6'>
@@ -386,170 +443,302 @@ export default function StudentInstructorSearchPage() {
           <div className='space-y-2'>
             <div className='flex items-center gap-2'>
               <h1 className='text-3xl font-bold tracking-[-0.03em]'>
-                Search Instructors
+                {activeView === 'search'
+                  ? 'Search Instructors'
+                  : activeView === 'saved'
+                    ? 'Saved Instructors'
+                    : 'Hired Instructors'}
               </h1>
             </div>
             <p className='text-muted-foreground max-w-3xl text-sm sm:text-[0.95rem]'>
-              Find, compare, and hire verified instructors.
+              {activeView === 'search'
+                ? 'Find, compare, and hire verified instructors.'
+                : activeView === 'saved'
+                  ? 'Review the instructors you saved for later.'
+                  : 'See the instructors already approved for this course.'}
             </p>
           </div>
 
           <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-            {/* <Button type='button' variant='success' className='h-10 rounded-xl px-4 text-sm'>
-              <Plus className='size-4' />
-              Post a Job
-            </Button> */}
-            <Button type='button' variant='outline' className='h-10 rounded-md px-4 text-sm'>
+            <Button
+              type='button'
+              variant={activeView === 'search' ? 'success' : 'outline'}
+              className='h-10 rounded-md px-4 text-sm'
+              onClick={() => setActiveView('search')}
+            >
+              <Search className='size-4' />
+              Search
+            </Button>
+            <Button
+              type='button'
+              variant={activeView === 'saved' ? 'success' : 'outline'}
+              className='h-10 rounded-md px-4 text-sm'
+              onClick={() => setActiveView('saved')}
+            >
               <Bookmark className='size-4' />
               Saved Instructors
+            </Button>
+            <Button
+              type='button'
+              variant={activeView === 'hired' ? 'success' : 'outline'}
+              className='h-10 rounded-md px-4 text-sm'
+              onClick={() => setActiveView('hired')}
+            >
+              <Bookmark className='size-4' />
+              Hired Instructors
             </Button>
           </div>
         </div>
       </section>
 
-      <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]'>
-        <div className='min-w-0 space-y-4'>
-          <SearchInstructorFilters
-            filters={filters}
-            allSpecializations={allSpecializations}
-            onChange={updateFilter}
-            onReset={resetFilters}
-            onApply={() => undefined}
-          />
+      {activeView === 'search' ? (
+        <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]'>
+          <div className='min-w-0 space-y-4'>
+            <SearchInstructorFilters
+              filters={filters}
+              allSpecializations={allSpecializations}
+              onChange={updateFilter}
+              onReset={resetFilters}
+              onApply={() => undefined}
+            />
 
-          <SearchInstructorMetrics
-            totalInstructors={filteredInstructors.length}
-            topSkill={topSkill}
-            topLocation={topLocation}
-            topInstructorName={topRatedInstructor?.full_name ?? ''}
-            topRating={topRating}
-          />
+            <SearchInstructorMetrics
+              totalInstructors={filteredInstructors.length}
+              topSkill={topSkill}
+              topLocation={topLocation}
+              topInstructorName={topRatedInstructor?.full_name ?? ''}
+              topRating={topRating}
+            />
 
-          <div className='bg-card px-4 py-0 shadow-none'>
-            <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between'>
-              <div>
-                <p className='text-sm font-semibold sm:text-base'>Showing {filteredInstructors.length} instructors</p>
+            <div className='bg-card px-4 py-0 shadow-none'>
+              <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between'>
+                <div>
+                  <p className='text-sm font-semibold sm:text-base'>
+                    Showing {filteredInstructors.length} instructors
+                  </p>
+                </div>
+
+                <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+                  <Select value={sortBy} onValueChange={value => setSortBy(value as SortBy)}>
+                    <SelectTrigger className='h-10 rounded-md text-sm sm:w-[180px]'>
+                      <SelectValue placeholder='Sort by: Relevance' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='relevance'>Relevance</SelectItem>
+                      <SelectItem value='rating'>Highest Rated</SelectItem>
+                      <SelectItem value='experience'>Most Experience</SelectItem>
+                      <SelectItem value='alphabetical'>Alphabetical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+            </div>
 
-              <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-                {/* <div className='inline-flex items-center gap-2 rounded-xl border px-3 py-2'>
-                  <span className='bg-primary size-2 rounded-full' />
-                  <span className='text-xs font-medium sm:text-sm'>
-                    {selectedInstructor ? selectedInstructor.full_name : 'No instructor selected'}
-                  </span>
-                </div> */}
-                <Select value={sortBy} onValueChange={value => setSortBy(value as SortBy)}>
-                  <SelectTrigger className='h-10 rounded-md text-sm sm:w-[180px]'>
-                    <SelectValue placeholder='Sort by: Relevance' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='relevance'>Relevance</SelectItem>
-                    <SelectItem value='rating'>Highest Rated</SelectItem>
-                    <SelectItem value='experience'>Most Experience</SelectItem>
-                    <SelectItem value='alphabetical'>Alphabetical</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-3'>
+              {loading ? (
+                Array.from({ length: 6 }).map((_, index) => (
+                  <Card key={index} className='h-[280px] rounded-xl border bg-card p-4 shadow-none' />
+                ))
+              ) : paginatedInstructors.length > 0 ? (
+                paginatedInstructors.map(instructor => (
+                  <SearchInstructorCard
+                    key={instructor.uuid}
+                    instructor={instructor}
+                    courseId={courseId}
+                    selected={selectedInstructorUuid === instructor.uuid}
+                    isSaved={savedInstructorUuids.includes(instructor.uuid)}
+                    onSelect={() => selectInstructor(instructor.uuid as string)}
+                    onHireNow={() => setHireModalInstructorUuid(instructor.uuid as string)}
+                    onToggleSave={() => toggleSavedInstructor(instructor.uuid as string)}
+                  />
+                ))
+              ) : (
+                <Card className='col-span-1 md:col-span-2 2xl:col-span-3 w-full rounded-xl border border-dashed bg-card p-8 text-center shadow-none'>
+                  <div className='mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted/40'>
+                    <Search className='text-muted-foreground size-5' />
+                  </div>
+                  <h3 className='text-base font-semibold'>No instructors found</h3>
+                  <p className='text-muted-foreground mt-2 text-sm'>
+                    Try broadening the filters or clearing the current search.
+                  </p>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className='mt-4 rounded-xl'
+                    onClick={resetFilters}
+                  >
+                    Clear Filters
+                  </Button>
+                </Card>
+              )}
+            </div>
+
+            {filteredInstructors.length > PAGE_SIZE ? (
+              <Pagination className='justify-center pb-2'>
+                <PaginationContent className='flex-wrap justify-center'>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href='#'
+                      onClick={event => {
+                        event.preventDefault();
+                        setPage(current => Math.max(1, current - 1));
+                      }}
+                      aria-disabled={page === 1}
+                    />
+                  </PaginationItem>
+
+                  {paginationItems.map((item, index) =>
+                    item === 'ellipsis' ? (
+                      <PaginationItem key={`ellipsis-${index}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={item}>
+                        <PaginationLink
+                          href='#'
+                          isActive={item === page}
+                          onClick={event => {
+                            event.preventDefault();
+                            setPage(item);
+                          }}
+                        >
+                          {item}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  )}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      href='#'
+                      onClick={event => {
+                        event.preventDefault();
+                        setPage(current => Math.min(totalPages, current + 1));
+                      }}
+                      aria-disabled={page === totalPages}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            ) : null}
+          </div>
+
+          <aside className='min-w-0 xl:sticky xl:top-4 xl:h-fit'>
+            <SearchInstructorSidebar
+              selectedInstructor={selectedInstructor}
+              shortlist={shortlist}
+              instructorIntroVideo=''
+              onSelectShortlist={selectInstructor}
+              onQuickHire={() => {
+                if (selectedInstructor?.uuid) {
+                  setHireModalInstructorUuid(selectedInstructor.uuid);
+                }
+              }}
+              courseId={courseId}
+            />
+          </aside>
+        </div>
+      ) : (
+        <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]'>
+          <div className='min-w-0 space-y-4'>
+            <Card className='rounded-xl border bg-card p-4 shadow-none'>
+              <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+                <div>
+                  <p className='text-sm font-semibold sm:text-base'>
+                    {activeView === 'saved'
+                      ? `${filteredInstructors.length} saved instructor${filteredInstructors.length === 1 ? '' : 's'}`
+                      : `${filteredInstructors.length} hired instructor${filteredInstructors.length === 1 ? '' : 's'}`}
+                  </p>
+                  <p className='text-muted-foreground text-xs sm:text-sm'>
+                    {activeView === 'saved'
+                      ? 'These are the instructors you bookmarked for later review.'
+                      : courseId
+                        ? 'These instructors are already approved for the selected course.'
+                        : 'Select a course to see the hired instructor list.'}
+                  </p>
+                </div>
+
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='h-10 rounded-md px-4 text-sm'
+                  onClick={() => setActiveView('search')}
+                >
+                  Back to search
+                </Button>
               </div>
+            </Card>
+
+            <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-3'>
+              {loading ? (
+                Array.from({ length: 6 }).map((_, index) => (
+                  <Card key={index} className='h-[280px] rounded-xl border bg-card p-4 shadow-none' />
+                ))
+              ) : filteredInstructors.length > 0 ? (
+                filteredInstructors.map(instructor => (
+                  <SearchInstructorCard
+                    key={instructor.uuid}
+                    instructor={instructor}
+                    courseId={courseId}
+                    selected={selectedInstructorUuid === instructor.uuid}
+                    isSaved={savedInstructorUuids.includes(instructor.uuid)}
+                    onSelect={() => selectInstructor(instructor.uuid as string)}
+                    onHireNow={() => setHireModalInstructorUuid(instructor.uuid as string)}
+                    onToggleSave={() => toggleSavedInstructor(instructor.uuid as string)}
+                  />
+                ))
+              ) : (
+                <Card className='col-span-1 md:col-span-2 2xl:col-span-3 w-full rounded-xl border border-dashed bg-card p-8 text-center shadow-none'>
+                  <div className='mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted/40'>
+                    <Bookmark className='text-muted-foreground size-5' />
+                  </div>
+                  <h3 className='text-base font-semibold'>
+                    {activeView === 'saved' ? 'No saved instructors yet' : 'No hired instructors yet'}
+                  </h3>
+                  <p className='text-muted-foreground mt-2 text-sm'>
+                    {activeView === 'saved'
+                      ? 'Save instructors from the search tab to see them here.'
+                      : 'Approved hires for this course will appear here once they are added.'}
+                  </p>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className='mt-4 rounded-xl'
+                    onClick={() => setActiveView('search')}
+                  >
+                    Browse instructors
+                  </Button>
+                </Card>
+              )}
             </div>
           </div>
 
-          <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-3'>
-            {loading ? (
-              Array.from({ length: 6 }).map((_, index) => (
-                <Card key={index} className='h-[280px] rounded-xl border bg-card p-4 shadow-none' />
-              ))
-            ) : paginatedInstructors.length > 0 ? (
-              paginatedInstructors.map(instructor => (
-                <SearchInstructorCard
-                  key={instructor.uuid}
-                  instructor={instructor}
-                  courseId={courseId}
-                  selected={selectedInstructorUuid === instructor.uuid}
-                  onSelect={() => selectInstructor(instructor.uuid as string)}
-                  onHireNow={() => setHireModalInstructorUuid(instructor.uuid as string)}
-                />
-              ))
-            ) : (
-              <Card className='col-span-1 md:col-span-2 2xl:col-span-3 w-full rounded-xl border border-dashed bg-card p-8 text-center shadow-none'>
-                <div className='mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted/40'>
-                  <Search className='text-muted-foreground size-5' />
-                </div>
-                <h3 className='text-base font-semibold'>No instructors found</h3>
-                <p className='text-muted-foreground mt-2 text-sm'>
-                  Try broadening the filters or clearing the current search.
+          <aside className='min-w-0 xl:sticky xl:top-4 xl:h-fit'>
+            <Card className='rounded-xl border bg-card p-4 shadow-none'>
+              <div className='space-y-3'>
+                <h3 className='text-sm font-semibold sm:text-base'>
+                  {activeView === 'saved' ? 'Saved list' : 'Hired list'}
+                </h3>
+                <p className='text-muted-foreground text-xs sm:text-sm'>
+                  {activeView === 'saved'
+                    ? 'Saved instructors are stored in your browser on this device.'
+                    : 'These instructors were approved from the current course applications.'}
                 </p>
-                <Button type='button' variant='outline' className='mt-4 rounded-xl' onClick={resetFilters}>
-                  Clear Filters
-                </Button>
-              </Card>
-            )}
-          </div>
-
-          {filteredInstructors.length > PAGE_SIZE ? (
-            <Pagination className='justify-center pb-2'>
-              <PaginationContent className='flex-wrap justify-center'>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href='#'
-                    onClick={event => {
-                      event.preventDefault();
-                      setPage(current => Math.max(1, current - 1));
-                    }}
-                    aria-disabled={page === 1}
-                  />
-                </PaginationItem>
-
-                {paginationItems.map((item, index) =>
-                  item === 'ellipsis' ? (
-                    <PaginationItem key={`ellipsis-${index}`}>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  ) : (
-                    <PaginationItem key={item}>
-                      <PaginationLink
-                        href='#'
-                        isActive={item === page}
-                        onClick={event => {
-                          event.preventDefault();
-                          setPage(item);
-                        }}
-                      >
-                        {item}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )
-                )}
-
-                <PaginationItem>
-                  <PaginationNext
-                    href='#'
-                    onClick={event => {
-                      event.preventDefault();
-                      setPage(current => Math.min(totalPages, current + 1));
-                    }}
-                    aria-disabled={page === totalPages}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          ) : null}
+                <div className='space-y-2'>
+                  <div className='flex items-center justify-between rounded-lg border px-3 py-2'>
+                    <span className='text-sm'>Visible instructors</span>
+                    <span className='text-sm font-semibold'>{filteredInstructors.length}</span>
+                  </div>
+                  <div className='flex items-center justify-between rounded-lg border px-3 py-2'>
+                    <span className='text-sm'>Selected course</span>
+                    <span className='text-sm font-semibold'>{courseId ? 'Yes' : 'No'}</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </aside>
         </div>
-
-        <aside className='min-w-0 xl:sticky xl:top-4 xl:h-fit'>
-          <SearchInstructorSidebar
-            selectedInstructor={selectedInstructor}
-            shortlist={shortlist}
-            instructorIntroVideo=''
-            onSelectShortlist={selectInstructor}
-            onQuickHire={() => {
-              if (selectedInstructor?.uuid) {
-                setHireModalInstructorUuid(selectedInstructor.uuid);
-              }
-            }}
-            courseId={courseId}
-          />
-        </aside>
-      </div>
+      )}
 
       <InstructorHireModal
         instructor={hireModalInstructor}

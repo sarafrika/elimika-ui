@@ -14,18 +14,18 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import Spinner from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Spinner from '@/components/ui/spinner';
+import type { User } from '@/services/client';
 import {
   updateUserMutation,
   uploadProfileImageMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { User } from '@/services/client';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import type React from 'react';
@@ -109,7 +109,20 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
     },
   });
 
+  const profileFormSnapshot = [
+    profile?.uuid ?? '',
+    profile?.first_name ?? '',
+    profile?.middle_name ?? '',
+    profile?.last_name ?? '',
+    profile?.email ?? '',
+    profile?.phone_number ?? '',
+  ].join('|');
+
   useEffect(() => {
+    if (isEditing) {
+      return;
+    }
+
     form.reset({
       first_name: profile?.first_name ?? '',
       middle_name: profile?.middle_name ?? '',
@@ -117,7 +130,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
       email: profile?.email ?? '',
       phone_number: profile?.phone_number ?? '',
     });
-  }, [form, profile]);
+  }, [form, isEditing, profileFormSnapshot]);
 
   const profileImage = profile?.profile_image_url ?? '';
 
@@ -234,6 +247,8 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
       toast.error(getMutationErrorMessage(error));
     }
   };
+
+  const { isSubmitting } = form.formState;
 
   const visibleFields = [
     {
@@ -570,10 +585,10 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                           variant === 'organisation'
                             ? organisation?.description ?? 'Not set'
                             : profile?.student?.bio ??
-                              profile?.instructor?.bio ??
-                              profile?.courseCreator?.bio ??
-                              profile?.full_name ??
-                              'Not set'
+                            profile?.instructor?.bio ??
+                            profile?.courseCreator?.bio ??
+                            profile?.full_name ??
+                            'Not set'
                         }
                         multiline
                       />
@@ -592,9 +607,9 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                         <Button
                           type='submit'
                           className='h-10 min-w-[140px] rounded-md px-4 text-sm'
-                          disabled={!isEditing || updateUser.isPending}
+                          disabled={!isEditing || updateUser.isPending || isSubmitting}
                         >
-                          {updateUser.isPending ? (
+                          {updateUser.isPending || isSubmitting ? (
                             <span className='flex items-center gap-2'>
                               <Spinner className='h-4 w-4' />
                               Saving...
