@@ -1,7 +1,7 @@
 'use client';
 
-import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
 type StudentOverviewSearchBarProps = {
   value: string;
@@ -21,7 +21,7 @@ export function StudentOverviewSearchBar({
         value={value}
         onChange={event => onChange(event.target.value)}
         placeholder={placeholder}
-        className='h-14 rounded-[18px] border-border bg-card pl-11 text-sm shadow-sm placeholder:text-muted-foreground'
+        className='h-10 rounded-md border-border bg-card pl-11 text-sm shadow-sm placeholder:text-muted-foreground'
       />
     </label>
   );

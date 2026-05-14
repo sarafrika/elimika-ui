@@ -4,14 +4,35 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import Spinner from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { User } from '@/services/client';
+import {
+  updateUserMutation,
+  uploadProfileImageMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
 import { SettingsField } from '../_components/settings-field';
 import { SettingsPageHeader } from '../_components/settings-page-header';
@@ -30,6 +51,35 @@ type DashboardSettingsPageProps = {
   variant: DashboardSettingsVariant;
 };
 
+const userDetailsSchema = z.object({
+  first_name: z.string().trim().min(1, 'First name is required'),
+  middle_name: z.string().trim().optional(),
+  last_name: z.string().trim().min(1, 'Last name is required'),
+  email: z.string().trim().email('Enter a valid email address'),
+  phone_number: z.string().trim().optional(),
+});
+
+type UserDetailsFormValues = z.infer<typeof userDetailsSchema>;
+
+function getMutationErrorMessage(error: unknown) {
+  if (typeof error === 'object' && error !== null) {
+    if ('message' in error && typeof error.message === 'string') {
+      return error.message;
+    }
+
+    if ('error' in error && typeof error.error === 'object' && error.error !== null) {
+      const firstError = Object.values(error.error).find(
+        value => typeof value === 'string' && value.trim().length > 0
+      );
+      if (typeof firstError === 'string') {
+        return firstError;
+      }
+    }
+  }
+
+  return 'Unable to update your profile right now. Please try again.';
+}
+
 const supportCopyByVariant: Record<DashboardSettingsVariant, string> = {
   admin: 'Platform access, policies, and approvals',
   organisation: 'Organisation records and workspace controls',
@@ -39,8 +89,50 @@ const supportCopyByVariant: Record<DashboardSettingsVariant, string> = {
 };
 
 export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
+  const qc = useQueryClient();
   const profile = useUserProfile();
   const organisation = useOrganisation();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const updateUser = useMutation(updateUserMutation());
+  const uploadProfileImage = useMutation(uploadProfileImageMutation());
+  const [isEditing, setIsEditing] = useState(false);
+
+  const form = useForm<UserDetailsFormValues>({
+    resolver: zodResolver(userDetailsSchema),
+    defaultValues: {
+      first_name: profile?.first_name ?? '',
+      middle_name: profile?.middle_name ?? '',
+      last_name: profile?.last_name ?? '',
+      email: profile?.email ?? '',
+      phone_number: profile?.phone_number ?? '',
+    },
+  });
+
+  const profileFormSnapshot = [
+    profile?.uuid ?? '',
+    profile?.first_name ?? '',
+    profile?.middle_name ?? '',
+    profile?.last_name ?? '',
+    profile?.email ?? '',
+    profile?.phone_number ?? '',
+  ].join('|');
+
+  useEffect(() => {
+    if (isEditing) {
+      return;
+    }
+
+    form.reset({
+      first_name: profile?.first_name ?? '',
+      middle_name: profile?.middle_name ?? '',
+      last_name: profile?.last_name ?? '',
+      email: profile?.email ?? '',
+      phone_number: profile?.phone_number ?? '',
+    });
+  }, [form, isEditing, profileFormSnapshot]);
+
+  const profileImage = profile?.profile_image_url ?? '';
 
   const profileName = getProfileDisplayName(profile);
   const profileInitials = getProfileInitials(profileName);
@@ -66,8 +158,97 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
     ' '
   );
   const supportCopy = supportCopyByVariant[variant];
-  const avatarSrc = profile?.profile_image_url ?? '';
   const joinedDate = formatDate(profile?.created_date ?? null);
+  const openProfileImagePicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleProfileImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    if (!profile?.uuid) {
+      toast.error('User profile is not available yet.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Profile images must be smaller than 5MB.');
+      return;
+    }
+
+    try {
+      await uploadProfileImage.mutateAsync({
+        path: { userUuid: profile.uuid },
+        body: { profileImage: file },
+      });
+      toast.success('Profile photo updated');
+      await qc.invalidateQueries({ queryKey: ['profile'] });
+    } catch (error) {
+      toast.error(getMutationErrorMessage(error));
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const handleStartEditing = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEditing = () => {
+    form.reset({
+      first_name: profile?.first_name ?? '',
+      middle_name: profile?.middle_name ?? '',
+      last_name: profile?.last_name ?? '',
+      email: profile?.email ?? '',
+      phone_number: profile?.phone_number ?? '',
+    });
+    setIsEditing(false);
+  };
+
+  const handleSaveProfile = async (values: UserDetailsFormValues) => {
+    if (!profile?.uuid) {
+      toast.error('User profile is not available yet.');
+      return;
+    }
+
+    const dob =
+      profile.dob instanceof Date ? profile.dob : profile.dob ? new Date(profile.dob) : null;
+
+    if (!dob || Number.isNaN(dob.getTime())) {
+      toast.error('We could not determine your date of birth.');
+      return;
+    }
+
+    try {
+      await updateUser.mutateAsync({
+        path: { uuid: profile.uuid },
+        body: {
+          ...(profile as User),
+          first_name: values.first_name.trim(),
+          middle_name: values.middle_name?.trim() || undefined,
+          last_name: values.last_name.trim(),
+          email: values.email.trim(),
+          phone_number: values.phone_number?.trim() || undefined,
+          dob,
+        },
+      });
+
+      toast.success('Profile updated successfully');
+      setIsEditing(false);
+      await qc.invalidateQueries({ queryKey: ['profile'] });
+    } catch (error) {
+      toast.error(getMutationErrorMessage(error));
+    }
+  };
+
+  const { isSubmitting } = form.formState;
 
   const visibleFields = [
     {
@@ -154,7 +335,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
           title={config.title}
           subtitle={config.subtitle}
           profileName={profileName}
-          profileImage={avatarSrc}
+          profileImage={profileImage}
           initials={profileInitials}
         />
 
@@ -197,7 +378,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                   <div className='flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between'>
                     <div className='flex min-w-0 items-center gap-4'>
                       <Avatar className='size-20 border border-border/70 sm:size-24'>
-                        <AvatarImage src={avatarSrc} alt={profileName} />
+                        <AvatarImage src={profileImage} alt={profileName} />
                         <AvatarFallback className='bg-primary/10 text-primary text-xl font-semibold'>
                           {profileInitials}
                         </AvatarFallback>
@@ -224,62 +405,223 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                       </div>
                     </div>
 
-                    <Button
-                      type='button'
-                      variant='outline'
-                      className='h-11 rounded-md px-4 text-sm font-medium shadow-sm'
-                    >
-                      Upload New
-                    </Button>
+                    <div className='flex flex-wrap gap-2'>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        className='h-10 rounded-md px-4 text-sm font-medium shadow-sm'
+                        onClick={handleStartEditing}
+                        disabled={isEditing || !profile?.uuid}
+                      >
+                        Edit details
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        className='h-10 rounded-md px-4 text-sm font-medium shadow-sm'
+                        onClick={openProfileImagePicker}
+                        disabled={!profile?.uuid || uploadProfileImage.isPending}
+                      >
+                        {uploadProfileImage.isPending ? 'Uploading...' : 'Upload New'}
+                      </Button>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type='file'
+                      accept='image/*'
+                      className='hidden'
+                      onChange={handleProfileImageUpload}
+                    />
                   </div>
 
-                  <div className='grid gap-4 sm:grid-cols-2'>
-                    {visibleFields.map(field => (
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleSaveProfile)} className='space-y-5'>
+                      <div className='space-y-4'>
+                        <div className='grid gap-4 sm:grid-cols-2'>
+                          {isEditing ? (
+                            <>
+                              <FormField
+                                control={form.control}
+                                name='first_name'
+                                render={({ field }) => (
+                                  <FormItem className='space-y-2'>
+                                    <FormLabel>First name</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder='First name'
+                                        {...field}
+                                        className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name='middle_name'
+                                render={({ field }) => (
+                                  <FormItem className='space-y-2'>
+                                    <FormLabel>Middle name</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder='Middle name'
+                                        {...field}
+                                        className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name='last_name'
+                                render={({ field }) => (
+                                  <FormItem className='space-y-2'>
+                                    <FormLabel>Last name</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder='Last name'
+                                        {...field}
+                                        className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name='email'
+                                render={({ field }) => (
+                                  <FormItem className='space-y-2'>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder='Email address'
+                                        type='email'
+                                        {...field}
+                                        className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <SettingsField
+                                label='First name'
+                                value={form.getValues('first_name') || 'Not set'}
+                                helperText='Primary display name from your current profile.'
+                              />
+                              <SettingsField
+                                label='Middle name'
+                                value={form.getValues('middle_name') || 'Not set'}
+                                helperText='Optional middle name or initial.'
+                              />
+                              <SettingsField
+                                label='Last name'
+                                value={form.getValues('last_name') || 'Not set'}
+                                helperText='Family name shown in your account.'
+                              />
+                              <SettingsField
+                                label='Email'
+                                value={form.getValues('email') || 'Not set'}
+                                helperText='Used for sign in and system notifications.'
+                              />
+                            </>
+                          )}
+                        </div>
+
+                        {isEditing ? (
+                          <FormField
+                            control={form.control}
+                            name='phone_number'
+                            render={({ field }) => (
+                              <FormItem className='space-y-2 sm:max-w-[calc(50%-0.5rem)]'>
+                                <FormLabel>Phone number</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder='Phone number'
+                                    {...field}
+                                    className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        ) : (
+                          <div className='sm:max-w-[calc(50%-0.5rem)]'>
+                            <SettingsField
+                              label='Phone number'
+                              value={form.getValues('phone_number') || 'Not set'}
+                              helperText='Shown for contact and recovery purposes.'
+                            />
+                          </div>
+                        )}
+                      </div>
+
                       <SettingsField
-                        key={field.label}
-                        label={field.label}
-                        value={field.value}
-                        helperText={field.helperText}
+                        label='Username'
+                        value={profile?.username ?? 'Not set'}
+                        helperText='Your unique login handle.'
                       />
-                    ))}
-                  </div>
 
-                  <div className='grid gap-4 sm:grid-cols-2'>
-                    {roleFields[variant].map(field => (
-                      <SettingsField key={field.label} label={field.label} value={field.value} />
-                    ))}
-                  </div>
+                      <div className='grid gap-4 sm:grid-cols-2'>
+                        {roleFields[variant].map(field => (
+                          <SettingsField key={field.label} label={field.label} value={field.value} />
+                        ))}
+                      </div>
 
-                  <SettingsField
-                    label={variant === 'organisation' ? 'Organisation description' : 'Bio / description'}
-                    value={
-                      variant === 'organisation'
-                        ? organisation?.description ?? 'Not set'
-                        : profile?.student?.bio ??
-                        profile?.instructor?.bio ??
-                        profile?.courseCreator?.bio ??
-                        profile?.full_name ??
-                        'Not set'
-                    }
-                    multiline
-                  />
+                      <SettingsField
+                        label={
+                          variant === 'organisation' ? 'Organisation description' : 'Bio / description'
+                        }
+                        value={
+                          variant === 'organisation'
+                            ? organisation?.description ?? 'Not set'
+                            : profile?.student?.bio ??
+                            profile?.instructor?.bio ??
+                            profile?.courseCreator?.bio ??
+                            profile?.full_name ??
+                            'Not set'
+                        }
+                        multiline
+                      />
 
-                  <div className="flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-end">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-10 min-w-[140px] rounded-md px-4 text-sm"
-                    >
-                      Cancel
-                    </Button>
+                      <div className='flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-end'>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          className='h-10 min-w-[140px] rounded-md px-4 text-sm'
+                          onClick={handleCancelEditing}
+                          disabled={!isEditing}
+                        >
+                          Cancel
+                        </Button>
 
-                    <Button
-                      type="button"
-                      className="h-10 min-w-[140px] rounded-md px-4 text-sm"
-                    >
-                      Save Changes
-                    </Button>
-                  </div>
+                        <Button
+                          type='submit'
+                          className='h-10 min-w-[140px] rounded-md px-4 text-sm'
+                          disabled={!isEditing || updateUser.isPending || isSubmitting}
+                        >
+                          {updateUser.isPending || isSubmitting ? (
+                            <span className='flex items-center gap-2'>
+                              <Spinner className='h-4 w-4' />
+                              Saving...
+                            </span>
+                          ) : (
+                            'Save Changes'
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+
                 </CardContent>
               </Card>
 
@@ -403,7 +745,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                     <Button
                       asChild
                       variant='outline'
-                      className='mt-2 h-11 w-full rounded-md border-dashed text-sm font-medium'
+                      className='mt-2 h-10 w-full rounded-md border-dashed text-sm font-medium'
                     >
                       <Link href={accessActionHref}>
                         Open {variant === 'admin' ? 'system config' : 'help center'}
@@ -415,17 +757,17 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
             </div>
           </TabsContent>
 
-          <TabsContent value="access" className="mt-0">
-            <Card className="rounded-[20px] border-border/70 p-0 shadow-sm">
-              <CardHeader className="border-border/60 border-b px-4 py-4 sm:px-5">
-                <CardTitle className="text-base font-semibold sm:text-lg">
+          <TabsContent value='access' className='mt-0'>
+            <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+              <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
+                <CardTitle className='text-base font-semibold sm:text-lg'>
                   Access
                 </CardTitle>
               </CardHeader>
 
-              <CardContent className="px-4 py-5 sm:px-5">
-                <div className="flex min-h-[320px] items-center justify-center rounded-[16px] border border-dashed border-border/70 bg-muted/20">
-                  <p className="text-sm text-muted-foreground">
+              <CardContent className='px-4 py-5 sm:px-5'>
+                <div className='flex min-h-[320px] items-center justify-center rounded-[16px] border border-dashed border-border/70 bg-muted/20'>
+                  <p className='text-sm text-muted-foreground'>
                     No access settings available yet.
                   </p>
                 </div>
@@ -582,10 +924,10 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
-                    <Button variant='outline' className='h-11 w-full rounded-md border-dashed text-sm'>
+                    <Button variant='outline' className='h-10 w-full rounded-md border-dashed text-sm'>
                       Reset advanced preferences
                     </Button>
-                    <Button variant='outline' className='h-11 w-full rounded-md text-sm'>
+                    <Button variant='outline' className='h-10 w-full rounded-md text-sm'>
                       View account activity
                     </Button>
                   </CardContent>

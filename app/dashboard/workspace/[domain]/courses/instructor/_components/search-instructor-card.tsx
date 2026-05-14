@@ -23,6 +23,8 @@ type Props = {
   selected: boolean;
   onSelect: () => void;
   onHireNow: () => void;
+  isSaved?: boolean;
+  onToggleSave?: () => void;
 };
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -74,6 +76,8 @@ export function SearchInstructorCard({
   selected,
   onSelect,
   onHireNow,
+  isSaved = false,
+  onToggleSave,
 }: Props) {
   const { data: appliedCourses } = useQuery({
     ...searchTrainingApplicationsOptions({
@@ -232,8 +236,12 @@ export function SearchInstructorCard({
                 size='icon'
                 className='size-9 rounded-full'
                 aria-label='Save instructor'
+                onClick={event => {
+                  event.stopPropagation();
+                  onToggleSave?.();
+                }}
               >
-                <Heart className='size-4' />
+                <Heart className={isSaved ? 'size-4 fill-current text-destructive' : 'size-4'} />
               </Button>
             </div>
 
