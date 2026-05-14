@@ -403,7 +403,7 @@ export default function InstructorClassPage() {
         isOpen: openDropdowns.classrooms,
         items: classroomFilterItems,
         key: 'classrooms',
-        label: 'Classrooms / Rooms',
+        label: 'Classrooms',
         onItemClick: id => {
           setSelectedFilter({ id, kind: 'classroom' });
           setIsFiltersSheetOpen(false);

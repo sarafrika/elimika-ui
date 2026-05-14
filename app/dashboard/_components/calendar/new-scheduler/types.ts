@@ -8,6 +8,7 @@ export type SchedulerEvent = {
   id: string;
   instanceUuid?: string;
   classDefinitionUuid?: string;
+  eventType?: 'class' | 'booking_request';
   title: string;
   course: string;
   instructor: string;
@@ -31,6 +32,22 @@ export type SchedulerFilterValues = Record<SchedulerFilterKey, string> & {
 
 export type SchedulerFilterOptions = Record<SchedulerFilterKey, string[]> & {
   statuses: string[];
+};
+
+export type SchedulerFilterItem = {
+  id: string;
+  name: string;
+};
+
+export type SchedulerFilterSection = {
+  count: number;
+  isOpen: boolean;
+  items: SchedulerFilterItem[];
+  key: 'bookings' | 'classes' | 'classrooms' | 'venues';
+  label: string;
+  onItemClick: (id: string) => void;
+  onToggle: () => void;
+  selectedId?: string | null;
 };
 
 export type SchedulerMetric = {

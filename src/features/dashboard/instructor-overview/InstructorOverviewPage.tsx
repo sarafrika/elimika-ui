@@ -21,7 +21,7 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
 
   return (
     <main className='w-full mb-20'>
-      <div className='mx-auto max-w-[1480px] px-2 py-2 sm:px-3 lg:px-4'>
+      <div className='px-2 py-2 sm:px-3 lg:px-4'>
         <div className='space-y-3 border border-border bg-card p-3 sm:p-4 rounded-xl'>
           <OverviewHeader firstName={firstName} />
 
