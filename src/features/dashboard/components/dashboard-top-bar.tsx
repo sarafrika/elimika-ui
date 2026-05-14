@@ -84,6 +84,9 @@ export default function DashboardTopBar() {
     ? dashboardDomainDisplayConfig[activeDomain as keyof typeof dashboardDomainDisplayConfig]
     : null;
   const isCourseCreator = activeDomain === 'course_creator';
+  const isInstructor = activeDomain === 'instructor';
+  const isOrganisation = activeDomain === 'organisation';
+
   const profileName = getProfileName(profile);
   const profileInitials = getInitials(profileName);
 
@@ -117,6 +120,10 @@ export default function DashboardTopBar() {
   const createCourseHref = buildWorkspaceAliasPath(
     activeDomain,
     '/dashboard/course-management/create-new-course'
+  );
+  const createClassHref = buildWorkspaceAliasPath(
+    activeDomain,
+    '/dashboard/classes/create-new'
   );
 
   return (
@@ -172,6 +179,16 @@ export default function DashboardTopBar() {
                 <Link href={createCourseHref}>
                   <Sparkles className='h-7 w-4' />
                   Create Course
+                  <ChevronDown className='h-4 w-4' />
+                </Link>
+              </Button>
+            )}
+
+            {(isInstructor || isOrganisation) && (
+              <Button asChild size='sm' className='hidden rounded-full px-4 font-semibold md:inline-flex'>
+                <Link href={createClassHref}>
+                  <Sparkles className='h-7 w-4' />
+                  Create Class
                   <ChevronDown className='h-4 w-4' />
                 </Link>
               </Button>

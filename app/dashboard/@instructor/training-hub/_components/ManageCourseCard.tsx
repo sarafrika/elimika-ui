@@ -31,7 +31,7 @@ export function ManageCourseCard({ course }: ManageCourseCardProps) {
 
   return (
     <article className='w-full max-w-full min-w-0 overflow-hidden rounded-[12px] border border-border/60 bg-card p-2.5 shadow-sm sm:p-3'>
-      <div className='flex w-full min-w-0 gap-3'>
+      <div className='flex w-full min-w-0 gap-3 py-1.5'>
         <div className='min-w-0 flex-1 basis-0'>
 
           <Link
@@ -101,15 +101,14 @@ export function ManageCourseCard({ course }: ManageCourseCardProps) {
       </div>
 
       {/* ACTION */}
-      <div className='mt-2 flex justify-end'>
+      {/* <div className='mt-2 flex justify-end'>
         <Link
           className='inline-flex h-9 items-center justify-center rounded-[8px] bg-primary px-4 text-[0.8rem] font-medium text-primary-foreground transition hover:bg-primary/90'
           href={course.ctaHref}
         >
           {course.ctaLabel}
         </Link>
-      </div>
-
+      </div> */}
     </article>
   );
 }
