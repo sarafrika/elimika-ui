@@ -41,7 +41,7 @@ export function AppSidebar({
   };
 
   return (
-    <Sidebar variant='inset' {...props}>
+    <Sidebar variant='inset' {...props} className='px-1'>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

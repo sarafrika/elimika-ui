@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
-import { useState } from 'react';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import type { UserDomain } from '@/lib/types';
 import { type MenuItem, markActiveMenuItem } from '@/src/features/dashboard/config/menu';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import Link from 'next/link';
+import { useState } from 'react';
 
 export function NavMain({
   items,
@@ -65,7 +65,7 @@ function MenuItemWithAccordion({
 
           {/* Nested Items */}
           {isOpen && (
-            <SidebarMenu className='border-border/60 ml-4 border-l pl-4'>
+            <SidebarMenu className='border-border/60 border-l pl-4'>
               {item.items
                 ?.filter(child => (child.requiresAdmin ? isAdmin : true))
                 .map((child, index) => (
