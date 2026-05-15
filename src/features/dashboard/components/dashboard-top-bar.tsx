@@ -1,7 +1,6 @@
 'use client';
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
-import { AppBreadcrumb } from '@/components/ui/app-breadcrumb';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -283,9 +282,9 @@ export default function DashboardTopBar() {
           </div>
         </div>
 
-        <div className='hidden px-3 py-3 sm:px-5 lg:px-6 xl:block'>
+        {/* <div className='hidden px-3 py-3 sm:px-5 lg:px-6 xl:block'>
           <AppBreadcrumb className='text-muted-foreground text-sm border-none' />
-        </div>
+        </div> */}
       </div>
     </header>
   );

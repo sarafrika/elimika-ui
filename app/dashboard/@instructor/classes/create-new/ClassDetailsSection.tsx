@@ -214,7 +214,7 @@ export const ClassDetailsSection = ({
   };
 
   return (
-    <Card className='overflow-hidden border pt-0 shadow-sm'>
+    <Card className='border pt-0 shadow-sm'>
       <div className='bg-muted/50 border-b px-4 py-4 sm:px-6'>
         <h3 className='text-foreground text-lg font-semibold'>Class Details</h3>
       </div>

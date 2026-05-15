@@ -1,0 +1,190 @@
+'use client';
+
+import {
+  Banknote,
+  CalendarDays,
+  Clock3,
+  Copy,
+  Facebook,
+  Globe,
+  Linkedin,
+  Mail,
+  MapPin,
+  MessageCircleMore,
+  MoreHorizontal,
+  PenTool,
+  TimerReset,
+  Users,
+} from 'lucide-react';
+import { useState, type ComponentType } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+
+export type ClassCreationPreviewData = {
+  classTitle: string;
+  classTypeLabel: string;
+  instructorName: string;
+  lectureTypeLabel: string;
+  locationName: string;
+  scheduleLabel: string;
+  timeLabel: string;
+  durationLabel: string;
+  pricePerSessionLabel: string;
+  totalSessionsLabel: string;
+  totalAmountLabel: string;
+  meetingLink: string;
+  inviteLink: string;
+};
+
+const shareButtons = [
+  { icon: MessageCircleMore, label: 'WhatsApp', tone: 'text-success' },
+  { icon: Facebook, label: 'Facebook', tone: 'text-primary' },
+  { icon: Globe, label: 'X', tone: 'text-sky-500' },
+  { icon: Linkedin, label: 'LinkedIn', tone: 'text-primary' },
+  { icon: Mail, label: 'Email', tone: 'text-muted-foreground' },
+  { icon: MoreHorizontal, label: 'More', tone: 'text-foreground' },
+];
+
+const CopyButton = ({ value }: { value: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!value) return;
+    await navigator.clipboard.writeText(value);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <Button
+      type='button'
+      variant='outline'
+      size='icon'
+      className='h-10 w-10 shrink-0 rounded-md'
+      onClick={handleCopy}
+      disabled={!value}
+      aria-label='Copy link'
+    >
+      <Copy className='h-4 w-4' />
+    </Button>
+  );
+};
+
+export function ClassCreationPreviewRail({ data }: { data: ClassCreationPreviewData }) {
+  return (
+    <aside className='space-y-4'>
+      <Card className='border border-border pt-0 shadow-sm rounded-md'>
+        <div className='bg-background flex items-center justify-between gap-3 px-4 pt-4'>
+          <h3 className='text-foreground text-sm font-semibold sm:text-base'>Class Preview</h3>
+          <button type='button' className='text-primary text-xs font-semibold'>
+            See How It Looks
+          </button>
+        </div>
+
+        <div className='px-4 pb-4'>
+          <div
+            className='overflow-hidden rounded-md border border-primary/20'
+            style={{
+              backgroundImage:
+                'url(https://images.unsplash.com/photo-1504384308090-c894fdcc538d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80) ',
+            }}
+          >
+            <div className='px-4 py-8 text-center text-black'>
+              <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-md border border-white/20 bg-white/10'>
+                <PenTool className='h-5 w-5' />
+              </div>
+              <p className='text-xl font-semibold leading-tight'>{data.classTitle || 'Class title'}</p>
+              <div className='mt-2 flex flex-wrap items-center justify-center gap-2 text-sm text-white/90'>
+                <span>{data.classTypeLabel}</span>
+                <span aria-hidden='true'>•</span>
+                <span>{data.lectureTypeLabel}</span>
+              </div>
+            </div>
+
+            <div className='divide-y bg-card'>
+              <PreviewRow icon={Users} label='Instructor' value={data.instructorName || 'John Doe'} />
+              <PreviewRow icon={Globe} label='Lecture Type' value={data.lectureTypeLabel} />
+              <PreviewRow icon={MapPin} label='Location' value={data.locationName || 'Nairobi, Kenya'} />
+              <PreviewRow icon={CalendarDays} label='Schedule' value={`${data.scheduleLabel}\n${data.timeLabel}`} />
+              <PreviewRow icon={Clock3} label='Duration per Session' value={data.durationLabel} />
+              <PreviewRow icon={TimerReset} label='Price per Session' value={data.pricePerSessionLabel} />
+              <PreviewRow icon={CalendarDays} label='Total Sessions' value={data.totalSessionsLabel} />
+              <PreviewRow icon={Banknote} label='Total Amount' value={data.totalAmountLabel} />
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
+        <div className='px-4 py-4'>
+          <h3 className='text-foreground text-sm font-semibold sm:text-base'>Class Meeting Link</h3>
+          <p className='text-muted-foreground mt-1 text-sm'>
+            This link will be used by you and your students to join the class.
+          </p>
+          <div className='mt-4 flex gap-2'>
+            <Input value={data.meetingLink} readOnly />
+            <CopyButton value={data.meetingLink} />
+          </div>
+        </div>
+      </Card>
+
+      <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
+        <div className='px-4 py-4'>
+          <h3 className='text-foreground text-sm font-semibold sm:text-base'>Class Invite Link</h3>
+          <p className='text-muted-foreground mt-1 text-sm'>
+            Share this link to invite students to your class.
+          </p>
+          <div className='mt-4 flex gap-2'>
+            <Input value={data.inviteLink} readOnly />
+            <CopyButton value={data.inviteLink} />
+          </div>
+
+          <div className='mt-4 space-y-3'>
+            <p className='text-foreground text-sm font-semibold'>Share via</p>
+            <div className='grid grid-cols-3 gap-2 sm:grid-cols-6'>
+              {shareButtons.map(item => {
+                const Icon = item.icon;
+
+                return (
+                  <button
+                    key={item.label}
+                    type='button'
+                    className='border-border hover:border-primary/50 hover:bg-primary/5 flex h-11 items-center justify-center rounded-md border bg-card transition'
+                    aria-label={item.label}
+                  >
+                    <Icon className={cn('h-5 w-5', item.tone)} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </Card>
+    </aside>
+  );
+}
+
+const PreviewRow = ({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) => (
+  <div className='grid gap-3 px-4 py-4 sm:px-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center'>
+    <div className='flex items-center gap-3'>
+      <div className='bg-primary/10 text-primary flex h-4 w-8 shrink-0 items-center justify-center rounded-md'>
+        <Icon className='h-4 w-4' />
+      </div>
+      <span className='text-muted-foreground text-sm font-medium'>{label}</span>
+    </div>
+    <div className='min-w-0 whitespace-pre-line text-sm font-medium text-foreground md:text-right'>
+      {value}
+    </div>
+  </div>
+);
