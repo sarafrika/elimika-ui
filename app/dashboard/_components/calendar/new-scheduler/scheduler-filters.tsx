@@ -17,7 +17,7 @@ const Dropdown = ({
   onItemClick,
   selectedId,
 }: FilterSectionView) => (
-  <div className='border-border border-b last:border-b-0'>
+  <div className='border-border border-b last:border-b-0 py-2'>
     <button
       type='button'
       onClick={onToggle}
@@ -41,11 +41,10 @@ const Dropdown = ({
             <button
               key={item.id}
               type='button'
-              className={`flex w-full items-center justify-between rounded px-2.5 py-1.5 text-left text-xs transition-colors md:text-sm ${
-                selectedId === item.id
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-muted-foreground hover:bg-primary/5'
-              }`}
+              className={`flex w-full items-center justify-between rounded px-2.5 py-1.5 text-left text-xs transition-colors md:text-sm ${selectedId === item.id
+                ? 'bg-primary/10 text-primary font-medium'
+                : 'text-muted-foreground hover:bg-primary/5'
+                }`}
               onClick={() => onItemClick(item.id)}
             >
               <span className='truncate'>{item.name}</span>
