@@ -16,7 +16,7 @@ import {
   Users
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 
 import { useInstructor } from '../../../../../context/instructor-context';
@@ -43,14 +43,12 @@ import {
 import type { ClassDetails, NotificationSettings, ScheduleSettings } from '../create-new/page';
 import { ClassCreationHeader } from './_components/class-creation-header';
 import {
-  ClassCreationPreviewRail,
-  type ClassCreationPreviewData,
+  type ClassCreationPreviewData
 } from './_components/class-creation-preview-rail';
 import {
   ClassCreationRateCard,
   type ClassCreationRateSummary,
 } from './_components/class-creation-rate-card';
-import { ClassCreationSummaryStrip } from './_components/class-creation-summary-strip';
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new-class-creation';
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
@@ -267,6 +265,7 @@ const NewClassCreationPage = () => {
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(() =>
     createInitialNotificationSettings()
   );
+  const classDetailsCardRef = useRef<HTMLDivElement | null>(null);
 
   const resolvedId = classId || savedClassUuid;
   const { data: combinedClass, isLoading } = useClassDetails(resolvedId || undefined);
@@ -697,6 +696,9 @@ const NewClassCreationPage = () => {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const inviteLink = resolvedId ? `${origin}/class-invite?id=${resolvedId}` : '';
   const meetingLink = classDetails.meeting_link || 'https://skillswallet.co/meet/john/uix101';
+  const normalizedLocationType = normalizeLocationType(classDetails.location_type);
+  const showMeetingLink =
+    normalizedLocationType === 'ONLINE' || normalizedLocationType === 'HYBRID';
 
   const previewData: ClassCreationPreviewData = {
     classTitle: classDetails.title || selectedCatalogItem?.label || 'Class title',
@@ -724,17 +726,17 @@ const NewClassCreationPage = () => {
   };
 
   return (
-    <div className='bg-background min-h-screen px-2 py-4 sm:px-3 sm:py-6 lg:px-6'>
-      <div className='mx-auto max-w-[1560px]'>
-        <form onSubmit={handleSubmit} className='space-y-6'>
-          <ClassCreationHeader
-            isSubmitting={createClassDefinition.isPending || updateClassDefinition.isPending}
-            onSaveDraft={() => submitClass(true)}
-            onPublish={() => submitClass(false)}
-          />
+    <div className='h-auto px-2 py-4 sm:px-3 sm:py-6 lg:px-6'>
+      <form onSubmit={handleSubmit} className='space-y-6'>
+        <ClassCreationHeader
+          isSubmitting={createClassDefinition.isPending || updateClassDefinition.isPending}
+          onSaveDraft={() => submitClass(true)}
+          onPublish={() => submitClass(false)}
+        />
 
-          <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start'>
-            <div className='space-y-4'>
+        <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start'>
+          <div className='space-y-4'>
+            <div ref={classDetailsCardRef} className='scroll-mt-24'>
               <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
                 <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
                   <h3 className='text-foreground text-lg font-semibold'>Class Details</h3>
@@ -814,24 +816,29 @@ const NewClassCreationPage = () => {
                       />
                     </FieldGroup>
                     {/*  <FieldGroup label='Description *'>
-                      <div className='space-y-2'>
-                        <Textarea
-                          value={classDetails.description}
-                          onChange={e => setClassDetails(prev => ({ ...prev, description: e.target.value }))}
-                          rows={3}
-                          placeholder='Learn the fundamentals of UI/UX design, including user research, wireframing, prototyping and usability principles.'
-                        />
-                        <div className='text-muted-foreground text-right text-xs'>
-                          {classDetails.description.length}/500
+                        <div className='space-y-2'>
+                          <Textarea
+                            value={classDetails.description}
+                            onChange={e => setClassDetails(prev => ({ ...prev, description: e.target.value }))}
+                            rows={3}
+                            placeholder='Learn the fundamentals of UI/UX design, including user research, wireframing, prototyping and usability principles.'
+                          />
+                          <div className='text-muted-foreground text-right text-xs'>
+                            {classDetails.description.length}/500
+                          </div>
                         </div>
-                      </div>
-                    </FieldGroup> */}
+                      </FieldGroup> */}
                   </div>
 
                   <ClassCreationRateCard
                     durationHours={sessionDuration}
                     summary={rateSummary}
-                    onEditRate={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    onEditRate={() =>
+                      classDetailsCardRef.current?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                      })
+                    }
                   />
                 </div>
 
@@ -874,292 +881,305 @@ const NewClassCreationPage = () => {
                       />
                     </FieldGroup>
                   </div>
+
+                  {showMeetingLink ? (
+                    <div className='mt-4'>
+                      <FieldGroup label='Class Meeting Link *'>
+                        <Input
+                          type='url'
+                          value={classDetails.meeting_link}
+                          onChange={e => setClassDetails(prev => ({ ...prev, meeting_link: e.target.value }))}
+                          placeholder='https://meet.google.com/abc-defg-hij'
+                        />
+                      </FieldGroup>
+                    </div>
+                  ) : null}
                 </div>
               </Card>
+            </div>
 
-              <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
-                <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-3'>
-                  <h3 className='text-foreground text-lg font-semibold'>Schedule Options</h3>
+            <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
+              <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-3'>
+                <h3 className='text-foreground text-lg font-semibold'>Schedule Options</h3>
+              </div>
+
+              <div className='space-y-4 px-2 pb-4 sm:px-3 sm:pb-6'>
+                <div className='grid gap-3 md:grid-cols-3'>
+                  {schedulePresetOptions.map(option => (
+                    <button
+                      key={option.key}
+                      type='button'
+                      onClick={() => setSchedulePreset(option.key)}
+                      className={`rounded-md border px-4 py-3 text-left transition ${schedulePreset === option.key
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/40'
+                        }`}
+                    >
+                      <div className='text-sm font-semibold'>{option.title}</div>
+                      <div className='text-muted-foreground mt-1 text-xs'>{option.description}</div>
+                    </button>
+                  ))}
                 </div>
 
-                <div className='space-y-4 px-2 pb-4 sm:px-3 sm:pb-6'>
-                  <div className='grid gap-3 md:grid-cols-3'>
-                    {schedulePresetOptions.map(option => (
-                      <button
-                        key={option.key}
-                        type='button'
-                        onClick={() => setSchedulePreset(option.key)}
-                        className={`rounded-md border px-4 py-3 text-left transition ${schedulePreset === option.key
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/40'
-                          }`}
-                      >
-                        <div className='text-sm font-semibold'>{option.title}</div>
-                        <div className='text-muted-foreground mt-1 text-xs'>{option.description}</div>
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className='grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,0.9fr)]'>
-                    <div className='space-y-4 rounded-md border border-border/60 p-4'>
-                      <div>
-                        <p className='text-foreground text-sm font-semibold'>Standard Schedule</p>
-                        <p className='text-muted-foreground mt-1 text-xs'>
-                          Set recurring days and times
-                        </p>
-                      </div>
-
-                      <div className='space-y-3'>
-                        <div className='flex flex-wrap gap-2'>
-                          {DAY_NAMES.map((day, index) => {
-                            const active = scheduleSettings.repeat.days?.includes(index);
-                            return (
-                              <button
-                                key={day}
-                                type='button'
-                                onClick={() =>
-                                  setScheduleSettings(prev => {
-                                    const currentDays = prev.repeat.days || [];
-                                    const nextDays = active
-                                      ? currentDays.filter(item => item !== index)
-                                      : [...currentDays, index];
-                                    return { ...prev, repeat: { ...prev.repeat, days: nextDays } };
-                                  })
-                                }
-                                className={`rounded-md border px-3 py-2 text-sm font-medium ${active
-                                  ? 'border-primary bg-primary text-primary-foreground'
-                                  : 'border-border bg-card text-foreground'
-                                  }`}
-                              >
-                                {day.slice(0, 3)}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        <div className='grid gap-4 sm:grid-cols-2'>
-                          <FieldGroup label='Class Start Date *'>
-                            <Input
-                              type='date'
-                              value={scheduleSettings.startClass.date}
-                              onChange={e =>
-                                setScheduleSettings(prev => ({
-                                  ...prev,
-                                  startClass: { ...prev.startClass, date: e.target.value },
-                                  endRepeat: prev.endRepeat || e.target.value,
-                                }))
-                              }
-                            />
-                          </FieldGroup>
-                          <FieldGroup label='End Repeat *'>
-                            <Input
-                              type='date'
-                              value={scheduleSettings.endRepeat}
-                              onChange={e => setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))}
-                            />
-                          </FieldGroup>
-                        </div>
-
-                        <div className='grid gap-4 sm:grid-cols-2'>
-                          <FieldGroup label='Start Time'>
-                            <Input
-                              type='time'
-                              value={scheduleSettings.startClass.startTime || ''}
-                              onChange={e =>
-                                setScheduleSettings(prev => ({
-                                  ...prev,
-                                  startClass: { ...prev.startClass, startTime: e.target.value },
-                                }))
-                              }
-                            />
-                          </FieldGroup>
-                          <FieldGroup label='End Time'>
-                            <Input
-                              type='time'
-                              value={scheduleSettings.startClass.endTime || ''}
-                              onChange={e =>
-                                setScheduleSettings(prev => ({
-                                  ...prev,
-                                  startClass: { ...prev.startClass, endTime: e.target.value },
-                                }))
-                              }
-                            />
-                          </FieldGroup>
-                        </div>
-
-                        <FieldGroup label='Timezone'>
-                          <Select
-                            value={scheduleSettings.timezone}
-                            onValueChange={value => setScheduleSettings(prev => ({ ...prev, timezone: value }))}
-                          >
-                            <SelectTrigger className='h-11'>
-                              <SelectValue placeholder='Select timezone' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
-                              <SelectItem value='UTC Coordinated Universal Time'>
-                                UTC Coordinated Universal Time
-                              </SelectItem>
-                              <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FieldGroup>
-                      </div>
-                    </div>
-
-                    <div className='space-y-3 rounded-md border border-border/60 p-4'>
-                      <p className='text-foreground text-sm font-semibold'>Schedule Summary</p>
-                      <SummaryLine icon={CalendarDays} label='Repeat' value={getRepeatSummary(scheduleSettings)} />
-                      <SummaryLine icon={Clock3} label='Time' value={formatScheduleTime(scheduleSettings.startClass.startTime, scheduleSettings.startClass.endTime, scheduleSettings.allDay)} />
-                      <SummaryLine
-                        icon={BellRing}
-                        label='Reminder'
-                        value={notificationSettings.reminder || '24 hours before class'}
-                      />
-                      <SummaryLine
-                        icon={MapPin}
-                        label='Timezone'
-                        value={scheduleSettings.timezone || 'EAT East Africa Time'}
-                      />
-                      <SummaryLine
-                        icon={Circle}
-                        label='Duration'
-                        value={`${sessionDuration || 0} ${sessionDuration === 1 ? 'Hour' : 'Hours'} per session`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className='rounded-md border border-border/60 p-4'>
-                    <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
-                      <div>
-                        <p className='text-foreground text-sm font-semibold'>Class Color</p>
-                        <p className='text-muted-foreground text-xs'>
-                          Choose a color to represent your class.
-                        </p>
-                      </div>
-                      <div className='flex flex-wrap gap-3'>
-                        {['#4f46e5', '#7c3aed', '#ec4899', '#f97316', '#f59e0b', '#10b981', '#14b8a6', '#2563eb', '#6b7280'].map(color => (
-                          <button
-                            key={color}
-                            type='button'
-                            onClick={() => setNotificationSettings(prev => ({ ...prev, classColour: color }))}
-                            className={`h-8 w-8 rounded-full border-2 ${notificationSettings.classColour === color ? 'border-primary' : 'border-transparent'
-                              }`}
-                            style={{ backgroundColor: color }}
-                            aria-label={`Select class color ${color}`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
-                <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
-                  <h3 className='text-foreground text-lg font-semibold'>Reminder Options</h3>
-                </div>
-
-                <div className='grid gap-4 px-2 pb-4 sm:px-4 sm:pb-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]'>
-                  <ReminderCard
-                    title='Student Reminders'
-                    enabled={notificationSettings.reminder !== ''}
-                    onEnabledChange={() =>
-                      setNotificationSettings(prev => ({
-                        ...prev,
-                        reminder: prev.reminder ? '' : '24h',
-                      }))
-                    }
-                  >
-                    <FieldGroup label='Email Reminder'>
-                      <Select
-                        value={notificationSettings.reminder}
-                        onValueChange={value => setNotificationSettings(prev => ({ ...prev, reminder: value }))}
-                      >
-                        <SelectTrigger className='h-11'>
-                          <SelectValue placeholder='Select reminder' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {REMINDER_OPTIONS.map(item => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FieldGroup>
-                    <FieldGroup label='SMS Reminder'>
-                      <Select defaultValue='1h'>
-                        <SelectTrigger className='h-11'>
-                          <SelectValue placeholder='Select reminder' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='1h'>1 hour before class</SelectItem>
-                          <SelectItem value='30m'>30 minutes before class</SelectItem>
-                          <SelectItem value='15m'>15 minutes before class</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FieldGroup>
-                  </ReminderCard>
-
-                  <ReminderCard
-                    title='Instructor Reminders'
-                    enabled
-                    onEnabledChange={() => undefined}
-                  >
-                    <FieldGroup label='Email Reminder'>
-                      <Select defaultValue='1d'>
-                        <SelectTrigger className='h-11'>
-                          <SelectValue placeholder='Select reminder' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='1d'>1 day before class</SelectItem>
-                          <SelectItem value='12h'>12 hours before class</SelectItem>
-                          <SelectItem value='1h'>1 hour before class</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FieldGroup>
-                    <FieldGroup label='SMS Reminder'>
-                      <Select defaultValue='30m'>
-                        <SelectTrigger className='h-11'>
-                          <SelectValue placeholder='Select reminder' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='30m'>30 minutes before class</SelectItem>
-                          <SelectItem value='15m'>15 minutes before class</SelectItem>
-                          <SelectItem value='5m'>5 minutes before class</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FieldGroup>
-                  </ReminderCard>
-
-                  <div className='bg-muted/20 flex items-center justify-center rounded-md border border-border/60 px-4 py-4 text-center'>
-                    <div className='space-y-2'>
-                      <div className='bg-primary/10 text-primary mx-auto flex h-12 w-12 items-center justify-center rounded-full'>
-                        <BellRing className='h-5 w-5' />
-                      </div>
-                      <p className='text-muted-foreground text-xs leading-relaxed'>
-                        Reminders help reduce no-shows and keep your class on track.
+                <div className='grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,0.9fr)]'>
+                  <div className='space-y-4 rounded-md border border-border/60 p-4'>
+                    <div>
+                      <p className='text-foreground text-sm font-semibold'>Standard Schedule</p>
+                      <p className='text-muted-foreground mt-1 text-xs'>
+                        Set recurring days and times
                       </p>
                     </div>
+
+                    <div className='space-y-3'>
+                      <div className='flex flex-wrap gap-2'>
+                        {DAY_NAMES.map((day, index) => {
+                          const active = scheduleSettings.repeat.days?.includes(index);
+                          return (
+                            <button
+                              key={day}
+                              type='button'
+                              onClick={() =>
+                                setScheduleSettings(prev => {
+                                  const currentDays = prev.repeat.days || [];
+                                  const nextDays = active
+                                    ? currentDays.filter(item => item !== index)
+                                    : [...currentDays, index];
+                                  return { ...prev, repeat: { ...prev.repeat, days: nextDays } };
+                                })
+                              }
+                              className={`rounded-md border px-3 py-2 text-sm font-medium ${active
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-border bg-card text-foreground'
+                                }`}
+                            >
+                              {day.slice(0, 3)}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className='grid gap-4 sm:grid-cols-2'>
+                        <FieldGroup label='Class Start Date *'>
+                          <Input
+                            type='date'
+                            value={scheduleSettings.startClass.date}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                startClass: { ...prev.startClass, date: e.target.value },
+                                endRepeat: prev.endRepeat || e.target.value,
+                              }))
+                            }
+                          />
+                        </FieldGroup>
+                        <FieldGroup label='End Repeat *'>
+                          <Input
+                            type='date'
+                            value={scheduleSettings.endRepeat}
+                            onChange={e => setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))}
+                          />
+                        </FieldGroup>
+                      </div>
+
+                      <div className='grid gap-4 sm:grid-cols-2'>
+                        <FieldGroup label='Start Time'>
+                          <Input
+                            type='time'
+                            value={scheduleSettings.startClass.startTime || ''}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                startClass: { ...prev.startClass, startTime: e.target.value },
+                              }))
+                            }
+                          />
+                        </FieldGroup>
+                        <FieldGroup label='End Time'>
+                          <Input
+                            type='time'
+                            value={scheduleSettings.startClass.endTime || ''}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                startClass: { ...prev.startClass, endTime: e.target.value },
+                              }))
+                            }
+                          />
+                        </FieldGroup>
+                      </div>
+
+                      <FieldGroup label='Timezone'>
+                        <Select
+                          value={scheduleSettings.timezone}
+                          onValueChange={value => setScheduleSettings(prev => ({ ...prev, timezone: value }))}
+                        >
+                          <SelectTrigger className='h-11'>
+                            <SelectValue placeholder='Select timezone' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
+                            <SelectItem value='UTC Coordinated Universal Time'>
+                              UTC Coordinated Universal Time
+                            </SelectItem>
+                            <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FieldGroup>
+                    </div>
+                  </div>
+
+                  <div className='space-y-3 rounded-md border border-border/60 p-4'>
+                    <p className='text-foreground text-sm font-semibold'>Schedule Summary</p>
+                    <SummaryLine icon={CalendarDays} label='Repeat' value={getRepeatSummary(scheduleSettings)} />
+                    <SummaryLine icon={Clock3} label='Time' value={formatScheduleTime(scheduleSettings.startClass.startTime, scheduleSettings.startClass.endTime, scheduleSettings.allDay)} />
+                    <SummaryLine
+                      icon={BellRing}
+                      label='Reminder'
+                      value={notificationSettings.reminder || '24 hours before class'}
+                    />
+                    <SummaryLine
+                      icon={MapPin}
+                      label='Timezone'
+                      value={scheduleSettings.timezone || 'EAT East Africa Time'}
+                    />
+                    <SummaryLine
+                      icon={Circle}
+                      label='Duration'
+                      value={`${sessionDuration || 0} ${sessionDuration === 1 ? 'Hour' : 'Hours'} per session`}
+                    />
                   </div>
                 </div>
-              </Card>
 
-              <ClassCreationSummaryStrip
-                currency={rateCard?.currency as string | undefined || 'KES'}
-                maxParticipants={classDetails.class_limit}
-                totalAmount={totalAmount}
-                totalSessions={totalSessions}
-              />
-            </div>
+                <div className='rounded-md border border-border/60 p-4'>
+                  <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                    <div>
+                      <p className='text-foreground text-sm font-semibold'>Class Color</p>
+                      <p className='text-muted-foreground text-xs'>
+                        Choose a color to represent your class.
+                      </p>
+                    </div>
+                    <div className='flex flex-wrap gap-3'>
+                      {['#4f46e5', '#7c3aed', '#ec4899', '#f97316', '#f59e0b', '#10b981', '#14b8a6', '#2563eb', '#6b7280'].map(color => (
+                        <button
+                          key={color}
+                          type='button'
+                          onClick={() => setNotificationSettings(prev => ({ ...prev, classColour: color }))}
+                          className={`h-8 w-8 rounded-full border-2 ${notificationSettings.classColour === color ? 'border-primary' : 'border-transparent'
+                            }`}
+                          style={{ backgroundColor: color }}
+                          aria-label={`Select class color ${color}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
 
-            <div className=''>
-              <ClassCreationPreviewRail data={previewData} />
-            </div>
+            <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
+              <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
+                <h3 className='text-foreground text-lg font-semibold'>Reminder Options</h3>
+              </div>
+
+              <div className='grid gap-4 px-2 pb-4 sm:px-4 sm:pb-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]'>
+                <ReminderCard
+                  title='Student Reminders'
+                  enabled={notificationSettings.reminder !== ''}
+                  onEnabledChange={() =>
+                    setNotificationSettings(prev => ({
+                      ...prev,
+                      reminder: prev.reminder ? '' : '24h',
+                    }))
+                  }
+                >
+                  <FieldGroup label='Email Reminder'>
+                    <Select
+                      value={notificationSettings.reminder}
+                      onValueChange={value => setNotificationSettings(prev => ({ ...prev, reminder: value }))}
+                    >
+                      <SelectTrigger className='h-11'>
+                        <SelectValue placeholder='Select reminder' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {REMINDER_OPTIONS.map(item => (
+                          <SelectItem key={item.value} value={item.value}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FieldGroup>
+                  <FieldGroup label='SMS Reminder'>
+                    <Select defaultValue='1h'>
+                      <SelectTrigger className='h-11'>
+                        <SelectValue placeholder='Select reminder' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='1h'>1 hour before class</SelectItem>
+                        <SelectItem value='30m'>30 minutes before class</SelectItem>
+                        <SelectItem value='15m'>15 minutes before class</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FieldGroup>
+                </ReminderCard>
+
+                <ReminderCard
+                  title='Instructor Reminders'
+                  enabled
+                  onEnabledChange={() => undefined}
+                >
+                  <FieldGroup label='Email Reminder'>
+                    <Select defaultValue='1d'>
+                      <SelectTrigger className='h-11'>
+                        <SelectValue placeholder='Select reminder' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='1d'>1 day before class</SelectItem>
+                        <SelectItem value='12h'>12 hours before class</SelectItem>
+                        <SelectItem value='1h'>1 hour before class</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FieldGroup>
+                  <FieldGroup label='SMS Reminder'>
+                    <Select defaultValue='30m'>
+                      <SelectTrigger className='h-11'>
+                        <SelectValue placeholder='Select reminder' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='30m'>30 minutes before class</SelectItem>
+                        <SelectItem value='15m'>15 minutes before class</SelectItem>
+                        <SelectItem value='5m'>5 minutes before class</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FieldGroup>
+                </ReminderCard>
+
+                <div className='bg-muted/20 flex items-center justify-center rounded-md border border-border/60 px-4 py-4 text-center'>
+                  <div className='space-y-2'>
+                    <div className='bg-primary/10 text-primary mx-auto flex h-12 w-12 items-center justify-center rounded-full'>
+                      <BellRing className='h-5 w-5' />
+                    </div>
+                    <p className='text-muted-foreground text-xs leading-relaxed'>
+                      Reminders help reduce no-shows and keep your class on track.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+            {/* 
+            <ClassCreationSummaryStrip
+              currency={rateCard?.currency as string | undefined || 'KES'}
+              maxParticipants={classDetails.class_limit}
+              totalAmount={totalAmount}
+              totalSessions={totalSessions}
+            /> */}
           </div>
-        </form>
-      </div>
+
+          {/* <div className=''>
+            <ClassCreationPreviewRail data={previewData} />
+          </div> */}
+        </div>
+      </form>
     </div>
   );
 };
