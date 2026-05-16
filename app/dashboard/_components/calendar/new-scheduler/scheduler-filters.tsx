@@ -21,7 +21,7 @@ const Dropdown = ({
     <button
       type='button'
       onClick={onToggle}
-      className='hover:bg-primary/5 flex w-full items-center justify-between px-4 py-2.5 transition-colors md:px-5 md:py-3'
+      className='hover:bg-primary/5 flex w-full items-center justify-between px-2 py-2 transition-colors rounded'
     >
       <span className='text-foreground text-xs font-medium tracking-wide uppercase md:text-sm'>
         {label}
@@ -35,13 +35,13 @@ const Dropdown = ({
     </button>
 
     {isOpen && (
-      <div className='scrollbar-hide max-h-64 space-y-1.5 overflow-y-auto px-4 pb-3 md:px-5'>
+      <div className='scrollbar-hide max-h-64 space-y-1.5 overflow-y-auto px-2 pb-3'>
         {items.length ? (
           items.map(item => (
             <button
               key={item.id}
               type='button'
-              className={`flex w-full items-center justify-between rounded px-2.5 py-1.5 text-left text-xs transition-colors md:text-sm ${selectedId === item.id
+              className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors md:text-sm ${selectedId === item.id
                 ? 'bg-primary/10 text-primary font-medium'
                 : 'text-muted-foreground hover:bg-primary/5'
                 }`}
@@ -101,7 +101,7 @@ export function SchedulerFilters({
       </div>
 
       {activeFilterCount > 0 && (
-        <div className='border-border border-b p-3 md:p-4'>
+        <div className='border-border border-b py-2'>
           <div className='flex items-center justify-between gap-3'>
             <span className='text-muted-foreground text-xs font-medium md:text-sm'>
               {activeFilterCount} {activeFilterCount === 1 ? 'filter' : 'filters'} applied

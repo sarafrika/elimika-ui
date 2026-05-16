@@ -1,6 +1,5 @@
 'use client';
 
-import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,16 +27,21 @@ import {
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import {
+  Check,
   Bell,
   ChevronDown,
+  Laptop2,
   LayoutDashboard,
+  MoonStar,
   Search,
   Sparkles,
+  SunMedium,
   Wallet,
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTheme } from 'next-themes';
 
 const dashboardLabelByDomain = (domain?: string | null) => {
   if (!domain) return 'Dashboard';
@@ -203,8 +207,6 @@ export default function DashboardTopBar() {
               </Button>
             )}
 
-            <ThemeSwitcher size='icon' />
-
             <Button
               variant='outline'
               size='icon'
@@ -334,6 +336,16 @@ function DashboardProfileMenu({
   onAddProfile,
   onLogout,
 }: DashboardProfileMenuProps) {
+  const { theme, setTheme, systemTheme } = useTheme();
+  const selectedTheme = theme ?? 'system';
+  const resolvedTheme = selectedTheme === 'system' ? systemTheme ?? 'light' : selectedTheme;
+
+  const themeOptions = [
+    { value: 'light', label: 'Light', Icon: SunMedium },
+    { value: 'dark', label: 'Dark', Icon: MoonStar },
+    { value: 'system', label: 'System', Icon: Laptop2 },
+  ] as const;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -393,6 +405,41 @@ function DashboardProfileMenu({
               </Badge>
             </div>
           </div>
+        </div>
+
+        <DropdownMenuSeparator className='my-3' />
+
+        <DropdownMenuLabel className='px-2 text-[11px] uppercase tracking-wide'>
+          Appearance
+        </DropdownMenuLabel>
+
+        <div className='space-y-1'>
+          {themeOptions.map(({ value, label, Icon }) => (
+            <DropdownMenuItem
+              key={value}
+              className={cn(
+                'flex items-center justify-between gap-2 text-sm',
+                selectedTheme === value && 'text-primary'
+              )}
+              onSelect={() => setTheme(value)}
+            >
+              <span className='flex min-w-0 items-center gap-2'>
+                <Icon className='h-4 w-4 shrink-0' />
+                <span className='truncate'>{label}</span>
+                {value === 'system' && (
+                  <span className='text-muted-foreground text-xs'>
+                    ({resolvedTheme === 'dark' ? 'Dark' : 'Light'})
+                  </span>
+                )}
+              </span>
+              <Check
+                className={cn(
+                  'text-primary h-4 w-4 shrink-0 transition-opacity',
+                  selectedTheme === value ? 'opacity-100' : 'opacity-0'
+                )}
+              />
+            </DropdownMenuItem>
+          ))}
         </div>
 
         <DropdownMenuSeparator className='my-3' />
