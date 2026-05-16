@@ -27,13 +27,13 @@ export function ClassCreationSummaryStrip({
     },
     {
       icon: Banknote,
-      label: 'Total Amount For All Sessions',
+      label: 'Total Amount For All Sessions (per student)',
       value: `${currency} ${totalAmount.toLocaleString()}`,
     },
   ];
 
   return (
-    <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
+    <Card className='overflow-hidden border pt-2 pb-0 shadow-sm rounded-md'>
       <div className='grid gap-px bg-border md:grid-cols-3'>
         {items.map(item => {
           const Icon = item.icon;
