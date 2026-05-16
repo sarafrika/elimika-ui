@@ -14,7 +14,7 @@ import {
   getStudentScheduleOptions,
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { ClassDefinition, Course, User } from '@/services/client/types.gen';
+import type { ClassDefinition, Course, Student, User } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { ClassWithScheduleInput, InstructorSummary, SchedulerCalendarData, StudentSummary } from './calendar-utils';
@@ -131,7 +131,7 @@ function useClassStudentSummaries(
   });
 
   const studentMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, Student>();
 
     uniqueStudentUuids.forEach((uuid, index) => {
       // @ts-ignore
