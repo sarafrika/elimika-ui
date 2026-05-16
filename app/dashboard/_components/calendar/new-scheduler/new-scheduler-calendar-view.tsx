@@ -241,7 +241,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
       params.set('endTime', getTimeValue(slot.endTime));
     }
 
-    router.push(`/dashboard/classes/create-new${params.toString() ? `?${params.toString()}` : ''}`);
+    router.push(`/dashboard/classes/new${params.toString() ? `?${params.toString()}` : ''}`);
   };
 
   const handleEmptySlotClick = (slot: { date: Date; startTime: Date; endTime: Date }) => {

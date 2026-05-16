@@ -460,7 +460,7 @@ export default function NewClassPage() {
                     ? 'Resume Lesson'
                     : 'Start Lesson'
                 }
-                onAddClasses={() => router.push(`/dashboard/classes/create-new?id=${selectedClass?.uuid}`)}
+                onAddClasses={() => router.push(`/dashboard/classes/new?id=${selectedClass?.uuid}`)}
               />
             </TabsContent>
 
@@ -490,7 +490,7 @@ export default function NewClassPage() {
                 completionRate={completionRate}
                 selectedInstanceUuid={selectedInstanceUuid as string}
                 visibleInstances={visibleInstances}
-                onAddClasses={() => router.push('/dashboard/classes/create-new')}
+                onAddClasses={() => router.push('/dashboard/classes/new')}
               />
             </TabsContent>
 

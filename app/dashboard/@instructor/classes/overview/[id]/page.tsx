@@ -339,7 +339,7 @@ export default function ClassPreviewPage() {
         </div>
 
         <Button
-          onClick={() => router.push(`/dashboard/classes/create-new?id=${classData?.uuid}`)}
+          onClick={() => router.push(`/dashboard/classes/new?id=${classData?.uuid}`)}
           variant='outline'
           className='gap-2'
         >

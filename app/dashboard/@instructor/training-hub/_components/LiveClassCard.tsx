@@ -102,7 +102,7 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
 
               <DropdownMenuItem asChild>
                 <Link
-                  href={`/dashboard/classes/create-new?id=${liveClass.classUuid}`}
+                  href={`/dashboard/classes/new?id=${liveClass.classUuid}`}
                   className='flex items-center gap-2'
                 >
                   <Pencil className='size-4' />

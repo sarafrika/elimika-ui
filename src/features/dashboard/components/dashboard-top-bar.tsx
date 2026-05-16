@@ -27,8 +27,8 @@ import {
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import {
-  Check,
   Bell,
+  Check,
   ChevronDown,
   Laptop2,
   LayoutDashboard,
@@ -39,9 +39,9 @@ import {
   Wallet,
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
+import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useTheme } from 'next-themes';
 
 const dashboardLabelByDomain = (domain?: string | null) => {
   if (!domain) return 'Dashboard';
@@ -128,7 +128,7 @@ export default function DashboardTopBar() {
   );
   const createClassHref = buildWorkspaceAliasPath(
     activeDomain,
-    '/dashboard/classes/create-new'
+    '/dashboard/classes/new'
   );
 
   return (
