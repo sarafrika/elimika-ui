@@ -82,6 +82,18 @@ const schedulePresetOptions = [
   { key: 'academic-period', title: 'Academic Period', description: 'Align with academic term' },
 ] as const;
 
+const CLASS_COLOR_OPTIONS = [
+  { label: 'Brand', value: 'var(--chart-1)' },
+  { label: 'Azure', value: 'var(--chart-2)' },
+  { label: 'Amber', value: 'var(--chart-3)' },
+  { label: 'Iris', value: 'var(--chart-4)' },
+  { label: 'Jade', value: 'var(--chart-5)' },
+  { label: 'Success', value: 'var(--success)' },
+  { label: 'Warning', value: 'var(--warning)' },
+  { label: 'Destructive', value: 'var(--destructive)' },
+  { label: 'Muted', value: 'var(--muted-foreground)' },
+] as const;
+
 type SchedulePreset = (typeof schedulePresetOptions)[number]['key'];
 type CatalogSource = 'course' | 'program';
 
@@ -142,7 +154,7 @@ const createInitialScheduleSettings = (): ScheduleSettings => ({
 
 const createInitialNotificationSettings = (): NotificationSettings => ({
   reminder: '24h',
-  classColour: '#4f46e5',
+  classColour: 'var(--chart-1)',
 });
 
 const reminderToMinutes = (reminder?: string) => {
@@ -1346,18 +1358,18 @@ const NewClassCreationPage = () => {
                             </p>
                           </div>
                           <div className='flex flex-wrap gap-3'>
-                            {['#4f46e5', '#7c3aed', '#ec4899', '#f97316', '#f59e0b', '#10b981', '#14b8a6', '#2563eb', '#6b7280'].map(color => (
+                            {CLASS_COLOR_OPTIONS.map(color => (
                               <button
-                                key={color}
+                                key={color.value}
                                 type='button'
                                 onClick={() => {
-                                  setNotificationSettings(prev => ({ ...prev, classColour: color }));
-                                  setClassDetails(prev => ({ ...prev, class_color: color }));
+                                  setNotificationSettings(prev => ({ ...prev, classColour: color.value }));
+                                  setClassDetails(prev => ({ ...prev, class_color: color.value }));
                                 }}
-                                className={`h-8 w-8 rounded-full border-2 ${notificationSettings.classColour === color ? 'border-primary' : 'border-transparent'
+                                className={`h-8 w-8 rounded-full border-2 ${notificationSettings.classColour === color.value ? 'border-primary' : 'border-transparent'
                                   }`}
-                                style={{ backgroundColor: color }}
-                                aria-label={`Select class color ${color}`}
+                                style={{ backgroundColor: color.value }}
+                                aria-label={`Select class color ${color.label}`}
                               />
                             ))}
                           </div>
