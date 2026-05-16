@@ -215,7 +215,7 @@ export default function DashboardTopBar() {
                 <Bell className='h-4 w-4' />
 
                 {notificationCount > 0 && (
-                  <span className='absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white'>
+                  <span className='bg-destructive text-destructive-foreground absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold'>
                     {notificationCount}
                   </span>
                 )}
