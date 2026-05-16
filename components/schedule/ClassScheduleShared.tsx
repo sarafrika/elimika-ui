@@ -18,13 +18,13 @@ import {
 } from 'lucide-react';
 import type React from 'react';
 
-import { Button } from '@/components/ui/button';
 import type {
   CalendarEvent,
   ScheduleFilterSection,
   StudentEnrollment,
   ViewMode,
 } from '@/components/schedule/types';
+import { Button } from '@/components/ui/button';
 
 export const COLOR_PALETTE = [
   'rgb(59 130 246)',
@@ -75,7 +75,7 @@ const Dropdown: React.FC<{
     <button
       type='button'
       onClick={onToggle}
-      className='hover:bg-primary/5 flex w-full items-center justify-between px-4 py-2.5 transition-colors md:px-5 md:py-3'
+      className='hover:bg-primary/5 flex w-full items-center justify-between py-2.5 transition-colors md:py-3'
     >
       <span className='text-foreground text-xs font-medium tracking-wide uppercase md:text-sm'>
         {label}
@@ -89,15 +89,14 @@ const Dropdown: React.FC<{
     </button>
 
     {isOpen && items && (
-      <div className='scrollbar-hide max-h-64 space-y-1.5 overflow-y-auto px-4 pb-3 md:px-5'>
+      <div className='scrollbar-hide max-h-64 space-y-1.5 overflow-y-auto pb-3'>
         {items.map(item => (
           <div
             key={item.id}
-            className={`flex cursor-pointer items-center justify-between rounded px-2.5 py-1.5 text-xs transition-colors md:text-sm ${
-              selectedId === item.id
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'text-muted-foreground hover:bg-primary/5'
-            }`}
+            className={`flex cursor-pointer items-center justify-between rounded py-1.5 text-xs transition-colors md:text-sm ${selectedId === item.id
+              ? 'bg-primary/10 text-primary font-medium'
+              : 'text-muted-foreground hover:bg-primary/5'
+              }`}
             onClick={() => onItemClick?.(item.id)}
           >
             <span className='truncate'>{item.name}</span>
@@ -119,7 +118,7 @@ export const ScheduleFiltersPanel: React.FC<{
   sections: ScheduleFilterSection[];
 }> = ({ searchQuery, onSearchChange, activeFilterCount, onClearFilters, sections }) => (
   <div className='flex h-full flex-col overflow-hidden'>
-    <div className='border-border border-b p-3 md:p-4'>
+    <div className='border-border border-b py-3 md:py-4'>
       <div className='relative'>
         <Search className='text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2' />
         <input
@@ -212,88 +211,87 @@ export const ScheduleCalendarHeader: React.FC<{
   onWorkingHoursClick,
   onSettingsClick,
 }) => {
-  const formatDate = () => {
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+    const formatDate = () => {
+      const options: Intl.DateTimeFormatOptions = {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      };
+      return currentDate.toLocaleDateString('en-US', options);
     };
-    return currentDate.toLocaleDateString('en-US', options);
-  };
 
-  return (
-    <div className='bg-background border-border border-b px-4 pb-3 md:px-6 md:py-3'>
-      <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-center md:gap-6'>
-          <h1 className='text-foreground text-lg font-bold tracking-tight md:text-xl'>
-            Class Schedule
-          </h1>
-          <div className='flex items-center gap-2'>
-            <button
-              type='button'
-              onClick={() => onDateChange('prev')}
-              className='hover:bg-primary/5 rounded-lg p-1.5 transition-colors'
-            >
-              <ChevronLeft className='text-muted-foreground h-4 w-4' />
-            </button>
-            <span className='text-foreground min-w-[130px] text-center text-xs font-semibold md:min-w-[160px] md:text-sm'>
-              {formatDate()}
-            </span>
-            <button
-              type='button'
-              onClick={() => onDateChange('next')}
-              className='hover:bg-primary/5 rounded-lg p-1.5 transition-colors'
-            >
-              <ChevronRight className='text-muted-foreground h-4 w-4' />
-            </button>
-          </div>
-          <div className='bg-muted flex items-center gap-1 overflow-x-auto rounded-lg p-0.5'>
-            {(['day', 'week', 'month', 'year'] as ViewMode[]).map(view => (
+    return (
+      <div className='bg-background border-border border-b px-4 pb-3 md:px-6 md:py-3'>
+        <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-center md:gap-6'>
+            <h1 className='text-foreground text-lg font-bold tracking-tight md:text-xl'>
+              Class Schedule
+            </h1>
+            <div className='flex items-center gap-2'>
               <button
-                key={view}
                 type='button'
-                onClick={() => onViewChange(view)}
-                className={`rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all md:px-3.5 md:text-sm ${
-                  viewMode === view
+                onClick={() => onDateChange('prev')}
+                className='hover:bg-primary/5 rounded-lg p-1.5 transition-colors'
+              >
+                <ChevronLeft className='text-muted-foreground h-4 w-4' />
+              </button>
+              <span className='text-foreground min-w-[130px] text-center text-xs font-semibold md:min-w-[160px] md:text-sm'>
+                {formatDate()}
+              </span>
+              <button
+                type='button'
+                onClick={() => onDateChange('next')}
+                className='hover:bg-primary/5 rounded-lg p-1.5 transition-colors'
+              >
+                <ChevronRight className='text-muted-foreground h-4 w-4' />
+              </button>
+            </div>
+            <div className='bg-muted flex items-center gap-1 overflow-x-auto rounded-lg p-0.5'>
+              {(['day', 'week', 'month', 'year'] as ViewMode[]).map(view => (
+                <button
+                  key={view}
+                  type='button'
+                  onClick={() => onViewChange(view)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all md:px-3.5 md:text-sm ${viewMode === view
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {view.charAt(0).toUpperCase() + view.slice(1)}
-              </button>
-            ))}
+                    }`}
+                >
+                  {view.charAt(0).toUpperCase() + view.slice(1)}
+                </button>
+              ))}
+            </div>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='rounded-full px-4'
+              onClick={onWorkingHoursClick}
+            >
+              <Clock className='h-3.5 w-3.5' />
+              {workingHoursLabel || 'Working hours'}
+            </Button>
           </div>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            className='rounded-full px-4'
-            onClick={onWorkingHoursClick}
-          >
-            <Clock className='h-3.5 w-3.5' />
-            {workingHoursLabel || 'Working hours'}
-          </Button>
-        </div>
-        <div className='flex items-center justify-between gap-3 md:justify-end'>
-          <div className='bg-primary/10 flex items-center gap-2 rounded-lg px-2.5 py-1.5'>
-            <Calendar className='text-primary h-3.5 w-3.5' />
-            <span className='text-primary text-xs font-semibold md:text-sm'>
-              {eventCount} {eventCount === 1 ? 'Session' : 'Sessions'}
-            </span>
+          <div className='flex items-center justify-between gap-3 md:justify-end'>
+            <div className='bg-primary/10 flex items-center gap-2 rounded-lg px-2.5 py-1.5'>
+              <Calendar className='text-primary h-3.5 w-3.5' />
+              <span className='text-primary text-xs font-semibold md:text-sm'>
+                {eventCount} {eventCount === 1 ? 'Session' : 'Sessions'}
+              </span>
+            </div>
+            <button
+              type='button'
+              className='hover:bg-primary/5 rounded-lg p-1.5 transition-colors'
+              onClick={onSettingsClick}
+            >
+              <Settings className='text-muted-foreground h-4 w-4' />
+            </button>
           </div>
-          <button
-            type='button'
-            className='hover:bg-primary/5 rounded-lg p-1.5 transition-colors'
-            onClick={onSettingsClick}
-          >
-            <Settings className='text-muted-foreground h-4 w-4' />
-          </button>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 export const ScheduleWeekView: React.FC<{
   events: CalendarEvent[];
@@ -312,261 +310,259 @@ export const ScheduleWeekView: React.FC<{
   showWeekends = true,
   onTimeSlotSelect,
 }) => {
-  const hours = Array.from({ length: 18 }, (_, i) => i + 4);
+    const hours = Array.from({ length: 18 }, (_, i) => i + 4);
 
-  const getWeekStart = (date: Date) => {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(d.setDate(diff));
-  };
+    const getWeekStart = (date: Date) => {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(d.setDate(diff));
+    };
 
-  const weekStart = getWeekStart(currentDate);
-  const weekDaysWithDates = getVisibleWeekDays(showWeekends).map(({ label, dayOffset }) => {
-    const date = new Date(weekStart);
-    date.setDate(weekStart.getDate() + dayOffset);
-    return { day: label, date, dayOffset };
-  });
-
-  const getEventsForDayAndHour = (dayIndex: number, hour: number) => {
-    const targetDate = new Date(weekStart);
-    targetDate.setDate(weekStart.getDate() + dayIndex);
-
-    return events.filter(event => {
-      const eventDate = new Date(event.startTime);
-      const eventHour = eventDate.getHours();
-      return eventDate.toDateString() === targetDate.toDateString() && eventHour === hour;
+    const weekStart = getWeekStart(currentDate);
+    const weekDaysWithDates = getVisibleWeekDays(showWeekends).map(({ label, dayOffset }) => {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + dayOffset);
+      return { day: label, date, dayOffset };
     });
-  };
 
-  const getEventHeight = (event: CalendarEvent) => {
-    const start = new Date(event.startTime);
-    const end = new Date(event.endTime);
-    const durationMs = end.getTime() - start.getTime();
-    const durationHours = durationMs / (1000 * 60 * 60);
-    return durationHours * 60;
-  };
+    const getEventsForDayAndHour = (dayIndex: number, hour: number) => {
+      const targetDate = new Date(weekStart);
+      targetDate.setDate(weekStart.getDate() + dayIndex);
 
-  const getEventTop = (event: CalendarEvent) => {
-    const start = new Date(event.startTime);
-    const minutes = start.getMinutes();
-    return (minutes / 60) * 60;
-  };
+      return events.filter(event => {
+        const eventDate = new Date(event.startTime);
+        const eventHour = eventDate.getHours();
+        return eventDate.toDateString() === targetDate.toDateString() && eventHour === hour;
+      });
+    };
 
-  const createSlotRange = (date: Date, hour: number) => {
-    const startTime = new Date(date);
-    startTime.setHours(hour, 0, 0, 0);
-    const endTime = new Date(startTime);
-    endTime.setHours(hour + 1, 0, 0, 0);
-    return { startTime, endTime };
-  };
+    const getEventHeight = (event: CalendarEvent) => {
+      const start = new Date(event.startTime);
+      const end = new Date(event.endTime);
+      const durationMs = end.getTime() - start.getTime();
+      const durationHours = durationMs / (1000 * 60 * 60);
+      return durationHours * 60;
+    };
 
-  return (
-    <div className='scrollbar-hide flex-1 overflow-auto'>
-      <div className='space-y-3 p-3 max-[1550px]:block min-[1551px]:hidden md:p-5'>
-        {weekDaysWithDates.map(({ day, date }) => {
-          const dayEvents = events
-            .filter(event => new Date(event.startTime).toDateString() === date.toDateString())
-            .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+    const getEventTop = (event: CalendarEvent) => {
+      const start = new Date(event.startTime);
+      const minutes = start.getMinutes();
+      return (minutes / 60) * 60;
+    };
 
-          return (
-            <div key={day} className='border-border bg-card rounded-xl border p-3 shadow-sm'>
-              <div className='mb-3 flex items-center justify-between gap-3'>
-                <button
-                  type='button'
-                  onClick={() => onDateSelect?.(date)}
-                  className='hover:text-primary text-left transition-colors'
-                >
-                  <div className='text-foreground text-sm font-semibold'>{day}</div>
-                  <div className='text-muted-foreground text-xs'>
-                    {date.toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
+    const createSlotRange = (date: Date, hour: number) => {
+      const startTime = new Date(date);
+      startTime.setHours(hour, 0, 0, 0);
+      const endTime = new Date(startTime);
+      endTime.setHours(hour + 1, 0, 0, 0);
+      return { startTime, endTime };
+    };
+
+    return (
+      <div className='scrollbar-hide flex-1 overflow-auto'>
+        <div className='space-y-3 p-3 max-[1550px]:block min-[1551px]:hidden md:p-5'>
+          {weekDaysWithDates.map(({ day, date }) => {
+            const dayEvents = events
+              .filter(event => new Date(event.startTime).toDateString() === date.toDateString())
+              .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+
+            return (
+              <div key={day} className='border-border bg-card rounded-xl border p-3 shadow-sm'>
+                <div className='mb-3 flex items-center justify-between gap-3'>
+                  <button
+                    type='button'
+                    onClick={() => onDateSelect?.(date)}
+                    className='hover:text-primary text-left transition-colors'
+                  >
+                    <div className='text-foreground text-sm font-semibold'>{day}</div>
+                    <div className='text-muted-foreground text-xs'>
+                      {date.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </div>
+                  </button>
+                  <div className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
+                    {dayEvents.length} {dayEvents.length === 1 ? 'session' : 'sessions'}
                   </div>
-                </button>
-                <div className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
-                  {dayEvents.length} {dayEvents.length === 1 ? 'session' : 'sessions'}
                 </div>
-              </div>
 
-              {dayEvents.length > 0 ? (
-                <div className='space-y-2'>
-                  {dayEvents.map(event => (
-                    <button
-                      key={event.id}
-                      type='button'
-                      onClick={() => onEventSelect(event)}
-                      className={`w-full rounded-xl border p-3 text-left transition-all ${
-                        selectedEvent?.id === event.id
+                {dayEvents.length > 0 ? (
+                  <div className='space-y-2'>
+                    {dayEvents.map(event => (
+                      <button
+                        key={event.id}
+                        type='button'
+                        onClick={() => onEventSelect(event)}
+                        className={`w-full rounded-xl border p-3 text-left transition-all ${selectedEvent?.id === event.id
                           ? 'border-primary bg-primary/5'
                           : 'border-border bg-background hover:border-primary/40 hover:bg-primary/5'
-                      }`}
-                      style={
-                        isBookingRequestEvent(event)
-                          ? REQUEST_EVENT_STYLES
-                          : undefined
-                      }
-                    >
-                      <div className='flex items-start justify-between gap-3'>
-                        <div className='min-w-0'>
-                          <div className='truncate text-sm font-semibold'>
-                            {isBookingRequestEvent(event) ? 'Booking request' : event.title}
-                          </div>
-                          <div className='truncate text-xs opacity-80'>
-                            {event.courseName || event.studentName || event.requestSource}
-                          </div>
-                        </div>
-                        {isBookingRequestEvent(event) ? (
-                          <span className='border-warning/70 text-warning-foreground rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase'>
-                            Request
-                          </span>
-                        ) : (
-                          <span
-                            className='mt-0.5 h-2.5 w-2.5 flex-shrink-0 rounded-full'
-                            style={{ backgroundColor: event.color }}
-                          />
-                        )}
-                      </div>
-                      <div className='mt-2 text-xs opacity-80'>
-                        {new Date(event.startTime).toLocaleTimeString('en-US', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}{' '}
-                        -{' '}
-                        {new Date(event.endTime).toLocaleTimeString('en-US', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </div>
-                      <div className='mt-1 truncate text-xs opacity-75'>{event.location}</div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <button
-                  type='button'
-                  className='text-muted-foreground hover:border-primary/40 hover:bg-primary/5 w-full rounded-xl border border-dashed px-3 py-6 text-center text-sm transition-colors'
-                  onClick={() => onTimeSlotSelect?.(createSlotRange(date, 9))}
-                >
-                  No sessions scheduled. Tap to create a class.
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <div
-        className={`hidden min-[1551px]:block ${showWeekends ? 'min-[1551px]:min-w-[980px]' : 'min-[1551px]:min-w-[760px]'}`}
-      >
-        <div
-          className='border-border bg-muted sticky top-0 z-10 border-b'
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `84px repeat(${weekDaysWithDates.length}, minmax(120px, 1fr))`,
-          }}
-        >
-          <div className='text-muted-foreground p-2 text-xs font-semibold md:p-3 md:text-sm'>
-            Time
-          </div>
-          {weekDaysWithDates.map(({ day, date }) => (
-            <button
-              key={day}
-              type='button'
-              onClick={() => onDateSelect?.(date)}
-              className='border-border hover:bg-primary/5 border-l p-2 transition-colors md:p-3'
-            >
-              <div className='text-foreground text-center text-xs font-semibold md:text-sm'>
-                {day}
-              </div>
-              <div className='text-muted-foreground mt-0.5 text-center text-xs'>
-                {date.getDate()}
-              </div>
-            </button>
-          ))}
-        </div>
-        <div className='relative'>
-          {hours.map(hour => (
-            <div
-              key={hour}
-              className='border-border/50 border-b'
-              style={{
-                display: 'grid',
-                gridTemplateColumns: `84px repeat(${weekDaysWithDates.length}, minmax(120px, 1fr))`,
-              }}
-            >
-              <div className='text-muted-foreground p-2 text-xs font-medium md:p-3 md:text-sm'>
-                {hour.toString().padStart(2, '0')}:00
-              </div>
-              {weekDaysWithDates.map(({ dayOffset, date }) => {
-                const dayEvents = getEventsForDayAndHour(dayOffset, hour);
-                const isStartHour = dayEvents.some(e => new Date(e.startTime).getHours() === hour);
-
-                return (
-                  <button
-                    key={dayOffset}
-                    type='button'
-                    className='border-border/50 hover:bg-primary/5 relative border-l text-left transition-colors'
-                    style={{ height: '60px' }}
-                    onClick={() => onTimeSlotSelect?.(createSlotRange(date, hour))}
-                  >
-                    {isStartHour &&
-                      dayEvents.map((event, eventIdx) => {
-                        const eventStartHour = new Date(event.startTime).getHours();
-                        if (eventStartHour !== hour) return null;
-
-                        return (
-                          <div
-                            key={event.id}
-                            className={`absolute overflow-hidden rounded-lg border p-1.5 transition-all hover:shadow-lg md:p-2 ${
-                              selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
-                            }`}
-                            style={{
-                              backgroundColor: isBookingRequestEvent(event)
-                                ? REQUEST_EVENT_STYLES.backgroundColor
-                                : event.color,
-                              borderColor: isBookingRequestEvent(event)
-                                ? REQUEST_EVENT_STYLES.borderColor
-                                : event.color,
-                              color: isBookingRequestEvent(event) ? REQUEST_EVENT_STYLES.color : 'white',
-                              height: `${getEventHeight(event)}px`,
-                              top: `${getEventTop(event)}px`,
-                              left: `${4 + eventIdx * 2}px`,
-                              right: '4px',
-                              zIndex: eventIdx + 1,
-                            }}
-                            onClick={slotEvent => {
-                              slotEvent.stopPropagation();
-                              onEventSelect(event);
-                            }}
-                          >
-                            <div className='truncate text-[10px] font-semibold md:text-xs'>
+                          }`}
+                        style={
+                          isBookingRequestEvent(event)
+                            ? REQUEST_EVENT_STYLES
+                            : undefined
+                        }
+                      >
+                        <div className='flex items-start justify-between gap-3'>
+                          <div className='min-w-0'>
+                            <div className='truncate text-sm font-semibold'>
                               {isBookingRequestEvent(event) ? 'Booking request' : event.title}
                             </div>
-                            <div className='truncate text-[9px] opacity-90 md:text-xs'>
+                            <div className='truncate text-xs opacity-80'>
                               {event.courseName || event.studentName || event.requestSource}
                             </div>
-                            <div className='mt-0.5 truncate text-[9px] opacity-75 md:text-xs'>
-                              {new Date(event.startTime).toLocaleTimeString('en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </div>
                           </div>
-                        );
-                      })}
+                          {isBookingRequestEvent(event) ? (
+                            <span className='border-warning/70 text-warning-foreground rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase'>
+                              Request
+                            </span>
+                          ) : (
+                            <span
+                              className='mt-0.5 h-2.5 w-2.5 flex-shrink-0 rounded-full'
+                              style={{ backgroundColor: event.color }}
+                            />
+                          )}
+                        </div>
+                        <div className='mt-2 text-xs opacity-80'>
+                          {new Date(event.startTime).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}{' '}
+                          -{' '}
+                          {new Date(event.endTime).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                        <div className='mt-1 truncate text-xs opacity-75'>{event.location}</div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <button
+                    type='button'
+                    className='text-muted-foreground hover:border-primary/40 hover:bg-primary/5 w-full rounded-xl border border-dashed px-3 py-6 text-center text-sm transition-colors'
+                    onClick={() => onTimeSlotSelect?.(createSlotRange(date, 9))}
+                  >
+                    No sessions scheduled. Tap to create a class.
                   </button>
-                );
-              })}
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div
+          className={`hidden min-[1551px]:block ${showWeekends ? 'min-[1551px]:min-w-[980px]' : 'min-[1551px]:min-w-[760px]'}`}
+        >
+          <div
+            className='border-border bg-muted sticky top-0 z-10 border-b'
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `84px repeat(${weekDaysWithDates.length}, minmax(120px, 1fr))`,
+            }}
+          >
+            <div className='text-muted-foreground p-2 text-xs font-semibold md:p-3 md:text-sm'>
+              Time
             </div>
-          ))}
+            {weekDaysWithDates.map(({ day, date }) => (
+              <button
+                key={day}
+                type='button'
+                onClick={() => onDateSelect?.(date)}
+                className='border-border hover:bg-primary/5 border-l p-2 transition-colors md:p-3'
+              >
+                <div className='text-foreground text-center text-xs font-semibold md:text-sm'>
+                  {day}
+                </div>
+                <div className='text-muted-foreground mt-0.5 text-center text-xs'>
+                  {date.getDate()}
+                </div>
+              </button>
+            ))}
+          </div>
+          <div className='relative'>
+            {hours.map(hour => (
+              <div
+                key={hour}
+                className='border-border/50 border-b'
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: `84px repeat(${weekDaysWithDates.length}, minmax(120px, 1fr))`,
+                }}
+              >
+                <div className='text-muted-foreground p-2 text-xs font-medium md:p-3 md:text-sm'>
+                  {hour.toString().padStart(2, '0')}:00
+                </div>
+                {weekDaysWithDates.map(({ dayOffset, date }) => {
+                  const dayEvents = getEventsForDayAndHour(dayOffset, hour);
+                  const isStartHour = dayEvents.some(e => new Date(e.startTime).getHours() === hour);
+
+                  return (
+                    <button
+                      key={dayOffset}
+                      type='button'
+                      className='border-border/50 hover:bg-primary/5 relative border-l text-left transition-colors'
+                      style={{ height: '60px' }}
+                      onClick={() => onTimeSlotSelect?.(createSlotRange(date, hour))}
+                    >
+                      {isStartHour &&
+                        dayEvents.map((event, eventIdx) => {
+                          const eventStartHour = new Date(event.startTime).getHours();
+                          if (eventStartHour !== hour) return null;
+
+                          return (
+                            <div
+                              key={event.id}
+                              className={`absolute overflow-hidden rounded-lg border p-1.5 transition-all hover:shadow-lg md:p-2 ${selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
+                                }`}
+                              style={{
+                                backgroundColor: isBookingRequestEvent(event)
+                                  ? REQUEST_EVENT_STYLES.backgroundColor
+                                  : event.color,
+                                borderColor: isBookingRequestEvent(event)
+                                  ? REQUEST_EVENT_STYLES.borderColor
+                                  : event.color,
+                                color: isBookingRequestEvent(event) ? REQUEST_EVENT_STYLES.color : 'white',
+                                height: `${getEventHeight(event)}px`,
+                                top: `${getEventTop(event)}px`,
+                                left: `${4 + eventIdx * 2}px`,
+                                right: '4px',
+                                zIndex: eventIdx + 1,
+                              }}
+                              onClick={slotEvent => {
+                                slotEvent.stopPropagation();
+                                onEventSelect(event);
+                              }}
+                            >
+                              <div className='truncate text-[10px] font-semibold md:text-xs'>
+                                {isBookingRequestEvent(event) ? 'Booking request' : event.title}
+                              </div>
+                              <div className='truncate text-[9px] opacity-90 md:text-xs'>
+                                {event.courseName || event.studentName || event.requestSource}
+                              </div>
+                              <div className='mt-0.5 truncate text-[9px] opacity-75 md:text-xs'>
+                                {new Date(event.startTime).toLocaleTimeString('en-US', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 export const ScheduleDayView: React.FC<{
   events: CalendarEvent[];
@@ -620,9 +616,8 @@ export const ScheduleDayView: React.FC<{
                 {hourEvents.map((event, idx) => (
                   <div
                     key={event.id}
-                    className={`absolute rounded-lg border p-2 transition-all hover:shadow-lg md:p-3 ${
-                      selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
-                    }`}
+                    className={`absolute rounded-lg border p-2 transition-all hover:shadow-lg md:p-3 ${selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
+                      }`}
                     style={{
                       backgroundColor: isBookingRequestEvent(event)
                         ? REQUEST_EVENT_STYLES.backgroundColor
@@ -878,11 +873,10 @@ export const ScheduleYearView: React.FC<{
                   return (
                     <div
                       key={dayNumber}
-                      className={`rounded p-0.5 text-center text-[10px] md:text-xs ${
-                        hasEvent
-                          ? 'bg-primary/10 text-primary font-semibold'
-                          : 'text-muted-foreground hover:bg-primary/5'
-                      }`}
+                      className={`rounded p-0.5 text-center text-[10px] md:text-xs ${hasEvent
+                        ? 'bg-primary/10 text-primary font-semibold'
+                        : 'text-muted-foreground hover:bg-primary/5'
+                        }`}
                     >
                       {dayNumber}
                     </div>
@@ -985,172 +979,172 @@ export const ScheduleSessionDetailsPanel: React.FC<{
   onDeclineRequest,
   isUpdatingRequest,
 }) => {
-  if (!selectedEvent) {
+    if (!selectedEvent) {
+      return (
+        <div className='flex h-full items-center justify-center p-6'>
+          <div className='text-muted-foreground text-center'>
+            <Calendar className='mx-auto mb-2 h-10 w-10 opacity-50' />
+            <p className='text-sm'>Select a class session to view details</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className='flex h-full items-center justify-center p-6'>
-        <div className='text-muted-foreground text-center'>
-          <Calendar className='mx-auto mb-2 h-10 w-10 opacity-50' />
-          <p className='text-sm'>Select a class session to view details</p>
+      <div>
+        <div className='border-border bg-background border-b p-4'>
+          <h3 className='text-muted-foreground mb-1.5 text-xs font-semibold tracking-wider uppercase'>
+            {isBookingRequestEvent(selectedEvent) ? 'Booking Request' : 'Class Session'}
+          </h3>
+          <h2 className='text-foreground text-base font-bold'>{selectedEvent.title}</h2>
+          {selectedEvent.courseName && (
+            <p className='text-muted-foreground mt-0.5 text-sm'>{selectedEvent.courseName}</p>
+          )}
+        </div>
+        <div className='space-y-4 p-4'>
+          <div className='border-border border-b pb-3'>
+            <div className='mb-1.5 flex items-center gap-1.5'>
+              <Calendar className='text-muted-foreground h-3.5 w-3.5' />
+              <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
+                Date & Time
+              </span>
+            </div>
+            <p className='text-foreground mt-0.5 text-sm'>
+              {new Date(selectedEvent.startTime).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}{' '}
+              •{' '}
+              {new Date(selectedEvent.startTime).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}{' '}
+              -{' '}
+              {new Date(selectedEvent.endTime).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
+          </div>
+          <div className='border-border border-b pb-3'>
+            <div className='mb-1.5 flex items-center gap-1.5'>
+              <Users className='text-muted-foreground h-3.5 w-3.5' />
+              <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
+                {isBookingRequestEvent(selectedEvent) ? 'Requester' : 'Instructor'}
+              </span>
+            </div>
+            <p className='text-foreground mt-0.5 text-sm'>
+              {selectedEvent.studentName || selectedEvent.instructor || 'Unassigned'}
+            </p>
+          </div>
+          <div className='border-border border-b pb-3'>
+            <div className='mb-1.5 flex items-center gap-1.5'>
+              <MapPin className='text-muted-foreground h-3.5 w-3.5' />
+              <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
+                Location
+              </span>
+            </div>
+            <p className='text-foreground mt-0.5 text-sm'>
+              {selectedEvent.location} ({selectedEvent.locationType})
+            </p>
+          </div>
+          {isBookingRequestEvent(selectedEvent) && (
+            <div className='border-border border-b pb-3'>
+              <div className='mb-1.5 flex items-center gap-1.5'>
+                <Info className='text-muted-foreground h-3.5 w-3.5' />
+                <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
+                  Request details
+                </span>
+              </div>
+              <p className='text-foreground text-sm'>
+                {selectedEvent.requestSource || 'Request added to the schedule'}
+              </p>
+              {selectedEvent.requestNote && (
+                <p className='text-muted-foreground mt-1 text-sm'>{selectedEvent.requestNote}</p>
+              )}
+              {selectedEvent.requestStatus && (
+                <span className='border-warning/70 bg-warning/10 text-warning mt-3 inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold capitalize'>
+                  {selectedEvent.requestStatus.replaceAll('_', ' ')}
+                </span>
+              )}
+            </div>
+          )}
+          <div className='border-border border-b pb-3'>
+            <div className='mb-1.5 flex items-center gap-1.5'>
+              <Users className='text-muted-foreground h-3.5 w-3.5' />
+              <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
+                Capacity
+              </span>
+            </div>
+            <p className='text-foreground mt-0.5 text-sm'>
+              {selectedEvent.maxParticipants} participants
+            </p>
+          </div>
+          <div className='border-border border-b pb-3'>
+            <div className='mb-1.5 flex items-center gap-1.5'>
+              <Home className='text-muted-foreground h-3.5 w-3.5' />
+              <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
+                Session Format
+              </span>
+            </div>
+            <p className='text-foreground mt-0.5 text-sm'>{selectedEvent.sessionFormat}</p>
+          </div>
+          <div className='border-border border-t pt-3'>
+            <div className='bg-primary/10 border-primary/20 rounded-lg border p-3'>
+              <div className='text-primary mb-0.5 text-xs font-semibold tracking-wider uppercase'>
+                {isBookingRequestEvent(selectedEvent) ? 'Requested Fee' : 'Training Fee (/hr/head)'}
+              </div>
+              <div className='text-primary text-xl font-bold'>${selectedEvent.trainingFee}</div>
+            </div>
+          </div>
+
+          {isBookingRequestEvent(selectedEvent) ? (
+            <div className='flex gap-3 pt-1'>
+              <Button
+                className='flex-1'
+                onClick={onAcceptRequest}
+                disabled={isUpdatingRequest}
+              >
+                Accept request
+              </Button>
+              <Button
+                variant='outline'
+                className='flex-1'
+                onClick={onDeclineRequest}
+                disabled={isUpdatingRequest}
+              >
+                Decline request
+              </Button>
+            </div>
+          ) : isLoadingStudents ? (
+            <div className='mt-4'>
+              <Skeleton className='mb-2 h-4 w-32' />
+              <div className='border-border overflow-hidden rounded-lg border'>
+                <div className='bg-muted border-border flex gap-4 border-b p-3'>
+                  <Skeleton className='h-3 w-20' />
+                  <Skeleton className='h-3 w-24' />
+                  <Skeleton className='h-3 w-16' />
+                </div>
+                <div className='divide-border divide-y'>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className='flex gap-4 p-3'>
+                      <Skeleton className='h-4 w-24' />
+                      <Skeleton className='h-4 w-20' />
+                      <Skeleton className='h-6 w-16 rounded-full' />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <ScheduleStudentEnrollmentTable students={transformedStudents} />
+          )}
         </div>
       </div>
     );
-  }
-
-  return (
-    <div>
-      <div className='border-border bg-background border-b p-4'>
-        <h3 className='text-muted-foreground mb-1.5 text-xs font-semibold tracking-wider uppercase'>
-          {isBookingRequestEvent(selectedEvent) ? 'Booking Request' : 'Class Session'}
-        </h3>
-        <h2 className='text-foreground text-base font-bold'>{selectedEvent.title}</h2>
-        {selectedEvent.courseName && (
-          <p className='text-muted-foreground mt-0.5 text-sm'>{selectedEvent.courseName}</p>
-        )}
-      </div>
-      <div className='space-y-4 p-4'>
-        <div className='border-border border-b pb-3'>
-          <div className='mb-1.5 flex items-center gap-1.5'>
-            <Calendar className='text-muted-foreground h-3.5 w-3.5' />
-            <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
-              Date & Time
-            </span>
-          </div>
-          <p className='text-foreground mt-0.5 text-sm'>
-            {new Date(selectedEvent.startTime).toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}{' '}
-            •{' '}
-            {new Date(selectedEvent.startTime).toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}{' '}
-            -{' '}
-            {new Date(selectedEvent.endTime).toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </p>
-        </div>
-        <div className='border-border border-b pb-3'>
-          <div className='mb-1.5 flex items-center gap-1.5'>
-            <Users className='text-muted-foreground h-3.5 w-3.5' />
-            <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
-              {isBookingRequestEvent(selectedEvent) ? 'Requester' : 'Instructor'}
-            </span>
-          </div>
-          <p className='text-foreground mt-0.5 text-sm'>
-            {selectedEvent.studentName || selectedEvent.instructor || 'Unassigned'}
-          </p>
-        </div>
-        <div className='border-border border-b pb-3'>
-          <div className='mb-1.5 flex items-center gap-1.5'>
-            <MapPin className='text-muted-foreground h-3.5 w-3.5' />
-            <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
-              Location
-            </span>
-          </div>
-          <p className='text-foreground mt-0.5 text-sm'>
-            {selectedEvent.location} ({selectedEvent.locationType})
-          </p>
-        </div>
-        {isBookingRequestEvent(selectedEvent) && (
-          <div className='border-border border-b pb-3'>
-            <div className='mb-1.5 flex items-center gap-1.5'>
-              <Info className='text-muted-foreground h-3.5 w-3.5' />
-              <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
-                Request details
-              </span>
-            </div>
-            <p className='text-foreground text-sm'>
-              {selectedEvent.requestSource || 'Request added to the schedule'}
-            </p>
-            {selectedEvent.requestNote && (
-              <p className='text-muted-foreground mt-1 text-sm'>{selectedEvent.requestNote}</p>
-            )}
-            {selectedEvent.requestStatus && (
-              <span className='border-warning/70 bg-warning/10 text-warning mt-3 inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold capitalize'>
-                {selectedEvent.requestStatus.replaceAll('_', ' ')}
-              </span>
-            )}
-          </div>
-        )}
-        <div className='border-border border-b pb-3'>
-          <div className='mb-1.5 flex items-center gap-1.5'>
-            <Users className='text-muted-foreground h-3.5 w-3.5' />
-            <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
-              Capacity
-            </span>
-          </div>
-          <p className='text-foreground mt-0.5 text-sm'>
-            {selectedEvent.maxParticipants} participants
-          </p>
-        </div>
-        <div className='border-border border-b pb-3'>
-          <div className='mb-1.5 flex items-center gap-1.5'>
-            <Home className='text-muted-foreground h-3.5 w-3.5' />
-            <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
-              Session Format
-            </span>
-          </div>
-          <p className='text-foreground mt-0.5 text-sm'>{selectedEvent.sessionFormat}</p>
-        </div>
-        <div className='border-border border-t pt-3'>
-          <div className='bg-primary/10 border-primary/20 rounded-lg border p-3'>
-            <div className='text-primary mb-0.5 text-xs font-semibold tracking-wider uppercase'>
-              {isBookingRequestEvent(selectedEvent) ? 'Requested Fee' : 'Training Fee (/hr/head)'}
-            </div>
-            <div className='text-primary text-xl font-bold'>${selectedEvent.trainingFee}</div>
-          </div>
-        </div>
-
-        {isBookingRequestEvent(selectedEvent) ? (
-          <div className='flex gap-3 pt-1'>
-            <Button
-              className='flex-1'
-              onClick={onAcceptRequest}
-              disabled={isUpdatingRequest}
-            >
-              Accept request
-            </Button>
-            <Button
-              variant='outline'
-              className='flex-1'
-              onClick={onDeclineRequest}
-              disabled={isUpdatingRequest}
-            >
-              Decline request
-            </Button>
-          </div>
-        ) : isLoadingStudents ? (
-          <div className='mt-4'>
-            <Skeleton className='mb-2 h-4 w-32' />
-            <div className='border-border overflow-hidden rounded-lg border'>
-              <div className='bg-muted border-border flex gap-4 border-b p-3'>
-                <Skeleton className='h-3 w-20' />
-                <Skeleton className='h-3 w-24' />
-                <Skeleton className='h-3 w-16' />
-              </div>
-              <div className='divide-border divide-y'>
-                {[1, 2, 3].map(i => (
-                  <div key={i} className='flex gap-4 p-3'>
-                    <Skeleton className='h-4 w-24' />
-                    <Skeleton className='h-4 w-20' />
-                    <Skeleton className='h-6 w-16 rounded-full' />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <ScheduleStudentEnrollmentTable students={transformedStudents} />
-        )}
-      </div>
-    </div>
-  );
-};
+  };
 
 export const ScheduleLoadingState: React.FC = () => (
   <div className='flex flex-1 overflow-hidden'>

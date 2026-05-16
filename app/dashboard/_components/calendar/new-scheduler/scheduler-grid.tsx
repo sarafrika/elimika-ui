@@ -83,8 +83,10 @@ function getStartHour(event: SchedulerEvent) {
   return event.startTime.getHours() + event.startTime.getMinutes() / 60;
 }
 
-function getDurationHours(event: SchedulerEvent) {
-  return Math.max((event.endTime.getTime() - event.startTime.getTime()) / 36e5, 0.75);
+function getOccupancyHours(event: SchedulerEvent) {
+  const startHour = event.startTime.getHours() + event.startTime.getMinutes() / 60;
+  const endHour = event.endTime.getHours() + event.endTime.getMinutes() / 60;
+  return Math.max(Math.floor(endHour) - Math.floor(startHour) + 1, 1);
 }
 
 function isCancelledStatus(status?: string) {
@@ -132,7 +134,7 @@ function EventBlock({
       )}
       style={{
         top: `${(getStartHour(event) % 1) * rowHeight + 6}px`,
-        height: `${Math.max(getDurationHours(event) * rowHeight - 10, 50)}px`,
+        height: `${Math.max(getOccupancyHours(event) * rowHeight - 10, 50)}px`,
       }}
       onClick={eventData => {
         eventData.stopPropagation();
@@ -172,6 +174,9 @@ function WeekEventBlock({
         'focus-visible:ring-ring w-full overflow-hidden rounded-md border px-2 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none',
         getEventStyles(event)
       )}
+      style={{
+        height: `${Math.max(getOccupancyHours(event) * rowHeight - 10, 50)}px`,
+      }}
       onClick={eventData => {
         eventData.stopPropagation();
         onClick?.(event);
@@ -317,10 +322,7 @@ function DayGrid({
                     .map(event => (
                       <div
                         key={event.id}
-                        className='absolute right-2 left-2 top-2'
-                        style={{
-                          top: `${(event.startTime.getMinutes() / 60) * rowHeight + 6}px`,
-                        }}
+                        className='absolute right-2 left-2 top-2 z-10'
                       >
                         <EventBlock event={event} onClick={onEventClick} />
                       </div>
@@ -476,11 +478,17 @@ function WeekGrid({
                     {isSameCalendarDay(day, currentTime) && currentTime.getHours() === hour ? (
                       <CurrentTimeIndicator currentTime={currentTime} />
                     ) : null}
-                    <div className='space-y-1'>
-                      {hourEvents.map(event => (
-                        <WeekEventBlock key={event.id} event={event} onClick={onEventClick} />
-                      ))}
-                    </div>
+                    {hourEvents.map(event => (
+                      <div
+                        key={event.id}
+                        className='absolute right-1 left-1 top-1 z-10'
+                        style={{
+                          top: `${(event.startTime.getMinutes() / 60) * rowHeight + 6}px`,
+                        }}
+                      >
+                        <WeekEventBlock event={event} onClick={onEventClick} />
+                      </div>
+                    ))}
                   </div>
                 );
               })}

@@ -1,7 +1,6 @@
 'use client';
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
-import { AppBreadcrumb } from '@/components/ui/app-breadcrumb';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -90,6 +89,8 @@ export default function DashboardTopBar() {
   const profileName = getProfileName(profile);
   const profileInitials = getInitials(profileName);
 
+  const notificationCount = 0;
+
   const walletOptions = profile?.uuid ? getWalletOptions({ path: { userUuid: profile.uuid } }) : null;
 
   const walletQueryOptions = (walletOptions ?? {
@@ -165,7 +166,7 @@ export default function DashboardTopBar() {
               <Input
                 type='search'
                 placeholder='Search courses, students, and more...'
-                className='border-border/70 bg-card/80 h-12 rounded-full pl-11 pr-16 shadow-sm text-xs'
+                className='border-border/70 bg-card/80 h-10 rounded-md pl-11 pr-16 shadow-sm text-xs'
               />
               {/* <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
                 Ctrl K
@@ -175,9 +176,13 @@ export default function DashboardTopBar() {
 
           <div className='ml-auto flex items-center gap-2 sm:gap-3'>
             {isCourseCreator && (
-              <Button asChild size='sm' className='hidden rounded-full px-4 font-semibold md:inline-flex'>
+              <Button
+                asChild
+                size='sm'
+                className='hidden h-10 rounded-md px-4 font-semibold md:inline-flex'
+              >
                 <Link href={createCourseHref}>
-                  <Sparkles className='h-7 w-4' />
+                  <Sparkles className='h-4 w-4' />
                   Create Course
                   <ChevronDown className='h-4 w-4' />
                 </Link>
@@ -185,9 +190,13 @@ export default function DashboardTopBar() {
             )}
 
             {(isInstructor || isOrganisation) && (
-              <Button asChild size='sm' className='hidden rounded-full px-4 font-semibold md:inline-flex'>
+              <Button
+                asChild
+                size='sm'
+                className='hidden h-10 rounded-md px-4 font-semibold md:inline-flex'
+              >
                 <Link href={createClassHref}>
-                  <Sparkles className='h-7 w-4' />
+                  <Sparkles className='h-4 w-4' />
                   Create Class
                   <ChevronDown className='h-4 w-4' />
                 </Link>
@@ -200,29 +209,34 @@ export default function DashboardTopBar() {
               variant='outline'
               size='icon'
               asChild
-              className='border-border/70 bg-card/80 hidden rounded-full shadow-sm sm:inline-flex'
+              className='border-border/70 bg-card/80 relative hidden h-10 w-10 rounded-md shadow-sm sm:inline-flex'
             >
               <Link href={notificationHref} aria-label='Notifications'>
                 <Bell className='h-4 w-4' />
+
+                {notificationCount > 0 && (
+                  <span className='absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white'>
+                    {notificationCount}
+                  </span>
+                )}
               </Link>
             </Button>
 
-
-            {(
-              <div className='border-border/70 bg-card/80 hidden items-center gap-2 rounded-md border px-3 py-2 shadow-sm xl:flex'>
-                <div className='bg-success/10 text-success flex size-8 items-center justify-center rounded-full'>
-                  <Wallet className='h-4 w-4' />
-                </div>
-                <div className='min-w-0 leading-tight'>
-                  <p className='text-muted-foreground text-[11px] font-medium uppercase tracking-wide'>
-                    Skills Wallet
-                  </p>
-                  <p className='text-foreground truncate text-sm font-semibold'>
-                    {walletBalance}
-                  </p>
-                </div>
+            <div className='border-border/70 bg-card/80 hidden h-10 items-center gap-2 rounded-md border px-3 shadow-sm xl:flex'>
+              <div className='bg-success/10 text-success flex h-8 w-8 items-center justify-center rounded-full'>
+                <Wallet className='h-4 w-4' />
               </div>
-            )}
+
+              <div className='min-w-0 flex flex-col justify-center leading-tight'>
+                <p className='text-muted-foreground text-[10px] font-medium uppercase tracking-wide'>
+                  Skills Wallet
+                </p>
+
+                <p className='text-foreground truncate text-sm font-semibold leading-none'>
+                  {walletBalance}
+                </p>
+              </div>
+            </div>
 
             <DashboardProfileMenu
               profileName={profileName}
@@ -234,7 +248,9 @@ export default function DashboardTopBar() {
               availableDomains={domain.domains}
               activeDomain={activeDomain}
               onSwitch={handleDashboardSwitch}
-              onAddProfile={() => router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/add-profile'))}
+              onAddProfile={() =>
+                router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/add-profile'))
+              }
               onLogout={async () => {
                 await signOut();
                 domain.clearDomain();
@@ -283,9 +299,9 @@ export default function DashboardTopBar() {
           </div>
         </div>
 
-        <div className='hidden px-3 py-3 sm:px-5 lg:px-6 xl:block'>
+        {/* <div className='hidden px-3 py-3 sm:px-5 lg:px-6 xl:block'>
           <AppBreadcrumb className='text-muted-foreground text-sm border-none' />
-        </div>
+        </div> */}
       </div>
     </header>
   );
@@ -323,7 +339,7 @@ function DashboardProfileMenu({
       <DropdownMenuTrigger asChild>
         <Button
           variant='outline'
-          className='border-border/70 bg-card/80 h-12 rounded-md px-3 shadow-sm transition hover:border-primary/40 hover:bg-primary/15'
+          className='border-border/70 bg-card/80 h-10 rounded-md px-3 shadow-sm transition hover:border-primary/40 hover:bg-primary/15'
         >
           <Avatar className='border-border/60 h-8 w-8 border'>
             <AvatarImage src={userImage} alt={profileName} />
@@ -331,30 +347,48 @@ function DashboardProfileMenu({
               {profileInitials}
             </AvatarFallback>
           </Avatar>
+
           <span className='hidden min-w-0 flex-col items-start leading-tight md:flex'>
-            <span className='text-foreground truncate text-sm font-semibold'>{profileName}</span>
-            <span className='text-muted-foreground truncate text-xs'>{roleLabel}</span>
+            <span className='text-foreground truncate text-sm font-semibold'>
+              {profileName}
+            </span>
+
+            <span className='text-muted-foreground truncate text-xs'>
+              {roleLabel}
+            </span>
           </span>
+
           <ChevronDown className='text-muted-foreground h-4 w-4' />
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align='end' className='border-border/70 w-80 rounded-2xl p-3 shadow-lg'>
+      <DropdownMenuContent
+        align='end'
+        className='border-border/70 w-80 rounded-md p-3 shadow-lg'
+      >
         <div className='flex items-center gap-3 rounded-md bg-muted/40 p-3'>
           <Avatar className='h-10 w-10'>
             <AvatarImage src={userImage} alt={profileName} />
+
             <AvatarFallback className='bg-primary/10 text-primary text-sm font-semibold'>
               {profileInitials}
             </AvatarFallback>
           </Avatar>
+
           <div className='min-w-0'>
-            <p className='text-foreground truncate text-sm font-semibold'>{profileName}</p>
-            <p className='text-muted-foreground truncate text-xs'>{profileEmail ?? 'No email'}</p>
+            <p className='text-foreground truncate text-sm font-semibold'>
+              {profileName}
+            </p>
+
+            <p className='text-muted-foreground truncate text-xs'>
+              {profileEmail ?? 'No email'}
+            </p>
+
             <div className='mt-2 flex flex-wrap gap-2'>
-              {/* <Badge variant='outline' className='rounded-full px-2 py-0 text-[10px] uppercase'>
-                {roleLabel}
-              </Badge> */}
-              <Badge variant='secondary' className='rounded-full px-2 py-0 text-[10px]'>
+              <Badge
+                variant='secondary'
+                className='rounded-md px-2 py-0 text-[10px]'
+              >
                 {activeDomainLabel}
               </Badge>
             </div>
@@ -366,9 +400,14 @@ function DashboardProfileMenu({
         <DropdownMenuLabel className='px-2 text-[11px] uppercase tracking-wide'>
           Switch profile
         </DropdownMenuLabel>
+
         <div className='space-y-1'>
           {availableDomains.map(domain => {
-            const config = dashboardDomainDisplayConfig[domain as keyof typeof dashboardDomainDisplayConfig];
+            const config =
+              dashboardDomainDisplayConfig[
+              domain as keyof typeof dashboardDomainDisplayConfig
+              ];
+
             if (!config) return null;
 
             const Icon = config.icon;
@@ -378,18 +417,30 @@ function DashboardProfileMenu({
               <DropdownMenuItem
                 key={domain}
                 className={cn(
-                  'flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 hover:bg-primary/25 focus:bg-primary/25',
+                  'flex h-10 cursor-pointer items-center gap-3 rounded-md px-3 hover:bg-primary/25 focus:bg-primary/25',
                   isActive && 'bg-primary/10'
                 )}
                 onClick={() => onSwitch(domain)}
               >
-                <div className={cn('flex size-8 items-center justify-center rounded-full hover:bg-primary/15', config.bgColor)}>
+                <div
+                  className={cn(
+                    'flex size-8 items-center justify-center rounded-full hover:bg-primary/15',
+                    config.bgColor
+                  )}
+                >
                   <Icon className={cn('h-4 w-4', config.color)} />
                 </div>
+
                 <div className='min-w-0 flex-1'>
-                  <p className='text-foreground truncate text-sm font-medium'>{config.title}</p>
-                  <p className='text-muted-foreground truncate text-xs'>{config.description}</p>
+                  <p className='text-foreground truncate text-sm font-medium'>
+                    {config.title}
+                  </p>
+
+                  <p className='text-muted-foreground truncate text-xs'>
+                    {config.description}
+                  </p>
                 </div>
+
                 {isActive && <LayoutDashboard className='text-primary h-4 w-4' />}
               </DropdownMenuItem>
             );
@@ -400,14 +451,14 @@ function DashboardProfileMenu({
 
         <div className='grid gap-1'>
           <DropdownMenuItem
-            className='cursor-pointer rounded-md px-3 py-2.5 hover:bg-primary/15 focus:bg-primary/15'
+            className='h-10 cursor-pointer rounded-md px-3 hover:bg-primary/15 focus:bg-primary/15'
             onClick={onAddProfile}
           >
             Add another profile
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            className='text-destructive cursor-pointer rounded-md px-3 py-2.5 hover:bg-primary/15 focus:bg-primary/15'
+            className='text-destructive h-10 cursor-pointer rounded-md px-3 hover:bg-primary/15 focus:bg-primary/15'
             onClick={() => void onLogout()}
           >
             Sign out

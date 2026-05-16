@@ -12,12 +12,11 @@ import {
 } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
-import { CalendarDays, ChevronLeft, ChevronRight, Filter, Info, Search, Settings } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Filter, Info, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import type { SchedulerCalendarData } from './calendar-utils';
 import {
-  DEFAULT_FILTERS,
   DEFAULT_PREFERENCES,
   TIME_OPTIONS,
   findClosestDate,
@@ -32,11 +31,33 @@ import { SchedulerFilters } from './scheduler-filters';
 import { SchedulerGrid } from './scheduler-grid';
 import { SchedulerRightRail } from './scheduler-right-rail';
 import { SchedulerStatCard } from './scheduler-stat-card';
-import type { SchedulerEvent, SchedulerFilterOptions, SchedulerFilterValues, SchedulerMetric, SchedulerProfile, SchedulerView } from './types';
+import type {
+  SchedulerEvent,
+  SchedulerFilterSection,
+  SchedulerMetric,
+  SchedulerProfile,
+  SchedulerView,
+} from './types';
 
 type Props = {
   profile: SchedulerProfile;
   data: SchedulerCalendarData;
+};
+
+type FilterSelection =
+  | { id: 'all'; kind: 'all' }
+  | { id: string; kind: 'class' | 'booking' | 'venue' | 'classroom' };
+
+const normalizeText = (value?: string | null) => value?.trim().toLowerCase() ?? '';
+
+const isVenueLocation = (value?: string | null) => {
+  const normalized = normalizeText(value);
+  return Boolean(normalized) && !normalized.includes('room') && !normalized.includes('classroom');
+};
+
+const isClassroomLocation = (value?: string | null) => {
+  const normalized = normalizeText(value);
+  return normalized.includes('room') || normalized.includes('classroom');
 };
 
 export function SchedulerCalendarView({ profile, data }: Props) {
@@ -47,43 +68,35 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<SchedulerView>('week');
   const [showAllInstructors, setShowAllInstructors] = useState(false);
-  const [filters, setFilters] = useState<SchedulerFilterValues>(DEFAULT_FILTERS);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState<FilterSelection>({ id: 'all', kind: 'all' });
+  const [openDropdowns, setOpenDropdowns] = useState({
+    bookings: true,
+    classes: true,
+    classrooms: true,
+    venues: true,
+  });
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
 
-  const createLabel = profile === 'student' ? 'View Session' : 'Create Session';
   const events = data.events;
   const allInstructorSummaries = data.allInstructors.length > 0 ? data.allInstructors : data.instructors;
   const studentSummaries = data.students;
-
-  const EVENT_STATUSES = ['Scheduled', 'Ongoing', 'Completed', 'Cancelled'] as const;
-  const normalizeStatus = (status?: string) => {
-    if (!status) return 'Scheduled';
-    const s = status.toLowerCase();
-
-    if (s === 'ongoing') return 'Ongoing';
-    if (s === 'completed') return 'Completed';
-    if (s === 'cancelled') return 'Cancelled';
-
-    return 'Scheduled';
-  };
 
   const allEvents = useMemo(() => events, [events]);
   const filteredEvents = useMemo(
     () =>
       allEvents.filter(event => {
-        if (filters.course && event.course !== filters.course) return false;
-        if (filters.instructor && event.instructor !== filters.instructor) return false;
-        if (filters.location && event.location !== filters.location) return false;
-        if (filters.category && event.category !== filters.category) return false;
+        if (selectedFilter.kind === 'class' && event.classDefinitionUuid !== selectedFilter.id) return false;
+        if (selectedFilter.kind === 'booking' && event.eventType !== 'booking_request') return false;
         if (
-          filters.statuses.length &&
-          !filters.statuses.includes(normalizeStatus(event.status))
+          (selectedFilter.kind === 'venue' || selectedFilter.kind === 'classroom') &&
+          event.location !== selectedFilter.id
         ) {
           return false;
         }
         return true;
       }),
-    [allEvents, filters]
+    [allEvents, selectedFilter]
   );
 
   const visibleEvents = useMemo(
@@ -94,16 +107,69 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     [currentDate, filteredEvents, view]
   );
 
-  const filterOptions = useMemo<SchedulerFilterOptions>(
-    () => ({
-      category: Array.from(new Set(allEvents.map(event => event.category))).sort(),
-      course: Array.from(new Set(allEvents.map(event => event.course).filter(Boolean))).sort(),
-      instructor: Array.from(new Set(allEvents.map(event => event.instructor).filter(Boolean))).sort(),
-      location: Array.from(new Set(allEvents.map(event => event.location).filter(Boolean))).sort(),
-      statuses: EVENT_STATUSES,
-    }),
-    [allEvents]
-  );
+  const searchTerm = normalizeText(searchQuery);
+
+  const classFilterItems = useMemo(() => {
+    const items = Array.from(
+      new Map(
+        allEvents
+          .filter(event => Boolean(event.classDefinitionUuid))
+          .map(event => [
+            event.classDefinitionUuid as string,
+            {
+              id: event.classDefinitionUuid as string,
+              name: `${event.title}${event.course ? ` - ${event.course}` : ''}`,
+            },
+          ])
+      ).values()
+    ).sort((left, right) => left.name.localeCompare(right.name));
+
+    return items.filter(item => !searchTerm || item.name.toLowerCase().includes(searchTerm));
+  }, [allEvents, searchTerm]);
+
+  const bookingFilterItems = useMemo(() => {
+    const bookingCount = allEvents.filter(event => event.eventType === 'booking_request').length;
+    if (!bookingCount) return [];
+
+    const items = [
+      {
+        id: 'booking-requests',
+        name: `Booking Requests (${bookingCount})`,
+      },
+    ];
+
+    return items.filter(item => !searchTerm || item.name.toLowerCase().includes(searchTerm));
+  }, [allEvents, searchTerm]);
+
+  const venueFilterItems = useMemo(() => {
+    const items = Array.from(
+      new Set(
+        allEvents
+          .filter(event => isVenueLocation(event.location))
+          .map(event => event.location)
+          .filter(Boolean)
+      )
+    )
+      .map(location => ({ id: location, name: location }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+
+    return items.filter(item => !searchTerm || item.name.toLowerCase().includes(searchTerm));
+  }, [allEvents, searchTerm]);
+
+  const classroomFilterItems = useMemo(() => {
+    const items = Array.from(
+      new Set(
+        allEvents
+          .filter(event => isClassroomLocation(event.location))
+          .map(event => event.location)
+          .filter(Boolean)
+      )
+    )
+      .map(location => ({ id: location, name: location }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+
+    return items.filter(item => !searchTerm || item.name.toLowerCase().includes(searchTerm));
+  }, [allEvents, searchTerm]);
 
   const activeDayEntries = useMemo(
     () => filteredEvents.filter(entry => isSameCalendarDay(entry.startTime, currentDate)),
@@ -117,9 +183,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     [activeDayEvents]
   );
 
-  const hasActiveFilters =
-    Boolean(filters.course || filters.instructor || filters.location || filters.category) ||
-    filters.statuses.length > 0;
+  const hasActiveFilters = selectedFilter.kind !== 'all';
 
   useEffect(() => {
     if (!hasActiveFilters || !filteredEvents.length) return;
@@ -185,29 +249,79 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     handleCreateSession(slot);
   };
 
+  const filterSections = useMemo<SchedulerFilterSection[]>(
+    () => [
+      {
+        count: bookingFilterItems.length,
+        isOpen: openDropdowns.bookings,
+        items: bookingFilterItems,
+        key: 'bookings',
+        label: 'Booking Requests',
+        onItemClick: id => {
+          setSelectedFilter({ id, kind: 'booking' });
+          setFiltersOpen(false);
+        },
+        onToggle: () => setOpenDropdowns(prev => ({ ...prev, bookings: !prev.bookings })),
+        selectedId: selectedFilter.kind === 'booking' ? selectedFilter.id : null,
+      },
+      {
+        count: classFilterItems.length,
+        isOpen: openDropdowns.classes,
+        items: classFilterItems,
+        key: 'classes',
+        label: 'Classes',
+        onItemClick: id => {
+          setSelectedFilter({ id, kind: 'class' });
+          setFiltersOpen(false);
+        },
+        onToggle: () => setOpenDropdowns(prev => ({ ...prev, classes: !prev.classes })),
+        selectedId: selectedFilter.kind === 'class' ? selectedFilter.id : null,
+      },
+      {
+        count: venueFilterItems.length,
+        isOpen: openDropdowns.venues,
+        items: venueFilterItems,
+        key: 'venues',
+        label: 'Venues',
+        onItemClick: id => {
+          setSelectedFilter({ id, kind: 'venue' });
+          setFiltersOpen(false);
+        },
+        onToggle: () => setOpenDropdowns(prev => ({ ...prev, venues: !prev.venues })),
+        selectedId: selectedFilter.kind === 'venue' ? selectedFilter.id : null,
+      },
+      {
+        count: classroomFilterItems.length,
+        isOpen: openDropdowns.classrooms,
+        items: classroomFilterItems,
+        key: 'classrooms',
+        label: 'Classrooms',
+        onItemClick: id => {
+          setSelectedFilter({ id, kind: 'classroom' });
+          setFiltersOpen(false);
+        },
+        onToggle: () => setOpenDropdowns(prev => ({ ...prev, classrooms: !prev.classrooms })),
+        selectedId: selectedFilter.kind === 'classroom' ? selectedFilter.id : null,
+      },
+    ],
+    [
+      bookingFilterItems,
+      classFilterItems,
+      classroomFilterItems,
+      openDropdowns.bookings,
+      openDropdowns.classes,
+      openDropdowns.classrooms,
+      openDropdowns.venues,
+      selectedFilter,
+      venueFilterItems,
+    ]
+  );
+
   return (
     <main className='bg-background space-y-4 pt-4 pb-8 px-4'>
       <div className='w-full'>
         <h1 className='text-foreground text-2xl font-semibold sm:text-3xl'>Calendar / Scheduler</h1>
         <p className='text-muted-foreground mt-1 text-sm'>Manage Classes, Venues &amp; Instructors</p>
-      </div>
-
-      <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-        <label className='relative min-w-0 flex-1 lg:max-w-4xl'>
-          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-          <input
-            className='bg-card text-foreground placeholder:text-muted-foreground focus-visible:ring-ring h-11 w-full rounded-md border px-10 text-sm shadow-sm transition outline-none focus-visible:ring-2'
-            placeholder='Search students, courses, instructors, venues...'
-          />
-        </label>
-
-        {/* {(profile === "instructor" || profile === "organization") &&
-          <div className='flex flex-wrap items-center gap-2 self-end'>
-            <Button className='h-10 rounded-md px-4 text-xs sm:text-sm' onClick={() => handleCreateSession()}>
-              <Plus className='h-4 w-4' />
-              {createLabel}
-            </Button>
-          </div>} */}
       </div>
 
       <header className='flex justify-end self-end'>
@@ -308,10 +422,14 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           <div className='flex min-w-0 flex-col gap-4 min-[1300px]:flex-row min-[1300px]:items-start'>
             <div className='hidden min-[1300px]:block'>
               <SchedulerFilters
-                options={filterOptions}
-                values={filters}
-                onChange={setFilters}
-                onClear={() => setFilters(DEFAULT_FILTERS)}
+                activeFilterCount={Number(selectedFilter.kind !== 'all')}
+                onClearFilters={() => {
+                  setSelectedFilter({ id: 'all', kind: 'all' });
+                  setSearchQuery('');
+                }}
+                onSearchChange={setSearchQuery}
+                searchQuery={searchQuery}
+                sections={filterSections}
               />
             </div>
 
@@ -354,10 +472,14 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           </SheetHeader>
 
           <SchedulerFilters
-            options={filterOptions}
-            values={filters}
-            onChange={setFilters}
-            onClear={() => setFilters(DEFAULT_FILTERS)}
+            activeFilterCount={Number(selectedFilter.kind !== 'all')}
+            onClearFilters={() => {
+              setSelectedFilter({ id: 'all', kind: 'all' });
+              setSearchQuery('');
+            }}
+            onSearchChange={setSearchQuery}
+            searchQuery={searchQuery}
+            sections={filterSections}
           />
         </SheetContent>
       </Sheet>

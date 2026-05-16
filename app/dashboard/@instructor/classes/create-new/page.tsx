@@ -447,23 +447,23 @@ const ClassBuilderPage = ({
         days:
           prev.repeat.days && prev.repeat.days.length > 0 ? prev.repeat.days : [normalizedWeekday],
       },
-        timetable: {
-          ...prev.timetable,
-          days:
-            prev.timetable.days && prev.timetable.days.length > 0
-              ? prev.timetable.days
-              : [DAY_NAMES[normalizedWeekday]],
-          time: {
-            ...prev.timetable.time,
-            duration:
-              prev.timetable.time.duration ||
-              `${Math.max(
-                30,
-                Math.round((slot.endTime.getTime() - slot.startTime.getTime()) / 60000)
-              )}`,
-          },
+      timetable: {
+        ...prev.timetable,
+        days:
+          prev.timetable.days && prev.timetable.days.length > 0
+            ? prev.timetable.days
+            : [DAY_NAMES[normalizedWeekday]],
+        time: {
+          ...prev.timetable.time,
+          duration:
+            prev.timetable.time.duration ||
+            `${Math.max(
+              30,
+              Math.round((slot.endTime.getTime() - slot.startTime.getTime()) / 60000)
+            )}`,
         },
-      }));
+      },
+    }));
   }, [initialSlot, queryPrefillSlot, resolveId]);
 
 
@@ -918,8 +918,8 @@ const ClassBuilderPage = ({
   const shouldShowSkeleton = isLoading || (resolveId && !isDataInitialized);
 
   return (
-    <div className={embedded ? 'bg-background px-1 py-1' : 'bg-background min-h-screen px-3 py-4 sm:px-4 sm:py-8'}>
-      <div className={embedded ? 'mx-auto max-w-5xl' : 'mx-auto max-w-5xl'}>
+    <div className={embedded ? 'bg-background px-1 py-1' : 'bg-background px-3 py-4 sm:px-4 sm:py-8'}>
+      <div className={embedded ? '' : ''}>
         {/* Header */}
         <div className={embedded ? 'mb-6' : 'mb-8'}>
           <h1 className={`text-foreground mb-2 font-bold ${embedded ? 'text-2xl' : 'text-3xl'}`}>
@@ -961,10 +961,10 @@ const ClassBuilderPage = ({
                     handleSubmit(event, true);
                   }}
                   disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
-                  >
-                    <Save className='mr-2 h-4 w-4' />
-                    Save as Draft
-                  </Button>
+                >
+                  <Save className='mr-2 h-4 w-4' />
+                  Save as Draft
+                </Button>
                 {!resolveId ? (
                   <Button
                     type='button'
