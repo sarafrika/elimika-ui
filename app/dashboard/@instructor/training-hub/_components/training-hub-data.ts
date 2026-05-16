@@ -74,7 +74,7 @@ export const managedCourses: TrainingHubManagedCourse[] = [
     students: '100 students',
     classes: '10 Classes',
     ctaLabel: 'Create Classes',
-    ctaHref: '/dashboard/classes/create-new',
+    ctaHref: '/dashboard/classes/new',
     accent: 'blue',
   },
   {
@@ -85,7 +85,7 @@ export const managedCourses: TrainingHubManagedCourse[] = [
     students: '65 students',
     classes: '10 Classes',
     ctaLabel: 'Create Classes',
-    ctaHref: '/dashboard/classes/create-new',
+    ctaHref: '/dashboard/classes/new',
     accent: 'indigo',
   },
   {
@@ -96,7 +96,7 @@ export const managedCourses: TrainingHubManagedCourse[] = [
     students: '60 students',
     classes: '10 Classes',
     ctaLabel: 'Create Classes',
-    ctaHref: '/dashboard/classes/create-new',
+    ctaHref: '/dashboard/classes/new',
     accent: 'orange',
   },
   {
@@ -107,7 +107,7 @@ export const managedCourses: TrainingHubManagedCourse[] = [
     students: '60 students',
     classes: '10 Classes',
     ctaLabel: 'Create Classes',
-    ctaHref: '/dashboard/classes/create-new',
+    ctaHref: '/dashboard/classes/new',
     accent: 'blue',
   },
   {
@@ -118,7 +118,7 @@ export const managedCourses: TrainingHubManagedCourse[] = [
     students: '6 Classes',
     classes: '10 Classes',
     ctaLabel: 'Create Classes',
-    ctaHref: '/dashboard/classes/create-new',
+    ctaHref: '/dashboard/classes/new',
     accent: 'yellow',
   },
 ];

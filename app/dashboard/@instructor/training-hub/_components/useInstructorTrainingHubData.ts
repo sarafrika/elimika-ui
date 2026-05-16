@@ -260,7 +260,7 @@ export function useInstructorTrainingHubData() {
         students: `${learnerIds.size} students`,
         classes: `${courseClasses.length} classes`,
         ctaLabel: 'Create New Class',
-        ctaHref: '/dashboard/classes/create-new',
+        ctaHref: '/dashboard/classes/new',
         accent: ACCENTS[index % ACCENTS.length] ?? 'blue',
         imageUrl: course.thumbnail_url ?? course.banner_url,
         status: 'approved',

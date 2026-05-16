@@ -116,14 +116,21 @@ export default function NewClassPage() {
     if (!selectedClass) return null;
     if (!selectedClass.program_uuid || selectedClass.course) return selectedClass;
 
-    const primaryProgramCourse = programCourses[0] ?? null;
-    if (!primaryProgramCourse) return selectedClass;
+    const selectedLessonModule = lessonModules.find(module =>
+      module.content?.data?.some(content => content.uuid === selectedLessonUuid)
+    );
+    const selectedProgramCourse =
+      selectedLessonModule?.course ??
+      programCourses.find(course => course.uuid === selectedLessonModule?.course?.uuid) ??
+      programCourses[0] ??
+      null;
+    if (!selectedProgramCourse) return selectedClass;
 
     return {
       ...selectedClass,
-      course: primaryProgramCourse,
+      course: selectedProgramCourse,
     };
-  }, [programCourses, selectedClass]);
+  }, [lessonModules, programCourses, selectedClass, selectedLessonUuid]);
 
   useEffect(() => {
     if (!lessonModules.length) {
@@ -172,6 +179,8 @@ export default function NewClassPage() {
       null,
     [selectedLessonUuid, selectedModule]
   );
+  const selectedLessonCourseUuid =
+    selectedModule?.course?.uuid ?? selectedClassForDisplay?.course?.uuid ?? '';
 
   const startClassMut = useMutation(startScheduledInstanceMutation());
 
@@ -221,6 +230,9 @@ export default function NewClassPage() {
     if (selectedLesson?.uuid) {
       params.set('content', selectedLesson.uuid);
     }
+    if (selectedLessonCourseUuid) {
+      params.set('course', selectedLessonCourseUuid);
+    }
 
     const queryString = params.toString();
     return `/dashboard/classes/class-training/${selectedClassUuid}${queryString ? `?${queryString}` : ''
@@ -230,6 +242,7 @@ export default function NewClassPage() {
     selectedInstanceEntry?.instanceUuid,
     selectedLesson?.uuid,
     selectedModule?.lesson?.uuid,
+    selectedLessonCourseUuid,
   ]);
 
   const getStartLessonHref = useCallback(
@@ -246,12 +259,19 @@ export default function NewClassPage() {
       if (contentUuid) {
         params.set('content', contentUuid);
       }
+      const lessonCourseUuid =
+        lessonModules.find(module => module.lesson.uuid === lessonUuid)?.course?.uuid ??
+        selectedClassForDisplay?.course?.uuid ??
+        '';
+      if (lessonCourseUuid) {
+        params.set('course', lessonCourseUuid);
+      }
 
       const queryString = params.toString();
       return `/dashboard/classes/class-training/${selectedClassUuid}${queryString ? `?${queryString}` : ''
         }`;
     },
-    [selectedClassUuid, selectedInstanceEntry?.instanceUuid]
+    [lessonModules, selectedClassForDisplay?.course?.uuid, selectedClassUuid, selectedInstanceEntry?.instanceUuid]
   );
 
   const handleStartLesson = useCallback(
@@ -440,7 +460,7 @@ export default function NewClassPage() {
                     ? 'Resume Lesson'
                     : 'Start Lesson'
                 }
-                onAddClasses={() => router.push(`/dashboard/classes/create-new?id=${selectedClass?.uuid}`)}
+                onAddClasses={() => router.push(`/dashboard/classes/new?id=${selectedClass?.uuid}`)}
               />
             </TabsContent>
 
@@ -470,7 +490,7 @@ export default function NewClassPage() {
                 completionRate={completionRate}
                 selectedInstanceUuid={selectedInstanceUuid as string}
                 visibleInstances={visibleInstances}
-                onAddClasses={() => router.push('/dashboard/classes/create-new')}
+                onAddClasses={() => router.push('/dashboard/classes/new')}
               />
             </TabsContent>
 

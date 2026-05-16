@@ -118,7 +118,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             event.classDefinitionUuid as string,
             {
               id: event.classDefinitionUuid as string,
-              name: `${event.title}${event.course ? ` - ${event.course}` : ''}`,
+              name: `${event.course ? `${event.course}` : ''} - ${event.title}`,
             },
           ])
       ).values()
@@ -241,7 +241,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
       params.set('endTime', getTimeValue(slot.endTime));
     }
 
-    router.push(`/dashboard/classes/create-new${params.toString() ? `?${params.toString()}` : ''}`);
+    router.push(`/dashboard/classes/new${params.toString() ? `?${params.toString()}` : ''}`);
   };
 
   const handleEmptySlotClick = (slot: { date: Date; startTime: Date; endTime: Date }) => {
@@ -251,19 +251,6 @@ export function SchedulerCalendarView({ profile, data }: Props) {
 
   const filterSections = useMemo<SchedulerFilterSection[]>(
     () => [
-      {
-        count: bookingFilterItems.length,
-        isOpen: openDropdowns.bookings,
-        items: bookingFilterItems,
-        key: 'bookings',
-        label: 'Booking Requests',
-        onItemClick: id => {
-          setSelectedFilter({ id, kind: 'booking' });
-          setFiltersOpen(false);
-        },
-        onToggle: () => setOpenDropdowns(prev => ({ ...prev, bookings: !prev.bookings })),
-        selectedId: selectedFilter.kind === 'booking' ? selectedFilter.id : null,
-      },
       {
         count: classFilterItems.length,
         isOpen: openDropdowns.classes,
@@ -302,6 +289,19 @@ export function SchedulerCalendarView({ profile, data }: Props) {
         },
         onToggle: () => setOpenDropdowns(prev => ({ ...prev, classrooms: !prev.classrooms })),
         selectedId: selectedFilter.kind === 'classroom' ? selectedFilter.id : null,
+      },
+      {
+        count: bookingFilterItems.length,
+        isOpen: openDropdowns.bookings,
+        items: bookingFilterItems,
+        key: 'bookings',
+        label: 'Booking Requests',
+        onItemClick: id => {
+          setSelectedFilter({ id, kind: 'booking' });
+          setFiltersOpen(false);
+        },
+        onToggle: () => setOpenDropdowns(prev => ({ ...prev, bookings: !prev.bookings })),
+        selectedId: selectedFilter.kind === 'booking' ? selectedFilter.id : null,
       },
     ],
     [

@@ -57,6 +57,7 @@ import { ClassCreationSummaryStrip } from './_components/class-creation-summary-
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new-class-creation';
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const CLASS_TYPE_OPTIONS = [
   { label: 'Group Class', value: 'PUBLIC', icon: Users },
@@ -229,6 +230,12 @@ const parseCoordinate = (value: string) => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+/**
+ * Calculates the total number of session occurrences between startDate and endDate
+ * based on the recurrence rule. For weekly recurrence, only days in selectedDays
+ * are counted. For weekly with an interval > 1, the walk still goes day-by-day
+ * but skips entire weeks that fall outside the interval cycle.
+ */
 const calculateOccurrences = (
   startDate: string,
   endDate: string,
@@ -243,36 +250,60 @@ const calculateOccurrences = (
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return 0;
 
   let occurrences = 0;
-  let current = new Date(start);
 
   switch (repeatUnit) {
-    case 'day':
+    case 'day': {
+      let current = new Date(start);
       while (current <= end) {
         occurrences++;
         current.setDate(current.getDate() + repeatInterval);
       }
       break;
-    case 'week':
-      while (current <= end) {
-        const dayIndex = current.getDay() === 0 ? 6 : current.getDay() - 1;
-        if (!selectedDays?.length || selectedDays.includes(dayIndex)) {
-          occurrences++;
+    }
+    case 'week': {
+      // Walk week-by-week (jumping repeatInterval weeks at a time),
+      // and within each week count only the selected days.
+      let weekStart = new Date(start);
+      // Normalise weekStart to Monday of the week containing `start`
+      const startDow = weekStart.getDay(); // 0=Sun
+      const daysToMon = startDow === 0 ? -6 : 1 - startDow;
+      weekStart.setDate(weekStart.getDate() + daysToMon);
+
+      while (weekStart <= end) {
+        // For each selected day in this week, check if it falls in [start, end]
+        const daysToCheck = selectedDays?.length
+          ? selectedDays
+          : [0, 1, 2, 3, 4, 5, 6]; // Mon=0..Sun=6
+
+        for (const dayIdx of daysToCheck) {
+          const candidate = new Date(weekStart);
+          candidate.setDate(weekStart.getDate() + dayIdx);
+          if (candidate >= start && candidate <= end) {
+            occurrences++;
+          }
         }
-        current.setDate(current.getDate() + 1);
+
+        // Advance by repeatInterval weeks
+        weekStart.setDate(weekStart.getDate() + 7 * repeatInterval);
       }
       break;
-    case 'month':
+    }
+    case 'month': {
+      let current = new Date(start);
       while (current <= end) {
         occurrences++;
         current.setMonth(current.getMonth() + repeatInterval);
       }
       break;
-    case 'year':
+    }
+    case 'year': {
+      let current = new Date(start);
       while (current <= end) {
         occurrences++;
         current.setFullYear(current.getFullYear() + repeatInterval);
       }
       break;
+    }
     default:
       break;
   }
@@ -280,7 +311,8 @@ const calculateOccurrences = (
   return occurrences;
 };
 
-const buildUtcIsoDateTime = (date: string, time: string) => new Date(`${date}T${time}:00Z`).toISOString();
+const buildUtcIsoDateTime = (date: string, time: string) =>
+  new Date(`${date}T${time}:00Z`).toISOString();
 
 const formatClassType = (value?: string | null) => {
   if (!value) return 'Group Class';
@@ -308,8 +340,22 @@ const getMutationErrorMessage = (error: unknown, fallback: string) => {
       return message;
     }
   }
-
   return fallback;
+};
+
+const getRepeatSummary = (scheduleSettings: ScheduleSettings) => {
+  const days = scheduleSettings.repeat.days || [];
+  const interval = scheduleSettings.repeat.interval || 1;
+
+  if (scheduleSettings.repeat.unit === 'week') {
+    const intervalLabel = interval > 1 ? `every ${interval} weeks` : 'weekly';
+    if (days.length > 0) {
+      return `Repeats ${intervalLabel} on ${days.map(d => DAY_SHORT[d] ?? 'Mon').join(', ')}`;
+    }
+    return `Repeats ${intervalLabel}`;
+  }
+
+  return `Repeats every ${interval} ${scheduleSettings.repeat.unit}(s)`;
 };
 
 const NewClassCreationPage = () => {
@@ -319,7 +365,7 @@ const NewClassCreationPage = () => {
   const instructor = useInstructor();
   const classId = searchParams.get('id');
 
-  const [savedClassUuid, setSavedClassUuid] = useState<string | null>(null);
+  const [draftSavedTick, setDraftSavedTick] = useState(0); const [savedClassUuid, setSavedClassUuid] = useState<string | null>(null);
   const [isDataInitialized, setIsDataInitialized] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState('');
   const [schedulePreset, setSchedulePreset] = useState<SchedulePreset>('standard');
@@ -336,6 +382,8 @@ const NewClassCreationPage = () => {
   const [allowWaitlist, setAllowWaitlist] = useState(true);
   const [locationLatitude, setLocationLatitude] = useState('');
   const [locationLongitude, setLocationLongitude] = useState('');
+  // pick-dates preset
+  const [pickedDates, setPickedDates] = useState<string[]>([]);
   const classDetailsCardRef = useRef<HTMLDivElement | null>(null);
 
   const resolvedId = classId || savedClassUuid;
@@ -357,19 +405,14 @@ const NewClassCreationPage = () => {
   });
   const approvedCourses = useMemo(() => {
     if (!courses?.data?.content || !appliedCourses?.data?.content) return [];
-
     const approvedApplicationMap = new Map(
       appliedCourses.data.content
         .filter(app => app.status === 'approved')
         .map(app => [app.course_uuid, app])
     );
-
     return courses.data.content
       .filter(course => approvedApplicationMap.has(course.uuid) && course.admin_approved)
-      .map(course => ({
-        ...course,
-        application: approvedApplicationMap.get(course.uuid),
-      }));
+      .map(course => ({ ...course, application: approvedApplicationMap.get(course.uuid) }));
   }, [courses, appliedCourses]);
 
   const { data: programs } = useQuery(getAllTrainingProgramsOptions({ query: { pageable: {} } }));
@@ -384,19 +427,14 @@ const NewClassCreationPage = () => {
   });
   const approvedPrograms = useMemo(() => {
     if (!programs?.data?.content || !appliedPrograms?.data?.content) return [];
-
     const approvedApplicationMap = new Map(
       appliedPrograms.data.content
         .filter(app => app.status === 'approved')
         .map(app => [app.program_uuid, app])
     );
-
     return programs.data.content
       .filter(program => approvedApplicationMap.has(program.uuid) && program.admin_approved)
-      .map(program => ({
-        ...program,
-        application: approvedApplicationMap.get(program.uuid),
-      }));
+      .map(program => ({ ...program, application: approvedApplicationMap.get(program.uuid) }));
   }, [programs, appliedPrograms]);
 
   const catalogItems = useMemo<CatalogItem[]>(() => {
@@ -407,7 +445,6 @@ const NewClassCreationPage = () => {
       classLimit: course.class_limit ?? 0,
       rateCard: course.application?.rate_card as CatalogRateCard | undefined,
     }));
-
     const programItems: CatalogItem[] = approvedPrograms.map(program => ({
       label: program.title,
       source: 'program',
@@ -415,7 +452,6 @@ const NewClassCreationPage = () => {
       classLimit: program.class_limit ?? 0,
       rateCard: program.application?.rate_card as CatalogRateCard | undefined,
     }));
-
     return [...courseItems, ...programItems];
   }, [approvedCourses, approvedPrograms]);
 
@@ -431,10 +467,7 @@ const NewClassCreationPage = () => {
 
   const rateCard = selectedCatalogItem?.rateCard;
   const ratePerHour = useMemo(() => {
-    if (!rateCard || !classDetails.class_type || !classDetails.location_type) {
-      return 0;
-    }
-
+    if (!rateCard || !classDetails.class_type || !classDetails.location_type) return 0;
     const classType = classDetails.class_type === 'PRIVATE' ? 'private' : 'group';
     const locationType =
       classDetails.location_type === 'ONLINE'
@@ -443,9 +476,7 @@ const NewClassCreationPage = () => {
           ? 'inperson'
           : 'inperson';
     const rateKey = `${classType}_${locationType}_rate`;
-    const rawRate = rateCard[rateKey];
-
-    return Number(rawRate ?? 0);
+    return Number(rateCard[rateKey] ?? 0);
   }, [classDetails.class_type, classDetails.location_type, rateCard]);
 
   const sessionDuration = calculateSessionHours(
@@ -453,16 +484,30 @@ const NewClassCreationPage = () => {
     scheduleSettings.startClass.endTime,
     scheduleSettings.allDay
   );
-  const totalSessions =
-    schedulePreset === 'standard'
-      ? calculateOccurrences(
+
+  const totalSessions = useMemo(() => {
+    if (schedulePreset === 'standard') {
+      return calculateOccurrences(
         scheduleSettings.startClass.date,
         scheduleSettings.endRepeat,
         scheduleSettings.repeat.unit,
         scheduleSettings.repeat.interval,
         scheduleSettings.repeat.days
-      )
-      : 1;
+      );
+    }
+    if (schedulePreset === 'pick-dates') {
+      return pickedDates.length;
+    }
+    // academic-period: treat same as standard but use academicPeriod dates
+    return calculateOccurrences(
+      scheduleSettings.academicPeriod.start,
+      scheduleSettings.academicPeriod.end,
+      scheduleSettings.repeat.unit,
+      scheduleSettings.repeat.interval,
+      scheduleSettings.repeat.days
+    );
+  }, [schedulePreset, scheduleSettings, pickedDates]);
+
   const feePerSession = Math.max(ratePerHour * sessionDuration, 0);
   const totalAmount = feePerSession * Math.max(totalSessions, 1);
 
@@ -474,15 +519,11 @@ const NewClassCreationPage = () => {
     }
     : null;
 
+  // ── Draft restore ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (resolvedId || isDataInitialized || typeof window === 'undefined') return;
-
     const savedDraft = window.localStorage.getItem(LOCAL_CLASS_DRAFT_KEY);
-    if (!savedDraft) {
-      setIsDataInitialized(true);
-      return;
-    }
-
+    if (!savedDraft) { setIsDataInitialized(true); return; }
     try {
       const parsed = JSON.parse(savedDraft) as {
         classDetails?: Partial<ClassDetails>;
@@ -492,55 +533,34 @@ const NewClassCreationPage = () => {
         allowWaitlist?: boolean;
         locationLatitude?: string;
         locationLongitude?: string;
+        pickedDates?: string[];
       };
-
       if (parsed.classDetails) {
-        const savedClassDetails = parsed.classDetails;
+        const saved = parsed.classDetails;
         setClassDetails(prev => ({
-          ...prev,
-          ...savedClassDetails,
-          location_type: normalizeLocationType(savedClassDetails.location_type),
+          ...prev, ...saved,
+          location_type: normalizeLocationType(saved.location_type),
         }));
       }
-
       if (parsed.scheduleSettings) {
         setScheduleSettings(prev => ({
-          ...prev,
-          ...parsed.scheduleSettings,
+          ...prev, ...parsed.scheduleSettings,
           academicPeriod: { ...prev.academicPeriod, ...parsed.scheduleSettings?.academicPeriod },
-          registrationPeriod: {
-            ...prev.registrationPeriod,
-            ...parsed.scheduleSettings?.registrationPeriod,
-          },
+          registrationPeriod: { ...prev.registrationPeriod, ...parsed.scheduleSettings?.registrationPeriod },
           startClass: { ...prev.startClass, ...parsed.scheduleSettings?.startClass },
           repeat: { ...prev.repeat, ...parsed.scheduleSettings?.repeat },
           timetable: {
-            ...prev.timetable,
-            ...parsed.scheduleSettings?.timetable,
+            ...prev.timetable, ...parsed.scheduleSettings?.timetable,
             time: { ...prev.timetable.time, ...parsed.scheduleSettings?.timetable?.time },
           },
         }));
       }
-
-      if (parsed.notificationSettings) {
-        setNotificationSettings(prev => ({ ...prev, ...parsed.notificationSettings }));
-      }
-
-      if (parsed.schedulePreset) {
-        setSchedulePreset(parsed.schedulePreset);
-      }
-
-      if (typeof parsed.allowWaitlist === 'boolean') {
-        setAllowWaitlist(parsed.allowWaitlist);
-      }
-
-      if (typeof parsed.locationLatitude === 'string') {
-        setLocationLatitude(parsed.locationLatitude);
-      }
-
-      if (typeof parsed.locationLongitude === 'string') {
-        setLocationLongitude(parsed.locationLongitude);
-      }
+      if (parsed.notificationSettings) setNotificationSettings(prev => ({ ...prev, ...parsed.notificationSettings }));
+      if (parsed.schedulePreset) setSchedulePreset(parsed.schedulePreset);
+      if (typeof parsed.allowWaitlist === 'boolean') setAllowWaitlist(parsed.allowWaitlist);
+      if (typeof parsed.locationLatitude === 'string') setLocationLatitude(parsed.locationLatitude);
+      if (typeof parsed.locationLongitude === 'string') setLocationLongitude(parsed.locationLongitude);
+      if (Array.isArray(parsed.pickedDates)) setPickedDates(parsed.pickedDates);
     } catch {
       window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
     } finally {
@@ -548,6 +568,7 @@ const NewClassCreationPage = () => {
     }
   }, [resolvedId, isDataInitialized]);
 
+  // ── Draft save ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (resolvedId || !isDataInitialized || typeof window === 'undefined') return;
 
@@ -562,9 +583,13 @@ const NewClassCreationPage = () => {
           allowWaitlist,
           locationLatitude,
           locationLongitude,
+          pickedDates,
           savedAt: new Date().toISOString(),
         })
       );
+
+      // 🔥 trigger UI "draft saved" indicator
+      setDraftSavedTick(prev => prev + 1);
     }, 500);
 
     return () => window.clearTimeout(timeout);
@@ -576,10 +601,12 @@ const NewClassCreationPage = () => {
     allowWaitlist,
     locationLatitude,
     locationLongitude,
+    pickedDates,
     resolvedId,
     isDataInitialized,
   ]);
 
+  // ── Edit-mode hydration ────────────────────────────────────────────────────
   useEffect(() => {
     if (resolvedId && classData && !isLoading && !isDataInitialized) {
       const classRecord = classData as NonNullable<typeof classData> & {
@@ -601,24 +628,17 @@ const NewClassCreationPage = () => {
         description: classRecord.description || '',
         categories: Array.isArray(classRecord.categories)
           ? classRecord.categories
-          : classRecord.categories
-            ? [classRecord.categories]
-            : [],
+          : classRecord.categories ? [classRecord.categories] : [],
         class_type: classRecord.class_visibility || 'PUBLIC',
         location_type: normalizeLocationType(classRecord.location_type),
         rate_card: classRecord.rate_card || classRecord.training_fee || '',
         class_limit: classRecord.max_participants || 0,
         targetAudience: classRecord.targetAudience || '',
         location_name: classRecord.location_name || '',
-        startDate: '',
-        endDate: '',
-        allDay: false,
-        repeatUnit: '1',
+        startDate: '', endDate: '', allDay: false, repeatUnit: '1',
         instructorName: instructor?.full_name,
         meeting_link: classRecord.meeting_link || '',
-        classroom: '',
-        class_color: classRecord.class_color || '',
-        reminder: '',
+        classroom: '', class_color: classRecord.class_color || '', reminder: '',
       });
 
       setNotificationSettings(prev => ({
@@ -627,19 +647,11 @@ const NewClassCreationPage = () => {
         classColour: classRecord.class_color || prev.classColour,
       }));
       setAllowWaitlist(classRecord.allow_waitlist ?? true);
-      setLocationLatitude(
-        typeof classRecord.location_latitude === 'number' ? String(classRecord.location_latitude) : ''
-      );
-      setLocationLongitude(
-        typeof classRecord.location_longitude === 'number' ? String(classRecord.location_longitude) : ''
-      );
+      setLocationLatitude(typeof classRecord.location_latitude === 'number' ? String(classRecord.location_latitude) : '');
+      setLocationLongitude(typeof classRecord.location_longitude === 'number' ? String(classRecord.location_longitude) : '');
 
-      if (
-        classRecord.academic_period_start_date ||
-        classRecord.academic_period_end_date ||
-        classRecord.registration_period_start_date ||
-        classRecord.registration_period_end_date
-      ) {
+      if (classRecord.academic_period_start_date || classRecord.academic_period_end_date ||
+        classRecord.registration_period_start_date || classRecord.registration_period_end_date) {
         setScheduleSettings(prev => ({
           ...prev,
           academicPeriod: {
@@ -665,7 +677,6 @@ const NewClassCreationPage = () => {
       if (classRecord.default_start_time) {
         const startDate = new Date(classRecord.default_start_time);
         const endDate = new Date(classRecord.default_end_time || classRecord.default_start_time);
-
         setScheduleSettings(prev => ({
           ...prev,
           startClass: {
@@ -684,41 +695,48 @@ const NewClassCreationPage = () => {
     }
   }, [classData, isLoading, resolvedId, isDataInitialized, instructor?.full_name]);
 
+  // ── Validation ─────────────────────────────────────────────────────────────
   const isFormValid = () => {
     if (!classDetails.course_uuid && !classDetails.program_uuid) {
-      toast.error('Please select a course or program');
-      return false;
+      toast.error('Please select a course or program'); return false;
     }
-
     if (!classDetails.title.trim()) {
-      toast.error('Please enter a class title');
-      return false;
+      toast.error('Please enter a class title'); return false;
     }
-
     const locationType = normalizeLocationType(classDetails.location_type);
     if (!locationType) {
-      toast.error('Please select a lecture type');
-      return false;
+      toast.error('Please select a lecture type'); return false;
     }
-
     if (requiresPhysicalLocation(locationType) && !trimToUndefined(classDetails.location_name)) {
-      toast.error('Please enter a location');
-      return false;
+      toast.error('Please enter a location'); return false;
     }
 
-    if (!scheduleSettings.startClass.date || !scheduleSettings.startClass.startTime || !scheduleSettings.startClass.endTime) {
-      toast.error('Please fill in the schedule fields');
-      return false;
+    if (schedulePreset === 'standard') {
+      if (!scheduleSettings.startClass.date || !scheduleSettings.startClass.startTime || !scheduleSettings.startClass.endTime) {
+        toast.error('Please fill in the schedule fields'); return false;
+      }
+      if (!scheduleSettings.endRepeat) {
+        toast.error('Please set an end repeat date'); return false;
+      }
     }
 
-    if (!scheduleSettings.endRepeat) {
-      toast.error('Please set an end repeat date');
-      return false;
+    if (schedulePreset === 'pick-dates' && pickedDates.length === 0) {
+      toast.error('Please select at least one date'); return false;
+    }
+
+    if (schedulePreset === 'academic-period') {
+      if (!scheduleSettings.academicPeriod.start || !scheduleSettings.academicPeriod.end) {
+        toast.error('Please set the academic period dates'); return false;
+      }
+      if (!scheduleSettings.startClass.startTime || !scheduleSettings.startClass.endTime) {
+        toast.error('Please set the class start and end times'); return false;
+      }
     }
 
     return true;
   };
 
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const submitClass = (isDraft = false) => {
     if (!isFormValid()) return;
 
@@ -729,17 +747,71 @@ const NewClassCreationPage = () => {
 
     const startTime = scheduleSettings.allDay ? '00:00' : scheduleSettings.startClass.startTime || '00:00';
     const endTime = scheduleSettings.allDay ? '23:59' : scheduleSettings.startClass.endTime || '23:59';
-    const startTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, startTime);
-    const endTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, endTime);
-    const daysOfWeek = (scheduleSettings.repeat.days || [])
-      .slice()
-      .sort()
-      .map(dayIndex => DAY_NAMES[dayIndex])
-      .join(',');
     const academicPeriodStart = buildDateFromInput(scheduleSettings.academicPeriod.start);
     const academicPeriodEnd = buildDateFromInput(scheduleSettings.academicPeriod.end);
     const registrationPeriodStart = buildDateFromInput(scheduleSettings.registrationPeriod.start);
     const registrationPeriodEnd = buildDateFromInput(scheduleSettings.registrationPeriod.end);
+
+    // Build days_of_week string (e.g. "MONDAY,TUESDAY,WEDNESDAY")
+    const daysOfWeekString = (scheduleSettings.repeat.days || [])
+      .slice()
+      .sort()
+      .map(idx => DAY_NAMES[idx])
+      .join(',') || undefined;
+
+    // Total occurrences — this IS the occurrence_count sent to the backend.
+    // calculateOccurrences already handles the interval correctly for all units.
+    const totalOccurrences = totalSessions || 1;
+
+    // Determine the reference date and recurrence type per preset
+    let referenceDate = scheduleSettings.startClass.date;
+    if (schedulePreset === 'academic-period') {
+      referenceDate = scheduleSettings.academicPeriod.start;
+    }
+
+    const startTimeIso = buildUtcIsoDateTime(referenceDate, startTime);
+    const endTimeIso = buildUtcIsoDateTime(referenceDate, endTime);
+
+    let session_templates: CreateClassDefinitionData['body']['session_templates'];
+
+    if (schedulePreset === 'pick-dates') {
+      // One template per individually picked date
+      session_templates = pickedDates.sort().map(dateStr => ({
+        start_time: new Date(buildUtcIsoDateTime(dateStr, startTime)),
+        end_time: new Date(buildUtcIsoDateTime(dateStr, endTime)),
+        recurrence: {
+          recurrence_type: RecurrenceTypeEnum.DAILY,
+          interval_value: 1,
+          days_of_week: undefined,
+          occurrence_count: 1,
+        },
+        conflict_resolution: ConflictResolutionEnum.FAIL,
+      }));
+    } else {
+      // Standard or academic-period: single recurrence template
+      const recurrenceType =
+        scheduleSettings.repeat.unit === 'day'
+          ? RecurrenceTypeEnum.DAILY
+          : scheduleSettings.repeat.unit === 'week'
+            ? RecurrenceTypeEnum.WEEKLY
+            : scheduleSettings.repeat.unit === 'month'
+              ? RecurrenceTypeEnum.MONTHLY
+              : RecurrenceTypeEnum.YEARLY;
+
+      session_templates = [
+        {
+          start_time: new Date(startTimeIso),
+          end_time: new Date(endTimeIso),
+          recurrence: {
+            recurrence_type: recurrenceType,
+            interval_value: scheduleSettings.repeat.interval,
+            days_of_week: daysOfWeekString,
+            occurrence_count: totalOccurrences,
+          },
+          conflict_resolution: ConflictResolutionEnum.FAIL,
+        },
+      ];
+    }
 
     const payload: CreateClassDefinitionData['body'] = {
       course_uuid: selectedSource === 'course' ? classDetails.course_uuid || undefined : undefined,
@@ -748,8 +820,7 @@ const NewClassCreationPage = () => {
       description: classDetails.description || undefined,
       default_instructor_uuid: instructor?.uuid as string,
       class_visibility: classDetails.class_type === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
-      session_format:
-        classDetails.class_type === 'PRIVATE' ? SessionFormatEnum.INDIVIDUAL : SessionFormatEnum.GROUP,
+      session_format: classDetails.class_type === 'PRIVATE' ? SessionFormatEnum.INDIVIDUAL : SessionFormatEnum.GROUP,
       location_type: LocationTypeEnum[locationType as keyof typeof LocationTypeEnum],
       location_name: trimToUndefined(classDetails.location_name),
       location_latitude: parseCoordinate(locationLatitude),
@@ -768,24 +839,7 @@ const NewClassCreationPage = () => {
       default_start_time: new Date(startTimeIso),
       default_end_time: new Date(endTimeIso),
       meeting_link: meetingLinkAllowed ? trimToUndefined(classDetails.meeting_link) : undefined,
-      session_templates: [
-        {
-          start_time: new Date(startTimeIso),
-          end_time: new Date(endTimeIso),
-          recurrence: {
-            recurrence_type:
-              scheduleSettings.repeat.unit === 'day'
-                ? RecurrenceTypeEnum.DAILY
-                : scheduleSettings.repeat.unit === 'week'
-                  ? RecurrenceTypeEnum.WEEKLY
-                  : RecurrenceTypeEnum.MONTHLY,
-            interval_value: scheduleSettings.repeat.interval,
-            days_of_week: daysOfWeek || undefined,
-            occurrence_count: totalSessions || 1,
-          },
-          conflict_resolution: ConflictResolutionEnum.FAIL,
-        },
-      ],
+      session_templates,
     };
 
     const onSuccess = () => {
@@ -795,19 +849,10 @@ const NewClassCreationPage = () => {
         }),
       });
       qc.invalidateQueries({ queryKey: getAllClassDefinitionsQueryKey({ query: { pageable: {} } }) });
-
       if (resolvedId) {
-        qc.invalidateQueries({
-          queryKey: getClassDefinitionQueryKey({
-            path: { uuid: resolvedId },
-          }),
-        });
+        qc.invalidateQueries({ queryKey: getClassDefinitionQueryKey({ path: { uuid: resolvedId } }) });
       }
-
-      if (typeof window !== 'undefined') {
-        window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
-      }
-
+      if (typeof window !== 'undefined') window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
       toast.success(isDraft ? 'Class saved as draft' : resolvedId ? 'Class updated successfully' : 'Class created successfully');
       router.push('/dashboard/classes');
     };
@@ -815,10 +860,7 @@ const NewClassCreationPage = () => {
     if (resolvedId) {
       updateClassDefinition.mutate(
         { path: { uuid: resolvedId }, body: payload },
-        {
-          onSuccess,
-          onError: error => toast.error(getMutationErrorMessage(error, 'Failed to update class')),
-        }
+        { onSuccess, onError: error => toast.error(getMutationErrorMessage(error, 'Failed to update class')) }
       );
     } else {
       createClassDefinition.mutate(
@@ -826,9 +868,7 @@ const NewClassCreationPage = () => {
         {
           onSuccess: response => {
             const savedUuid = response?.data?.class_definition?.uuid;
-            if (savedUuid) {
-              setSavedClassUuid(savedUuid);
-            }
+            if (savedUuid) setSavedClassUuid(savedUuid);
             onSuccess();
           },
           onError: error => toast.error(getMutationErrorMessage(error, 'Failed to create class')),
@@ -842,12 +882,40 @@ const NewClassCreationPage = () => {
     submitClass(false);
   };
 
+  const clearDraft = () => {
+    // 1. Remove persisted draft
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
+    }
+
+    // 2. Reset core form state
+    setClassDetails(createInitialClassDetails(instructor?.full_name));
+    setScheduleSettings(createInitialScheduleSettings());
+    setNotificationSettings(createInitialNotificationSettings());
+
+    // 3. Reset auxiliary state
+    setSchedulePreset('standard');
+    setAllowWaitlist(true);
+    setLocationLatitude('');
+    setLocationLongitude('');
+    setPickedDates([]);
+
+    // 4. Reset mutation-derived state
+    setSavedClassUuid(null);
+
+    // 5. Reset initialization flag so draft auto-save restarts cleanly
+    setIsDataInitialized(true);
+
+    // 6. UX feedback
+    toast.success('Draft cleared');
+  };
+
+  // ── Derived UI values ──────────────────────────────────────────────────────
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const inviteLink = resolvedId ? `${origin}/class-invite?id=${resolvedId}` : '';
   const meetingLink = classDetails.meeting_link || 'https://skillswallet.co/meet/john/uix101';
   const normalizedLocationType = normalizeLocationType(classDetails.location_type);
-  const showMeetingLink =
-    normalizedLocationType === 'ONLINE' || normalizedLocationType === 'HYBRID';
+  const showMeetingLink = normalizedLocationType === 'ONLINE' || normalizedLocationType === 'HYBRID';
 
   const previewData: ClassCreationPreviewData = {
     classTitle: classDetails.title || selectedCatalogItem?.label || 'Class title',
@@ -856,11 +924,11 @@ const NewClassCreationPage = () => {
     lectureTypeLabel: formatLectureType(classDetails.location_type),
     locationName: classDetails.location_name || 'Nairobi, Kenya',
     scheduleLabel:
-      schedulePreset === 'standard' && scheduleSettings.startClass.date
-        ? `Every ${new Date(`${scheduleSettings.startClass.date}T00:00:00`).toLocaleDateString('en-US', {
-          weekday: 'long',
-        })}`
-        : 'Schedule pending',
+      schedulePreset === 'pick-dates'
+        ? `${pickedDates.length} selected date${pickedDates.length === 1 ? '' : 's'}`
+        : schedulePreset === 'standard' && scheduleSettings.startClass.date
+          ? `Every ${new Date(`${scheduleSettings.startClass.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' })}`
+          : 'Schedule pending',
     timeLabel: formatScheduleTime(
       scheduleSettings.startClass.startTime,
       scheduleSettings.startClass.endTime,
@@ -874,6 +942,118 @@ const NewClassCreationPage = () => {
     inviteLink,
   };
 
+  // ── Shared time fields (used by all presets) ───────────────────────────────
+  const SharedTimeFields = (
+    <div className='flex flex-col gap-4 sm:flex-row'>
+      <div className='flex-1'>
+        <FieldGroup label='Start Time *'>
+          <Input
+            type='time'
+            value={scheduleSettings.startClass.startTime || ''}
+            disabled={scheduleSettings.allDay}
+            onChange={e =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                startClass: { ...prev.startClass, startTime: e.target.value },
+              }))
+            }
+          />
+        </FieldGroup>
+      </div>
+      <div className='flex-1'>
+        <FieldGroup label='End Time *'>
+          <Input
+            type='time'
+            value={scheduleSettings.startClass.endTime || ''}
+            disabled={scheduleSettings.allDay}
+            onChange={e =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                startClass: { ...prev.startClass, endTime: e.target.value },
+              }))
+            }
+          />
+        </FieldGroup>
+      </div>
+    </div>
+  );
+
+  // ── Repeat rule fields (shared by standard + academic-period) ─────────────
+  const RepeatRuleFields = (
+    <div className='space-y-3'>
+      {/* Interval + unit */}
+      <div className='flex flex-wrap items-end gap-3'>
+        <div className='flex flex-col gap-1'>
+          <span className='text-muted-foreground text-xs font-semibold'>Repeat every</span>
+          <Input
+            type='number'
+            min={1}
+            value={scheduleSettings.repeat.interval}
+            onChange={e =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                repeat: { ...prev.repeat, interval: parseInt(e.target.value, 10) || 1 },
+              }))
+            }
+            className='w-20'
+          />
+        </div>
+        <div className='flex flex-col gap-1'>
+          <span className='text-muted-foreground text-xs font-semibold'>Unit</span>
+          <Select
+            value={scheduleSettings.repeat.unit}
+            onValueChange={value =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                repeat: { ...prev.repeat, unit: value as 'day' | 'week' | 'month' | 'year', days: value !== 'week' ? [] : prev.repeat.days },
+              }))
+            }
+          >
+            <SelectTrigger className='w-32'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='day'>Day</SelectItem>
+              <SelectItem value='week'>Week</SelectItem>
+              <SelectItem value='month'>Month</SelectItem>
+              <SelectItem value='year'>Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Day selector — only for weekly */}
+      {scheduleSettings.repeat.unit === 'week' && (
+        <div className='flex flex-wrap gap-2'>
+          {DAY_NAMES.map((day, index) => {
+            const active = scheduleSettings.repeat.days?.includes(index);
+            return (
+              <button
+                key={day}
+                type='button'
+                onClick={() =>
+                  setScheduleSettings(prev => {
+                    const currentDays = prev.repeat.days || [];
+                    const nextDays = active
+                      ? currentDays.filter(d => d !== index)
+                      : [...currentDays, index];
+                    return { ...prev, repeat: { ...prev.repeat, days: nextDays } };
+                  })
+                }
+                className={`rounded-md border px-3 py-2 text-sm font-medium transition ${active
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-card text-foreground hover:border-primary/40'
+                  }`}
+              >
+                {day.slice(0, 3)}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className='h-auto px-2 py-4 sm:px-3 sm:py-6 lg:px-6'>
       <form onSubmit={handleSubmit} className='space-y-6'>
@@ -881,74 +1061,56 @@ const NewClassCreationPage = () => {
           isSubmitting={createClassDefinition.isPending || updateClassDefinition.isPending}
           onSaveDraft={() => submitClass(true)}
           onPublish={() => submitClass(false)}
+          onClearDraft={clearDraft}
+          hasDraft={isDataInitialized && typeof window !== 'undefined' && !!window.localStorage.getItem(LOCAL_CLASS_DRAFT_KEY)}
+          draftSavedTick={draftSavedTick}
         />
 
-        {/* Outer layout: main content + preview rail */}
-        <div className='flex flex-col gap-4 xl:flex-row xl:items-start'>
+        <div className="flex flex-col items-start gap-4 xl:flex-row xl:sticky xl:top-4 h-fit self-start">
           <div className='min-w-0 flex-1 space-y-4'>
-
-            {/* Class Details Card */}
             <div ref={classDetailsCardRef} className='scroll-mt-24'>
               <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
                 <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
                   <h3 className='text-foreground text-lg font-semibold'>Class Details</h3>
                 </div>
 
-                {/* Class details inner: form fields + rate card */}
                 <div className='flex flex-col gap-4 px-2 pb-4 sm:px-3 sm:pb-6 lg:flex-row'>
                   <div className='min-w-0 flex-1 space-y-4'>
                     <FieldGroup label='Select Course *'>
-                      <div className='space-y-3'>
-                        <Select
-                          value={selectedCatalogItem?.uuid || ''}
-                          onValueChange={value => {
-                            const item = catalogItems.find(catalog => catalog.uuid === value);
-                            if (!item) return;
-
-                            if (item.source === 'course') {
-                              setClassDetails(prev => ({
-                                ...prev,
-                                course_uuid: item.uuid,
-                                program_uuid: null,
-                                class_limit: item.classLimit,
-                              }));
-                            } else {
-                              setClassDetails(prev => ({
-                                ...prev,
-                                program_uuid: item.uuid,
-                                course_uuid: '',
-                                class_limit: item.classLimit,
-                              }));
-                            }
-                          }}
-                        >
-                          <SelectTrigger className='h-10 w-full rounded-md'>
-                            <SelectValue placeholder='Select a course or program' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {catalogItems.filter(item =>
-                              `${item.source} ${item.label}`.toLowerCase().includes(catalogSearch.toLowerCase())
-                            ).length === 0 ? (
-                              <div className='text-muted-foreground p-4 text-center text-sm'>
-                                No matching classes found
-                              </div>
-                            ) : (
-                              catalogItems
-                                .filter(item =>
-                                  `${item.source} ${item.label}`.toLowerCase().includes(catalogSearch.toLowerCase())
-                                )
-                                .map(item => (
-                                  <SelectItem key={`${item.source}-${item.uuid}`} value={item.uuid}>
-                                    {item.label}
-                                    <span className='text-muted-foreground ml-2 text-xs'>
-                                      {item.source === 'course' ? 'Course' : 'Program'}
-                                    </span>
-                                  </SelectItem>
-                                ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <Select
+                        value={selectedCatalogItem?.uuid || ''}
+                        onValueChange={value => {
+                          const item = catalogItems.find(c => c.uuid === value);
+                          if (!item) return;
+                          if (item.source === 'course') {
+                            setClassDetails(prev => ({ ...prev, course_uuid: item.uuid, program_uuid: null, class_limit: item.classLimit }));
+                          } else {
+                            setClassDetails(prev => ({ ...prev, program_uuid: item.uuid, course_uuid: '', class_limit: item.classLimit }));
+                          }
+                        }}
+                      >
+                        <SelectTrigger className='h-10 w-full rounded-md'>
+                          <SelectValue placeholder='Select a course or program' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {catalogItems
+                            .filter(item => `${item.source} ${item.label}`.toLowerCase().includes(catalogSearch.toLowerCase()))
+                            .length === 0 ? (
+                            <div className='text-muted-foreground p-4 text-center text-sm'>No matching classes found</div>
+                          ) : (
+                            catalogItems
+                              .filter(item => `${item.source} ${item.label}`.toLowerCase().includes(catalogSearch.toLowerCase()))
+                              .map(item => (
+                                <SelectItem key={`${item.source}-${item.uuid}`} value={item.uuid}>
+                                  {item.label}
+                                  <span className='text-muted-foreground ml-2 text-xs'>
+                                    {item.source === 'course' ? 'Course' : 'Program'}
+                                  </span>
+                                </SelectItem>
+                              ))
+                          )}
+                        </SelectContent>
+                      </Select>
                     </FieldGroup>
 
                     <FieldGroup label='Class Title *'>
@@ -960,7 +1122,6 @@ const NewClassCreationPage = () => {
                     </FieldGroup>
                   </div>
 
-                  {/* Rate card: fixed width on large screens */}
                   <div className='w-full lg:w-[300px] lg:shrink-0'>
                     <ClassCreationRateCard
                       durationHours={sessionDuration}
@@ -968,17 +1129,13 @@ const NewClassCreationPage = () => {
                       totalSessions={totalSessions}
                       summary={rateSummary}
                       onEditRate={() =>
-                        classDetailsCardRef.current?.scrollIntoView({
-                          behavior: 'smooth',
-                          block: 'start',
-                        })
+                        classDetailsCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                       }
                     />
                   </div>
                 </div>
 
                 <div className='border-t border-border/60 px-2 py-4 sm:px-3'>
-                  {/* Class Type + Lecture Type */}
                   <div className='flex flex-col gap-4 md:flex-row'>
                     <div className='flex-1'>
                       <ChoiceGroup
@@ -1005,7 +1162,6 @@ const NewClassCreationPage = () => {
                     </div>
                   </div>
 
-                  {/* Location + Classroom */}
                   <div className='mt-4 flex flex-col gap-4 md:flex-row'>
                     <div className='flex-1'>
                       <FieldGroup label='Location *'>
@@ -1027,7 +1183,7 @@ const NewClassCreationPage = () => {
                     </div>
                   </div>
 
-                  {showMeetingLink ? (
+                  {showMeetingLink && (
                     <div className='mt-4'>
                       <FieldGroup label='Class Meeting Link *'>
                         <Input
@@ -1038,19 +1194,18 @@ const NewClassCreationPage = () => {
                         />
                       </FieldGroup>
                     </div>
-                  ) : null}
+                  )}
                 </div>
               </Card>
             </div>
 
-            {/* Schedule Options Card */}
             <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
               <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-3'>
                 <h3 className='text-foreground text-lg font-semibold'>Schedule Options</h3>
               </div>
 
               <div className='space-y-4 px-2 pb-4 sm:px-3 sm:pb-6'>
-                {/* Schedule preset buttons */}
+                {/* Preset selector */}
                 <div className='flex flex-col gap-3 md:flex-row'>
                   {schedulePresetOptions.map(option => (
                     <button
@@ -1068,148 +1223,250 @@ const NewClassCreationPage = () => {
                   ))}
                 </div>
 
-                {/* Standard schedule + summary */}
-                <div className='flex flex-col gap-4 xl:flex-row'>
-                  {/* Standard schedule panel */}
-                  <div className='min-w-0 flex-[1.7] space-y-4 rounded-md border border-border/60 p-4'>
+                {schedulePreset === 'standard' && (
+                  <div className='flex flex-col gap-4 xl:flex-row'>
+                    <div className='min-w-0 flex-[1.7] space-y-4 rounded-md border border-border/60 p-4'>
+                      <div>
+                        <p className='text-foreground text-sm font-semibold'>Standard Schedule</p>
+                        <p className='text-muted-foreground mt-1 text-xs'>Set recurring days and times</p>
+                      </div>
+                      <div className='space-y-4'>
+                        {RepeatRuleFields}
+
+                        <div className='flex flex-col gap-4 sm:flex-row'>
+                          <div className='flex-1'>
+                            <FieldGroup label='Class Start Date *'>
+                              <Input
+                                type='date'
+                                value={scheduleSettings.startClass.date}
+                                onChange={e =>
+                                  setScheduleSettings(prev => ({
+                                    ...prev,
+                                    startClass: { ...prev.startClass, date: e.target.value },
+                                    endRepeat: prev.endRepeat || e.target.value,
+                                  }))
+                                }
+                              />
+                            </FieldGroup>
+                          </div>
+                          <div className='flex-1'>
+                            <FieldGroup label='End Repeat *'>
+                              <Input
+                                type='date'
+                                value={scheduleSettings.endRepeat}
+                                onChange={e =>
+                                  setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))
+                                }
+                              />
+                            </FieldGroup>
+                          </div>
+                        </div>
+
+                        {SharedTimeFields}
+
+                        <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
+                          <input
+                            type='checkbox'
+                            checked={scheduleSettings.allDay}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
+                            }
+                            className='h-4 w-4 rounded'
+                          />
+                          All Day
+                        </label>
+
+                        <FieldGroup label='Timezone'>
+                          <Select
+                            value={scheduleSettings.timezone}
+                            onValueChange={value =>
+                              setScheduleSettings(prev => ({ ...prev, timezone: value }))
+                            }
+                          >
+                            <SelectTrigger className='h-11'>
+                              <SelectValue placeholder='Select timezone' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
+                              <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
+                              <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FieldGroup>
+
+                        {totalSessions > 0 && (
+                          <div className='bg-primary/10 text-primary border-primary/20 rounded-lg border px-4 py-2.5 text-sm font-medium'>
+                            Total sessions: <span className='font-bold'>{totalSessions}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Summary panel */}
+                    <div className='flex-[0.9] space-y-3 rounded-md border border-border/60 p-4'>
+                      <p className='text-foreground text-sm font-semibold'>Schedule Summary</p>
+                      <SummaryLine icon={CalendarDays} label='Repeat' value={getRepeatSummary(scheduleSettings)} />
+                      <SummaryLine icon={Clock3} label='Time' value={formatScheduleTime(scheduleSettings.startClass.startTime, scheduleSettings.startClass.endTime, scheduleSettings.allDay)} />
+                      <SummaryLine icon={BellRing} label='Reminder' value={notificationSettings.reminder || '24 hours before class'} />
+                      <SummaryLine icon={MapPin} label='Timezone' value={scheduleSettings.timezone || 'EAT East Africa Time'} />
+                      <SummaryLine icon={Circle} label='Duration' value={`${sessionDuration || 0} ${sessionDuration === 1 ? 'Hour' : 'Hours'} per session`} />
+                    </div>
+                  </div>
+                )}
+
+                {schedulePreset === 'pick-dates' && (
+                  <div className='space-y-4 rounded-md border border-border/60 p-4'>
                     <div>
-                      <p className='text-foreground text-sm font-semibold'>Standard Schedule</p>
+                      <p className='text-foreground text-sm font-semibold'>Pick Specific Dates</p>
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        Set recurring days and times
+                        Type in each date you want to schedule a session on.
                       </p>
                     </div>
 
                     <div className='space-y-3'>
-                      {/* Day selector */}
-                      <div className='flex flex-wrap gap-2'>
-                        {DAY_NAMES.map((day, index) => {
-                          const active = scheduleSettings.repeat.days?.includes(index);
-                          return (
-                            <button
-                              key={day}
-                              type='button'
-                              onClick={() =>
-                                setScheduleSettings(prev => {
-                                  const currentDays = prev.repeat.days || [];
-                                  const nextDays = active
-                                    ? currentDays.filter(item => item !== index)
-                                    : [...currentDays, index];
-                                  return { ...prev, repeat: { ...prev.repeat, days: nextDays } };
-                                })
-                              }
-                              className={`rounded-md border px-3 py-2 text-sm font-medium ${active
-                                ? 'border-primary bg-primary text-primary-foreground'
-                                : 'border-border bg-card text-foreground'
-                                }`}
-                            >
-                              {day.slice(0, 3)}
-                            </button>
-                          );
-                        })}
+                      {pickedDates.map((date, idx) => (
+                        <div key={idx} className='flex items-center gap-3'>
+                          <Input
+                            type='date'
+                            value={date}
+                            onChange={e => {
+                              const next = [...pickedDates];
+                              next[idx] = e.target.value;
+                              setPickedDates(next);
+                            }}
+                            className='w-full max-w-48'
+                          />
+                          <button
+                            type='button'
+                            onClick={() => setPickedDates(pickedDates.filter((_, i) => i !== idx))}
+                            className='text-muted-foreground hover:text-destructive text-sm'
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type='button'
+                        onClick={() => setPickedDates([...pickedDates, ''])}
+                        className='border-primary text-primary rounded-md border px-4 py-2 text-sm font-medium'
+                      >
+                        + Add Date
+                      </button>
+                    </div>
+
+                    {SharedTimeFields}
+
+                    <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
+                      <input
+                        type='checkbox'
+                        checked={scheduleSettings.allDay}
+                        onChange={e =>
+                          setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
+                        }
+                        className='h-4 w-4 rounded'
+                      />
+                      All Day
+                    </label>
+
+                    {pickedDates.filter(Boolean).length > 0 && (
+                      <div className='bg-primary/10 text-primary border-primary/20 rounded-lg border px-4 py-2.5 text-sm font-medium'>
+                        Total sessions: <span className='font-bold'>{pickedDates.filter(Boolean).length}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {schedulePreset === 'academic-period' && (
+                  <div className='flex flex-col gap-4 xl:flex-row'>
+                    <div className='min-w-0 flex-[1.7] space-y-4 rounded-md border border-border/60 p-4'>
+                      <div>
+                        <p className='text-foreground text-sm font-semibold'>Academic Period</p>
+                        <p className='text-muted-foreground mt-1 text-xs'>
+                          Define the academic term and recurrence within it.
+                        </p>
                       </div>
 
-                      {/* Start date + end repeat */}
                       <div className='flex flex-col gap-4 sm:flex-row'>
                         <div className='flex-1'>
-                          <FieldGroup label='Class Start Date *'>
+                          <FieldGroup label='Period Start *'>
                             <Input
                               type='date'
-                              value={scheduleSettings.startClass.date}
+                              value={scheduleSettings.academicPeriod.start}
                               onChange={e =>
                                 setScheduleSettings(prev => ({
                                   ...prev,
-                                  startClass: { ...prev.startClass, date: e.target.value },
-                                  endRepeat: prev.endRepeat || e.target.value,
+                                  academicPeriod: { ...prev.academicPeriod, start: e.target.value },
                                 }))
                               }
                             />
                           </FieldGroup>
                         </div>
                         <div className='flex-1'>
-                          <FieldGroup label='End Repeat *'>
+                          <FieldGroup label='Period End *'>
                             <Input
                               type='date'
-                              value={scheduleSettings.endRepeat}
-                              onChange={e => setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))}
+                              value={scheduleSettings.academicPeriod.end}
+                              onChange={e =>
+                                setScheduleSettings(prev => ({
+                                  ...prev,
+                                  academicPeriod: { ...prev.academicPeriod, end: e.target.value },
+                                }))
+                              }
                             />
                           </FieldGroup>
                         </div>
                       </div>
+
+                      {RepeatRuleFields}
+                      {SharedTimeFields}
 
-                      {/* Start time + end time */}
-                      <div className='flex flex-col gap-4 sm:flex-row'>
-                        <div className='flex-1'>
-                          <FieldGroup label='Start Time'>
-                            <Input
-                              type='time'
-                              value={scheduleSettings.startClass.startTime || ''}
-                              onChange={e =>
-                                setScheduleSettings(prev => ({
-                                  ...prev,
-                                  startClass: { ...prev.startClass, startTime: e.target.value },
-                                }))
-                              }
-                            />
-                          </FieldGroup>
-                        </div>
-                        <div className='flex-1'>
-                          <FieldGroup label='End Time'>
-                            <Input
-                              type='time'
-                              value={scheduleSettings.startClass.endTime || ''}
-                              onChange={e =>
-                                setScheduleSettings(prev => ({
-                                  ...prev,
-                                  startClass: { ...prev.startClass, endTime: e.target.value },
-                                }))
-                              }
-                            />
-                          </FieldGroup>
-                        </div>
-                      </div>
+                      <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
+                        <input
+                          type='checkbox'
+                          checked={scheduleSettings.allDay}
+                          onChange={e =>
+                            setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
+                          }
+                          className='h-4 w-4 rounded'
+                        />
+                        All Day
+                      </label>
 
                       <FieldGroup label='Timezone'>
                         <Select
                           value={scheduleSettings.timezone}
-                          onValueChange={value => setScheduleSettings(prev => ({ ...prev, timezone: value }))}
+                          onValueChange={value =>
+                            setScheduleSettings(prev => ({ ...prev, timezone: value }))
+                          }
                         >
                           <SelectTrigger className='h-11'>
                             <SelectValue placeholder='Select timezone' />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
-                            <SelectItem value='UTC Coordinated Universal Time'>
-                              UTC Coordinated Universal Time
-                            </SelectItem>
+                            <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
                             <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
                           </SelectContent>
                         </Select>
                       </FieldGroup>
+
+                      {totalSessions > 0 && (
+                        <div className='bg-primary/10 text-primary border-primary/20 rounded-lg border px-4 py-2.5 text-sm font-medium'>
+                          Total sessions: <span className='font-bold'>{totalSessions}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className='flex-[0.9] space-y-3 rounded-md border border-border/60 p-4'>
+                      <p className='text-foreground text-sm font-semibold'>Schedule Summary</p>
+                      <SummaryLine icon={CalendarDays} label='Repeat' value={getRepeatSummary(scheduleSettings)} />
+                      <SummaryLine icon={Clock3} label='Time' value={formatScheduleTime(scheduleSettings.startClass.startTime, scheduleSettings.startClass.endTime, scheduleSettings.allDay)} />
+                      <SummaryLine icon={BellRing} label='Reminder' value={notificationSettings.reminder || '24 hours before class'} />
+                      <SummaryLine icon={MapPin} label='Timezone' value={scheduleSettings.timezone || 'EAT East Africa Time'} />
+                      <SummaryLine icon={Circle} label='Duration' value={`${sessionDuration || 0} ${sessionDuration === 1 ? 'Hour' : 'Hours'} per session`} />
                     </div>
                   </div>
-
-                  {/* Schedule summary panel */}
-                  <div className='flex-[0.9] space-y-3 rounded-md border border-border/60 p-4'>
-                    <p className='text-foreground text-sm font-semibold'>Schedule Summary</p>
-                    <SummaryLine icon={CalendarDays} label='Repeat' value={getRepeatSummary(scheduleSettings)} />
-                    <SummaryLine icon={Clock3} label='Time' value={formatScheduleTime(scheduleSettings.startClass.startTime, scheduleSettings.startClass.endTime, scheduleSettings.allDay)} />
-                    <SummaryLine
-                      icon={BellRing}
-                      label='Reminder'
-                      value={notificationSettings.reminder || '24 hours before class'}
-                    />
-                    <SummaryLine
-                      icon={MapPin}
-                      label='Timezone'
-                      value={scheduleSettings.timezone || 'EAT East Africa Time'}
-                    />
-                    <SummaryLine
-                      icon={Circle}
-                      label='Duration'
-                      value={`${sessionDuration || 0} ${sessionDuration === 1 ? 'Hour' : 'Hours'} per session`}
-                    />
-                  </div>
-                </div>
+                )}
 
                 <Collapsible
                   open={showOptionalSettings}
@@ -1222,16 +1479,12 @@ const NewClassCreationPage = () => {
                       className='flex w-full items-center justify-between gap-3 px-4 py-3 text-left'
                     >
                       <div>
-                        <p className='text-foreground text-sm font-semibold'>
-                          Optional Class Settings
-                        </p>
+                        <p className='text-foreground text-sm font-semibold'>Optional Class Settings</p>
                         <p className='text-muted-foreground text-xs'>
                           Expand to adjust capacity, dates, waitlist, and class color.
                         </p>
                       </div>
-                      <ChevronDown
-                        className={`h-4 w-4 shrink-0 transition-transform ${showOptionalSettings ? 'rotate-180' : ''}`}
-                      />
+                      <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${showOptionalSettings ? 'rotate-180' : ''}`} />
                     </button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className='border-t border-border/60 px-4 py-4'>
@@ -1239,26 +1492,17 @@ const NewClassCreationPage = () => {
                       <div className='grid gap-4 md:grid-cols-2'>
                         <FieldGroup label='Max Participants'>
                           <Input
-                            type='number'
-                            min='1'
+                            type='number' min='1'
                             value={classDetails.class_limit || ''}
-                            onChange={e =>
-                              setClassDetails(prev => ({
-                                ...prev,
-                                class_limit: Number(e.target.value || 0),
-                              }))
-                            }
+                            onChange={e => setClassDetails(prev => ({ ...prev, class_limit: Number(e.target.value || 0) }))}
                             placeholder='25'
                           />
                         </FieldGroup>
-
                         <FieldGroup label='Allow Waitlist'>
                           <div className='flex items-center justify-between rounded-md border border-border/60 px-3 py-2'>
                             <div>
                               <p className='text-foreground text-sm font-medium'>Enable waitlist</p>
-                              <p className='text-muted-foreground text-xs'>
-                                Let students join the queue when capacity is full.
-                              </p>
+                              <p className='text-muted-foreground text-xs'>Let students join the queue when capacity is full.</p>
                             </div>
                             <Switch checked={allowWaitlist} onCheckedChange={setAllowWaitlist} />
                           </div>
@@ -1267,51 +1511,10 @@ const NewClassCreationPage = () => {
 
                       <div className='grid gap-4 md:grid-cols-2'>
                         <FieldGroup label='Location Latitude'>
-                          <Input
-                            type='number'
-                            step='any'
-                            value={locationLatitude}
-                            onChange={e => setLocationLatitude(e.target.value)}
-                            placeholder='-1.292066'
-                          />
+                          <Input type='number' step='any' value={locationLatitude} onChange={e => setLocationLatitude(e.target.value)} placeholder='-1.292066' />
                         </FieldGroup>
-
                         <FieldGroup label='Location Longitude'>
-                          <Input
-                            type='number'
-                            step='any'
-                            value={locationLongitude}
-                            onChange={e => setLocationLongitude(e.target.value)}
-                            placeholder='36.821945'
-                          />
-                        </FieldGroup>
-                      </div>
-
-                      <div className='grid gap-4 md:grid-cols-2'>
-                        <FieldGroup label='Academic Period Start'>
-                          <Input
-                            type='date'
-                            value={scheduleSettings.academicPeriod.start}
-                            onChange={e =>
-                              setScheduleSettings(prev => ({
-                                ...prev,
-                                academicPeriod: { ...prev.academicPeriod, start: e.target.value },
-                              }))
-                            }
-                          />
-                        </FieldGroup>
-
-                        <FieldGroup label='Academic Period End'>
-                          <Input
-                            type='date'
-                            value={scheduleSettings.academicPeriod.end}
-                            onChange={e =>
-                              setScheduleSettings(prev => ({
-                                ...prev,
-                                academicPeriod: { ...prev.academicPeriod, end: e.target.value },
-                              }))
-                            }
-                          />
+                          <Input type='number' step='any' value={locationLongitude} onChange={e => setLocationLongitude(e.target.value)} placeholder='36.821945' />
                         </FieldGroup>
                       </div>
 
@@ -1323,39 +1526,50 @@ const NewClassCreationPage = () => {
                             onChange={e =>
                               setScheduleSettings(prev => ({
                                 ...prev,
-                                registrationPeriod: {
-                                  ...prev.registrationPeriod,
-                                  start: e.target.value,
-                                },
+                                registrationPeriod: { ...prev.registrationPeriod, start: e.target.value },
                               }))
                             }
                           />
                         </FieldGroup>
-
                         <FieldGroup label='Registration Period End'>
                           <Input
                             type='date'
                             value={scheduleSettings.registrationPeriod.end}
+                            disabled={scheduleSettings.registrationPeriod.continuous}
                             onChange={e =>
                               setScheduleSettings(prev => ({
                                 ...prev,
-                                registrationPeriod: {
-                                  ...prev.registrationPeriod,
-                                  end: e.target.value,
-                                },
+                                registrationPeriod: { ...prev.registrationPeriod, end: e.target.value },
                               }))
                             }
                           />
                         </FieldGroup>
                       </div>
 
+                      <label className='flex cursor-pointer items-center gap-3 text-sm font-medium'>
+                        <input
+                          type='checkbox'
+                          checked={scheduleSettings.registrationPeriod.continuous || false}
+                          onChange={e =>
+                            setScheduleSettings(prev => ({
+                              ...prev,
+                              registrationPeriod: {
+                                ...prev.registrationPeriod,
+                                continuous: e.target.checked,
+                                end: e.target.checked ? '' : prev.registrationPeriod.end,
+                              },
+                            }))
+                          }
+                          className='h-4 w-4 rounded'
+                        />
+                        Continuous Registration (no closing date)
+                      </label>
+
                       <div className='rounded-md border border-border/60 p-4'>
                         <div className='flex flex-row flex-wrap gap-2 sm:items-center sm:justify-between'>
                           <div>
                             <p className='text-foreground text-sm font-semibold'>Class Color</p>
-                            <p className='text-muted-foreground text-xs'>
-                              Choose a color to represent your class.
-                            </p>
+                            <p className='text-muted-foreground text-xs'>Choose a color to represent your class.</p>
                           </div>
                           <div className='flex flex-wrap gap-3'>
                             {CLASS_COLOR_OPTIONS.map(color => (
@@ -1366,8 +1580,7 @@ const NewClassCreationPage = () => {
                                   setNotificationSettings(prev => ({ ...prev, classColour: color.value }));
                                   setClassDetails(prev => ({ ...prev, class_color: color.value }));
                                 }}
-                                className={`h-8 w-8 rounded-full border-2 ${notificationSettings.classColour === color.value ? 'border-primary' : 'border-transparent'
-                                  }`}
+                                className={`h-8 w-8 rounded-full border-2 ${notificationSettings.classColour === color.value ? 'border-primary' : 'border-transparent'}`}
                                 style={{ backgroundColor: color.value }}
                                 aria-label={`Select class color ${color.label}`}
                               />
@@ -1381,23 +1594,17 @@ const NewClassCreationPage = () => {
               </div>
             </Card>
 
-            {/* Reminder Options Card */}
             <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
               <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
                 <h3 className='text-foreground text-lg font-semibold'>Reminder Options</h3>
               </div>
-
-              {/* Reminder cards row */}
               <div className='flex flex-col gap-4 px-2 pb-4 sm:px-4 sm:pb-6 lg:flex-row'>
                 <div className='flex-1'>
                   <ReminderCard
                     title='Student Reminders'
                     enabled={notificationSettings.reminder !== ''}
                     onEnabledChange={() =>
-                      setNotificationSettings(prev => ({
-                        ...prev,
-                        reminder: prev.reminder ? '' : '24h',
-                      }))
+                      setNotificationSettings(prev => ({ ...prev, reminder: prev.reminder ? '' : '24h' }))
                     }
                   >
                     <FieldGroup label='Email Reminder'>
@@ -1405,23 +1612,17 @@ const NewClassCreationPage = () => {
                         value={notificationSettings.reminder}
                         onValueChange={value => setNotificationSettings(prev => ({ ...prev, reminder: value }))}
                       >
-                        <SelectTrigger className='h-11'>
-                          <SelectValue placeholder='Select reminder' />
-                        </SelectTrigger>
+                        <SelectTrigger className='h-11'><SelectValue placeholder='Select reminder' /></SelectTrigger>
                         <SelectContent>
                           {REMINDER_OPTIONS.map(item => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
-                            </SelectItem>
+                            <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </FieldGroup>
                     <FieldGroup label='SMS Reminder'>
                       <Select defaultValue='1h'>
-                        <SelectTrigger className='h-11'>
-                          <SelectValue placeholder='Select reminder' />
-                        </SelectTrigger>
+                        <SelectTrigger className='h-11'><SelectValue placeholder='Select reminder' /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value='1h'>1 hour before class</SelectItem>
                           <SelectItem value='30m'>30 minutes before class</SelectItem>
@@ -1433,16 +1634,10 @@ const NewClassCreationPage = () => {
                 </div>
 
                 <div className='flex-1'>
-                  <ReminderCard
-                    title='Instructor Reminders'
-                    enabled
-                    onEnabledChange={() => undefined}
-                  >
+                  <ReminderCard title='Instructor Reminders' enabled onEnabledChange={() => undefined}>
                     <FieldGroup label='Email Reminder'>
                       <Select defaultValue='1d'>
-                        <SelectTrigger className='h-11'>
-                          <SelectValue placeholder='Select reminder' />
-                        </SelectTrigger>
+                        <SelectTrigger className='h-11'><SelectValue placeholder='Select reminder' /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value='1d'>1 day before class</SelectItem>
                           <SelectItem value='12h'>12 hours before class</SelectItem>
@@ -1452,9 +1647,7 @@ const NewClassCreationPage = () => {
                     </FieldGroup>
                     <FieldGroup label='SMS Reminder'>
                       <Select defaultValue='30m'>
-                        <SelectTrigger className='h-11'>
-                          <SelectValue placeholder='Select reminder' />
-                        </SelectTrigger>
+                        <SelectTrigger className='h-11'><SelectValue placeholder='Select reminder' /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value='30m'>30 minutes before class</SelectItem>
                           <SelectItem value='15m'>15 minutes before class</SelectItem>
@@ -1465,7 +1658,6 @@ const NewClassCreationPage = () => {
                   </ReminderCard>
                 </div>
 
-                {/* Bell icon info box: fixed width */}
                 <div className='w-full lg:w-[220px] lg:shrink-0'>
                   <div className='bg-muted/20 flex h-full items-center justify-center rounded-md border border-border/60 px-4 py-4 text-center'>
                     <div className='space-y-2'>
@@ -1489,7 +1681,6 @@ const NewClassCreationPage = () => {
             />
           </div>
 
-          {/* Preview rail: fixed width on xl */}
           <div className='w-full xl:w-[360px] xl:shrink-0'>
             <ClassCreationPreviewRail data={previewData} />
           </div>
@@ -1501,13 +1692,8 @@ const NewClassCreationPage = () => {
 
 export default NewClassCreationPage;
 
-const FieldGroup = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
+
+const FieldGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className='space-y-2'>
     <div className='text-foreground text-sm font-semibold'>{label}</div>
     {children}
@@ -1515,10 +1701,7 @@ const FieldGroup = ({
 );
 
 const ChoiceGroup = ({
-  label,
-  options,
-  value,
-  onChange,
+  label, options, value, onChange,
 }: {
   label: string;
   options: { label: string; value: string; icon: typeof Users }[];
@@ -1527,34 +1710,22 @@ const ChoiceGroup = ({
 }) => (
   <div className='space-y-2'>
     <div className='text-foreground text-xs font-semibold'>{label}</div>
-
     <div className='flex flex-wrap gap-2 sm:flex-nowrap'>
       {options.map(option => {
         const Icon = option.icon;
         const active = value === option.value;
-
         return (
           <button
             key={option.value}
             type='button'
             onClick={() => onChange(option.value)}
-            className={`flex flex-1 items-center gap-2 rounded-md border px-2.5 py-2 text-left transition ${active
-              ? 'border-primary bg-primary/5'
-              : 'border-border hover:border-primary/40'
+            className={`flex flex-1 items-center gap-2 rounded-md border px-2.5 py-2 text-left transition ${active ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
               }`}
           >
-            <div
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${active
-                ? 'bg-primary/10 text-primary'
-                : 'bg-muted text-muted-foreground'
-                }`}
-            >
+            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
               <Icon className='h-3.5 w-3.5' />
             </div>
-
-            <span className='text-xs font-medium leading-none'>
-              {option.label}
-            </span>
+            <span className='text-xs font-medium leading-none'>{option.label}</span>
           </button>
         );
       })}
@@ -1562,15 +1733,7 @@ const ChoiceGroup = ({
   </div>
 );
 
-const SummaryLine = ({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof CalendarDays;
-  label: string;
-  value: string;
-}) => (
+const SummaryLine = ({ icon: Icon, label, value }: { icon: typeof CalendarDays; label: string; value: string }) => (
   <div className='flex items-start gap-3 rounded-md border border-border/60 px-3 py-2'>
     <div className='bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-md'>
       <Icon className='h-4 w-4' />
@@ -1583,10 +1746,7 @@ const SummaryLine = ({
 );
 
 const ReminderCard = ({
-  title,
-  enabled,
-  onEnabledChange,
-  children,
+  title, enabled, onEnabledChange, children,
 }: {
   children: React.ReactNode;
   enabled: boolean;
@@ -1605,22 +1765,9 @@ const ReminderCard = ({
         className={`relative h-6 w-11 rounded-full transition ${enabled ? 'bg-primary' : 'bg-muted'}`}
         aria-pressed={enabled}
       >
-        <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition ${enabled ? 'left-5' : 'left-0.5'
-            }`}
-        />
+        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition ${enabled ? 'left-5' : 'left-0.5'}`} />
       </button>
     </div>
-
     <div className='mt-4 space-y-4'>{children}</div>
   </div>
 );
-
-const getRepeatSummary = (scheduleSettings: ScheduleSettings) => {
-  const days = scheduleSettings.repeat.days || [];
-  if (scheduleSettings.repeat.unit === 'week' && days.length > 0) {
-    return `Repeats on ${days.map(day => DAY_NAMES[day]?.slice(0, 3) || 'Mon').join(', ')}`;
-  }
-
-  return `Repeats every ${scheduleSettings.repeat.interval} ${scheduleSettings.repeat.unit}(s)`;
-};

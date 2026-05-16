@@ -15,7 +15,9 @@ import { useMemo } from 'react';
 type InstructorClass = NonNullable<
   NonNullable<GetClassDefinitionsForInstructorResponse['data']>[number]['class_definition']
 >;
+
 type InstructorCourse = NonNullable<GetCourseByUuidResponse['data']>;
+
 type InstructorSchedule = NonNullable<
   NonNullable<GetClassScheduleResponse['data']>['content']
 >[number];
@@ -23,17 +25,27 @@ type InstructorSchedule = NonNullable<
 export type InstructorClassWithSchedule = InstructorClass & {
   course?: InstructorCourse | null;
   schedule: InstructorSchedule[];
+  enrollments: unknown[];
 };
 
-export function useInstructorClassesWithSchedules(instructorUuid?: string) {
+export function useInstructorClassesWithSchedules(
+  instructorUuid?: string
+) {
   const classesQuery = useQuery({
     ...getClassDefinitionsForInstructorOptions({
-      path: { instructorUuid: instructorUuid as string },
-      query: { activeOnly: true },
+      path: {
+        instructorUuid: instructorUuid as string,
+      },
+      query: {
+        activeOnly: true,
+      },
     }),
+
     enabled: !!instructorUuid,
+
     staleTime: 10 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
+
     refetchOnMount: false,
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
@@ -52,37 +64,68 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
 
     return classes.filter((classItem): classItem is InstructorClass => {
       const uuid = classItem.uuid;
+
       if (!uuid || seen.has(uuid)) {
         return false;
       }
 
       seen.add(uuid);
+
       return true;
     });
   }, [classes]);
 
+  const uniqueCourseUuids = useMemo(() => {
+    return [...new Set(
+      uniqueClasses
+        .map(classItem => classItem.course_uuid)
+        .filter(Boolean)
+    )];
+  }, [uniqueClasses]);
+
   const courseQueries = useQueries({
-    queries: uniqueClasses.map(classItem => ({
+    queries: uniqueCourseUuids.map(courseUuid => ({
       ...getCourseByUuidOptions({
-        path: { uuid: classItem.course_uuid as string },
+        path: {
+          uuid: courseUuid as string,
+        },
       }),
-      enabled: Boolean(classItem.course_uuid),
+
+      enabled: !!courseUuid,
+
       staleTime: 10 * 60 * 1000,
       gcTime: 60 * 60 * 1000,
+
       refetchOnMount: false,
       refetchOnReconnect: false,
       refetchOnWindowFocus: false,
     })),
   });
 
+  const courseMap = useMemo<
+    Record<string, InstructorCourse | null>
+  >(() => {
+    return Object.fromEntries(
+      uniqueCourseUuids.map((uuid, index) => [
+        uuid as string,
+        courseQueries[index]?.data?.data ?? null,
+      ])
+    );
+  }, [uniqueCourseUuids, courseQueries]);
+
   const enrollmentQueries = useQueries({
     queries: uniqueClasses.map(classItem => ({
       ...getEnrollmentsForClassOptions({
-        path: { uuid: classItem.uuid as string },
+        path: {
+          uuid: classItem.uuid as string,
+        },
       }),
+
       enabled: !!classItem.uuid,
+
       staleTime: 10 * 60 * 1000,
       gcTime: 60 * 60 * 1000,
+
       refetchOnMount: false,
       refetchOnReconnect: false,
       refetchOnWindowFocus: false,
@@ -92,12 +135,23 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
   const scheduleQueries = useQueries({
     queries: uniqueClasses.map(classItem => ({
       ...getClassScheduleOptions({
-        path: { uuid: classItem.uuid as string },
-        query: { pageable: { page: 0, size: 1000 } },
+        path: {
+          uuid: classItem.uuid as string,
+        },
+
+        query: {
+          pageable: {
+            page: 0,
+            size: 1000,
+          },
+        },
       }),
+
       enabled: !!classItem.uuid,
+
       staleTime: 10 * 60 * 1000,
       gcTime: 60 * 60 * 1000,
+
       refetchOnMount: false,
       refetchOnReconnect: false,
       refetchOnWindowFocus: false,
@@ -108,29 +162,46 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
     () =>
       uniqueClasses.map((classItem, index) => ({
         ...classItem,
-        course: courseQueries[index]?.data?.data ?? null,
-        schedule: scheduleQueries[index]?.data?.data?.content ?? [],
-        enrollments: enrollmentQueries[index]?.data?.data ?? [],
+
+        course:
+          courseMap[classItem.course_uuid as string] ?? null,
+
+        schedule:
+          scheduleQueries[index]?.data?.data?.content ?? [],
+
+        enrollments:
+          enrollmentQueries[index]?.data?.data ?? [],
       })),
-    [uniqueClasses, courseQueries, scheduleQueries, enrollmentQueries]
+    [
+      uniqueClasses,
+      courseMap,
+      scheduleQueries,
+      enrollmentQueries,
+    ]
   );
+
+  const isLoading =
+    classesQuery.isLoading ||
+    courseQueries.some(query => query.isLoading) ||
+    enrollmentQueries.some(query => query.isLoading) ||
+    scheduleQueries.some(query => query.isLoading);
+
+  const isPending =
+    classesQuery.isPending ||
+    courseQueries.some(query => query.isPending) ||
+    enrollmentQueries.some(query => query.isPending) ||
+    scheduleQueries.some(query => query.isPending);
+
+  const isError =
+    classesQuery.isError ||
+    courseQueries.some(query => query.isError) ||
+    enrollmentQueries.some(query => query.isError) ||
+    scheduleQueries.some(query => query.isError);
 
   return {
     classes: data,
-    isLoading:
-      classesQuery.isLoading ||
-      courseQueries.some(query => query.isLoading) ||
-      enrollmentQueries.some(query => query.isLoading) ||
-      scheduleQueries.some(query => query.isLoading),
-    isPending:
-      classesQuery.isPending ||
-      courseQueries.some(query => query.isPending) ||
-      enrollmentQueries.some(query => query.isPending) ||
-      scheduleQueries.some(query => query.isPending),
-    isError:
-      classesQuery.isError ||
-      courseQueries.some(query => query.isError) ||
-      enrollmentQueries.some(query => query.isError) ||
-      scheduleQueries.some(query => query.isError),
+    isLoading,
+    isPending,
+    isError,
   };
 }
