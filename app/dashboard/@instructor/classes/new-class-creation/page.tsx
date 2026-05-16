@@ -365,7 +365,7 @@ const NewClassCreationPage = () => {
   const instructor = useInstructor();
   const classId = searchParams.get('id');
 
-  const [savedClassUuid, setSavedClassUuid] = useState<string | null>(null);
+  const [draftSavedTick, setDraftSavedTick] = useState(0); const [savedClassUuid, setSavedClassUuid] = useState<string | null>(null);
   const [isDataInitialized, setIsDataInitialized] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState('');
   const [schedulePreset, setSchedulePreset] = useState<SchedulePreset>('standard');
@@ -571,18 +571,39 @@ const NewClassCreationPage = () => {
   // ── Draft save ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (resolvedId || !isDataInitialized || typeof window === 'undefined') return;
+
     const timeout = window.setTimeout(() => {
-      window.localStorage.setItem(LOCAL_CLASS_DRAFT_KEY, JSON.stringify({
-        classDetails, scheduleSettings, notificationSettings,
-        schedulePreset, allowWaitlist, locationLatitude, locationLongitude,
-        pickedDates, savedAt: new Date().toISOString(),
-      }));
+      window.localStorage.setItem(
+        LOCAL_CLASS_DRAFT_KEY,
+        JSON.stringify({
+          classDetails,
+          scheduleSettings,
+          notificationSettings,
+          schedulePreset,
+          allowWaitlist,
+          locationLatitude,
+          locationLongitude,
+          pickedDates,
+          savedAt: new Date().toISOString(),
+        })
+      );
+
+      // 🔥 trigger UI "draft saved" indicator
+      setDraftSavedTick(prev => prev + 1);
     }, 500);
+
     return () => window.clearTimeout(timeout);
   }, [
-    classDetails, scheduleSettings, notificationSettings, schedulePreset,
-    allowWaitlist, locationLatitude, locationLongitude, pickedDates,
-    resolvedId, isDataInitialized,
+    classDetails,
+    scheduleSettings,
+    notificationSettings,
+    schedulePreset,
+    allowWaitlist,
+    locationLatitude,
+    locationLongitude,
+    pickedDates,
+    resolvedId,
+    isDataInitialized,
   ]);
 
   // ── Edit-mode hydration ────────────────────────────────────────────────────
@@ -861,6 +882,34 @@ const NewClassCreationPage = () => {
     submitClass(false);
   };
 
+  const clearDraft = () => {
+    // 1. Remove persisted draft
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
+    }
+
+    // 2. Reset core form state
+    setClassDetails(createInitialClassDetails(instructor?.full_name));
+    setScheduleSettings(createInitialScheduleSettings());
+    setNotificationSettings(createInitialNotificationSettings());
+
+    // 3. Reset auxiliary state
+    setSchedulePreset('standard');
+    setAllowWaitlist(true);
+    setLocationLatitude('');
+    setLocationLongitude('');
+    setPickedDates([]);
+
+    // 4. Reset mutation-derived state
+    setSavedClassUuid(null);
+
+    // 5. Reset initialization flag so draft auto-save restarts cleanly
+    setIsDataInitialized(true);
+
+    // 6. UX feedback
+    toast.success('Draft cleared');
+  };
+
   // ── Derived UI values ──────────────────────────────────────────────────────
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const inviteLink = resolvedId ? `${origin}/class-invite?id=${resolvedId}` : '';
@@ -1012,12 +1061,13 @@ const NewClassCreationPage = () => {
           isSubmitting={createClassDefinition.isPending || updateClassDefinition.isPending}
           onSaveDraft={() => submitClass(true)}
           onPublish={() => submitClass(false)}
+          onClearDraft={clearDraft}
+          hasDraft={isDataInitialized && typeof window !== 'undefined' && !!window.localStorage.getItem(LOCAL_CLASS_DRAFT_KEY)}
+          draftSavedTick={draftSavedTick}
         />
 
-        <div className='flex flex-col gap-4 xl:flex-row xl:items-start'>
+        <div className="flex flex-col items-start gap-4 xl:flex-row xl:sticky xl:top-4 h-fit self-start">
           <div className='min-w-0 flex-1 space-y-4'>
-
-            {/* ── Class Details Card ─────────────────────────────────────── */}
             <div ref={classDetailsCardRef} className='scroll-mt-24'>
               <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
                 <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
@@ -1149,7 +1199,6 @@ const NewClassCreationPage = () => {
               </Card>
             </div>
 
-            {/* ── Schedule Options Card ──────────────────────────────────── */}
             <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
               <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-3'>
                 <h3 className='text-foreground text-lg font-semibold'>Schedule Options</h3>
@@ -1174,7 +1223,6 @@ const NewClassCreationPage = () => {
                   ))}
                 </div>
 
-                {/* ── Standard Schedule ─────────────────────────────── */}
                 {schedulePreset === 'standard' && (
                   <div className='flex flex-col gap-4 xl:flex-row'>
                     <div className='min-w-0 flex-[1.7] space-y-4 rounded-md border border-border/60 p-4'>
@@ -1266,7 +1314,6 @@ const NewClassCreationPage = () => {
                   </div>
                 )}
 
-                {/* ── Pick Dates ────────────────────────────────────── */}
                 {schedulePreset === 'pick-dates' && (
                   <div className='space-y-4 rounded-md border border-border/60 p-4'>
                     <div>
@@ -1329,7 +1376,6 @@ const NewClassCreationPage = () => {
                   </div>
                 )}
 
-                {/* ── Academic Period ───────────────────────────────── */}
                 {schedulePreset === 'academic-period' && (
                   <div className='flex flex-col gap-4 xl:flex-row'>
                     <div className='min-w-0 flex-[1.7] space-y-4 rounded-md border border-border/60 p-4'>
@@ -1422,7 +1468,6 @@ const NewClassCreationPage = () => {
                   </div>
                 )}
 
-                {/* ── Optional Settings (all presets) ──────────────── */}
                 <Collapsible
                   open={showOptionalSettings}
                   onOpenChange={setShowOptionalSettings}
@@ -1549,7 +1594,6 @@ const NewClassCreationPage = () => {
               </div>
             </Card>
 
-            {/* ── Reminder Options Card ──────────────────────────────────── */}
             <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
               <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
                 <h3 className='text-foreground text-lg font-semibold'>Reminder Options</h3>
@@ -1648,9 +1692,6 @@ const NewClassCreationPage = () => {
 
 export default NewClassCreationPage;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────────────────────
 
 const FieldGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className='space-y-2'>
