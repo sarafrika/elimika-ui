@@ -55,19 +55,21 @@ export function ClassCreationRateCard({
             </p>
             <p className='text-foreground text-base font-semibold'>
               {durationHours > 0
-                ? `${durationHours} ${durationHours === 1 ? 'Hour' : 'Hours'}`
+                ? `${durationHours} ${durationHours === 1 ? 'Hour' : 'Hours'
+                }`
                 : '—'}
             </p>
           </div>
-
-          <button
-            type='button'
-            onClick={onEditRate}
-            className='text-primary text-xs font-semibold transition hover:opacity-80'
-          >
-            Edit Rate
-          </button>
         </div>
+
+        <button
+          type='button'
+          onClick={onEditRate}
+          className='text-primary text-xs font-semibold transition hover:opacity-80'
+        >
+          Edit Rate
+        </button>
+      </div>
     </Card>
   );
 }
