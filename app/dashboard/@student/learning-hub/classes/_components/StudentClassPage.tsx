@@ -25,7 +25,7 @@ import type { ClassDefinition, Course, StudentSchedule } from '@/services/client
 import { useQueries } from '@tanstack/react-query';
 import { PanelBottom, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { ClassDeliveryStatusTab } from '../../../../@instructor/classes/_components/class-delivery-status-tab';
 import { ClassOverviewTab } from '../../../../@instructor/classes/_components/class-overview-tab';
@@ -61,7 +61,7 @@ export default function StudentClassPage({
   const { difficultyMap } = useDifficultyLevels();
   const profile = useUserProfile()
   const student = profile?.student
-  const classTitile = studentEnrolledClasses[0]?.class_title
+  const classTitile = (studentEnrolledClasses[0] as { class_title?: string } | undefined)?.class_title
 
   const [selectedInstanceUuid, setSelectedInstanceUuid] = useState<string | null>(null);
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
@@ -230,14 +230,21 @@ export default function StudentClassPage({
     if (!selectedClass) return null;
     if (!selectedClass.program_uuid || selectedClass.course) return selectedClass;
 
-    const primaryProgramCourse = programCourses[0] ?? null;
-    if (!primaryProgramCourse) return selectedClass;
+    const selectedLessonModule = lessonModules.find(module =>
+      module.content?.data?.some(content => content.uuid === selectedLessonUuid)
+    );
+    const selectedProgramCourse =
+      selectedLessonModule?.course ??
+      programCourses.find(course => course.uuid === selectedLessonModule?.course?.uuid) ??
+      programCourses[0] ??
+      null;
+    if (!selectedProgramCourse) return selectedClass;
 
     return {
       ...selectedClass,
-      course: primaryProgramCourse,
+      course: selectedProgramCourse,
     };
-  }, [programCourses, selectedClass]);
+  }, [lessonModules, programCourses, selectedClass, selectedLessonUuid]);
 
   useEffect(() => {
     if (!lessonModules.length) {
@@ -286,6 +293,8 @@ export default function StudentClassPage({
       null,
     [selectedLessonUuid, selectedModule]
   );
+  const selectedLessonCourseUuid =
+    selectedModule?.course?.uuid ?? selectedClassForDisplay?.course?.uuid ?? '';
 
   const selectedModuleResources = selectedModule?.content?.data ?? [];
 
@@ -341,6 +350,9 @@ export default function StudentClassPage({
     if (selectedLesson?.uuid) {
       params.set('content', selectedLesson.uuid);
     }
+    if (selectedLessonCourseUuid) {
+      params.set('course', selectedLessonCourseUuid);
+    }
 
     const queryString = params.toString();
 
@@ -351,6 +363,7 @@ export default function StudentClassPage({
     selectedInstanceEntry?.instanceUuid,
     selectedLesson?.uuid,
     selectedModule?.lesson?.uuid,
+    selectedLessonCourseUuid,
   ]);
 
   const getLessonHref = (
@@ -372,12 +385,30 @@ export default function StudentClassPage({
     if (contentUuid) {
       params.set('content', contentUuid);
     }
+    const lessonCourseUuid =
+      lessonModules.find(module => module.lesson.uuid === lessonUuid)?.course?.uuid ??
+      selectedClassForDisplay?.course?.uuid ??
+      '';
+    if (lessonCourseUuid) {
+      params.set('course', lessonCourseUuid);
+    }
 
     const queryString = params.toString();
 
     return `${baseClassRoute(selectedClassUuid)}${queryString ? `?${queryString}` : ''
       }`;
   };
+
+  const handleStartLesson = useCallback(
+    (lessonUuid?: string | null, contentUuid?: string | null) => {
+      const href = getLessonHref(lessonUuid, contentUuid);
+      if (href === '#') return;
+      router.push(href);
+    },
+    [getLessonHref, router]
+  );
+
+  const selectedLessonActionLabel = selectedLesson?.uuid ? 'Open Lesson' : 'Start Lesson';
 
 
 
@@ -503,20 +534,17 @@ export default function StudentClassPage({
                 selectedClass={selectedClassForDisplay}
                 selectedClassUuid={selectedClassUuid}
                 lessonModules={lessonModules}
-                expandedModuleId={expandedModuleId}
                 selectedLesson={selectedLesson}
-                selectedModule={selectedModule}
-                selectedModuleResources={selectedModuleResources}
                 contentTypeMap={contentTypeMap}
                 difficultyMap={difficultyMap}
                 rosterEntries={roster}
                 sessionProgress={sessionProgress}
                 remainingSessions={remainingSessions}
-                setExpandedModuleId={setExpandedModuleId}
                 setSelectedLessonUuid={setSelectedLessonUuid}
                 startLessonHref={startLessonHref}
                 getStartLessonHref={getLessonHref}
-                getResumeLessonHref={getLessonHref}
+                onStartLesson={handleStartLesson}
+                selectedLessonActionLabel={selectedLessonActionLabel}
                 onAddClasses={() => router.push('/dashboard/workspace/student/courses')}
                 roleLabel='Student view'
               />

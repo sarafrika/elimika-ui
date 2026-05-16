@@ -29,9 +29,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { useClassDetails, type ClassDetailsScheduleItem } from '@/hooks/use-class-details';
+import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
 import {
-  useCourseLessonsWithContent,
   type CourseLessonContent,
   type CourseLessonWithContent,
 } from '@/hooks/use-courselessonwithcontent';
@@ -99,7 +99,13 @@ import { toast } from 'sonner';
 
 type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
 type LessonContentItem = CourseLessonContent;
-type LessonModule = CourseLessonWithContent;
+type LessonModule = CourseLessonWithContent & {
+  course?: {
+    uuid: string;
+    name?: string | null;
+    description?: string | null;
+  } | null;
+};
 type AssignmentScheduleItem = ClassAssignmentSchedule & {
   class_lesson_plan_uuid?: string;
   assignment?: Assignment | null;
@@ -717,12 +723,14 @@ function AssignedTaskRow({
 }: {
   type: 'assignment' | 'quiz';
   title: string;
-  dueAt?: string | null;
-  gradingDueAt?: string | null;
+  dueAt?: string | Date | null;
+  gradingDueAt?: string | Date | null;
 }) {
   const [expanded, setExpanded] = React.useState(false);
-  const [editDueAt, setEditDueAt] = React.useState(dueAt ?? '');
-  const [editGradingDueAt, setEditGradingDueAt] = React.useState(gradingDueAt ?? '');
+  const [editDueAt, setEditDueAt] = React.useState(formatDateTimeInput(dueAt));
+  const [editGradingDueAt, setEditGradingDueAt] = React.useState(
+    formatDateTimeInput(gradingDueAt)
+  );
 
   return (
     <div className='border-border/60 bg-background/80 overflow-hidden rounded-lg border'>
@@ -1552,6 +1560,7 @@ export default function ClassTrainingPage({
   const requestedScheduleId = requestedScheduleIdProp ?? searchParams.get('schedule') ?? '';
   const requestedLessonId = searchParams.get('lesson') ?? '';
   const requestedContentId = searchParams.get('content') ?? '';
+  const requestedCourseId = searchParams.get('course') ?? '';
   const { replaceBreadcrumbs } = useBreadcrumb();
   const userProfile = useUserProfile();
   const { data, isLoading, isError } = useClassDetails(classId);
@@ -1590,14 +1599,18 @@ export default function ClassTrainingPage({
   }, [classId, replaceBreadcrumbs]);
 
   const classData = data.class;
-  const course = data.course;
+  const course = data.course ?? data?.pCourses?.[0] ?? null;
+  const programCourses = data.pCourses ?? [];
   const schedules = data.schedule ?? [];
 
   const {
     isLoading: lessonsLoading,
-    lessons: lessonsWithContent,
+    lessonModules: lessonsWithContent,
     contentTypeDetailsMap,
-  } = useCourseLessonsWithContent({ courseUuid: course?.uuid as string });
+  } = useClassLessonContent({
+    courseUuid: classData?.course_uuid,
+    programUuid: classData?.program_uuid,
+  });
 
   const sortedSchedules = useMemo<TrainingSchedule[]>(
     () =>
@@ -1638,22 +1651,47 @@ export default function ClassTrainingPage({
     );
   }, [lessonsWithContent]);
 
+  const selectedCourseUuid = useMemo(() => {
+    if (classData?.program_uuid) {
+      return requestedCourseId || course?.uuid || programCourses[0]?.uuid || '';
+    }
+
+    return course?.uuid ?? '';
+  }, [classData?.program_uuid, course?.uuid, programCourses, requestedCourseId]);
+
+  const scopedLessonModules = useMemo(() => {
+    if (!selectedCourseUuid) return lessonModules;
+
+    const filteredModules = lessonModules.filter(
+      module => module.course?.uuid === selectedCourseUuid
+    );
+
+    return filteredModules.length > 0 ? filteredModules : lessonModules;
+  }, [lessonModules, selectedCourseUuid]);
+
   const requestedLessonModule = useMemo(() => {
-    const byLessonId = lessonModules.find(module => module.lesson.uuid === requestedLessonId);
+    const activeModulePool = scopedLessonModules.length > 0 ? scopedLessonModules : lessonModules;
+    const byLessonId = activeModulePool.find(module => module.lesson.uuid === requestedLessonId);
     if (byLessonId) return byLessonId;
 
     if (!requestedContentId) return null;
 
     return (
-      lessonModules.find(module =>
+      activeModulePool.find(module =>
         module.content?.data?.some(content => content.uuid === requestedContentId)
       ) ?? null
     );
-  }, [lessonModules, requestedContentId, requestedLessonId]);
+  }, [lessonModules, requestedContentId, requestedLessonId, scopedLessonModules]);
 
-  const activeLessonModule = requestedLessonModule ?? lessonModules[0] ?? null;
+  const activeLessonModule =
+    requestedLessonModule ?? scopedLessonModules[0] ?? lessonModules[0] ?? null;
   const activeLesson = activeLessonModule?.lesson ?? null;
   const activeLessonContents = activeLessonModule?.content?.data ?? [];
+  const activeLessonCourse =
+    activeLessonModule?.course ??
+    programCourses.find(programCourse => programCourse.uuid === selectedCourseUuid) ??
+    course;
+  const activeLessonCourseUuid = activeLessonCourse?.uuid ?? '';
 
   useEffect(() => {
     if (activeLessonContents.length === 0) {
@@ -1797,17 +1835,17 @@ export default function ClassTrainingPage({
 
   const { data: courseRubricsData } = useQuery({
     ...getCourseRubricsOptions({
-      path: { courseUuid: course?.uuid as string },
+      path: { courseUuid: activeLessonCourseUuid as string },
       query: { pageable: { page: 0, size: 50 } },
     }),
-    enabled: !!course?.uuid,
+    enabled: !!activeLessonCourseUuid,
   });
   const { data: courseAssessmentsData } = useQuery({
     ...getCourseAssessmentsOptions({
-      path: { courseUuid: course?.uuid as string },
+      path: { courseUuid: activeLessonCourseUuid as string },
       query: { pageable: { page: 0, size: 50 } },
     }),
-    enabled: !!course?.uuid,
+    enabled: !!activeLessonCourseUuid,
   });
   const { data: allAssignments } = useQuery({
     ...getAllAssignmentsOptions({ query: { pageable: { page: 0, size: 100 } } }),
@@ -2262,7 +2300,7 @@ export default function ClassTrainingPage({
             </span>
             <div className='min-w-0'>
               <h1 className='truncate text-sm font-semibold sm:text-base'>
-                {course?.name || classData?.title || 'Class Training'}
+                {activeLessonCourse?.name || course?.name || classData?.title || 'Class Training'}
               </h1>
               <p className='text-muted-foreground truncate text-xs'>
                 {activeSchedule
@@ -2473,7 +2511,9 @@ export default function ClassTrainingPage({
                   </div>
 
                   <div className='border-border/70 border-b p-4'>
-                    <p className='text-muted-foreground text-xs'>{course?.name}</p>
+                    <p className='text-muted-foreground text-xs'>
+                      {activeLessonCourse?.name || course?.name}
+                    </p>
                     <h3 className='mt-1 text-xl font-semibold'>{activeLesson?.title}</h3>
                   </div>
                   <div className='p-4'>
@@ -2549,7 +2589,7 @@ export default function ClassTrainingPage({
                   </div>
                   <div className='p-4'>
                     <PracticeActivityList
-                      courseUuid={course?.uuid}
+                      courseUuid={activeLessonCourseUuid || undefined}
                       lessonUuid={activeLesson?.uuid}
                       variant='instructor'
                     />

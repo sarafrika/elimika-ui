@@ -31,17 +31,32 @@ function useUserOrganisationUuid() {
   );
 }
 
-function useClassStudentSummaries(classUuids: Array<string | null | undefined>) {
+function useClassStudentSummaries(
+  classUuids: Array<string | null | undefined>
+) {
   const normalizedClassUuids = useMemo(
-    () => Array.from(new Set(classUuids.filter((uuid): uuid is string => Boolean(uuid && uuid.trim())))),
+    () =>
+      Array.from(
+        new Set(
+          classUuids.filter(
+            (uuid): uuid is string =>
+              Boolean(uuid && uuid.trim())
+          )
+        )
+      ),
     [classUuids]
   );
 
   const enrollmentQueries = useQueries({
     queries: normalizedClassUuids.map(uuid => ({
-      ...getEnrollmentsForClassOptions({ path: { uuid } }),
+      ...getEnrollmentsForClassOptions({
+        path: { uuid },
+      }),
+
       enabled: !!uuid,
+
       staleTime: 5 * 60 * 1000,
+
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: false,
@@ -55,102 +70,187 @@ function useClassStudentSummaries(classUuids: Array<string | null | undefined>) 
       studentUuid: string;
     }> = [];
 
-    normalizedClassUuids.forEach((classDefinitionUuid, index) => {
-      const enrollments = enrollmentQueries[index]?.data?.data ?? [];
-      const seenInClass = new Set<string>();
+    normalizedClassUuids.forEach(
+      (classDefinitionUuid, index) => {
+        const enrollments =
+          enrollmentQueries[index]?.data?.data ?? [];
 
-      // Keep one summary row per student within each class definition.
-      // The enrollments endpoint can return multiple rows for the same student,
-      // but the calendar rail only needs a single representative entry.
-      enrollments.forEach(enrollment => {
-        const studentUuid = enrollment.student_uuid?.trim();
-        if (!studentUuid || seenInClass.has(studentUuid)) return;
+        const seenInClass = new Set<string>();
 
-        seenInClass.add(studentUuid);
-        entries.push({
-          classDefinitionUuid,
-          enrollmentUuid: enrollment.uuid,
-          studentUuid,
+        enrollments.forEach(enrollment => {
+          const studentUuid =
+            enrollment.student_uuid?.trim();
+
+          if (
+            !studentUuid ||
+            seenInClass.has(studentUuid)
+          ) {
+            return;
+          }
+
+          seenInClass.add(studentUuid);
+
+          entries.push({
+            classDefinitionUuid,
+            enrollmentUuid: enrollment.uuid,
+            studentUuid,
+          });
         });
-      });
-    });
+      }
+    );
 
     return entries;
   }, [enrollmentQueries, normalizedClassUuids]);
 
-  const studentQueries = useQueries({
-    queries: uniqueStudentEntries.map(entry => ({
-      ...getStudentByIdOptions({ path: { uuid: entry.studentUuid } }),
-      enabled: !!entry.studentUuid,
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-    })),
-  });
-
-  const studentUserUuids = useMemo(
+  const uniqueStudentUuids = useMemo(
     () =>
-      studentQueries
-        //@ts-ignore
-        .map(query => query?.data?.data?.user_uuid)
-        .filter((uuid): uuid is string => !!uuid),
-    [studentQueries]
+      Array.from(
+        new Set(
+          uniqueStudentEntries
+            .map(entry => entry.studentUuid)
+            .filter(Boolean)
+        )
+      ),
+    [uniqueStudentEntries]
   );
 
-  const studentUserQueries = useQueries({
-    queries: studentUserUuids.map(uuid => ({
-      ...getUserByUuidOptions({ path: { uuid } }),
+  const studentQueries = useQueries({
+    queries: uniqueStudentUuids.map(uuid => ({
+      ...getStudentByIdOptions({
+        path: { uuid },
+      }),
+
       enabled: !!uuid,
+
       staleTime: 5 * 60 * 1000,
+
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });
 
+  const studentMap = useMemo(() => {
+    const map = new Map<string, any>();
 
-  const studentProfilesByUuid = useMemo(() => {
-    const map = new Map<string, User>();
+    uniqueStudentUuids.forEach((uuid, index) => {
+      // @ts-ignore
+      const student =
+        studentQueries[index]?.data?.data;
 
-    studentUserQueries.forEach(query => {
-      const user = query?.data?.data;
-      if (user?.uuid) {
-        map.set(user.uuid, user);
+      if (student?.uuid) {
+        map.set(uuid, student);
       }
     });
 
     return map;
-  }, [studentUserQueries]);
+  }, [studentQueries, uniqueStudentUuids]);
+
+  const studentUserUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          Array.from(studentMap.values())
+            .map(student => student?.user_uuid)
+            .filter(
+              (uuid): uuid is string => Boolean(uuid)
+            )
+        )
+      ),
+    [studentMap]
+  );
+
+  const studentUserQueries = useQueries({
+    queries: studentUserUuids.map(uuid => ({
+      ...getUserByUuidOptions({
+        path: { uuid },
+      }),
+
+      enabled: !!uuid,
+
+      staleTime: 5 * 60 * 1000,
+
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    })),
+  });
+
+  const studentProfilesByUuid = useMemo(() => {
+    const map = new Map<string, User>();
+
+    studentUserUuids.forEach((uuid, index) => {
+      const user =
+        studentUserQueries[index]?.data?.data;
+
+      if (user?.uuid) {
+        map.set(uuid, user);
+      }
+    });
+
+    return map;
+  }, [studentUserQueries, studentUserUuids]);
 
   const students = useMemo<StudentSummary[]>(
     () =>
       uniqueStudentEntries
-        .map((entry, index) => {
-          // @ts-ignore
-          const student = studentQueries[index]?.data?.data;
-          if (!student?.uuid) return null;
+        .map(entry => {
+          const student = studentMap.get(
+            entry.studentUuid
+          );
 
-          const user = student.user_uuid ? studentProfilesByUuid.get(student.user_uuid)?.data : undefined;
+          if (!student?.uuid) {
+            return null;
+          }
+
+          const user = student.user_uuid
+            ? studentProfilesByUuid.get(
+              student.user_uuid
+            )
+            : undefined;
 
           return {
             uuid: student.uuid,
-            fullName: student.full_name || user?.full_name || user?.display_name || 'Student',
-            avatarUrl: user?.profile_image_url,
-            classDefinitionUuid: entry.classDefinitionUuid,
-            enrollmentUuid: entry.enrollmentUuid,
-            studentEnrollmentKey: `${entry.classDefinitionUuid}:${student.uuid}`,
+
+            fullName:
+              student.full_name ||
+              user?.full_name ||
+              user?.display_name ||
+              'Student',
+
+            avatarUrl:
+              user?.profile_image_url,
+
+            classDefinitionUuid:
+              entry.classDefinitionUuid,
+
+            enrollmentUuid:
+              entry.enrollmentUuid,
+
+            studentEnrollmentKey:
+              `${entry.classDefinitionUuid}:${student.uuid}`,
           };
         })
-        .filter(value => value !== null) as StudentSummary[],
-    [studentProfilesByUuid, studentQueries, uniqueStudentEntries]
+        .filter(Boolean) as StudentSummary[],
+    [
+      uniqueStudentEntries,
+      studentMap,
+      studentProfilesByUuid,
+    ]
   );
 
   return {
     isLoading:
-      enrollmentQueries.some(query => query.isLoading) ||
-      studentQueries.some(query => query.isLoading) ||
-      studentUserQueries.some(query => query.isLoading),
+      enrollmentQueries.some(
+        query => query.isLoading
+      ) ||
+      studentQueries.some(
+        query => query.isLoading
+      ) ||
+      studentUserQueries.some(
+        query => query.isLoading
+      ),
+
     students,
   };
 }

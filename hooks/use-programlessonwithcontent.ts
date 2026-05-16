@@ -1,6 +1,11 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import type { GetAllContentTypesResponse, GetCourseLessonsResponse } from '../services/client';
+import type {
+  GetAllContentTypesResponse,
+  GetCourseLessonsResponse,
+  GetLessonContentResponse,
+} from '../services/client';
+import type { Course, ContentType } from '../services/client/types.gen';
 import {
   getAllContentTypesOptions,
   getCourseLessonsOptions,
@@ -9,14 +14,13 @@ import {
 
 type CourseLesson = NonNullable<NonNullable<GetCourseLessonsResponse['data']>['content']>[number];
 type CourseLessonWithUuid = CourseLesson & { uuid: string };
-export type ProgramCourseLike = {
-  uuid: string;
-  name?: string;
-  description?: string;
-};
+export type ProgramCourseLike = Course & { uuid: string };
 export type ProgramCourseLessonWithContent = {
   lesson: CourseLesson;
-  content: unknown;
+  content: GetLessonContentResponse | undefined;
+};
+export type ProgramLessonModule = ProgramCourseLessonWithContent & {
+  course?: ProgramCourseLike | null;
 };
 export type ProgramCourseWithLessons = {
   course: ProgramCourseLike;
@@ -113,11 +117,20 @@ export function useProgramLessonsWithContent({
     return Object.fromEntries(contentTypeData.map(ct => [ct.uuid, ct.name.toLowerCase()]));
   }, [contentTypeData]);
 
+  const contentTypeDetailsMap = useMemo<Record<string, ContentType>>(() => {
+    return Object.fromEntries(
+      contentTypeData
+        .filter((ct): ct is ContentType & { uuid: string } => Boolean(ct.uuid))
+        .map(ct => [ct.uuid, ct])
+    );
+  }, [contentTypeData]);
+
   return {
     isLoading: isAllDataLoading,
     isFetching: isAllDataFetching || contentTypeFetching,
     coursesWithLessons,
     contentTypes: contentTypeData,
     contentTypeMap,
+    contentTypeDetailsMap,
   };
 }
