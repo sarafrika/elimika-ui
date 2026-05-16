@@ -1,13 +1,16 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BellRing,
   Building2,
   CalendarDays,
+  ChevronDown,
   Circle,
   Clock3,
   Globe,
@@ -43,12 +46,14 @@ import {
 import type { ClassDetails, NotificationSettings, ScheduleSettings } from '../create-new/page';
 import { ClassCreationHeader } from './_components/class-creation-header';
 import {
+  ClassCreationPreviewRail,
   type ClassCreationPreviewData
 } from './_components/class-creation-preview-rail';
 import {
   ClassCreationRateCard,
   type ClassCreationRateSummary,
 } from './_components/class-creation-rate-card';
+import { ClassCreationSummaryStrip } from './_components/class-creation-summary-strip';
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new-class-creation';
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
@@ -140,6 +145,45 @@ const createInitialNotificationSettings = (): NotificationSettings => ({
   classColour: '#4f46e5',
 });
 
+const reminderToMinutes = (reminder?: string) => {
+  switch (reminder) {
+    case '24h':
+    case '1d':
+      return 24 * 60;
+    case '1h':
+      return 60;
+    case '30m':
+      return 30;
+    case '15m':
+      return 15;
+    case '12h':
+      return 12 * 60;
+    case '5m':
+      return 5;
+    default:
+      return undefined;
+  }
+};
+
+const reminderFromMinutes = (minutes?: number | null) => {
+  switch (minutes) {
+    case 24 * 60:
+      return '24h';
+    case 12 * 60:
+      return '12h';
+    case 60:
+      return '1h';
+    case 30:
+      return '30m';
+    case 15:
+      return '15m';
+    case 5:
+      return '5m';
+    default:
+      return undefined;
+  }
+};
+
 const calculateSessionHours = (start?: string, end?: string, allDay?: boolean) => {
   if (allDay) return 24;
   if (!start || !end) return 0;
@@ -160,6 +204,17 @@ const calculateSessionHours = (start?: string, end?: string, allDay?: boolean) =
   const endValue = endHour + endMinute / 60;
 
   return Number(Math.max(endValue - startValue, 0).toFixed(2));
+};
+
+const buildDateFromInput = (date: string) => {
+  const parsedDate = new Date(date);
+  return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
+};
+
+const parseCoordinate = (value: string) => {
+  if (!value.trim()) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
 };
 
 const calculateOccurrences = (
@@ -265,12 +320,15 @@ const NewClassCreationPage = () => {
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(() =>
     createInitialNotificationSettings()
   );
+  const [showOptionalSettings, setShowOptionalSettings] = useState(false);
+  const [allowWaitlist, setAllowWaitlist] = useState(true);
+  const [locationLatitude, setLocationLatitude] = useState('');
+  const [locationLongitude, setLocationLongitude] = useState('');
   const classDetailsCardRef = useRef<HTMLDivElement | null>(null);
 
   const resolvedId = classId || savedClassUuid;
   const { data: combinedClass, isLoading } = useClassDetails(resolvedId || undefined);
   const classData = combinedClass?.class;
-  const courseDetail = combinedClass?.course;
 
   const createClassDefinition = useMutation(createClassDefinitionMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
@@ -393,7 +451,8 @@ const NewClassCreationPage = () => {
         scheduleSettings.repeat.days
       )
       : 1;
-  const totalAmount = Math.max(ratePerHour * sessionDuration, 0) * Math.max(totalSessions, 1);
+  const feePerSession = Math.max(ratePerHour * sessionDuration, 0);
+  const totalAmount = feePerSession * Math.max(totalSessions, 1);
 
   const rateSummary: ClassCreationRateSummary | null = ratePerHour
     ? {
@@ -418,6 +477,9 @@ const NewClassCreationPage = () => {
         scheduleSettings?: Partial<ScheduleSettings>;
         notificationSettings?: Partial<NotificationSettings>;
         schedulePreset?: SchedulePreset;
+        allowWaitlist?: boolean;
+        locationLatitude?: string;
+        locationLongitude?: string;
       };
 
       if (parsed.classDetails) {
@@ -455,6 +517,18 @@ const NewClassCreationPage = () => {
       if (parsed.schedulePreset) {
         setSchedulePreset(parsed.schedulePreset);
       }
+
+      if (typeof parsed.allowWaitlist === 'boolean') {
+        setAllowWaitlist(parsed.allowWaitlist);
+      }
+
+      if (typeof parsed.locationLatitude === 'string') {
+        setLocationLatitude(parsed.locationLatitude);
+      }
+
+      if (typeof parsed.locationLongitude === 'string') {
+        setLocationLongitude(parsed.locationLongitude);
+      }
     } catch {
       window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
     } finally {
@@ -473,13 +547,26 @@ const NewClassCreationPage = () => {
           scheduleSettings,
           notificationSettings,
           schedulePreset,
+          allowWaitlist,
+          locationLatitude,
+          locationLongitude,
           savedAt: new Date().toISOString(),
         })
       );
     }, 500);
 
     return () => window.clearTimeout(timeout);
-  }, [classDetails, scheduleSettings, notificationSettings, schedulePreset, resolvedId, isDataInitialized]);
+  }, [
+    classDetails,
+    scheduleSettings,
+    notificationSettings,
+    schedulePreset,
+    allowWaitlist,
+    locationLatitude,
+    locationLongitude,
+    resolvedId,
+    isDataInitialized,
+  ]);
 
   useEffect(() => {
     if (resolvedId && classData && !isLoading && !isDataInitialized) {
@@ -489,6 +576,9 @@ const NewClassCreationPage = () => {
         targetAudience?: string | null;
         training_fee?: string | null;
         meeting_link?: string | null;
+        allow_waitlist?: boolean | null;
+        location_latitude?: number | null;
+        location_longitude?: number | null;
       };
 
       setClassDetails({
@@ -518,6 +608,47 @@ const NewClassCreationPage = () => {
         class_color: classRecord.class_color || '',
         reminder: '',
       });
+
+      setNotificationSettings(prev => ({
+        ...prev,
+        reminder: reminderFromMinutes(classRecord.class_reminder_minutes) || prev.reminder,
+        classColour: classRecord.class_color || prev.classColour,
+      }));
+      setAllowWaitlist(classRecord.allow_waitlist ?? true);
+      setLocationLatitude(
+        typeof classRecord.location_latitude === 'number' ? String(classRecord.location_latitude) : ''
+      );
+      setLocationLongitude(
+        typeof classRecord.location_longitude === 'number' ? String(classRecord.location_longitude) : ''
+      );
+
+      if (
+        classRecord.academic_period_start_date ||
+        classRecord.academic_period_end_date ||
+        classRecord.registration_period_start_date ||
+        classRecord.registration_period_end_date
+      ) {
+        setScheduleSettings(prev => ({
+          ...prev,
+          academicPeriod: {
+            start: classRecord.academic_period_start_date
+              ? new Date(classRecord.academic_period_start_date).toISOString().slice(0, 10)
+              : prev.academicPeriod.start,
+            end: classRecord.academic_period_end_date
+              ? new Date(classRecord.academic_period_end_date).toISOString().slice(0, 10)
+              : prev.academicPeriod.end,
+          },
+          registrationPeriod: {
+            ...prev.registrationPeriod,
+            start: classRecord.registration_period_start_date
+              ? new Date(classRecord.registration_period_start_date).toISOString().slice(0, 10)
+              : prev.registrationPeriod.start,
+            end: classRecord.registration_period_end_date
+              ? new Date(classRecord.registration_period_end_date).toISOString().slice(0, 10)
+              : prev.registrationPeriod.end,
+          },
+        }));
+      }
 
       if (classRecord.default_start_time) {
         const startDate = new Date(classRecord.default_start_time);
@@ -552,11 +683,6 @@ const NewClassCreationPage = () => {
       return false;
     }
 
-    if (!classDetails.description.trim()) {
-      toast.error('Please enter a class description');
-      return false;
-    }
-
     const locationType = normalizeLocationType(classDetails.location_type);
     if (!locationType) {
       toast.error('Please select a lecture type');
@@ -585,10 +711,9 @@ const NewClassCreationPage = () => {
     if (!isFormValid()) return;
 
     const locationType = normalizeLocationType(classDetails.location_type);
-    const physicalLocationRequired = requiresPhysicalLocation(locationType);
     const meetingLinkAllowed = locationType === 'ONLINE' || locationType === 'HYBRID';
-    const selectedItem = selectedCatalogItem;
-    const selectedSource: CatalogSource = selectedItem?.source || (classDetails.program_uuid ? 'program' : 'course');
+    const selectedSource: CatalogSource =
+      selectedCatalogItem?.source || (classDetails.program_uuid ? 'program' : 'course');
 
     const startTime = scheduleSettings.allDay ? '00:00' : scheduleSettings.startClass.startTime || '00:00';
     const endTime = scheduleSettings.allDay ? '23:59' : scheduleSettings.startClass.endTime || '23:59';
@@ -599,22 +724,34 @@ const NewClassCreationPage = () => {
       .sort()
       .map(dayIndex => DAY_NAMES[dayIndex])
       .join(',');
+    const academicPeriodStart = buildDateFromInput(scheduleSettings.academicPeriod.start);
+    const academicPeriodEnd = buildDateFromInput(scheduleSettings.academicPeriod.end);
+    const registrationPeriodStart = buildDateFromInput(scheduleSettings.registrationPeriod.start);
+    const registrationPeriodEnd = buildDateFromInput(scheduleSettings.registrationPeriod.end);
 
     const payload: CreateClassDefinitionData['body'] = {
       course_uuid: selectedSource === 'course' ? classDetails.course_uuid || undefined : undefined,
       program_uuid: selectedSource === 'program' ? classDetails.program_uuid || undefined : undefined,
       title: classDetails.title,
-      description: classDetails.description,
+      description: classDetails.description || undefined,
       default_instructor_uuid: instructor?.uuid as string,
       class_visibility: classDetails.class_type === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
       session_format:
         classDetails.class_type === 'PRIVATE' ? SessionFormatEnum.INDIVIDUAL : SessionFormatEnum.GROUP,
       location_type: LocationTypeEnum[locationType as keyof typeof LocationTypeEnum],
-      location_name: physicalLocationRequired ? trimToUndefined(classDetails.location_name) : undefined,
-      location_latitude: physicalLocationRequired ? -1.292066 : undefined,
-      location_longitude: physicalLocationRequired ? 36.821945 : undefined,
-      max_participants: classDetails.class_limit,
-      allow_waitlist: true,
+      location_name: trimToUndefined(classDetails.location_name),
+      location_latitude: parseCoordinate(locationLatitude),
+      location_longitude: parseCoordinate(locationLongitude),
+      max_participants: classDetails.class_limit > 0 ? classDetails.class_limit : undefined,
+      classroom: trimToUndefined(classDetails.classroom),
+      class_color: trimToUndefined(notificationSettings.classColour || classDetails.class_color),
+      academic_period_start_date: academicPeriodStart,
+      academic_period_end_date: academicPeriodEnd,
+      registration_period_start_date: registrationPeriodStart,
+      registration_period_end_date: registrationPeriodEnd,
+      class_reminder_minutes: reminderToMinutes(notificationSettings.reminder),
+      training_fee: ratePerHour,
+      allow_waitlist: allowWaitlist,
       is_active: !isDraft,
       default_start_time: new Date(startTimeIso),
       default_end_time: new Date(endTimeIso),
@@ -660,7 +797,7 @@ const NewClassCreationPage = () => {
       }
 
       toast.success(isDraft ? 'Class saved as draft' : resolvedId ? 'Class updated successfully' : 'Class created successfully');
-      router.push('/dashboard/trainings');
+      router.push('/dashboard/classes');
     };
 
     if (resolvedId) {
@@ -718,7 +855,7 @@ const NewClassCreationPage = () => {
       scheduleSettings.allDay
     ),
     durationLabel: `${sessionDuration || 0} ${sessionDuration === 1 ? 'Hour' : 'Hours'}`,
-    pricePerSessionLabel: `${rateCard?.currency || 'KES'} ${Math.max(ratePerHour * sessionDuration, 0).toLocaleString()}`,
+    pricePerSessionLabel: `${rateCard?.currency || 'KES'} ${feePerSession.toLocaleString()}`,
     totalSessionsLabel: `${totalSessions} Session${totalSessions === 1 ? '' : 's'}`,
     totalAmountLabel: `${rateCard?.currency || 'KES'} ${totalAmount.toLocaleString()}`,
     meetingLink,
@@ -734,28 +871,22 @@ const NewClassCreationPage = () => {
           onPublish={() => submitClass(false)}
         />
 
-        <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start'>
-          <div className='space-y-4'>
+        {/* Outer layout: main content + preview rail */}
+        <div className='flex flex-col gap-4 xl:flex-row xl:items-start'>
+          <div className='min-w-0 flex-1 space-y-4'>
+
+            {/* Class Details Card */}
             <div ref={classDetailsCardRef} className='scroll-mt-24'>
               <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
                 <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
                   <h3 className='text-foreground text-lg font-semibold'>Class Details</h3>
                 </div>
 
-                <div className='grid gap-4 px-2 pb-4 sm:px-3 sm:pb-6 lg:grid-cols-[minmax(0,1fr)_300px]'>
-                  <div className='space-y-4'>
+                {/* Class details inner: form fields + rate card */}
+                <div className='flex flex-col gap-4 px-2 pb-4 sm:px-3 sm:pb-6 lg:flex-row'>
+                  <div className='min-w-0 flex-1 space-y-4'>
                     <FieldGroup label='Select Course *'>
                       <div className='space-y-3'>
-                        {/* <div className='relative'>
-                          <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
-                          <Input
-                            value={catalogSearch}
-                            onChange={e => setCatalogSearch(e.target.value)}
-                            placeholder='Search courses and programs'
-                            className='h-11 pl-9'
-                          />
-                        </div> */}
-
                         <Select
                           value={selectedCatalogItem?.uuid || ''}
                           onValueChange={value => {
@@ -815,71 +946,73 @@ const NewClassCreationPage = () => {
                         placeholder='UI/UX Design Fundamentals'
                       />
                     </FieldGroup>
-                    {/*  <FieldGroup label='Description *'>
-                        <div className='space-y-2'>
-                          <Textarea
-                            value={classDetails.description}
-                            onChange={e => setClassDetails(prev => ({ ...prev, description: e.target.value }))}
-                            rows={3}
-                            placeholder='Learn the fundamentals of UI/UX design, including user research, wireframing, prototyping and usability principles.'
-                          />
-                          <div className='text-muted-foreground text-right text-xs'>
-                            {classDetails.description.length}/500
-                          </div>
-                        </div>
-                      </FieldGroup> */}
                   </div>
 
-                  <ClassCreationRateCard
-                    durationHours={sessionDuration}
-                    summary={rateSummary}
-                    onEditRate={() =>
-                      classDetailsCardRef.current?.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start',
-                      })
-                    }
-                  />
-                </div>
-
-                <div className='border-t border-border/60 px-2 py-4 sm:px-3'>
-                  <div className='grid gap-4 md:grid-cols-2'>
-                    <ChoiceGroup
-                      label='Class Type *'
-                      options={CLASS_TYPE_OPTIONS}
-                      value={classDetails.class_type}
-                      onChange={value => setClassDetails(prev => ({ ...prev, class_type: value }))}
-                    />
-                    <ChoiceGroup
-                      label='Lecture Type *'
-                      options={LECTURE_TYPE_OPTIONS}
-                      value={classDetails.location_type}
-                      onChange={value =>
-                        setClassDetails(prev => ({
-                          ...prev,
-                          location_type: normalizeLocationType(value),
-                          ...(normalizeLocationType(value) === 'ONLINE' ? { location_name: '' } : {}),
-                          ...(normalizeLocationType(value) === 'IN_PERSON' ? { meeting_link: '' } : {}),
-                        }))
+                  {/* Rate card: fixed width on large screens */}
+                  <div className='w-full lg:w-[300px] lg:shrink-0'>
+                    <ClassCreationRateCard
+                      durationHours={sessionDuration}
+                      totalAmount={totalAmount}
+                      totalSessions={totalSessions}
+                      summary={rateSummary}
+                      onEditRate={() =>
+                        classDetailsCardRef.current?.scrollIntoView({
+                          behavior: 'smooth',
+                          block: 'start',
+                        })
                       }
                     />
                   </div>
+                </div>
 
-                  <div className='mt-4 grid gap-4 md:grid-cols-2'>
-                    <FieldGroup label='Location *'>
-                      <Input
-                        value={classDetails.location_name}
-                        onChange={e => setClassDetails(prev => ({ ...prev, location_name: e.target.value }))}
-                        placeholder='Nairobi, Kenya'
+                <div className='border-t border-border/60 px-2 py-4 sm:px-3'>
+                  {/* Class Type + Lecture Type */}
+                  <div className='flex flex-col gap-4 md:flex-row'>
+                    <div className='flex-1'>
+                      <ChoiceGroup
+                        label='Class Type *'
+                        options={CLASS_TYPE_OPTIONS}
+                        value={classDetails.class_type}
+                        onChange={value => setClassDetails(prev => ({ ...prev, class_type: value }))}
                       />
-                    </FieldGroup>
-                    <FieldGroup label='Classroom *'>
-                      <Input
-                        value={classDetails.classroom}
-                        onChange={e => setClassDetails(prev => ({ ...prev, classroom: e.target.value }))}
-                        placeholder='Room 101'
+                    </div>
+                    <div className='flex-1'>
+                      <ChoiceGroup
+                        label='Lecture Type *'
+                        options={LECTURE_TYPE_OPTIONS}
+                        value={classDetails.location_type}
+                        onChange={value =>
+                          setClassDetails(prev => ({
+                            ...prev,
+                            location_type: normalizeLocationType(value),
+                            ...(normalizeLocationType(value) === 'ONLINE' ? { location_name: '' } : {}),
+                            ...(normalizeLocationType(value) === 'IN_PERSON' ? { meeting_link: '' } : {}),
+                          }))
+                        }
                       />
-                    </FieldGroup>
+                    </div>
+                  </div>
+
+                  {/* Location + Classroom */}
+                  <div className='mt-4 flex flex-col gap-4 md:flex-row'>
+                    <div className='flex-1'>
+                      <FieldGroup label='Location *'>
+                        <Input
+                          value={classDetails.location_name}
+                          onChange={e => setClassDetails(prev => ({ ...prev, location_name: e.target.value }))}
+                          placeholder='Nairobi, Kenya'
+                        />
+                      </FieldGroup>
+                    </div>
+                    <div className='flex-1'>
+                      <FieldGroup label='Classroom *'>
+                        <Input
+                          value={classDetails.classroom}
+                          onChange={e => setClassDetails(prev => ({ ...prev, classroom: e.target.value }))}
+                          placeholder='Room 101'
+                        />
+                      </FieldGroup>
+                    </div>
                   </div>
 
                   {showMeetingLink ? (
@@ -898,19 +1031,21 @@ const NewClassCreationPage = () => {
               </Card>
             </div>
 
+            {/* Schedule Options Card */}
             <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
               <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-3'>
                 <h3 className='text-foreground text-lg font-semibold'>Schedule Options</h3>
               </div>
 
               <div className='space-y-4 px-2 pb-4 sm:px-3 sm:pb-6'>
-                <div className='grid gap-3 md:grid-cols-3'>
+                {/* Schedule preset buttons */}
+                <div className='flex flex-col gap-3 md:flex-row'>
                   {schedulePresetOptions.map(option => (
                     <button
                       key={option.key}
                       type='button'
                       onClick={() => setSchedulePreset(option.key)}
-                      className={`rounded-md border px-4 py-3 text-left transition ${schedulePreset === option.key
+                      className={`flex-1 rounded-md border px-4 py-3 text-left transition ${schedulePreset === option.key
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/40'
                         }`}
@@ -921,8 +1056,10 @@ const NewClassCreationPage = () => {
                   ))}
                 </div>
 
-                <div className='grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,0.9fr)]'>
-                  <div className='space-y-4 rounded-md border border-border/60 p-4'>
+                {/* Standard schedule + summary */}
+                <div className='flex flex-col gap-4 xl:flex-row'>
+                  {/* Standard schedule panel */}
+                  <div className='min-w-0 flex-[1.7] space-y-4 rounded-md border border-border/60 p-4'>
                     <div>
                       <p className='text-foreground text-sm font-semibold'>Standard Schedule</p>
                       <p className='text-muted-foreground mt-1 text-xs'>
@@ -931,6 +1068,7 @@ const NewClassCreationPage = () => {
                     </div>
 
                     <div className='space-y-3'>
+                      {/* Day selector */}
                       <div className='flex flex-wrap gap-2'>
                         {DAY_NAMES.map((day, index) => {
                           const active = scheduleSettings.repeat.days?.includes(index);
@@ -958,54 +1096,64 @@ const NewClassCreationPage = () => {
                         })}
                       </div>
 
-                      <div className='grid gap-4 sm:grid-cols-2'>
-                        <FieldGroup label='Class Start Date *'>
-                          <Input
-                            type='date'
-                            value={scheduleSettings.startClass.date}
-                            onChange={e =>
-                              setScheduleSettings(prev => ({
-                                ...prev,
-                                startClass: { ...prev.startClass, date: e.target.value },
-                                endRepeat: prev.endRepeat || e.target.value,
-                              }))
-                            }
-                          />
-                        </FieldGroup>
-                        <FieldGroup label='End Repeat *'>
-                          <Input
-                            type='date'
-                            value={scheduleSettings.endRepeat}
-                            onChange={e => setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))}
-                          />
-                        </FieldGroup>
+                      {/* Start date + end repeat */}
+                      <div className='flex flex-col gap-4 sm:flex-row'>
+                        <div className='flex-1'>
+                          <FieldGroup label='Class Start Date *'>
+                            <Input
+                              type='date'
+                              value={scheduleSettings.startClass.date}
+                              onChange={e =>
+                                setScheduleSettings(prev => ({
+                                  ...prev,
+                                  startClass: { ...prev.startClass, date: e.target.value },
+                                  endRepeat: prev.endRepeat || e.target.value,
+                                }))
+                              }
+                            />
+                          </FieldGroup>
+                        </div>
+                        <div className='flex-1'>
+                          <FieldGroup label='End Repeat *'>
+                            <Input
+                              type='date'
+                              value={scheduleSettings.endRepeat}
+                              onChange={e => setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))}
+                            />
+                          </FieldGroup>
+                        </div>
                       </div>
 
-                      <div className='grid gap-4 sm:grid-cols-2'>
-                        <FieldGroup label='Start Time'>
-                          <Input
-                            type='time'
-                            value={scheduleSettings.startClass.startTime || ''}
-                            onChange={e =>
-                              setScheduleSettings(prev => ({
-                                ...prev,
-                                startClass: { ...prev.startClass, startTime: e.target.value },
-                              }))
-                            }
-                          />
-                        </FieldGroup>
-                        <FieldGroup label='End Time'>
-                          <Input
-                            type='time'
-                            value={scheduleSettings.startClass.endTime || ''}
-                            onChange={e =>
-                              setScheduleSettings(prev => ({
-                                ...prev,
-                                startClass: { ...prev.startClass, endTime: e.target.value },
-                              }))
-                            }
-                          />
-                        </FieldGroup>
+                      {/* Start time + end time */}
+                      <div className='flex flex-col gap-4 sm:flex-row'>
+                        <div className='flex-1'>
+                          <FieldGroup label='Start Time'>
+                            <Input
+                              type='time'
+                              value={scheduleSettings.startClass.startTime || ''}
+                              onChange={e =>
+                                setScheduleSettings(prev => ({
+                                  ...prev,
+                                  startClass: { ...prev.startClass, startTime: e.target.value },
+                                }))
+                              }
+                            />
+                          </FieldGroup>
+                        </div>
+                        <div className='flex-1'>
+                          <FieldGroup label='End Time'>
+                            <Input
+                              type='time'
+                              value={scheduleSettings.startClass.endTime || ''}
+                              onChange={e =>
+                                setScheduleSettings(prev => ({
+                                  ...prev,
+                                  startClass: { ...prev.startClass, endTime: e.target.value },
+                                }))
+                              }
+                            />
+                          </FieldGroup>
+                        </div>
                       </div>
 
                       <FieldGroup label='Timezone'>
@@ -1028,7 +1176,8 @@ const NewClassCreationPage = () => {
                     </div>
                   </div>
 
-                  <div className='space-y-3 rounded-md border border-border/60 p-4'>
+                  {/* Schedule summary panel */}
+                  <div className='flex-[0.9] space-y-3 rounded-md border border-border/60 p-4'>
                     <p className='text-foreground text-sm font-semibold'>Schedule Summary</p>
                     <SummaryLine icon={CalendarDays} label='Repeat' value={getRepeatSummary(scheduleSettings)} />
                     <SummaryLine icon={Clock3} label='Time' value={formatScheduleTime(scheduleSettings.startClass.startTime, scheduleSettings.startClass.endTime, scheduleSettings.allDay)} />
@@ -1050,134 +1199,288 @@ const NewClassCreationPage = () => {
                   </div>
                 </div>
 
-                <div className='rounded-md border border-border/60 p-4'>
-                  <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
-                    <div>
-                      <p className='text-foreground text-sm font-semibold'>Class Color</p>
-                      <p className='text-muted-foreground text-xs'>
-                        Choose a color to represent your class.
-                      </p>
+                <Collapsible
+                  open={showOptionalSettings}
+                  onOpenChange={setShowOptionalSettings}
+                  className='rounded-md border border-border/60'
+                >
+                  <CollapsibleTrigger asChild>
+                    <button
+                      type='button'
+                      className='flex w-full items-center justify-between gap-3 px-4 py-3 text-left'
+                    >
+                      <div>
+                        <p className='text-foreground text-sm font-semibold'>
+                          Optional Class Settings
+                        </p>
+                        <p className='text-muted-foreground text-xs'>
+                          Expand to adjust capacity, dates, waitlist, and class color.
+                        </p>
+                      </div>
+                      <ChevronDown
+                        className={`h-4 w-4 shrink-0 transition-transform ${showOptionalSettings ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className='border-t border-border/60 px-4 py-4'>
+                    <div className='space-y-4'>
+                      <div className='grid gap-4 md:grid-cols-2'>
+                        <FieldGroup label='Max Participants'>
+                          <Input
+                            type='number'
+                            min='1'
+                            value={classDetails.class_limit || ''}
+                            onChange={e =>
+                              setClassDetails(prev => ({
+                                ...prev,
+                                class_limit: Number(e.target.value || 0),
+                              }))
+                            }
+                            placeholder='25'
+                          />
+                        </FieldGroup>
+
+                        <FieldGroup label='Allow Waitlist'>
+                          <div className='flex items-center justify-between rounded-md border border-border/60 px-3 py-2'>
+                            <div>
+                              <p className='text-foreground text-sm font-medium'>Enable waitlist</p>
+                              <p className='text-muted-foreground text-xs'>
+                                Let students join the queue when capacity is full.
+                              </p>
+                            </div>
+                            <Switch checked={allowWaitlist} onCheckedChange={setAllowWaitlist} />
+                          </div>
+                        </FieldGroup>
+                      </div>
+
+                      <div className='grid gap-4 md:grid-cols-2'>
+                        <FieldGroup label='Location Latitude'>
+                          <Input
+                            type='number'
+                            step='any'
+                            value={locationLatitude}
+                            onChange={e => setLocationLatitude(e.target.value)}
+                            placeholder='-1.292066'
+                          />
+                        </FieldGroup>
+
+                        <FieldGroup label='Location Longitude'>
+                          <Input
+                            type='number'
+                            step='any'
+                            value={locationLongitude}
+                            onChange={e => setLocationLongitude(e.target.value)}
+                            placeholder='36.821945'
+                          />
+                        </FieldGroup>
+                      </div>
+
+                      <div className='grid gap-4 md:grid-cols-2'>
+                        <FieldGroup label='Academic Period Start'>
+                          <Input
+                            type='date'
+                            value={scheduleSettings.academicPeriod.start}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                academicPeriod: { ...prev.academicPeriod, start: e.target.value },
+                              }))
+                            }
+                          />
+                        </FieldGroup>
+
+                        <FieldGroup label='Academic Period End'>
+                          <Input
+                            type='date'
+                            value={scheduleSettings.academicPeriod.end}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                academicPeriod: { ...prev.academicPeriod, end: e.target.value },
+                              }))
+                            }
+                          />
+                        </FieldGroup>
+                      </div>
+
+                      <div className='grid gap-4 md:grid-cols-2'>
+                        <FieldGroup label='Registration Period Start'>
+                          <Input
+                            type='date'
+                            value={scheduleSettings.registrationPeriod.start}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                registrationPeriod: {
+                                  ...prev.registrationPeriod,
+                                  start: e.target.value,
+                                },
+                              }))
+                            }
+                          />
+                        </FieldGroup>
+
+                        <FieldGroup label='Registration Period End'>
+                          <Input
+                            type='date'
+                            value={scheduleSettings.registrationPeriod.end}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                registrationPeriod: {
+                                  ...prev.registrationPeriod,
+                                  end: e.target.value,
+                                },
+                              }))
+                            }
+                          />
+                        </FieldGroup>
+                      </div>
+
+                      <div className='rounded-md border border-border/60 p-4'>
+                        <div className='flex flex-row flex-wrap gap-2 sm:items-center sm:justify-between'>
+                          <div>
+                            <p className='text-foreground text-sm font-semibold'>Class Color</p>
+                            <p className='text-muted-foreground text-xs'>
+                              Choose a color to represent your class.
+                            </p>
+                          </div>
+                          <div className='flex flex-wrap gap-3'>
+                            {['#4f46e5', '#7c3aed', '#ec4899', '#f97316', '#f59e0b', '#10b981', '#14b8a6', '#2563eb', '#6b7280'].map(color => (
+                              <button
+                                key={color}
+                                type='button'
+                                onClick={() => {
+                                  setNotificationSettings(prev => ({ ...prev, classColour: color }));
+                                  setClassDetails(prev => ({ ...prev, class_color: color }));
+                                }}
+                                className={`h-8 w-8 rounded-full border-2 ${notificationSettings.classColour === color ? 'border-primary' : 'border-transparent'
+                                  }`}
+                                style={{ backgroundColor: color }}
+                                aria-label={`Select class color ${color}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className='flex flex-wrap gap-3'>
-                      {['#4f46e5', '#7c3aed', '#ec4899', '#f97316', '#f59e0b', '#10b981', '#14b8a6', '#2563eb', '#6b7280'].map(color => (
-                        <button
-                          key={color}
-                          type='button'
-                          onClick={() => setNotificationSettings(prev => ({ ...prev, classColour: color }))}
-                          className={`h-8 w-8 rounded-full border-2 ${notificationSettings.classColour === color ? 'border-primary' : 'border-transparent'
-                            }`}
-                          style={{ backgroundColor: color }}
-                          aria-label={`Select class color ${color}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             </Card>
 
+            {/* Reminder Options Card */}
             <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
               <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
                 <h3 className='text-foreground text-lg font-semibold'>Reminder Options</h3>
               </div>
 
-              <div className='grid gap-4 px-2 pb-4 sm:px-4 sm:pb-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]'>
-                <ReminderCard
-                  title='Student Reminders'
-                  enabled={notificationSettings.reminder !== ''}
-                  onEnabledChange={() =>
-                    setNotificationSettings(prev => ({
-                      ...prev,
-                      reminder: prev.reminder ? '' : '24h',
-                    }))
-                  }
-                >
-                  <FieldGroup label='Email Reminder'>
-                    <Select
-                      value={notificationSettings.reminder}
-                      onValueChange={value => setNotificationSettings(prev => ({ ...prev, reminder: value }))}
-                    >
-                      <SelectTrigger className='h-11'>
-                        <SelectValue placeholder='Select reminder' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {REMINDER_OPTIONS.map(item => (
-                          <SelectItem key={item.value} value={item.value}>
-                            {item.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FieldGroup>
-                  <FieldGroup label='SMS Reminder'>
-                    <Select defaultValue='1h'>
-                      <SelectTrigger className='h-11'>
-                        <SelectValue placeholder='Select reminder' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='1h'>1 hour before class</SelectItem>
-                        <SelectItem value='30m'>30 minutes before class</SelectItem>
-                        <SelectItem value='15m'>15 minutes before class</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FieldGroup>
-                </ReminderCard>
+              {/* Reminder cards row */}
+              <div className='flex flex-col gap-4 px-2 pb-4 sm:px-4 sm:pb-6 lg:flex-row'>
+                <div className='flex-1'>
+                  <ReminderCard
+                    title='Student Reminders'
+                    enabled={notificationSettings.reminder !== ''}
+                    onEnabledChange={() =>
+                      setNotificationSettings(prev => ({
+                        ...prev,
+                        reminder: prev.reminder ? '' : '24h',
+                      }))
+                    }
+                  >
+                    <FieldGroup label='Email Reminder'>
+                      <Select
+                        value={notificationSettings.reminder}
+                        onValueChange={value => setNotificationSettings(prev => ({ ...prev, reminder: value }))}
+                      >
+                        <SelectTrigger className='h-11'>
+                          <SelectValue placeholder='Select reminder' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {REMINDER_OPTIONS.map(item => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FieldGroup>
+                    <FieldGroup label='SMS Reminder'>
+                      <Select defaultValue='1h'>
+                        <SelectTrigger className='h-11'>
+                          <SelectValue placeholder='Select reminder' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='1h'>1 hour before class</SelectItem>
+                          <SelectItem value='30m'>30 minutes before class</SelectItem>
+                          <SelectItem value='15m'>15 minutes before class</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FieldGroup>
+                  </ReminderCard>
+                </div>
 
-                <ReminderCard
-                  title='Instructor Reminders'
-                  enabled
-                  onEnabledChange={() => undefined}
-                >
-                  <FieldGroup label='Email Reminder'>
-                    <Select defaultValue='1d'>
-                      <SelectTrigger className='h-11'>
-                        <SelectValue placeholder='Select reminder' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='1d'>1 day before class</SelectItem>
-                        <SelectItem value='12h'>12 hours before class</SelectItem>
-                        <SelectItem value='1h'>1 hour before class</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FieldGroup>
-                  <FieldGroup label='SMS Reminder'>
-                    <Select defaultValue='30m'>
-                      <SelectTrigger className='h-11'>
-                        <SelectValue placeholder='Select reminder' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='30m'>30 minutes before class</SelectItem>
-                        <SelectItem value='15m'>15 minutes before class</SelectItem>
-                        <SelectItem value='5m'>5 minutes before class</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FieldGroup>
-                </ReminderCard>
+                <div className='flex-1'>
+                  <ReminderCard
+                    title='Instructor Reminders'
+                    enabled
+                    onEnabledChange={() => undefined}
+                  >
+                    <FieldGroup label='Email Reminder'>
+                      <Select defaultValue='1d'>
+                        <SelectTrigger className='h-11'>
+                          <SelectValue placeholder='Select reminder' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='1d'>1 day before class</SelectItem>
+                          <SelectItem value='12h'>12 hours before class</SelectItem>
+                          <SelectItem value='1h'>1 hour before class</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FieldGroup>
+                    <FieldGroup label='SMS Reminder'>
+                      <Select defaultValue='30m'>
+                        <SelectTrigger className='h-11'>
+                          <SelectValue placeholder='Select reminder' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='30m'>30 minutes before class</SelectItem>
+                          <SelectItem value='15m'>15 minutes before class</SelectItem>
+                          <SelectItem value='5m'>5 minutes before class</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FieldGroup>
+                  </ReminderCard>
+                </div>
 
-                <div className='bg-muted/20 flex items-center justify-center rounded-md border border-border/60 px-4 py-4 text-center'>
-                  <div className='space-y-2'>
-                    <div className='bg-primary/10 text-primary mx-auto flex h-12 w-12 items-center justify-center rounded-full'>
-                      <BellRing className='h-5 w-5' />
+                {/* Bell icon info box: fixed width */}
+                <div className='w-full lg:w-[220px] lg:shrink-0'>
+                  <div className='bg-muted/20 flex h-full items-center justify-center rounded-md border border-border/60 px-4 py-4 text-center'>
+                    <div className='space-y-2'>
+                      <div className='bg-primary/10 text-primary mx-auto flex h-12 w-12 items-center justify-center rounded-full'>
+                        <BellRing className='h-5 w-5' />
+                      </div>
+                      <p className='text-muted-foreground text-xs leading-relaxed'>
+                        Reminders help reduce no-shows and keep your class on track.
+                      </p>
                     </div>
-                    <p className='text-muted-foreground text-xs leading-relaxed'>
-                      Reminders help reduce no-shows and keep your class on track.
-                    </p>
                   </div>
                 </div>
               </div>
             </Card>
-            {/* 
+
             <ClassCreationSummaryStrip
               currency={rateCard?.currency as string | undefined || 'KES'}
               maxParticipants={classDetails.class_limit}
               totalAmount={totalAmount}
               totalSessions={totalSessions}
-            /> */}
+            />
           </div>
 
-          {/* <div className=''>
+          {/* Preview rail: fixed width on xl */}
+          <div className='w-full xl:w-[360px] xl:shrink-0'>
             <ClassCreationPreviewRail data={previewData} />
-          </div> */}
+          </div>
         </div>
       </form>
     </div>
@@ -1213,7 +1516,7 @@ const ChoiceGroup = ({
   <div className='space-y-2'>
     <div className='text-foreground text-xs font-semibold'>{label}</div>
 
-    <div className='grid gap-2 sm:grid-cols-3'>
+    <div className='flex flex-wrap gap-2 sm:flex-nowrap'>
       {options.map(option => {
         const Icon = option.icon;
         const active = value === option.value;
@@ -1223,7 +1526,7 @@ const ChoiceGroup = ({
             key={option.value}
             type='button'
             onClick={() => onChange(option.value)}
-            className={`flex items-center gap-2 rounded-md border px-2.5 py-2 text-left transition ${active
+            className={`flex flex-1 items-center gap-2 rounded-md border px-2.5 py-2 text-left transition ${active
               ? 'border-primary bg-primary/5'
               : 'border-border hover:border-primary/40'
               }`}

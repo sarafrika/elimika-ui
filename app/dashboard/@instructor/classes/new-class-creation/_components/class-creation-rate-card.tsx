@@ -12,10 +12,14 @@ export type ClassCreationRateSummary = {
 
 export function ClassCreationRateCard({
   durationHours,
+  totalSessions,
+  totalAmount,
   summary,
   onEditRate,
 }: {
   durationHours: number;
+  totalAmount: number;
+  totalSessions: number;
   onEditRate: () => void;
   summary?: ClassCreationRateSummary | null;
 }) {
@@ -38,10 +42,10 @@ export function ClassCreationRateCard({
         <div className='grid gap-2 sm:grid-cols-2'>
           <div className='space-y-0.5'>
             <p className='text-muted-foreground text-[11px] font-medium'>
-              Rate per Session
+              Fee per Hour
             </p>
             <p className='text-foreground text-base font-semibold'>
-              {currency} {perSession.toLocaleString()}
+              {currency} {ratePerHour.toLocaleString()}
             </p>
           </div>
 
@@ -55,16 +59,15 @@ export function ClassCreationRateCard({
                 : '—'}
             </p>
           </div>
-        </div>
 
-        <button
-          type='button'
-          onClick={onEditRate}
-          className='text-primary text-xs font-semibold transition hover:opacity-80'
-        >
-          Edit Rate
-        </button>
-      </div>
+          <button
+            type='button'
+            onClick={onEditRate}
+            className='text-primary text-xs font-semibold transition hover:opacity-80'
+          >
+            Edit Rate
+          </button>
+        </div>
     </Card>
   );
 }
