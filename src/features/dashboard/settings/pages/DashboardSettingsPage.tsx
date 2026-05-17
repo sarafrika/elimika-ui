@@ -34,6 +34,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
+import ManageProfileActions from '../../../profile/add-profile/components/ManageProfileActions';
 import { SettingsField } from '../_components/settings-field';
 import { SettingsPageHeader } from '../_components/settings-page-header';
 import { SettingsToggleRow } from '../_components/settings-toggle-row';
@@ -148,7 +149,8 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
   const [toggles, setToggles] = useState(() => ({
     profileVisibility: true,
     emailAlerts: true,
-    phoneAlerts: Boolean(profile?.phone_number),
+    // phoneAlerts: Boolean(profile?.phone_number),
+    phoneAlerts: false,
     dataSharing: variant !== 'student',
     twoFactor: variant === 'admin',
   }));
@@ -847,93 +849,99 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
           </TabsContent>
 
           <TabsContent value='advanced-settings' className='mt-0'>
-            <div className='grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]'>
-              <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
-                <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                  <CardTitle className='text-base font-semibold sm:text-lg'>
-                    Advanced preferences
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-4 px-4 py-5 sm:px-5'>
-                  <div className='grid gap-4 sm:grid-cols-2'>
-                    <SettingsField
-                      label='Default timezone'
-                      value='Africa/Lagos'
-                      helperText='Used for scheduled actions and time-based notifications.'
-                    />
-                    <SettingsField
-                      label='Language'
-                      value='English'
-                      helperText='Controls the interface language for this profile.'
-                    />
-                  </div>
-
-                  <div className='grid gap-3'>
-                    <SettingsToggleRow
-                      title='Weekly digest'
-                      description='Receive a weekly summary of activity and important updates.'
-                      enabled
-                      onToggle={() => undefined}
-                    />
-                    <SettingsToggleRow
-                      title='Preview mode'
-                      description='Keep draft changes visible only to you until you publish them.'
-                      enabled={variant !== 'student'}
-                      onToggle={() => undefined}
-                    />
-                    <SettingsToggleRow
-                      title='Data export reminders'
-                      description='Show reminders when account exports or compliance actions are available.'
-                      enabled={variant === 'admin' || variant === 'organisation'}
-                      onToggle={() => undefined}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className='flex min-w-0 flex-col gap-4'>
+            <>
+              <div className='grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]'>
                 <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <CardTitle className='text-base font-semibold sm:text-lg'>
-                      Session controls
+                      Advanced preferences
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
-                    <SettingsField
-                      label='Last active'
-                      value={formatDate(profile?.updated_date ?? null)}
-                      helperText='Most recent account activity recorded on this profile.'
-                    />
-                    <SettingsField
-                      label='Account source'
-                      value={variant === 'organisation' ? 'Organisation workspace' : 'User profile'}
-                      helperText='Shows where these settings are being managed from.'
-                    />
-                    <SettingsField
-                      label='Support route'
-                      value={config.supportHref}
-                      helperText='Where advanced issues should be routed from this tab.'
-                    />
+                  <CardContent className='space-y-4 px-4 py-5 sm:px-5'>
+                    <div className='grid gap-4 sm:grid-cols-2'>
+                      <SettingsField
+                        label='Default timezone'
+                        value='Africa/Lagos'
+                        helperText='Used for scheduled actions and time-based notifications.'
+                      />
+                      <SettingsField
+                        label='Language'
+                        value='English'
+                        helperText='Controls the interface language for this profile.'
+                      />
+                    </div>
+
+                    <div className='grid gap-3'>
+                      <SettingsToggleRow
+                        title='Weekly digest'
+                        description='Receive a weekly summary of activity and important updates.'
+                        enabled
+                        onToggle={() => undefined}
+                      />
+                      <SettingsToggleRow
+                        title='Preview mode'
+                        description='Keep draft changes visible only to you until you publish them.'
+                        enabled={variant !== 'student'}
+                        onToggle={() => undefined}
+                      />
+                      <SettingsToggleRow
+                        title='Data export reminders'
+                        description='Show reminders when account exports or compliance actions are available.'
+                        enabled={variant === 'admin' || variant === 'organisation'}
+                        onToggle={() => undefined}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
 
-                <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
-                  <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                    <CardTitle className='text-base font-semibold sm:text-lg'>
-                      Recovery actions
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
-                    <Button variant='outline' className='h-10 w-full rounded-md border-dashed text-sm'>
-                      Reset advanced preferences
-                    </Button>
-                    <Button variant='outline' className='h-10 w-full rounded-md text-sm'>
-                      View account activity
-                    </Button>
-                  </CardContent>
-                </Card>
+                <div className='flex min-w-0 flex-col gap-4'>
+                  <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+                    <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
+                      <CardTitle className='text-base font-semibold sm:text-lg'>
+                        Session controls
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
+                      <SettingsField
+                        label='Last active'
+                        value={formatDate(profile?.updated_date ?? null)}
+                        helperText='Most recent account activity recorded on this profile.'
+                      />
+                      <SettingsField
+                        label='Account source'
+                        value={variant === 'organisation' ? 'Organisation workspace' : 'User profile'}
+                        helperText='Shows where these settings are being managed from.'
+                      />
+                      <SettingsField
+                        label='Support route'
+                        value={config.supportHref}
+                        helperText='Where advanced issues should be routed from this tab.'
+                      />
+                    </CardContent>
+                  </Card>
+
+                  <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+                    <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
+                      <CardTitle className='text-base font-semibold sm:text-lg'>
+                        Recovery actions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
+                      <Button variant='outline' className='h-10 w-full rounded-md border-dashed text-sm'>
+                        Reset advanced preferences
+                      </Button>
+                      <Button variant='outline' className='h-10 w-full rounded-md text-sm'>
+                        View account activity
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-            </div>
+
+              <Card className='rounded-[20px] border-border/70 mt-6 overflow-hidden p-6 shadow-sm'>
+                <ManageProfileActions />
+              </Card>
+            </>
           </TabsContent>
         </Tabs>
       </div>
