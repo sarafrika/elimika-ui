@@ -8,6 +8,7 @@ import {
   Facebook,
   Globe,
   Linkedin,
+  LucideIcon,
   Mail,
   MapPin,
   MessageCircleMore,
@@ -23,6 +24,12 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
+export type PreviewSummaryItem = {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+};
+
 export type ClassCreationPreviewData = {
   classTitle: string;
   classTypeLabel: string;
@@ -37,6 +44,7 @@ export type ClassCreationPreviewData = {
   totalAmountLabel: string;
   meetingLink: string;
   inviteLink: string;
+  summaryItems?: PreviewSummaryItem[];
 };
 
 const shareButtons = [
@@ -114,6 +122,39 @@ export function ClassCreationPreviewRail({ data }: { data: ClassCreationPreviewD
               <PreviewRow icon={CalendarDays} label='Total Sessions' value={data.totalSessionsLabel} />
               <PreviewRow icon={Banknote} label='Total Amount' value={data.totalAmountLabel} />
             </div>
+
+            {data.summaryItems?.length ? (
+              <div className='divide-y bg-card'>
+                {data.summaryItems.map(item => (
+                  <PreviewRow
+                    key={item.label}
+                    icon={item.icon}
+                    label={item.label}
+                    value={item.value}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className='divide-y bg-card'>
+                <PreviewRow
+                  icon={Users}
+                  label='Instructor'
+                  value={data.instructorName || 'John Doe'}
+                />
+
+                <PreviewRow
+                  icon={Globe}
+                  label='Lecture Type'
+                  value={data.lectureTypeLabel}
+                />
+
+                <PreviewRow
+                  icon={MapPin}
+                  label='Location'
+                  value={data.locationName || 'Nairobi, Kenya'}
+                />
+              </div>
+            )}
           </div>
         </div>
       </Card>
@@ -183,7 +224,7 @@ const PreviewRow = ({
       </div>
       <span className='text-muted-foreground text-sm font-medium'>{label}</span>
     </div>
-    <div className='min-w-0 whitespace-pre-line text-sm font-medium text-foreground md:text-right'>
+    <div className='min-w-0 whitespace-pre-line break-all text-sm font-medium text-foreground md:text-right'>
       {value}
     </div>
   </div>

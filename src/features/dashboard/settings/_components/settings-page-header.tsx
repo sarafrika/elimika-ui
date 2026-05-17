@@ -1,6 +1,5 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
 type SettingsPageHeaderProps = {
@@ -36,7 +35,7 @@ export function SettingsPageHeader({
         </div>
       </div>
 
-      <div className='flex min-w-0 items-center gap-3 rounded-[18px] border border-border/70 bg-card px-3 py-2 shadow-sm'>
+      {/* <div className='flex min-w-0 items-center gap-3 rounded-[18px] border border-border/70 bg-card px-3 py-2 shadow-sm'>
         <Avatar className='size-11 border border-border/70'>
           <AvatarImage src={profileImage} alt={profileName} />
           <AvatarFallback className='bg-primary/10 text-primary text-sm font-semibold'>
@@ -53,7 +52,7 @@ export function SettingsPageHeader({
             Personal settings snapshot
           </p>
         </div>
-      </div>
+      </div> */}
     </header>
   );
 }

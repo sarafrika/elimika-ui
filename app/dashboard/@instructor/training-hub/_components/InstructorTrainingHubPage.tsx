@@ -100,10 +100,7 @@ export function InstructorTrainingHubPage() {
           <div className='min-w-0 space-y-3 overflow-hidden'>
 
             <div className='flex flex-row items-center gap-1'>
-              <TrainingHubSectionHeader title='Manage Courses' />
-              <p className='text-sm text-muted-foreground'>
-                List of courses approved to train.
-              </p>
+              <TrainingHubSectionHeader title='My Courses' />
             </div>
 
             <div className='space-y-3'>
