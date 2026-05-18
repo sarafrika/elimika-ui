@@ -281,9 +281,16 @@ export function CredentialCertificateCard({
         >
           <SheetHeader className='border-border/70 border-b px-5 py-4 text-left'>
             <SheetTitle className='text-lg'>{item.documentLabel}</SheetTitle>
-            <SheetDescription className='text-xs'>
-              {item.recordSummary ? `${item.recordSummary} · ` : ''}
-              {ownerName}
+            <SheetDescription className="text-xs space-y-0.5">
+              <p className="font-medium text-foreground">
+                {ownerName}
+              </p>
+
+              {item.recordSummary && (
+                <p className="text-muted-foreground leading-snug">
+                  {item.recordSummary}
+                </p>
+              )}
             </SheetDescription>
           </SheetHeader>
 

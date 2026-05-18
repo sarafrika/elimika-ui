@@ -30,7 +30,6 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
-  UserCircle,
   UserIcon,
   Users,
   UsersIcon,
@@ -217,11 +216,11 @@ export default {
       url: '/dashboard/analytics',
       icon: LineChart,
     },
-    {
-      title: 'Profile',
-      url: '/dashboard/profile',
-      icon: UserCircle,
-    },
+    // {
+    //   title: 'Profile',
+    //   url: '/dashboard/profile',
+    //   icon: UserCircle,
+    // },
     {
       title: 'Settings',
       url: '/dashboard/settings',
@@ -324,11 +323,11 @@ export default {
     //   url: '/dashboard/reviews',
     //   icon: Star,
     // },
-    {
-      title: 'Profile',
-      url: '/dashboard/profile',
-      icon: UserCircle,
-    },
+    // {
+    //   title: 'Profile',
+    //   url: '/dashboard/profile',
+    //   icon: UserCircle,
+    // },
     {
       title: 'Settings',
       url: '/dashboard/settings',
@@ -417,11 +416,11 @@ export default {
     //   url: '/dashboard/verification',
     //   icon: ShieldCheck,
     // },
-    {
-      title: 'Profile',
-      url: '/dashboard/profile',
-      icon: UserCircle,
-    },
+    // {
+    //   title: 'Profile',
+    //   url: '/dashboard/profile',
+    //   icon: UserCircle,
+    // },
     {
       title: 'Settings',
       url: '/dashboard/settings',

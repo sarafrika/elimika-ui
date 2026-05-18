@@ -47,6 +47,7 @@ import {
   normalizeUserDomainValue,
   type DashboardSettingsVariant,
 } from '../settings-config';
+import InstructorRateCard from './instructor-rate-page';
 
 type DashboardSettingsPageProps = {
   variant: DashboardSettingsVariant;
@@ -356,7 +357,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
 
           <TabsContent value='profile' className='mt-0'>
             <div className='grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.72fr)_minmax(320px,0.88fr)]'>
-              <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+              <Card className='rounded-md border-border/70 p-0 shadow-sm'>
                 <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                   <div className='flex flex-wrap items-start justify-between gap-4'>
                     <div className='min-w-0 space-y-1'>
@@ -628,7 +629,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
               </Card>
 
               <div className='flex min-w-0 flex-col gap-4'>
-                <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+                <Card className='rounded-md border-border/70 p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <CardTitle className='flex items-center gap-2 text-base font-semibold sm:text-lg'>
                       <Wallet className='text-primary size-4 sm:size-5' />
@@ -711,7 +712,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                   </CardContent>
                 </Card>
 
-                <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+                <Card className='rounded-md border-border/70 p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <CardTitle className='flex items-center gap-2 text-base font-semibold sm:text-lg'>
                       <ShieldCheck className='text-primary size-4 sm:size-5' />
@@ -759,8 +760,14 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
             </div>
           </TabsContent>
 
+          <TabsContent value='rate' className='mt-0'>
+            <div className=''>
+              <InstructorRateCard />
+            </div>
+          </TabsContent>
+
           <TabsContent value='access' className='mt-0'>
-            <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+            <Card className='rounded-md border-border/70 p-0 shadow-sm'>
               <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                 <CardTitle className='text-base font-semibold sm:text-lg'>
                   Access
@@ -779,7 +786,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
 
           <TabsContent value='support' className='mt-0'>
             <div className='grid gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)]'>
-              <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+              <Card className='rounded-md border-border/70 p-0 shadow-sm'>
                 <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                   <CardTitle className='text-base font-semibold sm:text-lg'>Support details</CardTitle>
                 </CardHeader>
@@ -797,7 +804,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
               </Card>
 
               <div className='flex flex-col gap-4'>
-                <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+                <Card className='rounded-md border-border/70 p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <CardTitle className='text-base font-semibold sm:text-lg'>Security snapshot</CardTitle>
                   </CardHeader>
@@ -829,7 +836,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                   </CardContent>
                 </Card>
 
-                <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+                <Card className='rounded-md border-border/70 p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <CardTitle className='text-base font-semibold sm:text-lg'>
                       Support widget preview
@@ -851,7 +858,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
           <TabsContent value='advanced-settings' className='mt-0'>
             <>
               <div className='grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]'>
-                <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+                <Card className='rounded-md border-border/70 p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <CardTitle className='text-base font-semibold sm:text-lg'>
                       Advanced preferences
@@ -895,7 +902,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                 </Card>
 
                 <div className='flex min-w-0 flex-col gap-4'>
-                  <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+                  <Card className='rounded-md border-border/70 p-0 shadow-sm'>
                     <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                       <CardTitle className='text-base font-semibold sm:text-lg'>
                         Session controls
@@ -920,7 +927,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                     </CardContent>
                   </Card>
 
-                  <Card className='rounded-[20px] border-border/70 p-0 shadow-sm'>
+                  <Card className='rounded-md border-border/70 p-0 shadow-sm'>
                     <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                       <CardTitle className='text-base font-semibold sm:text-lg'>
                         Recovery actions
@@ -938,7 +945,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                 </div>
               </div>
 
-              <Card className='rounded-[20px] border-border/70 mt-6 overflow-hidden p-6 shadow-sm'>
+              <Card className='rounded-md border-border/70 mt-6 overflow-hidden p-6 shadow-sm'>
                 <ManageProfileActions />
               </Card>
             </>

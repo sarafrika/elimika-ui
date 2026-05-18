@@ -10,9 +10,10 @@ import { GrowthTimelineCard } from './GrowthTimelineCard';
 
 type GrowthTimelineSectionProps = {
   items: GrowthItem[];
+  ownerName: string;
 };
 
-export function GrowthTimelineSection({ items }: GrowthTimelineSectionProps) {
+export function GrowthTimelineSection({ items, ownerName }: GrowthTimelineSectionProps) {
   return (
     <Card className='rounded-[18px] border-white/60 bg-card/95 px-4 py-4 shadow-sm sm:px-5 mb-20'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -26,7 +27,7 @@ export function GrowthTimelineSection({ items }: GrowthTimelineSectionProps) {
       {items.length > 0 ? (
         <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-3'>
           {items.map(item => (
-            <GrowthTimelineCard key={item.id} item={item} />
+            <GrowthTimelineCard key={item.id} item={item} ownerName={ownerName} />
           ))}
         </div>
       ) : (
