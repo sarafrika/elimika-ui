@@ -4,7 +4,6 @@ import { Card } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BellRing,
@@ -348,14 +347,19 @@ const getRepeatSummary = (scheduleSettings: ScheduleSettings) => {
   const interval = scheduleSettings.repeat.interval || 1;
 
   if (scheduleSettings.repeat.unit === 'week') {
-    const intervalLabel = interval > 1 ? `every ${interval} weeks` : 'weekly';
+    const intervalLabel =
+      interval > 1 ? `Every ${interval} weeks` : 'Weekly';
+
     if (days.length > 0) {
-      return `Repeats ${intervalLabel} on ${days.map(d => DAY_SHORT[d] ?? 'Mon').join(', ')}`;
+      return `${intervalLabel}\n${days
+        .map(d => DAY_SHORT[d] ?? 'Mon')
+        .join(', ')}`;
     }
-    return `Repeats ${intervalLabel}`;
+
+    return intervalLabel;
   }
 
-  return `Repeats every ${interval} ${scheduleSettings.repeat.unit}(s)`;
+  return `Every ${interval}\n${scheduleSettings.repeat.unit}(s)`;
 };
 
 const NewClassCreationPage = () => {
@@ -829,8 +833,8 @@ const NewClassCreationPage = () => {
       session_format: classDetails.class_type === 'PRIVATE' ? SessionFormatEnum.INDIVIDUAL : SessionFormatEnum.GROUP,
       location_type: LocationTypeEnum[locationType as keyof typeof LocationTypeEnum],
       location_name: trimToUndefined(classDetails.location_name),
-      location_latitude: parseCoordinate(locationLatitude),
-      location_longitude: parseCoordinate(locationLongitude),
+      location_latitude: -1.292066, // parseCoordinate(locationLatitude),
+      location_longitude: 36.821945,  // parseCoordinate(locationLongitude),
       max_participants: classDetails.class_limit > 0 ? classDetails.class_limit : undefined,
       classroom: trimToUndefined(classDetails.classroom),
       class_color: trimToUndefined(notificationSettings.classColour || classDetails.class_color),
@@ -840,7 +844,7 @@ const NewClassCreationPage = () => {
       registration_period_end_date: registrationPeriodEnd,
       class_reminder_minutes: reminderToMinutes(notificationSettings.reminder),
       training_fee: ratePerHour,
-      allow_waitlist: allowWaitlist,
+      allow_waitlist: true, // allowWaitlist,
       is_active: !isDraft,
       default_start_time: new Date(startTimeIso),
       default_end_time: new Date(endTimeIso),
@@ -1256,7 +1260,41 @@ const NewClassCreationPage = () => {
                         <p className='text-muted-foreground mt-1 text-xs'>Set recurring days and times</p>
                       </div>
                       <div className='space-y-4'>
-                        {RepeatRuleFields}
+                        <div className='flex flex-row flex-wrap gap-4 justify-between' >
+                          {RepeatRuleFields}
+
+                          <div className='flex flex-wrap flex-row items-center gap-4' >
+                            <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
+                              <input
+                                type='checkbox'
+                                checked={scheduleSettings.allDay}
+                                onChange={e =>
+                                  setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
+                                }
+                                className='h-4 w-4 rounded'
+                              />
+                              All Day
+                            </label>
+
+                            <FieldGroup label='Timezone'>
+                              <Select
+                                value={scheduleSettings.timezone}
+                                onValueChange={value =>
+                                  setScheduleSettings(prev => ({ ...prev, timezone: value }))
+                                }
+                              >
+                                <SelectTrigger className='h-11'>
+                                  <SelectValue placeholder='Select timezone' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
+                                  <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
+                                  <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FieldGroup>
+                          </div>
+                        </div>
 
                         <div className='flex flex-col gap-4 sm:flex-row'>
                           <div className='flex-1'>
@@ -1289,35 +1327,7 @@ const NewClassCreationPage = () => {
 
                         {SharedTimeFields}
 
-                        <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
-                          <input
-                            type='checkbox'
-                            checked={scheduleSettings.allDay}
-                            onChange={e =>
-                              setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
-                            }
-                            className='h-4 w-4 rounded'
-                          />
-                          All Day
-                        </label>
 
-                        <FieldGroup label='Timezone'>
-                          <Select
-                            value={scheduleSettings.timezone}
-                            onValueChange={value =>
-                              setScheduleSettings(prev => ({ ...prev, timezone: value }))
-                            }
-                          >
-                            <SelectTrigger className='h-11'>
-                              <SelectValue placeholder='Select timezone' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
-                              <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
-                              <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FieldGroup>
 
                         {totalSessions > 0 && (
                           <div className='bg-primary/10 text-primary border-primary/20 rounded-lg border px-4 py-2.5 text-sm font-medium'>
@@ -1340,173 +1350,183 @@ const NewClassCreationPage = () => {
                 )}
 
                 {schedulePreset === 'pick-dates' && (
-                  <div className='space-y-5 rounded-md border border-border/60 p-4'>
-                    {/* Calendar */}
-                    <Calendar
-                      mode='multiple'
-                      selected={pickedDates.map(item => new Date(item.date))}
-                      onSelect={dates => {
-                        if (!dates) {
-                          setPickedDates([]);
-                          return;
-                        }
+                  <div className='flex flex-col gap-4 min-[1110px]:flex-row min-[1280px]:flex-col min-[1440px]:flex-row'>
+                    <div className='min-w-0 flex-[1.2] space-y-4 rounded-md border border-border/60 p-4'>
+                      <Calendar
+                        mode='multiple'
+                        selected={pickedDates.map(item => new Date(item.date))}
+                        onSelect={dates => {
+                          if (!dates) {
+                            setPickedDates([]);
+                            return;
+                          }
 
-                        const next = dates.map(date => {
-                          const formatted = format(date, 'yyyy-MM-dd');
+                          const next = dates.map(date => {
+                            const formatted = format(date, 'yyyy-MM-dd');
 
-                          const existing = pickedDates.find(
-                            item => item.date === formatted
-                          );
+                            const existing = pickedDates.find(
+                              item => item.date === formatted
+                            );
 
-                          return (
-                            existing || {
-                              date: formatted,
-                              startTime:
-                                scheduleSettings.startClass.startTime || '09:00',
-                              endTime:
-                                scheduleSettings.startClass.endTime || '10:00',
-                            }
-                          );
-                        });
+                            return (
+                              existing || {
+                                date: formatted,
+                                startTime:
+                                  scheduleSettings.startClass.startTime || '09:00',
+                                endTime:
+                                  scheduleSettings.startClass.endTime || '10:00',
+                              }
+                            );
+                          });
 
-                        setPickedDates(next);
-                      }}
-                      className='w-full'
-                      classNames={{
-                        day:
-                          'mx-auto flex h-7 w-7 items-center justify-center rounded-md text-[11px] transition',
-                      }}
-                    />
-
-                    {/* Selected dates */}
-                    {pickedDates.length > 0 && (
-                      <div className='space-y-3'>
-                        <div className='flex items-center justify-between'>
-                          <p className='text-foreground text-sm font-semibold'>
-                            Selected Sessions
-                          </p>
-
-                          <div className='bg-primary/10 text-primary border-primary/20 rounded-md border px-2.5 py-1 text-xs font-semibold'>
-                            {pickedDates.length}{' '}
-                            {pickedDates.length === 1
-                              ? 'Session'
-                              : 'Sessions'}
-                          </div>
-                        </div>
-
-                        <div className='space-y-2'>
-                          {pickedDates.map((item, idx) => (
-                            <div
-                              key={item.date}
-                              className='flex flex-col gap-3 rounded-md border border-border/60 px-3 py-1.5 sm:flex-row sm:items-center sm:justify-between'
-                            >
-                              {/* Date */}
-                              <div className='min-w-0 flex-1'>
-                                <p className='truncate text-[13px] font-semibold text-foreground'>
-                                  {format(new Date(item.date), 'EEE, MMM d, yyyy')}
-                                </p>
-                              </div>
-
-                              {/* Time inputs */}
-                              {!scheduleSettings.allDay && (
-                                <div className='flex w-full items-center gap-2 sm:w-auto'>
-                                  <Input
-                                    type='time'
-                                    value={item.startTime}
-                                    onChange={e => {
-                                      const next = [...pickedDates];
-                                      next[idx] = { ...next[idx], startTime: e.target.value };
-                                      setPickedDates(next);
-                                    }}
-                                    className='h-9 w-full sm:w-28'
-                                  />
-
-                                  <span className='text-muted-foreground text-xs'>→</span>
-
-                                  <Input
-                                    type='time'
-                                    value={item.endTime}
-                                    onChange={e => {
-                                      const next = [...pickedDates];
-                                      next[idx] = { ...next[idx], endTime: e.target.value };
-                                      setPickedDates(next);
-                                    }}
-                                    className='h-9 w-full sm:w-28'
-                                  />
-                                </div>
-                              )}
-
-                              {/* Remove */}
-                              <button
-                                type='button'
-                                onClick={() =>
-                                  setPickedDates(prev => prev.filter((_, i) => i !== idx))
-                                }
-                                className='text-muted-foreground hover:text-destructive text-sm font-medium sm:ml-2'
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Shared options */}
-                    <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
-                      <input
-                        type='checkbox'
-                        checked={scheduleSettings.allDay}
-                        onChange={e =>
-                          setScheduleSettings(prev => ({
-                            ...prev,
-                            allDay: e.target.checked,
-                          }))
-                        }
-                        className='h-4 w-4 rounded'
+                          setPickedDates(next);
+                        }}
+                        className='w-full'
+                        classNames={{
+                          day:
+                            'mx-auto flex h-7 w-7 items-center justify-center rounded-md text-[11px] transition',
+                        }}
                       />
 
-                      All Day
-                    </label>
+                      <>
+                        {/* Shared options */}
+                        <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
+                          <input
+                            type='checkbox'
+                            checked={scheduleSettings.allDay}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                allDay: e.target.checked,
+                              }))
+                            }
+                            className='h-4 w-4 rounded'
+                          />
 
-                    <FieldGroup label='Timezone'>
-                      <Select
-                        value={scheduleSettings.timezone}
-                        onValueChange={value =>
-                          setScheduleSettings(prev => ({
-                            ...prev,
-                            timezone: value,
-                          }))
-                        }
-                      >
-                        <SelectTrigger className='h-11 w-full'>
-                          <SelectValue placeholder='Select timezone' />
-                        </SelectTrigger>
+                          All Day
+                        </label>
 
-                        <SelectContent>
-                          <SelectItem value='EAT East Africa Time'>
-                            EAT East Africa Time
-                          </SelectItem>
+                        <FieldGroup label='Timezone'>
+                          <Select
+                            value={scheduleSettings.timezone}
+                            onValueChange={value =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                timezone: value,
+                              }))
+                            }
+                          >
+                            <SelectTrigger className='h-11 w-full'>
+                              <SelectValue placeholder='Select timezone' />
+                            </SelectTrigger>
 
-                          <SelectItem value='UTC Coordinated Universal Time'>
-                            UTC Coordinated Universal Time
-                          </SelectItem>
+                            <SelectContent>
+                              <SelectItem value='EAT East Africa Time'>
+                                EAT East Africa Time
+                              </SelectItem>
 
-                          <SelectItem value='WAT West Africa Time'>
-                            WAT West Africa Time
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FieldGroup>
+                              <SelectItem value='UTC Coordinated Universal Time'>
+                                UTC Coordinated Universal Time
+                              </SelectItem>
 
-                    {pickedDates.length > 0 && (
-                      <div className='bg-primary/10 text-primary border-primary/20 rounded-lg border px-4 py-2.5 text-sm font-medium'>
-                        Total sessions:{' '}
-                        <span className='font-bold'>
-                          {pickedDates.length}
-                        </span>
-                      </div>
-                    )}
+                              <SelectItem value='WAT West Africa Time'>
+                                WAT West Africa Time
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FieldGroup>
+                      </>
+                    </div>
+
+                    <div className='flex-[1.5] space-y-2 rounded-md border border-border/60 p-3'>
+                      {/* Selected dates */}
+                      {pickedDates.length > 0 && (
+                        <div className='space-y-2'>
+                          {/* Header */}
+                          <div className='flex items-center justify-between'>
+                            <p className='text-xs font-semibold text-foreground'>
+                              Selected Sessions
+                            </p>
+
+                            <div className='bg-primary/10 text-primary border-primary/20 rounded border px-2 py-0.5 text-[10px] font-semibold'>
+                              {pickedDates.length}{' '}
+                              {pickedDates.length === 1 ? 'Session' : 'Sessions'}
+                            </div>
+                          </div>
+
+                          {/* Sessions */}
+                          <div className='space-y-1.5'>
+                            {pickedDates.map((item, idx) => (
+                              <div
+                                key={item.date}
+                                className='flex flex-col gap-2 rounded-md border border-border/50 px-2.5 py-2 sm:flex-row sm:items-center sm:justify-between'
+                              >
+                                {/* Date */}
+                                <div className='min-w-0 flex-1'>
+                                  <p className='truncate text-[11px] font-medium text-foreground'>
+                                    {format(new Date(item.date), 'EEE, MMM d')}
+                                  </p>
+                                </div>
+
+                                {/* Time inputs */}
+                                {!scheduleSettings.allDay && (
+                                  <div className='flex items-center gap-1.5'>
+                                    <Input
+                                      type='time'
+                                      value={item.startTime}
+                                      onChange={e => {
+                                        const next = [...pickedDates];
+
+                                        next[idx] = {
+                                          ...next[idx],
+                                          startTime: e.target.value,
+                                        };
+
+                                        setPickedDates(next);
+                                      }}
+                                      className='h-7 w-[92px] px-2 text-[11px]'
+                                    />
+
+                                    <span className='text-[10px] text-muted-foreground'>
+                                      →
+                                    </span>
+
+                                    <Input
+                                      type='time'
+                                      value={item.endTime}
+                                      onChange={e => {
+                                        const next = [...pickedDates];
+
+                                        next[idx] = {
+                                          ...next[idx],
+                                          endTime: e.target.value,
+                                        };
+
+                                        setPickedDates(next);
+                                      }}
+                                      className='h-7 w-[92px] px-2 text-[11px]'
+                                    />
+                                  </div>
+                                )}
+
+                                {/* Remove */}
+                                <button
+                                  type='button'
+                                  onClick={() =>
+                                    setPickedDates(prev =>
+                                      prev.filter((_, i) => i !== idx)
+                                    )
+                                  }
+                                  className='text-[11px] font-medium text-muted-foreground transition hover:text-destructive'
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -1551,38 +1571,44 @@ const NewClassCreationPage = () => {
                         </div>
                       </div>
 
-                      {RepeatRuleFields}
                       {SharedTimeFields}
 
-                      <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
-                        <input
-                          type='checkbox'
-                          checked={scheduleSettings.allDay}
-                          onChange={e =>
-                            setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
-                          }
-                          className='h-4 w-4 rounded'
-                        />
-                        All Day
-                      </label>
+                      <div className='flex flex-row flex-wrap gap-4 justify-between' >
+                        {RepeatRuleFields}
 
-                      <FieldGroup label='Timezone'>
-                        <Select
-                          value={scheduleSettings.timezone}
-                          onValueChange={value =>
-                            setScheduleSettings(prev => ({ ...prev, timezone: value }))
-                          }
-                        >
-                          <SelectTrigger className='h-11'>
-                            <SelectValue placeholder='Select timezone' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
-                            <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
-                            <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FieldGroup>
+                        <div className='flex flex-wrap flex-row items-center gap-4' >
+                          <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
+                            <input
+                              type='checkbox'
+                              checked={scheduleSettings.allDay}
+                              onChange={e =>
+                                setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
+                              }
+                              className='h-4 w-4 rounded'
+                            />
+                            All Day
+                          </label>
+
+                          <FieldGroup label='Timezone'>
+                            <Select
+                              value={scheduleSettings.timezone}
+                              onValueChange={value =>
+                                setScheduleSettings(prev => ({ ...prev, timezone: value }))
+                              }
+                            >
+                              <SelectTrigger className='h-11'>
+                                <SelectValue placeholder='Select timezone' />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
+                                <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
+                                <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FieldGroup>
+                        </div>
+                      </div>
+
 
                       {totalSessions > 0 && (
                         <div className='bg-primary/10 text-primary border-primary/20 rounded-lg border px-4 py-2.5 text-sm font-medium'>
@@ -1661,7 +1687,7 @@ const NewClassCreationPage = () => {
                             placeholder='25'
                           />
                         </FieldGroup> */}
-                        <FieldGroup label='Allow Waitlist'>
+                        {/* <FieldGroup label='Allow Waitlist'>
                           <div className='flex items-center justify-between rounded-md border border-border/60 px-3 py-2'>
                             <div>
                               <p className='text-foreground text-sm font-medium'>Enable waitlist</p>
@@ -1669,7 +1695,8 @@ const NewClassCreationPage = () => {
                             </div>
                             <Switch checked={allowWaitlist} onCheckedChange={setAllowWaitlist} />
                           </div>
-                        </FieldGroup>
+                        </FieldGroup> */}
+
                         <label className='flex cursor-pointer items-center gap-3 text-sm font-medium'>
                           <input
                             type='checkbox'
@@ -1690,16 +1717,14 @@ const NewClassCreationPage = () => {
                         </label>
                       </div>
 
-                      <div className='grid gap-4 md:grid-cols-2'>
+                      {/* <div className='grid gap-4 md:grid-cols-2'>
                         <FieldGroup label='Location Latitude'>
                           <Input type='number' step='any' value={locationLatitude} onChange={e => setLocationLatitude(e.target.value)} placeholder='-1.292066' />
                         </FieldGroup>
                         <FieldGroup label='Location Longitude'>
                           <Input type='number' step='any' value={locationLongitude} onChange={e => setLocationLongitude(e.target.value)} placeholder='36.821945' />
                         </FieldGroup>
-                      </div>
-
-
+                      </div> */}
 
                       <div className='rounded-md border border-border/60 p-4'>
                         <div className='flex flex-row flex-wrap gap-2 sm:items-center sm:justify-between'>
@@ -1881,8 +1906,13 @@ const SummaryLine = ({ icon: Icon, label, value }: { icon: typeof CalendarDays; 
   </div>
 );
 
+import { Switch } from '@/components/ui/switch';
+
 const ReminderCard = ({
-  title, enabled, onEnabledChange, children,
+  title,
+  enabled,
+  onEnabledChange,
+  children,
 }: {
   children: React.ReactNode;
   enabled: boolean;
@@ -1892,18 +1922,23 @@ const ReminderCard = ({
   <div className='rounded-md border border-border/60 p-4'>
     <div className='flex items-center justify-between gap-3'>
       <div>
-        <p className='text-foreground text-sm font-semibold'>{title}</p>
-        <p className='text-muted-foreground text-xs'>Set reminders for your students.</p>
+        <p className='text-foreground text-sm font-semibold'>
+          {title}
+        </p>
+
+        <p className='text-muted-foreground text-xs'>
+          Set reminders for your students.
+        </p>
       </div>
-      <button
-        type='button'
-        onClick={() => onEnabledChange(!enabled)}
-        className={`relative h-6 w-11 rounded-full transition ${enabled ? 'bg-primary' : 'bg-muted'}`}
-        aria-pressed={enabled}
-      >
-        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition ${enabled ? 'left-5' : 'left-0.5'}`} />
-      </button>
+
+      <Switch
+        checked={enabled}
+        onCheckedChange={onEnabledChange}
+      />
     </div>
-    <div className='mt-4 space-y-4'>{children}</div>
+
+    <div className='mt-4 space-y-4'>
+      {children}
+    </div>
   </div>
 );
