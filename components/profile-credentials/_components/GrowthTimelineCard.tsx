@@ -7,10 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
+import { useState } from 'react';
+import { PdfPreview } from '../../../app/dashboard/@admin/verifications/_components/DocumentsVerificationPage';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../../ui/sheet';
 import type { GrowthItem } from '../data';
 
 type GrowthTimelineCardProps = {
   item: GrowthItem;
+  ownerName: string;
 };
 
 const accentStyles = {
@@ -21,9 +25,11 @@ const accentStyles = {
   blue: 'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_18%,white),white)] text-primary',
 } as const;
 
-export function GrowthTimelineCard({ item }: GrowthTimelineCardProps) {
+export function GrowthTimelineCard({ item, ownerName }: GrowthTimelineCardProps) {
   const Icon = item.icon;
   const recordKindLabel = item.recordKind ? item.recordKind.charAt(0).toUpperCase() + item.recordKind.slice(1) : null;
+
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   return (
     <Card className='gap-4 rounded-[16px] border-white/60 bg-card/95 px-4 py-4 shadow-sm'>
@@ -78,31 +84,67 @@ export function GrowthTimelineCard({ item }: GrowthTimelineCardProps) {
       </div>
 
       <div className='flex flex-end flex-wrap justify-between gap-2 border-t pt-3'>
-        {/* <Badge
-          variant='outline'
-          className='rounded-lg border-white/70 bg-background/80 px-3 py-1.5 text-sm text-primary'
-        >
-          {item.footerLabel}
-        </Badge> */}
-        <Button
-          asChild={!!item.documentUrl}
-          variant={item.actionLabel === 'Apply New' ? 'default' : 'outline'}
-          size='sm'
-          className='rounded-lg self-end'
-        >
-          {item.documentUrl ? (
-            <a href={item.documentUrl} target='_blank' rel='noreferrer'>
-              {item.actionLabel}
-              <ChevronRight className='size-4' />
-            </a>
-          ) : (
-            <>
-              {item.actionLabel}
-              <ChevronRight className='size-4' />
-            </>
-          )}
-        </Button>
+        {item.documentUrl ? (
+          <Button
+            type='button'
+            variant='outline'
+            className='min-h-8 rounded-md border-white/70 bg-background/80 px-3 text-xs'
+            onClick={() => setViewerOpen(true)}
+            disabled={!item.documentUrl}
+          >
+            {item.actionLabel}
+            <ChevronRight className='size-3.5' />
+          </Button>
+        ) : (
+          <Button
+            variant='outline'
+            className='min-h-8 rounded-md border-white/70 bg-background/80 px-3 text-xs'
+          >
+            {item.actionLabel}
+            <ChevronRight className='size-3.5' />
+          </Button>
+        )}
       </div>
+
+      {/* Viewer */}
+      <Sheet open={viewerOpen} onOpenChange={setViewerOpen}>
+        <SheetContent
+          side='right'
+          className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[680px]'
+        >
+          <SheetHeader className='border-border/70 border-b px-5 py-4 text-left'>
+            <SheetTitle className='text-lg'>{item.documentName as string}</SheetTitle>
+            <SheetDescription className="text-xs space-y-0.5">
+              <p className="font-medium text-foreground">
+                {ownerName}
+              </p>
+
+              {item.recordSummary && (
+                <p className="text-muted-foreground leading-snug">
+                  {item.recordSummary}
+                </p>
+              )}
+            </SheetDescription>
+          </SheetHeader>
+
+          {item.documentUrl ? (
+            <div className='flex-1 space-y-4 overflow-y-auto px-5 py-4'>
+              <div className='overflow-hidden rounded-[14px] border bg-card shadow-sm'>
+                <PdfPreview
+                  documentUrl={item.documentUrl}
+                  documentLabel={item.documentName as string}
+                  documentTitle={item.documentName as string}
+                  fullHeight
+                />
+              </div>
+            </div>
+          ) : (
+            <div className='flex flex-1 items-center justify-center p-5 text-center text-xs text-muted-foreground'>
+              No document URL available for this credential.
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </Card>
   );
 }

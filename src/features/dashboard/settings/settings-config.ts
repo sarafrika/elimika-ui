@@ -135,6 +135,7 @@ export function getSettingsVariantConfig(
     ],
     instructor: [
       { value: 'profile', label: 'Profile' },
+      { value: 'rate', label: 'Rate Card' },
       { value: 'access', label: 'Teaching Settings' },
       { value: 'support', label: 'Support' },
       { value: 'advanced-settings', label: 'Advanced Settings' },
