@@ -38,7 +38,7 @@ export const schedulerMetrics: SchedulerMetric[] = [
     tone: 'bg-primary text-primary-foreground',
   },
   {
-    label: 'Instructors',
+    label: 'Instructor Bookings',
     value: '12',
     helper: 'Available',
     icon: GraduationCap,
@@ -48,14 +48,14 @@ export const schedulerMetrics: SchedulerMetric[] = [
     label: 'Venues in Use',
     value: '7 / 10',
     helper: 'Today',
-    icon: MapPinned,
+    icon: Building2,
     tone: 'bg-success text-success-foreground',
   },
   {
-    label: 'Upcoming',
+    label: 'Students',
     value: '24',
-    helper: 'Next 7 Days',
-    icon: Building2,
+    helper: 'Students attending classes today',
+    icon: MapPinned,
     tone: 'bg-secondary text-secondary-foreground',
   },
 ];

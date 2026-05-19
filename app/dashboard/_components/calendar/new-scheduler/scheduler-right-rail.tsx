@@ -8,7 +8,7 @@ import { Copy, ExternalLink, Share2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { StudentSummary } from './calendar-utils';
 import { studentMetric } from './data';
-import type { SchedulerEvent } from './types';
+import type { SchedulerEvent, SchedulerProfile } from './types';
 
 type InstructorSummary = {
   uuid: string;
@@ -55,6 +55,7 @@ function joinParts(parts: Array<string | null | undefined>) {
 }
 
 export function SchedulerRightRail({
+  profile,
   currentDate,
   events,
   allInstructors,
@@ -62,6 +63,7 @@ export function SchedulerRightRail({
   showAllInstructors,
   onToggleInstructors,
 }: {
+  profile: SchedulerProfile;
   currentDate: Date;
   events: SchedulerEvent[];
   allInstructors: InstructorSummary[];
@@ -212,7 +214,7 @@ export function SchedulerRightRail({
         </div>
       </section>
 
-      <section className='bg-card w-full min-w-0 rounded-md border p-3 shadow-sm'>
+      {(profile === "organization" || profile === "admin") && <section className='bg-card w-full min-w-0 rounded-md border p-3 shadow-sm'>
         <div className='mb-2 flex items-center justify-between gap-3'>
           <h2 className='text-foreground text-sm font-semibold'>Instructors</h2>
           <div className='flex items-center gap-2'>
@@ -262,7 +264,8 @@ export function SchedulerRightRail({
             ))
           )}
         </div>
-      </section>
+      </section>}
+
 
       <section className='bg-card w-full min-w-0 rounded-md border p-3 shadow-sm'>
         <div className='mb-2 flex items-center justify-between gap-3'>
