@@ -46,7 +46,7 @@ type Props = {
 
 type FilterSelection =
   | { id: 'all'; kind: 'all' }
-  | { id: string; kind: 'class' | 'booking' | 'venue' | 'classroom' };
+  | { id: string; kind: 'class' | 'booking' | 'venue' | 'classroom' | 'instructor'; };
 
 const normalizeText = (value?: string | null) => value?.trim().toLowerCase() ?? '';
 
@@ -70,12 +70,6 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   const [showAllInstructors, setShowAllInstructors] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<FilterSelection>({ id: 'all', kind: 'all' });
-  const [openDropdowns, setOpenDropdowns] = useState({
-    bookings: true,
-    classes: true,
-    classrooms: true,
-    venues: true,
-  });
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
 
   const events = data.events;
@@ -92,6 +86,9 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           (selectedFilter.kind === 'venue' || selectedFilter.kind === 'classroom') &&
           event.location !== selectedFilter.id
         ) {
+          return false;
+        }
+        if (selectedFilter.kind === 'instructor' && event.instructor !== selectedFilter.id) {
           return false;
         }
         return true;
@@ -171,17 +168,17 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     return items.filter(item => !searchTerm || item.name.toLowerCase().includes(searchTerm));
   }, [allEvents, searchTerm]);
 
-  const activeDayEntries = useMemo(
-    () => filteredEvents.filter(entry => isSameCalendarDay(entry.startTime, currentDate)),
-    [currentDate, filteredEvents]
-  );
+  // const activeDayEntries = useMemo(
+  //   () => filteredEvents.filter(entry => isSameCalendarDay(entry.startTime, currentDate)),
+  //   [currentDate, filteredEvents]
+  // );
 
-  const activeDayEvents = useMemo(() => activeDayEntries, [activeDayEntries]);
+  // const activeDayEvents = useMemo(() => activeDayEntries, [activeDayEntries]);
 
-  const filteredVisibleInstructors = useMemo(
-    () => Array.from(new Set(activeDayEvents.map(event => event.instructor).filter(Boolean))).sort(),
-    [activeDayEvents]
-  );
+  // const filteredVisibleInstructors = useMemo(
+  //   () => Array.from(new Set(activeDayEvents.map(event => event.instructor).filter(Boolean))).sort(),
+  //   [activeDayEvents]
+  // );
 
   const hasActiveFilters = selectedFilter.kind !== 'all';
 
@@ -200,22 +197,39 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   const activeEvents = visibleEvents;
 
   const metrics = useMemo<SchedulerMetric[]>(
-    () => [
+    () => {
+      const items: SchedulerMetric[] = [
+        {
+          ...(schedulerMetrics[0] as SchedulerMetric),
+          value: String(
+            new Set(activeEvents.map(event => event.title)).size
+          ),
+        },
+      ];
+
       {
-        ...(schedulerMetrics[0] as SchedulerMetric),
-        value: String(new Set(activeEvents.map(event => event.title)).size),
-      },
-      { ...(schedulerMetrics[1] as SchedulerMetric), value: String(filteredVisibleInstructors.length) },
-      {
-        ...(schedulerMetrics[2] as SchedulerMetric),
-        value: `${new Set(activeEvents.map(event => event.location).filter(Boolean)).size}`,
-      },
-      {
-        ...(schedulerMetrics[3] as SchedulerMetric),
-        value: String(activeEvents.filter(event => event.startTime.getTime() >= Date.now()).length),
-      },
-    ],
-    [activeEvents, filteredVisibleInstructors.length]
+        items.push({
+          ...(schedulerMetrics[1] as SchedulerMetric),
+          value: String(bookingFilterItems.length),
+        });
+      }
+
+      items.push(
+        {
+          ...(schedulerMetrics[2] as SchedulerMetric),
+          value: `${new Set(
+            activeEvents.map(event => event.location).filter(Boolean)
+          ).size}`,
+        },
+        {
+          ...(schedulerMetrics[3] as SchedulerMetric),
+          value: String(studentSummaries.length),
+        }
+      );
+
+      return items;
+    },
+    [activeEvents, bookingFilterItems.length, profile]
   );
 
   const isLoading = data.isLoading;
@@ -249,11 +263,30 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     handleCreateSession(slot);
   };
 
-  const filterSections = useMemo<SchedulerFilterSection[]>(
-    () => [
+  const instructorFilterItems = useMemo(() => {
+    const items = Array.from(
+      new Set(
+        allEvents
+          .map(event => event.instructor)
+          .filter(Boolean)
+      )
+    )
+      .map(instructor => ({
+        id: instructor,
+        name: instructor,
+      }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+
+    return items.filter(
+      item => !searchTerm || item.name.toLowerCase().includes(searchTerm)
+    );
+  }, [allEvents, searchTerm]);
+
+  const filterSections = useMemo<SchedulerFilterSection[]>(() => {
+    const sections: SchedulerFilterSection[] = [
       {
         count: classFilterItems.length,
-        isOpen: openDropdowns.classes,
+        isOpen: true,
         items: classFilterItems,
         key: 'classes',
         label: 'Classes',
@@ -261,12 +294,16 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           setSelectedFilter({ id, kind: 'class' });
           setFiltersOpen(false);
         },
-        onToggle: () => setOpenDropdowns(prev => ({ ...prev, classes: !prev.classes })),
-        selectedId: selectedFilter.kind === 'class' ? selectedFilter.id : null,
+        onToggle: () => { },
+        selectedId:
+          selectedFilter.kind === 'class'
+            ? selectedFilter.id
+            : null,
       },
+
       {
         count: venueFilterItems.length,
-        isOpen: openDropdowns.venues,
+        isOpen: true,
         items: venueFilterItems,
         key: 'venues',
         label: 'Venues',
@@ -274,12 +311,16 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           setSelectedFilter({ id, kind: 'venue' });
           setFiltersOpen(false);
         },
-        onToggle: () => setOpenDropdowns(prev => ({ ...prev, venues: !prev.venues })),
-        selectedId: selectedFilter.kind === 'venue' ? selectedFilter.id : null,
+        onToggle: () => { },
+        selectedId:
+          selectedFilter.kind === 'venue'
+            ? selectedFilter.id
+            : null,
       },
+
       {
         count: classroomFilterItems.length,
-        isOpen: openDropdowns.classrooms,
+        isOpen: true,
         items: classroomFilterItems,
         key: 'classrooms',
         label: 'Classrooms',
@@ -287,35 +328,60 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           setSelectedFilter({ id, kind: 'classroom' });
           setFiltersOpen(false);
         },
-        onToggle: () => setOpenDropdowns(prev => ({ ...prev, classrooms: !prev.classrooms })),
-        selectedId: selectedFilter.kind === 'classroom' ? selectedFilter.id : null,
+        onToggle: () => { },
+        selectedId:
+          selectedFilter.kind === 'classroom'
+            ? selectedFilter.id
+            : null,
       },
-      {
-        count: bookingFilterItems.length,
-        isOpen: openDropdowns.bookings,
-        items: bookingFilterItems,
-        key: 'bookings',
-        label: 'Booking Requests',
+    ];
+
+    // ONLY organisation/admin sees instructors
+    if (profile === 'organization' || profile === 'admin') {
+      sections.push({
+        count: instructorFilterItems.length,
+        isOpen: true,
+        items: instructorFilterItems,
+        key: 'instructors',
+        label: 'Instructors',
         onItemClick: id => {
-          setSelectedFilter({ id, kind: 'booking' });
+          setSelectedFilter({ id, kind: 'instructor' });
           setFiltersOpen(false);
         },
-        onToggle: () => setOpenDropdowns(prev => ({ ...prev, bookings: !prev.bookings })),
-        selectedId: selectedFilter.kind === 'booking' ? selectedFilter.id : null,
-      },
-    ],
-    [
-      bookingFilterItems,
-      classFilterItems,
-      classroomFilterItems,
-      openDropdowns.bookings,
-      openDropdowns.classes,
-      openDropdowns.classrooms,
-      openDropdowns.venues,
-      selectedFilter,
-      venueFilterItems,
-    ]
-  );
+        onToggle: () => { },
+        selectedId:
+          selectedFilter.kind === 'instructor'
+            ? selectedFilter.id
+            : null,
+      });
+    }
+
+    // sections.push({
+    //   count: bookingFilterItems.length,
+    //   isOpen: true,
+    //   items: bookingFilterItems,
+    //   key: 'bookings',
+    //   label: 'Booking Requests',
+    //   onItemClick: id => {
+    //     setSelectedFilter({ id, kind: 'booking' });
+    //     setFiltersOpen(false);
+    //   },
+    //   onToggle: () => { },
+    //   selectedId:
+    //     selectedFilter.kind === 'booking'
+    //       ? selectedFilter.id
+    //       : null,
+    // });
+
+    return sections;
+  }, [
+    classFilterItems,
+    classroomFilterItems,
+    instructorFilterItems,
+    profile,
+    selectedFilter,
+    venueFilterItems,
+  ]);
 
   return (
     <main className='bg-background space-y-4 pt-4 pb-8 px-4'>
@@ -455,6 +521,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
         <div className='hidden min-[1600px]:block'>
           <SchedulerRightRail
             currentDate={currentDate}
+            profile={profile}
             events={visibleEvents}
             allInstructors={allInstructorSummaries}
             students={studentSummaries}
