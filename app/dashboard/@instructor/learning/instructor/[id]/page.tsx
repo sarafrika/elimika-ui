@@ -1,5 +1,6 @@
 'use client';
 
+import type { SearchInstructor } from '@/app/dashboard/_components/types';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -12,7 +13,6 @@ import { useParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useBreadcrumb } from '../../../../../../context/breadcrumb-provider';
-import type { SearchInstructor } from '@/app/dashboard/_components/types';
 import type { ClassData } from '../../../../@instructor/trainings/create-new/academic-period-form';
 import { InstructorDirectory } from '../../../../_components/instructor-directory';
 import { ManageBookings } from '../../../../_components/manage-bookings';
@@ -212,7 +212,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
           },
           mode: ['online', 'onsite'],
           location: {
-            city: 'Lagos',
+            city: 'Nairobi',
             country: 'Nigeria',
             coordinates: { lat: 6.5244, lng: 3.3792 },
           },

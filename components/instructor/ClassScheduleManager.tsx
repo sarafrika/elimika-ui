@@ -1,9 +1,10 @@
 'use client';
 
+import { QuizzesSheet } from '@/app/dashboard/@instructor/trainings/instructor-console/[id]/quiz-sheet';
+import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,9 +31,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
 import { useInstructor } from '@/context/instructor-context';
+import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
 import { cx, getCardClasses, getEmptyStateClasses } from '@/lib/design-system';
+import { getErrorMessage } from '@/lib/error-utils';
+import type {
+  Assignment,
+  AssignmentAttachment,
+  ClassAssignmentSchedule,
+  ClassQuizSchedule,
+  Enrollment,
+  Quiz,
+} from '@/services/client';
 import {
   createAssignmentScheduleMutation,
   createQuizScheduleMutation,
@@ -81,16 +91,6 @@ import {
 import moment from 'moment';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { QuizzesSheet } from '@/app/dashboard/@instructor/trainings/instructor-console/[id]/quiz-sheet';
-import { getErrorMessage } from '@/lib/error-utils';
-import type {
-  Assignment,
-  AssignmentAttachment,
-  ClassAssignmentSchedule,
-  ClassQuizSchedule,
-  Enrollment,
-  Quiz,
-} from '@/services/client';
 
 export type ManagedScheduleItem = {
   uuid: string;
@@ -592,7 +592,7 @@ export function ClassScheduleManager({
           visible_at: visibleAtDate,
           due_at: assignmentDueDateValue,
           grading_due_at: gradingDueAtDate,
-          timezone: 'Africa/Lagos',
+          timezone: 'Africa/Nairobi',
           release_strategy: 'CUSTOM',
           max_attempts: Number(maxAttempts),
           instructor_uuid: instructor?.uuid,
@@ -629,7 +629,7 @@ export function ClassScheduleManager({
           class_lesson_plan_uuid: selectedSchedule.uuid,
           visible_at: quizVisibleAtDate,
           due_at: quizDueDateValue,
-          timezone: 'Africa/Lagos',
+          timezone: 'Africa/Nairobi',
           release_strategy: 'CUSTOM',
           time_limit_override: timeLimitOverride ? Number(timeLimitOverride) : undefined,
           attempt_limit_override: attemptLimitOverride ? Number(attemptLimitOverride) : undefined,
@@ -1538,11 +1538,11 @@ export function ClassScheduleManager({
         content={
           previewAttachment
             ? {
-                title: previewAttachment.original_filename ?? 'Attachment',
-                file_url: previewAttachment.file_url ?? null,
-                mime_type: (previewAttachment as { mime_type?: string }).mime_type ?? null,
-                value: previewAttachment.file_url ?? null,
-              }
+              title: previewAttachment.original_filename ?? 'Attachment',
+              file_url: previewAttachment.file_url ?? null,
+              mime_type: (previewAttachment as { mime_type?: string }).mime_type ?? null,
+              value: previewAttachment.file_url ?? null,
+            }
             : null
         }
         contentType={previewAttachment ? inferAttachmentContentType(previewAttachment) : undefined}

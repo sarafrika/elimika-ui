@@ -60,7 +60,7 @@ export function ClassCreationHeader({
             onClick={onClearDraft}
             disabled={isSubmitting}
           >
-            Clear Draft
+            Clear
           </Button>
         ) : (
           <Button

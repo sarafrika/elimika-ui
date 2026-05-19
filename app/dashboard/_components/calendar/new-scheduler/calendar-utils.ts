@@ -82,7 +82,7 @@ export const DEFAULT_PREFERENCES: SchedulePreferences = {
   location: 'Main campus',
   showHolidays: true,
   showWeekends: true,
-  timezone: 'Africa/Lagos',
+  timezone: 'Africa/Nairobi',
   workingHoursEnd: '18:00',
   workingHoursStart: '08:00',
 };
@@ -204,10 +204,10 @@ export const makeInitials = (value?: string | null) =>
 export const formatStatus = (status?: string | null) =>
   status
     ? status
-        .toLowerCase()
-        .split('_')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
+      .toLowerCase()
+      .split('_')
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
     : 'Scheduled';
 
 export const inferCategory = (value?: string | null): SchedulerCategory => {

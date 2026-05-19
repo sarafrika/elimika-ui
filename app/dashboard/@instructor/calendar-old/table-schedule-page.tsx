@@ -89,7 +89,7 @@ const DEFAULT_PREFERENCES: SchedulePreferences = {
   location: 'Main campus',
   showHolidays: true,
   showWeekends: true,
-  timezone: 'Africa/Lagos',
+  timezone: 'Africa/Nairobi',
   workingHoursEnd: '18:00',
   workingHoursStart: '08:00',
 };
@@ -864,7 +864,7 @@ export default function InstructorClassPage() {
                           <SelectValue placeholder='Choose timezone' />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value='Africa/Lagos'>Africa/Lagos</SelectItem>
+                          <SelectItem value='Africa/Nairobi'>Africa/Nairobi</SelectItem>
                           <SelectItem value='Africa/Nairobi'>Africa/Nairobi</SelectItem>
                           <SelectItem value='Europe/London'>Europe/London</SelectItem>
                           <SelectItem value='America/New_York'>America/New_York</SelectItem>

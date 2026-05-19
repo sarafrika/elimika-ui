@@ -673,7 +673,7 @@ export default function InstructorTrainingConsole() {
       visible_at: activeSchedule.start_time,
       due_at: assignmentDueAt ? new Date(assignmentDueAt) : activeSchedule.end_time,
       grading_due_at: assignmentDueAt ? new Date(assignmentDueAt) : activeSchedule.end_time,
-      timezone: 'Africa/Lagos',
+      timezone: 'Africa/Nairobi',
       release_strategy: 'CUSTOM',
       max_attempts: 1,
       instructor_uuid: instructor?.uuid as string,
@@ -709,7 +709,7 @@ export default function InstructorTrainingConsole() {
       class_lesson_plan_uuid: activeSchedule.uuid,
       visible_at: activeSchedule.start_time,
       due_at: quizDueAt ? new Date(quizDueAt) : activeSchedule.end_time,
-      timezone: 'Africa/Lagos',
+      timezone: 'Africa/Nairobi',
       release_strategy: 'CUSTOM',
       instructor_uuid: instructor?.uuid as string,
     };

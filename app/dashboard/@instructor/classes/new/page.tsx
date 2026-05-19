@@ -83,15 +83,15 @@ const schedulePresetOptions = [
 ] as const;
 
 const CLASS_COLOR_OPTIONS = [
-  { label: 'Brand', value: 'var(--chart-1)' },
-  { label: 'Azure', value: 'var(--chart-2)' },
-  { label: 'Amber', value: 'var(--chart-3)' },
-  { label: 'Iris', value: 'var(--chart-4)' },
-  { label: 'Jade', value: 'var(--chart-5)' },
-  { label: 'Success', value: 'var(--success)' },
-  { label: 'Warning', value: 'var(--warning)' },
-  { label: 'Destructive', value: 'var(--destructive)' },
-  { label: 'Muted', value: 'var(--muted-foreground)' },
+  { label: 'Brand', value: '#6366F1' },
+  { label: 'Azure', value: '#0EA5E9' },
+  { label: 'Amber', value: '#F59E0B' },
+  { label: 'Iris', value: '#8B5CF6' },
+  { label: 'Jade', value: '#10B981' },
+  { label: 'Success', value: '#22C55E' },
+  { label: 'Warning', value: '#F97316' },
+  { label: 'Destructive', value: '#EF4444' },
+  { label: 'Muted', value: '#6B7280' },
 ] as const;
 
 type SchedulePreset = (typeof schedulePresetOptions)[number]['key'];
@@ -971,6 +971,15 @@ const NewClassCreationPage = () => {
     ],
   };
 
+
+  const normalizeTime = (time?: string) => {
+    if (!time) return '';
+    if (/^\d{2}:\d{2}$/.test(time)) return time;
+    const [h = '0', m = '0'] = time.split(':');
+    return `${String(Number(h)).padStart(2, '0')}:${String(
+      Number(m)
+    ).padStart(2, '0')}`;
+  };
   // ── Shared time fields (used by all presets) ───────────────────────────────
   const SharedTimeFields = (
     <div className='flex flex-col gap-4 sm:flex-row'>
@@ -978,27 +987,34 @@ const NewClassCreationPage = () => {
         <FieldGroup label='Start Time *'>
           <Input
             type='time'
-            value={scheduleSettings.startClass.startTime || ''}
+            value={normalizeTime(scheduleSettings.startClass.startTime)}
             disabled={scheduleSettings.allDay}
             onChange={e =>
               setScheduleSettings(prev => ({
                 ...prev,
-                startClass: { ...prev.startClass, startTime: e.target.value },
+                startClass: {
+                  ...prev.startClass,
+                  startTime: normalizeTime(e.target.value),
+                },
               }))
             }
           />
         </FieldGroup>
       </div>
+
       <div className='flex-1'>
         <FieldGroup label='End Time *'>
           <Input
             type='time'
-            value={scheduleSettings.startClass.endTime || ''}
+            value={normalizeTime(scheduleSettings.startClass.endTime)}
             disabled={scheduleSettings.allDay}
             onChange={e =>
               setScheduleSettings(prev => ({
                 ...prev,
-                startClass: { ...prev.startClass, endTime: e.target.value },
+                startClass: {
+                  ...prev.startClass,
+                  endTime: normalizeTime(e.target.value),
+                },
               }))
             }
           />
