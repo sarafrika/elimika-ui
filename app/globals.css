@@ -101,6 +101,16 @@
   --el-warning-500: #f97316;
   --el-danger-500: #ef2f4b;
 
+  --color-brand: #6366f1;
+  --color-azure: #0ea5e9;
+  --color-amber: #f59e0b;
+  --color-iris: #8b5cf6;
+  --color-jade: #10b981;
+  --color-success: #22c55e;
+  --color-warning: #f97316;
+  --color-destructive: #ef4444;
+  --color-muted: #6b7280;
+
   --radius: 0.75rem;
 
   --background: var(--el-neutral-0);

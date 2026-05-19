@@ -84,15 +84,15 @@ const schedulePresetOptions = [
 ] as const;
 
 const CLASS_COLOR_OPTIONS = [
-  { label: 'Brand', value: '#6366F1' },
-  { label: 'Azure', value: '#0EA5E9' },
-  { label: 'Amber', value: '#F59E0B' },
-  { label: 'Iris', value: '#8B5CF6' },
-  { label: 'Jade', value: '#10B981' },
-  { label: 'Success', value: '#22C55E' },
-  { label: 'Warning', value: '#F97316' },
-  { label: 'Destructive', value: '#EF4444' },
-  { label: 'Muted', value: '#6B7280' },
+  { label: 'Brand', value: 'var(--color-brand)' },
+  { label: 'Azure', value: 'var(--color-azure)' },
+  { label: 'Amber', value: 'var(--color-amber)' },
+  { label: 'Iris', value: 'var(--color-iris)' },
+  { label: 'Jade', value: 'var(--color-jade)' },
+  { label: 'Success', value: 'var(--color-success)' },
+  { label: 'Warning', value: 'var(--color-warning)' },
+  { label: 'Destructive', value: 'var(--color-destructive)' },
+  { label: 'Muted', value: 'var(--color-muted)' },
 ] as const;
 
 type SchedulePreset = (typeof schedulePresetOptions)[number]['key'];
