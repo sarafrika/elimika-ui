@@ -75,6 +75,13 @@ export interface ScheduleSettings {
     end: string;
     continuous?: boolean;
   };
+  weeklyDayTimes: Record<
+    number,
+    {
+      startTime: string;
+      endTime: string;
+    }
+  >;
   startClass: {
     date: string;
     startTime?: string;

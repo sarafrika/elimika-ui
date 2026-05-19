@@ -19,7 +19,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 
-import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { Calendar } from '../../../../../components/ui/calendar';
 import { useInstructor } from '../../../../../context/instructor-context';
@@ -43,7 +42,7 @@ import {
   RecurrenceTypeEnum,
   SessionFormatEnum,
 } from '../../../../../services/client/types.gen';
-import { ClassDetails, NotificationSettings, ScheduleSettings } from '../../trainings/create-new/page';
+import type { ClassDetails, NotificationSettings } from '../create-new/page';
 import { ClassCreationHeader } from './_components/class-creation-header';
 import {
   ClassCreationPreviewRail,
@@ -233,7 +232,9 @@ const parseCoordinate = (value: string) => {
 
 /**
  * Calculates the total number of session occurrences between startDate and endDate
- * based on the recurrence rule.
+ * based on the recurrence rule. For weekly recurrence, only days in selectedDays
+ * are counted. For weekly with an interval > 1, the walk still goes day-by-day
+ * but skips entire weeks that fall outside the interval cycle.
  */
 const calculateOccurrences = (
   startDate: string,
@@ -260,15 +261,19 @@ const calculateOccurrences = (
       break;
     }
     case 'week': {
+      // Walk week-by-week (jumping repeatInterval weeks at a time),
+      // and within each week count only the selected days.
       let weekStart = new Date(start);
-      const startDow = weekStart.getDay();
+      // Normalise weekStart to Monday of the week containing `start`
+      const startDow = weekStart.getDay(); // 0=Sun
       const daysToMon = startDow === 0 ? -6 : 1 - startDow;
       weekStart.setDate(weekStart.getDate() + daysToMon);
 
       while (weekStart <= end) {
+        // For each selected day in this week, check if it falls in [start, end]
         const daysToCheck = selectedDays?.length
           ? selectedDays
-          : [0, 1, 2, 3, 4, 5, 6];
+          : [0, 1, 2, 3, 4, 5, 6]; // Mon=0..Sun=6
 
         for (const dayIdx of daysToCheck) {
           const candidate = new Date(weekStart);
@@ -278,6 +283,7 @@ const calculateOccurrences = (
           }
         }
 
+        // Advance by repeatInterval weeks
         weekStart.setDate(weekStart.getDate() + 7 * repeatInterval);
       }
       break;
@@ -305,29 +311,8 @@ const calculateOccurrences = (
   return occurrences;
 };
 
-const buildUtcIsoDateTime = (date?: string, time?: string) => {
-  if (!date) {
-    throw new Error('Missing date');
-  }
-
-  if (!time) {
-    throw new Error(`Missing time for date: ${date}`);
-  }
-
-  // Supports HH:mm
-  const normalizedTime =
-    time.length === 5 ? `${time}:00` : time;
-
-  const isoString = `${date}T${normalizedTime}Z`;
-
-  const parsed = new Date(isoString);
-
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error(`Invalid datetime: ${isoString}`);
-  }
-
-  return parsed.toISOString();
-};
+const buildUtcIsoDateTime = (date: string, time: string) =>
+  new Date(`${date}T${time}:00Z`).toISOString();
 
 const formatClassType = (value?: string | null) => {
   if (!value) return 'Group Class';
@@ -385,8 +370,7 @@ const NewClassCreationPage = () => {
   const instructor = useInstructor();
   const classId = searchParams.get('id');
 
-  const [draftSavedTick, setDraftSavedTick] = useState(0);
-  const [savedClassUuid, setSavedClassUuid] = useState<string | null>(null);
+  const [draftSavedTick, setDraftSavedTick] = useState(0); const [savedClassUuid, setSavedClassUuid] = useState<string | null>(null);
   const [isDataInitialized, setIsDataInitialized] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState('');
   const [schedulePreset, setSchedulePreset] = useState<SchedulePreset>('standard');
@@ -411,6 +395,11 @@ const NewClassCreationPage = () => {
       endTime: string;
     }[]
   >([]);
+
+
+
+
+
 
   const classDetailsCardRef = useRef<HTMLDivElement | null>(null);
 
@@ -526,7 +515,7 @@ const NewClassCreationPage = () => {
     if (schedulePreset === 'pick-dates') {
       return pickedDates.length;
     }
-    // academic-period
+    // academic-period: treat same as standard but use academicPeriod dates
     return calculateOccurrences(
       scheduleSettings.academicPeriod.start,
       scheduleSettings.academicPeriod.end,
@@ -547,15 +536,27 @@ const NewClassCreationPage = () => {
     }
     : null;
 
-  // When default times change in pick-dates mode, apply them to dates that have no custom time yet
   useEffect(() => {
-    if (schedulePreset !== 'pick-dates' || pickedDates.length === 0) return;
+    if (
+      schedulePreset !== 'pick-dates' ||
+      pickedDates.length === 0
+    ) {
+      return;
+    }
 
     setPickedDates(prev =>
       prev.map(item => ({
         ...item,
-        startTime: item.startTime || scheduleSettings.startClass.startTime || '09:00',
-        endTime: item.endTime || scheduleSettings.startClass.endTime || '10:00',
+
+        startTime:
+          item.startTime ||
+          scheduleSettings.startClass.startTime ||
+          '09:00',
+
+        endTime:
+          item.endTime ||
+          scheduleSettings.startClass.endTime ||
+          '10:00',
       }))
     );
   }, [
@@ -578,7 +579,7 @@ const NewClassCreationPage = () => {
         allowWaitlist?: boolean;
         locationLatitude?: string;
         locationLongitude?: string;
-        pickedDates?: { date: string; startTime: string; endTime: string }[];
+        pickedDates?: string[];
       };
       if (parsed.classDetails) {
         const saved = parsed.classDetails;
@@ -632,6 +633,8 @@ const NewClassCreationPage = () => {
           savedAt: new Date().toISOString(),
         })
       );
+
+      // 🔥 trigger UI "draft saved" indicator
       setDraftSavedTick(prev => prev + 1);
     }, 500);
 
@@ -795,14 +798,18 @@ const NewClassCreationPage = () => {
     const registrationPeriodStart = buildDateFromInput(scheduleSettings.registrationPeriod.start);
     const registrationPeriodEnd = buildDateFromInput(scheduleSettings.registrationPeriod.end);
 
+    // Build days_of_week string (e.g. "MONDAY,TUESDAY,WEDNESDAY")
     const daysOfWeekString = (scheduleSettings.repeat.days || [])
       .slice()
       .sort()
       .map(idx => DAY_NAMES[idx])
       .join(',') || undefined;
 
+    // Total occurrences — this IS the occurrence_count sent to the backend.
+    // calculateOccurrences already handles the interval correctly for all units.
     const totalOccurrences = totalSessions || 1;
 
+    // Determine the reference date and recurrence type per preset
     let referenceDate = scheduleSettings.startClass.date;
     if (schedulePreset === 'academic-period') {
       referenceDate = scheduleSettings.academicPeriod.start;
@@ -811,41 +818,22 @@ const NewClassCreationPage = () => {
     const startTimeIso = buildUtcIsoDateTime(referenceDate, startTime);
     const endTimeIso = buildUtcIsoDateTime(referenceDate, endTime);
 
+    ///////////////////////////////////////////
     let session_templates: CreateClassDefinitionData['body']['session_templates'];
 
     if (schedulePreset === 'pick-dates') {
-      // One template per individually picked date, using that date's own start/end times
-      session_templates = pickedDates
-        .slice()
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .map(item => {
-          const effectiveStartTime = scheduleSettings.allDay
-            ? '00:00'
-            : item.startTime ?? startTime ?? '00:00';
-
-          const effectiveEndTime = scheduleSettings.allDay
-            ? '23:59'
-            : item.endTime ?? endTime ?? '23:59';
-
-          return {
-            start_time: new Date(
-              buildUtcIsoDateTime(item.date, effectiveStartTime)
-            ),
-
-            end_time: new Date(
-              buildUtcIsoDateTime(item.date, effectiveEndTime)
-            ),
-
-            recurrence: {
-              recurrence_type: RecurrenceTypeEnum.DAILY,
-              interval_value: 1,
-              days_of_week: undefined,
-              occurrence_count: 1,
-            },
-
-            conflict_resolution: ConflictResolutionEnum.FAIL,
-          };
-        });
+      // One template per individually picked date
+      session_templates = pickedDates.sort().map(dateStr => ({
+        start_time: new Date(buildUtcIsoDateTime(dateStr, startTime)),
+        end_time: new Date(buildUtcIsoDateTime(dateStr, endTime)),
+        recurrence: {
+          recurrence_type: RecurrenceTypeEnum.DAILY,
+          interval_value: 1,
+          days_of_week: undefined,
+          occurrence_count: 1,
+        },
+        conflict_resolution: ConflictResolutionEnum.FAIL,
+      }));
     } else {
       // Standard or academic-period: single recurrence template
       const recurrenceType =
@@ -858,45 +846,99 @@ const NewClassCreationPage = () => {
               : RecurrenceTypeEnum.YEARLY;
 
       if (scheduleSettings.repeat.unit === 'week') {
-        session_templates = (scheduleSettings.repeat.days || []).map(dayIndex => {
-          const override = scheduleSettings.weeklyDayTimes[dayIndex];
-          const effectiveStartTime = override?.startTime || startTime;
-          const effectiveEndTime = override?.endTime || endTime;
+        session_templates =
+          (scheduleSettings.repeat.days || []).map(
+            dayIndex => {
+              const override =
+                scheduleSettings.weeklyDayTimes[
+                dayIndex
+                ];
 
-          const startDateObj = new Date(referenceDate);
-          while (((startDateObj.getDay() + 6) % 7) !== dayIndex) {
-            startDateObj.setDate(startDateObj.getDate() + 1);
-          }
-          const sessionDate = startDateObj.toISOString().split('T')[0];
+              const effectiveStartTime =
+                override?.startTime ||
+                startTime;
 
-          return {
-            start_time: new Date(buildUtcIsoDateTime(sessionDate, effectiveStartTime)),
-            end_time: new Date(buildUtcIsoDateTime(sessionDate, effectiveEndTime)),
-            recurrence: {
-              recurrence_type: RecurrenceTypeEnum.WEEKLY,
-              interval_value: scheduleSettings.repeat.interval,
-              days_of_week: DAY_NAMES[dayIndex],
-              occurrence_count: totalOccurrences,
-            },
-            conflict_resolution: ConflictResolutionEnum.FAIL,
-          };
-        });
+              const effectiveEndTime =
+                override?.endTime ||
+                endTime;
+
+              const startDateObj = new Date(referenceDate);
+
+              while (
+                ((startDateObj.getDay() + 6) % 7) !==
+                dayIndex
+              ) {
+                startDateObj.setDate(
+                  startDateObj.getDate() + 1
+                );
+              }
+
+              const sessionDate =
+                startDateObj
+                  .toISOString()
+                  .split('T')[0];
+
+              return {
+                start_time: new Date(
+                  buildUtcIsoDateTime(
+                    sessionDate,
+                    effectiveStartTime
+                  )
+                ),
+
+                end_time: new Date(
+                  buildUtcIsoDateTime(
+                    sessionDate,
+                    effectiveEndTime
+                  )
+                ),
+
+                recurrence: {
+                  recurrence_type:
+                    RecurrenceTypeEnum.WEEKLY,
+
+                  interval_value:
+                    scheduleSettings.repeat.interval,
+
+                  days_of_week:
+                    DAY_NAMES[dayIndex],
+
+                  occurrence_count:
+                    totalOccurrences,
+                },
+
+                conflict_resolution:
+                  ConflictResolutionEnum.FAIL,
+              };
+            }
+          );
       } else {
         session_templates = [
           {
             start_time: new Date(startTimeIso),
+
             end_time: new Date(endTimeIso),
+
             recurrence: {
               recurrence_type: recurrenceType,
-              interval_value: scheduleSettings.repeat.interval,
-              days_of_week: daysOfWeekString,
-              occurrence_count: totalOccurrences,
+
+              interval_value:
+                scheduleSettings.repeat.interval,
+
+              days_of_week:
+                daysOfWeekString,
+
+              occurrence_count:
+                totalOccurrences,
             },
-            conflict_resolution: ConflictResolutionEnum.FAIL,
+
+            conflict_resolution:
+              ConflictResolutionEnum.FAIL,
           },
         ];
       }
     }
+    ///////////////////////////////////////////
 
     const payload: CreateClassDefinitionData['body'] = {
       course_uuid: selectedSource === 'course' ? classDetails.course_uuid || undefined : undefined,
@@ -908,8 +950,8 @@ const NewClassCreationPage = () => {
       session_format: classDetails.class_type === 'PRIVATE' ? SessionFormatEnum.INDIVIDUAL : SessionFormatEnum.GROUP,
       location_type: LocationTypeEnum[locationType as keyof typeof LocationTypeEnum],
       location_name: trimToUndefined(classDetails.location_name),
-      location_latitude: -1.292066,
-      location_longitude: 36.821945,
+      location_latitude: -1.292066, // parseCoordinate(locationLatitude),
+      location_longitude: 36.821945,  // parseCoordinate(locationLongitude),
       max_participants: classDetails.class_limit > 0 ? classDetails.class_limit : undefined,
       classroom: trimToUndefined(classDetails.classroom),
       class_color: trimToUndefined(notificationSettings.classColour || classDetails.class_color),
@@ -919,7 +961,7 @@ const NewClassCreationPage = () => {
       registration_period_end_date: registrationPeriodEnd,
       class_reminder_minutes: reminderToMinutes(notificationSettings.reminder),
       training_fee: ratePerHour,
-      allow_waitlist: true,
+      allow_waitlist: true, // allowWaitlist,
       is_active: !isDraft,
       default_start_time: new Date(startTimeIso),
       default_end_time: new Date(endTimeIso),
@@ -942,24 +984,26 @@ const NewClassCreationPage = () => {
       router.push('/dashboard/classes');
     };
 
-    if (resolvedId) {
-      updateClassDefinition.mutate(
-        { path: { uuid: resolvedId }, body: payload },
-        { onSuccess, onError: error => toast.error(getMutationErrorMessage(error, 'Failed to update class')) }
-      );
-    } else {
-      createClassDefinition.mutate(
-        { body: payload },
-        {
-          onSuccess: response => {
-            const savedUuid = response?.data?.class_definition?.uuid;
-            if (savedUuid) setSavedClassUuid(savedUuid);
-            onSuccess();
-          },
-          onError: error => toast.error(getMutationErrorMessage(error, 'Failed to create class')),
-        }
-      );
-    }
+    console.log(payload, "CLASS CREATE PAYLOAD")
+
+    // if (resolvedId) {
+    //   updateClassDefinition.mutate(
+    //     { path: { uuid: resolvedId }, body: payload },
+    //     { onSuccess, onError: error => toast.error(getMutationErrorMessage(error, 'Failed to update class')) }
+    //   );
+    // } else {
+    //   createClassDefinition.mutate(
+    //     { body: payload },
+    //     {
+    //       onSuccess: response => {
+    //         const savedUuid = response?.data?.class_definition?.uuid;
+    //         if (savedUuid) setSavedClassUuid(savedUuid);
+    //         onSuccess();
+    //       },
+    //       onError: error => toast.error(getMutationErrorMessage(error, 'Failed to create class')),
+    //     }
+    //   );
+    // }
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -968,19 +1012,30 @@ const NewClassCreationPage = () => {
   };
 
   const clearDraft = () => {
+    // 1. Remove persisted draft
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
     }
+
+    // 2. Reset core form state
     setClassDetails(createInitialClassDetails(instructor?.full_name));
     setScheduleSettings(createInitialScheduleSettings());
     setNotificationSettings(createInitialNotificationSettings());
+
+    // 3. Reset auxiliary state
     setSchedulePreset('standard');
     setAllowWaitlist(true);
     setLocationLatitude('');
     setLocationLongitude('');
     setPickedDates([]);
+
+    // 4. Reset mutation-derived state
     setSavedClassUuid(null);
+
+    // 5. Reset initialization flag so draft auto-save restarts cleanly
     setIsDataInitialized(true);
+
+    // 6. UX feedback
     toast.success('Draft cleared');
   };
 
@@ -1023,310 +1078,28 @@ const NewClassCreationPage = () => {
       {
         icon: BellRing,
         label: 'Reminder',
-        value: notificationSettings.reminder || '24 hours before class',
+        value:
+          notificationSettings.reminder || '24 hours before class',
       },
       {
         icon: MapPin,
         label: 'Timezone',
-        value: scheduleSettings.timezone || 'EAT East Africa Time',
+        value:
+          scheduleSettings.timezone || 'EAT East Africa Time',
       },
     ],
   };
+
 
   const normalizeTime = (time?: string) => {
     if (!time) return '';
     if (/^\d{2}:\d{2}$/.test(time)) return time;
     const [h = '0', m = '0'] = time.split(':');
-    return `${String(Number(h)).padStart(2, '0')}:${String(Number(m)).padStart(2, '0')}`;
+    return `${String(Number(h)).padStart(2, '0')}:${String(
+      Number(m)
+    ).padStart(2, '0')}`;
   };
-
-  // ── Day-time grid (Mon–Sun rows with Start/End time per day) ──────────────
-  // Used by both Standard and Academic Period presets
-  const DayTimeGrid = (
-    <div className='space-y-2'>
-      {DAY_NAMES.map((day, index) => {
-        const active = scheduleSettings.repeat.days?.includes(index);
-        const override = scheduleSettings.weeklyDayTimes[index];
-
-        const effectiveStartTime = override?.startTime || scheduleSettings.startClass.startTime || '';
-        const effectiveEndTime = override?.endTime || scheduleSettings.startClass.endTime || '';
-
-        return (
-          <div
-            key={day}
-            className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${active ? 'border-primary bg-primary/5' : 'border-border bg-background'
-              }`}
-          >
-            {/* Day toggle button */}
-            <button
-              type='button'
-              onClick={() =>
-                setScheduleSettings(prev => {
-                  const currentDays = prev.repeat.days || [];
-                  const nextDays = active
-                    ? currentDays.filter(d => d !== index)
-                    : [...currentDays, index].sort();
-                  return {
-                    ...prev,
-                    repeat: { ...prev.repeat, days: nextDays, unit: 'week' },
-                  };
-                })
-              }
-              className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${active
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
-                }`}
-            >
-              {DAY_SHORT[index]}
-            </button>
-
-            {/* Start Time */}
-            <div className='flex flex-1 flex-col gap-0.5'>
-              <span className='text-muted-foreground text-[10px] font-medium'>Start Time</span>
-              <Input
-                type='time'
-                disabled={!active || scheduleSettings.allDay}
-                value={normalizeTime(effectiveStartTime)}
-                onChange={e =>
-                  setScheduleSettings(prev => ({
-                    ...prev,
-                    weeklyDayTimes: {
-                      ...prev.weeklyDayTimes,
-                      [index]: {
-                        startTime: normalizeTime(e.target.value),
-                        endTime:
-                          prev.weeklyDayTimes[index]?.endTime ||
-                          prev.startClass.endTime ||
-                          '',
-                      },
-                    },
-                  }))
-                }
-                className='h-8 text-xs'
-              />
-            </div>
-
-            {/* End Time */}
-            <div className='flex flex-1 flex-col gap-0.5'>
-              <span className='text-muted-foreground text-[10px] font-medium'>End Time</span>
-              <Input
-                type='time'
-                disabled={!active || scheduleSettings.allDay}
-                value={normalizeTime(effectiveEndTime)}
-                onChange={e =>
-                  setScheduleSettings(prev => ({
-                    ...prev,
-                    weeklyDayTimes: {
-                      ...prev.weeklyDayTimes,
-                      [index]: {
-                        startTime:
-                          prev.weeklyDayTimes[index]?.startTime ||
-                          prev.startClass.startTime ||
-                          '',
-                        endTime: normalizeTime(e.target.value),
-                      },
-                    },
-                  }))
-                }
-                className='h-8 text-xs'
-              />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-
-  // ── Right-column fields (Repeat Every, Start Date, End Repeat, Registration) ──
-  const buildRightColumnFields = (preset: 'standard' | 'academic-period') => (
-    <div className='space-y-4'>
-      {/* Repeat Every */}
-      <div className='space-y-2'>
-        <span className='text-foreground text-sm font-semibold'>Repeat Every</span>
-        <div className='flex gap-2'>
-          <Input
-            type='number'
-            min={1}
-            value={scheduleSettings.repeat.interval}
-            onChange={e =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                repeat: { ...prev.repeat, interval: parseInt(e.target.value, 10) || 1 },
-              }))
-            }
-            className='w-20'
-          />
-          <Select
-            value={scheduleSettings.repeat.unit}
-            onValueChange={value =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                repeat: {
-                  ...prev.repeat,
-                  unit: value as 'day' | 'week' | 'month' | 'year',
-                  days: value !== 'week' ? [] : prev.repeat.days,
-                },
-              }))
-            }
-          >
-            <SelectTrigger className='flex-1'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='day'>Day</SelectItem>
-              <SelectItem value='week'>Week</SelectItem>
-              <SelectItem value='month'>Month</SelectItem>
-              <SelectItem value='year'>Year</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Start Date — standard uses startClass.date; academic uses academicPeriod.start */}
-      {preset === 'standard' ? (
-        <FieldGroup label='Start Date *'>
-          <Input
-            type='date'
-            value={scheduleSettings.startClass.date}
-            onChange={e =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                startClass: { ...prev.startClass, date: e.target.value },
-                endRepeat: prev.endRepeat || e.target.value,
-              }))
-            }
-          />
-        </FieldGroup>
-      ) : (
-        <FieldGroup label='Period Start *'>
-          <Input
-            type='date'
-            value={scheduleSettings.academicPeriod.start}
-            onChange={e =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                academicPeriod: { ...prev.academicPeriod, start: e.target.value },
-              }))
-            }
-          />
-        </FieldGroup>
-      )}
-
-      {/* End Repeat — standard: endRepeat; academic: academicPeriod.end */}
-      {preset === 'standard' ? (
-        <FieldGroup label='End Repeat *'>
-          <Input
-            type='date'
-            value={scheduleSettings.endRepeat}
-            onChange={e =>
-              setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))
-            }
-          />
-        </FieldGroup>
-      ) : (
-        <FieldGroup label='Period End *'>
-          <Input
-            type='date'
-            value={scheduleSettings.academicPeriod.end}
-            onChange={e =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                academicPeriod: { ...prev.academicPeriod, end: e.target.value },
-              }))
-            }
-          />
-        </FieldGroup>
-      )}
-
-      {/* Registration Start */}
-      <FieldGroup label='Registration Start'>
-        <Input
-          type='date'
-          value={scheduleSettings.registrationPeriod.start}
-          onChange={e =>
-            setScheduleSettings(prev => ({
-              ...prev,
-              registrationPeriod: { ...prev.registrationPeriod, start: e.target.value },
-            }))
-          }
-        />
-      </FieldGroup>
-
-      {/* Registration End */}
-      <FieldGroup label='Registration End'>
-        <Input
-          type='date'
-          value={scheduleSettings.registrationPeriod.end}
-          disabled={scheduleSettings.registrationPeriod.continuous}
-          onChange={e =>
-            setScheduleSettings(prev => ({
-              ...prev,
-              registrationPeriod: { ...prev.registrationPeriod, end: e.target.value },
-            }))
-          }
-        />
-      </FieldGroup>
-
-      <label className='flex cursor-pointer items-center gap-2 text-xs font-medium'>
-        <input
-          type='checkbox'
-          checked={scheduleSettings.registrationPeriod.continuous || false}
-          onChange={e =>
-            setScheduleSettings(prev => ({
-              ...prev,
-              registrationPeriod: {
-                ...prev.registrationPeriod,
-                continuous: e.target.checked,
-                end: e.target.checked ? '' : prev.registrationPeriod.end,
-              },
-            }))
-          }
-          className='h-4 w-4 rounded'
-        />
-        Continuous Registration (no closing date)
-      </label>
-
-      {/* All Day + Timezone */}
-      <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
-        <input
-          type='checkbox'
-          checked={scheduleSettings.allDay}
-          onChange={e =>
-            setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
-          }
-          className='h-4 w-4 rounded'
-        />
-        All Day
-      </label>
-
-      <FieldGroup label='Timezone'>
-        <Select
-          value={scheduleSettings.timezone}
-          onValueChange={value =>
-            setScheduleSettings(prev => ({ ...prev, timezone: value }))
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder='Select timezone' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
-            <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
-            <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
-          </SelectContent>
-        </Select>
-      </FieldGroup>
-
-      {/* Session count badge */}
-      {totalSessions > 0 && (
-        <div className='bg-primary/10 text-primary border-primary/20 rounded-lg border px-4 py-2.5 text-sm font-medium'>
-          Total sessions: <span className='font-bold'>{totalSessions}</span>
-        </div>
-      )}
-    </div>
-  );
-
-  // ── Shared default time fields (used by pick-dates preset) ────────────────
+  // ── Shared time fields (used by all presets) ───────────────────────────────
   const SharedTimeFields = (
     <div className='flex flex-col gap-4 sm:flex-row'>
       <div className='flex-1'>
@@ -1347,6 +1120,7 @@ const NewClassCreationPage = () => {
           />
         </FieldGroup>
       </div>
+
       <div className='flex-1'>
         <FieldGroup label='Default End Time *'>
           <Input
@@ -1368,6 +1142,185 @@ const NewClassCreationPage = () => {
     </div>
   );
 
+  // ── Repeat rule fields (shared by standard + academic-period) ─────────────
+  const RepeatRuleFields = (
+    <div className='space-y-3'>
+      {/* Interval + unit */}
+      <div className='flex flex-wrap items-end gap-3'>
+        <div className='flex flex-col gap-1'>
+          <span className='text-muted-foreground text-xs font-semibold'>Repeat every</span>
+          <Input
+            type='number'
+            min={1}
+            value={scheduleSettings.repeat.interval}
+            onChange={e =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                repeat: { ...prev.repeat, interval: parseInt(e.target.value, 10) || 1 },
+              }))
+            }
+            className='w-20'
+          />
+        </div>
+        <div className='flex flex-col gap-1'>
+          <span className='text-muted-foreground text-xs font-semibold'>Unit</span>
+          <Select
+            value={scheduleSettings.repeat.unit}
+            onValueChange={value =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                repeat: { ...prev.repeat, unit: value as 'day' | 'week' | 'month' | 'year', days: value !== 'week' ? [] : prev.repeat.days },
+              }))
+            }
+          >
+            <SelectTrigger className='w-32'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='day'>Day</SelectItem>
+              <SelectItem value='week'>Week</SelectItem>
+              <SelectItem value='month'>Month</SelectItem>
+              <SelectItem value='year'>Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Day selector — only for weekly */}
+      {scheduleSettings.repeat.unit === 'week' && (
+        <div className='space-y-2'>
+          {DAY_NAMES.map((day, index) => {
+            const active =
+              scheduleSettings.repeat.days?.includes(index);
+
+            const override =
+              scheduleSettings.weeklyDayTimes[index];
+
+            return (
+              <div
+                key={day}
+                className={`rounded-lg border p-3 ${active
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border'
+                  }`}
+              >
+                <div className='flex flex-col gap-3 lg:flex-row lg:items-end'>
+                  {/* Day toggle */}
+                  <button
+                    type='button'
+                    onClick={() =>
+                      setScheduleSettings(prev => {
+                        const currentDays =
+                          prev.repeat.days || [];
+
+                        const nextDays = active
+                          ? currentDays.filter(
+                            d => d !== index
+                          )
+                          : [...currentDays, index];
+
+                        return {
+                          ...prev,
+
+                          repeat: {
+                            ...prev.repeat,
+                            days: nextDays,
+                          },
+                        };
+                      })
+                    }
+                    className={`rounded-md border px-3 py-2 text-sm font-medium ${active
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-background'
+                      }`}
+                  >
+                    {DAY_SHORT[index]}
+                  </button>
+
+                  {/* Start */}
+                  <div className='flex-1'>
+                    <FieldGroup label='Start Time'>
+                      <Input
+                        type='time'
+                        disabled={!active}
+                        value={
+                          override?.startTime ||
+                          scheduleSettings.startClass
+                            .startTime ||
+                          ''
+                        }
+                        onChange={e =>
+                          setScheduleSettings(prev => ({
+                            ...prev,
+
+                            weeklyDayTimes: {
+                              ...prev.weeklyDayTimes,
+
+                              [index]: {
+                                startTime:
+                                  normalizeTime(
+                                    e.target.value
+                                  ),
+
+                                endTime:
+                                  prev.weeklyDayTimes[
+                                    index
+                                  ]?.endTime ||
+                                  prev.startClass.endTime,
+                              },
+                            },
+                          }))
+                        }
+                      />
+                    </FieldGroup>
+                  </div>
+
+                  {/* End */}
+                  <div className='flex-1'>
+                    <FieldGroup label='End Time'>
+                      <Input
+                        type='time'
+                        disabled={!active}
+                        value={
+                          override?.endTime ||
+                          scheduleSettings.startClass
+                            .endTime ||
+                          ''
+                        }
+                        onChange={e =>
+                          setScheduleSettings(prev => ({
+                            ...prev,
+
+                            weeklyDayTimes: {
+                              ...prev.weeklyDayTimes,
+
+                              [index]: {
+                                startTime:
+                                  prev.weeklyDayTimes[
+                                    index
+                                  ]?.startTime ||
+                                  prev.startClass.startTime,
+
+                                endTime:
+                                  normalizeTime(
+                                    e.target.value
+                                  ),
+                              },
+                            },
+                          }))
+                        }
+                      />
+                    </FieldGroup>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className='h-auto px-2 py-4 sm:px-3 sm:py-6 lg:px-6'>
       <form onSubmit={handleSubmit} className='space-y-6'>
@@ -1382,7 +1335,6 @@ const NewClassCreationPage = () => {
 
         <div className="flex flex-col items-start gap-4 xl:flex-row xl:sticky xl:top-4 h-fit self-start">
           <div className='min-w-0 flex-1 space-y-4'>
-            {/* ── Class Details Card ─────────────────────────────────────── */}
             <div ref={classDetailsCardRef} className='scroll-mt-24'>
               <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
                 <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
@@ -1514,7 +1466,6 @@ const NewClassCreationPage = () => {
               </Card>
             </div>
 
-            {/* ── Schedule Options Card ──────────────────────────────────── */}
             <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
               <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-3'>
                 <h3 className='text-foreground text-lg font-semibold'>Schedule Options</h3>
@@ -1539,34 +1490,103 @@ const NewClassCreationPage = () => {
                   ))}
                 </div>
 
-                {/* ── STANDARD SCHEDULE ──────────────────────────────────── */}
                 {schedulePreset === 'standard' && (
-                  <div className='rounded-md border border-border/60 p-4'>
-                    <div className='mb-4'>
-                      <p className='text-foreground text-sm font-semibold'>
-                        Standard Schedule
-                      </p>
+                  <div className='flex flex-col gap-4 xl:flex-row'>
+                    <div className='min-w-0 flex-[1.6] space-y-4 rounded-md border border-border/60 p-4'>
+                      <div>
+                        <p className='text-foreground text-sm font-semibold'>Standard Schedule</p>
+                        <p className='text-muted-foreground mt-1 text-xs'>Set recurring days and times</p>
+                      </div>
+                      <div className='space-y-4'>
+                        <div className='flex flex-col gap-4 sm:flex-row'>
+                          <div className='flex-1'>
+                            <FieldGroup label='Class Start Date *'>
+                              <Input
+                                type='date'
+                                value={scheduleSettings.startClass.date}
+                                onChange={e =>
+                                  setScheduleSettings(prev => ({
+                                    ...prev,
+                                    startClass: { ...prev.startClass, date: e.target.value },
+                                    endRepeat: prev.endRepeat || e.target.value,
+                                  }))
+                                }
+                              />
+                            </FieldGroup>
+                          </div>
+                          <div className='flex-1'>
+                            <FieldGroup label='End Repeat *'>
+                              <Input
+                                type='date'
+                                value={scheduleSettings.endRepeat}
+                                onChange={e =>
+                                  setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))
+                                }
+                              />
+                            </FieldGroup>
+                          </div>
+                        </div>
 
-                      <p className='text-muted-foreground mt-1 text-xs'>
-                        Toggle days and set times. Use the right panel to configure recurrence and dates.
-                      </p>
+                        {SharedTimeFields}
+
+                        {totalSessions > 0 && (
+                          <div className='bg-primary/10 text-primary border-primary/20 rounded-lg border px-4 py-2.5 text-sm font-medium'>
+                            Total sessions: <span className='font-bold'>{totalSessions}</span>
+                          </div>
+                        )}
+
+                        <div className='flex flex-row flex-wrap gap-4 justify-between' >
+                          {RepeatRuleFields}
+
+                          <div className='flex flex-wrap flex-row items-center gap-4' >
+                            <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
+                              <input
+                                type='checkbox'
+                                checked={scheduleSettings.allDay}
+                                onChange={e =>
+                                  setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
+                                }
+                                className='h-4 w-4 rounded'
+                              />
+                              All Day
+                            </label>
+
+                            <FieldGroup label='Timezone'>
+                              <Select
+                                value={scheduleSettings.timezone}
+                                onValueChange={value =>
+                                  setScheduleSettings(prev => ({ ...prev, timezone: value }))
+                                }
+                              >
+                                <SelectTrigger className='h-11'>
+                                  <SelectValue placeholder='Select timezone' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
+                                  <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
+                                  <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FieldGroup>
+                          </div>
+                        </div>
+
+
+                      </div>
                     </div>
 
-                    <div className='flex flex-wrap gap-6'>
-                      {/* Left: Day-time grid */}
-                      <div className='min-w-[320px] flex-1'>
-                        {DayTimeGrid}
-                      </div>
-
-                      {/* Right: Recurrence + date fields */}
-                      <div className='w-full min-w-[260px] flex-1 xl:max-w-[280px] xl:flex-none'>
-                        {buildRightColumnFields('standard')}
-                      </div>
-                    </div>
+                    {/* Summary panel */}
+                    {/* <div className='flex-[0.9] space-y-3 rounded-md border border-border/60 p-4'>
+                      <p className='text-foreground text-sm font-semibold'>Schedule Summary</p>
+                      <SummaryLine icon={CalendarDays} label='Repeat' value={getRepeatSummary(scheduleSettings)} />
+                      <SummaryLine icon={Clock3} label='Time' value={formatScheduleTime(scheduleSettings.startClass.startTime, scheduleSettings.startClass.endTime, scheduleSettings.allDay)} />
+                      <SummaryLine icon={BellRing} label='Reminder' value={notificationSettings.reminder || '24 hours before class'} />
+                      <SummaryLine icon={MapPin} label='Timezone' value={scheduleSettings.timezone || 'EAT East Africa Time'} />
+                      <SummaryLine icon={Circle} label='Duration' value={`${sessionDuration || 0} ${sessionDuration === 1 ? 'Hour' : 'Hours'} per session`} />
+                    </div> */}
                   </div>
                 )}
 
-                {/* ── PICK DATES ─────────────────────────────────────────── */}
                 {schedulePreset === 'pick-dates' && (
                   <div className='flex flex-col gap-4 min-[1110px]:flex-row min-[1280px]:flex-col min-[1440px]:flex-row'>
                     <div className='min-w-0 flex-[1.2] space-y-4 rounded-md border border-border/60 p-4'>
@@ -1581,12 +1601,18 @@ const NewClassCreationPage = () => {
 
                           const next = dates.map(date => {
                             const formatted = format(date, 'yyyy-MM-dd');
-                            const existing = pickedDates.find(item => item.date === formatted);
+
+                            const existing = pickedDates.find(
+                              item => item.date === formatted
+                            );
+
                             return (
                               existing || {
                                 date: formatted,
-                                startTime: scheduleSettings.startClass.startTime || '09:00',
-                                endTime: scheduleSettings.startClass.endTime || '10:00',
+                                startTime:
+                                  scheduleSettings.startClass.startTime || '09:00',
+                                endTime:
+                                  scheduleSettings.startClass.endTime || '10:00',
                               }
                             );
                           });
@@ -1595,155 +1621,148 @@ const NewClassCreationPage = () => {
                         }}
                         className='w-full'
                         classNames={{
-                          day: 'mx-auto flex h-7 w-7 items-center justify-center rounded-md text-[11px] transition',
+                          day:
+                            'mx-auto flex h-7 w-7 items-center justify-center rounded-md text-[11px] transition',
                         }}
                       />
 
+                      {SharedTimeFields}
 
-                      <div className='flex flex-col gap-4 sm:flex-row'>
-                        <div className='flex-1'>
-                          <FieldGroup label='Start Date *'>
-                            <Input
-                              type='date'
-                              value={scheduleSettings.startClass.date}
-                              onChange={e =>
-                                setScheduleSettings(prev => ({
-                                  ...prev,
-                                  startClass: { ...prev.startClass, date: e.target.value },
-                                  endRepeat: prev.endRepeat || e.target.value,
-                                }))
-                              }
-                            />
-                          </FieldGroup>
-                        </div>
-                        <div className='flex-1'>
-                          <FieldGroup label='End Date *'>
-                            <Input
-                              type='date'
-                              value={scheduleSettings.endRepeat}
-                              onChange={e =>
-                                setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))
-                              }
-                            />
-                          </FieldGroup>
-                        </div>
-                      </div>
+                      <>
+                        {/* Shared options */}
+                        <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
+                          <input
+                            type='checkbox'
+                            checked={scheduleSettings.allDay}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                allDay: e.target.checked,
+                              }))
+                            }
+                            className='h-4 w-4 rounded'
+                          />
 
-                      {/* Default times — applied to newly picked dates */}
-                      <div>
-                        <p className='text-foreground mb-2 text-xs font-semibold'>
-                          Default Times <span className='text-muted-foreground font-normal'>(applied to new selections)</span>
-                        </p>
-                        {SharedTimeFields}
-                      </div>
+                          All Day
+                        </label>
 
-                      <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
-                        <input
-                          type='checkbox'
-                          checked={scheduleSettings.allDay}
-                          onChange={e =>
-                            setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
-                          }
-                          className='h-4 w-4 rounded'
-                        />
-                        All Day
-                      </label>
+                        <FieldGroup label='Timezone'>
+                          <Select
+                            value={scheduleSettings.timezone}
+                            onValueChange={value =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                timezone: value,
+                              }))
+                            }
+                          >
+                            <SelectTrigger className='h-11 w-full'>
+                              <SelectValue placeholder='Select timezone' />
+                            </SelectTrigger>
 
-                      <FieldGroup label='Timezone'>
-                        <Select
-                          value={scheduleSettings.timezone}
-                          onValueChange={value =>
-                            setScheduleSettings(prev => ({ ...prev, timezone: value }))
-                          }
-                        >
-                          <SelectTrigger className='h-11 w-full'>
-                            <SelectValue placeholder='Select timezone' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
-                            <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
-                            <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FieldGroup>
+                            <SelectContent>
+                              <SelectItem value='EAT East Africa Time'>
+                                EAT East Africa Time
+                              </SelectItem>
+
+                              <SelectItem value='UTC Coordinated Universal Time'>
+                                UTC Coordinated Universal Time
+                              </SelectItem>
+
+                              <SelectItem value='WAT West Africa Time'>
+                                WAT West Africa Time
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FieldGroup>
+                      </>
                     </div>
 
                     <div className='flex-[1.5] space-y-2 rounded-md border border-border/60 p-3'>
+                      {/* Selected dates */}
                       {pickedDates.length > 0 && (
                         <div className='space-y-2'>
+                          {/* Header */}
                           <div className='flex items-center justify-between'>
-                            <p className='text-xs font-semibold text-foreground'>Selected Sessions</p>
+                            <p className='text-xs font-semibold text-foreground'>
+                              Selected Sessions
+                            </p>
+
                             <div className='bg-primary/10 text-primary border-primary/20 rounded border px-2 py-0.5 text-[10px] font-semibold'>
-                              {pickedDates.length} {pickedDates.length === 1 ? 'Session' : 'Sessions'}
+                              {pickedDates.length}{' '}
+                              {pickedDates.length === 1 ? 'Session' : 'Sessions'}
                             </div>
                           </div>
 
+                          {/* Sessions */}
                           <div className='space-y-1.5'>
-                            {pickedDates
-                              .slice()
-                              .sort((a, b) => a.date.localeCompare(b.date))
-                              .map((item, idx) => {
-                                // Use sorted index to find original index for mutation
-                                const origIdx = pickedDates.findIndex(d => d.date === item.date);
-                                return (
-                                  <div
-                                    key={item.date}
-                                    className='flex flex-col gap-2 rounded-md border border-border/50 px-2.5 py-2 sm:flex-row sm:items-center sm:justify-between'
-                                  >
-                                    <div className='min-w-0 flex-1'>
-                                      <p className='truncate text-[11px] font-medium text-foreground'>
-                                        {format(new Date(item.date), 'EEE, MMM d, yyyy')}
-                                      </p>
-                                    </div>
+                            {pickedDates.map((item, idx) => (
+                              <div
+                                key={item.date}
+                                className='flex flex-col gap-2 rounded-md border border-border/50 px-2.5 py-2 sm:flex-row sm:items-center sm:justify-between'
+                              >
+                                {/* Date */}
+                                <div className='min-w-0 flex-1'>
+                                  <p className='truncate text-[11px] font-medium text-foreground'>
+                                    {format(new Date(item.date), 'EEE, MMM d')}
+                                  </p>
+                                </div>
 
-                                    {!scheduleSettings.allDay && (
-                                      <div className='flex items-center gap-1.5'>
-                                        <Input
-                                          type='time'
-                                          value={normalizeTime(item.startTime)}
-                                          onChange={e => {
-                                            const next = [...pickedDates];
-                                            if (next[origIdx]) {
-                                              next[origIdx] = {
-                                                ...next[origIdx],
-                                                startTime: normalizeTime(e.target.value),
-                                              };
-                                            }
-                                            setPickedDates(next);
-                                          }}
-                                          className='h-7 w-[92px] px-2 text-[11px]'
-                                        />
-                                        <span className='text-[10px] text-muted-foreground'>→</span>
-                                        <Input
-                                          type='time'
-                                          value={normalizeTime(item.endTime)}
-                                          onChange={e => {
-                                            const next = [...pickedDates];
-                                            if (next[origIdx]) {
-                                              next[origIdx] = {
-                                                ...next[origIdx],
-                                                endTime: normalizeTime(e.target.value),
-                                              };
-                                            }
-                                            setPickedDates(next);
-                                          }}
-                                          className='h-7 w-[92px] px-2 text-[11px]'
-                                        />
-                                      </div>
-                                    )}
+                                {/* Time inputs */}
+                                {!scheduleSettings.allDay && (
+                                  <div className='flex items-center gap-1.5'>
+                                    <Input
+                                      type='time'
+                                      value={item.startTime}
+                                      onChange={e => {
+                                        const next = [...pickedDates];
 
-                                    <button
-                                      type='button'
-                                      onClick={() =>
-                                        setPickedDates(prev => prev.filter((_, i) => i !== origIdx))
-                                      }
-                                      className='text-[11px] font-medium text-muted-foreground transition hover:text-destructive'
-                                    >
-                                      Remove
-                                    </button>
+                                        next[idx] = {
+                                          ...next[idx],
+                                          startTime: e.target.value,
+                                        };
+
+                                        setPickedDates(next);
+                                      }}
+                                      className='h-7 w-[92px] px-2 text-[11px]'
+                                    />
+
+                                    <span className='text-[10px] text-muted-foreground'>
+                                      →
+                                    </span>
+
+                                    <Input
+                                      type='time'
+                                      value={item.endTime}
+                                      onChange={e => {
+                                        const next = [...pickedDates];
+
+                                        next[idx] = {
+                                          ...next[idx],
+                                          endTime: e.target.value,
+                                        };
+
+                                        setPickedDates(next);
+                                      }}
+                                      className='h-7 w-[92px] px-2 text-[11px]'
+                                    />
                                   </div>
-                                );
-                              })}
+                                )}
+
+                                {/* Remove */}
+                                <button
+                                  type='button'
+                                  onClick={() =>
+                                    setPickedDates(prev =>
+                                      prev.filter((_, i) => i !== idx)
+                                    )
+                                  }
+                                  className='text-[11px] font-medium text-muted-foreground transition hover:text-destructive'
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
@@ -1751,34 +1770,104 @@ const NewClassCreationPage = () => {
                   </div>
                 )}
 
-                {/* ── ACADEMIC PERIOD ────────────────────────────────────── */}
                 {schedulePreset === 'academic-period' && (
-                  <div className='rounded-md border border-border/60 p-4'>
-                    <div className='mb-4'>
-                      <p className='text-foreground text-sm font-semibold'>
-                        Academic Period
-                      </p>
-
-                      <p className='text-muted-foreground mt-1 text-xs'>
-                        Toggle days and set times. Use the right panel to configure the academic term and recurrence.
-                      </p>
-                    </div>
-
-                    <div className='flex flex-wrap gap-6'>
-                      {/* Left: Day-time grid */}
-                      <div className='min-w-[320px] flex-1'>
-                        {DayTimeGrid}
+                  <div className='flex flex-col gap-4 xl:flex-row'>
+                    <div className='min-w-0 flex-[1.7] space-y-4 rounded-md border border-border/60 p-4'>
+                      <div>
+                        <p className='text-foreground text-sm font-semibold'>Academic Period</p>
+                        <p className='text-muted-foreground mt-1 text-xs'>
+                          Define the academic term and recurrence within it.
+                        </p>
                       </div>
 
-                      {/* Right: Recurrence + academic period date fields */}
-                      <div className='w-full min-w-[260px] flex-1 xl:max-w-[280px] xl:flex-none'>
-                        {buildRightColumnFields('academic-period')}
+                      <div className='flex flex-col gap-4 sm:flex-row'>
+                        <div className='flex-1'>
+                          <FieldGroup label='Period Start *'>
+                            <Input
+                              type='date'
+                              value={scheduleSettings.academicPeriod.start}
+                              onChange={e =>
+                                setScheduleSettings(prev => ({
+                                  ...prev,
+                                  academicPeriod: { ...prev.academicPeriod, start: e.target.value },
+                                }))
+                              }
+                            />
+                          </FieldGroup>
+                        </div>
+                        <div className='flex-1'>
+                          <FieldGroup label='Period End *'>
+                            <Input
+                              type='date'
+                              value={scheduleSettings.academicPeriod.end}
+                              onChange={e =>
+                                setScheduleSettings(prev => ({
+                                  ...prev,
+                                  academicPeriod: { ...prev.academicPeriod, end: e.target.value },
+                                }))
+                              }
+                            />
+                          </FieldGroup>
+                        </div>
                       </div>
+
+                      {SharedTimeFields}
+
+                      <div className='flex flex-row flex-wrap gap-4 justify-between' >
+                        {RepeatRuleFields}
+
+                        <div className='flex flex-wrap flex-row items-center gap-4' >
+                          <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
+                            <input
+                              type='checkbox'
+                              checked={scheduleSettings.allDay}
+                              onChange={e =>
+                                setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
+                              }
+                              className='h-4 w-4 rounded'
+                            />
+                            All Day
+                          </label>
+
+                          <FieldGroup label='Timezone'>
+                            <Select
+                              value={scheduleSettings.timezone}
+                              onValueChange={value =>
+                                setScheduleSettings(prev => ({ ...prev, timezone: value }))
+                              }
+                            >
+                              <SelectTrigger className='h-11'>
+                                <SelectValue placeholder='Select timezone' />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
+                                <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
+                                <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FieldGroup>
+                        </div>
+                      </div>
+
+
+                      {totalSessions > 0 && (
+                        <div className='bg-primary/10 text-primary border-primary/20 rounded-lg border px-4 py-2.5 text-sm font-medium'>
+                          Total sessions: <span className='font-bold'>{totalSessions}</span>
+                        </div>
+                      )}
                     </div>
+
+                    {/* <div className='flex-[0.9] space-y-3 rounded-md border border-border/60 p-4'>
+                      <p className='text-foreground text-sm font-semibold'>Schedule Summary</p>
+                      <SummaryLine icon={CalendarDays} label='Repeat' value={getRepeatSummary(scheduleSettings)} />
+                      <SummaryLine icon={Clock3} label='Time' value={formatScheduleTime(scheduleSettings.startClass.startTime, scheduleSettings.startClass.endTime, scheduleSettings.allDay)} />
+                      <SummaryLine icon={BellRing} label='Reminder' value={notificationSettings.reminder || '24 hours before class'} />
+                      <SummaryLine icon={MapPin} label='Timezone' value={scheduleSettings.timezone || 'EAT East Africa Time'} />
+                      <SummaryLine icon={Circle} label='Duration' value={`${sessionDuration || 0} ${sessionDuration === 1 ? 'Hour' : 'Hours'} per session`} />
+                    </div> */}
                   </div>
                 )}
 
-                {/* ── Optional Class Settings (color, capacity etc.) ─────── */}
                 <Collapsible
                   open={showOptionalSettings}
                   onOpenChange={setShowOptionalSettings}
@@ -1792,7 +1881,7 @@ const NewClassCreationPage = () => {
                       <div>
                         <p className='text-foreground text-sm font-semibold'>Optional Class Settings</p>
                         <p className='text-muted-foreground text-xs'>
-                          Expand to adjust class color.
+                          Expand to adjust capacity, dates, waitlist, and class color.
                         </p>
                       </div>
                       <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${showOptionalSettings ? 'rotate-180' : ''}`} />
@@ -1800,6 +1889,83 @@ const NewClassCreationPage = () => {
                   </CollapsibleTrigger>
                   <CollapsibleContent className='border-t border-border/60 px-4 py-4'>
                     <div className='space-y-4'>
+                      <div className='grid gap-4 md:grid-cols-2'>
+                        <FieldGroup label='Registration Period Start'>
+                          <Input
+                            type='date'
+                            value={scheduleSettings.registrationPeriod.start}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                registrationPeriod: { ...prev.registrationPeriod, start: e.target.value },
+                              }))
+                            }
+                          />
+                        </FieldGroup>
+                        <FieldGroup label='Registration Period End'>
+                          <Input
+                            type='date'
+                            value={scheduleSettings.registrationPeriod.end}
+                            disabled={scheduleSettings.registrationPeriod.continuous}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                registrationPeriod: { ...prev.registrationPeriod, end: e.target.value },
+                              }))
+                            }
+                          />
+                        </FieldGroup>
+                      </div>
+
+
+                      <div className='grid gap-4 md:grid-cols-2'>
+                        {/* <FieldGroup label='Max Participants'>
+                          <Input
+                            type='number' min='1'
+                            value={classDetails.class_limit || ''}
+                            onChange={e => setClassDetails(prev => ({ ...prev, class_limit: Number(e.target.value || 0) }))}
+                            placeholder='25'
+                          />
+                        </FieldGroup> */}
+                        {/* <FieldGroup label='Allow Waitlist'>
+                          <div className='flex items-center justify-between rounded-md border border-border/60 px-3 py-2'>
+                            <div>
+                              <p className='text-foreground text-sm font-medium'>Enable waitlist</p>
+                              <p className='text-muted-foreground text-xs'>Let students join the queue when capacity is full.</p>
+                            </div>
+                            <Switch checked={allowWaitlist} onCheckedChange={setAllowWaitlist} />
+                          </div>
+                        </FieldGroup> */}
+
+                        <label className='flex cursor-pointer items-center gap-3 text-sm font-medium'>
+                          <input
+                            type='checkbox'
+                            checked={scheduleSettings.registrationPeriod.continuous || false}
+                            onChange={e =>
+                              setScheduleSettings(prev => ({
+                                ...prev,
+                                registrationPeriod: {
+                                  ...prev.registrationPeriod,
+                                  continuous: e.target.checked,
+                                  end: e.target.checked ? '' : prev.registrationPeriod.end,
+                                },
+                              }))
+                            }
+                            className='h-4 w-4 rounded'
+                          />
+                          Continuous Registration (no closing date)
+                        </label>
+                      </div>
+
+                      {/* <div className='grid gap-4 md:grid-cols-2'>
+                        <FieldGroup label='Location Latitude'>
+                          <Input type='number' step='any' value={locationLatitude} onChange={e => setLocationLatitude(e.target.value)} placeholder='-1.292066' />
+                        </FieldGroup>
+                        <FieldGroup label='Location Longitude'>
+                          <Input type='number' step='any' value={locationLongitude} onChange={e => setLocationLongitude(e.target.value)} placeholder='36.821945' />
+                        </FieldGroup>
+                      </div> */}
+
                       <div className='rounded-md border border-border/60 p-4'>
                         <div className='flex flex-row flex-wrap gap-2 sm:items-center sm:justify-between'>
                           <div>
@@ -1829,7 +1995,6 @@ const NewClassCreationPage = () => {
               </div>
             </Card>
 
-            {/* ── Reminder Options Card ──────────────────────────────────── */}
             <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
               <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
                 <h3 className='text-foreground text-lg font-semibold'>Reminder Options</h3>
@@ -1929,8 +2094,6 @@ const NewClassCreationPage = () => {
 export default NewClassCreationPage;
 
 
-// ── Shared sub-components ────────────────────────────────────────────────────
-
 const FieldGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className='space-y-2'>
     <div className='text-foreground text-sm font-semibold'>{label}</div>
@@ -1971,6 +2134,21 @@ const ChoiceGroup = ({
   </div>
 );
 
+const SummaryLine = ({ icon: Icon, label, value }: { icon: typeof CalendarDays; label: string; value: string }) => (
+  <div className='flex items-start gap-3 rounded-md border border-border/60 px-3 py-2'>
+    <div className='bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-md'>
+      <Icon className='h-4 w-4' />
+    </div>
+    <div className='min-w-0'>
+      <div className='text-muted-foreground text-xs font-medium'>{label}</div>
+      <div className='text-foreground text-sm font-semibold'>{value}</div>
+    </div>
+  </div>
+);
+
+import { Switch } from '@/components/ui/switch';
+import { ScheduleSettings } from '../old-class-creation/page';
+
 const ReminderCard = ({
   title,
   enabled,
@@ -1985,11 +2163,23 @@ const ReminderCard = ({
   <div className='rounded-md border border-border/60 p-4'>
     <div className='flex items-center justify-between gap-3'>
       <div>
-        <p className='text-foreground text-sm font-semibold'>{title}</p>
-        <p className='text-muted-foreground text-xs'>Set reminders for your students.</p>
+        <p className='text-foreground text-sm font-semibold'>
+          {title}
+        </p>
+
+        <p className='text-muted-foreground text-xs'>
+          Set reminders for your students.
+        </p>
       </div>
-      <Switch checked={enabled} onCheckedChange={onEnabledChange} />
+
+      <Switch
+        checked={enabled}
+        onCheckedChange={onEnabledChange}
+      />
     </div>
-    <div className='mt-4 space-y-4'>{children}</div>
+
+    <div className='mt-4 space-y-4'>
+      {children}
+    </div>
   </div>
 );
