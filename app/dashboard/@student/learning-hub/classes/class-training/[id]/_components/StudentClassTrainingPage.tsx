@@ -1330,7 +1330,7 @@ export default function StudentClassTrainingPage({
       visible_at: activeSchedule.start_time ? new Date(activeSchedule.start_time) : undefined,
       due_at: assignmentDueDate,
       grading_due_at: assignmentGradingDueDate,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Lagos',
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Nairobi',
       release_strategy: 'CUSTOM',
       max_attempts: 1,
       instructor_uuid: userProfile?.instructor?.uuid as string,
@@ -1392,7 +1392,7 @@ export default function StudentClassTrainingPage({
       visible_at: activeSchedule.start_time ? new Date(activeSchedule.start_time) : undefined,
       due_at: quizDueDate,
       grading_due_at: quizGradingDueDate,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Lagos',
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Nairobi',
       release_strategy: 'CUSTOM',
       instructor_uuid: userProfile?.instructor?.uuid as string,
     };

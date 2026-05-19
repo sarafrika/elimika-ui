@@ -1,6 +1,6 @@
 import type { CourseLessonWithContent } from '@/hooks/use-courselessonwithcontent';
-import type { ProgramCourseLike } from '@/hooks/use-programlessonwithcontent';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
+import type { ProgramCourseLike } from '@/hooks/use-programlessonwithcontent';
 import type { Student } from '@/services/client';
 import { useMemo } from 'react';
 
@@ -229,22 +229,48 @@ export const useFilteredClassInstances = ({
         (classItem.schedule ?? []).map((instance, instanceIndex) => ({
           instanceUuid:
             instance.uuid ??
-            `${classItem.uuid ?? 'class'}-${instance.start_time?.toString() ?? instanceIndex}`,
+            `${classItem.uuid ?? 'class'}-${instance.start_time?.toString() ?? instanceIndex
+            }`,
+
           classUuid: classItem.uuid ?? '',
+
           title: classItem.title,
-          courseName: classItem.course?.name || 'No linked course',
+
+          courseName:
+            classItem.course?.name || 'No linked course',
+
           difficulty: classItem.course?.difficulty_uuid
-            ? (difficultyMap[classItem.course.difficulty_uuid] ?? 'General')
+            ? (
+              difficultyMap[
+              classItem.course.difficulty_uuid
+              ] ?? 'General'
+            )
             : 'General',
-          sessionFormat: formatLabel(classItem.session_format),
+
+          sessionFormat: formatLabel(
+            classItem.session_format
+          ),
+
           start_time: instance.start_time,
+
           end_time: instance.end_time,
-          location_name: instance.location_name ?? classItem.location_name,
+
+          location_name:
+            instance.location_name ??
+            classItem.location_name,
+
           classItem,
+
           instance,
         }))
       )
+
       .filter(instanceItem => {
+        // Exclude cancelled instances
+        const isNotCancelled =
+          instanceItem.instance.status?.toUpperCase() !==
+          'CANCELLED';
+
         const matchesSearch =
           !normalizedSearch ||
           [
@@ -253,23 +279,43 @@ export const useFilteredClassInstances = ({
             instanceItem.sessionFormat,
             instanceItem.difficulty,
             formatDateTime(instanceItem.start_time),
-            formatLabel(getInstanceStatus(instanceItem.start_time, instanceItem.end_time)),
+            formatLabel(
+              getInstanceStatus(
+                instanceItem.start_time,
+                instanceItem.end_time
+              )
+            ),
           ]
             .join(' ')
             .toLowerCase()
             .includes(normalizedSearch);
 
         const matchesDateFilter =
-          (dateFilter === 'all' && isUpcoming(instanceItem.start_time)) ||
-          (dateFilter === 'current-day' && isCurrentDay(instanceItem.start_time)) ||
-          (dateFilter === 'current-week' && isWithinCurrentWeek(instanceItem.start_time)) ||
-          (dateFilter === 'upcoming' && isUpcoming(instanceItem.start_time));
+          (dateFilter === 'all' &&
+            isUpcoming(instanceItem.start_time)) ||
 
-        return matchesSearch && matchesDateFilter;
+          (dateFilter === 'current-day' &&
+            isCurrentDay(instanceItem.start_time)) ||
+
+          (dateFilter === 'current-week' &&
+            isWithinCurrentWeek(
+              instanceItem.start_time
+            )) ||
+
+          (dateFilter === 'upcoming' &&
+            isUpcoming(instanceItem.start_time));
+
+        return (
+          isNotCancelled &&
+          matchesSearch &&
+          matchesDateFilter
+        );
       })
+
       .sort(
         (left, right) =>
-          new Date(left.start_time ?? 0).getTime() - new Date(right.start_time ?? 0).getTime()
+          new Date(left.start_time ?? 0).getTime() -
+          new Date(right.start_time ?? 0).getTime()
       );
   }, [classes, dateFilter, difficultyMap, searchTerm]);
 

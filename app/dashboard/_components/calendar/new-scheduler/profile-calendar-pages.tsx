@@ -359,6 +359,7 @@ function AdminCalendarPage() {
             new Map(instructorSummaries.map(item => [item.uuid, item]))
           )
         )
+        .filter(event => event.status !== "Cancelled")
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
     [classData, instructorSummaries]
   );
@@ -425,6 +426,7 @@ function InstructorCalendarPage() {
             new Map(instructorSummary.map(item => [item.uuid, item]))
           )
         )
+        .filter(event => event.status !== "Cancelled")
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
     [classData, instructorSummary]
   );
@@ -662,6 +664,7 @@ function StudentCalendarPage() {
           return mapStudentSchedule(item, instructorDetails, classDetails);
         })
         .filter(Boolean)
+        .filter(event => event.status !== "Cancelled")
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
     [studentScheduleQuery.data, studentClassData, instructorSummaries]
   );
@@ -837,6 +840,7 @@ function OrganizationCalendarPage() {
             classIndex
           )
         )
+        .filter(event => event.status !== "Cancelled")
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
     [classesWithCourseAndInstructor]
   );

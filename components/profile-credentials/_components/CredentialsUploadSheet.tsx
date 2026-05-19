@@ -558,7 +558,7 @@ export function CredentialsUploadSheet({
                         id='education-school'
                         value={draft.education.schoolName}
                         onChange={event => setEducationDraft({ schoolName: event.target.value })}
-                        placeholder='e.g. University of Lagos'
+                        placeholder='e.g. University of Nairobi'
                       />
                     </div>
                   </div>

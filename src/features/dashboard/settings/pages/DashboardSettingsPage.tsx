@@ -868,7 +868,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                     <div className='grid gap-4 sm:grid-cols-2'>
                       <SettingsField
                         label='Default timezone'
-                        value='Africa/Lagos'
+                        value='Africa/Nairobi'
                         helperText='Used for scheduled actions and time-based notifications.'
                       />
                       <SettingsField
