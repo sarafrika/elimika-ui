@@ -1035,9 +1035,10 @@ const NewClassCreationPage = () => {
 
   const normalizeTime = (time?: string) => {
     if (!time) return '';
-    if (/^\d{2}:\d{2}$/.test(time)) return time;
-    const [h = '0', m = '0'] = time.split(':');
-    return `${String(Number(h)).padStart(2, '0')}:${String(Number(m)).padStart(2, '0')}`;
+
+    const [hour = '00', minute = '00'] = time.split(':');
+
+    return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
   };
 
   // ── Day-time grid (Mon–Sun rows with Start/End time per day) ──────────────
@@ -1333,7 +1334,7 @@ const NewClassCreationPage = () => {
         <FieldGroup label='Default Start Time *'>
           <Input
             type='time'
-            value={normalizeTime(scheduleSettings.startClass.startTime)}
+            value={normalizeTime(scheduleSettings.startClass.startTime) || ''}
             disabled={scheduleSettings.allDay}
             onChange={e =>
               setScheduleSettings(prev => ({
@@ -1351,7 +1352,7 @@ const NewClassCreationPage = () => {
         <FieldGroup label='Default End Time *'>
           <Input
             type='time'
-            value={normalizeTime(scheduleSettings.startClass.endTime)}
+            value={normalizeTime(scheduleSettings.startClass.endTime) || ''}
             disabled={scheduleSettings.allDay}
             onChange={e =>
               setScheduleSettings(prev => ({
