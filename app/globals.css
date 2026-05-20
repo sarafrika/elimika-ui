@@ -261,6 +261,9 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
 .accordion-trigger-no-underline {
   text-decoration: none; /* Use !important if necessary to override existing styles */
 }

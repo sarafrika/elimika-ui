@@ -73,7 +73,7 @@ import {
 } from 'lucide-react';
 import moment from 'moment';
 import Link from 'next/link';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -861,6 +861,8 @@ export default function StudentClassTrainingPage({
 }: ClassTrainingPageProps = {}) {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter()
+  const pathname = usePathname();
   const queryClient = useQueryClient();
   const classId = classIdProp ?? (params?.id as string);
   const requestedScheduleId = requestedScheduleIdProp ?? searchParams.get('schedule') ?? '';
@@ -960,6 +962,12 @@ export default function StudentClassTrainingPage({
     );
   }, [lessonsWithContent]);
 
+  const sortedLessonModules = useMemo(() => {
+    return [...lessonModules].sort(
+      (a, b) => (a.lesson.lesson_number ?? 0) - (b.lesson.lesson_number ?? 0)
+    );
+  }, [lessonModules]);
+
   const selectedCourseUuid = useMemo(() => {
     if (classData?.program_uuid) {
       return requestedCourseId || course?.uuid || programCourses[0]?.uuid || '';
@@ -1037,6 +1045,25 @@ export default function StudentClassTrainingPage({
     selectedContent && 'duration' in selectedContent
       ? String(selectedContent.duration || '')
       : '';
+
+  const handleContentChange = (contentId: string) => {
+    const module = lessonModules.find(m =>
+      m.content?.data?.some(c => c.uuid === contentId)
+    );
+
+    const lessonId = module?.lesson?.uuid;
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set('content', contentId);
+
+    if (lessonId) {
+      params.set('lesson', lessonId);
+    }
+
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
 
   const activeInstanceStudents = useMemo(
     () =>
@@ -1486,7 +1513,7 @@ export default function StudentClassTrainingPage({
         </div>
 
         <div className='hidden min-w-0 flex-1 justify-center md:flex'>
-          <div className='flex max-w-xl flex-1 items-center gap-2 rounded-full bg-white/12 px-3 py-2'>
+          <div className='flex max-w-xl flex-1 items-center gap-2 rounded-full bg-white/12 px-3 py-0.5'>
             <Search className='text-primary-foreground/70 h-4 w-4 shrink-0' />
             <Input
               value={pageSearch}
@@ -1497,7 +1524,7 @@ export default function StudentClassTrainingPage({
                 }
               }}
               placeholder='Search this page...'
-              className='border-0 bg-transparent px-0 text-xs text-white placeholder:text-white/70 focus-visible:ring-0'
+              className='border-0 bg-transparent px-0 text-xs text-foreground placeholder:text-muted-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none'
             />
             <Button
               size='sm'
@@ -1569,7 +1596,7 @@ export default function StudentClassTrainingPage({
                   {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
                 </h2>
 
-                <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+                <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
                   <Tabs
                     value={activeTab}
                     onValueChange={value => setActiveTab(value as typeof activeTab)}
@@ -1592,21 +1619,29 @@ export default function StudentClassTrainingPage({
                     <p className='text-muted-foreground text-sm'>Lesson</p>
                     <Select
                       value={selectedContentId}
-                      onValueChange={setSelectedContentId}
-                      disabled={activeLessonContents.length === 0}
+                      onValueChange={handleContentChange}
+                      disabled={lessonModules.length === 0}
                     >
-                      <SelectTrigger className='h-9 w-full lg:w-52'>
+                      <SelectTrigger className="h-9 w-full lg:min-w-52">
                         <SelectValue placeholder='Select content' />
                       </SelectTrigger>
 
                       <SelectContent>
-                        {activeLessonContents.map((content, index) => (
-                          <SelectItem
-                            key={content.uuid ?? `content-${index}`}
-                            value={content.uuid ?? `content-${index}`}
-                          >
-                            {getContentTitle(content, index)}
-                          </SelectItem>
+                        {sortedLessonModules.map((module) => (
+                          <div key={module.lesson.uuid}>
+                            <div className="px-2 py-1 text-[13px] italic font-semibold text-muted-foreground bg-muted/60 rounded my-1 border border-muted">
+                              {module.lesson.title}
+                            </div>
+
+                            {module.content?.data
+                              ?.slice() // optional safety copy
+                              .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                              .map((content) => (
+                                <SelectItem key={content.uuid} value={content.uuid}>
+                                  {content.title}
+                                </SelectItem>
+                              ))}
+                          </div>
                         ))}
                       </SelectContent>
                     </Select>

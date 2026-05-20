@@ -1,10 +1,10 @@
-import Image from 'next/image';
-import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { HelpSection, SkillsFundSection } from '@/src/features/marketing/sections/PublicSections';
+import Image from 'next/image';
+import Link from 'next/link';
 
 const featureCards = [
   {

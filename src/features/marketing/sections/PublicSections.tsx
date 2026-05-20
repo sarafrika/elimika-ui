@@ -1,5 +1,18 @@
+'use client';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Send } from 'lucide-react';
+import Link from 'next/link';
+import { SupportContactForm } from '../pages/SupportContactForm';
 
 export function SkillsFundSection() {
   return (
@@ -82,21 +95,69 @@ export function OpportunitiesSection() {
 
 export function HelpSection() {
   return (
-    <section id='help' className='border-border/60 bg-muted/30 rounded-[28px] border p-8 shadow-sm'>
+    <section
+      id='help'
+      className='border-border/60 bg-muted/30 rounded-[28px] border p-8 shadow-sm'
+    >
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div className='space-y-2'>
-          <p className='text-primary text-xs font-semibold tracking-[0.3em] uppercase'>Help</p>
-          <h3 className='text-foreground text-2xl font-semibold'>Need support?</h3>
+          <p className='text-primary text-xs font-semibold tracking-[0.3em] uppercase'>
+            Help
+          </p>
+
+          <h3 className='text-foreground text-2xl font-semibold'>
+            Need support?
+          </h3>
+
           <p className='text-muted-foreground text-sm'>
-            Visit our help center or reach out for guidance on building your Skills Wallet, funding,
-            or employer access.
+            Visit our help center or reach out for guidance on building your
+            Skills Wallet, funding, or employer access.
           </p>
         </div>
-        <div className='flex flex-wrap gap-3'>
-          <Button className='rounded-full px-6' variant='outline'>
-            Help center
+
+        <div className='flex flex-wrap items-center gap-3'>
+          <Button
+            asChild
+            className='rounded-full px-6'
+            variant='outline'
+          >
+            <Link href='/help'>
+              Help center
+            </Link>
           </Button>
-          <Button className='rounded-full px-6'>Contact support</Button>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className='rounded-full px-6'>
+                Contact support
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className='sm:max-w-[640px]'>
+              <DialogHeader>
+                <DialogTitle>
+                  Contact support
+                </DialogTitle>
+
+                <DialogDescription>
+                  Tell us what you need help with and our team will respond as
+                  soon as possible.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className='mt-4'>
+                <SupportContactForm />
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <a
+            href="mailto:support@yourapp.com?subject=Help%20Request"
+            className="inline-flex items-center justify-center rounded-full border border-border bg-background p-2 text-foreground transition-colors hover:bg-muted mr-1 hover:text-foreground"
+            aria-label="Send support email"
+          >
+            <Send className="size-4" />
+          </a>
         </div>
       </div>
     </section>

@@ -108,7 +108,7 @@ export default function StudentClassPage({
     queries: classDefinitionUuids.map(uuid => ({
       ...getClassScheduleOptions({
         path: { uuid },
-        query: { pageable: {} },
+        query: { pageable: { size: 1000 } },
       }),
       enabled: Boolean(uuid),
     })),

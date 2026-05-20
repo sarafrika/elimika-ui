@@ -24,7 +24,7 @@ export const useMultipleClassDetails = (classUuids: string[] = []) => {
   //     queries: classUuids.map(uuid => ({
   //       ...getClassScheduleOptions({
   //         path: { uuid },
-  //         query: { pageable: {} },
+  //         query: { pageable: { size: 1000 } },
   //       }),
   //       enabled: !!uuid,
   //     })),
@@ -35,7 +35,7 @@ export const useMultipleClassDetails = (classUuids: string[] = []) => {
   //     queries: classUuids.map(uuid => ({
   //       ...getClassScheduleOptions({
   //         path: { uuid },
-  //         query: { pageable: {} },
+  //         query: { pageable: { size: 1000 } },
   //       }),
   //       enabled: !!uuid,
   //     })),

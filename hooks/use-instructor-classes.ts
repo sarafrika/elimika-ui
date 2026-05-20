@@ -121,7 +121,7 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
     queries: classes.map(cls => ({
       ...getClassScheduleOptions({
         path: { uuid: cls.uuid as string },
-        query: { pageable: {} },
+        query: { pageable: { size: 1000 } },
       }),
       enabled: !!cls.uuid,
       staleTime: 5 * 60 * 1000,

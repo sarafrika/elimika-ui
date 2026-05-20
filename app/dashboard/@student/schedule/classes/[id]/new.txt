@@ -99,7 +99,7 @@ export default function ClassDetailsPage() {
     const { data: classSchedules } = useQuery({
         ...getClassScheduleOptions({
             path: { uuid: classDefinition?.uuid as string },
-            query: { pageable: {} },
+        query: { pageable: { size: 1000 } },
         }),
         enabled: !!classDefinition?.uuid,
     });

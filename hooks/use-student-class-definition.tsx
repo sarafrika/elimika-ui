@@ -1,12 +1,12 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import type {
   GetClassDefinitionResponse,
-  GetCourseByUuidResponse,
   GetClassEnrollmentsForStudentResponse,
+  GetCourseByUuidResponse,
 } from '../services/client';
 import {
-  getClassEnrollmentsForStudentOptions,
   getClassDefinitionOptions,
+  getClassEnrollmentsForStudentOptions,
   getClassScheduleOptions,
   getCourseByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
@@ -55,7 +55,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
   const scheduleQueries = useQueries({
     queries:
       classDefinitionUuids.map((uuid: string) => ({
-        ...getClassScheduleOptions({ path: { uuid }, query: { pageable: {} } }),
+        ...getClassScheduleOptions({ path: { uuid }, query: { pageable: { size: 1000 } } }),
         enabled: !!uuid,
       })) || [],
   });
