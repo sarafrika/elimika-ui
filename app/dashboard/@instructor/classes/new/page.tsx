@@ -1,11 +1,17 @@
 'use client';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  useInstructorClassesWithSchedules,
+  type InstructorClassWithSchedule,
+} from '@/hooks/use-instructor-classes-with-schedules';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  AlertTriangle,
   BellRing,
   Building2,
   CalendarDays,
@@ -109,6 +115,24 @@ type CatalogItem = {
   rateCard?: CatalogRateCard;
   source: CatalogSource;
   uuid: string;
+};
+
+type ScheduledSession = { date: string; startTime: string; endTime: string };
+
+type ScheduleConflict = {
+  proposed: ScheduledSession;
+  existing: {
+    classUuid: string;
+    classTitle: string;
+    startTime: string;
+    endTime: string;
+  };
+};
+
+const normalizeDateTimeValue = (value: string | Date | undefined | null) => {
+  if (!value) return null;
+  const parsed = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
 const createInitialClassDetails = (instructorName?: string): ClassDetails => ({
@@ -341,6 +365,133 @@ const getRepeatSummary = (scheduleSettings: ScheduleSettings) => {
   return `Every ${interval}\n${scheduleSettings.repeat.unit}(s)`;
 };
 
+
+const findScheduleConflicts = (
+  sessions: ScheduledSession[],
+  instructorClasses: InstructorClassWithSchedule[],
+  resolveId: string | null,
+  instructorUuid?: string
+): ScheduleConflict[] => {
+  if (!instructorUuid || sessions.length === 0) return [];
+
+  const existingSchedules = instructorClasses
+    .filter(c => c.uuid && c.uuid !== resolveId)
+    .flatMap(c =>
+      (c.schedule ?? []).map(s => ({
+        classUuid: c.uuid,
+        classTitle: c.title || 'Existing class',
+        startTime: s.start_time,
+        endTime: s.end_time,
+      }))
+    )
+    .map(s => {
+      const start = normalizeDateTimeValue(s.startTime);
+      const end = normalizeDateTimeValue(s.endTime);
+      if (!start || !end) return null;
+      return { ...s, startTime: start.toISOString(), endTime: end.toISOString() };
+    })
+    .filter(Boolean) as (ScheduleConflict['existing'] & { startTime: string; endTime: string })[];
+
+  return sessions.flatMap(session => {
+    const proposedStart = new Date(buildUtcIsoDateTime(session.date, session.startTime)).getTime();
+    const proposedEnd = new Date(buildUtcIsoDateTime(session.date, session.endTime)).getTime();
+    if (Number.isNaN(proposedStart) || Number.isNaN(proposedEnd) || proposedStart >= proposedEnd) return [];
+
+    return existingSchedules
+      .filter(existing => {
+        const existingStart = new Date(existing.startTime).getTime();
+        const existingEnd = new Date(existing.endTime).getTime();
+        return proposedStart < existingEnd && existingStart < proposedEnd;
+      })
+      .map(existing => ({ proposed: session, existing }));
+  });
+};
+
+/** Expand the current schedule settings into a flat list of sessions for conflict checking. */
+const expandSessionsForConflictCheck = (
+  schedulePreset: SchedulePreset,
+  scheduleSettings: ScheduleSettings,
+  pickedDates: { date: string; startTime: string; endTime: string }[]
+): ScheduledSession[] => {
+  if (schedulePreset === 'pick-dates') {
+    return pickedDates.map(item => ({
+      date: item.date,
+      startTime: scheduleSettings.allDay ? '00:00' : item.startTime,
+      endTime: scheduleSettings.allDay ? '23:59' : item.endTime,
+    }));
+  }
+
+  const referenceDate =
+    schedulePreset === 'academic-period'
+      ? scheduleSettings.academicPeriod.start
+      : scheduleSettings.startClass.date;
+  const endDate =
+    schedulePreset === 'academic-period'
+      ? scheduleSettings.academicPeriod.end
+      : scheduleSettings.endRepeat;
+
+  if (!referenceDate || !endDate) return [];
+
+  const start = new Date(referenceDate);
+  const end = new Date(endDate);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return [];
+
+  const sessions: ScheduledSession[] = [];
+  const { unit, interval, days = [] } = scheduleSettings.repeat;
+
+  if (unit === 'week') {
+    if (days.length === 0) return [];
+
+    // For each selected weekday, walk from the first occurrence >= referenceDate
+    for (const dayIndex of days) {
+      const override = scheduleSettings.weeklyDayTimes[dayIndex];
+      const startTime = scheduleSettings.allDay
+        ? '00:00'
+        : override?.startTime || scheduleSettings.startClass.startTime || '00:00';
+      const endTime = scheduleSettings.allDay
+        ? '23:59'
+        : override?.endTime || scheduleSettings.startClass.endTime || '23:59';
+
+      // Find the first date >= referenceDate that falls on this weekday (0=Mon…6=Sun)
+      const cursor = new Date(referenceDate);
+      const cursorDow = (cursor.getDay() + 6) % 7; // convert Sun=0 → Mon=0
+      const daysUntil = (dayIndex - cursorDow + 7) % 7;
+      cursor.setDate(cursor.getDate() + daysUntil);
+
+      while (cursor <= end) {
+        sessions.push({
+          date: cursor.toISOString().split('T')[0]!,
+          startTime,
+          endTime,
+        });
+        cursor.setDate(cursor.getDate() + interval * 7);
+      }
+    }
+  } else {
+    const startTime = scheduleSettings.allDay
+      ? '00:00'
+      : scheduleSettings.startClass.startTime || '00:00';
+    const endTime = scheduleSettings.allDay
+      ? '23:59'
+      : scheduleSettings.startClass.endTime || '23:59';
+
+    const cursor = new Date(referenceDate);
+    while (cursor <= end) {
+      sessions.push({
+        date: cursor.toISOString().split('T')[0]!,
+        startTime,
+        endTime,
+      });
+      if (unit === 'day') cursor.setDate(cursor.getDate() + interval);
+      else if (unit === 'month') cursor.setMonth(cursor.getMonth() + interval);
+      else if (unit === 'year') cursor.setFullYear(cursor.getFullYear() + interval);
+      else break;
+    }
+  }
+
+  return sessions;
+};
+
 const NewClassCreationPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -373,6 +524,22 @@ const NewClassCreationPage = () => {
   const resolvedId = classId || savedClassUuid;
   const { data: combinedClass, isLoading } = useClassDetails(resolvedId || undefined);
   const classData = combinedClass?.class;
+
+  const { classes: instructorClasses = [] } = useInstructorClassesWithSchedules(instructor?.uuid);
+  const sessionsForConflictCheck = useMemo(
+    () => expandSessionsForConflictCheck(schedulePreset, scheduleSettings, pickedDates),
+    [schedulePreset, scheduleSettings, pickedDates]
+  );
+
+  const scheduleConflicts = useMemo(
+    () => findScheduleConflicts(sessionsForConflictCheck, instructorClasses, resolvedId, instructor?.uuid),
+    [sessionsForConflictCheck, instructorClasses, resolvedId, instructor?.uuid]
+  );
+
+  // if (scheduleConflicts.length > 0) {
+  //   toast.error('One or more sessions conflict with an existing class. Adjust the schedule before publishing.');
+  //   return false;
+  // }
 
   const createClassDefinition = useMutation(createClassDefinitionMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
@@ -1524,7 +1691,55 @@ const NewClassCreationPage = () => {
                   </div>
                 )}
 
-                {/* ── Optional Class Settings ────────────────────────────── */}
+                {scheduleConflicts.length > 0 && (
+                  <Alert
+                    variant='destructive'
+                    className='border-destructive/30 bg-destructive/8 text-foreground rounded-xl border shadow-sm'
+                  >
+                    <AlertTriangle className='text-destructive mt-0.5' />
+                    <AlertTitle className='text-destructive text-base font-semibold'>
+                      Schedule conflict detected
+                    </AlertTitle>
+                    <AlertDescription className='space-y-2'>
+                      <p className='text-muted-foreground text-sm'>
+                        One or more sessions overlap with this instructor&apos;s existing classes.
+                        Adjust the times below before publishing.
+                      </p>
+                      <ul className='marker:text-destructive list-disc space-y-1.5 pl-5 text-sm text-muted-foreground'>
+                        {scheduleConflicts.slice(0, 5).map(conflict => (
+                          <li
+                            key={`${conflict.proposed.date}-${conflict.proposed.startTime}-${conflict.existing.classTitle}-${conflict.existing.startTime}`}
+                            className='leading-relaxed'
+                          >
+                            <span className='font-medium text-foreground'>
+                              {new Date(`${conflict.proposed.date}T00:00:00`).toLocaleDateString('en-US', {
+                                weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
+                              })}
+                              {' '}{conflict.proposed.startTime}–{conflict.proposed.endTime}
+                            </span>{' '}
+                            overlaps with{' '}
+                            <span className='font-medium text-foreground'>
+                              {conflict.existing.classTitle}
+                            </span>{' '}
+                            ({new Date(conflict.existing.startTime).toLocaleTimeString('en-US', {
+                              hour: 'numeric', minute: '2-digit',
+                            })}
+                            {' '}–{' '}
+                            {new Date(conflict.existing.endTime).toLocaleTimeString('en-US', {
+                              hour: 'numeric', minute: '2-digit',
+                            })})
+                          </li>
+                        ))}
+                        {scheduleConflicts.length > 5 && (
+                          <li className='font-medium'>
+                            …and {scheduleConflicts.length - 5} more conflict{scheduleConflicts.length - 5 > 1 ? 's' : ''}.
+                          </li>
+                        )}
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <Collapsible
                   open={showOptionalSettings}
                   onOpenChange={setShowOptionalSettings}
