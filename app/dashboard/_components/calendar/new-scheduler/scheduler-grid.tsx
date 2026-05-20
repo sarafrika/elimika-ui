@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../../../components/ui/dialog';
 import { categoryStyles, schedulerHours } from './data';
 import type { SchedulerEvent, SchedulerView } from './types';
 
@@ -626,101 +627,279 @@ function MonthGrid({
 function YearGrid({
   currentDate,
   events,
+  onEventClick,
   onEmptySlotClick,
 }: {
   currentDate: Date;
   events: SchedulerEvent[];
+  onEventClick?: (event: SchedulerEvent) => void;
   onEmptySlotClick?: (slot: EmptySlot) => void;
 }) {
   const today = new Date();
+
   const months = Array.from(
     { length: 12 },
     (_, index) => new Date(currentDate.getFullYear(), index, 1)
   );
 
+  const [selectedEvents, setSelectedEvents] = useState<SchedulerEvent[] | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
   return (
-    <section className='bg-card grid min-w-0 w-full gap-3 overflow-hidden rounded-md border p-3 shadow-sm sm:grid-cols-2 xl:grid-cols-3'>
-      {months.map(month => {
-        const monthEvents = getMonthEvents(events, month);
-        const monthDays = getMonthDays(month);
-        const monthEventDays = new Set(monthEvents.map(event => getCalendarKey(event.startTime)));
-        const monthCancelledEventDays = new Set(
-          monthEvents
-            .filter(event => isCancelledStatus(event.status))
-            .map(event => getCalendarKey(event.startTime))
-        );
+    <>
+      <section className='bg-card grid min-w-0 w-full gap-3 overflow-hidden rounded-md border p-3 shadow-sm sm:grid-cols-2 xl:grid-cols-3'>
+        {months.map(month => {
+          const monthEvents = getMonthEvents(events, month);
 
-        return (
-          <div
-            key={month.toISOString()}
-            className='bg-background rounded-md border p-3'
-            role='button'
-            tabIndex={0}
-            onClick={() =>
-              onEmptySlotClick?.({
-                date: month,
-                startTime: new Date(month.getFullYear(), month.getMonth(), 1, 9, 0, 0, 0),
-                endTime: new Date(month.getFullYear(), month.getMonth(), 1, 10, 0, 0, 0),
-                view: 'year',
-              })
-            }
-          >
-            <div className='mb-3 flex items-center justify-between gap-2'>
-              <h3 className='text-foreground text-sm font-semibold'>
-                {month.toLocaleDateString('en-US', { month: 'long' })}
-              </h3>
-              <span className='text-muted-foreground text-xs'>{monthEvents.length} sessions</span>
-            </div>
+          const monthDays = getMonthDays(month);
 
-            <div className='mb-2 grid grid-cols-7 text-[10px] font-semibold text-muted-foreground'>
-              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(label => (
-                <span key={`${month.toISOString()}-${label}`} className='text-center'>
-                  {label}
+          const monthCancelledEventDays = new Set(
+            monthEvents
+              .filter(event => isCancelledStatus(event.status))
+              .map(event => getCalendarKey(event.startTime))
+          );
+
+          return (
+            <div
+              key={month.toISOString()}
+              className='bg-background rounded-md border p-3'
+            >
+              <div className='mb-3 flex items-center justify-between gap-2'>
+                <h3 className='text-foreground text-sm font-semibold'>
+                  {month.toLocaleDateString('en-US', { month: 'long' })}
+                </h3>
+
+                <span className='text-muted-foreground text-xs'>
+                  {monthEvents.length} sessions
                 </span>
-              ))}
-            </div>
+              </div>
 
-            <div className='grid grid-cols-7 gap-1'>
-              {monthDays.map(day => {
-                const dayKey = getCalendarKey(day);
-                const hasEvents = monthEventDays.has(dayKey);
-                const hasCancelledEvents = monthCancelledEventDays.has(dayKey);
-                const inMonth = isSameMonth(day, month);
-
-                return (
-                  <div
-                    key={day.toISOString()}
-                    className={cn(
-                      'relative flex aspect-square items-center justify-center rounded text-[11px] font-semibold',
-                      inMonth ? 'text-foreground' : 'text-muted-foreground/50',
-                      isSameCalendarDay(day, today) &&
-                      (hasCancelledEvents ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-primary-foreground'),
-                      hasEvents &&
-                      !isSameCalendarDay(day, today) &&
-                      (hasCancelledEvents ? 'bg-destructive/10 ring-1 ring-destructive/30' : 'bg-primary/10 ring-1 ring-primary/30')
-                    )}
+              <div className='mb-2 grid grid-cols-7 text-[10px] font-semibold text-muted-foreground'>
+                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(label => (
+                  <span
+                    key={`${month.toISOString()}-${label}`}
+                    className='text-center'
                   >
-                    <span>{day.getDate()}</span>
-                    {hasEvents ? (
-                      <span
-                        className={cn(
-                          'absolute bottom-1 h-1.5 w-1.5 rounded-full',
-                          hasCancelledEvents
-                            ? 'bg-destructive'
-                            : isSameCalendarDay(day, today)
-                              ? 'bg-primary-foreground'
-                              : 'bg-primary'
-                        )}
-                      />
-                    ) : null}
-                  </div>
-                );
-              })}
+                    {label}
+                  </span>
+                ))}
+              </div>
+
+              <div className='grid grid-cols-7 gap-1'>
+                {monthDays.map(day => {
+                  const dayKey = getCalendarKey(day);
+
+                  const dayEvents = getDayEvents(events, day);
+
+                  const hasEvents = dayEvents.length > 0;
+
+                  const hasCancelledEvents = monthCancelledEventDays.has(dayKey);
+
+                  const inMonth = isSameMonth(day, month);
+
+                  return (
+                    <button
+                      key={day.toISOString()}
+                      type='button'
+                      className={cn(
+                        'relative flex aspect-square cursor-pointer items-center justify-center rounded text-[11px] font-semibold transition-colors hover:bg-muted',
+                        inMonth
+                          ? 'text-foreground'
+                          : 'text-muted-foreground/50',
+                        isSameCalendarDay(day, today) &&
+                        (hasCancelledEvents
+                          ? 'bg-destructive text-destructive-foreground'
+                          : 'bg-primary text-primary-foreground'),
+                        hasEvents &&
+                        !isSameCalendarDay(day, today) &&
+                        (hasCancelledEvents
+                          ? 'bg-destructive/10 ring-1 ring-destructive/30'
+                          : 'bg-primary/10 ring-1 ring-primary/30')
+                      )}
+                      onClick={e => {
+                        e.stopPropagation();
+
+                        // Single event → open immediately
+                        if (dayEvents.length === 1) {
+                          onEventClick?.(dayEvents[0]);
+                          return;
+                        }
+
+                        // Multiple events → show picker dialog
+                        if (dayEvents.length > 1) {
+                          setSelectedEvents(dayEvents);
+                          setSelectedDate(day);
+                          return;
+                        }
+
+                        // Empty day → create slot
+                        onEmptySlotClick?.({
+                          date: day,
+                          startTime: new Date(
+                            day.getFullYear(),
+                            day.getMonth(),
+                            day.getDate(),
+                            9,
+                            0,
+                            0,
+                            0
+                          ),
+                          endTime: new Date(
+                            day.getFullYear(),
+                            day.getMonth(),
+                            day.getDate(),
+                            10,
+                            0,
+                            0,
+                            0
+                          ),
+                          view: 'year',
+                        });
+                      }}
+                    >
+                      <span>{day.getDate()}</span>
+
+                      {hasEvents ? (
+                        <span
+                          className={cn(
+                            'absolute bottom-1 h-1.5 w-1.5 rounded-full',
+                            hasCancelledEvents
+                              ? 'bg-destructive'
+                              : isSameCalendarDay(day, today)
+                                ? 'bg-primary-foreground'
+                                : 'bg-primary'
+                          )}
+                        />
+                      ) : null}
+
+                      {dayEvents.length > 1 ? (
+                        <span className='bg-background absolute right-0.5 top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full border px-1 text-[8px] font-bold leading-none'>
+                          {dayEvents.length}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+          );
+        })}
+      </section>
+
+      {/* Events Picker Dialog */}
+      <Dialog
+        open={!!selectedEvents}
+        onOpenChange={open => {
+          if (!open) {
+            setSelectedEvents(null);
+            setSelectedDate(null);
+          }
+        }}
+      >
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>
+              {selectedDate?.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className='space-y-2'>
+            {[...(selectedEvents ?? [])]
+              .sort(
+                (a, b) =>
+                  new Date(a.startTime).getTime() -
+                  new Date(b.startTime).getTime()
+              )
+              .map(event => (
+                <button
+                  key={event.id}
+                  type='button'
+                  className='hover:bg-muted w-full rounded-md border p-3 text-left transition-colors'
+                  onClick={() => {
+                    onEventClick?.(event);
+
+                    setSelectedEvents(null);
+                    setSelectedDate(null);
+                  }}
+                >
+                  <div className='flex flex-col gap-3'>
+                    {/* Header */}
+                    <div className='flex items-start justify-between gap-2'>
+                      <div className='min-w-0 flex-1'>
+                        <p className='break-words font-medium leading-snug whitespace-normal'>
+                          {event.course}
+                        </p>
+
+                        <p className='text-muted-foreground mt-1 text-sm'>
+                          {new Date(event.startTime).toLocaleTimeString([], {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                          })}
+                          {' - '}
+                          {new Date(event.endTime).toLocaleTimeString([], {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                          })}
+                        </p>
+                      </div>
+
+                      {isCancelledStatus(event.status) ? (
+                        <span className='bg-destructive/10 text-destructive shrink-0 rounded px-2 py-1 text-[10px] font-semibold'>
+                          Cancelled
+                        </span>
+                      ) : (
+                        <span className='bg-primary/10 text-primary shrink-0 rounded px-2 py-1 text-[10px] font-semibold'>
+                          {event.status}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Details */}
+                    <div className='text-muted-foreground flex flex-wrap gap-x-4 gap-y-2 text-xs'>
+                      <div className='flex items-center gap-1'>
+                        <span className='font-medium text-foreground'>
+                          Type:
+                        </span>
+                        <span>{event.locationType}</span>
+                      </div>
+
+                      <div className='flex items-center gap-1'>
+                        <span className='font-medium text-foreground'>
+                          Location:
+                        </span>
+                        <span className='break-words'>
+                          {event.location}
+                        </span>
+                      </div>
+
+                      {event.meetingLink ? (
+                        <div className='min-w-0'>
+                          <a
+                            href={event.meetingLink}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            className='text-primary hover:underline break-all'
+                            onClick={e => e.stopPropagation()}
+                          >
+                            Join Meeting
+                          </a>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </button>
+              ))}
           </div>
-        );
-      })}
-    </section>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -773,6 +952,7 @@ export function SchedulerGrid({
         currentDate={currentDate}
         events={events}
         onEmptySlotClick={onEmptySlotClick}
+        onEventClick={onEventClick}
       />
     );
   }

@@ -564,6 +564,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             students={studentSummaries}
             showAllInstructors={showAllInstructors}
             onToggleInstructors={() => setShowAllInstructors(v => !v)}
+            profile={profile}
           />
         </SheetContent>
       </Sheet>
