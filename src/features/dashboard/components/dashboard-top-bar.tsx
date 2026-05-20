@@ -183,7 +183,7 @@ export default function DashboardTopBar() {
               <Button
                 asChild
                 size='sm'
-                className='hidden h-10 rounded-md px-4 font-semibold md:inline-flex'
+                className='h-10 rounded-md px-4 font-semibold md:inline-flex'
               >
                 <Link href={createCourseHref}>
                   <Sparkles className='h-4 w-4' />
@@ -197,7 +197,7 @@ export default function DashboardTopBar() {
               <Button
                 asChild
                 size='sm'
-                className='hidden h-10 rounded-md px-4 font-semibold md:inline-flex'
+                className='h-10 rounded-md px-4 font-semibold md:inline-flex'
               >
                 <Link href={createClassHref}>
                   <Sparkles className='h-4 w-4' />
