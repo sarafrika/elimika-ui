@@ -1,7 +1,12 @@
+'use client'
+
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { HelpSection } from '@/src/features/marketing/sections/PublicSections';
+import { Send } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '../../../../components/ui/button';
+import { SupportContactForm } from './SupportContactForm';
 
 const faqs = [
   {
@@ -20,6 +25,51 @@ const faqs = [
       'Courses listed in Elimika are vetted and mapped to accreditation requirements where applicable.',
   },
 ] as const;
+
+function ScrollHelpSection() {
+  return (
+    <section id='help' className='border-border/60 bg-muted/30 rounded-[28px] border p-8 shadow-sm'>
+      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+        <div className='space-y-2'>
+          <p className='text-primary text-xs font-semibold tracking-[0.3em] uppercase'>Help</p>
+          <h3 className='text-foreground text-2xl font-semibold'>Need support?</h3>
+          <p className='text-muted-foreground text-sm'>
+            Visit our help center or reach out for guidance on building your Skills Wallet, funding,
+            or employer access.
+          </p>
+        </div>
+        <div className='flex flex-wrap gap-3'>
+          <Button
+            asChild
+            className='rounded-full px-6'
+            variant='outline'
+          >
+            <Link href='/help'>
+              Help center
+            </Link>
+          </Button>
+          <Button
+            className='rounded-full px-6'
+            onClick={() => {
+              document
+                .getElementById('contact-support')
+                ?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            Contact support
+          </Button>
+          <a
+            href="mailto:support@yourapp.com?subject=Help%20Request"
+            className="inline-flex items-center justify-center rounded-full border border-border bg-background p-2 text-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Send support email"
+          >
+            <Send className="size-4" />
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export function MarketingHelpPage() {
   return (
@@ -43,7 +93,7 @@ export function MarketingHelpPage() {
           </div>
         </header>
 
-        <HelpSection />
+        <ScrollHelpSection />
 
         <Card className='border-border/60 bg-card/80 rounded-[28px] border shadow-md'>
           <CardHeader>
@@ -69,18 +119,27 @@ export function MarketingHelpPage() {
 
         <Separator />
 
-        <div className='border-border/60 bg-muted/30 rounded-[28px] border p-8 shadow-sm'>
+        <div
+          id='contact-support'
+          className='border-border/60 bg-muted/30 rounded-[28px] border p-8 shadow-sm'
+        >
           <p className='text-primary text-sm font-semibold tracking-[0.3em] uppercase'>
             Still stuck?
           </p>
+
           <p className='text-foreground mt-2 text-base'>
-            Reach out with context on your account, the page you were on, and any error messages you
-            saw.
+            Reach out with context on your account, the page you were on, and any error
+            messages you saw.
           </p>
+
           <p className='text-muted-foreground mt-2 text-sm'>
-            Our team responds during business hours and prioritises issues affecting access to
-            courses and funding.
+            Our team responds during business hours and prioritises issues affecting
+            access to courses and funding.
           </p>
+
+          <div className='mt-6'>
+            <SupportContactForm />
+          </div>
         </div>
       </main>
     </>

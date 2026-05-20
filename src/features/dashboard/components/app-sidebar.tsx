@@ -80,16 +80,16 @@ export function AppSidebar({
 
         <NavSecondary items={menu?.secondary ?? []} className='mt-auto' />
       </SidebarContent>
-      <SidebarFooter className='gap-3 mb-3'>
+      <SidebarFooter className='gap-3'>
         {/* <NavUser items={menu?.user ?? []} /> */}
 
         <SettingsSupportWidget
           href={activeDomain === 'admin' ? '/dashboard/support' : '/help'}
         />
 
-        <div className="flex justify-between rounded-md border border-border/70 bg-muted px-4 py-2 text-xs text-muted-foreground">
+        <div className="flex justify-between rounded-md border border-border/70 bg-muted/60 px-4 py-2 text-xs">
           <p>© 2026 Elimika.</p>
-          <p>V.1.0.0</p>
+          <p>v.1.0.0</p>
         </div>
       </SidebarFooter>
     </Sidebar>
