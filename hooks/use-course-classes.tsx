@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import {
   getClassDefinitionsForCourseOptions,
   getClassScheduleOptions,
@@ -18,8 +18,8 @@ import type { BundledClass } from '../src/features/dashboard/courses/types';
 
 type StudentLike =
   | {
-      uuid?: string | null;
-    }
+    uuid?: string | null;
+  }
   | null
   | undefined;
 
@@ -58,7 +58,7 @@ function useBundledClassInfo(
   const scheduleQueries = useQueries({
     queries:
       classes.map(cls => ({
-        ...getClassScheduleOptions({ path: { uuid: cls.uuid as string }, query: { pageable: {} } }),
+        ...getClassScheduleOptions({ path: { uuid: cls.uuid as string }, query: { pageable: { size: 1000 } } }),
         enabled: !!cls.course_uuid,
       })) || [],
   });

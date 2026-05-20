@@ -77,7 +77,6 @@ import {
   ClipboardList,
   ListChecks,
   Loader2,
-  MessageSquareText,
   PanelLeft,
   PanelRight,
   Pencil,
@@ -87,11 +86,11 @@ import {
   ShieldCheck,
   SquarePen,
   Trash2,
-  Video,
+  Video
 } from 'lucide-react';
 import moment from 'moment';
 import Link from 'next/link';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -874,12 +873,19 @@ function RosterPanel({
   onMarkAllPresent: () => void;
   isMarkingAllAttendance: boolean;
 }) {
+  const isSessionExpired = useMemo(() => {
+    if (!activeSchedule?.end_time) return false;
+    return new Date(activeSchedule.end_time).getTime() < Date.now();
+  }, [activeSchedule?.end_time]);
+
   const presentCount = activeInstanceStudents.filter(
     entry => getStudentAttendanceState(entry) === 'present'
   ).length;
+
   const absentCount = activeInstanceStudents.filter(
     entry => getStudentAttendanceState(entry) === 'absent'
   ).length;
+
   const pendingCount = activeInstanceStudents.filter(
     entry => getStudentAttendanceState(entry) === 'pending'
   ).length;
@@ -891,67 +897,107 @@ function RosterPanel({
   const absentPct = total ? (absentCount / total) * 100 : 0;
 
   return (
-    <div className='flex h-full min-h-0 flex-col'>
-      <div className='border-border/70 bg-card/90 space-y-3 border-b p-3'>
-        <div className='flex items-center justify-between gap-3'>
-          <div className='min-w-0'>
-            <p className='text-foreground text-sm font-semibold'>All Students</p>
-            <p className='text-muted-foreground text-xs'>Attendance rubric tracker</p>
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="border-border/70 bg-card/90 space-y-3 border-b p-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-foreground text-sm font-semibold">
+              All Students
+            </p>
+            <p className="text-muted-foreground text-xs">
+              Attendance rubric tracker
+            </p>
           </div>
-          <Badge variant='outline' className='bg-primary/5 text-primary'>
+
+          <Badge variant="outline" className="bg-primary/5 text-primary">
             {activeInstanceStudentsCount}
           </Badge>
         </div>
+
+        {/* MARK ALL PRESENT BUTTON */}
         <Button
-          size='sm'
-          variant='outline'
-          className='w-full'
-          disabled={isMarkingAllAttendance || pendingCount === 0}
+          size="sm"
+          variant="outline"
+          className="w-full"
+          disabled={
+            isMarkingAllAttendance ||
+            pendingCount === 0 ||
+            isSessionExpired
+          }
           onClick={onMarkAllPresent}
         >
           Mark All Present
         </Button>
-        <div className='relative'>
-          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+
+        {/* STATUS MESSAGE (NEW UX) */}
+        <div
+          className={`text-xs text-center leading-snug ${isSessionExpired ? 'text-destructive' : 'text-muted-foreground'
+            }`}
+        >
+          {isSessionExpired && (
+            <span>
+              Attendance window closed. This session has exceeded its scheduled end time.
+            </span>
+          )}
+        </div>
+
+        {/* SEARCH */}
+        <div className="relative">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             value={studentSearch}
             onChange={event => setStudentSearch(event.target.value)}
-            placeholder='Search students'
-            className='bg-background/80 h-9 rounded-md pl-9 text-sm'
+            placeholder="Search students"
+            className="bg-background/80 h-9 rounded-md pl-9 text-sm"
           />
         </div>
       </div>
-      <ScrollArea className='min-h-0 flex-1 bg-background'>
-        <div className='space-y-1.5 p-2'>
+
+      {/* ROSTER LIST */}
+      <ScrollArea className="min-h-0 flex-1 bg-background">
+        <div className="space-y-1.5 p-2">
           {filteredRoster.map((entry: RosterEntry) => {
             const attendanceState = getStudentAttendanceState(entry);
-            const isSelected = selectedStudentId === (entry.enrollment?.uuid ?? '');
+            const isSelected =
+              selectedStudentId === (entry.enrollment?.uuid ?? '');
 
             return (
               <button
-                type='button'
-                key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
+                type="button"
+                key={
+                  entry.enrollment?.uuid ??
+                  entry.user?.uuid ??
+                  entry.student?.uuid
+                }
                 onClick={() => onSelectStudent(entry)}
-                className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected ? 'border-primary/30 bg-primary/8' : 'hover:bg-primary/5 border-transparent'
+                className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected
+                  ? 'border-primary/30 bg-primary/8'
+                  : 'hover:bg-primary/5 border-transparent'
                   }`}
               >
-                <div className='flex items-start gap-2.5'>
-                  <Avatar className='border-border/60 size-8 border'>
+                <div className="flex items-start gap-2.5">
+                  <Avatar className="border-border/60 size-8 border">
                     <AvatarImage
                       src={entry.user?.profile_image_url ?? undefined}
                       alt={entry.user?.full_name || 'Student'}
                     />
-                    <AvatarFallback>{getInitials(entry.user?.full_name)}</AvatarFallback>
+                    <AvatarFallback>
+                      {getInitials(entry.user?.full_name)}
+                    </AvatarFallback>
                   </Avatar>
-                  <div className='min-w-0 flex-1'>
-                    <p className='truncate text-sm font-semibold'>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
                       {entry.user?.full_name || 'Unknown student'}
                     </p>
-                    <div className='text-muted-foreground mt-1 flex items-center justify-between gap-2 text-xs'>
-                      <span className='truncate'>
-                        {entry.enrollment?.is_attendance_marked ? 'Attended' : 'Attendance pending'}
+
+                    <div className="text-muted-foreground mt-1 flex items-center justify-between gap-2 text-xs">
+                      <span className="truncate">
+                        {entry.enrollment?.is_attendance_marked
+                          ? 'Attended'
+                          : 'Attendance pending'}
                       </span>
-                      <span className='capitalize'>{attendanceState}</span>
+                      <span className="capitalize">{attendanceState}</span>
                     </div>
                   </div>
                 </div>
@@ -960,7 +1006,7 @@ function RosterPanel({
           })}
 
           {filteredRoster.length === 0 && (
-            <div className='text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm'>
+            <div className="text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm">
               {activeSchedule
                 ? 'No learners are attached to this class instance yet.'
                 : 'No class instance was selected.'}
@@ -969,19 +1015,21 @@ function RosterPanel({
         </div>
       </ScrollArea>
 
-      <div className='border-border/70 bg-card/90 border-t p-3'>
-        <p className='text-xs text-muted-foreground mb-2'>Attendance rubric tracker</p>
+      {/* FOOTER STATS */}
+      <div className="border-border/70 bg-card/90 border-t p-3">
+        <p className="text-xs text-muted-foreground mb-2">
+          Attendance rubric tracker
+        </p>
 
-        <div className='grid grid-cols-2 items-center gap-3'>
-          {/* Donut */}
+        <div className="grid grid-cols-2 items-center gap-3">
           <div
             className="grid size-[72px] shrink-0 place-items-center rounded-full"
             style={{
               background: `conic-gradient(
-          color-mix(in srgb, var(--primary) 85%, var(--background)) 0 ${presentPct}%,
-          color-mix(in srgb, var(--warning) 70%, var(--background)) ${presentPct}% ${presentPct + pendingPct}%,
-          color-mix(in srgb, var(--destructive) 80%, var(--background)) ${presentPct + pendingPct}% 100%
-        )`,
+                color-mix(in srgb, var(--primary) 85%, var(--background)) 0 ${presentPct}%,
+                color-mix(in srgb, var(--warning) 70%, var(--background)) ${presentPct}% ${presentPct + pendingPct}%,
+                color-mix(in srgb, var(--destructive) 80%, var(--background)) ${presentPct + pendingPct}% 100%
+              )`,
             }}
           >
             <div className="grid size-[62px] place-items-center rounded-full bg-card text-center">
@@ -996,32 +1044,36 @@ function RosterPanel({
             </div>
           </div>
 
-          {/* Legend */}
-          <div className='flex flex-col gap-2 text-xs'>
-            <div className='flex items-center gap-4'>
-              <div className='flex items-center gap-2'>
-                <span className='h-2.5 w-2.5 rounded-sm bg-primary' />
-                <p className='text-muted-foreground'>Present</p>
+          <div className="flex flex-col gap-2 text-xs">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-sm bg-primary" />
+                <p className="text-muted-foreground">Present</p>
               </div>
-              <p className='font-semibold text-foreground'>{presentCount}</p>
+              <p className="font-semibold text-foreground">
+                {presentCount}
+              </p>
             </div>
 
-            <div className='flex items-center gap-4'>
-              <div className='flex items-center gap-2'>
-                <span className='h-2.5 w-2.5 rounded-sm bg-warning/70' />
-                <p className='text-muted-foreground'>Pending</p>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-sm bg-warning/70" />
+                <p className="text-muted-foreground">Pending</p>
               </div>
-              <p className='font-semibold text-foreground'>{pendingCount}</p>
+              <p className="font-semibold text-foreground">
+                {pendingCount}
+              </p>
             </div>
 
-            <div className='flex items-center gap-4'>
-              <div className='flex items-center gap-2'>
-                <span className='h-2.5 w-2.5 rounded-sm bg-destructive' />
-                <p className='text-muted-foreground'>Absent</p>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-sm bg-destructive" />
+                <p className="text-muted-foreground">Absent</p>
               </div>
-              <p className='font-semibold text-foreground'>{absentCount}</p>
+              <p className="font-semibold text-foreground">
+                {absentCount}
+              </p>
             </div>
-
           </div>
         </div>
       </div>
@@ -1083,12 +1135,36 @@ function SubmissionPanel({
     'submissions'
   );
   const selectedStudentAttendanceState = getStudentAttendanceState(selectedStudent);
-  const attendanceActionDisabled = isMarkingAttendance || !selectedStudent?.enrollment?.uuid;
   const panelTabs = [
     { value: 'submissions' as const, label: 'Submissions', icon: ClipboardCheck },
     { value: 'rubric' as const, label: 'Rubric', icon: ShieldCheck },
-    { value: 'notes' as const, label: 'Notes', icon: MessageSquareText },
+    // { value: 'notes' as const, label: 'Notes', icon: MessageSquareText },
   ];
+
+  const isSessionExpired = useMemo(() => {
+    if (!activeSchedule?.end_time) return false;
+    return new Date(activeSchedule.end_time).getTime() < Date.now();
+  }, [activeSchedule?.end_time]);
+
+  const attendanceActionDisabled =
+    isMarkingAttendance ||
+    !selectedStudent?.enrollment?.uuid ||
+    isSessionExpired;
+
+
+  const handleAttendanceClick = (entry: RosterEntry, attended: boolean) => {
+    if (isSessionExpired) {
+      toast({
+        title: 'Session ended',
+        description:
+          'This class session has elapsed. Attendance can no longer be recorded.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    onMarkAttendance(entry, attended);
+  };
 
   return (
     <aside className='bg-card/95 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden'>
@@ -1187,8 +1263,9 @@ function SubmissionPanel({
                 size='sm'
                 className='flex-1'
                 disabled={attendanceActionDisabled}
-                onClick={() => selectedStudent && onMarkAttendance(selectedStudent, true)}
-              >
+                onClick={() =>
+                  selectedStudent && handleAttendanceClick(selectedStudent, true)
+                }              >
                 Mark Present
               </Button>
               <Button
@@ -1196,11 +1273,18 @@ function SubmissionPanel({
                 variant='outline'
                 className='flex-1'
                 disabled={attendanceActionDisabled}
-                onClick={() => selectedStudent && onMarkAttendance(selectedStudent, false)}
-              >
+                onClick={() =>
+                  selectedStudent && handleAttendanceClick(selectedStudent, false)
+                }              >
                 Mark Absent
               </Button>
             </div>
+
+            {isSessionExpired ? (
+              <p className="text-xs text-destructive mt-2">
+                This class session has elapsed. Attendance is locked.
+              </p>
+            ) : null}
 
             {selectedStudent?.enrollment?.attendance_marked_at ? (
               <p className='text-muted-foreground mt-3 text-xs'>
@@ -1555,6 +1639,7 @@ export default function ClassTrainingPage({
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
   const classId = classIdProp ?? (params?.id as string);
   const requestedScheduleId = requestedScheduleIdProp ?? searchParams.get('schedule') ?? '';
@@ -1651,6 +1736,12 @@ export default function ClassTrainingPage({
     );
   }, [lessonsWithContent]);
 
+  const sortedLessonModules = useMemo(() => {
+    return [...lessonModules].sort(
+      (a, b) => (a.lesson.lesson_number ?? 0) - (b.lesson.lesson_number ?? 0)
+    );
+  }, [lessonModules]);
+
   const selectedCourseUuid = useMemo(() => {
     if (classData?.program_uuid) {
       return requestedCourseId || course?.uuid || programCourses[0]?.uuid || '';
@@ -1728,6 +1819,25 @@ export default function ClassTrainingPage({
     selectedContent && 'duration' in selectedContent
       ? String(selectedContent.duration || '')
       : '';
+
+  const handleContentChange = (contentId: string) => {
+    const module = lessonModules.find(m =>
+      m.content?.data?.some(c => c.uuid === contentId)
+    );
+
+    const lessonId = module?.lesson?.uuid;
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set('content', contentId);
+
+    if (lessonId) {
+      params.set('lesson', lessonId);
+    }
+
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
 
   const activeInstanceStudents = useMemo(
     () =>
@@ -2312,7 +2422,7 @@ export default function ClassTrainingPage({
         </div>
 
         <div className='hidden min-w-0 flex-1 justify-center md:flex'>
-          <div className='bg-muted/70 border-border/70 flex max-w-xl flex-1 items-center gap-2 rounded-full border px-3 py-2'>
+          <div className='bg-muted/70 border-border/70 flex max-w-xl flex-1 items-center gap-2 rounded-full border px-3 py-0.5'>
             <Search className='text-muted-foreground h-4 w-4 shrink-0' />
             <Input
               value={pageSearch}
@@ -2323,7 +2433,7 @@ export default function ClassTrainingPage({
                 }
               }}
               placeholder='Search this page...'
-              className='border-0 bg-transparent px-0 text-xs text-foreground placeholder:text-muted-foreground focus-visible:ring-0'
+              className='border-0 bg-transparent px-0 text-xs text-foreground placeholder:text-muted-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none'
             />
             <Button
               size='sm'
@@ -2386,6 +2496,7 @@ export default function ClassTrainingPage({
                 <SheetTitle>Class work</SheetTitle>
                 <SheetDescription>Submissions, rubric, and notes.</SheetDescription>
               </SheetHeader>
+
               <SubmissionPanel
                 activeSchedule={activeSchedule}
                 activeInstanceStudentsCount={activeInstanceStudents.length}
@@ -2450,7 +2561,7 @@ export default function ClassTrainingPage({
                   {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
                 </h2>
 
-                <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+                <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
                   <Tabs
                     value={activeTab}
                     onValueChange={value => setActiveTab(value as typeof activeTab)}
@@ -2469,25 +2580,33 @@ export default function ClassTrainingPage({
                     </TabsList>
                   </Tabs>
 
-                  <div className='flex items-center gap-3 lg:w-72 lg:justify-end'>
+                  <div className='flex flex-col items-start lg:w-72 lg:justify-end'>
                     <p className='text-muted-foreground text-sm'>Lesson</p>
                     <Select
                       value={selectedContentId}
-                      onValueChange={setSelectedContentId}
-                      disabled={activeLessonContents.length === 0}
+                      onValueChange={handleContentChange}
+                      disabled={lessonModules.length === 0}
                     >
-                      <SelectTrigger className='h-9 w-full lg:w-52'>
-                        <SelectValue placeholder='Select content' />
+                      <SelectTrigger className="h-9 w-full lg:min-w-52">
+                        <SelectValue placeholder="Select content" />
                       </SelectTrigger>
 
                       <SelectContent>
-                        {activeLessonContents.map((content, index) => (
-                          <SelectItem
-                            key={content.uuid ?? `content-${index}`}
-                            value={content.uuid ?? `content-${index}`}
-                          >
-                            {getContentTitle(content, index)}
-                          </SelectItem>
+                        {sortedLessonModules.map((module) => (
+                          <div key={module.lesson.uuid}>
+                            <div className="px-2 py-1 text-[13px] italic font-semibold text-muted-foreground bg-muted/60 rounded my-1 border border-muted">
+                              {module.lesson.title}
+                            </div>
+
+                            {module.content?.data
+                              ?.slice()
+                              .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                              .map((content) => (
+                                <SelectItem key={content.uuid} value={content.uuid}>
+                                  {content.title}
+                                </SelectItem>
+                              ))}
+                          </div>
                         ))}
                       </SelectContent>
                     </Select>

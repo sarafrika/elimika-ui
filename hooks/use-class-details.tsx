@@ -56,7 +56,7 @@ export const useClassDetails = (classId?: string) => {
   const { data: classScheduleData, isLoading: isLoadingSchedule } = useQuery({
     ...getClassScheduleOptions({
       path: { uuid: classId as string },
-      query: { pageable: {} },
+      query: { pageable: { size: 1000 } },
     }),
     enabled: !!classId,
   });

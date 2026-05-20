@@ -57,7 +57,7 @@ function useProgramBundledClassInfo(
   // Fetch schedules for each class
   const scheduleQueries = useQueries({
     queries: classes.map(cls => ({
-      ...getClassScheduleOptions({ path: { uuid: cls.uuid as string }, query: { pageable: {} } }),
+      ...getClassScheduleOptions({ path: { uuid: cls.uuid as string }, query: { pageable: { size: 1000 } } }),
       enabled: !!cls.uuid,
     })),
   });
