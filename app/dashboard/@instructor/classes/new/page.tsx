@@ -1553,8 +1553,16 @@ const NewClassCreationPage = () => {
                     </div>
 
                     <div className='flex flex-wrap gap-6'>
+
                       {/* Left: Day-time grid */}
-                      <div className='min-w-[320px] flex-1'>
+                      <div className='min-w-[320px] flex-1 flex-wrap gap-2'>
+                        <div className='mb-2'>
+                          <p className='text-foreground mb-2 text-xs font-semibold'>
+                            Default Times <span className='text-muted-foreground font-normal'>(applied to new selections)</span>
+                          </p>
+                          {SharedTimeFields}
+                        </div>
+
                         {DayTimeGrid}
                       </div>
 
@@ -1766,7 +1774,14 @@ const NewClassCreationPage = () => {
 
                     <div className='flex flex-wrap gap-6'>
                       {/* Left: Day-time grid */}
-                      <div className='min-w-[320px] flex-1'>
+                      <div className='min-w-[320px] flex-1 flex-wrap gap-2'>
+                        <div className='mb-2'>
+                          <p className='text-foreground mb-2 text-xs font-semibold'>
+                            Default Times <span className='text-muted-foreground font-normal'>(applied to new selections)</span>
+                          </p>
+                          {SharedTimeFields}
+                        </div>
+
                         {DayTimeGrid}
                       </div>
 
