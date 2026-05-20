@@ -84,15 +84,15 @@ const schedulePresetOptions = [
 ] as const;
 
 const CLASS_COLOR_OPTIONS = [
-  { label: 'Brand', value: 'var(--color-brand)' },
-  { label: 'Azure', value: 'var(--color-azure)' },
-  { label: 'Amber', value: 'var(--color-amber)' },
-  { label: 'Iris', value: 'var(--color-iris)' },
-  { label: 'Jade', value: 'var(--color-jade)' },
-  { label: 'Success', value: 'var(--color-success)' },
-  { label: 'Warning', value: 'var(--color-warning)' },
-  { label: 'Destructive', value: 'var(--color-destructive)' },
-  { label: 'Muted', value: 'var(--color-muted)' },
+  { label: 'Brand', value: '#2563EB' },
+  { label: 'Azure', value: '#0EA5E9' },
+  { label: 'Amber', value: '#F59E0B' },
+  { label: 'Iris', value: '#8B5CF6' },
+  { label: 'Jade', value: '#10B981' },
+  { label: 'Success', value: '#22C55E' },
+  { label: 'Warning', value: '#F97316' },
+  { label: 'Destructive', value: '#EF4444' },
+  { label: 'Muted', value: '#6B7280' },
 ] as const;
 
 type SchedulePreset = (typeof schedulePresetOptions)[number]['key'];
@@ -754,14 +754,14 @@ const NewClassCreationPage = () => {
       toast.error('Please enter a location'); return false;
     }
 
-    if (schedulePreset === 'standard') {
-      if (!scheduleSettings.startClass.date || !scheduleSettings.startClass.startTime || !scheduleSettings.startClass.endTime) {
-        toast.error('Please fill in the schedule fields'); return false;
-      }
-      if (!scheduleSettings.endRepeat) {
-        toast.error('Please set an end repeat date'); return false;
-      }
-    }
+    // if (schedulePreset === 'standard') {
+    //   if (!scheduleSettings.startClass.date || !scheduleSettings.startClass.startTime || !scheduleSettings.startClass.endTime) {
+    //     toast.error('Please fill in the schedule fields'); return false;
+    //   }
+    //   if (!scheduleSettings.endRepeat) {
+    //     toast.error('Please set an end repeat date'); return false;
+    //   }
+    // }
 
     if (schedulePreset === 'pick-dates' && pickedDates.length === 0) {
       toast.error('Please select at least one date'); return false;
@@ -991,6 +991,12 @@ const NewClassCreationPage = () => {
   const normalizedLocationType = normalizeLocationType(classDetails.location_type);
   const showMeetingLink = normalizedLocationType === 'ONLINE' || normalizedLocationType === 'HYBRID';
 
+  const hasValidTime =
+    Boolean(scheduleSettings.startClass.startTime) &&
+    Boolean(scheduleSettings.startClass.endTime);
+
+
+
   const previewData: ClassCreationPreviewData = {
     classTitle: classDetails.title || selectedCatalogItem?.label || 'Class title',
     classTypeLabel: formatClassType(classDetails.class_type),
@@ -1002,12 +1008,14 @@ const NewClassCreationPage = () => {
         ? `${pickedDates.length} selected date${pickedDates.length === 1 ? '' : 's'}`
         : schedulePreset === 'standard' && scheduleSettings.startClass.date
           ? `Every ${new Date(`${scheduleSettings.startClass.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' })}`
-          : 'Schedule pending',
-    timeLabel: formatScheduleTime(
-      scheduleSettings.startClass.startTime,
-      scheduleSettings.startClass.endTime,
-      scheduleSettings.allDay
-    ),
+          : '',
+    timeLabel: hasValidTime
+      ? formatScheduleTime(
+        scheduleSettings.startClass.startTime,
+        scheduleSettings.startClass.endTime,
+        scheduleSettings.allDay
+      )
+      : '',
     durationLabel: `${sessionDuration || 0} ${sessionDuration === 1 ? 'Hour' : 'Hours'}`,
     pricePerSessionLabel: `${rateCard?.currency || 'KES'} ${feePerSession.toLocaleString()}`,
     totalSessionsLabel: `${totalSessions} Session${totalSessions === 1 ? '' : 's'}`,
@@ -1035,9 +1043,10 @@ const NewClassCreationPage = () => {
 
   const normalizeTime = (time?: string) => {
     if (!time) return '';
-    if (/^\d{2}:\d{2}$/.test(time)) return time;
-    const [h = '0', m = '0'] = time.split(':');
-    return `${String(Number(h)).padStart(2, '0')}:${String(Number(m)).padStart(2, '0')}`;
+
+    const [hour = '00', minute = '00'] = time.split(':');
+
+    return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
   };
 
   // ── Day-time grid (Mon–Sun rows with Start/End time per day) ──────────────
@@ -1333,7 +1342,7 @@ const NewClassCreationPage = () => {
         <FieldGroup label='Default Start Time *'>
           <Input
             type='time'
-            value={normalizeTime(scheduleSettings.startClass.startTime)}
+            value={normalizeTime(scheduleSettings.startClass.startTime) || ''}
             disabled={scheduleSettings.allDay}
             onChange={e =>
               setScheduleSettings(prev => ({
@@ -1351,7 +1360,7 @@ const NewClassCreationPage = () => {
         <FieldGroup label='Default End Time *'>
           <Input
             type='time'
-            value={normalizeTime(scheduleSettings.startClass.endTime)}
+            value={normalizeTime(scheduleSettings.startClass.endTime) || ''}
             disabled={scheduleSettings.allDay}
             onChange={e =>
               setScheduleSettings(prev => ({

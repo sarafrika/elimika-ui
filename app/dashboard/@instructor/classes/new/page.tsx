@@ -84,15 +84,15 @@ const schedulePresetOptions = [
 ] as const;
 
 const CLASS_COLOR_OPTIONS = [
-  { label: 'Brand', value: 'var(--color-brand)' },
-  { label: 'Azure', value: 'var(--color-azure)' },
-  { label: 'Amber', value: 'var(--color-amber)' },
-  { label: 'Iris', value: 'var(--color-iris)' },
-  { label: 'Jade', value: 'var(--color-jade)' },
-  { label: 'Success', value: 'var(--color-success)' },
-  { label: 'Warning', value: 'var(--color-warning)' },
-  { label: 'Destructive', value: 'var(--color-destructive)' },
-  { label: 'Muted', value: 'var(--color-muted)' },
+  { label: 'Brand', value: '#2563EB' },
+  { label: 'Azure', value: '#0EA5E9' },
+  { label: 'Amber', value: '#F59E0B' },
+  { label: 'Iris', value: '#8B5CF6' },
+  { label: 'Jade', value: '#10B981' },
+  { label: 'Success', value: '#22C55E' },
+  { label: 'Warning', value: '#F97316' },
+  { label: 'Destructive', value: '#EF4444' },
+  { label: 'Muted', value: '#6B7280' },
 ] as const;
 
 type SchedulePreset = (typeof schedulePresetOptions)[number]['key'];
@@ -225,16 +225,6 @@ const buildDateFromInput = (date: string) => {
   return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
 };
 
-const parseCoordinate = (value: string) => {
-  if (!value.trim()) return undefined;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : undefined;
-};
-
-/**
- * Calculates the total number of session occurrences between startDate and endDate
- * based on the recurrence rule.
- */
 const calculateOccurrences = (
   startDate: string,
   endDate: string,
@@ -266,18 +256,12 @@ const calculateOccurrences = (
       weekStart.setDate(weekStart.getDate() + daysToMon);
 
       while (weekStart <= end) {
-        const daysToCheck = selectedDays?.length
-          ? selectedDays
-          : [0, 1, 2, 3, 4, 5, 6];
-
+        const daysToCheck = selectedDays?.length ? selectedDays : [0, 1, 2, 3, 4, 5, 6];
         for (const dayIdx of daysToCheck) {
           const candidate = new Date(weekStart);
           candidate.setDate(weekStart.getDate() + dayIdx);
-          if (candidate >= start && candidate <= end) {
-            occurrences++;
-          }
+          if (candidate >= start && candidate <= end) occurrences++;
         }
-
         weekStart.setDate(weekStart.getDate() + 7 * repeatInterval);
       }
       break;
@@ -306,26 +290,12 @@ const calculateOccurrences = (
 };
 
 const buildUtcIsoDateTime = (date?: string, time?: string) => {
-  if (!date) {
-    throw new Error('Missing date');
-  }
-
-  if (!time) {
-    throw new Error(`Missing time for date: ${date}`);
-  }
-
-  // Supports HH:mm
-  const normalizedTime =
-    time.length === 5 ? `${time}:00` : time;
-
+  if (!date) throw new Error('Missing date');
+  if (!time) throw new Error(`Missing time for date: ${date}`);
+  const normalizedTime = time.length === 5 ? `${time}:00` : time;
   const isoString = `${date}T${normalizedTime}Z`;
-
   const parsed = new Date(isoString);
-
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error(`Invalid datetime: ${isoString}`);
-  }
-
+  if (Number.isNaN(parsed.getTime())) throw new Error(`Invalid datetime: ${isoString}`);
   return parsed.toISOString();
 };
 
@@ -344,16 +314,14 @@ const formatLectureType = (value?: string | null) => {
 
 const formatScheduleTime = (start?: string, end?: string, allDay?: boolean) => {
   if (allDay) return 'All Day';
-  if (!start || !end) return '10:00 AM - 12:00 PM';
+  if (!start || !end) return '';
   return `${start} - ${end}`;
 };
 
 const getMutationErrorMessage = (error: unknown, fallback: string) => {
   if (error && typeof error === 'object' && 'message' in error) {
     const { message } = error as { message?: unknown };
-    if (typeof message === 'string' && message.trim().length > 0) {
-      return message;
-    }
+    if (typeof message === 'string' && message.trim().length > 0) return message;
   }
   return fallback;
 };
@@ -363,15 +331,10 @@ const getRepeatSummary = (scheduleSettings: ScheduleSettings) => {
   const interval = scheduleSettings.repeat.interval || 1;
 
   if (scheduleSettings.repeat.unit === 'week') {
-    const intervalLabel =
-      interval > 1 ? `Every ${interval} weeks` : 'Weekly';
-
+    const intervalLabel = interval > 1 ? `Every ${interval} weeks` : 'Weekly';
     if (days.length > 0) {
-      return `${intervalLabel}\n${days
-        .map(d => DAY_SHORT[d] ?? 'Mon')
-        .join(', ')}`;
+      return `${intervalLabel}\n${days.map(d => DAY_SHORT[d] ?? 'Mon').join(', ')}`;
     }
-
     return intervalLabel;
   }
 
@@ -403,14 +366,7 @@ const NewClassCreationPage = () => {
   const [allowWaitlist, setAllowWaitlist] = useState(true);
   const [locationLatitude, setLocationLatitude] = useState('');
   const [locationLongitude, setLocationLongitude] = useState('');
-  // pick-dates preset
-  const [pickedDates, setPickedDates] = useState<
-    {
-      date: string;
-      startTime: string;
-      endTime: string;
-    }[]
-  >([]);
+  const [pickedDates, setPickedDates] = useState<{ date: string; startTime: string; endTime: string }[]>([]);
 
   const classDetailsCardRef = useRef<HTMLDivElement | null>(null);
 
@@ -424,10 +380,7 @@ const NewClassCreationPage = () => {
   const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
   const { data: appliedCourses } = useQuery({
     ...searchTrainingApplicationsOptions({
-      query: {
-        pageable: {},
-        searchParams: { applicant_uuid_eq: instructor?.uuid as string },
-      },
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
     }),
     enabled: !!instructor?.uuid,
   });
@@ -446,10 +399,7 @@ const NewClassCreationPage = () => {
   const { data: programs } = useQuery(getAllTrainingProgramsOptions({ query: { pageable: {} } }));
   const { data: appliedPrograms } = useQuery({
     ...searchProgramTrainingApplicationsOptions({
-      query: {
-        pageable: {},
-        searchParams: { applicant_uuid_eq: instructor?.uuid as string },
-      },
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
     }),
     enabled: !!instructor?.uuid,
   });
@@ -498,20 +448,32 @@ const NewClassCreationPage = () => {
     if (!rateCard || !classDetails.class_type || !classDetails.location_type) return 0;
     const classType = classDetails.class_type === 'PRIVATE' ? 'private' : 'group';
     const locationType =
-      classDetails.location_type === 'ONLINE'
-        ? 'online'
-        : classDetails.location_type === 'IN_PERSON'
-          ? 'inperson'
-          : 'inperson';
+      classDetails.location_type === 'ONLINE' ? 'online' : 'inperson';
     const rateKey = `${classType}_${locationType}_rate`;
     return Number(rateCard[rateKey] ?? 0);
   }, [classDetails.class_type, classDetails.location_type, rateCard]);
 
-  const sessionDuration = calculateSessionHours(
-    scheduleSettings.startClass.startTime,
-    scheduleSettings.startClass.endTime,
-    scheduleSettings.allDay
-  );
+  // ── Derive session duration from first available day's times ───────────────
+  // For standard/academic: use the first selected day's (possibly overridden) times.
+  // For pick-dates: use the first picked date's times.
+  const sessionDuration = useMemo(() => {
+    if (scheduleSettings.allDay) return 24;
+
+    if (schedulePreset === 'pick-dates') {
+      if (pickedDates.length === 0) return 0;
+      const first = pickedDates[0];
+      return calculateSessionHours(first?.startTime, first?.endTime, false);
+    }
+
+    // standard or academic-period — use the lowest-index selected day
+    const sortedDays = [...(scheduleSettings.repeat.days || [])].sort((a, b) => a - b);
+    if (sortedDays.length === 0) return 0;
+    const firstDayIdx = sortedDays[0]!;
+    const override = scheduleSettings.weeklyDayTimes[firstDayIdx];
+    const startTime = override?.startTime || scheduleSettings.startClass.startTime || '';
+    const endTime = override?.endTime || scheduleSettings.startClass.endTime || '';
+    return calculateSessionHours(startTime, endTime, false);
+  }, [schedulePreset, scheduleSettings, pickedDates]);
 
   const totalSessions = useMemo(() => {
     if (schedulePreset === 'standard') {
@@ -523,10 +485,7 @@ const NewClassCreationPage = () => {
         scheduleSettings.repeat.days
       );
     }
-    if (schedulePreset === 'pick-dates') {
-      return pickedDates.length;
-    }
-    // academic-period
+    if (schedulePreset === 'pick-dates') return pickedDates.length;
     return calculateOccurrences(
       scheduleSettings.academicPeriod.start,
       scheduleSettings.academicPeriod.end,
@@ -540,29 +499,25 @@ const NewClassCreationPage = () => {
   const totalAmount = feePerSession * Math.max(totalSessions, 1);
 
   const rateSummary: ClassCreationRateSummary | null = ratePerHour
-    ? {
-      currency: rateCard?.currency as string | undefined,
-      label: selectedCatalogItem?.label,
-      ratePerHour,
-    }
+    ? { currency: rateCard?.currency as string | undefined, label: selectedCatalogItem?.label, ratePerHour }
     : null;
 
-  // When default times change in pick-dates mode, apply them to dates that have no custom time yet
-  useEffect(() => {
-    if (schedulePreset !== 'pick-dates' || pickedDates.length === 0) return;
-
-    setPickedDates(prev =>
-      prev.map(item => ({
-        ...item,
-        startTime: item.startTime || scheduleSettings.startClass.startTime || '09:00',
-        endTime: item.endTime || scheduleSettings.startClass.endTime || '10:00',
-      }))
-    );
-  }, [
-    schedulePreset,
-    scheduleSettings.startClass.startTime,
-    scheduleSettings.startClass.endTime,
-  ]);
+  // ── Derive the display time label from the first day/date for the preview ──
+  const firstSessionTimeLabel = useMemo(() => {
+    if (scheduleSettings.allDay) return 'All Day';
+    if (schedulePreset === 'pick-dates') {
+      if (pickedDates.length === 0) return '';
+      const first = pickedDates[0];
+      return formatScheduleTime(first?.startTime, first?.endTime, false);
+    }
+    const sortedDays = [...(scheduleSettings.repeat.days || [])].sort((a, b) => a - b);
+    if (sortedDays.length === 0) return '';
+    const firstDayIdx = sortedDays[0]!;
+    const override = scheduleSettings.weeklyDayTimes[firstDayIdx];
+    const startTime = override?.startTime || scheduleSettings.startClass.startTime || '';
+    const endTime = override?.endTime || scheduleSettings.startClass.endTime || '';
+    return formatScheduleTime(startTime, endTime, false);
+  }, [schedulePreset, scheduleSettings, pickedDates]);
 
   // ── Draft restore ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -582,10 +537,7 @@ const NewClassCreationPage = () => {
       };
       if (parsed.classDetails) {
         const saved = parsed.classDetails;
-        setClassDetails(prev => ({
-          ...prev, ...saved,
-          location_type: normalizeLocationType(saved.location_type),
-        }));
+        setClassDetails(prev => ({ ...prev, ...saved, location_type: normalizeLocationType(saved.location_type) }));
       }
       if (parsed.scheduleSettings) {
         setScheduleSettings(prev => ({
@@ -616,38 +568,19 @@ const NewClassCreationPage = () => {
   // ── Draft save ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (resolvedId || !isDataInitialized || typeof window === 'undefined') return;
-
     const timeout = window.setTimeout(() => {
       window.localStorage.setItem(
         LOCAL_CLASS_DRAFT_KEY,
         JSON.stringify({
-          classDetails,
-          scheduleSettings,
-          notificationSettings,
-          schedulePreset,
-          allowWaitlist,
-          locationLatitude,
-          locationLongitude,
-          pickedDates,
+          classDetails, scheduleSettings, notificationSettings, schedulePreset,
+          allowWaitlist, locationLatitude, locationLongitude, pickedDates,
           savedAt: new Date().toISOString(),
         })
       );
       setDraftSavedTick(prev => prev + 1);
     }, 500);
-
     return () => window.clearTimeout(timeout);
-  }, [
-    classDetails,
-    scheduleSettings,
-    notificationSettings,
-    schedulePreset,
-    allowWaitlist,
-    locationLatitude,
-    locationLongitude,
-    pickedDates,
-    resolvedId,
-    isDataInitialized,
-  ]);
+  }, [classDetails, scheduleSettings, notificationSettings, schedulePreset, allowWaitlist, locationLatitude, locationLongitude, pickedDates, resolvedId, isDataInitialized]);
 
   // ── Edit-mode hydration ────────────────────────────────────────────────────
   useEffect(() => {
@@ -669,9 +602,7 @@ const NewClassCreationPage = () => {
         program_uuid: classRecord.program_uuid ?? null,
         title: classRecord.title || '',
         description: classRecord.description || '',
-        categories: Array.isArray(classRecord.categories)
-          ? classRecord.categories
-          : classRecord.categories ? [classRecord.categories] : [],
+        categories: Array.isArray(classRecord.categories) ? classRecord.categories : classRecord.categories ? [classRecord.categories] : [],
         class_type: classRecord.class_visibility || 'PUBLIC',
         location_type: normalizeLocationType(classRecord.location_type),
         rate_card: classRecord.rate_card || classRecord.training_fee || '',
@@ -698,21 +629,13 @@ const NewClassCreationPage = () => {
         setScheduleSettings(prev => ({
           ...prev,
           academicPeriod: {
-            start: classRecord.academic_period_start_date
-              ? new Date(classRecord.academic_period_start_date).toISOString().slice(0, 10)
-              : prev.academicPeriod.start,
-            end: classRecord.academic_period_end_date
-              ? new Date(classRecord.academic_period_end_date).toISOString().slice(0, 10)
-              : prev.academicPeriod.end,
+            start: classRecord.academic_period_start_date ? new Date(classRecord.academic_period_start_date).toISOString().slice(0, 10) : prev.academicPeriod.start,
+            end: classRecord.academic_period_end_date ? new Date(classRecord.academic_period_end_date).toISOString().slice(0, 10) : prev.academicPeriod.end,
           },
           registrationPeriod: {
             ...prev.registrationPeriod,
-            start: classRecord.registration_period_start_date
-              ? new Date(classRecord.registration_period_start_date).toISOString().slice(0, 10)
-              : prev.registrationPeriod.start,
-            end: classRecord.registration_period_end_date
-              ? new Date(classRecord.registration_period_end_date).toISOString().slice(0, 10)
-              : prev.registrationPeriod.end,
+            start: classRecord.registration_period_start_date ? new Date(classRecord.registration_period_start_date).toISOString().slice(0, 10) : prev.registrationPeriod.start,
+            end: classRecord.registration_period_end_date ? new Date(classRecord.registration_period_end_date).toISOString().slice(0, 10) : prev.registrationPeriod.end,
           },
         }));
       }
@@ -753,29 +676,14 @@ const NewClassCreationPage = () => {
     if (requiresPhysicalLocation(locationType) && !trimToUndefined(classDetails.location_name)) {
       toast.error('Please enter a location'); return false;
     }
-
-    if (schedulePreset === 'standard') {
-      if (!scheduleSettings.startClass.date || !scheduleSettings.startClass.startTime || !scheduleSettings.startClass.endTime) {
-        toast.error('Please fill in the schedule fields'); return false;
-      }
-      if (!scheduleSettings.endRepeat) {
-        toast.error('Please set an end repeat date'); return false;
-      }
-    }
-
     if (schedulePreset === 'pick-dates' && pickedDates.length === 0) {
       toast.error('Please select at least one date'); return false;
     }
-
     if (schedulePreset === 'academic-period') {
       if (!scheduleSettings.academicPeriod.start || !scheduleSettings.academicPeriod.end) {
         toast.error('Please set the academic period dates'); return false;
       }
-      if (!scheduleSettings.startClass.startTime || !scheduleSettings.startClass.endTime) {
-        toast.error('Please set the class start and end times'); return false;
-      }
     }
-
     return true;
   };
 
@@ -788,86 +696,75 @@ const NewClassCreationPage = () => {
     const selectedSource: CatalogSource =
       selectedCatalogItem?.source || (classDetails.program_uuid ? 'program' : 'course');
 
-    const startTime = scheduleSettings.allDay ? '00:00' : scheduleSettings.startClass.startTime || '00:00';
-    const endTime = scheduleSettings.allDay ? '23:59' : scheduleSettings.startClass.endTime || '23:59';
     const academicPeriodStart = buildDateFromInput(scheduleSettings.academicPeriod.start);
     const academicPeriodEnd = buildDateFromInput(scheduleSettings.academicPeriod.end);
     const registrationPeriodStart = buildDateFromInput(scheduleSettings.registrationPeriod.start);
     const registrationPeriodEnd = buildDateFromInput(scheduleSettings.registrationPeriod.end);
 
-    const daysOfWeekString = (scheduleSettings.repeat.days || [])
-      .slice()
-      .sort()
-      .map(idx => DAY_NAMES[idx])
-      .join(',') || undefined;
-
     const totalOccurrences = totalSessions || 1;
 
     let referenceDate = scheduleSettings.startClass.date;
-    if (schedulePreset === 'academic-period') {
-      referenceDate = scheduleSettings.academicPeriod.start;
-    }
+    if (schedulePreset === 'academic-period') referenceDate = scheduleSettings.academicPeriod.start;
 
-    const startTimeIso = buildUtcIsoDateTime(referenceDate, startTime);
-    const endTimeIso = buildUtcIsoDateTime(referenceDate, endTime);
+    // Determine a representative default start/end time from the first selected day (for payload fields)
+    const getDefaultTimes = () => {
+      if (scheduleSettings.allDay) return { startTime: '00:00', endTime: '23:59' };
+      const sortedDays = [...(scheduleSettings.repeat.days || [])].sort((a, b) => a - b);
+      if (sortedDays.length > 0) {
+        const firstIdx = sortedDays[0]!;
+        const override = scheduleSettings.weeklyDayTimes[firstIdx];
+        return {
+          startTime: override?.startTime || scheduleSettings.startClass.startTime || '00:00',
+          endTime: override?.endTime || scheduleSettings.startClass.endTime || '23:59',
+        };
+      }
+      return {
+        startTime: scheduleSettings.startClass.startTime || '00:00',
+        endTime: scheduleSettings.startClass.endTime || '23:59',
+      };
+    };
+
+    const { startTime: defaultStart, endTime: defaultEnd } = getDefaultTimes();
 
     let session_templates: CreateClassDefinitionData['body']['session_templates'];
 
     if (schedulePreset === 'pick-dates') {
-      // One template per individually picked date, using that date's own start/end times
       session_templates = pickedDates
         .slice()
         .sort((a, b) => a.date.localeCompare(b.date))
         .map(item => {
-          const effectiveStartTime = scheduleSettings.allDay
-            ? '00:00'
-            : item.startTime ?? startTime ?? '00:00';
-
-          const effectiveEndTime = scheduleSettings.allDay
-            ? '23:59'
-            : item.endTime ?? endTime ?? '23:59';
-
+          const effectiveStartTime = scheduleSettings.allDay ? '00:00' : (item.startTime ?? '00:00');
+          const effectiveEndTime = scheduleSettings.allDay ? '23:59' : (item.endTime ?? '23:59');
           return {
-            start_time: new Date(
-              buildUtcIsoDateTime(item.date, effectiveStartTime)
-            ),
-
-            end_time: new Date(
-              buildUtcIsoDateTime(item.date, effectiveEndTime)
-            ),
-
+            start_time: new Date(buildUtcIsoDateTime(item.date, effectiveStartTime)),
+            end_time: new Date(buildUtcIsoDateTime(item.date, effectiveEndTime)),
             recurrence: {
               recurrence_type: RecurrenceTypeEnum.DAILY,
               interval_value: 1,
               days_of_week: undefined,
               occurrence_count: 1,
             },
-
             conflict_resolution: ConflictResolutionEnum.FAIL,
           };
         });
     } else {
-      // Standard or academic-period: single recurrence template
       const recurrenceType =
-        scheduleSettings.repeat.unit === 'day'
-          ? RecurrenceTypeEnum.DAILY
-          : scheduleSettings.repeat.unit === 'week'
-            ? RecurrenceTypeEnum.WEEKLY
-            : scheduleSettings.repeat.unit === 'month'
-              ? RecurrenceTypeEnum.MONTHLY
+        scheduleSettings.repeat.unit === 'day' ? RecurrenceTypeEnum.DAILY
+          : scheduleSettings.repeat.unit === 'week' ? RecurrenceTypeEnum.WEEKLY
+            : scheduleSettings.repeat.unit === 'month' ? RecurrenceTypeEnum.MONTHLY
               : RecurrenceTypeEnum.YEARLY;
 
       if (scheduleSettings.repeat.unit === 'week') {
         session_templates = (scheduleSettings.repeat.days || []).map(dayIndex => {
           const override = scheduleSettings.weeklyDayTimes[dayIndex];
-          const effectiveStartTime = override?.startTime || startTime;
-          const effectiveEndTime = override?.endTime || endTime;
+          const effectiveStartTime = scheduleSettings.allDay ? '00:00' : (override?.startTime || scheduleSettings.startClass.startTime || '00:00');
+          const effectiveEndTime = scheduleSettings.allDay ? '23:59' : (override?.endTime || scheduleSettings.startClass.endTime || '23:59');
 
           const startDateObj = new Date(referenceDate);
           while (((startDateObj.getDay() + 6) % 7) !== dayIndex) {
             startDateObj.setDate(startDateObj.getDate() + 1);
           }
-          const sessionDate = startDateObj.toISOString().split('T')[0];
+          const sessionDate = startDateObj.toISOString().split('T')[0]!;
 
           return {
             start_time: new Date(buildUtcIsoDateTime(sessionDate, effectiveStartTime)),
@@ -882,21 +779,33 @@ const NewClassCreationPage = () => {
           };
         });
       } else {
-        session_templates = [
-          {
-            start_time: new Date(startTimeIso),
-            end_time: new Date(endTimeIso),
-            recurrence: {
-              recurrence_type: recurrenceType,
-              interval_value: scheduleSettings.repeat.interval,
-              days_of_week: daysOfWeekString,
-              occurrence_count: totalOccurrences,
-            },
-            conflict_resolution: ConflictResolutionEnum.FAIL,
+        const startTimeIso = buildUtcIsoDateTime(referenceDate, defaultStart);
+        const endTimeIso = buildUtcIsoDateTime(referenceDate, defaultEnd);
+        const daysOfWeekString = (scheduleSettings.repeat.days || []).slice().sort().map(idx => DAY_NAMES[idx]).join(',') || undefined;
+        session_templates = [{
+          start_time: new Date(startTimeIso),
+          end_time: new Date(endTimeIso),
+          recurrence: {
+            recurrence_type: recurrenceType,
+            interval_value: scheduleSettings.repeat.interval,
+            days_of_week: daysOfWeekString,
+            occurrence_count: totalOccurrences,
           },
-        ];
+          conflict_resolution: ConflictResolutionEnum.FAIL,
+        }];
       }
     }
+
+    // For payload default_start_time / default_end_time use first picked date or reference date
+    const payloadRefDate = schedulePreset === 'pick-dates' && pickedDates.length > 0
+      ? pickedDates[0]!.date
+      : referenceDate;
+    const payloadStartTime = schedulePreset === 'pick-dates' && pickedDates.length > 0
+      ? (scheduleSettings.allDay ? '00:00' : (pickedDates[0]!.startTime || '00:00'))
+      : defaultStart;
+    const payloadEndTime = schedulePreset === 'pick-dates' && pickedDates.length > 0
+      ? (scheduleSettings.allDay ? '23:59' : (pickedDates[0]!.endTime || '23:59'))
+      : defaultEnd;
 
     const payload: CreateClassDefinitionData['body'] = {
       course_uuid: selectedSource === 'course' ? classDetails.course_uuid || undefined : undefined,
@@ -921,22 +830,16 @@ const NewClassCreationPage = () => {
       training_fee: ratePerHour,
       allow_waitlist: true,
       is_active: !isDraft,
-      default_start_time: new Date(startTimeIso),
-      default_end_time: new Date(endTimeIso),
+      default_start_time: new Date(buildUtcIsoDateTime(payloadRefDate, payloadStartTime)),
+      default_end_time: new Date(buildUtcIsoDateTime(payloadRefDate, payloadEndTime)),
       meeting_link: meetingLinkAllowed ? trimToUndefined(classDetails.meeting_link) : undefined,
       session_templates,
     };
 
     const onSuccess = () => {
-      qc.invalidateQueries({
-        queryKey: getClassDefinitionsForInstructorQueryKey({
-          path: { instructorUuid: instructor?.uuid as string },
-        }),
-      });
+      qc.invalidateQueries({ queryKey: getClassDefinitionsForInstructorQueryKey({ path: { instructorUuid: instructor?.uuid as string } }) });
       qc.invalidateQueries({ queryKey: getAllClassDefinitionsQueryKey({ query: { pageable: {} } }) });
-      if (resolvedId) {
-        qc.invalidateQueries({ queryKey: getClassDefinitionQueryKey({ path: { uuid: resolvedId } }) });
-      }
+      if (resolvedId) qc.invalidateQueries({ queryKey: getClassDefinitionQueryKey({ path: { uuid: resolvedId } }) });
       if (typeof window !== 'undefined') window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
       toast.success(isDraft ? 'Class saved as draft' : resolvedId ? 'Class updated successfully' : 'Class created successfully');
       router.push('/dashboard/classes');
@@ -968,9 +871,7 @@ const NewClassCreationPage = () => {
   };
 
   const clearDraft = () => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
-    }
+    if (typeof window !== 'undefined') window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
     setClassDetails(createInitialClassDetails(instructor?.full_name));
     setScheduleSettings(createInitialScheduleSettings());
     setNotificationSettings(createInitialNotificationSettings());
@@ -1001,13 +902,9 @@ const NewClassCreationPage = () => {
       schedulePreset === 'pick-dates'
         ? `${pickedDates.length} selected date${pickedDates.length === 1 ? '' : 's'}`
         : schedulePreset === 'standard' && scheduleSettings.startClass.date
-          ? `Every ${new Date(`${scheduleSettings.startClass.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' })}`
-          : 'Schedule pending',
-    timeLabel: formatScheduleTime(
-      scheduleSettings.startClass.startTime,
-      scheduleSettings.startClass.endTime,
-      scheduleSettings.allDay
-    ),
+          ? `Start ${new Date(`${scheduleSettings.startClass.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' })}`
+          : '',
+    timeLabel: firstSessionTimeLabel,
     durationLabel: `${sessionDuration || 0} ${sessionDuration === 1 ? 'Hour' : 'Hours'}`,
     pricePerSessionLabel: `${rateCard?.currency || 'KES'} ${feePerSession.toLocaleString()}`,
     totalSessionsLabel: `${totalSessions} Session${totalSessions === 1 ? '' : 's'}`,
@@ -1015,40 +912,24 @@ const NewClassCreationPage = () => {
     meetingLink,
     inviteLink,
     summaryItems: [
-      {
-        icon: CalendarDays,
-        label: 'Repeat',
-        value: getRepeatSummary(scheduleSettings),
-      },
-      {
-        icon: BellRing,
-        label: 'Reminder',
-        value: notificationSettings.reminder || '24 hours before class',
-      },
-      {
-        icon: MapPin,
-        label: 'Timezone',
-        value: scheduleSettings.timezone || 'EAT East Africa Time',
-      },
+      { icon: CalendarDays, label: 'Repeat', value: getRepeatSummary(scheduleSettings) },
+      { icon: BellRing, label: 'Reminder', value: notificationSettings.reminder || '24 hours before class' },
+      { icon: MapPin, label: 'Timezone', value: scheduleSettings.timezone || 'EAT East Africa Time' },
     ],
   };
 
   const normalizeTime = (time?: string) => {
     if (!time) return '';
-
     const [hour = '00', minute = '00'] = time.split(':');
-
     return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
   };
 
   // ── Day-time grid (Mon–Sun rows with Start/End time per day) ──────────────
-  // Used by both Standard and Academic Period presets
   const DayTimeGrid = (
     <div className='space-y-2'>
       {DAY_NAMES.map((day, index) => {
         const active = scheduleSettings.repeat.days?.includes(index);
         const override = scheduleSettings.weeklyDayTimes[index];
-
         const effectiveStartTime = override?.startTime || scheduleSettings.startClass.startTime || '';
         const effectiveEndTime = override?.endTime || scheduleSettings.startClass.endTime || '';
 
@@ -1058,7 +939,6 @@ const NewClassCreationPage = () => {
             className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${active ? 'border-primary bg-primary/5' : 'border-border bg-background'
               }`}
           >
-            {/* Day toggle button */}
             <button
               type='button'
               onClick={() =>
@@ -1067,10 +947,7 @@ const NewClassCreationPage = () => {
                   const nextDays = active
                     ? currentDays.filter(d => d !== index)
                     : [...currentDays, index].sort();
-                  return {
-                    ...prev,
-                    repeat: { ...prev.repeat, days: nextDays, unit: 'week' },
-                  };
+                  return { ...prev, repeat: { ...prev.repeat, days: nextDays, unit: 'week' } };
                 })
               }
               className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${active
@@ -1081,7 +958,6 @@ const NewClassCreationPage = () => {
               {DAY_SHORT[index]}
             </button>
 
-            {/* Start Time */}
             <div className='flex flex-1 flex-col gap-0.5'>
               <span className='text-muted-foreground text-[10px] font-medium'>Start Time</span>
               <Input
@@ -1095,10 +971,7 @@ const NewClassCreationPage = () => {
                       ...prev.weeklyDayTimes,
                       [index]: {
                         startTime: normalizeTime(e.target.value),
-                        endTime:
-                          prev.weeklyDayTimes[index]?.endTime ||
-                          prev.startClass.endTime ||
-                          '',
+                        endTime: prev.weeklyDayTimes[index]?.endTime || prev.startClass.endTime || '',
                       },
                     },
                   }))
@@ -1107,7 +980,6 @@ const NewClassCreationPage = () => {
               />
             </div>
 
-            {/* End Time */}
             <div className='flex flex-1 flex-col gap-0.5'>
               <span className='text-muted-foreground text-[10px] font-medium'>End Time</span>
               <Input
@@ -1120,10 +992,7 @@ const NewClassCreationPage = () => {
                     weeklyDayTimes: {
                       ...prev.weeklyDayTimes,
                       [index]: {
-                        startTime:
-                          prev.weeklyDayTimes[index]?.startTime ||
-                          prev.startClass.startTime ||
-                          '',
+                        startTime: prev.weeklyDayTimes[index]?.startTime || prev.startClass.startTime || '',
                         endTime: normalizeTime(e.target.value),
                       },
                     },
@@ -1141,7 +1010,6 @@ const NewClassCreationPage = () => {
   // ── Right-column fields (Repeat Every, Start Date, End Repeat, Registration) ──
   const buildRightColumnFields = (preset: 'standard' | 'academic-period') => (
     <div className='space-y-4'>
-      {/* Repeat Every */}
       <div className='space-y-2'>
         <span className='text-foreground text-sm font-semibold'>Repeat Every</span>
         <div className='flex gap-2'>
@@ -1170,9 +1038,7 @@ const NewClassCreationPage = () => {
               }))
             }
           >
-            <SelectTrigger className='flex-1'>
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger className='flex-1'><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value='day'>Day</SelectItem>
               <SelectItem value='week'>Week</SelectItem>
@@ -1183,7 +1049,6 @@ const NewClassCreationPage = () => {
         </div>
       </div>
 
-      {/* Start Date — standard uses startClass.date; academic uses academicPeriod.start */}
       {preset === 'standard' ? (
         <FieldGroup label='Start Date *'>
           <Input
@@ -1213,15 +1078,12 @@ const NewClassCreationPage = () => {
         </FieldGroup>
       )}
 
-      {/* End Repeat — standard: endRepeat; academic: academicPeriod.end */}
       {preset === 'standard' ? (
         <FieldGroup label='End Repeat *'>
           <Input
             type='date'
             value={scheduleSettings.endRepeat}
-            onChange={e =>
-              setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))
-            }
+            onChange={e => setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))}
           />
         </FieldGroup>
       ) : (
@@ -1239,7 +1101,6 @@ const NewClassCreationPage = () => {
         </FieldGroup>
       )}
 
-      {/* Registration Start */}
       <FieldGroup label='Registration Start'>
         <Input
           type='date'
@@ -1253,7 +1114,6 @@ const NewClassCreationPage = () => {
         />
       </FieldGroup>
 
-      {/* Registration End */}
       <FieldGroup label='Registration End'>
         <Input
           type='date'
@@ -1287,14 +1147,11 @@ const NewClassCreationPage = () => {
         Continuous Registration (no closing date)
       </label>
 
-      {/* All Day + Timezone */}
       <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
         <input
           type='checkbox'
           checked={scheduleSettings.allDay}
-          onChange={e =>
-            setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
-          }
+          onChange={e => setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))}
           className='h-4 w-4 rounded'
         />
         All Day
@@ -1303,13 +1160,9 @@ const NewClassCreationPage = () => {
       <FieldGroup label='Timezone'>
         <Select
           value={scheduleSettings.timezone}
-          onValueChange={value =>
-            setScheduleSettings(prev => ({ ...prev, timezone: value }))
-          }
+          onValueChange={value => setScheduleSettings(prev => ({ ...prev, timezone: value }))}
         >
-          <SelectTrigger>
-            <SelectValue placeholder='Select timezone' />
-          </SelectTrigger>
+          <SelectTrigger><SelectValue placeholder='Select timezone' /></SelectTrigger>
           <SelectContent>
             <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
             <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
@@ -1318,54 +1171,11 @@ const NewClassCreationPage = () => {
         </Select>
       </FieldGroup>
 
-      {/* Session count badge */}
       {totalSessions > 0 && (
         <div className='bg-primary/10 text-primary border-primary/20 rounded-lg border px-4 py-2.5 text-sm font-medium'>
           Total sessions: <span className='font-bold'>{totalSessions}</span>
         </div>
       )}
-    </div>
-  );
-
-  // ── Shared default time fields (used by pick-dates preset) ────────────────
-  const SharedTimeFields = (
-    <div className='flex flex-col gap-4 sm:flex-row'>
-      <div className='flex-1'>
-        <FieldGroup label='Default Start Time *'>
-          <Input
-            type='time'
-            value={normalizeTime(scheduleSettings.startClass.startTime) || ''}
-            disabled={scheduleSettings.allDay}
-            onChange={e =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                startClass: {
-                  ...prev.startClass,
-                  startTime: normalizeTime(e.target.value),
-                },
-              }))
-            }
-          />
-        </FieldGroup>
-      </div>
-      <div className='flex-1'>
-        <FieldGroup label='Default End Time *'>
-          <Input
-            type='time'
-            value={normalizeTime(scheduleSettings.startClass.endTime) || ''}
-            disabled={scheduleSettings.allDay}
-            onChange={e =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                startClass: {
-                  ...prev.startClass,
-                  endTime: normalizeTime(e.target.value),
-                },
-              }))
-            }
-          />
-        </FieldGroup>
-      </div>
     </div>
   );
 
@@ -1409,9 +1219,9 @@ const NewClassCreationPage = () => {
                           <SelectValue placeholder='Select a course or program' />
                         </SelectTrigger>
                         <SelectContent>
-                          {catalogItems
-                            .filter(item => `${item.source} ${item.label}`.toLowerCase().includes(catalogSearch.toLowerCase()))
-                            .length === 0 ? (
+                          {catalogItems.filter(item =>
+                            `${item.source} ${item.label}`.toLowerCase().includes(catalogSearch.toLowerCase())
+                          ).length === 0 ? (
                             <div className='text-muted-foreground p-4 text-center text-sm'>No matching classes found</div>
                           ) : (
                             catalogItems
@@ -1522,7 +1332,6 @@ const NewClassCreationPage = () => {
               </div>
 
               <div className='space-y-4 px-2 pb-4 sm:px-3 sm:pb-6'>
-                {/* Preset selector */}
                 <div className='flex flex-col gap-3 md:flex-row'>
                   {schedulePresetOptions.map(option => (
                     <button
@@ -1540,34 +1349,17 @@ const NewClassCreationPage = () => {
                   ))}
                 </div>
 
-                {/* ── STANDARD SCHEDULE ──────────────────────────────────── */}
+                {/* ── STANDARD SCHEDULE ─────────────────────────────────── */}
                 {schedulePreset === 'standard' && (
                   <div className='rounded-md border border-border/60 p-4'>
                     <div className='mb-4'>
-                      <p className='text-foreground text-sm font-semibold'>
-                        Standard Schedule
-                      </p>
-
+                      <p className='text-foreground text-sm font-semibold'>Standard Schedule</p>
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        Toggle days and set times. Use the right panel to configure recurrence and dates.
+                        Toggle days and set times. Configure recurrence and dates on the right.
                       </p>
                     </div>
-
                     <div className='flex flex-wrap gap-6'>
-
-                      {/* Left: Day-time grid */}
-                      <div className='min-w-[320px] flex-1 flex-wrap gap-2'>
-                        <div className='mb-2'>
-                          <p className='text-foreground mb-2 text-xs font-semibold'>
-                            Default Times <span className='text-muted-foreground font-normal'>(applied to new selections)</span>
-                          </p>
-                          {SharedTimeFields}
-                        </div>
-
-                        {DayTimeGrid}
-                      </div>
-
-                      {/* Right: Recurrence + date fields */}
+                      <div className='min-w-[320px] flex-1'>{DayTimeGrid}</div>
                       <div className='w-full min-w-[260px] flex-1 xl:max-w-[280px] xl:flex-none'>
                         {buildRightColumnFields('standard')}
                       </div>
@@ -1575,7 +1367,7 @@ const NewClassCreationPage = () => {
                   </div>
                 )}
 
-                {/* ── PICK DATES ─────────────────────────────────────────── */}
+                {/* ── PICK DATES ────────────────────────────────────────── */}
                 {schedulePreset === 'pick-dates' && (
                   <div className='flex flex-col gap-4 min-[1110px]:flex-row min-[1280px]:flex-col min-[1440px]:flex-row'>
                     <div className='min-w-0 flex-[1.2] space-y-4 rounded-md border border-border/60 p-4'>
@@ -1583,31 +1375,17 @@ const NewClassCreationPage = () => {
                         mode='multiple'
                         selected={pickedDates.map(item => new Date(item.date))}
                         onSelect={dates => {
-                          if (!dates) {
-                            setPickedDates([]);
-                            return;
-                          }
-
+                          if (!dates) { setPickedDates([]); return; }
                           const next = dates.map(date => {
                             const formatted = format(date, 'yyyy-MM-dd');
                             const existing = pickedDates.find(item => item.date === formatted);
-                            return (
-                              existing || {
-                                date: formatted,
-                                startTime: scheduleSettings.startClass.startTime || '09:00',
-                                endTime: scheduleSettings.startClass.endTime || '10:00',
-                              }
-                            );
+                            return existing || { date: formatted, startTime: '09:00', endTime: '10:00' };
                           });
-
                           setPickedDates(next);
                         }}
                         className='w-full'
-                        classNames={{
-                          day: 'mx-auto flex h-7 w-7 items-center justify-center rounded-md text-[11px] transition',
-                        }}
+                        classNames={{ day: 'mx-auto flex h-7 w-7 items-center justify-center rounded-md text-[11px] transition' }}
                       />
-
 
                       <div className='flex flex-col gap-4 sm:flex-row'>
                         <div className='flex-1'>
@@ -1630,29 +1408,17 @@ const NewClassCreationPage = () => {
                             <Input
                               type='date'
                               value={scheduleSettings.endRepeat}
-                              onChange={e =>
-                                setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))
-                              }
+                              onChange={e => setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))}
                             />
                           </FieldGroup>
                         </div>
-                      </div>
-
-                      {/* Default times — applied to newly picked dates */}
-                      <div>
-                        <p className='text-foreground mb-2 text-xs font-semibold'>
-                          Default Times <span className='text-muted-foreground font-normal'>(applied to new selections)</span>
-                        </p>
-                        {SharedTimeFields}
                       </div>
 
                       <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
                         <input
                           type='checkbox'
                           checked={scheduleSettings.allDay}
-                          onChange={e =>
-                            setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
-                          }
+                          onChange={e => setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))}
                           className='h-4 w-4 rounded'
                         />
                         All Day
@@ -1661,13 +1427,9 @@ const NewClassCreationPage = () => {
                       <FieldGroup label='Timezone'>
                         <Select
                           value={scheduleSettings.timezone}
-                          onValueChange={value =>
-                            setScheduleSettings(prev => ({ ...prev, timezone: value }))
-                          }
+                          onValueChange={value => setScheduleSettings(prev => ({ ...prev, timezone: value }))}
                         >
-                          <SelectTrigger className='h-11 w-full'>
-                            <SelectValue placeholder='Select timezone' />
-                          </SelectTrigger>
+                          <SelectTrigger className='h-11 w-full'><SelectValue placeholder='Select timezone' /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
                             <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
@@ -1686,13 +1448,11 @@ const NewClassCreationPage = () => {
                               {pickedDates.length} {pickedDates.length === 1 ? 'Session' : 'Sessions'}
                             </div>
                           </div>
-
                           <div className='space-y-1.5'>
                             {pickedDates
                               .slice()
                               .sort((a, b) => a.date.localeCompare(b.date))
-                              .map((item, idx) => {
-                                // Use sorted index to find original index for mutation
+                              .map(item => {
                                 const origIdx = pickedDates.findIndex(d => d.date === item.date);
                                 return (
                                   <div
@@ -1704,7 +1464,6 @@ const NewClassCreationPage = () => {
                                         {format(new Date(item.date), 'EEE, MMM d, yyyy')}
                                       </p>
                                     </div>
-
                                     {!scheduleSettings.allDay && (
                                       <div className='flex items-center gap-1.5'>
                                         <Input
@@ -1712,12 +1471,7 @@ const NewClassCreationPage = () => {
                                           value={normalizeTime(item.startTime)}
                                           onChange={e => {
                                             const next = [...pickedDates];
-                                            if (next[origIdx]) {
-                                              next[origIdx] = {
-                                                ...next[origIdx],
-                                                startTime: normalizeTime(e.target.value),
-                                              };
-                                            }
+                                            if (next[origIdx]) next[origIdx] = { ...next[origIdx]!, startTime: normalizeTime(e.target.value) };
                                             setPickedDates(next);
                                           }}
                                           className='h-7 w-[92px] px-2 text-[11px]'
@@ -1728,24 +1482,16 @@ const NewClassCreationPage = () => {
                                           value={normalizeTime(item.endTime)}
                                           onChange={e => {
                                             const next = [...pickedDates];
-                                            if (next[origIdx]) {
-                                              next[origIdx] = {
-                                                ...next[origIdx],
-                                                endTime: normalizeTime(e.target.value),
-                                              };
-                                            }
+                                            if (next[origIdx]) next[origIdx] = { ...next[origIdx]!, endTime: normalizeTime(e.target.value) };
                                             setPickedDates(next);
                                           }}
                                           className='h-7 w-[92px] px-2 text-[11px]'
                                         />
                                       </div>
                                     )}
-
                                     <button
                                       type='button'
-                                      onClick={() =>
-                                        setPickedDates(prev => prev.filter((_, i) => i !== origIdx))
-                                      }
+                                      onClick={() => setPickedDates(prev => prev.filter((_, i) => i !== origIdx))}
                                       className='text-[11px] font-medium text-muted-foreground transition hover:text-destructive'
                                     >
                                       Remove
@@ -1760,33 +1506,17 @@ const NewClassCreationPage = () => {
                   </div>
                 )}
 
-                {/* ── ACADEMIC PERIOD ────────────────────────────────────── */}
+                {/* ── ACADEMIC PERIOD ───────────────────────────────────── */}
                 {schedulePreset === 'academic-period' && (
                   <div className='rounded-md border border-border/60 p-4'>
                     <div className='mb-4'>
-                      <p className='text-foreground text-sm font-semibold'>
-                        Academic Period
-                      </p>
-
+                      <p className='text-foreground text-sm font-semibold'>Academic Period</p>
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        Toggle days and set times. Use the right panel to configure the academic term and recurrence.
+                        Toggle days and set times. Configure the academic term and recurrence on the right.
                       </p>
                     </div>
-
                     <div className='flex flex-wrap gap-6'>
-                      {/* Left: Day-time grid */}
-                      <div className='min-w-[320px] flex-1 flex-wrap gap-2'>
-                        <div className='mb-2'>
-                          <p className='text-foreground mb-2 text-xs font-semibold'>
-                            Default Times <span className='text-muted-foreground font-normal'>(applied to new selections)</span>
-                          </p>
-                          {SharedTimeFields}
-                        </div>
-
-                        {DayTimeGrid}
-                      </div>
-
-                      {/* Right: Recurrence + academic period date fields */}
+                      <div className='min-w-[320px] flex-1'>{DayTimeGrid}</div>
                       <div className='w-full min-w-[260px] flex-1 xl:max-w-[280px] xl:flex-none'>
                         {buildRightColumnFields('academic-period')}
                       </div>
@@ -1794,49 +1524,42 @@ const NewClassCreationPage = () => {
                   </div>
                 )}
 
-                {/* ── Optional Class Settings (color, capacity etc.) ─────── */}
+                {/* ── Optional Class Settings ────────────────────────────── */}
                 <Collapsible
                   open={showOptionalSettings}
                   onOpenChange={setShowOptionalSettings}
                   className='rounded-md border border-border/60'
                 >
                   <CollapsibleTrigger asChild>
-                    <button
-                      type='button'
-                      className='flex w-full items-center justify-between gap-3 px-4 py-3 text-left'
-                    >
+                    <button type='button' className='flex w-full items-center justify-between gap-3 px-4 py-3 text-left'>
                       <div>
                         <p className='text-foreground text-sm font-semibold'>Optional Class Settings</p>
-                        <p className='text-muted-foreground text-xs'>
-                          Expand to adjust class color.
-                        </p>
+                        <p className='text-muted-foreground text-xs'>Expand to adjust class color.</p>
                       </div>
                       <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${showOptionalSettings ? 'rotate-180' : ''}`} />
                     </button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className='border-t border-border/60 px-4 py-4'>
-                    <div className='space-y-4'>
-                      <div className='rounded-md border border-border/60 p-4'>
-                        <div className='flex flex-row flex-wrap gap-2 sm:items-center sm:justify-between'>
-                          <div>
-                            <p className='text-foreground text-sm font-semibold'>Class Color</p>
-                            <p className='text-muted-foreground text-xs'>Choose a color to represent your class.</p>
-                          </div>
-                          <div className='flex flex-wrap gap-3'>
-                            {CLASS_COLOR_OPTIONS.map(color => (
-                              <button
-                                key={color.value}
-                                type='button'
-                                onClick={() => {
-                                  setNotificationSettings(prev => ({ ...prev, classColour: color.value }));
-                                  setClassDetails(prev => ({ ...prev, class_color: color.value }));
-                                }}
-                                className={`h-8 w-8 rounded-full border-2 ${notificationSettings.classColour === color.value ? 'border-primary' : 'border-transparent'}`}
-                                style={{ backgroundColor: color.value }}
-                                aria-label={`Select class color ${color.label}`}
-                              />
-                            ))}
-                          </div>
+                    <div className='rounded-md border border-border/60 p-4'>
+                      <div className='flex flex-row flex-wrap gap-2 sm:items-center sm:justify-between'>
+                        <div>
+                          <p className='text-foreground text-sm font-semibold'>Class Color</p>
+                          <p className='text-muted-foreground text-xs'>Choose a color to represent your class.</p>
+                        </div>
+                        <div className='flex flex-wrap gap-3'>
+                          {CLASS_COLOR_OPTIONS.map(color => (
+                            <button
+                              key={color.value}
+                              type='button'
+                              onClick={() => {
+                                setNotificationSettings(prev => ({ ...prev, classColour: color.value }));
+                                setClassDetails(prev => ({ ...prev, class_color: color.value }));
+                              }}
+                              className={`h-8 w-8 rounded-full border-2 ${notificationSettings.classColour === color.value ? 'border-primary' : 'border-transparent'}`}
+                              style={{ backgroundColor: color.value }}
+                              aria-label={`Select class color ${color.label}`}
+                            />
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -1884,7 +1607,6 @@ const NewClassCreationPage = () => {
                     </FieldGroup>
                   </ReminderCard>
                 </div>
-
                 <div className='flex-1'>
                   <ReminderCard title='Instructor Reminders' enabled onEnabledChange={() => undefined}>
                     <FieldGroup label='Email Reminder'>
@@ -1909,7 +1631,6 @@ const NewClassCreationPage = () => {
                     </FieldGroup>
                   </ReminderCard>
                 </div>
-
                 <div className='w-full lg:w-[220px] lg:shrink-0'>
                   <div className='bg-muted/20 flex h-full items-center justify-center rounded-md border border-border/60 px-4 py-4 text-center'>
                     <div className='space-y-2'>
@@ -1988,10 +1709,7 @@ const ChoiceGroup = ({
 );
 
 const ReminderCard = ({
-  title,
-  enabled,
-  onEnabledChange,
-  children,
+  title, enabled, onEnabledChange, children,
 }: {
   children: React.ReactNode;
   enabled: boolean;
