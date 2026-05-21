@@ -21,6 +21,11 @@ import {
     searchQuizzesOptions,
 } from '../../services/client/@tanstack/react-query.gen';
 
+import type {
+    QuestionTypeEnum,
+    QuizQuestion,
+    QuizQuestionOption,
+} from '../../services/client/types.gen';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -39,14 +44,13 @@ type QuizContentPreviewProps = {
     role?: 'instructor' | 'user';
 };
 
-type QuestionType =
-    | 'MULTIPLE_CHOICE'
-    | 'TRUE_FALSE'
-    | 'ESSAY'
-    | 'SHORT_ANSWER'
-    | 'MATCHING';
+type QuizAnswerValue = string | Record<string, string>;
+type QuizQuestionOptionPreview = QuizQuestionOption & {
+    left_text?: string;
+    right_text?: string;
+};
 
-const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
+const QUESTION_TYPE_LABELS: Partial<Record<QuestionTypeEnum, string>> = {
     MULTIPLE_CHOICE: 'Multiple Choice',
     TRUE_FALSE: 'True / False',
     ESSAY: 'Essay',
@@ -61,9 +65,9 @@ type QuestionOptionsPreviewProps = {
 
     role?: 'instructor' | 'user';
 
-    answer?: any;
+    answer?: QuizAnswerValue;
 
-    onChange?: (value: any) => void;
+    onChange?: (value: QuizAnswerValue) => void;
 
     submitted?: boolean;
 };
@@ -92,7 +96,7 @@ function QuestionOptionsPreview({
         enabled: !!quizUuid && !!questionUuid,
     });
 
-    const options = data?.data?.content ?? [];
+    const options: QuizQuestionOptionPreview[] = data?.data?.content ?? [];
 
     if (isLoading) {
         return (
@@ -106,23 +110,27 @@ function QuestionOptionsPreview({
     // MULTIPLE CHOICE / TRUE FALSE
     // ─────────────────────────────────────────────────────────────
 
-    if (options) {
+    if (
+        (questionType === 'multiple_choice' ||
+            questionType === 'true_false') &&
+        options.length > 0
+    ) {
         return (
             <div className='space-y-2'>
-                {options.map((option: any, index: number) => {
+                {options.map((option, index: number) => {
                     const isCorrect = option.is_correct;
-
+                    const optionUuid = option.uuid ?? option.option_text;
                     const selected =
-                        answer === option.uuid;
+                        typeof answer === 'string' && answer === optionUuid;
 
                     return (
                         <button
                             type='button'
-                            key={option.uuid ?? index}
+                            key={optionUuid ?? index}
                             disabled={submitted}
                             onClick={() => {
                                 if (!isInstructor) {
-                                    onChange?.(option.uuid);
+                                    onChange?.(optionUuid);
                                 }
                             }}
                             className={cn(
@@ -172,7 +180,7 @@ function QuestionOptionsPreview({
     // ESSAY
     // ─────────────────────────────────────────────────────────────
 
-    if (questionType === 'ESSAY') {
+    if (questionType === 'essay') {
         return (
             <div className='rounded-xl border p-4'>
                 {isInstructor ? (
@@ -182,13 +190,13 @@ function QuestionOptionsPreview({
                         </p>
 
                         <div className='bg-muted rounded-lg p-4 text-sm whitespace-pre-wrap'>
-                            {options?.[0]?.text || 'No answer provided'}
+                            {options?.[0]?.option_text || 'No answer provided'}
                         </div>
                     </div>
                 ) : (
                     <Textarea
                         disabled={submitted}
-                        value={answer || ''}
+                        value={typeof answer === 'string' ? answer : ''}
                         onChange={(e) =>
                             onChange?.(e.target.value)
                         }
@@ -204,7 +212,7 @@ function QuestionOptionsPreview({
     // SHORT ANSWER
     // ─────────────────────────────────────────────────────────────
 
-    if (questionType === 'SHORT_ANSWER') {
+    if (questionType === 'short_answer') {
         return (
             <div className='rounded-xl border p-4'>
                 {isInstructor ? (
@@ -214,13 +222,13 @@ function QuestionOptionsPreview({
                         </p>
 
                         <div className='bg-muted rounded-lg p-4 text-sm'>
-                            {options?.[0]?.text || 'No answer provided'}
+                            {options?.[0]?.option_text || 'No answer provided'}
                         </div>
                     </div>
                 ) : (
                     <Input
                         disabled={submitted}
-                        value={answer || ''}
+                        value={typeof answer === 'string' ? answer : ''}
                         onChange={(e) =>
                             onChange?.(e.target.value)
                         }
@@ -235,10 +243,15 @@ function QuestionOptionsPreview({
     // MATCHING
     // ─────────────────────────────────────────────────────────────
 
-    if (questionType === 'MATCHING') {
+    if (questionType === 'matching') {
+        const matchingAnswer: Record<string, string> =
+            typeof answer === 'object' && answer !== null && !Array.isArray(answer)
+                ? answer
+                : {};
+
         return (
             <div className='space-y-2'>
-                {options.map((option: any, index: number) => (
+                {options.map((option, index: number) => (
                     <div
                         key={option.uuid ?? index}
                         className='bg-muted/40 flex items-center justify-between gap-4 rounded-lg border p-3'
@@ -261,15 +274,11 @@ function QuestionOptionsPreview({
                             ) : (
                                 <select
                                     disabled={submitted}
-                                    value={
-                                        answer?.[
-                                        option.uuid
-                                        ] || ''
-                                    }
+                                    value={matchingAnswer[option.uuid ?? option.option_text] || ''}
                                     onChange={(e) =>
                                         onChange?.({
-                                            ...answer,
-                                            [option.uuid]:
+                                            ...matchingAnswer,
+                                            [option.uuid ?? option.option_text]:
                                                 e.target
                                                     .value,
                                         })
@@ -280,24 +289,25 @@ function QuestionOptionsPreview({
                                         Select match
                                     </option>
 
-                                    {options.map(
-                                        (
-                                            rightOption: any
-                                        ) => (
+                                    {options.map((rightOption: QuizQuestionOptionPreview) => {
+                                        const rightOptionUuid =
+                                            rightOption.uuid ?? rightOption.option_text;
+
+                                        return (
                                             <option
                                                 key={
-                                                    rightOption.uuid
+                                                    rightOptionUuid
                                                 }
                                                 value={
-                                                    rightOption.uuid
+                                                    rightOptionUuid
                                                 }
                                             >
                                                 {
                                                     rightOption.right_text
                                                 }
                                             </option>
-                                        )
-                                    )}
+                                        );
+                                    })}
                                 </select>
                             )}
                         </div>
@@ -320,17 +330,12 @@ export function QuizContentPreview({
 }: QuizContentPreviewProps) {
     const isInstructor = role === 'instructor';
 
-    const [answers, setAnswers] = useState<
-        Record<string, any>
-    >({});
+    const [answers, setAnswers] = useState<Record<string, QuizAnswerValue>>({});
 
     const [submitted, setSubmitted] =
         useState(false);
 
-    const updateAnswer = (
-        questionUuid: string,
-        value: any
-    ) => {
+    const updateAnswer = (questionUuid: string, value: QuizAnswerValue) => {
         setAnswers((prev) => ({
             ...prev,
             [questionUuid]: value,
@@ -396,8 +401,7 @@ export function QuizContentPreview({
             enabled: !!quizUuid,
         });
 
-    const quiz =
-        quizData?.data?.content?.[0];
+    const quiz = quizData?.data?.content?.[0];
 
     // ─────────────────────────────────────────────────────────────
     // QUESTIONS
@@ -418,8 +422,7 @@ export function QuizContentPreview({
         enabled: !!quizUuid,
     });
 
-    const questions =
-        questionsData?.data?.content ?? [];
+    const questions: QuizQuestion[] = questionsData?.data?.content ?? [];
 
     const isLoading =
         isQuizLoading || isQuestionsLoading;
@@ -538,80 +541,79 @@ export function QuizContentPreview({
                 ) : (
                     <>
                         {questions.map(
-                            (
-                                question: any,
-                                index: number
-                            ) => (
-                                <Card
-                                    key={
-                                        question.uuid ??
-                                        index
-                                    }
-                                    className='overflow-hidden shadow-none'
-                                >
-                                    <CardContent className='space-y-5 pt-6'>
-                                        <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-                                            <div className='space-y-3'>
-                                                <div className='flex flex-wrap items-center gap-2'>
-                                                    <Badge variant='secondary'>
-                                                        {QUESTION_TYPE_LABELS[
-                                                            question.question_type as QuestionType
-                                                        ] ||
-                                                            question.question_type}
-                                                    </Badge>
+                            (question, index: number) => {
+                                const questionUuid = question.uuid ?? `question-${index}`;
 
-                                                    <Badge variant='outline'>
-                                                        {question.points ??
-                                                            1}{' '}
-                                                        pts
-                                                    </Badge>
+                                return (
+                                    <Card
+                                        key={
+                                            questionUuid
+                                        }
+                                        className='overflow-hidden shadow-none'
+                                    >
+                                        <CardContent className='space-y-5 pt-6'>
+                                            <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+                                                <div className='space-y-3'>
+                                                    <div className='flex flex-wrap items-center gap-2'>
+                                                        <Badge variant='secondary'>
+                                                            {QUESTION_TYPE_LABELS[
+                                                                question.question_type
+                                                            ] ||
+                                                                question.question_type}
+                                                        </Badge>
+
+                                                        <Badge variant='outline'>
+                                                            {question.points ??
+                                                                1}{' '}
+                                                            pts
+                                                        </Badge>
+                                                    </div>
+
+                                                    <h3 className='text-base leading-relaxed font-medium'>
+                                                        {index +
+                                                            1}
+                                                        .{' '}
+                                                        {
+                                                            question.question_text
+                                                        }
+                                                    </h3>
                                                 </div>
-
-                                                <h3 className='text-base leading-relaxed font-medium'>
-                                                    {index +
-                                                        1}
-                                                    .{' '}
-                                                    {
-                                                        question.question_text
-                                                    }
-                                                </h3>
                                             </div>
-                                        </div>
 
-                                        <Separator />
+                                            <Separator />
 
-                                        <QuestionOptionsPreview
-                                            quizUuid={
-                                                quizUuid
-                                            }
-                                            questionUuid={
-                                                question.uuid
-                                            }
-                                            questionType={
-                                                question.question_type
-                                            }
-                                            role={role}
-                                            answer={
-                                                answers[
-                                                question
-                                                    .uuid
-                                                ]
-                                            }
-                                            submitted={
-                                                submitted
-                                            }
-                                            onChange={(
-                                                value
-                                            ) =>
-                                                updateAnswer(
-                                                    question.uuid,
+                                            <QuestionOptionsPreview
+                                                quizUuid={
+                                                    quizUuid
+                                                }
+                                                questionUuid={
+                                                    questionUuid
+                                                }
+                                                questionType={
+                                                    question.question_type
+                                                }
+                                                role={role}
+                                                answer={
+                                                    answers[
+                                                    questionUuid
+                                                    ]
+                                                }
+                                                submitted={
+                                                    submitted
+                                                }
+                                                onChange={(
                                                     value
-                                                )
-                                            }
-                                        />
-                                    </CardContent>
-                                </Card>
-                            )
+                                                ) =>
+                                                    updateAnswer(
+                                                        questionUuid,
+                                                        value
+                                                    )
+                                                }
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                );
+                            }
                         )}
 
                         {!isInstructor && (

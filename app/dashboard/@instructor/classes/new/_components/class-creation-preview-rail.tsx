@@ -38,8 +38,8 @@ export type ClassCreationPreviewData = {
   locationName: string;
   scheduleLabel: string;
   timeLabel: string;
-  durationLabel: string;
-  pricePerSessionLabel: string;
+  totalHoursLabel: string;
+  pricePerHourLabel: string;
   totalSessionsLabel: string;
   totalAmountLabel: string;
   meetingLink: string;
@@ -117,9 +117,9 @@ export function ClassCreationPreviewRail({ data }: { data: ClassCreationPreviewD
               <PreviewRow icon={Globe} label='Lecture Type' value={data.lectureTypeLabel} />
               <PreviewRow icon={MapPin} label='Location' value={data.locationName || 'Nairobi, Kenya'} />
               {/* <PreviewRow icon={CalendarDays} label='Schedule' value={`${data.scheduleLabel}\n${data.timeLabel}`} /> */}
-              <PreviewRow icon={Clock3} label='Duration per Session' value={data.durationLabel} />
-              <PreviewRow icon={TimerReset} label='Price per Session' value={data.pricePerSessionLabel} />
-              <PreviewRow icon={CalendarDays} label='Total Sessions' value={data.totalSessionsLabel} />
+              <PreviewRow icon={Clock3} label='Total Hours' value={data.totalHoursLabel} />
+              <PreviewRow icon={TimerReset} label='Price per Hour' value={data.pricePerHourLabel} />
+              <PreviewRow icon={CalendarDays} label='Total Classes' value={data.totalSessionsLabel} />
               <PreviewRow icon={Banknote} label='Total Amount' value={data.totalAmountLabel} />
             </div>
 
