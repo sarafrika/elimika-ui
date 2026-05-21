@@ -49,6 +49,7 @@ import {
   RecurrenceTypeEnum,
   SessionFormatEnum,
 } from '../../../../../services/client/types.gen';
+import { CLASS_COLOR_OPTIONS } from '../../../_components/class-colors';
 import { ClassDetails, NotificationSettings, ScheduleSettings } from '../../trainings/create-new/page';
 import { ClassCreationHeader } from './_components/class-creation-header';
 import {
@@ -87,18 +88,6 @@ const schedulePresetOptions = [
   { key: 'standard', title: 'Standard Schedule', description: 'Set recurring days and times' },
   { key: 'pick-dates', title: 'Pick Dates', description: 'Select specific dates' },
   { key: 'academic-period', title: 'Academic Period', description: 'Align with academic term' },
-] as const;
-
-const CLASS_COLOR_OPTIONS = [
-  { label: 'Brand', value: '#2563EB' },
-  { label: 'Azure', value: '#0EA5E9' },
-  { label: 'Amber', value: '#F59E0B' },
-  { label: 'Iris', value: '#8B5CF6' },
-  { label: 'Jade', value: '#10B981' },
-  { label: 'Success', value: '#22C55E' },
-  { label: 'Warning', value: '#F97316' },
-  { label: 'Destructive', value: '#EF4444' },
-  { label: 'Muted', value: '#6B7280' },
 ] as const;
 
 type SchedulePreset = (typeof schedulePresetOptions)[number]['key'];

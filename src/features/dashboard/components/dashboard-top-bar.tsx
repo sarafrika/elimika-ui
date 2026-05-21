@@ -262,13 +262,13 @@ export default function DashboardTopBar() {
           </div>
         </div>
 
-        <div className='border-border/70 border-t px-3 pb-3 sm:px-5 lg:px-6 xl:hidden'>
+        <div className='border-border/70 border-t pt-2 px-3 sm:px-5 lg:px-6 xl:hidden'>
           <label className='relative block'>
             <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
             <Input
               type='search'
               placeholder='Search courses, students, and more...'
-              className='border-border/70 bg-card/80 h-11 rounded-full pl-11 pr-14 shadow-sm text-sm'
+              className='border-border/70 bg-card/80 h-11 rounded-md pl-11 pr-14 shadow-sm text-sm'
             />
             {/* <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
               Ctrl K
@@ -286,7 +286,7 @@ export default function DashboardTopBar() {
             )}
 
             {(
-              <div className='border-border/70 bg-card/80 flex items-center gap-2 rounded-full border px-3 py-2 shadow-sm sm:hidden'>
+              <div className='mb-2 border-border/70 bg-card/80 flex items-center gap-2 rounded-md border px-3 py-2 shadow-sm sm:hidden'>
                 <div className='bg-success/10 text-success flex size-7 items-center justify-center rounded-full'>
                   <Wallet className='h-3.5 w-3.5' />
                 </div>

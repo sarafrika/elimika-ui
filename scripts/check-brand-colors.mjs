@@ -19,20 +19,21 @@ const FAIL_PATTERNS = [
     message: 'Legacy Tailwind color utility — use design tokens (bg-primary, bg-success, …)',
     hint: 'Replace with bg-primary / bg-success / bg-warning / bg-destructive / bg-card / bg-muted etc.',
   },
-  // {
-  //   name: 'raw-hex',
-  //   regex: /#[0-9a-fA-F]{3,6}\b/g,
-  //   message: 'Raw hex color — use a CSS variable / token instead',
-  //   allowFiles: new Set([
-  //     'app/globals.css',
-  //     'styles/_variables.scss',
-  //     'components/tiptap-ui/color-highlight-button/use-color-highlight.ts',
-  //     // Dynamic-color render paths — accept a hex fallback so dyed CMS data still renders
-  //     // when the lib/color-themes palette is empty.
-  //     'src/features/profile/landing/course-creator-tab.tsx',
-  //     'src/features/profile/landing/instructors-tab.tsx',
-  //   ]),
-  // },
+  {
+    name: 'raw-hex',
+    regex: /#[0-9a-fA-F]{3,6}\b/g,
+    message: 'Raw hex color — use a CSS variable / token instead',
+    allowFiles: new Set([
+      'app/globals.css',
+      'styles/_variables.scss',
+      'components/tiptap-ui/color-highlight-button/use-color-highlight.ts',
+      // Dynamic-color render paths — accept a hex fallback so dyed CMS data still renders
+      // when the lib/color-themes palette is empty.
+      'src/features/profile/landing/course-creator-tab.tsx',
+      'src/features/profile/landing/instructors-tab.tsx',
+      'app/dashboard/_components/class-colors.ts',
+    ]),
+  },
 ];
 
 const WARN_PATTERNS = [
