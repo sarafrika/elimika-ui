@@ -1,28 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import {
-  Award,
-  BookOpen,
-  CheckCircle2,
-  Clock,
-  Edit,
-  Eye,
-  FileQuestion,
-  FileText,
-  Loader2,
-  Search,
-  Trash2,
-  TrendingUp,
-  Users,
-  X,
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
 import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -53,6 +30,29 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  Award,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  Edit,
+  Eye,
+  FileQuestion,
+  FileText,
+  Loader2,
+  Search,
+  Trash2,
+  TrendingUp,
+  Users,
+  X,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 import {
   getAllTrainingProgramsOptions,
   getAllTrainingProgramsQueryKey,
@@ -620,80 +620,80 @@ export default function AdminProgramsPage() {
               activeFilter !== 'all' ||
               adminApprovalFilter !== 'not_approved' ||
               categoryFilter !== 'all') && (
-              <div className='flex flex-wrap items-center gap-2'>
-                <span className='text-muted-foreground text-xs'>Active filters:</span>
-                {searchQuery && (
-                  <Badge variant='secondary' className='text-xs'>
-                    Search: {searchQuery}
-                    <button
-                      onClick={() => {
-                        setSearchQuery('');
-                        setPage(0);
-                      }}
-                      className='hover:text-destructive ml-1.5'
-                    >
-                      <X className='h-3 w-3' />
-                    </button>
-                  </Badge>
-                )}
-                {adminApprovalFilter !== 'not_approved' && (
-                  <Badge variant='secondary' className='text-xs'>
-                    {adminApprovalOptions.find(o => o.value === adminApprovalFilter)?.label}
-                    <button
-                      onClick={() => {
-                        setAdminApprovalFilter('not_approved');
-                        setPage(0);
-                      }}
-                      className='hover:text-destructive ml-1.5'
-                    >
-                      <X className='h-3 w-3' />
-                    </button>
-                  </Badge>
-                )}
-                {statusFilter !== 'all' && (
-                  <Badge variant='secondary' className='text-xs'>
-                    {statusOptions.find(o => o.value === statusFilter)?.label}
-                    <button
-                      onClick={() => {
-                        setStatusFilter('all');
-                        setPage(0);
-                      }}
-                      className='hover:text-destructive ml-1.5'
-                    >
-                      <X className='h-3 w-3' />
-                    </button>
-                  </Badge>
-                )}
-                {activeFilter !== 'all' && (
-                  <Badge variant='secondary' className='text-xs'>
-                    {activeOptions.find(o => o.value === activeFilter)?.label}
-                    <button
-                      onClick={() => {
-                        setActiveFilter('all');
-                        setPage(0);
-                      }}
-                      className='hover:text-destructive ml-1.5'
-                    >
-                      <X className='h-3 w-3' />
-                    </button>
-                  </Badge>
-                )}
-                {categoryFilter !== 'all' && (
-                  <Badge variant='secondary' className='text-xs'>
-                    {categoryOptions.find(o => o.value === categoryFilter)?.label}
-                    <button
-                      onClick={() => {
-                        setCategoryFilter('all');
-                        setPage(0);
-                      }}
-                      className='hover:text-destructive ml-1.5'
-                    >
-                      <X className='h-3 w-3' />
-                    </button>
-                  </Badge>
-                )}
-              </div>
-            )}
+                <div className='flex flex-wrap items-center gap-2'>
+                  <span className='text-muted-foreground text-xs'>Active filters:</span>
+                  {searchQuery && (
+                    <Badge variant='secondary' className='text-xs'>
+                      Search: {searchQuery}
+                      <button
+                        onClick={() => {
+                          setSearchQuery('');
+                          setPage(0);
+                        }}
+                        className='hover:text-destructive ml-1.5'
+                      >
+                        <X className='h-3 w-3' />
+                      </button>
+                    </Badge>
+                  )}
+                  {adminApprovalFilter !== 'not_approved' && (
+                    <Badge variant='secondary' className='text-xs'>
+                      {adminApprovalOptions.find(o => o.value === adminApprovalFilter)?.label}
+                      <button
+                        onClick={() => {
+                          setAdminApprovalFilter('not_approved');
+                          setPage(0);
+                        }}
+                        className='hover:text-destructive ml-1.5'
+                      >
+                        <X className='h-3 w-3' />
+                      </button>
+                    </Badge>
+                  )}
+                  {statusFilter !== 'all' && (
+                    <Badge variant='secondary' className='text-xs'>
+                      {statusOptions.find(o => o.value === statusFilter)?.label}
+                      <button
+                        onClick={() => {
+                          setStatusFilter('all');
+                          setPage(0);
+                        }}
+                        className='hover:text-destructive ml-1.5'
+                      >
+                        <X className='h-3 w-3' />
+                      </button>
+                    </Badge>
+                  )}
+                  {activeFilter !== 'all' && (
+                    <Badge variant='secondary' className='text-xs'>
+                      {activeOptions.find(o => o.value === activeFilter)?.label}
+                      <button
+                        onClick={() => {
+                          setActiveFilter('all');
+                          setPage(0);
+                        }}
+                        className='hover:text-destructive ml-1.5'
+                      >
+                        <X className='h-3 w-3' />
+                      </button>
+                    </Badge>
+                  )}
+                  {categoryFilter !== 'all' && (
+                    <Badge variant='secondary' className='text-xs'>
+                      {categoryOptions.find(o => o.value === categoryFilter)?.label}
+                      <button
+                        onClick={() => {
+                          setCategoryFilter('all');
+                          setPage(0);
+                        }}
+                        className='hover:text-destructive ml-1.5'
+                      >
+                        <X className='h-3 w-3' />
+                      </button>
+                    </Badge>
+                  )}
+                </div>
+              )}
           </div>
         </div>
       </div>
@@ -1224,6 +1224,7 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
 }
 
 import { Skeleton } from '@/components/ui/skeleton';
+import { LessonContentViewerDialog } from '../../../../components/content-preview/LessonContentPreview';
 import {
   Dialog,
   DialogContent,
@@ -1233,7 +1234,6 @@ import {
   DialogTitle,
 } from '../../../../components/ui/dialog';
 import { Label } from '../../../../components/ui/label';
-import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import { useProgramLessonsWithContent } from '../../../../hooks/use-programlessonwithcontent';
 import { useStudentsMap } from '../../../../hooks/use-studentsMap';
 import {
@@ -1636,9 +1636,9 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: ProgramListItem }
     activeStudents === 0
       ? 0
       : activeEnrollments.reduce(
-          (sum, student) => sum + (student.progressPercentage ?? student.progress_percentage ?? 0),
-          0
-        ) / activeStudents;
+        (sum, student) => sum + (student.progressPercentage ?? student.progress_percentage ?? 0),
+        0
+      ) / activeStudents;
 
   const isTableLoading = isFetching || isLoadingStudents;
 
@@ -1738,57 +1738,57 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: ProgramListItem }
                     <tbody>
                       {isTableLoading
                         ? Array.from({ length: 5 }).map((_, index) => (
-                            <tr key={`skeleton-${index}`} className='border-t'>
+                          <tr key={`skeleton-${index}`} className='border-t'>
+                            <td className='p-4'>
+                              <Skeleton className='h-4 w-32' />
+                            </td>
+                            <td className='p-4'>
+                              <Skeleton className='h-4 w-16' />
+                            </td>
+                            <td className='p-4'>
+                              <Skeleton className='h-4 w-12' />
+                            </td>
+                            <td className='p-4'>
+                              <Skeleton className='h-4 w-16' />
+                            </td>
+                            <td className='p-4'>
+                              <Skeleton className='h-4 w-20' />
+                            </td>
+                          </tr>
+                        ))
+                        : enrollments.map(enrollment => {
+                          const student = studentsMap[enrollment.student_uuid];
+
+                          return (
+                            <tr
+                              key={enrollment.uuid}
+                              className='hover:bg-muted/40 border-t transition-colors'
+                            >
+                              <td className='p-4 font-medium'>{student?.full_name || '—'}</td>
+
                               <td className='p-4'>
-                                <Skeleton className='h-4 w-32' />
+                                <Badge
+                                  variant={
+                                    enrollment.status === 'ACTIVE' ? 'default' : 'secondary'
+                                  }
+                                  className='capitalize'
+                                >
+                                  {enrollment.status}
+                                </Badge>
                               </td>
+
+                              <td className='p-4'>{enrollment.progress_display || '0%'}</td>
+
+                              <td className='p-4'>{enrollment.enrollment_duration || '—'}</td>
+
                               <td className='p-4'>
-                                <Skeleton className='h-4 w-16' />
-                              </td>
-                              <td className='p-4'>
-                                <Skeleton className='h-4 w-12' />
-                              </td>
-                              <td className='p-4'>
-                                <Skeleton className='h-4 w-16' />
-                              </td>
-                              <td className='p-4'>
-                                <Skeleton className='h-4 w-20' />
+                                {enrollment.enrollment_date
+                                  ? new Date(enrollment.enrollment_date).toLocaleDateString()
+                                  : '—'}
                               </td>
                             </tr>
-                          ))
-                        : enrollments.map(enrollment => {
-                            const student = studentsMap[enrollment.student_uuid];
-
-                            return (
-                              <tr
-                                key={enrollment.uuid}
-                                className='hover:bg-muted/40 border-t transition-colors'
-                              >
-                                <td className='p-4 font-medium'>{student?.full_name || '—'}</td>
-
-                                <td className='p-4'>
-                                  <Badge
-                                    variant={
-                                      enrollment.status === 'ACTIVE' ? 'default' : 'secondary'
-                                    }
-                                    className='capitalize'
-                                  >
-                                    {enrollment.status}
-                                  </Badge>
-                                </td>
-
-                                <td className='p-4'>{enrollment.progress_display || '0%'}</td>
-
-                                <td className='p-4'>{enrollment.enrollment_duration || '—'}</td>
-
-                                <td className='p-4'>
-                                  {enrollment.enrollment_date
-                                    ? new Date(enrollment.enrollment_date).toLocaleDateString()
-                                    : '—'}
-                                </td>
-                              </tr>
-                            );
-                          })}
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>

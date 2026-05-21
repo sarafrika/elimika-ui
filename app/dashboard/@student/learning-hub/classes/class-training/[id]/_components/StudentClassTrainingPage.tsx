@@ -1,7 +1,6 @@
 'use client';
 
 import { PracticeActivityList } from '@/app/dashboard/@course_creator/_components/practice-activity-management';
-import { LessonContentPreview } from '@/components/lesson-content/LessonContentPreview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +36,7 @@ import {
   createQuizScheduleMutation,
   getAllAssignmentsOptions,
   getAllQuizzesOptions,
+  getAssignmentAttachmentsOptions,
   getAssignmentSchedulesOptions,
   getAssignmentSchedulesQueryKey,
   getAssignmentSubmissionsOptions,
@@ -66,6 +66,7 @@ import {
   ArrowLeft,
   BookOpen,
   ClipboardCheck,
+  Eye,
   Loader2,
   MessageSquareText,
   PanelRight,
@@ -74,8 +75,12 @@ import {
 import moment from 'moment';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { AssignmentContentPreview } from '../../../../../../../../components/content-preview/AssignmentContentPreview';
+import { LessonContentPreview } from '../../../../../../../../components/content-preview/LessonContentPreview';
+import { QuizContentPreview } from '../../../../../../../../components/content-preview/QuizContentPreview';
+import RichTextRenderer from '../../../../../../../../components/editors/richTextRenders';
 
 
 
@@ -427,40 +432,222 @@ function AssessmentTasksSection({
   isAssigningAssignment: boolean;
   isAssigningQuiz: boolean;
 }) {
+  const [isAssignmentPreviewOpen, setIsAssignmentPreviewOpen] =
+    React.useState(false);
+
+  const [previewAssignment, setPreviewAssignment] =
+    React.useState<Assignment | null>(null);
+
+  const [isQuizPreviewOpen, setIsQuizPreviewOpen] =
+    React.useState(false);
+
+  const [previewQuiz, setPreviewQuiz] =
+    React.useState<Quiz | null>(null);
+
+  const { data: assignmentAttachmentsData } = useQuery({
+    ...getAssignmentAttachmentsOptions({
+      path: {
+        assignmentUuid: previewAssignment?.uuid ?? '',
+      },
+    }),
+    enabled: !!previewAssignment?.uuid,
+  });
+
   return (
     <div className='space-y-3'>
       <div className='border-border/70 bg-background/80 rounded-md border p-3'>
-        <p className='text-sm font-semibold'>Tasks assigned for this lesson</p>
+        <p className='text-sm font-semibold'>
+          Tasks assigned for this lesson
+        </p>
+
         <div className='mt-3 space-y-2'>
+          {/* Assignments */}
           {activeScheduleAssignments.map(item => (
-            <div key={item.uuid ?? item.assignment_uuid} className='rounded-md border p-3'>
-              <p className='text-xs font-medium'>{item.assignment?.title || 'Assignment'}</p>
-              <p className='text-muted-foreground mt-1 text-[11px]'>
-                Due {formatDateTime(item.due_at)}
-              </p>
-              <p className='text-muted-foreground mt-1 text-[11px]'>
-                Grading due {formatDateTime(item.grading_due_at)}
-              </p>
+            <div
+              key={item.uuid ?? item.assignment_uuid}
+              className='rounded-md border p-3'
+            >
+              <div className='flex items-start justify-between gap-3'>
+                <div className='min-w-0 flex-1'>
+                  <p className='text-xs font-medium'>
+                    {item.assignment?.title || 'Assignment'}
+                  </p>
+
+                  <p className='text-muted-foreground mt-1 text-[11px]'>
+                    Due {formatDateTime(item.due_at)}
+                  </p>
+
+                  <p className='text-muted-foreground mt-1 text-[11px]'>
+                    Grading due {formatDateTime(item.grading_due_at)}
+                  </p>
+                </div>
+
+                {item.assignment && (
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    onClick={() => {
+                      setPreviewAssignment(item.assignment!);
+                      setIsAssignmentPreviewOpen(true);
+                    }}
+                  >
+                    <Eye className='mr-1 size-3.5' />
+                    View
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
+
+          {/* Quizzes */}
           {activeScheduleQuizzes.map(item => (
-            <div key={item.uuid ?? item.quiz_uuid} className='rounded-md border p-3'>
-              <p className='text-xs font-medium'>{item.quiz?.title || 'Quiz'}</p>
-              <p className='text-muted-foreground mt-1 text-[11px]'>
-                Due {formatDateTime(item.due_at)}
-              </p>
-              <p className='text-muted-foreground mt-1 text-[11px]'>
-                Grading due {formatDateTime(item.grading_due_at)}
-              </p>
+            <div
+              key={item.uuid ?? item.quiz_uuid}
+              className='rounded-md border p-3'
+            >
+              <div className='flex items-start justify-between gap-3'>
+                <div className='min-w-0 flex-1'>
+                  <p className='text-xs font-medium'>
+                    {item.quiz?.title || 'Quiz'}
+                  </p>
+
+                  <p className='text-muted-foreground mt-1 text-[11px]'>
+                    Due {formatDateTime(item.due_at)}
+                  </p>
+
+                  <p className='text-muted-foreground mt-1 text-[11px]'>
+                    Grading due {formatDateTime(item.grading_due_at)}
+                  </p>
+                </div>
+
+                {item.quiz && (
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    onClick={() => {
+                      setPreviewQuiz(item.quiz!);
+                      setIsQuizPreviewOpen(true);
+                    }}
+                  >
+                    <Eye className='mr-1 size-3.5' />
+                    View
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
-          {activeScheduleAssignments.length === 0 && activeScheduleQuizzes.length === 0 ? (
+
+          {activeScheduleAssignments.length === 0 &&
+            activeScheduleQuizzes.length === 0 ? (
             <p className='text-muted-foreground text-xs'>
               No tasks have been attached to this lesson instance yet.
             </p>
           ) : null}
         </div>
       </div>
+
+      {/* Assignment Preview */}
+      <Sheet
+        open={isAssignmentPreviewOpen}
+        onOpenChange={setIsAssignmentPreviewOpen}
+      >
+        <SheetContent
+          side='right'
+          className='w-full overflow-y-auto sm:max-w-3xl p-2 sm:p-4'
+        >
+          <div className='space-y-6'>
+            <div>
+              <h2 className='text-lg font-semibold'>
+                {previewAssignment?.title}
+              </h2>
+
+              {previewAssignment?.description && (
+                <div className='text-muted-foreground mt-2 text-sm'>
+                  <RichTextRenderer
+                    htmlString={previewAssignment.description}
+                  />
+                </div>
+              )}
+            </div>
+
+            {previewAssignment?.instructions && (
+              <div className='space-y-2'>
+                <p className='text-sm font-medium'>
+                  Instructions
+                </p>
+
+                <div className='text-muted-foreground text-sm'>
+                  <RichTextRenderer
+                    htmlString={previewAssignment.instructions}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className='space-y-3'>
+              <div className='flex items-center justify-between'>
+                <p className='text-sm font-medium'>
+                  Assignment Attachments
+                </p>
+
+                <Badge variant='outline'>
+                  {assignmentAttachmentsData?.data?.length ?? 0} files
+                </Badge>
+              </div>
+
+              <AssignmentContentPreview
+                attachments={
+                  assignmentAttachmentsData?.data ?? []
+                }
+              />
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Quiz Preview */}
+      <Sheet
+        open={isQuizPreviewOpen}
+        onOpenChange={setIsQuizPreviewOpen}
+      >
+        <SheetContent
+          side='right'
+          className='w-full overflow-y-auto sm:max-w-4xl p-2 sm:p-6'
+        >
+          <div className='space-y-6'>
+            <div className='border-b pb-4'>
+              <div className='flex items-center justify-between gap-3'>
+                <div>
+                  <h2 className='text-xl font-semibold'>
+                    {previewQuiz?.title}
+                  </h2>
+
+                  {previewQuiz?.instructions && (
+                    <p className='text-muted-foreground mt-2 text-sm'>
+                      {previewQuiz.instructions}
+                    </p>
+                  )}
+                </div>
+
+                <Badge variant='outline'>
+                  Quiz Preview
+                </Badge>
+              </div>
+            </div>
+
+            {previewQuiz?.uuid ? (
+              <QuizContentPreview
+                quizUuid={previewQuiz.uuid}
+                role='student'
+              />
+            ) : (
+              <div className='text-muted-foreground py-10 text-center text-sm'>
+                No quiz selected.
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

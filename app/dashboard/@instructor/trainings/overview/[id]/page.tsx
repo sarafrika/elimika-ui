@@ -2,7 +2,6 @@
 
 import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
 import RichTextRenderer from '@/components/editors/richTextRenders';
-import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import { LinkShareCard } from '@/components/shared/link-share-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,6 +55,7 @@ import {
   ClassScheduleCalendar,
   type ClassScheduleItem as CalendarScheduleItem,
 } from '../../../../@student/schedule/classes/[id]/SudentClassSchedule';
+import { LessonContentViewerDialog } from '../../../../../../components/content-preview/LessonContentPreview';
 
 export interface ContentItem {
   uuid: string;

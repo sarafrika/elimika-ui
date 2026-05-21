@@ -10,7 +10,6 @@ import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 // Import hooks
-import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
@@ -26,6 +25,7 @@ import {
   getInstructorByUuidOptions,
   submitInstructorReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { LessonContentViewerDialog } from '../../../../../../components/content-preview/LessonContentPreview';
 import { CustomLoadingState } from '../../../../@course_creator/_components/loading-state';
 import { FeedbackDialog } from '../../../../_components/review-instructor-modal';
 import { ClassPageHeader } from './ClassPageHeader';
