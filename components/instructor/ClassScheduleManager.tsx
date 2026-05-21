@@ -1,7 +1,6 @@
 'use client';
 
 import { QuizzesSheet } from '@/app/dashboard/@instructor/trainings/instructor-console/[id]/quiz-sheet';
-import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -91,6 +90,7 @@ import {
 import moment from 'moment';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { LessonContentViewerDialog } from '../content-preview/LessonContentPreview';
 
 export type ManagedScheduleItem = {
   uuid: string;

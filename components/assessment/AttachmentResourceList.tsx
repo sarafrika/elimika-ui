@@ -1,10 +1,10 @@
 'use client';
 
-import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { LessonContentViewerDialog } from '../content-preview/LessonContentPreview';
 
 type AttachmentItem = {
   uuid?: string;
@@ -82,11 +82,11 @@ export function AttachmentResourceList({
 
   const previewContent: PreviewableAttachment | null = previewAttachment
     ? {
-        ...previewAttachment,
-        title: previewAttachment.original_filename ?? 'Attachment',
-        content_text: null,
-        value: previewAttachment.file_url || null,
-      }
+      ...previewAttachment,
+      title: previewAttachment.original_filename ?? 'Attachment',
+      content_text: null,
+      value: previewAttachment.file_url || null,
+    }
     : null;
 
   return (

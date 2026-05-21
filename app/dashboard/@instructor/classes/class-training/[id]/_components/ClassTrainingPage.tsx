@@ -2,7 +2,6 @@
 
 import { PracticeActivityList } from '@/app/dashboard/@course_creator/_components/practice-activity-management';
 import ConfirmModal from '@/components/custom-modals/confirm-modal';
-import { LessonContentPreview } from '@/components/lesson-content/LessonContentPreview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,6 +40,7 @@ import {
   endScheduledInstanceMutation,
   getAllAssignmentsOptions,
   getAllQuizzesOptions,
+  getAssignmentAttachmentsOptions,
   getAssignmentSchedulesOptions,
   getAssignmentSchedulesQueryKey,
   getAssignmentSubmissionsOptions,
@@ -75,6 +75,7 @@ import {
   CheckCircle,
   ClipboardCheck,
   ClipboardList,
+  Eye,
   ListChecks,
   Loader2,
   PanelLeft,
@@ -93,6 +94,10 @@ import Link from 'next/link';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { AssignmentContentPreview } from '../../../../../../../components/content-preview/AssignmentContentPreview';
+import { LessonContentPreview } from '../../../../../../../components/content-preview/LessonContentPreview';
+import { QuizContentPreview } from '../../../../../../../components/content-preview/QuizContentPreview';
+import RichTextRenderer from '../../../../../../../components/editors/richTextRenders';
 
 
 
@@ -447,10 +452,31 @@ function AssessmentTasksSection({
   const [activeTab, setActiveTab] = React.useState<'add' | 'assigned'>('assigned');
   const [addType, setAddType] = React.useState<'assignment' | 'quiz'>('assignment');
 
+  const [isAssignmentPreviewOpen, setIsAssignmentPreviewOpen] =
+    React.useState(false);
+
+  const [previewAssignment, setPreviewAssignment] =
+    React.useState<Assignment | null>(null);
+
+  const [isQuizPreviewOpen, setIsQuizPreviewOpen] =
+    React.useState(false);
+
+  const [previewQuiz, setPreviewQuiz] =
+    React.useState<Quiz | null>(null);
+
   const totalAssigned = activeScheduleAssignments.length + activeScheduleQuizzes.length;
 
+  const { data: assignmentAttachmentsData } = useQuery({
+    ...getAssignmentAttachmentsOptions({
+      path: {
+        assignmentUuid: previewAssignment?.uuid ?? '',
+      },
+    }),
+    enabled: !!previewAssignment?.uuid,
+  });
+
   return (
-    <div className='space-y-3'>
+    <div className='space-y-3 mb-20'>
       {/* Tab bar */}
       <div className='bg-muted flex rounded-lg p-1'>
         <button
@@ -521,36 +547,161 @@ function AssessmentTasksSection({
                     Pick an assignment, set student deadline, then grading due date.
                   </p>
                 </div>
+
                 <Badge variant='outline' className='shrink-0 text-[10px]'>
                   Assignment
                 </Badge>
               </div>
 
-              <div className='space-y-3'>
-                <div className='space-y-1.5'>
+              <div className='space-y-4'>
+                {/* Assignment list */}
+                <div className='space-y-2'>
                   <Label className='text-xs'>Select assignment</Label>
-                  <Select value={selectedAssignmentUuid} onValueChange={onAssignmentSelect}>
-                    <SelectTrigger className='h-9'>
-                      <SelectValue placeholder='Choose an assignment…' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {lessonAssignments.map(assignment => (
-                        <SelectItem key={assignment.uuid} value={assignment.uuid ?? ''}>
-                          {assignment.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+
+                  <div className='space-y-2 overflow-y-auto pr-1'>
+                    {lessonAssignments.map(assignment => {
+                      const isSelected = selectedAssignmentUuid === assignment.uuid
+
+                      return (
+                        <div
+                          key={assignment.uuid}
+                          onClick={() => onAssignmentSelect(assignment.uuid ?? '')}
+                          className={`cursor-pointer rounded-lg border p-3 transition-all ${isSelected
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:bg-muted/40'
+                            }`}
+                        >
+                          <div className='flex items-start justify-between gap-3'>
+                            <div className='min-w-0 flex-1'>
+                              {/* Title */}
+                              <div className='flex items-center gap-2'>
+                                <p className='truncate text-sm font-medium'>
+                                  {assignment.title}
+                                </p>
+
+                                {assignment.is_published && (
+                                  <Badge
+                                    variant='secondary'
+                                    className='text-[10px]'
+                                  >
+                                    Published
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Description */}
+                              {assignment.description && (
+                                <div className='text-muted-foreground mt-1 text-xs'>
+                                  <RichTextRenderer htmlString={assignment.description} maxChars={500} />
+                                </div>
+                              )}
+
+                              {/* Instructions */}
+                              {assignment.instructions && (
+                                <div className='text-muted-foreground mt-2 text-[11px] italic'>
+                                  <RichTextRenderer htmlString={assignment.instructions} />
+                                </div>
+                              )}
+
+                              {/* Meta info */}
+                              <div className='text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-[11px]'>
+                                {/* Max points */}
+                                {assignment.max_points && (
+                                  <Badge
+                                    variant='outline'
+                                    className='font-normal'
+                                  >
+                                    🎯 {assignment.points_display ??
+                                      `${assignment.max_points} points`}
+                                  </Badge>
+                                )}
+
+                                {/* Submission types */}
+                                {assignment.submission_types?.length > 0 && (
+                                  <Badge
+                                    variant='outline'
+                                    className='font-normal'
+                                  >
+                                    📤 {assignment.submission_summary ??
+                                      `${assignment.submission_types.length} submission types`}
+                                  </Badge>
+                                )}
+
+                                {/* Assignment category */}
+                                {assignment.assignment_category && (
+                                  <Badge
+                                    variant='outline'
+                                    className='font-normal'
+                                  >
+                                    📝 {assignment.assignment_category}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Individual submission types */}
+                              {assignment.submission_types?.length > 0 && (
+                                <div className='mt-2 flex flex-wrap items-center gap-1'>
+                                  <p className='text-muted-foreground line-clamp-2 text-xs'>
+                                    Accepted Submissions:
+                                  </p>
+                                  {assignment.submission_types.map(type => (
+                                    <Badge
+                                      key={type}
+                                      variant='secondary'
+                                      className='text-[10px]'
+                                    >
+                                      {type}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className='flex items-center gap-2'>
+                              <Button
+                                size='sm'
+                                variant='outline'
+                                onClick={e => {
+                                  e.stopPropagation();
+
+                                  setPreviewAssignment(assignment);
+                                  setIsAssignmentPreviewOpen(true);
+                                }}
+                              >
+                                View
+                              </Button>
+
+                              {isSelected && (
+                                <Badge className='text-[10px]'>
+                                  Selected
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+
+                  {lessonAssignments.length === 0 && (
+                    <div className='text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm'>
+                      No assignments available yet.
+                    </div>
+                  )}
                 </div>
 
+                {/* Deadlines */}
                 <div className='bg-muted/40 rounded-md p-3'>
                   <p className='text-muted-foreground mb-2.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide'>
                     <CalendarClock className='size-3' />
                     Deadlines
                   </p>
+
                   <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2'>
                     <div className='space-y-1.5'>
                       <Label className='text-xs'>Student due date</Label>
+
                       <Input
                         type='datetime-local'
                         value={assignmentDueAt}
@@ -558,8 +709,10 @@ function AssessmentTasksSection({
                         className='h-9'
                       />
                     </div>
+
                     <div className='space-y-1.5'>
                       <Label className='text-xs'>Grading due date</Label>
+
                       <Input
                         type='datetime-local'
                         value={assignmentGradingDueAt}
@@ -572,11 +725,18 @@ function AssessmentTasksSection({
 
                 <Button
                   onClick={onAssignAssignment}
-                  disabled={!selectedAssignmentUuid || !activeSchedule || isAssigningAssignment}
+                  disabled={
+                    !selectedAssignmentUuid ||
+                    !activeSchedule ||
+                    isAssigningAssignment
+                  }
                   className='w-full'
                 >
                   <SquarePen className='mr-2 size-4' />
-                  {isAssigningAssignment ? 'Assigning…' : 'Assign Assignment'}
+
+                  {isAssigningAssignment
+                    ? 'Assigning…'
+                    : 'Assign Assignment'}
                 </Button>
               </div>
             </div>
@@ -592,36 +752,144 @@ function AssessmentTasksSection({
                     Schedule a lesson quiz and define its deadline details.
                   </p>
                 </div>
+
                 <Badge variant='outline' className='shrink-0 text-[10px]'>
                   Quiz
                 </Badge>
               </div>
 
-              <div className='space-y-3'>
-                <div className='space-y-1.5'>
+              <div className='space-y-4'>
+                {/* Quiz list */}
+                <div className='space-y-2'>
                   <Label className='text-xs'>Select quiz</Label>
-                  <Select value={selectedQuizUuid} onValueChange={onQuizSelect}>
-                    <SelectTrigger className='h-9'>
-                      <SelectValue placeholder='Choose a quiz…' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {lessonQuizzes.map(quiz => (
-                        <SelectItem key={quiz.uuid} value={quiz.uuid ?? ''}>
-                          {quiz.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+
+                  <div className='space-y-2 overflow-y-auto pr-1'>
+                    {lessonQuizzes.map(quiz => {
+                      const isSelected = selectedQuizUuid === quiz.uuid
+
+                      return (
+                        <div
+                          key={quiz.uuid}
+                          onClick={() => onQuizSelect(quiz.uuid ?? '')}
+                          className={`cursor-pointer rounded-lg border p-3 transition-all ${isSelected
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:bg-muted/40'
+                            }`}
+                        >
+                          <div className='flex items-start justify-between gap-3'>
+                            <div className='min-w-0 flex-1'>
+                              {/* Title */}
+                              <div className='flex items-center gap-2'>
+                                <p className='truncate text-sm font-medium'>
+                                  {quiz.title}
+                                </p>
+
+                                {quiz.is_published && (
+                                  <Badge
+                                    variant='secondary'
+                                    className='text-[10px]'
+                                  >
+                                    Published
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Description */}
+                              {quiz.description && (
+                                <p className='text-muted-foreground mt-1 line-clamp-2 text-xs'>
+                                  {quiz.description}
+                                </p>
+                              )}
+
+                              {/* Instructions */}
+                              {quiz.instructions && (
+                                <p className='text-muted-foreground mt-2 line-clamp-2 text-[11px] italic'>
+                                  {quiz.instructions}
+                                </p>
+                              )}
+
+                              {/* Meta info */}
+                              <div className='text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-[11px]'>
+                                {/* Time limit */}
+                                {quiz.is_timed && quiz.time_limit_minutes && (
+                                  <Badge
+                                    variant='outline'
+                                    className='font-normal'
+                                  >
+                                    ⏱ {quiz.time_limit_display ??
+                                      `${quiz.time_limit_minutes} mins`}
+                                  </Badge>
+                                )}
+
+                                {/* Passing score */}
+                                {quiz.passing_score && (
+                                  <Badge
+                                    variant='outline'
+                                    className='font-normal'
+                                  >
+                                    🎯 Pass: {quiz.passing_score}%
+                                  </Badge>
+                                )}
+
+                                {/* Attempts */}
+                                {quiz.attempts_allowed && (
+                                  <Badge
+                                    variant='outline'
+                                    className='font-normal'
+                                  >
+                                    🔁 {quiz.attempts_allowed}{' '}
+                                    {quiz.attempts_allowed === 1
+                                      ? 'Attempt'
+                                      : 'Attempts'}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className='flex items-center gap-2'>
+                              <Button
+                                size='sm'
+                                variant='outline'
+                                onClick={e => {
+                                  e.stopPropagation();
+
+                                  setPreviewQuiz(quiz);
+                                  setIsQuizPreviewOpen(true);
+                                }}
+                              >
+                                View Quiz
+                              </Button>
+
+                              {isSelected && (
+                                <Badge className='text-[10px]'>
+                                  Selected
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    {lessonQuizzes.length === 0 && (
+                      <div className='text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm'>
+                        No quizzes available yet.
+                      </div>
+                    )}
+                  </div>
                 </div>
 
+                {/* Deadlines */}
                 <div className='bg-muted/40 rounded-md p-3'>
                   <p className='text-muted-foreground mb-2.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide'>
                     <CalendarClock className='size-3' />
                     Deadlines
                   </p>
+
                   <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2'>
                     <div className='space-y-1.5'>
                       <Label className='text-xs'>Student due date</Label>
+
                       <Input
                         type='datetime-local'
                         value={quizDueAt}
@@ -629,8 +897,10 @@ function AssessmentTasksSection({
                         className='h-9'
                       />
                     </div>
+
                     <div className='space-y-1.5'>
                       <Label className='text-xs'>Grading due date</Label>
+
                       <Input
                         type='datetime-local'
                         value={quizGradingDueAt}
@@ -643,11 +913,18 @@ function AssessmentTasksSection({
 
                 <Button
                   onClick={onAssignQuiz}
-                  disabled={!selectedQuizUuid || !activeSchedule || isAssigningQuiz}
+                  disabled={
+                    !selectedQuizUuid ||
+                    !activeSchedule ||
+                    isAssigningQuiz
+                  }
                   className='w-full'
                 >
                   <ClipboardList className='mr-2 size-4' />
-                  {isAssigningQuiz ? 'Assigning…' : 'Assign Quiz'}
+
+                  {isAssigningQuiz
+                    ? 'Assigning…'
+                    : 'Assign Quiz'}
                 </Button>
               </div>
             </div>
@@ -669,46 +946,150 @@ function AssessmentTasksSection({
           ) : (
             <>
               {/* Assignments */}
-              {activeScheduleAssignments.length > 0 && (
-                <div className='space-y-2'>
-                  <p className='text-muted-foreground flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide'>
-                    <SquarePen className='size-3' />
-                    Assignments
-                  </p>
-                  {activeScheduleAssignments.map(item => (
-                    <AssignedTaskRow
-                      key={item.uuid ?? item.assignment_uuid}
-                      type='assignment'
-                      title={item.assignment?.title || 'Assignment'}
-                      dueAt={item.due_at}
-                      gradingDueAt={item.grading_due_at}
-                    />
-                  ))}
-                </div>
-              )}
+              {activeScheduleAssignments.map(item => (
+                <AssignedTaskRow
+                  key={item.uuid ?? item.assignment_uuid}
+                  type='assignment'
+                  title={item.assignment?.title || 'Assignment'}
+                  dueAt={item.due_at}
+                  gradingDueAt={item.grading_due_at}
+                  assignment={item.assignment}
+                  onViewAssignment={assignment => {
+                    setPreviewAssignment(assignment);
+                    setIsAssignmentPreviewOpen(true);
+                  }}
+                />
+              ))}
 
               {/* Quizzes */}
-              {activeScheduleQuizzes.length > 0 && (
-                <div className='space-y-2'>
-                  <p className='text-muted-foreground flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide'>
-                    <ClipboardList className='size-3' />
-                    Quizzes
-                  </p>
-                  {activeScheduleQuizzes.map(item => (
-                    <AssignedTaskRow
-                      key={item.uuid ?? item.quiz_uuid}
-                      type='quiz'
-                      title={item.quiz?.title || 'Quiz'}
-                      dueAt={item.due_at}
-                      gradingDueAt={item.grading_due_at}
-                    />
-                  ))}
-                </div>
-              )}
+              {activeScheduleQuizzes.map(item => (
+                <AssignedTaskRow
+                  key={item.uuid ?? item.quiz_uuid}
+                  type='quiz'
+                  title={item.quiz?.title || 'Quiz'}
+                  dueAt={item.due_at}
+                  gradingDueAt={item.grading_due_at}
+
+                  quiz={item.quiz}
+
+                  onViewQuiz={quiz => {
+                    setPreviewQuiz(quiz);
+                    setIsQuizPreviewOpen(true);
+                  }}
+                />
+              ))}
             </>
           )}
         </div>
       )}
+
+      <Sheet
+        open={isAssignmentPreviewOpen}
+        onOpenChange={setIsAssignmentPreviewOpen}
+      >
+        <SheetContent
+          side='right'
+          className='w-full overflow-y-auto sm:max-w-3xl p-2 sm:p-4'
+        >
+          <div className='space-y-6'>
+            {/* Header */}
+            <div>
+              <h2 className='text-lg font-semibold'>
+                {previewAssignment?.title}
+              </h2>
+
+              {previewAssignment?.description && (
+                <div className='text-muted-foreground mt-2 text-sm'>
+                  <RichTextRenderer
+                    htmlString={previewAssignment.description}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Instructions */}
+            {previewAssignment?.instructions && (
+              <div className='space-y-2'>
+                <p className='text-sm font-medium'>
+                  Instructions
+                </p>
+
+                <div className='text-muted-foreground text-sm'>
+                  <RichTextRenderer
+                    htmlString={previewAssignment.instructions}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Attachments */}
+            <div className='space-y-3'>
+              <div className='flex items-center justify-between'>
+                <p className='text-sm font-medium'>
+                  Assignment Attachments
+                </p>
+
+                <Badge variant='outline'>
+                  {assignmentAttachmentsData?.data?.length ?? 0}{' '}
+                  files
+                </Badge>
+              </div>
+
+              <AssignmentContentPreview
+                attachments={
+                  assignmentAttachmentsData?.data ?? []
+                }
+              />
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet
+        open={isQuizPreviewOpen}
+        onOpenChange={setIsQuizPreviewOpen}
+      >
+        <SheetContent
+          side='right'
+          className='w-full overflow-y-auto sm:max-w-4xl p-2 sm:p-6'
+        >
+          <div className='space-y-6'>
+            {/* Header */}
+            <div className='border-b pb-4'>
+              <div className='flex items-center justify-between gap-3'>
+                <div>
+                  <h2 className='text-xl font-semibold'>
+                    {previewQuiz?.title}
+                  </h2>
+
+                  {previewQuiz?.instructions && (
+                    <p className='text-muted-foreground mt-2 text-sm'>
+                      {previewQuiz.instructions}
+                    </p>
+                  )}
+                </div>
+
+                <Badge variant='outline'>
+                  Quiz Preview
+                </Badge>
+              </div>
+            </div>
+
+            {/* Quiz Content */}
+            {previewQuiz?.uuid ? (
+              <QuizContentPreview
+                quizUuid={previewQuiz.uuid}
+                role='instructor'
+
+              />
+            ) : (
+              <div className='text-muted-foreground py-10 text-center text-sm'>
+                No quiz selected.
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -719,14 +1100,30 @@ function AssignedTaskRow({
   title,
   dueAt,
   gradingDueAt,
+
+  assignment,
+  quiz,
+
+  onViewAssignment,
+  onViewQuiz,
 }: {
   type: 'assignment' | 'quiz';
   title: string;
   dueAt?: string | Date | null;
   gradingDueAt?: string | Date | null;
+
+  assignment?: Assignment | null;
+  quiz?: Quiz | null;
+
+  onViewAssignment?: (assignment: Assignment) => void;
+  onViewQuiz?: (quiz: Quiz) => void;
 }) {
   const [expanded, setExpanded] = React.useState(false);
-  const [editDueAt, setEditDueAt] = React.useState(formatDateTimeInput(dueAt));
+
+  const [editDueAt, setEditDueAt] = React.useState(
+    formatDateTimeInput(dueAt)
+  );
+
   const [editGradingDueAt, setEditGradingDueAt] = React.useState(
     formatDateTimeInput(gradingDueAt)
   );
@@ -736,7 +1133,9 @@ function AssignedTaskRow({
       {/* Row header */}
       <div className='flex items-center gap-3 p-3'>
         <div
-          className={`grid size-7 shrink-0 place-items-center rounded-md ${type === 'assignment' ? 'bg-primary/10 text-primary' : 'bg-violet-500/10 text-violet-500'
+          className={`grid size-7 shrink-0 place-items-center rounded-md ${type === 'assignment'
+            ? 'bg-primary/10 text-primary'
+            : 'bg-violet-500/10 text-violet-500'
             }`}
         >
           {type === 'assignment' ? (
@@ -745,13 +1144,43 @@ function AssignedTaskRow({
             <ClipboardList className='size-3.5' />
           )}
         </div>
+
         <div className='min-w-0 flex-1'>
           <p className='text-sm font-medium leading-tight'>{title}</p>
+
           <p className='text-muted-foreground mt-0.5 text-[11px]'>
-            Due {formatDateTime(dueAt)} · Grading {formatDateTime(gradingDueAt)}
+            Due {formatDateTime(dueAt)} · Grading{' '}
+            {formatDateTime(gradingDueAt)}
           </p>
         </div>
+
         <div className='flex shrink-0 items-center gap-1'>
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={e => {
+              e.stopPropagation();
+
+              if (
+                type === 'assignment' &&
+                assignment &&
+                onViewAssignment
+              ) {
+                onViewAssignment(assignment);
+              }
+
+              if (
+                type === 'quiz' &&
+                quiz &&
+                onViewQuiz
+              ) {
+                onViewQuiz(quiz);
+              }
+            }}
+          >
+            <Eye className='size-3.5' />
+          </Button>
+
           <Button
             type='button'
             variant='ghost'
@@ -762,6 +1191,7 @@ function AssignedTaskRow({
           >
             <Pencil className='size-3.5' />
           </Button>
+
           <Button
             type='button'
             variant='ghost'
@@ -780,9 +1210,11 @@ function AssignedTaskRow({
           <p className='text-muted-foreground mb-2 text-[11px] font-medium uppercase tracking-wide'>
             Adjust deadlines
           </p>
+
           <div className='grid gap-3 sm:grid-cols-2'>
             <div className='space-y-1.5'>
               <Label className='text-xs'>Student due date</Label>
+
               <Input
                 type='datetime-local'
                 value={editDueAt}
@@ -790,8 +1222,10 @@ function AssignedTaskRow({
                 className='h-8 text-xs'
               />
             </div>
+
             <div className='space-y-1.5'>
               <Label className='text-xs'>Grading due date</Label>
+
               <Input
                 type='datetime-local'
                 value={editGradingDueAt}
@@ -800,6 +1234,7 @@ function AssignedTaskRow({
               />
             </div>
           </div>
+
           <div className='mt-3 flex justify-end gap-2'>
             <Button
               type='button'
@@ -810,6 +1245,7 @@ function AssignedTaskRow({
             >
               Cancel
             </Button>
+
             <Button
               type='button'
               size='sm'
@@ -2368,9 +2804,9 @@ export default function ClassTrainingPage({
     toast.success('Note shared for this session view.');
   };
 
-  if (isLoading || rosterLoading || lessonsLoading) {
-    return <ConsoleSkeleton />;
-  }
+  // if (isLoading || rosterLoading || lessonsLoading) {
+  //   return <ConsoleSkeleton />;
+  // }
 
   if (isError) {
     return (
@@ -2618,7 +3054,7 @@ export default function ClassTrainingPage({
 
           <ScrollArea className='h-[calc(100vh-8.5rem)]'>
             {activeTab === 'content' && (
-              <div className='mx-auto space-y-4 p-2 md:p-2 pb-40'>
+              <div className='mx-auto space-y-4 p-2 md:p-2 mb-40'>
                 <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
                   <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
                     <Badge variant='outline' className='capitalize'>

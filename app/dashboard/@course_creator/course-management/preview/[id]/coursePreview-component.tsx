@@ -1,8 +1,30 @@
 'use client';
 
+import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
+import HTMLTextPreview from '@/components/editors/html-text-preview';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/ui/dialog';
+import Spinner from '@/components/ui/spinner';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useCourseRubrics } from '@/hooks/use-course-rubric';
+import {
+  getCourseAssessmentsOptions,
+  getCourseByUuidOptions,
+  getCourseReviewsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import type {
+  CourseAssessment,
+  CourseRubricAssociation,
+  LessonContent,
+} from '@/services/client/types.gen';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import type { LucideIcon } from 'lucide-react';
 import {
   BookOpen,
   BookOpenCheck,
@@ -19,35 +41,13 @@ import {
   Video,
 } from 'lucide-react';
 import Image from 'next/image';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
-import HTMLTextPreview from '@/components/editors/html-text-preview';
-import RichTextRenderer from '@/components/editors/richTextRenders';
-import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/ui/dialog';
-import Spinner from '@/components/ui/spinner';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useCourseRubrics } from '@/hooks/use-course-rubric';
-import {
-  getCourseAssessmentsOptions,
-  getCourseByUuidOptions,
-  getCourseReviewsOptions,
-} from '@/services/client/@tanstack/react-query.gen';
+import { LessonContentViewerDialog } from '../../../../../../components/content-preview/LessonContentPreview';
 import { useCourseLessonsWithContent } from '../../../../../../hooks/use-courselessonwithcontent';
 import { getResourceIcon } from '../../../../../../lib/resources-icon';
 import { ReviewCard } from '../../../../@instructor/reviews/review-card';
 import { ContentItem } from '../../../../@instructor/trainings/overview/[id]/page';
-import type {
-  CourseAssessment,
-  CourseRubricAssociation,
-  LessonContent,
-} from '@/services/client/types.gen';
-import type { LucideIcon } from 'lucide-react';
 
 type PreviewContentItem = ContentItem & LessonContent;
 

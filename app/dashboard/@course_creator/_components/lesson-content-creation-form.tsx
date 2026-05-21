@@ -1,10 +1,7 @@
 'use client';
 
-'use client';
-
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import {
   Eye,
   FileText,
@@ -21,6 +18,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { LessonContentViewerDialog } from '../../../../components/content-preview/LessonContentPreview';
 import { SimpleEditor } from '../../../../components/tiptap-templates/simple/simple-editor';
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
@@ -47,10 +45,9 @@ import {
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type {
   ApiResponseCourse,
-  ContentType as GeneratedContentType,
   Lesson,
   LessonContent,
-  PagedDtoLesson,
+  PagedDtoLesson
 } from '../../../../services/client/types.gen';
 import { ContentItem } from '../../@instructor/trainings/overview/[id]/page';
 import { PracticeActivityManager } from './practice-activity-management';
@@ -385,7 +382,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const getContentIcon = (type: string) => {
@@ -465,11 +462,10 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`-mb-px border-b-2 px-4 py-2 transition-colors ${
-                  activeTab === tab
-                    ? 'border-primary text-primary font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className={`-mb-px border-b-2 px-4 py-2 transition-colors ${activeTab === tab
+                  ? 'border-primary text-primary font-semibold'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
               >
                 {tab}
               </button>
@@ -520,11 +516,10 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                             )}
                           >
                             <div
-                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                                selectedContentId === content.uuid
-                                  ? 'bg-primary/20 text-primary'
-                                  : 'bg-background text-muted-foreground'
-                              }`}
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${selectedContentId === content.uuid
+                                ? 'bg-primary/20 text-primary'
+                                : 'bg-background text-muted-foreground'
+                                }`}
                             >
                               {getContentIcon(content.content_type_key ?? 'TEXT')}
                             </div>

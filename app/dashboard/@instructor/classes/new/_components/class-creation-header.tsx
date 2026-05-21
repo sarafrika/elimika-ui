@@ -45,7 +45,6 @@ export function ClassCreationHeader({
         <h1 className='text-foreground text-xl font-semibold tracking-tight sm:text-2xl lg:text-[1.7rem]'>
           Create New Class
         </h1>
-
         <p className='text-muted-foreground text-xs sm:text-sm'>
           Set up your class details and schedule
         </p>
