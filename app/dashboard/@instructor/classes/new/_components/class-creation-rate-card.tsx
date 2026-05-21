@@ -11,21 +11,22 @@ export type ClassCreationRateSummary = {
 };
 
 export function ClassCreationRateCard({
-  durationHours,
+  totalHours,
+  pricePerHour,
   totalSessions,
   totalAmount,
   summary,
   onEditRate,
 }: {
-  durationHours: number;
+  totalHours: number;
+  pricePerHour: number;
   totalAmount: number;
   totalSessions: number;
   onEditRate: () => void;
   summary?: ClassCreationRateSummary | null;
 }) {
   const currency = summary?.currency || 'KES';
-  const ratePerHour = summary?.ratePerHour ?? 0;
-  const perSession = Math.max(ratePerHour * durationHours, 0);
+  const resolvedRatePerHour = summary?.ratePerHour ?? pricePerHour ?? 0;
 
   return (
     <Card className='overflow-hidden border border-primary/20 p-0 shadow-sm'>
@@ -45,19 +46,28 @@ export function ClassCreationRateCard({
               Fee per Hour
             </p>
             <p className='text-foreground text-base font-semibold'>
-              {currency} {ratePerHour.toLocaleString()}
+              {currency} {resolvedRatePerHour.toLocaleString()}
             </p>
           </div>
 
           <div className='space-y-0.5'>
-            <p className='text-muted-foreground text-[11px] font-medium'>
-              Duration per Session
-            </p>
+            <p className='text-muted-foreground text-[11px] font-medium'>Total Hours</p>
             <p className='text-foreground text-base font-semibold'>
-              {durationHours > 0
-                ? `${durationHours} ${durationHours === 1 ? 'Hour' : 'Hours'
-                }`
-                : '—'}
+              {totalHours > 0 ? `${totalHours} ${totalHours === 1 ? 'Hour' : 'Hours'}` : '—'}
+            </p>
+          </div>
+
+          <div className='space-y-0.5'>
+            <p className='text-muted-foreground text-[11px] font-medium'>Total Sessions</p>
+            <p className='text-foreground text-base font-semibold'>
+              {totalSessions > 0 ? totalSessions.toLocaleString() : '—'}
+            </p>
+          </div>
+
+          <div className='space-y-0.5'>
+            <p className='text-muted-foreground text-[11px] font-medium'>Total Amount</p>
+            <p className='text-foreground text-base font-semibold'>
+              {currency} {totalAmount.toLocaleString()}
             </p>
           </div>
         </div>

@@ -238,70 +238,6 @@ const buildDateFromInput = (date: string) => {
   return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
 };
 
-const calculateOccurrences = (
-  startDate: string,
-  endDate: string,
-  repeatUnit: string,
-  repeatInterval: number,
-  selectedDays?: number[]
-) => {
-  if (!startDate || !endDate) return 0;
-
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return 0;
-
-  let occurrences = 0;
-
-  switch (repeatUnit) {
-    case 'day': {
-      let current = new Date(start);
-      while (current <= end) {
-        occurrences++;
-        current.setDate(current.getDate() + repeatInterval);
-      }
-      break;
-    }
-    case 'week': {
-      let weekStart = new Date(start);
-      const startDow = weekStart.getDay();
-      const daysToMon = startDow === 0 ? -6 : 1 - startDow;
-      weekStart.setDate(weekStart.getDate() + daysToMon);
-
-      while (weekStart <= end) {
-        const daysToCheck = selectedDays?.length ? selectedDays : [0, 1, 2, 3, 4, 5, 6];
-        for (const dayIdx of daysToCheck) {
-          const candidate = new Date(weekStart);
-          candidate.setDate(weekStart.getDate() + dayIdx);
-          if (candidate >= start && candidate <= end) occurrences++;
-        }
-        weekStart.setDate(weekStart.getDate() + 7 * repeatInterval);
-      }
-      break;
-    }
-    case 'month': {
-      let current = new Date(start);
-      while (current <= end) {
-        occurrences++;
-        current.setMonth(current.getMonth() + repeatInterval);
-      }
-      break;
-    }
-    case 'year': {
-      let current = new Date(start);
-      while (current <= end) {
-        occurrences++;
-        current.setFullYear(current.getFullYear() + repeatInterval);
-      }
-      break;
-    }
-    default:
-      break;
-  }
-
-  return occurrences;
-};
-
 const buildUtcIsoDateTime = (date?: string, time?: string) => {
   if (!date) throw new Error('Missing date');
   if (!time) throw new Error(`Missing time for date: ${date}`);
@@ -609,50 +545,18 @@ const NewClassCreationPage = () => {
     return Number(rateCard[rateKey] ?? 0);
   }, [classDetails.class_type, classDetails.location_type, rateCard]);
 
-  // ── Derive session duration from first available day's times ───────────────
-  // For standard/academic: use the first selected day's (possibly overridden) times.
-  // For pick-dates: use the first picked date's times.
-  const sessionDuration = useMemo(() => {
-    if (scheduleSettings.allDay) return 24;
+  const totalSessions = sessionsForConflictCheck.length;
+  const totalHours = useMemo(
+    () =>
+      sessionsForConflictCheck.reduce(
+        (sum, session) =>
+          sum + calculateSessionHours(session.startTime, session.endTime, scheduleSettings.allDay),
+        0
+      ),
+    [scheduleSettings.allDay, sessionsForConflictCheck]
+  );
 
-    if (schedulePreset === 'pick-dates') {
-      if (pickedDates.length === 0) return 0;
-      const first = pickedDates[0];
-      return calculateSessionHours(first?.startTime, first?.endTime, false);
-    }
-
-    // standard or academic-period — use the lowest-index selected day
-    const sortedDays = [...(scheduleSettings.repeat.days || [])].sort((a, b) => a - b);
-    if (sortedDays.length === 0) return 0;
-    const firstDayIdx = sortedDays[0]!;
-    const override = scheduleSettings.weeklyDayTimes[firstDayIdx];
-    const startTime = override?.startTime || scheduleSettings.startClass.startTime || '';
-    const endTime = override?.endTime || scheduleSettings.startClass.endTime || '';
-    return calculateSessionHours(startTime, endTime, false);
-  }, [schedulePreset, scheduleSettings, pickedDates]);
-
-  const totalSessions = useMemo(() => {
-    if (schedulePreset === 'standard') {
-      return calculateOccurrences(
-        scheduleSettings.startClass.date,
-        scheduleSettings.endRepeat,
-        scheduleSettings.repeat.unit,
-        scheduleSettings.repeat.interval,
-        scheduleSettings.repeat.days
-      );
-    }
-    if (schedulePreset === 'pick-dates') return pickedDates.length;
-    return calculateOccurrences(
-      scheduleSettings.academicPeriod.start,
-      scheduleSettings.academicPeriod.end,
-      scheduleSettings.repeat.unit,
-      scheduleSettings.repeat.interval,
-      scheduleSettings.repeat.days
-    );
-  }, [schedulePreset, scheduleSettings, pickedDates]);
-
-  const feePerSession = Math.max(ratePerHour * sessionDuration, 0);
-  const totalAmount = feePerSession * Math.max(totalSessions, 1);
+  const totalAmount = Math.max(ratePerHour * totalHours, 0);
 
   const rateSummary: ClassCreationRateSummary | null = ratePerHour
     ? { currency: rateCard?.currency as string | undefined, label: selectedCatalogItem?.label, ratePerHour }
@@ -856,6 +760,7 @@ const NewClassCreationPage = () => {
     const academicPeriodEnd = buildDateFromInput(scheduleSettings.academicPeriod.end);
     const registrationPeriodStart = buildDateFromInput(scheduleSettings.registrationPeriod.start);
     const registrationPeriodEnd = buildDateFromInput(scheduleSettings.registrationPeriod.end);
+    const selectedClassColor = trimToUndefined(notificationSettings.classColour || classDetails.class_color);
 
     const totalOccurrences = totalSessions || 1;
 
@@ -977,7 +882,7 @@ const NewClassCreationPage = () => {
       location_longitude: 36.821945,
       max_participants: classDetails.class_limit > 0 ? classDetails.class_limit : undefined,
       classroom: trimToUndefined(classDetails.classroom),
-      class_color: trimToUndefined(notificationSettings.classColour || classDetails.class_color),
+      class_color: trimToUndefined(CLASS_COLOR_OPTIONS?.[0]?.value || classDetails.class_color),
       academic_period_start_date: academicPeriodStart,
       academic_period_end_date: academicPeriodEnd,
       registration_period_start_date: registrationPeriodStart,
@@ -1061,9 +966,9 @@ const NewClassCreationPage = () => {
           ? `Start ${new Date(`${scheduleSettings.startClass.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' })}`
           : '',
     timeLabel: firstSessionTimeLabel,
-    durationLabel: `${sessionDuration || 0} ${sessionDuration === 1 ? 'Hour' : 'Hours'}`,
-    pricePerSessionLabel: `${rateCard?.currency || 'KES'} ${feePerSession.toLocaleString()}`,
-    totalSessionsLabel: `${totalSessions} Session${totalSessions === 1 ? '' : 's'}`,
+    totalHoursLabel: `${totalHours || 0} ${totalHours === 1 ? 'Hour' : 'Hours'}`,
+    pricePerHourLabel: `${rateCard?.currency || 'KES'} ${ratePerHour.toLocaleString()}`,
+    totalSessionsLabel: `${totalSessions} Class${totalSessions === 1 ? '' : 'es'}`,
     totalAmountLabel: `${rateCard?.currency || 'KES'} ${totalAmount.toLocaleString()}`,
     meetingLink,
     inviteLink,
@@ -1406,7 +1311,8 @@ const NewClassCreationPage = () => {
 
                   <div className='w-full lg:w-[300px] lg:shrink-0'>
                     <ClassCreationRateCard
-                      durationHours={sessionDuration}
+                      totalHours={totalHours}
+                      pricePerHour={ratePerHour}
                       totalAmount={totalAmount}
                       totalSessions={totalSessions}
                       summary={rateSummary}
