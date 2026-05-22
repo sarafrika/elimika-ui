@@ -42,6 +42,7 @@ import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { Label } from '../../../../components/ui/label';
 
 const dashboardLabelByDomain = (domain?: string | null) => {
   if (!domain) return 'Dashboard';
@@ -164,18 +165,33 @@ export default function DashboardTopBar() {
             </Link> */}
           </div>
 
-          <div className='hidden min-w-0 flex-1 xl:block'>
-            <label className='relative block max-w-2xl'>
+          {/* <div className='hidden min-w-0 flex-1 xl:block'>
+            <Label className='relative block max-w-2xl'>
               <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
               <Input
                 type='search'
                 placeholder='Search courses, students, and more...'
                 className='border-border/70 bg-card/80 h-10 rounded-md pl-11 pr-16 shadow-sm text-xs'
               />
+              <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
+                Ctrl K
+              </span>
+            </Label>
+          </div> */}
+
+          <div className='hidden min-w-0 flex-1 xl:block'>
+            <Label className='relative block max-w-2xl'>
+              <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
+
+              <Input
+                type='search'
+                placeholder='Search courses, students, and more...'
+                className='h-10 rounded-md border border-border/50 bg-background pl-11 pr-16 text-xs shadow-none'
+              />
               {/* <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
                 Ctrl K
               </span> */}
-            </label>
+            </Label>
           </div>
 
           <div className='ml-auto flex items-center gap-2 sm:gap-3'>
