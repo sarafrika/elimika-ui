@@ -6,6 +6,7 @@ import { categoryStyles, schedulerHours } from './data';
 import type { SchedulerEvent, SchedulerView } from './types';
 
 const rowHeight = 58;
+
 const weekColumnClass =
   'grid-cols-[72px_repeat(7,110px)] sm:grid-cols-[78px_repeat(7,110px)] lg:grid-cols-[88px_repeat(7,110px)]';
 
@@ -25,13 +26,16 @@ function formatHour(hour: number) {
 function getWeekStart(date: Date) {
   const next = new Date(date);
   const day = next.getDay();
+
   next.setHours(0, 0, 0, 0);
   next.setDate(next.getDate() - day + (day === 0 ? -6 : 1));
+
   return next;
 }
 
 function getWeekDays(currentDate: Date) {
   const weekStart = getWeekStart(currentDate);
+
   return Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart);
     date.setDate(weekStart.getDate() + index);
@@ -48,19 +52,29 @@ function isSameCalendarDay(left: Date, right: Date) {
 }
 
 function isSameMonth(left: Date, right: Date) {
-  return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth();
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth()
+  );
 }
 
 function getCalendarKey(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
+
   return `${year}-${month}-${day}`;
 }
 
 function getMonthDays(currentDate: Date) {
-  const firstOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const firstOfMonth = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    1
+  );
+
   const gridStart = getWeekStart(firstOfMonth);
+
   return Array.from({ length: 42 }, (_, index) => {
     const date = new Date(gridStart);
     date.setDate(gridStart.getDate() + index);
@@ -71,23 +85,37 @@ function getMonthDays(currentDate: Date) {
 function getMonthEvents(events: SchedulerEvent[], monthDate: Date) {
   return events
     .filter(event => isSameMonth(event.startTime, monthDate))
-    .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
+    .sort(
+      (left, right) =>
+        left.startTime.getTime() - right.startTime.getTime()
+    );
 }
 
 function getDayEvents(events: SchedulerEvent[], day: Date) {
   return events
     .filter(event => isSameCalendarDay(event.startTime, day))
-    .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
+    .sort(
+      (left, right) =>
+        left.startTime.getTime() - right.startTime.getTime()
+    );
 }
 
-function getStartHour(event: SchedulerEvent) {
-  return event.startTime.getHours() + event.startTime.getMinutes() / 60;
+
+function getEventTop(event: SchedulerEvent) {
+  const hours = event.startTime.getHours();
+  const minutes = event.startTime.getMinutes();
+
+  return hours * rowHeight + (minutes / 60) * rowHeight;
 }
 
-function getOccupancyHours(event: SchedulerEvent) {
-  const startHour = event.startTime.getHours() + event.startTime.getMinutes() / 60;
-  const endHour = event.endTime.getHours() + event.endTime.getMinutes() / 60;
-  return Math.max(Math.floor(endHour) - Math.floor(startHour) + 1, 1);
+function getEventHeight(event: SchedulerEvent) {
+  const durationMs =
+    new Date(event.endTime).getTime() -
+    new Date(event.startTime).getTime();
+
+  const durationMinutes = durationMs / (1000 * 60);
+
+  return Math.max((durationMinutes / 60) * rowHeight, 40);
 }
 
 function isCancelledStatus(status?: string) {
@@ -106,11 +134,17 @@ function getCurrentTimeOffset(currentTime: Date) {
   return (currentTime.getMinutes() / 60) * rowHeight;
 }
 
-function CurrentTimeIndicator({ currentTime }: { currentTime: Date }) {
+function CurrentTimeIndicator({
+  currentTime,
+}: {
+  currentTime: Date;
+}) {
   return (
     <div
       className='pointer-events-none absolute right-0 left-0 z-30 flex items-center'
-      style={{ top: `${getCurrentTimeOffset(currentTime)}px` }}
+      style={{
+        top: `${getCurrentTimeOffset(currentTime)}px`,
+      }}
       aria-hidden='true'
     >
       <span className='bg-destructive h-2 w-2 shrink-0 rounded-full' />
@@ -130,32 +164,42 @@ function EventBlock({
     <button
       type='button'
       className={cn(
-        'focus-visible:ring-ring absolute inset-x-0.5 overflow-hidden rounded-md border px-1 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none sm:inset-x-1 sm:px-1.5 lg:inset-x-2 lg:p-2',
+        'focus-visible:ring-ring absolute inset-x-0 overflow-hidden rounded-md border px-1 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none sm:px-1.5 lg:p-2',
         getEventStyles(event)
       )}
       style={{
-        top: `${(getStartHour(event) % 1) * rowHeight + 6}px`,
-        height: `${Math.max(getOccupancyHours(event) * rowHeight - 10, 50)}px`,
+        top: 0,
+        height: `${getEventHeight(event)}px`,
       }}
       onClick={eventData => {
         eventData.stopPropagation();
         onClick?.(event);
       }}
     >
-      <p className='truncate text-[9px] font-semibold sm:text-[10px] lg:text-xs'>{event.title}</p>
+      <p className='truncate text-[9px] font-semibold sm:text-[10px] lg:text-xs'>
+        {event.title}
+      </p>
+
       <p className='hidden truncate text-[9px] opacity-80 sm:block lg:text-[11px]'>
         {event.instructor}
       </p>
+
       <p className='hidden truncate text-[9px] opacity-75 md:block lg:text-[11px]'>
         {event.location}
       </p>
+
       <div className='mt-1 hidden items-center gap-1 lg:flex'>
         {event.students.slice(0, 3).map(student => (
           <Avatar key={student} className='h-5 w-5 border'>
-            <AvatarFallback className='text-[8px]'>{student}</AvatarFallback>
+            <AvatarFallback className='text-[8px]'>
+              {student}
+            </AvatarFallback>
           </Avatar>
         ))}
-        <span className='text-[10px] opacity-75'>+{event.students.length + 7}</span>
+
+        <span className='text-[10px] opacity-75'>
+          +{event.students.length + 7}
+        </span>
       </div>
     </button>
   );
@@ -176,19 +220,32 @@ function WeekEventBlock({
         getEventStyles(event)
       )}
       style={{
-        height: `${Math.max(getOccupancyHours(event) * rowHeight - 10, 50)}px`,
+        height: `${getEventHeight(event)}px`,
       }}
       onClick={eventData => {
         eventData.stopPropagation();
         onClick?.(event);
       }}
     >
-      <p className='truncate text-[10px] font-semibold sm:text-[11px]'>{event.title}</p>
-      <p className='truncate text-[9px] opacity-75'>
-        {event.startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} -
-        {event.endTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+      <p className='truncate text-[10px] font-semibold sm:text-[11px]'>
+        {event.title}
       </p>
-      <p className='hidden truncate text-[9px] opacity-75 sm:block'>{event.location}</p>
+
+      <p className='truncate text-[9px] opacity-75'>
+        {event.startTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+        })}
+        {' - '}
+        {event.endTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+        })}
+      </p>
+
+      <p className='hidden truncate text-[9px] opacity-75 sm:block'>
+        {event.location}
+      </p>
     </button>
   );
 }
@@ -234,129 +291,138 @@ function DayGrid({
   onEventClick?: (event: SchedulerEvent) => void;
   onEmptySlotClick?: (slot: EmptySlot) => void;
 }) {
-  const today = new Date();
   const dayEvents = getDayEvents(events, currentDate);
-  const shouldShowCurrentTime = isSameCalendarDay(currentDate, currentTime);
-  const currentDayLabel = currentDate.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+
+  const shouldShowCurrentTime = isSameCalendarDay(
+    currentDate,
+    currentTime
+  );
 
   return (
     <section className='bg-card flex w-full flex-col overflow-hidden rounded-md border shadow-sm'>
-      <div className='border-b px-3 py-3 sm:px-4'>
-        <div className='flex flex-wrap items-start justify-between gap-2'>
-          <div className='min-w-0'>
-            <p className='text-muted-foreground text-xs font-semibold uppercase tracking-wide'>
-              Day view
-            </p>
-            <h2 className='text-foreground text-base font-semibold sm:text-lg'>{currentDayLabel}</h2>
-            <p className='text-muted-foreground text-sm'>
-              {dayEvents.length} session{dayEvents.length === 1 ? '' : 's'} scheduled
-            </p>
-          </div>
-          <span
-            className={cn(
-              'rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide',
-              isSameCalendarDay(currentDate, today)
-                ? 'border-primary/40 bg-primary/10 text-primary'
-                : 'bg-muted text-muted-foreground'
-            )}
-          >
-            {isSameCalendarDay(currentDate, today) ? 'Today' : 'Selected day'}
-          </span>
-        </div>
-      </div>
-
       <div className='grid gap-4 p-3 lg:grid-cols-[minmax(0,1fr)_260px] lg:p-4'>
+        {/* LEFT SCHEDULE */}
         <div className='bg-background min-w-0 overflow-hidden rounded-md border'>
           <div className='bg-muted/40 grid grid-cols-[72px_1fr] border-b'>
-            <div className='px-2 py-2 text-center text-[10px] font-semibold sm:text-xs'>Time</div>
+            <div className='px-2 py-2 text-center text-[10px] font-semibold sm:text-xs'>
+              Time
+            </div>
+
             <div className='px-2 py-2 text-center text-[10px] font-semibold sm:text-xs'>
               Schedule
             </div>
           </div>
 
           <div className='max-h-[640px] overflow-y-auto'>
-            {schedulerHours.map(hour => (
-              <div
-                key={hour}
-                role='button'
-                tabIndex={0}
-                className='grid grid-cols-[72px_1fr] border-b last:border-b-0'
-                onClick={() =>
-                  onEmptySlotClick?.({
-                    date: currentDate,
-                    startTime: new Date(
-                      currentDate.getFullYear(),
-                      currentDate.getMonth(),
-                      currentDate.getDate(),
-                      hour,
-                      0,
-                      0,
-                      0
-                    ),
-                    endTime: new Date(
-                      currentDate.getFullYear(),
-                      currentDate.getMonth(),
-                      currentDate.getDate(),
-                      hour + 1,
-                      0,
-                      0,
-                      0
-                    ),
-                    view: 'day',
-                  })
-                }
-              >
-                <div className='text-muted-foreground px-2 py-2 text-right text-[9px] font-semibold sm:text-[10px]'>
-                  {formatHour(hour)}
+            <div
+              className='relative'
+              style={{
+                height: `${schedulerHours.length * rowHeight}px`,
+              }}
+            >
+              {/* GRID */}
+              {schedulerHours.map(hour => (
+                <div
+                  key={hour}
+                  className='grid grid-cols-[72px_1fr] border-b'
+                  style={{
+                    height: `${rowHeight}px`,
+                  }}
+                >
+                  <div className='text-muted-foreground px-2 py-2 text-right text-[9px] font-semibold sm:text-[10px]'>
+                    {formatHour(hour)}
+                  </div>
+
+                  <div
+                    className='relative border-l'
+                    onClick={() =>
+                      onEmptySlotClick?.({
+                        date: currentDate,
+                        startTime: new Date(
+                          currentDate.getFullYear(),
+                          currentDate.getMonth(),
+                          currentDate.getDate(),
+                          hour,
+                          0,
+                          0,
+                          0
+                        ),
+                        endTime: new Date(
+                          currentDate.getFullYear(),
+                          currentDate.getMonth(),
+                          currentDate.getDate(),
+                          hour + 1,
+                          0,
+                          0,
+                          0
+                        ),
+                        view: 'day',
+                      })
+                    }
+                  >
+                    {shouldShowCurrentTime &&
+                      currentTime.getHours() === hour ? (
+                      <CurrentTimeIndicator currentTime={currentTime} />
+                    ) : null}
+                  </div>
                 </div>
-                <div className='relative min-h-[58px] border-l'>
-                  {shouldShowCurrentTime && currentTime.getHours() === hour ? (
-                    <CurrentTimeIndicator currentTime={currentTime} />
-                  ) : null}
-                  {dayEvents
-                    .filter(event => event.startTime.getHours() === hour)
-                    .map(event => (
-                      <div
-                        key={event.id}
-                        className='absolute right-2 left-2 top-2 z-10'
-                      >
-                        <EventBlock event={event} onClick={onEventClick} />
-                      </div>
-                    ))}
-                </div>
+              ))}
+
+              {/* EVENTS */}
+              <div className='absolute inset-0 left-[72px]'>
+                {dayEvents.map(event => (
+                  <div
+                    key={event.id}
+                    className='absolute left-2 right-2'
+                    style={{
+                      top: `${getEventTop(event)}px`,
+                    }}
+                  >
+                    <EventBlock
+                      event={event}
+                      onClick={onEventClick}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
 
+        {/* RIGHT DETAILS PANEL */}
         <div className='space-y-3'>
           <div className='bg-background rounded-md border p-3'>
             <div className='mb-2 flex items-center justify-between gap-2'>
               <h3 className='text-sm font-semibold'>Events</h3>
-              <span className='text-muted-foreground text-xs'>{dayEvents.length} items</span>
+
+              <span className='text-muted-foreground text-xs'>
+                {dayEvents.length} items
+              </span>
             </div>
 
             <div className='space-y-2'>
               {dayEvents.length ? (
                 dayEvents.map(event => (
-                  <div key={event.id} className='bg-muted/30 rounded-md border p-2'>
-                    <p className='text-foreground text-sm font-semibold'>{event.title}</p>
+                  <div
+                    key={event.id}
+                    className='bg-muted/30 rounded-md border p-2'
+                  >
+                    <p className='text-foreground text-sm font-semibold'>
+                      {event.title}
+                    </p>
+
                     <p className='text-muted-foreground text-xs'>
                       {event.startTime.toLocaleTimeString('en-US', {
                         hour: 'numeric',
                         minute: '2-digit',
-                      })}{' '}
-                      -{' '}
+                      })}
+                      {' - '}
                       {event.endTime.toLocaleTimeString('en-US', {
                         hour: 'numeric',
                         minute: '2-digit',
                       })}
                     </p>
+
                     <p className='text-muted-foreground mt-1 truncate text-xs'>
                       {event.instructor} · {event.location}
                     </p>
@@ -371,10 +437,13 @@ function DayGrid({
           </div>
 
           <div className='bg-background rounded-md border p-3'>
-            <h3 className='mb-2 text-sm font-semibold'>Summary</h3>
+            <h3 className='mb-2 text-sm font-semibold'>
+              Summary
+            </h3>
+
             <p className='text-muted-foreground text-xs'>
-              {currentDayLabel} is currently showing {dayEvents.length} scheduled session
-              {dayEvents.length === 1 ? '' : 's'}.
+              {dayEvents.length} scheduled session
+              {dayEvents.length === 1 ? '' : 's'} for this day.
             </p>
           </div>
         </div>
@@ -397,60 +466,59 @@ function WeekGrid({
   onEmptySlotClick?: (slot: EmptySlot) => void;
 }) {
   const schedulerDays = getWeekDays(currentDate);
-  const today = new Date();
-  const gridClass = weekColumnClass;
 
   return (
     <section className='bg-card flex min-w-0 w-full flex-col overflow-hidden rounded-md ring-1 ring-border/60 shadow-sm'>
-      <div className='bg-background max-h-[720px] overflow-x-auto overflow-y-auto'>
-        <div className='min-w-max'>
-          <div className='sticky top-0 z-10 bg-muted/40'>
-            <div className={cn('grid border-b', gridClass)}>
-              <div className='text-foreground px-2 py-2 text-center text-[10px] font-semibold sm:px-3 sm:text-xs'>
+      <div className='bg-background max-h-[720px] overflow-auto'>
+        <div className='relative min-w-max'>
+          {/* HEADER */}
+          <div className='sticky top-0 z-20 bg-muted/40'>
+            <div className={cn('grid border-b', weekColumnClass)}>
+              <div className='px-2 py-2 text-center text-xs font-semibold'>
                 Time
               </div>
+
               {schedulerDays.map(day => (
                 <div
                   key={day.toISOString()}
-                  className={cn(
-                    'border-l px-1 py-2 text-center text-[10px] font-semibold sm:px-2 sm:text-xs lg:text-sm',
-                    isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground'
-                  )}
+                  className='border-l px-2 py-2 text-center text-xs font-semibold'
                 >
-                  <span className='block sm:inline'>
-                    {day.toLocaleDateString('en-US', { weekday: 'short' })}
-                  </span>
-                  <span className='sm:ml-1'>{day.getDate()}</span>
+                  {day.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                  })}
+                  {' '}
+                  {day.getDate()}
                 </div>
               ))}
             </div>
           </div>
 
-          {schedulerHours.map(hour => (
-            <div
-              key={hour}
-              className={cn('grid border-b last:border-b-0', gridClass)}
-              style={{ minHeight: `${rowHeight}px` }}
-            >
-              <div className='text-muted-foreground px-2 py-2 text-right text-[9px] font-semibold sm:px-3 sm:text-[10px] lg:text-xs'>
-                {formatHour(hour)}
-              </div>
+          {/* GRID */}
+          <div
+            className='relative'
+            style={{
+              height: `${schedulerHours.length * rowHeight}px`,
+            }}
+          >
+            {schedulerHours.map(hour => (
+              <div
+                key={hour}
+                className={cn(
+                  'grid border-b last:border-b-0',
+                  weekColumnClass
+                )}
+                style={{
+                  height: `${rowHeight}px`,
+                }}
+              >
+                <div className='text-muted-foreground px-2 py-2 text-right text-[9px] font-semibold'>
+                  {formatHour(hour)}
+                </div>
 
-              {schedulerDays.map(day => {
-                const hourEvents = events
-                  .filter(
-                    event =>
-                      isSameCalendarDay(event.startTime, day) &&
-                      event.startTime.getHours() === hour
-                  )
-                  .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
-
-                return (
+                {schedulerDays.map(day => (
                   <div
                     key={`${day.toISOString()}-${hour}`}
-                    role='button'
-                    tabIndex={0}
-                    className='relative border-l px-1 py-1'
+                    className='relative border-l'
                     onClick={() =>
                       onEmptySlotClick?.({
                         date: day,
@@ -476,25 +544,55 @@ function WeekGrid({
                       })
                     }
                   >
-                    {isSameCalendarDay(day, currentTime) && currentTime.getHours() === hour ? (
-                      <CurrentTimeIndicator currentTime={currentTime} />
+                    {isSameCalendarDay(day, currentTime) &&
+                      currentTime.getHours() === hour ? (
+                      <CurrentTimeIndicator
+                        currentTime={currentTime}
+                      />
                     ) : null}
-                    {hourEvents.map(event => (
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            {/* EVENTS OVERLAY */}
+            <div
+              className={cn(
+                'pointer-events-none absolute inset-0 grid',
+                weekColumnClass
+              )}
+            >
+              <div />
+
+              {schedulerDays.map(day => {
+                const dayEvents = events.filter(event =>
+                  isSameCalendarDay(event.startTime, day)
+                );
+
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className='relative'
+                  >
+                    {dayEvents.map(event => (
                       <div
                         key={event.id}
-                        className='absolute right-1 left-1 top-1 z-10'
+                        className='pointer-events-auto absolute left-1 right-1'
                         style={{
-                          top: `${(event.startTime.getMinutes() / 60) * rowHeight + 6}px`,
+                          top: `${getEventTop(event)}px`,
                         }}
                       >
-                        <WeekEventBlock event={event} onClick={onEventClick} />
+                        <WeekEventBlock
+                          event={event}
+                          onClick={onEventClick}
+                        />
                       </div>
                     ))}
                   </div>
                 );
               })}
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </section>

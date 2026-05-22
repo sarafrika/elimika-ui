@@ -36,11 +36,6 @@ import { Textarea } from '../ui/textarea';
 
 type QuizContentPreviewProps = {
     quizUuid: string;
-
-    /**
-     * instructor => show correct answers
-     * user => hide correct answers
-     */
     role?: 'instructor' | 'user';
 };
 
@@ -51,11 +46,11 @@ type QuizQuestionOptionPreview = QuizQuestionOption & {
 };
 
 const QUESTION_TYPE_LABELS: Partial<Record<QuestionTypeEnum, string>> = {
-    MULTIPLE_CHOICE: 'Multiple Choice',
-    TRUE_FALSE: 'True / False',
-    ESSAY: 'Essay',
-    SHORT_ANSWER: 'Short Answer',
-    MATCHING: 'Matching',
+    MULTIPLE_CHOICE: 'multiple_choice',
+    TRUE_FALSE: 'true_false',
+    ESSAY: 'essay',
+    SHORT_ANSWER: 'short_answer',
+    MATCHING: 'matching',
 };
 
 type QuestionOptionsPreviewProps = {
