@@ -27,6 +27,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
+import { getPreferredScheduleInstance } from '@/app/dashboard/@instructor/classes/_components/new-class-page.utils';
 import { useClassDetails, type ClassDetailsScheduleItem } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
@@ -2142,18 +2143,7 @@ export default function ClassTrainingPage({
   useEffect(() => {
     if (sortedSchedules.length === 0) return;
 
-    const requestedSchedule = sortedSchedules.find(
-      schedule => schedule.uuid === requestedScheduleId
-    );
-    const liveSchedule = sortedSchedules.find(schedule => getScheduleState(schedule) === 'live');
-    const todaySchedule = sortedSchedules.find(schedule =>
-      moment(schedule.start_time).isSame(moment(), 'day')
-    );
-    const upcomingSchedule = sortedSchedules.find(
-      schedule => getScheduleState(schedule) === 'upcoming'
-    );
-    const defaultSchedule =
-      requestedSchedule ?? liveSchedule ?? todaySchedule ?? upcomingSchedule ?? sortedSchedules[0];
+    const defaultSchedule = getPreferredScheduleInstance(sortedSchedules, requestedScheduleId);
 
     if (defaultSchedule?.uuid && activeScheduleId !== defaultSchedule.uuid) {
       setActiveScheduleId(defaultSchedule.uuid);

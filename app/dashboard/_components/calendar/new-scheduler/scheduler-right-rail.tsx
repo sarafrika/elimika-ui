@@ -171,7 +171,7 @@ export function SchedulerRightRail({
             Day schedule
           </h2>
           <span className='text-muted-foreground shrink-0 text-xs'>
-            {visibleSchedule.length} sessions
+            {visibleSchedule.length} {visibleSchedule.length === 1 ? 'session' : 'sessions'}
           </span>
         </div>
 

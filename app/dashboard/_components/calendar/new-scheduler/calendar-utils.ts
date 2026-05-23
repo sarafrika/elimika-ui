@@ -332,8 +332,9 @@ export const mapClassSchedule = (
           subtitle: classDef.instructor?.professional_headline || 'Attached to class data',
         };
 
-      const title = schedule.title || classDef.title || classDef.course?.name || 'Scheduled class';
-      const courseName = classDef.course?.name || classDef.title || 'Class';
+      const title = classDef?.title as string;
+      const classCode = schedule.title as string;
+      const courseName = classDef.course?.name as string;
       const locationName = schedule.location_name || classDef.location_name || '';
 
       return {
@@ -341,6 +342,7 @@ export const mapClassSchedule = (
         instanceUuid: schedule.uuid || undefined,
         classDefinitionUuid: classDef.uuid || undefined,
         title,
+        classCode,
         course: courseName,
         instructor: instructorDetails.fullName,
         instructorUuid,

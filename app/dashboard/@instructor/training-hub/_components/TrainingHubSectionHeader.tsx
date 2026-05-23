@@ -1,16 +1,18 @@
 'use client';
 
-import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 
 type TrainingHubSectionHeaderProps = {
   title: string;
   href?: string;
+  number_of_items?: number
   actionLabel?: string;
 };
 
 export function TrainingHubSectionHeader({
   title,
+  number_of_items,
   href,
   actionLabel,
 }: TrainingHubSectionHeaderProps) {
@@ -18,6 +20,7 @@ export function TrainingHubSectionHeader({
     <div className='flex items-center justify-between gap-3'>
       <h2 className='text-[1.08rem] font-semibold tracking-[-0.02em] text-foreground sm:text-[1.14rem]'>
         {title}
+        {typeof number_of_items !== 'undefined' ? ` (${number_of_items})` : ''}
       </h2>
 
       {href && actionLabel ? (

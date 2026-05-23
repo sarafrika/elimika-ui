@@ -6,9 +6,11 @@ import { useMemo } from 'react';
 
 export type ClassTab =
   | 'overview'
-  | 'waiting-list'
-  | 'delivery-status'
+  | 'lessons'
+  | 'schedule'
   | 'students'
+  | 'delivery'
+  | 'waiting-list'
   | 'announcements'
   | 'tasks';
 
@@ -22,8 +24,8 @@ export const dateFilterHeadings: Record<DateFilter, string> = {
 };
 
 export const dateFilterDescriptions: Record<DateFilter, string> = {
-  'current-day': 'Classes scheduled for today are listed here.',
-  'current-week': 'Classes scheduled for this week are listed here.',
+  'current-day': 'Classes with sessions scheduled for today are listed here.',
+  'current-week': 'Classes with sessions scheduled for this week are listed here.',
   upcoming: 'Upcoming instructor class schedules are listed here.',
   all: 'All of your future scheduled classes are listed here.',
 };
@@ -59,10 +61,65 @@ export type ClassInstanceItem = {
 
 export const classTabs: { value: ClassTab; label: string }[] = [
   { value: 'overview', label: 'Overview' },
-  { value: 'tasks', label: 'Tasks' },
-  { value: 'delivery-status', label: 'Delivery Status' },
+  { value: 'lessons', label: 'Lessons' },
+  { value: 'schedule', label: 'Schedule' },
+  { value: 'students', label: 'Students' },
+  { value: 'delivery', label: 'Delivery' },
   { value: 'announcements', label: 'Announcements' },
 ];
+
+const isNonCancelledInstance = (instance: NonNullable<InstructorClassWithSchedule['schedule']>[number]) =>
+  instance.status?.toUpperCase() !== 'CANCELLED';
+
+export const getPreferredScheduleInstance = (
+  schedule: InstructorClassWithSchedule['schedule'] = [],
+  requestedScheduleUuid?: string | null
+) => {
+  const sortedSchedule = [...schedule]
+    .filter(isNonCancelledInstance)
+    .sort((left, right) => new Date(left.start_time).getTime() - new Date(right.start_time).getTime());
+
+  if (sortedSchedule.length === 0) {
+    return null;
+  }
+
+  if (requestedScheduleUuid) {
+    const requestedSchedule = sortedSchedule.find(instance => instance.uuid === requestedScheduleUuid);
+    if (requestedSchedule) {
+      return requestedSchedule;
+    }
+  }
+
+  const now = new Date();
+  const nextSchedule = sortedSchedule.find(instance => {
+    const endTime = new Date(instance.end_time);
+    if (!Number.isNaN(endTime.getTime())) {
+      return endTime >= now;
+    }
+
+    const startTime = new Date(instance.start_time);
+    return !Number.isNaN(startTime.getTime()) && startTime >= now;
+  });
+
+  return nextSchedule ?? sortedSchedule[sortedSchedule.length - 1] ?? null;
+};
+
+export const formatPreferredScheduleLabel = (classItem: InstructorClassWithSchedule) => {
+  const nextSession = getPreferredScheduleInstance(classItem.schedule);
+
+  if (!nextSession) return 'No sessions scheduled';
+
+  const start = new Date(nextSession.start_time);
+  if (Number.isNaN(start.getTime())) return 'Session time pending';
+
+  return start.toLocaleString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+};
 
 const getStartOfWeek = (date: Date) => {
   const result = new Date(date);
@@ -318,6 +375,86 @@ export const useFilteredClassInstances = ({
           new Date(right.start_time ?? 0).getTime()
       );
   }, [classes, dateFilter, difficultyMap, searchTerm]);
+
+export const useFilteredInstructorClasses = ({
+  classes,
+  searchTerm,
+  dateFilter,
+}: {
+  classes: InstructorClassWithSchedule[];
+  searchTerm: string;
+  dateFilter: DateFilter;
+}) =>
+  useMemo<InstructorClassWithSchedule[]>(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const now = new Date();
+
+    return classes
+      .filter(classItem => {
+        const schedule = classItem.schedule ?? [];
+        const hasActiveSession = schedule.some(isNonCancelledInstance);
+
+        const matchesSearch =
+          !normalizedSearch ||
+          [
+            classItem.title,
+            classItem.course?.name,
+            classItem.course?.category_names?.join(' '),
+            classItem.session_format,
+            classItem.location_name,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase()
+            .includes(normalizedSearch);
+
+        const matchesDateFilter =
+          dateFilter === 'all'
+            ? hasActiveSession
+            : schedule.some(instance => {
+                if (!isNonCancelledInstance(instance)) return false;
+                const start = new Date(instance.start_time);
+                if (Number.isNaN(start.getTime())) return false;
+
+                if (dateFilter === 'current-day') {
+                  return (
+                    start.getFullYear() === now.getFullYear() &&
+                    start.getMonth() === now.getMonth() &&
+                    start.getDate() === now.getDate()
+                  );
+                }
+
+                if (dateFilter === 'current-week') {
+                  const startOfWeek = new Date(now);
+                  const day = startOfWeek.getDay();
+                  const diff = day === 0 ? -6 : 1 - day;
+                  startOfWeek.setDate(startOfWeek.getDate() + diff);
+                  startOfWeek.setHours(0, 0, 0, 0);
+
+                  const endOfWeek = new Date(startOfWeek);
+                  endOfWeek.setDate(endOfWeek.getDate() + 6);
+                  endOfWeek.setHours(23, 59, 59, 999);
+                  return start >= startOfWeek && start <= endOfWeek;
+                }
+
+                return start >= now;
+              });
+
+        return matchesSearch && matchesDateFilter;
+      })
+      .sort((left, right) => {
+        const leftDate = getPreferredScheduleInstance(left.schedule)?.start_time ?? null;
+        const rightDate = getPreferredScheduleInstance(right.schedule)?.start_time ?? null;
+        const leftTime = leftDate ? new Date(leftDate).getTime() : Number.POSITIVE_INFINITY;
+        const rightTime = rightDate ? new Date(rightDate).getTime() : Number.POSITIVE_INFINITY;
+
+        if (leftTime !== rightTime) {
+          return leftTime - rightTime;
+        }
+
+        return left.title.localeCompare(right.title);
+      });
+  }, [classes, dateFilter, searchTerm]);
 
 export const buildStudentRows = ({
   enrollments,

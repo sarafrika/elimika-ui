@@ -115,7 +115,8 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             event.classDefinitionUuid as string,
             {
               id: event.classDefinitionUuid as string,
-              name: `${event.course ? `${event.course}` : ''} - ${event.title}`,
+              name: event.title,
+              course: event.course
             },
           ])
       ).values()
@@ -306,7 +307,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
         isOpen: true,
         items: venueFilterItems,
         key: 'venues',
-        label: 'Venues',
+        label: 'Classrooms',
         onItemClick: id => {
           setSelectedFilter({ id, kind: 'venue' });
           setFiltersOpen(false);
@@ -317,23 +318,22 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             ? selectedFilter.id
             : null,
       },
-
-      {
-        count: classroomFilterItems.length,
-        isOpen: true,
-        items: classroomFilterItems,
-        key: 'classrooms',
-        label: 'Classrooms',
-        onItemClick: id => {
-          setSelectedFilter({ id, kind: 'classroom' });
-          setFiltersOpen(false);
-        },
-        onToggle: () => { },
-        selectedId:
-          selectedFilter.kind === 'classroom'
-            ? selectedFilter.id
-            : null,
-      },
+      // {
+      //   count: classroomFilterItems.length,
+      //   isOpen: true,
+      //   items: classroomFilterItems,
+      //   key: 'classrooms',
+      //   label: 'Classrooms',
+      //   onItemClick: id => {
+      //     setSelectedFilter({ id, kind: 'classroom' });
+      //     setFiltersOpen(false);
+      //   },
+      //   onToggle: () => { },
+      //   selectedId:
+      //     selectedFilter.kind === 'classroom'
+      //       ? selectedFilter.id
+      //       : null,
+      // },
     ];
 
     // ONLY organisation/admin sees instructors

@@ -11,7 +11,7 @@ import {
   searchEnrollmentsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { BookingResponse, Enrollment, ScheduledInstance, Student, User } from '@/services/client/types.gen';
+import type { BookingResponse, Enrollment, Student, User } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type {
@@ -41,60 +41,6 @@ const formatCurrency = (amount?: number | null, currency = 'KES') => {
   }
 };
 
-const formatDayLabel = (value?: Date | string | null) => {
-  if (!value) return 'Upcoming';
-
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Upcoming';
-
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfTarget = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diffDays = Math.round(
-    (startOfTarget.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Tomorrow';
-
-  return new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  }).format(date);
-};
-
-const formatTimeRange = (start?: Date | string | null, end?: Date | string | null) => {
-  if (!start || !end) return 'Time pending';
-
-  const startDate = start instanceof Date ? start : new Date(start);
-  const endDate = end instanceof Date ? end : new Date(end);
-  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-    return 'Time pending';
-  }
-
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  return `${formatter.format(startDate)} - ${formatter.format(endDate)}`;
-};
-
-const formatDateTime = (value?: Date | string | null) => {
-  if (!value) return 'Schedule pending';
-
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Schedule pending';
-
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date);
-};
-
 const formatRelativeAge = (createdDate?: Date | string | null) => {
   if (!createdDate) return 'New';
 
@@ -111,8 +57,6 @@ const formatRelativeAge = (createdDate?: Date | string | null) => {
   const diffMinutes = Math.max(1, Math.floor(diffMs / (1000 * 60)));
   return `${diffMinutes}m`;
 };
-
-const isNonCancelledInstance = (instance: ScheduledInstance) => instance.status !== 'CANCELLED';
 
 const normalizeStatusLabel = (value: string) =>
   value
@@ -297,56 +241,34 @@ export function useInstructorTrainingHubData() {
   }, [relevantClasses, waitlistQueries]);
 
   const liveClassItems = useMemo(() => {
-    const now = new Date();
-
-    return relevantClasses
-      .flatMap(classItem =>
-        (classItem.schedule ?? []).map(instance => ({
-          classItem,
-          instance,
-        }))
-      )
-      .filter(({ instance }) => {
-        const endTime = new Date(instance.end_time);
-        return isNonCancelledInstance(instance) && endTime.getTime() >= now.getTime();
-      })
-      .sort(
-        (left, right) =>
-          new Date(left.instance.start_time).getTime() - new Date(right.instance.start_time).getTime()
-      );
+    return relevantClasses;
   }, [relevantClasses]);
 
   const liveClasses = useMemo<TrainingHubLiveClass[]>(() => {
-    return liveClassItems.slice(0, 5).map(({ classItem, instance }) => {
+    return liveClassItems.slice(0, 5).map(classItem => {
       const enrollments = enrollmentsByClass.get(classItem.uuid ?? '') ?? [];
-      const students = enrollments.filter(
-        enrollment =>
-          enrollment.scheduled_instance_uuid === instance.uuid &&
-          ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
+      const students = enrollments.filter(enrollment =>
+        ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
       ).length;
-      const waitlistedStudents = (waitlistEnrollmentsByClass.get(classItem.uuid ?? '') ?? []).filter(
-        enrollment => enrollment.scheduled_instance_uuid === instance.uuid
-      ).length;
-
-      const dayLabel = formatDayLabel(instance.start_time);
+      const classSchedules = classItem.schedule?.filter(instance => instance.status !== 'CANCELLED') ?? [];
+      const nextSession = classSchedules[0] ?? null;
 
       return {
-        instanceUuid: instance.uuid,
-        classUuid: classItem.uuid,
-        id: instance.uuid,
-        day: dayLabel,
-        time: formatTimeRange(instance.start_time, instance.end_time),
-        title: instance.title || classItem.course?.name || classItem.title,
+        id: classItem.uuid ?? classItem.title,
+        classUuid: classItem.uuid ?? '',
+        title: classItem.title,
+        duration_minutes: classItem.duration_minutes ?? 'N/A',
         provider: classItem.course?.category_names?.[0] ?? 'Approved course',
+        level: classItem.course?.total_duration_display || classItem.course?.category_names?.[0] || 'General',
         students: `${students} students`,
-        waitlistedStudents: `${waitlistedStudents} students`,
+        classes: `${classSchedules.length} classes`,
         fee: formatCurrency(classItem.training_fee),
-        sessions: `${classItem.schedule?.filter(isNonCancelledInstance).length ?? 0}`,
-        href: instance.uuid
-          ? `/dashboard/class-instance/${instance.uuid}`
-          : '/dashboard/classes',
-        instance_status: instance?.status,
-        status: dayLabel === 'Today' ? 'today' : dayLabel === 'Tomorrow' ? 'tomorrow' : 'upcoming',
+        sessions: `${classSchedules.length}`,
+        status: nextSession ? 'scheduled' : 'draft',
+        href: classItem.uuid ? `/dashboard/classes/overview/${classItem.uuid}` : '/dashboard/classes',
+        imageUrl: classItem.course?.thumbnail_url ?? classItem.course?.banner_url,
+        manageHref: classItem.uuid ? `/dashboard/classes/overview/${classItem.uuid}` : '/dashboard/classes',
+        inviteHref: '/dashboard/training-hub/waiting-list',
       };
     });
   }, [enrollmentsByClass, liveClassItems, waitlistEnrollmentsByClass]);

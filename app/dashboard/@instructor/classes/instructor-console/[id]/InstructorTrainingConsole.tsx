@@ -24,6 +24,7 @@ import {
   type CourseLessonContent,
   type CourseLessonWithContent,
 } from '@/hooks/use-courselessonwithcontent';
+import { getPreferredScheduleInstance } from '@/app/dashboard/@instructor/classes/_components/new-class-page.utils';
 import {
   cx,
   elimikaDesignSystem,
@@ -540,15 +541,7 @@ export default function InstructorTrainingConsole() {
   useEffect(() => {
     if (sortedSchedules.length === 0) return;
 
-    const requestedSchedule = sortedSchedules.find(schedule => schedule.uuid === requestedScheduleId);
-    const liveSchedule = sortedSchedules.find(schedule => getScheduleState(schedule) === 'live');
-    const todaySchedule = sortedSchedules.find(schedule =>
-      moment(schedule.start_time).isSame(moment(), 'day')
-    );
-    const upcomingSchedule = sortedSchedules.find(
-      schedule => getScheduleState(schedule) === 'upcoming'
-    );
-    const defaultSchedule = requestedSchedule ?? liveSchedule ?? todaySchedule ?? upcomingSchedule ?? sortedSchedules[0];
+    const defaultSchedule = getPreferredScheduleInstance(sortedSchedules, requestedScheduleId);
 
     if (defaultSchedule?.uuid && activeScheduleId !== defaultSchedule.uuid) {
       setActiveScheduleId(defaultSchedule.uuid);

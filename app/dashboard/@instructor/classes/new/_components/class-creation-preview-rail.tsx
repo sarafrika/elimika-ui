@@ -44,6 +44,8 @@ export type ClassCreationPreviewData = {
   totalAmountLabel: string;
   meetingLink: string;
   inviteLink: string;
+  classroom: string;
+  thumbnailUrl: string;
   summaryItems?: PreviewSummaryItem[];
 };
 
@@ -92,70 +94,95 @@ export function ClassCreationPreviewRail({ data }: { data: ClassCreationPreviewD
           </button>
         </div>
 
-        <div className='px-4 pb-4'>
-          <div
-            className='overflow-hidden rounded-md border border-primary/20'
-            style={{
-              backgroundImage:
-                'url(https://images.unsplash.com/photo-1504384308090-c894fdcc538d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80) ',
-            }}
-          >
-            <div className='px-4 py-8 text-center text-black'>
-              <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-md border border-white/20 bg-white/10'>
-                <PenTool className='h-5 w-5' />
-              </div>
-              <p className='text-xl font-semibold leading-tight'>{data.classTitle || 'Class title'}</p>
-              <div className='mt-2 flex flex-wrap items-center justify-center gap-2 text-sm text-white/90'>
-                <span>{data.classTypeLabel}</span>
-                <span aria-hidden='true'>•</span>
-                <span>{data.lectureTypeLabel}</span>
-              </div>
-            </div>
-
-            <div className='divide-y bg-card'>
-              <PreviewRow icon={Users} label='Instructor' value={data.instructorName || 'John Doe'} />
-              <PreviewRow icon={Globe} label='Lecture Type' value={data.lectureTypeLabel} />
-              <PreviewRow icon={MapPin} label='Location' value={data.locationName || 'Nairobi, Kenya'} />
-              {/* <PreviewRow icon={CalendarDays} label='Schedule' value={`${data.scheduleLabel}\n${data.timeLabel}`} /> */}
-              <PreviewRow icon={Clock3} label='Total Hours' value={data.totalHoursLabel} />
-              <PreviewRow icon={TimerReset} label='Price per Hour' value={data.pricePerHourLabel} />
-              <PreviewRow icon={CalendarDays} label='Total Classes' value={data.totalSessionsLabel} />
-              <PreviewRow icon={Banknote} label='Total Amount' value={data.totalAmountLabel} />
-            </div>
-
-            {data.summaryItems?.length ? (
-              <div className='divide-y bg-card'>
-                {data.summaryItems.map(item => (
-                  <PreviewRow
-                    key={item.label}
-                    icon={item.icon}
-                    label={item.label}
-                    value={item.value}
-                  />
-                ))}
-              </div>
+        <div className='overflow-hidden  rounded-md border border-primary/20 bg-background'>
+          {/* HERO IMAGE */}
+          <div className='relative h-[220px] w-full overflow-hidden'>
+            {data?.thumbnailUrl ? (
+              <img
+                src={data.thumbnailUrl}
+                alt={data.classTitle || 'Class thumbnail'}
+                className='h-full w-full object-cover'
+              />
             ) : (
-              <div className='divide-y bg-card'>
-                <PreviewRow
-                  icon={Users}
-                  label='Instructor'
-                  value={data.instructorName || 'John Doe'}
-                />
-
-                <PreviewRow
-                  icon={Globe}
-                  label='Lecture Type'
-                  value={data.lectureTypeLabel}
-                />
-
-                <PreviewRow
-                  icon={MapPin}
-                  label='Location'
-                  value={data.locationName || 'Nairobi, Kenya'}
-                />
+              <div className='relative h-full w-full bg-gradient-to-br from-muted to-background'>
+                <div className='absolute inset-0 flex items-center justify-center'>
+                  <PenTool className='h-10 w-10 text-muted-foreground/40' />
+                </div>
               </div>
             )}
+
+            {/* OVERLAY */}
+            <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10' />
+
+            {/* TEXT CONTENT */}
+            <div className='absolute  inset-x-0 bottom-0 px-4 py-4 text-white'>
+              <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-md border border-white/20 bg-white/10 backdrop-blur-sm'>
+                <PenTool className='h-5 w-5' />
+              </div>
+
+              <p className='text-xl font-semibold leading-tight drop-shadow-sm'>
+                {data.classTitle || 'Class title'}
+              </p>
+
+              <div className='mt-2 flex flex-wrap items-center gap-2 text-sm text-white/90'>
+                <span className='rounded-full bg-white/10 px-2 py-0.5 backdrop-blur-sm'>
+                  {data.classTypeLabel}
+                </span>
+
+                <span className='rounded-full bg-white/10 px-2 py-0.5 backdrop-blur-sm'>
+                  {data.lectureTypeLabel}
+                </span>
+              </div>
+            </div>
           </div>
+
+          <div className='divide-y bg-card'>
+            <PreviewRow icon={Users} label='Instructor' value={data.instructorName || 'John Doe'} />
+            <PreviewRow icon={Globe} label='Lecture Type' value={data.lectureTypeLabel} />
+            <PreviewRow icon={MapPin} label='Location' value={data.locationName || 'Nairobi, Kenya'} />
+            <PreviewRow icon={MapPin} label='Classroom' value={data.classroom || 'N/A'} />
+            {/* <PreviewRow icon={CalendarDays} label='Schedule' value={`${data.scheduleLabel}\n${data.timeLabel}`} /> */}
+            <PreviewRow icon={Clock3} label='Total Hours' value={data.totalHoursLabel} />
+            <PreviewRow icon={TimerReset} label='Price per Hour' value={data.pricePerHourLabel} />
+            <PreviewRow icon={CalendarDays} label='Total Classes' value={data.totalSessionsLabel} />
+            <PreviewRow icon={Banknote} label='Total Amount' value={data.totalAmountLabel} />
+          </div>
+
+          {data.summaryItems?.length ? (
+            <div className='divide-y bg-card'>
+              {data.summaryItems.map(item => (
+                <PreviewRow
+                  key={item.label}
+                  icon={item.icon}
+                  label={item.label}
+                  value={item.value}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className='divide-y bg-card'>
+              <PreviewRow
+                icon={Users}
+                label='Instructor'
+                value={data.instructorName || 'John Doe'}
+              />
+
+              <PreviewRow
+                icon={Globe}
+                label='Lecture Type'
+                value={data.lectureTypeLabel}
+              />
+
+              <PreviewRow
+                icon={MapPin}
+                label='Location'
+                value={data.locationName || 'Nairobi, Kenya'}
+              />
+            </div>
+          )}
+
+
+
         </div>
       </Card>
 

@@ -48,6 +48,7 @@ import {
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { LessonContentViewerDialog } from '../../../../../../components/content-preview/LessonContentPreview';
 import { useClassDetails } from '../../../../../../hooks/use-class-details';
 import { useProgramLessonsWithContent } from '../../../../../../hooks/use-programlessonwithcontent';
 import { useScheduleStats } from '../../../../../../hooks/use-schedule-stats';
@@ -55,7 +56,6 @@ import {
   ClassScheduleCalendar,
   type ClassScheduleItem as CalendarScheduleItem,
 } from '../../../../@student/schedule/classes/[id]/SudentClassSchedule';
-import { LessonContentViewerDialog } from '../../../../../../components/content-preview/LessonContentPreview';
 
 export interface ContentItem {
   uuid: string;
@@ -271,6 +271,56 @@ export default function ClassPreviewPage() {
 
   return (
     <div className='mb-20 space-y-6'>
+      {/* Status Banner */}
+      <div>
+        {classData?.is_active ? (
+          <Card className='border-success/30 bg-success/10 py-0'>
+            <CardContent className='flex items-center gap-2 px-3 py-2'>
+              <CheckCircle className='text-success h-4 w-4 shrink-0' />
+
+              <div className='min-w-0'>
+                <h3 className='text-success text-sm font-semibold leading-none'>
+                  Class Published Successfully
+                </h3>
+
+                <p className='text-success/90 mt-1 text-[11px] leading-snug'>
+                  Your class is live and students can now enroll.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className='border-warning/40 bg-warning/10 py-0'>
+            <CardContent className='flex items-center gap-2 px-3 py-2'>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                className='text-warning h-4 w-4 shrink-0'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M12 9v2m0 4h.01M21 12A9 9 0 1112 3a9 9 0 019 9z'
+                />
+              </svg>
+
+              <div className='min-w-0'>
+                <h3 className='text-warning text-sm font-semibold leading-none'>
+                  Class Currently Inactive
+                </h3>
+
+                <p className='text-warning/90 mt-1 text-[11px] leading-snug'>
+                  Students cannot enroll until the class is activated.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-4'>
@@ -301,54 +351,6 @@ export default function ClassPreviewPage() {
           <Edit className='h-4 w-4' />
           Edit Class
         </Button>
-      </div>
-
-      {/* Status Banner */}
-      <div>
-        {classData?.is_active ? (
-          <Card className='border-success/30 bg-success/10'>
-            <CardContent className='p-4'>
-              <div className='flex items-center gap-3'>
-                <CheckCircle className='text-success h-6 w-6' />
-                <div>
-                  <h3 className='text-success font-semibold'>Class Published Successfully!</h3>
-                  <p className='text-success text-sm'>
-                    Your class is now live and students can enroll. Share the registration link to
-                    start getting enrollments.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className='border-warning/40 bg-warning/10'>
-            <CardContent className='p-4'>
-              <div className='flex items-center gap-3'>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  className='text-warning h-6 w-6'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M12 9v2m0 4h.01M21 12A9 9 0 1112 3a9 9 0 019 9z'
-                  />
-                </svg>
-                <div>
-                  <h3 className='text-warning font-semibold'>Class is Currently Inactive</h3>
-                  <p className='text-warning text-sm'>
-                    Students cannot enroll in this class until it's activated. You can activate it
-                    from your dashboard.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       {/* Class Preview Card */}
