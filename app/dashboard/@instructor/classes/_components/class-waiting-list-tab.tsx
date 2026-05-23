@@ -10,7 +10,6 @@ import {
   searchEnrollmentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
-import type { ClassInstanceItem } from './new-class-page.utils';
 import type { Enrollment, Student, User } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Clock3, Users } from 'lucide-react';
@@ -90,7 +89,10 @@ export function ClassWaitingListTab({
 }: {
   isLoadingClasses: boolean;
   selectedClass: InstructorClassWithSchedule | null;
-  selectedClassEntry: ClassInstanceItem | null;
+  selectedClassEntry?: {
+    start_time?: string | Date;
+    end_time?: string | Date;
+  } | null;
   visibleInstances: InstructorClassWithSchedule['schedule'];
 }) {
   const classUuid = selectedClass?.uuid;
@@ -246,7 +248,7 @@ export function ClassWaitingListTab({
               {waitlistEnrollments.length} waiting
             </Badge>
           </div>
-          {selectedClassEntry ? (
+          {selectedClassEntry?.start_time ? (
             <div className='text-muted-foreground flex items-center gap-2 text-xs'>
               <Clock3 className='h-3.5 w-3.5' />
               Active instance: {formatDateTime(selectedClassEntry.start_time)} •{' '}

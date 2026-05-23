@@ -18,7 +18,7 @@ import {
   Users,
 } from 'lucide-react';
 import HTMLTextPreview from '../../../../../components/editors/html-text-preview';
-import type { ClassInstanceItem, DateFilter } from './new-class-page.utils';
+import type { DateFilter } from './new-class-page.utils';
 import {
   formatDateTime,
   formatDuration,
@@ -71,7 +71,6 @@ function resolveInstanceStatus(instance: ClassScheduleInstance) {
 export function ClassDeliveryStatusTab({
   isLoadingClasses,
   selectedClass,
-  selectedClassEntry,
   dateFilter,
   difficultyMap,
   instructorName,
@@ -85,7 +84,6 @@ export function ClassDeliveryStatusTab({
 }: {
   isLoadingClasses: boolean;
   selectedClass: InstructorClassWithSchedule | null;
-  selectedClassEntry: ClassInstanceItem | null;
   dateFilter: DateFilter;
   difficultyMap: Record<string, string>;
   instructorName?: string | null;
@@ -93,7 +91,7 @@ export function ClassDeliveryStatusTab({
   studentCount: number;
   totalInstances: number;
   completionRate: number;
-  selectedInstanceUuid: string;
+  selectedInstanceUuid?: string;
   visibleInstances: InstructorClassWithSchedule['schedule'];
   onAddClasses: () => void;
 }) {
@@ -143,7 +141,7 @@ export function ClassDeliveryStatusTab({
 
   return (
     <div className="space-y-3">
-      {isLoadingClasses || !selectedClass || !selectedClassEntry ? (
+      {isLoadingClasses || !selectedClass ? (
         <div className="space-y-3">
           <Skeleton className="h-56 rounded-lg" />
           <Skeleton className="h-80 rounded-lg" />

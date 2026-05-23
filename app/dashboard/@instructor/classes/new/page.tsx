@@ -555,6 +555,7 @@ const NewClassCreationPage = () => {
       ),
     [scheduleSettings.allDay, sessionsForConflictCheck]
   );
+  const totalHoursInMinutes = BigInt(Math.round(totalHours * 60));
 
   const totalAmount = Math.max(ratePerHour * totalHours, 0);
 
@@ -888,6 +889,7 @@ const NewClassCreationPage = () => {
       registration_period_start_date: registrationPeriodStart,
       registration_period_end_date: registrationPeriodEnd,
       class_reminder_minutes: reminderToMinutes(notificationSettings.reminder),
+      duration_minutes: totalHoursInMinutes,
       training_fee: ratePerHour,
       allow_waitlist: true,
       is_active: !isDraft,

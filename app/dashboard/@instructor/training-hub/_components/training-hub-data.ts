@@ -13,19 +13,21 @@ export type TrainingHubManagedCourse = {
 };
 
 export type TrainingHubLiveClass = {
-  classUuid: string,
-  instanceUuid: string,
   id: string;
-  day: string;
-  time: string;
+  classUuid: string;
   title: string;
   provider: string;
+  level: string;
   students: string;
-  waitlistedStudents: string;
+  classes: string;
   fee: string;
   sessions: string;
+  status: 'published' | 'draft' | 'scheduled';
   href: string;
-  status?: 'today' | 'tomorrow' | 'upcoming';
+  imageUrl?: string;
+  manageHref: string;
+  inviteHref: string;
+  duration_minutes: string;
 };
 
 export type TrainingHubWaitingStudent = {
@@ -120,69 +122,6 @@ export const managedCourses: TrainingHubManagedCourse[] = [
     ctaLabel: 'Create Classes',
     ctaHref: '/dashboard/classes/new',
     accent: 'yellow',
-  },
-];
-
-export const liveClasses: TrainingHubLiveClass[] = [
-  {
-    id: 'ui-ux-live',
-    day: 'Today',
-    time: '2:00 PM - 4:00 PM',
-    title: 'UI/UX Design Principles',
-    provider: 'Google',
-    students: '85 students',
-    waitlistedStudents: '12 students',
-    fee: 'KSh 3,300',
-    sessions: '5',
-    href: '/dashboard/classes',
-  },
-  {
-    id: 'data-analysis-live',
-    day: 'Tomorrow',
-    time: '10:30 AM - 12:00 PM',
-    title: 'Data Analysis',
-    provider: 'Google',
-    students: '60 students',
-    waitlistedStudents: '8 students',
-    fee: 'KSh 2,000',
-    sessions: '10',
-    href: '/dashboard/classes',
-  },
-  {
-    id: 'advanced-photoshop-live',
-    day: 'Wed, May 8',
-    time: '9:00 PM - 4:00 PM',
-    title: 'Advanced Photoshop',
-    provider: 'Google',
-    students: '100 students',
-    waitlistedStudents: '5 students',
-    fee: 'KSh 4,500',
-    sessions: '5',
-    href: '/dashboard/classes',
-  },
-  {
-    id: 'sql-analysis-live',
-    day: 'Thu, May 9',
-    time: '11:00 AM - 1:00 PM',
-    title: 'SQL for Data Analysis',
-    provider: 'Acaiemy',
-    students: '40 students',
-    waitlistedStudents: '3 students',
-    fee: 'KSh 3,500',
-    sessions: '5',
-    href: '/dashboard/classes',
-  },
-  {
-    id: 'creative-writing-live',
-    day: 'Fri, May 10',
-    time: '2:00 PM - 3:00 PM',
-    title: 'Creative Writing for UX',
-    provider: 'CreativeMinds',
-    students: '5 students',
-    waitlistedStudents: '1 student',
-    fee: 'KSh 2,000',
-    sessions: '5',
-    href: '/dashboard/classes',
   },
 ];
 

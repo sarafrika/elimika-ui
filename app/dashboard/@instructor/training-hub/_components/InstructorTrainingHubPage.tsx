@@ -26,6 +26,7 @@ export function InstructorTrainingHubPage() {
     managedCourses,
     upcomingBookings,
     waitingList,
+    classes,
     isLoading: isLoadingManagedCourses,
   } = useInstructorTrainingHubData();
 
@@ -54,12 +55,11 @@ export function InstructorTrainingHubPage() {
     () =>
       liveClasses.filter(liveClass =>
         selectedType !== 'manage-courses' &&
-        [liveClass.title, liveClass.provider, liveClass.day, liveClass.time].some(value =>
+        [liveClass.title, liveClass.provider, liveClass.level, liveClass.classes, liveClass.students].some(value =>
           value.toLowerCase().includes(normalizedSearch)
-        ) &&
-        (selectedStatus === 'all' || liveClass.status === selectedStatus)
+        )
       ),
-    [liveClasses, normalizedSearch, selectedStatus, selectedType]
+    [liveClasses, normalizedSearch, selectedType]
   );
 
   const filteredWaitingList = useMemo(
@@ -100,7 +100,7 @@ export function InstructorTrainingHubPage() {
           <div className='min-w-0 space-y-3 overflow-hidden'>
 
             <div className='flex flex-row items-center gap-1'>
-              <TrainingHubSectionHeader title='My Courses' />
+              <TrainingHubSectionHeader title='My Courses' number_of_items={managedCourses.length} />
             </div>
 
             <div className='space-y-3'>
@@ -130,11 +130,11 @@ export function InstructorTrainingHubPage() {
           </div>
 
           <div className='min-w-0 space-y-3 overflow-hidden'>
-
             <TrainingHubSectionHeader
               actionLabel='View Classes'
               href='/dashboard/classes'
-              title='Live Classes'
+              title='My Classes'
+              number_of_items={classes?.length}
             />
 
             <div className='space-y-3'>
@@ -147,7 +147,7 @@ export function InstructorTrainingHubPage() {
                 selectedType !== 'manage-courses' && (
                   <Card className='border-border/60 shadow-sm'>
                     <CardContent className='py-10 text-center text-sm text-muted-foreground'>
-                      No upcoming class instances matched your search.
+                      No created classes matched your search.
                     </CardContent>
                   </Card>
                 )}
@@ -155,7 +155,7 @@ export function InstructorTrainingHubPage() {
               {isLoadingManagedCourses && selectedType !== 'manage-courses' && (
                 <Card className='border-border/60 shadow-sm'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
-                    Loading upcoming classes...
+                    Loading classes...
                   </CardContent>
                 </Card>
               )}

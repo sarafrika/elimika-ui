@@ -24,16 +24,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useUserProfile } from '../../../../context/profile-context';
 import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab';
+import { ClassLessonsTab } from './_components/class-lessons-tab';
+import { ClassScheduleTab } from './_components/class-schedule-tab';
 import { ClassOverviewTab } from './_components/class-overview-tab';
 import { ClassSidebar } from './_components/class-sidebar';
 import { ClassStudentsTab } from './_components/class-students-tab';
-import { ClassTasksTab } from './_components/class-tasks-tab';
-import { ClassWaitingListTab } from './_components/class-waiting-list-tab';
 import {
   classTabs,
   dateFilterDescriptions,
-  useFilteredClassInstances,
-  type ClassInstanceItem,
+  useFilteredInstructorClasses,
   type ClassTab,
   type DateFilter,
 } from './_components/new-class-page.utils';
@@ -46,8 +45,8 @@ export default function NewClassPage() {
   const { difficultyMap } = useDifficultyLevels();
   const router = useRouter();
 
-  const [selectedInstanceUuid, setSelectedInstanceUuid] = useState<string | null>(null);
   const [, setExpandedModuleId] = useState<string | null>(null);
+  const [selectedClassUuid, setSelectedClassUuid] = useState<string | null>(null);
   const [selectedLessonUuid, setSelectedLessonUuid] = useState<string | null>(null);
   const [draftSearchTerm, setDraftSearchTerm] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,35 +72,36 @@ export default function NewClassPage() {
     isError: hasClassesError,
   } = useInstructorClassesWithSchedules(instructor?.uuid);
 
-  const filteredClasses = useFilteredClassInstances({
+  const filteredClasses = useFilteredInstructorClasses({
     classes,
-    difficultyMap,
     searchTerm,
     dateFilter,
   });
 
   useEffect(() => {
     if (!filteredClasses.length) {
-      setSelectedInstanceUuid(null);
+      setSelectedClassUuid(null);
       return;
     }
 
-    setSelectedInstanceUuid(previous =>
-      previous && filteredClasses.some(classItem => classItem.instanceUuid === previous)
+    setSelectedClassUuid(previous =>
+      previous && filteredClasses.some(classItem => classItem.uuid === previous)
         ? previous
-        : (filteredClasses[0]?.instanceUuid ?? null)
+        : (filteredClasses[0]?.uuid ?? null)
     );
   }, [filteredClasses]);
 
-  const selectedInstanceEntry = useMemo<ClassInstanceItem | null>(
-    () =>
-      filteredClasses.find(classItem => classItem.instanceUuid === selectedInstanceUuid) ?? null,
-    [filteredClasses, selectedInstanceUuid]
+  const selectedClass = useMemo(
+    () => filteredClasses.find(classItem => classItem.uuid === selectedClassUuid) ?? null,
+    [filteredClasses, selectedClassUuid]
   );
-
-  const selectedClass = selectedInstanceEntry?.classItem ?? null;
-  const selectedClassUuid = selectedClass?.uuid ?? null;
-  const selectedInstance = selectedInstanceEntry?.instance ?? null;
+  const selectedScheduleInstance = useMemo(
+    () =>
+      selectedClass?.schedule
+        ?.filter(instance => instance.status?.toUpperCase() !== 'CANCELLED')
+        .sort((left, right) => new Date(left.start_time).getTime() - new Date(right.start_time).getTime())[0] ?? null,
+    [selectedClass]
+  );
   const { roster, isLoading: isLoadingStudents } = useClassRoster(selectedClassUuid ?? undefined);
   const {
     isLoading: isLoadingLessons,
@@ -221,8 +221,8 @@ export default function NewClassPage() {
     if (!selectedClassUuid) return '#';
 
     const params = new URLSearchParams();
-    if (selectedInstanceEntry?.instanceUuid) {
-      params.set('schedule', selectedInstanceEntry.instanceUuid);
+    if (selectedScheduleInstance?.uuid) {
+      params.set('schedule', selectedScheduleInstance.uuid);
     }
     if (selectedModule?.lesson?.uuid) {
       params.set('lesson', selectedModule.lesson.uuid);
@@ -239,7 +239,7 @@ export default function NewClassPage() {
       }`;
   }, [
     selectedClassUuid,
-    selectedInstanceEntry?.instanceUuid,
+    selectedScheduleInstance?.uuid,
     selectedLesson?.uuid,
     selectedModule?.lesson?.uuid,
     selectedLessonCourseUuid,
@@ -250,8 +250,8 @@ export default function NewClassPage() {
       if (!selectedClassUuid) return '#';
 
       const params = new URLSearchParams();
-      if (selectedInstanceEntry?.instanceUuid) {
-        params.set('schedule', selectedInstanceEntry.instanceUuid);
+      if (selectedScheduleInstance?.uuid) {
+        params.set('schedule', selectedScheduleInstance.uuid);
       }
       if (lessonUuid) {
         params.set('lesson', lessonUuid);
@@ -271,17 +271,19 @@ export default function NewClassPage() {
       return `/dashboard/classes/class-training/${selectedClassUuid}${queryString ? `?${queryString}` : ''
         }`;
     },
-    [lessonModules, selectedClassForDisplay?.course?.uuid, selectedClassUuid, selectedInstanceEntry?.instanceUuid]
+    [lessonModules, selectedClassForDisplay?.course?.uuid, selectedClassUuid, selectedScheduleInstance?.uuid]
   );
 
   const handleStartLesson = useCallback(
     (lessonUuid?: string | null, contentUuid?: string | null) => {
-      if (!selectedClassUuid || !selectedInstanceEntry?.instanceUuid) {
+      if (!selectedClassUuid || !selectedScheduleInstance?.uuid) {
         return;
       }
 
       const href = getStartLessonHref(lessonUuid, contentUuid);
-      const shouldResumeLesson = Boolean(selectedInstance?.started_at && !selectedInstance?.concluded_at);
+      const shouldResumeLesson = Boolean(
+        selectedScheduleInstance?.started_at && !selectedScheduleInstance?.concluded_at
+      );
 
       if (shouldResumeLesson) {
         router.push(href);
@@ -289,7 +291,7 @@ export default function NewClassPage() {
       }
 
       startClassMut.mutate(
-        { path: { instanceUuid: selectedInstanceEntry.instanceUuid } },
+        { path: { instanceUuid: selectedScheduleInstance.uuid } },
         {
           onSuccess: () => {
             router.push(href);
@@ -304,9 +306,9 @@ export default function NewClassPage() {
       getStartLessonHref,
       router,
       selectedClassUuid,
-      selectedInstance?.concluded_at,
-      selectedInstance?.started_at,
-      selectedInstanceEntry?.instanceUuid,
+      selectedScheduleInstance?.concluded_at,
+      selectedScheduleInstance?.started_at,
+      selectedScheduleInstance?.uuid,
       startClassMut,
     ]
   );
@@ -338,11 +340,11 @@ export default function NewClassPage() {
           <ClassSidebar
             isLoading={isLoadingClasses}
             classes={filteredClasses}
-            selectedInstanceUuid={selectedInstanceUuid}
+            selectedClassUuid={selectedClassUuid}
             searchTerm={searchTerm}
             draftSearchTerm={draftSearchTerm}
             dateFilter={dateFilter}
-            onSelectClass={setSelectedInstanceUuid}
+            onSelectClass={setSelectedClassUuid}
             onSearchChange={value => {
               setDraftSearchTerm(value);
               setSearchTerm(value.trim());
@@ -351,7 +353,7 @@ export default function NewClassPage() {
           />
         </aside>
 
-        {!selectedInstanceEntry && !isLoadingClasses ? (
+        {!selectedClass && !isLoadingClasses ? (
           <Card className='border-border/70 bg-card/90 shadow-sm'>
             <CardContent className='flex min-h-[420px] flex-col items-center justify-center gap-4 p-8 text-center'>
               <div className='bg-primary/10 text-primary rounded-full p-4'>
@@ -360,7 +362,7 @@ export default function NewClassPage() {
               <div className='space-y-2'>
                 <h3 className='text-foreground text-lg font-semibold'>No classes available</h3>
                 <p className='text-muted-foreground max-w-lg text-sm'>
-                  Try another search term or switch the date filter to load more class instances.
+                  Try another search term or switch the date filter to load more classes.
                 </p>
               </div>
             </CardContent>
@@ -456,7 +458,7 @@ export default function NewClassPage() {
                 getStartLessonHref={getStartLessonHref}
                 onStartLesson={handleStartLesson}
                 selectedLessonActionLabel={
-                  selectedInstance?.started_at && !selectedInstance?.concluded_at
+                  selectedScheduleInstance?.started_at && !selectedScheduleInstance?.concluded_at
                     ? 'Resume Lesson'
                     : 'Start Lesson'
                 }
@@ -464,31 +466,33 @@ export default function NewClassPage() {
               />
             </TabsContent>
 
+            <TabsContent value='lessons' className='mt-0'>
+              <ClassLessonsTab
+                isLoading={isLoadingClasses || isLoadingLessons}
+                classTitle={selectedClass?.title}
+                lessonModules={lessonModules}
+              />
+            </TabsContent>
+
+            <TabsContent value='schedule' className='mt-0'>
+              <ClassScheduleTab isLoading={isLoadingClasses} selectedClass={selectedClass} />
+            </TabsContent>
+
             <TabsContent value='students' className='mt-0'>
               <ClassStudentsTab isLoadingStudents={isLoadingStudents} rosterEntries={roster} />
             </TabsContent>
 
-            <TabsContent value='waiting-list' className='mt-0'>
-              <ClassWaitingListTab
-                isLoadingClasses={isLoadingClasses}
-                selectedClass={selectedClass}
-                selectedClassEntry={selectedInstanceEntry}
-                visibleInstances={visibleInstances}
-              />
-            </TabsContent>
-
-            <TabsContent value='delivery-status' className='mt-0'>
+            <TabsContent value='delivery' className='mt-0'>
               <ClassDeliveryStatusTab
                 isLoadingClasses={isLoadingClasses}
                 selectedClass={selectedClass}
-                selectedClassEntry={selectedInstanceEntry}
                 dateFilter={dateFilter}
                 difficultyMap={difficultyMap}
                 instructorName={instructor?.full_name}
                 studentCount={roster.length}
                 totalInstances={totalInstances}
                 completionRate={completionRate}
-                selectedInstanceUuid={selectedInstanceUuid as string}
+                selectedInstanceUuid={selectedScheduleInstance?.uuid}
                 visibleInstances={visibleInstances}
                 onAddClasses={() => router.push('/dashboard/classes/new')}
               />
@@ -498,16 +502,6 @@ export default function NewClassPage() {
               <PlaceholderTab
                 title='Announcements'
                 description='No announcements yet. Updates, reminders, and important messages for this class will appear here.'
-              />
-            </TabsContent>
-
-            <TabsContent value='tasks' className='mt-0'>
-              <ClassTasksTab
-                classUuid={selectedClassUuid}
-                classTitle={selectedClass?.title}
-                courseTitle={selectedClassForDisplay?.course?.name}
-                lessonModules={lessonModules}
-                isLoading={isLoadingClasses || isLoadingLessons}
               />
             </TabsContent>
           </Tabs>
