@@ -20,7 +20,10 @@ import {
   Users,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import type { DateFilter } from './new-class-page.utils';
+import {
+  formatPreferredScheduleLabel,
+  type DateFilter,
+} from './new-class-page.utils';
 
 const CLASSES_PER_PAGE = 8;
 
@@ -38,27 +41,6 @@ function getVisiblePageNumbers(currentPage: number, totalPages: number) {
   }
 
   return [1, currentPage - 1, currentPage, currentPage + 1, totalPages];
-}
-
-function formatNextSessionLabel(classItem: InstructorClassWithSchedule) {
-  const nextSession =
-    classItem.schedule
-      ?.filter(instance => instance.status?.toUpperCase() !== 'CANCELLED')
-      .sort((left, right) => new Date(left.start_time).getTime() - new Date(right.start_time).getTime())[0] ??
-    null;
-
-  if (!nextSession) return 'No sessions scheduled';
-
-  const start = new Date(nextSession.start_time);
-  if (Number.isNaN(start.getTime())) return 'Session time pending';
-
-  return start.toLocaleString('en-GB', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
 }
 
 function getClassStatus(classItem: InstructorClassWithSchedule) {
@@ -230,7 +212,9 @@ export function ClassSidebar({
 
                     <div className='mt-2 flex items-center gap-1.5 text-xs text-muted-foreground'>
                       <CalendarDays className='size-3.5 shrink-0' />
-                      <span className='truncate'>{formatNextSessionLabel(classItem)}</span>
+                      <span className='truncate'>
+                        {formatPreferredScheduleLabel(classItem)}
+                      </span>
                     </div>
                   </div>
                 </div>

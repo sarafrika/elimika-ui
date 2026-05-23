@@ -2,7 +2,6 @@
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -15,7 +14,6 @@ import {
   BellRing,
   Building2,
   CalendarDays,
-  ChevronDown,
   Globe,
   LockKeyhole,
   MapPin,
@@ -104,6 +102,7 @@ type CatalogItem = {
   rateCard?: CatalogRateCard;
   source: CatalogSource;
   uuid: string;
+  thumbnailUrl: string
 };
 
 type ScheduledSession = { date: string; startTime: string; endTime: string };
@@ -513,6 +512,7 @@ const NewClassCreationPage = () => {
       source: 'course',
       uuid: String(course.uuid),
       classLimit: course.class_limit ?? 0,
+      thumbnailUrl: course?.thumbnail_url || "NF",
       rateCard: course.application?.rate_card as CatalogRateCard | undefined,
     }));
     const programItems: CatalogItem[] = approvedPrograms.map(program => ({
@@ -956,6 +956,7 @@ const NewClassCreationPage = () => {
   const showMeetingLink = normalizedLocationType === 'ONLINE' || normalizedLocationType === 'HYBRID';
 
   const previewData: ClassCreationPreviewData = {
+    thumbnailUrl: selectedCatalogItem?.thumbnailUrl as string,
     classTitle: classDetails.title || selectedCatalogItem?.label || 'Class title',
     classTypeLabel: formatClassType(classDetails.class_type),
     instructorName: classDetails.instructorName || instructor?.full_name || 'John Doe',
@@ -968,6 +969,7 @@ const NewClassCreationPage = () => {
           ? `Start ${new Date(`${scheduleSettings.startClass.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' })}`
           : '',
     timeLabel: firstSessionTimeLabel,
+    classroom: classDetails.classroom,
     totalHoursLabel: `${totalHours || 0} ${totalHours === 1 ? 'Hour' : 'Hours'}`,
     pricePerHourLabel: `${rateCard?.currency || 'KES'} ${ratePerHour.toLocaleString()}`,
     totalSessionsLabel: `${totalSessions} Class${totalSessions === 1 ? '' : 'es'}`,
@@ -1637,7 +1639,7 @@ const NewClassCreationPage = () => {
                   </Alert>
                 )}
 
-                <Collapsible
+                {/* <Collapsible
                   open={showOptionalSettings}
                   onOpenChange={setShowOptionalSettings}
                   className='rounded-md border border-border/60'
@@ -1676,7 +1678,7 @@ const NewClassCreationPage = () => {
                       </div>
                     </div>
                   </CollapsibleContent>
-                </Collapsible>
+                </Collapsible> */}
               </div>
             </Card>
 

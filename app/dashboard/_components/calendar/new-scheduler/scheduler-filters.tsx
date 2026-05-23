@@ -100,23 +100,45 @@ export function SchedulerFilters({
         {activeSection?.items.length ? (
           <div className='space-y-1.5'>
             {activeSection.items.map(item => {
-              const isSelected = activeSection.selectedId === item.id;
+              const isSelected =
+                activeSection.selectedId === item.id;
 
               return (
                 <button
                   key={item.id}
                   type='button'
-                  onClick={() => activeSection.onItemClick(item.id)}
-                  className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-xs transition-colors md:text-sm ${isSelected
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-muted-foreground hover:bg-primary/5'
+                  onClick={() =>
+                    activeSection.onItemClick(item.id)
+                  }
+                  className={`group flex w-full items-center gap-2.5 rounded-md border px-3 py-2.5 text-left transition-all ${isSelected
+                    ? 'border-primary/20 bg-primary/10'
+                    : 'border-border/50 hover:border-primary/10 hover:bg-muted/40'
                     }`}
                 >
-                  <span className='truncate'>{item.name}</span>
+                  {/* CONTENT */}
+                  <div className='min-w-0 flex-1'>
+                    {/* CLASS NAME */}
+                    <p
+                      className={`truncate text-[13px] font-medium leading-tight ${isSelected
+                        ? 'text-primary'
+                        : 'text-foreground'
+                        }`}
+                    >
+                      {item.name}
+                    </p>
 
-                  {isSelected && (
-                    <div className='bg-primary h-2 w-2 shrink-0 rounded-full' />
-                  )}
+                    {/* COURSE */}
+                    <p className='mt-0.5 truncate text-[11px] text-muted-foreground'>
+                      {item.course}
+                    </p>
+                  </div>
+
+                  {/* ACTIVE BADGE */}
+                  {isSelected ? (
+                    <div className='rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary'>
+                      Active
+                    </div>
+                  ) : null}
                 </button>
               );
             })}

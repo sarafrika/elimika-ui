@@ -32,6 +32,7 @@ import { ClassStudentsTab } from './_components/class-students-tab';
 import {
   classTabs,
   dateFilterDescriptions,
+  getPreferredScheduleInstance,
   useFilteredInstructorClasses,
   type ClassTab,
   type DateFilter,
@@ -96,11 +97,8 @@ export default function NewClassPage() {
     [filteredClasses, selectedClassUuid]
   );
   const selectedScheduleInstance = useMemo(
-    () =>
-      selectedClass?.schedule
-        ?.filter(instance => instance.status?.toUpperCase() !== 'CANCELLED')
-        .sort((left, right) => new Date(left.start_time).getTime() - new Date(right.start_time).getTime())[0] ?? null,
-    [selectedClass]
+    () => getPreferredScheduleInstance(selectedClass?.schedule ?? []),
+    [selectedClass?.schedule]
   );
   const { roster, isLoading: isLoadingStudents } = useClassRoster(selectedClassUuid ?? undefined);
   const {

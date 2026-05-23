@@ -71,6 +71,56 @@ export const classTabs: { value: ClassTab; label: string }[] = [
 const isNonCancelledInstance = (instance: NonNullable<InstructorClassWithSchedule['schedule']>[number]) =>
   instance.status?.toUpperCase() !== 'CANCELLED';
 
+export const getPreferredScheduleInstance = (
+  schedule: InstructorClassWithSchedule['schedule'] = [],
+  requestedScheduleUuid?: string | null
+) => {
+  const sortedSchedule = [...schedule]
+    .filter(isNonCancelledInstance)
+    .sort((left, right) => new Date(left.start_time).getTime() - new Date(right.start_time).getTime());
+
+  if (sortedSchedule.length === 0) {
+    return null;
+  }
+
+  if (requestedScheduleUuid) {
+    const requestedSchedule = sortedSchedule.find(instance => instance.uuid === requestedScheduleUuid);
+    if (requestedSchedule) {
+      return requestedSchedule;
+    }
+  }
+
+  const now = new Date();
+  const nextSchedule = sortedSchedule.find(instance => {
+    const endTime = new Date(instance.end_time);
+    if (!Number.isNaN(endTime.getTime())) {
+      return endTime >= now;
+    }
+
+    const startTime = new Date(instance.start_time);
+    return !Number.isNaN(startTime.getTime()) && startTime >= now;
+  });
+
+  return nextSchedule ?? sortedSchedule[sortedSchedule.length - 1] ?? null;
+};
+
+export const formatPreferredScheduleLabel = (classItem: InstructorClassWithSchedule) => {
+  const nextSession = getPreferredScheduleInstance(classItem.schedule);
+
+  if (!nextSession) return 'No sessions scheduled';
+
+  const start = new Date(nextSession.start_time);
+  if (Number.isNaN(start.getTime())) return 'Session time pending';
+
+  return start.toLocaleString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+};
+
 const getStartOfWeek = (date: Date) => {
   const result = new Date(date);
   const day = result.getDay();
@@ -393,8 +443,8 @@ export const useFilteredInstructorClasses = ({
         return matchesSearch && matchesDateFilter;
       })
       .sort((left, right) => {
-        const leftDate = left.schedule?.find(isNonCancelledInstance)?.start_time ?? null;
-        const rightDate = right.schedule?.find(isNonCancelledInstance)?.start_time ?? null;
+        const leftDate = getPreferredScheduleInstance(left.schedule)?.start_time ?? null;
+        const rightDate = getPreferredScheduleInstance(right.schedule)?.start_time ?? null;
         const leftTime = leftDate ? new Date(leftDate).getTime() : Number.POSITIVE_INFINITY;
         const rightTime = rightDate ? new Date(rightDate).getTime() : Number.POSITIVE_INFINITY;
 
