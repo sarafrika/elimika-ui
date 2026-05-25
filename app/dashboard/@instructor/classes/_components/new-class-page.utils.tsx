@@ -68,6 +68,13 @@ export const classTabs: { value: ClassTab; label: string }[] = [
   { value: 'announcements', label: 'Announcements' },
 ];
 
+export const studentClassTabs: { value: ClassTab; label: string }[] = [
+  { value: 'overview', label: 'Overview' },
+  { value: 'lessons', label: 'Lessons' },
+  { value: 'schedule', label: 'Schedule' },
+  { value: 'announcements', label: 'Announcements' },
+];
+
 const isNonCancelledInstance = (instance: NonNullable<InstructorClassWithSchedule['schedule']>[number]) =>
   instance.status?.toUpperCase() !== 'CANCELLED';
 
@@ -412,33 +419,33 @@ export const useFilteredInstructorClasses = ({
           dateFilter === 'all'
             ? hasActiveSession
             : schedule.some(instance => {
-                if (!isNonCancelledInstance(instance)) return false;
-                const start = new Date(instance.start_time);
-                if (Number.isNaN(start.getTime())) return false;
+              if (!isNonCancelledInstance(instance)) return false;
+              const start = new Date(instance.start_time);
+              if (Number.isNaN(start.getTime())) return false;
 
-                if (dateFilter === 'current-day') {
-                  return (
-                    start.getFullYear() === now.getFullYear() &&
-                    start.getMonth() === now.getMonth() &&
-                    start.getDate() === now.getDate()
-                  );
-                }
+              if (dateFilter === 'current-day') {
+                return (
+                  start.getFullYear() === now.getFullYear() &&
+                  start.getMonth() === now.getMonth() &&
+                  start.getDate() === now.getDate()
+                );
+              }
 
-                if (dateFilter === 'current-week') {
-                  const startOfWeek = new Date(now);
-                  const day = startOfWeek.getDay();
-                  const diff = day === 0 ? -6 : 1 - day;
-                  startOfWeek.setDate(startOfWeek.getDate() + diff);
-                  startOfWeek.setHours(0, 0, 0, 0);
+              if (dateFilter === 'current-week') {
+                const startOfWeek = new Date(now);
+                const day = startOfWeek.getDay();
+                const diff = day === 0 ? -6 : 1 - day;
+                startOfWeek.setDate(startOfWeek.getDate() + diff);
+                startOfWeek.setHours(0, 0, 0, 0);
 
-                  const endOfWeek = new Date(startOfWeek);
-                  endOfWeek.setDate(endOfWeek.getDate() + 6);
-                  endOfWeek.setHours(23, 59, 59, 999);
-                  return start >= startOfWeek && start <= endOfWeek;
-                }
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(endOfWeek.getDate() + 6);
+                endOfWeek.setHours(23, 59, 59, 999);
+                return start >= startOfWeek && start <= endOfWeek;
+              }
 
-                return start >= now;
-              });
+              return start >= now;
+            });
 
         return matchesSearch && matchesDateFilter;
       })

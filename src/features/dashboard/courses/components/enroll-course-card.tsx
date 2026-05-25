@@ -4,7 +4,6 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useStudent } from '@/context/student-context';
 import { useClassRoster } from '@/hooks/use-class-roster';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import {
@@ -29,6 +28,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useUserProfile } from '../../../profile/context/profile-context';
+import { useUserDomain } from '../../context/user-domain-context';
 import { type BundledClass, getErrorMessage } from '../types';
 import AddToCartModal from './AddToCartModal';
 
@@ -51,7 +52,9 @@ export default function EnrollCourseCard({
   variant,
   instructorView = false
 }: EnrollCourseCardProps) {
-  const student = useStudent();
+  const profile = useUserProfile();
+  const student = profile?.student
+  const { activeDomain } = useUserDomain()
   const qc = useQueryClient();
   const { cartId: savedCartId, setCartId } = useCartStore();
 
@@ -64,6 +67,13 @@ export default function EnrollCourseCard({
   const enrolled = roster?.length ?? 0;
   const maxParticipants = cls.max_participants ?? 0;
   const enrolledPercentage = maxParticipants > 0 ? (enrolled / maxParticipants) * 100 : 0;
+
+  const isStudentEnrolled =
+    activeDomain === 'student' &&
+    !!student?.uuid &&
+    uniqueEnrollments?.some(
+      enrollment => enrollment.student_uuid === student.uuid
+    );
 
   const [showCartModal, setShowCartModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState<BundledClass | null>(null);
@@ -336,13 +346,13 @@ export default function EnrollCourseCard({
                     e.stopPropagation();
                     handleEnroll(cls);
                   }}
-                  disabled={disableEnroll}
-                  className={`w-full rounded-xl font-semibold shadow-none transition-all duration-300 ${disableEnroll
+                  disabled={disableEnroll || isStudentEnrolled}
+                  className={`w-full rounded-xl font-semibold shadow-none transition-all duration-300 ${(disableEnroll || isStudentEnrolled)
                     ? 'bg-success text-success-foreground hover:bg-success/90'
                     : 'bg-primary text-primary-foreground hover:bg-primary/90'
                     }`}
                 >
-                  {disableEnroll ? (
+                  {(disableEnroll || isStudentEnrolled) ? (
                     <div className='flex items-center gap-2'>
                       <CheckCircle className='h-5 w-5' />
                       <span>Enrolled</span>
