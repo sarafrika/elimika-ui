@@ -1,87 +1,21 @@
-import { Progress } from '@/components/ui/progress';
+'use client';
+
+import { CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
+import { listSalesOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { RevenueSaleLineItemDto } from '@/services/client/types.gen';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { ClassSessionLedgerSection } from './class-session-ledger-section';
 import {
-  BarChart3,
-  CalendarDays,
-  CircleDot,
-  GraduationCap,
-  UserRound,
-  Users,
-} from 'lucide-react';
-import HTMLTextPreview from '../../../../../components/editors/html-text-preview';
+  buildClassSessionLedgerRows,
+  type ClassSessionLedgerRow,
+} from './class-session-ledger-table.utils';
 import type { DateFilter } from './new-class-page.utils';
-import {
-  formatDateTime,
-  formatDuration,
-  formatLabel,
-} from './new-class-page.utils';
 
-export type ClassScheduleInstance = {
-  class_definition_uuid: string;
-  instructor_uuid: string;
-  title: string;
-  status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
-  location_type: 'ONLINE' | 'OFFLINE' | 'HYBRID';
-  max_participants: number;
-  can_be_cancelled: boolean;
-  can_be_started: boolean;
-  can_be_ended: boolean;
-  concluded_at: boolean;
-  is_currently_active: boolean;
-  start_time: Date;
-  end_time: Date;
-  duration_minutes: bigint; // because of 60n
-  duration_formatted: string;
-  time_range: string;
-  timezone: string;
-};
-
-function resolveInstanceStatus(instance: ClassScheduleInstance) {
-  if (instance.status === 'COMPLETED' || instance.concluded_at) {
-    return 'Completed';
-  }
-
-  if (instance.is_currently_active || instance.can_be_ended) {
-    return 'Ongoing';
-  }
-
-  if (instance.status === 'SCHEDULED' || instance.can_be_started) {
-    return 'Scheduled';
-  }
-
-  const now = new Date();
-  const start = new Date(instance.start_time);
-  const end = new Date(instance.end_time);
-
-  if (end < now) return 'Completed';
-  if (start <= now && end >= now) return 'Ongoing';
-
-  return 'Upcoming';
-}
-
-export function ClassDeliveryStatusTab({
-  isLoadingClasses,
-  selectedClass,
-  dateFilter,
-  difficultyMap,
-  instructorName,
-  roleLabel = 'Instructor view',
-  studentCount,
-  totalInstances,
-  completionRate,
-  visibleInstances,
-  selectedInstanceUuid,
-  onAddClasses,
-}: {
+type ClassDeliveryStatusTabProps = {
   isLoadingClasses: boolean;
   selectedClass: InstructorClassWithSchedule | null;
   dateFilter: DateFilter;
@@ -91,276 +25,189 @@ export function ClassDeliveryStatusTab({
   studentCount: number;
   totalInstances: number;
   completionRate: number;
-  selectedInstanceUuid?: string;
   visibleInstances: InstructorClassWithSchedule['schedule'];
+  selectedInstanceUuid?: string;
   onAddClasses: () => void;
-}) {
-  /* ✅ NEW: sort + group */
-  const sortedInstances = [...visibleInstances].sort(
-    (a, b) =>
-      new Date(a.start_time).getTime() -
-      new Date(b.start_time).getTime()
-  );
+};
 
-  const groupedInstances = sortedInstances.reduce(
-    (acc, instance) => {
-      const status = resolveInstanceStatus(instance);
-      if (!acc[status]) acc[status] = [];
-      acc[status].push(instance);
-      return acc;
-    },
-    {} as Record<string, typeof visibleInstances>
+function DeliverySkeleton() {
+  return (
+    <div className='space-y-3'>
+      <Skeleton className='h-40 rounded-[14px]' />
+      <Skeleton className='h-[620px] rounded-[14px]' />
+    </div>
   );
+}
+
+export function ClassDeliveryStatusTab(props: ClassDeliveryStatusTabProps) {
+  const {
+    isLoadingClasses,
+    selectedClass,
+    dateFilter,
+    difficultyMap = {},
+    roleLabel = 'Instructor view',
+    studentCount,
+    totalInstances,
+    completionRate,
+    visibleInstances,
+  } = props;
+
+  const { difficultyMap: fallbackDifficultyMap } = useDifficultyLevels();
+  const mergedDifficultyMap = { ...fallbackDifficultyMap, ...difficultyMap };
+  const showFinancialColumns = roleLabel !== 'Student view';
+
+  const { data: salesResp } = useQuery({
+    ...listSalesOptions({
+      query: {
+        domain: 'instructor',
+        class_definition_uuid: selectedClass?.uuid ?? '',
+        pageable: { page: 0, size: 100 },
+      },
+    }),
+    enabled: showFinancialColumns && Boolean(selectedClass?.uuid),
+  });
+
+  const salesItems: RevenueSaleLineItemDto[] = salesResp?.data?.content ?? [];
+
+  const rows = useMemo<ClassSessionLedgerRow[]>(() => {
+    if (!selectedClass) return [];
+
+    return buildClassSessionLedgerRows({
+      selectedClass,
+      visibleInstances,
+      salesItems,
+      showFinancialColumns,
+    });
+  }, [salesItems, selectedClass, showFinancialColumns, visibleInstances]);
+
+  if (isLoadingClasses || !selectedClass) {
+    return <DeliverySkeleton />;
+  }
+
+  const difficultyLabel = selectedClass.course?.difficulty_uuid
+    ? mergedDifficultyMap[selectedClass.course.difficulty_uuid] ?? 'General'
+    : 'General';
 
   const filterLabel =
     dateFilter === 'current-day'
-      ? 'Current day'
+      ? 'Today'
       : dateFilter === 'current-week'
-        ? 'Current week'
+        ? 'This week'
         : dateFilter === 'upcoming'
           ? 'Upcoming'
-          : 'All scheduled dates';
-
-  const courseName =
-    selectedClass?.course?.name ||
-    selectedClass?.title ||
-    'No linked course';
-
-  const difficulty = selectedClass?.course?.difficulty_uuid
-    ? difficultyMap[selectedClass.course.difficulty_uuid] ?? 'General'
-    : 'General';
-
-  const tableDescription =
-    dateFilter === 'current-day'
-      ? 'Showing class instances happening today for the selected class.'
-      : dateFilter === 'current-week'
-        ? 'Showing class instances happening in the current week, arranged by date.'
-        : dateFilter === 'upcoming'
-          ? 'Showing upcoming class instances for the selected class.'
-          : 'Showing every scheduled instance for the selected class, arranged by date.';
+          : 'All dates';
 
   return (
-    <div className="space-y-3">
-      {isLoadingClasses || !selectedClass ? (
-        <div className="space-y-3">
-          <Skeleton className="h-56 rounded-lg" />
-          <Skeleton className="h-80 rounded-lg" />
-        </div>
-      ) : (
-        <>
-          {/* ===== HEADER (UNCHANGED) ===== */}
-          <div className="grid gap-3 2xl:grid-cols-[minmax(0,1fr)_320px]">
-            <section className="border-border/70 bg-card/90 overflow-hidden rounded-lg border shadow-sm backdrop-blur">
-              <div className="border-border/70 border-b p-4 md:p-5">
-                <div className="space-y-2">
-                  <h2 className="text-foreground text-2xl leading-tight font-semibold md:text-3xl">
-                    {selectedClass.title}
-                  </h2>
-                  <div className="text-muted-foreground line-clamp-3 max-w-4xl text-sm leading-6">
-                    <HTMLTextPreview
-                      htmlContent={
-                        (selectedClass?.course?.description as string) ||
-                        (selectedClass.description as string)
-                      }
-                    />
-                  </div>
-                </div>
+    <div className='space-y-3'>
+      <section className='overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm'>
+        {/* <div className='border-border/70 border-b px-4 py-4 sm:px-5 sm:py-5'>
+          <div className='flex flex-col gap-4'>
+            <div className='flex flex-wrap items-center gap-2'>
+              <Badge variant='outline' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
+                {roleLabel}
+              </Badge>
+              <Badge variant='secondary' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
+                {filterLabel}
+              </Badge>
+            </div>
 
-                <div className="text-muted-foreground mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-                  <span className="inline-flex items-center gap-1.5">
-                    <CircleDot className="h-4 w-4" />
-                    {totalInstances} total instances
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <GraduationCap className="h-4 w-4" />
-                    {difficulty}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <Users className="h-4 w-4" />
-                    {studentCount} students
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <UserRound className="h-4 w-4" />
-                    {instructorName || roleLabel}
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid gap-3 p-4 sm:grid-cols-2 md:p-5 xl:grid-cols-3">
-                <div className="border-border/70 bg-background/70 rounded-md border p-4">
-                  <p className="text-muted-foreground flex items-center gap-2 text-xs font-semibold uppercase">
-                    <CalendarDays className="h-4 w-4" />
-                    Filter
-                  </p>
-                  <p className="text-foreground mt-2 text-lg font-semibold">
-                    {filterLabel}
-                  </p>
-                </div>
-
-                <div className="border-border/70 bg-background/70 rounded-md border p-4">
-                  <p className="text-muted-foreground flex items-center gap-2 text-xs font-semibold uppercase">
-                    <BarChart3 className="h-4 w-4" />
-                    Delivery rate
-                  </p>
-                  <p className="text-foreground mt-2 text-lg font-semibold">
-                    {completionRate}%
-                  </p>
-                  <Progress
-                    value={completionRate}
-                    className="bg-muted mt-3 h-2.5"
-                    indicatorClassName="bg-success"
-                  />
-                </div>
-
-                <div className="border-border/70 bg-background/70 rounded-md border p-4 sm:col-span-2 xl:col-span-1">
-                  <p className="text-muted-foreground flex items-center gap-2 text-xs font-semibold uppercase">
-                    <CircleDot className="h-4 w-4" />
-                    Visible instances
-                  </p>
-                  <p className="text-foreground mt-2 text-lg font-semibold">
-                    {visibleInstances.length}
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* ===== SIDEBAR (UNCHANGED) ===== */}
-            <aside className="border-border/70 bg-card/90 rounded-lg border p-4 shadow-sm backdrop-blur">
-              <h3 className="text-foreground mb-4 text-xl font-semibold">
-                Class Summary
-              </h3>
-              <div className="space-y-4">
-                <div className="border-border/70 flex justify-between border-b pb-3">
-                  <span className="text-muted-foreground text-sm">Course</span>
-                  <span className="text-foreground text-sm font-medium">
-                    {courseName}
-                  </span>
-                </div>
-
-                <div className="border-border/70 flex justify-between border-b pb-3">
-                  <span className="text-muted-foreground text-sm">
-                    Session format
-                  </span>
-                  <span className="text-foreground text-sm font-medium">
-                    {formatLabel(selectedClass.session_format)}
-                  </span>
-                </div>
-
-                <div className="border-border/70 flex justify-between border-b pb-3">
-                  <span className="text-muted-foreground text-sm">
-                    Completion
-                  </span>
-                  <span className="text-foreground text-sm font-medium">
-                    {completionRate}%
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground text-sm">
-                    Students
-                  </span>
-                  <span className="text-foreground text-sm font-medium">
-                    {studentCount}
-                  </span>
-                </div>
-              </div>
-            </aside>
-          </div>
-
-          {/* ===== TABLE (UPDATED WITH HIERARCHY) ===== */}
-          <section className="border-border/70 bg-card/90 rounded-lg border p-4 shadow-sm md:p-5">
-            <div className="mb-4">
-              <h3 className="text-foreground text-xl font-semibold">
-                Class instances
-              </h3>
-              <p className="text-muted-foreground mt-1 text-sm">
-                {tableDescription}
+            <div className='space-y-1'>
+              <h2 className='text-foreground text-xl font-semibold leading-tight sm:text-2xl'>
+                {selectedClass.title}
+              </h2>
+              <p className='text-muted-foreground text-sm sm:text-base'>
+                Delivery overview for {selectedClass.course?.name || selectedClass.title || 'this class'}.
               </p>
             </div>
 
-            <div className="overflow-x-auto">
-              <Table className="min-w-[780px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Session</TableHead>
-                    <TableHead>Date & Time</TableHead>
-                    <TableHead>Class Duration</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
+            <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
+                <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  <CalendarDays className='h-4 w-4' />
+                  Filter
+                </p>
+                <p className='text-foreground mt-2 text-sm font-semibold sm:text-base'>
+                  {filterLabel}
+                </p>
+              </div>
 
-                <TableBody>
-                  {sortedInstances.length > 0 ? (
-                    ['Ongoing', 'Scheduled', 'Upcoming', 'Completed'].map(
-                      status => {
-                        const instances = groupedInstances[status] || [];
-                        if (!instances.length) return null;
+              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
+                <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  <BarChart3 className='h-4 w-4' />
+                  Delivery rate
+                </p>
+                <p className='text-foreground mt-2 text-sm font-semibold sm:text-base'>
+                  {completionRate}%
+                </p>
+              </div>
 
-                        return (
-                          <>
-                            <TableRow key={status} className="bg-muted/40">
-                              <TableCell colSpan={5} className="font-semibold">
-                                {status} ({instances.length})
-                              </TableCell>
-                            </TableRow>
+              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
+                <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  <Users className='h-4 w-4' />
+                  Students
+                </p>
+                <p className='text-foreground mt-2 text-sm font-semibold sm:text-base'>
+                  {studentCount}
+                </p>
+              </div>
 
-                            {instances.map((instance, index) => (
-                              <TableRow
-                                key={instance.uuid}
-                                className={
-                                  instance.uuid === selectedInstanceUuid
-                                    ? 'bg-accent/40'
-                                    : instance.is_currently_active
-                                      ? 'bg-green-50'
-                                      : ''
-                                }
-                              >
-                                <TableCell className="font-medium">
-                                  {index + 1}
-                                </TableCell>
-
-                                <TableCell>
-                                  {formatDateTime(instance.start_time)}
-                                </TableCell>
-
-                                <TableCell>
-                                  {formatDuration(
-                                    instance.start_time,
-                                    instance.end_time
-                                  )}
-                                </TableCell>
-
-                                <TableCell>
-                                  {instance.location_name ||
-                                    selectedClass.location_name ||
-                                    formatLabel(
-                                      selectedClass.location_type
-                                    )}
-                                </TableCell>
-
-                                <TableCell>
-                                  {resolveInstanceStatus(instance)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </>
-                        );
-                      }
-                    )
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-10">
-                        No class instances match the current date filter.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
+                <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  <CircleDot className='h-4 w-4' />
+                  Instances
+                </p>
+                <p className='text-foreground mt-2 text-sm font-semibold sm:text-base'>
+                  {totalInstances}
+                </p>
+              </div>
             </div>
-          </section>
-        </>
-      )}
+
+            <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
+                <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  Difficulty
+                </p>
+                <p className='text-foreground mt-1 text-sm font-semibold sm:text-base'>
+                  {difficultyLabel}
+                </p>
+              </div>
+
+              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
+                <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  Class format
+                </p>
+                <p className='text-foreground mt-1 text-sm font-semibold sm:text-base'>
+                  {selectedClass.session_format || 'Not specified'}
+                </p>
+              </div>
+
+              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
+                <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  Status view
+                </p>
+                <p className='text-foreground mt-1 text-sm font-semibold sm:text-base'>
+                  {roleLabel}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div> */}
+
+        <CardContent className='px-4 py-4 sm:px-5 sm:py-5'>
+          <ClassSessionLedgerSection
+            selectedClass={selectedClass}
+            roleLabel={roleLabel}
+            difficultyLabel={difficultyLabel}
+            rows={rows}
+            sessionProgress={completionRate}
+            remainingSessions={Math.max(totalInstances - Math.round((completionRate / 100) * totalInstances), 0)}
+            rosterCount={studentCount}
+            showFinancialColumns={showFinancialColumns}
+            tableTitle='Delivery table'
+            tableDescription='This table mirrors the session-level delivery overview used by the class workspace.'
+          />
+        </CardContent>
+      </section>
     </div>
   );
 }

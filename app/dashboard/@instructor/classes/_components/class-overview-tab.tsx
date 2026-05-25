@@ -1,12 +1,14 @@
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { RosterEntry } from '@/hooks/use-class-roster';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import { cn } from '@/lib/utils';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { useQuery } from '@tanstack/react-query';
 import {
   Award,
   BarChart3,
@@ -20,10 +22,10 @@ import {
   Play,
   Plus,
   UserRound,
-  Video,
+  Video
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import {
   Tooltip,
   TooltipContent,
@@ -31,6 +33,14 @@ import {
   TooltipTrigger,
 } from '../../../../../components/ui/tooltip';
 import { useUserDomain } from '../../../../../context/user-domain-context';
+import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
+import { RevenueSaleLineItemDto } from '../../../../../services/client';
+import { listSalesOptions } from '../../../../../services/client/@tanstack/react-query.gen';
+import { ClassSessionLedgerSection } from './class-session-ledger-section';
+import {
+  buildClassSessionLedgerRows,
+  type ClassSessionLedgerRow,
+} from './class-session-ledger-table.utils';
 import type { LessonContentItem, LessonModule } from './new-class-page.utils';
 import {
   formatDateOnly,
@@ -82,7 +92,7 @@ function getInitials(value?: string | null) {
   );
 }
 
-function CourseArtwork({ imageUrl, courseName }: { imageUrl?: string | null; courseName: string }) {
+export function CourseArtwork({ imageUrl, courseName }: { imageUrl?: string | null; courseName: string }) {
   const resolvedImageUrl = toAuthenticatedMediaUrl(imageUrl) || imageUrl;
 
   if (resolvedImageUrl) {
@@ -728,85 +738,7 @@ function UpcomingClassesPanel({
   );
 }
 
-export function ClassOverviewTab({
-  isLoadingClasses,
-  isLoadingLessons,
-  selectedClass,
-  selectedClassUuid,
-  lessonModules,
-  selectedLesson,
-  contentTypeMap,
-  difficultyMap,
-  instructorName,
-  roleLabel = 'Instructor view',
-  rosterEntries = [],
-  sessionProgress,
-  remainingSessions,
-  setSelectedLessonUuid,
-  startLessonHref,
-  getStartLessonHref,
-  onStartLesson,
-  selectedLessonActionLabel,
-  onAddClasses,
-}: {
-  isLoadingClasses: boolean;
-  isLoadingLessons: boolean;
-  selectedClass: InstructorClassWithSchedule | null;
-  selectedClassUuid: string | null;
-  lessonModules: LessonModule[];
-  selectedLesson: LessonContentItem | null;
-  contentTypeMap: Record<string, string>;
-  difficultyMap: Record<string, string>;
-  instructorName?: string | null;
-  roleLabel?: string;
-  rosterEntries?: RosterEntry[];
-  sessionProgress: number;
-  remainingSessions: number;
-  setSelectedLessonUuid: (value: string | null) => void;
-  startLessonHref: string;
-  getStartLessonHref: (lessonUuid?: string | null, contentUuid?: string | null) => string;
-  onStartLesson: (lessonUuid?: string | null, contentUuid?: string | null) => void;
-  selectedLessonActionLabel: string;
-  onAddClasses: () => void;
-}) {
-  if (isLoadingClasses || !selectedClass || isLoadingLessons) {
-    return (
-      <div className='space-y-3'>
-        <Skeleton className='h-56 rounded-lg' />
-        <div className='grid gap-3 2xl:grid-cols-[minmax(0,1fr)_320px]'>
-          <Skeleton className='h-80 rounded-lg' />
-          <Skeleton className='h-80 rounded-lg' />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className='space-y-3'>
-      <ClassHero
-        selectedClass={selectedClass}
-        difficultyMap={difficultyMap}
-        instructorName={instructorName}
-        roleLabel={roleLabel}
-        sessionProgress={sessionProgress}
-        remainingSessions={remainingSessions}
-        startLessonHref={startLessonHref}
-        selectedClassUuid={selectedClassUuid}
-        onAddClasses={onAddClasses}
-      />
-
-      <div>
-        {/* // the new overview table here, all the components of the tabs should be visible to instructors,  */}
-        {/* for students, only payment informations should nont be visible to students */}
-      </div>
-    </div>
-  );
-}
-
-// update the classdeliverystatustab component also, to use the same table. it should show basically the same information as the overview for instructors
-
-
-export function ClassLessonOverviewTab({
+export function ClassLessonTab({
   isLoadingClasses,
   isLoadingLessons,
   selectedClass,
@@ -889,6 +821,204 @@ export function ClassLessonOverviewTab({
           rosterEntries={rosterEntries}
         />
       </div>
+    </div>
+  );
+}
+
+type ClassOverviewTabProps = {
+  isLoadingClasses: boolean;
+  isLoadingLessons: boolean;
+  selectedClass: InstructorClassWithSchedule | null;
+  selectedClassUuid: string | null;
+  lessonModules?: unknown[];
+  selectedLesson?: unknown;
+  contentTypeMap?: Record<string, string>;
+  difficultyMap?: Record<string, string>;
+  instructorName?: string | null;
+  roleLabel?: string;
+  rosterEntries?: unknown[];
+  sessionProgress: number;
+  remainingSessions: number;
+  setSelectedLessonUuid?: (value: string | null) => void;
+  startLessonHref?: string;
+  getStartLessonHref?: (lessonUuid?: string | null, contentUuid?: string | null) => string;
+  onStartLesson?: (lessonUuid?: string | null, contentUuid?: string | null) => void;
+  selectedLessonActionLabel?: string;
+  onAddClasses?: () => void;
+};
+
+function OverviewSkeleton() {
+  return (
+    <div className='space-y-3'>
+      <Skeleton className='h-56 rounded-[14px]' />
+      <Skeleton className='h-[640px] rounded-[14px]' />
+    </div>
+  );
+}
+
+function OverviewMetaCard({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: ReactNode;
+}) {
+  return (
+    <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
+      <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]'>
+        {icon}
+        {label}
+      </p>
+      <p className='text-foreground mt-2 text-sm font-semibold sm:text-base'>{value}</p>
+    </div>
+  );
+}
+
+
+
+export function ClassOverviewTab(props: ClassOverviewTabProps) {
+  const {
+    isLoadingClasses,
+    isLoadingLessons,
+    selectedClass,
+    selectedClassUuid,
+    roleLabel = 'Instructor view',
+    rosterEntries = [],
+    sessionProgress,
+    remainingSessions,
+    difficultyMap = {},
+  } = props;
+
+  const { difficultyMap: fallbackDifficultyMap } = useDifficultyLevels();
+  const mergedDifficultyMap = { ...fallbackDifficultyMap, ...difficultyMap };
+  const showFinancialColumns = roleLabel !== 'Student view';
+
+  const { data: salesResp } = useQuery({
+    ...listSalesOptions({
+      query: {
+        domain: 'instructor',
+        class_definition_uuid: selectedClass?.uuid ?? '',
+        pageable: { page: 0, size: 100 },
+      },
+    }),
+    enabled: showFinancialColumns && Boolean(selectedClass?.uuid),
+  });
+
+  const salesItems: RevenueSaleLineItemDto[] = salesResp?.data?.content ?? [];
+
+  const rows = useMemo<ClassSessionLedgerRow[]>(() => {
+    if (!selectedClass) return [];
+
+    return buildClassSessionLedgerRows({
+      selectedClass,
+      visibleInstances: selectedClass.schedule ?? [],
+      salesItems,
+      showFinancialColumns,
+    });
+  }, [salesItems, selectedClass, showFinancialColumns]);
+
+  if (isLoadingClasses || !selectedClass || isLoadingLessons) {
+    return <OverviewSkeleton />;
+  }
+
+  const difficultyLabel = selectedClass.course?.difficulty_uuid
+    ? mergedDifficultyMap[selectedClass.course.difficulty_uuid] ?? 'General'
+    : 'General';
+
+  return (
+    <div className='space-y-3'>
+      <section className='overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm'>
+        {/* <div className='border-border/70 border-b px-4 py-4 sm:px-5 sm:py-5'>
+          <div className='flex flex-col gap-4'>
+            <div className='flex flex-wrap items-center gap-2'>
+              <Badge variant='outline' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
+                {roleLabel}
+              </Badge>
+              <Badge variant='secondary' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
+                {selectedClass.schedule?.length ?? 0} sessions
+              </Badge>
+            </div>
+
+            <div className='space-y-1'>
+              <h2 className='text-foreground text-xl font-semibold leading-tight sm:text-2xl'>
+                {selectedClass.title}
+              </h2>
+              <p className='text-muted-foreground text-sm sm:text-base'>
+                {selectedClass.course?.name || selectedClass.title || 'Class overview'}
+              </p>
+            </div>
+
+            <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+              <OverviewMetaCard
+                label='Sessions'
+                value={`${selectedClass.schedule?.length ?? 0}`}
+                icon={<Clock3 className='h-4 w-4' />}
+              />
+              <OverviewMetaCard
+                label='Difficulty'
+                value={difficultyLabel}
+                icon={<BarChart3 className='h-4 w-4' />}
+              />
+              <OverviewMetaCard
+                label='Learners'
+                value={`${rosterEntries.length}`}
+                icon={<Users className='h-4 w-4' />}
+              />
+              <OverviewMetaCard
+                label='Progress'
+                value={`${sessionProgress}%`}
+                icon={<BookOpen className='h-4 w-4' />}
+              />
+            </div>
+
+            <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
+                <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  Remaining sessions
+                </p>
+                <p className='text-primary mt-1 text-sm font-semibold sm:text-base'>
+                  {remainingSessions}
+                </p>
+              </div>
+
+              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
+                <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  Format
+                </p>
+                <p className='text-foreground mt-1 text-sm font-semibold sm:text-base'>
+                  {selectedClass.session_format || 'Not specified'}
+                </p>
+              </div>
+
+              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
+                <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  Session type
+                </p>
+                <p className='text-foreground mt-1 text-sm font-semibold sm:text-base'>
+                  {selectedClass.location_type || 'Not specified'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div> */}
+
+        <CardContent className='px-4 py-4 sm:px-5 sm:py-5'>
+          <ClassSessionLedgerSection
+            selectedClass={selectedClass}
+            roleLabel={roleLabel}
+            difficultyLabel={difficultyLabel}
+            rows={rows}
+            sessionProgress={sessionProgress}
+            remainingSessions={remainingSessions}
+            rosterCount={rosterEntries.length}
+            showFinancialColumns={showFinancialColumns}
+            tableTitle='Session ledger'
+            tableDescription='All scheduled sessions are listed below with attendance and settlement details.'
+          />
+        </CardContent>
+      </section>
     </div>
   );
 }

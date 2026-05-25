@@ -27,7 +27,7 @@ import { PanelBottom, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClassDeliveryStatusTab } from '../../../../@instructor/classes/_components/class-delivery-status-tab';
-import { ClassLessonOverviewTab, ClassOverviewTab } from '../../../../@instructor/classes/_components/class-overview-tab';
+import { ClassLessonTab, ClassOverviewTab } from '../../../../@instructor/classes/_components/class-overview-tab';
 import { ClassScheduleTab } from '../../../../@instructor/classes/_components/class-schedule-tab';
 import { ClassSidebar } from '../../../../@instructor/classes/_components/class-sidebar';
 import { ClassStudentsTab } from '../../../../@instructor/classes/_components/class-students-tab';
@@ -577,7 +577,7 @@ export default function StudentClassPage({
 
 
             <TabsContent value='lessons' className='mt-0'>
-              <ClassLessonOverviewTab
+              <ClassLessonTab
                 isLoadingClasses={isLoadingClasses}
                 isLoadingLessons={isLoadingLessons}
                 selectedClass={selectedClassForDisplay}
@@ -595,7 +595,7 @@ export default function StudentClassPage({
                 onStartLesson={handleStartLesson}
                 selectedLessonActionLabel={selectedLessonActionLabel}
                 onAddClasses={() => router.push('/dashboard/workspace/student/courses')}
-                roleLabel='Student view'
+                roleLabel='Instructor view'
               />
             </TabsContent>
 

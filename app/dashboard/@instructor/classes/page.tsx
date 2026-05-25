@@ -24,7 +24,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useUserProfile } from '../../../../context/profile-context';
 import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab';
-import { ClassLessonOverviewTab, ClassOverviewTab } from './_components/class-overview-tab';
+import { ClassLessonTab, ClassOverviewTab } from './_components/class-overview-tab';
 import { ClassScheduleTab } from './_components/class-schedule-tab';
 import { ClassSidebar } from './_components/class-sidebar';
 import { ClassStudentsTab } from './_components/class-students-tab';
@@ -465,7 +465,7 @@ export default function NewClassPage() {
 
 
             <TabsContent value='lessons' className='mt-0'>
-              <ClassLessonOverviewTab
+              <ClassLessonTab
                 isLoadingClasses={isLoadingClasses}
                 isLoadingLessons={isLoadingLessons}
                 selectedClass={selectedClassForDisplay}
