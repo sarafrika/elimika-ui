@@ -8,6 +8,7 @@ import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes
 import { cn } from '@/lib/utils';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import {
+  Award,
   BarChart3,
   BookOpen,
   Building2,
@@ -271,19 +272,28 @@ function ClassHero({
           )}
         </div>
       </div>
-
       <div className='p-4 md:p-5'>
-        <div className='grid items-center gap-3 md:grid-cols-[minmax(0,1fr)_auto]'>
+        <div className='grid items-center gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto]'>
           <Progress
             value={sessionProgress}
             className='bg-muted h-1.5'
             indicatorClassName='bg-success'
           />
-          <p className='text-primary text-sm font-semibold'>
+
+          <p className='text-primary text-sm font-semibold whitespace-nowrap'>
             {remainingSessions} Sessions Remaining
           </p>
+
+          <Button className='gap-2 rounded-[6px] whitespace-nowrap'>
+            <Award className='h-4 w-4' />
+            View Certificate
+          </Button>
         </div>
-        <p className='text-foreground mt-1 text-sm'>{sessionProgress}% completed</p>
+
+        <p className='text-foreground mt-1 text-sm'>
+          {sessionProgress}% completed
+        </p>
+
         {selectedClassUuid ? (
           <Link href={startLessonHref} className='sr-only'>
             Open selected lesson
@@ -719,6 +729,84 @@ function UpcomingClassesPanel({
 }
 
 export function ClassOverviewTab({
+  isLoadingClasses,
+  isLoadingLessons,
+  selectedClass,
+  selectedClassUuid,
+  lessonModules,
+  selectedLesson,
+  contentTypeMap,
+  difficultyMap,
+  instructorName,
+  roleLabel = 'Instructor view',
+  rosterEntries = [],
+  sessionProgress,
+  remainingSessions,
+  setSelectedLessonUuid,
+  startLessonHref,
+  getStartLessonHref,
+  onStartLesson,
+  selectedLessonActionLabel,
+  onAddClasses,
+}: {
+  isLoadingClasses: boolean;
+  isLoadingLessons: boolean;
+  selectedClass: InstructorClassWithSchedule | null;
+  selectedClassUuid: string | null;
+  lessonModules: LessonModule[];
+  selectedLesson: LessonContentItem | null;
+  contentTypeMap: Record<string, string>;
+  difficultyMap: Record<string, string>;
+  instructorName?: string | null;
+  roleLabel?: string;
+  rosterEntries?: RosterEntry[];
+  sessionProgress: number;
+  remainingSessions: number;
+  setSelectedLessonUuid: (value: string | null) => void;
+  startLessonHref: string;
+  getStartLessonHref: (lessonUuid?: string | null, contentUuid?: string | null) => string;
+  onStartLesson: (lessonUuid?: string | null, contentUuid?: string | null) => void;
+  selectedLessonActionLabel: string;
+  onAddClasses: () => void;
+}) {
+  if (isLoadingClasses || !selectedClass || isLoadingLessons) {
+    return (
+      <div className='space-y-3'>
+        <Skeleton className='h-56 rounded-lg' />
+        <div className='grid gap-3 2xl:grid-cols-[minmax(0,1fr)_320px]'>
+          <Skeleton className='h-80 rounded-lg' />
+          <Skeleton className='h-80 rounded-lg' />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className='space-y-3'>
+      <ClassHero
+        selectedClass={selectedClass}
+        difficultyMap={difficultyMap}
+        instructorName={instructorName}
+        roleLabel={roleLabel}
+        sessionProgress={sessionProgress}
+        remainingSessions={remainingSessions}
+        startLessonHref={startLessonHref}
+        selectedClassUuid={selectedClassUuid}
+        onAddClasses={onAddClasses}
+      />
+
+      <div>
+        {/* // the new overview table here, all the components of the tabs should be visible to instructors,  */}
+        {/* for students, only payment informations should nont be visible to students */}
+      </div>
+    </div>
+  );
+}
+
+// update the classdeliverystatustab component also, to use the same table. it should show basically the same information as the overview for instructors
+
+
+export function ClassLessonOverviewTab({
   isLoadingClasses,
   isLoadingLessons,
   selectedClass,

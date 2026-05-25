@@ -15,9 +15,8 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Clock3,
   Search,
-  Users,
+  Users
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -61,6 +60,7 @@ export function ClassSidebar({
   onSelectClass,
   onSearchChange,
   onDateFilterChange,
+  instructorView = true
 }: {
   isLoading: boolean;
   classes: InstructorClassWithSchedule[];
@@ -71,6 +71,7 @@ export function ClassSidebar({
   onSelectClass: (classUuid: string) => void;
   onSearchChange: (value: string) => void;
   onDateFilterChange: (value: DateFilter) => void;
+  instructorView?: boolean
 }) {
   const hasSearchTerm = searchTerm.trim().length > 0;
   const [currentPage, setCurrentPage] = useState(1);
@@ -192,7 +193,7 @@ export function ClassSidebar({
                       </span>
                     </div>
 
-                    <div className='mt-2 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2'>
+                    {instructorView && <div className='mt-2 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2'>
                       <span className='inline-flex items-center gap-1.5'>
                         <Users className='size-3.5 shrink-0' />
 
@@ -204,11 +205,8 @@ export function ClassSidebar({
                           ).size
                         } enrollments
                       </span>
-                      <span className='inline-flex items-center gap-1.5'>
-                        <Clock3 className='size-3.5 shrink-0' />
-                        {activeSessions} sessions
-                      </span>
-                    </div>
+
+                    </div>}
 
                     <div className='mt-2 flex items-center gap-1.5 text-xs text-muted-foreground'>
                       <CalendarDays className='size-3.5 shrink-0' />

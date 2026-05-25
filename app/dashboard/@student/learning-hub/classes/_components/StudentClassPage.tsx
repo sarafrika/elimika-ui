@@ -15,28 +15,29 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import { useClassRoster } from '@/hooks/use-class-roster';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { type InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
+import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import {
   getClassDefinitionOptions,
   getClassScheduleOptions,
-  getCourseByUuidOptions
+  getCourseByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, Course, StudentSchedule } from '@/services/client/types.gen';
 import { useQueries } from '@tanstack/react-query';
 import { PanelBottom, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useUserProfile } from '../../../../../../context/profile-context';
 import { ClassDeliveryStatusTab } from '../../../../@instructor/classes/_components/class-delivery-status-tab';
-import { ClassOverviewTab } from '../../../../@instructor/classes/_components/class-overview-tab';
+import { ClassLessonOverviewTab, ClassOverviewTab } from '../../../../@instructor/classes/_components/class-overview-tab';
+import { ClassScheduleTab } from '../../../../@instructor/classes/_components/class-schedule-tab';
 import { ClassSidebar } from '../../../../@instructor/classes/_components/class-sidebar';
-import { ClassTasksTab } from '../../../../@instructor/classes/_components/class-tasks-tab';
+import { ClassStudentsTab } from '../../../../@instructor/classes/_components/class-students-tab';
 import {
-  classTabs,
-  useFilteredClassInstances,
-  type ClassInstanceItem,
+  dateFilterDescriptions,
+  getPreferredScheduleInstance,
+  studentClassTabs,
+  useFilteredInstructorClasses,
   type ClassTab,
-  type DateFilter,
+  type DateFilter
 } from '../../../../@instructor/classes/_components/new-class-page.utils';
 import { PlaceholderTab } from '../../../../@instructor/classes/_components/placeholder-tab';
 
@@ -48,7 +49,7 @@ type StudentClassDefinition = ClassDefinition & {
 type StudentClassPageProps = {
   studentEnrolledClasses: StudentSchedule[];
   loading?: boolean;
-  singleClassDetails?: boolean
+  singleClassDetails?: boolean;
 };
 
 export default function StudentClassPage({
@@ -59,12 +60,8 @@ export default function StudentClassPage({
   const router = useRouter();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { difficultyMap } = useDifficultyLevels();
-  const profile = useUserProfile()
-  const student = profile?.student
-  const classTitile = (studentEnrolledClasses[0] as { class_title?: string } | undefined)?.class_title
 
-  const [selectedInstanceUuid, setSelectedInstanceUuid] = useState<string | null>(null);
-  const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
+  const [selectedClassUuid, setSelectedClassUuid] = useState<string | null>(null);
   const [selectedLessonUuid, setSelectedLessonUuid] = useState<string | null>(null);
   const [draftSearchTerm, setDraftSearchTerm] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,7 +100,6 @@ export default function StudentClassPage({
     })),
   });
 
-  // for each of the classes, get the schedule and return in the class definitions
   const classScheduleQueries = useQueries({
     queries: classDefinitionUuids.map(uuid => ({
       ...getClassScheduleOptions({
@@ -127,7 +123,7 @@ export default function StudentClassPage({
     });
 
     return map;
-  }, [classScheduleQueries, classDefinitionUuids]);
+  }, [classDefinitionUuids, classScheduleQueries]);
 
   const classDefinitions = useMemo<StudentClassDefinition[]>(() => {
     return classDefinitionQueries
@@ -187,35 +183,35 @@ export default function StudentClassPage({
     })) as InstructorClassWithSchedule[];
   }, [classDefinitions, courseMap]);
 
-  const filteredClasses = useFilteredClassInstances({
+  const filteredClasses = useFilteredInstructorClasses({
     classes,
-    difficultyMap,
     searchTerm,
     dateFilter,
   });
 
   useEffect(() => {
     if (!filteredClasses.length) {
-      setSelectedInstanceUuid(null);
+      setSelectedClassUuid(null);
       return;
     }
 
-    setSelectedInstanceUuid(previous =>
-      previous && filteredClasses.some(classItem => classItem.instanceUuid === previous)
+    setSelectedClassUuid(previous =>
+      previous && filteredClasses.some(classItem => classItem.uuid === previous)
         ? previous
-        : (filteredClasses[0]?.instanceUuid ?? null)
+        : (filteredClasses[0]?.uuid ?? null)
     );
   }, [filteredClasses]);
 
-  const selectedInstanceEntry = useMemo<ClassInstanceItem | null>(
-    () =>
-      filteredClasses.find(classItem => classItem.instanceUuid === selectedInstanceUuid) ?? null,
-    [filteredClasses, selectedInstanceUuid]
+  const selectedClass = useMemo(
+    () => filteredClasses.find(classItem => classItem.uuid === selectedClassUuid) ?? null,
+    [filteredClasses, selectedClassUuid]
   );
 
-  const selectedClass = selectedInstanceEntry?.classItem ?? null;
+  const selectedScheduleInstance = useMemo(
+    () => getPreferredScheduleInstance(selectedClass?.schedule ?? []),
+    [selectedClass?.schedule]
+  );
 
-  const selectedClassUuid = selectedClass?.uuid ?? null;
   const { roster, isLoading: isLoadingStudents } = useClassRoster(selectedClassUuid ?? undefined);
   const {
     isLoading: isLoadingLessons,
@@ -226,6 +222,7 @@ export default function StudentClassPage({
     courseUuid: selectedClass?.course_uuid,
     programUuid: selectedClass?.program_uuid,
   });
+
   const selectedClassForDisplay = useMemo<InstructorClassWithSchedule | null>(() => {
     if (!selectedClass) return null;
     if (!selectedClass.program_uuid || selectedClass.course) return selectedClass;
@@ -238,6 +235,7 @@ export default function StudentClassPage({
       programCourses.find(course => course.uuid === selectedLessonModule?.course?.uuid) ??
       programCourses[0] ??
       null;
+
     if (!selectedProgramCourse) return selectedClass;
 
     return {
@@ -248,19 +246,12 @@ export default function StudentClassPage({
 
   useEffect(() => {
     if (!lessonModules.length) {
-      setExpandedModuleId(null);
       setSelectedLessonUuid(null);
       return;
     }
 
     const firstModule = lessonModules[0];
     const firstLesson = firstModule?.content?.data?.[0];
-
-    setExpandedModuleId(previous =>
-      previous && lessonModules.some(module => module.lesson.uuid === previous)
-        ? previous
-        : (firstModule?.lesson?.uuid ?? null)
-    );
 
     setSelectedLessonUuid(previous => {
       if (
@@ -293,10 +284,9 @@ export default function StudentClassPage({
       null,
     [selectedLessonUuid, selectedModule]
   );
+
   const selectedLessonCourseUuid =
     selectedModule?.course?.uuid ?? selectedClassForDisplay?.course?.uuid ?? '';
-
-  const selectedModuleResources = selectedModule?.content?.data ?? [];
 
   const visibleInstances = selectedClass?.schedule ?? [];
   const countableInstances = visibleInstances.filter(instance => {
@@ -339,8 +329,8 @@ export default function StudentClassPage({
 
     const params = new URLSearchParams();
 
-    if (selectedInstanceEntry?.instanceUuid) {
-      params.set('schedule', selectedInstanceEntry.instanceUuid);
+    if (selectedScheduleInstance?.uuid) {
+      params.set('schedule', selectedScheduleInstance.uuid);
     }
 
     if (selectedModule?.lesson?.uuid) {
@@ -350,98 +340,125 @@ export default function StudentClassPage({
     if (selectedLesson?.uuid) {
       params.set('content', selectedLesson.uuid);
     }
+
     if (selectedLessonCourseUuid) {
       params.set('course', selectedLessonCourseUuid);
     }
 
     const queryString = params.toString();
 
-    return `${baseClassRoute(selectedClassUuid)}${queryString ? `?${queryString}` : ''
-      }`;
+    return `${baseClassRoute(selectedClassUuid)}${queryString ? `?${queryString}` : ''}`;
   }, [
     selectedClassUuid,
-    selectedInstanceEntry?.instanceUuid,
     selectedLesson?.uuid,
-    selectedModule?.lesson?.uuid,
     selectedLessonCourseUuid,
+    selectedModule?.lesson?.uuid,
+    selectedScheduleInstance?.uuid,
   ]);
 
-  const getLessonHref = (
-    lessonUuid?: string | null,
-    contentUuid?: string | null
-  ) => {
-    if (!selectedClassUuid) return '#';
+  const getLessonHref = useCallback(
+    (lessonUuid?: string | null, contentUuid?: string | null) => {
+      if (!selectedClassUuid) return '#';
 
-    const params = new URLSearchParams();
+      const params = new URLSearchParams();
 
-    if (selectedInstanceEntry?.instanceUuid) {
-      params.set('schedule', selectedInstanceEntry.instanceUuid);
-    }
+      if (selectedScheduleInstance?.uuid) {
+        params.set('schedule', selectedScheduleInstance.uuid);
+      }
 
-    if (lessonUuid) {
-      params.set('lesson', lessonUuid);
-    }
+      if (lessonUuid) {
+        params.set('lesson', lessonUuid);
+      }
 
-    if (contentUuid) {
-      params.set('content', contentUuid);
-    }
-    const lessonCourseUuid =
-      lessonModules.find(module => module.lesson.uuid === lessonUuid)?.course?.uuid ??
-      selectedClassForDisplay?.course?.uuid ??
-      '';
-    if (lessonCourseUuid) {
-      params.set('course', lessonCourseUuid);
-    }
+      if (contentUuid) {
+        params.set('content', contentUuid);
+      }
 
-    const queryString = params.toString();
+      const lessonCourseUuid =
+        lessonModules.find(module => module.lesson.uuid === lessonUuid)?.course?.uuid ??
+        selectedClassForDisplay?.course?.uuid ??
+        '';
 
-    return `${baseClassRoute(selectedClassUuid)}${queryString ? `?${queryString}` : ''
-      }`;
-  };
+      if (lessonCourseUuid) {
+        params.set('course', lessonCourseUuid);
+      }
+
+      const queryString = params.toString();
+
+      return `${baseClassRoute(selectedClassUuid)}${queryString ? `?${queryString}` : ''}`;
+    },
+    [lessonModules, selectedClassForDisplay?.course?.uuid, selectedClassUuid, selectedScheduleInstance?.uuid]
+  );
 
   const handleStartLesson = useCallback(
     (lessonUuid?: string | null, contentUuid?: string | null) => {
-      const href = getLessonHref(lessonUuid, contentUuid);
-      if (href === '#') return;
-      router.push(href);
+      if (!selectedClassUuid || !selectedScheduleInstance?.uuid) {
+        return;
+      }
+
+      router.push(getLessonHref(lessonUuid, contentUuid));
     },
-    [getLessonHref, router]
+    [getLessonHref, router, selectedClassUuid, selectedScheduleInstance?.uuid]
   );
 
-  const selectedLessonActionLabel = selectedLesson?.uuid ? 'Open Lesson' : 'Start Lesson';
+  const selectedLessonActionLabel =
+    selectedScheduleInstance?.started_at && !selectedScheduleInstance?.concluded_at
+      ? 'Resume Lesson'
+      : 'Start Lesson';
 
-
+  const isLoadingClasses = loading || classDefinitionQueries.some(query => query.isLoading);
+  const hasClassesError =
+    classDefinitionQueries.some(query => query.isError) ||
+    classScheduleQueries.some(query => query.isError) ||
+    courseQueries.some(query => query.isError);
 
   return (
-    <div className='space-y-3 mb-20'>
-      <div className='border-border/70 bg-card/90 rounded-lg border p-4 shadow-sm backdrop-blur'>
-        <div className='flex items-center justify-between gap-3'>
-          <div>
-            <p className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>Learning Hub</p>
-            <h1 className='text-foreground mt-1 text-2xl font-semibold'>{singleClassDetails ? classTitile : "Your Classes"}</h1>
-          </div>
-        </div>
+    <div className='min-h-full rounded-lg px-3 py-8 shadow-sm sm:px-5'>
+      <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+        <p className='text-foreground text-md leading-tight sm:text-lg'>
+          {dateFilterDescriptions[dateFilter]} <span className='font-semibold'>Start training</span>
+        </p>
+        {singleClassDetails && selectedClass ? (
+          <p className='text-muted-foreground text-sm font-medium'>{selectedClass.title}</p>
+        ) : null}
       </div>
+
+      {hasClassesError ? (
+        <Card className='border-destructive/40'>
+          <CardContent className='flex min-h-48 flex-col items-center justify-center gap-3 p-8 text-center'>
+            <div className='bg-destructive/10 text-destructive rounded-full p-4'>
+              <Search className='h-8 w-8' />
+            </div>
+            <div className='space-y-1'>
+              <p className='text-foreground font-semibold'>Unable to load class workspace</p>
+              <p className='text-muted-foreground text-sm'>
+                We hit a problem while loading classes, instances, or your enrollments.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className='grid gap-3 xl:grid-cols-[350px_minmax(0,1fr)]'>
         <aside className='xl:sticky xl:top-4 xl:self-start'>
           <ClassSidebar
-            isLoading={loading || classDefinitionQueries.some(query => query.isLoading)}
+            isLoading={isLoadingClasses}
             classes={filteredClasses}
-            selectedInstanceUuid={selectedInstanceUuid}
+            selectedClassUuid={selectedClassUuid}
             searchTerm={searchTerm}
             draftSearchTerm={draftSearchTerm}
             dateFilter={dateFilter}
-            onSelectClass={setSelectedInstanceUuid}
+            onSelectClass={setSelectedClassUuid}
             onSearchChange={value => {
               setDraftSearchTerm(value);
               setSearchTerm(value.trim());
             }}
             onDateFilterChange={setDateFilter}
+            instructorView={false}
           />
         </aside>
 
-        {!selectedInstanceEntry && !loading && classDefinitionQueries.every(query => !query.isLoading) ? (
+        {!selectedClass && !isLoadingClasses ? (
           <Card className='border-border/70 bg-card/90 shadow-sm'>
             <CardContent className='flex min-h-[420px] flex-col items-center justify-center gap-4 p-8 text-center'>
               <div className='bg-primary/10 text-primary rounded-full p-4'>
@@ -450,7 +467,7 @@ export default function StudentClassPage({
               <div className='space-y-2'>
                 <h3 className='text-foreground text-lg font-semibold'>No classes available</h3>
                 <p className='text-muted-foreground max-w-lg text-sm'>
-                  Try another search term or switch the date filter to load more class instances.
+                  Try another search term or switch the date filter to load more classes.
                 </p>
               </div>
             </CardContent>
@@ -471,7 +488,7 @@ export default function StudentClassPage({
                   >
                     <span className='flex items-center gap-2'>
                       <PanelBottom className='h-4 w-4' />
-                      {classTabs.find(tab => tab.value === activeTab)?.label ?? 'Overview'}
+                      {studentClassTabs.find(tab => tab.value === activeTab)?.label ?? 'Overview'}
                     </span>
                     <span className='text-muted-foreground text-xs tracking-[0.18em] uppercase'>
                       Open tabs
@@ -486,7 +503,7 @@ export default function StudentClassPage({
                     </SheetDescription>
                   </SheetHeader>
                   <div className='space-y-2 px-5'>
-                    {classTabs.map(tab => {
+                    {studentClassTabs.map(tab => {
                       const isActive = tab.value === activeTab;
 
                       return (
@@ -516,7 +533,7 @@ export default function StudentClassPage({
             </div>
 
             <TabsList className='border-border/70 bg-card/70 hidden h-auto w-full flex-wrap justify-start gap-1 rounded-lg border p-1.5 shadow-sm md:flex'>
-              {classTabs.map(tab => (
+              {studentClassTabs.map(tab => (
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
@@ -529,7 +546,7 @@ export default function StudentClassPage({
 
             <TabsContent value='overview' className='mt-0'>
               <ClassOverviewTab
-                isLoadingClasses={loading || classDefinitionQueries.some(query => query.isLoading)}
+                isLoadingClasses={isLoadingClasses}
                 isLoadingLessons={isLoadingLessons}
                 selectedClass={selectedClassForDisplay}
                 selectedClassUuid={selectedClassUuid}
@@ -550,18 +567,57 @@ export default function StudentClassPage({
               />
             </TabsContent>
 
-            <TabsContent value='delivery-status' className='mt-0'>
+            {/* <TabsContent value='lessons' className='mt-0'>
+              <ClassLessonsTab
+                isLoading={isLoadingClasses || isLoadingLessons}
+                classTitle={selectedClass?.title}
+                lessonModules={lessonModules}
+              />
+            </TabsContent> */}
+
+
+            <TabsContent value='lessons' className='mt-0'>
+              <ClassLessonOverviewTab
+                isLoadingClasses={isLoadingClasses}
+                isLoadingLessons={isLoadingLessons}
+                selectedClass={selectedClassForDisplay}
+                selectedClassUuid={selectedClassUuid}
+                lessonModules={lessonModules}
+                selectedLesson={selectedLesson}
+                contentTypeMap={contentTypeMap}
+                difficultyMap={difficultyMap}
+                rosterEntries={roster}
+                sessionProgress={sessionProgress}
+                remainingSessions={remainingSessions}
+                setSelectedLessonUuid={setSelectedLessonUuid}
+                startLessonHref={startLessonHref}
+                getStartLessonHref={getLessonHref}
+                onStartLesson={handleStartLesson}
+                selectedLessonActionLabel={selectedLessonActionLabel}
+                onAddClasses={() => router.push('/dashboard/workspace/student/courses')}
+                roleLabel='Student view'
+              />
+            </TabsContent>
+
+            <TabsContent value='schedule' className='mt-0'>
+              <ClassScheduleTab isLoading={isLoadingClasses} selectedClass={selectedClass} />
+            </TabsContent>
+
+            <TabsContent value='students' className='mt-0'>
+              <ClassStudentsTab isLoadingStudents={isLoadingStudents} rosterEntries={roster} />
+            </TabsContent>
+
+            <TabsContent value='delivery' className='mt-0'>
               <ClassDeliveryStatusTab
-                isLoadingClasses={loading}
+                isLoadingClasses={isLoadingClasses}
                 selectedClass={selectedClass}
-                selectedClassEntry={selectedInstanceEntry}
                 dateFilter={dateFilter}
                 difficultyMap={difficultyMap}
                 studentCount={roster.length}
                 totalInstances={totalInstances}
                 completionRate={completionRate}
+                selectedInstanceUuid={selectedScheduleInstance?.uuid}
                 visibleInstances={visibleInstances}
-                selectedInstanceUuid={selectedInstanceUuid as string}
                 onAddClasses={() => router.push('/dashboard/workspace/student/courses')}
                 roleLabel='Student view'
               />
@@ -571,16 +627,6 @@ export default function StudentClassPage({
               <PlaceholderTab
                 title='Announcements'
                 description='No announcements yet. Updates, reminders, and important messages for this class will appear here.'
-              />
-            </TabsContent>
-
-            <TabsContent value='tasks' className='mt-0'>
-              <ClassTasksTab
-                classUuid={selectedClassUuid}
-                classTitle={selectedClass?.title}
-                courseTitle={selectedClassForDisplay?.course?.name}
-                lessonModules={lessonModules}
-                isLoading={loading || classDefinitionQueries.some(query => query.isLoading)}
               />
             </TabsContent>
           </Tabs>

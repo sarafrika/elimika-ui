@@ -24,9 +24,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useUserProfile } from '../../../../context/profile-context';
 import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab';
-import { ClassLessonsTab } from './_components/class-lessons-tab';
+import { ClassLessonOverviewTab, ClassOverviewTab } from './_components/class-overview-tab';
 import { ClassScheduleTab } from './_components/class-schedule-tab';
-import { ClassOverviewTab } from './_components/class-overview-tab';
 import { ClassSidebar } from './_components/class-sidebar';
 import { ClassStudentsTab } from './_components/class-students-tab';
 import {
@@ -464,13 +463,41 @@ export default function NewClassPage() {
               />
             </TabsContent>
 
+
             <TabsContent value='lessons' className='mt-0'>
+              <ClassLessonOverviewTab
+                isLoadingClasses={isLoadingClasses}
+                isLoadingLessons={isLoadingLessons}
+                selectedClass={selectedClassForDisplay}
+                selectedClassUuid={selectedClassUuid}
+                lessonModules={lessonModules}
+                selectedLesson={selectedLesson}
+                contentTypeMap={contentTypeMap}
+                difficultyMap={difficultyMap}
+                instructorName={instructor?.full_name}
+                rosterEntries={roster}
+                sessionProgress={sessionProgress}
+                remainingSessions={remainingSessions}
+                setSelectedLessonUuid={setSelectedLessonUuid}
+                startLessonHref={startLessonHref}
+                getStartLessonHref={getStartLessonHref}
+                onStartLesson={handleStartLesson}
+                selectedLessonActionLabel={
+                  selectedScheduleInstance?.started_at && !selectedScheduleInstance?.concluded_at
+                    ? 'Resume Lesson'
+                    : 'Start Lesson'
+                }
+                onAddClasses={() => router.push(`/dashboard/classes/new?id=${selectedClass?.uuid}`)}
+              />
+            </TabsContent>
+
+            {/* <TabsContent value='lessons' className='mt-0'>
               <ClassLessonsTab
                 isLoading={isLoadingClasses || isLoadingLessons}
                 classTitle={selectedClass?.title}
                 lessonModules={lessonModules}
               />
-            </TabsContent>
+            </TabsContent> */}
 
             <TabsContent value='schedule' className='mt-0'>
               <ClassScheduleTab isLoading={isLoadingClasses} selectedClass={selectedClass} />
