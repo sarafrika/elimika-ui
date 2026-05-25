@@ -273,7 +273,8 @@ export function useStudentOverviewData(): StudentOverviewData {
               : buildCourseProgress(certificatesByCourse.get(courseUuid), index),
           nextDateLabel: formatDateLabel(updatedDate),
           buttonLabel: 'Continue',
-          href: `/dashboard/courses/${courseUuid}`,
+          // href: `/dashboard/courses/${courseUuid}`,
+          href: `/dashboard/workspace/student/courses/my-courses`,
           sortValue: updatedDate?.getTime() ?? 0,
         };
       })

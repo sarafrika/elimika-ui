@@ -10,7 +10,7 @@ import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-dom
 import { useEffect } from 'react';
 import type { BundledClass } from '../types';
 
-export default function AvailableProgramsPage({ programId }: { programId: string }) {
+export default function AvailableProgramsPage({ programId, instructorView }: { programId: string, instructorView?: boolean }) {
   const { activeDomain } = useUserDomain();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const student = useStudent();
@@ -65,29 +65,63 @@ export default function AvailableProgramsPage({ programId }: { programId: string
   }));
 
   return (
-    <AvailabilityListingLayout
-      appliedEnd={appliedEnd}
-      appliedStart={appliedStart}
-      dateError={dateError}
-      emptyDescription="It looks like this program doesn't have any open class sessions yet."
-      emptyTitle='No Program Sessions Available'
-      endDateInput={endDateInput}
-      heading='Review available sessions for this program'
-      helperText='Browse scheduled program cohorts, compare instructors and pricing, then continue into enrollment from the same streamlined workspace.'
-      isLoading={loading}
-      items={cardClasses}
-      onApplyDates={applyDates}
-      onClearDates={clearDates}
-      onEnroll={selectedClass => {
-        window.location.href = buildWorkspaceAliasPath(
-          activeDomain,
-          `/dashboard/courses/available-programs/${programId}/enroll?id=${selectedClass.uuid}`
-        );
-      }}
-      setEndDateInput={setEndDateInput}
-      setStartDateInput={setStartDateInput}
-      startDateInput={startDateInput}
-      subheading='Available programs'
-    />
+    <>
+      {instructorView ?
+        <AvailabilityListingLayout
+          instructorView={true}
+          appliedEnd={appliedEnd}
+          appliedStart={appliedStart}
+          dateError={dateError}
+          emptyDescription="It looks like this program doesn't have any open class sessions yet."
+          emptyTitle='No Program Sessions Available'
+          endDateInput={endDateInput}
+          heading='Review available sessions for this program'
+          helperText='Browse scheduled program cohorts, compare instructors and pricing, then continue into enrollment from the same streamlined workspace.'
+          isLoading={loading}
+          items={cardClasses}
+          onApplyDates={applyDates}
+          onClearDates={clearDates}
+          onEnroll={selectedClass => {
+            window.location.href = buildWorkspaceAliasPath(
+              activeDomain,
+              `/dashboard/courses/available-programs/${programId}/enroll?id=${selectedClass.uuid}`
+            );
+          }}
+          setEndDateInput={setEndDateInput}
+          setStartDateInput={setStartDateInput}
+          startDateInput={startDateInput}
+          subheading='Available programs'
+        /> : <AvailabilityListingLayout
+          instructorView={false}
+          appliedEnd={appliedEnd}
+          appliedStart={appliedStart}
+          dateError={dateError}
+          emptyDescription="It looks like this program doesn't have any open class sessions yet."
+          emptyTitle='No Program Sessions Available'
+          endDateInput={endDateInput}
+          heading='Review available sessions for this program'
+          helperText='Browse scheduled program cohorts, compare instructors and pricing, then continue into enrollment from the same streamlined workspace.'
+          isLoading={loading}
+          items={cardClasses}
+          onApplyDates={applyDates}
+          onClearDates={clearDates}
+          onEnroll={selectedClass => {
+            window.location.href = buildWorkspaceAliasPath(
+              activeDomain,
+              `/dashboard/courses/available-programs/${programId}/enroll?id=${selectedClass.uuid}`
+            );
+          }}
+          setEndDateInput={setEndDateInput}
+          setStartDateInput={setStartDateInput}
+          startDateInput={startDateInput}
+          subheading='Available programs'
+        />
+
+      }
+
+
+
+    </>
+
   );
 }

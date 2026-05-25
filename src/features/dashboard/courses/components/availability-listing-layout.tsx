@@ -222,33 +222,35 @@ export function AvailabilityListingLayout({
             </div>
           </div>
 
-          {instructorView ? <div className='grid gap-4 justify-items-center md:grid-cols-2 2xl:grid-cols-3'>
-            {items.map(item => (
-              <EnrollCourseCard
-                key={item.uuid}
-                href='#'
-                cls={item}
-                isFull={false}
-                disableEnroll={false}
-                handleEnroll={onEnroll}
-                variant='full'
-                instructorView={true}
-              />
-            ))}
-          </div> : <div className='grid gap-4 justify-items-center md:grid-cols-2 2xl:grid-cols-3'>
-            {items.map(item => (
-              <EnrollCourseCard
-                key={item.uuid}
-                href='#'
-                cls={item}
-                isFull={false}
-                disableEnroll={false}
-                handleEnroll={onEnroll}
-                variant='full'
-                instructorView={false}
-              />
-            ))}
-          </div>}
+          {instructorView ?
+            <div className='grid gap-4 justify-items-center md:grid-cols-2 2xl:grid-cols-3'>
+              {items.map(item => (
+                <EnrollCourseCard
+                  key={item.uuid}
+                  href='#'
+                  cls={item}
+                  isFull={false}
+                  disableEnroll={false}
+                  handleEnroll={onEnroll}
+                  variant='full'
+                  instructorView={true}
+                />
+              ))}
+            </div> :
+            <div className='grid gap-4 justify-items-center md:grid-cols-2 2xl:grid-cols-3'>
+              {items.map(item => (
+                <EnrollCourseCard
+                  key={item.uuid}
+                  href='#'
+                  cls={item}
+                  isFull={false}
+                  disableEnroll={false}
+                  handleEnroll={onEnroll}
+                  variant='full'
+                  instructorView={false}
+                />
+              ))}
+            </div>}
 
         </section>
       )}
