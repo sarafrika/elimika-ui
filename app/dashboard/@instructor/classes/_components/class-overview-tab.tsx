@@ -8,7 +8,7 @@ import type { RosterEntry } from '@/hooks/use-class-roster';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import { cn } from '@/lib/utils';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   Award,
   BarChart3,
@@ -35,7 +35,7 @@ import {
 import { useUserDomain } from '../../../../../context/user-domain-context';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
 import { RevenueSaleLineItemDto } from '../../../../../services/client';
-import { listSalesOptions } from '../../../../../services/client/@tanstack/react-query.gen';
+import { getEnrollmentsForInstanceOptions, listSalesOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 import { ClassSessionLedgerSection } from './class-session-ledger-section';
 import {
   buildClassSessionLedgerRows,
@@ -97,7 +97,7 @@ export function CourseArtwork({ imageUrl, courseName }: { imageUrl?: string | nu
 
   if (resolvedImageUrl) {
     return (
-      <div className='border-border/70 bg-muted relative aspect-[16/9] w-full overflow-hidden rounded-sm border sm:max-w-[220px] sm:shrink-0'>
+      <div className='border-border/70 bg-muted relative aspect-[16/9] w-full overflow-hidden rounded-sm border sm:max-w-[180px] sm:shrink-0'>
         <img
           src={resolvedImageUrl}
           alt={`${courseName} course thumbnail`}
@@ -130,7 +130,7 @@ export function CourseArtwork({ imageUrl, courseName }: { imageUrl?: string | nu
   );
 }
 
-function ClassHero({
+export function ClassHero({
   selectedClass,
   difficultyMap,
   instructorName,
@@ -216,7 +216,7 @@ function ClassHero({
         )}
       </div>
 
-      <div className='border-border/70 grid gap-5 border-b p-4 md:grid-cols-[220px_minmax(0,1fr)] md:p-5'>
+      <div className='border-border/70 grid gap-5 border-b p-4 md:grid-cols-[180px_minmax(0,1fr)] md:p-5'>
         <CourseArtwork imageUrl={courseImageUrl} courseName={courseName} />
 
         <div className='min-w-0'>
@@ -333,10 +333,6 @@ function CourseProgram({
 }) {
   return (
     <section className='border-border/70 bg-card/90 rounded-lg border p-4 shadow-sm backdrop-blur'>
-      <div className='mb-3 flex items-center justify-between gap-4'>
-        <h2 className='text-foreground text-xl font-semibold'>Course Program</h2>
-      </div>
-
       {lessonModules.length === 0 ? (
         <div className='border-border/70 rounded-lg border border-dashed p-6 text-center'>
           <p className='text-foreground font-medium'>No lesson content yet</p>
@@ -793,18 +789,6 @@ export function ClassLessonTab({
 
   return (
     <div className='space-y-3'>
-      <ClassHero
-        selectedClass={selectedClass}
-        difficultyMap={difficultyMap}
-        instructorName={instructorName}
-        roleLabel={roleLabel}
-        sessionProgress={sessionProgress}
-        remainingSessions={remainingSessions}
-        startLessonHref={startLessonHref}
-        selectedClassUuid={selectedClassUuid}
-        onAddClasses={onAddClasses}
-      />
-
       <div className='grid gap-3 2xl:grid-cols-[minmax(0,1fr)_320px]'>
         <CourseProgram
           lessonModules={lessonModules}
@@ -876,8 +860,6 @@ function OverviewMetaCard({
   );
 }
 
-
-
 export function ClassOverviewTab(props: ClassOverviewTabProps) {
   const {
     isLoadingClasses,
@@ -906,6 +888,31 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
     enabled: showFinancialColumns && Boolean(selectedClass?.uuid),
   });
 
+  const scheduleInstances = selectedClass?.schedule ?? [];
+
+  const enrollmentQueries = useQueries({
+    queries: scheduleInstances.map(instance => ({
+      ...getEnrollmentsForInstanceOptions({
+        path: {
+          instanceUuid: instance.uuid as string,
+        },
+      }),
+      enabled: Boolean(instance.uuid),
+    })),
+  });
+
+  const enrichedInstances = useMemo(() => {
+    return scheduleInstances.map((instance, index) => {
+      const enrollments =
+        enrollmentQueries[index]?.data?.data ?? [];
+
+      return {
+        ...instance,
+        enrollments,
+      };
+    });
+  }, [scheduleInstances, enrollmentQueries]);
+
   const salesItems: RevenueSaleLineItemDto[] = salesResp?.data?.content ?? [];
 
   const rows = useMemo<ClassSessionLedgerRow[]>(() => {
@@ -913,11 +920,16 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
 
     return buildClassSessionLedgerRows({
       selectedClass,
-      visibleInstances: selectedClass.schedule ?? [],
+      visibleInstances: enrichedInstances,
       salesItems,
       showFinancialColumns,
     });
-  }, [salesItems, selectedClass, showFinancialColumns]);
+  }, [
+    enrichedInstances,
+    salesItems,
+    selectedClass,
+    showFinancialColumns,
+  ]);
 
   if (isLoadingClasses || !selectedClass || isLoadingLessons) {
     return <OverviewSkeleton />;
@@ -930,80 +942,6 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
   return (
     <div className='space-y-3'>
       <section className='overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm'>
-        {/* <div className='border-border/70 border-b px-4 py-4 sm:px-5 sm:py-5'>
-          <div className='flex flex-col gap-4'>
-            <div className='flex flex-wrap items-center gap-2'>
-              <Badge variant='outline' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
-                {roleLabel}
-              </Badge>
-              <Badge variant='secondary' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
-                {selectedClass.schedule?.length ?? 0} sessions
-              </Badge>
-            </div>
-
-            <div className='space-y-1'>
-              <h2 className='text-foreground text-xl font-semibold leading-tight sm:text-2xl'>
-                {selectedClass.title}
-              </h2>
-              <p className='text-muted-foreground text-sm sm:text-base'>
-                {selectedClass.course?.name || selectedClass.title || 'Class overview'}
-              </p>
-            </div>
-
-            <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
-              <OverviewMetaCard
-                label='Sessions'
-                value={`${selectedClass.schedule?.length ?? 0}`}
-                icon={<Clock3 className='h-4 w-4' />}
-              />
-              <OverviewMetaCard
-                label='Difficulty'
-                value={difficultyLabel}
-                icon={<BarChart3 className='h-4 w-4' />}
-              />
-              <OverviewMetaCard
-                label='Learners'
-                value={`${rosterEntries.length}`}
-                icon={<Users className='h-4 w-4' />}
-              />
-              <OverviewMetaCard
-                label='Progress'
-                value={`${sessionProgress}%`}
-                icon={<BookOpen className='h-4 w-4' />}
-              />
-            </div>
-
-            <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
-              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
-                <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
-                  Remaining sessions
-                </p>
-                <p className='text-primary mt-1 text-sm font-semibold sm:text-base'>
-                  {remainingSessions}
-                </p>
-              </div>
-
-              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
-                <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
-                  Format
-                </p>
-                <p className='text-foreground mt-1 text-sm font-semibold sm:text-base'>
-                  {selectedClass.session_format || 'Not specified'}
-                </p>
-              </div>
-
-              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
-                <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
-                  Session type
-                </p>
-                <p className='text-foreground mt-1 text-sm font-semibold sm:text-base'>
-                  {selectedClass.location_type || 'Not specified'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div> */}
-
         <CardContent className='px-4 py-4 sm:px-5 sm:py-5'>
           <ClassSessionLedgerSection
             selectedClass={selectedClass}

@@ -19,7 +19,7 @@ export type ClassSessionLedgerRow = {
 
 export type BuildClassSessionLedgerRowsParams = {
   selectedClass: InstructorClassWithSchedule;
-  visibleInstances: InstructorClassWithSchedule['schedule'];
+  visibleInstances: EnrichedScheduleInstance[];
   salesItems?: RevenueSaleLineItemDto[];
   showFinancialColumns: boolean;
 };
@@ -122,6 +122,17 @@ function resolveAttendanceValues(
   };
 }
 
+type EnrichedScheduleInstance =
+  NonNullable<
+    InstructorClassWithSchedule['schedule']
+  >[number] & {
+    enrollments?: {
+      uuid: string;
+      status?: string;
+      student_uuid?: string;
+    }[];
+  };
+
 export function buildClassSessionLedgerRows({
   selectedClass,
   visibleInstances,
@@ -132,15 +143,42 @@ export function buildClassSessionLedgerRows({
     .filter(instance => instance.status?.toUpperCase() !== 'CANCELLED')
     .filter(instance => instance.status?.toUpperCase() !== 'BLOCKED')
     .sort(
-    (left, right) =>
-      new Date(left.start_time ?? 0).getTime() - new Date(right.start_time ?? 0).getTime()
+      (left, right) =>
+        new Date(left.start_time ?? 0).getTime() - new Date(right.start_time ?? 0).getTime()
     );
 
   return sortedInstances.map((instance, index) => {
     const statusLabel = resolveSessionStatus(instance);
     const attendanceValues = resolveAttendanceValues(statusLabel, instance);
-    const sale = salesItems[index] ?? salesItems[0] ?? null;
-    const fallbackAmount = selectedClass.training_fee ?? 0;
+
+    const enrolledCount = instance.enrollments?.length ?? 0;
+    const attendedCount =
+      instance.enrollments?.filter(e => e.status?.toUpperCase() === 'ATTENDED').length ?? 0;
+
+    const studentAttendance =
+      statusLabel === 'Upcoming' || enrolledCount === 0
+        ? 'Pending'
+        : `${Math.round((attendedCount / enrolledCount) * 100)}%`;
+
+    const feePerHour = selectedClass.training_fee ?? 0;
+    const start = new Date(instance.start_time);
+    const end = new Date(instance.end_time);
+
+    const durationHours = Math.max(
+      (end.getTime() - start.getTime()) /
+      (1000 * 60 * 60),
+      1
+    );
+
+    const payableAmount =
+      showFinancialColumns && statusLabel === 'Completed'
+        ? formatCurrency(attendedCount * feePerHour * durationHours)
+        : undefined;
+
+    const orderAmount =
+      showFinancialColumns
+        ? formatCurrency(enrolledCount * feePerHour * durationHours)
+        : undefined;
 
     return {
       id: instance.uuid ?? `${selectedClass.uuid ?? 'class'}-${index}`,
@@ -150,17 +188,23 @@ export function buildClassSessionLedgerRows({
         shortDateFormatter.format(new Date(instance.start_time ?? Date.now())),
       classDuration: instance.duration_formatted || formatDuration(instance.start_time, instance.end_time),
       trainerAttendance: attendanceValues.trainerAttendance,
-      studentAttendance: attendanceValues.studentAttendance,
+      studentAttendance,
       training: attendanceValues.training,
       assessment: attendanceValues.assessment,
-      payableAmount: showFinancialColumns
-        ? formatCurrency(sale?.total ?? sale?.unit_price ?? fallbackAmount)
-        : undefined,
-      orderAmount: showFinancialColumns
-        ? formatCurrency(sale?.order_total_amount ?? sale?.subtotal ?? fallbackAmount)
-        : undefined,
+      payableAmount,
+      orderAmount,
       statusLabel,
       statusTone: resolveStatusTone(statusLabel),
     };
   });
 }
+
+// trainer attendance ... use the started at and concluded at data fields to calculate the number of hours instructor used to train a class (in hours and minutes)...
+// training -- check if instructor really trained a class (i.e. if instructor started and ended class within the alloted time frame of the class)
+// assessment -- check if the class instance has an assigned assignment or quiz
+// also check if assignments/tasks can be assigned to a class-instance under a class
+// update the class-delivery-status-bar page too
+
+
+// now for newclasspage (instructor view) and studentclasspage (student view), we need use the classhero UI (which was initially in the lessontabs) to be above the tablists on these 2 pages
+// 
