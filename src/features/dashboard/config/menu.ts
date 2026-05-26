@@ -239,11 +239,6 @@ export default {
       icon: BadgeCheck,
     },
     {
-      title: 'Calendar',
-      url: '/dashboard/calendar',
-      icon: CalendarClock,
-    },
-    {
       title: 'Courses',
       url: '/dashboard/courses',
       icon: GraduationCap,
@@ -257,6 +252,11 @@ export default {
       title: 'Classes',
       url: '/dashboard/classes',
       icon: School,
+    },
+    {
+      title: 'Calendar',
+      url: '/dashboard/calendar',
+      icon: CalendarClock,
     },
     {
       title: 'Assignments',

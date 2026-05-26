@@ -2,9 +2,9 @@
 
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
 import RichTextRenderer from '@/components/editors/richTextRenders';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import useBundledClassInfo from '@/hooks/use-course-classes';
 import { useScheduleStats } from '@/hooks/use-schedule-stats';
 import {
@@ -23,9 +23,20 @@ import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-dom
 import { useCartStore } from '@/store/cart-store';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { AlertCircle, Armchair, ArrowLeft, Calendar, DollarSign, MapPin, User } from 'lucide-react';
+import {
+  AlertCircle,
+  Armchair,
+  ArrowLeft,
+  BookOpen,
+  Calendar,
+  Clock,
+  Layers,
+  MapPin,
+  User,
+  Users
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
@@ -35,6 +46,28 @@ const STUDENT_SCHEDULE_START = new Date('2024-10-10');
 const STUDENT_SCHEDULE_END = new Date('2030-10-10');
 const ACTIVE_ENROLLMENT_STATUSES = new Set(['ENROLLED', 'ATTENDED', 'ABSENT']);
 
+// ─── Shared InfoRow (same as ClassInviteContent) ───────────────────────────
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className='flex items-start gap-3'>
+      <div className='text-primary mt-0.5'>{icon}</div>
+      <div className='space-y-0.5'>
+        <div className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</div>
+        <div className='text-sm font-medium'>{value}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ─────────────────────────────────────────────────────────────
 export default function ClassEnrollmentPage({
   courseId,
   classId,
@@ -45,14 +78,11 @@ export default function ClassEnrollmentPage({
   const router = useRouter();
   const qc = useQueryClient();
   const { activeDomain } = useUserDomain();
-  const user = useUserProfile()
-  const student = user?.student
+  const user = useUserProfile();
+  const student = user?.student;
 
   const [enrollmentError, setEnrollmentError] = useState(false);
-
-  const { replaceBreadcrumbs } = useBreadcrumb();
-
-  // Fetch class information
+  // ── Data fetching ──────────────────────────────────────────────────────
   const { classes = [], loading } = useBundledClassInfo(courseId, undefined, undefined, student);
 
   const { data: classEnrollmentsResponse } = useQuery({
@@ -60,11 +90,13 @@ export default function ClassEnrollmentPage({
     enabled: Boolean(classId),
   });
 
-  // Find the specific class
-  const enrollingClass = useMemo(() => {
-    return classes.find(cls => cls.uuid === classId);
-  }, [classes, classId]);
+  const enrollingClass = useMemo(
+    () => classes.find(cls => cls.uuid === classId),
+    [classes, classId]
+  );
+
   const schedule = enrollingClass?.schedule ?? [];
+
   const calendarSchedule = schedule.flatMap(item => {
     if (
       !item.uuid ||
@@ -99,27 +131,19 @@ export default function ClassEnrollmentPage({
     ];
   }) as unknown as Parameters<typeof ClassScheduleCalendar>[0]['schedules'];
 
-  const totalMinutes = enrollingClass?.schedule?.reduce((sum, item) => {
-    const minutes = Number(item?.duration_minutes);
-    return sum + (Number.isFinite(minutes) ? minutes : 0);
-  }, 0);
-  const totalHours = (totalMinutes ?? 0) / 60;
-  const totalHoursRounded = `${Math.round(totalHours)}`;
-
   const scheduleStats = useScheduleStats(
-    schedule.map(item => ({
-      duration_minutes: Number(item.duration_minutes ?? 0),
-    }))
+    schedule.map(item => ({ duration_minutes: Number(item.duration_minutes ?? 0) }))
   );
+
   const enrolledCount = useMemo(
     () =>
       Array.from(
         new Set(
           (classEnrollmentsResponse?.data ?? [])
-            .filter(enrollment =>
-              ACTIVE_ENROLLMENT_STATUSES.has(String(enrollment.status ?? 'ENROLLED').toUpperCase())
+            .filter(e =>
+              ACTIVE_ENROLLMENT_STATUSES.has(String(e.status ?? 'ENROLLED').toUpperCase())
             )
-            .map(enrollment => enrollment.student_uuid)
+            .map(e => e.student_uuid)
             .filter(Boolean)
         )
       ).length,
@@ -128,65 +152,27 @@ export default function ClassEnrollmentPage({
 
   const maxParticipants = enrollingClass?.max_participants ?? 0;
   const isClassFull = maxParticipants > 0 && enrolledCount >= maxParticipants;
+  const availableSeats = Math.max(0, maxParticipants - enrolledCount);
 
-
-  // Format dates
   const { formattedStart, formattedEnd } = useMemo(() => {
-    if (!enrollingClass) {
-      return { formattedStart: '', formattedEnd: '' };
-    }
-
+    if (!enrollingClass) return { formattedStart: '', formattedEnd: '' };
     try {
-      const start = enrollingClass?.default_start_time
+      const start = enrollingClass.default_start_time
         ? new Date(enrollingClass.default_start_time)
         : null;
-      const end = enrollingClass?.default_end_time
+      const end = enrollingClass.default_end_time
         ? new Date(enrollingClass.default_end_time)
         : null;
-
       return {
         formattedStart: start ? format(start, 'MMM dd, yyyy • hh:mm a') : 'N/A',
         formattedEnd: end ? format(end, 'MMM dd, yyyy • hh:mm a') : 'N/A',
       };
-    } catch (e) {
+    } catch {
       return { formattedStart: 'N/A', formattedEnd: 'N/A' };
     }
   }, [enrollingClass]);
 
-  // Update breadcrumbs
-  useEffect(() => {
-    if (courseId && classId) {
-      replaceBreadcrumbs([
-        {
-          id: 'dashboard',
-          title: 'Dashboard',
-          url: buildWorkspaceAliasPath(activeDomain, '/dashboard/overview'),
-        },
-        {
-          id: 'courses',
-          title: 'Browse Courses',
-          url: buildWorkspaceAliasPath(activeDomain, '/dashboard/courses'),
-        },
-        {
-          id: 'course-details',
-          title: 'Available Classes',
-          url: buildWorkspaceAliasPath(
-            activeDomain,
-            `/dashboard/courses/available-classes/${courseId}`
-          ),
-        },
-        {
-          id: 'enroll',
-          title: 'Enroll',
-          url: buildWorkspaceAliasPath(
-            activeDomain,
-            `/dashboard/courses/available-classes/${courseId}/enroll?id=${classId}`
-          ),
-        },
-      ]);
-    }
-  }, [replaceBreadcrumbs, courseId, classId, activeDomain]);
-
+  // ── Cart mutations ─────────────────────────────────────────────────────
   const { cartId: savedCartId, setCartId } = useCartStore();
   const createCart = useMutation(createCartMutation());
   const addItemToCart = useMutation(addItemMutation());
@@ -206,25 +192,16 @@ export default function ClassEnrollmentPage({
           body: {
             currency_code: 'KES',
             region_code: 'KE',
-            items: [
-              {
-                variant_id: catalogue.variant_code,
-                quantity: 1,
-              },
-            ],
+            items: [{ variant_id: catalogue.variant_code, quantity: 1 }],
           },
         },
         {
           onSuccess: data => {
             const cartId = data?.id || null;
-            if (cartId) {
-              setCartId(cartId);
-            }
-
+            if (cartId) setCartId(cartId);
             qc.invalidateQueries({
               queryKey: getCartQueryKey({ path: { cartId: cartId as string } }),
             });
-
             toast.success('Class added to cart!');
             router.push('/cart');
           },
@@ -233,24 +210,19 @@ export default function ClassEnrollmentPage({
           },
         }
       );
-
       return;
     }
 
     addItemToCart.mutate(
       {
         path: { cartId: savedCartId as string },
-        body: {
-          variant_id: catalogue.variant_code,
-          quantity: 1,
-        },
+        body: { variant_id: catalogue.variant_code, quantity: 1 },
       },
       {
-        onSuccess: data => {
+        onSuccess: () => {
           qc.invalidateQueries({
             queryKey: getCartQueryKey({ path: { cartId: savedCartId as string } }),
           });
-
           router.push('/cart');
           toast.success('Class added to cart!');
         },
@@ -258,36 +230,33 @@ export default function ClassEnrollmentPage({
     );
   };
 
-  // Enrollment mutation
+  // ── Enrollment mutations ───────────────────────────────────────────────
   const enrollStudent = useMutation(enrollStudentMutation());
   const waitlistStudent = useMutation(joinWaitlistMutation());
 
   const invalidateStudentEnrollmentData = () => {
     if (!student?.uuid) return;
-
     qc.invalidateQueries({
       queryKey: getStudentScheduleQueryKey({
         path: { studentUuid: student.uuid as string },
-        query: {
-          start: STUDENT_SCHEDULE_START,
-          end: STUDENT_SCHEDULE_END,
-        },
+        query: { start: STUDENT_SCHEDULE_START, end: STUDENT_SCHEDULE_END },
       }),
     });
-
     qc.invalidateQueries({
       queryKey: getClassEnrollmentsForStudentQueryKey({
         path: { studentUuid: student.uuid as string },
         query: { pageable: {} },
       }),
     });
-
     qc.invalidateQueries({
       queryKey: getEnrollmentsForClassQueryKey({ path: { uuid: classId } }),
     });
   };
 
-  const handleEnrollmentSuccess = (data: { message?: string } | undefined, successText: string) => {
+  const handleEnrollmentSuccess = (
+    data: { message?: string } | undefined,
+    successText: string
+  ) => {
     invalidateStudentEnrollmentData();
     toast.success(data?.message || successText);
     router.push('/dashboard/courses');
@@ -298,28 +267,21 @@ export default function ClassEnrollmentPage({
       toast.error('Student not found, log into your student profile or create a new one');
       return;
     }
-
     waitlistStudent.mutate(
+      { body: { class_definition_uuid: classId, student_uuid: student.uuid } },
       {
-        body: {
-          class_definition_uuid: classId,
-          student_uuid: student.uuid,
-        },
-      },
-      {
-        onSuccess: data => {
-          handleEnrollmentSuccess(data, 'Student added to waitlist successfully');
-        },
-        onError: err => {
-          toast.error(getErrorMessage(err, 'Failed to join the waitlist'));
-        },
+        onSuccess: data =>
+          handleEnrollmentSuccess(data, 'Student added to waitlist successfully'),
+        onError: err => toast.error(getErrorMessage(err, 'Failed to join the waitlist')),
       }
     );
   };
 
   const isCapacityError = (error: unknown) => {
     const message = getErrorMessage(error, '').toLowerCase();
-    return message.includes('capacity') || message.includes('full') || message.includes('waitlist');
+    return (
+      message.includes('capacity') || message.includes('full') || message.includes('waitlist')
+    );
   };
 
   const handleEnrollStudent = () => {
@@ -333,22 +295,14 @@ export default function ClassEnrollmentPage({
     }
 
     enrollStudent.mutate(
+      { body: { class_definition_uuid: classId, student_uuid: student.uuid } },
       {
-        body: {
-          class_definition_uuid: classId,
-          student_uuid: student.uuid,
-        },
-      },
-      {
-        onSuccess: data => {
-          handleEnrollmentSuccess(data, 'Student enrolled successfully');
-        },
+        onSuccess: data => handleEnrollmentSuccess(data, 'Student enrolled successfully'),
         onError: err => {
           if (isCapacityError(err)) {
             handleWaitlist();
             return;
           }
-
           toast.error(getErrorMessage(err, 'Failed to enroll in class'));
           handleCreateCartAndPay(enrollingClass);
         },
@@ -358,10 +312,14 @@ export default function ClassEnrollmentPage({
 
   const handleCancel = () => {
     window.location.assign(
-      buildWorkspaceAliasPath(activeDomain, `/dashboard/courses/available-classes/${courseId}`)
+      buildWorkspaceAliasPath(
+        activeDomain,
+        `/dashboard/courses/available-classes/${courseId}`
+      )
     );
   };
 
+  // ── Loading / not-found states ─────────────────────────────────────────
   if (loading) {
     return (
       <EnrollmentLoadingState
@@ -373,208 +331,226 @@ export default function ClassEnrollmentPage({
 
   if (!enrollingClass) {
     return (
-      <div className='space-y-4'>
+      <div className='mx-auto w-full max-w-6xl px-6 py-12 lg:py-16 space-y-4'>
         <Button variant='ghost' onClick={handleCancel} className='gap-2'>
           <ArrowLeft className='h-4 w-4' />
           Back to Classes
         </Button>
-        <Card className='flex flex-col items-center justify-center space-y-2 p-6 text-center'>
+        <Card className='border-border/70 bg-card rounded-[28px] border shadow-sm flex flex-col items-center justify-center space-y-2 p-10 text-center'>
           <AlertCircle className='text-muted-foreground h-10 w-10' />
           <h3 className='text-foreground text-lg font-medium'>Class Not Found</h3>
           <p className='text-muted-foreground text-sm'>
-            The class you're trying to enroll in could not be found.
+            The class you&apos;re trying to enroll in could not be found.
           </p>
         </Card>
       </div>
     );
   }
 
+  const isPending = enrollStudent.isPending || waitlistStudent.isPending;
+
+  // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className='space-y-6 pb-20'>
-      {/* Header */}
-      <div className='flex items-center justify-between'>
-        <Button variant='ghost' onClick={handleCancel} className='gap-2'>
-          <ArrowLeft className='h-4 w-4' />
-          Back to Classes
-        </Button>
-      </div>
+    <div className='mx-auto w-full max-w-6xl px-6 py-12 lg:py-16 space-y-6'>
+      {/* Back button */}
+      <Button variant='ghost' onClick={handleCancel} className='gap-2 -ml-2'>
+        <ArrowLeft className='h-4 w-4' />
+        Back to Classes
+      </Button>
 
-      {/* Main Content */}
-      <div className='mx-auto max-w-4xl space-y-6'>
-        <div className='space-y-2'>
-          <h1 className='text-3xl font-bold'>Confirm Enrollment</h1>
-          <p className='text-muted-foreground'>
-            Review the class details below before confirming your enrollment.
-          </p>
-        </div>
+      {/* Main card */}
+      <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
 
-        {/* Class Details Card */}
-        <Card className='space-y-6 p-6'>
-          {/* Course Name */}
-          <div className='space-y-2'>
-            <h2 className='text-2xl font-semibold'>{enrollingClass?.course?.name || 'N/A'}</h2>
-            {enrollingClass?.course?.description && (
-              <RichTextRenderer htmlString={enrollingClass.course.description} />
-            )}
+        {/* ── Card header: badges + title + description ── */}
+        <CardHeader className='space-y-4'>
+          <div className='flex items-center justify-between gap-4'>
+            <div className='flex flex-wrap gap-2'>
+              {enrollingClass.session_format && (
+                <Badge className='rounded-full'>{enrollingClass.session_format}</Badge>
+              )}
+              {enrollingClass.class_visibility && (
+                <Badge variant='outline' className='rounded-full'>
+                  {enrollingClass.class_visibility}
+                </Badge>
+              )}
+              {enrollingClass.duration_formatted && (
+                <Badge
+                  variant='outline'
+                  className='border-primary/30 bg-primary/10 text-primary rounded-full'
+                >
+                  {enrollingClass.duration_formatted}
+                </Badge>
+              )}
+            </div>
+
+            <span className='text-on-primary bg-primary rounded-full px-3 py-1 text-xs font-semibold shadow-sm'>
+              COURSE
+            </span>
           </div>
 
-          <div className='border-t pt-6'>
-            <div className='grid gap-4 md:grid-cols-2'>
-              {/* Instructor */}
-              <div className='flex items-start gap-3'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <User className='text-primary h-5 w-5' />
-                </div>
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium'>Instructor</p>
-                  <p className='text-muted-foreground text-sm'>
-                    {enrollingClass?.instructor?.data?.full_name || 'N/A'}
-                  </p>
-                </div>
-              </div>
+          <CardTitle className='text-3xl font-semibold'>
+            {enrollingClass.course?.name || enrollingClass.title || 'Class Enrollment'}
+          </CardTitle>
 
-              {/* Location */}
-              {enrollingClass?.location_type && (
-                <div className='flex items-start gap-3'>
-                  <div className='bg-primary/10 rounded-lg p-2'>
-                    <MapPin className='text-primary h-5 w-5' />
-                  </div>
-                  <div className='space-y-1'>
-                    <p className='text-sm font-medium'>Location</p>
-                    <p className='text-muted-foreground text-sm'>{enrollingClass.location_type}</p>
-                  </div>
-                </div>
-              )}
+          <CardDescription className='text-muted-foreground max-w-2xl'>
+            Review the class details below before confirming your enrollment.
+          </CardDescription>
+        </CardHeader>
 
-              {/* Start Date */}
-              <div className='flex items-start gap-3'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <Calendar className='text-primary h-5 w-5' />
-                </div>
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium'>Start Date</p>
-                  <p className='text-muted-foreground text-sm'>{formattedStart}</p>
-                </div>
-              </div>
+        {/* ── Course description (rich text) ── */}
+        {enrollingClass.course?.description && (
+          <CardContent>
+            <div className='bg-muted/30 rounded-2xl border border-border/60 p-4'>
+              <RichTextRenderer htmlString={enrollingClass.course.description} />
+            </div>
+          </CardContent>
+        )}
 
-              {/* Training Fee */}
-              <div className='flex items-start gap-3'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <DollarSign className='text-primary h-5 w-5' />
-                </div>
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium'>Training Fee</p>
-                  <p className='text-muted-foreground text-sm'>
-                    KES {enrollingClass?.training_fee || 'N/A'} / hr
-                  </p>
-                </div>
-              </div>
+        {/* ── InfoRow grid ── */}
+        <CardContent className='space-y-6'>
+          <div className='grid gap-4 sm:grid-cols-2'>
+            <InfoRow
+              icon={<Clock className='h-4 w-4' />}
+              label='Class Begins'
+              value={`${formattedStart} – ${formattedEnd}`}
+            />
 
-              <div className='flex items-start gap-3'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <Calendar className='text-primary h-5 w-5' />
-                </div>
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium'>Session Duration</p>
-                  <p className='text-muted-foreground text-sm'>
-                    {scheduleStats.mostCommonDuration} - {schedule.length} class instances
-                  </p>
-                </div>
-              </div>
+            <InfoRow
+              icon={<MapPin className='h-4 w-4' />}
+              label='Location'
+              value={
+                enrollingClass.location_type === 'ONLINE'
+                  ? 'Online'
+                  : (enrollingClass.location_name ?? enrollingClass.location_type ?? 'N/A')
+              }
+            />
 
-              <div className='flex items-start gap-3'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <Calendar className='text-primary h-5 w-5' />
-                </div>
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium'>Total Duration</p>
-                  <p className='text-muted-foreground text-sm'>{scheduleStats.totalHours}</p>
-                </div>
-              </div>
+            <InfoRow
+              icon={<User className='h-4 w-4' />}
+              label='Instructor'
+              value={enrollingClass.instructor?.data?.full_name || 'N/A'}
+            />
 
-              {/* // available seats is supposed to reduce as students are enrolled to this class */}
+            <InfoRow
+              icon={<Layers className='h-4 w-4' />}
+              label='Training Fee'
+              value={
+                typeof enrollingClass.training_fee === 'number'
+                  ? `KES ${enrollingClass.training_fee.toLocaleString()} / hr`
+                  : enrollingClass.training_fee
+                    ? `KES ${enrollingClass.training_fee} / hr`
+                    : 'Free'
+              }
+            />
 
-              <div className='flex items-start gap-3'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <Armchair className='text-primary h-5 w-5' />
-                </div>
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium'>Available Seats</p>
-                  <p className='text-muted-foreground text-sm'>
-                    {Math.max(0, maxParticipants - enrolledCount)} of {maxParticipants} seats
-                  </p>
+            <InfoRow
+              icon={<Calendar className='h-4 w-4' />}
+              label='Session Duration'
+              value={`${scheduleStats.mostCommonDuration} · ${schedule.length} class instance${schedule.length !== 1 ? 's' : ''}`}
+            />
+
+            <InfoRow
+              icon={<Clock className='h-4 w-4' />}
+              label='Total Duration'
+              value={scheduleStats.totalHours}
+            />
+
+            <InfoRow
+              icon={<Users className='h-4 w-4' />}
+              label='Capacity'
+              value={`${maxParticipants} students`}
+            />
+
+            <InfoRow
+              icon={<Armchair className='h-4 w-4' />}
+              label='Available Seats'
+              value={
+                <div className='space-y-0.5'>
+                  <span>
+                    {availableSeats} of {maxParticipants}
+                  </span>
                   {isClassFull && (
-                    <p className='text-sm text-yellow-700 dark:text-yellow-300'>
-                      This class is full. We&apos;ll add you to the waitlist instead.
+                    <p className='text-xs text-yellow-700 dark:text-yellow-300'>
+                      Class is full — you&apos;ll be added to the waitlist.
                     </p>
                   )}
                 </div>
+              }
+            />
+          </div>
+        </CardContent>
+
+        {/* ── What You'll Get (benefits) ── */}
+        <CardContent>
+          <div className='bg-primary/5 rounded-2xl border border-primary/15 p-4'>
+            <h3 className='font-semibold mb-3'>What You&apos;ll Get</h3>
+            <ul className='text-muted-foreground space-y-2 text-sm'>
+              <li className='flex items-start gap-2'>
+                <BookOpen className='text-primary mt-0.5 h-4 w-4 shrink-0' />
+                <span>Access to all course materials and resources</span>
+              </li>
+              <li className='flex items-start gap-2'>
+                <BookOpen className='text-primary mt-0.5 h-4 w-4 shrink-0' />
+                <span>Real-time session updates and notifications</span>
+              </li>
+              <li className='flex items-start gap-2'>
+                <BookOpen className='text-primary mt-0.5 h-4 w-4 shrink-0' />
+                <span>Assessments and assignments to track your progress</span>
+              </li>
+            </ul>
+          </div>
+        </CardContent>
+
+        {/* ── Important notice ── */}
+        <CardContent>
+          <div className='rounded-2xl border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900 dark:bg-yellow-950'>
+            <div className='flex gap-3'>
+              <AlertCircle className='h-5 w-5 flex-shrink-0 text-yellow-600 dark:text-yellow-400' />
+              <div className='space-y-1'>
+                <p className='font-medium text-yellow-900 dark:text-yellow-100'>
+                  Important Notice
+                </p>
+                <p className='text-sm text-yellow-800 dark:text-yellow-200'>
+                  Once enrolled, you may need to contact your instructor or administrator to
+                  withdraw from this class.
+                </p>
               </div>
             </div>
           </div>
-        </Card>
+        </CardContent>
 
-        <CardContent className='p-0'>
+        {/* ── Schedule calendar ── */}
+        <CardContent>
           <ClassScheduleCalendar schedules={calendarSchedule} />
         </CardContent>
 
-        {/* Benefits Card */}
-        <Card className='bg-primary/5 p-6'>
-          <h3 className='mb-3 font-semibold'>What You'll Get</h3>
-          <ul className='text-muted-foreground space-y-2 text-sm'>
-            <li className='flex items-start gap-2'>
-              <span className='text-primary mt-0.5'>✓</span>
-              <span>Access to all course materials and resources</span>
-            </li>
-            <li className='flex items-start gap-2'>
-              <span className='text-primary mt-0.5'>✓</span>
-              <span>Real-time session updates and notifications</span>
-            </li>
-            <li className='flex items-start gap-2'>
-              <span className='text-primary mt-0.5'>✓</span>
-              <span>Assessments and assignments to track your progress</span>
-            </li>
-            {/* <li className='flex items-start gap-2'>
-                            <span className='mt-0.5 text-primary'>✓</span>
-                            <span>Direct communication with your instructor</span>
-                        </li> */}
-          </ul>
-        </Card>
-
-        {/* Warning Card */}
-        <Card className='border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900 dark:bg-yellow-950'>
-          <div className='flex gap-3'>
-            <AlertCircle className='h-5 w-5 flex-shrink-0 text-yellow-600 dark:text-yellow-400' />
-            <div className='space-y-1'>
-              <p className='font-medium text-yellow-900 dark:text-yellow-100'>Important Notice</p>
-              <p className='text-sm text-yellow-800 dark:text-yellow-200'>
-                Once enrolled, you may need to contact your instructor or administrator to withdraw
-                from this class.
-              </p>
-            </div>
+        {/* ── CTA footer (mirrors ClassInviteContent) ── */}
+        <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 pb-6 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='text-muted-foreground text-sm'>
+            {isClassFull ? 'Class is full • Waitlist available' : 'Limited seats remaining'}
           </div>
-        </Card>
 
-        {/* Action Buttons */}
-        <div className='flex flex-col-reverse gap-3 sm:flex-row sm:justify-end'>
-          <Button variant='outline' onClick={handleCancel} className='w-full sm:w-auto'>
-            Cancel
-          </Button>
+          <div className='flex items-center gap-3'>
+            <Button variant='outline' onClick={handleCancel} className='rounded-full px-6'>
+              Cancel
+            </Button>
 
-          <Button
-            onClick={handleEnrollStudent}
-            disabled={enrollStudent.isPending || enrollmentError}
-            className='w-full min-w-[120px] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto'
-            variant='success'
-          >
-            {enrollStudent.isPending || waitlistStudent.isPending
-              ? 'Processing...'
-              : isClassFull
-                ? 'Join Waitlist'
-                : 'Yes, Enroll Me'}
-          </Button>
+            <Button
+              onClick={handleEnrollStudent}
+              disabled={isPending || enrollmentError}
+              size='lg'
+              className='rounded-full px-10 disabled:cursor-not-allowed disabled:opacity-60'
+              variant='success'
+            >
+              {isPending
+                ? 'Processing…'
+                : isClassFull
+                  ? 'Join Waitlist'
+                  : 'Yes, Enroll Me'}
+            </Button>
+          </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

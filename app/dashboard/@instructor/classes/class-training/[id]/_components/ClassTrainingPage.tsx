@@ -1,6 +1,7 @@
 'use client';
 
 import { PracticeActivityList } from '@/app/dashboard/@course_creator/_components/practice-activity-management';
+import { getPreferredScheduleInstance } from '@/app/dashboard/@instructor/classes/_components/new-class-page.utils';
 import ConfirmModal from '@/components/custom-modals/confirm-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +28,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
-import { getPreferredScheduleInstance } from '@/app/dashboard/@instructor/classes/_components/new-class-page.utils';
 import { useClassDetails, type ClassDetailsScheduleItem } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
@@ -2794,9 +2794,9 @@ export default function ClassTrainingPage({
     toast.success('Note shared for this session view.');
   };
 
-  // if (isLoading || rosterLoading || lessonsLoading) {
-  //   return <ConsoleSkeleton />;
-  // }
+  if (isLoading || rosterLoading || lessonsLoading) {
+    return <ConsoleSkeleton />;
+  }
 
   if (isError) {
     return (
