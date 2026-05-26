@@ -1,16 +1,7 @@
 'use client';
 
-import HTMLTextPreview from '@/components/editors/html-text-preview';
-import { Badge } from '@/components/ui/badge';
 import { CardContent } from '@/components/ui/card';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
-import { cn } from '@/lib/utils';
-import {
-  BarChart3,
-  Clock3,
-  GraduationCap,
-  Users
-} from 'lucide-react';
 import { ClassSessionLedgerTable } from './class-session-ledger-table';
 import type { ClassSessionLedgerRow } from './class-session-ledger-table.utils';
 
@@ -48,8 +39,8 @@ export function ClassSessionLedgerSection({
 
   return (
     <div className='space-y-3'>
-      <section className='overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm'>
-        <div className='border-border/70 border-b px-4 py-4 sm:px-5 sm:py-5'>
+      <section className='overflow-hidden p-0'>
+        {/* <div className='border-border/70 border-b px-4 py-4 sm:px-5 sm:py-5'>
           <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
             <div className='min-w-0 space-y-2'>
               <div className='flex flex-wrap items-center gap-2'>
@@ -129,7 +120,7 @@ export function ClassSessionLedgerSection({
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         <CardContent className='space-y-4 px-0 py-0'>
           <div className='border-border/70 border-b px-4 py-4 sm:px-5'>

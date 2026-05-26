@@ -4,9 +4,12 @@ import { CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
-import { listSalesOptions } from '@/services/client/@tanstack/react-query.gen';
-import type { RevenueSaleLineItemDto } from '@/services/client/types.gen';
-import { useQuery } from '@tanstack/react-query';
+import {
+  getAssignmentSchedulesOptions,
+  getQuizSchedulesOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import type { ClassAssignmentSchedule, ClassQuizSchedule } from '@/services/client/types.gen';
+import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { ClassSessionLedgerSection } from './class-session-ledger-section';
 import {
@@ -55,19 +58,23 @@ export function ClassDeliveryStatusTab(props: ClassDeliveryStatusTabProps) {
   const { difficultyMap: fallbackDifficultyMap } = useDifficultyLevels();
   const mergedDifficultyMap = { ...fallbackDifficultyMap, ...difficultyMap };
   const showFinancialColumns = roleLabel !== 'Student view';
+  const classUuid = selectedClass?.uuid;
 
-  const { data: salesResp } = useQuery({
-    ...listSalesOptions({
-      query: {
-        domain: 'instructor',
-        class_definition_uuid: selectedClass?.uuid ?? '',
-        pageable: { page: 0, size: 100 },
+  const [{ data: assignmentScheduleResp }, { data: quizScheduleResp }] = useQueries({
+    queries: [
+      {
+        ...getAssignmentSchedulesOptions({ path: { classUuid: classUuid ?? '' } }),
+        enabled: Boolean(classUuid),
       },
-    }),
-    enabled: showFinancialColumns && Boolean(selectedClass?.uuid),
+      {
+        ...getQuizSchedulesOptions({ path: { classUuid: classUuid ?? '' } }),
+        enabled: Boolean(classUuid),
+      },
+    ],
   });
 
-  const salesItems: RevenueSaleLineItemDto[] = salesResp?.data?.content ?? [];
+  const assignmentSchedules: ClassAssignmentSchedule[] = assignmentScheduleResp?.data ?? [];
+  const quizSchedules: ClassQuizSchedule[] = quizScheduleResp?.data ?? [];
 
   const rows = useMemo<ClassSessionLedgerRow[]>(() => {
     if (!selectedClass) return [];
@@ -75,10 +82,17 @@ export function ClassDeliveryStatusTab(props: ClassDeliveryStatusTabProps) {
     return buildClassSessionLedgerRows({
       selectedClass,
       visibleInstances,
-      salesItems,
+      assignmentSchedules,
+      quizSchedules,
       showFinancialColumns,
     });
-  }, [salesItems, selectedClass, showFinancialColumns, visibleInstances]);
+  }, [
+    assignmentSchedules,
+    quizSchedules,
+    selectedClass,
+    showFinancialColumns,
+    visibleInstances,
+  ]);
 
   if (isLoadingClasses || !selectedClass) {
     return <DeliverySkeleton />;
@@ -97,9 +111,11 @@ export function ClassDeliveryStatusTab(props: ClassDeliveryStatusTabProps) {
           ? 'Upcoming'
           : 'All dates';
 
+  const assessmentCount = assignmentSchedules.length + quizSchedules.length;
+
   return (
     <div className='space-y-3'>
-      <section className='overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm'>
+      <section className='overflow-hidden p-0'>
         {/* <div className='border-border/70 border-b px-4 py-4 sm:px-5 sm:py-5'>
           <div className='flex flex-col gap-4'>
             <div className='flex flex-wrap items-center gap-2'>
@@ -109,15 +125,6 @@ export function ClassDeliveryStatusTab(props: ClassDeliveryStatusTabProps) {
               <Badge variant='secondary' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
                 {filterLabel}
               </Badge>
-            </div>
-
-            <div className='space-y-1'>
-              <h2 className='text-foreground text-xl font-semibold leading-tight sm:text-2xl'>
-                {selectedClass.title}
-              </h2>
-              <p className='text-muted-foreground text-sm sm:text-base'>
-                Delivery overview for {selectedClass.course?.name || selectedClass.title || 'this class'}.
-              </p>
             </div>
 
             <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
@@ -160,47 +167,30 @@ export function ClassDeliveryStatusTab(props: ClassDeliveryStatusTabProps) {
                   {totalInstances}
                 </p>
               </div>
-            </div>
-
-            <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
               <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
-                <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
-                  Difficulty
+                <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  <Pen className='h-4 w-4' />
+                  Assessments
                 </p>
-                <p className='text-foreground mt-1 text-sm font-semibold sm:text-base'>
-                  {difficultyLabel}
-                </p>
-              </div>
-
-              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
-                <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
-                  Class format
-                </p>
-                <p className='text-foreground mt-1 text-sm font-semibold sm:text-base'>
-                  {selectedClass.session_format || 'Not specified'}
-                </p>
-              </div>
-
-              <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
-                <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
-                  Status view
-                </p>
-                <p className='text-foreground mt-1 text-sm font-semibold sm:text-base'>
-                  {roleLabel}
+                <p className='text-foreground mt-2 text-sm font-semibold sm:text-base'>
+                  {assessmentCount}
                 </p>
               </div>
             </div>
           </div>
         </div> */}
 
-        <CardContent className='px-4 py-4 sm:px-5 sm:py-5'>
+        <CardContent className=''>
           <ClassSessionLedgerSection
             selectedClass={selectedClass}
             roleLabel={roleLabel}
             difficultyLabel={difficultyLabel}
             rows={rows}
             sessionProgress={completionRate}
-            remainingSessions={Math.max(totalInstances - Math.round((completionRate / 100) * totalInstances), 0)}
+            remainingSessions={Math.max(
+              totalInstances - Math.round((completionRate / 100) * totalInstances),
+              0
+            )}
             rosterCount={studentCount}
             showFinancialColumns={showFinancialColumns}
             tableTitle='Delivery table'

@@ -27,7 +27,11 @@ import { PanelBottom, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClassDeliveryStatusTab } from '../../../../@instructor/classes/_components/class-delivery-status-tab';
-import { ClassLessonTab, ClassOverviewTab } from '../../../../@instructor/classes/_components/class-overview-tab';
+import {
+  ClassHero,
+  ClassLessonTab,
+  ClassOverviewTab,
+} from '../../../../@instructor/classes/_components/class-overview-tab';
 import { ClassScheduleTab } from '../../../../@instructor/classes/_components/class-schedule-tab';
 import { ClassSidebar } from '../../../../@instructor/classes/_components/class-sidebar';
 import { ClassStudentsTab } from '../../../../@instructor/classes/_components/class-students-tab';
@@ -531,6 +535,19 @@ export default function StudentClassPage({
                 </SheetContent>
               </Sheet>
             </div>
+
+            {selectedClassForDisplay ? (
+              <ClassHero
+                selectedClass={selectedClassForDisplay}
+                difficultyMap={difficultyMap}
+                roleLabel='Student view'
+                sessionProgress={sessionProgress}
+                remainingSessions={remainingSessions}
+                startLessonHref={startLessonHref}
+                selectedClassUuid={selectedClassUuid}
+                onAddClasses={() => router.push('/dashboard/workspace/student/courses')}
+              />
+            ) : null}
 
             <TabsList className='border-border/70 bg-card/70 hidden h-auto w-full flex-wrap justify-start gap-1 rounded-lg border p-1.5 shadow-sm md:flex'>
               {studentClassTabs.map(tab => (

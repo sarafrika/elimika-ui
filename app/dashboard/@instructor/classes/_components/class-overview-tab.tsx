@@ -1,5 +1,6 @@
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -8,24 +9,26 @@ import type { RosterEntry } from '@/hooks/use-class-roster';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import { cn } from '@/lib/utils';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   Award,
   BarChart3,
   BookOpen,
   Building2,
+  CalendarDays,
   Check,
   Clock3,
   Layers3,
+  MapPin,
   MonitorPlay,
   Pen,
   Play,
   Plus,
   UserRound,
+  Users,
   Video
 } from 'lucide-react';
 import Link from 'next/link';
-import { type ReactNode, useMemo, useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   Tooltip,
   TooltipContent,
@@ -34,13 +37,6 @@ import {
 } from '../../../../../components/ui/tooltip';
 import { useUserDomain } from '../../../../../context/user-domain-context';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
-import { RevenueSaleLineItemDto } from '../../../../../services/client';
-import { getEnrollmentsForInstanceOptions, listSalesOptions } from '../../../../../services/client/@tanstack/react-query.gen';
-import { ClassSessionLedgerSection } from './class-session-ledger-section';
-import {
-  buildClassSessionLedgerRows,
-  type ClassSessionLedgerRow,
-} from './class-session-ledger-table.utils';
 import type { LessonContentItem, LessonModule } from './new-class-page.utils';
 import {
   formatDateOnly,
@@ -61,11 +57,6 @@ function getContentTypeIcon(contentTypeMap: Record<string, string>, uuid?: strin
     default:
       return <BookOpen className='h-3.5 w-3.5' />;
   }
-}
-
-function getLessonProgress(moduleIndex: number, contentIndex: number) {
-  const value = 100 - moduleIndex * 20 - contentIndex * 20;
-  return Math.max(45, Math.min(100, value));
 }
 
 function getContentDuration(content: LessonContentItem) {
@@ -152,16 +143,17 @@ export function ClassHero({
   onAddClasses: () => void;
 }) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const difficulty = selectedClass.course?.difficulty_uuid
-    ? difficultyMap[selectedClass.course.difficulty_uuid]
+
+  const difficulty = selectedClass?.course?.difficulty_uuid
+    ? difficultyMap[selectedClass?.course?.difficulty_uuid]
     : 'Beginner';
-  const courseName = selectedClass.course?.name || selectedClass.title || 'Select a class';
+  const courseName = selectedClass?.course?.name || selectedClass?.title || 'Select a class';
   const courseDescription =
-    selectedClass.course?.description ||
-    selectedClass.description ||
+    selectedClass?.course?.description ||
+    selectedClass?.description ||
     'An introduction to the basic concepts of this course.';
   const plainCourseDescription = getPlainTextFromHtml(courseDescription);
-  const courseImageUrl = selectedClass.course?.thumbnail_url || selectedClass.course?.banner_url;
+  const courseImageUrl = selectedClass?.course?.thumbnail_url || selectedClass?.course?.banner_url;
 
   return (
     <section className='border-border/70 bg-card/90 overflow-hidden rounded-lg border shadow-sm backdrop-blur'>
@@ -256,7 +248,7 @@ export function ClassHero({
           <div className='text-muted-foreground mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm'>
             <span className='inline-flex items-center gap-1.5'>
               <Clock3 className='h-4 w-4' />
-              {selectedClass.schedule?.length ?? 0} Sessions
+              {selectedClass?.schedule?.length ?? 0} Sessions
             </span>
             <span className='bg-border hidden h-4 w-px sm:block' />
             <span className='inline-flex items-center gap-1.5'>
@@ -272,10 +264,10 @@ export function ClassHero({
 
           {roleLabel === 'Instructor View' && (
             <div className='text-muted-foreground mt-5 grid gap-3 text-[12px] sm:grid-cols-2'>
-              <p>{selectedClass.max_participants ?? 0} students</p>
+              <p>{selectedClass?.max_participants ?? 0} students</p>
               <p>
-                {selectedClass.training_fee
-                  ? `$${selectedClass.training_fee}`
+                {selectedClass?.training_fee
+                  ? `$${selectedClass?.training_fee}`
                   : 'Class fee not set'}
               </p>
             </div>
@@ -814,13 +806,13 @@ type ClassOverviewTabProps = {
   isLoadingLessons: boolean;
   selectedClass: InstructorClassWithSchedule | null;
   selectedClassUuid: string | null;
-  lessonModules?: unknown[];
-  selectedLesson?: unknown;
+  lessonModules?: LessonModule[];
+  selectedLesson?: LessonContentItem | null;
   contentTypeMap?: Record<string, string>;
   difficultyMap?: Record<string, string>;
   instructorName?: string | null;
   roleLabel?: string;
-  rosterEntries?: unknown[];
+  rosterEntries?: RosterEntry[];
   sessionProgress: number;
   remainingSessions: number;
   setSelectedLessonUuid?: (value: string | null) => void;
@@ -865,71 +857,20 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
     isLoadingClasses,
     isLoadingLessons,
     selectedClass,
-    selectedClassUuid,
+    instructorName,
     roleLabel = 'Instructor view',
     rosterEntries = [],
     sessionProgress,
     remainingSessions,
     difficultyMap = {},
+    lessonModules = [],
+    startLessonHref,
+    selectedLessonActionLabel,
+    onStartLesson,
   } = props;
 
   const { difficultyMap: fallbackDifficultyMap } = useDifficultyLevels();
   const mergedDifficultyMap = { ...fallbackDifficultyMap, ...difficultyMap };
-  const showFinancialColumns = roleLabel !== 'Student view';
-
-  const { data: salesResp } = useQuery({
-    ...listSalesOptions({
-      query: {
-        domain: 'instructor',
-        class_definition_uuid: selectedClass?.uuid ?? '',
-        pageable: { page: 0, size: 100 },
-      },
-    }),
-    enabled: showFinancialColumns && Boolean(selectedClass?.uuid),
-  });
-
-  const scheduleInstances = selectedClass?.schedule ?? [];
-
-  const enrollmentQueries = useQueries({
-    queries: scheduleInstances.map(instance => ({
-      ...getEnrollmentsForInstanceOptions({
-        path: {
-          instanceUuid: instance.uuid as string,
-        },
-      }),
-      enabled: Boolean(instance.uuid),
-    })),
-  });
-
-  const enrichedInstances = useMemo(() => {
-    return scheduleInstances.map((instance, index) => {
-      const enrollments =
-        enrollmentQueries[index]?.data?.data ?? [];
-
-      return {
-        ...instance,
-        enrollments,
-      };
-    });
-  }, [scheduleInstances, enrollmentQueries]);
-
-  const salesItems: RevenueSaleLineItemDto[] = salesResp?.data?.content ?? [];
-
-  const rows = useMemo<ClassSessionLedgerRow[]>(() => {
-    if (!selectedClass) return [];
-
-    return buildClassSessionLedgerRows({
-      selectedClass,
-      visibleInstances: enrichedInstances,
-      salesItems,
-      showFinancialColumns,
-    });
-  }, [
-    enrichedInstances,
-    salesItems,
-    selectedClass,
-    showFinancialColumns,
-  ]);
 
   if (isLoadingClasses || !selectedClass || isLoadingLessons) {
     return <OverviewSkeleton />;
@@ -939,22 +880,259 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
     ? mergedDifficultyMap[selectedClass.course.difficulty_uuid] ?? 'General'
     : 'General';
 
+  const scheduleInstances = (selectedClass.schedule ?? [])
+    .filter(instance => instance.status?.toUpperCase() !== 'CANCELLED')
+    .filter(instance => instance.status?.toUpperCase() !== 'BLOCKED')
+    .sort((left, right) => new Date(left.start_time ?? 0).getTime() - new Date(right.start_time ?? 0).getTime());
+
+  const upcomingInstances = scheduleInstances.filter(instance => isUpcoming(instance.start_time)).slice(0, 3);
+  const lessonCount = lessonModules.reduce(
+    (sum, module) => sum + (module.content?.data?.length ?? 0),
+    0
+  );
+  const moduleCount = lessonModules.length;
+  const categoryNames = selectedClass.course?.category_names?.filter(Boolean) ?? [];
+  const courseSummary = selectedClass.course?.description || selectedClass.description || 'No course summary has been provided yet.';
+  const classSummary = selectedClass.description || selectedClass.course?.description || 'This class will appear here with a detailed overview, schedule, and course context.';
+  const nextSession = scheduleInstances[0] ?? null;
+  const nextSessionLabel = nextSession
+    ? `${formatDateOnly(nextSession.start_time)} · ${formatTimeRange(nextSession.start_time, nextSession.end_time)}`
+    : 'No upcoming session scheduled';
+  const classLocation =
+    selectedClass.location_name ||
+    nextSession?.location_name ||
+    nextSession?.location_type ||
+    'Location not set';
+  const instructorLabel = instructorName || selectedClass.default_instructor_uuid || roleLabel;
+  const hasLessonCta = Boolean(startLessonHref && onStartLesson);
+
   return (
     <div className='space-y-3'>
       <section className='overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm'>
-        <CardContent className='px-4 py-4 sm:px-5 sm:py-5'>
-          <ClassSessionLedgerSection
-            selectedClass={selectedClass}
-            roleLabel={roleLabel}
-            difficultyLabel={difficultyLabel}
-            rows={rows}
-            sessionProgress={sessionProgress}
-            remainingSessions={remainingSessions}
-            rosterCount={rosterEntries.length}
-            showFinancialColumns={showFinancialColumns}
-            tableTitle='Session ledger'
-            tableDescription='All scheduled sessions are listed below with attendance and settlement details.'
-          />
+        <div className='border-border/70 border-b px-4 py-4 sm:px-5 sm:py-5'>
+          <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+            <div className='min-w-0 space-y-3'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <Badge variant='outline' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
+                  {roleLabel}
+                </Badge>
+                <Badge variant='secondary' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
+                  {difficultyLabel}
+                </Badge>
+                <Badge variant='secondary' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
+                  {selectedClass.session_format || 'Format not set'}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <CardContent className='space-y-4 px-4 py-4 sm:px-5 sm:py-5'>
+          <div className='space-y-4'>
+            <div className='overflow-hidden rounded-[12px] border border-border/70 bg-background/80'>
+              <div className='border-border/70 border-b px-4 py-3'>
+                <div className='flex items-center justify-between gap-3'>
+                  <div>
+                    <h3 className='text-foreground text-lg font-semibold'>Class overview</h3>
+                    <p className='text-muted-foreground text-sm'>
+                      A summary of the class setup, delivery plan, and live progress.
+                    </p>
+                  </div>
+
+                  {roleLabel === "Instructor view" && <>
+                    {hasLessonCta ? (
+                      <Button
+                        type='button'
+                        onClick={() => onStartLesson?.()}
+                        className='inline-flex items-center gap-2 rounded-md'
+                      >
+                        <Play className='h-4 w-4' />
+                        {selectedLessonActionLabel || 'Open lesson'}
+                      </Button>
+                    ) : null}
+                  </>}
+
+                </div>
+              </div>
+            </div>
+
+            <div className='overflow-hidden rounded-[12px] border border-border/70 bg-background/80'>
+              <div className='border-border/70 border-b px-4 py-3'>
+                <h3 className='text-foreground text-lg font-semibold'>Course details</h3>
+                <p className='text-muted-foreground text-sm'>
+                  The broader course context, categories, and learning structure.
+                </p>
+              </div>
+
+              <div className='grid gap-4 p-4 2xl:grid-cols-[minmax(0,1fr)_340px]'>
+                {/* LEFT SIDE */}
+                <div className='min-w-0 space-y-4'>
+                  {/* META GRID */}
+                  <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3'>
+                    <OverviewMetaCard
+                      label='Course'
+                      value={selectedClass.course?.name || 'No linked course'}
+                      icon={<BookOpen className='h-4 w-4' />}
+                    />
+
+                    <OverviewMetaCard
+                      label='Difficulty'
+                      value={difficultyLabel}
+                      icon={<BarChart3 className='h-4 w-4' />}
+                    />
+
+                    <OverviewMetaCard
+                      label='Categories'
+                      value={
+                        categoryNames.length
+                          ? categoryNames.join(', ')
+                          : 'General'
+                      }
+                      icon={<Layers3 className='h-4 w-4' />}
+                    />
+
+                    <OverviewMetaCard
+                      label='Modules'
+                      value={`${moduleCount}`}
+                      icon={<BookOpen className='h-4 w-4' />}
+                    />
+
+                    <OverviewMetaCard
+                      label='Lessons'
+                      value={`${lessonCount}`}
+                      icon={<Check className='h-4 w-4' />}
+                    />
+
+                    <OverviewMetaCard
+                      label='Timeline'
+                      value={
+                        selectedClass.course?.total_duration_display ||
+                        selectedClass.session_format ||
+                        'Self-paced'
+                      }
+                      icon={<CalendarDays className='h-4 w-4' />}
+                    />
+
+                    <OverviewMetaCard
+                      label='Location'
+                      value={classLocation}
+                      icon={<MapPin className='h-4 w-4' />}
+                    />
+
+                    <OverviewMetaCard
+                      label='Instructor'
+                      value={instructorLabel}
+                      icon={<UserRound className='h-4 w-4' />}
+                    />
+
+                    <OverviewMetaCard
+                      label='Class fee'
+                      value={
+                        selectedClass.training_fee
+                          ? `KSh ${selectedClass.training_fee}`
+                          : 'Not set'
+                      }
+                      icon={<Award className='h-4 w-4' />}
+                    />
+
+                    <OverviewMetaCard
+                      label='Maximum students'
+                      value={`${selectedClass.max_participants ?? 'Not set'
+                        }`}
+                      icon={<Users className='h-4 w-4' />}
+                    />
+                  </div>
+
+                  {/* COURSE SUMMARY */}
+                  <div className='rounded-[12px] border border-border/70 bg-card px-4 py-3'>
+                    <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                      Course summary
+                    </p>
+
+                    <HTMLTextPreview
+                      htmlContent={courseSummary}
+                      className='text-muted-foreground mt-2 text-sm leading-6 [&_p]:mb-0'
+                    />
+                  </div>
+                </div>
+
+                {/* RIGHT SIDE */}
+                <div className='grid min-w-0 gap-4 sm:grid-cols-2 2xl:grid-cols-1'>
+                  {/* UPCOMING */}
+                  <div className='rounded-[12px] border border-border/70 bg-card px-4 py-4'>
+                    <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                      <CalendarDays className='h-4 w-4' />
+                      Upcoming sessions
+                    </p>
+
+                    <div className='mt-3 space-y-3'>
+                      {upcomingInstances.length ? (
+                        upcomingInstances.map((session, index) => (
+                          <div
+                            key={
+                              session.uuid ??
+                              `${session.start_time}-${index}`
+                            }
+                            className='border-border/70 bg-background rounded-lg border px-3 py-3'
+                          >
+                            <p className='text-foreground text-sm font-semibold'>
+                              {formatDateOnly(session.start_time)}
+                            </p>
+
+                            <p className='text-muted-foreground mt-1 text-xs'>
+                              {formatTimeRange(
+                                session.start_time,
+                                session.end_time
+                              )}
+                            </p>
+
+                            <p className='text-muted-foreground mt-1 flex items-center gap-1.5 text-xs'>
+                              <MapPin className='h-3.5 w-3.5' />
+                              {session.location_name ||
+                                selectedClass.location_name ||
+                                'Location not set'}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className='text-muted-foreground text-sm'>
+                          No future sessions are currently scheduled.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CLASS LINK */}
+                  <div className='sm:col-span-2 2xl:col-span-1 rounded-[12px] border border-border/70 bg-card px-4 py-4'>
+                    <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                      <Video className='h-4 w-4' />
+                      Class link
+                    </p>
+
+                    <div className='mt-3 space-y-2'>
+                      <p className='text-muted-foreground text-sm'>
+                        {selectedClass.meeting_link
+                          ? 'Students and instructors can join the live class from the meeting link.'
+                          : 'A meeting link has not been added to this class yet.'}
+                      </p>
+
+                      {selectedClass.meeting_link ? (
+                        <a
+                          href={selectedClass.meeting_link}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='text-primary hover:text-accent inline-flex items-center gap-2 text-sm font-semibold transition-colors'
+                        >
+                          Open meeting link
+                          <Video className='h-4 w-4' />
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </section>
     </div>
