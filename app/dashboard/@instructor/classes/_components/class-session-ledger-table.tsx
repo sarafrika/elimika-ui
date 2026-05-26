@@ -127,10 +127,10 @@ export function ClassSessionLedgerTable({
               {showFinancialColumns ? (
                 <>
                   <TableHead className='px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
-                    Payable Amount
+                    Order Amount
                   </TableHead>
                   <TableHead className='px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
-                    Order Amount
+                    Payable Amount
                   </TableHead>
                 </>
               ) : null}
@@ -183,10 +183,10 @@ export function ClassSessionLedgerTable({
                   {showFinancialColumns ? (
                     <>
                       <TableCell className='px-4 py-4 text-sm text-foreground whitespace-nowrap'>
-                        {row.payableAmount ?? 'Ksh 0'}
+                        {row.orderAmount ?? 'Ksh 0'}
                       </TableCell>
                       <TableCell className='px-4 py-4 text-sm text-foreground whitespace-nowrap'>
-                        {row.orderAmount ?? 'Ksh 0'}
+                        {row.payableAmount ?? 'Ksh 0'}
                       </TableCell>
                     </>
                   ) : null}

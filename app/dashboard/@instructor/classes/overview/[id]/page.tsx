@@ -315,7 +315,7 @@ export default function ClassPreviewPage() {
   }
 
   return (
-    <div className='mb-20 space-y-6 my-8 px-2'>
+    <div className='mb-20 space-y-6 my-8 px-2 sm:px-6'>
       {/* Status Banner */}
       <div>
         {classData?.is_active ? (
@@ -866,9 +866,8 @@ export default function ClassPreviewPage() {
       </Tabs>
 
       {/* Registration Link and Sharing */}
-      {/* Registration Link and Sharing */}
       <div className='grid grid-cols-1 gap-6 xl:grid-cols-2'>
-        <LinkShareCard
+        {/* <LinkShareCard
           description='Send students directly to the class invite page.'
           title='Class Invite Link'
           url={inviteLink}
@@ -901,7 +900,7 @@ export default function ClassPreviewPage() {
               </div>
             </div>
           }
-        />
+        /> */}
 
         <LinkShareCard
           description='Copy or share the registration link for enrollment.'

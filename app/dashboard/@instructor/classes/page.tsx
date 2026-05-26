@@ -24,7 +24,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useUserProfile } from '../../../../context/profile-context';
 import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab';
-import { ClassLessonTab, ClassOverviewTab } from './_components/class-overview-tab';
+import { ClassHero, ClassLessonTab, ClassOverviewTab } from './_components/class-overview-tab';
 import { ClassScheduleTab } from './_components/class-schedule-tab';
 import { ClassSidebar } from './_components/class-sidebar';
 import { ClassStudentsTab } from './_components/class-students-tab';
@@ -368,7 +368,7 @@ export default function NewClassPage() {
           <Tabs
             value={activeTab}
             onValueChange={value => setActiveTab(value as ClassTab)}
-            className='space-y-3'
+            className=''
           >
             <div className='flex md:hidden'>
               <Sheet open={isTabsSheetOpen} onOpenChange={setIsTabsSheetOpen}>
@@ -424,74 +424,95 @@ export default function NewClassPage() {
               </Sheet>
             </div>
 
-            <TabsList className='border-border/70 bg-card/70 hidden h-auto w-full flex-wrap justify-start gap-1 rounded-lg border p-1.5 shadow-sm md:flex'>
-              {classTabs.map(tab => (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md px-3 py-2 text-xs font-semibold'
-                >
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <ClassHero
+              selectedClass={selectedClass as any}
+              difficultyMap={difficultyMap}
+              instructorName={instructor?.full_name}
+              roleLabel={"instructor"}
+              sessionProgress={sessionProgress}
+              remainingSessions={remainingSessions}
+              startLessonHref={startLessonHref}
+              selectedClassUuid={selectedClassUuid}
+              onAddClasses={() => router.push(`/dashboard/classes/new?id=${selectedClass?.uuid}`)}
+            />
 
-            <TabsContent value='overview' className='mt-0'>
-              <ClassOverviewTab
-                isLoadingClasses={isLoadingClasses}
-                isLoadingLessons={isLoadingLessons}
-                selectedClass={selectedClassForDisplay}
-                selectedClassUuid={selectedClassUuid}
-                lessonModules={lessonModules}
-                selectedLesson={selectedLesson}
-                contentTypeMap={contentTypeMap}
-                difficultyMap={difficultyMap}
-                instructorName={instructor?.full_name}
-                rosterEntries={roster}
-                sessionProgress={sessionProgress}
-                remainingSessions={remainingSessions}
-                setSelectedLessonUuid={setSelectedLessonUuid}
-                startLessonHref={startLessonHref}
-                getStartLessonHref={getStartLessonHref}
-                onStartLesson={handleStartLesson}
-                selectedLessonActionLabel={
-                  selectedScheduleInstance?.started_at && !selectedScheduleInstance?.concluded_at
-                    ? 'Resume Lesson'
-                    : 'Start Lesson'
-                }
-                onAddClasses={() => router.push(`/dashboard/classes/new?id=${selectedClass?.uuid}`)}
-              />
-            </TabsContent>
+            <div>
+              <TabsList className='border-border/70 bg-card/70 hidden h-auto w-full flex-wrap justify-start gap-1 rounded-t-md border p-1.5 shadow-sm md:flex'>
+                {classTabs.map(tab => (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md px-3 py-2 text-xs font-semibold'
+                  >
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              <TabsContent
+                value='overview'
+                className='mt-0 rounded-b-[14px] rounded-t-none p-0'
+              >
+                <ClassOverviewTab
+                  isLoadingClasses={isLoadingClasses}
+                  isLoadingLessons={isLoadingLessons}
+                  selectedClass={selectedClassForDisplay}
+                  selectedClassUuid={selectedClassUuid}
+                  lessonModules={lessonModules}
+                  selectedLesson={selectedLesson}
+                  contentTypeMap={contentTypeMap}
+                  difficultyMap={difficultyMap}
+                  instructorName={instructor?.full_name}
+                  rosterEntries={roster}
+                  sessionProgress={sessionProgress}
+                  remainingSessions={remainingSessions}
+                  setSelectedLessonUuid={setSelectedLessonUuid}
+                  startLessonHref={startLessonHref}
+                  getStartLessonHref={getStartLessonHref}
+                  onStartLesson={handleStartLesson}
+                  selectedLessonActionLabel={
+                    selectedScheduleInstance?.started_at &&
+                      !selectedScheduleInstance?.concluded_at
+                      ? 'Resume Lesson'
+                      : 'Start Lesson'
+                  }
+                  onAddClasses={() =>
+                    router.push(
+                      `/dashboard/classes/new?id=${selectedClass?.uuid}`
+                    )
+                  }
+                />
+              </TabsContent>
 
 
-            <TabsContent value='lessons' className='mt-0'>
-              <ClassLessonTab
-                isLoadingClasses={isLoadingClasses}
-                isLoadingLessons={isLoadingLessons}
-                selectedClass={selectedClassForDisplay}
-                selectedClassUuid={selectedClassUuid}
-                lessonModules={lessonModules}
-                selectedLesson={selectedLesson}
-                contentTypeMap={contentTypeMap}
-                difficultyMap={difficultyMap}
-                instructorName={instructor?.full_name}
-                rosterEntries={roster}
-                sessionProgress={sessionProgress}
-                remainingSessions={remainingSessions}
-                setSelectedLessonUuid={setSelectedLessonUuid}
-                startLessonHref={startLessonHref}
-                getStartLessonHref={getStartLessonHref}
-                onStartLesson={handleStartLesson}
-                selectedLessonActionLabel={
-                  selectedScheduleInstance?.started_at && !selectedScheduleInstance?.concluded_at
-                    ? 'Resume Lesson'
-                    : 'Start Lesson'
-                }
-                onAddClasses={() => router.push(`/dashboard/classes/new?id=${selectedClass?.uuid}`)}
-              />
-            </TabsContent>
+              <TabsContent value='lessons' className='mt-0'>
+                <ClassLessonTab
+                  isLoadingClasses={isLoadingClasses}
+                  isLoadingLessons={isLoadingLessons}
+                  selectedClass={selectedClassForDisplay}
+                  selectedClassUuid={selectedClassUuid}
+                  lessonModules={lessonModules}
+                  selectedLesson={selectedLesson}
+                  contentTypeMap={contentTypeMap}
+                  difficultyMap={difficultyMap}
+                  instructorName={instructor?.full_name}
+                  rosterEntries={roster}
+                  sessionProgress={sessionProgress}
+                  remainingSessions={remainingSessions}
+                  setSelectedLessonUuid={setSelectedLessonUuid}
+                  startLessonHref={startLessonHref}
+                  getStartLessonHref={getStartLessonHref}
+                  onStartLesson={handleStartLesson}
+                  selectedLessonActionLabel={
+                    selectedScheduleInstance?.started_at && !selectedScheduleInstance?.concluded_at
+                      ? 'Resume Lesson'
+                      : 'Start Lesson'
+                  }
+                  onAddClasses={() => router.push(`/dashboard/classes/new?id=${selectedClass?.uuid}`)}
+                />
+              </TabsContent>
 
-            {/* <TabsContent value='lessons' className='mt-0'>
+              {/* <TabsContent value='lessons' className='mt-0'>
               <ClassLessonsTab
                 isLoading={isLoadingClasses || isLoadingLessons}
                 classTitle={selectedClass?.title}
@@ -499,36 +520,37 @@ export default function NewClassPage() {
               />
             </TabsContent> */}
 
-            <TabsContent value='schedule' className='mt-0'>
-              <ClassScheduleTab isLoading={isLoadingClasses} selectedClass={selectedClass} />
-            </TabsContent>
+              <TabsContent value='schedule' className='mt-0'>
+                <ClassScheduleTab isLoading={isLoadingClasses} selectedClass={selectedClass} />
+              </TabsContent>
 
-            <TabsContent value='students' className='mt-0'>
-              <ClassStudentsTab isLoadingStudents={isLoadingStudents} rosterEntries={roster} />
-            </TabsContent>
+              <TabsContent value='students' className='mt-0'>
+                <ClassStudentsTab isLoadingStudents={isLoadingStudents} rosterEntries={roster} />
+              </TabsContent>
 
-            <TabsContent value='delivery' className='mt-0'>
-              <ClassDeliveryStatusTab
-                isLoadingClasses={isLoadingClasses}
-                selectedClass={selectedClass}
-                dateFilter={dateFilter}
-                difficultyMap={difficultyMap}
-                instructorName={instructor?.full_name}
-                studentCount={roster.length}
-                totalInstances={totalInstances}
-                completionRate={completionRate}
-                selectedInstanceUuid={selectedScheduleInstance?.uuid}
-                visibleInstances={visibleInstances}
-                onAddClasses={() => router.push('/dashboard/classes/new')}
-              />
-            </TabsContent>
+              <TabsContent value='delivery' className='mt-0'>
+                <ClassDeliveryStatusTab
+                  isLoadingClasses={isLoadingClasses}
+                  selectedClass={selectedClass}
+                  dateFilter={dateFilter}
+                  difficultyMap={difficultyMap}
+                  instructorName={instructor?.full_name}
+                  studentCount={roster.length}
+                  totalInstances={totalInstances}
+                  completionRate={completionRate}
+                  selectedInstanceUuid={selectedScheduleInstance?.uuid}
+                  visibleInstances={visibleInstances}
+                  onAddClasses={() => router.push('/dashboard/classes/new')}
+                />
+              </TabsContent>
 
-            <TabsContent value='announcements' className='mt-0'>
-              <PlaceholderTab
-                title='Announcements'
-                description='No announcements yet. Updates, reminders, and important messages for this class will appear here.'
-              />
-            </TabsContent>
+              <TabsContent value='announcements' className='mt-0'>
+                <PlaceholderTab
+                  title='Announcements'
+                  description='No announcements yet. Updates, reminders, and important messages for this class will appear here.'
+                />
+              </TabsContent>
+            </div>
           </Tabs>
         )}
       </div>
