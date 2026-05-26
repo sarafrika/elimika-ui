@@ -425,7 +425,7 @@ export default function NewClassPage() {
             </div>
 
             <ClassHero
-              selectedClass={selectedClass as any}
+              selectedClass={selectedClass as InstructorClassWithSchedule}
               difficultyMap={difficultyMap}
               instructorName={instructor?.full_name}
               roleLabel={"instructor"}
