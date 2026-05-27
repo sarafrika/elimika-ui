@@ -183,15 +183,17 @@ export function ClassSidebar({
                         <p className='truncate text-sm font-semibold text-foreground'>
                           {classItem.title}
                         </p>
-                        <p className='truncate text-xs text-muted-foreground'>
-                          {classItem.course?.name || 'Linked course not available'}
-                        </p>
+
                       </div>
 
                       <span className='inline-flex shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
                         {getClassStatus(classItem)}
                       </span>
                     </div>
+
+                    <p className='line-clamp-2 text-xs text-muted-foreground'>
+                      {classItem.course?.name || 'Linked course not available'}
+                    </p>
 
                     {instructorView && <div className='mt-2 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2'>
                       <span className='inline-flex items-center gap-1.5'>

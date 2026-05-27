@@ -14,6 +14,7 @@ import {
 import type { BookingResponse, Enrollment, Student, User } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { formatDateTime, formatTimeRange, useFilteredInstructorClasses } from '../../classes/_components/new-class-page.utils';
 import type {
   TrainingHubBooking,
   TrainingHubLiveClass,
@@ -244,34 +245,68 @@ export function useInstructorTrainingHubData() {
     return relevantClasses;
   }, [relevantClasses]);
 
+
+  const searchTerm = ''
+  const dateFilter = 'upcoming'
+  const filteredClasses = useFilteredInstructorClasses({ classes, searchTerm, dateFilter });
+
   const liveClasses = useMemo<TrainingHubLiveClass[]>(() => {
-    return liveClassItems.slice(0, 5).map(classItem => {
-      const enrollments = enrollmentsByClass.get(classItem.uuid ?? '') ?? [];
-      const students = enrollments.filter(enrollment =>
-        ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
-      ).length;
-      const classSchedules = classItem.schedule?.filter(instance => instance.status !== 'CANCELLED') ?? [];
+    return filteredClasses.map(classItem => {
+      const enrollments =
+        enrollmentsByClass.get(classItem.uuid ?? '') ?? [];
+
+      const students = new Set(
+        enrollments
+          .filter(enrollment =>
+            ACTIVE_ENROLLMENT_STATUSES.has(
+              enrollment.status ?? ''
+            )
+          )
+          .map(enrollment => enrollment.student_uuid)
+          .filter(Boolean)
+      ).size;
+
+      const classSchedules =
+        classItem.schedule?.filter(
+          instance => instance.status !== 'CANCELLED'
+        ) ?? [];
+
       const nextSession = classSchedules[0] ?? null;
 
       return {
         id: classItem.uuid ?? classItem.title,
         classUuid: classItem.uuid ?? '',
         title: classItem.title,
-        duration_minutes: classItem.duration_minutes ?? 'N/A',
-        provider: classItem.course?.category_names?.[0] ?? 'Approved course',
-        level: classItem.course?.total_duration_display || classItem.course?.category_names?.[0] || 'General',
-        students: `${students} students`,
-        classes: `${classSchedules.length} classes`,
+        duration_minutes:
+          classItem.duration_minutes ?? 'N/A',
+        provider:
+          classItem.course?.category_names?.[0] ??
+          'Approved course',
+        level:
+          classItem.course?.total_duration_display ||
+          classItem.course?.category_names?.[0] ||
+          'General',
+        students: `${students} student${students === 1 ? '' : 's'
+          }`,
+        classes: `${classSchedules.length} class${classSchedules.length === 1 ? '' : 'es'
+          }`,
         fee: formatCurrency(classItem.training_fee),
         sessions: `${classSchedules.length}`,
         status: nextSession ? 'scheduled' : 'draft',
-        href: classItem.uuid ? `/dashboard/classes/overview/${classItem.uuid}` : '/dashboard/classes',
-        imageUrl: classItem.course?.thumbnail_url ?? classItem.course?.banner_url,
-        manageHref: classItem.uuid ? `/dashboard/classes/overview/${classItem.uuid}` : '/dashboard/classes',
-        inviteHref: '/dashboard/training-hub/waiting-list',
+        href: classItem.uuid
+          ? `/dashboard/classes/overview/${classItem.uuid}`
+          : '/dashboard/classes',
+        imageUrl:
+          classItem.course?.thumbnail_url ??
+          classItem.course?.banner_url,
+        manageHref: classItem.uuid
+          ? `/dashboard/classes/overview/${classItem.uuid}`
+          : '/dashboard/classes',
+        inviteHref:
+          '/dashboard/training-hub/waiting-list',
       };
     });
-  }, [enrollmentsByClass, liveClassItems, waitlistEnrollmentsByClass]);
+  }, [filteredClasses, enrollmentsByClass]);
 
   const waitlistStudentUuids = useMemo(() => {
     const studentUuids = Array.from(

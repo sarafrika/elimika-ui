@@ -164,7 +164,7 @@ function EventBlock({
     <button
       type='button'
       className={cn(
-        'focus-visible:ring-ring absolute inset-x-0 overflow-hidden rounded-md border px-1 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none sm:px-1.5 lg:p-2',
+        'cursor-pointer focus-visible:ring-ring absolute inset-x-0 overflow-hidden rounded-md border px-1 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none sm:px-1.5 lg:p-2',
         getEventStyles(event)
       )}
       style={{
@@ -216,7 +216,7 @@ function WeekEventBlock({
     <button
       type='button'
       className={cn(
-        'focus-visible:ring-ring w-full overflow-hidden rounded-md border px-2 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none',
+        'cursor-pointer focus-visible:ring-ring w-full overflow-hidden rounded-md border px-2 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none',
         getEventStyles(event)
       )}
       style={{
@@ -334,7 +334,7 @@ function DayGrid({
                   </div>
 
                   <div
-                    className='relative border-l'
+                    className='cursor-pointer relative border-l'
                     onClick={() =>
                       onEmptySlotClick?.({
                         date: currentDate,
@@ -369,7 +369,7 @@ function DayGrid({
               ))}
 
               {/* EVENTS */}
-              <div className='absolute inset-0 left-[72px]'>
+              <div className='cursor-pointer absolute inset-0 left-[72px]'>
                 {dayEvents.map(event => (
                   <div
                     key={event.id}
@@ -511,7 +511,7 @@ function WeekGrid({
                   height: `${rowHeight}px`,
                 }}
               >
-                <div className='text-muted-foreground px-2 py-2 text-right text-[9px] font-semibold'>
+                <div className='cursor-pointer text-muted-foreground px-2 py-2 text-right text-[9px] font-semibold'>
                   {formatHour(hour)}
                 </div>
 
@@ -558,7 +558,7 @@ function WeekGrid({
             {/* EVENTS OVERLAY */}
             <div
               className={cn(
-                'pointer-events-none absolute inset-0 grid',
+                'cursor-pointer absolute inset-0 grid',
                 weekColumnClass
               )}
             >
@@ -572,12 +572,12 @@ function WeekGrid({
                 return (
                   <div
                     key={day.toISOString()}
-                    className='relative'
+                    className='cursor-pointer relative'
                   >
                     {dayEvents.map(event => (
                       <div
                         key={event.id}
-                        className='pointer-events-auto absolute left-1 right-1'
+                        className='absolute left-1 right-1'
                         style={{
                           top: `${getEventTop(event)}px`,
                         }}
@@ -654,7 +654,7 @@ function MonthGrid({
               <div
                 key={day.toISOString()}
                 className={cn(
-                  'min-h-28 border-r border-b p-2 last:border-r-0 sm:min-h-32',
+                  'min-h-28 border-r border-b p-2 last:border-r-0 sm:min-h-32 cursor-pointer',
                   !isSameMonth(day, currentDate) && 'bg-muted/20 text-muted-foreground'
                 )}
                 role='button'
@@ -703,7 +703,7 @@ function MonthGrid({
                     <span className='text-muted-foreground text-[10px]'>{dayEvents.length}</span>
                   ) : null}
                 </div>
-                <div className='space-y-1'>
+                <div className='space-y-1 cursor-pointer'>
                   {dayEvents.slice(0, 3).map(event => (
                     <CompactEvent key={event.id} event={event} onClick={onEventClick} />
                   ))}
@@ -773,9 +773,9 @@ function YearGrid({
               </div>
 
               <div className='mb-2 grid grid-cols-7 text-[10px] font-semibold text-muted-foreground'>
-                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(label => (
+                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((label, index) => (
                   <span
-                    key={`${month.toISOString()}-${label}`}
+                    key={`${month.toISOString()}-${label}-${index}`}
                     className='text-center'
                   >
                     {label}
