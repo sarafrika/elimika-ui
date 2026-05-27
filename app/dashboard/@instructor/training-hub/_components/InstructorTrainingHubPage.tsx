@@ -62,6 +62,10 @@ export function InstructorTrainingHubPage() {
     [liveClasses, normalizedSearch, selectedType]
   );
 
+  const visibleClasses = searchTerm.trim()
+    ? filteredLiveClasses
+    : filteredLiveClasses.slice(0, 5);
+
   const filteredWaitingList = useMemo(
     () =>
       waitingList.filter(student =>
@@ -131,19 +135,18 @@ export function InstructorTrainingHubPage() {
 
           <div className='min-w-0 space-y-3 overflow-hidden'>
             <TrainingHubSectionHeader
-              actionLabel='View Classes'
+              actionLabel={`View All (${classes?.length ?? 0})`}
               href='/dashboard/classes'
               title='My Classes'
-              number_of_items={classes?.length}
             />
 
             <div className='space-y-3'>
-              {filteredLiveClasses.map(liveClass => (
+              {visibleClasses.map(liveClass => (
                 <LiveClassCard key={liveClass.id} liveClass={liveClass} />
               ))}
 
               {!isLoadingManagedCourses &&
-                filteredLiveClasses.length === 0 &&
+                visibleClasses.length === 0 &&
                 selectedType !== 'manage-courses' && (
                   <Card className='border-border/60 shadow-sm'>
                     <CardContent className='py-10 text-center text-sm text-muted-foreground'>

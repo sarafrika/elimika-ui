@@ -140,10 +140,21 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
                 </Link>
 
                 <Link
-                  href={liveClass.inviteHref}
+                  href={(() => {
+                    const params = new URLSearchParams();
+
+                    if (liveClass?.classUuid) {
+                      params.set('classUuid', liveClass.classUuid);
+                    }
+
+                    const queryString = params.toString();
+
+                    return `/dashboard/classes/class-training/${liveClass?.classUuid}${queryString ? `?${queryString}` : ''
+                      }`;
+                  })()}
                   className='inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90'
                 >
-                  Invite students
+                  Start Class
                 </Link>
               </div>
             </div>
