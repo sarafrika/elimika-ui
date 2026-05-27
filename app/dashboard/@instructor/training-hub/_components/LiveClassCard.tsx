@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { EllipsisVertical, Eye, MailPlus, PenLine } from 'lucide-react';
+import { EllipsisVertical, Eye, PenLine, Play } from 'lucide-react';
 import Link from 'next/link';
 import {
   DropdownMenu,
@@ -98,26 +98,45 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
                     <EllipsisVertical className='size-4' />
                   </Button>
                 </DropdownMenuTrigger>
-
                 <DropdownMenuContent align='end' className='w-48'>
                   <DropdownMenuItem asChild>
-                    <Link href={liveClass.href} className='flex items-center gap-2'>
+                    <Link
+                      href={liveClass.href}
+                      className='flex items-center gap-2'
+                    >
                       <Eye className='size-4' />
                       View info
                     </Link>
                   </DropdownMenuItem>
 
                   <DropdownMenuItem asChild>
-                    <Link href={liveClass.manageHref} className='flex items-center gap-2'>
+                    <Link
+                      href={liveClass.manageHref}
+                      className='flex items-center gap-2'
+                    >
                       <PenLine className='size-4' />
                       Manage class
                     </Link>
                   </DropdownMenuItem>
 
                   <DropdownMenuItem asChild>
-                    <Link href={liveClass.inviteHref} className='flex items-center gap-2'>
-                      <MailPlus className='size-4' />
-                      Invite students
+                    <Link
+                      href={(() => {
+                        const params = new URLSearchParams();
+
+                        if (liveClass?.classUuid) {
+                          params.set('classUuid', liveClass.classUuid);
+                        }
+
+                        const queryString = params.toString();
+
+                        return `/dashboard/classes/class-training/${liveClass?.classUuid}${queryString ? `?${queryString}` : ''
+                          }`;
+                      })()}
+                      className='flex items-center gap-2'
+                    >
+                      <Play className='size-4' />
+                      Start class
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
