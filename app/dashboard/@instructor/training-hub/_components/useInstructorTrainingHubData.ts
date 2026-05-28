@@ -245,7 +245,6 @@ export function useInstructorTrainingHubData() {
     return relevantClasses;
   }, [relevantClasses]);
 
-
   const searchTerm = ''
   const dateFilter = 'upcoming'
   const filteredClasses = useFilteredInstructorClasses({ classes, searchTerm, dateFilter });
@@ -275,6 +274,7 @@ export function useInstructorTrainingHubData() {
 
       return {
         id: classItem.uuid ?? classItem.title,
+        class: classItem,
         classUuid: classItem.uuid ?? '',
         title: classItem.title,
         duration_minutes:

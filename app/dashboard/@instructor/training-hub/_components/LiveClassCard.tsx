@@ -2,176 +2,303 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { EllipsisVertical, Eye, PenLine, Play } from 'lucide-react';
-import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../../../../../components/ui/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
+import { Progress } from '@/components/ui/progress';
+import {
+  isAuthenticatedMediaUrl,
+  toAuthenticatedMediaUrl,
+} from '@/src/lib/media-url';
+import {
+  BookOpen,
+  CalendarDays,
+  EllipsisVertical,
+  Eye,
+  Pencil,
+  Plus,
+  Signal,
+  Trash2,
+  Users
+} from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
+import { RichTextPreview } from '../../classes/class-training/[id]/_components/ClassTrainingPage';
 import type { TrainingHubLiveClass } from './training-hub-data';
 
 type LiveClassCardProps = {
   liveClass: TrainingHubLiveClass;
 };
 
-export function LiveClassCard({ liveClass }: LiveClassCardProps) {
-  const imageUrl = toAuthenticatedMediaUrl(liveClass.imageUrl);
+export function LiveClassCard({
+  liveClass,
+}: LiveClassCardProps) {
+  const imageUrl = toAuthenticatedMediaUrl(
+    liveClass.imageUrl
+  );
 
-  const statusTone =
+  const handleDeleteClass = () => {
+    toast.message('Implement delete class');
+  };
+
+  const statusConfig =
     liveClass.status === 'published'
-      ? 'bg-[color-mix(in_srgb,var(--success)_18%,white)] text-[color-mix(in_srgb,var(--success)_88%,black)]'
+      ? {
+        label: 'Published',
+        className:
+          'bg-emerald-50 text-emerald-700 border-emerald-100',
+      }
       : liveClass.status === 'draft'
-        ? 'bg-[color-mix(in_srgb,var(--warning)_18%,white)] text-[color-mix(in_srgb,var(--warning)_88%,black)]'
-        : 'bg-[color-mix(in_srgb,var(--primary)_10%,white)] text-primary';
+        ? {
+          label: 'Draft',
+          className:
+            'bg-amber-50 text-amber-700 border-amber-100',
+        }
+        : {
+          label: 'On-going',
+          className:
+            'bg-emerald-50 text-emerald-700 border-emerald-100',
+        };
 
+
+  const { difficultyMap } = useDifficultyLevels();
+
+  const progress = liveClass?.class?.class_progress_percentage;
+  const sessionsRemaining = Number(liveClass?.sessions) - Number(liveClass?.class?.completed_session_count)
+
+  const formattedDate = liveClass?.class?.default_start_time
+    ? new Date(
+      liveClass.class.default_start_time
+    ).toLocaleDateString('en-KE', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+    : 'Not set';
+
+  console.log(liveClass, "LCC")
 
   return (
-    <Card className='overflow-hidden border-border/60 shadow-sm'>
-      <CardContent className='p-2 sm:p-3 py-0 -my-4'>
-        <div className='flex flex-col gap-4 lg:flex-row'>
-          {/* <div className='relative aspect-[16/10] w-full overflow-hidden rounded-[18px] border border-border/60 bg-muted lg:max-w-[220px]'>
-            {imageUrl ? (
-              <Image
-                src={imageUrl}
-                alt={liveClass.title}
-                fill
-                className='object-cover'
-                unoptimized={isAuthenticatedMediaUrl(imageUrl)}
-              />
-            ) : (
-              <div className='bg-primary/10 text-primary flex h-full w-full items-center justify-center'>
-                <Users className='size-10' />
-              </div>
-            )}
-          </div> */}
-
-          <div className='min-w-0 flex-1 space-y-3'>
-            <div className='flex items-start justify-between gap-3'>
-              <div className='min-w-0 space-y-2'>
-                <div className='flex flex-wrap items-center gap-2'>
-                  {/* <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${statusTone}`}
-                  >
-                    {liveClass.status}
-                  </span> */}
-                  <span className='inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
-                    {liveClass.provider}
-                  </span>
-                  <span className='inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
-                    {(() => {
-                      const mins = Number(liveClass.duration_minutes);
-
-                      const hours = Math.floor(mins / 60);
-                      const minutes = mins % 60;
-
-                      if (hours && minutes) {
-                        return `${hours} hours ${minutes} minutes`;
-                      }
-
-                      if (hours) {
-                        return `${hours} hour${hours > 1 ? 's' : ''}`;
-                      }
-
-                      return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-                    })()}
-                  </span>
+    <Card className='overflow-hidden p-0 rounded-md border border-border/60 bg-card shadow-sm'>
+      <CardContent className='p-0'>
+        <div className='flex flex-col'>
+          {/* TOP SECTION */}
+          <div className='flex flex-col gap-4 p-4 lg:flex-row lg:items-start'>
+            {/* IMAGE */}
+            <div className='hidden lg:flex relative h-[120px] w-full overflow-hidden rounded-md bg-muted lg:w-[180px] lg:min-w-[180px]'>
+              {imageUrl ? (
+                <Image
+                  src={imageUrl}
+                  alt={liveClass.title}
+                  fill
+                  className='object-cover'
+                  unoptimized={isAuthenticatedMediaUrl(
+                    imageUrl
+                  )}
+                />
+              ) : (
+                <div className='bg-primary/10 text-primary flex h-full w-full items-center justify-center'>
+                  <BookOpen className='size-10' />
                 </div>
+              )}
+            </div>
 
-                <div>
-                  <h3 className='text-foreground line-clamp-2 text-xl font-semibold tracking-[-0.02em]'>
+            {/* CONTENT */}
+            <div className='min-w-0 flex-1'>
+              {/* HEADER */}
+              <div className='flex items-start justify-between gap-3'>
+                <div className='min-w-0 flex-1'>
+                  <h3 className='text-foreground mt-2 line-clamp-1 text-xl font-semibold tracking-[-0.02em]'>
                     {liveClass.title}
                   </h3>
+
+                  <div className='text-muted-foreground mt-1 line-clamp-2 text-sm'>
+                    <RichTextPreview html={liveClass?.class?.course?.description} />
+                  </div>
                 </div>
+
+                {/* DROPDOWN */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      aria-label='More options'
+                      variant='ghost'
+                      size='icon'
+                      className='h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                    >
+                      <EllipsisVertical className='size-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent
+                    align='end'
+                    className='w-52'
+                  >
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={`/dashboard/classes/new?id=${liveClass?.classUuid}`}
+                        className='flex items-center gap-2'
+                      >
+                        <Plus className='size-4' />
+                        Add class
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={liveClass.href}
+                        className='flex items-center gap-2'
+                      >
+                        <Eye className='size-4' />
+                        View class
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={`/dashboard/classes/new?id=${liveClass?.classUuid}`}
+                        className='flex items-center gap-2'
+                      >
+                        <Pencil className='size-4' />
+                        Edit class
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem
+                      className='text-destructive focus:text-destructive'
+                      onClick={
+                        handleDeleteClass
+                      }
+                    >
+                      <Trash2 className='mr-2 size-4' />
+                      Delete class
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    aria-label='More options'
-                    variant='ghost'
-                    size='icon'
-                    className='h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-                  >
-                    <EllipsisVertical className='size-4' />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-48'>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href={liveClass.href}
-                      className='flex items-center gap-2'
-                    >
-                      <Eye className='size-4' />
-                      View info
-                    </Link>
-                  </DropdownMenuItem>
+              <div className='flex flex-wrap items-center gap-2 mt-2'>
+                <span className='inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
+                  {liveClass.provider}
+                </span>
 
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href={liveClass.manageHref}
-                      className='flex items-center gap-2'
-                    >
-                      <PenLine className='size-4' />
-                      Manage class
-                    </Link>
-                  </DropdownMenuItem>
+                <span className='inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
+                  {liveClass?.class?.duration_formatted}
+                </span>
 
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href={(() => {
-                        const params = new URLSearchParams();
+                <span className='inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
+                  {difficultyMap[liveClass?.class?.course?.difficulty_uuid]}
+                </span>
+              </div>
 
-                        if (liveClass?.classUuid) {
-                          params.set('classUuid', liveClass.classUuid);
-                        }
+              {/* STATS */}
+              <div className='mt-5 grid grid-cols-2 gap-3 border-t border-border/60 pt-4 md:grid-cols-5'>
+                <StatItem
+                  icon={
+                    <BookOpen className='size-4' />
+                  }
+                  value={liveClass.classes}
+                  label='Sessions'
+                />
 
-                        const queryString = params.toString();
+                {liveClass?.class?.course?.difficulty_uuid &&
+                  <StatItem
+                    icon={
+                      <Signal className='size-4' />
+                    }
+                    value={difficultyMap[liveClass?.class?.course?.difficulty_uuid]}
+                    label='Level'
+                  />
+                }
 
-                        return `/dashboard/classes/class-training/${liveClass?.classUuid}${queryString ? `?${queryString}` : ''
-                          }`;
-                      })()}
-                      className='flex items-center gap-2'
-                    >
-                      <Play className='size-4' />
-                      Start class
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                <StatItem
+                  icon={
+                    <Users className='size-4' />
+                  }
+                  value={liveClass.students}
+                  label='Students'
+                />
+
+                <StatItem
+                  icon={
+                    <CalendarDays className='size-4' />
+                  }
+                  value={formattedDate}
+                  label='Start Date'
+                />
+
+                <div >
+                  <p className={`py-1.5 px-0.5 text-center rounded-md items-center text-sm font-semibold ${statusConfig.className}`}>
+                    {statusConfig.label}
+                  </p>
+
+                  <p className='mt-1 text-xs opacity-80'>
+                    Last updated: 2 days ago
+                  </p>
+                </div>
+              </div>
             </div>
+          </div>
 
-            <div className='grid gap-3 sm:grid-cols-3'>
-              <InfoPill label='Students' value={liveClass.students} />
-              <InfoPill label='Classes' value={liveClass.classes} />
-              <InfoPill label='Fee' value={liveClass.fee} />
-            </div>
+          {/* BOTTOM SECTION */}
+          <div className='border-t border-border/60 bg-muted/20 px-4 py-4'>
+            <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
+              {/* PROGRESS */}
+              <div className='min-w-0 flex-1'>
+                <div className='mb-2 flex items-center justify-between gap-3'>
+                  <p className='text-sm font-medium text-foreground'>
+                    Overall Progress
+                  </p>
 
-            <div className='flex flex-col gap-2 sm:flex-row justify-end'>
-              <div className='flex flex-col gap-2 sm:flex-row'>
-                <Link
-                  href={liveClass.manageHref}
-                  className='inline-flex h-10 items-center justify-center rounded-lg border border-border/60 px-4 text-sm font-medium text-foreground transition hover:bg-muted/60'
-                >
-                  Manage class
-                </Link>
+                  <p className='text-sm font-semibold text-primary'>
+                    {sessionsRemaining} Sessions Remaining
+                  </p>
+                </div>
 
+                <Progress
+                  value={progress}
+                  className='bg-muted h-2'
+                  indicatorClassName='bg-primary'
+                />
+
+                <p className='text-muted-foreground mt-2 text-sm'>
+                  {progress}% completed
+                </p>
+              </div>
+
+              {/* ACTIONS */}
+              <div className='flex items-center gap-2'>
                 <Link
                   href={(() => {
-                    const params = new URLSearchParams();
+                    const params =
+                      new URLSearchParams();
 
-                    if (liveClass?.classUuid) {
-                      params.set('classUuid', liveClass.classUuid);
+                    if (
+                      liveClass?.classUuid
+                    ) {
+                      params.set(
+                        'classUuid',
+                        liveClass.classUuid
+                      );
                     }
 
-                    const queryString = params.toString();
+                    const queryString =
+                      params.toString();
 
-                    return `/dashboard/classes/class-training/${liveClass?.classUuid}${queryString ? `?${queryString}` : ''
+                    return `/dashboard/classes/class-training/${liveClass?.classUuid}${queryString
+                      ? `?${queryString}`
+                      : ''
                       }`;
                   })()}
-                  className='inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90'
+                  className='inline-flex h-9 min-w-[120px] items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90'
                 >
                   Start Class
                 </Link>
@@ -184,32 +311,30 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
   );
 }
 
-import { BookOpen, Users } from 'lucide-react';
-
-function InfoPill({
-  label,
+function StatItem({
+  icon,
   value,
+  label,
 }: {
-  label: string;
+  icon: React.ReactNode;
   value: string;
+  label: string;
 }) {
-  const iconMap = {
-    Students: Users,
-    Classes: BookOpen,
-  };
-
-  const Icon =
-    iconMap[label as keyof typeof iconMap];
-
   return (
-    <div className='inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[11px]'>
-      {Icon ? (
-        <Icon className='text-muted-foreground size-3 shrink-0' />
-      ) : null}
+    <div className='flex items-start gap-2 border-border/50 md:border-r md:pr-3 last:border-r-0'>
+      <div className='text-muted-foreground mt-0.5 shrink-0'>
+        {icon}
+      </div>
 
-      <span className='text-foreground font-semibold'>
-        {value}
-      </span>
+      <div className='min-w-0'>
+        <p className='text-foreground truncate text-sm font-semibold'>
+          {value}
+        </p>
+
+        <p className='text-muted-foreground text-xs'>
+          {label}
+        </p>
+      </div>
     </div>
   );
 }
