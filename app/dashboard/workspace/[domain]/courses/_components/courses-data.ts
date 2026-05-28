@@ -48,6 +48,7 @@ export type CoursesCatalogCardData = {
   provider: string;
   duration: string;
   secondaryMeta: string;
+  enrolledClasses: number;
   ctaLabel: string;
   ctaDisabled?: boolean;
   ctaKind?: 'link' | 'apply-course' | 'apply-program';

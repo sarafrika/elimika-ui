@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { BookOpen, Clock3, Tag, UserRoundSearch } from 'lucide-react';
+import { BookOpen, Tag, UserRoundSearch } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { CoursesCatalogCardData } from './courses-data';
@@ -73,16 +73,17 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
         </div>
 
         <div className='text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-[0.8rem]'>
-          {card.duration ? (
+          {/* {card.duration ? (
             <span className='inline-flex items-center gap-1.5'>
               <Clock3 className='size-3.5' />
               {card.duration}
             </span>
-          ) : null}
+          ) : null} */}
           <span className='inline-flex items-center gap-1.5'>
             <Tag className='size-3.5' />
             {card.secondaryMeta}
           </span>
+
         </div>
 
         <div className={cn('grid gap-2', card.showInstructorCta !== false && 'sm:grid-cols-2')}>

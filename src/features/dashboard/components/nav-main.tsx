@@ -58,7 +58,11 @@ function MenuItemWithAccordion({
       {hasChildren ? (
         <>
           {/* Toggle Button for Accordion */}
-          <SidebarMenuButton isActive={item.isActive} onClick={() => setIsOpen(!isOpen)}>
+          <SidebarMenuButton
+            isActive={item.isActive}
+            onClick={() => setIsOpen(!isOpen)}
+            tooltip={item.title}
+          >
             {item.icon && <item.icon />}
             <span>{item.title}</span>
           </SidebarMenuButton>
@@ -80,7 +84,7 @@ function MenuItemWithAccordion({
           )}
         </>
       ) : (
-        <SidebarMenuButton isActive={item.isActive} asChild>
+        <SidebarMenuButton isActive={item.isActive} asChild tooltip={item.title}>
           <Link href={buildWorkspaceAliasPath(activeDomain, item.url!)}>
             {item.icon && <item.icon />}
             <span>{item.title}</span>

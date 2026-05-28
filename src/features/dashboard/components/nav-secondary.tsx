@@ -32,8 +32,8 @@ export function NavSecondary({
       <SidebarGroupContent>
         <SidebarMenu className='gap-0.5'>
           {menuWithActivePath.map((item, index) => (
-            <SidebarMenuItem key={`${item.title}-${index}`}>
-              <SidebarMenuButton asChild size='sm' isActive={item.isActive}>
+              <SidebarMenuItem key={`${item.title}-${index}`}>
+              <SidebarMenuButton asChild size='sm' isActive={item.isActive} tooltip={item.title}>
                 <Link
                   href={
                     item.launchInNewTab

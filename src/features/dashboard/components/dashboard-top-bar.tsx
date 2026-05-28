@@ -12,8 +12,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import type { ApiResponseWallet } from '@/services/client';
@@ -52,13 +50,24 @@ const dashboardLabelByDomain = (domain?: string | null) => {
 const currencyLabel = (currencyCode?: string | null) =>
   currencyCode?.toUpperCase() === 'KES' ? 'Ksh' : currencyCode?.toUpperCase() ?? '';
 
-const formatBalance = (balance?: number | null, currencyCode?: string | null) => {
+const formatBalance = (
+  balance?: number | null,
+  currencyCode?: string | null
+) => {
   if (balance === undefined || balance === null) {
-    return 'Loading...';
+    return (
+      <div className="flex items-center">
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary" />
+      </div>
+    );
   }
 
   const prefix = currencyLabel(currencyCode);
-  const amount = new Intl.NumberFormat('en-KE', { maximumFractionDigits: 0 }).format(balance);
+
+  const amount = new Intl.NumberFormat('en-KE', {
+    maximumFractionDigits: 0,
+  }).format(balance);
+
   return prefix ? `${prefix} ${amount}` : amount;
 };
 
@@ -136,35 +145,6 @@ export default function DashboardTopBar() {
     <header className='bg-background/90 sticky top-0 z-50 backdrop-blur-md '>
       <div className='flex flex-col'>
         <div className='flex items-center gap-3 px-3 py-3 sm:px-5 lg:px-6'>
-          <div className='flex min-w-0 items-center gap-3'>
-            <SidebarTrigger className='-ml-1 shrink-0' />
-            <Separator orientation='vertical' className='bg-border/70 hidden h-8 sm:block' />
-            {/* <Link
-              href={buildWorkspaceAliasPath(activeDomain, '/dashboard/overview')}
-              className='flex min-w-0 items-center gap-3 transition hover:opacity-90'
-              prefetch
-            >
-              <div className='bg-sidebar-primary flex size-10 items-center justify-center overflow-hidden rounded-2xl shadow-sm'>
-                <Image
-                  alt='Elimika logo in white'
-                  src='/logos/elimika/Artboard 12.svg'
-                  width={40}
-                  height={40}
-                  className='h-10 w-10 drop-shadow-sm'
-                  priority
-                />
-              </div>
-              <div className='hidden min-w-0 flex-col leading-tight sm:flex'>
-                <span className='text-foreground truncate text-sm font-semibold'>
-                  {activeDomainLabel}
-                </span>
-                <span className='text-muted-foreground truncate text-xs'>
-                  {profile?.courseCreator?.professional_headline ?? profile?.email ?? 'Workspace dashboard'}
-                </span>
-              </div>
-            </Link> */}
-          </div>
-
           {/* <div className='hidden min-w-0 flex-1 xl:block'>
             <Label className='relative block max-w-2xl'>
               <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />

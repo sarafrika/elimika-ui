@@ -227,7 +227,7 @@ export default function ReusableCourseDetailsPage({
   ];
 
   return (
-    <div className='mx-auto mb-24 min-h-screen w-full max-w-[1680px]'>
+    <div className='mx-auto mt-2 mb-24 min-h-screen w-full max-w-[1680px]'>
       <section className='border-border bg-card relative overflow-hidden rounded-[24px] border px-5 py-6 sm:px-6 lg:px-8'>
         <div className='from-primary/10 via-background absolute inset-0 bg-gradient-to-br to-transparent' />
         <div className='relative grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]'>
