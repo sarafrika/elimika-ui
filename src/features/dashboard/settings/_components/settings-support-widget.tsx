@@ -18,7 +18,7 @@ export function SettingsSupportWidget({
       href={href}
       prefetch={false}
       className={cn(
-        'block rounded-[10px] border border-sidebar-border/70 p-2 shadow-sm transition-colors',
+        'block rounded-[10px] w-full border border-sidebar-border/70 p-2 shadow-sm transition-colors',
         'group-data-[collapsible=icon]:hidden bg-muted/60 hover:bg-muted',
         className
       )}

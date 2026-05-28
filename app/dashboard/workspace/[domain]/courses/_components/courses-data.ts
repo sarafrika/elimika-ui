@@ -25,7 +25,7 @@ export type CoursesHeroAction = {
   tone: 'primary' | 'warning' | 'success';
 };
 
-export type CoursesCatalogTab = 'programs' | 'short-courses' | 'all-courses';
+export type CoursesCatalogTab = 'programs' | 'short-courses' | 'all-courses' | 'my-courses';
 
 export type CoursesFilterSection = {
   key: 'category' | 'contentType' | 'level' | 'duration' | 'price';
@@ -106,6 +106,8 @@ export const catalogTabs: Array<{ value: CoursesCatalogTab; label: string }> = [
   { value: 'all-courses', label: 'All Courses' },
   { value: 'programs', label: 'Programs' },
   { value: 'short-courses', label: 'Short Courses' },
+  { value: 'my-courses', label: 'My Courses' },
+
 ];
 
 const tileIcons = [

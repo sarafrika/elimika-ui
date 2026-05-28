@@ -167,7 +167,7 @@ export default {
       icon: FileText,
     },
     {
-      title: 'Calendar',
+      title: 'Schedule',
       url: '/dashboard/calendar',
       icon: Calendar,
     },
@@ -254,7 +254,7 @@ export default {
       icon: School,
     },
     {
-      title: 'Calendar',
+      title: 'Schedule',
       url: '/dashboard/calendar',
       icon: CalendarClock,
     },
@@ -485,7 +485,7 @@ export default {
       icon: Handshake,
     },
     {
-      title: 'Classes Calendar',
+      title: 'Classes Schedule',
       url: '/dashboard/calendar',
       icon: CalendarClock,
     },
@@ -532,7 +532,7 @@ export default {
       icon: School,
     },
     {
-      title: 'Calendar',
+      title: 'Schedule',
       url: '/dashboard/calendar',
       icon: CalendarClock,
     },
