@@ -70,9 +70,7 @@ export function InstructorTrainingHubPage() {
     [liveClasses, normalizedSearch, selectedType]
   );
 
-  const visibleClasses = searchTerm.trim()
-    ? filteredLiveClasses
-    : filteredLiveClasses.slice(0, 5);
+  const visibleClasses = filteredLiveClasses
 
   const filteredWaitingList = useMemo(
     () =>
@@ -142,7 +140,7 @@ export function InstructorTrainingHubPage() {
 
         <div className='min-w-0 space-y-3 overflow-hidden'>
           <TrainingHubSectionHeader
-            actionLabel={`View All (${classes?.length ?? 0})`}
+            actionLabel={`View All (${liveClasses?.length ?? 0})`}
             href='/dashboard/classes'
             title='My Classes'
           />
