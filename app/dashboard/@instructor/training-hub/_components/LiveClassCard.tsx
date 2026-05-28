@@ -23,7 +23,7 @@ import {
   Plus,
   Signal,
   Trash2,
-  Users
+  Users,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -39,9 +39,7 @@ type LiveClassCardProps = {
 export function LiveClassCard({
   liveClass,
 }: LiveClassCardProps) {
-  const imageUrl = toAuthenticatedMediaUrl(
-    liveClass.imageUrl
-  );
+  const imageUrl = toAuthenticatedMediaUrl(liveClass.imageUrl);
 
   const handleDeleteClass = () => {
     toast.message('Implement delete class');
@@ -70,19 +68,31 @@ export function LiveClassCard({
   const { difficultyMap } = useDifficultyLevels();
 
   const progress = liveClass?.class?.class_progress_percentage;
-  const sessionsRemaining = Number(liveClass?.sessions) - Number(liveClass?.class?.completed_session_count)
+  const sessionsRemaining =
+    Number(liveClass?.sessions) - Number(liveClass?.class?.completed_session_count);
 
   const formattedDate = liveClass?.class?.default_start_time
-    ? new Date(
-      liveClass.class.default_start_time
-    ).toLocaleDateString('en-KE', {
+    ? new Date(liveClass.class.default_start_time).toLocaleDateString('en-KE', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     })
     : 'Not set';
 
-  console.log(liveClass, "LCC")
+  const bundledCourses = liveClass.programCourses ?? [];
+  const topDifficultyLabels = Array.from(
+    new Set(
+      [
+        liveClass?.class?.course?.difficulty_uuid
+          ? difficultyMap[liveClass.class.course.difficulty_uuid] ?? 'General'
+          : null,
+        ...bundledCourses.map(course =>
+          course.difficulty_uuid ? difficultyMap[course.difficulty_uuid] ?? 'General' : 'General'
+        ),
+      ].filter((value): value is string => Boolean(value))
+    )
+  );
+
 
   return (
     <Card className='overflow-hidden p-0 rounded-md border border-border/60 bg-card shadow-sm'>
@@ -194,10 +204,34 @@ export function LiveClassCard({
                   {liveClass?.class?.duration_formatted}
                 </span>
 
-                <span className='inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
-                  {difficultyMap[liveClass?.class?.course?.difficulty_uuid]}
-                </span>
+                <div className='flex flex-wrap items-center gap-2'>
+                  {topDifficultyLabels.map(difficulty => (
+                    <span
+                      key={difficulty}
+                      className='inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'
+                    >
+                      {difficulty}
+                    </span>
+                  ))}
+                </div>
               </div>
+
+              {bundledCourses.length > 0 && (
+                <div className='mt-3 flex flex-wrap items-center gap-2'>
+                  <span className='text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground'>
+                    Program courses:
+                  </span>
+
+                  {bundledCourses.map((course, index) => (
+                    <div
+                      key={course.uuid ?? `${course.name}-${index}`}
+                      className='inline-flex items-center rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted'
+                    >
+                      {course.name}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* STATS */}
               <div className='mt-5 grid grid-cols-2 gap-3 border-t border-border/60 pt-4 md:grid-cols-5'>

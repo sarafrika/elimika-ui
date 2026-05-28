@@ -54,9 +54,18 @@ export function InstructorTrainingHubPage() {
     () =>
       liveClasses.filter(liveClass =>
         selectedType !== 'manage-courses' &&
-        [liveClass.title, liveClass.provider, liveClass.level, liveClass.classes, liveClass.students].some(value =>
-          value.toLowerCase().includes(normalizedSearch)
-        )
+        [
+          liveClass.title,
+          liveClass.provider,
+          liveClass.level,
+          liveClass.classes,
+          liveClass.students,
+          ...(liveClass.programCourses ?? []).flatMap(course => [
+            course.name,
+            course.description ?? '',
+            course.difficulty_uuid ?? '',
+          ]),
+        ].some(value => value.toLowerCase().includes(normalizedSearch))
       ),
     [liveClasses, normalizedSearch, selectedType]
   );

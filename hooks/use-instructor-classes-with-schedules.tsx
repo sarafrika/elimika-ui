@@ -3,6 +3,7 @@ import {
   getClassScheduleOptions,
   getCourseByUuidOptions,
   getEnrollmentsForClassOptions,
+  getProgramCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   GetClassDefinitionsForInstructorResponse,
@@ -11,6 +12,7 @@ import type {
 } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import type { ProgramCourseLike } from './use-programlessonwithcontent';
 
 type InstructorClass = NonNullable<
   NonNullable<GetClassDefinitionsForInstructorResponse['data']>[number]['class_definition']
@@ -24,6 +26,7 @@ type InstructorSchedule = NonNullable<
 
 export type InstructorClassWithSchedule = InstructorClass & {
   course?: InstructorCourse | null;
+  programCourses?: ProgramCourseLike[];
   schedule: InstructorSchedule[];
   enrollments: unknown[];
 };
@@ -83,6 +86,14 @@ export function useInstructorClassesWithSchedules(
     )];
   }, [uniqueClasses]);
 
+  const uniqueProgramUuids = useMemo(() => {
+    return [...new Set(
+      uniqueClasses
+        .map(classItem => classItem.program_uuid)
+        .filter(Boolean)
+    )];
+  }, [uniqueClasses]);
+
   const courseQueries = useQueries({
     queries: uniqueCourseUuids.map(courseUuid => ({
       ...getCourseByUuidOptions({
@@ -112,6 +123,38 @@ export function useInstructorClassesWithSchedules(
       ])
     );
   }, [uniqueCourseUuids, courseQueries]);
+
+  const programCoursesQueries = useQueries({
+    queries: uniqueProgramUuids.map(programUuid => ({
+      ...getProgramCoursesOptions({
+        path: {
+          programUuid: programUuid as string,
+        },
+      }),
+
+      enabled: !!programUuid,
+
+      staleTime: 10 * 60 * 1000,
+      gcTime: 60 * 60 * 1000,
+
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
+    })),
+  });
+
+  const programCoursesMap = useMemo<
+    Record<string, ProgramCourseLike[]>
+  >(() => {
+    return Object.fromEntries(
+      uniqueProgramUuids.map((uuid, index) => [
+        uuid as string,
+        (programCoursesQueries[index]?.data?.data ?? []).filter(
+          (course): course is ProgramCourseLike => Boolean(course?.uuid)
+        ),
+      ])
+    );
+  }, [uniqueProgramUuids, programCoursesQueries]);
 
   const enrollmentQueries = useQueries({
     queries: uniqueClasses.map(classItem => ({
@@ -166,6 +209,11 @@ export function useInstructorClassesWithSchedules(
         course:
           courseMap[classItem.course_uuid as string] ?? null,
 
+        programCourses:
+          classItem.program_uuid
+            ? (programCoursesMap[classItem.program_uuid] ?? [])
+            : [],
+
         schedule:
           scheduleQueries[index]?.data?.data?.content ?? [],
 
@@ -175,6 +223,7 @@ export function useInstructorClassesWithSchedules(
     [
       uniqueClasses,
       courseMap,
+      programCoursesMap,
       scheduleQueries,
       enrollmentQueries,
     ]
@@ -183,18 +232,21 @@ export function useInstructorClassesWithSchedules(
   const isLoading =
     classesQuery.isLoading ||
     courseQueries.some(query => query.isLoading) ||
+    programCoursesQueries.some(query => query.isLoading) ||
     enrollmentQueries.some(query => query.isLoading) ||
     scheduleQueries.some(query => query.isLoading);
 
   const isPending =
     classesQuery.isPending ||
     courseQueries.some(query => query.isPending) ||
+    programCoursesQueries.some(query => query.isPending) ||
     enrollmentQueries.some(query => query.isPending) ||
     scheduleQueries.some(query => query.isPending);
 
   const isError =
     classesQuery.isError ||
     courseQueries.some(query => query.isError) ||
+    programCoursesQueries.some(query => query.isError) ||
     enrollmentQueries.some(query => query.isError) ||
     scheduleQueries.some(query => query.isError);
 

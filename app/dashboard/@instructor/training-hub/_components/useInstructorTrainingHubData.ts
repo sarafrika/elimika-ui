@@ -299,6 +299,7 @@ export function useInstructorTrainingHubData() {
         imageUrl:
           classItem.course?.thumbnail_url ??
           classItem.course?.banner_url,
+        programCourses: classItem.programCourses,
         manageHref: classItem.uuid
           ? `/dashboard/classes/overview/${classItem.uuid}`
           : '/dashboard/classes',
