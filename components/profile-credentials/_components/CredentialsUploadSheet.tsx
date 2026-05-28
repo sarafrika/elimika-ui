@@ -770,7 +770,7 @@ export function CredentialsUploadSheet({
               <div className='space-y-2'>
                 <Label>Document type</Label>
                 <div className='border-border bg-muted/40 text-foreground rounded-md border px-3 py-2 text-sm font-medium'>
-                  {selectedDocumentType?.name ?? 'Auto-selected'}
+                  {selectedDocumentType?.name ?? 'CERTIFICATE'}
                 </div>
 
                 {selectedDocumentType?.description ? (

@@ -245,7 +245,6 @@ export function useInstructorTrainingHubData() {
     return relevantClasses;
   }, [relevantClasses]);
 
-
   const searchTerm = ''
   const dateFilter = 'upcoming'
   const filteredClasses = useFilteredInstructorClasses({ classes, searchTerm, dateFilter });
@@ -275,6 +274,7 @@ export function useInstructorTrainingHubData() {
 
       return {
         id: classItem.uuid ?? classItem.title,
+        class: classItem,
         classUuid: classItem.uuid ?? '',
         title: classItem.title,
         duration_minutes:
@@ -299,6 +299,7 @@ export function useInstructorTrainingHubData() {
         imageUrl:
           classItem.course?.thumbnail_url ??
           classItem.course?.banner_url,
+        programCourses: classItem.programCourses,
         manageHref: classItem.uuid
           ? `/dashboard/classes/overview/${classItem.uuid}`
           : '/dashboard/classes',

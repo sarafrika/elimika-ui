@@ -1,3 +1,5 @@
+import type { ProgramCourseLike } from '@/hooks/use-programlessonwithcontent';
+
 export type TrainingHubManagedCourse = {
   id: string;
   title: string;
@@ -28,6 +30,7 @@ export type TrainingHubLiveClass = {
   manageHref: string;
   inviteHref: string;
   duration_minutes: string;
+  programCourses?: ProgramCourseLike[];
 };
 
 export type TrainingHubWaitingStudent = {

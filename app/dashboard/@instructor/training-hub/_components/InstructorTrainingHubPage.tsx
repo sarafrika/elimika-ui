@@ -7,7 +7,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../../../../components/ui/button';
 import { BookingCard } from './BookingCard';
 import { LiveClassCard } from './LiveClassCard';
-import { ManageCourseCard } from './ManageCourseCard';
 import { TrainingHubHeader } from './TrainingHubHeader';
 import { TrainingHubSectionHeader } from './TrainingHubSectionHeader';
 import { TrainingHubToolbar } from './TrainingHubToolbar';
@@ -55,16 +54,23 @@ export function InstructorTrainingHubPage() {
     () =>
       liveClasses.filter(liveClass =>
         selectedType !== 'manage-courses' &&
-        [liveClass.title, liveClass.provider, liveClass.level, liveClass.classes, liveClass.students].some(value =>
-          value.toLowerCase().includes(normalizedSearch)
-        )
+        [
+          liveClass.title,
+          liveClass.provider,
+          liveClass.level,
+          liveClass.classes,
+          liveClass.students,
+          ...(liveClass.programCourses ?? []).flatMap(course => [
+            course.name,
+            course.description ?? '',
+            course.difficulty_uuid ?? '',
+          ]),
+        ].some(value => value.toLowerCase().includes(normalizedSearch))
       ),
     [liveClasses, normalizedSearch, selectedType]
   );
 
-  const visibleClasses = searchTerm.trim()
-    ? filteredLiveClasses
-    : filteredLiveClasses.slice(0, 5);
+  const visibleClasses = filteredLiveClasses
 
   const filteredWaitingList = useMemo(
     () =>
@@ -99,10 +105,10 @@ export function InstructorTrainingHubPage() {
         selectedType={selectedType}
       />
 
-      <section className='grid w-full min-w-0 max-w-full gap-4 overflow-hidden min-[1380px]:grid-cols-[minmax(0,1fr)_300px]'>
-        <div className='grid min-w-0 max-w-full gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'>
-          <div className='min-w-0 space-y-3 overflow-hidden'>
 
+      <section className='grid w-full min-w-0 max-w-full gap-4 overflow-hidden xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]'>
+
+        {/* <div className='min-w-0 space-y-3 overflow-hidden'>
             <div className='flex flex-row items-center gap-1'>
               <TrainingHubSectionHeader title='My Courses' number_of_items={managedCourses.length} />
             </div>
@@ -130,45 +136,41 @@ export function InstructorTrainingHubPage() {
                 </Card>
               )}
             </div>
+          </div> */}
 
-          </div>
+        <div className='min-w-0 space-y-3 overflow-hidden'>
+          <TrainingHubSectionHeader
+            actionLabel={`View All (${liveClasses?.length ?? 0})`}
+            href='/dashboard/classes'
+            title='My Classes'
+          />
 
-          <div className='min-w-0 space-y-3 overflow-hidden'>
-            <TrainingHubSectionHeader
-              actionLabel={`View All (${classes?.length ?? 0})`}
-              href='/dashboard/classes'
-              title='My Classes'
-            />
+          <div className='space-y-3'>
+            {visibleClasses.map(liveClass => (
+              <LiveClassCard key={liveClass.id} liveClass={liveClass} />
+            ))}
 
-            <div className='space-y-3'>
-              {visibleClasses.map(liveClass => (
-                <LiveClassCard key={liveClass.id} liveClass={liveClass} />
-              ))}
-
-              {!isLoadingManagedCourses &&
-                visibleClasses.length === 0 &&
-                selectedType !== 'manage-courses' && (
-                  <Card className='border-border/60 shadow-sm'>
-                    <CardContent className='py-10 text-center text-sm text-muted-foreground'>
-                      No created classes matched your search.
-                    </CardContent>
-                  </Card>
-                )}
-
-              {isLoadingManagedCourses && selectedType !== 'manage-courses' && (
+            {!isLoadingManagedCourses &&
+              visibleClasses.length === 0 &&
+              selectedType !== 'manage-courses' && (
                 <Card className='border-border/60 shadow-sm'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
-                    Loading classes...
+                    No created classes matched your search.
                   </CardContent>
                 </Card>
               )}
-            </div>
 
+            {isLoadingManagedCourses && selectedType !== 'manage-courses' && (
+              <Card className='border-border/60 shadow-sm'>
+                <CardContent className='py-10 text-center text-sm text-muted-foreground'>
+                  Loading classes...
+                </CardContent>
+              </Card>
+            )}
           </div>
 
         </div>
 
-        {/* ASIDE */}
         <aside className='min-w-0 space-y-5 overflow-hidden'>
           <section className='space-y-3'>
             <TrainingHubSectionHeader
@@ -184,10 +186,11 @@ export function InstructorTrainingHubPage() {
                 ))}
               </div>
             ) : (
-              <div className='rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center'>
+              <div className='mx-auto flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center'>
                 <p className='text-sm font-medium text-foreground'>
                   No students on the waiting list
                 </p>
+
                 <p className='mt-1 text-sm text-muted-foreground'>
                   New waiting list requests will appear here.
                 </p>
@@ -209,10 +212,11 @@ export function InstructorTrainingHubPage() {
                 ))}
               </div>
             ) : (
-              <div className='rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center'>
+              <div className='flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center'>
                 <p className='text-sm font-medium text-foreground'>
                   No upcoming bookings
                 </p>
+
                 <p className='mt-1 text-sm text-muted-foreground'>
                   Upcoming bookings will appear here.
                 </p>
@@ -229,7 +233,6 @@ export function InstructorTrainingHubPage() {
             <span aria-hidden='true'>›</span>
           </Button>
         </aside>
-
       </section>
     </main>
   );
