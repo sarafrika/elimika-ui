@@ -50,18 +50,18 @@ export function LiveClassCard({
       ? {
         label: 'Published',
         className:
-          'bg-emerald-50 text-emerald-700 border-emerald-100',
+          'border-success/20 bg-success/10 text-success',
       }
       : liveClass.status === 'draft'
         ? {
           label: 'Draft',
           className:
-            'bg-amber-50 text-amber-700 border-amber-100',
+            'border-warning/20 bg-warning/10 text-warning',
         }
         : {
           label: 'On-going',
           className:
-            'bg-emerald-50 text-emerald-700 border-emerald-100',
+            'border-primary/20 bg-primary/10 text-primary',
         };
 
 
