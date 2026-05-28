@@ -3,11 +3,8 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroupContent,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem
+  SidebarTrigger
 } from '@/components/ui/sidebar';
 import type { UserDomain } from '@/lib/types';
 import menu, { type MenuItem } from '@/src/features/dashboard/config/menu';
@@ -41,54 +38,48 @@ export function AppSidebar({
   };
 
   return (
-    <Sidebar variant='inset' {...props} className='px-1'>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size='lg' asChild>
-              <Link prefetch href={buildWorkspaceAliasPath(activeDomain, '/dashboard/overview')}>
-                <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
-                  <Image
-                    alt='Elimika logo in white'
-                    src='/logos/elimika/Artboard 12.svg'
-                    width={40}
-                    height={60}
-                    className='h-20 w-20 drop-shadow-sm'
-                    priority
-                  />
-                </div>
-                <div className='grid flex-1 text-left text-sm leading-tight'>
-                  <span className='truncate font-medium capitalize'>
-                    {organisation?.name || 'Elimika'}
-                  </span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+    <Sidebar variant='inset' collapsible='icon' {...props} className='px-1'>
+      <SidebarHeader className='pt-2'>
+        <div className='flex items-center gap-2'>
+          <SidebarTrigger className='shrink-0' />
+
+          <Link
+            className='flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-sidebar-accent group-data-[collapsible=icon]:hidden'
+            prefetch
+            href={buildWorkspaceAliasPath(activeDomain, '/dashboard/overview')}
+          >
+            <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
+              <Image
+                alt='Elimika logo in white'
+                src='/logos/elimika/Artboard 12.svg'
+                width={40}
+                height={60}
+                className='h-20 w-20 drop-shadow-sm'
+                priority
+              />
+            </div>
+
+            <div className='grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden'>
+              <span className='truncate font-medium capitalize'>
+                {organisation?.name || 'Elimika'}
+              </span>
+            </div>
+          </Link>
+        </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroupContent>
-          {/* <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel> */}
-          <NavMain
-            items={getMenuItems(activeDomain)}
-            activeDomain={activeDomain}
-            pathname={pathname}
-            isAdmin={Boolean(isAdmin)}
-          />
-        </SidebarGroupContent>
+        <NavMain
+          items={getMenuItems(activeDomain)}
+          activeDomain={activeDomain}
+          pathname={pathname}
+          isAdmin={Boolean(isAdmin)}
+        />
 
         <NavSecondary items={menu?.secondary ?? []} className='mt-auto' />
       </SidebarContent>
-      <SidebarFooter className='gap-3'>
+      <SidebarFooter className='w-full gap-3 px-0'>
         {/* <NavUser items={menu?.user ?? []} /> */}
-
         <SettingsSupportWidget href={'/help'} />
-
-        <div className="flex justify-between rounded-md border border-border/70 bg-muted/60 px-4 py-2 text-xs">
-          <p>© 2026 Elimika.</p>
-          <p>v.1.0.0</p>
-        </div>
       </SidebarFooter>
     </Sidebar>
   );
