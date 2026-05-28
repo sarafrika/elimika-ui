@@ -786,8 +786,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     ]
   );
 
-  console.log(catalogCards, "CAT CARDS")
-
   const recommendationCards = useMemo(
     () => createRecommendationCards(recommendedBase, domain, creatorMap, ratingsMap, isInstructorDomain),
     [creatorMap, domain, isInstructorDomain, ratingsMap, recommendedBase]
