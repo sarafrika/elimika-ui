@@ -11,10 +11,11 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useClassDetails } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import { useClassRoster } from '@/hooks/use-class-roster';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { InstructorClassWithSchedule, useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
+import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import { startScheduledInstanceMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation } from '@tanstack/react-query';
 import { NotebookPen, PanelBottom, Search } from 'lucide-react';
@@ -26,7 +27,7 @@ import { ClassDeliveryStatusTab } from '../../../classes/_components/class-deliv
 import { ClassHero, ClassLessonTab, ClassOverviewTab } from '../../../classes/_components/class-overview-tab';
 import { ClassScheduleTab } from '../../../classes/_components/class-schedule-tab';
 import { ClassStudentsTab } from '../../../classes/_components/class-students-tab';
-import { ClassTab, classTabs, DateFilter, dateFilterDescriptions, getPreferredScheduleInstance, useFilteredInstructorClasses } from '../../../classes/_components/new-class-page.utils';
+import { ClassTab, classTabs, getPreferredScheduleInstance } from '../../../classes/_components/new-class-page.utils';
 import { PlaceholderTab } from '../../../classes/_components/placeholder-tab';
 
 
@@ -40,50 +41,30 @@ export default function TrainingHubClassDetailsPage() {
     const router = useRouter();
 
     const [, setExpandedModuleId] = useState<string | null>(null);
-    const [selectedClassUuid, _] = useState<string>(classId);
+    const selectedClassUuid = classId ?? '';
     const [selectedLessonUuid, setSelectedLessonUuid] = useState<string | null>(null);
-    const [draftSearchTerm, setDraftSearchTerm] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [dateFilter, setDateFilter] = useState<DateFilter>('current-day');
     const [activeTab, setActiveTab] = useState<ClassTab>('overview');
     const [isTabsSheetOpen, setIsTabsSheetOpen] = useState(false);
 
+    const { data, isLoading: isLoadingClasses, isError: hasClassesError } = useClassDetails(classId);
 
-    console.log(selectedClassUuid, "HERE?")
+    const selectedClass = useMemo<InstructorClassWithSchedule | null>(() => {
+        if (!data.class) return null;
 
-    const {
-        classes,
-        isLoading: isLoadingClasses,
-        isError: hasClassesError,
-    } = useInstructorClassesWithSchedules(instructor?.uuid);
+        return {
+            ...data.class,
+            course: data.course ?? null,
+            programCourses: data.pCourses ?? [],
+            schedule: data.schedule ?? [],
+            enrollments: data.enrollments ?? [],
+        };
+    }, [data.class, data.course, data.enrollments, data.pCourses, data.schedule]);
 
-    const filteredClasses = useFilteredInstructorClasses({
-        classes,
-        searchTerm,
-        dateFilter,
-    });
-
-    // useEffect(() => {
-    //     if (!filteredClasses.length) {
-    //         setSelectedClassUuid(null);
-    //         return;
-    //     }
-
-    //     setSelectedClassUuid(previous =>
-    //         previous && filteredClasses.some(classItem => classItem.uuid === previous)
-    //             ? previous
-    //             : (filteredClasses[0]?.uuid ?? null)
-    //     );
-    // }, [filteredClasses]);
-
-    const selectedClass = useMemo(
-        () => filteredClasses.find(classItem => classItem.uuid === selectedClassUuid) ?? null,
-        [filteredClasses, selectedClassUuid]
-    );
     const selectedScheduleInstance = useMemo(
         () => getPreferredScheduleInstance(selectedClass?.schedule ?? []),
         [selectedClass?.schedule]
     );
+    const dateFilter = 'all' as const;
     const { roster, isLoading: isLoadingStudents } = useClassRoster(selectedClassUuid ?? undefined);
     const {
         isLoading: isLoadingLessons,
@@ -299,7 +280,10 @@ export default function TrainingHubClassDetailsPage() {
         <div className='min-h-full rounded-lg px-3 py-8 shadow-sm sm:px-5'>
             <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                 <p className='text-foreground text-md leading-tight sm:text-lg'>
-                    {dateFilterDescriptions[dateFilter]} <span className='font-semibold'>Start training</span>
+                    <span className='font-semibold'>
+                        {selectedClass?.title ?? 'Class'}
+                    </span>{' '}
+                    details
                 </p>
             </div>
 

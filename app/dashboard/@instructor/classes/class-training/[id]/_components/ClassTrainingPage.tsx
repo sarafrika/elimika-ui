@@ -2993,7 +2993,7 @@ export default function ClassTrainingPage({
           </Tabs>
 
           <ScrollArea className='h-[calc(100vh-8.5rem)]'>
-            {activeLefTab === "students" &&
+            {activeLefTab === 'students' ? (
               <aside className='border-border/70 hidden min-h-0 border-r xl:block'>
                 <RosterPanel
                   activeInstanceStudentsCount={activeInstanceStudents.length}
@@ -3007,45 +3007,64 @@ export default function ClassTrainingPage({
                   onMarkAllPresent={handleMarkAllPresent}
                   isMarkingAllAttendance={markAttendanceMut.isPending}
                 />
-              </aside>}
+              </aside>
+            ) : null}
+
+            {activeLefTab === 'lessons' ? (
+              <div className='border-border/70 bg-card/90 rounded-lg border border-dashed p-8 text-center'>
+                <p className='text-foreground text-sm font-semibold'>Lessons</p>
+                <p className='text-muted-foreground mt-1 text-sm'>
+                  Lesson tools will be added here soon.
+                </p>
+              </div>
+            ) : null}
+
+            {activeLefTab === 'evaluation' ? (
+              <div className='border-border/70 bg-card/90 space-y-4 rounded-lg border p-4 shadow-sm'>
+
+                {/* // should show a list of all students in the class, like we had under the students tab section, and the selected student should be highlighted. the detaails of the evaluation for the studdent will be shown on the new section where evalutation is displayed for selected students */}
 
 
-            {activeLefTab === "lessons" && <div>Show lessons</div>}
+                <div className='space-y-1'>
+                  <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+                    Selected student
+                  </p>
+                  <h3 className='text-foreground text-lg font-semibold'>
+                    {selectedStudent?.user?.full_name || 'No student selected'}
+                  </h3>
+                  <p className='text-muted-foreground text-sm'>
+                    Review attendance, submissions, and rubric context for the learner chosen on the left.
+                  </p>
+                </div>
 
-            {activeLefTab === "evaluation" && <div>show evaluation</div>}
-            {/* <aside className='border-border/70 hidden min-h-0 border-l xl:block'>
-          <SubmissionPanel
-            activeSchedule={activeSchedule}
-            activeInstanceStudentsCount={activeInstanceStudents.length}
-            selectedContentType={selectedContentType}
-            selectedStudent={selectedStudent}
-            courseAssessments={courseAssessments}
-            rubricAssociations={rubricAssociations}
-            rubricMatrices={rubricMatrices}
-            noteDraft={noteDraft}
-            sentNotes={sentNotes}
-            selectedStudentSubmissions={selectedStudentSubmissions}
-            onNoteDraftChange={setNoteDraft}
-            isEndClassConfirmOpen={isEndClassConfirmOpen}
-            setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
-            isEndingClass={endScheduledInstanceMut.isPending}
-            onSendNote={handleSendNote}
-            onMarkAttendance={handleMarkAttendance}
-            isMarkingAttendance={markAttendanceMut.isPending}
-            onStartClass={handleStartClass}
-            onEndClass={handleEndClass}
-            isStartingClass={startScheduledInstanceMut.isPending}
-            handleEndClass={() => { }}
-          />
-        </aside> */}
-
-
+                <div className='grid gap-3 sm:grid-cols-3'>
+                  <div className='rounded-md border border-border/60 bg-background/80 p-3'>
+                    <p className='text-muted-foreground text-xs'>Students</p>
+                    <p className='text-foreground mt-1 text-lg font-semibold'>
+                      {activeInstanceStudents.length}
+                    </p>
+                  </div>
+                  <div className='rounded-md border border-border/60 bg-background/80 p-3'>
+                    <p className='text-muted-foreground text-xs'>Assignments</p>
+                    <p className='text-foreground mt-1 text-lg font-semibold'>
+                      {selectedStudentSubmissions.length}
+                    </p>
+                  </div>
+                  <div className='rounded-md border border-border/60 bg-background/80 p-3'>
+                    <p className='text-muted-foreground text-xs'>Assessments</p>
+                    <p className='text-foreground mt-1 text-lg font-semibold'>
+                      {courseAssessments.length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </ScrollArea>
-
-
-
         </section>
 
+
+        {/* when the activelefttab is either students or lesson, make sure this is displayed on the right as it is currently */}
+        {/* this is the training area, showing the lesson lists and content of each lesson */}
         <section className='min-h-0 overflow-hidden bg-background'>
           <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
             <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
@@ -3253,6 +3272,10 @@ export default function ClassTrainingPage({
               </div>
             )}
           </ScrollArea>
+        </section>
+
+        <section>
+          {/* this section should display all information about the evaluation for a selected studdent  */}
         </section>
 
         {/* <aside className='border-border/70 hidden min-h-0 border-l xl:block'>

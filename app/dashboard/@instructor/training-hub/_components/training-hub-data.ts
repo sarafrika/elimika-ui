@@ -64,16 +64,9 @@ export const trainingHubTypeFilters = [
   { label: 'Upcoming', value: 'upcoming' }, // classes with schedule happening on a future date
   { label: 'Incomplete', value: 'incomplete' }, // classes whose completion rate are not 100%
   { label: 'Remedial', value: 'remedial' }, // 
-  { label: 'Make up Classes', value: 'make-up' },
+  { label: 'Make-up Classes', value: 'make-up' },
   { label: 'Cancelled', value: 'cancelled' }, // cancelled classes
-] as const;
-
-export const trainingHubStatusFilters = [
-  { label: 'All Statuses', value: 'all' },
-  { label: 'Approved', value: 'approved' },
-  { label: 'Today', value: 'today' },
-  { label: 'Tomorrow', value: 'tomorrow' },
-  { label: 'Upcoming', value: 'upcoming' },
+  { label: 'Completed', value: 'completed' }, // classes whose completion rate is 100%
 ] as const;
 
 export const managedCourses: TrainingHubManagedCourse[] = [

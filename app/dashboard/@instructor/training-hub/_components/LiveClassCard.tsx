@@ -177,7 +177,7 @@ export function LiveClassCard({
 
                     <DropdownMenuItem asChild>
                       <Link
-                        href={`/dashboard/training-hub/classes/${liveClass?.classUuid}`}
+                        href={`/dashboard/training-hub/classes/${liveClass.classUuid}`}
                         className='flex items-center gap-2'
                       >
                         <Eye className='size-4' />
@@ -315,25 +315,7 @@ export function LiveClassCard({
               <div className='flex items-center gap-2'>
                 <Link
                   href={(() => {
-                    const params =
-                      new URLSearchParams();
-
-                    if (
-                      liveClass?.classUuid
-                    ) {
-                      params.set(
-                        'classUuid',
-                        liveClass.classUuid
-                      );
-                    }
-
-                    const queryString =
-                      params.toString();
-
-                    return `/dashboard/classes/class-training/${liveClass?.classUuid}${queryString
-                      ? `?${queryString}`
-                      : ''
-                      }`;
+                    return `/dashboard/classes/class-training/${liveClass.classUuid}`;
                   })()}
                   className='inline-flex h-9 min-w-[120px] items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90'
                 >
