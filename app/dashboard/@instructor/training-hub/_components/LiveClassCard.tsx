@@ -21,9 +21,9 @@ import {
   Eye,
   Pencil,
   Plus,
-  Signal,
   Trash2,
-  Users,
+  UserPlus,
+  Users
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -93,6 +93,14 @@ export function LiveClassCard({
     )
   );
 
+  const totalMinutes = liveClass?.class?.schedule?.reduce(
+    (sum, item) => sum + Number(item?.duration_minutes || 0),
+    0
+  );
+
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const timeHrsMinutes = `${hours} hrs ${minutes} mins`
 
   return (
     <Card className='overflow-hidden p-0 rounded-md border border-border/60 bg-card shadow-sm'>
@@ -100,23 +108,30 @@ export function LiveClassCard({
         <div className='flex flex-col'>
           {/* TOP SECTION */}
           <div className='flex flex-col gap-4 p-4 lg:flex-row lg:items-start'>
-            {/* IMAGE */}
-            <div className='hidden lg:flex relative h-[120px] w-full overflow-hidden rounded-md bg-muted lg:w-[180px] lg:min-w-[180px]'>
-              {imageUrl ? (
-                <Image
-                  src={imageUrl}
-                  alt={liveClass.title}
-                  fill
-                  className='object-cover'
-                  unoptimized={isAuthenticatedMediaUrl(
-                    imageUrl
-                  )}
-                />
-              ) : (
-                <div className='bg-primary/10 text-primary flex h-full w-full items-center justify-center'>
-                  <BookOpen className='size-10' />
-                </div>
-              )}
+            <div>
+              {/* IMAGE */}
+              <div className='hidden lg:flex relative h-[120px] w-full overflow-hidden rounded-md bg-muted lg:w-[180px] lg:min-w-[180px]'>
+                {imageUrl ? (
+                  <Image
+                    src={imageUrl}
+                    alt={liveClass.title}
+                    fill
+                    className='object-cover'
+                    unoptimized={isAuthenticatedMediaUrl(
+                      imageUrl
+                    )}
+                  />
+                ) : (
+                  <div className='bg-primary/10 text-primary flex h-full w-full items-center justify-center'>
+                    <BookOpen className='size-10' />
+                  </div>
+                )}
+              </div>
+
+              <Button variant={"ghost"} className='border mt-2'>
+                <UserPlus />
+                <p>Invite student</p>
+              </Button>
             </div>
 
             {/* CONTENT */}
@@ -129,7 +144,7 @@ export function LiveClassCard({
                   </h3>
 
                   <div className='text-muted-foreground mt-1 line-clamp-2 text-sm'>
-                    <RichTextPreview html={liveClass?.class?.course?.description} />
+                    <RichTextPreview html={liveClass?.class?.course?.description as string} />
                   </div>
                 </div>
 
@@ -162,7 +177,7 @@ export function LiveClassCard({
 
                     <DropdownMenuItem asChild>
                       <Link
-                        href={liveClass.href}
+                        href={`/dashboard/training-hub/classes/${liveClass.classUuid}`}
                         className='flex items-center gap-2'
                       >
                         <Eye className='size-4' />
@@ -201,7 +216,11 @@ export function LiveClassCard({
                 </span>
 
                 <span className='inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
-                  {liveClass?.class?.duration_formatted}
+                  {timeHrsMinutes}
+                </span>
+
+                <span className='inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
+                  {liveClass.fee} /hr/student
                 </span>
 
                 <div className='flex flex-wrap items-center gap-2'>
@@ -234,48 +253,32 @@ export function LiveClassCard({
               )}
 
               {/* STATS */}
-              <div className='mt-5 grid grid-cols-2 gap-3 border-t border-border/60 pt-4 md:grid-cols-5'>
+              <div className='mt-5 flex flex-wrap items-center justify-evenly gap-3 border-t border-border/60 pt-4'>
                 <StatItem
-                  icon={
-                    <BookOpen className='size-4' />
-                  }
+                  icon={<BookOpen className='size-4' />}
                   value={liveClass.classes}
                   label='Sessions'
                 />
 
-                {liveClass?.class?.course?.difficulty_uuid &&
-                  <StatItem
-                    icon={
-                      <Signal className='size-4' />
-                    }
-                    value={difficultyMap[liveClass?.class?.course?.difficulty_uuid]}
-                    label='Level'
-                  />
-                }
-
                 <StatItem
-                  icon={
-                    <Users className='size-4' />
-                  }
+                  icon={<Users className='size-4' />}
                   value={liveClass.students}
                   label='Students'
                 />
 
                 <StatItem
-                  icon={
-                    <CalendarDays className='size-4' />
-                  }
+                  icon={<CalendarDays className='size-4' />}
                   value={formattedDate}
                   label='Start Date'
                 />
 
-                <div >
-                  <p className={`py-1.5 px-0.5 text-center rounded-md items-center text-sm font-semibold ${statusConfig.className}`}>
-                    {statusConfig.label}
+                <div>
+                  <p className='rounded-md px-0.5 py-1.5 text-sm font-semibold'>
+                    {liveClass?.class?.location_type}
                   </p>
 
-                  <p className='mt-1 text-xs opacity-80'>
-                    Last updated: 2 days ago
+                  <p className='text-xs opacity-80'>
+                    {liveClass?.class?.class_visibility}
                   </p>
                 </div>
               </div>
@@ -312,25 +315,7 @@ export function LiveClassCard({
               <div className='flex items-center gap-2'>
                 <Link
                   href={(() => {
-                    const params =
-                      new URLSearchParams();
-
-                    if (
-                      liveClass?.classUuid
-                    ) {
-                      params.set(
-                        'classUuid',
-                        liveClass.classUuid
-                      );
-                    }
-
-                    const queryString =
-                      params.toString();
-
-                    return `/dashboard/classes/class-training/${liveClass?.classUuid}${queryString
-                      ? `?${queryString}`
-                      : ''
-                      }`;
+                    return `/dashboard/classes/class-training/${liveClass.classUuid}`;
                   })()}
                   className='inline-flex h-9 min-w-[120px] items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90'
                 >

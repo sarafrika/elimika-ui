@@ -888,6 +888,7 @@ const NewClassCreationPage = () => {
       academic_period_end_date: academicPeriodEnd,
       registration_period_start_date: registrationPeriodStart,
       registration_period_end_date: registrationPeriodEnd,
+      scheduled_session_count: totalSessions,
       class_reminder_minutes: reminderToMinutes(notificationSettings.reminder),
       duration_minutes: totalHoursInMinutes,
       training_fee: ratePerHour,

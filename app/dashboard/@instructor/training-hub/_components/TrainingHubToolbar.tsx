@@ -1,46 +1,26 @@
 'use client';
 
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { LayoutGrid, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-import {
-  trainingHubStatusFilters,
-  trainingHubTypeFilters,
-} from './training-hub-data';
+import { trainingHubTypeFilters, } from './training-hub-data';
+
 
 type TrainingHubToolbarProps = {
   searchTerm: string;
   onSearchTermChange: (value: string) => void;
-  selectedStatus: (typeof trainingHubStatusFilters)[number]['value'];
   selectedType: (typeof trainingHubTypeFilters)[number]['value'];
-  onStatusChange: (value: (typeof trainingHubStatusFilters)[number]['value']) => void;
   onTypeChange: (value: (typeof trainingHubTypeFilters)[number]['value']) => void;
 };
 
 export function TrainingHubToolbar({
   searchTerm,
   onSearchTermChange,
-  selectedStatus,
   selectedType,
-  onStatusChange,
   onTypeChange,
 }: TrainingHubToolbarProps) {
   return (
-    <section
-      aria-label='Training hub filters'
-      className='rounded-[14px] border border-border/50 bg-card p-3 shadow-sm sm:p-4'
-    >
-      <div className='flex flex-col gap-3 min-[900px]:flex-row min-[900px]:items-center min-[900px]:gap-2'>
-
-        {/* Search */}
+    <section aria-label='Training hub filters' className='space-y-3'>
+      {/* <div className='flex flex-col gap-3 min-[900px]:flex-row min-[900px]:items-center min-[900px]:gap-2'>
         <Label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-border/60 bg-background px-3 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
           <Search className="size-4 shrink-0" />
           <span className="sr-only">Search courses or classes</span>
@@ -55,44 +35,35 @@ export function TrainingHubToolbar({
           />
         </Label>
 
-        {/* Filters */}
-        <div className='flex flex-wrap gap-2 min-[900px]:justify-end'>
-
-          {/* Type Select */}
-          <Select value={selectedType} onValueChange={onTypeChange}>
-            <SelectTrigger className='h-11 w-[160px] rounded-[10px] border-border/60 bg-background'>
-              <SelectValue placeholder='Type' />
-            </SelectTrigger>
-            <SelectContent>
-              {trainingHubTypeFilters.map(filter => (
-                <SelectItem key={filter.value} value={filter.value}>
-                  {filter.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Status Select */}
-          <Select value={selectedStatus} onValueChange={onStatusChange}>
-            <SelectTrigger className='h-11 w-[160px] rounded-[10px] border-border/60 bg-background'>
-              <SelectValue placeholder='Status' />
-            </SelectTrigger>
-            <SelectContent>
-              {trainingHubStatusFilters.map(filter => (
-                <SelectItem key={filter.value} value={filter.value}>
-                  {filter.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <button
+        <div className='flex items-center gap-2'>
+          <Button
             type='button'
+            variant='outline'
             aria-label='Change view'
-            className='inline-flex size-11 items-center justify-center rounded-[10px] border border-border/60 bg-background text-muted-foreground transition hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20'
+            className='h-11 rounded-[10px] border-border/60 bg-background px-4 text-muted-foreground'
           >
-            <LayoutGrid className='size-4' />
-          </button>
+            All views
+          </Button>
+        </div>
+      </div> */}
+
+      <div className='space-y-3 my-3'>
+        <div className='flex flex-wrap gap-2'>
+          {trainingHubTypeFilters.map(filter => {
+            const isActive = filter.value === selectedType;
+
+            return (
+              <Button
+                key={filter.value}
+                type='button'
+                variant={isActive ? 'default' : 'outline'}
+                onClick={() => onTypeChange(filter.value)}
+                className='h-9 rounded-full px-4 text-xs'
+              >
+                {filter.label}
+              </Button>
+            );
+          })}
         </div>
       </div>
     </section>

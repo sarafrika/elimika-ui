@@ -1,4 +1,5 @@
 import type { ProgramCourseLike } from '@/hooks/use-programlessonwithcontent';
+import { InstructorClassWithSchedule } from '../../../../../hooks/use-instructor-classes-with-schedules';
 
 export type TrainingHubManagedCourse = {
   id: string;
@@ -17,6 +18,7 @@ export type TrainingHubManagedCourse = {
 export type TrainingHubLiveClass = {
   id: string;
   classUuid: string;
+  class: InstructorClassWithSchedule;
   title: string;
   provider: string;
   level: string;
@@ -57,17 +59,14 @@ export type TrainingHubBooking = {
 };
 
 export const trainingHubTypeFilters = [
-  { label: 'All Types', value: 'all' },
-  { label: 'Manage Courses', value: 'manage-courses' },
-  { label: 'Live Classes', value: 'live-classes' },
-] as const;
-
-export const trainingHubStatusFilters = [
-  { label: 'All Statuses', value: 'all' },
-  { label: 'Approved', value: 'approved' },
-  { label: 'Today', value: 'today' },
-  { label: 'Tomorrow', value: 'tomorrow' },
-  { label: 'Upcoming', value: 'upcoming' },
+  { label: 'All Classes', value: 'all' },
+  { label: 'Today Classes', value: 'today' }, //classes with schedule happening on that day
+  { label: 'Upcoming', value: 'upcoming' }, // classes with schedule happening on a future date
+  { label: 'Incomplete', value: 'incomplete' }, // classes whose completion rate are not 100%
+  { label: 'Remedial', value: 'remedial' }, // 
+  { label: 'Make-up Classes', value: 'make-up' },
+  { label: 'Cancelled', value: 'cancelled' }, // cancelled classes
+  { label: 'Completed', value: 'completed' }, // classes whose completion rate is 100%
 ] as const;
 
 export const managedCourses: TrainingHubManagedCourse[] = [

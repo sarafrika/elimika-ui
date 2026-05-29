@@ -14,7 +14,6 @@ import {
 import type { BookingResponse, Enrollment, Student, User } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { formatDateTime, formatTimeRange, useFilteredInstructorClasses } from '../../classes/_components/new-class-page.utils';
 import type {
   TrainingHubBooking,
   TrainingHubLiveClass,
@@ -241,16 +240,8 @@ export function useInstructorTrainingHubData() {
     return map;
   }, [relevantClasses, waitlistQueries]);
 
-  const liveClassItems = useMemo(() => {
-    return relevantClasses;
-  }, [relevantClasses]);
-
-  const searchTerm = ''
-  const dateFilter = 'upcoming'
-  const filteredClasses = useFilteredInstructorClasses({ classes, searchTerm, dateFilter });
-
   const liveClasses = useMemo<TrainingHubLiveClass[]>(() => {
-    return filteredClasses.map(classItem => {
+    return relevantClasses.map(classItem => {
       const enrollments =
         enrollmentsByClass.get(classItem.uuid ?? '') ?? [];
 
@@ -307,7 +298,7 @@ export function useInstructorTrainingHubData() {
           '/dashboard/training-hub/waiting-list',
       };
     });
-  }, [filteredClasses, enrollmentsByClass]);
+  }, [enrollmentsByClass, relevantClasses]);
 
   const waitlistStudentUuids = useMemo(() => {
     const studentUuids = Array.from(
