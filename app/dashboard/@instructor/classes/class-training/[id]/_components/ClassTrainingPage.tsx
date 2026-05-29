@@ -1524,6 +1524,57 @@ function RosterPanel({
   );
 }
 
+function EvaluationSummary({
+  activeInstanceStudentsCount,
+  selectedStudent,
+  selectedStudentSubmissionsCount,
+  courseAssessmentsCount,
+}: {
+  activeInstanceStudentsCount: number;
+  selectedStudent: RosterEntry | null;
+  selectedStudentSubmissionsCount: number;
+  courseAssessmentsCount: number;
+}) {
+  return (
+    <div className='space-y-4'>
+      <div className='space-y-1'>
+        <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+          Selected student
+        </p>
+        <h3 className='text-foreground text-lg font-semibold'>
+          {selectedStudent?.user?.full_name || 'No student selected'}
+        </h3>
+        <p className='text-muted-foreground text-sm'>
+          Review attendance, submissions, and rubric context for the learner chosen on the left.
+        </p>
+      </div>
+
+      <div className='grid gap-3 sm:grid-cols-3'>
+        <div className='rounded-md border border-border/60 bg-background/80 p-3'>
+          <p className='text-muted-foreground text-xs'>Students</p>
+          <p className='text-foreground mt-1 text-lg font-semibold'>
+            {activeInstanceStudentsCount}
+          </p>
+        </div>
+
+        <div className='rounded-md border border-border/60 bg-background/80 p-3'>
+          <p className='text-muted-foreground text-xs'>Assignments</p>
+          <p className='text-foreground mt-1 text-lg font-semibold'>
+            {selectedStudentSubmissionsCount}
+          </p>
+        </div>
+
+        <div className='rounded-md border border-border/60 bg-background/80 p-3'>
+          <p className='text-muted-foreground text-xs'>Assessments</p>
+          <p className='text-foreground mt-1 text-lg font-semibold'>
+            {courseAssessmentsCount}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SubmissionPanel({
   activeSchedule,
   activeInstanceStudentsCount,
@@ -2972,7 +3023,6 @@ export default function ClassTrainingPage({
       </header>
 
       <section className='grid min-h-0 flex-1 gap-0 overflow-hidden xl:grid-cols-[420px_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]'>
-
         <section>
           <Tabs
             value={activeLefTab}
@@ -2993,8 +3043,18 @@ export default function ClassTrainingPage({
           </Tabs>
 
           <ScrollArea className='h-[calc(100vh-8.5rem)]'>
-            {activeLefTab === 'students' ? (
-              <aside className='border-border/70 hidden min-h-0 border-r xl:block'>
+            {activeLefTab === 'students' || activeLefTab === 'evaluation' ? (
+              <aside className='border-border/70 min-h-0 border-r'>
+                {activeLefTab === 'evaluation' ? (
+                  <div className='border-border/70 bg-card/90 border-b p-3'>
+                    <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+                      Evaluation roster
+                    </p>
+                    <p className='text-foreground mt-1 text-sm font-medium'>
+                      Select a student to review their evaluation details.
+                    </p>
+                  </div>
+                ) : null}
                 <RosterPanel
                   activeInstanceStudentsCount={activeInstanceStudents.length}
                   activeInstanceStudents={activeInstanceStudents}
@@ -3020,149 +3080,117 @@ export default function ClassTrainingPage({
             ) : null}
 
             {activeLefTab === 'evaluation' ? (
-              <div className='border-border/70 bg-card/90 space-y-4 rounded-lg border p-4 shadow-sm'>
-
-                {/* // should show a list of all students in the class, like we had under the students tab section, and the selected student should be highlighted. the detaails of the evaluation for the studdent will be shown on the new section where evalutation is displayed for selected students */}
-
-
-                <div className='space-y-1'>
-                  <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
-                    Selected student
-                  </p>
-                  <h3 className='text-foreground text-lg font-semibold'>
-                    {selectedStudent?.user?.full_name || 'No student selected'}
-                  </h3>
-                  <p className='text-muted-foreground text-sm'>
-                    Review attendance, submissions, and rubric context for the learner chosen on the left.
-                  </p>
-                </div>
-
-                <div className='grid gap-3 sm:grid-cols-3'>
-                  <div className='rounded-md border border-border/60 bg-background/80 p-3'>
-                    <p className='text-muted-foreground text-xs'>Students</p>
-                    <p className='text-foreground mt-1 text-lg font-semibold'>
-                      {activeInstanceStudents.length}
-                    </p>
-                  </div>
-                  <div className='rounded-md border border-border/60 bg-background/80 p-3'>
-                    <p className='text-muted-foreground text-xs'>Assignments</p>
-                    <p className='text-foreground mt-1 text-lg font-semibold'>
-                      {selectedStudentSubmissions.length}
-                    </p>
-                  </div>
-                  <div className='rounded-md border border-border/60 bg-background/80 p-3'>
-                    <p className='text-muted-foreground text-xs'>Assessments</p>
-                    <p className='text-foreground mt-1 text-lg font-semibold'>
-                      {courseAssessments.length}
-                    </p>
-                  </div>
-                </div>
+              <div className='border-border/70 bg-card/90 space-y-4 rounded-lg border p-4 shadow-sm xl:hidden'>
+                <EvaluationSummary
+                  activeInstanceStudentsCount={activeInstanceStudents.length}
+                  courseAssessmentsCount={courseAssessments.length}
+                  selectedStudent={selectedStudent}
+                  selectedStudentSubmissionsCount={selectedStudentSubmissions.length}
+                />
               </div>
             ) : null}
           </ScrollArea>
         </section>
 
+        {activeLefTab !== 'evaluation' &&
+          <section className='min-h-0 overflow-hidden bg-background'>
+            <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
+              <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+                <div className='min-w-0 w-full'>
+                  <h2 className='truncate text-lg font-semibold'>
+                    {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
+                  </h2>
 
-        {/* when the activelefttab is either students or lesson, make sure this is displayed on the right as it is currently */}
-        {/* this is the training area, showing the lesson lists and content of each lesson */}
-        <section className='min-h-0 overflow-hidden bg-background'>
-          <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
-            <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-              <div className='min-w-0 w-full'>
-                <h2 className='truncate text-lg font-semibold'>
-                  {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
-                </h2>
-
-                <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
-                  <Tabs
-                    value={activeTab}
-                    onValueChange={value => setActiveTab(value as typeof activeTab)}
-                    className='w-full max-w-xl'
-                  >
-                    <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
-                      {TAB_ITEMS.map(tab => (
-                        <TabsTrigger
-                          key={tab.value}
-                          value={tab.value}
-                          className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
-                        >
-                          {tab.label}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                  </Tabs>
-
-                  <div className='flex flex-col items-start lg:w-72 lg:justify-end'>
-                    <p className='text-muted-foreground text-sm'>Lesson</p>
-                    <Select
-                      value={selectedContentId}
-                      onValueChange={handleContentChange}
-                      disabled={lessonModules.length === 0}
+                  <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
+                    <Tabs
+                      value={activeTab}
+                      onValueChange={value => setActiveTab(value as typeof activeTab)}
+                      className='w-full max-w-xl'
                     >
-                      <SelectTrigger className="h-9 w-full lg:min-w-52">
-                        <SelectValue placeholder="Select content" />
-                      </SelectTrigger>
-
-                      <SelectContent>
-                        {sortedLessonModules.map((module) => (
-                          <div key={module.lesson.uuid}>
-                            <div className="px-2 py-1 text-[13px] italic font-semibold text-muted-foreground bg-muted/60 rounded my-1 border border-muted">
-                              {module.lesson.title}
-                            </div>
-
-                            {module.content?.data
-                              ?.slice()
-                              .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-                              .map((content) => (
-                                <SelectItem key={content.uuid} value={content.uuid}>
-                                  {content.title}
-                                </SelectItem>
-                              ))}
-                          </div>
+                      <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
+                        {TAB_ITEMS.map(tab => (
+                          <TabsTrigger
+                            key={tab.value}
+                            value={tab.value}
+                            className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
+                          >
+                            {tab.label}
+                          </TabsTrigger>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </TabsList>
+                    </Tabs>
+
+                    <div className='flex flex-col items-start lg:w-72 lg:justify-end'>
+                      <p className='text-muted-foreground text-sm'>Lesson</p>
+                      <Select
+                        value={selectedContentId}
+                        onValueChange={handleContentChange}
+                        disabled={lessonModules.length === 0}
+                      >
+                        <SelectTrigger className="h-9 w-full lg:min-w-52">
+                          <SelectValue placeholder="Select content" />
+                        </SelectTrigger>
+
+                        <SelectContent>
+                          {sortedLessonModules.map((module) => (
+                            <div key={module.lesson.uuid}>
+                              <div className="px-2 py-1 text-[13px] italic font-semibold text-muted-foreground bg-muted/60 rounded my-1 border border-muted">
+                                {module.lesson.title}
+                              </div>
+
+                              {module.content?.data
+                                ?.slice()
+                                .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                                .map((content) => (
+                                  <SelectItem key={content.uuid} value={content.uuid}>
+                                    {content.title}
+                                  </SelectItem>
+                                ))}
+                            </div>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <ScrollArea className='h-[calc(100vh-8.5rem)]'>
-            {activeTab === 'content' && (
-              <div className='mx-auto space-y-4 p-2 md:p-2 mb-40'>
-                <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                  <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
-                    <Badge variant='outline' className='capitalize'>
-                      {selectedContentType}
-                    </Badge>
-                    <span>Beginner</span>
-                    <span>{activeInstanceStudents.length} students</span>
-                    <span>{selectedContentDuration || 'Open during class'}</span>
-                  </div>
-
-                  <div className='border-border/70 border-b p-4'>
-                    <p className='text-muted-foreground text-xs'>
-                      {activeLessonCourse?.name || course?.name}
-                    </p>
-                    <h3 className='mt-1 text-xl font-semibold'>{activeLesson?.title}</h3>
-                  </div>
-                  <div className='p-4'>
-                    {selectedContent?.title ? (
-                      <div className='border-border/60 bg-background mb-4 rounded-md border p-4'>
-                        <p className='text-muted-foreground text-sm leading-7'>
-                          {selectedContent.title}
-                        </p>
-                      </div>
-                    ) : null}
-
-                    <div className='max-w-[inherit]' >
-                      {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
+            <ScrollArea className='h-[calc(100vh-8.5rem)]'>
+              {activeTab === 'content' && (
+                <div className='mx-auto space-y-4 p-2 md:p-2 mb-40'>
+                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                    <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
+                      <Badge variant='outline' className='capitalize'>
+                        {selectedContentType}
+                      </Badge>
+                      <span>Beginner</span>
+                      <span>{activeInstanceStudents.length} students</span>
+                      <span>{selectedContentDuration || 'Open during class'}</span>
                     </div>
-                  </div>
-                </article>
 
-                {/* <section className='border-border/70 bg-card rounded-lg border p-4 shadow-sm'>
+                    <div className='border-border/70 border-b p-4'>
+                      <p className='text-muted-foreground text-xs'>
+                        {activeLessonCourse?.name || course?.name}
+                      </p>
+                      <h3 className='mt-1 text-xl font-semibold'>{activeLesson?.title}</h3>
+                    </div>
+                    <div className='p-4'>
+                      {selectedContent?.title ? (
+                        <div className='border-border/60 bg-background mb-4 rounded-md border p-4'>
+                          <p className='text-muted-foreground text-sm leading-7'>
+                            {selectedContent.title}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      <div className='max-w-[inherit]' >
+                        {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
+                      </div>
+                    </div>
+                  </article>
+
+                  {/* <section className='border-border/70 bg-card rounded-lg border p-4 shadow-sm'>
                 <div className='mb-3 flex items-center justify-between gap-3'>
                   <h3 className='font-semibold'>Class discussion</h3>
                   <Button variant='outline' size='sm'>
@@ -3201,82 +3229,299 @@ export default function ClassTrainingPage({
                   </Button>
                 </div>
               </section> */}
-              </div>
-            )}
+                </div>
+              )}
 
-            {activeTab === 'practice' && (
-              <div className='mx-auto space-y-4 p-2 md:p-2'>
-                <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                  <div className='border-border/70 border-b p-4'>
-                    <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
-                      Practice Activities
-                    </p>
-                    <h3 className='mt-1 text-xl font-semibold'>
-                      {activeLesson?.title || 'Practice activities'}
-                    </h3>
-                    <p className='text-muted-foreground mt-2 text-sm'>
-                      Class activities tied to this skill — guide learners through these during class.
-                    </p>
-                  </div>
-                  <div className='p-4'>
-                    <PracticeActivityList
-                      courseUuid={activeLessonCourseUuid || undefined}
-                      lessonUuid={activeLesson?.uuid}
-                      variant='instructor'
-                    />
-                  </div>
-                </article>
-              </div>
-            )}
+              {activeTab === 'practice' && (
+                <div className='mx-auto space-y-4 p-2 md:p-2'>
+                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                    <div className='border-border/70 border-b p-4'>
+                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                        Practice Activities
+                      </p>
+                      <h3 className='mt-1 text-xl font-semibold'>
+                        {activeLesson?.title || 'Practice activities'}
+                      </h3>
+                      <p className='text-muted-foreground mt-2 text-sm'>
+                        Class activities tied to this skill — guide learners through these during class.
+                      </p>
+                    </div>
+                    <div className='p-4'>
+                      <PracticeActivityList
+                        courseUuid={activeLessonCourseUuid || undefined}
+                        lessonUuid={activeLesson?.uuid}
+                        variant='instructor'
+                      />
+                    </div>
+                  </article>
+                </div>
+              )}
 
-            {activeTab === 'assessment' && (
-              <div className='mx-auto space-y-4 p-2 md:p-2'>
-                <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                  <div className='border-border/70 border-b p-4'>
-                    <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
-                      Assessment Tasks
-                    </p>
-                    <h3 className='mt-1 text-xl font-semibold'>
-                      {activeLesson?.title || 'Assessment tasks'}
-                    </h3>
-                    <p className='text-muted-foreground mt-2 text-sm'>
-                      Manage lesson assignments and quizzes from this tab.
-                    </p>
+              {activeTab === 'assessment' && (
+                <div className='mx-auto space-y-4 p-2 md:p-2'>
+                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                    <div className='border-border/70 border-b p-4'>
+                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                        Assessment Tasks
+                      </p>
+                      <h3 className='mt-1 text-xl font-semibold'>
+                        {activeLesson?.title || 'Assessment tasks'}
+                      </h3>
+                      <p className='text-muted-foreground mt-2 text-sm'>
+                        Manage lesson assignments and quizzes from this tab.
+                      </p>
+                    </div>
+                    <div className='p-4'>
+                      <AssessmentTasksSection
+                        activeSchedule={activeSchedule}
+                        lessonAssignments={lessonAssignments}
+                        lessonQuizzes={lessonQuizzes}
+                        activeScheduleAssignments={activeScheduleAssignments}
+                        activeScheduleQuizzes={activeScheduleQuizzes}
+                        selectedAssignmentUuid={selectedAssignmentUuid}
+                        selectedQuizUuid={selectedQuizUuid}
+                        assignmentDueAt={assignmentDueAt}
+                        assignmentGradingDueAt={assignmentGradingDueAt}
+                        quizDueAt={quizDueAt}
+                        quizGradingDueAt={quizGradingDueAt}
+                        onAssignmentSelect={setSelectedAssignmentUuid}
+                        onQuizSelect={setSelectedQuizUuid}
+                        onAssignmentDueAtChange={setAssignmentDueAt}
+                        onAssignmentGradingDueAtChange={setAssignmentGradingDueAt}
+                        onQuizDueAtChange={setQuizDueAt}
+                        onQuizGradingDueAtChange={setQuizGradingDueAt}
+                        onAssignAssignment={handleAssignAssignment}
+                        onAssignQuiz={handleAssignQuiz}
+                        isAssigningAssignment={addAssignmentScheduleMut.isPending}
+                        isAssigningQuiz={addQuizScheduleMut.isPending}
+                      />
+                    </div>
+                  </article>
+                </div>
+              )}
+            </ScrollArea>
+          </section>
+        }
+
+
+        {activeLefTab === "evaluation" &&
+          <section className='min-h-0 overflow-hidden bg-background'>
+            {activeLefTab === 'evaluation' ? (
+              <div className='h-full overflow-hidden'>
+                <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
+                  <div className='flex flex-col gap-3'>
+                    <div className='min-w-0'>
+                      <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+                        Evaluation
+                      </p>
+                      <h2 className='truncate text-lg font-semibold'>
+                        {selectedStudent?.user?.full_name || 'Select a student'}
+                      </h2>
+                      <p className='text-muted-foreground mt-1 text-sm'>
+                        Review the selected student’s attendance, submissions, and rubric context.
+                      </p>
+                    </div>
                   </div>
-                  <div className='p-4'>
-                    <AssessmentTasksSection
+                </div>
+
+                <ScrollArea className='h-[calc(100vh-8.5rem)]'>
+                  <div className='p-3'>
+                    <SubmissionPanel
                       activeSchedule={activeSchedule}
-                      lessonAssignments={lessonAssignments}
-                      lessonQuizzes={lessonQuizzes}
-                      activeScheduleAssignments={activeScheduleAssignments}
-                      activeScheduleQuizzes={activeScheduleQuizzes}
-                      selectedAssignmentUuid={selectedAssignmentUuid}
-                      selectedQuizUuid={selectedQuizUuid}
-                      assignmentDueAt={assignmentDueAt}
-                      assignmentGradingDueAt={assignmentGradingDueAt}
-                      quizDueAt={quizDueAt}
-                      quizGradingDueAt={quizGradingDueAt}
-                      onAssignmentSelect={setSelectedAssignmentUuid}
-                      onQuizSelect={setSelectedQuizUuid}
-                      onAssignmentDueAtChange={setAssignmentDueAt}
-                      onAssignmentGradingDueAtChange={setAssignmentGradingDueAt}
-                      onQuizDueAtChange={setQuizDueAt}
-                      onQuizGradingDueAtChange={setQuizGradingDueAt}
-                      onAssignAssignment={handleAssignAssignment}
-                      onAssignQuiz={handleAssignQuiz}
-                      isAssigningAssignment={addAssignmentScheduleMut.isPending}
-                      isAssigningQuiz={addQuizScheduleMut.isPending}
+                      activeInstanceStudentsCount={activeInstanceStudents.length}
+                      selectedContentType={selectedContentType}
+                      selectedStudent={selectedStudent}
+                      courseAssessments={courseAssessments}
+                      rubricAssociations={rubricAssociations}
+                      rubricMatrices={rubricMatrices}
+                      noteDraft={noteDraft}
+                      sentNotes={sentNotes}
+                      selectedStudentSubmissions={selectedStudentSubmissions}
+                      onNoteDraftChange={setNoteDraft}
+                      handleEndClass={handleEndClass}
+                      isEndClassConfirmOpen={isEndClassConfirmOpen}
+                      setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
+                      isEndingClass={endScheduledInstanceMut.isPending}
+                      onSendNote={handleSendNote}
+                      onMarkAttendance={handleMarkAttendance}
+                      isMarkingAttendance={markAttendanceMut.isPending}
+                      onStartClass={handleStartClass}
+                      onEndClass={handleEndClass}
+                      isStartingClass={startScheduledInstanceMut.isPending}
                     />
                   </div>
-                </article>
+                </ScrollArea>
+              </div>
+            ) : (
+              <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
+                <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+                  <div className='min-w-0 w-full'>
+                    <h2 className='truncate text-lg font-semibold'>
+                      {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
+                    </h2>
+
+                    <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
+                      <Tabs
+                        value={activeTab}
+                        onValueChange={value => setActiveTab(value as typeof activeTab)}
+                        className='w-full max-w-xl'
+                      >
+                        <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
+                          {TAB_ITEMS.map(tab => (
+                            <TabsTrigger
+                              key={tab.value}
+                              value={tab.value}
+                              className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
+                            >
+                              {tab.label}
+                            </TabsTrigger>
+                          ))}
+                        </TabsList>
+                      </Tabs>
+
+                      <div className='flex flex-col items-start lg:w-72 lg:justify-end'>
+                        <p className='text-muted-foreground text-sm'>Lesson</p>
+                        <Select
+                          value={selectedContentId}
+                          onValueChange={handleContentChange}
+                          disabled={lessonModules.length === 0}
+                        >
+                          <SelectTrigger className='h-9 w-full lg:min-w-52'>
+                            <SelectValue placeholder='Select content' />
+                          </SelectTrigger>
+
+                          <SelectContent>
+                            {sortedLessonModules.map(module => (
+                              <div key={module.lesson.uuid}>
+                                <div className='bg-muted/60 text-muted-foreground my-1 rounded border border-muted px-2 py-1 text-[13px] font-semibold italic'>
+                                  {module.lesson.title}
+                                </div>
+
+                                {module.content?.data
+                                  ?.slice()
+                                  .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                                  .map(content => (
+                                    <SelectItem key={content.uuid} value={content.uuid}>
+                                      {content.title}
+                                    </SelectItem>
+                                  ))}
+                              </div>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <ScrollArea className='h-[calc(100vh-8.5rem)]'>
+                  {activeTab === 'content' && (
+                    <div className='mx-auto mb-40 space-y-4 p-2 md:p-2'>
+                      <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                        <div className='mt-2 flex flex-wrap items-center gap-2 border-b p-4 text-xs text-muted-foreground'>
+                          <Badge variant='outline' className='capitalize'>
+                            {selectedContentType}
+                          </Badge>
+                          <span>Beginner</span>
+                          <span>{activeInstanceStudents.length} students</span>
+                          <span>{selectedContentDuration || 'Open during class'}</span>
+                        </div>
+
+                        <div className='border-border/70 border-b p-4'>
+                          <p className='text-muted-foreground text-xs'>
+                            {activeLessonCourse?.name || course?.name}
+                          </p>
+                          <h3 className='mt-1 text-xl font-semibold'>{activeLesson?.title}</h3>
+                        </div>
+                        <div className='p-4'>
+                          {selectedContent?.title ? (
+                            <div className='border-border/60 bg-background mb-4 rounded-md border p-4'>
+                              <p className='text-muted-foreground text-sm leading-7'>
+                                {selectedContent.title}
+                              </p>
+                            </div>
+                          ) : null}
+
+                          <div className='max-w-[inherit]'>
+                            {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                  )}
+
+                  {activeTab === 'practice' && (
+                    <div className='mx-auto space-y-4 p-2 md:p-2'>
+                      <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                        <div className='border-border/70 border-b p-4'>
+                          <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                            Practice Activities
+                          </p>
+                          <h3 className='mt-1 text-xl font-semibold'>
+                            {activeLesson?.title || 'Practice activities'}
+                          </h3>
+                          <p className='text-muted-foreground mt-2 text-sm'>
+                            Class activities tied to this skill — guide learners through these during class.
+                          </p>
+                        </div>
+                        <div className='p-4'>
+                          <PracticeActivityList
+                            courseUuid={activeLessonCourseUuid || undefined}
+                            lessonUuid={activeLesson?.uuid}
+                            variant='instructor'
+                          />
+                        </div>
+                      </article>
+                    </div>
+                  )}
+
+                  {activeTab === 'assessment' && (
+                    <div className='mx-auto space-y-4 p-2 md:p-2'>
+                      <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                        <div className='border-border/70 border-b p-4'>
+                          <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                            Assessment Tasks
+                          </p>
+                          <h3 className='mt-1 text-xl font-semibold'>
+                            {activeLesson?.title || 'Assessment tasks'}
+                          </h3>
+                          <p className='text-muted-foreground mt-2 text-sm'>
+                            Manage lesson assignments and quizzes from this tab.
+                          </p>
+                        </div>
+                        <div className='p-4'>
+                          <AssessmentTasksSection
+                            activeSchedule={activeSchedule}
+                            lessonAssignments={lessonAssignments}
+                            lessonQuizzes={lessonQuizzes}
+                            activeScheduleAssignments={activeScheduleAssignments}
+                            activeScheduleQuizzes={activeScheduleQuizzes}
+                            selectedAssignmentUuid={selectedAssignmentUuid}
+                            selectedQuizUuid={selectedQuizUuid}
+                            assignmentDueAt={assignmentDueAt}
+                            assignmentGradingDueAt={assignmentGradingDueAt}
+                            quizDueAt={quizDueAt}
+                            quizGradingDueAt={quizGradingDueAt}
+                            onAssignmentSelect={setSelectedAssignmentUuid}
+                            onQuizSelect={setSelectedQuizUuid}
+                            onAssignmentDueAtChange={setAssignmentDueAt}
+                            onAssignmentGradingDueAtChange={setAssignmentGradingDueAt}
+                            onQuizDueAtChange={setQuizDueAt}
+                            onQuizGradingDueAtChange={setQuizGradingDueAt}
+                            onAssignAssignment={handleAssignAssignment}
+                            onAssignQuiz={handleAssignQuiz}
+                            isAssigningAssignment={addAssignmentScheduleMut.isPending}
+                            isAssigningQuiz={addQuizScheduleMut.isPending}
+                          />
+                        </div>
+                      </article>
+                    </div>
+                  )}
+                </ScrollArea>
               </div>
             )}
-          </ScrollArea>
-        </section>
+          </section>}
 
-        <section>
-          {/* this section should display all information about the evaluation for a selected studdent  */}
-        </section>
 
         {/* <aside className='border-border/70 hidden min-h-0 border-l xl:block'>
           <SubmissionPanel
