@@ -395,12 +395,6 @@ const TAB_ITEMS = [
   { value: 'assessment', label: 'Assessment Tasks' },
 ];
 
-const LEFT_TAB_ITEMS = [
-  { value: 'students', label: 'Students' },
-  { value: 'lessons', label: 'Lessons' },
-  { value: 'evaluation', label: 'Evaluation' },
-];
-
 function renderLessonContentPreview(
   content: LessonContentItem | null,
   contentTypeDetailsMap: Record<
@@ -2110,8 +2104,6 @@ export default function ClassTrainingPage({
   const appliedRouteContentSelectionRef = useRef('');
 
   const [activeTab, setActiveTab] = useState<'content' | 'practice' | 'assessment'>('content');
-  const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>('students');
-
 
   useEffect(() => {
     if (!classId) return;
@@ -2971,80 +2963,21 @@ export default function ClassTrainingPage({
         </div>
       </header>
 
-      <section className='grid min-h-0 flex-1 gap-0 overflow-hidden xl:grid-cols-[420px_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]'>
-
-        <section>
-          <Tabs
-            value={activeLefTab}
-            onValueChange={value => setActiveLeftTab(value as typeof activeLefTab)}
-            className='w-full max-w-xl mt-2'
-          >
-            <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
-              {LEFT_TAB_ITEMS.map(tab => (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
-                >
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-
-          <ScrollArea className='h-[calc(100vh-8.5rem)]'>
-            {activeLefTab === "students" &&
-              <aside className='border-border/70 hidden min-h-0 border-r xl:block'>
-                <RosterPanel
-                  activeInstanceStudentsCount={activeInstanceStudents.length}
-                  activeInstanceStudents={activeInstanceStudents}
-                  filteredRoster={filteredRoster}
-                  activeSchedule={activeSchedule}
-                  studentSearch={studentSearch}
-                  setStudentSearch={setStudentSearch}
-                  selectedStudentId={selectedStudentId}
-                  onSelectStudent={entry => setSelectedStudentId(entry.enrollment?.uuid ?? '')}
-                  onMarkAllPresent={handleMarkAllPresent}
-                  isMarkingAllAttendance={markAttendanceMut.isPending}
-                />
-              </aside>}
-
-
-            {activeLefTab === "lessons" && <div>Show lessons</div>}
-
-            {activeLefTab === "evaluation" && <div>show evaluation</div>}
-            {/* <aside className='border-border/70 hidden min-h-0 border-l xl:block'>
-          <SubmissionPanel
-            activeSchedule={activeSchedule}
+      <section className='grid min-h-0 flex-1 gap-0 overflow-hidden xl:grid-cols-[260px_minmax(0,1fr)_420px] 2xl:grid-cols-[280px_minmax(0,1fr)_460px]'>
+        <aside className='border-border/70 hidden min-h-0 border-r xl:block'>
+          <RosterPanel
             activeInstanceStudentsCount={activeInstanceStudents.length}
-            selectedContentType={selectedContentType}
-            selectedStudent={selectedStudent}
-            courseAssessments={courseAssessments}
-            rubricAssociations={rubricAssociations}
-            rubricMatrices={rubricMatrices}
-            noteDraft={noteDraft}
-            sentNotes={sentNotes}
-            selectedStudentSubmissions={selectedStudentSubmissions}
-            onNoteDraftChange={setNoteDraft}
-            isEndClassConfirmOpen={isEndClassConfirmOpen}
-            setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
-            isEndingClass={endScheduledInstanceMut.isPending}
-            onSendNote={handleSendNote}
-            onMarkAttendance={handleMarkAttendance}
-            isMarkingAttendance={markAttendanceMut.isPending}
-            onStartClass={handleStartClass}
-            onEndClass={handleEndClass}
-            isStartingClass={startScheduledInstanceMut.isPending}
-            handleEndClass={() => { }}
+            activeInstanceStudents={activeInstanceStudents}
+            filteredRoster={filteredRoster}
+            activeSchedule={activeSchedule}
+            studentSearch={studentSearch}
+            setStudentSearch={setStudentSearch}
+            selectedStudentId={selectedStudentId}
+            onSelectStudent={entry => setSelectedStudentId(entry.enrollment?.uuid ?? '')}
+            onMarkAllPresent={handleMarkAllPresent}
+            isMarkingAllAttendance={markAttendanceMut.isPending}
           />
-        </aside> */}
-
-
-          </ScrollArea>
-
-
-
-        </section>
+        </aside>
 
         <section className='min-h-0 overflow-hidden bg-background'>
           <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
@@ -3255,7 +3188,7 @@ export default function ClassTrainingPage({
           </ScrollArea>
         </section>
 
-        {/* <aside className='border-border/70 hidden min-h-0 border-l xl:block'>
+        <aside className='border-border/70 hidden min-h-0 border-l xl:block'>
           <SubmissionPanel
             activeSchedule={activeSchedule}
             activeInstanceStudentsCount={activeInstanceStudents.length}
@@ -3279,7 +3212,7 @@ export default function ClassTrainingPage({
             isStartingClass={startScheduledInstanceMut.isPending}
             handleEndClass={() => { }}
           />
-        </aside> */}
+        </aside>
       </section>
     </main>
   );

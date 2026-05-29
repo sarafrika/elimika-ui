@@ -7,7 +7,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../../../../components/ui/button';
 import { BookingCard } from './BookingCard';
 import { LiveClassCard } from './LiveClassCard';
-import { TrainingHubHeader } from './TrainingHubHeader';
 import { TrainingHubSectionHeader } from './TrainingHubSectionHeader';
 import { TrainingHubToolbar } from './TrainingHubToolbar';
 import { WaitingListItem } from './WaitingListItem';
@@ -95,7 +94,6 @@ export function InstructorTrainingHubPage() {
   return (
     <main className='mx-auto flex w-full max-w-[1450px] flex-col gap-4 bg-background px-3 py-3 sm:px-4 sm:py-4 lg:px-5'>
 
-      <TrainingHubHeader />
       <TrainingHubToolbar
         onSearchTermChange={setSearchTerm}
         onStatusChange={setSelectedStatus}

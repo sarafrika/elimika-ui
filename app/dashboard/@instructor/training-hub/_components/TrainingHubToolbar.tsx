@@ -16,6 +16,23 @@ import {
   trainingHubTypeFilters,
 } from './training-hub-data';
 
+
+// update the traininghub tool bar to activate the filter for the classes.
+// make sure the data are filtered correctly based on the description of the filters
+
+const trainingHubFilters = [
+  { label: 'All Classes', value: 'all' },
+  { label: 'Today Classes', value: 'today' }, //classes with schedule happening on that day
+  { label: 'Upcoming', value: 'upcoming' }, // classes with schedule happening on a future date
+  { label: 'Incomplete', value: 'incomplete' }, // classes whose completion rate are not 100%
+  { label: 'Remedial', value: 'remedial' }, // 
+  { label: 'Make up Classes', value: 'make-up' },
+  { label: 'Cancelled', value: 'cancelled' }, // cancelled classes
+  { label: 'Completed', value: 'comleted' }, // cancelled whose completion rate is 100%
+
+] as const;
+
+
 type TrainingHubToolbarProps = {
   searchTerm: string;
   onSearchTermChange: (value: string) => void;
@@ -36,8 +53,10 @@ export function TrainingHubToolbar({
   return (
     <section
       aria-label='Training hub filters'
-      className='rounded-[14px] border border-border/50 bg-card p-3 shadow-sm sm:p-4'
+      className=''
     >
+      {/* // also add for the status here, list of all the items in the filters at the top here, such that when I select any, it filters also */}
+
       <div className='flex flex-col gap-3 min-[900px]:flex-row min-[900px]:items-center min-[900px]:gap-2'>
 
         {/* Search */}
@@ -57,14 +76,13 @@ export function TrainingHubToolbar({
 
         {/* Filters */}
         <div className='flex flex-wrap gap-2 min-[900px]:justify-end'>
-
           {/* Type Select */}
           <Select value={selectedType} onValueChange={onTypeChange}>
             <SelectTrigger className='h-11 w-[160px] rounded-[10px] border-border/60 bg-background'>
               <SelectValue placeholder='Type' />
             </SelectTrigger>
             <SelectContent>
-              {trainingHubTypeFilters.map(filter => (
+              {trainingHubFilters.map(filter => (
                 <SelectItem key={filter.value} value={filter.value}>
                   {filter.label}
                 </SelectItem>
@@ -73,7 +91,7 @@ export function TrainingHubToolbar({
           </Select>
 
           {/* Status Select */}
-          <Select value={selectedStatus} onValueChange={onStatusChange}>
+          {/* <Select value={selectedStatus} onValueChange={onStatusChange}>
             <SelectTrigger className='h-11 w-[160px] rounded-[10px] border-border/60 bg-background'>
               <SelectValue placeholder='Status' />
             </SelectTrigger>
@@ -84,7 +102,7 @@ export function TrainingHubToolbar({
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </Select> */}
 
           <button
             type='button'
