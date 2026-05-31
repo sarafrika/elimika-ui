@@ -49,7 +49,6 @@ import { toast } from 'sonner';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { CoursesCatalogCard } from './CoursesCatalogCard';
 import { CoursesCategoryFilters } from './CoursesCategoryFilters';
-import { CoursesHero } from './CoursesHero';
 import { CoursesRecommendationCard } from './CoursesRecommendationCard';
 import {
   catalogTabs,
@@ -61,12 +60,11 @@ import {
   getDurationBucket,
   getEnrollHref,
   getInstructorHref,
-  heroActions,
   stripHtml,
   type CoursesCatalogCardData,
   type CoursesCatalogTab,
   type CoursesFilterSection,
-  type CoursesRecommendationCardData,
+  type CoursesRecommendationCardData
 } from './courses-data';
 
 type SharedCoursesPageProps = {
@@ -926,7 +924,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   return (
     <div className='mx-auto w-full max-w-[1680px] bg-background px-3 py-4 sm:px-4 lg:px-6 2xl:px-8'>
       <div className='space-y-7'>
-        <CoursesHero actions={heroActions} domain={domain} />
+        {/* <CoursesHero actions={heroActions} domain={domain} /> */}
 
         <section className='space-y-4'>
           <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>

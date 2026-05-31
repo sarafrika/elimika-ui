@@ -1,9 +1,9 @@
 'use client';
 
-import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { Search } from 'lucide-react';
 import { assignmentFilters } from './assignment-data';
 import type { AssignmentStatus } from './assignment-types';
 
@@ -21,7 +21,7 @@ export function AssignmentToolbar({
   setSearch,
 }: AssignmentToolbarProps) {
   return (
-    <div className='border-border/70 bg-card rounded-xl border p-2.5 shadow-sm sm:p-3'>
+    <div className=''>
       <div className='flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center xl:justify-between'>
         <div className='bg-muted/50 grid grid-cols-2 gap-1.5 rounded-lg p-1 sm:flex sm:flex-wrap sm:gap-2'>
           {assignmentFilters.map(filter => (

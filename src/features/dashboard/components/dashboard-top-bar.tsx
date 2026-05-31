@@ -144,7 +144,7 @@ export default function DashboardTopBar() {
   return (
     <header className='bg-background/90 sticky top-0 z-50 backdrop-blur-md '>
       <div className='flex flex-col'>
-        <div className='flex items-center gap-3 px-3 py-3 sm:px-5 lg:px-6'>
+        <div className='flex items-center gap-3 px-1 py-3 sm:px-3 lg:px-4'>
           {/* <div className='hidden min-w-0 flex-1 xl:block'>
             <Label className='relative block max-w-2xl'>
               <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
