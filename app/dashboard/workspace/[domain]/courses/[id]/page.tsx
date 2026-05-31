@@ -1,6 +1,6 @@
-import { notFound } from 'next/navigation';
-import CourseDetailsPage from '@/src/features/dashboard/courses/pages/CourseDetailsPage';
 import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
+import { notFound } from 'next/navigation';
+import ClassCourseDetailsPage from '../_components/ClassCourseDetailsPage';
 
 type WorkspaceCourseDetailsPageProps = {
   params: Promise<{ domain: string; id: string }>;
@@ -20,5 +20,6 @@ export default async function WorkspaceCourseDetailsPage({
     notFound();
   }
 
-  return <CourseDetailsPage courseId={id} />;
+  return <ClassCourseDetailsPage courseId={id} />
+  // return <CourseDetailsPage courseId={id} />;
 }
