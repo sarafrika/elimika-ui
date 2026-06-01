@@ -14,7 +14,7 @@ export default function DashboardMainContent({
 
   return (
     <div className='flex h-full flex-1 flex-col'>
-      <div className='sticky top-0 z-20 shrink-0 border-b bg-background'>
+      <div className='sticky top-0 z-20 shrink-0 bg-background'>
         <DashboardTopBar />
       </div>
 

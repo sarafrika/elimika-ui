@@ -1339,7 +1339,7 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
 
   return (
     <main className='bg-muted/30 min-h-screen overflow-hidden'>
-      <section className='mx-auto w-full max-w-7xl space-y-5 px-4 py-4 sm:px-6 lg:px-8'>
+      <section className='mx-auto w-full space-y-5 px-4 py-4 sm:px-6 lg:px-8'>
         <div className='border-border/70 bg-card rounded-md border p-4 shadow-xs sm:p-5'>
           <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
             <div className='min-w-0 space-y-4'>

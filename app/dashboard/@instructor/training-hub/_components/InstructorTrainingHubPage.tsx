@@ -220,7 +220,7 @@ export function InstructorTrainingHubPage() {
   );
 
   return (
-    <main className='mx-auto flex w-full max-w-[1450px] flex-col gap-4 bg-background px-3 py-3 sm:px-4 sm:py-4 lg:px-5'>
+    <main className='mx-auto flex w-full flex-col gap-4 bg-background px-3 py-3 sm:px-4 sm:py-4 lg:px-5'>
       <TrainingHubToolbar
         onSearchTermChange={setSearchTerm}
         onTypeChange={setSelectedType}
