@@ -1,43 +1,152 @@
+import type { CourseReview } from "@/services/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "../../../../../../components/ui/button";
+import { useUserProfile } from "../../../../../../context/profile-context";
+import { getCourseReviewsQueryKey, submitCourseReviewMutation } from "../../../../../../services/client/@tanstack/react-query.gen";
+import { FeedbackDialog } from "../../../../_components/review-instructor-modal";
 import StarRating from "./StarRating";
 
 const breakdown = [
-    { stars: 5, pct: 84 },
-    { stars: 4, pct: 12 },
-    { stars: 3, pct: 3 },
-    { stars: 2, pct: 1 },
-    { stars: 1, pct: 0 },
+  { stars: 5, pct: 0 },
+  { stars: 4, pct: 0 },
+  { stars: 3, pct: 0 },
+  { stars: 2, pct: 0 },
+  { stars: 1, pct: 0 },
 ];
 
-export default function CourseRating() {
-    return (
-        <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 shadow-sm">
-            <h3 className="font-bold text-gray-900 text-sm sm:text-base mb-4">Course Rating</h3>
+type Props = {
+  reviewCount: number;
+  averageRating: string | null;
+  reviews: CourseReview[];
+  courseId: string;
+};
 
-            <div className="flex items-center gap-3 sm:gap-4 mb-4">
-                <div className="text-center shrink-0">
-                    <p className="text-3xl sm:text-4xl font-black text-gray-900">4.8</p>
-                    <StarRating rating={4.8} size="sm" showCount={false} />
-                    <p className="text-xs text-gray-500 mt-1">256 reviews</p>
-                </div>
-                <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-                    {breakdown.map((row) => (
-                        <div key={row.stars} className="flex items-center gap-2 text-xs">
-                            <div className="flex items-center gap-0.5 shrink-0">
-                                <span className="text-amber-400">★</span>
-                                <span className="text-gray-600">{row.stars}</span>
-                            </div>
-                            <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                <div className="h-full bg-blue-600 rounded-full transition-all" style={{ width: `${row.pct}%` }}></div>
-                            </div>
-                            <span className="text-gray-500 shrink-0 w-6 text-right">{row.pct}%</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
+export default function CourseRating({
+  reviewCount,
+  averageRating,
+  reviews,
+  courseId
+}: Props) {
+  const profile = useUserProfile();
+  const student_uuid = profile?.student?.uuid;
+  const rating = averageRating ? Number(averageRating) : 0;
 
-            <button className="w-full border border-gray-300 hover:border-blue-500 hover:text-blue-700 text-gray-700 font-semibold py-2 px-4 rounded-lg text-xs sm:text-sm transition-colors">
-                Write a Review
-            </button>
-        </div>
+  const dynamicBreakdown = breakdown.map((row) => {
+    const matched = reviews.filter(
+      (review) => Math.round(review.rating || 0) === row.stars
+    ).length;
+
+    const pct =
+      reviewCount > 0 ? Math.round((matched / reviewCount) * 100) : row.pct;
+
+    return { ...row, pct };
+  });
+
+  const qc = useQueryClient();
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [newRating, setNewRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [headline, setHeadline] = useState('');
+
+  const reviewCourseMut = useMutation(submitCourseReviewMutation());
+
+  const handleSubmitFeedback = () => {
+    reviewCourseMut.mutate(
+      {
+        body: {
+          course_uuid: courseId as string,
+          rating: newRating,
+          student_uuid: student_uuid as string,
+          comments: feedbackComment,
+          headline,
+          is_anonymous: false,
+        },
+        path: { courseUuid: courseId as string },
+      },
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
+          setShowFeedbackDialog(false);
+          qc.invalidateQueries({
+            queryKey: getCourseReviewsQueryKey({ path: { courseUuid: courseId as string } }),
+          });
+        },
+        onError: error => {
+          toast.error(error?.message);
+          setShowFeedbackDialog(false);
+        },
+      }
     );
+  };
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5">
+      <h3 className="mb-4 text-sm font-semibold text-foreground sm:text-base">
+        Course Rating
+      </h3>
+
+      <div className="mb-4 flex items-center gap-3 sm:gap-4">
+        {/* Rating summary */}
+        <div className="shrink-0 text-center">
+          <p className="text-3xl font-black text-foreground sm:text-4xl">
+            {rating ? rating.toFixed(1) : "0.0"}
+          </p>
+
+          <StarRating rating={rating || 4.8} size="sm" showCount={false} />
+
+          <p className="mt-1 text-xs text-muted-foreground">
+            {reviewCount.toLocaleString()} review
+            {reviewCount === 1 ? "" : "s"}
+          </p>
+        </div>
+
+        {/* Breakdown */}
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          {dynamicBreakdown.map((row) => (
+            <div key={row.stars} className="flex items-center gap-2 text-xs">
+              <div className="flex shrink-0 items-center gap-0.5 text-muted-foreground">
+                <span>★</span>
+                <span>{row.stars}</span>
+              </div>
+
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${row.pct}%` }}
+                />
+              </div>
+
+              <span className="w-6 shrink-0 text-right text-muted-foreground">
+                {row.pct}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Button
+        onClick={() => setShowFeedbackDialog(true)}
+
+        className="w-full h-10 rounded-lg border border-border bg-background px-4 py-2 text-xs font-medium text-foreground transition hover:bg-accent hover:text-accent-foreground sm:text-sm">
+        Write a Review
+      </Button>
+
+
+      <FeedbackDialog
+        type='others'
+        open={showFeedbackDialog}
+        onOpenChange={setShowFeedbackDialog}
+        headline={headline}
+        onHeadlineChange={setHeadline}
+        feedback={feedbackComment}
+        onFeedbackChange={setFeedbackComment}
+        rating={newRating}
+        onRatingChange={setNewRating}
+        isSubmitting={reviewCourseMut.isPending}
+        onSubmit={handleSubmitFeedback}
+      />
+    </div>
+  );
 }

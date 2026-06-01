@@ -1,137 +1,268 @@
 "use client";
-import { CheckCircle2, ChevronDown, ChevronUp, Play } from "lucide-react";
-import { useState } from "react";
 
-const curriculum = [
-    { title: "1. Introduction to Python", lessons: 5, duration: "2h 30m" },
-    { title: "2. Python Fundamentals", lessons: 10, duration: "5h 20m" },
-    { title: "3. Data Structures", lessons: 8, duration: "4h 10m" },
-    { title: "4. Functions & Modules", lessons: 6, duration: "3h 05m" },
-    { title: "5. Object-Oriented Programming", lessons: 8, duration: "4h 30m" },
-    { title: "6. Real-World Projects", lessons: 5, duration: "6h 25m" },
-];
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import type { Course } from '@/services/client';
+import { CheckCircle2, ChevronDown, ChevronUp, Play, User2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import HTMLTextPreview from '../../../../../../components/editors/html-text-preview';
 
-const learnings = [
-    "Understand Python syntax and core concepts",
-    "Work with data structures and control flow",
-    "Build real-world applications and projects",
-    "Use functions, modules and error handling",
-    "Work with files, APIs and databases",
-    "Apply best practices in coding",
-];
+type LessonContentItem = {
+  lesson: {
+    uuid?: string;
+    title: string;
+    description?: string | null;
+  };
+  content?: {
+    data?: Array<{
+      uuid?: string;
+      title: string;
+      file_size_display?: string | null;
+      description?: string | null;
+    }>;
+  };
+};
 
-export default function CourseOverview() {
-    const [expanded, setExpanded] = useState(false);
-    const [openModules, setOpenModules] = useState<number[]>([]);
+type Props = {
+  course: Course;
+  creatorName: string;
+  creatorHeadline: string;
+  creatorBio: string;
+  lessons: Array<{ uuid?: string; title: string }>;
+  lessonsWithContent: LessonContentItem[];
+  reviewCount: number;
+  averageRating: string | null;
+};
 
-    const toggle = (i: number) => setOpenModules((prev) => prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]);
+function splitBullets(value?: string | null) {
+  if (!value) return [];
+  return value
+    .split(/\n|•|-/)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+}
 
-    return (
-        <div className="flex flex-col gap-6 sm:gap-8">
-            {/* About */}
-            <section>
-                <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">About this course</h2>
-                <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                    This comprehensive Python course is designed for beginners who want to learn programming from scratch and for intermediate learners who want to strengthen their skills.
-                    {expanded && (
-                        <span> You'll go from writing your first line of code to building complex applications with databases, APIs, and object-oriented architecture. Structured around real-world projects, this course ensures you graduate job-ready.</span>
-                    )}
-                </p>
-                <button onClick={() => setExpanded(!expanded)} className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1 transition-colors">
-                    {expanded ? "Show less" : "Show more"}
-                    {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </button>
-            </section>
+export default function CourseOverview({
+  course,
+  creatorName,
+  creatorHeadline,
+  creatorBio,
+  lessons,
+  lessonsWithContent,
+  reviewCount,
+  averageRating,
+}: Props) {
+  const [expanded, setExpanded] = useState(false);
+  const [openModules, setOpenModules] = useState<number[]>([]);
 
-            {/* What you'll learn */}
-            <section>
-                <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">What you&apos;ll learn</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                    {learnings.map((item, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                            <span className="text-sm sm:text-base text-gray-700">{item}</span>
-                        </div>
-                    ))}
-                </div>
-            </section>
+  const learnings = useMemo(
+    () => splitBullets(course.objectives || course.description),
+    [course.description, course.objectives]
+  );
 
-            {/* Curriculum */}
-            <section>
-                <div className="flex items-center justify-between mb-3 sm:mb-4 flex-wrap gap-2">
-                    <h2 className="text-base sm:text-lg font-bold text-gray-900">Course Curriculum</h2>
-                    <button
-                        onClick={() => setOpenModules(openModules.length === curriculum.length ? [] : curriculum.map((_, i) => i))}
-                        className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium transition-colors"
-                    >
-                        {openModules.length === curriculum.length ? "Collapse All" : "Expand All"}
-                    </button>
-                </div>
+  const curriculum = useMemo(
+    () =>
+      lessonsWithContent.map((item, index) => ({
+        title: item.lesson.title,
+        lessons: item.content?.data?.length || 1,
+        duration:
+          item.content?.data?.reduce(
+            (total, content) => total + (content.file_size_display ? 1 : 0),
+            0
+          ) || `${index + 1}`.padStart(2, '0'),
+        description: item.lesson.description || course.description || '',
+      })),
+    [course.description, lessonsWithContent]
+  );
 
-                <div className="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100">
-                    {curriculum.map((mod, i) => (
-                        <div key={i}>
-                            <button
-                                onClick={() => toggle(i)}
-                                className="w-full flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 hover:bg-gray-50 transition-colors text-left gap-2"
-                            >
-                                <div className="flex items-center gap-2 min-w-0">
-                                    <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${openModules.includes(i) ? "rotate-180" : ""}`} />
-                                    <span className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{mod.title}</span>
-                                </div>
-                                <div className="flex items-center gap-3 sm:gap-5 shrink-0 text-xs sm:text-sm text-gray-500">
-                                    <span className="hidden xs:block">{mod.lessons} Lessons</span>
-                                    <span>{mod.duration}</span>
-                                    <Play className="w-4 h-4 text-gray-400 hover:text-blue-600 transition-colors" />
-                                </div>
-                            </button>
-                            {openModules.includes(i) && (
-                                <div className="bg-gray-50 px-4 sm:px-6 py-3 text-xs sm:text-sm text-gray-500 border-t border-gray-100">
-                                    <p>{mod.lessons} lessons • {mod.duration} total</p>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-
-                <div className="flex flex-wrap gap-4 sm:gap-6 mt-3 text-xs sm:text-sm text-gray-600">
-                    <span><strong>Total Lessons:</strong> 42</span>
-                    <span><strong>Total Duration:</strong> 8 weeks / 40 hours</span>
-                </div>
-            </section>
-
-            {/* Meet your instructor */}
-            <section>
-                <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Meet your instructor</h2>
-                <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 p-4 sm:p-5 bg-gray-50 rounded-xl border border-gray-100">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-amber-200 overflow-hidden flex items-center justify-center shrink-0">
-                        <svg viewBox="0 0 80 80" className="w-full h-full" fill="none">
-                            <circle cx="40" cy="40" r="40" fill="#FDE68A" />
-                            <circle cx="40" cy="32" r="14" fill="#92400E" />
-                            <path d="M10 70c0-16.569 13.431-30 30-30s30 13.431 30 30" fill="#92400E" />
-                        </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <h3 className="text-sm sm:text-base font-bold text-gray-900">James Mwangi</h3>
-                        <p className="text-xs sm:text-sm text-gray-500 mb-2">Senior Software Engineer & Educator</p>
-                        <p className="text-xs sm:text-sm text-gray-600 leading-relaxed mb-3 sm:mb-4">
-                            James has over 8 years of experience in software development and training. He has taught thousands of students and built scalable applications using Python.
-                        </p>
-                        <div className="flex flex-wrap gap-4 sm:gap-6">
-                            {[
-                                { val: "12+", label: "Courses" },
-                                { val: "8,500+", label: "Students" },
-                                { val: "4.9 ★", label: "Instructor Rating" },
-                            ].map((stat, i) => (
-                                <div key={i} className="text-center">
-                                    <p className="text-sm sm:text-base font-black text-gray-900">{stat.val}</p>
-                                    <p className="text-xs text-gray-500">{stat.label}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
+  const toggle = (index: number) => {
+    setOpenModules(prev =>
+      prev.includes(index)
+        ? prev.filter(item => item !== index)
+        : [...prev, index]
     );
+  };
+
+  return (
+    <div className="flex flex-col gap-6 sm:gap-8">
+
+      {/* ABOUT */}
+      <section>
+        <h2 className="mb-2 text-base font-bold text-foreground sm:mb-3 sm:text-lg">
+          About this course
+        </h2>
+
+        <div className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+          <RichTextRenderer
+            htmlString={
+              course.description ||
+              'This course is now driven by live API data.'
+            }
+            maxChars={expanded ? undefined : 260}
+          />
+
+          {course.description && (
+            <button
+              type="button"
+              onClick={() => setExpanded(prev => !prev)}
+              className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80"
+            >
+              {expanded ? 'Show less' : 'Show more'}
+              {expanded ? (
+                <ChevronUp className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5" />
+              )}
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* WHAT YOU'LL LEARN */}
+      <section>
+        <h2 className="mb-3 text-base font-bold text-foreground sm:mb-4 sm:text-lg">
+          What you'll learn
+        </h2>
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
+          {(learnings.length > 0
+            ? learnings
+            : ['Learn the key concepts in this course']
+          ).map((item, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <div className="text-sm text-muted-foreground sm:text-base">
+                <HTMLTextPreview htmlContent={item} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CURRICULUM */}
+      <section>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
+          <h2 className="text-base font-bold text-foreground sm:text-lg">
+            Course Curriculum
+          </h2>
+
+          <button
+            type="button"
+            onClick={() =>
+              setOpenModules(
+                openModules.length === curriculum.length
+                  ? []
+                  : curriculum.map((_, i) => i)
+              )
+            }
+            className="text-xs font-medium text-primary transition-colors hover:text-primary/80 sm:text-sm"
+          >
+            {openModules.length === curriculum.length
+              ? 'Collapse All'
+              : 'Expand All'}
+          </button>
+        </div>
+
+        <div className="overflow-hidden rounded-sm border border-border divide-y divide-border">
+          {curriculum.map((mod, i) => (
+            <div key={`${mod.title}-${i}`}>
+              <button
+                type="button"
+                onClick={() => toggle(i)}
+                className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left transition-colors hover:bg-muted sm:px-5 sm:py-4"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${openModules.includes(i) ? 'rotate-180' : ''
+                      }`}
+                  />
+
+                  <span className="truncate text-xs font-semibold text-foreground sm:text-sm">
+                    {mod.title}
+                  </span>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground sm:gap-5 sm:text-sm">
+                  <span className="hidden xs:block">
+                    {mod.lessons} Lessons
+                  </span>
+                  <span>{String(mod.duration)}h</span>
+
+                  <Play className="h-4 w-4 text-muted-foreground transition-colors hover:text-primary" />
+                </div>
+              </button>
+              {/* {openModules.includes(i) ? (
+                <div className="border-t border-border bg-muted px-4 py-3 text-xs text-muted-foreground sm:px-6 sm:text-sm">
+                  <p>
+                    {mod.description || 'Lesson content is available in the live workspace.'}
+                  </p>
+                </div>
+              ) : null} */}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground sm:gap-6 sm:text-sm">
+          <span>
+            <strong className="text-foreground">Total Lessons:</strong>{' '}
+            {lessons.length}
+          </span>
+          <span>
+            <strong className="text-foreground">Total Reviews:</strong>{' '}
+            {reviewCount}
+          </span>
+          <span>
+            <strong className="text-foreground">Average Rating:</strong>{' '}
+            {averageRating || 'New'}
+          </span>
+        </div>
+      </section>
+
+      {/* INSTRUCTOR */}
+      <section>
+        <h2 className="mb-3 text-base font-bold text-foreground sm:mb-4 sm:text-lg">
+          Meet your instructor
+        </h2>
+
+        <div className="flex flex-col items-start gap-4 rounded-md border border-border bg-muted/40 p-4 sm:flex-row sm:gap-6 sm:p-5">
+
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-muted sm:h-20 sm:w-20">
+            <User2 className="h-6 w-6 text-muted-foreground" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-bold text-foreground sm:text-base">
+              {creatorName}
+            </h3>
+
+            <p className="mb-2 text-xs text-muted-foreground sm:text-sm">
+              {creatorHeadline}
+            </p>
+
+            <div className="mb-3 text-xs leading-relaxed text-muted-foreground sm:mb-4 sm:text-sm">
+              <HTMLTextPreview htmlContent={creatorBio} />
+            </div>
+
+            <div className="flex flex-wrap gap-6 sm:gap-12">
+              {[
+                { val: `${lessons.length}`, label: 'Lessons' },
+                { val: `${reviewCount}`, label: 'Reviews' },
+                { val: `${course.class_limit ?? 0}`, label: 'Class limit' },
+              ].map((stat, i) => (
+                <div key={i} className="text-center">
+                  <p className="text-sm font-black text-foreground sm:text-base">
+                    {stat.val}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {stat.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  );
 }
