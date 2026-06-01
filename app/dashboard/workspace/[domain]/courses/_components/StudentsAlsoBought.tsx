@@ -77,7 +77,7 @@ export default function StudentsAlsoBought({
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
 
-                    <div className="absolute inset-0 bg-black/10" />
+                    <div className="absolute inset-0 bg-foreground/10" />
                   </>
                 ) : (
                   <div className="flex h-full w-full flex-col items-center justify-center text-center">
