@@ -1,6 +1,7 @@
 "use client";
 
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useInstructor } from '@/context/instructor-context';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import type {
     Assignment,
@@ -10,6 +11,7 @@ import type {
     Lesson,
     Quiz,
 } from '@/services/client';
+import { ApplicantTypeEnum } from '@/services/client';
 import {
     getAllAssignmentsOptions,
     getAllCoursesOptions,
@@ -18,13 +20,18 @@ import {
     getCourseByUuidOptions,
     getCourseCreatorByUuidOptions,
     getCourseReviewsOptions,
+    searchTrainingApplicationsOptions,
+    searchTrainingApplicationsQueryKey,
+    submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import NotesModal from '../../../../../../components/custom-modals/notes-modal';
 
 import CourseDetailsHero from './CourseDetailsHero';
 import CourseOverview from './CourseOverview';
@@ -55,11 +62,15 @@ export default function ClassCourseDetailsPage({
     const router = useRouter();
     const params = useParams();
     const { activeDomain } = useUserDomain();
+    const instructor = useInstructor();
+    const qc = useQueryClient();
     const { replaceBreadcrumbs } = useBreadcrumb();
 
     const resolvedCourseId = courseId || (params?.id as string);
 
     const [applyModalOpen, setApplyModalOpen] = useState(false);
+    const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
+    const isInstructorDomain = activeDomain === 'instructor';
 
 
     const {
@@ -154,6 +165,20 @@ export default function ClassCourseDetailsPage({
         enabled: !!course?.course_creator_uuid,
     });
 
+    const { data: trainingApplicationsResponse } = useQuery({
+        ...searchTrainingApplicationsOptions({
+            query: {
+                pageable: {},
+                searchParams: {
+                    applicant_uuid_eq: instructor?.uuid ?? '',
+                    course_uuid_eq: course?.uuid ?? '',
+                },
+            },
+        }),
+        enabled: isInstructorDomain && Boolean(instructor?.uuid) && Boolean(course?.uuid),
+        refetchOnWindowFocus: false,
+    });
+
     const lessons: Lesson[] = useMemo(
         () =>
             lessonsWithContent
@@ -196,8 +221,6 @@ export default function ClassCourseDetailsPage({
 
     const reviewCount = reviews.length;
 
-    console.log(reviews, "REVS")
-
     const avgRating =
         reviewCount > 0
             ? (
@@ -216,6 +239,20 @@ export default function ClassCourseDetailsPage({
         '';
 
     const durationLabel = getDurationLabel(course);
+    const currentTrainingApplication = trainingApplicationsResponse?.data?.content?.[0] ?? null;
+    const currentTrainingApplicationStatus = currentTrainingApplication?.status ?? null;
+    const instructorActionLabel =
+        currentTrainingApplicationStatus === 'approved'
+            ? 'Approved'
+            : currentTrainingApplicationStatus === 'pending'
+                ? 'Pending'
+                : currentTrainingApplicationStatus === 'revoked' ||
+                    currentTrainingApplicationStatus === 'rejected'
+                    ? 'Reapply to Train'
+                    : 'Apply to Train';
+    const instructorActionDisabled =
+        currentTrainingApplicationStatus === 'approved' ||
+        currentTrainingApplicationStatus === 'pending';
 
     const relatedCourses = useMemo(() => {
         const courses = relatedCoursesResponse?.data?.content ?? [];
@@ -234,6 +271,71 @@ export default function ClassCourseDetailsPage({
         course?.uuid,
         relatedCoursesResponse?.data?.content,
     ]);
+
+    const handleApplyToTrain = (data: {
+        notes: string;
+        private_online_rate: number;
+        private_inperson_rate: number;
+        group_online_rate: number;
+        group_inperson_rate: number;
+        rate_currency: string;
+    }) => {
+        if (!course?.uuid) {
+            toast.error('Course details are not ready yet.');
+            return;
+        }
+
+        if (!instructor?.uuid) {
+            toast.error('Please wait for your instructor profile to load.');
+            return;
+        }
+
+        applyToTrainCourseMut.mutate(
+            {
+                body: {
+                    applicant_type: ApplicantTypeEnum.INSTRUCTOR,
+                    applicant_uuid: instructor.uuid,
+                    rate_card: {
+                        currency: data.rate_currency,
+                        private_online_rate: data.private_online_rate,
+                        private_inperson_rate: data.private_inperson_rate,
+                        group_online_rate: data.group_online_rate,
+                        group_inperson_rate: data.group_inperson_rate,
+                    },
+                    application_notes: data.notes,
+                },
+                path: { courseUuid: course.uuid },
+            },
+            {
+                onSuccess: response => {
+                    qc.invalidateQueries({
+                        queryKey: searchTrainingApplicationsQueryKey({
+                            query: {
+                                pageable: {},
+                                searchParams: {
+                                    applicant_uuid_eq: instructor.uuid,
+                                    course_uuid_eq: course.uuid,
+                                },
+                            },
+                        }),
+                    });
+                    qc.invalidateQueries({
+                        queryKey: searchTrainingApplicationsQueryKey({
+                            query: {
+                                pageable: {},
+                                searchParams: { applicant_uuid_eq: instructor.uuid },
+                            },
+                        }),
+                    });
+                    toast.success(response?.message ?? 'Application submitted successfully.');
+                    setApplyModalOpen(false);
+                },
+                onError: error => {
+                    toast.error(error?.message ?? 'Unable to submit course application');
+                },
+            }
+        );
+    };
 
     useEffect(() => {
         if (!course) return;
@@ -265,8 +367,6 @@ export default function ClassCourseDetailsPage({
             },
         ]);
     }, [activeDomain, course, replaceBreadcrumbs]);
-
-    console.log(course, "COURSE")
 
     const isEverythingReady = !(
         courseLoading ||
@@ -375,7 +475,20 @@ export default function ClassCourseDetailsPage({
                                 filteredQuizzes.length
                             }
                             durationLabel={durationLabel}
-                            handleBecomeInstructor={() => { }}
+                            becomeInstructorLabel={instructorActionLabel}
+                            becomeInstructorDisabled={instructorActionDisabled}
+                            handleBecomeInstructor={() => {
+                                if (!isInstructorDomain) {
+                                    return;
+                                }
+
+                                if (!instructor?.uuid) {
+                                    toast.error('Please wait for your instructor profile to load.');
+                                    return;
+                                }
+
+                                setApplyModalOpen(true);
+                            }}
                             onEnroll={() =>
                                 router.push(
                                     buildWorkspaceAliasPath(
@@ -402,58 +515,44 @@ export default function ClassCourseDetailsPage({
                             reviewCount={reviewCount}
                             averageRating={avgRating}
                             reviews={reviews}
+                            courseId={resolvedCourseId}
                         />
 
                         <ShareCourse />
                     </div>
                 </div>
 
-                {/* <NotesModal
-                    open={applyModalOpen}
-                    setOpen={open => {
-                        setApplyModalOpen(open);
-                        if (!open) {
-                            setSelectedApplicationCard(null);
+                {isInstructorDomain && course ? (
+                    <NotesModal
+                        open={applyModalOpen}
+                        setOpen={setApplyModalOpen}
+                        title='Apply to Train a Course'
+                        description={
+                            <div className='space-y-2'>
+                                <p>
+                                    You are applying to train the course titled{' '}
+                                    <span className='font-semibold'>&ldquo;{course.name}&rdquo;</span>.
+                                </p>
+                                <p>
+                                    Provider:{' '}
+                                    <span className='font-medium'>{creatorName || 'Course Creator'}</span>
+                                    {durationLabel ? ` · Duration: ${durationLabel}` : ''}
+                                    {course.category_names?.[0] ? ` · Focus: ${course.category_names[0]}` : ''}
+                                </p>
+                                <p>
+                                    Submit your application notes and set the amount you want to charge students
+                                    per hour per head, while respecting the creator-set minimum shown below.
+                                </p>
+                            </div>
                         }
-                    }}
-                    title={
-                        selectedApplicationCard.ctaKind === 'apply-program'
-                            ? 'Apply to Train a Program'
-                            : 'Apply to Train a Course'
-                    }
-                    description={
-                        <div className='space-y-2'>
-                            <p>
-                                You are applying to train the{' '}
-                                {selectedApplicationCard.ctaKind === 'apply-program' ? 'program' : 'course'} titled{' '}
-                                <span className='font-semibold'>&ldquo;{selectedApplicationCard.title}&rdquo;</span>.
-                            </p>
-                            <p>
-                                Provider: <span className='font-medium'>{selectedApplicationCard.provider}</span>
-                                {selectedApplicationCard.duration
-                                    ? ` · Duration: ${selectedApplicationCard.duration}`
-                                    : ''}
-                                {selectedApplicationCard.secondaryMeta
-                                    ? ` · Focus: ${selectedApplicationCard.secondaryMeta}`
-                                    : ''}
-                            </p>
-                            <p>
-                                Submit your application notes and set the amount you want to charge students per
-                                hour per head, while respecting the creator-set minimum shown below.
-                            </p>
-                        </div>
-                    }
-                    onSave={handleApplyToTrain}
-                    saveText='Submit application'
-                    cancelText='Cancel'
-                    placeholder='Enter your application notes here...'
-                    isLoading={applyToTrainCourseMut.isPending || applyToTrainProgramMut.isPending}
-                    minimum_rate={selectedApplicationCard.minimumRate ?? 0}
-                /> */}
-
-
-
-
+                        onSave={handleApplyToTrain}
+                        saveText='Submit application'
+                        cancelText='Cancel'
+                        placeholder='Enter your application notes here...'
+                        isLoading={applyToTrainCourseMut.isPending}
+                        minimum_rate={course.minimum_training_fee ?? 0}
+                    />
+                ) : null}
             </main>
         </div>
     );

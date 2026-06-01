@@ -31,6 +31,8 @@ type Props = {
   handleBecomeInstructor: () => void;
   onSearchInstructor: () => void;
   activeDomain?: UserDomain | null;
+  becomeInstructorLabel?: string;
+  becomeInstructorDisabled?: boolean;
 };
 
 export default function EnrollSidebar({
@@ -44,6 +46,8 @@ export default function EnrollSidebar({
   handleBecomeInstructor,
   onSearchInstructor,
   activeDomain,
+  becomeInstructorLabel = "Apply to Train",
+  becomeInstructorDisabled = false,
 }: Props) {
   const priceLabel =
     typeof course.minimum_training_fee === "number" &&
@@ -87,10 +91,12 @@ export default function EnrollSidebar({
             </div>
 
             <Button
+              type="button"
               onClick={handleBecomeInstructor}
+              disabled={becomeInstructorDisabled}
               className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 sm:text-base"
             >
-              Become an Instructor
+              {becomeInstructorLabel}
             </Button>
           </>
         ) : (<>

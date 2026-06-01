@@ -9,11 +9,13 @@ import StarRating from './StarRating';
 type Props = {
   courses: Course[];
   creatorName: string;
+  activeDomain: string;
 };
 
 export default function StudentsAlsoBought({
   courses,
   creatorName,
+  activeDomain
 }: Props) {
   const reviewQueries = useQueries({
     queries: courses.map(course =>
