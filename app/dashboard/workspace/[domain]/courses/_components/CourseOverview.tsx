@@ -27,6 +27,7 @@ type Props = {
   creatorName: string;
   creatorHeadline: string;
   creatorBio: string;
+  creatorCourseItems: Array<{ uuid?: string; title: string }>;
   lessons: Array<{ uuid?: string; title: string }>;
   lessonsWithContent: LessonContentItem[];
   reviewCount: number;
@@ -47,6 +48,7 @@ export default function CourseOverview({
   creatorName,
   creatorHeadline,
   creatorBio,
+  creatorCourseItems,
   lessons,
   lessonsWithContent,
   reviewCount,
@@ -73,6 +75,15 @@ export default function CourseOverview({
         description: item.lesson.description || course.description || '',
       })),
     [course.description, lessonsWithContent]
+  );
+
+  const totalLessons = useMemo(
+    () =>
+      lessonsWithContent.reduce(
+        (total, item) => total + (item.content?.data?.length ?? 0),
+        0
+      ),
+    [lessonsWithContent]
   );
 
   const toggle = (index: number) => {
@@ -130,7 +141,7 @@ export default function CourseOverview({
             : ['Learn the key concepts in this course']
           ).map((item, i) => (
             <div key={i} className="flex items-start gap-2">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
               <div className="text-sm text-muted-foreground sm:text-base">
                 <HTMLTextPreview htmlContent={item} />
               </div>
@@ -164,64 +175,79 @@ export default function CourseOverview({
         </div>
 
         <div className="overflow-hidden rounded-sm border border-border divide-y divide-border">
-          {curriculum.map((mod, i) => (
-            <div key={`${mod.title}-${i}`}>
-              <button
-                type="button"
-                onClick={() => toggle(i)}
-                className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left transition-colors hover:bg-muted sm:px-5 sm:py-4"
-              >
-                <div className="flex min-w-0 items-center gap-2">
-                  <ChevronDown
-                    className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${openModules.includes(i) ? 'rotate-180' : ''
-                      }`}
-                  />
+          {lessonsWithContent.sort((a, b) => (a?.lesson?.lesson_number ?? 0) - (b?.lesson?.lesson_number ?? 0))
+            .map((mod, i) => (
+              <div key={`${mod.lesson?.uuid}-${i}`}>
+                <button
+                  type="button"
+                  onClick={() => toggle(i)}
+                  className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left transition-colors hover:bg-muted sm:px-5 sm:py-4"
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <ChevronDown
+                      className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${openModules.includes(i) ? 'rotate-180' : ''
+                        }`}
+                    />
 
-                  <span className="truncate text-xs font-semibold text-foreground sm:text-sm">
-                    {mod.title}
-                  </span>
-                </div>
+                    <span className="truncate text-xs font-semibold text-foreground sm:text-sm">
+                      {mod?.lesson?.title}
+                    </span>
+                  </div>
 
-                <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground sm:gap-5 sm:text-sm">
-                  <span className="hidden xs:block">
-                    {mod.lessons} Lessons
-                  </span>
-                  <span>{String(mod.duration)}h</span>
+                  <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground sm:gap-5 sm:text-sm">
+                    <span>
+                      {mod?.content?.data?.length || 0} Lessons
+                    </span>
+                    {/* <span>{String(mod.duration)}h</span> */}
+                    <span
+                      className="flex h-5 w-5 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <Play className="h-2.5 w-2.5" />
+                    </span>
+                  </div>
+                </button>
 
-                  <Play className="h-4 w-4 text-muted-foreground transition-colors hover:text-primary" />
-                </div>
-              </button>
-              {/* {openModules.includes(i) ? (
-                <div className="border-t border-border bg-muted px-4 py-3 text-xs text-muted-foreground sm:px-6 sm:text-sm">
-                  <p>
-                    {mod.description || 'Lesson content is available in the live workspace.'}
-                  </p>
-                </div>
-              ) : null} */}
-            </div>
-          ))}
+                {openModules.includes(i) && mod?.content?.data?.map((lesson, index) => (
+                  <div
+                    key={index}
+                    className="border-t border-border px-4 py-3 text-xs text-muted-foreground sm:px-6 sm:text-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-1.5 w-1.5 flex-shrink-0 items-center justify-center rounded-full bg-primary">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="h-2 w-2 text-on-primary"
+                        >
+                          <circle cx="12" cy="12" r="6" />
+                        </svg>
+                      </span>
+                      <p>{lesson.title}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground sm:gap-6 sm:text-sm">
-          <span>
-            <strong className="text-foreground">Total Lessons:</strong>{' '}
-            {lessons.length}
+        <div className="mt-3 flex flex-wrap gap-6 text-xs text-muted-foreground sm:gap-6 sm:text-sm">
+          <span className='flex gap-2'>
+            <strong className="text-foreground text-sm">Total Lessons:</strong>{' '}
+            <p> {totalLessons}</p>
           </span>
-          <span>
-            <strong className="text-foreground">Total Reviews:</strong>{' '}
-            {reviewCount}
+          <span className='flex gap-2'>
+            <strong className="text-foreground text-sm">Total Duration:</strong>{' '}
+            <p>{0}</p>
           </span>
-          <span>
-            <strong className="text-foreground">Average Rating:</strong>{' '}
-            {averageRating || 'New'}
-          </span>
+
         </div>
       </section>
 
       {/* INSTRUCTOR */}
       <section>
         <h2 className="mb-3 text-base font-bold text-foreground sm:mb-4 sm:text-lg">
-          Meet your instructor
+          Meet your Course Creator
         </h2>
 
         <div className="flex flex-col items-start gap-4 rounded-md border border-border bg-muted/40 p-4 sm:flex-row sm:gap-6 sm:p-5">
@@ -245,13 +271,27 @@ export default function CourseOverview({
 
             <div className="flex flex-wrap gap-6 sm:gap-12">
               {[
-                { val: `${lessons.length}`, label: 'Lessons' },
-                { val: `${reviewCount}`, label: 'Reviews' },
-                { val: `${course.class_limit ?? 0}`, label: 'Class limit' },
+                { val: `${creatorCourseItems.length}`, label: 'Courses' },
+                { val: `${0}`, label: 'Students' },
+                { val: `${0}`, label: 'Rating' },
               ].map((stat, i) => (
-                <div key={i} className="text-center">
+                <div key={i} className="text-start">
                   <p className="text-sm font-black text-foreground sm:text-base">
-                    {stat.val}
+                    {stat.label === 'Rating' ? (
+                      <span className="inline-flex items-center gap-1">
+                        {stat.val}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="h-4 w-4 text-warning"
+                        >
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                        </svg>
+                      </span>
+                    ) : (
+                      stat.val
+                    )}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {stat.label}

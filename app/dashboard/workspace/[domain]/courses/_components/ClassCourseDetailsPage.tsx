@@ -17,9 +17,11 @@ import {
     getAllCoursesOptions,
     getAllDifficultyLevelsOptions,
     getAllQuizzesOptions,
+    getAllTrainingProgramsOptions,
     getCourseByUuidOptions,
     getCourseCreatorByUuidOptions,
     getCourseReviewsOptions,
+    getPublishedCoursesOptions,
     searchTrainingApplicationsOptions,
     searchTrainingApplicationsQueryKey,
     submitTrainingApplicationMutation,
@@ -33,13 +35,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import NotesModal from '../../../../../../components/custom-modals/notes-modal';
 
+import { Heart, Share2 } from 'lucide-react';
 import CourseDetailsHero from './CourseDetailsHero';
 import CourseOverview from './CourseOverview';
 import CourseRating from './CourseRating';
-import { getEnrollHref } from './courses-data';
+import { formatDurationFromParts, getContentHref, getEnrollHref, stripHtml } from './courses-data';
 import CourseTabNav from './CourseTabNav';
 import EnrollSidebar from './EnrollSidebar';
 import ShareCourse from './ShareCourse';
+import { UnifiedContentItem } from './SharedCoursesPage';
 import StudentsAlsoBought from './StudentsAlsoBought';
 
 function getDurationLabel(course?: Course) {
@@ -62,6 +66,7 @@ export default function ClassCourseDetailsPage({
     const router = useRouter();
     const params = useParams();
     const { activeDomain } = useUserDomain();
+
     const instructor = useInstructor();
     const qc = useQueryClient();
     const { replaceBreadcrumbs } = useBreadcrumb();
@@ -72,32 +77,121 @@ export default function ClassCourseDetailsPage({
     const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
     const isInstructorDomain = activeDomain === 'instructor';
 
-
-    const {
-        data: courseResponse,
-        isLoading: courseLoading,
-        isFetching: courseFetching,
-    } = useQuery({
-        ...(resolvedCourseId
-            ? getCourseByUuidOptions({
-                path: { uuid: resolvedCourseId },
-            })
-            : {}),
-        enabled: !!resolvedCourseId,
+    const { data: coursesResponse, isLoading: coursesLoading } = useQuery({
+        ...getPublishedCoursesOptions({
+            query: {
+                pageable: {
+                    page: 0,
+                    size: 18,
+                },
+            },
+        }),
+        refetchOnWindowFocus: false,
     });
 
+    const { data: programsResponse, isLoading: programsLoading } = useQuery({
+        ...getAllTrainingProgramsOptions({
+            query: {
+                pageable: {
+                    page: 0,
+                    size: 12,
+                },
+            },
+        }),
+        refetchOnWindowFocus: false,
+    });
+
+    const courses = useMemo(() => coursesResponse?.data?.content ?? [], [coursesResponse]);
+    const programs = useMemo(() => programsResponse?.data?.content ?? [], [programsResponse]);
+
+    const mappedPrograms = useMemo<UnifiedContentItem[]>(
+        () =>
+            programs.map(program => {
+                const durationLabel = formatDurationFromParts(
+                    program.total_duration_hours,
+                    program.total_duration_minutes,
+                    program.total_duration_display
+                );
+
+                return {
+                    id: program.uuid ?? '',
+                    kind: 'program',
+                    title: program.title,
+                    description: stripHtml(program.description),
+                    createdAt: program.created_date ? new Date(program.created_date).getTime() : 0,
+                    durationMinutes: program.total_duration_hours * 60 + program.total_duration_minutes,
+                    durationLabel,
+                    categoryLabels: [],
+                    creatorUuid: program.course_creator_uuid,
+                    creatorName: '',
+                    price: program.price,
+                    minimumRate: program.price,
+                    imageUrl: undefined,
+                    href: getContentHref("course_creator", 'program', program.uuid ?? ''),
+                    enrolledClasses: 1,
+                    secondaryMeta:
+                        program.program_type ??
+                        (program.price && program.price > 0 ? 'Paid Program' : 'Free Program'),
+                    bundledCourseCount: 0,
+                };
+            }),
+        [programs]
+    );
+
+    const mappedCourses = useMemo<UnifiedContentItem[]>(
+        () =>
+            courses.map(course => ({
+                id: course.uuid ?? '',
+                kind: 'course',
+                title: course.name,
+                description: stripHtml(course.description),
+                createdAt: course.created_date ? new Date(course.created_date).getTime() : 0,
+                durationMinutes: course.duration_hours * 60 + course.duration_minutes,
+                durationLabel: formatDurationFromParts(
+                    course.duration_hours,
+                    course.duration_minutes,
+                    course.total_duration_display
+                ),
+                categoryLabels: course.category_names ?? [],
+                creatorUuid: course.course_creator_uuid,
+                creatorName: '',
+                levelLabel: '',
+                price: course.price,
+                minimumRate: course.minimum_training_fee ?? course.price,
+                imageUrl: course.banner_url ?? course.thumbnail_url,
+                href: getContentHref("course_creator", 'course', course.uuid ?? ''),
+                enrolledClasses: 1,
+                secondaryMeta:
+
+                    course.category_names?.[0] ??
+                    (course.price && course.price > 0 ? 'Paid Course' : 'Free Course'),
+            })),
+        [courses]
+    );
+
+    const { data: courseResponse, isLoading: courseLoading, isFetching: courseFetching, } = useQuery({
+        ...getCourseByUuidOptions({ path: { uuid: resolvedCourseId }, }),
+        enabled: !!resolvedCourseId,
+    });
     const course = courseResponse?.data as Course | undefined;
 
     const { data: creatorResponse, isLoading: creatorLoading } = useQuery({
-        ...(course?.course_creator_uuid
-            ? getCourseCreatorByUuidOptions({
-                path: { uuid: course.course_creator_uuid },
-            })
-            : {}),
+        ...getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string }, }),
         enabled: !!course?.course_creator_uuid,
     });
-
     const creator = creatorResponse?.data;
+
+    const myCourseItems = useMemo<UnifiedContentItem[]>(() => {
+        const courseCreatorUuid = course?.course_creator_uuid;
+
+        if (!courseCreatorUuid) { return []; }
+
+        const creatorCourses = mappedCourses.filter(course => course.creatorUuid === courseCreatorUuid);
+        const creatorPrograms = mappedPrograms.filter(program => program.creatorUuid === courseCreatorUuid);
+
+        return [...creatorCourses, ...creatorPrograms].sort((a, b) => b.createdAt - a.createdAt);
+    }, [mappedCourses, mappedPrograms, course?.course_creator_uuid]);
+
 
     const { data: reviewsResponse, isLoading: reviewsLoading } = useQuery({
         ...getCourseReviewsOptions({ path: { courseUuid: resolvedCourseId }, }),
@@ -394,13 +488,13 @@ export default function ClassCourseDetailsPage({
         <div className="min-h-screen font-sans">
             <main className="mx-auto w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
                 <div className="mb-4 flex justify-end gap-2 sm:mb-6">
-                    <button className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm transition-colors hover:border-foreground hover:text-foreground sm:text-sm">
-                        {/* Share Icon */}
+                    <button className="flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm transition-colors hover:border-foreground hover:text-foreground sm:text-sm">
+                        <Share2 className="h-3.5 w-3.5" />
                         Share
                     </button>
 
-                    <button className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm transition-colors hover:border-destructive hover:text-destructive sm:text-sm">
-                        {/* Wishlist Icon */}
+                    <button className="flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm transition-colors hover:border-destructive hover:text-destructive sm:text-sm">
+                        <Heart className="h-3.5 w-3.5" />
                         Wishlist
                     </button>
                 </div>
@@ -445,6 +539,7 @@ export default function ClassCourseDetailsPage({
                                     creatorHeadline={creatorHeadline}
                                     creatorBio={creatorBio}
                                     lessons={lessons}
+                                    creatorCourseItems={myCourseItems}
                                     lessonsWithContent={
                                         lessonsWithContent ?? []
                                     }
