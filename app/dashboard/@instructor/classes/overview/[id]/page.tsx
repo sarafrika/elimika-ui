@@ -67,7 +67,7 @@ export interface ContentItem {
   description?: string;
 }
 
-const socialShareActions: Array<{
+export const socialShareActions: Array<{
   icon: typeof Facebook;
   label: string;
   platform: SharePlatform;

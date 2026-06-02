@@ -3,6 +3,13 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -27,9 +34,13 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { LinkShareCard } from '../../../../../components/shared/link-share-card';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
+import { buildSocialShareUrl, openShareWindow } from '../../../../../lib/share';
 import { RichTextPreview } from '../../classes/class-training/[id]/_components/ClassTrainingPage';
+import { socialShareActions } from '../../classes/overview/[id]/page';
 import type { TrainingHubLiveClass } from './training-hub-data';
 
 type LiveClassCardProps = {
@@ -44,6 +55,13 @@ export function LiveClassCard({
   const handleDeleteClass = () => {
     toast.message('Implement delete class');
   };
+
+  const [inviteOpen, setInviteOpen] = useState(false);
+
+  const registrationLink =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/dashboard/workspace/student/courses/available-classes/${liveClass?.class?.course?.uuid}/enroll?id=${liveClass?.classUuid}`
+      : '';
 
   const statusConfig =
     liveClass.status === 'published'
@@ -127,11 +145,6 @@ export function LiveClassCard({
                   </div>
                 )}
               </div>
-
-              <Button variant={"ghost"} className='border mt-2'>
-                <UserPlus />
-                <p>Invite student</p>
-              </Button>
             </div>
 
             {/* CONTENT */}
@@ -149,65 +162,80 @@ export function LiveClassCard({
                 </div>
 
                 {/* DROPDOWN */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      aria-label='More options'
-                      variant='ghost'
-                      size='icon'
-                      className='h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-                    >
-                      <EllipsisVertical className='size-4' />
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent
-                    align='end'
-                    className='w-52'
+                <div className='flex flex-row items-center gap-2' >
+                  <Button
+                    variant='ghost'
+                    className='border mt-2 text-primary'
+                    onClick={() => setInviteOpen(true)}
                   >
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={`/dashboard/classes/new?id=${liveClass?.classUuid}`}
-                        className='flex items-center gap-2'
+                    <UserPlus />
+                    <p>Invite student</p>
+                  </Button>
+
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        aria-label='More options'
+                        variant='ghost'
+                        size='icon'
+                        className='h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground'
                       >
-                        <Plus className='size-4' />
-                        Add class
-                      </Link>
-                    </DropdownMenuItem>
+                        <EllipsisVertical className='size-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
 
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={`/dashboard/training-hub/classes/${liveClass.classUuid}`}
-                        className='flex items-center gap-2'
-                      >
-                        <Eye className='size-4' />
-                        View class
-                      </Link>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={`/dashboard/classes/new?id=${liveClass?.classUuid}`}
-                        className='flex items-center gap-2'
-                      >
-                        <Pencil className='size-4' />
-                        Edit class
-                      </Link>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuSeparator />
-
-                    <DropdownMenuItem
-                      className='text-destructive focus:text-destructive'
-                      onClick={
-                        handleDeleteClass
-                      }
+                    <DropdownMenuContent
+                      align='end'
+                      className='w-52'
                     >
-                      <Trash2 className='mr-2 size-4' />
-                      Delete class
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/dashboard/classes/new?id=${liveClass?.classUuid}`}
+                          className='flex items-center gap-2'
+                        >
+                          <Plus className='size-4' />
+                          Add class
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/dashboard/training-hub/classes/${liveClass.classUuid}`}
+                          className='flex items-center gap-2'
+                        >
+                          <Eye className='size-4' />
+                          View class
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/dashboard/classes/new?id=${liveClass?.classUuid}`}
+                          className='flex items-center gap-2'
+                        >
+                          <Pencil className='size-4' />
+                          Edit class
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+
+                      <DropdownMenuItem
+                        className='text-destructive focus:text-destructive'
+                        onClick={
+                          handleDeleteClass
+                        }
+                      >
+                        <Trash2 className='mr-2 size-4' />
+                        Delete class
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+
+
               </div>
 
               <div className='flex flex-wrap items-center gap-2 mt-2'>
@@ -326,6 +354,57 @@ export function LiveClassCard({
           </div>
         </div>
       </CardContent>
+
+
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent className='sm:max-w-lg'>
+          <DialogHeader>
+            <DialogTitle>Invite Students</DialogTitle>
+          </DialogHeader>
+
+          <DialogDescription>
+            Invite students to join your live class.
+          </DialogDescription>
+
+          <LinkShareCard
+            description='Copy or share the registration link for enrollment.'
+            title='Registration Link'
+            url={registrationLink}
+            footer={
+              <div className='space-y-3'>
+                <h4 className='text-sm font-medium'>Share via</h4>
+
+                <div className='flex flex-wrap gap-2'>
+                  {socialShareActions.map(
+                    ({ icon: Icon, label, platform }) => (
+                      <Button
+                        key={label}
+                        aria-label={`Share registration link on ${label}`}
+                        className='gap-2'
+                        disabled={!registrationLink}
+                        onClick={() =>
+                          openShareWindow(
+                            buildSocialShareUrl(platform, {
+                              title: liveClass.title,
+                              url: registrationLink,
+                              description: `Check out this class: ${liveClass.title}`,
+                            })
+                          )
+                        }
+                        size='sm'
+                        variant='outline'
+                      >
+                        <Icon className='h-4 w-4' />
+                        {label}
+                      </Button>
+                    )
+                  )}
+                </div>
+              </div>
+            }
+          />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
