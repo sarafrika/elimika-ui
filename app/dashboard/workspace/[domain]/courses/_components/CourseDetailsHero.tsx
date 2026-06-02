@@ -2,6 +2,7 @@ import type { Course } from '@/services/client';
 import {
   Award,
   BadgeCheck,
+  BarChart,
   BookOpen,
   Clock,
   FileCheck,
@@ -25,6 +26,7 @@ type Props = {
   assignmentCount: number;
   quizCount: number;
   durationLabel: string;
+  type?: 'course' | 'class';
 };
 
 export default function CourseDetailsHero({
@@ -38,6 +40,7 @@ export default function CourseDetailsHero({
   assignmentCount,
   quizCount,
   durationLabel,
+  type = 'course',
 }: Props) {
   const totalAssessments = assignmentCount + quizCount;
   const displayRating = averageRating ? Number(averageRating) : 0;
@@ -123,97 +126,136 @@ export default function CourseDetailsHero({
           <HTMLTextPreview htmlContent={course.description || ''} />
         </div>
 
-        <div className='flex flex-wrap items-center gap-12 w-full text-sm'>
-          <div className='flex items-center gap-2'>
-            <div className='bg-muted flex h-8 w-8 items-center justify-center rounded-full'>
-              <User className='text-muted-foreground h-4 w-4' />
+        {type === "course" ?
+          (<div className='flex flex-wrap items-center gap-12 w-full text-sm'>
+            <div className='flex items-start gap-2'>
+              <div className='bg-muted flex h-8 w-8 items-center justify-center rounded-full'>
+                <User className='text-muted-foreground h-4 w-4' />
+              </div>
+              <div>
+                <p className='text-muted-foreground text-xs'>
+                  Course Creator
+                </p>
+                <p className='text-foreground text-xs font-semibold sm:text-sm'>
+                  {creatorName}
+                </p>
+
+              </div>
             </div>
 
-            <div>
-              <p className='text-muted-foreground text-xs'>
-                Instructor
-              </p>
+            <div className='flex flex-col items-start gap-1.5'>
+              <div className='flex gap-2'>
+                <Clock className='text-muted-foreground h-4 w-4 shrink-0' />
+                <p className='text-muted-foreground text-xs'>
+                  Instructors
+                </p>
+              </div>
 
               <p className='text-foreground text-xs font-semibold sm:text-sm'>
-                {creatorName}
-              </p>
-
-              <p className='text-muted-foreground text-xs'>
-                {creatorHeadline}
+                {"0 | 5"} active
               </p>
             </div>
-          </div>
 
-          <div className='flex items-center gap-1.5'>
-            <Clock className='text-muted-foreground h-4 w-4 shrink-0' />
-
-            <div>
-              <p className='text-muted-foreground text-xs'>
-                Duration
-              </p>
+            <div className='flex flex-col items-start gap-1.5'>
+              <div className='flex gap-2'>
+                <Users className='text-muted-foreground h-4 w-4 shrink-0' />
+                <p className='text-muted-foreground text-xs'>
+                  Students
+                </p>
+              </div>
 
               <p className='text-foreground text-xs font-semibold sm:text-sm'>
-                {durationLabel}
+                {course.class_limit ?? 0} Enrolled
               </p>
             </div>
-          </div>
-
-          <div className='flex items-center gap-1.5'>
-            <Users className='text-muted-foreground h-4 w-4 shrink-0' />
-
-            <div>
-              <p className='text-muted-foreground text-xs'>
-                Students
-              </p>
+          </div>)
+          :
+          (<div className='flex flex-wrap items-center gap-12 w-full text-sm'>
+            <div className='flex flex-col items-start gap-1.5'>
+              <div className='flex gap-2'>
+                <Clock className='text-muted-foreground h-4 w-4 shrink-0' />
+                <p className='text-muted-foreground text-xs'>
+                  Schedule
+                </p>
+              </div>
 
               <p className='text-foreground text-xs font-semibold sm:text-sm'>
-                {course.class_limit ?? 0} Max
+                30hrs/10classes
               </p>
             </div>
-          </div>
-        </div>
+
+            <div className='flex flex-col items-start gap-1.5'>
+              <div className='flex gap-2'>
+                <BarChart className='text-muted-foreground h-4 w-4 shrink-0' />
+                <p className='text-muted-foreground text-xs'>
+                  Duration
+                </p>
+              </div>
+
+              <p className='text-foreground text-xs font-semibold sm:text-sm'>
+                {"0 | 5"} weeks
+              </p>
+            </div>
+
+            <div className='flex flex-col items-start gap-1.5'>
+              <div className='flex gap-2'>
+                <Users className='text-muted-foreground h-4 w-4 shrink-0' />
+                <p className='text-muted-foreground text-xs'>
+                  Students
+                </p>
+              </div>
+
+              <p className='text-foreground text-xs font-semibold sm:text-sm'>
+                {course.class_limit ?? 0} Enrolled / {5} waiting list
+              </p>
+            </div>
+          </div>)
+        }
       </div>
 
-      <div className='border-border flex flex-wrap gap-6 border-y py-3 sm:gap-12 sm:py-4'>
+      <div className="border-border flex flex-wrap gap-6 border-y py-3 sm:gap-12 sm:py-4">
         {[
           {
-            icon: <BookOpen className='text-primary h-4 w-4' />,
+            icon: <BookOpen className="h-4 w-4 text-primary" />,
             label: `${lessonCount}`,
             sub: 'Lessons',
+            bg: 'bg-primary/5',
           },
           {
-            icon: <FileCheck className='text-primary h-4 w-4' />,
+            icon: <FileCheck className="h-4 w-4 text-success" />,
             label: `${totalAssessments}`,
             sub: 'Assessments',
+            bg: 'bg-success/5',
           },
           {
-            icon: <MonitorPlay className='text-primary h-4 w-4' />,
-            label: 'Live',
-            sub: 'Course Data',
+            icon: <MonitorPlay className="h-4 w-4 text-warning" />,
+            label: 'Hands-on',
+            sub: 'Projects',
+            bg: 'bg-warning/5',
           },
           {
-            icon: <Award className='text-primary h-4 w-4' />,
-            label: 'API',
-            sub: 'Driven',
+            icon: <Award className="h-4 w-4 text-balance" />,
+            label: 'Certificate',
+            sub: 'of Completion',
+            bg: 'bg-muted/50',
           },
           {
-            icon: <Globe className='text-primary h-4 w-4' />,
+            icon: <Globe className="h-4 w-4 text-accent" />,
             label: 'English',
             sub: 'Language',
+            bg: 'bg-accent/5',
           },
         ].map((item, i) => (
-          <div
-            key={i}
-            className='flex min-w-fit items-center gap-2'
-          >
-            {item.icon}
+          <div key={i} className="flex flex-row min-w-fit items-center gap-2">
+            <div className={`${item.bg} p-2 rounded-full`}>
+              {item.icon}
+            </div>
 
-            <div>
-              <span className='text-foreground text-xs font-bold sm:text-sm'>
+            <div className="flex flex-col">
+              <span className="text-foreground text-xs font-bold sm:text-sm">
                 {item.label}
               </span>
-
-              <span className='text-muted-foreground ml-0.5 text-xs'>
+              <span className="text-muted-foreground text-xs -mt-1">
                 {item.sub}
               </span>
             </div>

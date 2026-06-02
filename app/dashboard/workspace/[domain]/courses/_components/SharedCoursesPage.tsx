@@ -71,7 +71,7 @@ type SharedCoursesPageProps = {
   domain: UserDomain;
 };
 
-type UnifiedContentItem = {
+export type UnifiedContentItem = {
   id: string;
   kind: 'course' | 'program';
   title: string;
