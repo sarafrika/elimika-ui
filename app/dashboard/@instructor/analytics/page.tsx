@@ -34,7 +34,7 @@ export default function TrainingDashboard() {
 
         <TabNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {activeTab === "Overview" ? (
+        {activeTab === "Overview" && (
           <div className="space-y-4 sm:space-y-5">
             <KPIRow />
 
@@ -63,9 +63,36 @@ export default function TrainingDashboard() {
 
             <DetailedMetrics />
           </div>
-        ) : (
-          <PlaceholderTab tabName={activeTab} />
         )}
+
+        {activeTab === "Session Report" && <div>
+          <PlaceholderTab tabName={activeTab} />
+        </div>}
+
+
+        {activeTab === "Program Report" && <div>
+          <PlaceholderTab tabName={activeTab} />
+        </div>}
+
+        {activeTab === "Instructor Report" && <div>
+          <PlaceholderTab tabName={activeTab} />
+        </div>}
+
+        {activeTab === "Participant Report" && <div>
+          <PlaceholderTab tabName={activeTab} />
+        </div>}
+
+        {activeTab === "Location Report" && <div>
+          <PlaceholderTab tabName={activeTab} />
+        </div>}
+
+        {activeTab === "Trend Report" && <div>
+          <PlaceholderTab tabName={activeTab} />
+        </div>}
+
+        {activeTab === "Custom Report" && <div>
+          <PlaceholderTab tabName={activeTab} />
+        </div>}
 
         {/* Footer */}
         <div className="mt-6 flex flex-wrap justify-between items-center text-xs text-muted-foreground gap-2 border-t border-border pt-4">
