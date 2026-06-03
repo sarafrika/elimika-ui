@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 import {
     CheckCircle2,
+    ChevronDown,
+    ChevronRight,
     Clock3,
     FileQuestion,
     HelpCircle,
@@ -36,7 +38,9 @@ import { Textarea } from '../ui/textarea';
 
 type QuizContentPreviewProps = {
     quizUuid: string;
-    role?: 'instructor' | 'user';
+    role?: 'instructor' | 'user' | 'preview';
+    questionsOpen?: boolean;
+
 };
 
 type QuizAnswerValue = string | Record<string, string>;
@@ -322,8 +326,16 @@ function QuestionOptionsPreview({
 export function QuizContentPreview({
     quizUuid,
     role = 'user',
+    questionsOpen = true
 }: QuizContentPreviewProps) {
     const isInstructor = role === 'instructor';
+
+    const [isQuestionsOpen, setIsQuestionsOpen] =
+        useState(questionsOpen);
+
+    useEffect(() => {
+        setIsQuestionsOpen(questionsOpen);
+    }, [questionsOpen]);
 
     const [answers, setAnswers] = useState<Record<string, QuizAnswerValue>>({});
 
@@ -520,115 +532,134 @@ export function QuizContentPreview({
             </Card>
 
             <div className='space-y-4'>
-                <div className='flex items-center gap-2'>
-                    <FileQuestion className='h-5 w-5' />
-
-                    <h2 className='text-lg font-semibold'>
-                        Quiz Questions
-                    </h2>
-                </div>
-
-                {questions.length === 0 ? (
-                    <div className='text-muted-foreground rounded-xl border border-dashed py-12 text-center text-sm'>
-                        No questions available
-                        for this quiz.
+                <Button
+                    variant="ghost"
+                    className="hover:bg-muted/40 hover:text-foreground w-full justify-between rounded-sm"
+                    onClick={() => setIsQuestionsOpen((prev) => !prev)}
+                >
+                    <div className="flex items-center gap-2">
+                        <FileQuestion className="h-5 w-5" />
+                        <h2 className="text-lg font-semibold">Quiz Questions</h2>
+                        <Badge variant="outline">{questions.length}</Badge>
                     </div>
-                ) : (
-                    <>
-                        {questions.map(
-                            (question, index: number) => {
-                                const questionUuid = question.uuid ?? `question-${index}`;
 
-                                return (
-                                    <Card
-                                        key={
-                                            questionUuid
-                                        }
-                                        className='overflow-hidden shadow-none'
-                                    >
-                                        <CardContent className='space-y-5 pt-6'>
-                                            <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-                                                <div className='space-y-3'>
-                                                    <div className='flex flex-wrap items-center gap-2'>
-                                                        <Badge variant='secondary'>
-                                                            {QUESTION_TYPE_LABELS[
-                                                                question.question_type
-                                                            ] ||
-                                                                question.question_type}
-                                                        </Badge>
+                    <div className="flex items-center gap-1">
+                        <span className="text-sm font-medium">
+                            {isQuestionsOpen ? 'Collapse' : 'Expand'}
+                        </span>
 
-                                                        <Badge variant='outline'>
-                                                            {question.points ??
-                                                                1}{' '}
-                                                            pts
-                                                        </Badge>
+                        {isQuestionsOpen ? (
+                            <ChevronDown className="h-4 w-4" />
+                        ) : (
+                            <ChevronRight className="h-4 w-4" />
+                        )}
+                    </div>
+                </Button>
+
+                {isQuestionsOpen && (<>
+                    {questions.length === 0 ? (
+                        <div className='text-muted-foreground rounded-xl border border-dashed py-12 text-center text-sm'>
+                            No questions available
+                            for this quiz.
+                        </div>
+                    ) : (
+                        <>
+                            {questions.map(
+                                (question, index: number) => {
+                                    const questionUuid = question.uuid ?? `question-${index}`;
+
+                                    return (
+                                        <Card
+                                            key={
+                                                questionUuid
+                                            }
+                                            className='overflow-hidden shadow-none'
+                                        >
+                                            <CardContent className='space-y-5 pt-6'>
+                                                <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+                                                    <div className='space-y-3'>
+                                                        <div className='flex flex-wrap items-center gap-2'>
+                                                            <Badge variant='secondary'>
+                                                                {QUESTION_TYPE_LABELS[
+                                                                    question.question_type
+                                                                ] ||
+                                                                    question.question_type}
+                                                            </Badge>
+
+                                                            <Badge variant='outline'>
+                                                                {question.points ??
+                                                                    1}{' '}
+                                                                pts
+                                                            </Badge>
+                                                        </div>
+
+                                                        <h3 className='text-base leading-relaxed font-medium'>
+                                                            {index +
+                                                                1}
+                                                            .{' '}
+                                                            {
+                                                                question.question_text
+                                                            }
+                                                        </h3>
                                                     </div>
-
-                                                    <h3 className='text-base leading-relaxed font-medium'>
-                                                        {index +
-                                                            1}
-                                                        .{' '}
-                                                        {
-                                                            question.question_text
-                                                        }
-                                                    </h3>
                                                 </div>
-                                            </div>
 
-                                            <Separator />
+                                                <Separator />
 
-                                            <QuestionOptionsPreview
-                                                quizUuid={
-                                                    quizUuid
-                                                }
-                                                questionUuid={
-                                                    questionUuid
-                                                }
-                                                questionType={
-                                                    question.question_type
-                                                }
-                                                role={role}
-                                                answer={
-                                                    answers[
-                                                    questionUuid
-                                                    ]
-                                                }
-                                                submitted={
-                                                    submitted
-                                                }
-                                                onChange={(
-                                                    value
-                                                ) =>
-                                                    updateAnswer(
-                                                        questionUuid,
+                                                <QuestionOptionsPreview
+                                                    quizUuid={
+                                                        quizUuid
+                                                    }
+                                                    questionUuid={
+                                                        questionUuid
+                                                    }
+                                                    questionType={
+                                                        question.question_type
+                                                    }
+                                                    role={role}
+                                                    answer={
+                                                        answers[
+                                                        questionUuid
+                                                        ]
+                                                    }
+                                                    submitted={
+                                                        submitted
+                                                    }
+                                                    onChange={(
                                                         value
-                                                    )
-                                                }
-                                            />
-                                        </CardContent>
-                                    </Card>
-                                );
-                            }
-                        )}
+                                                    ) =>
+                                                        updateAnswer(
+                                                            questionUuid,
+                                                            value
+                                                        )
+                                                    }
+                                                />
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                }
+                            )}
 
-                        {!isInstructor && (
-                            <div className='flex justify-end pt-4'>
-                                <Button
-                                    disabled={
-                                        submitted
-                                    }
-                                    onClick={
-                                        handleSubmitQuiz
-                                    }
-                                >
-                                    {submitted
-                                        ? 'Quiz Submitted'
-                                        : 'Submit Quiz'}
-                                </Button>
-                            </div>
-                        )}
-                    </>
-                )}
+                            {role === 'user' && (
+                                <div className='flex justify-end pt-4'>
+                                    <Button
+                                        disabled={
+                                            submitted
+                                        }
+                                        onClick={
+                                            handleSubmitQuiz
+                                        }
+                                    >
+                                        {submitted
+                                            ? 'Quiz Submitted'
+                                            : 'Submit Quiz'}
+                                    </Button>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                </>)}
             </div>
         </div>
     );
