@@ -57,7 +57,6 @@ export function LiveClassCard({
   };
 
   const [inviteOpen, setInviteOpen] = useState(false);
-
   const registrationLink =
     typeof window !== 'undefined'
       ? `${window.location.origin}/dashboard/workspace/student/courses/available-classes/${liveClass?.class?.course?.uuid}/enroll?id=${liveClass?.classUuid}`

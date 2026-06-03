@@ -191,7 +191,7 @@ export default function EnrollSidebar({
       </div>
 
       {/* COURSE META */}
-      {type !== "class" && (
+      {type === "class" && (
         <div className="rounded-xl border border-border bg-card px-6 py-4">
           <p className="text-md font-extrabold">
             Schedule Summary

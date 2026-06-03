@@ -36,13 +36,18 @@ import { toast } from 'sonner';
 import NotesModal from '../../../../../../components/custom-modals/notes-modal';
 
 import { Heart, Share2 } from 'lucide-react';
+import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
+import { Button } from '../../../../../../components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../../components/ui/dialog';
+import { buildSocialShareUrl, openShareWindow } from '../../../../../../lib/share';
+import { socialShareActions } from '../../../../@instructor/classes/overview/[id]/page';
 import CourseDetailsHero from './CourseDetailsHero';
 import CourseOverview from './CourseOverview';
 import CourseRating from './CourseRating';
 import { formatDurationFromParts, getContentHref, getEnrollHref, stripHtml } from './courses-data';
 import CourseTabNav from './CourseTabNav';
 import EnrollSidebar from './EnrollSidebar';
-import ShareCourse from './ShareCourse';
+import ShareClassCourse from './ShareClassCourse';
 import { UnifiedContentItem } from './SharedCoursesPage';
 import StudentsAlsoBought from './StudentsAlsoBought';
 
@@ -74,6 +79,8 @@ export default function ClassCourseDetailsPage({
     const resolvedCourseId = courseId || (params?.id as string);
 
     const [applyModalOpen, setApplyModalOpen] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
+
     const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
     const isInstructorDomain = activeDomain === 'instructor';
 
@@ -174,6 +181,15 @@ export default function ClassCourseDetailsPage({
         enabled: !!resolvedCourseId,
     });
     const course = courseResponse?.data as Course | undefined;
+
+
+    const courseShareLink =
+        typeof window !== 'undefined'
+            ? `${window.location.origin}${buildWorkspaceAliasPath(
+                activeDomain,
+                `/dashboard/courses/${course?.uuid}`
+            )}`
+            : '';
 
     const { data: creatorResponse, isLoading: creatorLoading } = useQuery({
         ...getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string }, }),
@@ -488,15 +504,18 @@ export default function ClassCourseDetailsPage({
         <div className="min-h-screen font-sans">
             <main className="mx-auto w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
                 <div className="mb-4 flex justify-end gap-2 sm:mb-6">
-                    <button className="flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm transition-colors hover:border-foreground hover:text-foreground sm:text-sm">
+                    <Button
+                        onClick={() => setShareOpen(true)}
+                        className="flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm transition-colors hover:border-foreground hover:text-foreground sm:text-sm"
+                    >
                         <Share2 className="h-3.5 w-3.5" />
                         Share
-                    </button>
+                    </Button>
 
-                    <button className="flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm transition-colors hover:border-destructive hover:text-destructive sm:text-sm">
+                    <Button className="flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm transition-colors hover:border-destructive hover:text-destructive sm:text-sm">
                         <Heart className="h-3.5 w-3.5" />
                         Wishlist
-                    </button>
+                    </Button>
                 </div>
 
                 <div className="flex flex-col items-start gap-6 lg:flex-row lg:gap-8 xl:gap-10">
@@ -613,7 +632,13 @@ export default function ClassCourseDetailsPage({
                             courseId={resolvedCourseId}
                         />
 
-                        <ShareCourse />
+                        <ShareClassCourse
+                            courseTitle={course?.name ?? ''}
+                            courseUrl={`${window.location.origin}${buildWorkspaceAliasPath(
+                                activeDomain,
+                                `/dashboard/courses/${course?.uuid}`
+                            )}`}
+                        />
                     </div>
                 </div>
 
@@ -649,6 +674,55 @@ export default function ClassCourseDetailsPage({
                     />
                 ) : null}
             </main>
+
+
+            <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Share Course</DialogTitle>
+                        <DialogDescription>
+                            Share this course with other learners and instructors.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <LinkShareCard
+                        title="Course Link"
+                        description="Copy or share this course link."
+                        url={courseShareLink}
+                        footer={
+                            <div className="space-y-3">
+                                <h4 className="text-sm font-medium">Share via</h4>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {socialShareActions.map(
+                                        ({ icon: Icon, label, platform }) => (
+                                            <Button
+                                                key={label}
+                                                size="sm"
+                                                variant="outline"
+                                                className="gap-2"
+                                                disabled={!courseShareLink}
+                                                onClick={() =>
+                                                    openShareWindow(
+                                                        buildSocialShareUrl(platform, {
+                                                            title: course?.name ?? 'Course',
+                                                            url: courseShareLink,
+                                                            description: `Check out this course: ${course?.name}`,
+                                                        })
+                                                    )
+                                                }
+                                            >
+                                                <Icon className="h-4 w-4" />
+                                                {label}
+                                            </Button>
+                                        )
+                                    )}
+                                </div>
+                            </div>
+                        }
+                    />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

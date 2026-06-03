@@ -1,7 +1,7 @@
 'use client';
 
+import { Check, Copy } from 'lucide-react';
 import * as React from 'react';
-import { Check, Copy, Share2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -161,7 +161,7 @@ export const LinkShareCard = React.memo(function LinkShareCard({
     <Card className={cn('gap-0', className)}>
       {header ?? (
         <CardHeader className='space-y-4'>
-          <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
+          <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between '>
             <div className='space-y-1'>
               <CardTitle className='text-xl'>{title}</CardTitle>
               {description ? <CardDescription>{description}</CardDescription> : null}
@@ -180,7 +180,7 @@ export const LinkShareCard = React.memo(function LinkShareCard({
                   <span className='min-w-0'>{actionLabel}</span>
                 </Button>
 
-                <Button
+                {/* <Button
                   aria-label={`Share ${title}`}
                   className='gap-2'
                   disabled={!isShareable}
@@ -189,7 +189,7 @@ export const LinkShareCard = React.memo(function LinkShareCard({
                 >
                   <Share2 className='h-4 w-4' />
                   <span className='min-w-0'>{shareLabel}</span>
-                </Button>
+                </Button> */}
               </div>
             ) : null}
           </div>
@@ -197,7 +197,7 @@ export const LinkShareCard = React.memo(function LinkShareCard({
       )}
 
       <CardContent className='space-y-4'>
-        <div className='border-border bg-muted/40 rounded-lg border px-4 py-3'>
+        <div className='border-border bg-muted/40 rounded-lg border px-3 py-3 mb-2'>
           {preview ?? defaultPreview}
         </div>
 
