@@ -41,11 +41,14 @@ import { Button } from '../../../../../../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../../components/ui/dialog';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../../lib/share';
 import { socialShareActions } from '../../../../@instructor/classes/overview/[id]/page';
+import { CourseTrainingRequirements } from '../../../../_components/course-training-requirements';
 import CourseDetailsHero from './CourseDetailsHero';
-import CourseOverview from './CourseOverview';
+import CourseFaq from './CourseFaq';
+import CourseOverview, { ClassCourseCurriculum } from './CourseOverview';
 import CourseRating from './CourseRating';
+import CourseReviews from './CourseReviews';
 import { formatDurationFromParts, getContentHref, getEnrollHref, stripHtml } from './courses-data';
-import CourseTabNav from './CourseTabNav';
+import ClassCourseTabNav from './CourseTabNav';
 import EnrollSidebar from './EnrollSidebar';
 import ShareClassCourse from './ShareClassCourse';
 import { UnifiedContentItem } from './SharedCoursesPage';
@@ -71,6 +74,8 @@ export default function ClassCourseDetailsPage({
     const router = useRouter();
     const params = useParams();
     const { activeDomain } = useUserDomain();
+
+    const [activeTab, setActiveTab] = useState('Overview');
 
     const instructor = useInstructor();
     const qc = useQueryClient();
@@ -190,6 +195,7 @@ export default function ClassCourseDetailsPage({
                 `/dashboard/courses/${course?.uuid}`
             )}`
             : '';
+
 
     const { data: creatorResponse, isLoading: creatorLoading } = useQuery({
         ...getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string }, }),
@@ -500,6 +506,17 @@ export default function ClassCourseDetailsPage({
         );
     }
 
+    const tabs = [
+        'Overview',
+        `Lessons (${lessons.length})`,
+        'Assessment',
+        `Requirements (${course?.training_requirements
+            ?.length ?? 0})`,
+        'Schedule',
+        `Reviews (${reviewCount})`,
+        'FAQs',
+    ];
+
     return (
         <div className="min-h-screen font-sans">
             <main className="mx-auto w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
@@ -537,34 +554,54 @@ export default function ClassCourseDetailsPage({
 
                         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                             <div className="px-4 pt-4 sm:px-5 sm:pt-5 lg:px-6">
-                                <CourseTabNav
-                                    reviewCount={reviewCount}
-                                    lessonCount={lessons.length}
-                                    assessmentCount={
-                                        filteredAssignments.length +
-                                        filteredQuizzes.length
-                                    }
-                                    requirementCount={
-                                        course?.training_requirements
-                                            ?.length ?? 0
-                                    }
+                                <ClassCourseTabNav
+                                    tabs={tabs}
+                                    activeTab={activeTab}
+                                    onTabChange={setActiveTab}
                                 />
                             </div>
 
                             <div className="px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
-                                <CourseOverview
-                                    course={course}
-                                    creatorName={creatorName}
-                                    creatorHeadline={creatorHeadline}
-                                    creatorBio={creatorBio}
-                                    lessons={lessons}
-                                    creatorCourseItems={myCourseItems}
-                                    lessonsWithContent={
-                                        lessonsWithContent ?? []
-                                    }
-                                    reviewCount={reviewCount}
-                                    averageRating={avgRating}
-                                />
+                                {activeTab === "Overview" && (
+                                    <CourseOverview
+                                        course={course}
+                                        creatorName={creatorName}
+                                        creatorHeadline={creatorHeadline}
+                                        creatorBio={creatorBio}
+                                        lessons={lessons}
+                                        creatorCourseItems={myCourseItems}
+                                        lessonsWithContent={
+                                            lessonsWithContent ?? []
+                                        }
+                                        reviewCount={reviewCount}
+                                        averageRating={avgRating}
+                                    />)
+                                }
+
+                                {activeTab === `Lessons (${lessons.length})` &&
+                                    <ClassCourseCurriculum lessonsWithContent={lessonsWithContent ?? []} />
+                                }
+
+                                {activeTab === "Assessment" && <div>Assessment</div>}
+
+                                {activeTab === `Requirements (${course?.training_requirements
+                                    ?.length ?? 0})` &&
+                                    <CourseTrainingRequirements
+                                        requirements={course?.training_requirements}
+                                        title='Course Training Requirements'
+                                        description='Review what you need to prepare before registering for this class.'
+                                        className='border-none shadow-none'
+                                    />
+                                }
+
+                                {activeTab === "Schedule" && <div>Schedule</div>}
+
+                                {activeTab === `Reviews (${reviewCount})` &&
+                                    <CourseReviews reviews={reviews} />
+                                }
+
+                                {activeTab === "FAQs" && <CourseFaq faqs={[]} />}
+
                             </div>
                         </div>
 
