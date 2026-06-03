@@ -22,9 +22,7 @@ export function PerformanceChart() {
 
   const xPos = (i: number) => padL + groupW * i + groupW / 2;
 
-  // Y for participants (left axis)
   const yPart = (v: number) => padT + plotH - (v / maxParticipants) * plotH;
-  // Y for completion rate (right axis, 0–100%)
   const yComp = (v: number) => padT + plotH - (v / 100) * plotH;
 
   const linePoints = weeks
@@ -35,16 +33,16 @@ export function PerformanceChart() {
   const yGridsRight = [0, 25, 50, 75, 100];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4 h-full">
-      <h3 className="text-xs sm:text-sm font-semibold text-gray-800 mb-1">
+    <div className="rounded-xl border border-border bg-card shadow-sm p-3 sm:p-4 h-full">
+      <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-1">
         Performance Over Time
       </h3>
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 mb-2">
-        <LegendItem color="#3b82f6" label="Sessions Completed" type="bar" />
-        <LegendItem color="#22c55e" label="Participants Trained" type="bar" />
-        <LegendItem color="#8b5cf6" label="Completion Rate (%)" type="line" />
+        <LegendItem color="text-primary" bgColor="bg-primary" label="Sessions Completed" type="bar" />
+        <LegendItem color="text-success" bgColor="bg-success" label="Participants Trained" type="bar" />
+        <LegendItem color="text-warning" bgColor="bg-warning" label="Completion Rate (%)" type="line" />
       </div>
 
       {/* Chart */}
@@ -64,13 +62,25 @@ export function PerformanceChart() {
                   y1={y}
                   x2={chartW - 20}
                   y2={y}
-                  stroke="#f3f4f6"
+                  stroke="var(--border-subtle)"
                   strokeWidth="1"
                 />
-                <text x={padL - 4} y={y + 3} fontSize="7" fill="#9ca3af" textAnchor="end">
+                <text
+                  x={padL - 4}
+                  y={y + 3}
+                  fontSize="7"
+                  fill="var(--text-muted)"
+                  textAnchor="end"
+                >
                   {v}
                 </text>
-                <text x={chartW - 16} y={y + 3} fontSize="7" fill="#9ca3af" textAnchor="start">
+                <text
+                  x={chartW - 16}
+                  y={y + 3}
+                  fontSize="7"
+                  fill="var(--text-muted)"
+                  textAnchor="start"
+                >
                   {yGridsRight[i]}%
                 </text>
               </g>
@@ -83,28 +93,35 @@ export function PerformanceChart() {
             const bH1 = (sessionsData[i] / 10) * plotH * 0.5;
             const bH2 = (participantsData[i] / maxParticipants) * plotH;
             const baseY = padT + plotH;
+
             return (
               <g key={i}>
-                {/* Sessions bar (blue) */}
+                {/* Sessions bar */}
                 <rect
                   x={cx - barW - 2}
                   y={baseY - bH1}
                   width={barW}
                   height={bH1}
-                  fill="#3b82f6"
+                  className="fill-primary"
                   rx="2"
                 />
-                {/* Participants bar (green) */}
+                {/* Participants bar */}
                 <rect
                   x={cx + 2}
                   y={baseY - bH2}
                   width={barW}
                   height={bH2}
-                  fill="#22c55e"
+                  className="fill-success"
                   rx="2"
                 />
                 {/* Week label */}
-                <text x={cx} y={chartH - 4} fontSize="7" fill="#9ca3af" textAnchor="middle">
+                <text
+                  x={cx}
+                  y={chartH - 4}
+                  fontSize="7"
+                  className="text-muted-foreground"
+                  textAnchor="middle"
+                >
                   {weeks[i]}
                 </text>
               </g>
@@ -115,7 +132,7 @@ export function PerformanceChart() {
           <polyline
             points={linePoints}
             fill="none"
-            stroke="#8b5cf6"
+            className="stroke-warning"
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -126,8 +143,8 @@ export function PerformanceChart() {
               cx={xPos(i)}
               cy={yComp(completionData[i])}
               r="3"
-              fill="white"
-              stroke="#8b5cf6"
+              fill="var(--card-background)"
+              className="stroke-warning"
               strokeWidth="1.5"
             />
           ))}
@@ -139,24 +156,26 @@ export function PerformanceChart() {
 
 function LegendItem({
   color,
+  bgColor,
   label,
   type,
 }: {
   color: string;
+  bgColor?: string;
   label: string;
   type: "bar" | "line";
 }) {
   return (
     <div className="flex items-center gap-1">
       {type === "bar" ? (
-        <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: color }} />
+        <span className={`w-2.5 h-2.5 rounded-sm shrink-0 ${bgColor} ${color}`} />
       ) : (
         <svg width="14" height="8" className="shrink-0">
-          <line x1="0" y1="4" x2="14" y2="4" stroke={color} strokeWidth="1.5" />
-          <circle cx="7" cy="4" r="2.5" fill="white" stroke={color} strokeWidth="1.5" />
+          <line x1="0" y1="4" x2="14" y2="4" className={`stroke-current ${color}`} strokeWidth="1.5" />
+          <circle cx="7" cy="4" r="2.5" fill="var(--card-background)" className={`stroke-current ${color}`} strokeWidth="1.5" />
         </svg>
       )}
-      <span className="text-xs text-gray-500 whitespace-nowrap">{label}</span>
+      <span className="text-xs text-muted-foreground whitespace-nowrap">{label}</span>
     </div>
   );
 }

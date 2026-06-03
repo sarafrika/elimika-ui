@@ -70,16 +70,15 @@ const sessions = [
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    Completed: "bg-green-50 text-green-700 border border-green-200",
-    "In Progress": "bg-blue-50 text-blue-700 border border-blue-200",
-    Upcoming: "bg-gray-50 text-gray-600 border border-gray-200",
-    Cancelled: "bg-red-50 text-red-700 border border-red-200",
+    Completed: "bg-success/20 text-success border border-success/40",
+    "In Progress": "bg-primary/20 text-primary border border-primary/40",
+    Upcoming: "bg-muted/20 text-muted border border-muted/40",
+    Cancelled: "bg-destructive/20 text-destructive border border-destructive/40",
   };
   return (
     <span
-      className={`inline-block px-2 py-0.5 rounded-md text-xs font-medium ${
-        styles[status] ?? styles["Upcoming"]
-      }`}
+      className={`inline-block px-2 py-0.5 rounded-md text-xs font-medium ${styles[status] ?? styles["Upcoming"]
+        }`}
     >
       {status}
     </span>
@@ -89,18 +88,21 @@ function StatusBadge({ status }: { status: string }) {
 function CompletionBar({ pct }: { pct: number }) {
   const color =
     pct >= 90
-      ? "bg-green-500"
+      ? "bg-success"
       : pct >= 70
-      ? "bg-green-400"
-      : pct >= 50
-      ? "bg-amber-400"
-      : "bg-red-400";
+        ? "bg-success/70"
+        : pct >= 50
+          ? "bg-warning"
+          : "bg-destructive";
   return (
     <div className="flex items-center gap-1.5">
-      <div className="w-16 bg-gray-100 rounded-full h-1.5">
-        <div className={`${color} h-1.5 rounded-full`} style={{ width: `${pct}%` }} />
+      <div className="w-16 h-1.5 rounded-full bg-muted/20">
+        <div
+          className={`${color} h-1.5 rounded-full`}
+          style={{ width: `${pct}%` }}
+        />
       </div>
-      <span className="text-xs font-medium text-gray-700">{pct}%</span>
+      <span className="text-xs font-medium text-foreground">{pct}%</span>
     </div>
   );
 }
@@ -108,41 +110,66 @@ function CompletionBar({ pct }: { pct: number }) {
 function StarRating({ value }: { value: number }) {
   return (
     <div className="flex items-center gap-1">
-      <span className="text-amber-400 text-xs">★</span>
-      <span className="text-xs font-medium text-gray-700">{value}</span>
+      <span className="text-warning text-xs">★</span>
+      <span className="text-xs font-medium text-foreground">{value}</span>
     </div>
   );
 }
 
 export function SessionTable() {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4">
-      <h3 className="text-xs sm:text-sm font-semibold text-gray-800 mb-3">
+    <div className="bg-card rounded-xl border border-border p-3 shadow-sm sm:p-4">
+      <h3 className="mb-3 text-xs font-semibold text-foreground sm:text-sm">
         Session Performance Summary
       </h3>
 
       {/* Desktop table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-xs min-w-[700px]">
+        <table className="w-full min-w-[700px] text-xs">
           <thead>
-            <tr className="border-b border-gray-100">
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">Program</th>
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">Session Name</th>
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">Date</th>
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">Location</th>
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">Instructor</th>
-              <th className="text-center py-2 px-2 text-gray-500 font-medium" colSpan={2}>
+            <tr className="border-b border-border">
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                Program
+              </th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                Session Name
+              </th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                Date
+              </th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                Location
+              </th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                Instructor
+              </th>
+              <th
+                className="px-2 py-2 text-center font-medium text-muted-foreground"
+                colSpan={2}
+              >
                 Participants
               </th>
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">Completion Rate</th>
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">Avg. Satisfaction</th>
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">Training Hours</th>
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">Status</th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                Completion Rate
+              </th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                Avg. Satisfaction
+              </th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                Training Hours
+              </th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                Status
+              </th>
             </tr>
-            <tr className="border-b border-gray-50">
+            <tr className="border-b border-border/50">
               <th colSpan={5} />
-              <th className="text-center py-1 px-2 text-gray-400 font-normal">Enrolled</th>
-              <th className="text-center py-1 px-2 text-gray-400 font-normal">Attended</th>
+              <th className="px-2 py-1 text-center text-muted-foreground font-normal">
+                Enrolled
+              </th>
+              <th className="px-2 py-1 text-center text-muted-foreground font-normal">
+                Attended
+              </th>
               <th colSpan={4} />
             </tr>
           </thead>
@@ -150,23 +177,29 @@ export function SessionTable() {
             {sessions.map((s, i) => (
               <tr
                 key={i}
-                className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                className="border-b border-border/50 hover:bg-muted/10 transition-colors"
               >
-                <td className="py-2.5 px-2 text-gray-600">{s.program}</td>
-                <td className="py-2.5 px-2 text-gray-800 font-medium">{s.session}</td>
-                <td className="py-2.5 px-2 text-gray-500 whitespace-nowrap">{s.date}</td>
-                <td className="py-2.5 px-2 text-gray-500 whitespace-nowrap">{s.location}</td>
-                <td className="py-2.5 px-2 text-gray-600 whitespace-nowrap">{s.instructor}</td>
-                <td className="py-2.5 px-2 text-center text-gray-700">{s.enrolled}</td>
-                <td className="py-2.5 px-2 text-center text-gray-700">{s.attended}</td>
-                <td className="py-2.5 px-2">
+                <td className="px-2 py-2.5 text-foreground">{s.program}</td>
+                <td className="px-2 py-2.5 font-medium text-foreground">{s.session}</td>
+                <td className="px-2 py-2.5 whitespace-nowrap text-muted-foreground">
+                  {s.date}
+                </td>
+                <td className="px-2 py-2.5 whitespace-nowrap text-muted-foreground">
+                  {s.location}
+                </td>
+                <td className="px-2 py-2.5 whitespace-nowrap text-foreground">
+                  {s.instructor}
+                </td>
+                <td className="px-2 py-2.5 text-center text-foreground">{s.enrolled}</td>
+                <td className="px-2 py-2.5 text-center text-foreground">{s.attended}</td>
+                <td className="px-2 py-2.5">
                   <CompletionBar pct={s.completion} />
                 </td>
-                <td className="py-2.5 px-2">
+                <td className="px-2 py-2.5">
                   <StarRating value={s.satisfaction} />
                 </td>
-                <td className="py-2.5 px-2 text-center text-gray-700">{s.hours}</td>
-                <td className="py-2.5 px-2">
+                <td className="px-2 py-2.5 text-center text-foreground">{s.hours}</td>
+                <td className="px-2 py-2.5">
                   <StatusBadge status={s.status} />
                 </td>
               </tr>
@@ -176,8 +209,10 @@ export function SessionTable() {
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-wrap items-center justify-between mt-3 gap-2">
-        <span className="text-xs text-gray-500">Showing 1 to 5 of 48 sessions</span>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs text-muted-foreground">
+          Showing 1 to 5 of 48 sessions
+        </span>
         <div className="flex items-center gap-1">
           <PagBtn label="‹" disabled />
           {[1, 2, 3, 4, 5].map((n) => (
@@ -204,13 +239,12 @@ function PagBtn({
   return (
     <button
       disabled={disabled}
-      className={`w-6 h-6 rounded text-xs flex items-center justify-center transition-colors ${
-        active
-          ? "bg-blue-500 text-white"
-          : disabled
-          ? "text-gray-300 cursor-default"
-          : "text-gray-500 hover:bg-gray-100"
-      }`}
+      className={`flex h-6 w-6 items-center justify-center rounded text-xs transition-colors ${active
+        ? "bg-primary/20 text-card-foreground"
+        : disabled
+          ? "cursor-default text-muted-foreground"
+          : "text-foreground hover:bg-muted/10"
+        }`}
     >
       {label}
     </button>

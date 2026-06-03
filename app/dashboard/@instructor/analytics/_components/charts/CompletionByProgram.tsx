@@ -19,23 +19,23 @@ const programs: ProgramBarProps[] = [
 function ProgramBar({ name, rate }: ProgramBarProps) {
   const color =
     rate >= 90
-      ? "bg-blue-500"
+      ? "bg-primary"
       : rate >= 75
-      ? "bg-blue-400"
-      : "bg-blue-300";
+        ? "bg-primary/70"
+        : "bg-primary/40";
 
   return (
     <div className="flex items-center gap-2 group">
-      <span className="text-xs text-gray-600 truncate flex-1 min-w-0 group-hover:text-gray-900 transition-colors">
+      <span className="flex-1 min-w-0 text-xs text-muted-foreground truncate group-hover:text-foreground transition-colors">
         {name}
       </span>
-      <div className="w-24 sm:w-28 bg-gray-100 rounded-full h-2 shrink-0">
+      <div className="relative w-24 sm:w-28 h-2 shrink-0 bg-muted rounded-full">
         <div
           className={`${color} h-2 rounded-full transition-all duration-500`}
           style={{ width: `${rate}%` }}
         />
       </div>
-      <span className="text-xs font-semibold text-gray-700 w-8 text-right shrink-0">
+      <span className="w-8 text-right shrink-0 text-xs font-semibold text-foreground">
         {rate}%
       </span>
     </div>
@@ -44,12 +44,12 @@ function ProgramBar({ name, rate }: ProgramBarProps) {
 
 export function CompletionByProgram() {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4 h-full">
+    <div className="h-full p-3 sm:p-4 bg-card rounded-xl border border-border shadow-sm">
       <div className="flex items-center justify-between mb-3 gap-2">
-        <h3 className="text-xs sm:text-sm font-semibold text-gray-800">
+        <h3 className="text-xs sm:text-sm font-semibold text-foreground">
           Completion Rate by Program
         </h3>
-        <button className="text-xs text-blue-500 hover:text-blue-700 transition-colors whitespace-nowrap shrink-0">
+        <button className="text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap shrink-0">
           View Full Report
         </button>
       </div>
