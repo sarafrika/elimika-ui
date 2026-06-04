@@ -35,10 +35,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import NotesModal from '../../../../../../components/custom-modals/notes-modal';
 
-import { Heart, Share2 } from 'lucide-react';
+import { CalendarClock, Heart, Share2 } from 'lucide-react';
+import { QuizContentPreview } from '../../../../../../components/content-preview/QuizContentPreview';
 import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
 import { Button } from '../../../../../../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../../components/ui/dialog';
+import { CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../../lib/share';
 import { socialShareActions } from '../../../../@instructor/classes/overview/[id]/page';
 import { CourseTrainingRequirements } from '../../../../_components/course-training-requirements';
@@ -50,7 +52,7 @@ import CourseReviews from './CourseReviews';
 import { formatDurationFromParts, getContentHref, getEnrollHref, stripHtml } from './courses-data';
 import ClassCourseTabNav from './CourseTabNav';
 import EnrollSidebar from './EnrollSidebar';
-import ShareClassCourse from './ShareClassCourse';
+import ShareClassCourse, { ShareClass } from './ShareClassCourse';
 import { UnifiedContentItem } from './SharedCoursesPage';
 import StudentsAlsoBought from './StudentsAlsoBought';
 
@@ -68,8 +70,10 @@ function getDurationLabel(course?: Course) {
 
 export default function ClassCourseDetailsPage({
     courseId,
+    classData,
 }: {
     courseId: string;
+    classData?: CombinedClassDetailsData;
 }) {
     const router = useRouter();
     const params = useParams();
@@ -82,9 +86,11 @@ export default function ClassCourseDetailsPage({
     const { replaceBreadcrumbs } = useBreadcrumb();
 
     const resolvedCourseId = courseId || (params?.id as string);
+    const classId = classData?.class?.uuid as string
 
     const [applyModalOpen, setApplyModalOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
+    const [inviteOpen, setInviteOpen] = useState(false);
 
     const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
     const isInstructorDomain = activeDomain === 'instructor';
@@ -186,7 +192,6 @@ export default function ClassCourseDetailsPage({
         enabled: !!resolvedCourseId,
     });
     const course = courseResponse?.data as Course | undefined;
-
 
     const courseShareLink =
         typeof window !== 'undefined'
@@ -453,36 +458,31 @@ export default function ClassCourseDetailsPage({
         );
     };
 
-    useEffect(() => {
-        if (!course) return;
+    const type = classData?.class?.uuid && classData?.course?.uuid
+        ? 'class'
+        : course?.uuid
+            ? 'course'
+            : undefined;
 
-        replaceBreadcrumbs([
-            {
-                id: 'dashboard',
-                title: 'Dashboard',
-                url: buildWorkspaceAliasPath(
-                    activeDomain,
-                    '/dashboard/overview'
-                ),
-            },
-            {
-                id: 'courses',
-                title: 'Browse Courses',
-                url: buildWorkspaceAliasPath(
-                    activeDomain,
-                    '/dashboard/courses'
-                ),
-            },
-            {
-                id: 'course-details',
-                title: course.name,
-                url: buildWorkspaceAliasPath(
-                    activeDomain,
-                    `/dashboard/courses/${course.uuid}`
-                ),
-            },
-        ]);
-    }, [activeDomain, course, replaceBreadcrumbs]);
+
+    const [siteOrigin, setSiteOrigin] = useState('');
+    useEffect(() => {
+        setSiteOrigin(window.location.origin);
+    }, []);
+
+    const registrationLink = useMemo(() => {
+        if (!siteOrigin) return '';
+
+        if (course?.uuid) {
+            return `${siteOrigin}/dashboard/workspace/student/courses/available-classes/${course.uuid}/enroll?id=${classId}`;
+        }
+
+        // if (program?.uuid) {
+        //     return `${siteOrigin}/dashboard/workspace/student/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
+        // }
+
+        return '';
+    }, [classId, course?.uuid, siteOrigin]);
 
     const isEverythingReady = !(
         courseLoading ||
@@ -509,7 +509,7 @@ export default function ClassCourseDetailsPage({
     const tabs = [
         'Overview',
         `Lessons (${lessons.length})`,
-        'Assessment',
+        `Assessment (${filteredAssignments?.length + filteredQuizzes?.length})`,
         `Requirements (${course?.training_requirements
             ?.length ?? 0})`,
         'Schedule',
@@ -522,14 +522,34 @@ export default function ClassCourseDetailsPage({
             <main className="mx-auto w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
                 <div className="mb-4 flex justify-end gap-2 sm:mb-6">
                     <Button
-                        onClick={() => setShareOpen(true)}
-                        className="flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm transition-colors hover:border-foreground hover:text-foreground sm:text-sm"
+                        onClick={() => {
+                            if (type === "course") {
+                                setShareOpen(true);
+                            } else {
+                                setInviteOpen(true);
+                            }
+                        }}
+                        className="
+      flex items-center gap-1.5 rounded-sm border border-border 
+      bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm
+      transition-colors duration-200 ease-in-out
+      hover:bg-muted/50 hover:border-primary/45 hover:text-foreground
+      sm:text-sm
+    "
                     >
                         <Share2 className="h-3.5 w-3.5" />
                         Share
                     </Button>
 
-                    <Button className="flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm transition-colors hover:border-destructive hover:text-destructive sm:text-sm">
+                    <Button
+                        className="
+      flex items-center gap-1.5 rounded-sm border border-border 
+      bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm
+      transition-colors duration-200 ease-in-out
+      hover:bg-destructive/10 hover:border-destructive hover:text-destructive
+      sm:text-sm
+    "
+                    >
                         <Heart className="h-3.5 w-3.5" />
                         Wishlist
                     </Button>
@@ -579,10 +599,17 @@ export default function ClassCourseDetailsPage({
                                 }
 
                                 {activeTab === `Lessons (${lessons.length})` &&
-                                    <ClassCourseCurriculum lessonsWithContent={lessonsWithContent ?? []} />
+                                    <ClassCourseCurriculum
+                                        lessonsWithContent={lessonsWithContent ?? []}
+                                    />
                                 }
 
-                                {activeTab === "Assessment" && <div>Assessment</div>}
+                                {activeTab === `Assessment (${filteredAssignments?.length + filteredQuizzes?.length})` && (
+                                    <CourseAssessments
+                                        assignments={filteredAssignments}
+                                        quizzes={filteredQuizzes}
+                                    />
+                                )}
 
                                 {activeTab === `Requirements (${course?.training_requirements
                                     ?.length ?? 0})` &&
@@ -591,10 +618,11 @@ export default function ClassCourseDetailsPage({
                                         title='Course Training Requirements'
                                         description='Review what you need to prepare before registering for this class.'
                                         className='border-none shadow-none'
+                                        viewerRole={activeDomain as string}
                                     />
                                 }
 
-                                {activeTab === "Schedule" && <div>Schedule</div>}
+                                {activeTab === 'Schedule' && (<CourseScheduleInfo />)}
 
                                 {activeTab === `Reviews (${reviewCount})` &&
                                     <CourseReviews reviews={reviews} />
@@ -617,9 +645,11 @@ export default function ClassCourseDetailsPage({
                     <div className="flex w-full shrink-0 flex-col gap-4 sm:gap-5 lg:sticky lg:top-20 lg:w-80 xl:w-96">
                         <EnrollSidebar
                             course={course}
+                            classData={classData}
                             creatorName={creatorName}
                             activeDomain={activeDomain}
                             difficultyName={difficultyName}
+                            type={type}
                             lessonCount={lessons.length}
                             assessmentCount={
                                 filteredAssignments.length +
@@ -660,6 +690,11 @@ export default function ClassCourseDetailsPage({
                                     )
                                 )
                             }
+                            onInviteStudents={() => setInviteOpen(true)}
+                            handleDeleteClass={() => { }}
+                            onApplyForFunding={() => {
+                                router.push('/dashboard/skills-fund')
+                            }}
                         />
 
                         <CourseRating
@@ -669,13 +704,18 @@ export default function ClassCourseDetailsPage({
                             courseId={resolvedCourseId}
                         />
 
-                        <ShareClassCourse
+                        {type === "course" ? <ShareClassCourse
                             courseTitle={course?.name ?? ''}
                             courseUrl={`${window.location.origin}${buildWorkspaceAliasPath(
                                 activeDomain,
                                 `/dashboard/courses/${course?.uuid}`
                             )}`}
-                        />
+                        /> :
+                            <ShareClass
+                                classTitle={classData?.class?.title ?? ''}
+                                classUrl={registrationLink}
+                            />}
+
                     </div>
                 </div>
 
@@ -760,6 +800,173 @@ export default function ClassCourseDetailsPage({
                     />
                 </DialogContent>
             </Dialog>
+
+            <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Invite Student</DialogTitle>
+                        <DialogDescription>
+                            Share this class with learners.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <LinkShareCard
+                        title="Class Registration Link"
+                        description="Copy or share this class link."
+                        url={registrationLink}
+                        footer={
+                            <div className="space-y-3">
+                                <h4 className="text-sm font-medium">Share via</h4>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {socialShareActions.map(
+                                        ({ icon: Icon, label, platform }) => (
+                                            <Button
+                                                key={label}
+                                                size="sm"
+                                                variant="outline"
+                                                className="gap-2"
+                                                disabled={!registrationLink}
+                                                onClick={() =>
+                                                    openShareWindow(
+                                                        buildSocialShareUrl(platform, {
+                                                            title: classData?.class?.title ?? 'Class',
+                                                            url: registrationLink,
+                                                            description: `Check out this class: ${classData?.class?.title}`,
+                                                        })
+                                                    )
+                                                }
+                                            >
+                                                <Icon className="h-4 w-4" />
+                                                {label}
+                                            </Button>
+                                        )
+                                    )}
+                                </div>
+                            </div>
+                        }
+                    />
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
+}
+
+function CourseScheduleInfo() {
+    return <div className="rounded-lg border border-muted/50 bg-muted/30 p-6">
+        <div className="flex items-start gap-4">
+            <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                <CalendarClock className="h-5 w-5" />
+            </div>
+
+            <div className="space-y-3">
+                <h3 className="text-base font-semibold">
+                    Your Class Schedule Will Be Provided After Enrollment
+                </h3>
+
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                    Hello! 😊 Once you enroll in this course, you’ll receive full details about your class schedule.
+                    This includes:
+                </p>
+
+                <ul className="ml-5 list-disc text-muted-foreground text-sm leading-relaxed space-y-1">
+                    <li>Class dates and start times</li>
+                    <li>Frequency and duration of sessions</li>
+                    <li>How to join each session</li>
+                </ul>
+
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                    Make sure your contact information is up to date so you don’t miss any updates.
+                    You’ll have everything you need to plan and prepare for your classes right after enrollment.
+                </p>
+            </div>
+        </div>
+    </div>
+}
+
+function CourseAssessments({
+    assignments = [],
+    quizzes = [],
+}: { assignments: Assignment[], quizzes: Quiz[] }) {
+    return (
+        <div className="space-y-8">
+            {/* Assignments */}
+            <section>
+                <div className="mb-4 flex items-center gap-2">
+                    <h2 className="text-lg font-semibold">Assignments</h2>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                        {assignments.length}
+                    </span>
+                </div>
+
+                {assignments.length === 0 ? (
+                    <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                        No assignments available.
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {assignments.map((assignment) => (
+                            <div
+                                key={assignment.uuid}
+                                className="rounded-lg border bg-card p-4"
+                            >
+                                <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                        <h3 className="font-semibold">{assignment.title}</h3>
+
+                                        {assignment.due_date && (
+                                            <p className="mt-1 text-sm text-muted-foreground">
+                                                Due {new Date(assignment.due_date).toLocaleDateString()}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="text-sm text-muted-foreground">
+                                        {assignment.max_points} pts
+                                    </div>
+                                </div>
+
+                                {assignment.description && (
+                                    <div
+                                        className="prose prose-sm mt-4 max-w-none"
+                                        dangerouslySetInnerHTML={{ __html: assignment.description }}
+                                    />
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            <div className="border-t" />
+
+            {/* Quizzes */}
+            <section>
+                <div className="mb-4 flex items-center gap-2">
+                    <h2 className="text-lg font-semibold">Quizzes</h2>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                        {quizzes.length}
+                    </span>
+                </div>
+
+                {quizzes.length === 0 ? (
+                    <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                        No quizzes available.
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {quizzes.map((quiz) => (
+                            <div key={quiz.uuid} className="rounded-lg bg-card">
+                                <QuizContentPreview
+                                    quizUuid={quiz.uuid}
+                                    role="preview"
+                                    questionsOpen={false}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
         </div>
     );
 }

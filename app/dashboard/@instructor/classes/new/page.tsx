@@ -247,12 +247,12 @@ const buildUtcIsoDateTime = (date?: string, time?: string) => {
   return parsed.toISOString();
 };
 
-const formatClassType = (value?: string | null) => {
+export const formatClassType = (value?: string | null) => {
   if (!value) return 'Group Class';
   return value.toUpperCase() === 'PRIVATE' ? 'Private Class' : 'Group Class';
 };
 
-const formatLectureType = (value?: string | null) => {
+export const formatLectureType = (value?: string | null) => {
   const normalized = value?.toUpperCase() ?? '';
   if (normalized === 'ONLINE') return 'Online';
   if (normalized === 'IN_PERSON') return 'In-Person';
