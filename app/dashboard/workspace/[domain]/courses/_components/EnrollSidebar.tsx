@@ -18,10 +18,12 @@ import {
   Wrench
 } from "lucide-react";
 import { Button } from "../../../../../../components/ui/button";
+import { CombinedClassDetailsData } from "../../../../../../hooks/use-class-details";
 import { UserDomain } from "../../../../../../lib/types";
 
 type Props = {
   course: Course;
+  classData: CombinedClassDetailsData;
   creatorName: string;
   difficultyName: string | null;
   lessonCount: number;
@@ -41,6 +43,7 @@ type Props = {
 
 export default function EnrollSidebar({
   course,
+  classData,
   creatorName,
   difficultyName,
   lessonCount,
@@ -55,7 +58,7 @@ export default function EnrollSidebar({
   activeDomain,
   becomeInstructorLabel = "Apply to Train",
   becomeInstructorDisabled = false,
-  type = "course",
+  type,
 }: Props) {
   const priceLabel =
     typeof course.minimum_training_fee === "number" &&
@@ -63,12 +66,15 @@ export default function EnrollSidebar({
       ? `From Ksh ${course.minimum_training_fee.toLocaleString()}`
       : "Pricing not set";
 
+  // console.log(type, "type")
+  // console.log(classData, "SIDE PANEL CLASS")
+
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       {/* ENROLL CARD */}
       <div className="rounded-xl border border-border bg-card text-card-foreground p-4 sm:p-5">
 
-        {type === "course" && activeDomain === "instructor" ? (
+        {type === "course" && (activeDomain === "instructor") &&
           <>
             <div className="space-y-2">
               <p className="text-md font-extrabold text-muted-foreground">
@@ -106,8 +112,9 @@ export default function EnrollSidebar({
             >
               {becomeInstructorLabel}
             </Button>
-          </>
-        ) : (
+          </>}
+
+        {type === "course" && (activeDomain !== "instructor") && (
           <>
             <p className="mb-1 text-sm font-medium text-muted-foreground">
               Enroll in this course

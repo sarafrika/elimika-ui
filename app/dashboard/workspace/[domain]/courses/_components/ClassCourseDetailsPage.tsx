@@ -40,6 +40,7 @@ import { QuizContentPreview } from '../../../../../../components/content-preview
 import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
 import { Button } from '../../../../../../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../../components/ui/dialog';
+import { CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../../lib/share';
 import { socialShareActions } from '../../../../@instructor/classes/overview/[id]/page';
 import { CourseTrainingRequirements } from '../../../../_components/course-training-requirements';
@@ -51,7 +52,7 @@ import CourseReviews from './CourseReviews';
 import { formatDurationFromParts, getContentHref, getEnrollHref, stripHtml } from './courses-data';
 import ClassCourseTabNav from './CourseTabNav';
 import EnrollSidebar from './EnrollSidebar';
-import ShareClassCourse from './ShareClassCourse';
+import ShareClassCourse, { ShareClass } from './ShareClassCourse';
 import { UnifiedContentItem } from './SharedCoursesPage';
 import StudentsAlsoBought from './StudentsAlsoBought';
 
@@ -69,8 +70,10 @@ function getDurationLabel(course?: Course) {
 
 export default function ClassCourseDetailsPage({
     courseId,
+    classData,
 }: {
     courseId: string;
+    classData?: CombinedClassDetailsData;
 }) {
     const router = useRouter();
     const params = useParams();
@@ -83,9 +86,11 @@ export default function ClassCourseDetailsPage({
     const { replaceBreadcrumbs } = useBreadcrumb();
 
     const resolvedCourseId = courseId || (params?.id as string);
+    const classId = classData?.class?.uuid as string
 
     const [applyModalOpen, setApplyModalOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
+    const [inviteOpen, setInviteOpen] = useState(false);
 
     const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
     const isInstructorDomain = activeDomain === 'instructor';
@@ -187,7 +192,6 @@ export default function ClassCourseDetailsPage({
         enabled: !!resolvedCourseId,
     });
     const course = courseResponse?.data as Course | undefined;
-
 
     const courseShareLink =
         typeof window !== 'undefined'
@@ -328,29 +332,6 @@ export default function ClassCourseDetailsPage({
         [lessonUuids, quizzes]
     );
 
-    const assessments = [
-        ...filteredAssignments.map((assignment) => ({
-            type: "assignment" as const,
-            id: assignment.uuid,
-            title: assignment.title,
-            dueDate: assignment.due_date,
-            points: assignment.max_points,
-            data: assignment,
-        })),
-        ...filteredQuizzes.map((quiz) => ({
-            type: "quiz" as const,
-            id: quiz.uuid,
-            title: quiz.title,
-            dueDate: quiz.available_until,
-            points: quiz.total_points,
-            data: quiz,
-        })),
-    ].sort(
-        (a, b) =>
-            new Date(a.dueDate ?? 0).getTime() -
-            new Date(b.dueDate ?? 0).getTime()
-    );
-
     const difficultyName = useMemo(
         () =>
             difficultyLevels.find(
@@ -477,36 +458,31 @@ export default function ClassCourseDetailsPage({
         );
     };
 
-    useEffect(() => {
-        if (!course) return;
+    const type = classData?.class?.uuid && classData?.course?.uuid
+        ? 'class'
+        : course?.uuid
+            ? 'course'
+            : undefined;
 
-        replaceBreadcrumbs([
-            {
-                id: 'dashboard',
-                title: 'Dashboard',
-                url: buildWorkspaceAliasPath(
-                    activeDomain,
-                    '/dashboard/overview'
-                ),
-            },
-            {
-                id: 'courses',
-                title: 'Browse Courses',
-                url: buildWorkspaceAliasPath(
-                    activeDomain,
-                    '/dashboard/courses'
-                ),
-            },
-            {
-                id: 'course-details',
-                title: course.name,
-                url: buildWorkspaceAliasPath(
-                    activeDomain,
-                    `/dashboard/courses/${course.uuid}`
-                ),
-            },
-        ]);
-    }, [activeDomain, course, replaceBreadcrumbs]);
+
+    const [siteOrigin, setSiteOrigin] = useState('');
+    useEffect(() => {
+        setSiteOrigin(window.location.origin);
+    }, []);
+
+    const registrationLink = useMemo(() => {
+        if (!siteOrigin) return '';
+
+        if (course?.uuid) {
+            return `${siteOrigin}/dashboard/workspace/student/courses/available-classes/${course.uuid}/enroll?id=${classId}`;
+        }
+
+        // if (program?.uuid) {
+        //     return `${siteOrigin}/dashboard/workspace/student/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
+        // }
+
+        return '';
+    }, [classId, course?.uuid, siteOrigin]);
 
     const isEverythingReady = !(
         courseLoading ||
@@ -546,7 +522,13 @@ export default function ClassCourseDetailsPage({
             <main className="mx-auto w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
                 <div className="mb-4 flex justify-end gap-2 sm:mb-6">
                     <Button
-                        onClick={() => setShareOpen(true)}
+                        onClick={() => {
+                            if (type === "course") {
+                                setShareOpen(true);
+                            } else {
+                                setInviteOpen(true);
+                            }
+                        }}
                         className="
       flex items-center gap-1.5 rounded-sm border border-border 
       bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm
@@ -636,6 +618,7 @@ export default function ClassCourseDetailsPage({
                                         title='Course Training Requirements'
                                         description='Review what you need to prepare before registering for this class.'
                                         className='border-none shadow-none'
+                                        viewerRole={activeDomain as string}
                                     />
                                 }
 
@@ -662,9 +645,11 @@ export default function ClassCourseDetailsPage({
                     <div className="flex w-full shrink-0 flex-col gap-4 sm:gap-5 lg:sticky lg:top-20 lg:w-80 xl:w-96">
                         <EnrollSidebar
                             course={course}
+                            classData={classData}
                             creatorName={creatorName}
                             activeDomain={activeDomain}
                             difficultyName={difficultyName}
+                            type={type}
                             lessonCount={lessons.length}
                             assessmentCount={
                                 filteredAssignments.length +
@@ -705,6 +690,11 @@ export default function ClassCourseDetailsPage({
                                     )
                                 )
                             }
+                            onInviteStudents={() => setInviteOpen(true)}
+                            handleDeleteClass={() => { }}
+                            onApplyForFunding={() => {
+                                router.push('/dashboard/skills-fund')
+                            }}
                         />
 
                         <CourseRating
@@ -714,13 +704,18 @@ export default function ClassCourseDetailsPage({
                             courseId={resolvedCourseId}
                         />
 
-                        <ShareClassCourse
+                        {type === "course" ? <ShareClassCourse
                             courseTitle={course?.name ?? ''}
                             courseUrl={`${window.location.origin}${buildWorkspaceAliasPath(
                                 activeDomain,
                                 `/dashboard/courses/${course?.uuid}`
                             )}`}
-                        />
+                        /> :
+                            <ShareClass
+                                classTitle={classData?.class?.title ?? ''}
+                                classUrl={registrationLink}
+                            />}
+
                     </div>
                 </div>
 
@@ -790,6 +785,54 @@ export default function ClassCourseDetailsPage({
                                                             title: course?.name ?? 'Course',
                                                             url: courseShareLink,
                                                             description: `Check out this course: ${course?.name}`,
+                                                        })
+                                                    )
+                                                }
+                                            >
+                                                <Icon className="h-4 w-4" />
+                                                {label}
+                                            </Button>
+                                        )
+                                    )}
+                                </div>
+                            </div>
+                        }
+                    />
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Invite Student</DialogTitle>
+                        <DialogDescription>
+                            Share this class with learners.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <LinkShareCard
+                        title="Class Registration Link"
+                        description="Copy or share this class link."
+                        url={registrationLink}
+                        footer={
+                            <div className="space-y-3">
+                                <h4 className="text-sm font-medium">Share via</h4>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {socialShareActions.map(
+                                        ({ icon: Icon, label, platform }) => (
+                                            <Button
+                                                key={label}
+                                                size="sm"
+                                                variant="outline"
+                                                className="gap-2"
+                                                disabled={!registrationLink}
+                                                onClick={() =>
+                                                    openShareWindow(
+                                                        buildSocialShareUrl(platform, {
+                                                            title: classData?.class?.title ?? 'Class',
+                                                            url: registrationLink,
+                                                            description: `Check out this class: ${classData?.class?.title}`,
                                                         })
                                                     )
                                                 }

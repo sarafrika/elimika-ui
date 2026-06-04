@@ -37,6 +37,21 @@ export type ClassDetailsLesson = NonNullable<
 export type ClassDetailsEnrollment = NonNullable<
   NonNullable<GetEnrollmentsForClassResponse['data']>[number]
 >;
+export type CombinedClassDetailsData = {
+  class: ClassDetailsClass | undefined;
+  schedule: ClassDetailsScheduleItem[];
+  course: ClassDetailsCourse | undefined;
+  pCourses: ClassDetailsProgramCourse[];
+  program: ClassDetailsProgram | undefined;
+  lessons: ClassDetailsLesson[];
+  enrollments: ClassDetailsEnrollment[];
+  instructor: Awaited<
+    ReturnType<typeof getInstructorByUuidOptions>
+  > extends infer T
+  ? T
+  : unknown;
+  instructorProfile: unknown;
+};
 
 export const useClassDetails = (classId?: string) => {
   //  Fetch class definition
