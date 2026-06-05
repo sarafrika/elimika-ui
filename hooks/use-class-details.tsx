@@ -54,7 +54,6 @@ export type CombinedClassDetailsData = {
 };
 
 export const useClassDetails = (classId?: string) => {
-  //  Fetch class definition
   const {
     data: classDefinitionData,
     isLoading: isLoadingClass,

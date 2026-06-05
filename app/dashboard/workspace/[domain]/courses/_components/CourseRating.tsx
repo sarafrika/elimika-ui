@@ -87,14 +87,14 @@ export default function CourseRating({
         Course Rating
       </h3>
 
-      <div className="mb-4 flex items-center gap-3 sm:gap-4">
+      <div className="mb-4 flex flex-col gap-4 sm:gap-6">
         {/* Rating summary */}
-        <div className="shrink-0 text-center">
+        <div className="flex flex-row items-center text-center gap-3">
           <p className="text-3xl font-black text-foreground sm:text-4xl">
             {rating ? rating.toFixed(1) : "0.0"}
           </p>
 
-          <StarRating rating={rating || 4.8} size="sm" showCount={false} />
+          <StarRating rating={rating} size="sm" showCount={false} />
 
           <p className="mt-1 text-xs text-muted-foreground">
             {reviewCount.toLocaleString()} review

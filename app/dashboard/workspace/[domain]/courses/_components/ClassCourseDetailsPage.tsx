@@ -35,12 +35,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import NotesModal from '../../../../../../components/custom-modals/notes-modal';
 
-import { CalendarClock, Heart, Share2 } from 'lucide-react';
+import { CalendarClock, Heart, Share2, Table } from 'lucide-react';
 import { QuizContentPreview } from '../../../../../../components/content-preview/QuizContentPreview';
 import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
 import { Button } from '../../../../../../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../../components/ui/dialog';
-import { CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../../../components/ui/table';
+import { ClassDetailsScheduleItem, CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../../lib/share';
 import { socialShareActions } from '../../../../@instructor/classes/overview/[id]/page';
 import { CourseTrainingRequirements } from '../../../../_components/course-training-requirements';
@@ -622,7 +623,12 @@ export default function ClassCourseDetailsPage({
                                     />
                                 }
 
-                                {activeTab === 'Schedule' && (<CourseScheduleInfo />)}
+                                {activeTab === 'Schedule' && (
+                                    <CourseScheduleInfo
+                                        type={type}
+                                        schedule={classData?.schedule}
+                                        classData={classData}
+                                    />)}
 
                                 {activeTab === `Reviews (${reviewCount})` &&
                                     <CourseReviews reviews={reviews} />
@@ -852,36 +858,91 @@ export default function ClassCourseDetailsPage({
     );
 }
 
-function CourseScheduleInfo() {
-    return <div className="rounded-lg border border-muted/50 bg-muted/30 p-6">
-        <div className="flex items-start gap-4">
-            <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                <CalendarClock className="h-5 w-5" />
+function CourseScheduleInfo({ type, classData, schedule }: { type: "course" | "class" | undefined, classData: CombinedClassDetailsData, schedule: ClassDetailsScheduleItem }) {
+
+    return <>
+        {type === "course" ?
+            <div className="rounded-lg border border-muted/50 bg-muted/30 p-6">
+                <div className="flex items-start gap-4">
+                    <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                        <CalendarClock className="h-5 w-5" />
+                    </div>
+
+                    <div className="space-y-3">
+                        <h3 className="text-base font-semibold">
+                            Your Class Schedule Will Be Provided After Enrollment
+                        </h3>
+
+                        <p className="text-muted-foreground text-sm leading-relaxed">
+                            Hello! 😊 Once you enroll in this course, you’ll receive full details about your class schedule.
+                            This includes:
+                        </p>
+
+                        <ul className="ml-5 list-disc text-muted-foreground text-sm leading-relaxed space-y-1">
+                            <li>Class dates and start times</li>
+                            <li>Frequency and duration of sessions</li>
+                            <li>How to join each session</li>
+                        </ul>
+
+                        <p className="text-muted-foreground text-sm leading-relaxed">
+                            Make sure your contact information is up to date so you don’t miss any updates.
+                            You’ll have everything you need to plan and prepare for your classes right after enrollment.
+                        </p>
+                    </div>
+                </div>
+            </div> :
+            <div className="overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>#</TableHead>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Date & Time</TableHead>
+                            <TableHead>Duration</TableHead>
+                            <TableHead>Format</TableHead>
+                            <TableHead>Timezone</TableHead>
+                            <TableHead>Status</TableHead>
+                        </TableRow>
+                    </TableHeader>
+
+                    <TableBody>
+                        {Array.isArray(schedule) && schedule.length > 0 ? (
+                            schedule.map((instance, index) => (
+                                <TableRow key={instance.uuid}>
+                                    <TableCell>{index + 1}</TableCell>
+                                    <TableCell>{instance.title}</TableCell>
+
+                                    <TableCell>
+                                        {new Date(instance.start_time).toLocaleDateString()}{" "}
+                                        {new Date(instance.start_time).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}{" "}
+                                        -{" "}
+                                        {new Date(instance.end_time).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
+                                    </TableCell>
+
+                                    <TableCell>{instance.duration_formatted}</TableCell>
+                                    <TableCell>{instance.location_type}</TableCell>
+                                    <TableCell>{instance.timezone}</TableCell>
+                                    <TableCell>{instance.status}</TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                                    No scheduled sessions for this class yet.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
             </div>
-
-            <div className="space-y-3">
-                <h3 className="text-base font-semibold">
-                    Your Class Schedule Will Be Provided After Enrollment
-                </h3>
-
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                    Hello! 😊 Once you enroll in this course, you’ll receive full details about your class schedule.
-                    This includes:
-                </p>
-
-                <ul className="ml-5 list-disc text-muted-foreground text-sm leading-relaxed space-y-1">
-                    <li>Class dates and start times</li>
-                    <li>Frequency and duration of sessions</li>
-                    <li>How to join each session</li>
-                </ul>
-
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                    Make sure your contact information is up to date so you don’t miss any updates.
-                    You’ll have everything you need to plan and prepare for your classes right after enrollment.
-                </p>
-            </div>
-        </div>
-    </div>
+        }
+    </>
 }
 
 function CourseAssessments({

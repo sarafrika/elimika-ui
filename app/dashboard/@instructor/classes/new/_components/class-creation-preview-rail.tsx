@@ -235,7 +235,7 @@ export function ClassCreationPreviewRail({ data }: { data: ClassCreationPreviewD
   );
 }
 
-const PreviewRow = ({
+export const PreviewRow = ({
   icon: Icon,
   label,
   value,
@@ -244,10 +244,10 @@ const PreviewRow = ({
   label: string;
   value: string;
 }) => (
-  <div className='grid gap-3 px-4 py-4 sm:px-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center'>
+  <div className='grid gap-2 px-4 py-2.5 sm:px-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center'>
     <div className='flex items-center gap-3'>
-      <div className='bg-primary/10 text-primary flex h-4 w-8 shrink-0 items-center justify-center rounded-md'>
-        <Icon className='h-4 w-4' />
+      <div className="bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+        <Icon className="h-4 w-4" />
       </div>
       <span className='text-muted-foreground text-sm font-medium'>{label}</span>
     </div>
