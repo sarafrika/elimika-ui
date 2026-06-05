@@ -9,17 +9,21 @@ import {
   Clock,
   Download,
   FileCheck,
+  Globe,
   Infinity,
   MapPin,
   Monitor,
   MoveRight,
   Search,
   Shield,
+  Video,
   Wrench
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "../../../../../../components/ui/button";
 import { CombinedClassDetailsData } from "../../../../../../hooks/use-class-details";
 import { UserDomain } from "../../../../../../lib/types";
+import { PreviewRow } from "../../../../@instructor/classes/new/_components/class-creation-preview-rail";
 
 type Props = {
   course: Course;
@@ -60,15 +64,12 @@ export default function EnrollSidebar({
   becomeInstructorDisabled = false,
   type,
 }: Props) {
+  const router = useRouter()
   const priceLabel =
     typeof course.minimum_training_fee === "number" &&
       course.minimum_training_fee > 0
       ? `From Ksh ${course.minimum_training_fee.toLocaleString()}`
       : "Pricing not set";
-
-  // console.log(type, "type")
-  // console.log(classData, "SIDE PANEL CLASS")
-
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       {/* ENROLL CARD */}
@@ -152,7 +153,7 @@ export default function EnrollSidebar({
             </p>
 
             <p className="mb-4 text-xl font-black text-foreground sm:text-2xl lg:text-3xl">
-              {priceLabel}
+              From Ksh {classData?.class?.training_fee}
             </p>
 
             <div className="flex flex-col gap-2.5 sm:gap-3">
@@ -199,75 +200,88 @@ export default function EnrollSidebar({
 
       {/* COURSE META */}
       {type === "class" && (
-        <div className="rounded-xl border border-border bg-card px-6 py-4">
-          <p className="text-md font-extrabold">
-            Schedule Summary
-          </p>
-
-          <div className="flex flex-col gap-2">
-            {[
-              // {
-              //   label: "Lecture Type",
-              //   value: course.status || "Course",
-              //   icon: <Globe className="h-4 w-4 text-muted-foreground" />,
-              // },
-              {
-                label: "Creator",
-                value: creatorName,
-                icon: <MapPin className="h-4 w-4 text-muted-foreground" />,
-              },
-              {
-                label: "Difficulty",
-                value: difficultyName || "General",
-                icon: <Building2 className="h-4 w-4 text-muted-foreground" />,
-              },
-              {
-                label: "Start Date",
-                value: course.created_date
-                  ? new Date(course.created_date).toLocaleDateString()
-                  : "TBA",
-                icon: <Calendar className="h-4 w-4 text-muted-foreground" />,
-              },
-              {
-                label: "End Date",
-                value: course.updated_date
-                  ? new Date(course.updated_date).toLocaleDateString()
-                  : "TBA",
-                icon: <Calendar className="h-4 w-4 text-muted-foreground" />,
-              },
-              {
-                label: "Class Schedule",
-                value: (
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">
-                      {durationLabel}
-                    </span>
-                  </div>
-                ),
-                icon: null,
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className={`flex items-center justify-between gap-2 py-2 ${i !== 0 ? "border-t border-border" : ""
-                  }`}
-              >
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  {item.icon}
-                  <span className="text-sm">{item.label}</span>
-                </div>
-
-                <div className="text-right text-sm font-medium text-foreground">
-                  {item.value}
-                </div>
-              </div>
-            ))}
+        <div className="rounded-xl border border-border bg-card">
+          <div className="border-b border-border px-4 py-4 sm:px-5">
+            <h3 className="text-md font-extrabold">Schedule Summary</h3>
           </div>
 
-          <Button variant="outline" size="sm" className="mt-4 w-full rounded-md h-9" >
-            Edit Schedule
-          </Button>
+          <PreviewRow
+            icon={Globe}
+            label="Lecture Type"
+            value={classData?.class?.location_type || "N/A"}
+          />
+
+          <PreviewRow
+            icon={MapPin}
+            label="Location"
+            value={classData?.class?.location_name || "N/A"}
+          />
+
+          <PreviewRow
+            icon={Building2}
+            label="Session Format"
+            value={classData?.class?.session_format || "N/A"}
+          />
+
+          <PreviewRow
+            icon={Calendar}
+            label="Registration Period"
+            value={
+              classData?.class?.registration_period_start_date &&
+                classData?.class?.registration_period_end_date
+                ? `${new Date(
+                  classData.class.registration_period_start_date
+                ).toLocaleDateString()} - ${new Date(
+                  classData.class.registration_period_end_date
+                ).toLocaleDateString()}`
+                : classData?.class?.registration_period_start_date
+                  ? `${new Date(
+                    classData.class.registration_period_start_date
+                  ).toLocaleDateString()} (Continuous)`
+                  : "Continuous"
+            }
+          />
+
+          <PreviewRow
+            icon={Calendar}
+            label="Start Date"
+            value={
+              classData?.class?.default_start_time
+                ? new Date(
+                  classData.class.default_start_time
+                ).toLocaleDateString()
+                : "TBA"
+            }
+          />
+
+          <PreviewRow
+            icon={Clock}
+            label="Class Duration"
+            value={classData?.class?.duration_formatted || "N/A"}
+          />
+
+          {classData?.class?.meeting_link && (
+            <PreviewRow
+              icon={Video}
+              label="Meeting Link"
+              value={classData.class.meeting_link}
+            />
+          )}
+
+          <div className="border-t border-border p-4 sm:p-5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 w-full rounded-md"
+              onClick={() => {
+                router.push(
+                  `/dashboard/classes/new?id=${classData?.class?.uuid}`
+                )
+              }}
+            >
+              Edit Schedule
+            </Button>
+          </div>
         </div>
       )}
 
