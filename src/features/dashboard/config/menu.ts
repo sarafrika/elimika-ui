@@ -249,10 +249,15 @@ export default {
       icon: ClipboardList,
     },
     {
-      title: 'Classes',
-      url: '/dashboard/classes',
-      icon: School,
+      title: 'Students',
+      url: '/dashboard/students',
+      icon: Users,
     },
+    // {
+    //   title: 'Classes',
+    //   url: '/dashboard/classes',
+    //   icon: School,
+    // },
     {
       title: 'Schedule',
       url: '/dashboard/calendar',

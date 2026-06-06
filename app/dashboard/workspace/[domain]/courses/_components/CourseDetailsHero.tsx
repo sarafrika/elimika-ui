@@ -13,10 +13,12 @@ import {
   Users,
 } from 'lucide-react';
 import HTMLTextPreview from '../../../../../../components/editors/html-text-preview';
+import { ClassDetailsScheduleItem, CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
 import StarRating from './StarRating';
 
 type Props = {
   course: Course;
+  classData: CombinedClassDetailsData;
   creatorName: string;
   creatorHeadline: string;
   difficultyName: string | null;
@@ -31,6 +33,7 @@ type Props = {
 
 export default function CourseDetailsHero({
   course,
+  classData,
   creatorName,
   creatorHeadline,
   difficultyName,
@@ -44,6 +47,43 @@ export default function CourseDetailsHero({
 }: Props) {
   const totalAssessments = assignmentCount + quizCount;
   const displayRating = averageRating ? Number(averageRating) : 0;
+
+  const totalMinutes = classData?.schedule.reduce(
+    (sum, item) => sum + Number(item.duration_minutes),
+    0
+  );
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const totalDuration = `${hours}h${minutes ? ` ${minutes}m` : ""}`;
+
+  function getNumberOfWeeks(schedule: ClassDetailsScheduleItem[]) {
+    if (!schedule?.length) return 0;
+
+    const timestamps = schedule.map(item =>
+      new Date(item.start_time).getTime()
+    );
+
+    const earliest = Math.min(...timestamps);
+    const latest = Math.max(...timestamps);
+
+    const diffDays = Math.floor(
+      (latest - earliest) / (1000 * 60 * 60 * 24)
+    );
+
+    return Math.floor(diffDays / 7) + 1;
+  }
+
+  const no_of_weeks = getNumberOfWeeks(classData?.schedule);
+
+  const uniqueEnrollments = Array.from(
+    new Map(
+      (classData?.enrollments || []).map(enrollment => [
+        enrollment.student_uuid,
+        enrollment,
+      ])
+    ).values()
+  );
+
 
   return (
     <div className='flex flex-col gap-4 sm:gap-6'>
@@ -98,9 +138,16 @@ export default function CourseDetailsHero({
       </div>
 
       <div className='flex flex-col gap-3 sm:gap-4'>
-        <h1 className='text-foreground text-xl font-black leading-tight sm:text-2xl lg:text-3xl'>
+        {type === "course" ? <h1 className='text-foreground text-xl font-black leading-tight sm:text-2xl lg:text-3xl'>
           {course.name}
-        </h1>
+        </h1> : <div>
+          <h1 className='text-foreground text-xl font-black leading-tight sm:text-2xl lg:text-3xl'>
+            {classData?.class?.title}
+          </h1>
+          <p className="text-base font-bold sm:text-lg lg:text-xl">
+            {course.name}
+          </p>
+        </div>}
 
         <div className='flex flex-wrap items-center gap-2'>
           <span className='bg-success/5 text-success border-border flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold sm:text-sm'>
@@ -180,7 +227,7 @@ export default function CourseDetailsHero({
               </div>
 
               <p className='text-foreground text-xs font-semibold sm:text-sm'>
-                30hrs/10classes
+                {totalDuration} / {classData?.schedule?.length} classes
               </p>
             </div>
 
@@ -193,7 +240,7 @@ export default function CourseDetailsHero({
               </div>
 
               <p className='text-foreground text-xs font-semibold sm:text-sm'>
-                {"0 | 5"} weeks
+                {no_of_weeks || 0} weeks
               </p>
             </div>
 
@@ -206,7 +253,7 @@ export default function CourseDetailsHero({
               </div>
 
               <p className='text-foreground text-xs font-semibold sm:text-sm'>
-                {course.class_limit ?? 0} Enrolled / {5} waiting list
+                {uniqueEnrollments?.length ?? 0} Enrolled / {0} waiting list
               </p>
             </div>
           </div>)

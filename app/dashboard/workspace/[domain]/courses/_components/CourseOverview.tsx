@@ -5,6 +5,7 @@ import type { Course } from '@/services/client';
 import { CheckCircle2, ChevronDown, ChevronUp, Play, User2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import HTMLTextPreview from '../../../../../../components/editors/html-text-preview';
+import { CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
 
 type LessonContentItem = {
   lesson: {
@@ -24,6 +25,9 @@ type LessonContentItem = {
 
 type Props = {
   course: Course;
+  classData: CombinedClassDetailsData;
+
+  type: "course" | "class" | undefined;
   creatorName: string;
   creatorHeadline: string;
   creatorBio: string;
@@ -176,7 +180,9 @@ export function ClassCourseCurriculum({
 
 export default function CourseOverview({
   course,
+  classData,
   creatorName,
+  type,
   creatorHeadline,
   creatorBio,
   creatorCourseItems,
@@ -225,6 +231,28 @@ export default function CourseOverview({
     );
   };
 
+  const instructor = classData?.instructor?.data
+
+  const profile = type === "course"
+    ? {
+      name: creatorName,
+      headline: creatorHeadline,
+      bio: creatorBio,
+      courses: creatorCourseItems.length,
+    }
+    : {
+      name: instructor?.full_name,
+      headline: instructor?.professional_headline,
+      bio: instructor?.bio,
+      courses: 0,
+    };
+
+  const stats = [
+    { val: profile.courses, label: "Courses" },
+    { val: 0, label: "Students" },
+    { val: 0, label: "Rating" },
+  ];
+
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
       {/* ABOUT */}
@@ -233,7 +261,7 @@ export default function CourseOverview({
           About this course
         </h2>
 
-        <div className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+        <div className="text-sm leading-relaxed text-muted-foreground">
           <RichTextRenderer
             htmlString={
               course.description ||
@@ -272,7 +300,7 @@ export default function CourseOverview({
           ).map((item, i) => (
             <div key={i} className="flex items-start gap-2">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-              <div className="text-sm text-muted-foreground sm:text-base">
+              <div className="text-sm text-muted-foreground">
                 <HTMLTextPreview htmlContent={item} />
               </div>
             </div>
@@ -377,37 +405,32 @@ export default function CourseOverview({
       {/* INSTRUCTOR */}
       <section>
         <h2 className="mb-3 text-base font-bold text-foreground sm:mb-4 sm:text-lg">
-          Meet your Course Creator
+          Meet your {type === "course" ? "Course Creator" : "Instructor"}
         </h2>
 
         <div className="flex flex-col items-start gap-4 rounded-md border border-border bg-muted/40 p-4 sm:flex-row sm:gap-6 sm:p-5">
-
           <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-muted sm:h-20 sm:w-20">
             <User2 className="h-6 w-6 text-muted-foreground" />
           </div>
 
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-bold text-foreground sm:text-base">
-              {creatorName}
+              {profile.name}
             </h3>
 
             <p className="mb-2 text-xs text-muted-foreground sm:text-sm">
-              {creatorHeadline}
+              {profile.headline}
             </p>
 
             <div className="mb-3 text-xs leading-relaxed text-muted-foreground sm:mb-4 sm:text-sm">
-              <HTMLTextPreview htmlContent={creatorBio} />
+              <HTMLTextPreview htmlContent={profile.bio} />
             </div>
 
             <div className="flex flex-wrap gap-6 sm:gap-12">
-              {[
-                { val: `${creatorCourseItems.length}`, label: 'Courses' },
-                { val: `${0}`, label: 'Students' },
-                { val: `${0}`, label: 'Rating' },
-              ].map((stat, i) => (
-                <div key={i} className="text-start">
+              {stats.map((stat) => (
+                <div key={stat.label} className="text-start">
                   <p className="text-sm font-black text-foreground sm:text-base">
-                    {stat.label === 'Rating' ? (
+                    {stat.label === "Rating" ? (
                       <span className="inline-flex items-center gap-1">
                         {stat.val}
                         <svg
@@ -423,6 +446,7 @@ export default function CourseOverview({
                       stat.val
                     )}
                   </p>
+
                   <p className="text-xs text-muted-foreground">
                     {stat.label}
                   </p>

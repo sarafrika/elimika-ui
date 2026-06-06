@@ -70,6 +70,15 @@ export default function EnrollSidebar({
       course.minimum_training_fee > 0
       ? `From Ksh ${course.minimum_training_fee.toLocaleString()}`
       : "Pricing not set";
+
+  const totalMinutes = classData?.schedule.reduce(
+    (sum, item) => sum + Number(item.duration_minutes),
+    0
+  );
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const totalDuration = `${hours}h${minutes ? ` ${minutes}m` : ""}`;
+
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       {/* ENROLL CARD */}
@@ -257,7 +266,7 @@ export default function EnrollSidebar({
           <PreviewRow
             icon={Clock}
             label="Class Duration"
-            value={classData?.class?.duration_formatted || "N/A"}
+            value={totalDuration || "N/A"}
           />
 
           {classData?.class?.meeting_link && (
