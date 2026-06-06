@@ -3,7 +3,10 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Spinner from '@/components/ui/spinner';
 import {
   useMarkAllNotificationsRead,
   useNotificationAction,
@@ -13,7 +16,7 @@ import {
   type UserNotification,
 } from '@/services/notifications';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import {
   Archive,
   Award,
@@ -36,6 +39,7 @@ import { toast } from 'sonner';
 type NotificationTab = 'all' | 'unread' | 'popups' | 'archived';
 
 const notificationTabs: NotificationTab[] = ['all', 'unread', 'popups', 'archived'];
+const pageSize = 20;
 
 const iconByType: Array<[RegExp, LucideIcon]> = [
   [/PAYMENT|RECEIPT/, CreditCard],
@@ -67,47 +71,114 @@ function getNotificationTone(notification: UserNotification) {
   return 'bg-muted text-muted-foreground';
 }
 
-function getQueryParams(tab: NotificationTab): NotificationListParams {
+function getQueryParams(tab: NotificationTab, page: number): NotificationListParams {
   if (tab === 'unread') {
-    return { page: 0, size: 30, status: 'UNREAD' };
+    return { page, size: pageSize, status: 'UNREAD' };
   }
 
   if (tab === 'popups') {
-    return { page: 0, size: 30, presentation: 'POPUP' };
+    return { page, size: pageSize, presentation: 'POPUP' };
   }
 
   if (tab === 'archived') {
-    return { page: 0, size: 30, status: 'ARCHIVED' };
+    return { page, size: pageSize, status: 'ARCHIVED' };
   }
 
-  return { page: 0, size: 30 };
+  return { page, size: pageSize };
 }
 
-function notificationTime(notification: UserNotification) {
+function notificationDate(notification: UserNotification) {
   const rawDate = notification.occurred_at ?? notification.created_at;
   if (!rawDate) {
-    return 'Recently';
+    return null;
   }
 
   const date = new Date(rawDate);
   if (Number.isNaN(date.getTime())) {
-    return 'Recently';
+    return null;
   }
 
-  return formatDistanceToNow(date, { addSuffix: true });
+  return date;
 }
 
-function notificationTypeLabel(type: string) {
-  return type
+function notificationTime(notification: UserNotification) {
+  const date = notificationDate(notification);
+  return date ? formatDistanceToNow(date, { addSuffix: true }) : 'Recently';
+}
+
+function notificationExactTime(notification: UserNotification) {
+  const date = notificationDate(notification);
+  return date ? format(date, 'PPp') : 'Recently';
+}
+
+function notificationTypeLabel(value: string) {
+  return value
+    .replace(/([a-z])([A-Z])/g, '$1_$2')
     .split('_')
     .filter(Boolean)
     .map(part => part.charAt(0) + part.slice(1).toLowerCase())
     .join(' ');
 }
 
+function priorityVariant(priority: string) {
+  if (priority === 'CRITICAL') return 'destructive';
+  if (priority === 'HIGH') return 'warning';
+  if (priority === 'LOW') return 'secondary';
+  return 'outline';
+}
+
+function metadataValue(value: unknown) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return null;
+  }
+}
+
+function metadataEntries(notification: UserNotification) {
+  return Object.entries(notification.metadata ?? {})
+    .map(([key, value]) => [notificationTypeLabel(key), metadataValue(value)] as const)
+    .filter((entry): entry is readonly [string, string] => Boolean(entry[1]))
+    .slice(0, 4);
+}
+
+function NotificationLoadingList() {
+  return (
+    <div className='space-y-3'>
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Card key={index} className='gap-4 p-4'>
+          <div className='flex gap-4'>
+            <Skeleton className='h-10 w-10 shrink-0 rounded-md' />
+            <div className='min-w-0 flex-1 space-y-3'>
+              <div className='flex items-start justify-between gap-4'>
+                <div className='w-full max-w-md space-y-2'>
+                  <Skeleton className='h-4 w-2/3' />
+                  <Skeleton className='h-3 w-1/3' />
+                </div>
+                <Skeleton className='h-7 w-24' />
+              </div>
+              <Skeleton className='h-4 w-full' />
+              <Skeleton className='h-4 w-4/5' />
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export function AlertsTab() {
   const [activeTab, setActiveTab] = useState<NotificationTab>('all');
-  const queryParams = getQueryParams(activeTab);
+  const [page, setPage] = useState(0);
+  const queryParams = getQueryParams(activeTab, page);
   const notificationsQuery = useNotifications(queryParams);
   const countsQuery = useNotificationCounts();
   const actionMutation = useNotificationAction();
@@ -116,7 +187,13 @@ export function AlertsTab() {
   const notifications = notificationsQuery.data?.items ?? [];
   const unreadCount = countsQuery.data?.unread_count ?? 0;
   const popupCount = countsQuery.data?.popup_count ?? 0;
+  const currentPage = notificationsQuery.data?.page ?? page;
   const totalItems = notificationsQuery.data?.totalItems ?? notifications.length;
+  const totalPages = notificationsQuery.data?.totalPages ?? 0;
+  const hasNextPage = notificationsQuery.data?.hasNext ?? false;
+  const hasPreviousPage = notificationsQuery.data?.hasPrevious ?? currentPage > 0;
+  const firstItem = totalItems === 0 ? 0 : currentPage * pageSize + 1;
+  const lastItem = Math.min(totalItems, currentPage * pageSize + notifications.length);
 
   const handleMarkAsRead = (notification: UserNotification) => {
     if (notification.status !== 'UNREAD') {
@@ -153,6 +230,7 @@ export function AlertsTab() {
         onValueChange={value => {
           if (isNotificationTab(value)) {
             setActiveTab(value);
+            setPage(0);
           }
         }}
       >
@@ -161,7 +239,7 @@ export function AlertsTab() {
             <TabsTrigger value='all'>
               <Inbox className='h-4 w-4' />
               All
-              {totalItems > 0 ? (
+              {activeTab === 'all' && totalItems > 0 ? (
                 <Badge variant='secondary' className='ml-2'>
                   {totalItems}
                 </Badge>
@@ -188,6 +266,11 @@ export function AlertsTab() {
             <TabsTrigger value='archived'>
               <Archive className='h-4 w-4' />
               Archived
+              {activeTab === 'archived' && totalItems > 0 ? (
+                <Badge variant='secondary' className='ml-2'>
+                  {totalItems}
+                </Badge>
+              ) : null}
             </TabsTrigger>
           </TabsList>
 
@@ -200,121 +283,153 @@ export function AlertsTab() {
               disabled={markAllMutation.isPending}
               onClick={handleMarkAllAsRead}
             >
-              <CheckCircle2 className='h-4 w-4' />
+              {markAllMutation.isPending ? (
+                <Spinner className='h-4 w-4' />
+              ) : (
+                <CheckCircle2 className='h-4 w-4' />
+              )}
               Mark all read
             </Button>
           ) : null}
         </div>
 
         <TabsContent value={activeTab} className='mt-5 mb-20'>
-          {notificationsQuery.isLoading ? (
-            <Card className='p-8 sm:p-12'>
-              <div className='flex flex-col items-center gap-3 text-muted-foreground'>
-                <div className='h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary' />
-                <p className='text-sm'>Loading notifications</p>
-              </div>
-            </Card>
+          {notificationsQuery.isPending ? (
+            <NotificationLoadingList />
           ) : notificationsQuery.isError ? (
-            <Card className='p-8 sm:p-12'>
-              <div className='text-center text-muted-foreground'>
-                <Bell className='mx-auto mb-4 h-10 w-10 sm:h-12 sm:w-12' />
-                <p className='text-base font-medium text-foreground sm:text-lg'>
-                  Notifications could not be loaded
-                </p>
-                <p className='mt-1 text-xs sm:text-sm'>Refresh the page or try again shortly.</p>
-              </div>
-            </Card>
+            <EmptyState
+              icon={Bell}
+              title='Notifications could not be loaded'
+              description='Refresh the page or try again shortly.'
+              variant='card'
+            />
           ) : notifications.length === 0 ? (
-            <Card className='p-8 sm:p-12'>
-              <div className='text-center text-muted-foreground'>
-                <Bell className='mx-auto mb-4 h-10 w-10 sm:h-12 sm:w-12' />
-                <p className='text-base font-medium text-foreground sm:text-lg'>No notifications</p>
-                <p className='mt-1 text-xs sm:text-sm'>You are all caught up.</p>
-              </div>
-            </Card>
+            <EmptyState
+              icon={Bell}
+              title='No notifications'
+              description='You are all caught up.'
+              variant='card'
+            />
           ) : (
-            <div className='space-y-3'>
-              {notifications.map(notification => {
-                const Icon = getNotificationIcon(notification.type);
-                const unread = notification.status === 'UNREAD';
+            <div className='space-y-4'>
+              <div className='flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between'>
+                <p>
+                  Showing {firstItem}-{lastItem} of {totalItems}
+                </p>
+                {totalPages > 1 ? <p>Page {currentPage + 1} of {totalPages}</p> : null}
+              </div>
 
-                return (
-                  <Card
-                    key={notification.uuid}
-                    className={cn(
-                      'p-4 transition-colors',
-                      unread ? 'border-l-4 border-l-primary bg-primary/5' : 'bg-card'
-                    )}
-                  >
-                    <div className='flex gap-4'>
-                      <div className='shrink-0'>
-                        <div
-                          className={cn(
-                            'flex h-10 w-10 items-center justify-center rounded-md',
-                            getNotificationTone(notification)
-                          )}
-                        >
-                          <Icon className='h-5 w-5' />
+              <div className='space-y-3'>
+                {notifications.map(notification => {
+                  const Icon = getNotificationIcon(notification.type);
+                  const unread = notification.status === 'UNREAD';
+                  const details = metadataEntries(notification);
+
+                  return (
+                    <Card
+                      key={notification.uuid}
+                      className={cn(
+                        'p-4 transition-colors',
+                        unread ? 'border-l-4 border-l-primary bg-primary/5' : 'bg-card'
+                      )}
+                    >
+                      <div className='flex gap-4'>
+                        <div className='shrink-0'>
+                          <div
+                            className={cn(
+                              'flex h-10 w-10 items-center justify-center rounded-md',
+                              getNotificationTone(notification)
+                            )}
+                          >
+                            <Icon className='h-5 w-5' />
+                          </div>
                         </div>
-                      </div>
 
-                      <div className='min-w-0 flex-1'>
-                        <div className='mb-1 flex flex-wrap items-start justify-between gap-2'>
-                          <div className='min-w-0'>
-                            <div className='flex min-w-0 items-center gap-2'>
-                              <h3 className='truncate text-sm font-semibold'>
-                                {notification.title}
-                              </h3>
-                              {unread ? <div className='h-2 w-2 rounded-full bg-primary' /> : null}
+                        <div className='min-w-0 flex-1'>
+                          <div className='mb-2 flex flex-wrap items-start justify-between gap-2'>
+                            <div className='min-w-0'>
+                              <div className='flex min-w-0 items-center gap-2'>
+                                <h3 className='truncate text-sm font-semibold'>
+                                  {notification.title}
+                                </h3>
+                                {unread ? <div className='h-2 w-2 rounded-full bg-primary' /> : null}
+                              </div>
+                              <p className='mt-1 text-xs text-muted-foreground'>
+                                {notificationTypeLabel(notification.type)}
+                              </p>
                             </div>
-                            <p className='mt-1 text-xs text-muted-foreground'>
-                              {notificationTypeLabel(notification.type)}
-                            </p>
-                          </div>
 
-                          <div className='flex items-center gap-2'>
-                            <Badge variant='outline' className='text-xs'>
-                              {notification.presentation}
-                            </Badge>
-                            <Button
-                              type='button'
-                              variant='ghost'
-                              size='icon'
-                              className='h-8 w-8'
-                              aria-label='Archive notification'
-                              disabled={actionMutation.isPending}
-                              onClick={() => handleArchive(notification)}
-                            >
-                              <Archive className='h-4 w-4' />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <p className='mb-3 text-sm leading-6 text-muted-foreground'>
-                          {notification.body}
-                        </p>
-
-                        <div className='flex flex-wrap items-center justify-between gap-2'>
-                          <p className='flex items-center gap-1 text-xs text-muted-foreground'>
-                            <CalendarClock className='h-3 w-3' />
-                            {notificationTime(notification)}
-                          </p>
-
-                          <div className='flex flex-wrap gap-2'>
-                            {unread ? (
+                            <div className='flex items-center gap-2'>
+                              <Badge variant='outline' className='text-xs'>
+                                {notification.presentation}
+                              </Badge>
                               <Button
                                 type='button'
-                                variant='outline'
-                                size='sm'
+                                variant='ghost'
+                                size='icon'
+                                className='h-8 w-8'
+                                aria-label='Archive notification'
                                 disabled={actionMutation.isPending}
-                                onClick={() => handleMarkAsRead(notification)}
+                                onClick={() => handleArchive(notification)}
                               >
-                                <CheckCircle2 className='h-4 w-4' />
-                                Mark read
+                                <Archive className='h-4 w-4' />
                               </Button>
-                            ) : null}
+                            </div>
+                          </div>
 
-                            {notification.action_url ? (
+                          <p className='mb-3 text-sm leading-6 text-muted-foreground'>
+                            {notification.body}
+                          </p>
+
+                          <div className='mb-3 flex flex-wrap gap-2'>
+                            <Badge variant='outline' className='text-xs'>
+                              {notification.status}
+                            </Badge>
+                            <Badge variant={priorityVariant(notification.priority)} className='text-xs'>
+                              {notification.priority}
+                            </Badge>
+                            {notification.category ? (
+                              <Badge variant='secondary' className='text-xs'>
+                                {notificationTypeLabel(notification.category)}
+                              </Badge>
+                            ) : null}
+                          </div>
+
+                          {details.length > 0 ? (
+                            <dl className='mb-3 grid gap-2 rounded-md border border-border bg-muted/40 p-3 text-xs sm:grid-cols-2'>
+                              {details.map(([label, value]) => (
+                                <div key={label} className='min-w-0'>
+                                  <dt className='text-muted-foreground'>{label}</dt>
+                                  <dd className='truncate font-medium text-foreground'>{value}</dd>
+                                </div>
+                              ))}
+                            </dl>
+                          ) : null}
+
+                          <div className='flex flex-wrap items-center justify-between gap-2'>
+                            <p
+                              className='flex items-center gap-1 text-xs text-muted-foreground'
+                              title={notificationExactTime(notification)}
+                            >
+                              <CalendarClock className='h-3 w-3' />
+                              {notificationTime(notification)}
+                            </p>
+
+                            <div className='flex flex-wrap gap-2'>
+                              {unread ? (
+                                <Button
+                                  type='button'
+                                  variant='outline'
+                                  size='sm'
+                                  disabled={actionMutation.isPending}
+                                  onClick={() => handleMarkAsRead(notification)}
+                                >
+                                  <CheckCircle2 className='h-4 w-4' />
+                                  Mark read
+                                </Button>
+                              ) : null}
+
+                              {notification.action_url ? (
                               <Button
                                 asChild
                                 size='sm'
@@ -325,14 +440,36 @@ export function AlertsTab() {
                                   Open
                                 </Link>
                               </Button>
-                            ) : null}
+                              ) : null}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                );
-              })}
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {totalPages > 1 ? (
+                <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    disabled={!hasPreviousPage || notificationsQuery.isFetching}
+                    onClick={() => setPage(previous => Math.max(previous - 1, 0))}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    disabled={!hasNextPage || notificationsQuery.isFetching}
+                    onClick={() => setPage(previous => previous + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              ) : null}
             </div>
           )}
         </TabsContent>
