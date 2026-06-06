@@ -25,7 +25,6 @@ import {
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import {
-  Bell,
   Check,
   ChevronDown,
   Laptop2,
@@ -41,6 +40,7 @@ import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Label } from '../../../../components/ui/label';
+import { DashboardNotifications } from './dashboard-notifications';
 
 const dashboardLabelByDomain = (domain?: string | null) => {
   if (!domain) return 'Dashboard';
@@ -102,8 +102,6 @@ export default function DashboardTopBar() {
 
   const profileName = getProfileName(profile);
   const profileInitials = getInitials(profileName);
-
-  const notificationCount = 0;
 
   const walletOptions = profile?.uuid ? getWalletOptions({ path: { userUuid: profile.uuid } }) : null;
 
@@ -203,22 +201,7 @@ export default function DashboardTopBar() {
               </Button>
             )}
 
-            <Button
-              variant='outline'
-              size='icon'
-              asChild
-              className='border-border/70 bg-card/80 relative hidden h-10 w-10 rounded-md shadow-sm sm:inline-flex'
-            >
-              <Link href={notificationHref} aria-label='Notifications'>
-                <Bell className='h-4 w-4' />
-
-                {notificationCount > 0 && (
-                  <span className='bg-destructive text-destructive-foreground absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold'>
-                    {notificationCount}
-                  </span>
-                )}
-              </Link>
-            </Button>
+            <DashboardNotifications notificationHref={notificationHref} />
 
             <div className='border-border/70 bg-card/80 hidden h-10 items-center gap-2 rounded-md border px-3 shadow-sm xl:flex'>
               <div className='bg-success/10 text-success flex h-8 w-8 items-center justify-center rounded-full'>
