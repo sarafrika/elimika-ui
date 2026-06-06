@@ -1,6 +1,5 @@
 "use client";
 
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import type {
@@ -35,12 +34,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import NotesModal from '../../../../../../components/custom-modals/notes-modal';
 
-import { CalendarClock, Heart, Share2, Table } from 'lucide-react';
+import { CalendarClock, Heart, Share2 } from 'lucide-react';
 import { QuizContentPreview } from '../../../../../../components/content-preview/QuizContentPreview';
 import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
 import { Button } from '../../../../../../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../../components/ui/dialog';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../../../components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../../../components/ui/table';
 import { ClassDetailsScheduleItem, CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../../lib/share';
 import { socialShareActions } from '../../../../@instructor/classes/overview/[id]/page';
@@ -84,7 +83,6 @@ export default function ClassCourseDetailsPage({
 
     const instructor = useInstructor();
     const qc = useQueryClient();
-    const { replaceBreadcrumbs } = useBreadcrumb();
 
     const resolvedCourseId = courseId || (params?.id as string);
     const classId = classData?.class?.uuid as string
@@ -501,7 +499,7 @@ export default function ClassCourseDetailsPage({
     if (!isEverythingReady) {
         return (
             <EnrollmentLoadingState
-                title="Loading your course details"
+                title={`Loading your ${type === "course" ? "course" : "class"} details`}
                 description="We are gathering lessons, tasks, quizzes, and course information so the full learning overview is ready when the page opens."
             />
         );
@@ -561,6 +559,8 @@ export default function ClassCourseDetailsPage({
                         <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 lg:p-6">
                             <CourseDetailsHero
                                 course={course}
+                                classData={classData}
+                                type={type}
                                 creatorName={creatorName}
                                 creatorHeadline={creatorHeadline}
                                 difficultyName={difficultyName}
@@ -586,6 +586,8 @@ export default function ClassCourseDetailsPage({
                                 {activeTab === "Overview" && (
                                     <CourseOverview
                                         course={course}
+                                        classData={classData}
+                                        type={type}
                                         creatorName={creatorName}
                                         creatorHeadline={creatorHeadline}
                                         creatorBio={creatorBio}
@@ -859,7 +861,6 @@ export default function ClassCourseDetailsPage({
 }
 
 function CourseScheduleInfo({ type, classData, schedule }: { type: "course" | "class" | undefined, classData: CombinedClassDetailsData, schedule: ClassDetailsScheduleItem }) {
-
     return <>
         {type === "course" ?
             <div className="rounded-lg border border-muted/50 bg-muted/30 p-6">
@@ -900,37 +901,48 @@ function CourseScheduleInfo({ type, classData, schedule }: { type: "course" | "c
                             <TableHead>Date & Time</TableHead>
                             <TableHead>Duration</TableHead>
                             <TableHead>Format</TableHead>
-                            <TableHead>Timezone</TableHead>
                             <TableHead>Status</TableHead>
                         </TableRow>
                     </TableHeader>
 
                     <TableBody>
                         {Array.isArray(schedule) && schedule.length > 0 ? (
-                            schedule.map((instance, index) => (
-                                <TableRow key={instance.uuid}>
-                                    <TableCell>{index + 1}</TableCell>
-                                    <TableCell>{instance.title}</TableCell>
+                            [...schedule]
+                                .sort(
+                                    (a, b) =>
+                                        new Date(a.start_time).getTime() -
+                                        new Date(b.start_time).getTime()
+                                )
+                                .map((instance, index) => (
+                                    <TableRow key={instance.uuid}>
+                                        <TableCell>{index + 1}</TableCell>
+                                        <TableCell>{classData?.class?.title}</TableCell>
 
-                                    <TableCell>
-                                        {new Date(instance.start_time).toLocaleDateString()}{" "}
-                                        {new Date(instance.start_time).toLocaleTimeString([], {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                        })}{" "}
-                                        -{" "}
-                                        {new Date(instance.end_time).toLocaleTimeString([], {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                        })}
-                                    </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span className="font-medium">
+                                                    {new Date(instance.start_time).toLocaleDateString()}
+                                                </span>
 
-                                    <TableCell>{instance.duration_formatted}</TableCell>
-                                    <TableCell>{instance.location_type}</TableCell>
-                                    <TableCell>{instance.timezone}</TableCell>
-                                    <TableCell>{instance.status}</TableCell>
-                                </TableRow>
-                            ))
+                                                <span className="text-xs text-muted-foreground">
+                                                    {new Date(instance.start_time).toLocaleTimeString([], {
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    })}
+                                                    {" - "}
+                                                    {new Date(instance.end_time).toLocaleTimeString([], {
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    })}
+                                                </span>
+                                            </div>
+                                        </TableCell>
+
+                                        <TableCell>{instance.duration_formatted}</TableCell>
+                                        <TableCell>{instance.location_type}</TableCell>
+                                        <TableCell>{instance.status}</TableCell>
+                                    </TableRow>
+                                ))
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">

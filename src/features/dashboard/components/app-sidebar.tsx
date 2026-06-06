@@ -12,7 +12,7 @@ import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-dom
 import { SettingsSupportWidget } from '@/src/features/dashboard/settings/_components/settings-support-widget';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { MoreHorizontalIcon } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -49,7 +49,7 @@ export function AppSidebar({
             className="shrink-0 cursor-pointer hover:bg-primary/5 p-1.5 rounded-sm"
             onClick={() => toggleSidebar()}
           >
-            <MoreHorizontalIcon size={20} />
+            <Menu size={20} />
           </div>
 
           <Link
