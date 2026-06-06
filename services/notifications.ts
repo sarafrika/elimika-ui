@@ -5,9 +5,9 @@ import { z } from 'zod';
 
 const notificationSchema = z.object({
   uuid: z.string().uuid(),
-  notification_id: z.string().uuid().optional(),
+  notification_id: z.string().uuid().nullable().optional(),
   type: z.string(),
-  category: z.string().optional(),
+  category: z.string().nullable().optional(),
   priority: z.string().default('NORMAL'),
   presentation: z.string().default('INBOX'),
   status: z.string().default('UNREAD'),
@@ -48,8 +48,8 @@ const notificationCountsResponseSchema = z.object({
   message: z.string().optional(),
   data: z
     .object({
-      unread_count: z.number().int().default(0),
-      popup_count: z.number().int().default(0),
+      unread_count: z.coerce.number().int().default(0),
+      popup_count: z.coerce.number().int().default(0),
     })
     .default({ unread_count: 0, popup_count: 0 }),
 });
@@ -129,12 +129,18 @@ export async function fetchNotifications(
   }
 
   const parsed = notificationsResponseSchema.parse(response.data ?? {});
+  if (parsed.success === false) {
+    throw new Error(parsed.message || 'Failed to fetch notifications');
+  }
+
   const items = parsed.data?.content ?? [];
   const metadata = parsed.data?.metadata ?? {};
   const page = metadata.pageNumber ?? normalizedParams.page ?? 0;
   const size = metadata.pageSize ?? normalizedParams.size ?? 20;
-  const totalItems = toNumber(metadata.totalElements);
-  const totalPages = metadata.totalPages ?? (totalItems > 0 ? Math.ceil(totalItems / size) : 0);
+  const totalItems =
+    metadata.totalElements === undefined ? items.length : toNumber(metadata.totalElements);
+  const totalPages =
+    metadata.totalPages ?? (totalItems > 0 ? Math.ceil(totalItems / size) : items.length > 0 ? 1 : 0);
 
   return {
     items,
@@ -156,7 +162,12 @@ export async function fetchNotificationCounts(): Promise<NotificationCounts> {
     );
   }
 
-  return notificationCountsResponseSchema.parse(response.data ?? {}).data;
+  const parsed = notificationCountsResponseSchema.parse(response.data ?? {});
+  if (parsed.success === false) {
+    throw new Error(parsed.message || 'Failed to fetch notification counts');
+  }
+
+  return parsed.data;
 }
 
 async function applyNotificationAction(uuid: string, action: 'read' | 'archive' | 'popup_seen') {
