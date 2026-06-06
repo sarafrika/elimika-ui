@@ -1,4 +1,3 @@
-// hooks/useStudentMap.ts
 'use client';
 
 import { Student } from '@/services/client';

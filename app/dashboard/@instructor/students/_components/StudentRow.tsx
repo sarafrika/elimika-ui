@@ -1,7 +1,6 @@
 import { MoreVertical } from "lucide-react";
 
 import { Student } from "../types";
-import { Avatar } from "./Avatar";
 import { ProgressBar } from "./ProgressBar";
 import { StatusBadge } from "./StatusBadge";
 
@@ -11,59 +10,62 @@ interface StudentRowProps {
   student: Student;
 }
 
-export function StudentRow({ student }: StudentRowProps) {
+export function StudentRow({ student }: any) {
   return (
     <tr className="border-b border-border hover:bg-muted/40 transition-colors">
       {/* Student */}
       <td className="py-3 px-4">
         <div className="flex items-center gap-2.5 min-w-0">
-          <Avatar
-            initials={student.initials}
-            colorClass={student.avatarColor}
-          />
+          <div className="min-w-8 min-h-8 rounded-full bg-primary/50 flex items-center justify-center text-xs font-semibold text-white uppercase">
+            {student.student?.full_name?.slice(0, 1)}
+          </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">
-              {student.name}
+              {student.student?.full_name}
             </p>
             <p className="text-xs text-muted-foreground">
-              ID: {student.id}
+              ID: {student.student?.uuid.slice(0, 8)}
             </p>
           </div>
         </div>
       </td>
 
-      {/* Course / Class */}
+      {/* Courses */}
       <td className="py-3 px-4 hidden sm:table-cell">
-        <p className="text-sm font-medium text-foreground">
-          {student.course}
-        </p>
+        <div className="text-sm font-medium text-foreground space-y-0.5 max-w-[180px]">
+          {(student.courses ?? [])
+            .map((c: any) => c?.name)
+            .filter(Boolean)
+            .map((name: string, i: number) => (
+              <p key={i} className="truncate">
+                {name}
+              </p>
+            ))}
+        </div>
+
         <p className="text-xs text-muted-foreground">
-          {student.schedule}
+          {(student.classes ?? []).length} classes
         </p>
       </td>
 
       {/* Status */}
       <td className="py-3 px-4">
-        <StatusBadge status={student.status} />
+        <StatusBadge status="Enrolled" />
       </td>
 
       {/* Progress */}
       <td className="py-3 px-4 hidden md:table-cell">
-        <ProgressBar value={student.progress} />
+        <ProgressBar value={0} />
       </td>
 
-      {/* Skills Wallet */}
-      <td className="py-3 px-4 hidden lg:table-cell">
-        <span className="text-sm text-foreground">
-          {student.skillsWallet}
-        </span>
+      {/* Progress */}
+      <td className="py-3 px-4 hidden md:table-cell">
+        Ksh {0}
       </td>
 
-      {/* Joined */}
-      <td className="py-3 px-4 hidden xl:table-cell">
-        <span className="text-sm text-muted-foreground">
-          {student.joined}
-        </span>
+      {/* Progress */}
+      <td className="py-3 px-4 hidden md:table-cell">
+        {"01/01/1980"}
       </td>
 
       {/* Actions */}
@@ -72,7 +74,7 @@ export function StudentRow({ student }: StudentRowProps) {
           variant="ghost"
           size="icon"
           className="h-7 w-7"
-          aria-label={`More options for ${student.name}`}
+          aria-label={`More options for ${student.student?.full_name}`}
         >
           <MoreVertical className="h-4 w-4" />
         </Button>

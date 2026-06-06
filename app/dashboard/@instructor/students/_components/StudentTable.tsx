@@ -14,7 +14,7 @@ import {
 } from "../../../../../components/ui/select";
 
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "../../../../../components/ui/table";
-import { courseTabs, students } from "../data";
+import { useInstructorStudentsData } from "../data";
 import { Pagination } from "./Pagination";
 import { StudentCard } from "./StudentCard";
 import { StudentRow } from "./StudentRow";
@@ -65,23 +65,39 @@ export function StudentTable() {
     level: "all",
   });
 
+  const { students, courseTabs } = useInstructorStudentsData()
+
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
+      const name = s.student?.full_name ?? "";
+
+      const courseNames = (s.courses ?? [])
+        .map((c: any) => c?.name?.toLowerCase())
+        .filter(Boolean);
+
+      const classNames = (s.classes ?? [])
+        .map((c: any) => c?.title?.toLowerCase())
+        .filter(Boolean);
+
       const matchesSearch =
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.course.toLowerCase().includes(search.toLowerCase());
+        name.toLowerCase().includes(search.toLowerCase()) ||
+        courseNames.some((c) => c.includes(search.toLowerCase()));
 
       const matchesTab =
-        activeTab === "all" || s.course === activeTab;
+        activeTab === "all" ||
+        (s.courses ?? []).some((c: any) => c?.uuid === activeTab);
 
       const matchesClass =
-        filters.class === "all" || s.course === filters.class;
+        filters.class === "all" ||
+        (s.classes ?? []).some((c: any) => c?.uuid === filters.class);
 
       const matchesStatus =
-        filters.status === "all" || s.status === filters.status;
+        filters.status === "all" ||
+        s.student?.status === filters.status;
 
       const matchesLevel =
-        filters.level === "all" || s.level === filters.level;
+        filters.level === "all" ||
+        s.student?.level === filters.level;
 
       return (
         matchesSearch &&
@@ -91,7 +107,7 @@ export function StudentTable() {
         matchesLevel
       );
     });
-  }, [search, activeTab, filters]);
+  }, [students, search, activeTab, filters]);
 
   return (
     <div className="flex-1 min-w-0 space-y-4">
@@ -111,16 +127,24 @@ export function StudentTable() {
           <Button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-sm border text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
               ? "border-foreground bg-foreground text-background"
               : "border-border bg-background text-foreground hover:bg-muted"
               }`}
           >
-            <span
-              className={`text-xs font-bold px-1.5 py-0.5 rounded ${tab.bgColor} ${tab.color}`}
-            >
-              {tab.code}
-            </span>
+            {/* Avatar / Thumbnail */}
+            {tab.thumbnail_url ? (
+              <img
+                src={tab.thumbnail_url}
+                alt={tab.label}
+                className="w-5 h-5 rounded object-cover shrink-0"
+              />
+            ) : (
+              <div className="w-5 h-5 rounded bg-muted flex items-center justify-center text-[10px] font-bold uppercase shrink-0">
+                {(tab.label ?? "NA").slice(0, 2)}
+              </div>
+            )}
+
             {tab.label}
           </Button>
         ))}
@@ -225,7 +249,7 @@ export function StudentTable() {
             <TableBody>
               {filteredStudents.map((student) => (
                 <StudentRow
-                  key={student.id + student.course}
+                  key={student.student?.uuid}
                   student={student}
                 />
               ))}
@@ -236,7 +260,7 @@ export function StudentTable() {
         {/* Mobile */}
         <div className="sm:hidden divide-y">
           {filteredStudents.map((student) => (
-            <div key={student.id + student.course} className="p-3">
+            <div key={student.student?.uuid} className="p-3">
               <StudentCard student={student} />
             </div>
           ))}

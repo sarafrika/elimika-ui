@@ -13,15 +13,6 @@ export interface Student {
   joined: string;
 }
 
-export interface Course {
-  id: string;
-  code: string;
-  name: string;
-  students: number;
-  color: string;
-  bgColor: string;
-}
-
 export interface RecentActivity {
   id: string;
   type: "completion" | "assignment" | "join";
