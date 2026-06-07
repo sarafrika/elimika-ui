@@ -171,6 +171,41 @@ function getContentTypeName(
   return inferLessonContentType(content, contentTypeDetailsMap);
 }
 
+type SpreadsheetCell = string | number | boolean | Date | null;
+
+const SPREADSHEET_PREVIEW_ROWS = 100;
+const SPREADSHEET_PREVIEW_COLUMNS = 50;
+
+function toSpreadsheetCell(value: unknown): SpreadsheetCell {
+  if (
+    value === null ||
+    value instanceof Date ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+
+  if (value === undefined) {
+    return null;
+  }
+
+  return String(value);
+}
+
+function formatSpreadsheetCell(value: SpreadsheetCell) {
+  if (value === null) {
+    return '';
+  }
+
+  if (value instanceof Date) {
+    return value.toLocaleDateString();
+  }
+
+  return String(value);
+}
+
 function OfficeDocumentPreview({
   source,
   title,
@@ -183,6 +218,7 @@ function OfficeDocumentPreview({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [spreadsheetRows, setSpreadsheetRows] = useState<SpreadsheetCell[][] | null>(null);
   const fileExtension = getFileExtension(source);
   const resolvedOfficeType =
     type === 'office'
@@ -197,16 +233,20 @@ function OfficeDocumentPreview({
     let cancelled = false;
     const container = containerRef.current;
 
-    if (!container) {
-      return undefined;
+    if (container) {
+      container.innerHTML = '';
     }
 
-    container.innerHTML = '';
     setIsLoading(true);
     setErrorMessage(null);
+    setSpreadsheetRows(null);
 
     const renderOfficeFile = async () => {
       try {
+        if (resolvedOfficeType === 'spreadsheet' && !['xlsx', 'xlsm'].includes(fileExtension)) {
+          throw new Error('Spreadsheet preview supports XLSX and XLSM files.');
+        }
+
         const response = await fetch(source);
         if (!response.ok) {
           throw new Error(`Unable to load file (${response.status})`);
@@ -218,6 +258,10 @@ function OfficeDocumentPreview({
         }
 
         if (resolvedOfficeType === 'document') {
+          if (!containerRef.current) {
+            return;
+          }
+
           const { renderAsync } = await import('docx-preview');
           await renderAsync(arrayBuffer, containerRef.current, containerRef.current, {
             breakPages: true,
@@ -227,32 +271,27 @@ function OfficeDocumentPreview({
             useBase64URL: true,
           });
         } else if (resolvedOfficeType === 'spreadsheet') {
-          const XLSX = await import('xlsx');
-          const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-          const firstSheetName = workbook.SheetNames[0];
+          const { default: readXlsxFile } = await import('read-excel-file');
+          const rows = await readXlsxFile(new Blob([arrayBuffer]));
 
-          if (!firstSheetName) {
+          if (!rows.length) {
             throw new Error('No worksheets were found in this spreadsheet.');
           }
 
-          const worksheet = workbook.Sheets[firstSheetName];
-          const html = XLSX.utils.sheet_to_html(worksheet);
-
-          if (cancelled || !containerRef.current) {
+          if (cancelled) {
             return;
           }
 
-          containerRef.current.innerHTML = `
-            <div class="overflow-auto rounded-2xl border border-border/60">
-              ${html}
-            </div>
-          `;
-
-          const table = containerRef.current.querySelector('table');
-          if (table) {
-            table.className = 'min-w-full border-collapse text-sm';
-          }
+          setSpreadsheetRows(
+            rows.slice(0, SPREADSHEET_PREVIEW_ROWS).map(row =>
+              row.slice(0, SPREADSHEET_PREVIEW_COLUMNS).map(toSpreadsheetCell)
+            )
+          );
         } else {
+          if (!containerRef.current) {
+            return;
+          }
+
           const { init } = await import('pptx-preview');
           const previewer = init(containerRef.current, {
             width: containerRef.current.clientWidth || 960,
@@ -280,7 +319,7 @@ function OfficeDocumentPreview({
         containerRef.current.innerHTML = '';
       }
     };
-  }, [source, resolvedOfficeType]);
+  }, [source, resolvedOfficeType, fileExtension]);
 
   if (errorMessage) {
     return (
@@ -308,10 +347,35 @@ function OfficeDocumentPreview({
           Loading {title || 'document'}...
         </div>
       ) : null}
-      <div
-        ref={containerRef}
-        className='lesson-content-office-preview min-h-[72vh] w-full overflow-auto rounded-2xl'
-      />
+      {resolvedOfficeType === 'spreadsheet' ? (
+        spreadsheetRows ? (
+          <div className='lesson-content-office-preview min-h-[72vh] w-full overflow-auto rounded-2xl'>
+            <div className='overflow-auto rounded-2xl border border-border/60'>
+              <table className='min-w-full border-collapse text-sm'>
+                <tbody>
+                  {spreadsheetRows.map((row, rowIndex) => (
+                    <tr key={`spreadsheet-row-${rowIndex}`}>
+                      {row.map((cell, cellIndex) => (
+                        <td
+                          key={`spreadsheet-cell-${rowIndex}-${cellIndex}`}
+                          className='border border-border/60 px-3 py-2 align-top'
+                        >
+                          {formatSpreadsheetCell(cell)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : null
+      ) : (
+        <div
+          ref={containerRef}
+          className='lesson-content-office-preview min-h-[72vh] w-full overflow-auto rounded-2xl'
+        />
+      )}
     </div>
   );
 }
