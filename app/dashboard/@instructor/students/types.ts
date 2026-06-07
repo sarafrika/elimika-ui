@@ -1,18 +1,5 @@
 export type StudentStatus = "Enrolled" | "Graduated" | "On Hold";
 
-export interface Student {
-  id: string;
-  name: string;
-  initials: string;
-  avatarColor: string;
-  course: string;
-  schedule: string;
-  status: StudentStatus;
-  progress: number;
-  skillsWallet: string;
-  joined: string;
-}
-
 export interface RecentActivity {
   id: string;
   type: "completion" | "assignment" | "join";

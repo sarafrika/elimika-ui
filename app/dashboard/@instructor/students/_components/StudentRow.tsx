@@ -1,16 +1,18 @@
 import { MoreVertical } from "lucide-react";
-
-import { Student } from "../types";
 import { ProgressBar } from "./ProgressBar";
 import { StatusBadge } from "./StatusBadge";
 
 import { Button } from "@/components/ui/button";
+import { Course, Student } from "../../../../../services/client";
 
 interface StudentRowProps {
   student: Student;
 }
 
-export function StudentRow({ student }: any) {
+export function StudentRow({ student }: StudentRowProps) {
+  const classCount = (student.classes ?? []).length;
+  const courseCount = (student.courses ?? []).length;
+
   return (
     <tr className="border-b border-border hover:bg-muted/40 transition-colors">
       {/* Student */}
@@ -34,7 +36,7 @@ export function StudentRow({ student }: any) {
       <td className="py-3 px-4 hidden sm:table-cell">
         <div className="text-sm font-medium text-foreground space-y-0.5 max-w-[180px]">
           {(student.courses ?? [])
-            .map((c: any) => c?.name)
+            .map((c: Course) => c?.name)
             .filter(Boolean)
             .map((name: string, i: number) => (
               <p key={i} className="truncate">
@@ -43,8 +45,9 @@ export function StudentRow({ student }: any) {
             ))}
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          {(student.classes ?? []).length} classes
+        <p className="text-xs text-muted-foreground space-x-1">
+          {courseCount} {courseCount === 1 ? "course" : "courses"} •{"  "}
+          {classCount} {classCount === 1 ? "class" : "classes"}
         </p>
       </td>
 

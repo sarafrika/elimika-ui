@@ -1,8 +1,8 @@
-import { Student } from '@/services/client';
+import { ClassDefinition, Course, Enrollment, Student } from '@/services/client';
 import { useMemo } from "react";
 import { useUserProfile } from "../../../../context/profile-context";
 import { useCoursesMap } from "../../../../hooks/use-courses-map";
-import useInstructorClassesWithDetails from "../../../../hooks/use-instructor-classes";
+import useInstructorClassesWithDetails, { CourseDetails, InstructorClass, InstructorClassWithDetails } from "../../../../hooks/use-instructor-classes";
 import { useStudentMap } from "../../../../hooks/use-student-map";
 import { RecentActivity } from "./types";
 
@@ -44,7 +44,7 @@ export function useInstructorStudentsData() {
 
   const instructorCourseUuids = useMemo(() => {
     const set = new Set<string>();
-    classes?.forEach((c: any) => c?.course_uuid && set.add(c.course_uuid));
+    classes?.forEach((c: InstructorClassWithDetails) => c?.course_uuid && set.add(c.course_uuid));
     return Array.from(set);
   }, [classes]);
 
@@ -57,7 +57,7 @@ export function useInstructorStudentsData() {
   const courseTabs = useMemo(() => {
     return [
       { id: "all", label: "All" },
-      ...instructorCourses.map((c: any) => ({
+      ...instructorCourses.map((c: unknown) => ({
         id: c.uuid,
         label: c.name,
         thumbnail_url: c?.thumbnail_url,
@@ -68,14 +68,14 @@ export function useInstructorStudentsData() {
   const students = useMemo(() => {
     const map = new Map<string, {
       student: Student;
-      classes: Set<any>;
-      courses: Set<any>;
+      classes: Set<InstructorClass[]>;
+      courses: Set<CourseDetails[]>;
     }>();
 
-    classes?.forEach((cls: any) => {
-      const course = courseMap?.[cls.course_uuid];
+    classes?.forEach((cls: ClassDefinition) => {
+      const course = courseMap?.[cls?.course_uuid as string];
 
-      (cls.enrollment ?? []).forEach((e: any) => {
+      (cls?.enrollment ?? []).forEach((e: Enrollment) => {
         if (!e?.student_uuid) return;
 
         if (!map.has(e.student_uuid)) {

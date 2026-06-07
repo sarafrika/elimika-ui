@@ -1,5 +1,5 @@
 import { InstructorClassWithDetails } from "../../../../../hooks/use-instructor-classes";
-import { Course } from "../types";
+import { Course, Enrollment } from "../../../../../services/client";
 
 interface CourseListProps {
   courses: Course[];
@@ -28,7 +28,7 @@ export function CourseList({ classes }: CourseListProps) {
               </div>
             )}
 
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0 flex-1">
               <span className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
                 {item.title}
               </span>
@@ -40,7 +40,7 @@ export function CourseList({ classes }: CourseListProps) {
           </div>
           <span className="text-xs text-muted-foreground shrink-0 ml-2">
             {Array.from(
-              new Set(item?.enrollment?.map((e: any) => e.student_uuid).filter(Boolean))
+              new Set(item?.enrollment?.map((e: Enrollment) => e.student_uuid).filter(Boolean))
             ).length}{" "}
             Students
           </span>

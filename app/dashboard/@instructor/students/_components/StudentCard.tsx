@@ -1,4 +1,4 @@
-import { Student } from "../types";
+import { Course, Student } from "../../../../../services/client";
 import { Avatar } from "./Avatar";
 import { ProgressBar } from "./ProgressBar";
 import { StatusBadge } from "./StatusBadge";
@@ -7,7 +7,7 @@ interface StudentCardProps {
   student: Student;
 }
 
-export function StudentCard({ student }: any) {
+export function StudentCard({ student }: StudentCardProps) {
   return (
     <div className="bg-card border border-border rounded-lg p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
@@ -34,7 +34,7 @@ export function StudentCard({ student }: any) {
           <span className="text-muted-foreground">Courses</span>
           <p className="text-foreground font-medium">
             {(student.courses ?? [])
-              .map((c: any) => c?.name)
+              .map((c: Course) => c?.name)
               .filter(Boolean)
               .join(", ")}
           </p>

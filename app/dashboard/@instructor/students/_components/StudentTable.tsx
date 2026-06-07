@@ -14,6 +14,7 @@ import {
 } from "../../../../../components/ui/select";
 
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "../../../../../components/ui/table";
+import { ClassDefinition, Course } from "../../../../../services/client";
 import { useInstructorStudentsData } from "../data";
 import { Pagination } from "./Pagination";
 import { StudentCard } from "./StudentCard";
@@ -72,11 +73,11 @@ export function StudentTable() {
       const name = s.student?.full_name ?? "";
 
       const courseNames = (s.courses ?? [])
-        .map((c: any) => c?.name?.toLowerCase())
+        .map((c: Course[]) => c?.name?.toLowerCase())
         .filter(Boolean);
 
       const classNames = (s.classes ?? [])
-        .map((c: any) => c?.title?.toLowerCase())
+        .map((c: ClassDefinition[]) => c?.title?.toLowerCase())
         .filter(Boolean);
 
       const matchesSearch =
@@ -85,11 +86,11 @@ export function StudentTable() {
 
       const matchesTab =
         activeTab === "all" ||
-        (s.courses ?? []).some((c: any) => c?.uuid === activeTab);
+        (s.courses ?? []).some((c: Course[]) => c?.uuid === activeTab);
 
       const matchesClass =
         filters.class === "all" ||
-        (s.classes ?? []).some((c: any) => c?.uuid === filters.class);
+        (s.classes ?? []).some((c: ClassDefinition[]) => c?.uuid === filters.class);
 
       const matchesStatus =
         filters.status === "all" ||
