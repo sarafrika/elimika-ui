@@ -1,10 +1,10 @@
-import { Course, Student } from "../../../../../services/client";
 import { Avatar } from "./Avatar";
 import { ProgressBar } from "./ProgressBar";
 import { StatusBadge } from "./StatusBadge";
+import type { StudentRosterEntry } from "../types";
 
 interface StudentCardProps {
-  student: Student;
+  student: StudentRosterEntry;
 }
 
 export function StudentCard({ student }: StudentCardProps) {
@@ -13,28 +13,28 @@ export function StudentCard({ student }: StudentCardProps) {
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
           <Avatar
-            initials={student.student?.initials}
-            colorClass={student.student?.avatarColor}
+            initials={student.student.initials}
+            colorClass={student.student.avatarColor}
           />
           <div>
             <p className="text-sm font-semibold text-foreground">
-              {student.student?.full_name}
+              {student.student.full_name}
             </p>
             <p className="text-xs text-muted-foreground">
-              ID: {student.student?.uuid}
+              ID: {student.student.uuid}
             </p>
           </div>
         </div>
 
-        <StatusBadge status="Enrolled" />
+        <StatusBadge status={student.status} />
       </div>
 
       <div className="grid grid-cols-1 gap-2 text-xs">
         <div>
           <span className="text-muted-foreground">Courses</span>
           <p className="text-foreground font-medium">
-            {(student.courses ?? [])
-              .map((c: Course) => c?.name)
+            {student.courses
+              .map((c) => c?.name)
               .filter(Boolean)
               .join(", ")}
           </p>
@@ -49,7 +49,7 @@ export function StudentCard({ student }: StudentCardProps) {
 
         <div>
           <span className="text-muted-foreground">Progress</span>
-          <ProgressBar value={0} />
+          <ProgressBar value={student.progress} />
         </div>
       </div>
     </div>

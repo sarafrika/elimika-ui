@@ -1,4 +1,4 @@
-import { StudentStatus } from "../types";
+import { normalizeStudentStatus, type StudentStatus } from "../types";
 
 const statusConfig: Record<
   StudentStatus,
@@ -19,11 +19,12 @@ const statusConfig: Record<
 };
 
 interface StatusBadgeProps {
-  status: StudentStatus;
+  status: StudentStatus | string;
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const config = statusConfig[status];
+  const normalizedStatus = normalizeStudentStatus(status);
+  const config = statusConfig[normalizedStatus];
 
   return (
     <span

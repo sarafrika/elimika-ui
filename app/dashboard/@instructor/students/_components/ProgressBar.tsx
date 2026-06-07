@@ -5,6 +5,8 @@ interface ProgressBarProps {
 }
 
 export function ProgressBar({ value }: ProgressBarProps) {
+  const safeValue = Math.max(0, Math.min(100, value));
+
   const getColorClass = (value: number) => {
     if (value === 100) return "bg-primary";
     if (value >= 70) return "bg-primary/80";
@@ -15,15 +17,15 @@ export function ProgressBar({ value }: ProgressBarProps) {
   return (
     <div className="flex items-center gap-2 min-w-[80px]">
       <span className="text-sm font-medium text-foreground w-9 shrink-0">
-        {value}%
+        {safeValue}%
       </span>
 
       <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden min-w-[48px]">
         <div
-          className={`h-full rounded-full transition-all ${getColorClass(value)}`}
-          style={{ width: `${value}%` }}
+          className={`h-full rounded-full transition-all ${getColorClass(safeValue)}`}
+          style={{ width: `${safeValue}%` }}
           role="progressbar"
-          aria-valuenow={value}
+          aria-valuenow={safeValue}
           aria-valuemin={0}
           aria-valuemax={100}
         />

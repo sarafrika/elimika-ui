@@ -25,6 +25,14 @@ interface RecentActivityListProps {
 export function RecentActivityList({
   activities,
 }: RecentActivityListProps) {
+  if (activities.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No recent activity yet.
+      </p>
+    );
+  }
+
   return (
     <div className="space-y-3">
       {activities.map((activity) => (

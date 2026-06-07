@@ -1,9 +1,7 @@
-import { InstructorClassWithDetails } from "../../../../../hooks/use-instructor-classes";
-import { Course, Enrollment } from "../../../../../services/client";
+import type { StudentRosterClass } from "../types";
 
 interface CourseListProps {
-  courses: Course[];
-  classes: InstructorClassWithDetails[]
+  classes: StudentRosterClass[];
 }
 
 export function CourseList({ classes }: CourseListProps) {
@@ -40,7 +38,11 @@ export function CourseList({ classes }: CourseListProps) {
           </div>
           <span className="text-xs text-muted-foreground shrink-0 ml-2">
             {Array.from(
-              new Set(item?.enrollment?.map((e: Enrollment) => e.student_uuid).filter(Boolean))
+              new Set(
+                item?.enrollment
+                  ?.map((e) => e.student_uuid)
+                  .filter(Boolean)
+              )
             ).length}{" "}
             Students
           </span>

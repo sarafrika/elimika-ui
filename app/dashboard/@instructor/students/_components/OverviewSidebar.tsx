@@ -14,44 +14,36 @@ export function OverviewSidebar() {
 
   const [showAllCourses, setShowAllCourses] = useState(false);
 
-  const { courses, recentActivities, classes } = useInstructorStudentsData();
+  const { recentActivities, classes, students } = useInstructorStudentsData();
 
   const stats = useMemo(() => {
-    const allEnrollments =
-      classes?.flatMap(c =>
-        (c.enrollment ?? []).map(e => ({
-          student_uuid: e.student_uuid,
-          class_uuid: c.uuid,
-        }))
-      ) ?? [];
-
-    const uniqueStudentClassPairs = new Set(
-      allEnrollments.map(e => `${e.student_uuid}-${e.class_uuid}`)
-    );
-
-    const uniqueStudents = new Set(
-      allEnrollments.map(e => e.student_uuid).filter(Boolean)
-    );
+    const totalStudents = students.length;
+    const enrolledStudents = students.filter(
+      (student) => student.status === "Enrolled"
+    ).length;
+    const graduatedStudents = students.filter(
+      (student) => student.status === "Graduated"
+    ).length;
 
     return [
       {
-        value: uniqueStudents.size,
+        value: totalStudents,
         label: "Total Students",
         icon: <Users className="h-5 w-5" />,
       },
       {
-        value: uniqueStudentClassPairs.size,
+        value: enrolledStudents,
         label: "Enrolled",
         icon: <GraduationCap className="h-5 w-5" />,
         highlight: true,
       },
       {
-        value: 0,
+        value: graduatedStudents,
         label: "Graduated",
         icon: <CheckCircle className="h-5 w-5" />,
       },
     ];
-  }, [classes]);
+  }, [students]);
 
   const visibleClasses = showAllCourses
     ? classes
@@ -74,17 +66,14 @@ export function OverviewSidebar() {
           </h2>
 
           <button
-            onClick={() => setShowAllCourses(prev => !prev)}
+            onClick={() => setShowAllCourses((prev) => !prev)}
             className="text-xs font-medium text-primary cursor-pointer p-2 rounded-sm hover:bg-primary/5"
           >
             {showAllCourses ? "Show less" : "View all"}
           </button>
         </div>
 
-        <CourseList
-          courses={courses}
-          classes={visibleClasses}
-        />
+        <CourseList classes={visibleClasses} />
 
         <button
           onClick={() => router.push("/dashboard/training-hub")}
@@ -108,7 +97,6 @@ export function OverviewSidebar() {
 
         <RecentActivityList activities={recentActivities} />
       </section>
-
     </aside>
   );
 }

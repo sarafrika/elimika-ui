@@ -8,7 +8,7 @@ import { getAllStudentsOptions } from '../services/client/@tanstack/react-query.
 export type StudentMap = Record<string, Student>;
 
 export function useStudentMap(page = 0, pageSize = 1000) {
-    const { data } = useQuery(
+    const { data, isLoading } = useQuery(
         getAllStudentsOptions({
             query: { pageable: { page, size: pageSize } },
         })
@@ -23,5 +23,5 @@ export function useStudentMap(page = 0, pageSize = 1000) {
         }, {});
     }, [data]);
 
-    return { studentMap: map, studentsList: data?.data?.content || [] };
+    return { studentMap: map, studentsList: data?.data?.content || [], isLoading };
 }
