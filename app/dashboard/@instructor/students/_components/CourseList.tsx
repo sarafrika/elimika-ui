@@ -1,30 +1,50 @@
-import React from "react";
-import { Course } from "../types";
+import type { StudentRosterClass } from "../types";
 
 interface CourseListProps {
-  courses: Course[];
+  classes: StudentRosterClass[];
 }
 
-export function CourseList({ courses }: CourseListProps) {
+export function CourseList({ classes }: CourseListProps) {
+
   return (
     <div className="space-y-1">
-      {courses.map((course) => (
+      {classes.map((item) => (
         <div
-          key={course.id}
-          className="flex items-center justify-between py-2 px-1 rounded-lg hover:bg-muted transition-colors cursor-pointer group"
+          key={item.uuid}
+          className="flex items-center justify-between py-2 px-2 rounded-sm hover:bg-muted transition-colors cursor-pointer group"
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <span
-              className={`text-xs font-bold px-1.5 py-0.5 rounded shrink-0 ${course.bgColor} ${course.color}`}
-            >
-              {course.code}
-            </span>
-            <span className="text-sm text-foreground truncate group-hover:text-primary transition-colors">
-              {course.name}
-            </span>
+            {item.course?.thumbnail_url ? (
+              <img
+                src={item.course.thumbnail_url}
+                alt={item.course?.name ?? "Course thumbnail"}
+                className="w-6 h-6 rounded shrink-0 object-cover"
+              />
+            ) : (
+              <div className="w-6 h-6 rounded shrink-0 bg-muted-foreground/40 flex items-center justify-center text-[10px] font-semibold uppercase">
+                {item.title?.slice(0, 2)}
+              </div>
+            )}
+
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                {item.title}
+              </span>
+
+              <span className="text-xs text-muted-foreground truncate group-hover:text-primary transition-colors">
+                {item?.course?.name}
+              </span>
+            </div>
           </div>
           <span className="text-xs text-muted-foreground shrink-0 ml-2">
-            {course.students} Students
+            {Array.from(
+              new Set(
+                item?.enrollment
+                  ?.map((e) => e.student_uuid)
+                  .filter(Boolean)
+              )
+            ).length}{" "}
+            Students
           </span>
         </div>
       ))}

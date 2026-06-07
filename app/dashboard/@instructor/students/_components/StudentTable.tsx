@@ -1,7 +1,7 @@
 "use client";
 
 import { Filter, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "../../../../../components/ui/button";
 import { Input } from "../../../../../components/ui/input";
@@ -13,17 +13,18 @@ import {
   SelectValue,
 } from "../../../../../components/ui/select";
 
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "../../../../../components/ui/table";
-import { courseTabs, students } from "../data";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../../../../components/ui/table";
+import { useInstructorStudentsData } from "../data";
+import type { StudentFilterState } from "../types";
 import { Pagination } from "./Pagination";
 import { StudentCard } from "./StudentCard";
 import { StudentRow } from "./StudentRow";
-
-type FilterState = {
-  class: string;
-  status: string;
-  level: string;
-};
 
 const FilterDropdown = ({
   label,
@@ -57,31 +58,33 @@ const FilterDropdown = ({
 export function StudentTable() {
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [search, setSearch] = useState("");
 
-  const [filters, setFilters] = useState<FilterState>({
+  const [filters, setFilters] = useState<StudentFilterState>({
     class: "all",
     status: "all",
     level: "all",
   });
 
+  const { students, courseTabs, filterOptions } = useInstructorStudentsData();
+
   const filteredStudents = useMemo(() => {
-    return students.filter((s) => {
+    const query = search.trim().toLowerCase();
+
+    return students.filter((student) => {
       const matchesSearch =
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.course.toLowerCase().includes(search.toLowerCase());
-
+        query.length === 0 || student.searchIndex.includes(query);
       const matchesTab =
-        activeTab === "all" || s.course === activeTab;
-
+        activeTab === "all" ||
+        student.courses.some((course) => course.uuid === activeTab);
       const matchesClass =
-        filters.class === "all" || s.course === filters.class;
-
+        filters.class === "all" ||
+        student.classes.some((item) => item.uuid === filters.class);
       const matchesStatus =
-        filters.status === "all" || s.status === filters.status;
-
+        filters.status === "all" || student.status === filters.status;
       const matchesLevel =
-        filters.level === "all" || s.level === filters.level;
+        filters.level === "all" || student.levels.includes(filters.level);
 
       return (
         matchesSearch &&
@@ -91,7 +94,24 @@ export function StudentTable() {
         matchesLevel
       );
     });
-  }, [search, activeTab, filters]);
+  }, [students, search, activeTab, filters]);
+
+  const totalItems = filteredStudents.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, filters, rowsPerPage, search]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const paginatedStudents = filteredStudents.slice(
+    startIndex,
+    startIndex + rowsPerPage
+  );
 
   return (
     <div className="flex-1 min-w-0 space-y-4">
@@ -107,20 +127,30 @@ export function StudentTable() {
           All
         </Button>
 
-        {courseTabs.slice(1).map((tab) => (
+        {courseTabs
+          .filter((tab) => tab.id !== "all")
+          .map((tab) => (
           <Button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-sm border text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
               ? "border-foreground bg-foreground text-background"
               : "border-border bg-background text-foreground hover:bg-muted"
               }`}
           >
-            <span
-              className={`text-xs font-bold px-1.5 py-0.5 rounded ${tab.bgColor} ${tab.color}`}
-            >
-              {tab.code}
-            </span>
+            {/* Avatar / Thumbnail */}
+            {tab.thumbnail_url ? (
+              <img
+                src={tab.thumbnail_url}
+                alt={tab.label}
+                className="w-5 h-5 rounded object-cover shrink-0"
+              />
+            ) : (
+              <div className="w-5 h-5 rounded bg-muted flex items-center justify-center text-[10px] font-bold uppercase shrink-0">
+                {(tab.label ?? "NA").slice(0, 2)}
+              </div>
+            )}
+
             {tab.label}
           </Button>
         ))}
@@ -150,10 +180,7 @@ export function StudentTable() {
           onChange={(val) =>
             setFilters((prev) => ({ ...prev, class: val }))
           }
-          options={[
-            { label: "Frontend", value: "frontend" },
-            { label: "Backend", value: "backend" },
-          ]}
+          options={filterOptions.classes}
         />
 
         <FilterDropdown
@@ -162,10 +189,7 @@ export function StudentTable() {
           onChange={(val) =>
             setFilters((prev) => ({ ...prev, status: val }))
           }
-          options={[
-            { label: "Active", value: "active" },
-            { label: "Inactive", value: "inactive" },
-          ]}
+          options={filterOptions.statuses}
         />
 
         <FilterDropdown
@@ -174,11 +198,7 @@ export function StudentTable() {
           onChange={(val) =>
             setFilters((prev) => ({ ...prev, level: val }))
           }
-          options={[
-            { label: "Beginner", value: "beginner" },
-            { label: "Intermediate", value: "intermediate" },
-            { label: "Advanced", value: "advanced" },
-          ]}
+          options={filterOptions.levels}
         />
 
 
@@ -223,9 +243,9 @@ export function StudentTable() {
             </TableHeader>
 
             <TableBody>
-              {filteredStudents.map((student) => (
+              {paginatedStudents.map((student) => (
                 <StudentRow
-                  key={student.id + student.course}
+                  key={student.student.uuid}
                   student={student}
                 />
               ))}
@@ -235,8 +255,8 @@ export function StudentTable() {
 
         {/* Mobile */}
         <div className="sm:hidden divide-y">
-          {filteredStudents.map((student) => (
-            <div key={student.id + student.course} className="p-3">
+          {paginatedStudents.map((student) => (
+            <div key={student.student.uuid} className="p-3">
               <StudentCard student={student} />
             </div>
           ))}
@@ -244,10 +264,11 @@ export function StudentTable() {
 
         <Pagination
           currentPage={currentPage}
-          totalPages={16}
-          totalItems={125}
-          rowsPerPage={20}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          rowsPerPage={rowsPerPage}
           onPageChange={setCurrentPage}
+          onRowsPerPageChange={setRowsPerPage}
         />
       </div>
     </div>

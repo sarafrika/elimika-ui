@@ -25,10 +25,39 @@ export function Pagination({
   onPageChange,
   onRowsPerPageChange,
 }: PaginationProps) {
-  const start = (currentPage - 1) * rowsPerPage + 1;
-  const end = Math.min(currentPage * rowsPerPage, totalItems);
+  const safeTotalPages = Math.max(totalPages, 1);
+  const start = totalItems === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+  const end = totalItems === 0 ? 0 : Math.min(currentPage * rowsPerPage, totalItems);
 
-  const pages = [1, 2, 3, 4, 5];
+  const pages = (() => {
+    if (safeTotalPages <= 7) {
+      return Array.from({ length: safeTotalPages }, (_, index) => index + 1);
+    }
+
+    const visible = new Set([
+      1,
+      safeTotalPages,
+      currentPage,
+      currentPage - 1,
+      currentPage + 1,
+    ]);
+
+    const sorted = Array.from(visible)
+      .filter((page) => page >= 1 && page <= safeTotalPages)
+      .sort((a, b) => a - b);
+
+    const pageItems: Array<number | "ellipsis"> = [];
+
+    sorted.forEach((page, index) => {
+      const previous = sorted[index - 1];
+      if (index > 0 && previous !== undefined && page - previous > 1) {
+        pageItems.push("ellipsis");
+      }
+      pageItems.push(page);
+    });
+
+    return pageItems;
+  })();
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-border">
@@ -60,37 +89,33 @@ export function Pagination({
         </Button>
 
         {/* Pages */}
-        {pages.map((page) => (
-          <Button
-            key={page}
-            variant={page === currentPage ? "default" : "ghost"}
-            size="icon"
-            onClick={() => onPageChange(page)}
-            className="h-7 w-7 text-xs"
-          >
-            {page}
-          </Button>
-        ))}
-
-        <span className="text-muted-foreground text-xs px-1">...</span>
-
-        <Button
-          variant={totalPages === currentPage ? "default" : "ghost"}
-          size="icon"
-          onClick={() => onPageChange(totalPages)}
-          className="h-7 w-7 text-xs"
-        >
-          {totalPages}
-        </Button>
+        {pages.map((page, index) =>
+          page === "ellipsis" ? (
+            <span
+              key={`ellipsis-${currentPage}-${safeTotalPages}-${index}`}
+              className="text-muted-foreground text-xs px-1"
+            >
+              ...
+            </span>
+          ) : (
+            <Button
+              key={page}
+              variant={page === currentPage ? "default" : "ghost"}
+              size="icon"
+              onClick={() => onPageChange(page)}
+              className="h-7 w-7 text-xs"
+            >
+              {page}
+            </Button>
+          )
+        )}
 
         {/* Next */}
         <Button
           variant="ghost"
           size="icon"
-          onClick={() =>
-            onPageChange(Math.min(totalPages, currentPage + 1))
-          }
-          disabled={currentPage === totalPages}
+          onClick={() => onPageChange(Math.min(safeTotalPages, currentPage + 1))}
+          disabled={currentPage === safeTotalPages}
           aria-label="Next page"
         >
           <svg
