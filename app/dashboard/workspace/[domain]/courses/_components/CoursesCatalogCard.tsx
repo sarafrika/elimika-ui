@@ -1,10 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { BookOpen, Tag, UserRoundSearch } from 'lucide-react';
+import { BookOpen, Calendar, Flame, Heart, Search } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Avatar, AvatarFallback, AvatarImage } from '../../../../../../components/ui/avatar';
 import type { CoursesCatalogCardData } from './courses-data';
+import { StarRatingSummary } from './StarRating';
 
 const imageToneClasses = {
   primary: 'bg-gradient-to-br from-primary/20 via-primary/10 to-background',
@@ -27,32 +29,66 @@ const ctaToneClasses: Record<NonNullable<CoursesCatalogCardData['ctaTone']>, str
     'border border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-100',
 };
 
+const levelStyles: Record<string, string> = {
+  prep: "bg-success/5 text-success border-success/20 border",
+  beginner: "bg-success/5 text-success border-success/20 border",
+  intermediate: "bg-warning/5 text-warning border-warning/20 border",
+  advanced: "bg-primary/5 text-primary border-primary/20 border",
+};
+
 export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
+  const level = card.secondaryMeta.toLowerCase();
 
   return (
-    <article className='border-border bg-card group overflow-hidden rounded-lg border'>
+    <article className='border-border bg-card group overflow-hidden rounded-sm border'>
       <Link href={card.detailsHref} className='block'>
         <div
           className={cn(
-            'border-border relative flex h-32 items-center justify-center overflow-hidden border-b',
+            "border-border relative flex h-40 items-center justify-center overflow-hidden border-b",
             imageToneClasses[card.imageTone]
           )}
         >
+          <div className="absolute inset-x-0 top-3 z-10 flex items-center justify-between">
+            <span className="inline-flex items-center gap-1 rounded-r-sm bg-warning px-2.5 py-1 text-[11px] font-semibold text-warning-foreground shadow-md">
+              <Flame className="size-3" />
+              Best Seller
+            </span>
+
+            <button
+              type="button"
+              className="mr-3 inline-flex size-8 items-center justify-center rounded-full bg-background/30 text-foreground backdrop-blur-md ring-1 ring-border/30 transition-transform hover:scale-110 hover:bg-background/40"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <Heart
+                className="size-4 text-foreground drop-shadow-sm"
+                strokeWidth={2.2}
+              />
+            </button>
+          </div>
+
           {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={card.title}
-              fill
-              className='object-cover'
-              unoptimized={isAuthenticatedMediaUrl(imageUrl)}
-            />
+            <>
+              <Image
+                src={imageUrl}
+                alt={card.title}
+                fill
+                loading='eager'
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                unoptimized={isAuthenticatedMediaUrl(imageUrl)}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-overlay/20 via-transparent to-transparent" />
+            </>
           ) : (
             <>
-              <div className='absolute inset-x-4 top-4 h-4 rounded-full bg-background/70' />
-              <div className='absolute bottom-4 left-4 h-5 w-12 rounded-full bg-background/70' />
-              <span className='inline-flex size-14 items-center justify-center rounded-full bg-background/90 shadow-sm'>
-                <card.icon className='text-foreground size-7' />
+              <div className="absolute inset-x-4 top-4 h-4 rounded-full bg-background/70" />
+              <div className="absolute bottom-4 left-4 h-5 w-12 rounded-full bg-background/70" />
+
+              <span className="inline-flex size-14 items-center justify-center rounded-full bg-background/90 shadow-sm">
+                <card.icon className="text-foreground size-7" />
               </span>
             </>
           )}
@@ -69,29 +105,49 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
               {card.title}
             </h3>
           </Link>
-          <p className='text-muted-foreground mt-1 text-xs sm:text-[0.8rem]'>{card.provider}</p>
+
+          <div className="flex flex-row items-center justify-between mt-1">
+            <div className="flex flex-row items-center gap-2">
+              <Avatar className="h-6 w-6">
+                <AvatarImage
+                  src=''
+                  alt={card.provider}
+                />
+                <AvatarFallback>AC</AvatarFallback>
+              </Avatar>
+
+              <p className="text-muted-foreground text-[14px]">
+                {card.provider}
+              </p>
+            </div>
+
+            <StarRatingSummary
+              rating={card.rating}
+              reviewCount={card.reviewCount}
+              showCount={true}
+            />
+          </div>
         </div>
 
-        <div className='text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-[0.8rem]'>
-          {/* {card.duration ? (
-            <span className='inline-flex items-center gap-1.5'>
-              <Clock3 className='size-3.5' />
-              {card.duration}
-            </span>
-          ) : null} */}
-          <span className='inline-flex items-center gap-1.5'>
-            <Tag className='size-3.5' />
+        <div className="flex flex-col gap-x-4 gap-y-2 text-xs sm:text-[0.8rem]">
+          <span>{card.enrollmentCount} students</span>
+          <span
+            className={cn(
+              "max-w-fit inline-flex items-center gap-1.5 rounded px-2 py-1 font-medium",
+              levelStyles[card.secondaryMeta.toLowerCase()] ??
+              "bg-muted text-muted-foreground"
+            )}
+          >
             {card.secondaryMeta}
           </span>
-
         </div>
 
         <div className={cn('grid gap-2', card.showInstructorCta !== false && 'sm:grid-cols-2')}>
           {card.showInstructorCta !== false ? (
-            <Button asChild variant='outline' className='h-9 rounded-xl text-sm shadow-none'>
+            <Button asChild variant='outline' className='h-9 rounded-sm text-sm shadow-none'>
               <Link href={card.instructorHref}>
-                <UserRoundSearch className='size-4' />
-                Instructors
+                <Search className='size-4' />
+                Search Instructor
               </Link>
             </Button>
           ) : null}
@@ -100,7 +156,7 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
             <Button
               type='button'
               className={cn(
-                'h-9 rounded-xl text-sm shadow-none',
+                'h-9 rounded-sm text-sm shadow-none',
                 ctaToneClasses[card.ctaTone ?? 'default']
               )}
               disabled={card.ctaDisabled}
@@ -110,9 +166,9 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
               {card.ctaLabel}
             </Button>
           ) : (
-            <Button asChild className='h-9 rounded-xl text-sm shadow-none' disabled={card.ctaDisabled}>
+            <Button asChild className='h-9 rounded-sm text-sm shadow-none' disabled={card.ctaDisabled}>
               <Link href={card.enrollHref}>
-                <BookOpen className='size-4' />
+                <Calendar className='size-4' />
                 {card.ctaLabel}
               </Link>
             </Button>

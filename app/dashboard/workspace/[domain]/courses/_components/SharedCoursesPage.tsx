@@ -39,14 +39,16 @@ import {
   submitProgramTrainingApplicationMutation,
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Category } from '@/services/client/types.gen';
+import type { Category, CourseReview } from '@/services/client/types.gen';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Filter, SquareDashedMousePointer } from 'lucide-react';
+import { ArrowRight, SlidersHorizontal, SquareDashedMousePointer } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useUserProfile } from '../../../../../../context/profile-context';
+import { useCourseEnrollmentsMap } from '../../../../../../hooks/use-enrollment-map';
+import { averageRating, useCourseReviewsMap } from '../../../../../../hooks/use-reviews-map';
 import { CoursesCatalogCard } from './CoursesCatalogCard';
 import { CoursesCategoryFilters } from './CoursesCategoryFilters';
 import { CoursesRecommendationCard } from './CoursesRecommendationCard';
@@ -90,6 +92,11 @@ export type UnifiedContentItem = {
   secondaryMeta: string;
   enrolledClasses: number;
   bundledCourseCount?: number;
+  rating: number,
+  reviewCount: number
+  enrollmentCount: number | undefined
+  imageTone?: string,
+  icon?: string | undefined
 };
 
 type FilterValues = Record<CoursesFilterSection['key'], string>;
@@ -122,8 +129,8 @@ const createCatalogCards = (
     const applicationStatus = application?.status ?? null;
     const ctaLabel = !isInstructorApplyCard
       ? item.kind === 'program'
-        ? 'Enroll'
-        : 'Enroll'
+        ? 'Enroll Classes'
+        : 'Enroll Classes'
       : applicationStatus === 'approved'
         ? 'Approved'
         : applicationStatus === 'pending'
@@ -171,6 +178,9 @@ const createCatalogCards = (
       icon: presentation.icon,
       imageTone: presentation.imageTone,
       imageUrl: item.imageUrl,
+      rating: item.rating,
+      reviewCount: item.reviewCount,
+      enrollmentCount: item.enrollmentCount,
     };
   });
 
@@ -224,6 +234,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     ? ApplicantTypeEnum.INSTRUCTOR
     : ApplicantTypeEnum.ORGANISATION;
 
+  const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<CoursesCatalogTab>('all-courses');
   const [filters, setFilters] = useState<FilterValues>(defaultFilterValues);
   const [currentCatalogPage, setCurrentCatalogPage] = useState(1);
@@ -318,6 +329,16 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     [difficultiesResponse]
   );
 
+  const { reviewMap } = useCourseReviewsMap([
+    ...courses.map(c => c.uuid ?? ''),
+    ...programs.map(p => p.uuid ?? ''),
+  ]);
+
+  const { courseEnrollmentMap } = useCourseEnrollmentsMap([
+    ...courses.map(c => c.uuid ?? ''),
+    ...programs.map(p => p.uuid ?? ''),
+  ]);
+
   const mappedPrograms = useMemo<UnifiedContentItem[]>(
     () =>
       programs.map(program => {
@@ -329,6 +350,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         const categoryLabel = program.category_uuid
           ? categoryMap.get(program.category_uuid)
           : undefined;
+
+        const reviews = reviewMap[program.uuid ?? ''];
+        const enrollments = courseEnrollmentMap[program.uuid ?? '']
 
         return {
           id: program.uuid ?? '',
@@ -351,6 +375,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             program.program_type ??
             (program.price && program.price > 0 ? 'Paid Program' : 'Free Program'),
           bundledCourseCount: 0,
+          reviewCount: Number(reviews?.count) ?? 0,
+          rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
+          enrollmentCount: enrollments?.count
         };
       }),
     [categoryMap, domain, programs]
@@ -358,33 +385,43 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   const mappedCourses = useMemo<UnifiedContentItem[]>(
     () =>
-      courses.map(course => ({
-        id: course.uuid ?? '',
-        kind: 'course',
-        title: course.name,
-        description: stripHtml(course.description),
-        createdAt: course.created_date ? new Date(course.created_date).getTime() : 0,
-        durationMinutes: course.duration_hours * 60 + course.duration_minutes,
-        durationLabel: formatDurationFromParts(
-          course.duration_hours,
-          course.duration_minutes,
-          course.total_duration_display
-        ),
-        categoryLabels: course.category_names ?? [],
-        creatorUuid: course.course_creator_uuid,
-        creatorName: '',
-        levelLabel: difficultyMap.get(course.difficulty_uuid ?? ''),
-        price: course.price,
-        minimumRate: course.minimum_training_fee ?? course.price,
-        imageUrl: course.banner_url ?? course.thumbnail_url,
-        href: getContentHref(domain, 'course', course.uuid ?? ''),
-        enrolledClasses: 1,
-        secondaryMeta:
-          difficultyMap.get(course.difficulty_uuid ?? '') ??
-          course.category_names?.[0] ??
-          (course.price && course.price > 0 ? 'Paid Course' : 'Free Course'),
-      })),
-    [courses, difficultyMap, domain]
+      courses.map(course => {
+        const reviews = reviewMap[course.uuid ?? ''];
+        const enrollments = courseEnrollmentMap[course.uuid ?? '']
+
+        return {
+          id: course.uuid ?? '',
+          kind: 'course',
+          title: course.name,
+          description: stripHtml(course.description),
+          createdAt: course.created_date
+            ? new Date(course.created_date).getTime()
+            : 0,
+          durationMinutes: course.duration_hours * 60 + course.duration_minutes,
+          durationLabel: formatDurationFromParts(
+            course.duration_hours,
+            course.duration_minutes,
+            course.total_duration_display
+          ),
+          categoryLabels: course.category_names ?? [],
+          creatorUuid: course.course_creator_uuid,
+          creatorName: '',
+          levelLabel: difficultyMap.get(course.difficulty_uuid ?? ''),
+          price: course.price,
+          minimumRate: course.minimum_training_fee ?? course.price,
+          imageUrl: course.banner_url ?? course.thumbnail_url,
+          href: getContentHref(domain, 'course', course.uuid ?? ''),
+          enrolledClasses: 1,
+          secondaryMeta:
+            difficultyMap.get(course.difficulty_uuid ?? '') ??
+            course.category_names?.[0] ??
+            (course.price && course.price > 0 ? 'Paid Course' : 'Free Course'),
+          reviewCount: Number(reviews?.count) ?? 0,
+          rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
+          enrollmentCount: enrollments?.count
+        };
+      }),
+    [courses, difficultyMap, domain, reviewMap]
   );
 
   const approvedInstructorCourseIds = useMemo(() => {
@@ -408,6 +445,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         if (!course?.uuid) {
           return;
         }
+
+        const reviews = reviewMap[course.uuid ?? ''];
+        const enrollments = courseEnrollmentMap[course.uuid ?? '']
 
         const classCount = definition.enrollments.length || definition.schedules?.length || 0;
         const existing = uniqueCourses.get(course.uuid);
@@ -441,6 +481,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           bundledCourseCount: classCount,
           icon: existing?.icon ?? presentation.icon,
           imageTone: existing?.imageTone ?? presentation.imageTone,
+          reviewCount: Number(reviews?.count) ?? 0,
+          rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
+          enrollmentCount: enrollments?.count
         });
       });
 
@@ -923,126 +966,67 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   return (
     <div className='mx-auto w-full max-w-[1680px] bg-background px-3 py-4 sm:px-4 lg:px-6 2xl:px-8'>
-      <div className='space-y-7'>
+      <div className='space-y-6'>
         {/* <CoursesHero actions={heroActions} domain={domain} /> */}
 
-        <section className='space-y-4'>
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-            <h2 className='text-foreground text-lg sm:text-[clamp(1.1rem,1.5vw,1.35rem)] font-semibold tracking-[-0.02em]'>
-              Browse by Category
-            </h2>
-            <div className='flex flex-wrap items-center gap-2 sm:justify-end'>
-              <div className='min-[1460px]:hidden'>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant='outline' className='h-9 rounded-md text-sm shadow-none'>
-                      <Filter className='size-4' />
-                      Filters
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent
-                    side='left'
-                    className='w-[86vw] max-w-sm overflow-y-auto rounded-r-md p-0'
-                  >
-                    <SheetHeader className='border-b border-border'>
-                      <SheetTitle>Filter Courses</SheetTitle>
-                      <SheetDescription>
-                        Refine the catalogue by category, type, level, duration, or price.
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className='p-4 pb-8'>
-                      <CoursesCategoryFilters
-                        sections={filterSections}
-                        selectedValues={filters}
-                        onSelect={setFilterValue}
-                        onClear={clearFilters}
-                      />
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
+        <div className='flex flex-wrap gap-1.5'>
+          {catalogTabs.map(tab => (
+            <button
+              key={tab.value}
+              type='button'
+              onClick={() => handleTabChange(tab.value)}
+              className={
+                activeTab === tab.value
+                  ? 'bg-primary/10 text-primary border-border border rounded-sm px-3 py-1.5 text-sm font-semibold'
+                  : 'text-muted-foreground hover:text-foreground rounded-sm px-3 py-1.5 text-sm font-semibold transition-colors border-border border'
+              }
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-              <Link
-                href={buildWorkspaceAliasPath(domain, '/dashboard/courses')}
-                className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-semibold sm:text-sm'
-              >
-                View All
-                <ArrowRight className='size-3.5' />
-              </Link>
-            </div>
-          </div>
+        <section className='space-y-2'>
+          <div className=''>
+            <div className='space-y-2'>
+              <div className='border-border bg-card rounded-sm border'>
+                <div className='border-border flex flex-row items-center justify-between gap-3 border-b px-4 py-2 min-[1180px]:flex-row min-[1180px]:items-center min-[1180px]:justify-between'>
+                  <p className="text-muted-foreground text-xs font-medium sm:text-sm">
+                    {filteredItems.length} course{filteredItems.length === 1 ? "" : "s"}
+                  </p>
 
-          <div className='grid gap-4 min-[1460px]:grid-cols-[260px_minmax(0,1fr)]'>
-            <CoursesCategoryFilters
-              sections={filterSections}
-              selectedValues={filters}
-              onSelect={setFilterValue}
-              onClear={clearFilters}
-              className='hidden min-[1460px]:block'
-            />
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Sheet open={open} onOpenChange={setOpen}>
+                      <SheetTrigger asChild>
+                        <Button variant="ghost" className='hover:bg-primary/75'>
+                          <SlidersHorizontal className="size-4" />
+                        </Button>
+                      </SheetTrigger>
 
-            <div className='space-y-4'>
-              {isLoading ? (
-                <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <Skeleton key={index} className='h-16 rounded-2xl' />
-                  ))}
-                </div>
-              ) : (
-                <div className='w-full min-w-0 overflow-hidden'>
-                  {/* <div className='scrollbar-hidden flex w-full min-w-0 gap-3 overflow-x-auto pb-1'>
-                    {categoryTileData.map((tile, index) => (
-                      <CoursesCategoryTile
-                        key={tile.title}
-                        tile={tile}
-                        className='w-[min(168px,70vw)] flex-none sm:w-[190px]'
-                        isActive={
-                          filters.category ===
-                          (categories[index]?.uuid ?? categories[index]?.name ?? '')
-                        }
-                        onClick={() => {
-                          const category = categories[index];
-                          if (category) {
-                            handleCategoryTileClick(category);
-                          }
-                        }}
-                      />
-                    ))}
-                  </div> */}
-                </div>
-              )}
+                      <SheetContent className="flex h-full flex-col">
+                        <SheetHeader className='pb-0' >
+                          <SheetTitle>Filters</SheetTitle>
+                        </SheetHeader>
 
-              <div className='border-border bg-card rounded-[16px] border'>
-                <div className='border-border flex flex-col gap-3 border-b px-4 py-3.5 min-[1180px]:flex-row min-[1180px]:items-center min-[1180px]:justify-between'>
-                  <div className='flex flex-wrap gap-1.5'>
-                    {catalogTabs.map(tab => (
-                      <button
-                        key={tab.value}
-                        type='button'
-                        onClick={() => handleTabChange(tab.value)}
-                        className={
-                          activeTab === tab.value
-                            ? 'bg-primary/10 text-primary rounded-xl px-3 py-1.5 text-sm font-semibold'
-                            : 'text-muted-foreground hover:text-foreground rounded-xl px-3 py-1.5 text-sm font-semibold transition-colors'
-                        }
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
+                        <SheetDescription asChild>
+                          <div className='hidden' >
+                            Filter courses by category, level, and other criteria.
+                          </div>
+                        </SheetDescription>
 
-                  <div className='flex flex-wrap items-center gap-3'>
-                    <p className='text-muted-foreground text-xs font-medium sm:text-sm'>
-                      {filteredItems.length} item{filteredItems.length === 1 ? '' : 's'}
-                    </p>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      className='text-muted-foreground hover:text-foreground hidden h-8 rounded-xl text-sm font-semibold shadow-none min-[1460px]:inline-flex'
-                    >
-                      <Filter className='size-4' />
-                      Filters
-                    </Button>
+                        <div className="flex-1 overflow-y-auto pr-2 mb-4">
+                          <CoursesCategoryFilters
+                            sections={filterSections}
+                            selectedValues={filters}
+                            onSelect={(key, value) => {
+                              setFilterValue(key, value);
+                              setOpen(false);
+                            }}
+                            onClear={clearFilters}
+                          />
+                        </div>
+                      </SheetContent>
+                    </Sheet>
                   </div>
                 </div>
 
