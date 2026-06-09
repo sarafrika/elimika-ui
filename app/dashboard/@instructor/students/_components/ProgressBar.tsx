@@ -15,12 +15,12 @@ export function ProgressBar({ value }: ProgressBarProps) {
   };
 
   return (
-    <div className="flex items-center gap-2 min-w-[80px]">
-      <span className="text-sm font-medium text-foreground w-9 shrink-0">
+    <div className="flex flex-col w-full items-center gap-2 min-w-[80px]">
+      <span className="self-start text-start text-sm font-medium text-foreground w-9">
         {safeValue}%
       </span>
 
-      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden min-w-[48px]">
+      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden min-w-[48px]">
         <div
           className={`h-full rounded-full transition-all ${getColorClass(safeValue)}`}
           style={{ width: `${safeValue}%` }}

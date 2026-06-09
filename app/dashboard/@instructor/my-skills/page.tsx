@@ -5,8 +5,8 @@ import {
   type SharedMySkillsProfile,
   type SharedOpportunity,
 } from '@/app/dashboard/_components/my-skills';
-import { useVerifiedSkillsContent } from '@/app/dashboard/_components/my-skills/verified-skills/live-data';
 import { useProfileShareUrl } from '@/app/dashboard/_components/my-skills/use-profile-share-url';
+import { useVerifiedSkillsContent } from '@/app/dashboard/_components/my-skills/verified-skills/live-data';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import { useMultipleClassDetails } from '@/hooks/use-class-multiple-details';
@@ -51,10 +51,18 @@ export default function InstructorMySkillsPage() {
 
   const studentInfo = studentSearchQuery.data?.content?.[0] as { uuid?: string } | undefined;
 
+  const scheduleQueryParams = useMemo(
+    () => ({
+      start: new Date('2026-01-20').toISOString(),
+      end: new Date('2027-01-20').toISOString(),
+    }),
+    []
+  );
+
   const studentEnrollmentQuery = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: studentInfo?.uuid ?? '' },
-      query: { start: new Date('2026-01-20'), end: new Date('2027-01-20') },
+      query: scheduleQueryParams,
     }),
     enabled: !!studentInfo?.uuid,
   });
@@ -105,9 +113,9 @@ export default function InstructorMySkillsPage() {
     joinedLabel:
       (getProfileString(user, ['created_date']) ?? getProfileString(instructor, ['created_date']))
         ? `Joined ${new Date(
-            (getProfileString(user, ['created_date']) ??
-              getProfileString(instructor, ['created_date'])) as string
-          ).toLocaleDateString()}`
+          (getProfileString(user, ['created_date']) ??
+            getProfileString(instructor, ['created_date'])) as string
+        ).toLocaleDateString()}`
         : undefined,
   };
 

@@ -2,8 +2,11 @@
 
 import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { CourseEnrollment } from '../services/client';
-import { getCourseEnrollmentsOptions } from '../services/client/@tanstack/react-query.gen';
+import { CourseEnrollment, Enrollment } from '../services/client';
+import {
+  getCourseEnrollmentsOptions,
+  getEnrollmentsForClassOptions,
+} from '../services/client/@tanstack/react-query.gen';
 
 export type EnrollmentMap = Record<
   string,
@@ -18,10 +21,10 @@ export function useCourseEnrollmentsMap(courseUuids: string[]) {
     queries: courseUuids.map(uuid => ({
       ...getCourseEnrollmentsOptions({
         path: { courseUuid: uuid },
-        query: { pageable: { size: 10000 } }
+        query: { pageable: { size: 10000 } },
       }),
       enabled: !!uuid,
-      staleTime: 5 * 60 * 1000,
+      staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: false,
@@ -50,3 +53,34 @@ export function useCourseEnrollmentsMap(courseUuids: string[]) {
   return { courseEnrollmentMap, isLoading };
 }
 
+export type ClassEnrollmentMap = Map<string, Enrollment[]>;
+
+export function useClassEnrollmentsMap(classUuids: string[]) {
+  const enrollmentQueries = useQueries({
+    queries: classUuids.map(uuid => ({
+      ...getEnrollmentsForClassOptions({
+        path: { uuid },
+      }),
+      enabled: Boolean(uuid),
+      staleTime: 60 * 1000, // 1 minute
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    })),
+  });
+
+  const classEnrollmentsMap = useMemo<ClassEnrollmentMap>(() => {
+    const map: ClassEnrollmentMap = new Map();
+
+    classUuids.forEach((uuid, index) => {
+      const data = enrollmentQueries[index]?.data?.data ?? [];
+      map.set(uuid, data);
+    });
+
+    return map;
+  }, [classUuids, enrollmentQueries]);
+
+  const isLoading = enrollmentQueries.some(q => q.isPending);
+
+  return { classEnrollmentsMap, isLoading };
+}

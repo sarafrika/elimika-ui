@@ -3,15 +3,6 @@
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import { useUserProfile } from "../../../../context/profile-context";
-import { useCoursesMap } from "../../../../hooks/use-courses-map";
-import { useDifficultyLevels } from "../../../../hooks/use-difficultyLevels";
-import useInstructorClassesWithDetails, {
-  type InstructorClassWithDetails,
-} from "../../../../hooks/use-instructor-classes";
-import { useStudentMap } from "../../../../hooks/use-student-map";
-import { useUsersMap } from "../../../../hooks/use-users-map";
-import { getEnrollmentOverviewForStudentOptions } from "../../../../services/client/@tanstack/react-query.gen";
 import type {
   Course,
   Enrollment,
@@ -21,6 +12,15 @@ import type {
   StudentEnrollmentOverview,
   User,
 } from "@/services/client";
+import { useUserProfile } from "../../../../context/profile-context";
+import { useCoursesMap } from "../../../../hooks/use-courses-map";
+import { useDifficultyLevels } from "../../../../hooks/use-difficultyLevels";
+import useInstructorClassesWithDetails, {
+  type InstructorClassWithDetails,
+} from "../../../../hooks/use-instructor-classes";
+import { useStudentMap } from "../../../../hooks/use-student-map";
+import { useUsersMap } from "../../../../hooks/use-users-map";
+import { getEnrollmentOverviewForStudentOptions } from "../../../../services/client/@tanstack/react-query.gen";
 
 import type {
   CourseTab,
@@ -144,15 +144,11 @@ export function useInstructorStudentsData() {
 
   const studentIds = useMemo(() => {
     const ids = new Set<string>();
-
     classes.forEach((cls) => {
       (cls.enrollment ?? []).forEach((enrollment: Enrollment) => {
-        if (enrollment.student_uuid) {
-          ids.add(enrollment.student_uuid);
-        }
+        if (enrollment.student_uuid) ids.add(enrollment.student_uuid);
       });
     });
-
     return Array.from(ids);
   }, [classes]);
 
@@ -172,14 +168,10 @@ export function useInstructorStudentsData() {
 
   const overviewMap = useMemo(() => {
     const map = new Map<string, StudentEnrollmentOverview>();
-
     studentIds.forEach((studentUuid, index) => {
       const overview = overviewQueries[index]?.data?.data;
-      if (overview) {
-        map.set(studentUuid, overview);
-      }
+      if (overview) map.set(studentUuid, overview);
     });
-
     return map;
   }, [overviewQueries, studentIds]);
 
@@ -188,8 +180,10 @@ export function useInstructorStudentsData() {
 
     classes.forEach((cls) => {
       const rosterClass = toRosterClass(cls);
-      const course = rosterClass.course
-        ?? (rosterClass.course_uuid ? courseMap?.[rosterClass.course_uuid] : undefined);
+      const allCourses = [
+        ...(cls.pCourses ?? []),
+        cls.course ?? (cls.course_uuid ? [courseMap?.[cls.course_uuid]] : []),
+      ].flat().filter(Boolean) as Course[];
 
       (cls.enrollment ?? []).forEach((enrollment: Enrollment) => {
         const studentUuid = enrollment.student_uuid;
@@ -222,7 +216,6 @@ export function useInstructorStudentsData() {
         }
 
         const entry = roster.get(studentUuid);
-
         if (!entry) return;
 
         entry.profile = profileStudent;
@@ -235,33 +228,24 @@ export function useInstructorStudentsData() {
           joinedAt: profileStudent?.created_date,
         };
         entry.classes.add(rosterClass);
-        if (course) {
+        allCourses.forEach((course) => {
           entry.courses.add(course);
           if (course.difficulty_uuid) {
             const level = difficultyMap[course.difficulty_uuid];
             if (level) entry.levels.add(level);
           }
-        }
+        });
       });
     });
 
     return Array.from(roster.values())
       .map((entry) => {
         const overview = overviewMap.get(entry.studentUuid);
-        const courseEnrollments =
-          overview?.course_enrollments?.content ?? [];
-        const classEnrollments =
-          overview?.class_enrollments?.content ?? [];
+        const courseEnrollments = overview?.course_enrollments?.content ?? [];
+        const classEnrollments = overview?.class_enrollments?.content ?? [];
         const progress = getStudentProgress(courseEnrollments);
-        const status = getStudentStatus(
-          courseEnrollments,
-          classEnrollments,
-          progress
-        );
-        const latestActivityAt = getLatestDate(
-          courseEnrollments,
-          classEnrollments
-        );
+        const status = getStudentStatus(courseEnrollments, classEnrollments, progress);
+        const latestActivityAt = getLatestDate(courseEnrollments, classEnrollments);
 
         return {
           student: entry.student,
@@ -274,9 +258,7 @@ export function useInstructorStudentsData() {
           status,
           progress,
           walletBalance: 0,
-          levels: Array.from(entry.levels).sort((a, b) =>
-            a.localeCompare(b)
-          ),
+          levels: Array.from(entry.levels).sort((a, b) => a.localeCompare(b)),
           latestActivityAt,
           searchIndex: buildSearchIndex(
             entry.student.full_name,
@@ -290,24 +272,20 @@ export function useInstructorStudentsData() {
       .sort((a, b) => {
         const aTime = a.latestActivityAt?.getTime() ?? 0;
         const bTime = b.latestActivityAt?.getTime() ?? 0;
-
         if (bTime !== aTime) return bTime - aTime;
-
         return a.student.full_name.localeCompare(b.student.full_name);
       });
   }, [classes, courseMap, difficultyMap, overviewMap, studentMap, userMap]);
 
   const uniqueCourses = useMemo<Course[]>(() => {
-    return Array.from(
-      new Map(
-        classes
-          .map((cls) =>
-            cls.course ?? (cls.course_uuid ? courseMap?.[cls.course_uuid] : undefined)
-          )
-          .filter((course): course is Course => Boolean(course))
-          .map((course) => [course.uuid ?? course.name, course])
-      ).values()
-    );
+    const coursesSet = new Map<string, Course>();
+    classes.forEach((cls) => {
+      [...(cls.pCourses ?? []), cls.course ?? (cls.course_uuid ? [courseMap?.[cls.course_uuid]] : [])]
+        .flat()
+        .filter(Boolean)
+        .forEach((course) => coursesSet.set(course?.uuid ?? course.name, course));
+    });
+    return Array.from(coursesSet.values());
   }, [classes, courseMap]);
 
   const courseTabs = useMemo<CourseTab[]>(() => {
@@ -329,9 +307,7 @@ export function useInstructorStudentsData() {
     const classOptions = Array.from(
       new Map(
         students.flatMap((student) =>
-          student.classes.flatMap((item) =>
-            item.uuid ? ([[item.uuid, item] as const]) : []
-          )
+          student.classes.flatMap((item) => (item.uuid ? [[item.uuid, item] as const] : []))
         )
       ).values()
     )
@@ -341,29 +317,15 @@ export function useInstructorStudentsData() {
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
 
-    const statusOptions = Array.from(
-      new Set(students.map((student) => student.status))
-    )
-      .map((status) => ({
-        value: status,
-        label: status,
-      }))
+    const statusOptions = Array.from(new Set(students.map((student) => student.status)))
+      .map((status) => ({ value: status, label: status }))
       .sort((a, b) => a.label.localeCompare(b.label));
 
-    const levelOptions = Array.from(
-      new Set(students.flatMap((student) => student.levels))
-    )
-      .map((level) => ({
-        value: level,
-        label: level,
-      }))
+    const levelOptions = Array.from(new Set(students.flatMap((student) => student.levels)))
+      .map((level) => ({ value: level, label: level }))
       .sort((a, b) => a.label.localeCompare(b.label));
 
-    return {
-      classes: classOptions,
-      statuses: statusOptions,
-      levels: levelOptions,
-    };
+    return { classes: classOptions, statuses: statusOptions, levels: levelOptions };
   }, [students]);
 
   const recentActivities = useMemo<RecentActivity[]>(() => {
@@ -372,8 +334,7 @@ export function useInstructorStudentsData() {
       .slice(0, 5)
       .map((student, index) => {
         const latestCourseEnrollment = [...student.courseEnrollments].sort(
-          (a, b) =>
-            (b.updated_date?.getTime() ?? 0) - (a.updated_date?.getTime() ?? 0)
+          (a, b) => (b.updated_date?.getTime() ?? 0) - (a.updated_date?.getTime() ?? 0)
         )[0];
 
         const action =
@@ -395,10 +356,7 @@ export function useInstructorStudentsData() {
           type: activityType,
           student: student.student.full_name,
           action,
-          course:
-            latestCourseEnrollment?.course_name ??
-            student.courses[0]?.name ??
-            undefined,
+          course: latestCourseEnrollment?.course_name ?? student.courses[0]?.name,
           time: formatRelativeTime(student.latestActivityAt),
           occurredAt: student.latestActivityAt,
         };
@@ -417,6 +375,7 @@ export function useInstructorStudentsData() {
     classes,
     students,
     courses: uniqueCourses,
+    pCourses: classes.flatMap((cls) => cls.pCourses ?? []),
     courseTabs,
     filterOptions,
     recentActivities,

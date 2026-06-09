@@ -108,12 +108,12 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
 
           <div className="flex flex-row items-center justify-between mt-1">
             <div className="flex flex-row items-center gap-2">
-              <Avatar className="h-6 w-6">
-                <AvatarImage
-                  src=''
-                  alt={card.provider}
-                />
-                <AvatarFallback>AC</AvatarFallback>
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="" alt={card.provider} />
+
+                <AvatarFallback className="text-[12px] font-medium leading-none">
+                  {card.provider?.slice(0, 2).toUpperCase() || '??'}
+                </AvatarFallback>
               </Avatar>
 
               <p className="text-muted-foreground text-[14px]">
