@@ -451,10 +451,12 @@ export function PdfPreview({
 
 function ReviewCard({
   item,
+  verifierName,
   onOpenReview,
   onOpenViewer,
 }: {
   item: ReviewItem;
+  verifierName: string;
   onOpenReview: (item: ReviewItem) => void;
   onOpenViewer: (item: ReviewItem) => void;
 }) {
@@ -491,7 +493,7 @@ function ReviewCard({
                 getStatusBadgeClass(item.statusTone)
               )}
             >
-              {item.statusLabel}
+              {item.statusLabel} by {verifierName}
             </Badge>
           </div>
 
@@ -620,7 +622,7 @@ function ReviewSheet({
                 <DetailRow label='Uploaded' value={item.uploadedAt || 'Recently'} />
                 <DetailRow label='Verified' value={item.verifiedAt || 'Not yet verified'} />
                 <DetailRow label='Size' value={item.fileSize || 'Unknown'} />
-                <DetailRow label='Verifier' value={verifierName || 'Admin'} />
+                <DetailRow label='Verified by' value={verifierName || 'Admin'} />
               </div>
             </div>
 
@@ -1330,6 +1332,7 @@ export default function DocumentsVerificationPage() {
                     {filteredItems.map(item => (
                       <ReviewCard
                         key={item.id}
+                        verifierName={profileName}
                         item={item}
                         onOpenReview={selected =>
                           setSheetState({ open: true, item: selected })

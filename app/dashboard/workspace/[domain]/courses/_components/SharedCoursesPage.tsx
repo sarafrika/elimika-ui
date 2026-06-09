@@ -375,7 +375,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             program.program_type ??
             (program.price && program.price > 0 ? 'Paid Program' : 'Free Program'),
           bundledCourseCount: 0,
-          reviewCount: Number(reviews?.count) ?? 0,
+          // reviewCount: Number(reviews?.count) ?? 0,
+          reviewCount: 0,
           rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
           enrollmentCount: enrollments?.count
         };
@@ -989,8 +990,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         <section className='space-y-2'>
           <div className=''>
             <div className='space-y-2'>
-              <div className='border-border bg-card rounded-sm border'>
-                <div className='border-border flex flex-row items-center justify-between gap-3 border-b px-4 py-2 min-[1180px]:flex-row min-[1180px]:items-center min-[1180px]:justify-between'>
+              <div className='bg-card p-0 rounded-sm'>
+                <div className='flex flex-row items-center justify-between gap-3 py-2 min-[1180px]:flex-row min-[1180px]:items-center min-[1180px]:justify-between'>
                   <p className="text-muted-foreground text-xs font-medium sm:text-sm">
                     {filteredItems.length} course{filteredItems.length === 1 ? "" : "s"}
                   </p>
@@ -1037,8 +1038,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                     ))}
                   </div>
                 ) : catalogCards.length > 0 ? (
-                  <div className='p-4'>
-                    <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
+                  <div className=''>
+                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                       {catalogCards.map(card => (
                         <CoursesCatalogCard
                           key={card.id}

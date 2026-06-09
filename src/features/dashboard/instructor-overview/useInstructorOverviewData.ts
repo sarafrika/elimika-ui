@@ -4,18 +4,16 @@ import { useInstructor } from '@/context/instructor-context';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import {
   getAssignmentSchedulesOptions,
-  getEnrollmentsForClassOptions,
   getRevenueDashboard1Options,
   getStudentByIdOptions,
-  listPaymentsOptions,
+  listPaymentsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   ClassAssignmentSchedule,
-  Enrollment,
   RevenueDashboardDto,
   RevenuePaymentDto,
   ScheduledInstance,
-  Student,
+  Student
 } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import {
@@ -26,6 +24,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useMemo } from 'react';
+import { useClassEnrollmentsMap } from '../../../../hooks/use-enrollment-map';
 import type {
   OverviewCourse,
   OverviewCourseSummary,
@@ -167,24 +166,9 @@ export function useInstructorOverviewData() {
     return map;
   }, [classes]);
 
-  const enrollmentQueries = useQueries({
-    queries: classes.map(cls => ({
-      ...getEnrollmentsForClassOptions({
-        path: { uuid: cls.uuid ?? '' },
-      }),
-      enabled: Boolean(cls.uuid),
-      staleTime: 60 * 1000,
-    })),
-  });
-
-  const classEnrollmentsMap = useMemo(() => {
-    const map = new Map<string, Enrollment[]>();
-    classes.forEach((cls, index) => {
-      if (!cls.uuid) return;
-      map.set(cls.uuid, enrollmentQueries[index]?.data?.data ?? []);
-    });
-    return map;
-  }, [classes, enrollmentQueries]);
+  const { classEnrollmentsMap, isLoading: isLoadingEnrollment } = useClassEnrollmentsMap([
+    ...classes.map(c => c.uuid ?? ''),
+  ]);
 
   const assignmentScheduleQueries = useQueries({
     queries: classes.map(cls => ({
@@ -427,7 +411,7 @@ export function useInstructorOverviewData() {
         return {
           id: item.instance.uuid ?? item.classDefinition.uuid ?? item.instance.title,
           timeLabel: formatRelativeClassTime(item.instance.start_time),
-          title: item.instance.title || item.course?.name || item.classDefinition.title,
+          title: item.classDefinition.title,
           provider: item.course?.category_names?.[0] ?? formatSessionFormat(item.classDefinition.session_format),
           students: `${enrolledCount} students`,
           actionLabel: 'Manage class',
@@ -449,7 +433,7 @@ export function useInstructorOverviewData() {
     () =>
       upcomingSource.map(item => ({
         id: item.instance.uuid ?? item.classDefinition.uuid ?? item.instance.title,
-        title: item.instance.title || item.course?.name || item.classDefinition.title,
+        title: item.classDefinition.title,
         scheduleLabel: formatDateTime(item.instance.start_time),
         metaLabel:
           item.instance.location_name ||
@@ -579,7 +563,7 @@ export function useInstructorOverviewData() {
     isLoadingClasses ||
     isLoadingRevenue ||
     isLoadingPayments ||
-    enrollmentQueries.some(query => query.isLoading) ||
+    isLoadingEnrollment ||
     assignmentScheduleQueries.some(query => query.isLoading) ||
     waitlistedStudentQueries.some(query => query.isLoading);
 
@@ -588,9 +572,17 @@ export function useInstructorOverviewData() {
     classInvites,
     courseSummary,
     earningOverview,
-    isLoading,
     liveClasses,
     stats,
     upcomingClasses,
+    // Combined loading state
+    isLoading,
+    // Individual loading states
+    isLoadingClasses,
+    isLoadingRevenue,
+    isLoadingPayments,
+    isLoadingEnrollment,
+    isLoadingAssignments: assignmentScheduleQueries.some(query => query.isLoading),
+    isLoadingWaitlistedStudents: waitlistedStudentQueries.some(query => query.isLoading),
   };
 }

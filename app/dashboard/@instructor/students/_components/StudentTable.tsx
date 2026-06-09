@@ -120,7 +120,7 @@ export function StudentTable() {
         <Button
           onClick={() => setActiveTab("all")}
           className={`px-3 py-1.5 rounded-sm border text-sm font-medium transition-colors whitespace-nowrap ${activeTab === "all"
-            ? "border-foreground bg-foreground text-background"
+            ? "border-primary bg-primary text-white"
             : "border-border bg-background text-foreground hover:bg-muted"
             }`}
         >
@@ -130,30 +130,30 @@ export function StudentTable() {
         {courseTabs
           .filter((tab) => tab.id !== "all")
           .map((tab) => (
-          <Button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-sm border text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
-              ? "border-foreground bg-foreground text-background"
-              : "border-border bg-background text-foreground hover:bg-muted"
-              }`}
-          >
-            {/* Avatar / Thumbnail */}
-            {tab.thumbnail_url ? (
-              <img
-                src={tab.thumbnail_url}
-                alt={tab.label}
-                className="w-5 h-5 rounded object-cover shrink-0"
-              />
-            ) : (
-              <div className="w-5 h-5 rounded bg-muted flex items-center justify-center text-[10px] font-bold uppercase shrink-0">
-                {(tab.label ?? "NA").slice(0, 2)}
-              </div>
-            )}
+            <Button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-sm border text-sm font-medium transition-colors whitespace-nowrap
+    ${activeTab === tab.id
+                  ? "border-primary bg-primary text-white"
+                  : "border-border bg-background text-foreground hover:bg-muted"
+                }`}
+            >
+              {tab.thumbnail_url ? (
+                <img
+                  src={tab.thumbnail_url}
+                  alt={tab.label}
+                  className="w-5 h-5 rounded object-cover shrink-0"
+                />
+              ) : (
+                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center text-[10px] font-bold uppercase shrink-0">
+                  {(tab.label ?? "NA").slice(0, 2)}
+                </div>
+              )}
 
-            {tab.label}
-          </Button>
-        ))}
+              {tab.label}
+            </Button>
+          ))}
       </div>
 
       {/* Filters */}

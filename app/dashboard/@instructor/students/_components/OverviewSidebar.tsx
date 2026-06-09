@@ -50,7 +50,7 @@ export function OverviewSidebar() {
     : classes.slice(0, 5);
 
   return (
-    <aside className="w-full xl:w-80 shrink-0 space-y-5">
+    <aside className="w-full xl:w-90 shrink-0 space-y-5">
       <section className="bg-card border border-border rounded-xl p-4 space-y-3">
         <h2 className="text-base font-semibold text-foreground">
           Overview
