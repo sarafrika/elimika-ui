@@ -271,22 +271,22 @@ function OfficeDocumentPreview({
             useBase64URL: true,
           });
         } else if (resolvedOfficeType === 'spreadsheet') {
-          const { default: readXlsxFile } = await import('read-excel-file');
-          const rows = await readXlsxFile(new Blob([arrayBuffer]));
+          // const { default: readXlsxFile } = await import('read-excel-file');
+          // const rows = await readXlsxFile(new Blob([arrayBuffer]));
 
-          if (!rows.length) {
-            throw new Error('No worksheets were found in this spreadsheet.');
-          }
+          // if (!rows.length) {
+          //   throw new Error('No worksheets were found in this spreadsheet.');
+          // }
 
-          if (cancelled) {
-            return;
-          }
+          // if (cancelled) {
+          //   return;
+          // }
 
-          setSpreadsheetRows(
-            rows.slice(0, SPREADSHEET_PREVIEW_ROWS).map(row =>
-              row.slice(0, SPREADSHEET_PREVIEW_COLUMNS).map(toSpreadsheetCell)
-            )
-          );
+          // setSpreadsheetRows(
+          //   rows.slice(0, SPREADSHEET_PREVIEW_ROWS).map(row =>
+          //     row.slice(0, SPREADSHEET_PREVIEW_COLUMNS).map(toSpreadsheetCell)
+          //   )
+          // );
         } else {
           if (!containerRef.current) {
             return;
