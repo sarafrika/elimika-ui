@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 import {
   useMarkAllNotificationsRead,
   useNotificationAction,
@@ -17,7 +18,6 @@ import {
   useNotifications,
   type UserNotification,
 } from '@/services/notifications';
-import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Award,
@@ -32,7 +32,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 type DashboardNotificationsProps = {
@@ -76,7 +76,7 @@ function NotificationRow({
 }) {
   const Icon = notificationIcon(notification.type);
   const unread = notification.status === 'UNREAD';
-  const href = notification.action_url || '#';
+  const href = notification.urlPath || '#';
 
   return (
     <Link
@@ -111,7 +111,39 @@ function NotificationRow({
   );
 }
 
+const getNotificationUrlPath = (notification: UserNotification): string => {
+  const { type, metadata, action_url } = notification;
+
+  switch (type) {
+    case 'QUIZ_DEADLINE_REMINDER':
+      return metadata.quiz_uuid && metadata.class_definition_uuid
+        ? `/dashboard/assignment/quiz_${metadata.quiz_uuid}?classId=${metadata.class_definition_uuid}`
+        : '';
+
+    case 'ASSIGNMENT_DEADLINE_REMINDER':
+      return metadata.assignment_uuid && metadata.class_definition_uuid
+        ? `/dashboard/assignment/assignment_${metadata.assignment_uuid}?classId=${metadata.class_definition_uuid}`
+        : '';
+
+    case 'UPCOMING_CLASS_REMINDER':
+      return metadata.class_definition_uuid
+        ? `/dashboard/classes/class-training/${metadata.class_definition_uuid}`
+        : '';
+
+    default:
+      return action_url || '';
+  }
+};
+
+export const normalizeNotifications = (notifications: UserNotification[]) => {
+  return notifications.map((notification: UserNotification) => ({
+    ...notification,
+    urlPath: getNotificationUrlPath(notification),
+  }));
+};
+
 export function DashboardNotifications({ notificationHref }: DashboardNotificationsProps) {
+  const [open, setOpen] = useState(false);
   const shownPopupIds = useRef<Set<string>>(new Set());
   const actionMutation = useNotificationAction();
   const markAllMutation = useMarkAllNotificationsRead();
@@ -128,6 +160,7 @@ export function DashboardNotifications({ notificationHref }: DashboardNotificati
   const unreadCount = countsQuery.data?.unread_count ?? 0;
   const recentNotifications = recentQuery.data?.items ?? [];
   const popupNotifications = popupQuery.data?.items ?? [];
+  const normalizedNotifications = normalizeNotifications(recentNotifications);
 
   useEffect(() => {
     for (const notification of popupNotifications) {
@@ -140,11 +173,11 @@ export function DashboardNotifications({ notificationHref }: DashboardNotificati
         description: notification.body,
         action: notification.action_url
           ? {
-              label: 'Open',
-              onClick: () => {
-                window.location.href = notification.action_url || notificationHref;
-              },
-            }
+            label: 'Open',
+            onClick: () => {
+              window.location.href = notification.action_url || notificationHref;
+            },
+          }
           : undefined,
       });
       actionMutation.mutate({ uuid: notification.uuid, action: 'popup_seen' });
@@ -158,7 +191,7 @@ export function DashboardNotifications({ notificationHref }: DashboardNotificati
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant='outline'
@@ -175,9 +208,16 @@ export function DashboardNotifications({ notificationHref }: DashboardNotificati
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align='end' className='w-[min(92vw,380px)] p-0'>
-        <div className='flex items-center justify-between px-4 py-3'>
-          <DropdownMenuLabel className='p-0 text-sm font-semibold'>Notifications</DropdownMenuLabel>
+      <DropdownMenuContent
+        align='end'
+        className='flex h-[480px] w-[min(92vw,380px)] flex-col p-0'
+      >
+        {/* Header */}
+        <div className='flex items-center justify-between px-4 py-3 shrink-0'>
+          <DropdownMenuLabel className='p-0 text-sm font-semibold'>
+            Notifications
+          </DropdownMenuLabel>
+
           <div className='flex items-center gap-2'>
             {unreadCount > 0 ? (
               <Button
@@ -190,37 +230,53 @@ export function DashboardNotifications({ notificationHref }: DashboardNotificati
                 Mark read
               </Button>
             ) : null}
+
             <Badge variant='secondary'>{unreadCount}</Badge>
           </div>
         </div>
 
         <DropdownMenuSeparator />
 
-        <ScrollArea className='max-h-[360px]'>
-          <div className='p-2'>
-            {recentNotifications.length === 0 ? (
-              <div className='px-4 py-8 text-center'>
-                <Bell className='text-muted-foreground mx-auto h-8 w-8' />
-                <p className='text-foreground mt-3 text-sm font-medium'>No notifications</p>
-                <p className='text-muted-foreground mt-1 text-xs'>You are all caught up.</p>
-              </div>
-            ) : (
-              recentNotifications.map(notification => (
-                <NotificationRow
-                  key={notification.uuid}
-                  notification={notification}
-                  onRead={handleRead}
-                />
-              ))
-            )}
-          </div>
-        </ScrollArea>
+        {/* Scrollable notifications */}
+        <div className='min-h-0 flex-1'>
+          <ScrollArea className='h-full'>
+            <div className='p-2'>
+              {normalizedNotifications.length === 0 ? (
+                <div className='px-4 py-8 text-center'>
+                  <Bell className='text-muted-foreground mx-auto h-8 w-8' />
+                  <p className='text-foreground mt-3 text-sm font-medium'>
+                    No notifications
+                  </p>
+                  <p className='text-muted-foreground mt-1 text-xs'>
+                    You are all caught up.
+                  </p>
+                </div>
+              ) : (
+                normalizedNotifications.map(notification => (
+                  <NotificationRow
+                    key={notification.uuid}
+                    notification={notification}
+                    onRead={handleRead}
+                  />
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </div>
 
-        <DropdownMenuSeparator />
-
-        <div className='p-2'>
-          <Button asChild variant='ghost' className='w-full justify-center text-sm'>
-            <Link href={notificationHref}>View all notifications</Link>
+        {/* Sticky footer */}
+        <div className='border-t bg-background p-2 shrink-0'>
+          <Button
+            asChild
+            variant='ghost'
+            className='w-full justify-center text-sm'
+          >
+            <Link
+              href={notificationHref}
+              onClick={() => setOpen(false)}
+            >
+              View all notifications
+            </Link>
           </Button>
         </div>
       </DropdownMenuContent>

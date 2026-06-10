@@ -33,6 +33,8 @@ export type InstructorClassWithDetails = InstructorClass & {
   enrollment: Enrollment[] | null;
 };
 
+const EMPTY_ARRAY: never[] = []; // stable reference
+
 function useInstructorClassesWithDetails(instructorUuid?: string) {
   const { courseMap, isLoading: courseIsLoading } = useCoursesMap();
   const { instructorMap, isLoading: instructorIsLoading } = useInstructorsMap();
@@ -49,7 +51,8 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
     refetchOnReconnect: false,
   });
 
-  const classesData = data?.data ?? [];
+  // ✅ Fix 1: stable fallback reference
+  const classesData = data?.data ?? EMPTY_ARRAY;
 
   const classes = useMemo(
     () =>
@@ -60,30 +63,21 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
   );
 
   const classUuids = useMemo(
-    () =>
-      classes
-        .map(cls => cls.uuid)
-        .filter(Boolean) as string[],
+    () => classes.map(cls => cls.uuid).filter(Boolean) as string[],
     [classes]
   );
 
   const programUuids = useMemo(
     () =>
       Array.from(
-        new Set(
-          classes
-            .map(cls => cls.program_uuid)
-            .filter(Boolean)
-        )
+        new Set(classes.map(cls => cls.program_uuid).filter(Boolean))
       ) as string[],
     [classes]
   );
 
   const programCourseQueries = useQueries({
     queries: programUuids.map(programUuid => ({
-      ...getProgramCoursesOptions({
-        path: { programUuid },
-      }),
+      ...getProgramCoursesOptions({ path: { programUuid } }),
       enabled: !!programUuid,
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
@@ -94,57 +88,38 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
 
   const programCoursesMap = useMemo(() => {
     const map: Record<string, CourseDetails[]> = {};
-
     programUuids.forEach((programUuid, index) => {
-      map[programUuid] =
-        (programCourseQueries[index]?.data?.data ?? []) as CourseDetails[];
+      map[programUuid] = (programCourseQueries[index]?.data?.data ?? EMPTY_ARRAY) as CourseDetails[];
     });
-
     return map;
   }, [programUuids, programCourseQueries]);
 
-  const { scheduleMap, isLoading: scheduleIsLoading } =
-    useClassSchedulesMap(classUuids);
+  const { scheduleMap, isLoading: scheduleIsLoading } = useClassSchedulesMap(classUuids);
+  const { enrollmentMap, isLoading: enrollmentIsLoading } = useEnrollmentMap(classUuids);
 
-  const { enrollmentMap, isLoading: enrollmentIsLoading } =
-    useEnrollmentMap(classUuids);
+  // ✅ Fix 2: removed IIFE wrapping — useMemo now actually memoizes
+  const classesWithCourseAndInstructor = useMemo<InstructorClassWithDetails[]>(() => {
+    return classes.map(cls => {
+      const course = cls.course_uuid ? (courseMap?.[cls.course_uuid] ?? null) : null;
 
-  const classesWithCourseAndInstructor =
-    useMemo<InstructorClassWithDetails[]>((() => {
-      return classes.map(cls => {
-        const course = cls.course_uuid
-          ? (courseMap?.[cls.course_uuid] ?? null)
-          : null;
+      const pCourses = cls.program_uuid
+        ? (programCoursesMap[cls.program_uuid] ?? EMPTY_ARRAY)
+        : course
+          ? [course]
+          : EMPTY_ARRAY;
 
-        const pCourses = cls.program_uuid
-          ? (programCoursesMap[cls.program_uuid] ?? [])
-          : course
-            ? [course]
-            : [];
-
-        return {
-          ...cls,
-          course,
-          pCourses,
-          instructor: cls.default_instructor_uuid
-            ? (instructorMap?.[cls.default_instructor_uuid] ?? null)
-            : null,
-          schedule: cls.uuid
-            ? (scheduleMap?.[cls.uuid] ?? null)
-            : null,
-          enrollment: cls.uuid
-            ? (enrollmentMap?.[cls.uuid] ?? null)
-            : null,
-        };
-      });
-    }), [
-      classes,
-      courseMap,
-      instructorMap,
-      scheduleMap,
-      enrollmentMap,
-      programCoursesMap,
-    ]);
+      return {
+        ...cls,
+        course,
+        pCourses,
+        instructor: cls.default_instructor_uuid
+          ? (instructorMap?.[cls.default_instructor_uuid] ?? null)
+          : null,
+        schedule: cls.uuid ? (scheduleMap?.[cls.uuid] ?? null) : null,
+        enrollment: cls.uuid ? (enrollmentMap?.[cls.uuid] ?? null) : null,
+      };
+    });
+  }, [classes, courseMap, instructorMap, scheduleMap, enrollmentMap, programCoursesMap]);
 
   const programCoursesLoading = programCourseQueries.some(
     query => query.isPending || query.isLoading

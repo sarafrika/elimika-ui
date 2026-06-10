@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Spinner from '@/components/ui/spinner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 import {
   useMarkAllNotificationsRead,
   useNotificationAction,
@@ -15,7 +16,6 @@ import {
   type NotificationListParams,
   type UserNotification,
 } from '@/services/notifications';
-import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
   Archive,
@@ -35,6 +35,7 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { normalizeNotifications } from '../../../../src/features/dashboard/components/dashboard-notifications';
 
 type NotificationTab = 'all' | 'unread' | 'popups' | 'archived';
 
@@ -185,6 +186,8 @@ export function AlertsTab() {
   const markAllMutation = useMarkAllNotificationsRead();
 
   const notifications = notificationsQuery.data?.items ?? [];
+  const normalizedNotifications = normalizeNotifications(notifications);
+
   const unreadCount = countsQuery.data?.unread_count ?? 0;
   const popupCount = countsQuery.data?.popup_count ?? 0;
   const currentPage = notificationsQuery.data?.page ?? page;
@@ -320,7 +323,7 @@ export function AlertsTab() {
               </div>
 
               <div className='space-y-3'>
-                {notifications.map(notification => {
+                {normalizedNotifications.map(notification => {
                   const Icon = getNotificationIcon(notification.type);
                   const unread = notification.status === 'UNREAD';
                   const details = metadataEntries(notification);
@@ -429,17 +432,17 @@ export function AlertsTab() {
                                 </Button>
                               ) : null}
 
-                              {notification.action_url ? (
-                              <Button
-                                asChild
-                                size='sm'
-                                onClick={() => handleMarkAsRead(notification)}
-                              >
-                                <Link href={notification.action_url}>
-                                  <ExternalLink className='h-4 w-4' />
-                                  Open
-                                </Link>
-                              </Button>
+                              {notification.urlPath ? (
+                                <Button
+                                  asChild
+                                  size='sm'
+                                  onClick={() => handleMarkAsRead(notification)}
+                                >
+                                  <Link href={notification.urlPath}>
+                                    <ExternalLink className='h-4 w-4' />
+                                    Open
+                                  </Link>
+                                </Button>
                               ) : null}
                             </div>
                           </div>

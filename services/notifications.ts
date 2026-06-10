@@ -3,6 +3,18 @@ import { fetchClient } from '@/services/api/fetch-client';
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
 
+const notificationMetadataSchema = z.object({
+  quiz_uuid: z.string().optional(),
+  assignment_uuid: z.string().optional(),
+  class_definition_uuid: z.string().optional(),
+  due_at: z.string().optional(),
+  start_time: z.string().optional(),
+  schedule_uuid: z.string().optional(),
+  student_uuid: z.string().optional(),
+  instructor_uuid: z.string().optional(),
+  reminder_minutes: z.number().optional(),
+}).passthrough();
+
 const notificationSchema = z.object({
   uuid: z.string().uuid(),
   notification_id: z.string().uuid().nullable().optional(),
@@ -14,7 +26,8 @@ const notificationSchema = z.object({
   title: z.string(),
   body: z.string(),
   action_url: z.string().nullable().optional(),
-  metadata: z.record(z.unknown()).optional().default({}),
+  urlPath: z.string().nullable().optional(),
+  metadata: notificationMetadataSchema.default({}),
   occurred_at: z.string().optional(),
   popup_seen_at: z.string().nullable().optional(),
   read_at: z.string().nullable().optional(),

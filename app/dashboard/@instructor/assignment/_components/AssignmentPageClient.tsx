@@ -7,12 +7,11 @@ import {
   getAssignmentSchedulesOptions,
   getAssignmentSubmissionsOptions,
   getCourseLessonsOptions,
-  getEnrollmentsForClassOptions,
   getPendingGradingOptions,
   getQuizAttemptsOptions,
   getQuizByUuidOptions,
   getQuizSchedulesOptions,
-  getSubmissionAnalyticsOptions,
+  getSubmissionAnalyticsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
@@ -25,6 +24,7 @@ import type {
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { useMemo, useState } from 'react';
+import { useClassEnrollmentsMap } from '../../../../../hooks/use-enrollment-map';
 import { AssignmentCard } from './AssignmentCard';
 import { AssignmentHeader } from './AssignmentHeader';
 import { AssignmentInsights } from './AssignmentInsights';
@@ -87,17 +87,11 @@ export function AssignmentPageClient() {
   const { classes, loading } = useInstructorClassesWithDetails(instructorUuid);
   const uniqueClasses = useMemo(() => dedupeByKey(classes, item => item.uuid ?? null), [classes]);
 
-  const classEnrollmentQueries = useQueries({
-    queries: uniqueClasses.map(item => ({
-      ...getEnrollmentsForClassOptions({ path: { uuid: item.uuid as string } }),
-      enabled: !!item.uuid,
-      staleTime: QUERY_STALE_TIME,
-      gcTime: QUERY_GC_TIME,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-    })),
-  });
+  const classUuids = useMemo(
+    () => uniqueClasses.map(c => c.uuid ?? ''),
+    [uniqueClasses]
+  );
+  const { classEnrollmentsMap } = useClassEnrollmentsMap(classUuids);
 
   const uniqueCourses = useMemo(
     () => dedupeByKey(uniqueClasses, item => item.course_uuid ?? null),
@@ -270,37 +264,21 @@ export function AssignmentPageClient() {
     [uniqueClasses]
   );
 
-  const enrollmentCountMap = useMemo(() => {
-    const map = new Map<string, number>();
-    uniqueClasses.forEach((item, index) => {
-      map.set(item.uuid as string, classEnrollmentQueries[index]?.data?.data?.length ?? 0);
-    });
-    return map;
-  }, [classEnrollmentQueries, uniqueClasses]);
-
   const lessonMap = useMemo(() => {
-    const map = new Map<
-      string,
-      {
-        lessonTitle: string;
-        courseTitle: string;
-      }
-    >();
-
-    uniqueClasses.forEach((item, index) => {
+    const map = new Map<string, { lessonTitle: string; courseTitle: string }>();
+    uniqueCourses.forEach((course, index) => {
       const lessons = lessonQueries[index]?.data?.data?.content ?? [];
       lessons.forEach(lesson => {
         if (lesson.uuid) {
           map.set(lesson.uuid, {
             lessonTitle: lesson.title || 'Untitled lesson',
-            courseTitle: item.course?.name || 'Untitled course',
+            courseTitle: course.course?.name || 'Untitled course',
           });
         }
       });
     });
-
     return map;
-  }, [lessonQueries, uniqueClasses]);
+  }, [lessonQueries, uniqueCourses]);
 
   const taskCards = useMemo<AssignmentCardData[]>(() => {
     const assignmentCards = assignmentSchedules
@@ -314,7 +292,7 @@ export function AssignmentPageClient() {
         const gradedCount = submissions.filter(item => item.is_graded || item.graded_at).length;
         const lessonInfo = lessonMap.get(schedule.lesson_uuid);
         const classInfo = classMap.get(schedule.classUuid);
-        const totalLearners = enrollmentCountMap.get(schedule.classUuid) ?? 0;
+        const totalLearners = classEnrollmentsMap.get(schedule.classUuid)?.length ?? 0;
         const status = getTaskStatus(schedule.due_at, submissionCount, gradedCount, 'assignment');
         const pendingBadge =
           gradedCount < submissionCount ? `${submissionCount - gradedCount} Pending` : null;
@@ -372,7 +350,7 @@ export function AssignmentPageClient() {
         const completedCount = attempts.filter(item => item.is_completed || item.submitted_at).length;
         const lessonInfo = lessonMap.get(schedule.lesson_uuid);
         const classInfo = classMap.get(schedule.classUuid);
-        const totalLearners = enrollmentCountMap.get(schedule.classUuid) ?? 0;
+        const totalLearners = classEnrollmentsMap.get(schedule.classUuid)?.length ?? 0;
         const status = getTaskStatus(schedule.due_at, submissionCount, completedCount, 'quiz');
         const pendingBadge =
           completedCount < submissionCount ? `${submissionCount - completedCount} Pending` : null;
@@ -422,7 +400,7 @@ export function AssignmentPageClient() {
     assignmentSchedules,
     assignmentSubmissionMap,
     classMap,
-    enrollmentCountMap,
+    classEnrollmentsMap,
     instructorName,
     lessonMap,
     quizAttemptMap,
@@ -539,7 +517,6 @@ export function AssignmentPageClient() {
               </div>
             )}
           </section>
-
 
           <aside className='space-y-4'>
             <AssignmentInsights insights={insights} />

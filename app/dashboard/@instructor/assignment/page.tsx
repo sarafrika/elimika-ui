@@ -1,7 +1,8 @@
-import { AssignmentPageClient } from './_components/AssignmentPageClient';
+'use client';
 
-const AssignmentPage = () => {
+import { AssignmentPageClient } from "./_components/AssignmentPageClient";
+
+
+export default function AssignmentsPage() {
   return <AssignmentPageClient />;
-};
-
-export default AssignmentPage;
+}
