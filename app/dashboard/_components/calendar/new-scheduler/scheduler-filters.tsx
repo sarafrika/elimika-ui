@@ -56,7 +56,7 @@ export function SchedulerFilters({
             <TabsTrigger
               key={section.key}
               value={section.key}
-              className='h-8 rounded-md border px-2 text-[11px] font-medium sm:text-xs data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'
+              className='h-8 rounded-md border px-2 text-[11px] font-medium sm:text-xs data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground min-w-fit'
             >
               <span className='truncate'>
                 {section.label}

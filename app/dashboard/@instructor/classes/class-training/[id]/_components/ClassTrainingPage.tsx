@@ -26,7 +26,6 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { useClassDetails, type ClassDetailsScheduleItem } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
@@ -1595,6 +1594,7 @@ function SubmissionPanel({
   onMarkAttendance,
   isMarkingAttendance,
   onStartClass,
+  remainingTime,
   onEndClass,
   isStartingClass,
 }: {
@@ -1622,6 +1622,7 @@ function SubmissionPanel({
   isMarkingAttendance: boolean;
   onStartClass: () => void;
   onEndClass: () => void;
+  remainingTime: string;
   isStartingClass: boolean;
   isEndingClass: boolean;
 }) {
@@ -2078,7 +2079,15 @@ function SubmissionPanel({
                   ) : (
                     <CheckCircle className='h-4 w-4' />
                   )}
-                  End Class
+
+                  <div className="flex items-center gap-2">
+                    <span>End Class</span>
+                    {remainingTime && (
+                      <span className="rounded px-2 py-0.5 text-xs">
+                        {remainingTime}
+                      </span>
+                    )}
+                  </div>
                 </Button>
               ) : (
                 <Button
@@ -2140,7 +2149,6 @@ export default function ClassTrainingPage({
   const requestedLessonId = searchParams.get('lesson') ?? '';
   const requestedContentId = searchParams.get('content') ?? '';
   const requestedCourseId = searchParams.get('course') ?? '';
-  const { replaceBreadcrumbs } = useBreadcrumb();
   const userProfile = useUserProfile();
   const { data, isLoading, isError } = useClassDetails(classId);
   const { rosterAllEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
@@ -2162,22 +2170,6 @@ export default function ClassTrainingPage({
 
   const [activeTab, setActiveTab] = useState<'content' | 'practice' | 'assessment'>('content');
   const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>('students');
-
-
-  useEffect(() => {
-    if (!classId) return;
-
-    replaceBreadcrumbs([
-      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-      { id: 'classes', title: 'Classes', url: '/dashboard/classes' },
-      {
-        id: 'class-training',
-        title: 'Class Training',
-        url: `/dashboard/classes/class-training/${classId}`,
-        isLast: true,
-      },
-    ]);
-  }, [classId, replaceBreadcrumbs]);
 
   const classData = data.class;
   const course = data.course ?? data?.pCourses?.[0] ?? null;
@@ -2815,6 +2807,46 @@ export default function ClassTrainingPage({
     );
   };
 
+  const [remainingTime, setRemainingTime] = useState('');
+
+  useEffect(() => {
+    if (!activeSchedule?.started_at || !activeSchedule?.duration_minutes) {
+      setRemainingTime('');
+      return;
+    }
+
+    const durationMinutes = Number(activeSchedule.duration_minutes);
+
+    const startedAt = new Date(activeSchedule.started_at).getTime();
+    const classEndsAt = startedAt + durationMinutes * 60 * 1000;
+
+    const updateCountdown = () => {
+      const diff = classEndsAt - Date.now();
+
+      if (diff <= 0) {
+        setRemainingTime('00:00:00');
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setRemainingTime(
+        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
+          2,
+          '0'
+        )}:${String(seconds).padStart(2, '0')}`
+      );
+    };
+
+    updateCountdown();
+
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeSchedule?.started_at, activeSchedule?.duration_minutes]);
+
   // const endClassMut = useMutation(endScheduledInstanceMutation());
   // const handleEndClass = () => {
   //   if (!requestedScheduleId) return;
@@ -3097,9 +3129,86 @@ export default function ClassTrainingPage({
             <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
               <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
                 <div className='min-w-0 w-full'>
-                  <h2 className='truncate text-lg font-semibold'>
-                    {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
-                  </h2>
+                  <div className='flex flex-row items-center justify-between' >
+                    <h2 className='truncate text-lg font-semibold'>
+                      {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
+                    </h2>
+
+                    <div className='border-border/70 border-t p-3 max-w-[500px]'>
+                      {(() => {
+                        const status = activeSchedule?.status?.toUpperCase();
+                        const isCancelled = status === 'CANCELLED';
+                        const isBlocked = status === 'BLOCKED';
+                        const isConcluded = Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
+                        const canStart =
+                          !!activeSchedule &&
+                          !isCancelled &&
+                          !isBlocked &&
+                          !isConcluded &&
+                          (activeSchedule.can_be_started ?? status === 'SCHEDULED');
+                        const canEnd =
+                          !!activeSchedule &&
+                          !isCancelled &&
+                          !isBlocked &&
+                          !isConcluded &&
+                          (activeSchedule.can_be_ended ?? status === 'ONGOING');
+                        const isLifecycleLoading =
+                          startScheduledInstanceMut.isPending || endScheduledInstanceMut.isPending;
+
+                        return (
+                          <div className='flex flex-col gap-3'>
+                            {isConcluded ? (
+                              <Button disabled className='h-10 w-full gap-2 rounded-md'>
+                                <CheckCircle className='h-4 w-4' />
+                                Class ended
+                              </Button>
+                            ) : canEnd ? (
+                              <Button
+                                variant="destructive"
+                                className="h-10 w-full gap-2 rounded-md"
+                                disabled={isLifecycleLoading}
+                                onClick={handleEndClass}
+                              >
+                                {endScheduledInstanceMut.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4" />
+                                )}
+
+                                <div className="flex items-center gap-2">
+                                  <span>End Class</span>
+                                  {remainingTime && (
+                                    <span className="rounded px-2 py-0.5 text-xs">
+                                      {remainingTime}
+                                    </span>
+                                  )}
+                                </div>
+                              </Button>
+                            ) : (
+                              <Button
+                                className='h-10 w-full gap-2 rounded-md'
+                                disabled={!canStart || isLifecycleLoading}
+                                onClick={handleStartClass}  // ✅ use the real handler
+                              >
+                                {startScheduledInstanceMut.isPending ? (
+                                  <Loader2 className='h-4 w-4 animate-spin' />
+                                ) : (
+                                  <Video className='h-4 w-4' />
+                                )}
+                                {isCancelled
+                                  ? 'Cancelled'
+                                  : isBlocked
+                                    ? 'Blocked'
+                                    : !activeSchedule
+                                      ? 'Select a session'
+                                      : 'Start Class'}
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
 
                   <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
                     <Tabs
@@ -3303,7 +3412,6 @@ export default function ClassTrainingPage({
           </section>
         }
 
-
         {activeLefTab === "evaluation" &&
           <section className='min-h-0 overflow-hidden bg-background'>
             {activeLefTab === 'evaluation' ? (
@@ -3346,6 +3454,7 @@ export default function ClassTrainingPage({
                       onMarkAttendance={handleMarkAttendance}
                       isMarkingAttendance={markAttendanceMut.isPending}
                       onStartClass={handleStartClass}
+                      remainingTime={remainingTime}
                       onEndClass={handleEndClass}
                       isStartingClass={startScheduledInstanceMut.isPending}
                     />
@@ -3520,7 +3629,8 @@ export default function ClassTrainingPage({
                 </ScrollArea>
               </div>
             )}
-          </section>}
+          </section>
+        }
 
 
         {/* <aside className='border-border/70 hidden min-h-0 border-l xl:block'>
