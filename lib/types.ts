@@ -1,4 +1,3 @@
-import type { schemas } from '@/services/api/zod-client';
 import type {
   Course,
   CourseCreator,
@@ -13,7 +12,6 @@ import type {
   User,
 } from '@/services/client';
 import type { ReactNode } from 'react';
-import type { z } from 'zod';
 
 export type UserDomain =
   | 'student'
@@ -49,10 +47,7 @@ export interface PagedData<T> {
   metadata: PageMetadata;
 }
 
-export type AllSchemas = typeof schemas;
-export type AllSchemaTypes = {
-  [K in keyof AllSchemas]: AllSchemas[K] extends z.ZodTypeAny ? z.infer<AllSchemas[K]> : never;
-}[keyof AllSchemas];
+export type AllSchemaTypes = unknown;
 
 export type ApiResponseWithPagination<T> = ApiResponse<PagedData<T>>;
 

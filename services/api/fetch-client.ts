@@ -1,9 +1,7 @@
 import { getAuthToken } from '@/services/auth/get-token';
-import { pluginToken } from '@zodios/plugins';
 import createClient, { type Middleware } from 'openapi-fetch';
 import { API_BASE_URL } from './base-url';
 import type { paths } from './schema';
-import { createApiClient } from './zod-client';
 
 const authMiddleware: Middleware = {
   async onRequest({ request }) {
@@ -25,6 +23,3 @@ export const fetchClient = createClient<paths>({
 });
 
 fetchClient.use(authMiddleware);
-
-export const zodClient = createApiClient(API_BASE_URL);
-zodClient.use(pluginToken({ getToken: getAuthToken }));

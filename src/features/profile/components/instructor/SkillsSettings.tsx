@@ -30,8 +30,8 @@ import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import useMultiMutations from '@/hooks/use-multi-mutations';
-import { schemas } from '@/services/api/zod-client';
 import type { Instructor, InstructorSkill, ProficiencyLevelEnum } from '@/services/client';
+import { zInstructorSkill } from '@/services/client/zod.gen';
 import {
   addInstructorSkillMutation,
   deleteInstructorSkillMutation,
@@ -43,7 +43,7 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
 import { InstructorSkillCard } from './InstructorSkillCard';
 
-const SkillSchema = schemas.InstructorSkill;
+const SkillSchema = zInstructorSkill;
 const skillsSchema = z.object({
   skills: z.array(SkillSchema),
 });
