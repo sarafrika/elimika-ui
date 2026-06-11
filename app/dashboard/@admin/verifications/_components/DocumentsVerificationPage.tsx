@@ -9,7 +9,7 @@ import {
   Search,
   Users,
 } from 'lucide-react';
-import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -43,7 +43,7 @@ import {
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
-import { loadPdfjs } from '@/lib/pdfjs';
+import { loadPdfjs, type PDFDocumentProxy, type PDFPageProxy } from '@/lib/pdfjs';
 import { cn } from '@/lib/utils';
 import type {
   CourseCreator,
