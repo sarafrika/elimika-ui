@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
   Calendar,
@@ -52,6 +52,7 @@ import {
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
+import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { extractEntity } from '@/lib/api-helpers';
 import type {
   ClassDefinition,
@@ -61,8 +62,7 @@ import type {
   Instructor,
 } from '@/services/client';
 import {
-  getClassDefinitionOptions,
-  getCourseByUuidOptions,
+  getAllClassDefinitionsOptions,
   getCourseCreatorByUuidOptions,
   getInstructorByUuidOptions,
   listCatalogItemsOptions,
@@ -191,69 +191,68 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     [rows]
   );
 
-  const courseQueries = useQueries({
-    queries: courseIds.map(uuid => ({
-      ...getCourseByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      staleTime: 5 * 60 * 1000,
-    })),
+  // Batched lookups: one search covering all course ids and one page of class
+  // definitions, instead of one request per catalogue item.
+  const { courseMap: courseLookup } = useCoursesByIds(courseIds);
+
+  const classDefinitionsQuery = useQuery({
+    ...getAllClassDefinitionsOptions({ query: { pageable: { page: 0, size: 200 } } }),
+    enabled: classIds.length > 0,
+    staleTime: 5 * 60 * 1000,
   });
 
-  const classQueries = useQueries({
-    queries: classIds.map(uuid => ({
-      ...getClassDefinitionOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      staleTime: 5 * 60 * 1000,
-    })),
-  });
+  const classLookup = useMemo(() => {
+    const map = new Map<string, ClassDefinition>();
+    for (const item of classDefinitionsQuery.data?.data?.content ?? []) {
+      const definition = item.class_definition;
+      if (definition?.uuid) map.set(definition.uuid, definition);
+    }
+    return map;
+  }, [classDefinitionsQuery.data]);
 
   const courseTitleMap = useMemo(() => {
     const map = new Map<string, string>();
-    courseQueries.forEach((query, index) => {
-      const course = extractEntity<Course>(query.data);
-      const courseId = courseIds[index];
+    courseIds.forEach(courseId => {
+      const course = courseLookup[courseId];
       if (course?.name && courseId) {
         map.set(courseId, course.name);
       }
     });
     return map;
-  }, [courseIds, courseQueries]);
+  }, [courseIds, courseLookup]);
 
   const classTitleMap = useMemo(() => {
     const map = new Map<string, string>();
-    classQueries.forEach((query, index) => {
-      const classDef = extractEntity<ClassDefinition>(query.data);
-      const classId = classIds[index];
+    classIds.forEach(classId => {
+      const classDef = classLookup.get(classId);
       if (classDef?.title && classId) {
         map.set(classId, classDef.title);
       }
     });
     return map;
-  }, [classIds, classQueries]);
+  }, [classIds, classLookup]);
 
   const courseMap = useMemo(() => {
     const map = new Map<string, Course>();
-    courseQueries.forEach((query, index) => {
-      const course = extractEntity<Course>(query.data);
-      const courseId = courseIds[index];
+    courseIds.forEach(courseId => {
+      const course = courseLookup[courseId];
       if (course && courseId) {
         map.set(courseId, course);
       }
     });
     return map;
-  }, [courseIds, courseQueries]);
+  }, [courseIds, courseLookup]);
 
   const classMap = useMemo(() => {
     const map = new Map<string, ClassDefinition>();
-    classQueries.forEach((query, index) => {
-      const classDef = extractEntity<ClassDefinition>(query.data);
-      const classId = classIds[index];
+    classIds.forEach(classId => {
+      const classDef = classLookup.get(classId);
       if (classDef && classId) {
         map.set(classId, classDef);
       }
     });
     return map;
-  }, [classIds, classQueries]);
+  }, [classIds, classLookup]);
 
   return { courseTitleMap, classTitleMap, courseMap, classMap };
 };

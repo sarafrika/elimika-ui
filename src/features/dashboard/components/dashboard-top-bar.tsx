@@ -1,5 +1,6 @@
 'use client';
 
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -225,7 +226,7 @@ export default function DashboardTopBar() {
               profileEmail={profile?.email}
               activeDomainLabel={activeDomainLabel}
               roleLabel={roleLabel}
-              userImage={profile?.profile_image_url ?? ''}
+              userImage={toAuthenticatedMediaUrl(profile?.profile_image_url) ?? ''}
               availableDomains={domain.domains}
               activeDomain={activeDomain}
               onSwitch={handleDashboardSwitch}
