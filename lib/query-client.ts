@@ -1,24 +1,25 @@
 import { QueryClient } from '@tanstack/react-query';
-import { persistQueryClient } from '@tanstack/react-query-persist-client';
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+
+/**
+ * staleTime tiers. Pick the slowest tier the data can tolerate — every tier
+ * step down multiplies refetch traffic across the app.
+ */
+export const STALE_TIMES = {
+  /** Reference data that rarely changes: categories, difficulty levels, course catalog. */
+  reference: 1000 * 60 * 30,
+  /** Entity data edited by its owner: profiles, course details. */
+  entity: 1000 * 60 * 5,
+  /** Live operational data: enrollments, schedules, notifications. */
+  live: 1000 * 60,
+} as const;
 
 export function makeQueryClient() {
-  const queryClient = new QueryClient({
+  return new QueryClient({
     defaultOptions: {
       queries: {
         gcTime: 1000 * 60 * 60 * 24, // 24 hours
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        staleTime: STALE_TIMES.entity,
       },
     },
   });
-
-  if (typeof window !== 'undefined') {
-    persistQueryClient({
-      queryClient,
-      persister: createSyncStoragePersister({ storage: window.localStorage }),
-      maxAge: 1000 * 60 * 60 * 24, // 24 hours
-    });
-  }
-
-  return queryClient;
 }

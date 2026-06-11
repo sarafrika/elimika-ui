@@ -58,7 +58,11 @@ function serializeQuery(queryParams: unknown) {
 export const createClientConfig: CreateClientConfig = config => ({
   ...config,
   baseUrl: API_BASE_URL,
-  auth: async () => await getAuthToken(),
+  // Only attach the token when running on the server (direct upstream calls).
+  // In the browser, requests go through /api/proxy which injects the session
+  // token itself — calling getAuthToken() here would add a server-action
+  // round trip to every single API request.
+  auth: typeof window === 'undefined' ? async () => await getAuthToken() : undefined,
   next: { revalidate: process.env.PRODUCTION ? 1000 * 60 * 15 : 0.5 },
   querySerializer: serializeQuery,
 });

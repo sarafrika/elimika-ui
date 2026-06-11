@@ -14,7 +14,7 @@ export function useClassSchedulesMap(classUuids: string[]) {
     queries: classUuids.map(uuid => ({
       ...getClassScheduleOptions({
         path: { uuid },
-        query: { pageable: { size: 1000 } },
+        query: { pageable: { size: 200 } },
       }),
       enabled: !!uuid,
       staleTime: 5 * 60 * 1000,
@@ -45,7 +45,7 @@ export function useEnrollmentMap(classUuids: string[]) {
     queries: classUuids.map(uuid => ({
       ...getEnrollmentsForClassOptions({
         path: { uuid },
-        query: { pageable: { size: 5000 } },
+        query: { pageable: { size: 500 } },
       }),
       enabled: !!uuid,
       staleTime: 5 * 60 * 1000,

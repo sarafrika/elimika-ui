@@ -1,17 +1,17 @@
 'use client';
 
 import { useInstructor } from '@/context/instructor-context';
+import { dayjs } from '@/lib/date';
+import { useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import {
   getAllCoursesOptions,
   getEnrollmentsForClassOptions,
   getInstructorBookingsOptions,
-  getStudentByIdOptions,
-  getUserByUuidOptions,
   searchEnrollmentsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { BookingResponse, Enrollment, Student, User } from '@/services/client/types.gen';
+import type { BookingResponse, Enrollment } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type {
@@ -57,6 +57,12 @@ const formatRelativeAge = (createdDate?: Date | string | null) => {
   const diffMinutes = Math.max(1, Math.floor(diffMs / (1000 * 60)));
   return `${diffMinutes}m`;
 };
+
+const formatDateTime = (value?: Date | string | null) =>
+  value ? dayjs(value).format('ddd, MMM D \u00b7 h:mm A') : 'TBD';
+
+const formatTimeRange = (start?: Date | string | null, end?: Date | string | null) =>
+  start && end ? `${dayjs(start).format('h:mm A')} \u2013 ${dayjs(end).format('h:mm A')}` : '';
 
 const normalizeStatusLabel = (value: string) =>
   value
@@ -212,33 +218,58 @@ export function useInstructorTrainingHubData() {
     });
   }, [approvedCourses, classesByCourse, enrollmentsByClass]);
 
-  const waitlistQueries = useQueries({
-    queries: relevantClasses.map(classItem => ({
-      ...searchEnrollmentsOptions({
-        query: {
-          pageable: {
-            page: 0,
-            size: 100,
-          },
-          searchParams: {
-            class_definition_uuid_eq: classItem.uuid ?? '',
-            status_eq: 'WAITLISTED',
-          },
+  const relevantClassUuids = useMemo(
+    () =>
+      relevantClasses
+        .map(classItem => classItem.uuid)
+        .filter((uuid): uuid is string => Boolean(uuid))
+        .sort((a, b) => a.localeCompare(b)),
+    [relevantClasses]
+  );
+
+  // One waitlist search across all classes (class_definition_uuid_in)
+  // instead of one search request per class.
+  const waitlistQuery = useQuery({
+    ...searchEnrollmentsOptions({
+      query: {
+        pageable: {
+          page: 0,
+          size: 500,
         },
-      }),
-      enabled: Boolean(classItem.uuid),
-      staleTime: 60 * 1000,
-    })),
+        searchParams: {
+          class_definition_uuid_in: relevantClassUuids.join(','),
+          status_eq: 'WAITLISTED',
+        },
+      },
+    }),
+    enabled: relevantClassUuids.length > 0,
+    staleTime: 60 * 1000,
   });
+
+  // Enrollments don't carry class_definition_uuid, so group them via the
+  // scheduled instance → class mapping that the schedules already provide.
+  const instanceToClassUuid = useMemo(() => {
+    const map = new Map<string, string>();
+    relevantClasses.forEach(classItem => {
+      if (!classItem.uuid) return;
+      (classItem.schedule ?? []).forEach(instance => {
+        if (instance.uuid) map.set(instance.uuid, classItem.uuid as string);
+      });
+    });
+    return map;
+  }, [relevantClasses]);
 
   const waitlistEnrollmentsByClass = useMemo(() => {
     const map = new Map<string, Enrollment[]>();
-    relevantClasses.forEach((classItem, index) => {
-      if (!classItem.uuid) return;
-      map.set(classItem.uuid, waitlistQueries[index]?.data?.data?.content ?? []);
-    });
+    for (const enrollment of waitlistQuery.data?.data?.content ?? []) {
+      const classUuid = instanceToClassUuid.get(enrollment.scheduled_instance_uuid ?? '');
+      if (!classUuid) continue;
+      const current = map.get(classUuid) ?? [];
+      current.push(enrollment);
+      map.set(classUuid, current);
+    }
     return map;
-  }, [relevantClasses, waitlistQueries]);
+  }, [instanceToClassUuid, waitlistQuery.data]);
 
   const liveClasses = useMemo<TrainingHubLiveClass[]>(() => {
     return relevantClasses.map(classItem => {
@@ -313,93 +344,6 @@ export function useInstructorTrainingHubData() {
     return studentUuids;
   }, [waitlistEnrollmentsByClass]);
 
-  const waitlistStudentQueries = useQueries({
-    queries: waitlistStudentUuids.map(uuid => ({
-      ...getStudentByIdOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      staleTime: 60 * 1000,
-    })),
-  });
-
-  const waitlistStudentsById = useMemo(() => {
-    const map: Record<string, Student> = {};
-    waitlistStudentQueries.forEach(queryResult => {
-      const student = queryResult.data;
-      if (student?.uuid) {
-        map[student.uuid] = student;
-      }
-    });
-    return map;
-  }, [waitlistStudentQueries]);
-
-  const waitlistUserUuids = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          waitlistStudentQueries
-            .map(queryResult => queryResult.data?.user_uuid)
-            .filter((uuid): uuid is string => Boolean(uuid))
-        )
-      ),
-    [waitlistStudentQueries]
-  );
-
-  const waitlistUserQueries = useQueries({
-    queries: waitlistUserUuids.map(uuid => ({
-      ...getUserByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      staleTime: 60 * 1000,
-    })),
-  });
-
-  const waitlistUsersById = useMemo(() => {
-    const map: Record<string, User> = {};
-    waitlistUserQueries.forEach(queryResult => {
-      const user = queryResult.data?.data;
-      if (user?.uuid) {
-        map[user.uuid] = user;
-      }
-    });
-    return map;
-  }, [waitlistUserQueries]);
-
-  const waitingList = useMemo<TrainingHubWaitingStudent[]>(() => {
-    const items: TrainingHubWaitingStudent[] = [];
-
-    relevantClasses.forEach(classItem => {
-      const classUuid = classItem.uuid ?? '';
-      const classWaitlist = waitlistEnrollmentsByClass.get(classUuid) ?? [];
-
-      classWaitlist.forEach(enrollment => {
-        const student = waitlistStudentsById[enrollment.student_uuid];
-        const user = student?.user_uuid ? waitlistUsersById[student.user_uuid] : undefined;
-        const scheduledInstance = classItem.schedule?.find(
-          instance => instance.uuid === enrollment.scheduled_instance_uuid
-        );
-
-        items.push({
-          id:
-            enrollment.uuid ??
-            `${classUuid}-${enrollment.student_uuid}-${enrollment.scheduled_instance_uuid}`,
-          name:
-            resolvePersonName(user?.first_name, user?.last_name, user?.display_name ?? user?.email) ||
-            enrollment.student_uuid.slice(0, 8),
-          email: user?.email ?? 'No email available',
-          status:
-            enrollment.status === 'WAITLISTED'
-              ? 'Waitlisted'
-              : normalizeStatusLabel(enrollment.status ?? 'WAITLISTED'),
-          age: formatRelativeAge(enrollment.created_date),
-          classTitle: classItem.course?.name || classItem.title,
-          scheduleLabel: formatDateTime(scheduledInstance?.start_time),
-          classId: classUuid,
-        });
-      });
-    });
-
-    return items.sort((left, right) => left.name.localeCompare(right.name));
-  }, [relevantClasses, waitlistEnrollmentsByClass, waitlistStudentsById, waitlistUsersById]);
-
   const bookingsQuery = useQuery({
     ...getInstructorBookingsOptions({
       path: { instructorUuid: instructorUuid ?? '' },
@@ -431,55 +375,63 @@ export function useInstructorTrainingHubData() {
     [bookings]
   );
 
-  const bookingStudentQueries = useQueries({
-    queries: bookingStudentUuids.map(uuid => ({
-      ...getStudentByIdOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      staleTime: 60 * 1000,
-    })),
-  });
-
-  const bookingStudentsById = useMemo(() => {
-    const map: Record<string, Student> = {};
-    bookingStudentQueries.forEach(queryResult => {
-      const student = queryResult.data;
-      if (student?.uuid) {
-        map[student.uuid] = student;
-      }
-    });
-    return map;
-  }, [bookingStudentQueries]);
-
-  const bookingUserUuids = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          bookingStudentQueries
-            .map(queryResult => queryResult.data?.user_uuid)
-            .filter((uuid): uuid is string => Boolean(uuid))
-        )
-      ),
-    [bookingStudentQueries]
+  // One batched lookup for waitlist + booking students together, then one for
+  // their users — replaces a request per student and per user.
+  const personStudentUuids = useMemo(
+    () => [...waitlistStudentUuids, ...bookingStudentUuids],
+    [bookingStudentUuids, waitlistStudentUuids]
   );
 
-  const bookingUserQueries = useQueries({
-    queries: bookingUserUuids.map(uuid => ({
-      ...getUserByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      staleTime: 60 * 1000,
-    })),
-  });
+  const { studentMap: personStudentsById, isLoading: isLoadingPersonStudents } =
+    useStudentsByIds(personStudentUuids);
 
-  const bookingUsersById = useMemo(() => {
-    const map: Record<string, User> = {};
-    bookingUserQueries.forEach(queryResult => {
-      const user = queryResult.data?.data;
-      if (user?.uuid) {
-        map[user.uuid] = user;
-      }
+  const personUserUuids = useMemo(
+    () =>
+      Object.values(personStudentsById)
+        .map(student => student.user_uuid)
+        .filter((uuid): uuid is string => Boolean(uuid)),
+    [personStudentsById]
+  );
+
+  const { userMap: personUsersById, isLoading: isLoadingPersonUsers } =
+    useUsersByIds(personUserUuids);
+
+  const waitingList = useMemo<TrainingHubWaitingStudent[]>(() => {
+    const items: TrainingHubWaitingStudent[] = [];
+
+    relevantClasses.forEach(classItem => {
+      const classUuid = classItem.uuid ?? '';
+      const classWaitlist = waitlistEnrollmentsByClass.get(classUuid) ?? [];
+
+      classWaitlist.forEach(enrollment => {
+        const student = personStudentsById[enrollment.student_uuid];
+        const user = student?.user_uuid ? personUsersById[student.user_uuid] : undefined;
+        const scheduledInstance = classItem.schedule?.find(
+          instance => instance.uuid === enrollment.scheduled_instance_uuid
+        );
+
+        items.push({
+          id:
+            enrollment.uuid ??
+            `${classUuid}-${enrollment.student_uuid}-${enrollment.scheduled_instance_uuid}`,
+          name:
+            resolvePersonName(user?.first_name, user?.last_name, user?.display_name ?? user?.email) ||
+            enrollment.student_uuid.slice(0, 8),
+          email: user?.email ?? 'No email available',
+          status:
+            enrollment.status === 'WAITLISTED'
+              ? 'Waitlisted'
+              : normalizeStatusLabel(enrollment.status ?? 'WAITLISTED'),
+          age: formatRelativeAge(enrollment.created_date),
+          classTitle: classItem.course?.name || classItem.title,
+          scheduleLabel: formatDateTime(scheduledInstance?.start_time),
+          classId: classUuid,
+        });
+      });
     });
-    return map;
-  }, [bookingUserQueries]);
+
+    return items.sort((left, right) => left.name.localeCompare(right.name));
+  }, [relevantClasses, waitlistEnrollmentsByClass, personStudentsById, personUsersById]);
 
   const upcomingBookings = useMemo<TrainingHubBooking[]>(() => {
     const now = new Date();
@@ -488,8 +440,8 @@ export function useInstructorTrainingHubData() {
       .filter(booking => isUpcomingBooking(booking, now))
       .sort((left, right) => left.start_time.getTime() - right.start_time.getTime())
       .map(booking => {
-        const student = bookingStudentsById[booking.student_uuid];
-        const user = student?.user_uuid ? bookingUsersById[student.user_uuid] : undefined;
+        const student = personStudentsById[booking.student_uuid];
+        const user = student?.user_uuid ? personUsersById[student.user_uuid] : undefined;
         const title =
           resolvePersonName(user?.first_name, user?.last_name, user?.display_name ?? user?.email) ||
           booking.purpose ||
@@ -508,7 +460,7 @@ export function useInstructorTrainingHubData() {
           href: '/dashboard/training-hub/bookings',
         };
       });
-  }, [bookingStudentsById, bookingUsersById, bookings]);
+  }, [personStudentsById, personUsersById, bookings]);
 
   return {
     classes: relevantClasses,
@@ -521,11 +473,9 @@ export function useInstructorTrainingHubData() {
       isLoadingCourses ||
       isLoadingApplications ||
       enrollmentQueries.some(query => query.isLoading) ||
-      waitlistQueries.some(query => query.isLoading) ||
-      waitlistStudentQueries.some(query => query.isLoading) ||
-      waitlistUserQueries.some(query => query.isLoading) ||
-      bookingsQuery.isLoading ||
-      bookingStudentQueries.some(query => query.isLoading) ||
-      bookingUserQueries.some(query => query.isLoading),
+      waitlistQuery.isLoading ||
+      isLoadingPersonStudents ||
+      isLoadingPersonUsers ||
+      bookingsQuery.isLoading,
   };
 }
