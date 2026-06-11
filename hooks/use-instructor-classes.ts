@@ -11,9 +11,8 @@ import {
   getClassDefinitionsForInstructorOptions,
   getProgramCoursesOptions,
 } from '../services/client/@tanstack/react-query.gen';
+import { useCoursesByIds, useInstructorsByIds } from './use-batched-lookups';
 import { useClassSchedulesMap, useEnrollmentMap } from './use-class-schedule-map';
-import { useCoursesMap } from './use-courses-map';
-import { useInstructorsMap } from './use-instructors-map';
 
 export type InstructorClass = NonNullable<
   NonNullable<GetClassDefinitionsForInstructorResponse['data']>[number]['class_definition']
@@ -36,9 +35,6 @@ export type InstructorClassWithDetails = InstructorClass & {
 const EMPTY_ARRAY: never[] = []; // stable reference
 
 function useInstructorClassesWithDetails(instructorUuid?: string) {
-  const { courseMap, isLoading: courseIsLoading } = useCoursesMap();
-  const { instructorMap, isLoading: instructorIsLoading } = useInstructorsMap();
-
   const { data, isLoading, isPending } = useQuery({
     ...getClassDefinitionsForInstructorOptions({
       path: { instructorUuid: instructorUuid ?? '' },
@@ -74,6 +70,21 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
       ) as string[],
     [classes]
   );
+
+  const courseUuids = useMemo(
+    () => classes.map(cls => cls.course_uuid).filter(Boolean) as string[],
+    [classes]
+  );
+
+  const instructorUuids = useMemo(
+    () => classes.map(cls => cls.default_instructor_uuid).filter(Boolean) as string[],
+    [classes]
+  );
+
+  // Batched id lookups (1 request per ~100 ids) instead of unbounded
+  // 1000-row catalog fetches.
+  const { courseMap, isLoading: courseIsLoading } = useCoursesByIds(courseUuids);
+  const { instructorMap, isLoading: instructorIsLoading } = useInstructorsByIds(instructorUuids);
 
   const programCourseQueries = useQueries({
     queries: programUuids.map(programUuid => ({

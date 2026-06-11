@@ -7,19 +7,15 @@ import { createApiClient } from './zod-client';
 
 const authMiddleware: Middleware = {
   async onRequest({ request }) {
-    // fetch token, if it doesn’t exist
-    const token = request.headers.get('Authorization');
-    if (!token) {
+    // Browser requests go through /api/proxy, which injects the session token
+    // itself — fetching it here would cost a server-action round trip per
+    // request. Only attach the token for direct server-side calls.
+    if (typeof window === 'undefined' && !request.headers.get('Authorization')) {
       const accessToken = await getAuthToken();
       if (accessToken) {
         request.headers.set('Authorization', `Bearer ${accessToken}`);
-      } else {
-        // handle auth error
-        //console.log('No access token');
       }
     }
-    // (optional) add logic here to refresh token when it expires
-    // add Authorization header to every request
     return request;
   },
 };
