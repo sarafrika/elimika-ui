@@ -19,7 +19,7 @@ import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-dom
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Layers, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 
 const matchesSearchQuery = (value: string | undefined, query: string) =>
   query === '' || (value ?? '').toLowerCase().includes(query.toLowerCase());
@@ -56,8 +56,12 @@ export default function AllCoursesPage() {
     refetchOnReconnect: false,
   });
 
-  const courses = data?.data?.content || [];
-  const programs = programsData?.data?.content || [];
+  const courses = useMemo(() => data?.data?.content ?? [], [data]);
+  const programs = useMemo(() => programsData?.data?.content ?? [], [programsData]);
+
+  // Defer filtering so typing in the search box stays responsive even while
+  // large lists re-filter.
+  const deferredQuery = useDeferredValue(searchQuery);
 
   const paginationMetadata = data?.data?.metadata;
   const programPaginationMetadata = programsData?.data?.metadata;
@@ -75,33 +79,41 @@ export default function AllCoursesPage() {
 
   const currentCategory = CATEGORIES.find(cat => cat.name === selectedCategory);
 
-  const filteredCourses = courses?.filter((course: Course) => {
-    const matchesSearch =
-      matchesSearchQuery(course?.name, searchQuery) ||
-      matchesSearchQuery(course?.description, searchQuery);
+  const filteredCourses = useMemo(
+    () =>
+      courses.filter((course: Course) => {
+        const matchesSearch =
+          matchesSearchQuery(course?.name, deferredQuery) ||
+          matchesSearchQuery(course?.description, deferredQuery);
 
-    const matchesCategory = matchesSelectedCategory(
-      course?.category_names,
-      selectedCategory,
-      currentCategory?.name
-    );
+        const matchesCategory = matchesSelectedCategory(
+          course?.category_names,
+          selectedCategory,
+          currentCategory?.name
+        );
 
-    return matchesSearch && matchesCategory;
-  });
+        return matchesSearch && matchesCategory;
+      }),
+    [courses, deferredQuery, selectedCategory, currentCategory?.name]
+  );
 
-  const filteredPrograms = programs?.filter((program: TrainingProgram) => {
-    const matchesSearch =
-      matchesSearchQuery(program?.title, searchQuery) ||
-      matchesSearchQuery(program?.description, searchQuery);
+  const filteredPrograms = useMemo(
+    () =>
+      programs.filter((program: TrainingProgram) => {
+        const matchesSearch =
+          matchesSearchQuery(program?.title, deferredQuery) ||
+          matchesSearchQuery(program?.description, deferredQuery);
 
-    const matchesCategory = matchesSelectedCategory(
-      undefined,
-      selectedCategory,
-      currentCategory?.name
-    );
+        const matchesCategory = matchesSelectedCategory(
+          undefined,
+          selectedCategory,
+          currentCategory?.name
+        );
 
-    return matchesSearch && matchesCategory;
-  });
+        return matchesSearch && matchesCategory;
+      }),
+    [programs, deferredQuery, selectedCategory, currentCategory?.name]
+  );
 
   const [activeTab, setActiveTab] = useState<'courses' | 'programs'>('courses');
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { WatchedText, WatchedValue } from '@/components/form/watched-value';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -1091,11 +1092,11 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                         <Grip className='text-muted-foreground mt-1 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100' />
                         <div>
                           <p className='text-foreground text-sm leading-snug font-semibold'>
-                            {form.watch(`educations.${index}.school_name`) || 'New Institution'}
+                            <WatchedText control={form.control} name={`educations.${index}.school_name`} fallback='New Institution' />
                           </p>
                           <p className='text-muted-foreground text-xs'>
-                            {form.watch(`educations.${index}.qualification`) || 'Degree'} ·{' '}
-                            {form.watch(`educations.${index}.field_of_study`) || 'Field of study'}
+                            <WatchedText control={form.control} name={`educations.${index}.qualification`} fallback='Degree' /> ·{' '}
+                            <WatchedText control={form.control} name={`educations.${index}.field_of_study`} fallback='Field of study' />
                           </p>
                         </div>
                       </div>
@@ -1214,15 +1215,22 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                           <FormItem className='md:col-start-2'>
                             <FormLabel>End year</FormLabel>
                             <FormControl>
-                              <Input
-                                type='number'
-                                placeholder='YYYY'
-                                min={1900}
-                                max={2099}
-                                disabled={form.watch(`educations.${index}.is_recent_qualification`)}
-                                {...field}
-                                value={field.value ?? ''}
-                              />
+                              <WatchedValue
+                                control={form.control}
+                                name={`educations.${index}.is_recent_qualification`}
+                              >
+                                {disabled => (
+                                  <Input
+                                    type='number'
+                                    placeholder='YYYY'
+                                    min={1900}
+                                    max={2099}
+                                    disabled={!!disabled}
+                                    {...field}
+                                    value={field.value ?? ''}
+                                  />
+                                )}
+                              </WatchedValue>
                             </FormControl>
 
                             <div className='mt-2'>
@@ -1653,11 +1661,10 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
                         <Grip className='text-muted-foreground mt-1 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100' />
                         <div>
                           <p className='text-foreground text-sm leading-snug font-semibold'>
-                            {form.watch(`experiences.${index}.organisation_name`) ||
-                              'New Experience'}
+                            <WatchedText control={form.control} name={`experiences.${index}.organisation_name`} fallback='New Experience' />
                           </p>
                           <p className='text-muted-foreground text-xs'>
-                            {form.watch(`experiences.${index}.position`) || 'Role not set'}
+                            <WatchedText control={form.control} name={`experiences.${index}.position`} fallback='Role not set' />
                           </p>
                         </div>
                       </div>
@@ -1723,12 +1730,19 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
                           <FormItem>
                             <FormLabel>End date</FormLabel>
                             <FormControl>
-                              <Input
-                                type='month'
-                                disabled={form.watch(`experiences.${index}.is_current_position`)}
-                                {...field}
-                                value={field.value ?? ''}
-                              />
+                              <WatchedValue
+                                control={form.control}
+                                name={`experiences.${index}.is_current_position`}
+                              >
+                                {disabled => (
+                                  <Input
+                                    type='month'
+                                    disabled={!!disabled}
+                                    {...field}
+                                    value={field.value ?? ''}
+                                  />
+                                )}
+                              </WatchedValue>
                             </FormControl>
                             <div className='mt-2'>
                               <FormField

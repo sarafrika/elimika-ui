@@ -1,5 +1,5 @@
 'use client';
-import { createContext, type ReactNode, useContext } from 'react';
+import { createContext, type ReactNode, useContext, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import type { Session } from 'next-auth';
 
@@ -12,8 +12,9 @@ const SessionContext = createContext<SessionContextType | null>(null);
 
 export function SessionProviderWrapper({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
+  const value = useMemo(() => ({ session, status }), [session, status]);
 
-  return <SessionContext.Provider value={{ session, status }}>{children}</SessionContext.Provider>;
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
 export function useSessionWrapper() {

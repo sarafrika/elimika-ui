@@ -1,5 +1,6 @@
 'use client';
 
+import { WatchedText } from '@/components/form/watched-value';
 import { useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusCircle, Trash2 } from 'lucide-react';
@@ -205,7 +206,7 @@ export default function ManageBranch() {
                   <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
                     <div>
                       <h3 className='text-lg font-semibold'>
-                        {form.watch(`branches.${index}.branch_name`) || `Branch ${index + 1}`}
+                        <WatchedText control={form.control} name={`branches.${index}.branch_name`} fallback={`Branch ${index + 1}`} />
                       </h3>
                       <p className='text-muted-foreground text-sm'>
                         Outline where this branch is located and who to contact.
