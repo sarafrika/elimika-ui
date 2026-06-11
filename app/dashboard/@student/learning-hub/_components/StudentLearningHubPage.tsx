@@ -12,7 +12,7 @@ export function StudentLearningHubPage() {
 
   return (
     <main className='w-full py-3 sm:py-4'>
-      <div className='space-y-4'>
+      <div className='space-y-4 pl-2'>
         <LearningHubHero
           firstName={data.firstName}
           studentName={data.studentName}

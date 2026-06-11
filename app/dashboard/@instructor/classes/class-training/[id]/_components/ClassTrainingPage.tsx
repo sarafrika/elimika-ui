@@ -26,7 +26,6 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { useClassDetails, type ClassDetailsScheduleItem } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
@@ -2150,7 +2149,6 @@ export default function ClassTrainingPage({
   const requestedLessonId = searchParams.get('lesson') ?? '';
   const requestedContentId = searchParams.get('content') ?? '';
   const requestedCourseId = searchParams.get('course') ?? '';
-  const { replaceBreadcrumbs } = useBreadcrumb();
   const userProfile = useUserProfile();
   const { data, isLoading, isError } = useClassDetails(classId);
   const { rosterAllEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
@@ -2172,22 +2170,6 @@ export default function ClassTrainingPage({
 
   const [activeTab, setActiveTab] = useState<'content' | 'practice' | 'assessment'>('content');
   const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>('students');
-
-
-  useEffect(() => {
-    if (!classId) return;
-
-    replaceBreadcrumbs([
-      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-      { id: 'classes', title: 'Classes', url: '/dashboard/classes' },
-      {
-        id: 'class-training',
-        title: 'Class Training',
-        url: `/dashboard/classes/class-training/${classId}`,
-        isLast: true,
-      },
-    ]);
-  }, [classId, replaceBreadcrumbs]);
 
   const classData = data.class;
   const course = data.course ?? data?.pCourses?.[0] ?? null;

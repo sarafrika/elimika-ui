@@ -22,7 +22,6 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { useClassDetails, type ClassDetailsScheduleItem } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
@@ -81,6 +80,7 @@ import { AssignmentContentPreview } from '../../../../../../../../components/con
 import { LessonContentPreview } from '../../../../../../../../components/content-preview/LessonContentPreview';
 import { QuizContentPreview } from '../../../../../../../../components/content-preview/QuizContentPreview';
 import RichTextRenderer from '../../../../../../../../components/editors/richTextRenders';
+import { getPreferredScheduleInstance } from '../../../../../../@instructor/classes/_components/new-class-page.utils';
 
 
 
@@ -1056,7 +1056,6 @@ export default function StudentClassTrainingPage({
   const requestedLessonId = searchParams.get('lesson') ?? '';
   const requestedContentId = searchParams.get('content') ?? '';
   const requestedCourseId = searchParams.get('course') ?? '';
-  const { replaceBreadcrumbs } = useBreadcrumb();
   const userProfile = useUserProfile();
   const { data, isLoading, isError } = useClassDetails(classId);
   const { rosterAllEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
@@ -1078,21 +1077,7 @@ export default function StudentClassTrainingPage({
   const appliedRouteContentSelectionRef = useRef('');
 
   const [activeTab, setActiveTab] = useState<'content' | 'practice' | 'assessment'>('content');
-
-  useEffect(() => {
-    if (!classId) return;
-
-    replaceBreadcrumbs([
-      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-      { id: 'classes', title: 'Classes', url: '/dashboard/classes' },
-      {
-        id: 'class-training',
-        title: 'Class Training',
-        url: `/dashboard/learning-hub/classes`,
-        isLast: true,
-      },
-    ]);
-  }, [classId, replaceBreadcrumbs]);
+  const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>('students');
 
   const classData = data.class;
   const course = data.course ?? data?.pCourses?.[0] ?? null;
@@ -1119,18 +1104,7 @@ export default function StudentClassTrainingPage({
   useEffect(() => {
     if (sortedSchedules.length === 0) return;
 
-    const requestedSchedule = sortedSchedules.find(
-      schedule => schedule.uuid === requestedScheduleId
-    );
-    const liveSchedule = sortedSchedules.find(schedule => getScheduleState(schedule) === 'live');
-    const todaySchedule = sortedSchedules.find(schedule =>
-      moment(schedule.start_time).isSame(moment(), 'day')
-    );
-    const upcomingSchedule = sortedSchedules.find(
-      schedule => getScheduleState(schedule) === 'upcoming'
-    );
-    const defaultSchedule =
-      requestedSchedule ?? liveSchedule ?? todaySchedule ?? upcomingSchedule ?? sortedSchedules[0];
+    const defaultSchedule = getPreferredScheduleInstance(sortedSchedules, requestedScheduleId);
 
     if (defaultSchedule?.uuid && activeScheduleId !== defaultSchedule.uuid) {
       setActiveScheduleId(defaultSchedule.uuid);

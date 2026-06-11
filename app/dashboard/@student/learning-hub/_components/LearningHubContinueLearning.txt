@@ -229,10 +229,6 @@ function CourseInfoRow({
 }
 
 import Image from 'next/image';
-import { LinkShareCard } from '../../../../../components/shared/link-share-card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../components/ui/dialog';
-import { buildSocialShareUrl, openShareWindow } from '../../../../../lib/share';
-import { socialShareActions } from '../../../@instructor/classes/overview/[id]/page';
 
 
 function ClassBanner({
@@ -279,90 +275,69 @@ function ClassBanner({
 }
 
 function ClassCard({ item }: { item: LearningHubClass }) {
-  const [shareOpen, setShareOpen] = useState(false);
-  const originUrl = typeof window !== 'undefined' ? window.location.origin : '';
-
-  const registrationLink = useMemo(() => {
-    if (!originUrl) return '';
-
-    if (item?.courseUuid) {
-      return `${originUrl}/dashboard/workspace/student/courses/available-classes/${item.courseUuid}/enroll?id=${item.id}`;
-    }
-
-    // if (program?.uuid) {
-    //   return `${siteOrigin}/dashboard/workspace/student/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
-    // }
-
-    return '';
-  }, [item.id, item.courseUuid, originUrl]);
-
-
   return (
-    <>
-      <article className="w-[320px] sm:min-w-[400px] sm:max-w-[410px] flex flex-col gap-2.5 rounded-[12px] border border-border/70 bg-card p-2 shadow-sm transition-shadow hover:shadow-md">
-        <ClassBanner bannerUrl={item.bannerUrl} bannerAlt={item.bannerUrl} title={item.title} />
+    <article className="w-[320px] sm:min-w-[400px] sm:max-w-[410px] flex flex-col gap-2.5 rounded-[12px] border border-border/70 bg-card p-2 shadow-sm transition-shadow hover:shadow-md">
+      <ClassBanner bannerUrl={item.bannerUrl} bannerAlt={item.bannerUrl} title={item.title} />
 
-        <div className="space-y-1.5">
-          <h3 className="text-[1rem] font-semibold text-foreground leading-snug line-clamp-2">
-            {item.title}
-          </h3>
-          <TagRow tags={item.tags} />
-        </div>
+      <div className="space-y-1.5">
+        <h3 className="text-[1rem] font-semibold text-foreground leading-snug line-clamp-2">
+          {item.title}
+        </h3>
+        <TagRow tags={item.tags} />
+      </div>
 
+      <div className="flex items-center justify-between">
+        <StarRating rating={item.rating} count={item.reviewCount} />
 
-        <div className="flex items-center justify-between">
-          <StarRating rating={item.rating} count={item.reviewCount} />
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-8 gap-1 bg-muted/50 hover:bg-muted"
-              onClick={() => setShareOpen(true)}
-            >
-              <Share className="h-3 w-3" />
-              <span className="text-xs">Share</span>
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-8 gap-1 bg-muted/50 hover:bg-destructive-50 hover:text-destructive dark:hover:bg-destructive-950/20"
-            >
-              <Heart className="h-3 w-3" />
-              <span className="text-xs">Wishlist</span>
-            </Button>
-          </div>
-        </div>
-
-        <p className="text-[0.74rem] text-muted-foreground leading-relaxed line-clamp-3">
-          {item.description}
-        </p>
-
-        <CourseInfoRow
-          instructorName={item.instructorName}
-          instructorAvatarUrl={item.instructorAvatarUrl}
-          duration={item.duration}
-          enrolledCount={item.enrolledCount}
-        />
-
-        <MetaStrip meta={item.meta} />
-
-        <div className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-          <span className="text-[0.85rem] font-semibold text-foreground">
-            From Ksh {item.price}
-          </span>
-
-          <Link
-            prefetch
-            href={item.href}
-            className={`inline-flex items-center justify-center gap-1.5 rounded-[7px] px-3.5 py-1.5 text-[0.78rem] font-medium transition hover:opacity-90 ${buttonAccentClasses[item.accent]}`}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-8 gap-1 bg-muted/50 hover:bg-muted"
           >
-            {item.ctaLabel}
-            <ChevronRight className="size-3.5" />
-          </Link>
+            <Share className="h-3 w-3" />
+            <span className="text-xs">Share</span>
+          </Button>
 
-          {/* <div className="flex justify-between items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-8 gap-1 bg-muted/50 hover:bg-destructive-50 hover:text-destructive dark:hover:bg-destructive-950/20"
+          >
+            <Heart className="h-3 w-3" />
+            <span className="text-xs">Wishlist</span>
+          </Button>
+        </div>
+      </div>
+
+      <p className="text-[0.74rem] text-muted-foreground leading-relaxed line-clamp-3">
+        {item.description}
+      </p>
+
+      <CourseInfoRow
+        instructorName={item.instructorName}
+        instructorAvatarUrl={item.instructorAvatarUrl}
+        duration={item.duration}
+        enrolledCount={item.enrolledCount}
+      />
+
+      <MetaStrip meta={item.meta} />
+
+      <div className="flex flex-wrap items-center justify-between gap-2 py-2.5">
+        <span className="text-[0.85rem] font-semibold text-foreground">
+          From Ksh {item.price}
+        </span>
+
+        <Link
+          prefetch
+          href={item.href}
+          className={`inline-flex items-center justify-center gap-1.5 rounded-[7px] px-3.5 py-1.5 text-[0.78rem] font-medium transition hover:opacity-90 ${buttonAccentClasses[item.accent]}`}
+        >
+          {item.ctaLabel}
+          <ChevronRight className="size-3.5" />
+        </Link>
+
+        {/* <div className="flex justify-between items-center gap-2">
           <Link
             prefetch
             href={item.href}
@@ -380,57 +355,8 @@ function ClassCard({ item }: { item: LearningHubClass }) {
             Search Instructor
           </Link>
         </div> */}
-        </div>
-      </article>
-
-      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Share {item.title}</DialogTitle>
-          </DialogHeader>
-
-          <DialogDescription></DialogDescription>
-
-          <LinkShareCard
-            description="Copy or share the registration link for enrollment."
-            title="Registration Link"
-            url={registrationLink}
-            footer={
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium">Share via</h4>
-
-                <div className="flex flex-wrap gap-2">
-                  {socialShareActions.map(
-                    ({ icon: Icon, label, platform }) => (
-                      <Button
-                        key={label}
-                        aria-label={`Share registration link on ${label}`}
-                        className="gap-2"
-                        disabled={!registrationLink}
-                        onClick={() =>
-                          openShareWindow(
-                            buildSocialShareUrl(platform, {
-                              title: item.title,
-                              url: registrationLink,
-                              description: `Check out this class: ${item.title}`,
-                            })
-                          )
-                        }
-                        size="sm"
-                        variant="outline"
-                      >
-                        <Icon className="h-4 w-4" />
-                        {label}
-                      </Button>
-                    )
-                  )}
-                </div>
-              </div>
-            }
-          />
-        </DialogContent>
-      </Dialog>
-    </>
+      </div>
+    </article>
   );
 }
 

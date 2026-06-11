@@ -314,17 +314,30 @@ export function StudentMyCoursesPage() {
           <h1 className='text-foreground text-[clamp(1.4rem,2vw,2rem)] font-bold tracking-[-0.03em]'>
             My Courses
           </h1>
-
         </div>
-        <Button
-          asChild
-          className='h-9 gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-none hover:bg-primary/80'
-        >
-          <Link href='/dashboard/workspace/student/courses'>
-            <Plus className='size-4' />
-            Enroll in New Course
-          </Link>
-        </Button>
+
+        <div className="flex flex-row items-center gap-4">
+          <Button
+            asChild
+            variant="outline"
+            className="h-9 gap-1.5 rounded-sm border-primary px-4 text-sm font-semibold text-primary hover:bg-primary/90"
+          >
+            <Link href="/dashboard/learning-hub">
+              <Plus className="size-4" />
+              My Classes
+            </Link>
+          </Button>
+
+          <Button
+            asChild
+            className="h-9 gap-1.5 rounded-sm bg-primary px-4 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+          >
+            <Link href="/dashboard/workspace/student/courses">
+              <Plus className="size-4" />
+              Enroll in New Course
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* ── Main layout: content + sidebar ──────────────────────────────── */}
@@ -469,7 +482,7 @@ export function StudentMyCoursesPage() {
           )}
         </div>
 
-        <aside className='w-full shrink-0 space-y-4 lg:w-[260px] xl:w-[280px]'>
+        <aside className='w-full shrink-0 space-y-4 lg:max-w-[280px] xl:max-w-[300px]'>
           <CourseProgressWidget
             total={enrolledCourseCards.length}
             inProgress={inProgressCards.length}
