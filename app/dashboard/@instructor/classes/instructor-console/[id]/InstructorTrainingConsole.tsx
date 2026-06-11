@@ -38,7 +38,7 @@ import {
   PanelRight,
   Search,
 } from 'lucide-react';
-import moment from 'moment';
+import { dayjs } from '@/lib/date';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -49,12 +49,12 @@ type LessonModule = CourseLessonWithContent;
 
 function formatDateTime(value?: string | Date | null) {
   if (!value) return 'Not scheduled';
-  return moment(value).format('ddd, MMM D · h:mm A');
+  return dayjs(value).format('ddd, MMM D · h:mm A');
 }
 
 function formatRange(start?: string | Date | null, end?: string | Date | null) {
   if (!start || !end) return 'Time not available';
-  return `${moment(start).format('ddd, MMM D')} · ${moment(start).format('h:mm A')} - ${moment(
+  return `${dayjs(start).format('ddd, MMM D')} · ${dayjs(start).format('h:mm A')} - ${dayjs(
     end
   ).format('h:mm A')}`;
 }
@@ -87,13 +87,13 @@ function getScheduleState(schedule?: { start_time?: string | Date; end_time?: st
   if (!schedule?.start_time || !schedule?.end_time) return 'upcoming' as const;
 
   if (
-    moment(schedule.start_time).isBefore(moment()) &&
-    moment(schedule.end_time).isAfter(moment())
+    dayjs(schedule.start_time).isBefore(dayjs()) &&
+    dayjs(schedule.end_time).isAfter(dayjs())
   ) {
     return 'live' as const;
   }
 
-  if (moment(schedule.end_time).isBefore(moment())) {
+  if (dayjs(schedule.end_time).isBefore(dayjs())) {
     return 'completed' as const;
   }
 
@@ -534,7 +534,7 @@ export default function InstructorTrainingConsole() {
 
   const sortedSchedules = useMemo<TrainingSchedule[]>(
     () =>
-      [...schedules].sort((left, right) => moment(left.start_time).diff(moment(right.start_time))),
+      [...schedules].sort((left, right) => dayjs(left.start_time).diff(dayjs(right.start_time))),
     [schedules]
   );
 

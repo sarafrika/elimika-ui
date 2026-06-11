@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -21,7 +22,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { asRecord, getFieldErrorMessage } from '@/lib/error-utils';
-import { queryClient } from '@/lib/query-client';
 import { profilePicSvg } from '@/lib/utils';
 import { type User, updateOrganisation, updateUser } from '@/services/client';
 import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
@@ -69,6 +69,7 @@ const getContextCountryName = (context: unknown): string | undefined => {
 };
 
 export default function TrainingCenterForm() {
+  const queryClient = useQueryClient();
   useOrganisationAccountBreadcrumb(
     'training-center',
     'Training Center',

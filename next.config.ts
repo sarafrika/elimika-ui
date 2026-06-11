@@ -49,6 +49,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '100mb',
     },
+    optimizePackageImports: ['lucide-react', 'recharts', 'date-fns'],
   },
   images: {
     remotePatterns,

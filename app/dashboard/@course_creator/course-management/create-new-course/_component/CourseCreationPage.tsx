@@ -2,13 +2,12 @@
 
 import { Button } from '@/components/ui/button';
 import Spinner from '@/components/ui/spinner';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookCheck, MoveLeft, Undo2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCourseCreator } from '../../../../../../context/course-creator-context';
-import { queryClient } from '../../../../../../lib/query-client';
 import {
   getCourseByUuidOptions,
   getCourseByUuidQueryKey,
@@ -27,6 +26,7 @@ const getErrorMessage = (error: unknown) =>
     : undefined;
 
 const CourseCreationPage = () => {
+  const queryClient = useQueryClient();
   const router = useRouter();
   const creator = useCourseCreator();
   const searchParams = useSearchParams();

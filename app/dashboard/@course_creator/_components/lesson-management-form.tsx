@@ -39,7 +39,7 @@ import {
 import { toast } from 'sonner';
 import * as z from 'zod';
 import RichTextRenderer from '@/components/editors/richTextRenders';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

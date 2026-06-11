@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { dayjs } from '@/lib/date';
 
 type ClassSchedule = {
   uuid: string;
@@ -42,7 +42,7 @@ export default function ClassScheduleList({ schedules }: Props) {
           </div>
           <div className='text-muted-foreground mt-2 text-sm'>
             <p>
-              <strong>Date:</strong> {moment(item.start_time).format('dddd, MMMM Do YYYY')}
+              <strong>Date:</strong> {dayjs(item.start_time).format('dddd, MMMM Do YYYY')}
             </p>
             <p>
               <strong>Time:</strong> {item.time_range} ({item.duration_formatted})

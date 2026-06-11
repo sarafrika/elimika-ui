@@ -36,7 +36,7 @@ import { RequirementTypeEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { AddCategoryFormItem } from '@/components/add-category-formfield';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,

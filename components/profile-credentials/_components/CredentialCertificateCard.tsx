@@ -2,7 +2,6 @@
 
 import { ChevronRight } from 'lucide-react';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
-import * as pdfjsLib from 'pdfjs-dist';
 import { useEffect, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { loadPdfjs } from '@/lib/pdfjs';
 import { cn } from '@/lib/utils';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
@@ -28,13 +28,6 @@ type CredentialCertificateCardProps = {
   onDelete?: (item: CredentialItem) => void;
   isDeleting?: boolean;
 };
-
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url
-  ).toString();
-}
 
 function getStatusTone(status: string) {
   const normalized = status.toLowerCase();
@@ -104,6 +97,7 @@ export function GeneralPdfPreview({ documentUrl, documentLabel }: { documentUrl:
     const load = async () => {
       try {
         setError(null);
+        const pdfjsLib = await loadPdfjs();
         const pdf = await pdfjsLib.getDocument(resolvedUrl).promise;
         if (cancelled) return;
         pdfDoc = pdf;
