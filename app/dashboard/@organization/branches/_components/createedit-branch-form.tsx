@@ -1,5 +1,6 @@
 'use client';
-import { zodResolver } from '@hookform/resolvers/zod';
+
+import { useQueryClient } from '@tanstack/react-query';import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -26,7 +27,6 @@ import {
 } from '../../../../../components/ui/form';
 import { Input } from '../../../../../components/ui/input';
 import { useOrganisation } from '../../../../../context/organisation-context';
-import { queryClient } from '../../../../../lib/query-client';
 import {
   createTrainingBranch,
   type TrainingBranch,
@@ -55,6 +55,7 @@ export default function CreateEditBranchform({
   branch?: TrainingBranch;
   onSave?: () => void;
 }) {
+  const queryClient = useQueryClient();
   const form = useForm<BranchType>({
     resolver: zodResolver(BranchSchema),
     defaultValues: branch,

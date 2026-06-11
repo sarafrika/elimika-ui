@@ -47,7 +47,6 @@ import {
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { LessonContentViewerDialog } from '../../../../../../components/content-preview/LessonContentPreview';
 import { useClassDetails } from '../../../../../../hooks/use-class-details';
 import { useProgramLessonsWithContent } from '../../../../../../hooks/use-programlessonwithcontent';

@@ -87,7 +87,7 @@ import {
   Video,
   XCircle,
 } from 'lucide-react';
-import moment from 'moment';
+import { dayjs } from '@/lib/date';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { LessonContentViewerDialog } from '../content-preview/LessonContentPreview';
@@ -192,7 +192,7 @@ function groupSchedules(schedules: ManagedScheduleItem[], groupBy: Props['groupB
   const groups = new Map<string, ManagedScheduleItem[]>();
 
   schedules.forEach(schedule => {
-    const start = moment(schedule.start_time);
+    const start = dayjs(schedule.start_time);
     const label =
       groupBy === 'day'
         ? start.format('dddd, MMM D, YYYY')
@@ -207,7 +207,7 @@ function groupSchedules(schedules: ManagedScheduleItem[], groupBy: Props['groupB
 
   return Array.from(groups.entries()).map(([label, items]) => ({
     label,
-    items: items.sort((a, b) => moment(a.start_time).diff(moment(b.start_time))),
+    items: items.sort((a, b) => dayjs(a.start_time).diff(dayjs(b.start_time))),
   }));
 }
 
@@ -262,7 +262,7 @@ export function ClassScheduleManager({
   const groupedSchedules = useMemo(
     () =>
       groupSchedules(
-        [...schedules].sort((a, b) => moment(a.start_time).diff(moment(b.start_time))),
+        [...schedules].sort((a, b) => dayjs(a.start_time).diff(dayjs(b.start_time))),
         groupBy
       ),
     [groupBy, schedules]
@@ -753,12 +753,12 @@ export function ClassScheduleManager({
 
             <div className='grid gap-4 2xl:grid-cols-2'>
               {group.items.map(schedule => {
-                const isPast = moment(schedule.end_time).isBefore(moment());
+                const isPast = dayjs(schedule.end_time).isBefore(dayjs());
                 const isLive =
-                  moment(schedule.start_time).isBefore(moment()) &&
-                  moment(schedule.end_time).isAfter(moment());
-                const startedAt = schedule.started_at ? moment(schedule.started_at) : null;
-                const concludedAt = schedule.concluded_at ? moment(schedule.concluded_at) : null;
+                  dayjs(schedule.start_time).isBefore(dayjs()) &&
+                  dayjs(schedule.end_time).isAfter(dayjs());
+                const startedAt = schedule.started_at ? dayjs(schedule.started_at) : null;
+                const concludedAt = schedule.concluded_at ? dayjs(schedule.concluded_at) : null;
                 const status = schedule.status?.toUpperCase();
                 const isCancelled = status === 'CANCELLED';
                 const isBlocked = status === 'BLOCKED';
@@ -827,9 +827,9 @@ export function ClassScheduleManager({
                               {schedule.classTitle}
                             </h3>
                             <p className='text-muted-foreground text-sm'>
-                              {moment(schedule.start_time).format('dddd, MMM D')} ·{' '}
-                              {moment(schedule.start_time).format('h:mm A')} -{' '}
-                              {moment(schedule.end_time).format('h:mm A')}
+                              {dayjs(schedule.start_time).format('dddd, MMM D')} ·{' '}
+                              {dayjs(schedule.start_time).format('h:mm A')} -{' '}
+                              {dayjs(schedule.end_time).format('h:mm A')}
                             </p>
                           </div>
                         </div>
@@ -997,7 +997,7 @@ export function ClassScheduleManager({
                 <SheetTitle>Attendance management</SheetTitle>
                 <SheetDescription>
                   {selectedSchedule
-                    ? `${selectedSchedule.classTitle} · ${moment(selectedSchedule.start_time).format('dddd, MMM D, h:mm A')}`
+                    ? `${selectedSchedule.classTitle} · ${dayjs(selectedSchedule.start_time).format('dddd, MMM D, h:mm A')}`
                     : 'Select attendance for this class session.'}
                 </SheetDescription>
               </SheetHeader>
@@ -1161,7 +1161,7 @@ export function ClassScheduleManager({
               <SheetTitle>Add assignment</SheetTitle>
               <SheetDescription>
                 {selectedSchedule
-                  ? `Schedule work for ${selectedSchedule.classTitle} on ${moment(selectedSchedule.start_time).format('MMM D, YYYY')}.`
+                  ? `Schedule work for ${selectedSchedule.classTitle} on ${dayjs(selectedSchedule.start_time).format('MMM D, YYYY')}.`
                   : 'Choose an assignment to attach to this session.'}
               </SheetDescription>
             </SheetHeader>
@@ -1262,7 +1262,7 @@ export function ClassScheduleManager({
               <SheetTitle>Add quiz</SheetTitle>
               <SheetDescription>
                 {selectedSchedule
-                  ? `Schedule a quiz for ${selectedSchedule.classTitle} on ${moment(selectedSchedule.start_time).format('MMM D, YYYY')}.`
+                  ? `Schedule a quiz for ${selectedSchedule.classTitle} on ${dayjs(selectedSchedule.start_time).format('MMM D, YYYY')}.`
                   : 'Choose a quiz to attach to this session.'}
               </SheetDescription>
             </SheetHeader>
@@ -1417,7 +1417,7 @@ export function ClassScheduleManager({
                               <div className='text-muted-foreground flex flex-wrap gap-2 text-xs'>
                                 <span className='inline-flex items-center gap-1'>
                                   <Calendar className='h-3.5 w-3.5' />
-                                  Due {moment(item.due_at).format('MMM D, YYYY')}
+                                  Due {dayjs(item.due_at).format('MMM D, YYYY')}
                                 </span>
                                 <span className='inline-flex items-center gap-1'>
                                   <Award className='h-3.5 w-3.5' />

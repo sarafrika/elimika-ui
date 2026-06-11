@@ -10,7 +10,6 @@ import {
   Users,
 } from 'lucide-react';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
-import * as pdfjsLib from 'pdfjs-dist';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -44,6 +43,7 @@ import {
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
+import { loadPdfjs } from '@/lib/pdfjs';
 import { cn } from '@/lib/utils';
 import type {
   CourseCreator,
@@ -115,13 +115,6 @@ type ReviewSheetState = {
 };
 
 const PAGEABLE = { page: 0, size: 200, sort: ['desc'] };
-
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url
-  ).toString();
-}
 
 function formatDate(value?: Date | string) {
   if (!value) return 'Recently';
@@ -405,6 +398,7 @@ export function PdfPreview({
     const load = async () => {
       try {
         setError(null);
+        const pdfjsLib = await loadPdfjs();
         const pdf = await pdfjsLib.getDocument(resolvedUrl).promise;
         if (cancelled) return;
         pdfDoc = pdf;

@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -20,7 +21,6 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { asRecord, getFieldErrorMessage } from '@/lib/error-utils';
-import { queryClient } from '@/lib/query-client';
 import { type ApiResponse, createTrainingBranch, updateTrainingBranch } from '@/services/client';
 import { zTrainingBranch } from '@/services/client/zod.gen';
 import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
@@ -51,6 +51,7 @@ type BranchType = z.infer<typeof branchSchema>;
 type BranchesFormValues = z.infer<typeof branchesSchema>;
 
 export default function ManageBranch() {
+  const queryClient = useQueryClient();
   useOrganisationAccountBreadcrumb('branches', 'Branches', '/dashboard/account/branches');
 
   const userProfile = useUserProfile();

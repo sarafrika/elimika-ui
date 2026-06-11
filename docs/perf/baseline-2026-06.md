@@ -79,3 +79,14 @@ Every request additionally pays an `auth()` JWT decode in `app/api/proxy/[...pat
 | Students page requests | S + 4 | — | ≤ 3 | — |
 | Class-details waterfall depth | 3 | — | ≤ 2 | — |
 | tsc errors | 838 | no increase | no increase | 0 |
+
+## 6. Phase 1 results (2026-06-11)
+
+Snapshot: `route-sizes-phase1.json`. Diff: `node scripts/perf/route-sizes.mjs --compare docs/perf/route-sizes-baseline.json`.
+
+- **Worst dashboard route: 2.72 MB → 1.92 MB (−29%)** — target ≤ 2.0 MB met.
+- Heavy pages down 20–48%: create-new-course 2.69 → 1.83 MB, training-hub 2.34 → 1.67 MB, class-training 2.26 → 1.59 MB, learning-hub class 2.22 → 1.55 MB, onboarding −33%.
+- Median 1.44 → 1.43 MB — barely moved because every dashboard route shares a heavy common layout bundle; that is the Phase 4 (server-component push-down / monolith split) problem, as predicted.
+- Routes: 183 → 176 (dead `old-*` routes removed). Two +3% chunk-reshuffle regressions on enroll pages, accepted.
+
+What changed: ReactQueryDevtools out of prod; ~14k lines dead code deleted (old-* routes, unused plate/slate editor kit, unused pdfmake/certificate, unused mapbox + react-big-calendar + read-excel-file packages — **7 dependencies uninstalled**); pdfjs lazy-loaded via `lib/pdfjs.ts`; tiptap editor lazy via `simple-editor-lazy.tsx`; recharts pages dynamic-imported; moment → dayjs (`lib/date.ts`) and moment uninstalled; `optimizePackageImports` for lucide-react/recharts/date-fns.

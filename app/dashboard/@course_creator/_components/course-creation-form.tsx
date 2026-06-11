@@ -1,6 +1,6 @@
 'use client';
 
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

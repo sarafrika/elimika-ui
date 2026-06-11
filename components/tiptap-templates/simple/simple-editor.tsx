@@ -165,7 +165,7 @@ const MobileToolbarContent = ({
   </>
 );
 
-type SimpleEditorProps = {
+export type SimpleEditorProps = {
   initialContent?: string;
   value?: string;
   onChange?: (value: string) => void;

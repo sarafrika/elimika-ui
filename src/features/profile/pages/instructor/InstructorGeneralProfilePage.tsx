@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
@@ -10,7 +11,7 @@ import * as z from 'zod';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import ImageSelector, { type ImageType } from '@/components/image-selector';
 import LocationInput from '@/components/locationInput';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -34,7 +35,6 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { queryClient } from '@/lib/query-client';
 import { cn, profilePicSvg } from '@/lib/utils';
 import {
   createInstructor,
@@ -80,6 +80,7 @@ const generalProfileSchema = z.object({
 type GeneralProfileFormValues = z.infer<typeof generalProfileSchema>;
 
 export default function InstructorProfile() {
+  const queryClient = useQueryClient();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 

@@ -16,7 +16,13 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { formatCount } from '@/lib/metrics';
 import KPICards from './KPICards';
-import AnalyticsCharts from './AnalyticsCharts';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const AnalyticsCharts = dynamic(() => import('./AnalyticsCharts'), {
+  ssr: false,
+  loading: () => <Skeleton className='h-80 w-full' />,
+});
 import SystemHealth from './SystemHealth';
 import ActivityFeed from './ActivityFeed';
 import MetricsBreakdown from './MetricsBreakdown';

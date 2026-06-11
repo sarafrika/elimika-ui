@@ -71,7 +71,7 @@ import {
   PanelRight,
   Search
 } from 'lucide-react';
-import moment from 'moment';
+import { dayjs } from '@/lib/date';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -128,12 +128,12 @@ function getSubmissionDisplayStatus(submission?: AssignmentSubmission | null) {
 
 function formatDateTime(value?: string | Date | null) {
   if (!value) return 'Not scheduled';
-  return moment(value).format('ddd, MMM D · h:mm A');
+  return dayjs(value).format('ddd, MMM D · h:mm A');
 }
 
 function formatDateTimeInput(value?: string | Date | null) {
   if (!value) return '';
-  const date = moment(value);
+  const date = dayjs(value);
   return date.isValid() ? date.format('YYYY-MM-DDTHH:mm') : '';
 }
 
@@ -161,7 +161,7 @@ function getApiToastMessage(error: unknown, fallback: string) {
 
 function formatRange(start?: string | Date | null, end?: string | Date | null) {
   if (!start || !end) return 'Time not available';
-  return `${moment(start).format('ddd, MMM D')} · ${moment(start).format('h:mm A')} - ${moment(
+  return `${dayjs(start).format('ddd, MMM D')} · ${dayjs(start).format('h:mm A')} - ${dayjs(
     end
   ).format('h:mm A')}`;
 }
@@ -237,13 +237,13 @@ function getScheduleState(schedule?: { start_time?: string | Date; end_time?: st
   if (!schedule?.start_time || !schedule?.end_time) return 'upcoming' as const;
 
   if (
-    moment(schedule.start_time).isBefore(moment()) &&
-    moment(schedule.end_time).isAfter(moment())
+    dayjs(schedule.start_time).isBefore(dayjs()) &&
+    dayjs(schedule.end_time).isAfter(dayjs())
   ) {
     return 'live' as const;
   }
 
-  if (moment(schedule.end_time).isBefore(moment())) {
+  if (dayjs(schedule.end_time).isBefore(dayjs())) {
     return 'completed' as const;
   }
 
@@ -1097,7 +1097,7 @@ export default function StudentClassTrainingPage({
 
   const sortedSchedules = useMemo<TrainingSchedule[]>(
     () =>
-      [...schedules].sort((left, right) => moment(left.start_time).diff(moment(right.start_time))),
+      [...schedules].sort((left, right) => dayjs(left.start_time).diff(dayjs(right.start_time))),
     [schedules]
   );
 
@@ -1383,13 +1383,13 @@ export default function StudentClassTrainingPage({
       setAssignmentDueAt(formatDateTimeInput(activeSchedule.end_time));
     }
     if (!assignmentGradingDueAt && activeSchedule?.end_time) {
-      setAssignmentGradingDueAt(moment(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm'));
+      setAssignmentGradingDueAt(dayjs(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm'));
     }
     if (!quizDueAt && activeSchedule?.end_time) {
       setQuizDueAt(formatDateTimeInput(activeSchedule.end_time));
     }
     if (!quizGradingDueAt && activeSchedule?.end_time) {
-      setQuizGradingDueAt(moment(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm'));
+      setQuizGradingDueAt(dayjs(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm'));
     }
   }, [
     activeSchedule,
@@ -1498,7 +1498,7 @@ export default function StudentClassTrainingPage({
     const assignmentGradingDueDate = assignmentGradingDueAt
       ? new Date(assignmentGradingDueAt)
       : assignmentDueDate
-        ? moment(assignmentDueDate).add(7, 'days').toDate()
+        ? dayjs(assignmentDueDate).add(7, 'days').toDate()
         : undefined;
 
     if (
@@ -1560,7 +1560,7 @@ export default function StudentClassTrainingPage({
     const quizGradingDueDate = quizGradingDueAt
       ? new Date(quizGradingDueAt)
       : quizDueDate
-        ? moment(quizDueDate).add(7, 'days').toDate()
+        ? dayjs(quizDueDate).add(7, 'days').toDate()
         : undefined;
 
     if (
