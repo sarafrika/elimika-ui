@@ -2,6 +2,7 @@
 
 import { CalendarDays } from 'lucide-react';
 import { Button } from '../../../../components/ui/button';
+import { Skeleton } from '../../../../components/ui/skeleton';
 import { OverviewClassInvitesPanel } from './_components/OverviewClassInvitesPanel';
 import { OverviewCourseListPanel } from './_components/OverviewCourseListPanel';
 import { OverviewEarningPanel } from './_components/OverviewEarningPanel';
@@ -16,8 +17,36 @@ type InstructorOverviewPageProps = {
 };
 
 export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProps) {
-  const { activeCourses, classInvites, courseSummary, earningOverview, liveClasses, stats, upcomingClasses } =
-    useInstructorOverviewData();
+  const {
+    activeCourses,
+    classInvites,
+    courseSummary,
+    earningOverview,
+    liveClasses,
+    stats,
+    upcomingClasses,
+    isLoading,
+  } = useInstructorOverviewData();
+
+  if (isLoading) {
+    return (
+      <main className='w-full mb-20'>
+        <div className='space-y-3 px-2 py-2 sm:px-3 lg:px-4'>
+          <Skeleton className='h-16 w-full rounded-2xl' />
+          <div className='grid gap-3 sm:grid-cols-2 2xl:grid-cols-4'>
+            {[0, 1, 2, 3].map(idx => (
+              <Skeleton key={idx} className='h-28 w-full rounded-2xl' />
+            ))}
+          </div>
+          <div className='grid gap-3 xl:grid-cols-3'>
+            {[0, 1, 2].map(idx => (
+              <Skeleton key={idx} className='h-96 w-full rounded-2xl' />
+            ))}
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className='w-full mb-20'>

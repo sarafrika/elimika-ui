@@ -170,7 +170,9 @@ export function useInstructorOverviewData() {
     ...classes.map(c => c.uuid ?? ''),
   ]);
 
-  const assignmentScheduleQueries = useQueries({
+  // `combine` gives the result a stable identity (structural sharing), so the
+  // downstream memo chain doesn't recompute on every unrelated render.
+  const { schedules: assignmentSchedules, isLoading: isLoadingAssignments } = useQueries({
     queries: classes.map(cls => ({
       ...getAssignmentSchedulesOptions({
         path: { classUuid: cls.uuid ?? '' },
@@ -178,13 +180,11 @@ export function useInstructorOverviewData() {
       enabled: Boolean(cls.uuid),
       staleTime: 60 * 1000,
     })),
+    combine: results => ({
+      schedules: results.flatMap(query => (query.data?.data ?? []) as ClassAssignmentSchedule[]),
+      isLoading: results.some(query => query.isLoading),
+    }),
   });
-
-  const assignmentSchedules = useMemo(
-    () =>
-      assignmentScheduleQueries.flatMap(query => (query.data?.data ?? []) as ClassAssignmentSchedule[]),
-    [assignmentScheduleQueries]
-  );
 
   const waitlistedEnrollments = useMemo(
     () =>
@@ -208,24 +208,28 @@ export function useInstructorOverviewData() {
     [waitlistedEnrollments]
   );
 
-  const waitlistedStudentQueries = useQueries({
+  const { students: waitlistedStudents, isLoading: isLoadingWaitlistedStudents } = useQueries({
     queries: waitlistedStudentIds.map(studentId => ({
       ...getStudentByIdOptions({ path: { uuid: studentId } }),
       enabled: Boolean(studentId),
       staleTime: 5 * 60 * 1000,
     })),
+    combine: results => ({
+      students: results.map(query => query.data),
+      isLoading: results.some(query => query.isLoading),
+    }),
   });
 
   const studentMap = useMemo(() => {
     const map = new Map<string, Student>();
     waitlistedStudentIds.forEach((studentId, index) => {
-      const student = waitlistedStudentQueries[index]?.data;
+      const student = waitlistedStudents[index];
       if (student) {
         map.set(studentId, student);
       }
     });
     return map;
-  }, [waitlistedStudentIds, waitlistedStudentQueries]);
+  }, [waitlistedStudentIds, waitlistedStudents]);
 
   const { data: revenueDashboardResponse, isLoading: isLoadingRevenue } = useQuery({
     ...getRevenueDashboard1Options({
@@ -564,8 +568,8 @@ export function useInstructorOverviewData() {
     isLoadingRevenue ||
     isLoadingPayments ||
     isLoadingEnrollment ||
-    assignmentScheduleQueries.some(query => query.isLoading) ||
-    waitlistedStudentQueries.some(query => query.isLoading);
+    isLoadingAssignments ||
+    isLoadingWaitlistedStudents;
 
   return {
     activeCourses,
@@ -582,7 +586,7 @@ export function useInstructorOverviewData() {
     isLoadingRevenue,
     isLoadingPayments,
     isLoadingEnrollment,
-    isLoadingAssignments: assignmentScheduleQueries.some(query => query.isLoading),
-    isLoadingWaitlistedStudents: waitlistedStudentQueries.some(query => query.isLoading),
+    isLoadingAssignments,
+    isLoadingWaitlistedStudents,
   };
 }

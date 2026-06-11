@@ -8,7 +8,14 @@ import {
 } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { createContext, type ReactNode, useCallback, useContext, useEffect } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+} from 'react';
 import type { UserProfileType } from '@/lib/types';
 import {
   type CourseCreator,
@@ -55,21 +62,22 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
     }
   }, [status, clearProfile, router]);
 
-  return (
-    <UserProfileContext.Provider
-      value={{
-        ...(data ?? {}),
-        isLoading,
-        invalidateQuery: async () => {
-          await qc.invalidateQueries({ queryKey: ['profile'] });
-          await refetch();
-        },
-        clearProfile,
-      }}
-    >
-      {children}
-    </UserProfileContext.Provider>
+  const invalidateQuery = useCallback(async () => {
+    await qc.invalidateQueries({ queryKey: ['profile'] });
+    await refetch();
+  }, [qc, refetch]);
+
+  const value = useMemo(
+    () => ({
+      ...(data ?? {}),
+      isLoading,
+      invalidateQuery,
+      clearProfile,
+    }),
+    [data, isLoading, invalidateQuery, clearProfile]
   );
+
+  return <UserProfileContext.Provider value={value}>{children}</UserProfileContext.Provider>;
 }
 
 async function fetchUserProfile(email: string): Promise<UserProfileType> {
