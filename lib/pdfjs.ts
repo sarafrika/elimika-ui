@@ -3,6 +3,8 @@
  * this helper from an event handler or effect — a static `import 'pdfjs-dist'`
  * pulls the whole library into the route's first-load bundle.
  */
+export type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
+
 export async function loadPdfjs() {
   const pdfjs = await import('pdfjs-dist');
   if (typeof window !== 'undefined' && !pdfjs.GlobalWorkerOptions.workerSrc) {

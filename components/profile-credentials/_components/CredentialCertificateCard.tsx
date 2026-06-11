@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronRight } from 'lucide-react';
-import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
+
 import { useEffect, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { loadPdfjs } from '@/lib/pdfjs';
+import { loadPdfjs, type PDFDocumentProxy, type PDFPageProxy } from '@/lib/pdfjs';
 import { cn } from '@/lib/utils';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 

@@ -1,6 +1,6 @@
-import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
+
 import React, { useEffect, useRef, useState } from 'react';
-import { loadPdfjs } from '@/lib/pdfjs';
+import { loadPdfjs, type PDFDocumentProxy, type PDFPageProxy } from '@/lib/pdfjs';
 
 interface PDFViewerProps {
   file: string; // URL or path to PDF
