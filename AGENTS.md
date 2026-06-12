@@ -26,6 +26,19 @@ Use TypeScript throughout. Name components `PascalCase.tsx`, hooks `useThing.ts`
 - The default query serializer rejects nested arrays inside objects. Don't pass `pageable: { sort: [] }` — omit empty arrays; if a real sort is needed, configure a custom `querySerializer` at the call site.
 - Path templates with `{cartId}`-style placeholders: only build the options object when the id is truthy. Empty-string fallbacks can leak literal placeholders into URLs.
 
+## Performance guardrails
+These came out of the June 2026 performance post-mortem (`docs/perf/post-mortem.md`, `docs/perf/hardening-round-2026-06-12.md`). Each rule maps to a real production slowdown — do not regress them:
+- **Request budget**: a page should issue ≤ ~12 API requests for a typical user. Never fire a query per row/entity. Look up entities by id through `hooks/use-batched-lookups.ts` (`useUsersByIds`, `useStudentsByIds`, `useCoursesByIds`, `useInstructorsByIds`) — the API's `*_in` search filters (e.g. `uuid_in=a,b,c`) are verified working. If composing hooks multiplies requests by N, restructure before shipping.
+- **Never fetch unbounded pages to read a few rows** — no `pageable: { size: 1000 }` map hooks. Scope requests to the ids actually on screen.
+- **Gate every query whose path/query params can be undefined** with a React Query `enabled:` option. An undefined path param sends a literal `{uuid}` placeholder to the API. `enabled` must be a top-level query option — nested inside the API `query: {}` object it is silently sent as a query-string param and does nothing (Biome blocks this pattern).
+- **`LocalDate` API params** (timetable `start`/`end` etc.): pass `localDate(...)` from `lib/date.ts`, never a raw `Date` — the serializer turns `Date` into a full ISO datetime, which the backend rejects.
+- **No `form.watch()` in render** — it re-renders the entire form per keystroke. Use `useWatch({ control, name })` inside a small subscriber component (`components/form/watched-value.tsx` has `WatchedText`/`WatchedValue`). Biome warns on `form.watch(...)`.
+- **Memoize context provider values**; `useMemo` derived lists; defer/debounce search-driven filtering (`useDeferredValue`).
+- **Heavy libraries load lazily**: pdfjs via `lib/pdfjs.ts`, the tiptap editor via `simple-editor-lazy`, charts/viewers via `next/dynamic`. Biome's `noRestrictedImports` enforces the known ones; extend it when you wrap a new heavy library.
+- **staleTime is deliberate**: pick a tier from `lib/query-client.ts` (`STALE_TIMES.reference/entity/live`). Shell data (wallet, profile) must not refetch on every navigation; polls (notifications) are ≥ 60s and dropdown content fetches on open, not on page load.
+- **Media URLs from the API** (`profile_image_url`, thumbnails) must go through `toAuthenticatedMediaUrl` (`src/lib/media-url.ts`) — direct hits on the API host are unauthenticated.
+- **Measure before/after**: `npx next experimental-analyze -o` + `node scripts/perf/route-sizes.mjs --compare docs/perf/route-sizes-phase4.json` for bundles (`@next/bundle-analyzer` does not work with Turbopack); `scripts/perf/login.mjs` + `scripts/perf/page-audit.mjs --domain <role>` for authenticated request counts/time-to-data. `scripts/perf/ts-error-ratchet.mjs` must pass (`--update` to lock in reductions).
+
 ## Brand-color guard
 `scripts/check-brand-colors.mjs` runs as part of `pnpm lint`. It enforces two tiers:
 - **Blocking** — legacy palette classes (`*-blue-…`, `*-red-…`, `*-gray-…` etc.) and raw hex outside an allowlist. Fix before merging.
