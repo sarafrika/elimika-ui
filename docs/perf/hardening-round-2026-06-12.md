@@ -93,16 +93,17 @@ per call). The "failed requests" on most pages are the dead-media 404s
 ### Newly exposed storms (previously masked by the role-switching bug)
 
 Now that every page renders its true role content, four more per-entity
-storms surfaced. Each is attributed and has a known fix pattern; they need
-either a UI decision or a backend endpoint, so they are queued rather than
-patched blind:
+storms surfaced.
 
-| Page | Requests | Dominant pattern | Recommended fix |
-|---|---|---|---|
-| admin `/dashboard/verifications` | 91 | 14× `instructors/{id}/documents` + 9× `course-creators/{id}/documents` + per-entity education/memberships | **Backend**: a "pending verification documents" listing endpoint; per-entity fetches only on row expand |
-| admin `/dashboard/calendar` | 86 | 29× `classes/{id}/schedule` + 20× `classes/{id}/enrollments` + 11× `students/{id}` | **Backend**: admin/global timetable range endpoint (instructor/student variants exist); students via existing `uuid_in` batch |
-| student `/dashboard/courses` | 60 | 15× `courses/{id}/reviews` + 15× `courses/{id}/enrollments` (full review lists fetched just to average ratings client-side) | **Backend**: rating summary on the course entity or a batch rating endpoint; meanwhile fetch ratings only for visible cards |
-| admin `/dashboard/classes` | 47 | 29× `classes/{id}/schedule` | Same global-timetable endpoint as admin calendar |
+All four were then fixed frontend-side as far as the existing API allows
+(verified live):
+
+| Page | Before | After | What was done | Still needs backend |
+|---|---|---|---|---|
+| admin `/dashboard/verifications` | 91 reqs, 15 failed | **25 reqs, 1 failed** | Per-entity documents/education/memberships/experience replaced with batched `*_in` searches; PDF card previews lazy-load on scroll; creator documents fetch only on their tab | Creator-documents search endpoint; dead media cleanup |
+| admin `/dashboard/calendar` | 86 reqs | **44 reqs** | Schedules via one timetable call per distinct instructor (29→4); instructors/users/students batched | Enrollment batch (20× per-class remains); global timetable endpoint would simplify |
+| admin `/dashboard/classes` | 47 reqs | **15 reqs** | Same `use-admin-classes` rewrite (shared hook) | — |
+| student `/dashboard/courses` | 60 reqs (huge payloads) | 60 reqs, tiny payloads | Enrollment counts now read from page metadata (size-1 requests instead of 10,000-row pages); ratings cached 30 min; duplicate review queries deduped by key | Course rating summary (or rating fields on Course) to remove the 15 per-course review fetches |
 
 ## Re-audit data
 

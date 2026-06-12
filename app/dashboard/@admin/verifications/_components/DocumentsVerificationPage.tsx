@@ -64,15 +64,15 @@ import {
   getAllInstructorsOptions,
   getAllStudentsOptions,
   getCourseCreatorDocumentsOptions,
+  searchCourseCreatorEducationOptions,
+  searchCourseCreatorExperienceOptions,
+  searchCourseCreatorMembershipsOptions,
+  searchDocumentsOptions,
+  searchEducationOptions,
+  searchExperienceOptions,
+  searchMembershipsOptions,
   getCourseCreatorDocumentsQueryKey,
-  getCourseCreatorEducationOptions,
-  getCourseCreatorExperienceOptions,
-  getCourseCreatorMembershipsOptions,
-  getInstructorDocumentsOptions,
   getInstructorDocumentsQueryKey,
-  getInstructorEducationOptions,
-  getInstructorExperienceOptions,
-  getInstructorMembershipsOptions,
   listDocumentTypesOptions,
   verifyCourseCreatorDocumentMutation,
   verifyDocumentMutation
@@ -364,10 +364,31 @@ export function PdfPreview({
 }) {
   const resolvedUrl = toAuthenticatedMediaUrl(documentUrl) || documentUrl;
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [inView, setInView] = useState(fullHeight);
+
+  // Card previews only download their PDF once near the viewport — the
+  // verifications list was eagerly fetching every document up front.
+  useEffect(() => {
+    if (fullHeight) return;
+    const node = previewContainerRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fullHeight]);
 
   useEffect(() => {
-    if (!documentUrl) return;
+    if (!documentUrl || !inView) return;
 
     let cancelled = false;
     let pdfDoc: PDFDocumentProxy | null = null;
@@ -415,10 +436,11 @@ export function PdfPreview({
       cancelled = true;
       pdfDoc?.destroy().catch(() => { });
     };
-  }, [documentUrl, resolvedUrl]);
+  }, [documentUrl, resolvedUrl, inView, fullHeight]);
 
   return (
     <div
+      ref={previewContainerRef}
       className={cn(
         'relative overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-3',
         fullHeight ? 'h-auto' : 'overflow-hidden'
@@ -796,60 +818,125 @@ export default function DocumentsVerificationPage() {
     [courseCreators]
   );
 
-  const instructorDocumentQueries = useQueries({
-    queries: instructorsWithUuid.map(instructor =>
-      getInstructorDocumentsOptions({ path: { instructorUuid: instructor.uuid } })
-    ),
+  // One batched search per record family (instructor_uuid_in /
+  // course_creator_uuid_in) instead of 4 requests per instructor and 4 per
+  // course creator — this page previously fired 91 requests. The results are
+  // reshaped into per-entity query-like arrays so the assembly code below is
+  // unchanged. Course-creator documents have no search endpoint yet, so those
+  // stay per-entity but only load on their tab.
+  const instructorUuidsCsv = useMemo(
+    () => instructorsWithUuid.map(item => item.uuid).sort((a, b) => a.localeCompare(b)).join(','),
+    [instructorsWithUuid]
+  );
+  const courseCreatorUuidsCsv = useMemo(
+    () => courseCreatorsWithUuid.map(item => item.uuid).sort((a, b) => a.localeCompare(b)).join(','),
+    [courseCreatorsWithUuid]
+  );
+  const batchPageable = { page: 0, size: 1000 };
+
+  const instructorDocumentsSearch = useQuery({
+    ...searchDocumentsOptions({
+      query: { searchParams: { instructor_uuid_in: instructorUuidsCsv }, pageable: batchPageable },
+    }),
+    enabled: instructorUuidsCsv.length > 0,
   });
+  const instructorEducationSearch = useQuery({
+    ...searchEducationOptions({
+      query: { searchParams: { instructor_uuid_in: instructorUuidsCsv }, pageable: batchPageable },
+    }),
+    enabled: instructorUuidsCsv.length > 0,
+  });
+  const instructorMembershipSearch = useQuery({
+    ...searchMembershipsOptions({
+      query: { searchParams: { instructor_uuid_in: instructorUuidsCsv }, pageable: batchPageable },
+    }),
+    enabled: instructorUuidsCsv.length > 0,
+  });
+  const instructorExperienceSearch = useQuery({
+    ...searchExperienceOptions({
+      query: { searchParams: { instructor_uuid_in: instructorUuidsCsv }, pageable: batchPageable },
+    }),
+    enabled: instructorUuidsCsv.length > 0,
+  });
+  const courseCreatorEducationSearch = useQuery({
+    ...searchCourseCreatorEducationOptions({
+      query: { searchParams: { course_creator_uuid_in: courseCreatorUuidsCsv }, pageable: batchPageable },
+    }),
+    enabled: courseCreatorUuidsCsv.length > 0,
+  });
+  const courseCreatorMembershipSearch = useQuery({
+    ...searchCourseCreatorMembershipsOptions({
+      query: { searchParams: { course_creator_uuid_in: courseCreatorUuidsCsv }, pageable: batchPageable },
+    }),
+    enabled: courseCreatorUuidsCsv.length > 0,
+  });
+  const courseCreatorExperienceSearch = useQuery({
+    ...searchCourseCreatorExperienceOptions({
+      query: { searchParams: { course_creator_uuid_in: courseCreatorUuidsCsv }, pageable: batchPageable },
+    }),
+    enabled: courseCreatorUuidsCsv.length > 0,
+  });
+
+  const groupByOwner = <T,>(items: T[], ownerOf: (item: T) => string | undefined) => {
+    const map = new Map<string, T[]>();
+    for (const item of items) {
+      const owner = ownerOf(item);
+      if (!owner) continue;
+      const current = map.get(owner) ?? [];
+      current.push(item);
+      map.set(owner, current);
+    }
+    return map;
+  };
+
+  type QueryLike<T> = { data?: { data?: T }; isLoading: boolean };
+  const asUnpagedQueries = <T,>(owners: Array<{ uuid: string }>, byOwner: Map<string, T[]>, isLoading: boolean): Array<QueryLike<T[]>> =>
+    owners.map(owner => ({ data: { data: byOwner.get(owner.uuid) ?? [] }, isLoading }));
+  const asPagedQueries = <T,>(owners: Array<{ uuid: string }>, byOwner: Map<string, T[]>, isLoading: boolean): Array<QueryLike<{ content: T[] }>> =>
+    owners.map(owner => ({ data: { data: { content: byOwner.get(owner.uuid) ?? [] } }, isLoading }));
+
+  const instructorDocumentQueries = useMemo(() => {
+    const items = (instructorDocumentsSearch.data?.data?.content ?? []) as unknown as InstructorDocument[];
+    return asUnpagedQueries(instructorsWithUuid, groupByOwner(items, item => item.instructor_uuid), instructorDocumentsSearch.isLoading);
+  }, [instructorDocumentsSearch.data, instructorDocumentsSearch.isLoading, instructorsWithUuid]);
+
+  const instructorEducationQueries = useMemo(() => {
+    const items = (instructorEducationSearch.data?.data?.content ?? []) as unknown as InstructorEducation[];
+    return asUnpagedQueries(instructorsWithUuid, groupByOwner(items, item => item.instructor_uuid), instructorEducationSearch.isLoading);
+  }, [instructorEducationSearch.data, instructorEducationSearch.isLoading, instructorsWithUuid]);
+
+  const instructorMembershipQueries = useMemo(() => {
+    const items = (instructorMembershipSearch.data?.data?.content ?? []) as unknown as InstructorProfessionalMembership[];
+    return asPagedQueries(instructorsWithUuid, groupByOwner(items, item => item.instructor_uuid), instructorMembershipSearch.isLoading);
+  }, [instructorMembershipSearch.data, instructorMembershipSearch.isLoading, instructorsWithUuid]);
+
+  const instructorExperienceQueries = useMemo(() => {
+    const items = (instructorExperienceSearch.data?.data?.content ?? []) as unknown as InstructorExperience[];
+    return asPagedQueries(instructorsWithUuid, groupByOwner(items, item => item.instructor_uuid), instructorExperienceSearch.isLoading);
+  }, [instructorExperienceSearch.data, instructorExperienceSearch.isLoading, instructorsWithUuid]);
+
+  const courseCreatorEducationQueries = useMemo(() => {
+    const items = (courseCreatorEducationSearch.data?.data?.content ?? []) as unknown as CourseCreatorEducation[];
+    return asPagedQueries(courseCreatorsWithUuid, groupByOwner(items, item => item.course_creator_uuid), courseCreatorEducationSearch.isLoading);
+  }, [courseCreatorEducationSearch.data, courseCreatorEducationSearch.isLoading, courseCreatorsWithUuid]);
+
+  const courseCreatorMembershipQueries = useMemo(() => {
+    const items = (courseCreatorMembershipSearch.data?.data?.content ?? []) as unknown as CourseCreatorProfessionalMembership[];
+    return asPagedQueries(courseCreatorsWithUuid, groupByOwner(items, item => item.course_creator_uuid), courseCreatorMembershipSearch.isLoading);
+  }, [courseCreatorMembershipSearch.data, courseCreatorMembershipSearch.isLoading, courseCreatorsWithUuid]);
+
+  const courseCreatorExperienceQueries = useMemo(() => {
+    const items = (courseCreatorExperienceSearch.data?.data?.content ?? []) as unknown as CourseCreatorExperience[];
+    return asPagedQueries(courseCreatorsWithUuid, groupByOwner(items, item => item.course_creator_uuid), courseCreatorExperienceSearch.isLoading);
+  }, [courseCreatorExperienceSearch.data, courseCreatorExperienceSearch.isLoading, courseCreatorsWithUuid]);
+
+  // No search endpoint for course-creator documents yet — per-entity, but
+  // only when the course_creator tab is active.
   const courseCreatorDocumentQueries = useQueries({
-    queries: courseCreatorsWithUuid.map(courseCreator =>
-      getCourseCreatorDocumentsOptions({ path: { courseCreatorUuid: courseCreator.uuid } })
-    ),
-  });
-  const instructorEducationQueries = useQueries({
-    queries: instructorsWithUuid.map(instructor =>
-      getInstructorEducationOptions({ path: { instructorUuid: instructor.uuid } })
-    ),
-  });
-  const instructorMembershipQueries = useQueries({
-    queries: instructorsWithUuid.map(instructor =>
-      getInstructorMembershipsOptions({
-        path: { instructorUuid: instructor.uuid },
-        query: { pageable: PAGEABLE },
-      })
-    ),
-  });
-  const instructorExperienceQueries = useQueries({
-    queries: instructorsWithUuid.map(instructor =>
-      getInstructorExperienceOptions({
-        path: { instructorUuid: instructor.uuid },
-        query: { pageable: PAGEABLE },
-      })
-    ),
-  });
-  const courseCreatorEducationQueries = useQueries({
-    queries: courseCreatorsWithUuid.map(courseCreator =>
-      getCourseCreatorEducationOptions({
-        path: { courseCreatorUuid: courseCreator.uuid },
-        query: { pageable: PAGEABLE },
-      })
-    ),
-  });
-  const courseCreatorMembershipQueries = useQueries({
-    queries: courseCreatorsWithUuid.map(courseCreator =>
-      getCourseCreatorMembershipsOptions({
-        path: { courseCreatorUuid: courseCreator.uuid },
-        query: { pageable: PAGEABLE },
-      })
-    ),
-  });
-  const courseCreatorExperienceQueries = useQueries({
-    queries: courseCreatorsWithUuid.map(courseCreator =>
-      getCourseCreatorExperienceOptions({
-        path: { courseCreatorUuid: courseCreator.uuid },
-        query: { pageable: PAGEABLE },
-      })
-    ),
+    queries: courseCreatorsWithUuid.map(courseCreator => ({
+      ...getCourseCreatorDocumentsOptions({ path: { courseCreatorUuid: courseCreator.uuid } }),
+      enabled: activeTab === 'course_creator',
+    })),
   });
 
   const instructorEducationMaps = useMemo(

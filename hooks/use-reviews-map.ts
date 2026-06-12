@@ -20,7 +20,7 @@ export function useCourseReviewsMap(courseUuids: string[]) {
         path: { courseUuid: uuid },
       }),
       enabled: !!uuid,
-      staleTime: 5 * 60 * 1000,
+      staleTime: 30 * 60 * 1000, // ratings change rarely
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: false,

@@ -1,10 +1,10 @@
+import { localDate } from '@/lib/date';
+import { STALE_TIMES } from '@/lib/query-client';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import {
   getAllClassDefinitionsOptions,
-  getClassScheduleOptions,
-  getCourseByUuidOptions,
-  getInstructorByUuidOptions,
+  getInstructorScheduleOptions,
 } from '../services/client/@tanstack/react-query.gen';
 import type {
   ClassDefinition,
@@ -12,6 +12,7 @@ import type {
   Instructor,
   ScheduledInstance,
 } from '../services/client/types.gen';
+import { useCoursesByIds, useInstructorsByIds } from './use-batched-lookups';
 
 type ClassWithDetails = ClassDefinition & {
   course: Course | null;
@@ -19,10 +20,16 @@ type ClassWithDetails = ClassDefinition & {
   schedule: Array<ScheduledInstance> | null;
 };
 
+/**
+ * Previously fetched one course, one instructor and one schedule page per
+ * class (3N requests; the admin calendar measured 86 requests). Courses and
+ * instructors are now batched lookups, and schedules come from one timetable
+ * call per distinct instructor (instances carry class_definition_uuid).
+ */
 function useAmdinClassesWithDetails() {
   const { data, isLoading, isPending, isFetching } = useQuery({
     ...getAllClassDefinitionsOptions({ query: { pageable: {} } }),
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.entity,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
@@ -51,93 +58,65 @@ function useAmdinClassesWithDetails() {
     classes.forEach(cls => {
       if (cls.default_instructor_uuid) set.add(cls.default_instructor_uuid);
     });
-    return Array.from(set);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [classes]);
 
-  const courseQueries = useQueries({
-    queries: uniqueCourseUuids.map(uuid => ({
-      ...getCourseByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-    })),
-  });
+  const { courseMap, isLoading: isCoursesLoading } = useCoursesByIds(uniqueCourseUuids);
+  const { instructorMap, isLoading: isInstructorsLoading } =
+    useInstructorsByIds(uniqueInstructorUuids);
 
-  // Extract only the data (stable dependency)
-  const courseDataArray = useMemo(
-    () => courseQueries.map(q => q.data?.data ?? null),
-    [courseQueries]
-  );
+  const scheduleRange = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setFullYear(start.getFullYear() - 2);
+    const end = new Date(now);
+    end.setFullYear(end.getFullYear() + 2);
+    return { start: localDate(start), end: localDate(end) };
+  }, []);
 
-  const courseMap = useMemo(() => {
-    const map = new Map<string, Course>();
-    uniqueCourseUuids.forEach((uuid, index) => {
-      const course = courseDataArray[index];
-      if (course) map.set(uuid, course);
-    });
-    return map;
-  }, [uniqueCourseUuids, courseDataArray]);
-
-  const instructorQueries = useQueries({
-    queries: uniqueInstructorUuids.map(uuid => ({
-      ...getInstructorByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-    })),
-  });
-
-  const instructorDataArray = useMemo(
-    () => instructorQueries.map(q => q.data ?? null),
-    [instructorQueries]
-  );
-
-  const instructorMap = useMemo(() => {
-    const map = new Map<string, Instructor>();
-    uniqueInstructorUuids.forEach((uuid, index) => {
-      const instructor = instructorDataArray[index];
-      if (instructor) map.set(uuid, instructor);
-    });
-    return map;
-  }, [uniqueInstructorUuids, instructorDataArray]);
-
-  const scheduleQueries = useQueries({
-    queries: classes.map(cls => ({
-      ...getClassScheduleOptions({
-        path: { uuid: cls.uuid ?? '' },
-        query: { pageable: { page: 0, size: 1000 } }
+  const instructorScheduleQueries = useQueries({
+    queries: uniqueInstructorUuids.map(instructorUuid => ({
+      ...getInstructorScheduleOptions({
+        path: { instructorUuid },
+        query: scheduleRange,
       }),
-      enabled: !!cls.uuid,
-      staleTime: 5 * 60 * 1000,
+      enabled: !!instructorUuid,
+      staleTime: STALE_TIMES.live,
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });
 
-  const schedules = useMemo(
-    () => scheduleQueries.map(q => q.data?.data?.content ?? null),
-    [scheduleQueries]
-  );
+  const schedulesByClass = useMemo(() => {
+    const map = new Map<string, ScheduledInstance[]>();
+    for (const query of instructorScheduleQueries) {
+      for (const instance of query.data?.data ?? []) {
+        const classUuid = instance.class_definition_uuid;
+        if (!classUuid) continue;
+        const current = map.get(classUuid) ?? [];
+        current.push(instance);
+        map.set(classUuid, current);
+      }
+    }
+    for (const instances of map.values()) {
+      instances.sort((a, b) => a.start_time.getTime() - b.start_time.getTime());
+    }
+    return map;
+  }, [instructorScheduleQueries]);
 
   const classesWithCourseAndInstructor = useMemo<Array<ClassWithDetails>>(() => {
-    return classes.map((cls, i) => ({
+    return classes.map(cls => ({
       ...cls,
-      course: cls.course_uuid ? (courseMap.get(cls.course_uuid) ?? null) : null,
+      course: cls.course_uuid ? ((courseMap[cls.course_uuid] as Course) ?? null) : null,
       instructor: cls.default_instructor_uuid
-        ? (instructorMap.get(cls.default_instructor_uuid) ?? null)
+        ? (instructorMap[cls.default_instructor_uuid] ?? null)
         : null,
-      schedule: schedules[i] ?? null,
+      schedule: cls.uuid ? (schedulesByClass.get(cls.uuid) ?? null) : null,
     }));
-  }, [classes, courseMap, instructorMap, schedules]);
+  }, [classes, courseMap, instructorMap, schedulesByClass]);
 
-  const isCoursesLoading = courseQueries.some(q => q.isLoading || q.isFetching);
-  const isInstructorsLoading = instructorQueries.some(q => q.isLoading || q.isFetching);
-  const isSchedulesLoading = scheduleQueries.some(q => q.isLoading || q.isFetching);
+  const isSchedulesLoading = instructorScheduleQueries.some(q => q.isLoading);
 
   const loading =
     isLoading || isFetching || isCoursesLoading || isInstructorsLoading || isSchedulesLoading;
