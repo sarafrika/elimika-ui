@@ -10,13 +10,9 @@ import {
   type CourseCreatorDashboardData,
 } from '@/lib/types/course-creator';
 import {
-  search,
-  searchCourseCreators,
   searchCourses,
   type Course,
   type CourseCreator,
-  type SearchResponse,
-  type User,
 } from '@/services/client';
 import { useEffect, useState } from 'react';
 import { useUserProfile } from '../context/profile-context';
@@ -27,6 +23,9 @@ export function useCourseCreatorDashboardData() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (user?.isLoading) {
+      return;
+    }
     if (!user?.email) {
       setLoading(false);
       return;
@@ -34,50 +33,27 @@ export function useCourseCreatorDashboardData() {
 
     async function fetchData() {
       try {
-        const { data: userSearchData } = await search({
-          query: {
-            searchParams: { email_eq: user.email },
-            pageable: { page: 0, size: 1, sort: [] },
-          },
-        });
-
-        const userSearch = userSearchData as SearchResponse;
-        const userRecord = Array.isArray(userSearch.data?.content)
-          ? (userSearch.data.content[0] as User)
-          : undefined;
-
-        if (!userRecord?.uuid) {
+        // The user record, domains and course-creator profile are already in
+        // the profile context — re-searching them added two extra API calls
+        // to every course_creator page.
+        const userUuid = user?.uuid;
+        if (!userUuid) {
           setData(emptyCourseCreatorDashboardData);
           return;
         }
 
-        const userDomains = Array.isArray(userRecord.user_domain)
-          ? userRecord.user_domain
-          : userRecord.user_domain
-            ? [userRecord.user_domain]
-            : [];
-
+        const userDomains = Array.isArray(user?.user_domain) ? user.user_domain : [];
         const hasCourseCreatorDomain = userDomains.includes('course_creator');
 
         if (!hasCourseCreatorDomain) {
           setData({
             ...emptyCourseCreatorDashboardData,
-            userUuid: userRecord.uuid,
+            userUuid,
           });
           return;
         }
 
-        const { data: courseCreatorData } = await searchCourseCreators({
-          query: {
-            searchParams: { user_uuid_eq: userRecord.uuid },
-            pageable: { page: 0, size: 1, sort: [] },
-          },
-        });
-
-        const courseCreatorSearch = courseCreatorData as SearchResponse;
-        const courseCreator = Array.isArray(courseCreatorSearch.data?.content)
-          ? (courseCreatorSearch.data.content[0] as CourseCreator)
-          : null;
+        const courseCreator = (user?.courseCreator ?? null) as CourseCreator | null;
 
         const coursesResponse =
           courseCreator?.uuid &&
@@ -99,7 +75,7 @@ export function useCourseCreatorDashboardData() {
         const trainingRequirements = calculateTrainingRequirementSummary(courses);
 
         setData({
-          userUuid: userRecord.uuid,
+          userUuid,
           profile: courseCreator,
           courses,
           analytics,

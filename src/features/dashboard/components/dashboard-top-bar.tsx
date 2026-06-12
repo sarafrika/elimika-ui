@@ -113,7 +113,11 @@ export default function DashboardTopBar() {
     retry: 1,
   }) as UseQueryOptions<ApiResponseWallet>;
 
-  const walletQuery = useQuery(walletQueryOptions);
+  const walletQuery = useQuery({
+    ...walletQueryOptions,
+    // Balance changes rarely; don't refetch it on every page navigation.
+    staleTime: 5 * 60 * 1000,
+  });
   const walletData = walletQuery.data;
 
   const walletBalance = formatBalance(walletData?.data?.balance_amount, walletData?.data?.currency_code);
