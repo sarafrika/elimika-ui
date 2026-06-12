@@ -15,6 +15,7 @@ import {
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, Course, Student, User } from '@/services/client/types.gen';
+import { useStudentsByIds, useUsersByIds, useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { ClassWithScheduleInput, InstructorSummary, SchedulerCalendarData, StudentSummary } from './calendar-utils';
@@ -114,37 +115,17 @@ function useClassStudentSummaries(
     [uniqueStudentEntries]
   );
 
-  const studentQueries = useQueries({
-    queries: uniqueStudentUuids.map(uuid => ({
-      ...getStudentByIdOptions({
-        path: { uuid },
-      }),
-
-      enabled: !!uuid,
-
-      staleTime: 5 * 60 * 1000,
-
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-    })),
-  });
+  const { studentMap: batchedStudents, isLoading: studentsLoading } =
+    useStudentsByIds(uniqueStudentUuids);
 
   const studentMap = useMemo(() => {
     const map = new Map<string, Student>();
-
-    uniqueStudentUuids.forEach((uuid, index) => {
-      // @ts-ignore
-      const student =
-        studentQueries[index]?.data?.data;
-
-      if (student?.uuid) {
-        map.set(uuid, student);
-      }
-    });
-
+    for (const uuid of uniqueStudentUuids) {
+      const student = batchedStudents[uuid];
+      if (student?.uuid) map.set(uuid, student);
+    }
     return map;
-  }, [studentQueries, uniqueStudentUuids]);
+  }, [batchedStudents, uniqueStudentUuids]);
 
   const studentUserUuids = useMemo(
     () =>
@@ -160,36 +141,17 @@ function useClassStudentSummaries(
     [studentMap]
   );
 
-  const studentUserQueries = useQueries({
-    queries: studentUserUuids.map(uuid => ({
-      ...getUserByUuidOptions({
-        path: { uuid },
-      }),
-
-      enabled: !!uuid,
-
-      staleTime: 5 * 60 * 1000,
-
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-    })),
-  });
+  const { userMap: batchedStudentUsers, isLoading: studentUsersLoading } =
+    useUsersByIds(studentUserUuids);
 
   const studentProfilesByUuid = useMemo(() => {
     const map = new Map<string, User>();
-
-    studentUserUuids.forEach((uuid, index) => {
-      const user =
-        studentUserQueries[index]?.data?.data;
-
-      if (user?.uuid) {
-        map.set(uuid, user);
-      }
-    });
-
+    for (const uuid of studentUserUuids) {
+      const user = batchedStudentUsers[uuid];
+      if (user?.uuid) map.set(uuid, user);
+    }
     return map;
-  }, [studentUserQueries, studentUserUuids]);
+  }, [batchedStudentUsers, studentUserUuids]);
 
   const students = useMemo<StudentSummary[]>(
     () =>
@@ -244,12 +206,8 @@ function useClassStudentSummaries(
       enrollmentQueries.some(
         query => query.isLoading
       ) ||
-      studentQueries.some(
-        query => query.isLoading
-      ) ||
-      studentUserQueries.some(
-        query => query.isLoading
-      ),
+      studentsLoading ||
+      studentUsersLoading,
 
     students,
   };
@@ -276,51 +234,31 @@ function AdminCalendarPage() {
     [classData]
   );
 
-  const instructorQueries = useQueries({
-    queries: classInstructorUuids.map(uuid => ({
-      ...getInstructorByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-      staleTime: 1000 * 60 * 5,
-    })),
-  });
+  const { instructorMap: batchedInstructors, isLoading: instructorsLoading } =
+    useInstructorsByIds(classInstructorUuids);
 
-  // ✅ FIXED: correct data shape
   const instructorUserUuids = useMemo(
     () =>
-      instructorQueries
-        .map(q => q.data?.data?.user_uuid)
+      Object.values(batchedInstructors)
+        .map(instructor => instructor.user_uuid)
         .filter((uuid): uuid is string => !!uuid),
-    [instructorQueries]
+    [batchedInstructors]
   );
 
-  const instructorProfileQueries = useQueries({
-    queries: instructorUserUuids.map(uuid => ({
-      ...getUserByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-      staleTime: 5 * 60 * 1000,
-    })),
-  });
+  const { userMap: batchedInstructorUsers } = useUsersByIds(instructorUserUuids);
 
-  // ✅ FIXED: no index coupling
   const instructorProfilesByUuid = useMemo(() => {
     const map = new Map<string, User>();
-
-    instructorProfileQueries.forEach(query => {
-      const user = query.data?.data;
-      if (user?.uuid) {
-        map.set(user.uuid, user);
-      }
-    });
-
+    for (const user of Object.values(batchedInstructorUsers)) {
+      if (user?.uuid) map.set(user.uuid, user);
+    }
     return map;
-  }, [instructorProfileQueries]);
+  }, [batchedInstructorUsers]);
 
-  // ✅ FIXED: clean summary mapping
   const instructorSummaries = useMemo(() => {
     const map = new Map<string, InstructorSummary>();
 
-    instructorQueries.forEach(query => {
-      const instructor = query.data?.data;
+    Object.values(batchedInstructors).forEach(instructor => {
       if (!instructor?.uuid) return;
 
       const user = instructor.user_uuid
@@ -343,7 +281,7 @@ function AdminCalendarPage() {
     });
 
     return Array.from(map.values());
-  }, [instructorQueries, instructorProfilesByUuid]);
+  }, [batchedInstructors, instructorProfilesByUuid]);
 
 
   const studentData = useClassStudentSummaries(classData.map(classDef => classDef.uuid ?? undefined));
@@ -368,7 +306,7 @@ function AdminCalendarPage() {
     allInstructors: instructorSummaries,
     events,
     instructors: instructorSummaries,
-    isLoading: adminClassesQuery.loading || instructorQueries.some(query => query.isLoading) || studentData.isLoading,
+    isLoading: adminClassesQuery.loading || instructorsLoading || studentData.isLoading,
     students: studentData.students,
   };
 

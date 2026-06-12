@@ -63,10 +63,30 @@ function getStatusTone(status: string) {
 export function GeneralPdfPreview({ documentUrl, documentLabel }: { documentUrl: string; documentLabel: string }) {
   const resolvedUrl = toAuthenticatedMediaUrl(documentUrl) || documentUrl;
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [inView, setInView] = useState(false);
+
+  // Only download/render the PDF once the card is near the viewport — a page
+  // of credential cards was fetching every document up front.
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
-    if (!documentUrl) return;
+    if (!documentUrl || !inView) return;
 
     let cancelled = false;
     let pdfDoc: PDFDocumentProxy | null = null;
@@ -114,10 +134,10 @@ export function GeneralPdfPreview({ documentUrl, documentLabel }: { documentUrl:
       cancelled = true;
       pdfDoc?.destroy().catch(() => { });
     };
-  }, [resolvedUrl]);
+  }, [resolvedUrl, inView, documentUrl]);
 
   return (
-    <div className='relative h-[180px] overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-3'>
+    <div ref={containerRef} className='relative h-[180px] overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-3'>
       <div className='pointer-events-none absolute inset-x-0 top-0 h-18 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_92%,white_8%),transparent)]' />
       <div className='pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--background)_94%,white_6%))]' />
       <div className='pointer-events-none absolute top-4 left-4 z-10 rounded-full border border-white/80 bg-background/85 px-3 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur'>

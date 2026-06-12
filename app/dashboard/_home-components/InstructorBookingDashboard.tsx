@@ -122,12 +122,15 @@ export const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   const [activeTab, setActiveTab] = useState('browse');
   const { data: trainingInstructors, loading } = useSearchTrainingInstructors();
 
-  const { data: applications } = useQuery(
-    listTrainingApplicationsOptions({
+  const { data: applications } = useQuery({
+    ...listTrainingApplicationsOptions({
       path: { courseUuid: courseId as string },
       query: { pageable: {}, status: 'approved' },
-    })
-  );
+    }),
+    // Without this gate the request goes out with a literal {courseUuid}
+    // placeholder whenever the page is opened without ?courseId.
+    enabled: Boolean(courseId),
+  });
 
   const approvedInstructorUuids =
     applications?.data?.content

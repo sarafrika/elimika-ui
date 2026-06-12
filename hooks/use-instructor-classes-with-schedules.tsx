@@ -1,3 +1,4 @@
+import { localDate } from '@/lib/date';
 import {
   getClassDefinitionsForInstructorOptions,
   getEnrollmentsForClassOptions,
@@ -159,7 +160,8 @@ export function useInstructorClassesWithSchedules(
     start.setFullYear(start.getFullYear() - 2);
     const end = new Date(now);
     end.setFullYear(end.getFullYear() + 2);
-    return { start, end };
+    // LocalDate params must go over the wire as YYYY-MM-DD
+    return { start: localDate(start), end: localDate(end) };
   }, []);
 
   const instructorScheduleQuery = useQuery({

@@ -1,44 +1,44 @@
+import { STALE_TIMES } from '@/lib/query-client';
 import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import type {
+  ClassDefinition,
   GetAssignmentSchedulesResponse,
   GetClassEnrollmentsForStudentResponse,
   GetCourseByUuidResponse,
-  GetCourseLessonsData,
   GetCourseLessonsResponse,
   GetEnrollmentsForClassResponse,
   GetQuizSchedulesResponse,
-  GetQuizSchedulesResponses,
-  Lesson
 } from '../services/client';
 import {
+  getAllClassDefinitionsOptions,
   getAssignmentSchedulesOptions,
-  getClassDefinitionOptions,
   getClassEnrollmentsForStudentOptions,
-  getClassScheduleOptions,
-  getCourseByUuidOptions,
   getCourseLessonsOptions,
   getEnrollmentsForClassOptions,
   getQuizSchedulesOptions,
+  getClassScheduleOptions,
 } from '../services/client/@tanstack/react-query.gen';
+import { useCoursesByIds } from './use-batched-lookups';
 
 type StudentLike = {
   uuid?: string;
 };
 
-type StudentEnrollment = NonNullable<
-  NonNullable<GetClassEnrollmentsForStudentResponse['data']>['content']
->[number];
-
 type CourseDetails = NonNullable<GetCourseByUuidResponse['data']>;
-type LessonDetails = NonNullable<GetCourseLessonsResponse['data']>;
+type LessonDetails = NonNullable<NonNullable<GetCourseLessonsResponse['data']>['content']>;
 type QuizDetails = NonNullable<GetQuizSchedulesResponse['data']>;
 type AssignmentDetails = NonNullable<GetAssignmentSchedulesResponse['data']>;
 type EnrollmentDetails = NonNullable<GetEnrollmentsForClassResponse['data']>;
 
-
-
 const isDefined = <T,>(value: T | null | undefined): value is T => value != null;
 
+/**
+ * Previously fired 7 requests per enrolled class (definition, schedule,
+ * course, lessons, quizzes, assignments, enrollments — ~50 requests for a
+ * typical student). Class definitions now come from one paged list, schedules
+ * from one student-timetable call, and courses from one batched search.
+ */
 function useStudentClassDefinitions(student?: StudentLike) {
   const { data: enrollmentsData } = useQuery({
     ...getClassEnrollmentsForStudentOptions({
@@ -50,41 +50,52 @@ function useStudentClassDefinitions(student?: StudentLike) {
 
   const enrollments = enrollmentsData?.data?.content ?? [];
 
-  const classDefinitionUuids = Array.from(
-    new Set(enrollments.map(en => en.class_definition_uuid).filter(isDefined))
+  const classDefinitionUuids = useMemo(
+    () =>
+      Array.from(new Set(enrollments.map(en => en.class_definition_uuid).filter(isDefined))),
+    [enrollments]
   );
 
-  const classQueries = useQueries({
-    queries: classDefinitionUuids.map(uuid => ({
-      ...getClassDefinitionOptions({ path: { uuid } }),
-      enabled: !!uuid,
-    })),
+  // One page of class definitions instead of one request per class.
+  const classDefinitionsQuery = useQuery({
+    ...getAllClassDefinitionsOptions({ query: { pageable: { page: 0, size: 200 } } }),
+    enabled: classDefinitionUuids.length > 0,
+    staleTime: STALE_TIMES.entity,
   });
+
+  const classDetailsByUuid = useMemo(() => {
+    const map = new Map<string, ClassDefinition>();
+    for (const item of classDefinitionsQuery.data?.data?.content ?? []) {
+      const definition = item.class_definition;
+      if (definition?.uuid) map.set(definition.uuid, definition);
+    }
+    return map;
+  }, [classDefinitionsQuery.data]);
 
   const scheduleQueries = useQueries({
     queries: classDefinitionUuids.map(uuid => ({
       ...getClassScheduleOptions({
         path: { uuid },
-        query: { pageable: { size: 1000 } },
+        query: { pageable: { size: 200 } },
       }),
       enabled: !!uuid,
+      staleTime: STALE_TIMES.live,
     })),
   });
 
-  const classDetailsArray = classQueries.map(
-    q => q.data?.data?.class_definition ?? null
+  const courseUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          classDefinitionUuids
+            .map(uuid => classDetailsByUuid.get(uuid)?.course_uuid)
+            .filter(isDefined)
+        )
+      ),
+    [classDefinitionUuids, classDetailsByUuid]
   );
 
-  const courseUuids = Array.from(
-    new Set(classDetailsArray.map(c => c?.course_uuid).filter(isDefined))
-  );
-
-  const courseQueries = useQueries({
-    queries: courseUuids.map(uuid => ({
-      ...getCourseByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-    })),
-  });
+  const { courseMap: batchedCourseMap, isLoading: coursesLoading } = useCoursesByIds(courseUuids);
 
   const lessonQueries = useQueries({
     queries: courseUuids.map(courseUuid => ({
@@ -93,6 +104,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
         query: { pageable: {} },
       }),
       enabled: !!courseUuid,
+      staleTime: STALE_TIMES.entity,
     })),
   });
 
@@ -102,6 +114,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
         path: { classUuid },
       }),
       enabled: !!classUuid,
+      staleTime: STALE_TIMES.live,
     })),
   });
 
@@ -111,25 +124,18 @@ function useStudentClassDefinitions(student?: StudentLike) {
         path: { classUuid },
       }),
       enabled: !!classUuid,
+      staleTime: STALE_TIMES.live,
     })),
   });
 
-  // ✅ NEW: per-class enrollments
   const classEnrollmentQueries = useQueries({
     queries: classDefinitionUuids.map(classUuid => ({
       ...getEnrollmentsForClassOptions({
         path: { uuid: classUuid },
       }),
       enabled: !!classUuid,
+      staleTime: STALE_TIMES.live,
     })),
-  });
-
-  const classScheduleArray = scheduleQueries.map(q => q.data?.data?.content);
-
-  const courseMap = new Map<string, CourseDetails>();
-  courseQueries.forEach(q => {
-    const course = q.data?.data;
-    if (course?.uuid) courseMap.set(course.uuid, course);
   });
 
   const lessonMap = new Map<string, LessonDetails>();
@@ -143,31 +149,31 @@ function useStudentClassDefinitions(student?: StudentLike) {
   const quizMap = new Map<string, QuizDetails>();
   quizQueries.forEach((q, i) => {
     const classUuid = classDefinitionUuids[i];
-    quizMap.set(classUuid, q.data?.data?.content ?? []);
+    // the schedules endpoint returns the array directly (no page wrapper)
+    if (classUuid) quizMap.set(classUuid, q.data?.data ?? []);
   });
 
   const assignmentMap = new Map<string, AssignmentDetails>();
   assignmentQueries.forEach((q, i) => {
     const classUuid = classDefinitionUuids[i];
-    assignmentMap.set(classUuid, q.data?.data?.content ?? []);
+    if (classUuid) assignmentMap.set(classUuid, q.data?.data ?? []);
   });
 
-  // ✅ NEW: enrollment map per class
-  const enrollmentMap = new Map<string, EnrollmentDetails[]>();
+  const enrollmentMap = new Map<string, EnrollmentDetails>();
   classEnrollmentQueries.forEach((q, i) => {
     const classUuid = classDefinitionUuids[i];
-    enrollmentMap.set(classUuid, q.data?.data?.content ?? []);
+    if (classUuid) enrollmentMap.set(classUuid, q.data?.data ?? []);
   });
 
-  const classDefinitions = classDefinitionUuids.map((uuid, i) => {
-    const classDetails = classDetailsArray[i];
+  const classDefinitions = classDefinitionUuids.map(uuid => {
+    const classDetails = classDetailsByUuid.get(uuid) ?? null;
     const courseUuid = classDetails?.course_uuid;
 
-    const course = courseUuid ? courseMap.get(courseUuid) : null;
-    const lessons = courseUuid ? lessonMap.get(courseUuid) ?? [] : [];
+    const course = courseUuid ? ((batchedCourseMap[courseUuid] as CourseDetails) ?? null) : null;
+    const lessons = courseUuid ? (lessonMap.get(courseUuid) ?? []) : [];
     const quizzes = quizMap.get(uuid) ?? [];
     const assignments = assignmentMap.get(uuid) ?? [];
-    const schedules = classScheduleArray[i] ?? [];
+    const schedules = scheduleQueries[classDefinitionUuids.indexOf(uuid)]?.data?.data?.content ?? [];
     const enrollmentsForClass = enrollmentMap.get(uuid) ?? [];
 
     return {
@@ -183,16 +189,17 @@ function useStudentClassDefinitions(student?: StudentLike) {
   });
 
   const loading =
-    classQueries.some(q => q.isLoading || q.isFetching) ||
-    courseQueries.some(q => q.isLoading || q.isFetching) ||
-    lessonQueries.some(q => q.isLoading || q.isFetching) ||
-    quizQueries.some(q => q.isLoading || q.isFetching) ||
-    assignmentQueries.some(q => q.isLoading || q.isFetching) ||
-    classEnrollmentQueries.some(q => q.isLoading || q.isFetching);
+    classDefinitionsQuery.isLoading ||
+    scheduleQueries.some(q => q.isLoading) ||
+    coursesLoading ||
+    lessonQueries.some(q => q.isLoading) ||
+    quizQueries.some(q => q.isLoading) ||
+    assignmentQueries.some(q => q.isLoading) ||
+    classEnrollmentQueries.some(q => q.isLoading);
 
   const isError =
-    classQueries.some(q => q.isError) ||
-    courseQueries.some(q => q.isError) ||
+    classDefinitionsQuery.isError ||
+    scheduleQueries.some(q => q.isError) ||
     lessonQueries.some(q => q.isError) ||
     quizQueries.some(q => q.isError) ||
     assignmentQueries.some(q => q.isError) ||

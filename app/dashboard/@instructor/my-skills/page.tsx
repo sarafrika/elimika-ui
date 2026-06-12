@@ -1,5 +1,6 @@
 'use client';
 
+import { localDate } from '@/lib/date';
 import {
   SharedMySkillsPage,
   type SharedMySkillsProfile,
@@ -53,8 +54,8 @@ export default function InstructorMySkillsPage() {
 
   const scheduleQueryParams = useMemo(
     () => ({
-      start: new Date('2026-01-20').toISOString(),
-      end: new Date('2027-01-20').toISOString(),
+      start: localDate('2026-01-20'),
+      end: localDate('2027-01-20'),
     }),
     []
   );

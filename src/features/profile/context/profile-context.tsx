@@ -45,7 +45,7 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
   const qc = useQueryClient();
   const router = useRouter();
 
-  const { data, isLoading, refetch } = useQuery(
+  const { data, isPending, refetch } = useQuery(
     createQueryOptions(session?.user?.email, {
       enabled: !!session?.user?.email,
     })
@@ -66,6 +66,13 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
     await qc.invalidateQueries({ queryKey: ['profile'] });
     await refetch();
   }, [qc, refetch]);
+
+  // isPending (not isLoading): while the session is still resolving the
+  // profile query is disabled, and a disabled query reports isLoading=false.
+  // Consumers (e.g. dashboard domain hydration) treated that as "profile
+  // loaded with no domains" and overwrote the user's saved dashboard choice
+  // with the default on every full page load.
+  const isLoading = status === 'loading' || isPending;
 
   const value = useMemo(
     () => ({
@@ -107,76 +114,52 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
     UserProfileType;
 
   if (user.user_domain && user.user_domain.length > 0) {
-    // Add student data if user is a student
-    if (user.user_domain.includes('student')) {
-      const searchResponse = await searchStudents({
-        query: {
-          searchParams: {
-            user_uuid_eq: user.uuid,
-          },
-          pageable: {
-            page: 0,
-            size: 20,
-          },
-        },
-      });
+    // The domain profile lookups are independent — run them in parallel.
+    // Sequential awaits here previously delayed every dashboard page by the
+    // sum of all three round trips before any page data could start loading.
+    const searchByUserUuid = { user_uuid_eq: user.uuid };
 
-      if (!searchResponse.error && searchResponse.data) {
-        const respData = searchResponse.data as SearchResponse;
-        if (respData.data?.content && respData.data.content.length > 0) {
-          user.student = respData.data.content[0] as unknown as Student;
-        }
+    const [studentResponse, instructorResponse, courseCreatorResponse] = await Promise.all([
+      user.user_domain.includes('student')
+        ? searchStudents({
+            query: { searchParams: searchByUserUuid, pageable: { page: 0, size: 20 } },
+          }).catch(() => null)
+        : null,
+      user.user_domain.includes('instructor')
+        ? searchInstructors({
+            query: { searchParams: searchByUserUuid, pageable: { page: 0, size: 20 } },
+          }).catch(() => null)
+        : null,
+      user.user_domain.includes('course_creator') && user.uuid
+        ? searchCourseCreators({
+            query: { searchParams: searchByUserUuid, pageable: { page: 0, size: 1 } },
+          }).catch(() => null)
+        : null,
+    ]);
+
+    if (studentResponse && !studentResponse.error && studentResponse.data) {
+      const respData = studentResponse.data as SearchResponse;
+      if (respData.data?.content && respData.data.content.length > 0) {
+        user.student = respData.data.content[0] as unknown as Student;
       }
     }
 
-    // Add instructor data if user is an instructor (lean payload only)
-    if (user.user_domain.includes('instructor')) {
-      const instructorSearchResponse = await searchInstructors({
-        query: {
-          searchParams: {
-            user_uuid_eq: user.uuid,
-          },
-          pageable: {
-            page: 0,
-            size: 20,
-          },
-        },
-      });
-
-      if (!instructorSearchResponse.error && instructorSearchResponse.data) {
-        const responseData = instructorSearchResponse.data as SearchResponse;
-        if (responseData.data?.content && responseData.data.content.length > 0) {
-          const instructor = responseData.data.content[0] as unknown as Instructor;
-          user.instructor = instructor as unknown as UserProfileType['instructor'];
-        }
+    if (instructorResponse && !instructorResponse.error && instructorResponse.data) {
+      const responseData = instructorResponse.data as SearchResponse;
+      if (responseData.data?.content && responseData.data.content.length > 0) {
+        const instructor = responseData.data.content[0] as unknown as Instructor;
+        user.instructor = instructor as unknown as UserProfileType['instructor'];
       }
     }
 
-    // Add course creator data if user is a course creator
-    if (user.user_domain.includes('course_creator') && user.uuid) {
-      try {
-        const courseCreatorResponse = await searchCourseCreators({
-          query: {
-            searchParams: {
-              user_uuid_eq: user.uuid,
-            },
-            pageable: {
-              page: 0,
-              size: 1,
-            },
-          },
-        });
-
-        if (!courseCreatorResponse.error && courseCreatorResponse.data) {
-          const creatorData = courseCreatorResponse.data as SearchResponse;
-          const creatorProfile = Array.isArray(creatorData.data?.content)
-            ? (creatorData.data.content[0] as unknown as CourseCreator)
-            : undefined;
-          if (creatorProfile) {
-            user.courseCreator = creatorProfile;
-          }
-        }
-      } catch (_error) {}
+    if (courseCreatorResponse && !courseCreatorResponse.error && courseCreatorResponse.data) {
+      const creatorData = courseCreatorResponse.data as SearchResponse;
+      const creatorProfile = Array.isArray(creatorData.data?.content)
+        ? (creatorData.data.content[0] as unknown as CourseCreator)
+        : undefined;
+      if (creatorProfile) {
+        user.courseCreator = creatorProfile;
+      }
     }
   }
 

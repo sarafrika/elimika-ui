@@ -1,6 +1,8 @@
 // components/layout/nav-user.tsx (or wherever NavUser is located)
 'use client';
 
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+
 import { ChevronsUpDown, LogOut, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
@@ -55,7 +57,7 @@ export function NavUser({ items }: NavUserProps) {
             >
               <Avatar className='bg-background h-8 w-8 overflow-hidden rounded-md border'>
                 <AvatarImage
-                  src={user?.profile_image_url ?? ''}
+                  src={toAuthenticatedMediaUrl(user?.profile_image_url) ?? ''}
                   alt={user?.full_name ?? ''}
                   className='h-full w-full object-cover'
                 />
@@ -91,7 +93,7 @@ export function NavUser({ items }: NavUserProps) {
               <div className='mb-4 flex items-center gap-3'>
                 <Avatar className='bg-background h-10 w-10 overflow-hidden rounded-md border'>
                   <AvatarImage
-                    src={user?.profile_image_url ?? ''}
+                    src={toAuthenticatedMediaUrl(user?.profile_image_url) ?? ''}
                     alt={user?.full_name ?? ''}
                     className='h-full w-full object-cover'
                   />

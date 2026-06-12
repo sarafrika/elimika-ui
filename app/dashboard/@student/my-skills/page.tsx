@@ -1,5 +1,6 @@
 'use client';
 
+import { localDate } from '@/lib/date';
 import {
   SharedMySkillsPage,
   type SharedMySkillsProfile,
@@ -64,7 +65,7 @@ export default function StudentMySkillsPage() {
   const enrollmentsQuery = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: student?.uuid as string },
-      query: { start: new Date('2026-01-01'), end: new Date('2027-12-31') },
+      query: { start: localDate('2026-01-01'), end: localDate('2027-12-31') },
     }),
     enabled: !!student?.uuid,
   });
