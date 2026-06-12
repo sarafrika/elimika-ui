@@ -1,3 +1,4 @@
+import { localDate } from '@/lib/date';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import {
@@ -32,8 +33,8 @@ function useBundledClassInfo(
   const studentUuid = student?.uuid ?? undefined;
   const scheduleRange = useMemo(
     () => ({
-      start: startDate ? new Date(startDate) : new Date('2024-10-10'),
-      end: endDate ? new Date(endDate) : new Date('2030-10-10'),
+      start: localDate(startDate ?? '2024-10-10'),
+      end: localDate(endDate ?? '2030-10-10'),
     }),
     [endDate, startDate]
   );
