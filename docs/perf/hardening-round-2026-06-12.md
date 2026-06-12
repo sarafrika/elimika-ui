@@ -77,6 +77,33 @@ With the request storms gone, pages converge on a profile of
 5. Already merged this round: 404/400 instead of 500 for unknown routes and
    parameter type mismatches (elimika PR #255).
 
+## Final verification audit (all 154 pages, post-fix build)
+
+| Domain | Pages | Median time-to-data | Median API reqs | Pages > 5s | Pages > 20 reqs |
+|---|---|---|---|---|---|
+| instructor | 47 | 3.9s | 12 | 15 | 8 |
+| student | 39 | 3.3s | 9 | 9 | 6 |
+| admin | 31 | 4.0s | 11 | 11 | 6 |
+| course_creator | 37 | 3.3s | 10 | 3 | 1 |
+
+Medians sit on the staging latency floor (~3–4s for 9–12 requests at 1–2s
+per call). The "failed requests" on most pages are the dead-media 404s
+(avatars, course thumbnails) — backend data cleanup.
+
+### Newly exposed storms (previously masked by the role-switching bug)
+
+Now that every page renders its true role content, four more per-entity
+storms surfaced. Each is attributed and has a known fix pattern; they need
+either a UI decision or a backend endpoint, so they are queued rather than
+patched blind:
+
+| Page | Requests | Dominant pattern | Recommended fix |
+|---|---|---|---|
+| admin `/dashboard/verifications` | 91 | 14× `instructors/{id}/documents` + 9× `course-creators/{id}/documents` + per-entity education/memberships | **Backend**: a "pending verification documents" listing endpoint; per-entity fetches only on row expand |
+| admin `/dashboard/calendar` | 86 | 29× `classes/{id}/schedule` + 20× `classes/{id}/enrollments` + 11× `students/{id}` | **Backend**: admin/global timetable range endpoint (instructor/student variants exist); students via existing `uuid_in` batch |
+| student `/dashboard/courses` | 60 | 15× `courses/{id}/reviews` + 15× `courses/{id}/enrollments` (full review lists fetched just to average ratings client-side) | **Backend**: rating summary on the course entity or a batch rating endpoint; meanwhile fetch ratings only for visible cards |
+| admin `/dashboard/classes` | 47 | 29× `classes/{id}/schedule` | Same global-timetable endpoint as admin calendar |
+
 ## Re-audit data
 
 - `docs/perf/audit2-instructor.json` (47 pages, post-fix build)
