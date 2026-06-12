@@ -110,6 +110,8 @@ import type {
   SubmitProgramTrainingApplicationResponse,
   GetProgramTrainingApplicationResponse,
   DecideOnProgramTrainingApplicationResponse,
+  GetProgramReviewsResponse,
+  SubmitProgramReviewResponse,
   GetProgramRequirementsResponse,
   AddProgramRequirementResponse,
   GetProgramCoursesResponse,
@@ -118,6 +120,8 @@ import type {
   CreateOrganisationResponse,
   GetTrainingBranchesByOrganisationResponse,
   CreateTrainingBranch1Response,
+  ListNotificationsResponse,
+  ApplyActionResponse,
   GetAllInstructorsResponse,
   CreateInstructorResponse,
   GetInstructorSkillsResponse,
@@ -203,6 +207,9 @@ import type {
   CompleteCartResponse,
   GetAllClassDefinitionsResponse,
   CreateClassDefinitionResponse,
+  UploadClassThumbnailResponse,
+  AddSessionTemplateResponse,
+  UploadClassPromotionalVideoResponse,
   GetQuizSchedulesResponse,
   CreateQuizScheduleResponse,
   GetAssignmentSchedulesResponse,
@@ -232,7 +239,7 @@ import type {
   AcceptBookingResponse,
   GetAllAssignmentsResponse,
   CreateAssignmentResponse,
-  SubmitAssignmentResponse,
+  SubmitAssignmentQueryResponse,
   ReturnSubmissionResponse,
   GradeSubmissionResponse,
   UploadSubmissionAttachmentResponse,
@@ -246,6 +253,7 @@ import type {
   VerifyInstructorResponse,
   UnverifyInstructorResponse,
   ModerateCourseResponse,
+  RescheduleScheduledInstanceResponse,
   GetCartResponse,
   UpdateCartResponse,
   UpdateQuizScheduleResponse,
@@ -282,6 +290,7 @@ import type {
   SearchQuizzesResponse,
   SearchQuestionsResponse,
   SearchAttemptsResponse,
+  GetProgramRatingSummaryResponse,
   GetProgramEnrollmentsResponse,
   GetRequiredCoursesResponse,
   GetOptionalCoursesResponse,
@@ -301,6 +310,7 @@ import type {
   GetBranchUsersResponse,
   GetBranchUsersByDomainResponse,
   Search2Response,
+  GetCountsResponse,
   GetInstructorRatingSummaryResponse,
   GetInstructorBookingsResponse,
   GetInstructorCalendarResponse,
@@ -1693,9 +1703,11 @@ const classDefinitionSchemaResponseTransformer = (data: any) => {
   if (data.registration_period_end_date) {
     data.registration_period_end_date = new Date(data.registration_period_end_date);
   }
-  data.session_templates = data.session_templates.map((item: any) => {
-    return classSessionTemplateSchemaResponseTransformer(item);
-  });
+  if (data.session_templates) {
+    data.session_templates = data.session_templates.map((item: any) => {
+      return classSessionTemplateSchemaResponseTransformer(item);
+    });
+  }
   if (data.scheduled_session_count) {
     data.scheduled_session_count = BigInt(data.scheduled_session_count.toString());
   }
@@ -2450,6 +2462,37 @@ export const decideOnProgramTrainingApplicationResponseTransformer = async (
   return data;
 };
 
+const pagedDtoSchemaResponseTransformer = (data: any) => {
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+export const getProgramReviewsResponseTransformer = async (
+  data: any
+): Promise<GetProgramReviewsResponse> => {
+  data = pagedDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const programReviewSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+export const submitProgramReviewResponseTransformer = async (
+  data: any
+): Promise<SubmitProgramReviewResponse> => {
+  data = programReviewSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoProgramRequirementSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -2550,6 +2593,63 @@ export const createTrainingBranch1ResponseTransformer = async (
   data: any
 ): Promise<CreateTrainingBranch1Response> => {
   data = apiResponseTrainingBranchSchemaResponseTransformer(data);
+  return data;
+};
+
+const notificationDtoSchemaResponseTransformer = (data: any) => {
+  if (data.occurred_at) {
+    data.occurred_at = new Date(data.occurred_at);
+  }
+  if (data.popup_seen_at) {
+    data.popup_seen_at = new Date(data.popup_seen_at);
+  }
+  if (data.read_at) {
+    data.read_at = new Date(data.read_at);
+  }
+  if (data.archived_at) {
+    data.archived_at = new Date(data.archived_at);
+  }
+  if (data.created_at) {
+    data.created_at = new Date(data.created_at);
+  }
+  return data;
+};
+
+const pagedDtoNotificationDtoSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return notificationDtoSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoNotificationDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoNotificationDtoSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listNotificationsResponseTransformer = async (
+  data: any
+): Promise<ListNotificationsResponse> => {
+  data = apiResponsePagedDtoNotificationDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseNotificationDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = notificationDtoSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const applyActionResponseTransformer = async (data: any): Promise<ApplyActionResponse> => {
+  data = apiResponseNotificationDtoSchemaResponseTransformer(data);
   return data;
 };
 
@@ -3750,6 +3850,61 @@ export const createClassDefinitionResponseTransformer = async (
   return data;
 };
 
+export const uploadClassThumbnailResponseTransformer = async (
+  data: any
+): Promise<UploadClassThumbnailResponse> => {
+  data = apiResponseClassDefinitionResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const classSchedulingConflictSchemaResponseTransformer = (data: any) => {
+  if (data.requested_start) {
+    data.requested_start = new Date(data.requested_start);
+  }
+  if (data.requested_end) {
+    data.requested_end = new Date(data.requested_end);
+  }
+  return data;
+};
+
+const classSessionTemplateScheduleResponseSchemaResponseTransformer = (data: any) => {
+  if (data.session_template) {
+    data.session_template = classSessionTemplateSchemaResponseTransformer(data.session_template);
+  }
+  if (data.scheduled_instances) {
+    data.scheduled_instances = data.scheduled_instances.map((item: any) => {
+      return scheduledInstanceSchemaResponseTransformer(item);
+    });
+  }
+  if (data.scheduling_conflicts) {
+    data.scheduling_conflicts = data.scheduling_conflicts.map((item: any) => {
+      return classSchedulingConflictSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseClassSessionTemplateScheduleResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = classSessionTemplateScheduleResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const addSessionTemplateResponseTransformer = async (
+  data: any
+): Promise<AddSessionTemplateResponse> => {
+  data = apiResponseClassSessionTemplateScheduleResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const uploadClassPromotionalVideoResponseTransformer = async (
+  data: any
+): Promise<UploadClassPromotionalVideoResponse> => {
+  data = apiResponseClassDefinitionResponseSchemaResponseTransformer(data);
+  return data;
+};
+
 const classQuizScheduleSchemaResponseTransformer = (data: any) => {
   if (data.visible_at) {
     data.visible_at = new Date(data.visible_at);
@@ -4212,9 +4367,9 @@ const apiResponseAssignmentSubmissionSchemaResponseTransformer = (data: any) => 
   return data;
 };
 
-export const submitAssignmentResponseTransformer = async (
+export const submitAssignmentQueryResponseTransformer = async (
   data: any
-): Promise<SubmitAssignmentResponse> => {
+): Promise<SubmitAssignmentQueryResponse> => {
   data = apiResponseAssignmentSubmissionSchemaResponseTransformer(data);
   return data;
 };
@@ -4373,6 +4528,13 @@ export const moderateCourseResponseTransformer = async (
   data: any
 ): Promise<ModerateCourseResponse> => {
   data = apiResponseCourseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const rescheduleScheduledInstanceResponseTransformer = async (
+  data: any
+): Promise<RescheduleScheduledInstanceResponse> => {
+  data = apiResponseScheduledInstanceSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4902,6 +5064,20 @@ export const searchAttemptsResponseTransformer = async (
   return data;
 };
 
+const programRatingSummarySchemaResponseTransformer = (data: any) => {
+  if (data.review_count) {
+    data.review_count = BigInt(data.review_count.toString());
+  }
+  return data;
+};
+
+export const getProgramRatingSummaryResponseTransformer = async (
+  data: any
+): Promise<GetProgramRatingSummaryResponse> => {
+  data = programRatingSummarySchemaResponseTransformer(data);
+  return data;
+};
+
 const programEnrollmentSchemaResponseTransformer = (data: any) => {
   if (data.enrollment_date) {
     data.enrollment_date = new Date(data.enrollment_date);
@@ -5093,6 +5269,28 @@ export const getBranchUsersByDomainResponseTransformer = async (
 
 export const search2ResponseTransformer = async (data: any): Promise<Search2Response> => {
   data = apiResponsePagedDtoOrganisationSchemaResponseTransformer(data);
+  return data;
+};
+
+const notificationCountsDtoSchemaResponseTransformer = (data: any) => {
+  if (data.unread_count) {
+    data.unread_count = BigInt(data.unread_count.toString());
+  }
+  if (data.popup_count) {
+    data.popup_count = BigInt(data.popup_count.toString());
+  }
+  return data;
+};
+
+const apiResponseNotificationCountsDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = notificationCountsDtoSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getCountsResponseTransformer = async (data: any): Promise<GetCountsResponse> => {
+  data = apiResponseNotificationCountsDtoSchemaResponseTransformer(data);
   return data;
 };
 
@@ -5785,16 +5983,6 @@ export const resolveByCourseOrClassResponseTransformer = async (
   data: any
 ): Promise<ResolveByCourseOrClassResponse> => {
   data = apiResponseListCommerceCatalogueItemSchemaResponseTransformer(data);
-  return data;
-};
-
-const classSchedulingConflictSchemaResponseTransformer = (data: any) => {
-  if (data.requested_start) {
-    data.requested_start = new Date(data.requested_start);
-  }
-  if (data.requested_end) {
-    data.requested_end = new Date(data.requested_end);
-  }
   return data;
 };
 

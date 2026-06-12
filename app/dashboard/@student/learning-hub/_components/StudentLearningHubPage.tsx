@@ -20,7 +20,7 @@ export function StudentLearningHubPage() {
           loading={data.loading}
         />
 
-        <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_350px]'>
+        <div className='grid gap-4'>
           <div className='space-y-4'>
             <LearningHubContinueLearning classes={data.continueLearning} loading={data.loading} />
             <LearningHubLiveClasses liveClasses={data.liveClasses} loading={data.loading} />

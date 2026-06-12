@@ -68,17 +68,18 @@ function FilterTabs({
   onChange: (id: ClassCategory) => void;
 }) {
   return (
-    <div className="relative">
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-background to-transparent z-10" />
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+    <div className="relative w-full min-w-0">
+      <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-10 bg-gradient-to-l from-background to-transparent" />
+
+      <div className="flex w-full min-w-0 items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onChange(tab.id)}
             className={`
-              inline-flex shrink-0 items-center rounded-sm border px-3.5 py-1.5
-              text-[0.78rem] font-medium transition-all duration-150 focus-visible:outline-none
-              focus-visible:ring-2 focus-visible:ring-primary/50
+              shrink-0 whitespace-nowrap rounded-sm border px-3.5 py-1.5
+              text-[0.78rem] font-medium transition-all duration-150
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50
               ${active === tab.id
                 ? 'border-foreground bg-foreground text-background shadow-sm'
                 : 'border-border/70 bg-background text-foreground/80 hover:border-foreground/30 hover:bg-muted/60'
@@ -281,7 +282,6 @@ function ClassBanner({
 function ClassCard({ item }: { item: LearningHubClass }) {
   const [shareOpen, setShareOpen] = useState(false);
   const originUrl = typeof window !== 'undefined' ? window.location.origin : '';
-
   const registrationLink = useMemo(() => {
     if (!originUrl) return '';
 
@@ -299,8 +299,21 @@ function ClassCard({ item }: { item: LearningHubClass }) {
 
   return (
     <>
-      <article className="w-[320px] sm:min-w-[400px] sm:max-w-[410px] flex flex-col gap-2.5 rounded-[12px] border border-border/70 bg-card p-2 shadow-sm transition-shadow hover:shadow-md">
-        <ClassBanner bannerUrl={item.bannerUrl} bannerAlt={item.bannerUrl} title={item.title} />
+      <article
+        className="
+    w-full
+    min-w-0
+    flex flex-col
+    gap-2.5
+    rounded-[12px]
+    border border-border/70
+    bg-card
+    p-2
+    shadow-sm
+    transition-shadow
+    hover:shadow-md
+  "
+      >        <ClassBanner bannerUrl={item.bannerUrl} bannerAlt={item.bannerUrl} title={item.title} />
 
         <div className="space-y-1.5">
           <h3 className="text-[1rem] font-semibold text-foreground leading-snug line-clamp-2">
@@ -436,7 +449,7 @@ function ClassCard({ item }: { item: LearningHubClass }) {
 
 function ClassCardSkeleton() {
   return (
-    <article className="w-[320px] sm:min-w-[400px] sm:max-w-[410px] flex flex-col gap-2.5 rounded-[12px] border border-border/70 bg-card p-3">
+    <article className="w-full min-w-0 flex flex-col gap-2.5 rounded-[12px] border border-border/70 bg-card p-3">
       <Skeleton className="h-[130px] rounded-[8px]" />
       <div className="space-y-2">
         <Skeleton className="h-4 w-4/5" />
@@ -521,14 +534,14 @@ export function LearningHubContinueLearning({
 
   return (
     <div className="flex flex-col gap-4 px-2">
-      <FilterTabs
+      {/* <FilterTabs
         tabs={FILTER_TABS}
         active={activeFilter}
         onChange={(id) => {
           setActiveFilter(id);
           setShowAll(false);
         }}
-      />
+      /> */}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-[0.8rem] text-muted-foreground">
@@ -572,10 +585,15 @@ export function LearningHubContinueLearning({
       </div>
 
       <div
-        className={`grid gap-4 ${viewMode === 'grid'
-          ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'
-          : 'grid-cols-1'
-          }`}
+        className={
+          viewMode === 'grid'
+            ? `
+        grid
+        gap-4
+        grid-cols-[repeat(auto-fit,minmax(320px,1fr))]
+      `
+            : 'grid grid-cols-1 gap-4'
+        }
       >
         {loading ? (
           Array.from({ length: INITIAL_VISIBLE }).map((_, index) => (

@@ -17,14 +17,14 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
 import { cx, getCardClasses, getEmptyStateClasses, getStatCardClasses } from '@/lib/design-system';
 import {
   getAssignmentSubmissionsQueryKey,
   getSubmissionAttachmentsOptions,
-  submitAssignmentMutation,
-  uploadSubmissionAttachmentMutation,
+  searchSubmissionsOptions,
+  submitAssignmentQueryMutation,
+  uploadSubmissionAttachmentMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AssignmentSubmissionAttachment } from '@/services/client/types.gen';
 import { getErrorMessage } from '@/src/features/dashboard/courses/types';
@@ -50,7 +50,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import DragDropUpload from '../assignment/drag-drop';
 
@@ -120,7 +120,6 @@ function getGradeTone(percentage?: number | null) {
 export function StudentAssignmentWorkspace() {
   const student = useStudent();
   const queryClient = useQueryClient();
-  const { replaceBreadcrumbs } = useBreadcrumb();
 
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [searchValue, setSearchValue] = useState('');
@@ -130,18 +129,72 @@ export function StudentAssignmentWorkspace() {
   const [queuedFiles, setQueuedFiles] = useState<File[]>([]);
   const { assignmentRows, isLoading } = useStudentAssignmentData();
 
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-      { id: 'assignment', title: 'Assignment', url: '/dashboard/assignment', isLast: true },
-    ]);
-  }, [replaceBreadcrumbs]);
+  const enrollmentUuid =
+    assignmentRows.find(
+      row =>
+        row.classMeta.courseEnrollmentUuid ||
+        row.classMeta.enrollmentUuid
+    )?.classMeta.courseEnrollmentUuid ||
+    assignmentRows.find(row => row.classMeta.enrollmentUuid)?.classMeta.enrollmentUuid;
+
+  const { data: submissionsResp } = useQuery({
+    ...searchSubmissionsOptions({
+      query: {
+        pageable: {
+          page: 0,
+          size: 1000,
+        },
+        searchParams: {
+          enrollment_uuid_eq: enrollmentUuid,
+        },
+      },
+    }),
+    enabled: !!enrollmentUuid,
+  });
+
+  const submittedAssignmentIds = useMemo(() => {
+    const submissions = submissionsResp?.data?.content ?? [];
+
+    return new Set(
+      submissions
+        .map(submission => submission.assignment_uuid)
+        .filter(Boolean)
+    );
+  }, [submissionsResp]);
+
+  const assignmentRowsWithSubmissionState = useMemo(() => {
+    return assignmentRows.map(row => ({
+      ...row,
+      hasSubmission: submittedAssignmentIds.has(
+        row.assignment?.uuid ?? ''
+      ),
+    }));
+  }, [assignmentRows, submittedAssignmentIds]);
 
   const processedRows = useMemo(() => {
-    return assignmentRows
+    return assignmentRowsWithSubmissionState
       .filter(row => {
-        const matchesTab =
-          activeTab === 'all' || getStudentAssignmentSubmissionState(row).key === activeTab;
+        let matchesTab = true;
+
+        switch (activeTab) {
+          case 'submitted':
+            matchesTab = row.hasSubmission;
+            break;
+
+          case 'pending':
+            matchesTab = !row.hasSubmission;
+            break;
+
+          case 'graded':
+          case 'returned':
+            matchesTab =
+              getStudentAssignmentSubmissionState(row).key === activeTab;
+            break;
+
+          default:
+            matchesTab = true;
+        }
+
         const matchesSearch =
           !searchValue.trim() ||
           [
@@ -151,13 +204,19 @@ export function StudentAssignmentWorkspace() {
             row.classMeta.classTitle,
           ]
             .filter(Boolean)
-            .some(value => String(value).toLowerCase().includes(searchValue.toLowerCase()));
+            .some(value =>
+              String(value)
+                .toLowerCase()
+                .includes(searchValue.toLowerCase())
+            );
 
         return matchesTab && matchesSearch;
       })
       .sort((left, right) => {
         if (sortBy === 'course') {
-          return left.classMeta.courseTitle.localeCompare(right.classMeta.courseTitle);
+          return left.classMeta.courseTitle.localeCompare(
+            right.classMeta.courseTitle
+          );
         }
 
         if (sortBy === 'title') {
@@ -166,52 +225,80 @@ export function StudentAssignmentWorkspace() {
           );
         }
 
-        const leftDue = new Date(left.schedule?.due_at || left.assignment?.due_date || 0).getTime();
-        const rightDue = new Date(
-          right.schedule?.due_at || right.assignment?.due_date || 0
+        const leftDue = new Date(
+          left.schedule?.due_at ||
+          left.assignment?.due_date ||
+          0
         ).getTime();
+
+        const rightDue = new Date(
+          right.schedule?.due_at ||
+          right.assignment?.due_date ||
+          0
+        ).getTime();
+
         return leftDue - rightDue;
       });
-  }, [activeTab, assignmentRows, searchValue, sortBy]);
+  }, [
+    activeTab,
+    assignmentRowsWithSubmissionState,
+    searchValue,
+    sortBy,
+  ]);
 
   const stats = useMemo(() => {
     const total = assignmentRows.length;
-    const pending = assignmentRows.filter(
-      row => getStudentAssignmentSubmissionState(row).key === 'pending'
+
+    const submitted = assignmentRows.filter(row =>
+      submittedAssignmentIds.has(row.assignment?.uuid ?? '')
     ).length;
-    const submitted = assignmentRows.filter(
-      row => getStudentAssignmentSubmissionState(row).key === 'submitted'
-    ).length;
+
+    const pending = total - submitted;
+
     const graded = assignmentRows.filter(
-      row => getStudentAssignmentSubmissionState(row).key === 'graded'
+      row =>
+        row.latestSubmission &&
+        row.latestSubmission.percentage != null
     ).length;
+
     const returned = assignmentRows.filter(
-      row => getStudentAssignmentSubmissionState(row).key === 'returned'
+      row =>
+        String(row.latestSubmission?.status).toUpperCase() ===
+        'RETURNED'
     ).length;
+
     const gradedSubmissions = assignmentRows
       .map(row => row.latestSubmission?.percentage)
-      .filter((value): value is number => typeof value === 'number');
+      .filter(
+        (value): value is number =>
+          typeof value === 'number'
+      );
 
     const averageScore =
       gradedSubmissions.length > 0
         ? Math.round(
-          gradedSubmissions.reduce((totalScore, percentage) => totalScore + percentage, 0) /
-          gradedSubmissions.length
+          gradedSubmissions.reduce(
+            (sum, value) => sum + value,
+            0
+          ) / gradedSubmissions.length
         )
         : 0;
 
-    const progress = total > 0 ? Math.round(((submitted + graded + returned) / total) * 100) : 0;
+    const progress =
+      total > 0
+        ? Math.round((submitted / total) * 100)
+        : 0;
 
     return {
-      averageScore,
-      graded,
-      pending,
-      progress,
-      returned,
-      submitted,
       total,
+      pending,
+      submitted,
+      graded,
+      returned,
+      averageScore,
+      progress,
     };
-  }, [assignmentRows]);
+  }, [assignmentRows, submittedAssignmentIds]);
 
   const selectedSubmissionAttachmentsQuery = useQuery({
     ...getSubmissionAttachmentsOptions({
@@ -225,7 +312,7 @@ export function StudentAssignmentWorkspace() {
     refetchOnWindowFocus: false,
   });
 
-  const submitAssignmentMut = useMutation(submitAssignmentMutation());
+  const submitAssignmentMut = useMutation(submitAssignmentQueryMutation());
   const uploadSubmissionAttachmentMut = useMutation(uploadSubmissionAttachmentMutation());
 
   const isSubmitting = submitAssignmentMut.isPending || uploadSubmissionAttachmentMut.isPending;
@@ -275,7 +362,16 @@ export function StudentAssignmentWorkspace() {
   };
 
   const handleSubmitAssignment = async () => {
-    if (!selectedAssignment?.assignment?.uuid || !selectedAssignment.classMeta.enrollmentUuid) {
+    if (!selectedAssignment?.assignment?.uuid) {
+      toast.error('This assignment is missing an active assignment record.');
+      return;
+    }
+
+    const enrollmentUuid =
+      selectedAssignment.classMeta.courseEnrollmentUuid ??
+      selectedAssignment.classMeta.enrollmentUuid;
+
+    if (!enrollmentUuid) {
       toast.error('This assignment is missing an active student enrollment.');
       return;
     }
@@ -283,47 +379,77 @@ export function StudentAssignmentWorkspace() {
     const submissionContent = submissionText.trim();
 
     if (!submissionContent && queuedFiles.length === 0) {
-      toast.error('Add a written response or at least one attachment before submitting.');
+      toast.error(
+        'Add a written response or at least one attachment before submitting.'
+      );
       return;
     }
 
     try {
       const response = await submitAssignmentMut.mutateAsync({
-        path: { assignmentUuid: selectedAssignment.assignment.uuid },
-        query: {
-          // The Hey API contract requires `content`, even when the student submits files only.
-          content: submissionContent,
-          enrollmentUuid: selectedAssignment.classMeta.enrollmentUuid,
+        path: {
+          assignmentUuid: selectedAssignment.assignment.uuid,
         },
+        body: {
+          enrollment_uuid: enrollmentUuid,
+          student_uuid: selectedAssignment.classMeta.studentUuid,
+          submission_text: submissionContent,
+        },
+        query: {
+          enrollmentUuid: enrollmentUuid,
+          content: submissionContent,
+          enrollment_uuid: enrollmentUuid,
+        }
       });
 
       const submissionUuid = response.data?.uuid;
+
       if (!submissionUuid) {
         throw new Error('Submission was created without an identifier.');
       }
 
-      for (const file of queuedFiles) {
-        await uploadSubmissionAttachmentMut.mutateAsync({
-          body: { file },
-          path: {
-            assignmentUuid: selectedAssignment.assignment.uuid,
-            submissionUuid,
-          },
-        });
-      }
+      await Promise.all(
+        queuedFiles.map(file =>
+          uploadSubmissionAttachmentMut.mutateAsync({
+            body: { file },
+            path: {
+              assignmentUuid: selectedAssignment.assignment.uuid as string,
+              submissionUuid,
+            },
+          })
+        )
+      );
 
-      await queryClient.invalidateQueries({
-        queryKey: getAssignmentSubmissionsQueryKey({
-          path: { assignmentUuid: selectedAssignment.assignment.uuid },
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: getAssignmentSubmissionsQueryKey({
+            path: {
+              assignmentUuid: selectedAssignment.assignment.uuid,
+            },
+          }),
         }),
-      });
+
+        queryClient.invalidateQueries({
+          queryKey: ['student-assignments'],
+        }),
+      ]);
 
       toast.success('Assignment submitted successfully.');
       handleCloseSheet(false);
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Unable to submit this assignment right now.'));
+    } catch (error) {
+      toast.error(
+        getErrorMessage(error, 'Unable to submit this assignment right now.')
+      );
     }
   };
+
+  const hasSubmission = !!selectedAssignment?.submissions;
+
+  const canResubmit =
+    selectedAssignment?.latestSubmission?.status === 'RETURNED';
+
+  const showSubmissionForm =
+    !hasSubmission || canResubmit;
 
   if (!student?.uuid) {
     return (
@@ -521,7 +647,13 @@ export function StudentAssignmentWorkspace() {
           <div className='grid gap-4 lg:grid-cols-2'>
             {processedRows.map(row => {
               const dueSummary = getDueSummary(row.schedule?.due_at ?? row.assignment?.due_date);
-              const status = getStudentAssignmentSubmissionState(row);
+              const status = row.hasSubmission
+                ? {
+                  label: 'Submitted',
+                  helper: 'You have submitted this assignment.',
+                  variant: 'default' as const,
+                }
+                : getStudentAssignmentSubmissionState(row);
               const percentage = row.latestSubmission?.percentage;
 
               return (
@@ -594,23 +726,60 @@ export function StudentAssignmentWorkspace() {
                         </div>
                       </div>
                     </div>
-
                     <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between'>
                       <div className='space-y-1'>
-                        <p className='text-foreground text-sm font-medium'>{status.helper}</p>
+                        <p className='text-foreground text-sm font-medium'>
+                          {row.hasSubmission
+                            ? 'Submission received.'
+                            : status.helper}
+                        </p>
+
                         <p className='text-muted-foreground text-xs'>
-                          {row.latestSubmission?.submitted_at
-                            ? `Last activity: ${formatDate(row.latestSubmission.submitted_at)}`
-                            : `Visible from ${formatShortDate(row.schedule?.visible_at)}`}
+                          {row.hasSubmission
+                            ? row.latestSubmission?.submitted_at
+                              ? `Submitted: ${formatDate(
+                                row.latestSubmission.submitted_at
+                              )}`
+                              : 'Submission available for review'
+                            : `Visible from ${formatShortDate(
+                              row.schedule?.visible_at
+                            )}`}
                         </p>
                       </div>
+
                       <Button
                         className='rounded-full sm:min-w-[160px]'
                         onClick={() => handleOpenAssignment(row)}
                       >
-                        {!row.latestSubmission ? 'Submit assignment' : 'Open details'}
+                        {row.hasSubmission
+                          ? 'Open submission'
+                          : 'Submit assignment'}
                       </Button>
                     </div>
+
+                    {row.hasSubmission && row.latestSubmission ? (
+                      <div className="rounded-xl border border-border/60 bg-background/70 p-3">
+                        <p className="text-xs text-muted-foreground">
+                          Submitted
+                        </p>
+
+                        <p className="text-sm font-medium">
+                          {formatDate(
+                            row.latestSubmission.submitted_at
+                          )}
+                        </p>
+
+                        {row.latestSubmission.submission_status_display && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Status:{" "}
+                            {
+                              row.latestSubmission
+                                .submission_status_display
+                            }
+                          </p>
+                        )}
+                      </div>
+                    ) : null}
                   </CardContent>
                 </Card>
               );
@@ -728,7 +897,7 @@ export function StudentAssignmentWorkspace() {
                 </div>
 
                 <Card className='border-border/60 space-y-0'>
-                  <CardHeader className='pb-3'>
+                  <CardHeader className=''>
                     <CardTitle className='text-base'>Resources from your instructor</CardTitle>
                   </CardHeader>
                   <CardContent >
@@ -829,123 +998,231 @@ export function StudentAssignmentWorkspace() {
                 <Card className='border-border/60'>
                   <CardHeader className='pb-3'>
                     <CardTitle className='text-base'>
-                      {selectedAssignment.latestSubmission?.status === 'RETURNED'
-                        ? 'Revise and resubmit'
-                        : 'Submit your work'}
+                      {showSubmissionForm
+                        ? selectedAssignment?.latestSubmission?.status === 'RETURNED'
+                          ? 'Revise and resubmit'
+                          : 'Submit your work'
+                        : 'Submission details'}
                     </CardTitle>
                   </CardHeader>
+
                   <CardContent className='space-y-4'>
-                    <div className='space-y-2'>
-                      <label
-                        className='text-foreground text-sm font-medium'
-                        htmlFor='submission-text'
-                      >
-                        Written response
-                      </label>
-                      <Textarea
-                        className='min-h-32'
-                        disabled={!canSubmitSelected || isSubmitting}
-                        id='submission-text'
-                        onChange={event => setSubmissionText(event.target.value)}
-                        placeholder='Paste your answer, notes, or submission links here.'
-                        value={submissionText}
-                      />
-                    </div>
-
-                    <div className='space-y-3'>
-                      <div className='flex items-center justify-between gap-3'>
-                        <div>
-                          <p className='text-foreground text-sm font-medium'>Attachments</p>
-                          <p className='text-muted-foreground text-xs'>
-                            {canUploadFiles
-                              ? 'Accepted file uploads can be added before you submit.'
-                              : 'This assignment primarily expects text or link-based responses.'}
-                          </p>
-                        </div>
-                        <Badge variant='outline'>{queuedFiles.length} queued</Badge>
-                      </div>
-
-                      <DragDropUpload
-                        className={cx(
-                          !canUploadFiles || !canSubmitSelected || isSubmitting
-                            ? 'pointer-events-none opacity-60'
-                            : ''
-                        )}
-                        multiple
-                        onFilesAdded={handleFilesAdded}
-                      >
-                        <div className='flex flex-col items-center gap-2 text-center'>
-                          <Upload className='text-primary h-5 w-5' />
-                          <div>
-                            <p className='text-foreground text-sm font-medium'>
-                              Drop files here or click to browse
+                    {!showSubmissionForm ? (
+                      <>
+                        <div className='grid gap-3 md:grid-cols-3'>
+                          <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                            <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                              Submitted
                             </p>
-                            <p className='text-muted-foreground text-xs'>
-                              Documents and supporting media upload right after the submission
-                              record is created.
+                            <p className='text-foreground mt-1 text-sm font-medium'>
+                              {selectedAssignment?.latestSubmission?.submitted_at
+                                ? formatDate(
+                                  selectedAssignment.latestSubmission.submitted_at
+                                )
+                                : 'Submitted'}
+                            </p>
+                          </div>
+
+                          <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                            <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                              Status
+                            </p>
+                            <p className='text-foreground mt-1 text-sm font-medium'>
+                              {selectedAssignment?.latestSubmission
+                                ?.submission_status_display ||
+                                selectedAssignment?.latestSubmission?.status ||
+                                'Submitted'}
+                            </p>
+                          </div>
+
+                          <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                            <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                              Score
+                            </p>
+                            <p
+                              className={cx(
+                                'mt-1 text-sm font-semibold',
+                                getGradeTone(
+                                  selectedAssignment?.latestSubmission?.percentage
+                                )
+                              )}
+                            >
+                              {selectedAssignment?.latestSubmission?.percentage == null
+                                ? 'Pending review'
+                                : selectedAssignment?.latestSubmission?.grade_display ||
+                                `${Math.round(
+                                  selectedAssignment.latestSubmission.percentage
+                                )}%`}
                             </p>
                           </div>
                         </div>
-                      </DragDropUpload>
 
-                      {queuedFiles.length > 0 ? (
+                        {selectedAssignment?.latestSubmission?.submission_text ? (
+                          <div className='space-y-2'>
+                            <p className='text-foreground text-sm font-medium'>
+                              Submitted response
+                            </p>
+
+                            <div className='border-border/60 bg-background/70 rounded-2xl border p-4 text-sm'>
+                              <RichTextRenderer
+                                htmlString={
+                                  selectedAssignment.latestSubmission.submission_text
+                                }
+                              />
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {selectedAssignment?.latestSubmission?.instructor_comments ? (
+                          <div className='space-y-2'>
+                            <p className='text-foreground text-sm font-medium'>
+                              Instructor feedback
+                            </p>
+
+                            <div className='border-warning/20 bg-warning/10 rounded-2xl border p-4 text-sm'>
+                              {selectedAssignment.latestSubmission.instructor_comments}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <div className='border-border/60 border-t pt-4'>
+                          <p className='text-muted-foreground text-sm'>
+                            Your submission has been received and is awaiting review.
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
                         <div className='space-y-2'>
-                          {queuedFiles.map(file => (
-                            <div
-                              key={`${file.name}-${file.size}`}
-                              className='border-border/60 bg-background/70 flex items-center justify-between gap-3 rounded-2xl border p-3'
-                            >
-                              <div className='min-w-0'>
-                                <p className='text-foreground truncate text-sm font-medium'>
-                                  {file.name}
+                          <label
+                            className='text-foreground text-sm font-medium'
+                            htmlFor='submission-text'
+                          >
+                            Written response
+                          </label>
+
+                          <Textarea
+                            className='min-h-32'
+                            disabled={!canSubmitSelected || isSubmitting}
+                            id='submission-text'
+                            onChange={event =>
+                              setSubmissionText(event.target.value)
+                            }
+                            placeholder='Paste your answer, notes, or submission links here.'
+                            value={submissionText}
+                          />
+                        </div>
+
+                        <div className='space-y-3'>
+                          <div className='flex items-center justify-between gap-3'>
+                            <div>
+                              <p className='text-foreground text-sm font-medium'>
+                                Attachments
+                              </p>
+
+                              <p className='text-muted-foreground text-xs'>
+                                {canUploadFiles
+                                  ? 'Accepted file uploads can be added before you submit.'
+                                  : 'This assignment primarily expects text or link-based responses.'}
+                              </p>
+                            </div>
+
+                            <Badge variant='outline'>
+                              {queuedFiles.length} queued
+                            </Badge>
+                          </div>
+
+                          <DragDropUpload
+                            className={cx(
+                              !canUploadFiles ||
+                                !canSubmitSelected ||
+                                isSubmitting
+                                ? 'pointer-events-none opacity-60'
+                                : ''
+                            )}
+                            multiple
+                            onFilesAdded={handleFilesAdded}
+                          >
+                            <div className='flex flex-col items-center gap-2 text-center'>
+                              <Upload className='text-primary h-5 w-5' />
+
+                              <div>
+                                <p className='text-foreground text-sm font-medium'>
+                                  Drop files here or click to browse
                                 </p>
+
                                 <p className='text-muted-foreground text-xs'>
-                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                  Documents and supporting media upload right after
+                                  the submission record is created.
                                 </p>
                               </div>
-                              <Button
-                                disabled={isSubmitting}
-                                onClick={() => handleRemoveFile(file)}
-                                size='icon'
-                                type='button'
-                                variant='ghost'
-                              >
-                                <X className='h-4 w-4' />
-                              </Button>
                             </div>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
+                          </DragDropUpload>
 
-                    <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between'>
-                      <div className='text-muted-foreground text-xs'>
-                        {!selectedAssignment.classMeta.enrollmentUuid
-                          ? 'Submission is unavailable until this class has an active enrollment record.'
-                          : canSubmitSelected
-                            ? 'Your submission will be saved immediately and any queued files will upload right after.'
-                            : 'This assignment already has a live submission state. Wait for a returned draft to resubmit.'}
-                      </div>
-                      <Button
-                        className='rounded-full'
-                        disabled={!canSubmitSelected || isSubmitting}
-                        onClick={handleSubmitAssignment}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                            Submitting
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className='mr-2 h-4 w-4' />
-                            {selectedAssignment.latestSubmission?.status === 'RETURNED'
-                              ? 'Resubmit assignment'
-                              : 'Submit assignment'}
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                          {queuedFiles.length > 0 && (
+                            <div className='space-y-2'>
+                              {queuedFiles.map(file => (
+                                <div
+                                  key={`${file.name}-${file.size}`}
+                                  className='border-border/60 bg-background/70 flex items-center justify-between gap-3 rounded-2xl border p-3'
+                                >
+                                  <div className='min-w-0'>
+                                    <p className='text-foreground truncate text-sm font-medium'>
+                                      {file.name}
+                                    </p>
+
+                                    <p className='text-muted-foreground text-xs'>
+                                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                                    </p>
+                                  </div>
+
+                                  <Button
+                                    disabled={isSubmitting}
+                                    onClick={() => handleRemoveFile(file)}
+                                    size='icon'
+                                    type='button'
+                                    variant='ghost'
+                                  >
+                                    <X className='h-4 w-4' />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between'>
+                          <div className='text-muted-foreground text-xs'>
+                            {!selectedAssignment?.classMeta?.enrollmentUuid
+                              ? 'Submission is unavailable until this class has an active enrollment record.'
+                              : canSubmitSelected
+                                ? 'Your submission will be saved immediately and any queued files will upload right after.'
+                                : 'This assignment already has a live submission state.'}
+                          </div>
+
+                          <Button
+                            className='rounded-full'
+                            disabled={!canSubmitSelected || isSubmitting}
+                            onClick={handleSubmitAssignment}
+                          >
+                            {isSubmitting ? (
+                              <>
+                                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                                Submitting
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className='mr-2 h-4 w-4' />
+                                {selectedAssignment?.latestSubmission?.status ===
+                                  'RETURNED'
+                                  ? 'Resubmit assignment'
+                                  : 'Submit assignment'}
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               </div>
