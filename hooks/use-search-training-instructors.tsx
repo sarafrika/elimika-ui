@@ -119,7 +119,7 @@ function useSearchTrainingInstructors() {
     const averageRating =
       typeof ratingSummary?.average_rating === 'number'
         ? ratingSummary.average_rating
-        : (instructor.rating ?? null);
+        : ((instructor as Instructor & { rating?: number }).rating ?? null);
 
     const skillArray = skillsByInstructor.get(instructor.uuid ?? '') ?? [];
     const skillCategories = skillArray.reduce<Record<string, InstructorSkill[]>>((acc, skill) => {
@@ -144,7 +144,7 @@ function useSearchTrainingInstructors() {
       total_experience_years: totalExperience,
       specializations: skillArray,
       skill_categories: skillCategories,
-      rating: averageRating ?? instructor.rating ?? 0,
+      rating: averageRating ?? (instructor as Instructor & { rating?: number }).rating ?? 0,
       review_count: reviewCount,
       reviews: [],
     };
