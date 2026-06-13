@@ -75,6 +75,7 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
               <Image
                 src={imageUrl}
                 alt={card.title}
+                sizes=''
                 fill
                 loading='eager'
                 className="object-cover transition-transform duration-500 group-hover:scale-105"

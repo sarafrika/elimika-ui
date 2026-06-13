@@ -21,7 +21,7 @@ export function CoursesRecommendationCard({ card }: CoursesRecommendationCardPro
   const isApplyToTrain = card.ctaKind === 'apply-to-train';
 
   return (
-    <article className='border-border bg-card group overflow-hidden rounded-lg border min-w-[248px] max-w-[248px] sm:min-w-[270px] sm:max-w-[270px]'>
+    <article className='border-border bg-card group overflow-hidden rounded-lg border min-w-[248px] max-w-[248px] sm:min-w-[300px] sm:max-w-[350px]'>
       <Link href={card.detailsHref} className='block'>
         <div
           className={cn(

@@ -450,7 +450,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         const reviews = reviewMap[course.uuid ?? ''];
         const enrollments = courseEnrollmentMap[course.uuid ?? '']
 
-        const classCount = definition.enrollments.length || definition.schedules?.length || 0;
+        const classCount = definition.classEnrollments.length || definition.schedules?.length || 0;
         const existing = uniqueCourses.get(course.uuid);
         const presentation = getCardPresentation(index);
 
@@ -1032,14 +1032,28 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                 </div>
 
                 {isLoading ? (
-                  <div className='grid gap-4 p-4 sm:grid-cols-2 min-[1400px]:grid-cols-3'>
-                    {Array.from({ length: 3 }).map((_, index) => (
-                      <Skeleton key={index} className='h-[268px] rounded-2xl' />
+                  <div className='grid gap-4 grid-cols-[repeat(auto-fit,minmax(320px,1fr))]'>
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="rounded-2xl border p-4 space-y-4"
+                      >
+                        <Skeleton className="h-40 w-full rounded-xl" />
+                        <Skeleton className="h-6 w-3/4" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-5/6" />
+                        </div>
+                        <div className="flex items-center justify-between pt-2">
+                          <Skeleton className="h-5 w-20" />
+                          <Skeleton className="h-10 w-28 rounded-lg" />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : catalogCards.length > 0 ? (
                   <div className=''>
-                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">
                       {catalogCards.map(card => (
                         <CoursesCatalogCard
                           key={card.id}
@@ -1147,10 +1161,23 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           </div>
 
           {isLoading ? (
-            <div className='grid gap-4 md:grid-cols-2 min-[1420px]:grid-cols-3'>
+            <div className='grid gap-4 grid-cols-[repeat(auto-fit,minmax(270px,270px))]'>
               {Array.from({ length: 3 }).map((_, index) => (
-                <Skeleton key={index} className='h-[268px] rounded-2xl' />
-              ))}
+                <div
+                  key={index}
+                  className="rounded-2xl border p-4 space-y-4"
+                >
+                  <Skeleton className="h-28 w-full rounded-xl" />
+                  <Skeleton className="h-6 w-3/4" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6" />
+                  </div>
+                  <div className="flex items-center justify-between pt-2">
+                    <Skeleton className="h-5 w-20" />
+                    <Skeleton className="h-10 w-28 rounded-lg" />
+                  </div>
+                </div>))}
             </div>
           ) : recommendationCards.length > 0 ? (
             <div className='scrollbar-hidden flex gap-4 overflow-x-auto pb-2'>

@@ -7,6 +7,8 @@ import type {
   GetCourseLessonsResponse,
   GetEnrollmentsForClassResponse,
   GetQuizSchedulesResponse,
+  ScheduleClassData,
+  ScheduledInstance,
 } from '../services/client';
 
 import {
@@ -239,7 +241,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
     const classUuid = classDefinitionUuids[index];
 
     quizMap.set(
-      classUuid,
+      classUuid as string,
       query.data?.data?.content ?? []
     );
   });
@@ -253,7 +255,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
     const classUuid = classDefinitionUuids[index];
 
     assignmentMap.set(
-      classUuid,
+      classUuid as string,
       query.data?.data?.content ?? []
     );
   });
@@ -261,13 +263,13 @@ function useStudentClassDefinitions(student?: StudentLike) {
   /**
    * Schedule map
    */
-  const scheduleMap = new Map<string, any[]>();
+  const scheduleMap = new Map<string, ScheduledInstance[]>();
 
   scheduleQueries.forEach((query, index) => {
     const classUuid = classDefinitionUuids[index];
 
     scheduleMap.set(
-      classUuid,
+      classUuid as string,
       query.data?.data?.content ?? []
     );
   });
@@ -317,7 +319,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
         classDefinitionUuids[index];
 
       classEnrollmentMap.set(
-        classUuid,
+        classUuid as string,
         query.data?.data?.content ?? []
       );
     }

@@ -2,9 +2,9 @@
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { CoursesFilterSection } from './courses-data';
 import { Check, ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import type { CoursesFilterSection } from './courses-data';
 
 type CoursesCategoryFiltersProps = {
   sections: CoursesFilterSection[];
@@ -40,7 +40,7 @@ export function CoursesCategoryFilters({
   };
 
   return (
-    <aside className={cn('border-border bg-card rounded-2xl border', className)}>
+    <aside className={cn('border-border bg-card', className)}>
       {sections.map(section => {
         const isCollapsed = visibleState[section.key];
 
