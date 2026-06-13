@@ -12,7 +12,7 @@ export function StudentLearningHubPage() {
 
   return (
     <main className='w-full py-3 sm:py-4'>
-      <div className='space-y-4'>
+      <div className='space-y-4 pl-2'>
         <LearningHubHero
           firstName={data.firstName}
           studentName={data.studentName}
@@ -20,7 +20,7 @@ export function StudentLearningHubPage() {
           loading={data.loading}
         />
 
-        <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_350px]'>
+        <div className='grid gap-4'>
           <div className='space-y-4'>
             <LearningHubContinueLearning classes={data.continueLearning} loading={data.loading} />
             <LearningHubLiveClasses liveClasses={data.liveClasses} loading={data.loading} />

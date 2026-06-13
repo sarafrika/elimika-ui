@@ -28,6 +28,47 @@ export type LearningHubStat = {
   tone: 'blue' | 'green' | 'red' | 'orange';
 };
 
+export type ClassAccent = 'blue' | 'green' | 'slate';
+
+export type ClassDeliveryMode =
+  | 'Online'
+  | 'Private'
+  | 'Group Class'
+  | 'In-Person';
+
+export type ClassCategory =
+  | 'All Courses'
+  | 'Special Needs'
+  | 'Near Me'
+  | 'Upcoming'
+  | 'Organisation'
+  | 'Individual'
+  | 'Online'
+  | 'Private Classes'
+  | 'Group Classes'
+  | 'Workshops'
+  | 'Camps'
+  | 'Free'
+  | 'Discounted';
+
+export interface ClassTag {
+  label: string;
+  color: 'blue' | 'green' | 'pink' | 'purple' | 'orange' | 'cyan';
+}
+
+export interface ClassMeta {
+  lessons: number;
+  assessments: number;
+  projects: string;
+  certificate: boolean;
+  language: string;
+}
+
+export type FilterTab = {
+  id: ClassCategory;
+  label: string;
+};
+
 export type LearningHubClass = {
   id: string;
   title: string;
@@ -39,6 +80,23 @@ export type LearningHubClass = {
   href: string;
   bannerUrl?: string;
   accent: 'blue' | 'green' | 'slate';
+  courseUuid?: string;
+  programUuid?: string;
+  // Extended fields for the new card UI
+  rating: number;
+  reviewCount: number;
+  description: string;
+  instructorName: string;
+  instructorAvatarUrl?: string;
+  duration: string;
+  enrolledCount: string;
+  price: string;
+  tags: ClassTag[];
+  deliveryMode: ClassDeliveryMode;
+  meta: ClassMeta;
+  category: ClassCategory;
+  isFree?: boolean;
+  isDiscounted?: boolean;
 };
 
 export type LearningHubLiveClass = {
@@ -390,35 +448,185 @@ export function useStudentLearningHubData(): LearningHubData {
     return map;
   }, [certificates]);
 
+
+
+  const getDeliveryMode = (
+    sessionFormat?: string,
+    locationType?: string
+  ): ClassDeliveryMode => {
+    if (locationType === 'ONLINE') return 'Online';
+    if (sessionFormat === 'PRIVATE') return 'Private';
+    if (sessionFormat === 'GROUP') return 'Group Class';
+
+    return 'In-Person';
+  };
+
+  const getCategory = (
+    deliveryMode: ClassDeliveryMode,
+    isFree: boolean
+  ): ClassCategory => {
+    if (isFree) return 'Free';
+    if (deliveryMode === 'Online') return 'Online';
+    if (deliveryMode === 'Private') return 'Private Classes';
+    if (deliveryMode === 'Group Class') return 'Group Classes';
+
+    return 'All Courses';
+  };
+
+
   const continueLearning = useMemo<LearningHubClass[]>(() => {
     return classDefinitions.map((item, index) => {
       const course = item.course;
       const classDetails = item.classDetails;
+
       const fallbackProgress =
         COURSE_PROGRESS_FALLBACK[index % COURSE_PROGRESS_FALLBACK.length] ?? 0;
-      const progress = course?.uuid
-        ? (certificateMap.get(course.uuid) ?? fallbackProgress)
-        : fallbackProgress;
+
+      const progress =
+        Number(classDetails?.class_progress_percentage) ||
+        (course?.uuid
+          ? (certificateMap.get(course.uuid) ?? fallbackProgress)
+          : fallbackProgress);
+
       const scheduleCount = item.schedules?.length ?? 0;
+
+      const deliveryMode = getDeliveryMode(
+        classDetails?.session_format,
+        classDetails?.location_type
+      );
+
+      const isFree =
+        Number(classDetails?.training_fee ?? 0) <= 0;
+
+      const trainingFee =
+        Number(classDetails?.training_fee ?? 0);
 
       return {
         id: item.uuid,
-        title: classDetails?.title ?? course?.name ?? 'Untitled class',
-        courseName: course?.name ?? 'Standalone class',
+        title: classDetails?.title,
+        courseName: course?.name,
+        courseUuid: course?.uuid,
+
         statusLabel: getClassStatusLabel(
-          classDetails?.academic_period_start_date ?? classDetails?.default_start_time,
-          classDetails?.academic_period_end_date ?? classDetails?.default_end_time
+          classDetails?.academic_period_start_date ??
+          classDetails?.default_start_time,
+          classDetails?.academic_period_end_date ??
+          classDetails?.default_end_time
         ),
+
         scheduleLabel:
-          scheduleCount === 1 ? '1 scheduled session' : `${scheduleCount} scheduled sessions`,
+          scheduleCount === 1
+            ? '1 scheduled session'
+            : `${scheduleCount} scheduled sessions`,
+
         progress,
-        ctaLabel: progress >= 80 ? 'View class' : 'Resume class',
+
+        ctaLabel:
+          progress >= 100
+            ? 'View Certificate'
+            : progress > 0
+              ? 'Continue Learning'
+              : 'Start Learning',
+
         href: `/dashboard/learning-hub/classes/${classDetails?.uuid}`,
-        bannerUrl: course?.banner_url,
-        accent: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
+
+        bannerUrl:
+          course?.banner_url ??
+          course?.thumbnail_url,
+
+        accent:
+          index % 3 === 0
+            ? 'blue'
+            : index % 3 === 1
+              ? 'slate'
+              : 'green',
+
+        // ======================
+        // New Rich Card Fields
+        // ======================
+        rating: 0,
+
+        reviewCount:
+          item.enrollments?.length ?? 0,
+
+        description:
+          stripHtml(course?.description) ||
+          stripHtml(classDetails?.description) ||
+          'No description available.',
+
+        instructorName:
+          instructorMap.get(
+            classDetails?.default_instructor_uuid ?? ''
+          )?.full_name ??
+          'Instructor',
+
+        instructorAvatarUrl:
+          instructorMap.get(
+            classDetails?.default_instructor_uuid ?? ''
+          )?.profile_picture_url,
+
+        duration:
+          course?.total_duration_display ??
+          `${course?.duration_hours ?? 0} hours`,
+
+        enrolledCount: String(
+          item.enrollments?.length ?? 0
+        ),
+
+        price: isFree
+          ? 'Free'
+          : `${trainingFee.toLocaleString()}`,
+
+        tags: [
+          ...(course?.category_names ?? []).map(
+            category => ({
+              label: category,
+              color: 'blue' as const,
+            })
+          ),
+
+          ...(classDetails?.allow_waitlist
+            ? [
+              {
+                label: 'Waitlist',
+                color: 'orange' as const,
+              },
+            ]
+            : []),
+        ],
+
+        deliveryMode,
+
+        meta: {
+          lessons: item?.lessons?.length,
+          assessments: item?.assignments?.length + item?.quizzes?.length,
+          projects: 0,
+          // projects:
+          //   course?.training_requirements?.length
+          //     ? `${course.training_requirements.length}`
+          //     : '0',
+          certificate: true,
+          language: 'English',
+        },
+
+        category: getCategory(
+          deliveryMode,
+          isFree
+        ),
+
+        isFree,
+
+        isDiscounted:
+          trainingFee >
+          Number(course?.minimum_training_fee ?? trainingFee),
       };
     });
-  }, [certificateMap, classDefinitions]);
+  }, [
+    classDefinitions,
+    certificateMap,
+    instructorMap,
+    assignmentSchedules,
+  ]);
 
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
   const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -520,7 +728,7 @@ export function useStudentLearningHubData(): LearningHubData {
         if (!assignment) return null;
 
         const enrollmentUuids = new Set(
-          item.classInfo.classEnrollments.map(enrollment => enrollment.enrollment_uuid).filter(Boolean)
+          item.classInfo.enrollments.map(enrollment => enrollment.enrollment_uuid).filter(Boolean)
         );
 
         const latestSubmission =

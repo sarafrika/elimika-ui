@@ -1618,9 +1618,9 @@ export default function StudentClassTrainingPage({
         toast.success('Note shared for this session view.');
     };
 
-    if (isLoading || rosterLoading || lessonsLoading) {
-        return <ConsoleSkeleton />;
-    }
+    // if (isLoading || rosterLoading || lessonsLoading) {
+    //   return <ConsoleSkeleton />;
+    // }
 
     if (isError) {
         return (
@@ -1651,7 +1651,7 @@ export default function StudentClassTrainingPage({
                         size='icon'
                         className='text-primary-foreground hover:bg-white/10'
                     >
-                        <Link href='/dashboard/learning-hub' aria-label='Back to classes'>
+                        <Link href='/dashboard/learning-hub/classes' aria-label='Back to classes'>
                             <ArrowLeft className='h-5 w-5' />
                         </Link>
                     </Button>
