@@ -415,9 +415,12 @@ export function TrainingClassList({
   const draftClasses = classesWithUuid.filter(item => !item.is_active);
 
   const enrollmentQueries = useQueries({
-    queries: filteredClasses.map(cls =>
-      getEnrollmentsForClassOptions({ path: { uuid: cls.uuid } })
-    ),
+    queries: filteredClasses.map(cls => ({
+      ...getEnrollmentsForClassOptions({ path: { uuid: cls.uuid as string } }),
+      // Without this gate, classes missing a uuid fire a request with a
+      // literal {uuid} placeholder, which the API rejects.
+      enabled: Boolean(cls.uuid),
+    })),
   });
 
   if (loading) {

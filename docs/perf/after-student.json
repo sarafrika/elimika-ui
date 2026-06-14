@@ -1,0 +1,123 @@
+[
+  {
+    "path": "/dashboard/overview",
+    "finalUrl": "/dashboard/overview",
+    "apiRequests": 12,
+    "failedRequests": 1,
+    "timeToDataMs": 4617,
+    "jsTransferredKB": 506,
+    "jsFiles": 49,
+    "domContentLoadedMs": 322,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/courses",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+        "ms": 1595,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 1385,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/courses",
+        "ms": 1385,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1321,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1226,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/learning-hub",
+    "finalUrl": "/dashboard/learning-hub",
+    "apiRequests": 21,
+    "failedRequests": 1,
+    "timeToDataMs": 5810,
+    "jsTransferredKB": 472,
+    "jsFiles": 41,
+    "domContentLoadedMs": 56,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/scheduled-instances",
+      "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+      "/api/v1/courses/published",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/schedule",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/quizzes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/assignments",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab/submissions",
+      "/api/v1/instructors/b7411300-d40d-4d55-a399-5592dd3088b2"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 3118,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+        "ms": 2133,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1093,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/courses/published",
+        "ms": 974,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+        "ms": 947,
+        "status": 200
+      }
+    ]
+  }
+]

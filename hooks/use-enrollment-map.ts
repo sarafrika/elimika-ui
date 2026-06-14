@@ -17,11 +17,14 @@ export type EnrollmentMap = Record<
 >;
 
 export function useCourseEnrollmentsMap(courseUuids: string[]) {
+  // Consumers only need the enrollment COUNT — read it from the page
+  // metadata of a size-1 request instead of downloading up to 10,000 rows
+  // per course.
   const enrollmentQueries = useQueries({
     queries: courseUuids.map(uuid => ({
       ...getCourseEnrollmentsOptions({
         path: { courseUuid: uuid },
-        query: { pageable: { size: 10000 } },
+        query: { pageable: { page: 0, size: 1 } },
       }),
       enabled: !!uuid,
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -35,12 +38,13 @@ export function useCourseEnrollmentsMap(courseUuids: string[]) {
     const map: EnrollmentMap = {};
 
     courseUuids.forEach((uuid, index) => {
-      const data = enrollmentQueries[index]?.data?.data?.content;
+      const page = enrollmentQueries[index]?.data?.data;
+      const content = page?.content;
 
-      map[uuid] = data
+      map[uuid] = content
         ? {
-          enrollments: data,
-          count: data.length ?? 0,
+          enrollments: content,
+          count: Number(page?.metadata?.totalElements ?? content.length ?? 0),
         }
         : null;
     });

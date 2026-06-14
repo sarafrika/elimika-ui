@@ -1,5 +1,6 @@
 'use client';
 
+import { localDate } from '@/lib/date';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import type { InstructorCalendarEntry } from '@/services/client/types.gen';
@@ -34,8 +35,8 @@ const Page = () => {
     ...getInstructorScheduleOptions({
       path: { instructorUuid: instructor?.uuid as string },
       query: {
-        start: new Date('2025-10-10'),
-        end: new Date('2025-11-11'),
+        start: localDate('2025-10-10'),
+        end: localDate('2025-11-11'),
       },
     }),
     enabled: !!instructor?.uuid,

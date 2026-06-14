@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getStudentByIdOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { InstructorReview } from '@/services/client/types.gen';
 import { useQuery } from '@tanstack/react-query';
-import moment from 'moment';
+import { dayjs } from '@/lib/date';
 
 function getInitials(name?: string) {
   if (!name) return 'ST';
@@ -68,7 +68,7 @@ export function ReviewCard({ review, type = 'instructor' }: ReviewCardProps) {
 
           <div className='bg-primary/30 h-2 w-2 rounded-full'></div>
 
-          <p className='text-muted-foreground text-xs'>{moment(review.created_date).fromNow()}</p>
+          <p className='text-muted-foreground text-xs'>{dayjs(review.created_date).fromNow()}</p>
         </div>
 
         <div className='text-sm text-yellow-500'>

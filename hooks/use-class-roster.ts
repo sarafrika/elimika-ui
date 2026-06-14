@@ -21,14 +21,15 @@ export type RosterEntry = {
 };
 
 export function useClassRoster(classId: string | undefined) {
-  const enrollmentQuery = useQuery(
-    getEnrollmentsForClassOptions({
+  const enrollmentQuery = useQuery({
+    ...getEnrollmentsForClassOptions({
       path: { uuid: classId as string },
-      query: {
-        enabled: Boolean(classId),
-      },
-    })
-  );
+    }),
+    // `enabled` was previously nested inside the API `query` params, where it
+    // did nothing — the request fired with a literal {uuid} placeholder
+    // whenever classId was undefined.
+    enabled: Boolean(classId),
+  });
 
   const allEnrollments = enrollmentQuery?.data?.data ?? [];
 

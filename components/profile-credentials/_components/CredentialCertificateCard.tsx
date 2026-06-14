@@ -1,8 +1,7 @@
 'use client';
 
 import { ChevronRight } from 'lucide-react';
-import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
-import * as pdfjsLib from 'pdfjs-dist';
+
 import { useEffect, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { loadPdfjs, type PDFDocumentProxy, type PDFPageProxy } from '@/lib/pdfjs';
 import { cn } from '@/lib/utils';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
@@ -28,13 +28,6 @@ type CredentialCertificateCardProps = {
   onDelete?: (item: CredentialItem) => void;
   isDeleting?: boolean;
 };
-
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url
-  ).toString();
-}
 
 function getStatusTone(status: string) {
   const normalized = status.toLowerCase();
@@ -70,10 +63,30 @@ function getStatusTone(status: string) {
 export function GeneralPdfPreview({ documentUrl, documentLabel }: { documentUrl: string; documentLabel: string }) {
   const resolvedUrl = toAuthenticatedMediaUrl(documentUrl) || documentUrl;
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [inView, setInView] = useState(false);
+
+  // Only download/render the PDF once the card is near the viewport — a page
+  // of credential cards was fetching every document up front.
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
-    if (!documentUrl) return;
+    if (!documentUrl || !inView) return;
 
     let cancelled = false;
     let pdfDoc: PDFDocumentProxy | null = null;
@@ -104,6 +117,7 @@ export function GeneralPdfPreview({ documentUrl, documentLabel }: { documentUrl:
     const load = async () => {
       try {
         setError(null);
+        const pdfjsLib = await loadPdfjs();
         const pdf = await pdfjsLib.getDocument(resolvedUrl).promise;
         if (cancelled) return;
         pdfDoc = pdf;
@@ -120,10 +134,10 @@ export function GeneralPdfPreview({ documentUrl, documentLabel }: { documentUrl:
       cancelled = true;
       pdfDoc?.destroy().catch(() => { });
     };
-  }, [resolvedUrl]);
+  }, [resolvedUrl, inView, documentUrl]);
 
   return (
-    <div className='relative h-[180px] overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-3'>
+    <div ref={containerRef} className='relative h-[180px] overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-3'>
       <div className='pointer-events-none absolute inset-x-0 top-0 h-18 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_92%,white_8%),transparent)]' />
       <div className='pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--background)_94%,white_6%))]' />
       <div className='pointer-events-none absolute top-4 left-4 z-10 rounded-full border border-white/80 bg-background/85 px-3 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur'>

@@ -1,0 +1,8 @@
+`query: { $props }` where {
+  $props <: contains pair(key = `enabled`),
+  register_diagnostic(
+    span = $props,
+    message = "`enabled` inside the API `query: {}` object is sent as a query-string parameter and does NOT gate the request. Move it to the top level of the useQuery options.",
+    severity = "error"
+  )
+}

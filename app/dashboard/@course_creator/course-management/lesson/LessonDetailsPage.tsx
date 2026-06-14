@@ -97,11 +97,14 @@ const LessonDetailsPage = () => {
   const qc = useQueryClient();
 
   // get lesson details
-  const { data, isLoading } = useQuery(
-    getCourseLessonOptions({
+  const { data, isLoading } = useQuery({
+    ...getCourseLessonOptions({
       path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
-    })
-  );
+    }),
+    // Without these gates, opening the page without query params sends
+    // literal {courseUuid}/{lessonUuid} placeholders to the API.
+    enabled: Boolean(courseId && lessonId),
+  });
   const lesson = data as unknown as LessonRecord | undefined;
 
   useEffect(() => {
@@ -131,11 +134,12 @@ const LessonDetailsPage = () => {
     return Array.isArray(content) ? content : [];
   }, [contentTypeList]);
 
-  const { data: lessonContent, isLoading: contentIsLoading } = useQuery(
-    getLessonContentOptions({
+  const { data: lessonContent, isLoading: contentIsLoading } = useQuery({
+    ...getLessonContentOptions({
       path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
-    })
-  );
+    }),
+    enabled: Boolean(courseId && lessonId),
+  });
   const contentItems = (lessonContent?.data ?? []) as unknown as LessonContentRecord[];
 
   const [openContentModal, setOpenContentModal] = useState(false);

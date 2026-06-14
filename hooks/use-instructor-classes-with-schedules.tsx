@@ -1,8 +1,8 @@
+import { localDate } from '@/lib/date';
 import {
   getClassDefinitionsForInstructorOptions,
-  getClassScheduleOptions,
-  getCourseByUuidOptions,
   getEnrollmentsForClassOptions,
+  getInstructorScheduleOptions,
   getProgramCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
@@ -12,6 +12,7 @@ import type {
 } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useCoursesByIds } from './use-batched-lookups';
 import type { ProgramCourseLike } from './use-programlessonwithcontent';
 
 type InstructorClass = NonNullable<
@@ -94,35 +95,10 @@ export function useInstructorClassesWithSchedules(
     )];
   }, [uniqueClasses]);
 
-  const courseQueries = useQueries({
-    queries: uniqueCourseUuids.map(courseUuid => ({
-      ...getCourseByUuidOptions({
-        path: {
-          uuid: courseUuid as string,
-        },
-      }),
-
-      enabled: !!courseUuid,
-
-      staleTime: 10 * 60 * 1000,
-      gcTime: 60 * 60 * 1000,
-
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-      refetchOnWindowFocus: false,
-    })),
-  });
-
-  const courseMap = useMemo<
-    Record<string, InstructorCourse | null>
-  >(() => {
-    return Object.fromEntries(
-      uniqueCourseUuids.map((uuid, index) => [
-        uuid as string,
-        courseQueries[index]?.data?.data ?? null,
-      ])
-    );
-  }, [uniqueCourseUuids, courseQueries]);
+  // One batched search per ~100 course ids instead of a request per course.
+  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(
+    uniqueCourseUuids as string[]
+  );
 
   const programCoursesQueries = useQueries({
     queries: uniqueProgramUuids.map(programUuid => ({
@@ -175,31 +151,46 @@ export function useInstructorClassesWithSchedules(
     })),
   });
 
-  const scheduleQueries = useQueries({
-    queries: uniqueClasses.map(classItem => ({
-      ...getClassScheduleOptions({
-        path: {
-          uuid: classItem.uuid as string,
-        },
+  // One timetable request for the whole instructor instead of one schedule
+  // request per class. Instances carry class_definition_uuid, so they are
+  // grouped client-side. The ±2-year window bounds payload size.
+  const scheduleRange = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setFullYear(start.getFullYear() - 2);
+    const end = new Date(now);
+    end.setFullYear(end.getFullYear() + 2);
+    // LocalDate params must go over the wire as YYYY-MM-DD
+    return { start: localDate(start), end: localDate(end) };
+  }, []);
 
-        query: {
-          pageable: {
-            page: 0,
-            size: 1000,
-          },
-        },
-      }),
-
-      enabled: !!classItem.uuid,
-
-      staleTime: 10 * 60 * 1000,
-      gcTime: 60 * 60 * 1000,
-
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-      refetchOnWindowFocus: false,
-    })),
+  const instructorScheduleQuery = useQuery({
+    ...getInstructorScheduleOptions({
+      path: { instructorUuid: instructorUuid as string },
+      query: scheduleRange,
+    }),
+    enabled: !!instructorUuid,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
   });
+
+  const schedulesByClass = useMemo(() => {
+    const map = new Map<string, InstructorSchedule[]>();
+    for (const instance of instructorScheduleQuery.data?.data ?? []) {
+      const classUuid = instance.class_definition_uuid;
+      if (!classUuid) continue;
+      const current = map.get(classUuid) ?? [];
+      current.push(instance as InstructorSchedule);
+      map.set(classUuid, current);
+    }
+    for (const instances of map.values()) {
+      instances.sort((a, b) => a.start_time.getTime() - b.start_time.getTime());
+    }
+    return map;
+  }, [instructorScheduleQuery.data]);
 
   const data = useMemo<InstructorClassWithSchedule[]>(
     () =>
@@ -214,8 +205,7 @@ export function useInstructorClassesWithSchedules(
             ? (programCoursesMap[classItem.program_uuid] ?? [])
             : [],
 
-        schedule:
-          scheduleQueries[index]?.data?.data?.content ?? [],
+        schedule: schedulesByClass.get(classItem.uuid ?? '') ?? [],
 
         enrollments:
           enrollmentQueries[index]?.data?.data ?? [],
@@ -224,31 +214,28 @@ export function useInstructorClassesWithSchedules(
       uniqueClasses,
       courseMap,
       programCoursesMap,
-      scheduleQueries,
+      schedulesByClass,
       enrollmentQueries,
     ]
   );
 
   const isLoading =
     classesQuery.isLoading ||
-    courseQueries.some(query => query.isLoading) ||
+    coursesLoading ||
     programCoursesQueries.some(query => query.isLoading) ||
     enrollmentQueries.some(query => query.isLoading) ||
-    scheduleQueries.some(query => query.isLoading);
+    instructorScheduleQuery.isLoading;
 
   const isPending =
     classesQuery.isPending ||
-    courseQueries.some(query => query.isPending) ||
     programCoursesQueries.some(query => query.isPending) ||
-    enrollmentQueries.some(query => query.isPending) ||
-    scheduleQueries.some(query => query.isPending);
+    enrollmentQueries.some(query => query.isPending);
 
   const isError =
     classesQuery.isError ||
-    courseQueries.some(query => query.isError) ||
     programCoursesQueries.some(query => query.isError) ||
     enrollmentQueries.some(query => query.isError) ||
-    scheduleQueries.some(query => query.isError);
+    instructorScheduleQuery.isError;
 
   return {
     classes: data,

@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
@@ -10,7 +11,7 @@ import * as z from 'zod';
 import ImageSelector, { type ImageType } from '@/components/image-selector';
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { ProfileViewField, ProfileViewGrid } from '@/components/profile/profile-view-field';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,6 @@ import { toast } from 'sonner';
 import LocationInput from '../../../../../../components/locationInput';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { useProfileFormMode } from '../../../../../../context/profile-form-mode-context';
-import { queryClient } from '../../../../../../lib/query-client';
 import {
   createCourseCreator,
   updateCourseCreator,
@@ -81,6 +81,7 @@ const hasOwnKey = <T extends object>(value: T, key: string): key is Extract<keyo
   Object.prototype.hasOwnProperty.call(value, key);
 
 export default function CourseCreatorProfile() {
+  const queryClient = useQueryClient();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 

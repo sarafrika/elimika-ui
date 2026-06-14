@@ -148,14 +148,23 @@ export function DashboardNotifications({ notificationHref }: DashboardNotificati
   const actionMutation = useNotificationAction();
   const markAllMutation = useMarkAllNotificationsRead();
 
-  const countsQuery = useNotificationCounts();
-  const recentQuery = useNotifications({ page: 0, size: 6 });
-  const popupQuery = useNotifications({
-    page: 0,
-    size: 5,
-    presentation: 'POPUP',
-    popupSeen: false,
-  });
+  // The badge needs counts and toasts need the popup feed, but the recent
+  // list is only visible inside the dropdown — fetch it when opened instead
+  // of on every page load.
+  const countsQuery = useNotificationCounts({ refetchInterval: 60_000 });
+  const recentQuery = useNotifications(
+    { page: 0, size: 6 },
+    { enabled: open, refetchInterval: open ? 30_000 : false }
+  );
+  const popupQuery = useNotifications(
+    {
+      page: 0,
+      size: 5,
+      presentation: 'POPUP',
+      popupSeen: false,
+    },
+    { refetchInterval: 60_000 }
+  );
 
   const unreadCount = countsQuery.data?.unread_count ?? 0;
   const recentNotifications = recentQuery.data?.items ?? [];

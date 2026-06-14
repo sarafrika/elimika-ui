@@ -13,13 +13,11 @@ import type {
   User,
 } from "@/services/client";
 import { useUserProfile } from "../../../../context/profile-context";
-import { useCoursesMap } from "../../../../hooks/use-courses-map";
+import { useStudentsByIds, useUsersByIds } from "../../../../hooks/use-batched-lookups";
 import { useDifficultyLevels } from "../../../../hooks/use-difficultyLevels";
 import useInstructorClassesWithDetails, {
   type InstructorClassWithDetails,
 } from "../../../../hooks/use-instructor-classes";
-import { useStudentMap } from "../../../../hooks/use-student-map";
-import { useUsersMap } from "../../../../hooks/use-users-map";
 import { getEnrollmentOverviewForStudentOptions } from "../../../../services/client/@tanstack/react-query.gen";
 
 import type {
@@ -132,11 +130,8 @@ export function useInstructorStudentsData() {
   const profile = useUserProfile();
   const instructor = profile?.instructor;
 
-  const { courseMap, isLoading: courseIsLoading } = useCoursesMap();
   const { difficultyMap, isLoading: difficultyIsLoading } =
     useDifficultyLevels();
-  const { studentMap, isLoading: studentIsLoading } = useStudentMap();
-  const { userMap, isLoading: userIsLoading } = useUsersMap();
 
   const { classes, loading: classesLoading } = useInstructorClassesWithDetails(
     instructor?.uuid as string
@@ -152,11 +147,28 @@ export function useInstructorStudentsData() {
     return Array.from(ids);
   }, [classes]);
 
+  // Batched lookups scoped to the students actually on this roster, instead
+  // of unconditionally fetching 1000 students + 1000 users.
+  const { studentMap, isLoading: studentIsLoading } = useStudentsByIds(studentIds);
+
+  const userIds = useMemo(
+    () =>
+      Object.values(studentMap)
+        .map((student) => student.user_uuid)
+        .filter(Boolean) as string[],
+    [studentMap]
+  );
+  const { userMap, isLoading: userIsLoading } = useUsersByIds(userIds);
+
+  // TODO(backend): a batch "enrollment overview for N students" endpoint
+  // would collapse these S requests into one. Until then keep them small:
+  // the page only derives status/progress/latest-activity from the
+  // most recent summaries, so size 50 is ample (was 1000).
   const overviewQueries = useQueries({
     queries: studentIds.map((studentUuid) => ({
       ...getEnrollmentOverviewForStudentOptions({
         path: { studentUuid },
-        query: { pageable: { page: 0, size: 1000 } },
+        query: { pageable: { page: 0, size: 50 } },
       }),
       enabled: !!studentUuid,
       staleTime: 5 * 60 * 1000,
@@ -180,10 +192,10 @@ export function useInstructorStudentsData() {
 
     classes.forEach((cls) => {
       const rosterClass = toRosterClass(cls);
-      const allCourses = [
-        ...(cls.pCourses ?? []),
-        cls.course ?? (cls.course_uuid ? [courseMap?.[cls.course_uuid]] : []),
-      ].flat().filter(Boolean) as Course[];
+      // cls.course is already resolved by useInstructorClassesWithDetails
+      const allCourses = [...(cls.pCourses ?? []), cls.course ?? []]
+        .flat()
+        .filter(Boolean) as Course[];
 
       (cls.enrollment ?? []).forEach((enrollment: Enrollment) => {
         const studentUuid = enrollment.student_uuid;
@@ -275,18 +287,18 @@ export function useInstructorStudentsData() {
         if (bTime !== aTime) return bTime - aTime;
         return a.student.full_name.localeCompare(b.student.full_name);
       });
-  }, [classes, courseMap, difficultyMap, overviewMap, studentMap, userMap]);
+  }, [classes, difficultyMap, overviewMap, studentMap, userMap]);
 
   const uniqueCourses = useMemo<Course[]>(() => {
     const coursesSet = new Map<string, Course>();
     classes.forEach((cls) => {
-      [...(cls.pCourses ?? []), cls.course ?? (cls.course_uuid ? [courseMap?.[cls.course_uuid]] : [])]
+      [...(cls.pCourses ?? []), cls.course ?? []]
         .flat()
         .filter(Boolean)
         .forEach((course) => coursesSet.set(course?.uuid ?? course.name, course));
     });
     return Array.from(coursesSet.values());
-  }, [classes, courseMap]);
+  }, [classes]);
 
   const courseTabs = useMemo<CourseTab[]>(() => {
     return [
@@ -365,7 +377,6 @@ export function useInstructorStudentsData() {
 
   const loading =
     classesLoading ||
-    courseIsLoading ||
     difficultyIsLoading ||
     studentIsLoading ||
     userIsLoading ||

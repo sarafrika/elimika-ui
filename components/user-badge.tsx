@@ -1,4 +1,6 @@
 'use client';
+
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, PhoneCall, Send, User as UserIcon } from 'lucide-react';
@@ -38,7 +40,7 @@ export default function UserBadge({
   return (
     <div className='flex items-center gap-3'>
       <Avatar>
-        <AvatarImage src={user.profile_image_url} alt='@shadcn' />
+        <AvatarImage src={toAuthenticatedMediaUrl(user.profile_image_url) ?? undefined} alt='@shadcn' />
         <AvatarFallback>
           <div className='bg-secondary text-primary rounded-full p-3'>
             <UserIcon size={iconSize} />

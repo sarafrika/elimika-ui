@@ -1,0 +1,1713 @@
+[
+  {
+    "path": "/dashboard",
+    "finalUrl": "/dashboard/overview",
+    "apiRequests": 55,
+    "failedRequests": 1,
+    "timeToDataMs": 7354,
+    "jsTransferredKB": 611,
+    "jsFiles": 55,
+    "domContentLoadedMs": 120,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/users/search",
+      "/api/v1/commerce/catalogue",
+      "/api/v1/users/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/courses/search",
+      "/api/v1/courses/search",
+      "/api/v1/courses/2a32f48c-73bb-4f6b-9cb8-cf3fd02f29bc",
+      "/api/v1/courses/8fc5209a-6845-4010-b4cf-4b3f3be0be4f",
+      "/api/v1/courses/4dbe0888-f958-49cd-bd98-46b60e44fef8",
+      "/api/v1/courses/55ad7f0d-a54b-4886-9263-a34f085dfc5c",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f",
+      "/api/v1/courses/36b43c2a-abd6-421b-b616-d33d8b501e3e",
+      "/api/v1/courses/0995a060-5097-4d91-b79d-6967fd2c981b",
+      "/api/v1/classes/dff3ae70-65bf-4268-9578-11e51aee641b",
+      "/api/v1/classes/1cf72532-8521-4634-9754-9704448dce30",
+      "/api/v1/classes/2b09f926-c13a-4f2c-8425-fa646c3479e1",
+      "/api/v1/classes/30fb8f5e-8ce7-4871-923c-de6316a2d9b8",
+      "/api/v1/classes/a3f6f7b3-680f-47a5-a715-a803e358af28",
+      "/api/v1/classes/49958252-fb3e-4a48-a693-972111cb1390",
+      "/api/v1/classes/bb7b8a2c-2002-4a2d-840d-1af1ee261be9",
+      "/api/v1/classes/cd743f1b-322d-495a-b664-b18c4cc28424",
+      "/api/v1/classes/2ee69f66-c5d4-4651-bfcd-97349acab28f",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b",
+      "/api/v1/classes/d2948249-1518-479e-a7b5-a882e72798ce",
+      "/api/v1/classes/d741f61e-fb47-4f66-bcdd-349b4f0b8a23",
+      "/api/v1/classes/ed39538b-292a-4e3f-913f-a3253bb9e009",
+      "/api/v1/classes/0625461d-60dc-4bdf-84b6-1ceca7a0507e",
+      "/api/v1/classes/d0b1b4d1-d75f-4735-ab22-3fae0cdb3cbc",
+      "/api/v1/classes/372fcb53-c50b-4008-a51f-db17ba6ec79d",
+      "/api/v1/classes/9dcccc16-00bd-46ca-817e-e57cb5391ffd",
+      "/api/v1/classes/7ca088c6-b03a-48d4-a5a9-7e75f9c7f26e",
+      "/api/v1/classes/2c426b45-12c8-4b47-9b35-c80fe8f6937d",
+      "/api/v1/classes/1d6f6296-76f2-4746-92df-98fd8f8f53b6",
+      "/api/v1/classes/0defe254-bccd-4cc2-a70f-30a2a1a6d4a1",
+      "/api/v1/classes/41f68724-a88c-4d1f-bd0e-97e97d2fc441",
+      "/api/v1/classes/dc0fb6c8-3b44-44cb-b982-89b48b0ac10a",
+      "/api/v1/classes/e1344706-fd40-4f87-8e2f-25a7985c9e78",
+      "/api/v1/classes/33d34fd3-f4c5-4ad2-8a5e-5c72e6b1f20b",
+      "/api/v1/classes/29f9fd80-81fd-4738-ab42-eaaae6929d65",
+      "/api/v1/classes/68fffaac-5970-4d99-9fb7-200bcb9d2fb0",
+      "/api/v1/classes/9eca7e27-e324-476d-a715-e8a4509b9c91",
+      "/api/v1/classes/5a89d9c5-12a3-4038-9252-df2a4abff088",
+      "/api/v1/classes/ede7bb31-57be-4e31-aaa5-c9b59293177e",
+      "/api/v1/classes/450c37ad-8183-4ed6-a5db-0b0b7904ef06",
+      "/api/v1/classes/b95a6e6f-c42c-4e23-84dd-31cb0365ea84"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/classes/b95a6e6f-c42c-4e23-84dd-31cb0365ea84",
+        "ms": 2244,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/ede7bb31-57be-4e31-aaa5-c9b59293177e",
+        "ms": 2243,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/450c37ad-8183-4ed6-a5db-0b0b7904ef06",
+        "ms": 2243,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/5a89d9c5-12a3-4038-9252-df2a4abff088",
+        "ms": 2238,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/68fffaac-5970-4d99-9fb7-200bcb9d2fb0",
+        "ms": 1937,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/administrators",
+    "finalUrl": "/dashboard/administrators",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3490,
+    "jsTransferredKB": 432,
+    "jsFiles": 36,
+    "domContentLoadedMs": 96,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 1228,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 978,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 959,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 347,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 346,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/all-courses",
+    "finalUrl": "/dashboard/all-courses",
+    "apiRequests": 37,
+    "failedRequests": 5,
+    "timeToDataMs": 8902,
+    "jsTransferredKB": 417,
+    "jsFiles": 44,
+    "domContentLoadedMs": 197,
+    "longTaskMs": 0,
+    "consoleErrors": 10,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/courses/published",
+      "/api/v1/programs",
+      "/api/v1/config/categories",
+      "/api/v1/users/search",
+      "/api/v1/course-creators/b9fc4304-d2f2-43ed-9fe6-6aaea674cca4",
+      "/api/v1/courses/4dbe0888-f958-49cd-bd98-46b60e44fef8/enrollments",
+      "/api/v1/config/difficulty-levels",
+      "/api/v1/course-creators/221c3381-a0d1-4071-acbf-41a0764cd2c1",
+      "/api/v1/courses/afbe4c7d-7da4-495c-8b72-6331cf1d4795/enrollments",
+      "/api/v1/course-creators/e635bcf0-3fba-4b61-aa50-38b87e785c00",
+      "/api/v1/courses/36b43c2a-abd6-421b-b616-d33d8b501e3e/enrollments",
+      "/api/v1/courses/55ad7f0d-a54b-4886-9263-a34f085dfc5c/enrollments",
+      "/api/v1/course-creators/5cd2786b-156c-403d-90fb-cf02bbfe93aa",
+      "/api/v1/courses/db480c68-d4ca-4a85-8a9a-cc01de5537b4/enrollments",
+      "/api/v1/courses/0995a060-5097-4d91-b79d-6967fd2c981b/enrollments",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/enrollments",
+      "/api/v1/courses/57b84729-be56-43b5-b679-4f6deb0e6c16/enrollments",
+      "/api/v1/courses/8fc5209a-6845-4010-b4cf-4b3f3be0be4f/enrollments",
+      "/api/v1/users/409fb742-db91-4d2c-a429-12afa3ba22f4",
+      "/api/v1/users/06c77989-5bcd-4eba-9dfa-b7e7651532df",
+      "/api/v1/users/cc715639-2e36-4a1c-b2c2-e548270bd21f",
+      "/api/v1/users/f66b0fb0-b8da-40f9-bcab-f022fc373695",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/22eee753-6bda-4467-b051-56591f9ed983.jpg",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/b104fc39-3bc3-4619-a3eb-0b7bb038ba1f.png",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/2cdfa082-3c18-4932-b70b-929db8357514.jpeg",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/159db880-7e85-4853-a211-af2b68174a6c.png",
+      "/api/v1/course-creators/search",
+      "/api/v1/courses/search"
+    ],
+    "slowestRequests": [
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 5199,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 4987,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/courses/0995a060-5097-4d91-b79d-6967fd2c981b/enrollments",
+        "ms": 2851,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/e635bcf0-3fba-4b61-aa50-38b87e785c00",
+        "ms": 2586,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/courses/55ad7f0d-a54b-4886-9263-a34f085dfc5c/enrollments",
+        "ms": 2385,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/all-courses/instructor",
+    "finalUrl": "/dashboard/all-courses/instructor",
+    "apiRequests": 58,
+    "failedRequests": 4,
+    "timeToDataMs": 11976,
+    "jsTransferredKB": 536,
+    "jsFiles": 52,
+    "domContentLoadedMs": 83,
+    "longTaskMs": 0,
+    "consoleErrors": 4,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/instructors/skills/search",
+      "/api/v1/students/ca80c307-e9cd-430e-95cb-b975b015f0bd/bookings",
+      "/api/v1/instructors",
+      "/api/v1/courses/%7BcourseUuid%7D/training-applications",
+      "/api/v1/users/search",
+      "/api/v1/users/99e4a8ed-24e0-4aed-90c4-f3870c63de95",
+      "/api/v1/users/cc715639-2e36-4a1c-b2c2-e548270bd21f",
+      "/api/v1/users/7af7ecce-04b4-4fda-88ea-4892b6235517",
+      "/api/v1/users/3b09f2db-5487-40d6-9195-ae1b860c8dec",
+      "/api/v1/users/06c77989-5bcd-4eba-9dfa-b7e7651532df",
+      "/api/v1/users/4d1ae0ad-4092-459a-a534-1d14deedbe5b",
+      "/api/v1/users/409fb742-db91-4d2c-a429-12afa3ba22f4",
+      "/api/v1/users/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/instructors/c3658c72-f9bf-4bd0-a3c4-a6e6f29350e6/reviews",
+      "/api/v1/instructors/6cc67af4-e2a7-4506-89fc-7ae2c360a0f7/reviews",
+      "/api/v1/instructors/5d69dc44-c7ab-41c7-9f1e-a72f7dae5d63/reviews",
+      "/api/v1/instructors/b7411300-d40d-4d55-a399-5592dd3088b2/reviews",
+      "/api/v1/instructors/9f1b101a-f40f-4265-8d39-8e2a73289992/reviews",
+      "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/reviews",
+      "/api/v1/instructors/69296fa2-9dba-48d4-8d59-315b0833c102/reviews",
+      "/api/v1/instructors/ca8f35c9-8410-494f-9b59-d6b2f2e18c88/reviews",
+      "/api/v1/instructors/c3658c72-f9bf-4bd0-a3c4-a6e6f29350e6/reviews/summary",
+      "/api/v1/instructors/6cc67af4-e2a7-4506-89fc-7ae2c360a0f7/reviews/summary",
+      "/api/v1/instructors/5d69dc44-c7ab-41c7-9f1e-a72f7dae5d63/reviews/summary",
+      "/api/v1/instructors/b7411300-d40d-4d55-a399-5592dd3088b2/reviews/summary",
+      "/api/v1/instructors/9f1b101a-f40f-4265-8d39-8e2a73289992/reviews/summary",
+      "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/reviews/summary",
+      "/api/v1/instructors/69296fa2-9dba-48d4-8d59-315b0833c102/reviews/summary",
+      "/api/v1/instructors/ca8f35c9-8410-494f-9b59-d6b2f2e18c88/reviews/summary",
+      "/api/v1/instructors/c3658c72-f9bf-4bd0-a3c4-a6e6f29350e6/experience",
+      "/api/v1/instructors/6cc67af4-e2a7-4506-89fc-7ae2c360a0f7/experience",
+      "/api/v1/instructors/5d69dc44-c7ab-41c7-9f1e-a72f7dae5d63/experience",
+      "/api/v1/instructors/b7411300-d40d-4d55-a399-5592dd3088b2/experience",
+      "/api/v1/instructors/9f1b101a-f40f-4265-8d39-8e2a73289992/experience",
+      "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/experience",
+      "/api/v1/instructors/69296fa2-9dba-48d4-8d59-315b0833c102/experience",
+      "/api/v1/instructors/ca8f35c9-8410-494f-9b59-d6b2f2e18c88/experience",
+      "/api/v1/instructors/c3658c72-f9bf-4bd0-a3c4-a6e6f29350e6/skills",
+      "/api/v1/instructors/6cc67af4-e2a7-4506-89fc-7ae2c360a0f7/skills",
+      "/api/v1/instructors/5d69dc44-c7ab-41c7-9f1e-a72f7dae5d63/skills",
+      "/api/v1/instructors/b7411300-d40d-4d55-a399-5592dd3088b2/skills",
+      "/api/v1/instructors/9f1b101a-f40f-4265-8d39-8e2a73289992/skills",
+      "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/skills",
+      "/api/v1/instructors/69296fa2-9dba-48d4-8d59-315b0833c102/skills",
+      "/api/v1/instructors/ca8f35c9-8410-494f-9b59-d6b2f2e18c88/skills",
+      "/api/v1/course-creators/search",
+      "/api/v1/courses/%7BcourseUuid%7D/training-applications",
+      "/api/v1/courses/search",
+      "/api/v1/courses/%7BcourseUuid%7D/training-applications"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/instructors/69296fa2-9dba-48d4-8d59-315b0833c102/experience",
+        "ms": 6821,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/69296fa2-9dba-48d4-8d59-315b0833c102/skills",
+        "ms": 4932,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/6cc67af4-e2a7-4506-89fc-7ae2c360a0f7/reviews",
+        "ms": 4931,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/ca80c307-e9cd-430e-95cb-b975b015f0bd/bookings",
+        "ms": 3932,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/ca8f35c9-8410-494f-9b59-d6b2f2e18c88/skills",
+        "ms": 3906,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/branches",
+    "finalUrl": "/dashboard/branches",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 5000,
+    "jsTransferredKB": 448,
+    "jsFiles": 39,
+    "domContentLoadedMs": 226,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 2428,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 1678,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1058,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 410,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 397,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/calendar",
+    "finalUrl": "/dashboard/calendar",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3280,
+    "jsTransferredKB": 433,
+    "jsFiles": 39,
+    "domContentLoadedMs": 112,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/users/search",
+        "ms": 973,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 889,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 705,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 395,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 358,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/catalogue",
+    "finalUrl": "/dashboard/catalogue",
+    "apiRequests": 11,
+    "failedRequests": 1,
+    "timeToDataMs": 4806,
+    "jsTransferredKB": 421,
+    "jsFiles": 40,
+    "domContentLoadedMs": 99,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/commerce/catalogue",
+      "/api/v1/users/search"
+    ],
+    "slowestRequests": [
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 3092,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 2503,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 407,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 375,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 359,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/categories",
+    "finalUrl": "/dashboard/categories",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3421,
+    "jsTransferredKB": 409,
+    "jsFiles": 34,
+    "domContentLoadedMs": 99,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/users/search",
+        "ms": 929,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 916,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 880,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 850,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 415,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/classes",
+    "finalUrl": "/dashboard/classes",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 5407,
+    "jsTransferredKB": 462,
+    "jsFiles": 42,
+    "domContentLoadedMs": 98,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 3620,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 2265,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 410,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 384,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 359,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/course-creators",
+    "finalUrl": "/dashboard/course-creators",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3562,
+    "jsTransferredKB": 417,
+    "jsFiles": 35,
+    "domContentLoadedMs": 93,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 1171,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1057,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 369,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 355,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 352,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/currencies",
+    "finalUrl": "/dashboard/currencies",
+    "apiRequests": 9,
+    "failedRequests": 0,
+    "timeToDataMs": 2564,
+    "jsTransferredKB": 409,
+    "jsFiles": 34,
+    "domContentLoadedMs": 57,
+    "longTaskMs": 0,
+    "consoleErrors": 0,
+    "consoleErrorSamples": [],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 905,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 692,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 374,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 332,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 325,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/financial-overview",
+    "finalUrl": "/dashboard/financial-overview",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 2649,
+    "jsTransferredKB": 403,
+    "jsFiles": 34,
+    "domContentLoadedMs": 73,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/notifications",
+        "ms": 961,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 867,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 724,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 366,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 355,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/instructors",
+    "finalUrl": "/dashboard/instructors",
+    "apiRequests": 21,
+    "failedRequests": 4,
+    "timeToDataMs": 7190,
+    "jsTransferredKB": 440,
+    "jsFiles": 40,
+    "domContentLoadedMs": 111,
+    "longTaskMs": 0,
+    "consoleErrors": 4,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/courses/training-applications/search",
+      "/api/v1/programs/training-applications/search",
+      "/api/v1/users/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1",
+      "/api/v1/courses/search",
+      "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/skills",
+      "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/education",
+      "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/documents",
+      "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/reviews",
+      "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/documents",
+      "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/documents"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/notifications",
+        "ms": 1437,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/reviews",
+        "ms": 1430,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 1259,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/programs/training-applications/search",
+        "ms": 998,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 963,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/manage-courses",
+    "finalUrl": "/dashboard/manage-courses",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 5000,
+    "jsTransferredKB": 446,
+    "jsFiles": 37,
+    "domContentLoadedMs": 102,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 2579,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 1096,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 976,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 407,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 376,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/manage-programs",
+    "finalUrl": "/dashboard/manage-programs",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 7157,
+    "jsTransferredKB": 446,
+    "jsFiles": 37,
+    "domContentLoadedMs": 69,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/notifications",
+        "ms": 4582,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 2956,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1180,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 468,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 322,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/messaging-notifications",
+    "finalUrl": "/dashboard/messaging-notifications",
+    "apiRequests": 2,
+    "failedRequests": 0,
+    "timeToDataMs": 1117,
+    "jsTransferredKB": 306,
+    "jsFiles": 27,
+    "domContentLoadedMs": 77,
+    "longTaskMs": 0,
+    "consoleErrors": 0,
+    "consoleErrorSamples": [],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/users/search",
+        "ms": 774,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/moderation",
+    "finalUrl": "/dashboard/moderation",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3310,
+    "jsTransferredKB": 429,
+    "jsFiles": 36,
+    "domContentLoadedMs": 90,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1030,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 907,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 903,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 859,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 392,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/notifications",
+    "finalUrl": "/dashboard/notifications",
+    "apiRequests": 11,
+    "failedRequests": 1,
+    "timeToDataMs": 4821,
+    "jsTransferredKB": 305,
+    "jsFiles": 27,
+    "domContentLoadedMs": 74,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/users/search"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 1432,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1331,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 967,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 967,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 407,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/opportunities",
+    "finalUrl": "/dashboard/opportunities",
+    "apiRequests": 16,
+    "failedRequests": 1,
+    "timeToDataMs": 5238,
+    "jsTransferredKB": 433,
+    "jsFiles": 40,
+    "domContentLoadedMs": 78,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/classes/jobs",
+      "/api/v1/classes/jobs/applications/mine",
+      "/api/v1/courses",
+      "/api/v1/organisations",
+      "/api/v1/users/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/courses/search"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 1894,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1383,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 1313,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/courses",
+        "ms": 1039,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 959,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/opportunities/my-applications",
+    "finalUrl": "/dashboard/opportunities/my-applications",
+    "apiRequests": 14,
+    "failedRequests": 1,
+    "timeToDataMs": 5694,
+    "jsTransferredKB": 414,
+    "jsFiles": 38,
+    "domContentLoadedMs": 78,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/classes/jobs",
+      "/api/v1/classes/jobs/applications/mine",
+      "/api/v1/users/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/courses/search"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 4012,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 1459,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 1126,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/classes/jobs/applications/mine",
+        "ms": 927,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 913,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/organizations",
+    "finalUrl": "/dashboard/organizations",
+    "apiRequests": 1,
+    "failedRequests": 0,
+    "timeToDataMs": null,
+    "jsTransferredKB": 368,
+    "jsFiles": 30,
+    "domContentLoadedMs": 148,
+    "longTaskMs": 0,
+    "consoleErrors": 0,
+    "consoleErrorSamples": [],
+    "apiUrls": [
+      "/api/v1/users/search"
+    ],
+    "slowestRequests": []
+  },
+  {
+    "path": "/dashboard/overview",
+    "finalUrl": "/dashboard/overview",
+    "apiRequests": 55,
+    "failedRequests": 1,
+    "timeToDataMs": 9025,
+    "jsTransferredKB": 611,
+    "jsFiles": 55,
+    "domContentLoadedMs": 75,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/commerce/catalogue",
+      "/api/v1/users/search",
+      "/api/v1/users/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/courses/2a32f48c-73bb-4f6b-9cb8-cf3fd02f29bc",
+      "/api/v1/courses/8fc5209a-6845-4010-b4cf-4b3f3be0be4f",
+      "/api/v1/courses/4dbe0888-f958-49cd-bd98-46b60e44fef8",
+      "/api/v1/courses/55ad7f0d-a54b-4886-9263-a34f085dfc5c",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f",
+      "/api/v1/courses/36b43c2a-abd6-421b-b616-d33d8b501e3e",
+      "/api/v1/courses/0995a060-5097-4d91-b79d-6967fd2c981b",
+      "/api/v1/classes/dff3ae70-65bf-4268-9578-11e51aee641b",
+      "/api/v1/classes/1cf72532-8521-4634-9754-9704448dce30",
+      "/api/v1/classes/2b09f926-c13a-4f2c-8425-fa646c3479e1",
+      "/api/v1/classes/30fb8f5e-8ce7-4871-923c-de6316a2d9b8",
+      "/api/v1/classes/a3f6f7b3-680f-47a5-a715-a803e358af28",
+      "/api/v1/classes/49958252-fb3e-4a48-a693-972111cb1390",
+      "/api/v1/classes/bb7b8a2c-2002-4a2d-840d-1af1ee261be9",
+      "/api/v1/classes/cd743f1b-322d-495a-b664-b18c4cc28424",
+      "/api/v1/classes/2ee69f66-c5d4-4651-bfcd-97349acab28f",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b",
+      "/api/v1/classes/d2948249-1518-479e-a7b5-a882e72798ce",
+      "/api/v1/classes/d741f61e-fb47-4f66-bcdd-349b4f0b8a23",
+      "/api/v1/classes/ed39538b-292a-4e3f-913f-a3253bb9e009",
+      "/api/v1/classes/0625461d-60dc-4bdf-84b6-1ceca7a0507e",
+      "/api/v1/classes/d0b1b4d1-d75f-4735-ab22-3fae0cdb3cbc",
+      "/api/v1/classes/372fcb53-c50b-4008-a51f-db17ba6ec79d",
+      "/api/v1/classes/9dcccc16-00bd-46ca-817e-e57cb5391ffd",
+      "/api/v1/classes/7ca088c6-b03a-48d4-a5a9-7e75f9c7f26e",
+      "/api/v1/classes/2c426b45-12c8-4b47-9b35-c80fe8f6937d",
+      "/api/v1/classes/1d6f6296-76f2-4746-92df-98fd8f8f53b6",
+      "/api/v1/classes/0defe254-bccd-4cc2-a70f-30a2a1a6d4a1",
+      "/api/v1/classes/41f68724-a88c-4d1f-bd0e-97e97d2fc441",
+      "/api/v1/classes/dc0fb6c8-3b44-44cb-b982-89b48b0ac10a",
+      "/api/v1/classes/e1344706-fd40-4f87-8e2f-25a7985c9e78",
+      "/api/v1/classes/33d34fd3-f4c5-4ad2-8a5e-5c72e6b1f20b",
+      "/api/v1/classes/29f9fd80-81fd-4738-ab42-eaaae6929d65",
+      "/api/v1/classes/68fffaac-5970-4d99-9fb7-200bcb9d2fb0",
+      "/api/v1/classes/9eca7e27-e324-476d-a715-e8a4509b9c91",
+      "/api/v1/classes/5a89d9c5-12a3-4038-9252-df2a4abff088",
+      "/api/v1/classes/ede7bb31-57be-4e31-aaa5-c9b59293177e",
+      "/api/v1/classes/450c37ad-8183-4ed6-a5db-0b0b7904ef06",
+      "/api/v1/classes/b95a6e6f-c42c-4e23-84dd-31cb0365ea84",
+      "/api/v1/course-creators/search",
+      "/api/v1/courses/search",
+      "/api/v1/courses/search"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/courses/search",
+        "ms": 4127,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 3790,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/b95a6e6f-c42c-4e23-84dd-31cb0365ea84",
+        "ms": 3479,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/ede7bb31-57be-4e31-aaa5-c9b59293177e",
+        "ms": 3475,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/5a89d9c5-12a3-4038-9252-df2a4abff088",
+        "ms": 3473,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/rubrics",
+    "finalUrl": "/dashboard/rubrics",
+    "apiRequests": 13,
+    "failedRequests": 1,
+    "timeToDataMs": 5791,
+    "jsTransferredKB": 445,
+    "jsFiles": 39,
+    "domContentLoadedMs": 75,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/rubrics/search",
+      "/api/v1/users/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/courses/search"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/notifications",
+        "ms": 4057,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 2748,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 1183,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/rubrics/search",
+        "ms": 965,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 964,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/settings",
+    "finalUrl": "/dashboard/settings",
+    "apiRequests": 1,
+    "failedRequests": 0,
+    "timeToDataMs": null,
+    "jsTransferredKB": 325,
+    "jsFiles": 29,
+    "domContentLoadedMs": 96,
+    "longTaskMs": 0,
+    "consoleErrors": 0,
+    "consoleErrorSamples": [],
+    "apiUrls": [
+      "/api/v1/users/search"
+    ],
+    "slowestRequests": []
+  },
+  {
+    "path": "/dashboard/students",
+    "finalUrl": "/dashboard/students",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3388,
+    "jsTransferredKB": 429,
+    "jsFiles": 39,
+    "domContentLoadedMs": 128,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1009,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 919,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 408,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 402,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 362,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/support",
+    "finalUrl": "/dashboard/support",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3959,
+    "jsTransferredKB": 403,
+    "jsFiles": 33,
+    "domContentLoadedMs": 97,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 2134,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 1371,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 1371,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 410,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 409,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/system-config",
+    "finalUrl": "/dashboard/system-config",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3495,
+    "jsTransferredKB": 438,
+    "jsFiles": 37,
+    "domContentLoadedMs": 68,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1217,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 998,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 980,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 948,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 343,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/system-config/rules/new",
+    "finalUrl": "/dashboard/system-config/rules/new",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 2810,
+    "jsTransferredKB": 403,
+    "jsFiles": 33,
+    "domContentLoadedMs": 89,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 1182,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 915,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 911,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 911,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 347,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/transactions",
+    "finalUrl": "/dashboard/transactions",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3994,
+    "jsTransferredKB": 403,
+    "jsFiles": 33,
+    "domContentLoadedMs": 90,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/notifications",
+        "ms": 2325,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 1097,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 1094,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 354,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 352,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/users",
+    "finalUrl": "/dashboard/users",
+    "apiRequests": 1,
+    "failedRequests": 0,
+    "timeToDataMs": null,
+    "jsTransferredKB": 366,
+    "jsFiles": 31,
+    "domContentLoadedMs": 110,
+    "longTaskMs": 0,
+    "consoleErrors": 0,
+    "consoleErrorSamples": [],
+    "apiUrls": [
+      "/api/v1/users/search"
+    ],
+    "slowestRequests": []
+  },
+  {
+    "path": "/dashboard/verifications",
+    "finalUrl": "/dashboard/verifications",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3218,
+    "jsTransferredKB": 422,
+    "jsFiles": 36,
+    "domContentLoadedMs": 71,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/notifications",
+        "ms": 1594,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 1283,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 358,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 347,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 337,
+        "status": 200
+      }
+    ]
+  }
+]

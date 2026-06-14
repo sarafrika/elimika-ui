@@ -1,0 +1,917 @@
+[
+  {
+    "route": "/dashboard/old-assessment/assignments",
+    "raw": 2856280,
+    "gzip": 769717
+  },
+  {
+    "route": "/dashboard/old-assessment/quiz",
+    "raw": 2856256,
+    "gzip": 769720
+  },
+  {
+    "route": "/dashboard/old-assessment/exams",
+    "raw": 2856233,
+    "gzip": 769700
+  },
+  {
+    "route": "/dashboard/old-assessment",
+    "raw": 2856142,
+    "gzip": 769673
+  },
+  {
+    "route": "/dashboard/course-management/create-new-course",
+    "raw": 2816517,
+    "gzip": 767804
+  },
+  {
+    "route": "/dashboard/profile/general",
+    "raw": 2479332,
+    "gzip": 629259
+  },
+  {
+    "route": "/dashboard/training-hub",
+    "raw": 2454173,
+    "gzip": 644076
+  },
+  {
+    "route": "/dashboard/assessment",
+    "raw": 2410736,
+    "gzip": 631016
+  },
+  {
+    "route": "/dashboard/overview",
+    "raw": 2408801,
+    "gzip": 591420
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/overview",
+    "raw": 2374796,
+    "gzip": 578625
+  },
+  {
+    "route": "/dashboard/class-instance/[id]",
+    "raw": 2371915,
+    "gzip": 621623
+  },
+  {
+    "route": "/dashboard/classes/class-training/[id]",
+    "raw": 2368219,
+    "gzip": 620760
+  },
+  {
+    "route": "/dashboard/learning-hub/classes/[id]",
+    "raw": 2326127,
+    "gzip": 614167
+  },
+  {
+    "route": "/dashboard/learning-hub/classes/class-training/[id]",
+    "raw": 2326127,
+    "gzip": 614167
+  },
+  {
+    "route": "/dashboard/add-profile/instructor",
+    "raw": 2309180,
+    "gzip": 577517
+  },
+  {
+    "route": "/dashboard/add-profile/course-creator",
+    "raw": 2308799,
+    "gzip": 577385
+  },
+  {
+    "route": "/dashboard/course-management/preview/[id]",
+    "raw": 2302382,
+    "gzip": 604188
+  },
+  {
+    "route": "/dashboard/trainings/instructor-console/[id]",
+    "raw": 2283186,
+    "gzip": 592496
+  },
+  {
+    "route": "/dashboard/all-courses/instructor",
+    "raw": 2175915,
+    "gzip": 572889
+  },
+  {
+    "route": "/dashboard/course-management/lesson",
+    "raw": 2161924,
+    "gzip": 585286
+  },
+  {
+    "route": "/dashboard/profile",
+    "raw": 2149639,
+    "gzip": 574042
+  },
+  {
+    "route": "/dashboard/profile/edit",
+    "raw": 2112144,
+    "gzip": 573037
+  },
+  {
+    "route": "/dashboard/programs",
+    "raw": 2090510,
+    "gzip": 564632
+  },
+  {
+    "route": "/dashboard/trainings",
+    "raw": 2068187,
+    "gzip": 558530
+  },
+  {
+    "route": "/dashboard/trainings/overview",
+    "raw": 2064783,
+    "gzip": 557666
+  },
+  {
+    "route": "/dashboard/programs/preview/[id]",
+    "raw": 2055275,
+    "gzip": 553953
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/courses/[id]",
+    "raw": 2042310,
+    "gzip": 538347
+  },
+  {
+    "route": "/dashboard/training-hub/classes/[id]",
+    "raw": 2042262,
+    "gzip": 538143
+  },
+  {
+    "route": "/dashboard/learning/instructor/[id]",
+    "raw": 2012429,
+    "gzip": 522176
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/courses/instructor-old",
+    "raw": 2011654,
+    "gzip": 521352
+  },
+  {
+    "route": "/dashboard/manage-courses",
+    "raw": 1983930,
+    "gzip": 523640
+  },
+  {
+    "route": "/dashboard/manage-programs",
+    "raw": 1983173,
+    "gzip": 523552
+  },
+  {
+    "route": "/dashboard/credentials",
+    "raw": 1972704,
+    "gzip": 515687
+  },
+  {
+    "route": "/dashboard/schedule/classes/[id]",
+    "raw": 1966283,
+    "gzip": 518304
+  },
+  {
+    "route": "/dashboard/learning-hub",
+    "raw": 1964624,
+    "gzip": 516111
+  },
+  {
+    "route": "/dashboard/assignment",
+    "raw": 1954503,
+    "gzip": 513151
+  },
+  {
+    "route": "/dashboard/profile/professional-membership",
+    "raw": 1931365,
+    "gzip": 461780
+  },
+  {
+    "route": "/dashboard/trainings/overview/[id]",
+    "raw": 1921102,
+    "gzip": 505395
+  },
+  {
+    "route": "/dashboard/classes/overview/[id]",
+    "raw": 1919632,
+    "gzip": 504892
+  },
+  {
+    "route": "/dashboard/assessment/assignments",
+    "raw": 1909837,
+    "gzip": 501147
+  },
+  {
+    "route": "/dashboard/verifications",
+    "raw": 1897050,
+    "gzip": 499096
+  },
+  {
+    "route": "/dashboard/profile/certificates",
+    "raw": 1895077,
+    "gzip": 451241
+  },
+  {
+    "route": "/dashboard/branches",
+    "raw": 1894977,
+    "gzip": 446407
+  },
+  {
+    "route": "/dashboard/rubrics",
+    "raw": 1882057,
+    "gzip": 442946
+  },
+  {
+    "route": "/dashboard/financial-overview",
+    "raw": 1865297,
+    "gzip": 485822
+  },
+  {
+    "route": "/dashboard/system-config",
+    "raw": 1857018,
+    "gzip": 436967
+  },
+  {
+    "route": "/dashboard/organizations",
+    "raw": 1853645,
+    "gzip": 434406
+  },
+  {
+    "route": "/dashboard/branches/[...slug]",
+    "raw": 1852916,
+    "gzip": 437762
+  },
+  {
+    "route": "/dashboard/profile/education",
+    "raw": 1852409,
+    "gzip": 438743
+  },
+  {
+    "route": "/dashboard/users",
+    "raw": 1837580,
+    "gzip": 431802
+  },
+  {
+    "route": "/dashboard/administrators",
+    "raw": 1834631,
+    "gzip": 430715
+  },
+  {
+    "route": "/dashboard/profile/experience",
+    "raw": 1829147,
+    "gzip": 431135
+  },
+  {
+    "route": "/dashboard/all-courses/[id]",
+    "raw": 1825259,
+    "gzip": 469378
+  },
+  {
+    "route": "/dashboard/moderation",
+    "raw": 1822260,
+    "gzip": 427780
+  },
+  {
+    "route": "/onboarding/instructor",
+    "raw": 1817799,
+    "gzip": 461096
+  },
+  {
+    "route": "/onboarding/course-creator",
+    "raw": 1817153,
+    "gzip": 460997
+  },
+  {
+    "route": "/dashboard/account/training-center",
+    "raw": 1800851,
+    "gzip": 421877
+  },
+  {
+    "route": "/dashboard/account/branches",
+    "raw": 1796686,
+    "gzip": 420926
+  },
+  {
+    "route": "/dashboard/learning/[id]",
+    "raw": 1788758,
+    "gzip": 455600
+  },
+  {
+    "route": "/dashboard/add-profile/student",
+    "raw": 1779833,
+    "gzip": 415345
+  },
+  {
+    "route": "/profile-user/[id]",
+    "raw": 1758104,
+    "gzip": 477824
+  },
+  {
+    "route": "/dashboard/audit",
+    "raw": 1753993,
+    "gzip": 405309
+  },
+  {
+    "route": "/dashboard/reviews",
+    "raw": 1750904,
+    "gzip": 443792
+  },
+  {
+    "route": "/dashboard/calendar-old",
+    "raw": 1669894,
+    "gzip": 429666
+  },
+  {
+    "route": "/dashboard/classes",
+    "raw": 1636769,
+    "gzip": 421465
+  },
+  {
+    "route": "/dashboard/availability",
+    "raw": 1629204,
+    "gzip": 421364
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/courses/instructor",
+    "raw": 1615960,
+    "gzip": 416281
+  },
+  {
+    "route": "/dashboard/classes/old-class-creation",
+    "raw": 1608400,
+    "gzip": 414253
+  },
+  {
+    "route": "/dashboard/trainings/timetable",
+    "raw": 1605522,
+    "gzip": 415438
+  },
+  {
+    "route": "/dashboard/trainings/create-new",
+    "raw": 1604532,
+    "gzip": 413748
+  },
+  {
+    "route": "/dashboard/classes/new",
+    "raw": 1588073,
+    "gzip": 409472
+  },
+  {
+    "route": "/dashboard/account/admin",
+    "raw": 1584514,
+    "gzip": 412311
+  },
+  {
+    "route": "/dashboard/training-hub/bookings",
+    "raw": 1584242,
+    "gzip": 406443
+  },
+  {
+    "route": "/dashboard/apply-to-train/[id]",
+    "raw": 1580036,
+    "gzip": 407043
+  },
+  {
+    "route": "/dashboard/instructors",
+    "raw": 1564958,
+    "gzip": 399878
+  },
+  {
+    "route": "/dashboard/my-skills",
+    "raw": 1553527,
+    "gzip": 402269
+  },
+  {
+    "route": "/dashboard/learning-hub/classes",
+    "raw": 1548194,
+    "gzip": 395701
+  },
+  {
+    "route": "/dashboard/people",
+    "raw": 1546153,
+    "gzip": 394911
+  },
+  {
+    "route": "/dashboard/course-management/create-new-program",
+    "raw": 1545540,
+    "gzip": 398345
+  },
+  {
+    "route": "/dashboard/programs/create-new-program",
+    "raw": 1540825,
+    "gzip": 396641
+  },
+  {
+    "route": "/dashboard/course-management/all",
+    "raw": 1536945,
+    "gzip": 393683
+  },
+  {
+    "route": "/dashboard/calendar",
+    "raw": 1535991,
+    "gzip": 389914
+  },
+  {
+    "route": "/dashboard/opportunities",
+    "raw": 1535132,
+    "gzip": 389945
+  },
+  {
+    "route": "/dashboard/profile/skills",
+    "raw": 1534185,
+    "gzip": 396080
+  },
+  {
+    "route": "/dashboard/revenue",
+    "raw": 1530318,
+    "gzip": 392149
+  },
+  {
+    "route": "/dashboard/settings",
+    "raw": 1527443,
+    "gzip": 390230
+  },
+  {
+    "route": "/dashboard/training-applications",
+    "raw": 1521234,
+    "gzip": 388999
+  },
+  {
+    "route": "/dashboard/skills-fund",
+    "raw": 1519358,
+    "gzip": 386771
+  },
+  {
+    "route": "/dashboard/schedule",
+    "raw": 1518964,
+    "gzip": 386378
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/courses",
+    "raw": 1515414,
+    "gzip": 388474
+  },
+  {
+    "route": "/dashboard/students",
+    "raw": 1514477,
+    "gzip": 387439
+  },
+  {
+    "route": "/dashboard/courses",
+    "raw": 1511242,
+    "gzip": 386816
+  },
+  {
+    "route": "/dashboard/my-skills/verified-skills",
+    "raw": 1508363,
+    "gzip": 384869
+  },
+  {
+    "route": "/dashboard/enrollments",
+    "raw": 1506158,
+    "gzip": 385695
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/courses/available-programs/[id]/enroll",
+    "raw": 1505145,
+    "gzip": 385317
+  },
+  {
+    "route": "/dashboard/all-courses/available-programs/[id]/enroll",
+    "raw": 1505037,
+    "gzip": 386281
+  },
+  {
+    "route": "/dashboard/catalogue",
+    "raw": 1504700,
+    "gzip": 384847
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/courses/available-classes/[id]/enroll",
+    "raw": 1504352,
+    "gzip": 385198
+  },
+  {
+    "route": "/dashboard/all-courses/available-classes/[id]/enroll",
+    "raw": 1504240,
+    "gzip": 386156
+  },
+  {
+    "route": "/dashboard/verification",
+    "raw": 1502469,
+    "gzip": 384743
+  },
+  {
+    "route": "/dashboard/analytics",
+    "raw": 1498227,
+    "gzip": 380265
+  },
+  {
+    "route": "/dashboard/account/availability",
+    "raw": 1495416,
+    "gzip": 385022
+  },
+  {
+    "route": "/dashboard/rate-card",
+    "raw": 1489977,
+    "gzip": 379824
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/courses/available-programs/[id]",
+    "raw": 1489927,
+    "gzip": 380775
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/courses/[id]/my-classes",
+    "raw": 1489891,
+    "gzip": 380815
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/courses/available-classes/[id]",
+    "raw": 1489891,
+    "gzip": 380815
+  },
+  {
+    "route": "/dashboard/all-courses/available-programs/[id]",
+    "raw": 1488646,
+    "gzip": 381292
+  },
+  {
+    "route": "/dashboard/all-courses/available-classes/[id]",
+    "raw": 1488601,
+    "gzip": 381334
+  },
+  {
+    "route": "/dashboard/profile/guardian-information",
+    "raw": 1484794,
+    "gzip": 380598
+  },
+  {
+    "route": "/dashboard/course-creators",
+    "raw": 1481314,
+    "gzip": 377653
+  },
+  {
+    "route": "/dashboard/portfolio",
+    "raw": 1480723,
+    "gzip": 375700
+  },
+  {
+    "route": "/dashboard/portfolio/[projectId]",
+    "raw": 1480723,
+    "gzip": 375700
+  },
+  {
+    "route": "/dashboard/apply-to-train",
+    "raw": 1478685,
+    "gzip": 378912
+  },
+  {
+    "route": "/dashboard/opportunities/[jobUuid]",
+    "raw": 1477291,
+    "gzip": 377416
+  },
+  {
+    "route": "/dashboard/assignment/[id]",
+    "raw": 1477165,
+    "gzip": 375647
+  },
+  {
+    "route": "/dashboard/course-management/drafts",
+    "raw": 1476967,
+    "gzip": 376714
+  },
+  {
+    "route": "/dashboard/organizations/[uuid]/branches",
+    "raw": 1476601,
+    "gzip": 376466
+  },
+  {
+    "route": "/dashboard/training-hub/waiting-list",
+    "raw": 1476405,
+    "gzip": 377434
+  },
+  {
+    "route": "/dashboard/profile/rate-card",
+    "raw": 1474748,
+    "gzip": 376417
+  },
+  {
+    "route": "/dashboard/account/instructor-preferences",
+    "raw": 1474278,
+    "gzip": 378012
+  },
+  {
+    "route": "/dashboard/enrollments/[id]",
+    "raw": 1474126,
+    "gzip": 374731
+  },
+  {
+    "route": "/dashboard/account/fees-scheduling",
+    "raw": 1473832,
+    "gzip": 377895
+  },
+  {
+    "route": "/dashboard/course-management/published",
+    "raw": 1471079,
+    "gzip": 375567
+  },
+  {
+    "route": "/dashboard/learning/enroll/[id]",
+    "raw": 1470957,
+    "gzip": 375333
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/courses/my-courses",
+    "raw": 1469454,
+    "gzip": 374823
+  },
+  {
+    "route": "/dashboard/quiz",
+    "raw": 1468039,
+    "gzip": 373183
+  },
+  {
+    "route": "/dashboard/courses/my-courses",
+    "raw": 1467350,
+    "gzip": 373984
+  },
+  {
+    "route": "/dashboard/my-applications",
+    "raw": 1467089,
+    "gzip": 374101
+  },
+  {
+    "route": "/dashboard/opportunities/my-applications",
+    "raw": 1460896,
+    "gzip": 371793
+  },
+  {
+    "route": "/dashboard/library",
+    "raw": 1459561,
+    "gzip": 371237
+  },
+  {
+    "route": "/dashboard/messaging-notifications",
+    "raw": 1459033,
+    "gzip": 370770
+  },
+  {
+    "route": "/dashboard/trainings/students",
+    "raw": 1458194,
+    "gzip": 370704
+  },
+  {
+    "route": "/dashboard/notifications",
+    "raw": 1457293,
+    "gzip": 370059
+  },
+  {
+    "route": "/dashboard/revenue/transaction-list",
+    "raw": 1456784,
+    "gzip": 370799
+  },
+  {
+    "route": "/dashboard/currencies",
+    "raw": 1456601,
+    "gzip": 369712
+  },
+  {
+    "route": "/dashboard/categories",
+    "raw": 1456317,
+    "gzip": 369758
+  },
+  {
+    "route": "/dashboard/all-courses",
+    "raw": 1455297,
+    "gzip": 370813
+  },
+  {
+    "route": "/dashboard/add-profile",
+    "raw": 1454153,
+    "gzip": 369898
+  },
+  {
+    "route": "/dashboard/programs/[id]",
+    "raw": 1451798,
+    "gzip": 369280
+  },
+  {
+    "route": "/dashboard/course-management/programs/[id]",
+    "raw": 1451561,
+    "gzip": 369365
+  },
+  {
+    "route": "/dashboard/learning",
+    "raw": 1448909,
+    "gzip": 368781
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/courses/programs/[id]",
+    "raw": 1448153,
+    "gzip": 367614
+  },
+  {
+    "route": "/dashboard/communities",
+    "raw": 1445776,
+    "gzip": 367529
+  },
+  {
+    "route": "/dashboard/organizations/[uuid]/users",
+    "raw": 1441828,
+    "gzip": 365621
+  },
+  {
+    "route": "/dashboard/course-management",
+    "raw": 1441075,
+    "gzip": 366403
+  },
+  {
+    "route": "/dashboard/programs/enrollments/[id]",
+    "raw": 1440050,
+    "gzip": 365869
+  },
+  {
+    "route": "/dashboard/contacts",
+    "raw": 1439511,
+    "gzip": 365168
+  },
+  {
+    "route": "/dashboard/settings/certificates/[id]",
+    "raw": 1438646,
+    "gzip": 365102
+  },
+  {
+    "route": "/dashboard/account/users",
+    "raw": 1436929,
+    "gzip": 364926
+  },
+  {
+    "route": "/dashboard/attendance",
+    "raw": 1436302,
+    "gzip": 364390
+  },
+  {
+    "route": "/dashboard/billing",
+    "raw": 1436302,
+    "gzip": 364390
+  },
+  {
+    "route": "/dashboard/courses/instructor",
+    "raw": 1436302,
+    "gzip": 364390
+  },
+  {
+    "route": "/dashboard/workspace/[domain]",
+    "raw": 1436302,
+    "gzip": 364390
+  },
+  {
+    "route": "/dashboard/workspace/[domain]/[...slug]",
+    "raw": 1436302,
+    "gzip": 364390
+  },
+  {
+    "route": "/dashboard/account",
+    "raw": 1436199,
+    "gzip": 364491
+  },
+  {
+    "route": "/dashboard/contacts/all",
+    "raw": 1435061,
+    "gzip": 364020
+  },
+  {
+    "route": "/dashboard/contacts/favorites",
+    "raw": 1435061,
+    "gzip": 364020
+  },
+  {
+    "route": "/dashboard/contacts/followers",
+    "raw": 1435061,
+    "gzip": 364020
+  },
+  {
+    "route": "/dashboard/contacts/friends",
+    "raw": 1435061,
+    "gzip": 364020
+  },
+  {
+    "route": "/dashboard/contacts/groups",
+    "raw": 1435061,
+    "gzip": 364020
+  },
+  {
+    "route": "/dashboard/invites",
+    "raw": 1435035,
+    "gzip": 364008
+  },
+  {
+    "route": "/dashboard/classes/instructor-console/[id]",
+    "raw": 1434562,
+    "gzip": 363679
+  },
+  {
+    "route": "/dashboard/assessment/exams",
+    "raw": 1434198,
+    "gzip": 363551
+  },
+  {
+    "route": "/dashboard/assessment/quizzes",
+    "raw": 1434198,
+    "gzip": 363551
+  },
+  {
+    "route": "/dashboard/support",
+    "raw": 1433945,
+    "gzip": 363336
+  },
+  {
+    "route": "/dashboard/system-config/rules/[uuid]",
+    "raw": 1433945,
+    "gzip": 363336
+  },
+  {
+    "route": "/dashboard/system-config/rules/new",
+    "raw": 1433945,
+    "gzip": 363336
+  },
+  {
+    "route": "/dashboard/transactions",
+    "raw": 1433945,
+    "gzip": 363336
+  },
+  {
+    "route": "/dashboard",
+    "raw": 1427815,
+    "gzip": 360850
+  },
+  {
+    "route": "/onboarding/organisation",
+    "raw": 1233881,
+    "gzip": 278977
+  },
+  {
+    "route": "/onboarding/student",
+    "raw": 1208406,
+    "gzip": 271651
+  },
+  {
+    "route": "/simple",
+    "raw": 1199961,
+    "gzip": 359938
+  },
+  {
+    "route": "/checkout",
+    "raw": 1103636,
+    "gzip": 288344
+  },
+  {
+    "route": "/class-invite",
+    "raw": 1014076,
+    "gzip": 263046
+  },
+  {
+    "route": "/skills-wallet",
+    "raw": 975137,
+    "gzip": 253088
+  },
+  {
+    "route": "/cart",
+    "raw": 971585,
+    "gzip": 251275
+  },
+  {
+    "route": "/help",
+    "raw": 966261,
+    "gzip": 250646
+  },
+  {
+    "route": "/courses/[courseId]",
+    "raw": 957438,
+    "gzip": 247838
+  },
+  {
+    "route": "/",
+    "raw": 956559,
+    "gzip": 247355
+  },
+  {
+    "route": "/courses",
+    "raw": 956559,
+    "gzip": 247355
+  },
+  {
+    "route": "/auth/create-account",
+    "raw": 838113,
+    "gzip": 244887
+  },
+  {
+    "route": "/onboarding",
+    "raw": 793529,
+    "gzip": 204919
+  },
+  {
+    "route": "/_not-found",
+    "raw": 591592,
+    "gzip": 170499
+  }
+]

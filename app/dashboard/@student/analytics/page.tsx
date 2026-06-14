@@ -1,5 +1,6 @@
 'use client';
 
+import { localDate } from '@/lib/date';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -92,7 +93,7 @@ const StudentProgressAnalytics: React.FC = () => {
   const { data } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: student?.uuid as string },
-      query: { start: new Date('2025-10-01'), end: new Date('2030-12-31') },
+      query: { start: localDate('2025-10-01'), end: localDate('2030-12-31') },
     }),
     enabled: !!student?.uuid,
   });

@@ -1,14 +1,6 @@
-import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
-import * as pdfjsLib from 'pdfjs-dist';
-import React, { useEffect, useRef, useState } from 'react';
 
-// Set worker for pdfjs v5
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url
-  ).toString();
-}
+import React, { useEffect, useRef, useState } from 'react';
+import { loadPdfjs, type PDFDocumentProxy, type PDFPageProxy } from '@/lib/pdfjs';
 
 interface PDFViewerProps {
   file: string; // URL or path to PDF
@@ -48,6 +40,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file }) => {
       try {
         setError(null);
         setPageNumber(1);
+        const pdfjsLib = await loadPdfjs();
         const pdf: PDFDocumentProxy = await pdfjsLib.getDocument(file).promise;
         if (cancelled) return;
         pdfRef.current = pdf;

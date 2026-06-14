@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useStudentMap } from "../../../../../../hooks/use-student-map";
+import { useMemo, useState } from "react";
+import { useStudentsByIds } from "../../../../../../hooks/use-batched-lookups";
 import { CourseReview } from "../../../../../../services/client";
 
 type Props = {
@@ -11,7 +11,15 @@ type Props = {
 export default function CourseReviews({ reviews }: Props) {
     const [filter, setFilter] = useState<number | "all">("all");
 
-    const { studentMap } = useStudentMap();
+    const reviewStudentIds = useMemo(
+        () =>
+            reviews
+                .filter((review) => !review.is_anonymous)
+                .map((review) => review.student_uuid)
+                .filter(Boolean),
+        [reviews]
+    );
+    const { studentMap } = useStudentsByIds(reviewStudentIds);
 
     const filterOptions: Array<number | "all"> = ["all", 5, 4, 3, 2, 1];
 

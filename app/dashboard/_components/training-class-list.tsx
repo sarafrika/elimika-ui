@@ -134,9 +134,12 @@ export function TrainingClassList({
 
   // 1. Prepare all roster hooks BEFORE rendering
   const enrollmentQueries = useQueries({
-    queries: filteredClasses.map(cls =>
-      getEnrollmentsForClassOptions({ path: { uuid: cls.uuid } })
-    ),
+    queries: filteredClasses.map(cls => ({
+      ...getEnrollmentsForClassOptions({ path: { uuid: cls.uuid as string } }),
+      // Without this gate, classes missing a uuid fire a request with a
+      // literal {uuid} placeholder, which the API rejects.
+      enabled: Boolean(cls.uuid),
+    })),
   });
 
   if (loading) {

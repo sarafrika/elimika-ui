@@ -1,0 +1,2281 @@
+[
+  {
+    "path": "/dashboard",
+    "finalUrl": "/dashboard/overview",
+    "apiRequests": 11,
+    "failedRequests": 1,
+    "timeToDataMs": 3112,
+    "jsTransferredKB": 526,
+    "jsFiles": 49,
+    "domContentLoadedMs": 414,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/courses",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+        "ms": 960,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/courses",
+        "ms": 952,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 928,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+        "ms": 526,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 433,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/all-courses",
+    "finalUrl": "/dashboard/all-courses",
+    "apiRequests": 33,
+    "failedRequests": 5,
+    "timeToDataMs": 5220,
+    "jsTransferredKB": 421,
+    "jsFiles": 44,
+    "domContentLoadedMs": 161,
+    "longTaskMs": 0,
+    "consoleErrors": 10,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/courses/published",
+      "/api/v1/programs",
+      "/api/v1/config/categories",
+      "/api/v1/course-creators/b9fc4304-d2f2-43ed-9fe6-6aaea674cca4",
+      "/api/v1/courses/4dbe0888-f958-49cd-bd98-46b60e44fef8/enrollments",
+      "/api/v1/config/difficulty-levels",
+      "/api/v1/course-creators/221c3381-a0d1-4071-acbf-41a0764cd2c1",
+      "/api/v1/courses/afbe4c7d-7da4-495c-8b72-6331cf1d4795/enrollments",
+      "/api/v1/course-creators/e635bcf0-3fba-4b61-aa50-38b87e785c00",
+      "/api/v1/courses/36b43c2a-abd6-421b-b616-d33d8b501e3e/enrollments",
+      "/api/v1/courses/55ad7f0d-a54b-4886-9263-a34f085dfc5c/enrollments",
+      "/api/v1/course-creators/5cd2786b-156c-403d-90fb-cf02bbfe93aa",
+      "/api/v1/courses/db480c68-d4ca-4a85-8a9a-cc01de5537b4/enrollments",
+      "/api/v1/courses/0995a060-5097-4d91-b79d-6967fd2c981b/enrollments",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/enrollments",
+      "/api/v1/courses/57b84729-be56-43b5-b679-4f6deb0e6c16/enrollments",
+      "/api/v1/courses/8fc5209a-6845-4010-b4cf-4b3f3be0be4f/enrollments",
+      "/api/v1/users/409fb742-db91-4d2c-a429-12afa3ba22f4",
+      "/api/v1/users/06c77989-5bcd-4eba-9dfa-b7e7651532df",
+      "/api/v1/users/f66b0fb0-b8da-40f9-bcab-f022fc373695",
+      "/api/v1/users/cc715639-2e36-4a1c-b2c2-e548270bd21f",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/22eee753-6bda-4467-b051-56591f9ed983.jpg",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/b104fc39-3bc3-4619-a3eb-0b7bb038ba1f.png",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/159db880-7e85-4853-a211-af2b68174a6c.png",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/2cdfa082-3c18-4932-b70b-929db8357514.jpeg"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/courses/published",
+        "ms": 1288,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/courses/8fc5209a-6845-4010-b4cf-4b3f3be0be4f/enrollments",
+        "ms": 1109,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/courses/57b84729-be56-43b5-b679-4f6deb0e6c16/enrollments",
+        "ms": 1089,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/f66b0fb0-b8da-40f9-bcab-f022fc373695",
+        "ms": 1008,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/programs",
+        "ms": 1004,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/all-courses/instructor",
+    "finalUrl": "/dashboard/all-courses/instructor",
+    "apiRequests": 34,
+    "failedRequests": 6,
+    "timeToDataMs": 5630,
+    "jsTransferredKB": 519,
+    "jsFiles": 52,
+    "domContentLoadedMs": 261,
+    "longTaskMs": 0,
+    "consoleErrors": 6,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/instructors",
+      "/api/v1/instructors/skills/search",
+      "/api/v1/users/search",
+      "/api/v1/instructors/experience/search",
+      "/api/v1/instructors/skills/search",
+      "/api/v1/instructors/c3658c72-f9bf-4bd0-a3c4-a6e6f29350e6/reviews/summary",
+      "/api/v1/instructors/6cc67af4-e2a7-4506-89fc-7ae2c360a0f7/reviews/summary",
+      "/api/v1/instructors/5d69dc44-c7ab-41c7-9f1e-a72f7dae5d63/reviews/summary",
+      "/api/v1/instructors/b7411300-d40d-4d55-a399-5592dd3088b2/reviews/summary",
+      "/api/v1/instructors/9f1b101a-f40f-4265-8d39-8e2a73289992/reviews/summary",
+      "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/reviews/summary",
+      "/api/v1/instructors/69296fa2-9dba-48d4-8d59-315b0833c102/reviews/summary",
+      "/api/v1/instructors/ca8f35c9-8410-494f-9b59-d6b2f2e18c88/reviews/summary",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/2cdfa082-3c18-4932-b70b-929db8357514.jpeg",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/f60d167d-a3bb-47a5-8ad8-622ff3a39ba4.jpeg",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/b104fc39-3bc3-4619-a3eb-0b7bb038ba1f.png",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/22eee753-6bda-4467-b051-56591f9ed983.jpg",
+      "/api/v1/courses/training-applications/search",
+      "/api/v1/courses/training-applications/search",
+      "/api/v1/courses/training-applications/search",
+      "/api/v1/courses/training-applications/search",
+      "/api/v1/courses/training-applications/search",
+      "/api/v1/courses/training-applications/search",
+      "/api/v1/courses/training-applications/search",
+      "/api/v1/courses/training-applications/search"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/instructors/skills/search",
+        "ms": 1364,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors",
+        "ms": 1304,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1273,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/2cdfa082-3c18-4932-b70b-929db8357514.jpeg",
+        "ms": 1232,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/instructors/a95a2c0d-2097-40ae-a4ce-6630111d12d1/reviews/summary",
+        "ms": 995,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/analytics",
+    "finalUrl": "/dashboard/analytics",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3415,
+    "jsTransferredKB": 429,
+    "jsFiles": 39,
+    "domContentLoadedMs": 74,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/timetable/student/ca80c307-e9cd-430e-95cb-b975b015f0bd"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/timetable/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+        "ms": 1324,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 999,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 924,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 921,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 378,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/assessment",
+    "finalUrl": "/dashboard/assessment",
+    "apiRequests": 29,
+    "failedRequests": 5,
+    "timeToDataMs": 12901,
+    "jsTransferredKB": 484,
+    "jsFiles": 40,
+    "domContentLoadedMs": 111,
+    "longTaskMs": 0,
+    "consoleErrors": 5,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 409 (Conflict)",
+      "Failed to load resource: the server responded with a status of 409 (Conflict)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/classes/instructor/ca8f35c9-8410-494f-9b59-d6b2f2e18c88",
+      "/api/v1/courses/search",
+      "/api/v1/instructors/search",
+      "/api/v1/classes/dff3ae70-65bf-4268-9578-11e51aee641b/schedule",
+      "/api/v1/classes/d0b1b4d1-d75f-4735-ab22-3fae0cdb3cbc/schedule",
+      "/api/v1/classes/dff3ae70-65bf-4268-9578-11e51aee641b/enrollments",
+      "/api/v1/classes/d0b1b4d1-d75f-4735-ab22-3fae0cdb3cbc/enrollments",
+      "/api/v1/classes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/schedule",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/quizzes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/assignments",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab/attachments",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab/submissions",
+      "/api/v1/courses/search",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/lessons",
+      "/api/v1/classes/dff3ae70-65bf-4268-9578-11e51aee641b/schedule",
+      "/api/v1/classes/dff3ae70-65bf-4268-9578-11e51aee641b/schedule",
+      "/api/v1/classes/dff3ae70-65bf-4268-9578-11e51aee641b/schedule"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/classes/dff3ae70-65bf-4268-9578-11e51aee641b/schedule",
+        "ms": 1121,
+        "status": 409
+      },
+      {
+        "url": "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+        "ms": 1032,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1027,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes",
+        "ms": 1002,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+        "ms": 995,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/assessment/assignments",
+    "finalUrl": "/dashboard/assessment/assignments",
+    "apiRequests": 19,
+    "failedRequests": 1,
+    "timeToDataMs": 4622,
+    "jsTransferredKB": 428,
+    "jsFiles": 35,
+    "domContentLoadedMs": 69,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/classes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/schedule",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/quizzes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/assignments",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab/attachments",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab/submissions",
+      "/api/v1/courses/search",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/lessons"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab/attachments",
+        "ms": 1059,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+        "ms": 965,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 938,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 935,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 906,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/assessment/exams",
+    "finalUrl": "/dashboard/assessment/exams",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 3264,
+    "jsTransferredKB": 407,
+    "jsFiles": 34,
+    "domContentLoadedMs": 70,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 1056,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 985,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 913,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 911,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 456,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/assessment/quizzes",
+    "finalUrl": "/dashboard/assessment/quizzes",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 3162,
+    "jsTransferredKB": 407,
+    "jsFiles": 34,
+    "domContentLoadedMs": 56,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1057,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 955,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 920,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 381,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 381,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/assignment",
+    "finalUrl": "/dashboard/assignment",
+    "apiRequests": 19,
+    "failedRequests": 1,
+    "timeToDataMs": 5019,
+    "jsTransferredKB": 442,
+    "jsFiles": 38,
+    "domContentLoadedMs": 79,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/classes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/schedule",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/quizzes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/assignments",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab/attachments",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab/submissions",
+      "/api/v1/courses/search",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/lessons"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab",
+        "ms": 1217,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1111,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 952,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 950,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+        "ms": 948,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/calendar",
+    "finalUrl": "/dashboard/calendar",
+    "apiRequests": 22,
+    "failedRequests": 1,
+    "timeToDataMs": 6841,
+    "jsTransferredKB": 441,
+    "jsFiles": 39,
+    "domContentLoadedMs": 237,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/timetable/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b",
+      "/api/v1/instructors/b7411300-d40d-4d55-a399-5592dd3088b2",
+      "/api/v1/users/3b09f2db-5487-40d6-9195-ae1b860c8dec",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+      "/api/v1/students/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+      "/api/v1/students/6eb5df6d-5d4e-4df3-870e-b06d2c09611d",
+      "/api/v1/students/b40af4fb-c06f-4b10-92d1-56741b6ddbd5",
+      "/api/v1/students/f628b435-60f5-4777-a04d-971abbc55b83",
+      "/api/v1/users/06c77989-5bcd-4eba-9dfa-b7e7651532df",
+      "/api/v1/users/4d1ae0ad-4092-459a-a534-1d14deedbe5b",
+      "/api/v1/users/409fb742-db91-4d2c-a429-12afa3ba22f4",
+      "/api/v1/users/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/timetable/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+        "ms": 1364,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1002,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 1000,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 996,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 955,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/communities",
+    "finalUrl": "/dashboard/communities",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 3312,
+    "jsTransferredKB": 413,
+    "jsFiles": 38,
+    "domContentLoadedMs": 44,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1122,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 985,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 959,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 372,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 372,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/contacts",
+    "finalUrl": "/dashboard/contacts",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 3083,
+    "jsTransferredKB": 409,
+    "jsFiles": 36,
+    "domContentLoadedMs": 62,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 973,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 970,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 905,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 366,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 363,
+        "status": 404
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/contacts/all",
+    "finalUrl": "/dashboard/contacts/all",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 3105,
+    "jsTransferredKB": 408,
+    "jsFiles": 35,
+    "domContentLoadedMs": 70,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 942,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 924,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 919,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 370,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 370,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/contacts/favorites",
+    "finalUrl": "/dashboard/contacts/favorites",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 3069,
+    "jsTransferredKB": 408,
+    "jsFiles": 35,
+    "domContentLoadedMs": 70,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 1000,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 912,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 905,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 325,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 319,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/contacts/followers",
+    "finalUrl": "/dashboard/contacts/followers",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 3294,
+    "jsTransferredKB": 408,
+    "jsFiles": 35,
+    "domContentLoadedMs": 41,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1053,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1028,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 984,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 410,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 409,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/contacts/friends",
+    "finalUrl": "/dashboard/contacts/friends",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 3189,
+    "jsTransferredKB": 408,
+    "jsFiles": 35,
+    "domContentLoadedMs": 43,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1033,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 973,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 968,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 403,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 403,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/contacts/groups",
+    "finalUrl": "/dashboard/contacts/groups",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 3172,
+    "jsTransferredKB": 408,
+    "jsFiles": 35,
+    "domContentLoadedMs": 53,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1033,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 967,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 961,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications/counts",
+        "ms": 368,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 368,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/courses",
+    "finalUrl": "/dashboard/courses",
+    "apiRequests": 60,
+    "failedRequests": 1,
+    "timeToDataMs": 6048,
+    "jsTransferredKB": 431,
+    "jsFiles": 37,
+    "domContentLoadedMs": 68,
+    "longTaskMs": 0,
+    "consoleErrors": 6,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/courses/published",
+      "/api/v1/programs",
+      "/api/v1/config/categories",
+      "/api/v1/config/difficulty-levels",
+      "/api/v1/courses/93c17a30-4695-458d-a972-2683dc9886c0/reviews",
+      "/api/v1/courses/563f0c3d-e9f4-4b61-b547-1dda54ea3a96/reviews",
+      "/api/v1/courses/0cc7697c-4249-4891-88e3-303a18a50fca/reviews",
+      "/api/v1/courses/31ab7a7c-0038-4d65-bc1d-40b9a04bd50f/reviews",
+      "/api/v1/courses/c49e7b3e-b644-4aa0-8d5c-acbefc129630/reviews",
+      "/api/v1/courses/1ae103f9-130d-44a5-8b34-958d844c918c/reviews",
+      "/api/v1/courses/93c17a30-4695-458d-a972-2683dc9886c0/enrollments",
+      "/api/v1/courses/563f0c3d-e9f4-4b61-b547-1dda54ea3a96/enrollments",
+      "/api/v1/courses/0cc7697c-4249-4891-88e3-303a18a50fca/enrollments",
+      "/api/v1/courses/31ab7a7c-0038-4d65-bc1d-40b9a04bd50f/enrollments",
+      "/api/v1/courses/c49e7b3e-b644-4aa0-8d5c-acbefc129630/enrollments",
+      "/api/v1/courses/1ae103f9-130d-44a5-8b34-958d844c918c/enrollments",
+      "/api/v1/programs/93c17a30-4695-458d-a972-2683dc9886c0/courses",
+      "/api/v1/programs/563f0c3d-e9f4-4b61-b547-1dda54ea3a96/courses",
+      "/api/v1/programs/0cc7697c-4249-4891-88e3-303a18a50fca/courses",
+      "/api/v1/programs/31ab7a7c-0038-4d65-bc1d-40b9a04bd50f/courses",
+      "/api/v1/programs/c49e7b3e-b644-4aa0-8d5c-acbefc129630/courses",
+      "/api/v1/programs/1ae103f9-130d-44a5-8b34-958d844c918c/courses",
+      "/api/v1/course-creators/e635bcf0-3fba-4b61-aa50-38b87e785c00",
+      "/api/v1/course-creators/221c3381-a0d1-4071-acbf-41a0764cd2c1",
+      "/api/v1/course-creators/b9fc4304-d2f2-43ed-9fe6-6aaea674cca4",
+      "/api/v1/classes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/schedule",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/quizzes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/assignments",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+      "/api/v1/courses/4dbe0888-f958-49cd-bd98-46b60e44fef8/reviews",
+      "/api/v1/courses/afbe4c7d-7da4-495c-8b72-6331cf1d4795/reviews",
+      "/api/v1/courses/36b43c2a-abd6-421b-b616-d33d8b501e3e/reviews",
+      "/api/v1/courses/55ad7f0d-a54b-4886-9263-a34f085dfc5c/reviews",
+      "/api/v1/courses/db480c68-d4ca-4a85-8a9a-cc01de5537b4/reviews",
+      "/api/v1/courses/0995a060-5097-4d91-b79d-6967fd2c981b/reviews",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/reviews",
+      "/api/v1/courses/57b84729-be56-43b5-b679-4f6deb0e6c16/reviews",
+      "/api/v1/courses/8fc5209a-6845-4010-b4cf-4b3f3be0be4f/reviews",
+      "/api/v1/courses/4dbe0888-f958-49cd-bd98-46b60e44fef8/enrollments",
+      "/api/v1/courses/afbe4c7d-7da4-495c-8b72-6331cf1d4795/enrollments",
+      "/api/v1/courses/36b43c2a-abd6-421b-b616-d33d8b501e3e/enrollments",
+      "/api/v1/courses/55ad7f0d-a54b-4886-9263-a34f085dfc5c/enrollments",
+      "/api/v1/courses/db480c68-d4ca-4a85-8a9a-cc01de5537b4/enrollments",
+      "/api/v1/courses/0995a060-5097-4d91-b79d-6967fd2c981b/enrollments",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/enrollments",
+      "/api/v1/courses/57b84729-be56-43b5-b679-4f6deb0e6c16/enrollments",
+      "/api/v1/courses/8fc5209a-6845-4010-b4cf-4b3f3be0be4f/enrollments",
+      "/api/v1/course-creators/5cd2786b-156c-403d-90fb-cf02bbfe93aa",
+      "/api/v1/courses/search",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/lessons"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/course-creators/5cd2786b-156c-403d-90fb-cf02bbfe93aa",
+        "ms": 3036,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/courses/8fc5209a-6845-4010-b4cf-4b3f3be0be4f/enrollments",
+        "ms": 3034,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/courses/57b84729-be56-43b5-b679-4f6deb0e6c16/reviews",
+        "ms": 2732,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/enrollments",
+        "ms": 2732,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/courses/0995a060-5097-4d91-b79d-6967fd2c981b/enrollments",
+        "ms": 2726,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/courses/my-courses",
+    "finalUrl": "/dashboard/courses/my-courses",
+    "apiRequests": 17,
+    "failedRequests": 1,
+    "timeToDataMs": 5073,
+    "jsTransferredKB": 417,
+    "jsFiles": 35,
+    "domContentLoadedMs": 49,
+    "longTaskMs": 0,
+    "consoleErrors": 2,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/classes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/schedule",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/quizzes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/assignments",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+      "/api/v1/courses/search",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/lessons",
+      "/api/v1/course-creators/5cd2786b-156c-403d-90fb-cf02bbfe93aa"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/students/search",
+        "ms": 1124,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1002,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 987,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+        "ms": 987,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+        "ms": 706,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/credentials",
+    "finalUrl": "/dashboard/credentials",
+    "apiRequests": 11,
+    "failedRequests": 2,
+    "timeToDataMs": 3279,
+    "jsTransferredKB": 444,
+    "jsFiles": 39,
+    "domContentLoadedMs": 37,
+    "longTaskMs": 0,
+    "consoleErrors": 2,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+      "/api/v1/document-types"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1053,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 1050,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+        "ms": 1044,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/document-types",
+        "ms": 1041,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 1037,
+        "status": 404
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/invites",
+    "finalUrl": "/dashboard/invites",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 3072,
+    "jsTransferredKB": 408,
+    "jsFiles": 35,
+    "domContentLoadedMs": 58,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1017,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 961,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 877,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 380,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 380,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/learning-hub",
+    "finalUrl": "/dashboard/learning-hub",
+    "apiRequests": 22,
+    "failedRequests": 1,
+    "timeToDataMs": 4741,
+    "jsTransferredKB": 477,
+    "jsFiles": 41,
+    "domContentLoadedMs": 80,
+    "longTaskMs": 0,
+    "consoleErrors": 2,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/scheduled-instances",
+      "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+      "/api/v1/courses/published",
+      "/api/v1/classes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/schedule",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/quizzes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/assignments",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab",
+      "/api/v1/assignments/fad41e53-49b0-46cb-b109-3a3a6388cdab/submissions",
+      "/api/v1/courses/search",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/lessons",
+      "/api/v1/instructors/b7411300-d40d-4d55-a399-5592dd3088b2"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/scheduled-instances",
+        "ms": 1311,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1192,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 1015,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+        "ms": 1006,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/courses/published",
+        "ms": 986,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/learning-hub/classes",
+    "finalUrl": "/dashboard/learning-hub/classes",
+    "apiRequests": 13,
+    "failedRequests": 1,
+    "timeToDataMs": 3833,
+    "jsTransferredKB": 438,
+    "jsFiles": 37,
+    "domContentLoadedMs": 42,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/config/difficulty-levels",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/schedule",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 996,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+        "ms": 980,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/config/difficulty-levels",
+        "ms": 963,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 959,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 954,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/library",
+    "finalUrl": "/dashboard/library",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 3072,
+    "jsTransferredKB": 417,
+    "jsFiles": 39,
+    "domContentLoadedMs": 47,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/notifications",
+        "ms": 978,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 944,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 922,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 919,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 374,
+        "status": 404
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/messaging-notifications",
+    "finalUrl": "/dashboard/messaging-notifications",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3284,
+    "jsTransferredKB": 416,
+    "jsFiles": 36,
+    "domContentLoadedMs": 49,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1138,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 969,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 963,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 958,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 411,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/my-skills",
+    "finalUrl": "/dashboard/my-skills",
+    "apiRequests": 14,
+    "failedRequests": 2,
+    "timeToDataMs": 5361,
+    "jsTransferredKB": 458,
+    "jsFiles": 40,
+    "domContentLoadedMs": 51,
+    "longTaskMs": 0,
+    "consoleErrors": 2,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+      "/api/v1/document-types",
+      "/api/v1/timetable/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1156,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 987,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/timetable/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+        "ms": 974,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/document-types",
+        "ms": 954,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+        "ms": 930,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/my-skills/verified-skills",
+    "finalUrl": "/dashboard/my-skills/verified-skills",
+    "apiRequests": 10,
+    "failedRequests": 1,
+    "timeToDataMs": 3390,
+    "jsTransferredKB": 430,
+    "jsFiles": 39,
+    "domContentLoadedMs": 46,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/document-types",
+      "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1087,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+        "ms": 1035,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1023,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/document-types",
+        "ms": 981,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 958,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/notifications",
+    "finalUrl": "/dashboard/notifications",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3171,
+    "jsTransferredKB": 417,
+    "jsFiles": 37,
+    "domContentLoadedMs": 41,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1024,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 988,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 975,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 941,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 365,
+        "status": 404
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/opportunities",
+    "finalUrl": "/dashboard/opportunities",
+    "apiRequests": 12,
+    "failedRequests": 1,
+    "timeToDataMs": 2719,
+    "jsTransferredKB": 437,
+    "jsFiles": 40,
+    "domContentLoadedMs": 129,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/classes/jobs",
+      "/api/v1/classes/jobs/applications/mine",
+      "/api/v1/courses",
+      "/api/v1/organisations"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/classes/jobs",
+        "ms": 1051,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1042,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/jobs/applications/mine",
+        "ms": 982,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/courses",
+        "ms": 982,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/organisations",
+        "ms": 708,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/opportunities/my-applications",
+    "finalUrl": "/dashboard/opportunities/my-applications",
+    "apiRequests": 10,
+    "failedRequests": 1,
+    "timeToDataMs": 3411,
+    "jsTransferredKB": 418,
+    "jsFiles": 38,
+    "domContentLoadedMs": 78,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/classes/jobs",
+      "/api/v1/classes/jobs/applications/mine"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 1043,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/jobs",
+        "ms": 1039,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1030,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1021,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/jobs/applications/mine",
+        "ms": 1014,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/overview",
+    "finalUrl": "/dashboard/overview",
+    "apiRequests": 11,
+    "failedRequests": 1,
+    "timeToDataMs": 2671,
+    "jsTransferredKB": 526,
+    "jsFiles": 49,
+    "domContentLoadedMs": 86,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/courses",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/users/search",
+        "ms": 981,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+        "ms": 981,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/courses",
+        "ms": 961,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/certificates/student/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+        "ms": 649,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 357,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/portfolio",
+    "finalUrl": "/dashboard/portfolio",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 3406,
+    "jsTransferredKB": 420,
+    "jsFiles": 37,
+    "domContentLoadedMs": 42,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 1163,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 1018,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 993,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 411,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 408,
+        "status": 404
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/profile",
+    "finalUrl": "/dashboard/profile",
+    "apiRequests": 9,
+    "failedRequests": 2,
+    "timeToDataMs": 2992,
+    "jsTransferredKB": 463,
+    "jsFiles": 43,
+    "domContentLoadedMs": 53,
+    "longTaskMs": 0,
+    "consoleErrors": 2,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 933,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 911,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 905,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 885,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 375,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/profile/general",
+    "finalUrl": "/dashboard/profile/general",
+    "apiRequests": 9,
+    "failedRequests": 2,
+    "timeToDataMs": 3581,
+    "jsTransferredKB": 483,
+    "jsFiles": 47,
+    "domContentLoadedMs": 81,
+    "longTaskMs": 0,
+    "consoleErrors": 2,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/students/search",
+        "ms": 1215,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1027,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 977,
+        "status": 200
+      },
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 975,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 395,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/profile/guardian-information",
+    "finalUrl": "/dashboard/profile/guardian-information",
+    "apiRequests": 9,
+    "failedRequests": 1,
+    "timeToDataMs": 3125,
+    "jsTransferredKB": 424,
+    "jsFiles": 37,
+    "domContentLoadedMs": 41,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/students/ca80c307-e9cd-430e-95cb-b975b015f0bd"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 1023,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/ca80c307-e9cd-430e-95cb-b975b015f0bd",
+        "ms": 1011,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 959,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 919,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/notifications",
+        "ms": 371,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/quiz",
+    "finalUrl": "/dashboard/quiz",
+    "apiRequests": 18,
+    "failedRequests": 1,
+    "timeToDataMs": 5244,
+    "jsTransferredKB": 417,
+    "jsFiles": 35,
+    "domContentLoadedMs": 49,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/classes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/schedule",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/quizzes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/assignments",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+      "/api/v1/quizzes/ef470952-5a92-488f-8e1f-e87dde80f842",
+      "/api/v1/quizzes/ef470952-5a92-488f-8e1f-e87dde80f842/attempts",
+      "/api/v1/courses/search",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/lessons"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1094,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+        "ms": 1091,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 1078,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 993,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/schedule",
+        "ms": 915,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/schedule",
+    "finalUrl": "/dashboard/schedule",
+    "apiRequests": 16,
+    "failedRequests": 1,
+    "timeToDataMs": 4813,
+    "jsTransferredKB": 430,
+    "jsFiles": 37,
+    "domContentLoadedMs": 74,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+      "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+      "/api/v1/classes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/schedule",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/quizzes",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/assignments",
+      "/api/v1/classes/b6270bd8-cfd7-49b4-b254-ffe8c266f06b/enrollments",
+      "/api/v1/courses/search",
+      "/api/v1/courses/a512846d-707a-4215-9009-2ba93508ee7f/lessons"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/enrollment/student/ca80c307-e9cd-430e-95cb-b975b015f0bd/classes",
+        "ms": 1106,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 1085,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 959,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 917,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/classes",
+        "ms": 787,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/settings",
+    "finalUrl": "/dashboard/settings",
+    "apiRequests": 9,
+    "failedRequests": 2,
+    "timeToDataMs": 2743,
+    "jsTransferredKB": 437,
+    "jsFiles": 40,
+    "domContentLoadedMs": 71,
+    "longTaskMs": 0,
+    "consoleErrors": 2,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "https://api.elimika.staging.sarafrika.com/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+        "ms": 967,
+        "status": 404
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 946,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 921,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/users/search",
+        "ms": 393,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 382,
+        "status": 200
+      }
+    ]
+  },
+  {
+    "path": "/dashboard/skills-fund",
+    "finalUrl": "/dashboard/skills-fund",
+    "apiRequests": 8,
+    "failedRequests": 1,
+    "timeToDataMs": 1990,
+    "jsTransferredKB": 432,
+    "jsFiles": 41,
+    "domContentLoadedMs": 56,
+    "longTaskMs": 0,
+    "consoleErrors": 1,
+    "consoleErrorSamples": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "apiUrls": [
+      "/api/v1/users/search",
+      "/api/v1/students/search",
+      "/api/v1/instructors/search",
+      "/api/v1/course-creators/search",
+      "/api/v1/users/profile-image/26ea3fb5-7553-493f-8533-2f7d7c5180d6.png",
+      "/api/v1/notifications/counts",
+      "/api/v1/notifications",
+      "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef"
+    ],
+    "slowestRequests": [
+      {
+        "url": "/api/v1/users/search",
+        "ms": 1000,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/instructors/search",
+        "ms": 387,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/course-creators/search",
+        "ms": 387,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/students/search",
+        "ms": 385,
+        "status": 200
+      },
+      {
+        "url": "/api/v1/wallets/2cfef737-3833-4a7e-8476-ccf28441f1ef",
+        "ms": 361,
+        "status": 200
+      }
+    ]
+  }
+]

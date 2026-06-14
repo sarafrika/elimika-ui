@@ -1,21 +1,26 @@
+import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAllInstructorsOptions,
-  getInstructorExperienceOptions,
   getInstructorRatingSummaryOptions,
-  getInstructorReviewsOptions,
-  getInstructorSkillsOptions,
-  getUserByUuidOptions,
+  searchExperienceOptions,
+  searchSkillsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Instructor,
+  InstructorExperience,
   InstructorSkill,
-  PagedDtoInstructorExperience,
-  InstructorReview,
-  User
 } from '@/services/client/types.gen';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useUsersByIds } from './use-batched-lookups';
 
+/**
+ * Instructor directory data. Previously fired 5 requests per instructor
+ * (profile, reviews, rating summary, experience, skills — 100+ requests for a
+ * 20-instructor page). Now: 1 instructor page + 1 batched user lookup +
+ * 1 experience search + 1 skills search + N small rating summaries.
+ */
 function useSearchTrainingInstructors() {
   const {
     data,
@@ -27,92 +32,96 @@ function useSearchTrainingInstructors() {
       query: { pageable: { page: 0, size: 20 } },
     }),
   });
-  const instructors: Instructor[] = data?.data?.content ?? [];
+  const instructors: Instructor[] = useMemo(() => data?.data?.content ?? [], [data]);
 
-  // Fetch profiles
-  const profileQueries = useQueries({
-    queries:
-      instructors.map(instructor => ({
-        ...getUserByUuidOptions({
-          path: { uuid: instructor.user_uuid },
-        }),
-        enabled: !!instructor.user_uuid,
-      })) || [],
-  });
-  const profiles: Array<User | null> = profileQueries.map(q => q.data?.data ?? null);
-
-  // Fetch reviews
-  const reviewsQueries = useQueries({
-    queries:
-      instructors.map(instructor => ({
-        ...getInstructorReviewsOptions({
-          path: { instructorUuid: instructor.uuid as string },
-        }),
-        enabled: !!instructor.uuid,
-      })) || [],
-  });
-
-  const reviewsList: InstructorReview[][] = reviewsQueries.map(q => q.data?.data ?? []);
-
-  const ratingSummaryQueries = useQueries({
-    queries:
-      instructors.map(instructor => ({
-        ...getInstructorRatingSummaryOptions({
-          path: { instructorUuid: instructor.uuid as string },
-        }),
-        enabled: !!instructor.uuid,
-      })) || [],
-  });
-
-  // Fetch experiences
-  const experienceQueries = useQueries({
-    queries:
-      instructors.map(instructor => ({
-        ...getInstructorExperienceOptions({
-          query: { pageable: {} },
-          path: { instructorUuid: instructor?.uuid as string },
-        }),
-        enabled: !!instructor.uuid,
-      })) || [],
-  });
-  const experiences: Array<PagedDtoInstructorExperience['content']> = experienceQueries.map(
-    q => q.data?.data?.content ?? []
+  const instructorUuids = useMemo(
+    () =>
+      instructors
+        .map(instructor => instructor.uuid)
+        .filter((uuid): uuid is string => Boolean(uuid))
+        .sort((a, b) => a.localeCompare(b)),
+    [instructors]
   );
 
+  const userUuids = useMemo(
+    () => instructors.map(instructor => instructor.user_uuid).filter(Boolean) as string[],
+    [instructors]
+  );
+  const { userMap, isLoading: isProfilesLoading } = useUsersByIds(userUuids);
+
+  const { data: experienceData, isLoading: isExperiencesLoading } = useQuery({
+    ...searchExperienceOptions({
+      query: {
+        searchParams: { instructor_uuid_in: instructorUuids.join(',') },
+        pageable: { page: 0, size: 500 },
+      },
+    }),
+    enabled: instructorUuids.length > 0,
+    staleTime: STALE_TIMES.entity,
+  });
+
+  const { data: skillsData, isLoading: isSkillsLoading } = useQuery({
+    ...searchSkillsOptions({
+      query: {
+        searchParams: { instructor_uuid_in: instructorUuids.join(',') },
+        pageable: { page: 0, size: 500 },
+      },
+    }),
+    enabled: instructorUuids.length > 0,
+    staleTime: STALE_TIMES.entity,
+  });
+
+  const experienceByInstructor = useMemo(() => {
+    const map = new Map<string, InstructorExperience[]>();
+    const content = (experienceData?.data?.content ?? []) as unknown as InstructorExperience[];
+    for (const experience of content) {
+      if (!experience.instructor_uuid) continue;
+      const current = map.get(experience.instructor_uuid) ?? [];
+      current.push(experience);
+      map.set(experience.instructor_uuid, current);
+    }
+    return map;
+  }, [experienceData]);
+
+  const skillsByInstructor = useMemo(() => {
+    const map = new Map<string, InstructorSkill[]>();
+    const content = (skillsData?.data?.content ?? []) as unknown as InstructorSkill[];
+    for (const skill of content) {
+      if (!skill.instructor_uuid) continue;
+      const current = map.get(skill.instructor_uuid) ?? [];
+      current.push(skill);
+      map.set(skill.instructor_uuid, current);
+    }
+    return map;
+  }, [skillsData]);
+
+  // No batch endpoint for rating summaries; payloads are tiny.
+  const ratingSummaryQueries = useQueries({
+    queries: instructors.map(instructor => ({
+      ...getInstructorRatingSummaryOptions({
+        path: { instructorUuid: instructor.uuid as string },
+      }),
+      enabled: !!instructor.uuid,
+      staleTime: STALE_TIMES.entity,
+    })),
+  });
   const ratingSummaries = ratingSummaryQueries.map(q => q.data?.data ?? null);
 
-  // Fetch skills
-  const skillQueries = useQueries({
-    queries:
-      instructors.map(instructor => ({
-        ...getInstructorSkillsOptions({
-          query: { pageable: {} },
-          path: { instructorUuid: instructor?.uuid as string },
-        }),
-        enabled: !!instructor.uuid,
-      })) || [],
-  });
-  const skills: InstructorSkill[][] = skillQueries.map(q => q.data?.data?.content ?? []);
-
-  // Combine data
   const instructorsWithProfiles: SearchInstructor[] = instructors.map((instructor, i) => {
-    const profile = profiles[i];
-    const expArray = experiences[i] ?? [];
+    const profile = instructor.user_uuid ? (userMap[instructor.user_uuid] ?? null) : null;
+    const expArray = experienceByInstructor.get(instructor.uuid ?? '') ?? [];
     const totalExperience = expArray.reduce(
       (sum, exp) => sum + (exp?.years_of_experience ?? exp?.calculated_years ?? 0),
       0
     );
-    const instructorReviews = reviewsList[i] ?? [];
     const ratingSummary = ratingSummaries[i];
-    const reviewCount = ratingSummary?.review_count
-      ? Number(ratingSummary.review_count)
-      : instructorReviews.length;
+    const reviewCount = ratingSummary?.review_count ? Number(ratingSummary.review_count) : 0;
     const averageRating =
       typeof ratingSummary?.average_rating === 'number'
         ? ratingSummary.average_rating
-        : instructor.rating ?? null;
+        : ((instructor as Instructor & { rating?: number }).rating ?? null);
 
-    const skillArray = skills[i] ?? [];
+    const skillArray = skillsByInstructor.get(instructor.uuid ?? '') ?? [];
     const skillCategories = skillArray.reduce<Record<string, InstructorSkill[]>>((acc, skill) => {
       const category = skill.proficiency_level || 'UNCATEGORIZED';
       if (!acc[category]) {
@@ -135,23 +144,17 @@ function useSearchTrainingInstructors() {
       total_experience_years: totalExperience,
       specializations: skillArray,
       skill_categories: skillCategories,
-      rating: averageRating ?? instructor.rating ?? 0,
+      rating: averageRating ?? (instructor as Instructor & { rating?: number }).rating ?? 0,
       review_count: reviewCount,
-      reviews: instructorReviews,
+      reviews: [],
     };
   });
 
-  // Handle loading states
-  const isProfilesLoading = profileQueries.some(q => q.isLoading || q.isFetching);
-  const isReviewsLoading = reviewsQueries.some(q => q.isLoading || q.isFetching);
-  const isRatingSummaryLoading = ratingSummaryQueries.some(q => q.isLoading || q.isFetching);
-  const isExperiencesLoading = experienceQueries.some(q => q.isLoading || q.isFetching);
-  const isSkillsLoading = skillQueries.some(q => q.isLoading || q.isFetching);
+  const isRatingSummaryLoading = ratingSummaryQueries.some(q => q.isLoading);
   const loading =
     isInstructorsLoading ||
     isFetching ||
     isProfilesLoading ||
-    isReviewsLoading ||
     isRatingSummaryLoading ||
     isExperiencesLoading ||
     isSkillsLoading;

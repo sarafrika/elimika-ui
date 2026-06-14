@@ -1,3 +1,11 @@
+import {
+  getCourseByUuid,
+  getCourseLessons,
+  getInstructorByUuid,
+  getProgramCourses,
+  getTrainingProgramByUuid,
+  getUserByUuid,
+} from '@/services/client';
 import type {
   GetClassDefinitionResponse,
   GetClassScheduleResponse,
@@ -11,13 +19,8 @@ import { useQuery } from '@tanstack/react-query';
 import {
   getClassDefinitionOptions,
   getClassScheduleOptions,
-  getCourseByUuidOptions,
-  getCourseLessonsOptions,
   getEnrollmentsForClassOptions,
   getInstructorByUuidOptions,
-  getProgramCoursesOptions,
-  getTrainingProgramByUuidOptions,
-  getUserByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
 export type ClassDetailsClass = NonNullable<
@@ -45,13 +48,51 @@ export type CombinedClassDetailsData = {
   program: ClassDetailsProgram | undefined;
   lessons: ClassDetailsLesson[];
   enrollments: ClassDetailsEnrollment[];
-  instructor: Awaited<
-    ReturnType<typeof getInstructorByUuidOptions>
-  > extends infer T
-  ? T
-  : unknown;
+  instructor: Awaited<ReturnType<typeof getInstructorByUuidOptions>> extends infer T ? T : unknown;
   instructorProfile: unknown;
 };
+
+/**
+ * Everything that depends on the class definition is fetched in a single
+ * queryFn with Promise.all, so the waterfall is two steps deep
+ * (definition → related) instead of chaining query-by-query across render
+ * cycles. The instructor's user profile is the only inherently sequential
+ * fetch and runs inside the same step.
+ */
+async function fetchClassRelated(params: {
+  courseUuid?: string;
+  programUuid?: string;
+  instructorUuid?: string;
+}) {
+  const { courseUuid, programUuid, instructorUuid } = params;
+
+  const [course, lessons, pCourses, program, instructorWithProfile] = await Promise.all([
+    courseUuid ? getCourseByUuid({ path: { uuid: courseUuid } }) : null,
+    courseUuid
+      ? getCourseLessons({ path: { courseUuid }, query: { pageable: {} } })
+      : null,
+    programUuid ? getProgramCourses({ path: { programUuid } }) : null,
+    programUuid ? getTrainingProgramByUuid({ path: { uuid: programUuid } }) : null,
+    (async () => {
+      if (!instructorUuid) return { instructor: undefined, profile: undefined };
+      const instructorResp = await getInstructorByUuid({ path: { uuid: instructorUuid } });
+      const instructor = instructorResp.data;
+      const profile = instructor?.user_uuid
+        ? (await getUserByUuid({ path: { uuid: instructor.user_uuid } })).data?.data
+        : undefined;
+      return { instructor, profile };
+    })(),
+  ]);
+
+  return {
+    course: course?.data?.data,
+    lessons: course ? (lessons?.data?.data?.content ?? []) : [],
+    pCourses: pCourses?.data?.data ?? [],
+    program: program?.data?.data,
+    instructor: instructorWithProfile.instructor,
+    instructorProfile: instructorWithProfile.profile,
+  };
+}
 
 export const useClassDetails = (classId?: string) => {
   const {
@@ -66,16 +107,16 @@ export const useClassDetails = (classId?: string) => {
   });
   const classDefinition = classDefinitionData?.data?.class_definition;
 
-  //  Fetch class schedule
+  // Schedule and enrollments only need the class id — fetched in parallel
+  // with the definition.
   const { data: classScheduleData, isLoading: isLoadingSchedule } = useQuery({
     ...getClassScheduleOptions({
       path: { uuid: classId as string },
-      query: { pageable: { size: 1000 } },
+      query: { pageable: { size: 200 } },
     }),
     enabled: !!classId,
   });
 
-  //  Fetch class enrollment
   const { data: classEnrollments, isLoading: isLoadingEnrollments } = useQuery({
     ...getEnrollmentsForClassOptions({
       path: { uuid: classId as string },
@@ -85,76 +126,32 @@ export const useClassDetails = (classId?: string) => {
 
   const courseUuid = classDefinition?.course_uuid;
   const programUuid = classDefinition?.program_uuid;
+  const instructorUuid = classDefinition?.default_instructor_uuid;
 
-  //  Fetch course details
-  const { data: courseDetailData, isLoading: isLoadingCourse } = useQuery({
-    ...getCourseByUuidOptions({
-      path: { uuid: courseUuid as string },
-    }),
-    enabled: !!courseUuid,
+  const { data: related, isLoading: isLoadingRelated } = useQuery({
+    queryKey: ['class-details-related', { courseUuid, programUuid, instructorUuid }],
+    queryFn: () => fetchClassRelated({ courseUuid, programUuid, instructorUuid }),
+    enabled: Boolean(courseUuid || programUuid || instructorUuid),
+    staleTime: 5 * 60 * 1000,
   });
 
-  const { data: pCourses, isLoading: isPCoursesLoading } = useQuery({
-    ...getProgramCoursesOptions({
-      path: { programUuid: programUuid as string },
-    }),
-    enabled: !!programUuid,
-  });
-
-  //  Fetch program details
-  const { data: programDetailData, isLoading: isLoadingProgram } = useQuery({
-    ...getTrainingProgramByUuidOptions({
-      path: { uuid: programUuid as string },
-    }),
-    enabled: !!programUuid,
-  });
-
-  // Fetch course lessons
-  const { data: courseLessonsData, isLoading: isLoadingLessons } = useQuery({
-    ...getCourseLessonsOptions({
-      path: { courseUuid: courseUuid as string },
-      query: { pageable: {} },
-    }),
-    enabled: !!courseUuid,
-  });
-
-  // Fetch instructor details
-  const { data: instructorResp } = useQuery({
-    ...getInstructorByUuidOptions({
-      path: { uuid: classDefinition?.default_instructor_uuid as string },
-    }),
-    enabled: !!classDefinition?.default_instructor_uuid,
-  });
-
-  const { data: instructorProfile } = useQuery({
-    ...getUserByUuidOptions({
-      path: { uuid: instructorResp?.user_uuid as string },
-    }),
-    enabled: !!instructorResp?.user_uuid,
-  });
-
-
-  // 🧩 Combined loading state
   const isLoading =
     isLoadingClass ||
     isLoadingSchedule ||
     isLoadingEnrollments ||
-    isLoadingCourse ||
-    isLoadingLessons ||
-    isPCoursesLoading ||
-    isLoadingProgram;
+    (Boolean(classDefinition) && isLoadingRelated);
 
   return {
     data: {
       class: classDefinition,
       schedule: classScheduleData?.data?.content ?? [],
-      course: courseDetailData?.data,
-      pCourses: pCourses?.data || [],
-      program: programDetailData?.data,
-      lessons: courseLessonsData?.data?.content ?? [],
+      course: related?.course,
+      pCourses: related?.pCourses ?? [],
+      program: related?.program,
+      lessons: related?.lessons ?? [],
       enrollments: classEnrollments?.data ?? [],
-      instructor: instructorResp,
-      instructorProfile: instructorProfile?.data,
+      instructor: related?.instructor,
+      instructorProfile: related?.instructorProfile,
     },
     isLoading,
     isError: isClassError,

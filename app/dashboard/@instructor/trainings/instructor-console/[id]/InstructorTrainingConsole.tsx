@@ -79,7 +79,7 @@ import {
   Users,
   Video
 } from 'lucide-react';
-import moment from 'moment';
+import { dayjs } from '@/lib/date';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -106,7 +106,7 @@ type QuizSchedulePayload = CreateQuizScheduleData['body'] & {
 
 function formatDateTime(value?: string | Date | null) {
   if (!value) return 'Not scheduled';
-  return moment(value).format('ddd, MMM D · h:mm A');
+  return dayjs(value).format('ddd, MMM D · h:mm A');
 }
 
 function formatEnum(value?: string | null) {
@@ -151,13 +151,13 @@ function getScheduleState(schedule?: { start_time?: string | Date; end_time?: st
   if (!schedule?.start_time || !schedule?.end_time) return 'upcoming' as const;
 
   if (
-    moment(schedule.start_time).isBefore(moment()) &&
-    moment(schedule.end_time).isAfter(moment())
+    dayjs(schedule.start_time).isBefore(dayjs()) &&
+    dayjs(schedule.end_time).isAfter(dayjs())
   ) {
     return 'live' as const;
   }
 
-  if (moment(schedule.end_time).isBefore(moment())) {
+  if (dayjs(schedule.end_time).isBefore(dayjs())) {
     return 'completed' as const;
   }
 
@@ -399,7 +399,7 @@ export default function InstructorTrainingConsole() {
 
   const sortedSchedules = useMemo<TrainingSchedule[]>(
     () =>
-      [...schedules].sort((left, right) => moment(left.start_time).diff(moment(right.start_time))),
+      [...schedules].sort((left, right) => dayjs(left.start_time).diff(dayjs(right.start_time))),
     [schedules]
   );
 
@@ -413,8 +413,8 @@ export default function InstructorTrainingConsole() {
     const defaultSchedule = liveSchedule ?? upcomingSchedule ?? sortedSchedules[0];
     if (defaultSchedule?.uuid) {
       setActiveScheduleId(defaultSchedule.uuid);
-      setAssignmentDueAt(moment(defaultSchedule.end_time).format('YYYY-MM-DDTHH:mm'));
-      setQuizDueAt(moment(defaultSchedule.end_time).format('YYYY-MM-DDTHH:mm'));
+      setAssignmentDueAt(dayjs(defaultSchedule.end_time).format('YYYY-MM-DDTHH:mm'));
+      setQuizDueAt(dayjs(defaultSchedule.end_time).format('YYYY-MM-DDTHH:mm'));
     }
   }, [activeScheduleId, sortedSchedules]);
 
@@ -422,10 +422,10 @@ export default function InstructorTrainingConsole() {
 
   useEffect(() => {
     if (!assignmentDueAt && activeSchedule?.end_time) {
-      setAssignmentDueAt(moment(activeSchedule.end_time).format('YYYY-MM-DDTHH:mm'));
+      setAssignmentDueAt(dayjs(activeSchedule.end_time).format('YYYY-MM-DDTHH:mm'));
     }
     if (!quizDueAt && activeSchedule?.end_time) {
-      setQuizDueAt(moment(activeSchedule.end_time).format('YYYY-MM-DDTHH:mm'));
+      setQuizDueAt(dayjs(activeSchedule.end_time).format('YYYY-MM-DDTHH:mm'));
     }
   }, [activeSchedule, assignmentDueAt, quizDueAt]);
 
@@ -502,7 +502,7 @@ export default function InstructorTrainingConsole() {
     null;
 
   const progress = useMemo(() => {
-    const completed = sortedSchedules.filter(schedule => moment(schedule.end_time).isBefore(moment())).length;
+    const completed = sortedSchedules.filter(schedule => dayjs(schedule.end_time).isBefore(dayjs())).length;
     const total = sortedSchedules.length;
 
     return {
@@ -513,7 +513,7 @@ export default function InstructorTrainingConsole() {
   }, [sortedSchedules]);
 
   const nextSession = useMemo(
-    () => sortedSchedules.find(schedule => moment(schedule.start_time).isAfter(moment())) ?? null,
+    () => sortedSchedules.find(schedule => dayjs(schedule.start_time).isAfter(dayjs())) ?? null,
     [sortedSchedules]
   );
 
@@ -1105,7 +1105,7 @@ export default function InstructorTrainingConsole() {
                   </p>
                   <p className='mt-2 text-sm font-semibold'>
                     {activeSchedule
-                      ? `${moment(activeSchedule.start_time).format('h:mm A')} - ${moment(activeSchedule.end_time).format('h:mm A')}`
+                      ? `${dayjs(activeSchedule.start_time).format('h:mm A')} - ${dayjs(activeSchedule.end_time).format('h:mm A')}`
                       : 'Not scheduled'}
                   </p>
                 </div>
@@ -1123,19 +1123,19 @@ export default function InstructorTrainingConsole() {
                     const nextSchedule = sortedSchedules.find(schedule => schedule.uuid === nextId);
                     setAssignmentDueAt(
                       nextSchedule?.end_time
-                        ? moment(nextSchedule.end_time).format('YYYY-MM-DDTHH:mm')
+                        ? dayjs(nextSchedule.end_time).format('YYYY-MM-DDTHH:mm')
                         : ''
                     );
                     setQuizDueAt(
                       nextSchedule?.end_time
-                        ? moment(nextSchedule.end_time).format('YYYY-MM-DDTHH:mm')
+                        ? dayjs(nextSchedule.end_time).format('YYYY-MM-DDTHH:mm')
                         : ''
                     );
                   }}
                 >
                   {sortedSchedules.map(schedule => (
                     <option key={schedule.uuid} value={schedule.uuid}>
-                      {moment(schedule.start_time).format('ddd, MMM D · h:mm A')} ·{' '}
+                      {dayjs(schedule.start_time).format('ddd, MMM D · h:mm A')} ·{' '}
                       {formatEnum(getScheduleState(schedule))}
                     </option>
                   ))}

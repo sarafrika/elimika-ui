@@ -12,7 +12,7 @@ import LocationInput from '@/components/locationInput';
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { ProfileViewField, ProfileViewGrid } from '@/components/profile/profile-view-field';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';

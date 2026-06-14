@@ -1,5 +1,7 @@
 'use client';
 
+import { WatchedText } from '@/components/form/watched-value';
+import { useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -20,7 +22,6 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { asRecord, getFieldErrorMessage } from '@/lib/error-utils';
-import { queryClient } from '@/lib/query-client';
 import { type ApiResponse, createTrainingBranch, updateTrainingBranch } from '@/services/client';
 import { zTrainingBranch } from '@/services/client/zod.gen';
 import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
@@ -51,6 +52,7 @@ type BranchType = z.infer<typeof branchSchema>;
 type BranchesFormValues = z.infer<typeof branchesSchema>;
 
 export default function ManageBranch() {
+  const queryClient = useQueryClient();
   useOrganisationAccountBreadcrumb('branches', 'Branches', '/dashboard/account/branches');
 
   const userProfile = useUserProfile();
@@ -204,7 +206,7 @@ export default function ManageBranch() {
                   <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
                     <div>
                       <h3 className='text-lg font-semibold'>
-                        {form.watch(`branches.${index}.branch_name`) || `Branch ${index + 1}`}
+                        <WatchedText control={form.control} name={`branches.${index}.branch_name`} fallback={`Branch ${index + 1}`} />
                       </h3>
                       <p className='text-muted-foreground text-sm'>
                         Outline where this branch is located and who to contact.

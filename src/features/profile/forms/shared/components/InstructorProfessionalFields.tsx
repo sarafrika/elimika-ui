@@ -1,5 +1,5 @@
 import type { UseFormReturn } from 'react-hook-form';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import {
   FormControl,
   FormDescription,
