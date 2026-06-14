@@ -481,6 +481,12 @@ import type {
   DecideOnProgramTrainingApplicationData,
   DecideOnProgramTrainingApplicationResponses,
   DecideOnProgramTrainingApplicationErrors,
+  GetProgramReviewsData,
+  GetProgramReviewsResponses,
+  GetProgramReviewsErrors,
+  SubmitProgramReviewData,
+  SubmitProgramReviewResponses,
+  SubmitProgramReviewErrors,
   GetProgramRequirementsData,
   GetProgramRequirementsResponses,
   GetProgramRequirementsErrors,
@@ -511,6 +517,15 @@ import type {
   AssignUserToBranchData,
   AssignUserToBranchResponses,
   AssignUserToBranchErrors,
+  ListNotificationsData,
+  ListNotificationsResponses,
+  ListNotificationsErrors,
+  ApplyBulkActionData,
+  ApplyBulkActionResponses,
+  ApplyBulkActionErrors,
+  ApplyActionData,
+  ApplyActionResponses,
+  ApplyActionErrors,
   GetAllInstructorsData,
   GetAllInstructorsResponses,
   GetAllInstructorsErrors,
@@ -778,6 +793,15 @@ import type {
   CreateClassDefinitionData,
   CreateClassDefinitionResponses,
   CreateClassDefinitionErrors,
+  UploadClassThumbnailData,
+  UploadClassThumbnailResponses,
+  UploadClassThumbnailErrors,
+  AddSessionTemplateData,
+  AddSessionTemplateResponses,
+  AddSessionTemplateErrors,
+  UploadClassPromotionalVideoData,
+  UploadClassPromotionalVideoResponses,
+  UploadClassPromotionalVideoErrors,
   GetQuizSchedulesData,
   GetQuizSchedulesResponses,
   GetQuizSchedulesErrors,
@@ -868,9 +892,9 @@ import type {
   CreateAssignmentData,
   CreateAssignmentResponses,
   CreateAssignmentErrors,
-  SubmitAssignmentData,
-  SubmitAssignmentResponses,
-  SubmitAssignmentErrors,
+  SubmitAssignmentQueryData,
+  SubmitAssignmentQueryResponses,
+  SubmitAssignmentQueryErrors,
   ReturnSubmissionData,
   ReturnSubmissionResponses,
   ReturnSubmissionErrors,
@@ -925,6 +949,9 @@ import type {
   ModerateCourseData,
   ModerateCourseResponses,
   ModerateCourseErrors,
+  RescheduleScheduledInstanceData,
+  RescheduleScheduledInstanceResponses,
+  RescheduleScheduledInstanceErrors,
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusResponses,
   UpdateScheduledInstanceStatusErrors,
@@ -1081,6 +1108,9 @@ import type {
   SearchAttemptsData,
   SearchAttemptsResponses,
   SearchAttemptsErrors,
+  GetProgramRatingSummaryData,
+  GetProgramRatingSummaryResponses,
+  GetProgramRatingSummaryErrors,
   GetProgramEnrollmentsData,
   GetProgramEnrollmentsResponses,
   GetProgramEnrollmentsErrors,
@@ -1141,6 +1171,9 @@ import type {
   Search2Data,
   Search2Responses,
   Search2Errors,
+  GetCountsData,
+  GetCountsResponses,
+  GetCountsErrors,
   GetInstructorRatingSummaryData,
   GetInstructorRatingSummaryResponses,
   GetInstructorRatingSummaryErrors,
@@ -1342,6 +1375,9 @@ import type {
   GetClassDefinitionsForOrganisationData,
   GetClassDefinitionsForOrganisationResponses,
   GetClassDefinitionsForOrganisationErrors,
+  GetClassMediaData,
+  GetClassMediaResponses,
+  GetClassMediaErrors,
   ListMyApplicationsData,
   ListMyApplicationsResponses,
   ListMyApplicationsErrors,
@@ -1604,6 +1640,8 @@ import {
   submitProgramTrainingApplicationResponseTransformer,
   getProgramTrainingApplicationResponseTransformer,
   decideOnProgramTrainingApplicationResponseTransformer,
+  getProgramReviewsResponseTransformer,
+  submitProgramReviewResponseTransformer,
   getProgramRequirementsResponseTransformer,
   addProgramRequirementResponseTransformer,
   getProgramCoursesResponseTransformer,
@@ -1612,6 +1650,8 @@ import {
   createOrganisationResponseTransformer,
   getTrainingBranchesByOrganisationResponseTransformer,
   createTrainingBranch1ResponseTransformer,
+  listNotificationsResponseTransformer,
+  applyActionResponseTransformer,
   getAllInstructorsResponseTransformer,
   createInstructorResponseTransformer,
   getInstructorSkillsResponseTransformer,
@@ -1697,6 +1737,9 @@ import {
   completeCartResponseTransformer,
   getAllClassDefinitionsResponseTransformer,
   createClassDefinitionResponseTransformer,
+  uploadClassThumbnailResponseTransformer,
+  addSessionTemplateResponseTransformer,
+  uploadClassPromotionalVideoResponseTransformer,
   getQuizSchedulesResponseTransformer,
   createQuizScheduleResponseTransformer,
   getAssignmentSchedulesResponseTransformer,
@@ -1726,7 +1769,7 @@ import {
   acceptBookingResponseTransformer,
   getAllAssignmentsResponseTransformer,
   createAssignmentResponseTransformer,
-  submitAssignmentResponseTransformer,
+  submitAssignmentQueryResponseTransformer,
   returnSubmissionResponseTransformer,
   gradeSubmissionResponseTransformer,
   uploadSubmissionAttachmentResponseTransformer,
@@ -1740,6 +1783,7 @@ import {
   verifyInstructorResponseTransformer,
   unverifyInstructorResponseTransformer,
   moderateCourseResponseTransformer,
+  rescheduleScheduledInstanceResponseTransformer,
   getCartResponseTransformer,
   updateCartResponseTransformer,
   updateQuizScheduleResponseTransformer,
@@ -1776,6 +1820,7 @@ import {
   searchQuizzesResponseTransformer,
   searchQuestionsResponseTransformer,
   searchAttemptsResponseTransformer,
+  getProgramRatingSummaryResponseTransformer,
   getProgramEnrollmentsResponseTransformer,
   getRequiredCoursesResponseTransformer,
   getOptionalCoursesResponseTransformer,
@@ -1795,6 +1840,7 @@ import {
   getBranchUsersResponseTransformer,
   getBranchUsersByDomainResponseTransformer,
   search2ResponseTransformer,
+  getCountsResponseTransformer,
   getInstructorRatingSummaryResponseTransformer,
   getInstructorBookingsResponseTransformer,
   getInstructorCalendarResponseTransformer,
@@ -6558,6 +6604,68 @@ export const decideOnProgramTrainingApplication = <ThrowOnError extends boolean 
 };
 
 /**
+ * Get reviews for a program
+ * Returns paginated public reviews for the specified training program.
+ */
+export const getProgramReviews = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgramReviewsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetProgramReviewsResponses,
+    GetProgramReviewsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getProgramReviewsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/reviews',
+    ...options,
+  });
+};
+
+/**
+ * Submit or update a program review
+ * Allows students with an active or completed program enrollment to leave a review.
+ * Each student can leave one review per program and may update it anytime.
+ *
+ */
+export const submitProgramReview = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitProgramReviewData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SubmitProgramReviewResponses,
+    SubmitProgramReviewErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitProgramReviewResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/reviews',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get program requirements
  * Retrieves all requirements for a specific program.
  */
@@ -6843,6 +6951,86 @@ export const assignUserToBranch = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/users/{userUuid}',
+    ...options,
+  });
+};
+
+/**
+ * List current user's notifications
+ */
+export const listNotifications = <ThrowOnError extends boolean = false>(
+  options: Options<ListNotificationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListNotificationsResponses,
+    ListNotificationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listNotificationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/notifications',
+    ...options,
+  });
+};
+
+/**
+ * Apply a bulk notification action
+ */
+export const applyBulkAction = <ThrowOnError extends boolean = false>(
+  options: Options<ApplyBulkActionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ApplyBulkActionResponses,
+    ApplyBulkActionErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/notifications',
+    ...options,
+  });
+};
+
+/**
+ * Apply an action to one notification
+ */
+export const applyAction = <ThrowOnError extends boolean = false>(
+  options: Options<ApplyActionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ApplyActionResponses,
+    ApplyActionErrors,
+    ThrowOnError
+  >({
+    responseTransformer: applyActionResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/notifications/{uuid}',
     ...options,
   });
 };
@@ -9669,6 +9857,101 @@ export const createClassDefinition = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Upload class thumbnail
+ */
+export const uploadClassThumbnail = <ThrowOnError extends boolean = false>(
+  options: Options<UploadClassThumbnailData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadClassThumbnailResponses,
+    UploadClassThumbnailErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadClassThumbnailResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/thumbnail',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Add a session template to an existing class definition
+ */
+export const addSessionTemplate = <ThrowOnError extends boolean = false>(
+  options: Options<AddSessionTemplateData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddSessionTemplateResponses,
+    AddSessionTemplateErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addSessionTemplateResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/session-templates',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Upload class promotional video
+ */
+export const uploadClassPromotionalVideo = <ThrowOnError extends boolean = false>(
+  options: Options<UploadClassPromotionalVideoData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadClassPromotionalVideoResponses,
+    UploadClassPromotionalVideoErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadClassPromotionalVideoResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/promotional-video',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * List quiz schedules for a class definition
  */
 export const getQuizSchedules = <ThrowOnError extends boolean = false>(
@@ -10545,15 +10828,15 @@ export const createAssignment = <ThrowOnError extends boolean = false>(
  * Submit assignment
  * Creates a new submission for an assignment by a student.
  */
-export const submitAssignment = <ThrowOnError extends boolean = false>(
-  options: Options<SubmitAssignmentData, ThrowOnError>
+export const submitAssignmentQuery = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitAssignmentQueryData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).post<
-    SubmitAssignmentResponses,
-    SubmitAssignmentErrors,
+    SubmitAssignmentQueryResponses,
+    SubmitAssignmentQueryErrors,
     ThrowOnError
   >({
-    responseTransformer: submitAssignmentResponseTransformer,
+    responseTransformer: submitAssignmentQueryResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -10566,6 +10849,10 @@ export const submitAssignment = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/assignments/{assignmentUuid}/submit',
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -11081,6 +11368,37 @@ export const moderateCourse = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/admin/courses/{uuid}/moderate',
     ...options,
+  });
+};
+
+/**
+ * Reschedule a scheduled class instance
+ */
+export const rescheduleScheduledInstance = <ThrowOnError extends boolean = false>(
+  options: Options<RescheduleScheduledInstanceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    RescheduleScheduledInstanceResponses,
+    RescheduleScheduledInstanceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: rescheduleScheduledInstanceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}/time',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -12526,6 +12844,34 @@ export const searchAttempts = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get program rating summary
+ * Returns the average rating and total review count for a training program.
+ */
+export const getProgramRatingSummary = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgramRatingSummaryData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetProgramRatingSummaryResponses,
+    GetProgramRatingSummaryErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getProgramRatingSummaryResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/reviews/summary',
+    ...options,
+  });
+};
+
+/**
  * Get program enrollments
  * Retrieves enrollment data for a specific program with completion analytics.
  */
@@ -13132,6 +13478,29 @@ export const search2 = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/search',
+    ...options,
+  });
+};
+
+/**
+ * Get current user's notification counts
+ */
+export const getCounts = <ThrowOnError extends boolean = false>(
+  options?: Options<GetCountsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<GetCountsResponses, GetCountsErrors, ThrowOnError>({
+    responseTransformer: getCountsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/notifications/counts',
     ...options,
   });
 };
@@ -15205,6 +15574,32 @@ export const getClassDefinitionsForOrganisation = <ThrowOnError extends boolean 
       },
     ],
     url: '/api/v1/classes/organisation/{organisationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get uploaded class media
+ */
+export const getClassMedia = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassMediaData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassMediaResponses,
+    GetClassMediaErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/media/{filePath}',
     ...options,
   });
 };

@@ -1,609 +1,144 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  AlignJustify,
-  Award,
-  BookOpen,
-  ChevronRight,
-  ClipboardList,
-  Clock,
-  Eye,
-  Globe,
-  GraduationCap,
-  Heart,
-  LayoutGrid,
-  MoreVertical,
-  Share,
-  Star,
-  Users,
-  Wrench
-} from 'lucide-react';
+import { BookOpen, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
-import { ClassAccent, ClassCategory, ClassMeta, ClassTag, FilterTab, LearningHubClass } from './useStudentLearningHubData';
+import type { LearningHubClass } from './useStudentLearningHubData';
 
-const FILTER_TABS: FilterTab[] = [
-  { id: 'All Courses', label: 'All Courses' },
-  { id: 'Special Needs', label: 'Special Needs' },
-  { id: 'Near Me', label: 'Near Me' },
-  { id: 'Upcoming', label: 'Upcoming' },
-  { id: 'Organisation', label: 'Organisation' },
-  { id: 'Individual', label: 'Individual' },
-  { id: 'Online', label: 'Online' },
-  { id: 'Private Classes', label: 'Private Classes' },
-  { id: 'Group Classes', label: 'Group Classes' },
-  { id: 'Workshops', label: 'Workshops' },
-  { id: 'Camps', label: 'Camps' },
-  { id: 'Free', label: 'Free' },
-  { id: 'Discounted', label: 'Discounted' },
-];
-
-const INITIAL_VISIBLE = 6;
-
-const buttonAccentClasses: Record<ClassAccent, string> = {
-  blue: 'bg-primary text-primary-foreground',
-  green: 'bg-primary text-primary-foreground',
-  slate: 'border border-border bg-background text-foreground',
+const buttonAccentClasses = {
+  blue: 'bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_88%,black_8%),color-mix(in_srgb,var(--primary)_74%,black_18%))] text-white',
+  green:
+    'bg-[linear-gradient(180deg,color-mix(in_srgb,var(--success)_76%,black_6%),color-mix(in_srgb,var(--success)_68%,black_18%))] text-white',
+  slate: 'border border-border/70 bg-background text-foreground',
 };
 
-const tagColorClasses: Record<ClassTag['color'], string> = {
-  blue: 'bg-muted text-foreground border-border',
-  green: 'bg-muted text-foreground border-border',
-  pink: 'bg-muted text-foreground border-border',
-  purple: 'bg-muted text-foreground border-border',
-  orange: 'bg-muted text-foreground border-border',
-  cyan: 'bg-muted text-foreground border-border',
-};
-
-function FilterTabs({
-  tabs,
-  active,
-  onChange,
-}: {
-  tabs: FilterTab[];
-  active: ClassCategory;
-  onChange: (id: ClassCategory) => void;
-}) {
-  return (
-    <div className="relative">
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-background to-transparent z-10" />
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => onChange(tab.id)}
-            className={`
-              inline-flex shrink-0 items-center rounded-sm border px-3.5 py-1.5
-              text-[0.78rem] font-medium transition-all duration-150 focus-visible:outline-none
-              focus-visible:ring-2 focus-visible:ring-primary/50
-              ${active === tab.id
-                ? 'border-foreground bg-foreground text-background shadow-sm'
-                : 'border-border/70 bg-background text-foreground/80 hover:border-foreground/30 hover:bg-muted/60'
-              }
-            `}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function StarRating({
-  rating,
-  count,
-}: {
-  rating: number;
-  count: number;
-}) {
-  return (
-    <div className="flex items-center gap-1">
-      <span className="text-[0.78rem] font-semibold text-foreground">
-        {rating}
-      </span>
-
-      <div className="flex items-center gap-0.5">
-        {Array.from({ length: 5 }).map((_, i) => {
-          const filled = i < Math.round(rating);
-
-          return (
-            <Star
-              key={i}
-              className={`size-3 ${filled
-                ? 'fill-primary text-primary'
-                : 'fill-muted text-muted-foreground'
-                }`}
-            />
-          );
-        })}
-      </div>
-
-      <span className="text-[0.72rem] text-muted-foreground">
-        ({count.toLocaleString()} reviews)
-      </span>
-    </div>
-  );
-}
-
-function TagRow({ tags }: { tags: ClassTag[] }) {
-  return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {tags.map((tag) => (
-        <span
-          key={tag.label}
-          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[0.68rem] font-medium ${tagColorClasses[tag.color]}`}
-        >
-          {tag.label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function MetaStrip({ meta }: { meta: ClassMeta }) {
-  const items = [
-    { icon: BookOpen, label: `${meta.lessons}+`, sub: 'Lessons' },
-    { icon: ClipboardList, label: String(meta.assessments), sub: 'Assessments' },
-    { icon: Wrench, label: meta.projects, sub: 'Projects' },
-    { icon: Award, label: meta.certificate ? 'Certificate' : 'No Cert', sub: 'of Completion' },
-    { icon: Globe, label: meta.language, sub: 'Language' },
-  ];
-  return (
-    <div className="flex flex-wrap items-start gap-x-2 gap-y-2 border-t border-border/60 pt-3">
-      {items.map(({ icon: Icon, label, sub }) => (
-        <div key={sub} className="flex items-center gap-1 min-w-0">
-          <Icon className="size-3.5 shrink-0 text-primary/70" />
-          <div className="leading-tight">
-            <p className="text-[0.7rem] font-semibold text-foreground">{label}</p>
-            <p className="text-[0.65rem] text-muted-foreground">{sub}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function CourseInfoRow({
-  instructorName,
-  instructorAvatarUrl,
-  duration,
-  enrolledCount,
-}: Pick<
-  LearningHubClass,
-  'instructorName' | 'instructorAvatarUrl' | 'duration' | 'enrolledCount'
->) {
-  return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border pt-2.5">
-      <div className="flex min-w-0 items-center gap-1.5">
-        <div className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
-          {instructorAvatarUrl ? (
-            <img
-              src={instructorAvatarUrl}
-              alt={instructorName}
-              className="size-full object-cover"
-            />
-          ) : (
-            <GraduationCap className="size-3 text-muted-foreground" />
-          )}
-        </div>
-
-        <div className="min-w-0 leading-tight">
-          <p className="text-[0.6rem] text-muted-foreground">
-            Instructor
-          </p>
-          <p className="truncate text-[0.7rem] font-medium text-foreground">
-            {instructorName}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex min-w-0 items-center gap-1">
-        <Clock className="size-3 shrink-0 text-muted-foreground" />
-        <div className="leading-tight">
-          <p className="text-[0.6rem] text-muted-foreground">
-            Duration
-          </p>
-          <p className="text-[0.7rem] font-medium text-foreground">
-            {duration}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex min-w-0 items-center gap-1">
-        <Users className="size-3 shrink-0 text-muted-foreground" />
-        <div className="leading-tight">
-          <p className="text-[0.6rem] text-muted-foreground">
-            Students
-          </p>
-          <p className="text-[0.7rem] font-medium text-foreground">
-            {enrolledCount}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-import Image from 'next/image';
-import { LinkShareCard } from '../../../../../components/shared/link-share-card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../components/ui/dialog';
-import { buildSocialShareUrl, openShareWindow } from '../../../../../lib/share';
-import { socialShareActions } from '../../../@instructor/classes/overview/[id]/page';
-
-
-function ClassBanner({
-  bannerUrl,
-  bannerAlt,
-  title,
-}: Pick<LearningHubClass, 'bannerUrl' | 'bannerAlt' | 'title'>) {
-  return (
-    <div className="relative min-h-[200px] overflow-hidden rounded-[8px] border border-border bg-muted sm:h-[140px]">
-      {bannerUrl ? (
-        <Image
-          src={toAuthenticatedMediaUrl(bannerUrl) || bannerUrl}
-          alt='Course banner'
-          className='h-full w-full object-cover'
-          priority
-          width={400}
-          height={200}
-          unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(bannerUrl))}
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-background">
-          <BookOpen className="size-10 text-muted-foreground/40" />
-        </div>
-      )}
-
-      <Button
-        type="button"
-        aria-label="Preview class"
-        className="absolute left-2 top-2 h-6 rounded-full bg-foreground/80 px-1.5 text-[0.58rem] font-medium text-background backdrop-blur-sm transition-colors hover:bg-foreground"
-      >
-        <Eye className="size-2" />
-        Preview
-      </Button>
-
-      <Button
-        type="button"
-        aria-label="More options"
-        className="absolute right-2 top-2 size-6 rounded-full bg-foreground/70 p-0 text-background backdrop-blur-sm transition-colors hover:bg-foreground"
-      >
-        <MoreVertical className="size-2.5" />
-      </Button>
-    </div>
-  );
-}
-
-function ClassCard({ item }: { item: LearningHubClass }) {
-  const [shareOpen, setShareOpen] = useState(false);
-  const originUrl = typeof window !== 'undefined' ? window.location.origin : '';
-
-  const registrationLink = useMemo(() => {
-    if (!originUrl) return '';
-
-    if (item?.courseUuid) {
-      return `${originUrl}/dashboard/workspace/student/courses/available-classes/${item.courseUuid}/enroll?id=${item.id}`;
-    }
-
-    // if (program?.uuid) {
-    //   return `${siteOrigin}/dashboard/workspace/student/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
-    // }
-
-    return '';
-  }, [item.id, item.courseUuid, originUrl]);
-
-
-  return (
-    <>
-      <article className="w-[320px] sm:min-w-[400px] sm:max-w-[410px] flex flex-col gap-2.5 rounded-[12px] border border-border/70 bg-card p-2 shadow-sm transition-shadow hover:shadow-md">
-        <ClassBanner bannerUrl={item.bannerUrl} bannerAlt={item.bannerUrl} title={item.title} />
-
-        <div className="space-y-1.5">
-          <h3 className="text-[1rem] font-semibold text-foreground leading-snug line-clamp-2">
-            {item.title}
-          </h3>
-          <TagRow tags={item.tags} />
-        </div>
-
-
-        <div className="flex items-center justify-between">
-          <StarRating rating={item.rating} count={item.reviewCount} />
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-8 gap-1 bg-muted/50 hover:bg-muted"
-              onClick={() => setShareOpen(true)}
-            >
-              <Share className="h-3 w-3" />
-              <span className="text-xs">Share</span>
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-8 gap-1 bg-muted/50 hover:bg-destructive-50 hover:text-destructive dark:hover:bg-destructive-950/20"
-            >
-              <Heart className="h-3 w-3" />
-              <span className="text-xs">Wishlist</span>
-            </Button>
-          </div>
-        </div>
-
-        <p className="text-[0.74rem] text-muted-foreground leading-relaxed line-clamp-3">
-          {item.description}
-        </p>
-
-        <CourseInfoRow
-          instructorName={item.instructorName}
-          instructorAvatarUrl={item.instructorAvatarUrl}
-          duration={item.duration}
-          enrolledCount={item.enrolledCount}
-        />
-
-        <MetaStrip meta={item.meta} />
-
-        <div className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-          <span className="text-[0.85rem] font-semibold text-foreground">
-            From Ksh {item.price}
-          </span>
-
-          <Link
-            prefetch
-            href={item.href}
-            className={`inline-flex items-center justify-center gap-1.5 rounded-[7px] px-3.5 py-1.5 text-[0.78rem] font-medium transition hover:opacity-90 ${buttonAccentClasses[item.accent]}`}
-          >
-            {item.ctaLabel}
-            <ChevronRight className="size-3.5" />
-          </Link>
-
-          {/* <div className="flex justify-between items-center gap-2">
-          <Link
-            prefetch
-            href={item.href}
-            className={`inline-flex items-center justify-center gap-1.5 rounded-[7px] px-3.5 py-1.5 text-[0.78rem] font-medium transition hover:opacity-90 ${buttonAccentClasses[item.accent]}`}
-          >
-            {item.ctaLabel}
-            <ChevronRight className="size-3.5" />
-          </Link>
-          <Link
-            prefetch
-            href={`${item.href}/instructor`}
-            className="inline-flex w-full text-center items-center gap-1.5 rounded-[7px] border border-border/70 bg-background px-3.5 py-1.5 text-[0.78rem] font-medium text-foreground transition hover:bg-muted"
-          >
-            <Search className="size-3" />
-            Search Instructor
-          </Link>
-        </div> */}
-        </div>
-      </article>
-
-      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Share {item.title}</DialogTitle>
-          </DialogHeader>
-
-          <DialogDescription></DialogDescription>
-
-          <LinkShareCard
-            description="Copy or share the registration link for enrollment."
-            title="Registration Link"
-            url={registrationLink}
-            footer={
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium">Share via</h4>
-
-                <div className="flex flex-wrap gap-2">
-                  {socialShareActions.map(
-                    ({ icon: Icon, label, platform }) => (
-                      <Button
-                        key={label}
-                        aria-label={`Share registration link on ${label}`}
-                        className="gap-2"
-                        disabled={!registrationLink}
-                        onClick={() =>
-                          openShareWindow(
-                            buildSocialShareUrl(platform, {
-                              title: item.title,
-                              url: registrationLink,
-                              description: `Check out this class: ${item.title}`,
-                            })
-                          )
-                        }
-                        size="sm"
-                        variant="outline"
-                      >
-                        <Icon className="h-4 w-4" />
-                        {label}
-                      </Button>
-                    )
-                  )}
-                </div>
-              </div>
-            }
-          />
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
-
-function ClassCardSkeleton() {
-  return (
-    <article className="w-[320px] sm:min-w-[400px] sm:max-w-[410px] flex flex-col gap-2.5 rounded-[12px] border border-border/70 bg-card p-3">
-      <Skeleton className="h-[130px] rounded-[8px]" />
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-4/5" />
-        <Skeleton className="h-3 w-3/5" />
-      </div>
-      <div className="flex gap-1.5">
-        <Skeleton className="h-5 w-20 rounded-full" />
-        <Skeleton className="h-5 w-16 rounded-full" />
-        <Skeleton className="h-5 w-14 rounded-full" />
-      </div>
-      <Skeleton className="h-3 w-full" />
-      <Skeleton className="h-3 w-5/6" />
-      <div className="flex gap-3 border-t border-border/40 pt-2.5">
-        <Skeleton className="h-8 w-24 rounded" />
-        <Skeleton className="h-8 w-24 rounded" />
-      </div>
-      <div className="flex gap-3 border-t border-border/40 pt-2.5">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-7 w-10 rounded" />
-        ))}
-      </div>
-      <div className="flex items-center justify-between gap-2 pt-1">
-        <Skeleton className="h-5 w-24" />
-        <div className="flex gap-2">
-          <Skeleton className="h-8 w-24 rounded-[7px]" />
-          <Skeleton className="h-8 w-32 rounded-[7px]" />
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="col-span-full flex flex-col items-center justify-center rounded-[12px] border border-dashed border-border/80 bg-muted/30 px-6 py-12 text-center">
-      <BookOpen className="mb-3 size-10 text-muted-foreground/50" />
-      <p className="text-sm font-medium text-foreground">No classes found</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Try a different filter or check back later.
-      </p>
-    </div>
-  );
-}
-
-type Props = {
-  classes?: LearningHubClass[];
+type LearningHubContinueLearningProps = {
+  classes: LearningHubClass[];
   loading?: boolean;
 };
+
+const INITIAL_VISIBLE_CLASSES = 6;
 
 export function LearningHubContinueLearning({
   classes,
   loading = false,
-}: Props) {
-  const [activeFilter, setActiveFilter] =
-    useState<ClassCategory>('All Courses');
+}: LearningHubContinueLearningProps) {
+
   const [showAll, setShowAll] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
-  const filteredClasses = useMemo(() => {
-    if (activeFilter === 'All Courses') return classes;
-
-    return classes?.filter((course) => {
-      if (activeFilter === 'Free') return course.isFree;
-      if (activeFilter === 'Discounted') return course.isDiscounted;
-
-      return course.category === activeFilter;
-    });
-  }, [classes, activeFilter]);
-
   const visibleClasses = useMemo(
-    () =>
-      showAll
-        ? filteredClasses
-        : filteredClasses?.slice(0, INITIAL_VISIBLE),
-    [filteredClasses, showAll]
+    () => (showAll ? classes : classes.slice(0, INITIAL_VISIBLE_CLASSES)),
+    [classes, showAll]
   );
-
-  const hiddenCount = Math.max(
-    0,
-    filteredClasses?.length - INITIAL_VISIBLE
-  );
+  const hiddenClassCount = Math.max(0, classes.length - INITIAL_VISIBLE_CLASSES);
 
   return (
-    <div className="flex flex-col gap-4 px-2">
-      <FilterTabs
-        tabs={FILTER_TABS}
-        active={activeFilter}
-        onChange={(id) => {
-          setActiveFilter(id);
-          setShowAll(false);
-        }}
-      />
+    <Card className='border-border/70 bg-background rounded-[18px] border p-3.5 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
+      <div className='flex items-center justify-between gap-3'>
+        <h2 className='text-foreground text-[1.08rem] font-semibold'>Continue Learning</h2>
+        <Link
+          prefetch
+          href='/dashboard/learning-hub/classes' className='inline-flex items-center gap-1 text-[0.82rem] font-medium text-primary transition hover:text-primary/80'
+        >
+          View all classes
+          <ChevronRight className='size-4' />
+        </Link>
+      </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[0.8rem] text-muted-foreground">
-          {loading ? (
-            <Skeleton className="inline-block h-4 w-32" />
-          ) : (
-            <span>
-              <span className="font-semibold text-foreground">
-                {filteredClasses?.length.toLocaleString()}
-              </span>{' '}
-              {filteredClasses?.length === 1 ? 'Class' : 'Classes'} Found
-            </span>
-          )}
-        </p>
+      <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-3'>
+        {loading
+          ? Array.from({ length: INITIAL_VISIBLE_CLASSES }).map((_, index) => (
+            <article
+              key={`learning-course-skeleton-${index}`}
+              className='space-y-2 rounded-[10px]'
+            >
+              <Skeleton className='h-[86px] rounded-[8px]' />
+              <div className='space-y-2'>
+                <Skeleton className='h-4 w-4/5' />
+                <Skeleton className='h-3 w-20' />
+              </div>
+              <div className='flex items-center gap-1.5'>
+                {Array.from({ length: 4 }).map((__, dotIndex) => (
+                  <Skeleton key={dotIndex} className='size-2 rounded-full' />
+                ))}
+              </div>
+              <Skeleton className='h-9 w-full rounded-[8px]' />
+            </article>
+          ))
+          : visibleClasses.map(classItem => (
+            <article key={classItem?.id} className='space-y-2 rounded-md'>
+              <div className='border-border/60 h-[150px] overflow-hidden rounded-md border'>
+                {classItem?.bannerUrl ? (
+                  <Image
+                    src={toAuthenticatedMediaUrl(classItem?.bannerUrl) || classItem?.bannerUrl}
+                    alt='Course banner'
+                    className='h-full w-full object-cover'
+                    priority
+                    width={400}
+                    height={200}
+                    unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(classItem?.bannerUrl))}
+                  />
+                ) : (
+                  <div className='text-muted-foreground flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,white),white)] text-xs'>
+                    <BookOpen size={32} />
+                  </div>
+                )}
+              </div>
+              <div>
+                <h3 className='text-foreground truncate text-[0.95rem] font-semibold'>
+                  {classItem.title}
+                </h3>
+                <p className='text-muted-foreground mt-1 truncate text-[0.72rem]'>
+                  {classItem.courseName}
+                </p>
+              </div>
+              <div className='text-muted-foreground flex items-center justify-between gap-2 text-[0.7rem]'>
+                <span>{classItem.statusLabel}</span>
+                <span className='truncate'>{classItem.scheduleLabel}</span>
+              </div>
+              <div className='flex items-center gap-1.5'>
+                {[0, 1, 2, 3].map(index => (
+                  <span
+                    key={`${classItem.id}-${index}`}
+                    className={`size-2 rounded-full ${index < Math.max(1, Math.round(classItem.progress / 25))
+                      ? 'bg-[color:color-mix(in_srgb,var(--primary)_52%,white)]'
+                      : 'bg-muted'
+                      }`}
+                  />
+                ))}
+              </div>
+              <Link
+                prefetch
+                // href={classItem.href}
+                href={`/dashboard/learning-hub/classes/${classItem?.id}`}
+                className={`inline-flex w-full items-center justify-center rounded-[8px] px-3 py-2 text-[0.78rem] font-medium transition hover:opacity-95 ${buttonAccentClasses[classItem.accent]}`}
+              >
+                {classItem.ctaLabel}
+              </Link>
+            </article>
+          ))}
+      </div>
 
-        <div className="flex items-center gap-1 rounded-lg border border-border bg-background p-0.5">
-          <button
-            type="button"
-            aria-label="Grid view"
-            onClick={() => setViewMode('grid')}
-            className={`rounded-md p-1.5 transition-colors ${viewMode === 'grid'
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground'
-              }`}
-          >
-            <LayoutGrid className="size-3.5" />
-          </button>
-
-          <button
-            type="button"
-            aria-label="List view"
-            onClick={() => setViewMode('list')}
-            className={`rounded-md p-1.5 transition-colors ${viewMode === 'list'
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground'
-              }`}
-          >
-            <AlignJustify className="size-3.5" />
-          </button>
+      {!loading && classes.length === 0 && (
+        <div className='border-border/80 bg-muted/30 mt-4 rounded-[10px] border border-dashed p-5 text-center'>
+          <p className='text-foreground text-sm font-medium'>No enrolled classes yet</p>
+          <p className='text-muted-foreground mt-1 text-xs'>
+            Enrolled classes will appear here when they are added to your schedule.
+          </p>
         </div>
-      </div>
+      )}
 
-      <div
-        className={`grid gap-4 ${viewMode === 'grid'
-          ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'
-          : 'grid-cols-1'
-          }`}
-      >
-        {loading ? (
-          Array.from({ length: INITIAL_VISIBLE }).map((_, index) => (
-            <ClassCardSkeleton key={`skel-${index}`} />
-          ))
-        ) : visibleClasses?.length > 0 ? (
-          visibleClasses?.map((item) => (
-            <ClassCard key={item.id} item={item} />
-          ))
-        ) : (
-          <EmptyState />
-        )}
-      </div>
-
-      {!loading && hiddenCount > 0 && !showAll && (
-        <div className="flex justify-center pt-1">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAll(true)}
-            className="gap-1.5 text-[0.8rem]"
-          >
-            Show {hiddenCount} more{' '}
-            {hiddenCount === 1 ? 'class' : 'classes'}
-            <ChevronRight className="size-3.5" />
+      {!loading && hiddenClassCount > 0 && !showAll && (
+        <div className='mt-4 flex justify-center'>
+          <Button variant='outline' size='sm' onClick={() => setShowAll(true)}>
+            Show more classes
           </Button>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

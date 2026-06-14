@@ -2953,6 +2953,9 @@ export const InstructorProfessionalMembershipSchema = {
       example: 4,
       readOnly: true,
     },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
+    },
     membership_period: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted membership period showing start and end dates.',
@@ -2997,9 +3000,6 @@ export const InstructorProfessionalMembershipSchema = {
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
       readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
     },
   },
   required: ['instructor_uuid', 'organisation_name'],
@@ -6706,6 +6706,174 @@ export const CommerceCatalogueItemSchema = {
   },
 } as const;
 
+export const ClassDefinitionUpdateRequestSchema = {
+  type: 'object',
+  description:
+    'Request payload for updating class metadata. Schedule changes use dedicated schedule endpoints.',
+  properties: {
+    title: {
+      type: 'string',
+      description: '**[REQUIRED]** Title of the class definition.',
+      example: 'Introduction to Java Programming',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description: '**[OPTIONAL]** Detailed description of the class.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    thumbnail_url: {
+      type: 'string',
+      description: '**[OPTIONAL]** URL to class thumbnail image.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    promotional_video_url: {
+      type: 'string',
+      description: '**[OPTIONAL]** URL to class promotional video.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    default_instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Default instructor UUID for the class.',
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Organisation UUID that owns the class.',
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Course UUID for course-scoped classes.',
+    },
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Program UUID for program-scoped classes.',
+    },
+    training_fee: {
+      type: 'number',
+      description: '**[OPTIONAL]** Training fee for the class.',
+      minimum: 0,
+    },
+    class_visibility: {
+      $ref: '#/components/schemas/ClassVisibilityEnum',
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
+    default_start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Default start date-time for the class.',
+    },
+    default_end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Default end date-time for the class.',
+    },
+    academic_period_start_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[OPTIONAL]** Academic period start date.',
+    },
+    academic_period_end_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[OPTIONAL]** Academic period end date.',
+    },
+    registration_period_start_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[OPTIONAL]** Registration period start date.',
+    },
+    registration_period_end_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[OPTIONAL]** Registration period end date.',
+    },
+    class_reminder_minutes: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Reminder lead time in minutes.',
+      minimum: 0,
+    },
+    class_color: {
+      type: 'string',
+      description: '**[OPTIONAL]** Hex color used in calendar UI.',
+      example: '#1F6FEB',
+      pattern: '^#[0-9A-Fa-f]{6}$',
+    },
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    location_name: {
+      type: 'string',
+      description: '**[OPTIONAL]** Human-readable location name.',
+    },
+    location_latitude: {
+      type: 'number',
+      description: '**[OPTIONAL]** Location latitude.',
+    },
+    location_longitude: {
+      type: 'number',
+      description: '**[OPTIONAL]** Location longitude.',
+    },
+    meeting_link: {
+      type: 'string',
+      description: '**[OPTIONAL]** Online meeting URL.',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    max_participants: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Maximum participants.',
+      minimum: 1,
+    },
+    allow_waitlist: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Whether waitlisting is allowed.',
+    },
+    is_active: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Whether the class is active.',
+    },
+  },
+  required: [
+    'class_visibility',
+    'default_end_time',
+    'default_instructor_uuid',
+    'default_start_time',
+    'location_type',
+    'session_format',
+    'title',
+  ],
+} as const;
+
+export const ApiResponseClassDefinitionResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassDefinitionResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
 export const ClassDefinitionSchema = {
   type: 'object',
   description: 'Class definition template that defines what a class is, independent of scheduling',
@@ -6714,6 +6882,10 @@ export const ClassDefinitionSchema = {
     title: 'Introduction to Java Programming',
     description:
       'Comprehensive introduction to Java programming covering basics, OOP concepts, and practical application development.',
+    thumbnail_url:
+      '/api/v1/classes/media/class_thumbnails/cd123456-7890-abcd-ef01-234567890abc/thumbnail.jpg',
+    promotional_video_url:
+      '/api/v1/classes/media/class_promotional_videos/cd123456-7890-abcd-ef01-234567890abc/promo.mp4',
     default_instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
     organisation_uuid: 'org12345-6789-abcd-ef01-234567890abc',
     course_uuid: 'course123-4567-89ab-cdef-123456789abc',
@@ -6783,6 +6955,23 @@ export const ClassDefinitionSchema = {
       example:
         'Comprehensive introduction to Java programming covering basics, OOP concepts, and practical application development.',
       maxLength: 2000,
+      minLength: 0,
+    },
+    thumbnail_url: {
+      type: 'string',
+      description: '**[OPTIONAL]** URL to class thumbnail image for class listings and previews.',
+      example:
+        '/api/v1/classes/media/class_thumbnails/cd123456-7890-abcd-ef01-234567890abc/thumbnail.jpg',
+      maxLength: 500,
+      minLength: 0,
+    },
+    promotional_video_url: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** URL to class promotional video for marketing and preview purposes.',
+      example:
+        '/api/v1/classes/media/class_promotional_videos/cd123456-7890-abcd-ef01-234567890abc/promo.mp4',
+      maxLength: 500,
       minLength: 0,
     },
     default_instructor_uuid: {
@@ -6928,7 +7117,8 @@ export const ClassDefinitionSchema = {
     },
     session_templates: {
       type: 'array',
-      description: `**[REQUIRED]** Inline session templates with time slots and recurrence rules to schedule class instances during creation.
+      description: `**[READ-ONLY]** Persisted session templates originally used to generate scheduled class instances.
+Legacy classes created before template persistence may return an empty list.
 conflict_resolution per template:
 - FAIL: stop scheduling if any conflict; response 409 with conflicts.
 - SKIP: schedule non-conflicting occurrences; return conflicts for skipped dates.
@@ -6937,8 +7127,7 @@ conflict_resolution per template:
       items: {
         $ref: '#/components/schemas/ClassSessionTemplate',
       },
-      maxItems: 2147483647,
-      minItems: 1,
+      readOnly: true,
     },
     scheduled_session_count: {
       type: 'integer',
@@ -7007,17 +7196,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -7028,9 +7217,19 @@ conflict_resolution per template:
     'default_start_time',
     'location_type',
     'session_format',
-    'session_templates',
     'title',
   ],
+} as const;
+
+export const ClassDefinitionResponseSchema = {
+  type: 'object',
+  description: 'Response payload for class definition operations',
+  properties: {
+    class_definition: {
+      $ref: '#/components/schemas/ClassDefinition',
+      description: 'Persisted class definition',
+    },
+  },
 } as const;
 
 export const ClassRecurrenceSchema = {
@@ -7078,6 +7277,12 @@ export const ClassSessionTemplateSchema = {
   description:
     'Time slot template used during class creation to generate scheduled instances with optional recurrence',
   properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for this persisted class session template.',
+      readOnly: true,
+    },
     start_time: {
       type: 'string',
       format: 'date-time',
@@ -7099,35 +7304,6 @@ export const ClassSessionTemplateSchema = {
     },
   },
   required: ['end_time', 'start_time'],
-} as const;
-
-export const ApiResponseClassDefinitionResponseSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/ClassDefinitionResponse',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
-      type: 'object',
-    },
-  },
-} as const;
-
-export const ClassDefinitionResponseSchema = {
-  type: 'object',
-  description: 'Response payload for class definition operations',
-  properties: {
-    class_definition: {
-      $ref: '#/components/schemas/ClassDefinition',
-      description: 'Persisted class definition',
-    },
-  },
 } as const;
 
 export const ClassMarketplaceJobRequestSchema = {
@@ -7608,16 +7784,16 @@ export const CertificateSchema = {
       example: 'system',
       readOnly: true,
     },
-    is_downloadable: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
-      example: true,
-      readOnly: true,
-    },
     certificate_type: {
       type: 'string',
       description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
       example: 'Course Completion',
+      readOnly: true,
+    },
+    is_downloadable: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
+      example: true,
       readOnly: true,
     },
     grade_letter: {
@@ -8513,6 +8689,13 @@ export const ScheduledInstanceSchema = {
       example: false,
       readOnly: true,
     },
+    can_be_ended: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
+      example: false,
+      readOnly: true,
+    },
     can_be_cancelled: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
@@ -8523,13 +8706,6 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
       example: true,
-      readOnly: true,
-    },
-    can_be_ended: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
-      example: false,
       readOnly: true,
     },
   },
@@ -8868,6 +9044,165 @@ export const ProgramTrainingApplicationDecisionRequestSchema = {
   },
 } as const;
 
+export const ProgramReviewSchema = {
+  type: 'object',
+  description: 'Student review and rating for a training program.',
+  example: {
+    uuid: 'd41707bc-e652-4ea4-8db0-ea9c85ff7d5c',
+    program_uuid: '640d0a57-76cc-46f2-ad46-72f5635d973a',
+    student_uuid: '4d91801f-0d0f-4078-9b70-7f68f7531c8a',
+    rating: 5,
+    headline: 'Excellent learning pathway',
+    comments: 'The program sequence was practical and easy to follow.',
+    is_anonymous: false,
+    created_date: '2026-06-11T12:33:00',
+    created_by: 'student@example.com',
+    updated_date: '2026-06-11T12:33:00',
+    updated_by: 'student@example.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for the review.',
+      example: 'd41707bc-e652-4ea4-8db0-ea9c85ff7d5c',
+      readOnly: true,
+    },
+    rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Overall rating for the program (1-5).',
+      example: 5,
+      maximum: 5,
+      minimum: 1,
+    },
+    headline: {
+      type: 'string',
+      description: 'Optional short headline for the review.',
+      example: 'Excellent learning pathway',
+      maxLength: 255,
+    },
+    comments: {
+      type: 'string',
+      description: 'Detailed feedback from the student.',
+      example: 'The program sequence was practical and easy to follow.',
+      maxLength: 5000,
+    },
+    is_anonymous: {
+      type: 'boolean',
+      description: 'Whether the review should be shown anonymously in public views.',
+      example: false,
+    },
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Training program being reviewed.',
+      example: '640d0a57-76cc-46f2-ad46-72f5635d973a',
+      readOnly: true,
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** Student who left the review. Null for anonymous public responses.',
+      example: '4d91801f-0d0f-4078-9b70-7f68f7531c8a',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the review was created.',
+      example: '2026-06-11T12:33:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Created by identifier. Null for anonymous public responses.',
+      example: 'student@example.com',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the review was last updated.',
+      example: '2026-06-11T12:33:00',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Updated by identifier. Null for anonymous public responses.',
+      example: 'student@example.com',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ProgramReviewRequestSchema = {
+  type: 'object',
+  description: 'Payload for submitting or updating a student review for a training program.',
+  example: {
+    student_uuid: '4d91801f-0d0f-4078-9b70-7f68f7531c8a',
+    rating: 5,
+    headline: 'Excellent learning pathway',
+    comments: 'The program sequence was practical and easy to follow.',
+    is_anonymous: false,
+  },
+  properties: {
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Student leaving the review.',
+      example: '4d91801f-0d0f-4078-9b70-7f68f7531c8a',
+    },
+    rating: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[REQUIRED]** Overall rating for the program (1-5).',
+      example: 5,
+      maximum: 5,
+      minimum: 1,
+    },
+    headline: {
+      type: 'string',
+      description: 'Optional short headline for the review.',
+      example: 'Excellent learning pathway',
+      maxLength: 255,
+      minLength: 0,
+    },
+    comments: {
+      type: 'string',
+      description: 'Detailed feedback from the student.',
+      example: 'The program sequence was practical and easy to follow.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    is_anonymous: {
+      type: 'boolean',
+      description: 'Whether the review should be shown anonymously in public views.',
+      example: false,
+    },
+  },
+  required: ['rating', 'student_uuid'],
+} as const;
+
+export const ApiResponseProgramReviewSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProgramReview',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
 export const ApiResponseVoidSchema = {
   type: 'object',
   properties: {
@@ -8882,6 +9217,119 @@ export const ApiResponseVoidSchema = {
     },
     error: {
       type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponseNotificationActionResultDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/NotificationActionResultDTO',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const NotificationActionResultDTOSchema = {
+  type: 'object',
+  properties: {
+    action: {
+      type: 'string',
+    },
+    affected_count: {
+      type: 'integer',
+      format: 'int32',
+    },
+  },
+} as const;
+
+export const ApiResponseNotificationDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/NotificationDTO',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const NotificationDTOSchema = {
+  type: 'object',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    notification_id: {
+      type: 'string',
+      format: 'uuid',
+    },
+    type: {
+      $ref: '#/components/schemas/TypeEnum',
+    },
+    category: {
+      $ref: '#/components/schemas/CategoryEnum',
+    },
+    priority: {
+      $ref: '#/components/schemas/PriorityEnum',
+    },
+    presentation: {
+      $ref: '#/components/schemas/PresentationEnum',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum8',
+    },
+    title: {
+      type: 'string',
+    },
+    body: {
+      type: 'string',
+    },
+    action_url: {
+      type: 'string',
+    },
+    metadata: {
+      type: 'object',
+      additionalProperties: {
+        type: 'object',
+      },
+    },
+    occurred_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    popup_seen_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    read_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    archived_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    created_at: {
+      type: 'string',
+      format: 'date-time',
     },
   },
 } as const;
@@ -9075,7 +9523,7 @@ export const GuardianStudentLinkSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum8',
+      $ref: '#/components/schemas/StatusEnum9',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -9209,7 +9657,7 @@ export const EnrollmentSchema = {
       example: 'st123456-7890-abcd-ef01-234567890abc',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum9',
+      $ref: '#/components/schemas/StatusEnum10',
     },
     attendance_marked_at: {
       type: 'string',
@@ -9252,6 +9700,12 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -9268,12 +9722,6 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
       readOnly: true,
     },
   },
@@ -9388,7 +9836,7 @@ export const CourseTrainingApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum10',
+      $ref: '#/components/schemas/StatusEnum11',
     },
     application_notes: {
       type: 'string',
@@ -9921,6 +10369,239 @@ export const SelectPaymentSessionRequestSchema = {
   required: ['provider_id'],
 } as const;
 
+export const ClassDefinitionCreateRequestSchema = {
+  type: 'object',
+  description: 'Request payload for creating a class definition and its initial schedule templates',
+  properties: {
+    title: {
+      type: 'string',
+      description: '**[REQUIRED]** Title of the class definition.',
+      example: 'Introduction to Java Programming',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description: '**[OPTIONAL]** Detailed description of the class.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    thumbnail_url: {
+      type: 'string',
+      description: '**[OPTIONAL]** URL to class thumbnail image.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    promotional_video_url: {
+      type: 'string',
+      description: '**[OPTIONAL]** URL to class promotional video.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    default_instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Default instructor UUID for the class.',
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Organisation UUID that owns the class.',
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Course UUID for course-scoped classes.',
+    },
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Program UUID for program-scoped classes.',
+    },
+    training_fee: {
+      type: 'number',
+      description: '**[OPTIONAL]** Training fee for the class.',
+      minimum: 0,
+    },
+    class_visibility: {
+      $ref: '#/components/schemas/ClassVisibilityEnum',
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
+    default_start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Default start date-time for the class.',
+    },
+    default_end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Default end date-time for the class.',
+    },
+    academic_period_start_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[OPTIONAL]** Academic period start date.',
+    },
+    academic_period_end_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[OPTIONAL]** Academic period end date.',
+    },
+    registration_period_start_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[OPTIONAL]** Registration period start date.',
+    },
+    registration_period_end_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[OPTIONAL]** Registration period end date.',
+    },
+    class_reminder_minutes: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Reminder lead time in minutes.',
+      minimum: 0,
+    },
+    class_color: {
+      type: 'string',
+      description: '**[OPTIONAL]** Hex color used in calendar UI.',
+      example: '#1F6FEB',
+      pattern: '^#[0-9A-Fa-f]{6}$',
+    },
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    location_name: {
+      type: 'string',
+      description: '**[OPTIONAL]** Human-readable location name.',
+    },
+    location_latitude: {
+      type: 'number',
+      description: '**[OPTIONAL]** Location latitude.',
+    },
+    location_longitude: {
+      type: 'number',
+      description: '**[OPTIONAL]** Location longitude.',
+    },
+    meeting_link: {
+      type: 'string',
+      description: '**[OPTIONAL]** Online meeting URL.',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    max_participants: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Maximum participants.',
+      minimum: 1,
+    },
+    allow_waitlist: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Whether waitlisting is allowed.',
+    },
+    is_active: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Whether the class is active.',
+    },
+    session_templates: {
+      type: 'array',
+      description: '**[REQUIRED]** Schedule templates used to generate initial scheduled sessions.',
+      items: {
+        $ref: '#/components/schemas/ClassSessionTemplate',
+      },
+      maxItems: 2147483647,
+      minItems: 1,
+    },
+  },
+  required: [
+    'class_visibility',
+    'default_end_time',
+    'default_instructor_uuid',
+    'default_start_time',
+    'location_type',
+    'session_format',
+    'session_templates',
+    'title',
+  ],
+} as const;
+
+export const ApiResponseClassSessionTemplateScheduleResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassSessionTemplateScheduleResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ClassSchedulingConflictSchema = {
+  type: 'object',
+  description: 'Details of a conflicting schedule request during class creation',
+  properties: {
+    requested_start: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Requested start date-time that conflicted',
+      example: '2025-01-15T14:00:00',
+    },
+    requested_end: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Requested end date-time that conflicted',
+      example: '2025-01-15T15:30:00',
+    },
+    reasons: {
+      type: 'array',
+      description: 'Reasons for the conflict',
+      items: {
+        type: 'string',
+      },
+    },
+  },
+} as const;
+
+export const ClassSessionTemplateScheduleResponseSchema = {
+  type: 'object',
+  description: 'Result of adding a session template to an existing class schedule',
+  properties: {
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Class definition that received the new template.',
+    },
+    session_template: {
+      $ref: '#/components/schemas/ClassSessionTemplate',
+      description: '**[READ-ONLY]** Persisted session template.',
+    },
+    scheduled_instances: {
+      type: 'array',
+      description: '**[READ-ONLY]** Scheduled instances created from the template.',
+      items: {
+        $ref: '#/components/schemas/ScheduledInstance',
+      },
+    },
+    scheduling_conflicts: {
+      type: 'array',
+      description: '**[READ-ONLY]** Non-blocking conflicts recorded while applying the template.',
+      items: {
+        $ref: '#/components/schemas/ClassSchedulingConflict',
+      },
+    },
+  },
+} as const;
+
 export const ClassQuizScheduleSchema = {
   type: 'object',
   description: 'Class-level quiz schedule with release timing and override values',
@@ -10286,7 +10967,7 @@ export const ClassMarketplaceJobApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum12',
     },
     job_uuid: {
       type: 'string',
@@ -10452,7 +11133,7 @@ export const BookingResponseSchema = {
       description: 'End time for the session',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum12',
+      $ref: '#/components/schemas/StatusEnum13',
     },
     price_amount: {
       type: 'number',
@@ -10700,7 +11381,7 @@ export const AssignmentSubmissionSchema = {
       example: '2024-04-10T14:30:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum13',
+      $ref: '#/components/schemas/StatusEnum14',
     },
     score: {
       type: 'number',
@@ -10805,6 +11486,41 @@ export const AssignmentSubmissionSchema = {
     },
   },
   required: ['assignment_uuid', 'enrollment_uuid', 'status'],
+} as const;
+
+export const AssignmentSubmissionRequestSchema = {
+  type: 'object',
+  description: 'Student assignment submission request',
+  properties: {
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Course enrollment UUID for the student submitting the assignment.',
+      example: 'e1n2r3o4-5l6l-7m8e-9n10-abcdefghijkl',
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        'Student UUID. Used to resolve the active course enrollment when enrollment_uuid is omitted.',
+      example: 's1t2u3d4-5e6n-7t8u-9u10-abcdefghijkl',
+    },
+    submission_text: {
+      type: 'string',
+      description: "Text content of the student's submission.",
+      example: 'My assignment response.',
+      maxLength: 10000,
+      minLength: 0,
+    },
+    file_urls: {
+      type: 'array',
+      description: 'External or previously uploaded file URLs attached to this submission.',
+      example: ['https://storage.sarafrika.com/submissions/work.pdf'],
+      items: {
+        type: 'string',
+      },
+    },
+  },
 } as const;
 
 export const ApiResponseAssignmentSubmissionAttachmentSchema = {
@@ -11198,6 +11914,29 @@ export const CurrencyCreateRequestSchema = {
     },
   },
   required: ['code', 'decimal_places', 'name'],
+} as const;
+
+export const ScheduledInstanceRescheduleRequestSchema = {
+  type: 'object',
+  description: 'Request payload for changing the date and time of a scheduled class instance',
+  properties: {
+    start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** New start date and time for the scheduled instance.',
+    },
+    end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** New end date and time for the scheduled instance.',
+    },
+    timezone: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Timezone for the scheduled instance. Defaults to the existing timezone.',
+    },
+  },
+  required: ['end_time', 'start_time'],
 } as const;
 
 export const UpdateCartRequestSchema = {
@@ -12773,7 +13512,7 @@ export const QuizAttemptSchema = {
       example: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum14',
+      $ref: '#/components/schemas/StatusEnum15',
     },
     created_date: {
       type: 'string',
@@ -12948,6 +13687,55 @@ export const PagedDTOProgramTrainingApplicationSchema = {
   },
 } as const;
 
+export const PagedDTOSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        type: 'object',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ProgramRatingSummarySchema = {
+  type: 'object',
+  description: 'Aggregate review metrics for a training program.',
+  example: {
+    program_uuid: '640d0a57-76cc-46f2-ad46-72f5635d973a',
+    average_rating: 4.7,
+    review_count: 12,
+  },
+  properties: {
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'UUID of the training program.',
+      example: '640d0a57-76cc-46f2-ad46-72f5635d973a',
+    },
+    average_rating: {
+      type: 'number',
+      format: 'double',
+      description:
+        'Average overall rating across all program reviews (1-5). Null when there are no reviews.',
+      example: 4.7,
+    },
+    review_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Total number of reviews for this program.',
+      example: 12,
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOProgramRequirementSchema = {
   type: 'object',
   properties: {
@@ -13078,7 +13866,7 @@ export const ProgramEnrollmentSchema = {
       example: '2024-06-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum15',
+      $ref: '#/components/schemas/StatusEnum16',
     },
     progress_percentage: {
       type: 'number',
@@ -13130,16 +13918,16 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Program Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Program Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -13325,6 +14113,74 @@ export const ApiResponseListUserSchema = {
     },
     error: {
       type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTONotificationDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTONotificationDTO',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTONotificationDTOSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/NotificationDTO',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseNotificationCountsDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/NotificationCountsDTO',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const NotificationCountsDTOSchema = {
+  type: 'object',
+  properties: {
+    unread_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    popup_count: {
+      type: 'integer',
+      format: 'int64',
     },
   },
 } as const;
@@ -13751,7 +14607,7 @@ export const GuardianStudentDashboardDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum8',
+      $ref: '#/components/schemas/StatusEnum9',
     },
     courseProgress: {
       type: 'array',
@@ -13864,7 +14720,7 @@ export const GuardianStudentSummaryDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum8',
+      $ref: '#/components/schemas/StatusEnum9',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -13999,7 +14855,7 @@ export const StudentClassEnrollmentSummarySchema = {
       description: 'Most recent scheduled-instance enrollment identifier for this class',
     },
     latest_enrollment_status: {
-      $ref: '#/components/schemas/StatusEnum9',
+      $ref: '#/components/schemas/StatusEnum10',
     },
     scheduled_instance_count: {
       type: 'integer',
@@ -14853,7 +15709,7 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum15',
+      $ref: '#/components/schemas/StatusEnum16',
     },
     progress_percentage: {
       type: 'number',
@@ -14905,16 +15761,16 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -15640,32 +16496,6 @@ export const ApiResponsePagedDTOClassSchedulingConflictSchema = {
     },
     error: {
       type: 'object',
-    },
-  },
-} as const;
-
-export const ClassSchedulingConflictSchema = {
-  type: 'object',
-  description: 'Details of a conflicting schedule request during class creation',
-  properties: {
-    requested_start: {
-      type: 'string',
-      format: 'date-time',
-      description: 'Requested start date-time that conflicted',
-      example: '2025-01-15T14:00:00',
-    },
-    requested_end: {
-      type: 'string',
-      format: 'date-time',
-      description: 'Requested end date-time that conflicted',
-      example: '2025-01-15T15:30:00',
-    },
-    reasons: {
-      type: 'array',
-      description: 'Reasons for the conflict',
-      items: {
-        type: 'string',
-      },
     },
   },
 } as const;
@@ -16821,6 +17651,14 @@ export const ProficiencyLevelEnumSchema = {
   example: 'EXPERT',
 } as const;
 
+export const MembershipStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the membership.',
+  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
+  example: 'ACTIVE',
+  readOnly: true,
+} as const;
+
 export const OrganisationTypeEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Classification of organisation type based on name keywords.',
@@ -16833,14 +17671,6 @@ export const OrganisationTypeEnumSchema = {
     'OTHER',
   ],
   example: 'PROFESSIONAL_INSTITUTE',
-  readOnly: true,
-} as const;
-
-export const MembershipStatusEnumSchema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Current status of the membership.',
-  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
-  example: 'ACTIVE',
   readOnly: true,
 } as const;
 
@@ -16872,7 +17702,7 @@ export const StatusEnum2Schema = {
 export const VerificationStatusEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Human-readable verification status of the document.',
-  enum: ['VERIFIED', 'PENDING', 'REJECTED'],
+  enum: ['VERIFIED', 'PENDING', 'REJECTED', 'EXPIRED'],
   example: 'VERIFIED',
   readOnly: true,
 } as const;
@@ -16954,24 +17784,20 @@ export const StatusEnum4Schema = {
 
 export const ClassVisibilityEnumSchema = {
   type: 'string',
-  description: '**[REQUIRED]** Visibility of the class when offerings are published.',
+  description: '**[REQUIRED]** Class visibility.',
   enum: ['PUBLIC', 'PRIVATE'],
-  example: 'PUBLIC',
 } as const;
 
 export const SessionFormatEnumSchema = {
   type: 'string',
-  description:
-    '**[REQUIRED]** Session format indicating whether the delivery targets an individual learner or group.',
+  description: '**[REQUIRED]** Session format.',
   enum: ['INDIVIDUAL', 'GROUP'],
-  example: 'GROUP',
 } as const;
 
 export const LocationTypeEnumSchema = {
   type: 'string',
-  description: '**[REQUIRED]** Default delivery format for the class.',
+  description: '**[REQUIRED]** Delivery location type.',
   enum: ['ONLINE', 'IN_PERSON', 'HYBRID'],
-  example: 'HYBRID',
 } as const;
 
 export const RecurrenceTypeEnumSchema = {
@@ -17031,6 +17857,79 @@ export const StatusEnum7Schema = {
   readOnly: true,
 } as const;
 
+export const TypeEnumSchema = {
+  type: 'string',
+  enum: [
+    'COURSE_ENROLLMENT_WELCOME',
+    'COURSE_COMPLETION_CERTIFICATE',
+    'LEARNING_MILESTONE_ACHIEVED',
+    'ASSIGNMENT_DUE_REMINDER',
+    'ASSIGNMENT_SUBMITTED_CONFIRMATION',
+    'ASSIGNMENT_GRADED',
+    'ASSIGNMENT_RETURNED_FOR_REVISION',
+    'ASSIGNMENT_DEADLINE_REMINDER',
+    'ASSESSMENT_COMPLETED',
+    'NEW_STUDENT_ENROLLMENT',
+    'NEW_ASSIGNMENT_SUBMISSION',
+    'CLASS_SCHEDULE_UPDATED',
+    'GRADING_REMINDER',
+    'COURSE_CONTENT_APPROVED',
+    'COURSE_CONTENT_REJECTED',
+    'PROGRAM_CONTENT_APPROVED',
+    'PROGRAM_CONTENT_REJECTED',
+    'COURSE_TRAINING_APPLICATION_SUBMITTED',
+    'COURSE_TRAINING_APPLICATION_APPROVED',
+    'COURSE_TRAINING_APPLICATION_REJECTED',
+    'COURSE_TRAINING_APPLICATION_REVOKED',
+    'PROGRAM_TRAINING_APPLICATION_SUBMITTED',
+    'PROGRAM_TRAINING_APPLICATION_APPROVED',
+    'PROGRAM_TRAINING_APPLICATION_REJECTED',
+    'PROGRAM_TRAINING_APPLICATION_REVOKED',
+    'CLASS_ENROLLMENT_CONFIRMED',
+    'COURSE_ENROLLMENT_MILESTONE',
+    'COURSE_ENROLLMENT_NOTICE',
+    'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE',
+    'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE',
+    'UPCOMING_CLASS_REMINDER',
+    'ACCOUNT_CREATED',
+    'PASSWORD_RESET_REQUEST',
+    'SECURITY_ALERT',
+    'ORDER_PAYMENT_RECEIPT',
+    'LEARNING_CERTIFICATE_ISSUED',
+    'PROFILE_DOCUMENT_VERIFIED',
+    'PROFILE_COMPLETION_REMINDER',
+    'WEEKLY_PROGRESS_SUMMARY',
+    'LEARNING_STREAK_ACHIEVEMENT',
+    'PEER_ACHIEVEMENT_CELEBRATION',
+  ],
+} as const;
+
+export const CategoryEnumSchema = {
+  type: 'string',
+  enum: [
+    'LEARNING_PROGRESS',
+    'ASSIGNMENTS_GRADING',
+    'COURSE_MANAGEMENT',
+    'SOCIAL_LEARNING',
+    'SYSTEM_ADMIN',
+  ],
+} as const;
+
+export const PriorityEnumSchema = {
+  type: 'string',
+  enum: ['LOW', 'NORMAL', 'HIGH', 'CRITICAL'],
+} as const;
+
+export const PresentationEnumSchema = {
+  type: 'string',
+  enum: ['POPUP', 'INBOX'],
+} as const;
+
+export const StatusEnum8Schema = {
+  type: 'string',
+  enum: ['UNREAD', 'READ', 'ARCHIVED'],
+} as const;
+
 export const RelationshipTypeEnumSchema = {
   type: 'string',
   enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
@@ -17041,19 +17940,19 @@ export const ShareScopeEnumSchema = {
   enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
 } as const;
 
-export const StatusEnum8Schema = {
+export const StatusEnum9Schema = {
   type: 'string',
   enum: ['PENDING', 'ACTIVE', 'REVOKED'],
 } as const;
 
-export const StatusEnum9Schema = {
+export const StatusEnum10Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
   example: 'ENROLLED',
 } as const;
 
-export const StatusEnum10Schema = {
+export const StatusEnum11Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the application.',
   enum: ['pending', 'approved', 'rejected'],
@@ -17075,13 +17974,13 @@ export const ReleaseStrategyEnumSchema = {
   example: 'CUSTOM',
 } as const;
 
-export const StatusEnum11Schema = {
+export const StatusEnum12Schema = {
   type: 'string',
   enum: ['pending', 'approved', 'rejected', 'assigned', 'not_selected'],
   readOnly: true,
 } as const;
 
-export const StatusEnum12Schema = {
+export const StatusEnum13Schema = {
   type: 'string',
   description: 'Current status of the booking',
   enum: [
@@ -17103,7 +18002,7 @@ export const PaymentStatusEnumSchema = {
   pattern: '^(succeeded|failed)$',
 } as const;
 
-export const StatusEnum13Schema = {
+export const StatusEnum14Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -17148,14 +18047,14 @@ export const EnrollmentStatusEnumSchema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum14Schema = {
+export const StatusEnum15Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the quiz attempt.',
   enum: ['IN_PROGRESS', 'SUBMITTED', 'GRADED'],
   example: 'GRADED',
 } as const;
 
-export const StatusEnum15Schema = {
+export const StatusEnum16Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],

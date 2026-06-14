@@ -565,6 +565,34 @@ function ReviewCard({
   );
 }
 
+import { Skeleton } from '@/components/ui/skeleton';
+
+function ReviewCardSkeleton() {
+  return (
+    <Card className="w-full gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm max-w-[450px]">
+      <Skeleton className="h-[190px] w-full rounded-none" />
+
+      <div className="space-y-4 px-5 py-4">
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <Skeleton className="h-6 w-24 rounded-lg" />
+            <Skeleton className="h-6 w-32 rounded-lg" />
+          </div>
+
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/2" />
+        </div>
+
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-24 rounded-lg" />
+          <Skeleton className="h-10 w-28 rounded-lg" />
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function ReviewSheet({
   state,
   verifierName,
@@ -1157,6 +1185,23 @@ export default function DocumentsVerificationPage() {
     instructorsWithUuid,
   ]);
 
+  const isLoading =
+    instructorsQuery.isLoading ||
+    courseCreatorsQuery.isLoading ||
+    studentsQuery.isLoading ||
+    documentTypesQuery.isLoading ||
+    instructorDocumentQueries.some(q => q.isLoading) ||
+    courseCreatorDocumentQueries.some(q => q.isLoading) ||
+    instructorEducationQueries.some(q => q.isLoading) ||
+    instructorMembershipQueries.some(q => q.isLoading) ||
+    instructorExperienceQueries.some(q => q.isLoading) ||
+    courseCreatorEducationQueries.some(q => q.isLoading) ||
+    courseCreatorMembershipQueries.some(q => q.isLoading) ||
+    courseCreatorExperienceQueries.some(q => q.isLoading);
+
+
+
+
   const filteredItems = useMemo(() => {
     const term = searchValue.trim().toLowerCase();
 
@@ -1408,7 +1453,13 @@ export default function DocumentsVerificationPage() {
 
               {/* Document cards grid */}
               <div className="min-w-0">
-                {filteredItems.length > 0 ? (
+                {isLoading ? (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <ReviewCardSkeleton key={index} />
+                    ))}
+                  </div>
+                ) : filteredItems.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
                     {filteredItems.map(item => (
                       <ReviewCard
