@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BookOpen, ChevronRight } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -40,13 +40,6 @@ export function LearningHubContinueLearning({
     <Card className='border-border/70 bg-background rounded-[18px] border p-3.5 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
       <div className='flex items-center justify-between gap-3'>
         <h2 className='text-foreground text-[1.08rem] font-semibold'>Continue Learning</h2>
-        <Link
-          prefetch
-          href='/dashboard/learning-hub/classes' className='inline-flex items-center gap-1 text-[0.82rem] font-medium text-primary transition hover:text-primary/80'
-        >
-          View all classes
-          <ChevronRight className='size-4' />
-        </Link>
       </div>
 
       <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-3'>
@@ -70,47 +63,50 @@ export function LearningHubContinueLearning({
             </article>
           ))
           : visibleClasses.map(classItem => (
-            <article key={classItem?.id} className='space-y-2 rounded-md'>
-              <div className='border-border/60 h-[150px] overflow-hidden rounded-md border'>
-                {classItem?.bannerUrl ? (
-                  <Image
-                    src={toAuthenticatedMediaUrl(classItem?.bannerUrl) || classItem?.bannerUrl}
-                    alt='Course banner'
-                    className='h-full w-full object-cover'
-                    priority
-                    width={400}
-                    height={200}
-                    unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(classItem?.bannerUrl))}
-                  />
-                ) : (
-                  <div className='text-muted-foreground flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,white),white)] text-xs'>
-                    <BookOpen size={32} />
-                  </div>
-                )}
-              </div>
-              <div>
-                <h3 className='text-foreground truncate text-[0.95rem] font-semibold'>
-                  {classItem.title}
-                </h3>
-                <p className='text-muted-foreground mt-1 truncate text-[0.72rem]'>
-                  {classItem.courseName}
-                </p>
-              </div>
-              <div className='text-muted-foreground flex items-center justify-between gap-2 text-[0.7rem]'>
-                <span>{classItem.statusLabel}</span>
-                <span className='truncate'>{classItem.scheduleLabel}</span>
-              </div>
-              <div className='flex items-center gap-1.5'>
-                {[0, 1, 2, 3].map(index => (
-                  <span
-                    key={`${classItem.id}-${index}`}
-                    className={`size-2 rounded-full ${index < Math.max(1, Math.round(classItem.progress / 25))
-                      ? 'bg-[color:color-mix(in_srgb,var(--primary)_52%,white)]'
-                      : 'bg-muted'
-                      }`}
-                  />
-                ))}
-              </div>
+            <article key={classItem?.id} className='flex flex-col gap-2 rounded-md'>
+              <Link href={`/dashboard/learning-hub/${classItem?.id}`} className='space-y-1'>
+                <div className='border-border/60 h-[150px] overflow-hidden rounded-md border'>
+                  {classItem?.bannerUrl ? (
+                    <Image
+                      src={toAuthenticatedMediaUrl(classItem?.bannerUrl) || classItem?.bannerUrl}
+                      alt='Course banner'
+                      className='h-full w-full object-cover'
+                      priority
+                      width={400}
+                      height={200}
+                      unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(classItem?.bannerUrl))}
+                    />
+                  ) : (
+                    <div className='text-muted-foreground flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,white),white)] text-xs'>
+                      <BookOpen size={32} />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 className='text-foreground truncate text-[0.95rem] font-semibold'>
+                    {classItem.title}
+                  </h3>
+                  <p className='text-muted-foreground mt-1 truncate text-[0.72rem]'>
+                    {classItem.courseName}
+                  </p>
+                </div>
+                <div className='text-muted-foreground flex items-center justify-between gap-2 text-[0.7rem]'>
+                  <span>{classItem.statusLabel}</span>
+                  <span className='truncate'>{classItem.scheduleLabel}</span>
+                </div>
+                <div className='flex items-center gap-1.5'>
+                  {[0, 1, 2, 3].map(index => (
+                    <span
+                      key={`${classItem.id}-${index}`}
+                      className={`size-2 rounded-full ${index < Math.max(1, Math.round(classItem.progress / 25))
+                        ? 'bg-[color:color-mix(in_srgb,var(--primary)_52%,white)]'
+                        : 'bg-muted'
+                        }`}
+                    />
+                  ))}
+                </div>
+              </Link>
+
               <Link
                 prefetch
                 // href={classItem.href}

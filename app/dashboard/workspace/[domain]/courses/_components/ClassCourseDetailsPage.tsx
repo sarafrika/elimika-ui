@@ -179,7 +179,6 @@ export default function ClassCourseDetailsPage({
                 href: getContentHref("course_creator", 'course', course.uuid ?? ''),
                 enrolledClasses: 1,
                 secondaryMeta:
-
                     course.category_names?.[0] ??
                     (course.price && course.price > 0 ? 'Paid Course' : 'Free Course'),
             })),

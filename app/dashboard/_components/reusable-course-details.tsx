@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
 import type { Assignment, CourseReview, DifficultyLevel, Lesson, Quiz } from '@/services/client';
@@ -38,7 +37,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { ReviewCard } from '../@instructor/reviews/review-card';
 import { VideoPlayer } from '../@student/schedule/classes/[id]/VideoPlayer';
@@ -72,8 +71,6 @@ export default function ReusableCourseDetailsPage({
   const params = useParams();
   const courseId = propCourseId || (params?.id as string);
   const { activeDomain } = useUserDomain();
-
-  const { replaceBreadcrumbs } = useBreadcrumb();
 
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [rating, setRating] = useState(0);
@@ -125,28 +122,6 @@ export default function ReusableCourseDetailsPage({
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-
-  useEffect(() => {
-    if (courseData) {
-      replaceBreadcrumbs([
-        {
-          id: 'dashboard',
-          title: 'Dashboard',
-          url: buildWorkspaceAliasPath(activeDomain, '/dashboard/overview'),
-        },
-        {
-          id: 'courses',
-          title: 'Browse Courses',
-          url: buildWorkspaceAliasPath(activeDomain, '/dashboard/courses'),
-        },
-        {
-          id: 'course-details',
-          title: courseData?.name,
-          url: buildWorkspaceAliasPath(activeDomain, `/dashboard/courses/${courseData?.uuid}`),
-        },
-      ]);
-    }
-  }, [replaceBreadcrumbs, courseId, courseData, userRole, activeDomain]);
 
   const { data: creator } = useQuery({
     ...getCourseCreatorByUuidOptions({ path: { uuid: courseData?.course_creator_uuid as string } }),
@@ -548,7 +523,6 @@ export default function ReusableCourseDetailsPage({
   );
 }
 
-/* ── tiny helper ─────────────────────────────────────────────── */
 function SectionLabel({
   children,
   className = '',

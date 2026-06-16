@@ -471,7 +471,9 @@ export function useStudentLearningHubData(): LearningHubData {
             timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
             instructor: instructor?.full_name ?? 'Instructor',
             locationLabel: item.locationLabel,
-            href: item.href,
+            // href: item.href,
+            href: `/dashboard/learning-hub/classes/${item?.uuid}`,
+
           };
         }),
     [instructorMap, now, upcomingClasses]

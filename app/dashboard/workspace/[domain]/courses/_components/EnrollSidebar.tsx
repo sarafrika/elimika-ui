@@ -297,7 +297,7 @@ export default function EnrollSidebar({
       {/* COURSE INCLUDES */}
       <div className="rounded-xl border border-border bg-card shadow-sm p-4 sm:p-5">
         <h3 className="mb-3 text-sm font-semibold text-foreground">
-          This course includes
+          7
         </h3>
 
         <div className="flex flex-col gap-3">

@@ -1,10 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { dayjs } from '@/lib/date';
 import { getStudentByIdOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { InstructorReview } from '@/services/client/types.gen';
 import { useQuery } from '@tanstack/react-query';
-import { dayjs } from '@/lib/date';
 
 function getInitials(name?: string) {
   if (!name) return 'ST';
