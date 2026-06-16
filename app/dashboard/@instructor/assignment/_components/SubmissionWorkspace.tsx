@@ -51,10 +51,13 @@ export function SubmissionWorkspace({
               {student ? (
                 <Badge variant='outline' className='rounded-full'>
                   <UserRound className='mr-1 h-3.5 w-3.5' />
-                  {student.attendanceLabel}
+                  {student.submissionStatus}
                 </Badge>
               ) : null}
             </div>
+            <p className='text-muted-foreground text-sm'>
+              {student?.submittedAt}
+            </p>
             <p className='text-muted-foreground text-sm'>
               {assignment.lesson} · {assignment.subtitle} · {assignment.dueLabel}
             </p>
@@ -88,24 +91,26 @@ export function SubmissionWorkspace({
                   </div>
                 </div>
 
-                {submission?.submission_text ? (
-                  <div className='rounded-lg border px-4 py-3 text-sm text-muted-foreground'>
-                    {submission.submission_text}
+                {student?.submissionText ? (
+                  <div className='px-4 py-3 text-sm text-muted-foreground'>
+                    {student.submissionText}
                   </div>
                 ) : null}
 
-                {submission?.file_urls?.length ? (
+                {student?.fileUrls?.length ? (
                   <div className='space-y-2'>
-                    {submission.file_urls.map(fileUrl => (
+                    {student.fileUrls.map((fileUrl, index) => (
                       <a
-                        key={fileUrl}
+                        key={`${fileUrl}-${index}`}
                         href={fileUrl}
-                        target='_blank'
-                        rel='noreferrer'
-                        className='flex items-center justify-between rounded-lg border px-4 py-3 text-sm text-primary'
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between rounded-lg border px-4 py-3 text-sm text-primary"
                       >
-                        <span className='truncate'>{fileUrl.split('/').pop() || fileUrl}</span>
-                        <ExternalLink className='h-4 w-4 shrink-0' />
+                        <span className="truncate">
+                          {fileUrl.split('/').pop() || fileUrl}
+                        </span>
+                        <ExternalLink className="h-4 w-4 shrink-0" />
                       </a>
                     ))}
                   </div>
@@ -120,7 +125,7 @@ export function SubmissionWorkspace({
                   </div>
                 ) : null}
 
-                {!submission?.submission_text && !submission?.file_urls?.length && !quizAttempt ? (
+                {!student?.submissionText && !student?.fileUrls?.length && !quizAttempt ? (
                   <div className='rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground'>
                     No submission content was attached to this task.
                   </div>
@@ -184,9 +189,9 @@ export function SubmissionWorkspace({
                 </div>
               ) : null}
 
-              <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+              <div className='flex flex-row items-center gap-4 justify-end'>
                 {taskType === 'assignment' ? (
-                  <Button className='h-11 rounded-lg' onClick={onGradeSubmission} disabled={isSavingGrade}>
+                  <Button className='h-11 rounded-lg disabled:bg-red-500' onClick={onGradeSubmission} disabled={isSavingGrade}>
                     {isSavingGrade ? 'Saving...' : 'Save Grade'}
                   </Button>
                 ) : null}

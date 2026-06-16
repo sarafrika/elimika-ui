@@ -29,6 +29,7 @@ import {
   type CourseLessonContent,
   type CourseLessonWithContent,
 } from '@/hooks/use-courselessonwithcontent';
+import { dayjs } from '@/lib/date';
 import {
   cx,
   elimikaDesignSystem,
@@ -79,7 +80,6 @@ import {
   Users,
   Video
 } from 'lucide-react';
-import { dayjs } from '@/lib/date';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';

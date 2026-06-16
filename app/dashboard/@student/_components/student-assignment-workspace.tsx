@@ -42,6 +42,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
+  FileText,
   GraduationCap,
   Loader2,
   Search,
@@ -129,13 +130,31 @@ export function StudentAssignmentWorkspace() {
   const [queuedFiles, setQueuedFiles] = useState<File[]>([]);
   const { assignmentRows, isLoading } = useStudentAssignmentData();
 
+  const currentEnrollment = useMemo(
+    () =>
+      assignmentRows.find(
+        row =>
+          row.classMeta.courseEnrollmentUuid ||
+          row.classMeta.enrollmentUuid
+      )?.classMeta,
+    [assignmentRows]
+  );
+
   const enrollmentUuid =
-    assignmentRows.find(
-      row =>
-        row.classMeta.courseEnrollmentUuid ||
-        row.classMeta.enrollmentUuid
-    )?.classMeta.courseEnrollmentUuid ||
-    assignmentRows.find(row => row.classMeta.enrollmentUuid)?.classMeta.enrollmentUuid;
+    currentEnrollment?.courseEnrollmentUuid ??
+    currentEnrollment?.enrollmentUuid;
+
+  const studentAssignmentRows = useMemo(
+    () =>
+      assignmentRows.filter(row => {
+        const rowEnrollment =
+          row.classMeta.courseEnrollmentUuid ??
+          row.classMeta.enrollmentUuid;
+
+        return rowEnrollment === enrollmentUuid;
+      }),
+    [assignmentRows, enrollmentUuid]
+  );
 
   const { data: submissionsResp } = useQuery({
     ...searchSubmissionsOptions({
@@ -152,6 +171,30 @@ export function StudentAssignmentWorkspace() {
     enabled: !!enrollmentUuid,
   });
 
+  const activeEnrollmentUuid =
+    selectedAssignment?.classMeta
+      .courseEnrollmentUuid ??
+    selectedAssignment?.classMeta
+      .enrollmentUuid;
+
+
+
+  const submissionsByAssignment = useMemo(() => {
+    const submissions = submissionsResp?.data?.content ?? [];
+
+    return submissions.reduce(
+      (acc, submission) => {
+        if (submission.assignment_uuid) {
+          acc[submission.assignment_uuid] = submission;
+        }
+
+        return acc;
+      },
+      {} as Record<string, (typeof submissions)[number]>
+    );
+  }, [submissionsResp]);
+
+
   const submittedAssignmentIds = useMemo(() => {
     const submissions = submissionsResp?.data?.content ?? [];
 
@@ -163,34 +206,41 @@ export function StudentAssignmentWorkspace() {
   }, [submissionsResp]);
 
   const assignmentRowsWithSubmissionState = useMemo(() => {
-    return assignmentRows.map(row => ({
-      ...row,
-      hasSubmission: submittedAssignmentIds.has(
-        row.assignment?.uuid ?? ''
-      ),
-    }));
-  }, [assignmentRows, submittedAssignmentIds]);
+    return studentAssignmentRows.map(row => {
+      const assignmentUuid = row.assignment?.uuid ?? '';
+
+      const submission =
+        submissionsByAssignment[assignmentUuid];
+
+      return {
+        ...row,
+
+        submissions: submission ? [submission] : [],
+
+        latestSubmission: submission ?? null,
+
+        hasSubmission: !!submission,
+      };
+    });
+  }, [
+    studentAssignmentRows,
+    submissionsByAssignment,
+  ]);
 
   const processedRows = useMemo(() => {
     return assignmentRowsWithSubmissionState
       .filter(row => {
         let matchesTab = true;
 
+        const state = getStudentAssignmentSubmissionState(row);
+
         switch (activeTab) {
           case 'submitted':
-            matchesTab = row.hasSubmission;
-            break;
-
-          case 'pending':
-            matchesTab = !row.hasSubmission;
-            break;
-
           case 'graded':
           case 'returned':
-            matchesTab =
-              getStudentAssignmentSubmissionState(row).key === activeTab;
+          case 'pending':
+            matchesTab = state.key === activeTab;
             break;
-
           default:
             matchesTab = true;
         }
@@ -212,33 +262,7 @@ export function StudentAssignmentWorkspace() {
 
         return matchesTab && matchesSearch;
       })
-      .sort((left, right) => {
-        if (sortBy === 'course') {
-          return left.classMeta.courseTitle.localeCompare(
-            right.classMeta.courseTitle
-          );
-        }
-
-        if (sortBy === 'title') {
-          return String(left.assignment?.title || '').localeCompare(
-            String(right.assignment?.title || '')
-          );
-        }
-
-        const leftDue = new Date(
-          left.schedule?.due_at ||
-          left.assignment?.due_date ||
-          0
-        ).getTime();
-
-        const rightDue = new Date(
-          right.schedule?.due_at ||
-          right.assignment?.due_date ||
-          0
-        ).getTime();
-
-        return leftDue - rightDue;
-      });
+      .sort(/* existing sort */);
   }, [
     activeTab,
     assignmentRowsWithSubmissionState,
@@ -247,32 +271,33 @@ export function StudentAssignmentWorkspace() {
   ]);
 
   const stats = useMemo(() => {
-    const total = assignmentRows.length;
+    const total = studentAssignmentRows.length;
 
-    const submitted = assignmentRows.filter(row =>
+    const submitted = studentAssignmentRows.filter(row =>
       submittedAssignmentIds.has(row.assignment?.uuid ?? '')
     ).length;
 
     const pending = total - submitted;
 
-    const graded = assignmentRows.filter(
+    const graded = studentAssignmentRows.filter(
       row =>
         row.latestSubmission &&
         row.latestSubmission.percentage != null
     ).length;
 
-    const returned = assignmentRows.filter(
+    const returned = studentAssignmentRows.filter(
       row =>
         String(row.latestSubmission?.status).toUpperCase() ===
         'RETURNED'
     ).length;
 
-    const gradedSubmissions = assignmentRows
+    const gradedSubmissions = studentAssignmentRows
       .map(row => row.latestSubmission?.percentage)
       .filter(
         (value): value is number =>
           typeof value === 'number'
       );
+
 
     const averageScore =
       gradedSubmissions.length > 0
@@ -298,7 +323,7 @@ export function StudentAssignmentWorkspace() {
       averageScore,
       progress,
     };
-  }, [assignmentRows, submittedAssignmentIds]);
+  }, [studentAssignmentRows, submittedAssignmentIds]);
 
   const selectedSubmissionAttachmentsQuery = useQuery({
     ...getSubmissionAttachmentsOptions({
@@ -324,12 +349,17 @@ export function StudentAssignmentWorkspace() {
     ? getStudentAssignmentSubmissionState(selectedAssignment)
     : null;
   const canUploadFiles = acceptsFileSubmission(selectedSubmissionTypes);
+
   const canSubmitSelected =
-    !!selectedAssignment?.classMeta.enrollmentUuid &&
-    (!selectedAssignment?.latestSubmission ||
+    !!activeEnrollmentUuid &&
+    (
+      !selectedAssignment?.latestSubmission ||
       ['RETURNED', 'DRAFT'].includes(
-        String(selectedAssignment.latestSubmission.status).toUpperCase()
-      ));
+        String(
+          selectedAssignment.latestSubmission.status
+        ).toUpperCase()
+      )
+    );
 
   const handleCloseSheet = (open: boolean) => {
     if (!open) {
@@ -443,7 +473,8 @@ export function StudentAssignmentWorkspace() {
     }
   };
 
-  const hasSubmission = !!selectedAssignment?.submissions;
+  const hasSubmission =
+    !!selectedAssignment?.latestSubmission;
 
   const canResubmit =
     selectedAssignment?.latestSubmission?.status === 'RETURNED';
@@ -483,7 +514,7 @@ export function StudentAssignmentWorkspace() {
     );
   }
 
-  if (assignmentRows.length === 0) {
+  if (studentAssignmentRows.length === 0) {
     return (
       <div className={getEmptyStateClasses()}>
         <BookOpen className='text-primary/70 h-10 w-10' />
@@ -728,11 +759,16 @@ export function StudentAssignmentWorkspace() {
                     </div>
                     <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between'>
                       <div className='space-y-1'>
-                        <p className='text-foreground text-sm font-medium'>
-                          {row.hasSubmission
-                            ? 'Submission received.'
-                            : status.helper}
-                        </p>
+                        <div className='flex flex-row items-center gap-2' >
+                          <p className='text-foreground text-sm font-medium'>
+                            {row.hasSubmission
+                              ? 'Submission received.'
+                              : status.helper}
+                          </p>
+                          <p className='text-foreground text-sm font-medium'>
+                            {row.latestSubmission?.file_count_display}
+                          </p>
+                        </div>
 
                         <p className='text-muted-foreground text-xs'>
                           {row.hasSubmission
@@ -961,8 +997,31 @@ export function StudentAssignmentWorkspace() {
                               htmlString={selectedAssignment.latestSubmission.submission_text}
                             />
                           </div>
+
+                          <div className="space-y-2">
+                            {(Array.isArray(selectedAssignment?.latestSubmission?.file_urls)
+                              ? selectedAssignment.latestSubmission.file_urls
+                              : []
+                            ).map((url: string, index: number) => {
+                              const name = url.split('/').pop();
+
+                              return (
+                                <div
+                                  key={index}
+                                  className="flex items-center gap-2 rounded-md border border-border/60 bg-background/60 px-3 py-2"
+                                >
+                                  <FileText className="h-4 w-4 text-muted-foreground" />
+
+                                  <span className="text-sm text-foreground truncate">
+                                    {name}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       ) : null}
+
 
                       {selectedAssignment.latestSubmission.instructor_comments ? (
                         <div className='space-y-2'>
@@ -1069,6 +1128,28 @@ export function StudentAssignmentWorkspace() {
                                   selectedAssignment.latestSubmission.submission_text
                                 }
                               />
+                            </div>
+
+                            <div className="space-y-2">
+                              {(Array.isArray(selectedAssignment?.latestSubmission?.file_urls)
+                                ? selectedAssignment.latestSubmission.file_urls
+                                : []
+                              ).map((url: string, index: number) => {
+                                const name = url.split('/').pop();
+
+                                return (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-2 rounded-md border border-border/60 bg-background/60 px-3 py-2"
+                                  >
+                                    <FileText className="h-4 w-4 text-muted-foreground" />
+
+                                    <span className="text-sm text-foreground truncate">
+                                      {name}
+                                    </span>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         ) : null}
@@ -1193,7 +1274,12 @@ export function StudentAssignmentWorkspace() {
 
                         <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between'>
                           <div className='text-muted-foreground text-xs'>
-                            {!selectedAssignment?.classMeta?.enrollmentUuid
+                            {!(
+                              selectedAssignment?.classMeta
+                                ?.courseEnrollmentUuid ??
+                              selectedAssignment?.classMeta
+                                ?.enrollmentUuid
+                            )
                               ? 'Submission is unavailable until this class has an active enrollment record.'
                               : canSubmitSelected
                                 ? 'Your submission will be saved immediately and any queued files will upload right after.'

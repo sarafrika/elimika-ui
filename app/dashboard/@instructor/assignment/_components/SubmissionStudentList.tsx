@@ -102,7 +102,7 @@ export function SubmissionStudentList({
                       </div>
 
                       <p className='text-muted-foreground mt-1 text-sm truncate'>
-                        {student.attendanceLabel}
+                        {student.submissionStatus}
                       </p>
                     </div>
                   </div>

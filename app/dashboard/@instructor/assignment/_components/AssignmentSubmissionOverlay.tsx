@@ -27,6 +27,7 @@ import { Bell, PanelLeft, PanelRight, Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useCourseEnrollmentsMap } from '../../../../../hooks/use-enrollment-map';
 import { SubmissionInsightsPanel } from './SubmissionInsightsPanel';
 import { SubmissionStudentList } from './SubmissionStudentList';
 import { SubmissionWorkspace } from './SubmissionWorkspace';
@@ -70,6 +71,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const classId = searchParams.get('classId') ?? '';
+  const courseId = searchParams.get('course_uuid') ?? '';
   const parsedTask = parseTaskId(taskId);
   const [search, setSearch] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState('');
@@ -121,15 +123,28 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
 
   const rubricMatrix = (rubricQuery[0]?.data?.data as RubricMatrix | undefined) ?? null;
 
+  const { courseEnrollmentMap } = useCourseEnrollmentsMap([courseId]);
   const submissions = assignmentSubmissionsQuery.data?.data ?? [];
+  const enrollments =
+    courseEnrollmentMap?.[courseId]?.enrollments ?? [];
+
+  const enrichedSubmissions: Array<
+    typeof submissions[number] & { student_uuid?: string }
+  > = submissions.map(submission => ({
+    ...submission,
+    student_uuid: enrollments.find(
+      enrollment => enrollment.uuid === submission.enrollment_uuid
+    )?.student_uuid,
+  }));
+
   const attempts = quizAttemptsQuery.data?.data?.content ?? [];
 
   const students = useMemo<SubmissionStudent[]>(() => {
     if (parsedTask?.taskType === 'assignment') {
-      return submissions
+      return enrichedSubmissions
         .map(submission => {
           const rosterEntry = rosterAllEnrollments.find(
-            entry => entry.enrollment?.uuid === submission.enrollment_uuid
+            entry => entry.enrollment?.student_uuid === submission.student_uuid
           );
           if (!rosterEntry?.enrollment?.uuid) return null;
 
@@ -138,6 +153,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
             comments: submission.instructor_comments ? [submission.instructor_comments] : [],
             fileUrls: submission.file_urls ?? [],
             id: rosterEntry.enrollment.uuid,
+            student_uuid: submission?.student_uuid as string,
             insightLabel: submission.is_graded ? 'Graded' : 'Awaiting review',
             name: rosterEntry.user?.full_name || 'Student',
             roleLabel: rosterEntry.user?.email || 'Learner',
@@ -156,7 +172,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
     return attempts
       .map(attempt => {
         const rosterEntry = rosterAllEnrollments.find(
-          entry => entry.enrollment?.uuid === attempt.enrollment_uuid
+          entry => entry.enrollment?.student_uuid === attempt?.student_uuid
         );
         if (!rosterEntry?.enrollment?.uuid) return null;
 
@@ -164,6 +180,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
           attendanceLabel: rosterEntry.enrollment.did_attend ? 'Present' : 'Pending',
           comments: [],
           id: rosterEntry.enrollment.uuid,
+          student_uuid: attempt?.student_uuid as string,
           insightLabel: attempt.is_passed ? 'Passed' : 'Needs review',
           name: rosterEntry.user?.full_name || 'Student',
           roleLabel: rosterEntry.user?.email || 'Learner',
@@ -190,11 +207,11 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
 
   const selectedSubmission =
     parsedTask?.taskType === 'assignment'
-      ? submissions.find(item => item.enrollment_uuid === selectedStudent?.id) ?? null
+      ? enrichedSubmissions.find(item => item.student_uuid === selectedStudent?.student_uuid) ?? null
       : null;
   const selectedAttempt =
     parsedTask?.taskType === 'quiz'
-      ? attempts.find(item => item.enrollment_uuid === selectedStudent?.id) ?? null
+      ? attempts.find(item => item.student_uuid === selectedStudent?.student_uuid) ?? null
       : null;
 
   const gradeSubmissionMut = useMutation(gradeSubmissionMutation());

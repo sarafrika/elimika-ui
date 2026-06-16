@@ -125,27 +125,32 @@ export function getDueSummary(value?: string | Date | null) {
   };
 }
 
-export function getStudentAssignmentSubmissionState(
-  row: StudentAssignmentRow
-) {
-  const status = String(
-    row.latestSubmission?.status ?? ''
-  ).toUpperCase();
+export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
+  const rawStatus = row.latestSubmission?.status;
+  const status = String(rawStatus ?? '').trim().toUpperCase();
 
   const dueSummary = getDueSummary(
     row.schedule?.due_at ?? row.assignment?.due_date
   );
 
-  if (!row.latestSubmission) {
+  const hasSubmission = row.submissions?.length > 0;
+
+  const isGraded =
+    status === 'GRADED' ||
+    row.latestSubmission?.percentage != null;
+
+  const isReturned = status === 'RETURNED';
+
+  if (!hasSubmission) {
     return {
-      key: 'pending' as StudentAssignmentFilterTab,
+      key: 'pending' as const,
       label: dueSummary.label === 'Overdue' ? 'Overdue' : 'Pending',
       variant:
         dueSummary.tone === 'danger'
-          ? ('destructive' as const)
+          ? 'destructive'
           : dueSummary.tone === 'warning'
-            ? ('warning' as const)
-            : ('secondary' as const),
+            ? 'warning'
+            : 'secondary',
       helper:
         dueSummary.label === 'Overdue'
           ? 'Past due date'
@@ -153,30 +158,30 @@ export function getStudentAssignmentSubmissionState(
     };
   }
 
-  if (status === 'GRADED') {
+  if (isGraded) {
     return {
-      key: 'graded' as StudentAssignmentFilterTab,
+      key: 'graded' as const,
       label: 'Graded',
-      variant: 'success' as const,
+      variant: 'success',
       helper:
-        row.latestSubmission.grade_display ||
+        row.latestSubmission?.grade_display ??
         'Instructor feedback available',
     };
   }
 
-  if (status === 'RETURNED') {
+  if (isReturned) {
     return {
-      key: 'returned' as StudentAssignmentFilterTab,
+      key: 'returned' as const,
       label: 'Returned',
-      variant: 'warning' as const,
+      variant: 'warning',
       helper: 'Requires revision and resubmission',
     };
   }
 
   return {
-    key: 'submitted' as StudentAssignmentFilterTab,
+    key: 'submitted' as const,
     label: status === 'IN_REVIEW' ? 'In review' : 'Submitted',
-    variant: 'secondary' as const,
+    variant: 'secondary',
     helper: 'Submitted and awaiting grading',
   };
 }
@@ -210,24 +215,21 @@ export function useStudentAssignmentData() {
               classDetails?.class_definition?.uuid;
 
             if (!classUuid) return null;
+            const studentUuid = student?.uuid;
 
             const enrollmentUuid =
               classDefinition.courseEnrollments.find(
                 enrollment =>
-                  enrollment.status !==
-                  'ACTIVE'
+                  enrollment.student_uuid === student?.uuid &&
+                  enrollment.status !== 'ACTIVE'
               )?.uuid;
 
-            const studentUuid =
+            const courseEnrollmentUuid =
               classDefinition.courseEnrollments.find(
                 enrollment =>
-                  enrollment.status !==
-                  'ACTIVE'
-              )?.student_uuid;
-
-            const courseEnrollmentUuid = classDefinition?.courseEnrollments?.find(enrollment =>
-              enrollment.status ===
-              'ACTIVE')?.uuid
+                  enrollment.student_uuid === student?.uuid &&
+                  enrollment.status === 'ACTIVE'
+              )?.uuid;
 
             return {
               classTitle: getClassTitle(classDetails),
@@ -340,7 +342,7 @@ export function useStudentAssignmentData() {
       ...getAssignmentSubmissionsOptions({
         path: { assignmentUuid: uuid },
       }),
-      enabled: Boolean(student?.uuid && uuid),
+      // enabled: Boolean(student?.uuid && uuid),
       staleTime: 60 * 1000,
       refetchOnWindowFocus: false,
     })),
@@ -381,6 +383,13 @@ export function useStudentAssignmentData() {
     return map;
   }, [assignmentAttachmentQueries, assignmentUuids]);
 
+
+  const studentEnrollmentUuids = new Set(
+    classItems
+      .map(item => item.courseEnrollmentUuid ?? item.enrollmentUuid)
+      .filter(Boolean)
+  );
+
   const submissionMap = useMemo(() => {
     const map = new Map<
       string,
@@ -389,31 +398,15 @@ export function useStudentAssignmentData() {
 
     assignmentUuids.forEach((uuid, i) => {
       const submissions =
-        assignmentSubmissionQueries[i]?.data?.data ??
-        [];
+        assignmentSubmissionQueries[i]?.data?.data ?? [];
 
       const filtered = submissions
         .filter(sub =>
-          classDefinitions.some(cd =>
-            cd.studentEnrollments.some(
-              e => e.uuid === sub.enrollment_uuid
-            )
-          )
+          studentEnrollmentUuids.has(sub.enrollment_uuid)
         )
         .sort((a, b) => {
-          const at = new Date(
-            a.submitted_at ||
-            a.updated_date ||
-            a.created_date ||
-            0
-          ).getTime();
-          const bt = new Date(
-            b.submitted_at ||
-            b.updated_date ||
-            b.created_date ||
-            0
-          ).getTime();
-
+          const at = new Date(a.submitted_at ?? a.updated_date ?? a.created_date ?? 0).getTime();
+          const bt = new Date(b.submitted_at ?? b.updated_date ?? b.created_date ?? 0).getTime();
           return bt - at;
         });
 
@@ -421,7 +414,11 @@ export function useStudentAssignmentData() {
     });
 
     return map;
-  }, [assignmentSubmissionQueries, assignmentUuids, classDefinitions]);
+  }, [
+    assignmentSubmissionQueries,
+    assignmentUuids,
+    studentEnrollmentUuids,
+  ]);
 
   /**
    * Final rows
@@ -444,11 +441,9 @@ export function useStudentAssignmentData() {
             submissionMap.get(assignmentUuid) ?? [];
 
           const latestSubmission =
-            submissions.find(
-              s =>
-                s.enrollment_uuid ===
-                classMeta.courseEnrollmentUuid
-            ) ?? null;
+            submissions.find(s => s.enrollment_uuid === classMeta.courseEnrollmentUuid) ??
+            submissions[0] ??
+            null;
 
           return {
             assignment,

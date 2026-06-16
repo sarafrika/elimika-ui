@@ -34,9 +34,12 @@ import {
   type CourseLessonContent,
   type CourseLessonWithContent,
 } from '@/hooks/use-courselessonwithcontent';
+import { dayjs } from '@/lib/date';
 import {
   createAssignmentScheduleMutation,
   createQuizScheduleMutation,
+  deleteAssignmentScheduleMutation,
+  deleteQuizScheduleMutation,
   endScheduledInstanceMutation,
   getAllAssignmentsOptions,
   getAllQuizzesOptions,
@@ -89,7 +92,6 @@ import {
   Trash2,
   Video
 } from 'lucide-react';
-import { dayjs } from '@/lib/date';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -960,6 +962,7 @@ function AssessmentTasksSection({
                   dueAt={item.due_at}
                   gradingDueAt={item.grading_due_at}
                   assignment={item.assignment}
+                  activeSchedule={item}
                   onViewAssignment={assignment => {
                     setPreviewAssignment(assignment);
                     setIsAssignmentPreviewOpen(true);
@@ -976,6 +979,7 @@ function AssessmentTasksSection({
                   dueAt={item.due_at}
                   gradingDueAt={item.grading_due_at}
 
+                  activeSchedule={item}
                   quiz={item.quiz}
 
                   onViewQuiz={quiz => {
@@ -1106,10 +1110,9 @@ function AssignedTaskRow({
   title,
   dueAt,
   gradingDueAt,
-
   assignment,
+  activeSchedule,
   quiz,
-
   onViewAssignment,
   onViewQuiz,
 }: {
@@ -1118,12 +1121,15 @@ function AssignedTaskRow({
   dueAt?: string | Date | null;
   gradingDueAt?: string | Date | null;
 
+  activeSchedule: AssignmentScheduleItem | QuizScheduleItem;
   assignment?: Assignment | null;
   quiz?: Quiz | null;
 
   onViewAssignment?: (assignment: Assignment) => void;
   onViewQuiz?: (quiz: Quiz) => void;
 }) {
+
+  const qc = useQueryClient()
   const [expanded, setExpanded] = React.useState(false);
 
   const [editDueAt, setEditDueAt] = React.useState(
@@ -1134,14 +1140,73 @@ function AssignedTaskRow({
     formatDateTimeInput(gradingDueAt)
   );
 
+  const deleteAssignmentSchedMut = useMutation(
+    deleteAssignmentScheduleMutation()
+  );
+
+  const deleteQuizSchedMut = useMutation(
+    deleteQuizScheduleMutation()
+  );
+
+  const isDeleting =
+    deleteAssignmentSchedMut.isPending ||
+    deleteQuizSchedMut.isPending;
+
+  const handleDelete = () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to remove this ${type} from the class schedule?`
+    );
+
+    if (!confirmed) return;
+
+    if (type === 'assignment' && assignment?.uuid) {
+      deleteAssignmentSchedMut.mutate(
+        {
+          path: {
+            classUuid: activeSchedule?.class_definition_uuid as string,
+            scheduleUuid: activeSchedule?.uuid as string,
+          },
+        },
+        {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: activeSchedule?.class_definition_uuid as string } }),
+            });
+
+          },
+        }
+      );
+
+      return;
+    }
+
+    if (type === 'quiz' && quiz?.uuid) {
+      deleteQuizSchedMut.mutate(
+        {
+          path: {
+            classUuid: activeSchedule?.class_definition_uuid as string,
+            scheduleUuid: activeSchedule?.uuid as string,
+          },
+        },
+        {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getQuizSchedulesQueryKey({ path: { classUuid: activeSchedule?.class_definition_uuid as string } }),
+            });
+          },
+        }
+      );
+    }
+  };
+
   return (
-    <div className='border-border/60 bg-background/80 overflow-hidden rounded-lg border'>
+    <div className='bg-card border-border overflow-hidden rounded-lg border'>
       {/* Row header */}
       <div className='flex items-center gap-3 p-3'>
         <div
           className={`grid size-7 shrink-0 place-items-center rounded-md ${type === 'assignment'
             ? 'bg-primary/10 text-primary'
-            : 'bg-violet-500/10 text-violet-500'
+            : 'bg-muted text-muted-foreground'
             }`}
         >
           {type === 'assignment' ? (
@@ -1202,17 +1267,23 @@ function AssignedTaskRow({
             type='button'
             variant='ghost'
             size='icon'
-            className='size-7 text-destructive hover:text-destructive'
+            className='size-7 text-destructive hover:bg-destructive/10 hover:text-destructive'
+            disabled={isDeleting}
+            onClick={handleDelete}
             title='Remove'
           >
-            <Trash2 className='size-3.5' />
+            {isDeleting ? (
+              <Loader2 className='size-3.5 animate-spin' />
+            ) : (
+              <Trash2 className='size-3.5' />
+            )}
           </Button>
         </div>
       </div>
 
       {/* Inline date editor */}
       {expanded && (
-        <div className='border-border/60 bg-muted/30 border-t p-3'>
+        <div className='bg-muted/30 border-border border-t p-3'>
           <p className='text-muted-foreground mb-2 text-[11px] font-medium uppercase tracking-wide'>
             Adjust deadlines
           </p>
@@ -1257,7 +1328,7 @@ function AssignedTaskRow({
               size='sm'
               className='h-7 text-xs'
               onClick={() => {
-                // TODO: wire to onUpdate handler
+                // TODO: wire update mutation
                 setExpanded(false);
               }}
             >
