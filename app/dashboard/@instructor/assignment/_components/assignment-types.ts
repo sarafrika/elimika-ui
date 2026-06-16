@@ -7,6 +7,7 @@ export type AssignmentCardData = {
   ctaLabel: string;
   classTitle?: string;
   courseTitle?: string;
+  courseId?: string;
   dueLabel: string;
   iconTone: 'amber' | 'blue';
   id: string;
@@ -52,6 +53,7 @@ export type SubmissionStudent = {
   comments: string[];
   fileUrls?: string[];
   id: string;
+  student_uuid: string;
   insightLabel: string;
   name: string;
   roleLabel: string;

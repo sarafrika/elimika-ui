@@ -300,12 +300,13 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
               )}
             >
               <Link
-                className='flex items-center justify-center gap-2'
+                className="flex items-center justify-center gap-2"
                 href={{
                   pathname: `/dashboard/assignment/${assignment.id}`,
-                  query: assignment.classUuid
-                    ? { classId: assignment.classUuid }
-                    : undefined,
+                  query: {
+                    ...(assignment.courseId && { course_uuid: assignment.courseId }),
+                    ...(assignment.classUuid && { classId: assignment.classUuid }),
+                  },
                 }}
               >
                 <span className='truncate text-xs sm:text-sm'>

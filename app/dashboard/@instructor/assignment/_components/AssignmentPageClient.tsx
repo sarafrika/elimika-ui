@@ -309,7 +309,8 @@ export function AssignmentPageClient() {
           classUuid: schedule.classUuid,
           scheduleUuid: schedule?.uuid as string,
           classTitle: classInfo?.title || 'Class',
-          courseTitle: lessonInfo?.courseTitle || classInfo?.course?.name || 'Course',
+          courseTitle: lessonInfo?.courseTitle || classInfo?.course?.name || '',
+          courseId: classInfo?.course_uuid,
           dueLabel: formatDueLabel(schedule.due_at || assignment.due_date),
           iconTone: status === 'overdue' ? 'amber' : 'blue',
           id: `assignment_${assignment.uuid}`,
@@ -365,6 +366,7 @@ export function AssignmentPageClient() {
           scheduleUuid: schedule?.uuid as string,
           classTitle: classInfo?.title || 'Class',
           courseTitle: lessonInfo?.courseTitle || classInfo?.course?.name || 'Course',
+          courseId: classInfo?.course_uuid,
           dueLabel: formatDueLabel(schedule.due_at),
           iconTone: status === 'overdue' ? 'amber' : 'blue',
           id: `quiz_${quiz.uuid}`,
@@ -500,12 +502,10 @@ export function AssignmentPageClient() {
                 </div>
               </div>
             ) : filteredAssignments.length > 0 ? (
-              <div
-                className='flex flex-row flex-wrap gap-4'
-              >
-                {filteredAssignments.map(assignment => (
+              <div className="flex flex-row flex-wrap gap-4">
+                {filteredAssignments.map((assignment, index) => (
                   <AssignmentCard
-                    key={assignment.id}
+                    key={`${assignment.id}-${index}`}
                     assignment={assignment}
                   />
                 ))}

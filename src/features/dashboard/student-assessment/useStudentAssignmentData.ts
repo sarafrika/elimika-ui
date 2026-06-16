@@ -340,7 +340,7 @@ export function useStudentAssignmentData() {
       ...getAssignmentSubmissionsOptions({
         path: { assignmentUuid: uuid },
       }),
-      enabled: Boolean(student?.uuid && uuid),
+      // enabled: Boolean(student?.uuid && uuid),
       staleTime: 60 * 1000,
       refetchOnWindowFocus: false,
     })),
@@ -381,6 +381,7 @@ export function useStudentAssignmentData() {
     return map;
   }, [assignmentAttachmentQueries, assignmentUuids]);
 
+
   const submissionMap = useMemo(() => {
     const map = new Map<
       string,
@@ -393,13 +394,13 @@ export function useStudentAssignmentData() {
         [];
 
       const filtered = submissions
-        .filter(sub =>
-          classDefinitions.some(cd =>
-            cd.studentEnrollments.some(
-              e => e.uuid === sub.enrollment_uuid
-            )
-          )
-        )
+        // .filter(sub =>
+        //   classDefinitions.some(cd =>
+        //     cd.studentEnrollments.some(
+        //       e => e.uuid === sub.enrollment_uuid
+        //     )
+        //   )
+        // )
         .sort((a, b) => {
           const at = new Date(
             a.submitted_at ||

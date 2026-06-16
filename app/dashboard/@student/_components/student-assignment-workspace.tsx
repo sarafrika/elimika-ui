@@ -152,6 +152,7 @@ export function StudentAssignmentWorkspace() {
     enabled: !!enrollmentUuid,
   });
 
+
   const submittedAssignmentIds = useMemo(() => {
     const submissions = submissionsResp?.data?.content ?? [];
 
@@ -273,6 +274,8 @@ export function StudentAssignmentWorkspace() {
         (value): value is number =>
           typeof value === 'number'
       );
+
+    console.log(assignmentRows, "ROWS")
 
     const averageScore =
       gradedSubmissions.length > 0
