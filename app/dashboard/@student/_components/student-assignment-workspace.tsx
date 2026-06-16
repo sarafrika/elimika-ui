@@ -532,6 +532,24 @@ export function StudentAssignmentWorkspace() {
   return (
     <>
       <div className='space-y-6'>
+        <div className='space-y-2'>
+          <Badge
+            variant='outline'
+            className='border-primary/30 bg-primary/5 text-primary w-fit'
+          >
+            Assignment workspace
+          </Badge>
+
+          <h1 className='text-foreground text-2xl font-semibold sm:text-3xl'>
+            Manage and submit course assignments
+          </h1>
+
+          <p className='text-muted-foreground text-sm'>
+            View assigned coursework, review instructions, upload your submissions,
+            and track grading feedback from your instructors.
+          </p>
+        </div>
+
         <section className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
           {[
             {
