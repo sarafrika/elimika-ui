@@ -1,9 +1,8 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { CalendarDays } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '../../../../../components/ui/button';
 import { BookingCard } from './BookingCard';
 import { LiveClassCard } from './LiveClassCard';
@@ -110,7 +109,6 @@ function matchesClassTag(
 }
 
 export function InstructorTrainingHubPage() {
-  const { replaceBreadcrumbs } = useBreadcrumb();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<
     'all' | 'today' | 'upcoming' | 'incomplete' | 'remedial' | 'make-up' | 'cancelled' | 'completed'
@@ -122,13 +120,6 @@ export function InstructorTrainingHubPage() {
     waitingList,
     isLoading,
   } = useInstructorTrainingHubData();
-
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-      { id: 'training-hub', title: 'Training Hub', url: '/dashboard/training-hub', isLast: true },
-    ]);
-  }, [replaceBreadcrumbs]);
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
 

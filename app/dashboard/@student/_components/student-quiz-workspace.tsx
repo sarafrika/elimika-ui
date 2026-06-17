@@ -190,6 +190,7 @@ function ScoreSummaryCard({ result }: { result: QuizResult }) {
             >
               {result.percentage}% · {tierStyles.label}
             </span>
+
             <div className='text-muted-foreground flex gap-4 text-xs'>
               <span className='text-success flex items-center gap-1 font-medium'>
                 <CheckCircle2 className='h-3.5 w-3.5' />
@@ -396,6 +397,12 @@ export function StudentQuizWorkspace() {
   const quizQuestions = questions as QuizQuestionWithOptions[];
   const selectedQuizUuid = selectedQuiz?.quiz?.uuid ?? '';
   const selectedAnswers = selectedQuizUuid ? (answerDrafts[selectedQuizUuid] ?? {}) : {};
+
+  const normalizeAnswer = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
 
   const isLoading =
     classDefinitionsLoading ||
@@ -695,24 +702,51 @@ export function StudentQuizWorkspace() {
                               ? [currentValue]
                               : [];
 
+                          const questionType = String(question.question_type || '').toUpperCase();
+
+                          const isTextQuestion =
+                            questionType === 'SHORT_TEXT' ||
+                            questionType === 'SHORT_ANSWER' ||
+                            questionType === 'ESSAY';
+
                           // Per-question correctness for review indicator
                           const isQuestionCorrect =
                             mode === 'review'
                               ? (() => {
-                                if (optionCount > 0) {
+                                const questionType = String(
+                                  question.question_type || ''
+                                ).toLowerCase();
+
+                                if (questionType === 'multiple_choice') {
                                   const correctIds = (question.options ?? [])
                                     .filter(o => o.is_correct)
                                     .map(o => o.uuid);
+
                                   return (
                                     selectedOptionValues.length === correctIds.length &&
                                     selectedOptionValues.every(id => correctIds.includes(id))
                                   );
                                 }
-                                const expected =
-                                  question.options?.[0]?.option_text?.trim().toLowerCase() ?? '';
-                                return (
-                                  String(currentValue || '').trim().toLowerCase() === expected
-                                );
+
+                                if (
+                                  questionType === 'short_answer' ||
+                                  questionType === 'short_text' ||
+                                  questionType === 'essay'
+                                ) {
+                                  const expected =
+                                    question.options
+                                      ?.find(o => o.is_correct)
+                                      ?.option_text?.trim()
+                                      .toLowerCase() ?? '';
+
+                                  return (
+                                    String(currentValue || '')
+                                      .trim()
+                                      .toLowerCase() === expected
+                                  );
+                                }
+
+                                return false;
                               })()
                               : null;
 
@@ -777,14 +811,79 @@ export function StudentQuizWorkspace() {
                                 </div>
 
                                 {/* MCQ options */}
-                                {optionCount > 0 ? (
+                                {/* Question Answer Area */}
+                                {isTextQuestion ? (
+                                  <div className='space-y-3'>
+                                    {mode === 'attempt' && (
+                                      <Textarea
+                                        rows={questionType === 'ESSAY' ? 6 : 3}
+                                        value={typeof currentValue === 'string' ? currentValue : ''}
+                                        onChange={e => setAnswerValue(questionUuid, e.target.value)}
+                                        placeholder={
+                                          questionType === 'ESSAY'
+                                            ? 'Write your essay here...'
+                                            : 'Type your answer here...'
+                                        }
+                                      />
+                                    )}
+
+                                    {mode === 'review' && (
+                                      (() => {
+                                        const submittedAnswer = String(currentValue || '');
+
+                                        const correctAnswer =
+                                          question.options?.find(o => o.is_correct)?.option_text || '';
+
+                                        const isCorrect =
+                                          normalizeAnswer(submittedAnswer) ===
+                                          normalizeAnswer(correctAnswer);
+
+                                        return (
+                                          <div className='space-y-2'>
+                                            <div
+                                              className={cx(
+                                                'rounded-xl border p-4',
+                                                isCorrect
+                                                  ? 'border-success/40 bg-success/5'
+                                                  : 'border-destructive/40 bg-destructive/5'
+                                              )}
+                                            >
+                                              <p className='text-muted-foreground text-xs'>
+                                                Your answer
+                                              </p>
+                                              <p className='mt-1 text-sm'>
+                                                {submittedAnswer || 'No answer provided'}
+                                              </p>
+                                            </div>
+
+                                            {!isCorrect && correctAnswer && (
+                                              <div className='rounded-xl border border-success/40 bg-success/5 p-4'>
+                                                <p className='text-muted-foreground text-xs'>
+                                                  Correct answer
+                                                </p>
+                                                <p className='mt-1 text-sm'>
+                                                  {correctAnswer}
+                                                </p>
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })()
+                                    )}
+                                  </div>
+                                ) : (
                                   <div className='space-y-2'>
                                     {question.options
                                       .slice()
-                                      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                                      .sort(
+                                        (a, b) =>
+                                          (a.display_order ?? 0) -
+                                          (b.display_order ?? 0)
+                                      )
                                       .map(option => {
                                         const optionUuid = option.uuid!;
-                                        const isSelected = selectedOptionValues.includes(optionUuid);
+                                        const isSelected =
+                                          selectedOptionValues.includes(optionUuid);
                                         const isCorrect = option.is_correct;
 
                                         return (
@@ -794,6 +893,7 @@ export function StudentQuizWorkspace() {
                                             disabled={mode === 'review'}
                                             onClick={() => {
                                               if (mode === 'review') return;
+
                                               toggleOption(
                                                 questionUuid,
                                                 optionUuid,
@@ -816,92 +916,39 @@ export function StudentQuizWorkspace() {
                                           >
                                             {mode === 'review' ? (
                                               isCorrect ? (
-                                                <CheckCircle2 className='text-success h-4 w-4 shrink-0 mt-0.5' />
+                                                <CheckCircle2 className='text-success mt-0.5 h-4 w-4 shrink-0' />
                                               ) : isSelected ? (
-                                                <XCircle className='text-destructive h-4 w-4 shrink-0 mt-0.5' />
+                                                <XCircle className='text-destructive mt-0.5 h-4 w-4 shrink-0' />
                                               ) : (
-                                                <Circle className='text-muted-foreground h-4 w-4 shrink-0 mt-0.5' />
+                                                <Circle className='text-muted-foreground mt-0.5 h-4 w-4 shrink-0' />
                                               )
                                             ) : (
-                                              <Circle className='text-muted-foreground h-4 w-4 shrink-0 mt-0.5' />
+                                              <Circle className='text-muted-foreground mt-0.5 h-4 w-4 shrink-0' />
                                             )}
 
-                                            <span className='text-sm'>{option.option_text}</span>
+                                            <span className='text-sm'>
+                                              {option.option_text}
+                                            </span>
 
                                             {mode === 'review' && isCorrect && (
-                                              <Badge className='ml-auto bg-success/15 text-success border border-success/30 shrink-0'>
+                                              <Badge className='ml-auto shrink-0 border border-success/30 bg-success/15 text-success'>
                                                 Correct
                                               </Badge>
                                             )}
-                                            {mode === 'review' && isSelected && !isCorrect && (
-                                              <Badge
-                                                variant='destructive'
-                                                className='ml-auto shrink-0'
-                                              >
-                                                Your answer
-                                              </Badge>
-                                            )}
+
+                                            {mode === 'review' &&
+                                              isSelected &&
+                                              !isCorrect && (
+                                                <Badge
+                                                  variant='destructive'
+                                                  className='ml-auto shrink-0'
+                                                >
+                                                  Your answer
+                                                </Badge>
+                                              )}
                                           </button>
                                         );
                                       })}
-                                  </div>
-                                ) : (
-                                  /* Short answer / Essay */
-                                  <div className='space-y-3'>
-                                    {mode === 'attempt' && (
-                                      <Textarea
-                                        rows={
-                                          String(question.question_type || '')
-                                            .toUpperCase() === 'ESSAY'
-                                            ? 6
-                                            : 3
-                                        }
-                                        value={typeof currentValue === 'string' ? currentValue : ''}
-                                        onChange={e =>
-                                          setAnswerValue(questionUuid, e.target.value)
-                                        }
-                                        placeholder='Type your answer here'
-                                      />
-                                    )}
-
-                                    {mode === 'review' &&
-                                      (() => {
-                                        const submittedAnswer = String(currentValue || '');
-                                        const correctAnswer =
-                                          question.options?.[0]?.option_text || '';
-                                        const isCorrect =
-                                          submittedAnswer.trim().toLowerCase() ===
-                                          correctAnswer.trim().toLowerCase();
-
-                                        return (
-                                          <div className='space-y-2'>
-                                            <div
-                                              className={cx(
-                                                'rounded-xl border p-4',
-                                                isCorrect
-                                                  ? 'border-success/40 bg-success/5'
-                                                  : 'border-destructive/40 bg-destructive/5'
-                                              )}
-                                            >
-                                              <p className='text-muted-foreground text-xs'>
-                                                Your answer
-                                              </p>
-                                              <p className='text-sm mt-1'>
-                                                {submittedAnswer || 'No answer provided'}
-                                              </p>
-                                            </div>
-
-                                            {!isCorrect && (
-                                              <div className='rounded-xl border border-success/40 bg-success/5 p-4'>
-                                                <p className='text-muted-foreground text-xs'>
-                                                  Correct answer
-                                                </p>
-                                                <p className='text-sm mt-1'>{correctAnswer}</p>
-                                              </div>
-                                            )}
-                                          </div>
-                                        );
-                                      })()}
                                   </div>
                                 )}
                               </CardContent>
@@ -980,6 +1027,12 @@ export function calculateQuizResult(
   let correctCount = 0;
   let incorrectCount = 0;
 
+  const normalizeAnswer = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+
   questions.forEach(question => {
     const points = Number(question.points ?? 0);
     totalPoints += points;
@@ -1002,10 +1055,22 @@ export function calculateQuizResult(
       }
     }
 
-    if (type === 'short_answer') {
-      const expectedAnswer = question.options?.[0]?.option_text?.trim().toLowerCase();
-      const submittedAnswer = String(answer || '').trim().toLowerCase();
-      const isCorrect = submittedAnswer === expectedAnswer;
+    if (
+      type === 'short_answer' ||
+      type === 'short_text'
+    ) {
+      const expectedAnswer =
+        question.options
+          ?.find(o => o.is_correct)
+          ?.option_text?.trim()
+          .toLowerCase() ?? '';
+
+      const submittedAnswer =
+        String(answer || '').trim().toLowerCase();
+
+      const isCorrect =
+        normalizeAnswer(submittedAnswer) ===
+        normalizeAnswer(expectedAnswer);
 
       if (isCorrect) {
         earnedPoints += points;

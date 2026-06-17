@@ -1,6 +1,5 @@
 'use client';
 
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,6 +23,7 @@ import {
   buildWorkspaceAliasPath,
 } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import {
   Check,
@@ -214,13 +214,13 @@ export default function DashboardTopBar() {
               </div>
 
               <div className='min-w-0 flex flex-col justify-center leading-tight'>
-                <p className='text-muted-foreground text-[10px] font-medium uppercase tracking-wide'>
+                <div className='text-muted-foreground text-[10px] font-medium uppercase tracking-wide'>
                   Skills Wallet
-                </p>
+                </div>
 
-                <p className='text-foreground truncate text-sm font-semibold leading-none'>
+                <div className='text-foreground truncate text-sm font-semibold leading-none'>
                   {walletBalance}
-                </p>
+                </div>
               </div>
             </div>
 
@@ -275,10 +275,10 @@ export default function DashboardTopBar() {
                   <Wallet className='h-3.5 w-3.5' />
                 </div>
                 <div className='min-w-0 leading-tight'>
-                  <p className='text-muted-foreground text-[10px] uppercase tracking-wide'>
+                  <div className='text-muted-foreground text-[10px] uppercase tracking-wide'>
                     Skills Wallet
-                  </p>
-                  <p className='text-foreground truncate text-xs font-semibold'>{walletBalance}</p>
+                  </div>
+                  <div className='text-foreground truncate text-xs font-semibold'>{walletBalance}</div>
                 </div>
               </div>
             )}

@@ -187,14 +187,14 @@ export function SchedulerRightRail({
                 </span>
 
                 <div className='min-w-0 overflow-hidden'>
-                  <p className='text-muted-foreground mb-1 truncate text-[11px] font-bold'>
+                  <div className='text-muted-foreground mb-1 truncate text-[11px] font-bold'>
                     {event.course}
-                  </p>
-                  <p className='text-foreground truncate text-xs font-semibold'>{event.title}</p>
+                  </div>
+                  <div className='text-foreground truncate text-xs font-semibold'>{event.title}</div>
 
-                  <p className='text-muted-foreground truncate text-[11px]'>
+                  <div className='text-muted-foreground truncate text-[11px]'>
                     {joinParts([event.instructor, event.location])}
-                  </p>
+                  </div>
                 </div>
 
                 <Button

@@ -13,9 +13,8 @@ import {
 import type {
   Assignment,
   AssignmentSubmission,
-  Course,
   Instructor,
-  ScheduledInstance,
+  ScheduledInstance
 } from '@/services/client/types.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQueries, useQuery } from '@tanstack/react-query';
@@ -558,19 +557,33 @@ export function useStudentLearningHubData(): LearningHubData {
     return rows.length > 0 ? rows : [];
   }, [assignmentSchedules, assignmentsMap, submissionsMap]);
 
-  const recommendedCourses = useMemo<LearningHubRecommendedCourse[]>(() => {
-    const realCourses = publishedCourses
-      .filter((course): course is Course => Boolean(course?.name))
+  const enrolledCourseIds = new Set(
+    classDefinitions
+      .map(item => item.course?.uuid)
+      .filter(Boolean)
+  );
+
+  const recommendedCourses = useMemo(() => {
+    return publishedCourses
+      .filter(
+        course =>
+          course?.name &&
+          !enrolledCourseIds.has(course.uuid)
+      )
       .slice(0, 6)
       .map(course => ({
         id: course.uuid ?? course.name,
         title: course.name,
-        level: (course.duration_hours ?? 0) >= 5 ? 'Intermediate' : 'Beginner',
-        duration: formatHours((course.duration_hours ?? 0) * 60 + (course.duration_minutes ?? 0)),
+        level:
+          (course.duration_hours ?? 0) >= 5
+            ? 'Intermediate'
+            : 'Beginner',
+        duration: formatHours(
+          (course.duration_hours ?? 0) * 60 +
+          (course.duration_minutes ?? 0)
+        ),
       }));
-
-    return realCourses.length > 0 ? realCourses : MOCK_RECOMMENDED_COURSES;
-  }, [publishedCourses]);
+  }, [publishedCourses, enrolledCourseIds]);
 
   const invite = useMemo<LearningHubInvite | null>(() => {
     const item = upcomingClassesPreview[1] ?? upcomingClassesPreview[0];

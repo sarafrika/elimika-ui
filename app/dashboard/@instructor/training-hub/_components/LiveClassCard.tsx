@@ -1,5 +1,15 @@
 'use client';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -21,6 +31,7 @@ import {
   isAuthenticatedMediaUrl,
   toAuthenticatedMediaUrl,
 } from '@/src/lib/media-url';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
   CalendarDays,
@@ -37,8 +48,10 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { LinkShareCard } from '../../../../../components/shared/link-share-card';
+import { useUserProfile } from '../../../../../context/profile-context';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../lib/share';
+import { deactivateClassDefinitionMutation, getClassDefinitionsForInstructorQueryKey } from '../../../../../services/client/@tanstack/react-query.gen';
 import { RichTextPreview } from '../../classes/class-training/[id]/_components/ClassTrainingPage';
 import { socialShareActions } from '../../classes/overview/[id]/page';
 import type { TrainingHubLiveClass } from './training-hub-data';
@@ -50,12 +63,37 @@ type LiveClassCardProps = {
 export function LiveClassCard({
   liveClass,
 }: LiveClassCardProps) {
+  const qc = useQueryClient()
+  const profile = useUserProfile()
+
   const imageUrl = toAuthenticatedMediaUrl(liveClass.imageUrl);
+  const deleteClassMut = useMutation(deactivateClassDefinitionMutation());
 
   const handleDeleteClass = () => {
-    toast.message('Implement delete class');
+    if (!liveClass?.classUuid) return;
+
+    deleteClassMut.mutate(
+      {
+        path: { uuid: liveClass.classUuid },
+      },
+      {
+        onSuccess: () => {
+          toast.success('Class deleted successfully');
+          setDeleteOpen(false);
+
+          qc.invalidateQueries({
+            queryKey: getClassDefinitionsForInstructorQueryKey({ path: { instructorUuid: profile?.instructor?.uuid as string } })
+          })
+        },
+        onError: (error) => {
+          toast.error('Failed to delete class');
+          console.error(error);
+        },
+      }
+    );
   };
 
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const registrationLink =
     typeof window !== 'undefined'
@@ -222,9 +260,7 @@ export function LiveClassCard({
 
                       <DropdownMenuItem
                         className='text-destructive focus:text-destructive'
-                        onClick={
-                          handleDeleteClass
-                        }
+                        onClick={() => setDeleteOpen(true)}
                       >
                         <Trash2 className='mr-2 size-4' />
                         Delete class
@@ -353,6 +389,41 @@ export function LiveClassCard({
           </div>
         </div>
       </CardContent>
+
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete Class?
+            </AlertDialogTitle>
+
+            <AlertDialogDescription>
+              Are you sure you want to delete{' '}
+              <span className='font-medium'>
+                "{liveClass.title}"
+              </span>
+              ? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              Cancel
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              onClick={handleDeleteClass}
+              disabled={deleteClassMut.isPending}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              {deleteClassMut.isPending
+                ? 'Deleting...'
+                : 'Delete Class'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
 
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>

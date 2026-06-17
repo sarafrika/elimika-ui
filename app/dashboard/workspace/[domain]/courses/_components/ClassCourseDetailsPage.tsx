@@ -698,7 +698,6 @@ export default function ClassCourseDetailsPage({
                                 )
                             }
                             onInviteStudents={() => setInviteOpen(true)}
-                            handleDeleteClass={() => { }}
                             onApplyForFunding={() => {
                                 router.push('/dashboard/skills-fund')
                             }}

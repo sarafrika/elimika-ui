@@ -1,6 +1,17 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { Course } from "@/services/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Award,
   BookOpen,
@@ -20,9 +31,13 @@ import {
   Wrench
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "../../../../../../components/ui/button";
+import { useUserProfile } from "../../../../../../context/profile-context";
 import { CombinedClassDetailsData } from "../../../../../../hooks/use-class-details";
 import { UserDomain } from "../../../../../../lib/types";
+import { deactivateClassDefinitionMutation, getClassDefinitionsForInstructorQueryKey } from "../../../../../../services/client/@tanstack/react-query.gen";
 import { PreviewRow } from "../../../../@instructor/classes/new/_components/class-creation-preview-rail";
 
 type Props = {
@@ -38,7 +53,6 @@ type Props = {
   onSearchInstructor: () => void;
   onInviteStudents?: () => void;
   onApplyForFunding?: () => void;
-  handleDeleteClass?: () => void;
   activeDomain?: UserDomain | null;
   becomeInstructorLabel?: string;
   becomeInstructorDisabled?: boolean;
@@ -58,13 +72,15 @@ export default function EnrollSidebar({
   onSearchInstructor,
   onInviteStudents,
   onApplyForFunding,
-  handleDeleteClass,
   activeDomain,
   becomeInstructorLabel = "Apply to Train",
   becomeInstructorDisabled = false,
   type,
 }: Props) {
   const router = useRouter()
+  const qc = useQueryClient()
+  const profile = useUserProfile()
+
   const priceLabel =
     typeof course.minimum_training_fee === "number" &&
       course.minimum_training_fee > 0
@@ -78,6 +94,38 @@ export default function EnrollSidebar({
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   const totalDuration = `${hours}h${minutes ? ` ${minutes}m` : ""}`;
+
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const deleteClassMut = useMutation(deactivateClassDefinitionMutation());
+
+  const handleDeleteClass = () => {
+    if (!classData?.class?.uuid) return;
+
+    deleteClassMut.mutate(
+      {
+        path: { uuid: classData?.class?.uuid },
+      },
+      {
+        onSuccess: () => {
+          toast.success('Class deleted successfully');
+          setDeleteOpen(false);
+
+          qc.invalidateQueries({
+            queryKey: getClassDefinitionsForInstructorQueryKey({ path: { instructorUuid: profile?.instructor?.uuid as string } })
+          })
+
+          router.push('/dashboard/training-hub')
+        },
+        onError: (error) => {
+          toast.error('Failed to delete class');
+          console.error(error);
+        },
+      }
+    );
+  };
+
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
@@ -297,7 +345,7 @@ export default function EnrollSidebar({
       {/* COURSE INCLUDES */}
       <div className="rounded-xl border border-border bg-card shadow-sm p-4 sm:p-5">
         <h3 className="mb-3 text-sm font-semibold text-foreground">
-          7
+          This course includes:
         </h3>
 
         <div className="flex flex-col gap-3">
@@ -337,15 +385,50 @@ export default function EnrollSidebar({
         </div>
       </div>
 
-
-
       {type === "class" && activeDomain === "instructor" && (
         <div>
-          <Button onClick={handleDeleteClass} variant="destructive" size="sm" className="w-full rounded-md h-10" >
+          <Button
+            onClick={() => setDeleteOpen(true)}
+            variant="destructive" size="sm" className="w-full rounded-md h-10" >
             Delete Class
           </Button>
         </div>
       )}
+
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete Class?
+            </AlertDialogTitle>
+
+            <AlertDialogDescription>
+              Are you sure you want to delete{' '}
+              <span className='font-medium'>
+                "{classData?.class?.title}"
+              </span>
+              ? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              Cancel
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              onClick={handleDeleteClass}
+              disabled={deleteClassMut.isPending}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              {deleteClassMut.isPending
+                ? 'Deleting...'
+                : 'Delete Class'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
