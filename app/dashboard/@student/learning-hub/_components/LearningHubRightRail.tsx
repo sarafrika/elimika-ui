@@ -146,7 +146,6 @@ export function LearningHubRightRail({
           </button>
         ) : null}
       </Card>
-
     </aside>
   );
 }

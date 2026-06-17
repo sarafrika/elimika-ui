@@ -396,7 +396,7 @@ function CredentialsPanel({
                 <CredentialCertificateCard
                   key={item.id}
                   item={item}
-                  ownerName={profile.full_name as string}
+                  ownerName={profile?.full_name as string}
                   onDelete={onDeleteItem}
                   isDeleting={deleting}
                 />
@@ -408,7 +408,7 @@ function CredentialsPanel({
         </div>
       </section>
 
-      <GrowthTimelineSection items={timeline} ownerName={profile.full_name as string}
+      <GrowthTimelineSection items={timeline} ownerName={profile?.full_name as string}
       />
     </>
   );

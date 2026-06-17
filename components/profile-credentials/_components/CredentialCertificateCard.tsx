@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight } from 'lucide-react';
+import { BookOpen, ChevronRight } from 'lucide-react';
 
 import { useEffect, useRef, useState } from 'react';
 
@@ -48,9 +48,8 @@ function getStatusTone(status: string) {
 
   if (normalized.includes('pending') || normalized.includes('review')) {
     return {
-      badgeClass:
-        'border-[color-mix(in_srgb,var(--el-accent-amber)_32%,white)] bg-[color-mix(in_srgb,var(--el-accent-amber)_16%,white)] text-[color-mix(in_srgb,var(--el-accent-amber)_90%,black)]',
-      iconClass: 'text-[color-mix(in_srgb,var(--el-accent-amber)_92%,var(--foreground))]',
+      badgeClass: 'border-warning/20 bg-warning/10 text-warning-foreground',
+      iconClass: 'text-warning',
     };
   }
 
@@ -60,15 +59,19 @@ function getStatusTone(status: string) {
   };
 }
 
-export function GeneralPdfPreview({ documentUrl, documentLabel }: { documentUrl: string; documentLabel: string }) {
+export function GeneralPdfPreview({
+  documentUrl,
+  documentLabel,
+}: {
+  documentUrl: string;
+  documentLabel: string;
+}) {
   const resolvedUrl = toAuthenticatedMediaUrl(documentUrl) || documentUrl;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [inView, setInView] = useState(false);
 
-  // Only download/render the PDF once the card is near the viewport — a page
-  // of credential cards was fetching every document up front.
   useEffect(() => {
     const node = containerRef.current;
     if (!node) return;
@@ -137,19 +140,23 @@ export function GeneralPdfPreview({ documentUrl, documentLabel }: { documentUrl:
   }, [resolvedUrl, inView, documentUrl]);
 
   return (
-    <div ref={containerRef} className='relative h-[180px] overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-3'>
-      <div className='pointer-events-none absolute inset-x-0 top-0 h-18 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_92%,white_8%),transparent)]' />
-      <div className='pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--background)_94%,white_6%))]' />
-      <div className='pointer-events-none absolute top-4 left-4 z-10 rounded-full border border-white/80 bg-background/85 px-3 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur'>
+    <div
+      ref={containerRef}
+      className="relative h-[180px] overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-3"
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-18 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_92%,white_8%),transparent)]" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--background)_94%,white_6%))]" />
+      <div className="pointer-events-none absolute top-4 left-4 z-10 rounded-full border border-border/40 bg-background/85 px-3 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur">
         {error ? 'Preview unavailable' : documentLabel}
       </div>
-      <div className='h-full overflow-hidden rounded-[12px] border border-border/70 bg-background shadow-[0_18px_40px_-28px_rgba(26,56,126,0.35)]'>
+      <div className="h-full overflow-hidden rounded-[12px] border border-border/70 bg-background shadow-[0_18px_40px_-28px_rgba(26,56,126,0.35)]">
         {error ? (
-          <div className='flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground'>
-            {error}
+          <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
+            <BookOpen className="size-8 text-muted-foreground/50" strokeWidth={1.5} />
+            <p className="text-xs text-muted-foreground">Preview unavailable</p>
           </div>
         ) : (
-          <canvas ref={canvasRef} className='block w-full' />
+          <canvas ref={canvasRef} className="block w-full" />
         )}
       </div>
     </div>
@@ -166,23 +173,23 @@ function CertificatePreview({
   documentLabel: string;
 }) {
   return (
-    <div className='relative overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-4'>
-      <div className='rounded-[12px] border border-[color-mix(in_srgb,var(--border)_85%,white)] bg-white/95 p-4 shadow-[0_18px_40px_-28px_rgba(26,56,126,0.55)]'>
-        <div className='flex items-start justify-between gap-4 border-b pb-3'>
+    <div className="relative overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-4">
+      <div className="rounded-[12px] border border-border/40 bg-card/95 p-4 shadow-[0_18px_40px_-28px_rgba(26,56,126,0.55)]">
+        <div className="flex items-start justify-between gap-4 border-b pb-3">
           <div>
-            <p className='text-foreground text-xl font-semibold'>{documentLabel}</p>
-            <p className='text-muted-foreground text-xs'>{issuer} credential authority</p>
+            <p className="text-foreground text-xl font-semibold">{documentLabel}</p>
+            <p className="text-muted-foreground text-xs">{issuer} credential authority</p>
           </div>
-          <div className='h-14 w-11 rounded-sm border-2 border-[color-mix(in_srgb,var(--primary)_35%,white)] bg-[linear-gradient(180deg,white,color-mix(in_srgb,var(--el-accent-azure)_18%,white))]' />
+          <div className="h-14 w-11 rounded-sm border-2 border-primary/20 bg-[linear-gradient(180deg,hsl(var(--background)),color-mix(in_srgb,var(--el-accent-azure)_18%,hsl(var(--background))))]" />
         </div>
-        <div className='space-y-3 pt-4'>
-          <div className='h-2.5 w-28 rounded-full bg-[color-mix(in_srgb,var(--primary)_12%,white)]' />
-          <div className='text-foreground text-2xl font-semibold'>{ownerName}</div>
-          <div className='h-2 w-40 rounded-full bg-muted' />
-          <div className='h-2 w-32 rounded-full bg-muted/75' />
+        <div className="space-y-3 pt-4">
+          <div className="h-2.5 w-28 rounded-full bg-primary/10" />
+          <div className="text-foreground text-2xl font-semibold">{ownerName}</div>
+          <div className="h-2 w-40 rounded-full bg-muted" />
+          <div className="h-2 w-32 rounded-full bg-muted/75" />
         </div>
       </div>
-      <div className='absolute right-5 bottom-5 h-14 w-14 rounded-full border border-[color-mix(in_srgb,var(--primary)_18%,white)] bg-white/85 shadow-sm' />
+      <div className="absolute right-5 bottom-5 h-14 w-14 rounded-full border border-primary/15 bg-background/85 shadow-sm" />
     </div>
   );
 }
@@ -198,12 +205,9 @@ export function CredentialCertificateCard({
   const [viewerOpen, setViewerOpen] = useState(false);
 
   return (
-    <Card className='gap-0 overflow-hidden rounded-[16px] border-white/60 bg-card/95 py-0 shadow-sm'>
+    <Card className="gap-0 overflow-hidden rounded-[16px] border-border/40 bg-card/95 py-0 shadow-sm">
       {item.documentUrl ? (
-        <GeneralPdfPreview
-          documentUrl={item.documentUrl}
-          documentLabel={item.documentLabel}
-        />
+        <GeneralPdfPreview documentUrl={item.documentUrl} documentLabel={item.documentLabel} />
       ) : (
         <CertificatePreview
           ownerName={ownerName}
@@ -213,25 +217,21 @@ export function CredentialCertificateCard({
       )}
 
       <div className={cn('space-y-3 px-4 py-3', item.documentUrl ? 'pt-4' : '')}>
-        <div className='space-y-1.5'>
+        <div className="space-y-1.5">
           {item.recordSummary ? (
-            <h3 className='text-foreground text-[17px] font-semibold tracking-tight leading-snug'>
+            <h3 className="text-foreground text-[17px] font-semibold tracking-tight leading-snug">
               {item.recordSummary}
             </h3>
           ) : null}
 
-          <div className='flex flex-wrap items-center gap-2 text-sm'>
-            <span className='font-semibold text-[color-mix(in_srgb,var(--primary)_62%,var(--el-accent-amber))]'>
-              {item.title}
-            </span>
-            <span className='text-muted-foreground'>|</span>
-            <span className='text-muted-foreground text-[13px]'>
-              {item.stage}
-            </span>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="font-semibold text-primary/80">{item.title}</span>
+            <span className="text-muted-foreground">|</span>
+            <span className="text-muted-foreground text-[13px]">{item.stage}</span>
 
             <Badge
-              variant='secondary'
-              className='rounded-md bg-[color-mix(in_srgb,var(--primary)_8%,white)] px-2 py-0.5 text-[11px] text-primary'
+              variant="secondary"
+              className="rounded-md bg-primary/8 px-2 py-0.5 text-[11px] text-primary"
             >
               {item.level}
             </Badge>
@@ -240,9 +240,9 @@ export function CredentialCertificateCard({
 
         <CredentialDetailGrid details={item.details} />
 
-        <div className='flex flex-wrap gap-2'>
+        <div className="flex flex-wrap gap-2">
           <Badge
-            variant='outline'
+            variant="outline"
             className={cn(
               'min-h-8 rounded-md px-2.5 text-xs font-medium',
               statusTone.badgeClass
@@ -254,30 +254,30 @@ export function CredentialCertificateCard({
 
           {item.documentUrl ? (
             <Button
-              type='button'
-              variant='outline'
-              className='min-h-8 rounded-md border-white/70 bg-background/80 px-3 text-xs'
+              type="button"
+              variant="outline"
+              className="min-h-8 rounded-md border-border/50 bg-background/80 px-3 text-xs"
               onClick={() => setViewerOpen(true)}
               disabled={!item.documentUrl}
             >
               {item.actionLabel}
-              <ChevronRight className='size-3.5' />
+              <ChevronRight className="size-3.5" />
             </Button>
           ) : (
             <Button
-              variant='outline'
-              className='min-h-8 rounded-md border-white/70 bg-background/80 px-3 text-xs'
+              variant="outline"
+              className="min-h-8 rounded-md border-border/50 bg-background/80 px-3 text-xs"
             >
               {item.actionLabel}
-              <ChevronRight className='size-3.5' />
+              <ChevronRight className="size-3.5" />
             </Button>
           )}
 
           {onDelete ? (
             <Button
-              type='button'
-              variant='destructive'
-              className='min-h-8 rounded-md px-3 text-xs'
+              type="button"
+              variant="destructive"
+              className="min-h-8 rounded-md px-3 text-xs"
               onClick={() => onDelete(item)}
               disabled={isDeleting}
             >
@@ -290,27 +290,22 @@ export function CredentialCertificateCard({
       {/* Viewer */}
       <Sheet open={viewerOpen} onOpenChange={setViewerOpen}>
         <SheetContent
-          side='right'
-          className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[680px]'
+          side="right"
+          className="flex w-full flex-col overflow-y-auto p-0 sm:max-w-[680px]"
         >
-          <SheetHeader className='border-border/70 border-b px-5 py-4 text-left'>
-            <SheetTitle className='text-lg'>{item.documentLabel}</SheetTitle>
+          <SheetHeader className="border-border/70 border-b px-5 py-4 text-left">
+            <SheetTitle className="text-lg">{item.documentLabel}</SheetTitle>
             <SheetDescription className="text-xs space-y-0.5">
-              <p className="font-medium text-foreground">
-                {ownerName}
-              </p>
-
+              <p className="font-medium text-foreground">{ownerName}</p>
               {item.recordSummary && (
-                <p className="text-muted-foreground leading-snug">
-                  {item.recordSummary}
-                </p>
+                <p className="text-muted-foreground leading-snug">{item.recordSummary}</p>
               )}
             </SheetDescription>
           </SheetHeader>
 
           {item.documentUrl ? (
-            <div className='flex-1 space-y-4 overflow-y-auto px-5 py-4'>
-              <div className='overflow-hidden rounded-[14px] border bg-card shadow-sm'>
+            <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+              <div className="overflow-hidden rounded-[14px] border bg-card shadow-sm">
                 <PdfPreview
                   documentUrl={item.documentUrl}
                   documentLabel={item.documentLabel}
@@ -320,7 +315,7 @@ export function CredentialCertificateCard({
               </div>
             </div>
           ) : (
-            <div className='flex flex-1 items-center justify-center p-5 text-center text-xs text-muted-foreground'>
+            <div className="flex flex-1 items-center justify-center p-5 text-center text-xs text-muted-foreground">
               No document URL available for this credential.
             </div>
           )}

@@ -4,25 +4,86 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import {
   getProgramCoursesOptions,
+  getProgramReviewsOptions,
+  getProgramReviewsQueryKey,
   getTrainingProgramByUuidOptions,
+  submitProgramReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useQuery } from '@tanstack/react-query';
-import { BookOpen, CalendarDays, Layers3, Target, Users } from 'lucide-react';
-import { useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { BookOpen, CalendarDays, ChevronRight, GraduationCap, Layers3, Star, Target, Users } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { ReviewCard } from '../../../../../app/dashboard/@instructor/reviews/review-card';
+import { CourseReview, ProgramReview } from '../../../../../services/client';
+import { useUserProfile } from '../../../profile/context/profile-context';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
+import { FeedbackDialog } from '../components/review-instructor-modal';
 
 type ProgramDetailsPageProps = {
   programId: string;
 };
 
 export default function ProgramDetailsPage({ programId }: ProgramDetailsPageProps) {
+  const profile = useUserProfile()
+  const qc = useQueryClient()
   const { activeDomain } = useUserDomain();
-  const { replaceBreadcrumbs } = useBreadcrumb();
+
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [headline, setHeadline] = useState('');
+
+
+  const reviewProgramMut = useMutation(submitProgramReviewMutation());
+
+  const handleSubmitFeedback = () => {
+    reviewProgramMut.mutate(
+      {
+        body: {
+          rating,
+          student_uuid: profile?.student?.uuid as string,
+          comments: feedbackComment,
+          headline,
+          is_anonymous: false,
+        },
+        path: { programUuid: programId as string },
+      },
+      {
+        onSuccess: data => {
+          toast.success("Review submitted successfully");
+          setShowFeedbackDialog(false);
+          qc.invalidateQueries({
+            queryKey: getProgramReviewsQueryKey({ path: { programUuid: programId as string }, query: { pageable: {} } }),
+          });
+        },
+        onError: error => {
+          toast.error("An error occured!. Contact support");
+          setShowFeedbackDialog(false);
+        },
+      }
+    );
+  };
+
+
+  const { data: reviews } = useQuery({
+    ...getProgramReviewsOptions({ path: { programUuid: programId as string }, query: { pageable: {} } }),
+    enabled: !!programId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const reviewItems: ProgramReview[] = reviews?.content ?? [];
+  const reviewCount = reviewItems.length;
+  const avgRating =
+    reviewCount > 0
+      ? (reviewItems.reduce((sum, review) => sum + (review.rating || 0), 0) / reviewCount).toFixed(
+        1
+      )
+      : null;
 
   const { data: programResponse, isLoading: programLoading } = useQuery({
     ...getTrainingProgramByUuidOptions({ path: { uuid: programId } }),
@@ -36,28 +97,6 @@ export default function ProgramDetailsPage({ programId }: ProgramDetailsPageProp
 
   const program = programResponse?.data;
   const programCourses = programCoursesResponse?.data ?? [];
-
-  useEffect(() => {
-    if (!programId) return;
-
-    replaceBreadcrumbs([
-      {
-        id: 'dashboard',
-        title: 'Dashboard',
-        url: buildWorkspaceAliasPath(activeDomain, '/dashboard/overview'),
-      },
-      {
-        id: 'courses',
-        title: 'Browse Courses',
-        url: buildWorkspaceAliasPath(activeDomain, '/dashboard/courses'),
-      },
-      {
-        id: 'program-details',
-        title: program?.title || 'Program details',
-        url: buildWorkspaceAliasPath(activeDomain, `/dashboard/courses/programs/${programId}`),
-      },
-    ]);
-  }, [activeDomain, program?.title, programId, replaceBreadcrumbs]);
 
   if (programLoading || coursesLoading) {
     return (
@@ -227,6 +266,52 @@ export default function ProgramDetailsPage({ programId }: ProgramDetailsPageProp
         </Card>
       </section>
 
+      <Card className='rounded-[22px] border p-5 shadow-none sm:p-6'>
+        <div className='mb-6 flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            <div className='mb-0'>Student Reviews</div>
+            {reviewCount > 0 && (
+              <Badge variant='secondary' className='text-xs'>
+                {reviewCount} review{reviewCount !== 1 ? 's' : ''}
+              </Badge>
+            )}
+          </div>
+          {activeDomain !== 'instructor' && (
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setShowFeedbackDialog(true)}
+              className='gap-2 rounded-xl shadow-none'
+            >
+              <Star className='h-4 w-4' />
+              Write a Review
+            </Button>
+          )}
+        </div>
+
+        {reviewCount === 0 ? (
+          <div className='border-border rounded-xl border border-dashed p-10 text-center'>
+            <GraduationCap className='text-muted-foreground/40 mx-auto mb-3 h-8 w-8' />
+            <p className='text-muted-foreground text-sm'>No reviews yet. Be the first!</p>
+          </div>
+        ) : (
+          <div className='grid gap-4 sm:grid-cols-2'>
+            {reviewItems
+              ?.slice(0, 6)
+              .map(review => <ReviewCard key={review.uuid} review={review} type='others' />)}
+          </div>
+        )}
+
+        {reviewCount > 6 && (
+          <button
+            type='button'
+            className='text-warning/60 dark:text-warning/40 mt-4 flex items-center gap-1 text-sm font-medium hover:underline'
+          >
+            View all {reviewCount} reviews <ChevronRight className='h-4 w-4' />
+          </button>
+        )}
+      </Card>
+
       <section className='space-y-4'>
         <div>
           <h2 className='text-foreground text-xl font-semibold'>Courses in this program</h2>
@@ -271,6 +356,21 @@ export default function ProgramDetailsPage({ programId }: ProgramDetailsPageProp
           </div>
         )}
       </section>
+
+
+      <FeedbackDialog
+        type='others'
+        open={showFeedbackDialog}
+        onOpenChange={setShowFeedbackDialog}
+        headline={headline}
+        onHeadlineChange={setHeadline}
+        feedback={feedbackComment}
+        onFeedbackChange={setFeedbackComment}
+        rating={rating}
+        onRatingChange={setRating}
+        isSubmitting={reviewProgramMut.isPending}
+        onSubmit={handleSubmitFeedback}
+      />
     </div>
   );
 }

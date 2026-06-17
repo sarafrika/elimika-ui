@@ -2,9 +2,10 @@
 
 import { AlertTriangle } from 'lucide-react';
 import React from 'react';
-import { useClassDetails } from '../../../../../../hooks/use-class-details';
-import { EnrollmentLoadingState } from '../../../../../../src/features/dashboard/courses/components/EnrollmentLoadingState';
-import ClassCourseDetailsPage from '../../../../workspace/[domain]/courses/_components/ClassCourseDetailsPage';
+import { useClassDetails } from '../../../../../hooks/use-class-details';
+import { EnrollmentLoadingState } from '../../../../../src/features/dashboard/courses/components/EnrollmentLoadingState';
+import ClassCourseDetailsPage from '../../../workspace/[domain]/courses/_components/ClassCourseDetailsPage';
+
 
 type Props = {
     params: Promise<{ domain: string; id: string }>;
@@ -46,7 +47,7 @@ function PageNotFound() {
     </div>
 }
 
-export default function TrainingHubClassCoursePage({ params }: Props) {
+export default function StudentClassCoursePage({ params }: Props) {
     const resolvedParams = React.use(params);
     const { id: classId } = resolvedParams;
 
