@@ -1,25 +1,23 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { toast } from 'sonner';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   ArrowRight,
-  CreditCard,
-  Calendar,
-  Check,
-  ShieldCheck,
-  Package,
-  Loader2,
-  Wallet,
   CalendarDays,
+  CreditCard,
+  Loader2,
+  Package,
+  ShieldCheck,
+  Wallet
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { PublicTopNav } from '@/components/PublicTopNav';
 import { Badge } from '@/components/ui/badge';
@@ -30,14 +28,14 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCartStore } from '@/store/cart-store';
 import { useUserProfile } from '@/context/profile-context';
+import type { CartItemResponse } from '@/services/client';
 import {
-  getCartOptions,
   completeCheckoutMutation,
+  getCartOptions,
   selectPaymentSessionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { CartItemResponse } from '@/services/client';
+import { useCartStore } from '@/store/cart-store';
 
 const DEFAULT_CURRENCY = 'KES';
 
@@ -91,8 +89,8 @@ export default function CheckoutPage() {
     },
   });
 
-  const watchPaymentType = form.watch('paymentType');
-  const watchInstallmentPlan = form.watch('installmentPlan');
+  const watchPaymentType = useWatch({ control: form.control, name: 'paymentType', });
+  const watchInstallmentPlan = useWatch({ control: form.control, name: 'installmentPlan', });
 
   // HeyAPI's path serializer leaves `{cartId}` literal in the URL when path value is null/empty.
   // Use a sentinel string when no cartId; `enabled: false` blocks the actual fetch.
@@ -144,6 +142,10 @@ export default function CheckoutPage() {
 
   const selectPaymentSession = useMutation(selectPaymentSessionMutation());
   const completeCheckout = useMutation(completeCheckoutMutation());
+
+  const paymentProvider = useWatch({
+    control: form.control, name: 'paymentProvider',
+  });
 
   const onSubmit = async (values: CheckoutFormValues) => {
     if (!cartId) {
@@ -282,11 +284,10 @@ export default function CheckoutPage() {
                   >
                     {/* Full Payment Option */}
                     <label
-                      className={`hover:border-primary/50 flex cursor-pointer items-start gap-4 rounded-lg border-2 p-4 transition-all ${
-                        watchPaymentType === 'full'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border'
-                      }`}
+                      className={`hover:border-primary/50 flex cursor-pointer items-start gap-4 rounded-lg border-2 p-4 transition-all ${watchPaymentType === 'full'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border'
+                        }`}
                     >
                       <RadioGroupItem value='full' id='payment-full' className='mt-1' />
                       <div className='flex-1 space-y-1'>
@@ -305,11 +306,10 @@ export default function CheckoutPage() {
 
                     {/* Installments Option */}
                     <label
-                      className={`hover:border-primary/50 flex cursor-pointer items-start gap-4 rounded-lg border-2 p-4 transition-all ${
-                        watchPaymentType === 'installments'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border'
-                      }`}
+                      className={`hover:border-primary/50 flex cursor-pointer items-start gap-4 rounded-lg border-2 p-4 transition-all ${watchPaymentType === 'installments'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border'
+                        }`}
                     >
                       <RadioGroupItem
                         value='installments'
@@ -355,11 +355,10 @@ export default function CheckoutPage() {
                           return (
                             <label
                               key={plan.months}
-                              className={`hover:border-primary/50 flex cursor-pointer items-center justify-between gap-4 rounded-md border p-3 transition-all ${
-                                watchInstallmentPlan === String(plan.months)
-                                  ? 'border-primary bg-primary/5'
-                                  : 'border-border'
-                              }`}
+                              className={`hover:border-primary/50 flex cursor-pointer items-center justify-between gap-4 rounded-md border p-3 transition-all ${watchInstallmentPlan === String(plan.months)
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border'
+                                }`}
                             >
                               <div className='flex items-center gap-3'>
                                 <RadioGroupItem
@@ -413,16 +412,17 @@ export default function CheckoutPage() {
                 </CardHeader>
                 <CardContent>
                   <RadioGroup
-                    value={form.watch('paymentProvider')}
-                    onValueChange={value => form.setValue('paymentProvider', value)}
+                    value={paymentProvider}
+                    onValueChange={value =>
+                      form.setValue('paymentProvider', value)
+                    }
                     className='space-y-3'
                   >
                     <label
-                      className={`hover:border-primary/50 flex cursor-pointer items-center gap-4 rounded-lg border-2 p-4 transition-all ${
-                        form.watch('paymentProvider') === 'mpesa'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border'
-                      }`}
+                      className={`hover:border-primary/50 flex cursor-pointer items-center gap-4 rounded-lg border-2 p-4 transition-all ${paymentProvider === 'mpesa'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border'
+                        }`}
                     >
                       <RadioGroupItem value='mpesa' id='mpesa' />
                       <div className='flex items-center gap-3'>
@@ -433,24 +433,27 @@ export default function CheckoutPage() {
                         />
                         <div>
                           <p className='font-semibold'>M-Pesa</p>
-                          <p className='text-muted-foreground text-sm'>Pay with mobile money</p>
+                          <p className='text-muted-foreground text-sm'>
+                            Pay with mobile money
+                          </p>
                         </div>
                       </div>
                     </label>
 
                     <label
-                      className={`hover:border-primary/50 flex cursor-pointer items-center gap-4 rounded-lg border-2 p-4 transition-all ${
-                        form.watch('paymentProvider') === 'card'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border'
-                      }`}
+                      className={`hover:border-primary/50 flex cursor-pointer items-center gap-4 rounded-lg border-2 p-4 transition-all ${paymentProvider === 'card'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border'
+                        }`}
                     >
                       <RadioGroupItem value='card' id='card' />
                       <div className='flex items-center gap-3'>
                         <CreditCard className='text-primary h-10 w-10' />
                         <div>
                           <p className='font-semibold'>Credit/Debit Card</p>
-                          <p className='text-muted-foreground text-sm'>Visa, Mastercard accepted</p>
+                          <p className='text-muted-foreground text-sm'>
+                            Visa, Mastercard accepted
+                          </p>
                         </div>
                       </div>
                     </label>

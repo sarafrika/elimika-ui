@@ -87,7 +87,6 @@ export function LiveClassCard({
         },
         onError: (error) => {
           toast.error('Failed to delete class');
-          console.error(error);
         },
       }
     );

@@ -47,7 +47,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { XIcon } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
 
@@ -449,9 +449,9 @@ function RecurrencForm({
       days_of_week:
         typeof data?.days_of_week === 'string'
           ? data.days_of_week
-              .split(',')
-              .map(day => day.trim())
-              .filter(isDayOfWeek)
+            .split(',')
+            .map(day => day.trim())
+            .filter(isDayOfWeek)
           : (data?.days_of_week ?? []),
       end_date: data?.end_date ? new Date(data.end_date).toISOString().split('T')[0] : '',
     };
@@ -461,6 +461,8 @@ function RecurrencForm({
     resolver: zodResolver(recurrenceSchema),
     defaultValues: normalizeInitialValues(initialValues) || {},
   });
+
+  const daysOfWeek = useWatch({ control: form.control, name: 'days_of_week', });
 
   const qc = useQueryClient();
   const _user = useUserProfile();
@@ -568,7 +570,7 @@ function RecurrencForm({
                 <div className='mb-1 flex items-center gap-2'>
                   <Select
                     onValueChange={day => {
-                      const current = form.watch('days_of_week') || [];
+                      const current = daysOfWeek || [];
                       if (isDayOfWeek(day) && !current.includes(day)) {
                         form.setValue('days_of_week', [...current, day]);
                       }
@@ -580,27 +582,27 @@ function RecurrencForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {WEEK_DAYS.filter(
-                        day => !(form.watch('days_of_week') || []).includes(day)
-                      ).map(day => (
-                        <SelectItem key={day} value={day}>
-                          {day}
-                        </SelectItem>
-                      ))}
+                      {WEEK_DAYS
+                        .filter(day => !(daysOfWeek || []).includes(day))
+                        .map(day => (
+                          <SelectItem key={day} value={day}>
+                            {day}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Show selected days as removable badges */}
                 <div className='flex flex-wrap gap-2'>
-                  {(form.watch('days_of_week') || []).map((day: string, index: number) => (
+                  {(daysOfWeek || []).map((day: string, index: number) => (
                     <Badge key={day} variant='secondary' className='flex items-center gap-1'>
                       {day}
                       <button
                         type='button'
                         className='ml-2'
                         onClick={() => {
-                          const current = form.watch('days_of_week') || [];
+                          const current = daysOfWeek || [];
                           const updated = current.filter(item => item !== day);
                           form.setValue('days_of_week', updated);
                         }}
@@ -680,7 +682,7 @@ function RecurrencForm({
           <Button
             type='submit'
             className='flex min-w-[120px] items-center justify-center gap-2'
-            // disabled={createClassRecurrence.isPending || updateClassRecurrence.isPending}
+          // disabled={createClassRecurrence.isPending || updateClassRecurrence.isPending}
           >
             {/* {(createClassRecurrence.isPending || updateClassRecurrence.isPending) && <Spinner />} */}
             {initialValues ? 'Update Recurrence' : 'Create Recurrence'}
@@ -810,7 +812,7 @@ function ScheduleForm({
           <Button
             type='submit'
             className='flex min-w-[120px] items-center justify-center gap-2'
-            // disabled={createClassSchedule.isPending || updateClassSchedule.isPending}
+          // disabled={createClassSchedule.isPending || updateClassSchedule.isPending}
           >
             {/* {(createClassSchedule.isPending || updateClassSchedule.isPending) && <Spinner />} */}
             {initialValues ? 'Update Schedule' : 'Create Schedule'}
@@ -1018,7 +1020,7 @@ function ClassDialog({
             initialValues={initialValues}
             className='px-6 pb-6'
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>
@@ -1061,7 +1063,7 @@ function RecurrenceDialog({
             initialValues={initialValues}
             className='px-6 pb-6'
             recurrenceId={editingRecurrenceId}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>
@@ -1111,7 +1113,7 @@ function ScheduleDialog({
             className='px-6 pb-6'
             scheduleId={editingScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>
@@ -1163,7 +1165,7 @@ function TimetableScheduleDialog({
             className='px-6 pb-6'
             timetableScheduleId={timetableScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
             status={status}
           />
         </ScrollArea>

@@ -1,12 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
-import { Building2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
@@ -24,6 +17,13 @@ import {
   organisationProfileSchema,
 } from '@/src/features/organisation/forms/shared/organisation-profile';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { Building2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
 
 const _organizationTypes = [
   { value: 'PROFESSIONAL_INSTITUTE', label: 'Professional Institute' },
@@ -66,8 +66,8 @@ export function OrganizationOnboardingForm() {
     },
   });
 
-  const latitudeWatch = form.watch('latitude');
-  const longitudeWatch = form.watch('longitude');
+  const latitudeWatch = useWatch({ control: form.control, name: 'latitude', });
+  const longitudeWatch = useWatch({ control: form.control, name: 'longitude', });
 
   const watchedCoordinates = {
     latitude: normalizeCoordinateValue(latitudeWatch),

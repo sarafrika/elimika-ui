@@ -1,12 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { XIcon } from 'lucide-react';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import z from 'zod';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -50,6 +43,13 @@ import {
   RecurrenceTypeEnum,
   type StatusEnum3,
 } from '@/services/client/types.gen';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { XIcon } from 'lucide-react';
+import { useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import z from 'zod';
 
 const _SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
 const WEEK_DAYS = [
@@ -480,6 +480,12 @@ function RecurrencForm({
     defaultValues: normalizeInitialValues(initialValues) || {},
   });
 
+  const days_of_week =
+    useWatch({
+      control: form.control,
+      name: 'days_of_week',
+    }) ?? [];
+
   const qc = useQueryClient();
   const _user = useUserProfile();
 
@@ -588,7 +594,7 @@ function RecurrencForm({
                 <div className='mb-1 flex items-center gap-2'>
                   <Select
                     onValueChange={day => {
-                      const current = (form.watch('days_of_week') || []) as DayOfWeek[];
+                      const current = (days_of_week || []) as DayOfWeek[];
                       const selectedDay = day as DayOfWeek;
                       if (selectedDay && !current.includes(selectedDay)) {
                         form.setValue('days_of_week', [...current, selectedDay]);
@@ -602,7 +608,7 @@ function RecurrencForm({
                     </FormControl>
                     <SelectContent>
                       {WEEK_DAYS.filter(day => {
-                        const current = (form.watch('days_of_week') || []) as DayOfWeek[];
+                        const current = (days_of_week || []) as DayOfWeek[];
                         return !current.includes(day);
                       }).map(day => (
                         <SelectItem key={day} value={day}>
@@ -615,14 +621,14 @@ function RecurrencForm({
 
                 {/* Show selected days as removable badges */}
                 <div className='flex flex-wrap gap-2'>
-                  {(form.watch('days_of_week') || []).map((day, index: number) => (
+                  {days_of_week.map((day, index: number) => (
                     <Badge key={day} variant='secondary' className='flex items-center gap-1'>
                       {day}
                       <button
                         type='button'
                         className='ml-2'
                         onClick={() => {
-                          const current = form.watch('days_of_week') || [];
+                          const current = days_of_week || [];
                           const updated = current.filter(
                             (_, currentIndex) => currentIndex !== index
                           );
@@ -1042,7 +1048,7 @@ function ClassDialog({
             initialValues={initialValues}
             className='px-6 pb-6'
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>
@@ -1085,7 +1091,7 @@ function RecurrenceDialog({
             initialValues={initialValues}
             className='px-6 pb-6'
             recurrenceId={editingRecurrenceId}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>
@@ -1135,7 +1141,7 @@ function ScheduleDialog({
             className='px-6 pb-6'
             scheduleId={editingScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>
@@ -1187,7 +1193,7 @@ function TimetableScheduleDialog({
             className='px-6 pb-6'
             timetableScheduleId={timetableScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
             status={status}
           />
         </ScrollArea>

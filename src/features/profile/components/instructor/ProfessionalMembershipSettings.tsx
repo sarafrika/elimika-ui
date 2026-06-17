@@ -1,13 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -44,6 +36,14 @@ import {
 } from '@/src/features/profile/components/profile-view-field';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 
 const InstructorMembershipSchema = zInstructorProfessionalMembership
   .omit({
@@ -117,6 +117,8 @@ export default function ProfessionalBodySettings() {
     },
     mode: 'onChange',
   });
+
+  const professionalBodies = useWatch({ control: form.control, name: 'professional_bodies', });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -276,21 +278,34 @@ export default function ProfessionalBodySettings() {
               {fields.map((field, index) => (
                 <div key={field.id} className='group relative space-y-4 rounded-md border p-5'>
                   <div className='flex items-start justify-between gap-4'>
-                    <div className='flex items-start gap-2'>
-                      <Grip className='text-muted-foreground mt-1 h-5 w-5' />
-                      <div>
-                        <div className='flex items-center gap-2'>
-                          <h3 className='text-base font-medium'>
-                            {form.watch(`professional_bodies.${index}.organisation_name`) ||
-                              'New membership'}
-                          </h3>
-                          {form.watch(`professional_bodies.${index}.is_active`) && (
-                            <Badge className='border-green-200 bg-green-100 text-xs text-green-700'>
-                              Active
-                            </Badge>
-                          )}
+                    <div className='flex items-start justify-between gap-4'>
+                      <div className='flex items-start gap-2'>
+                        <Grip className='text-muted-foreground mt-1 h-5 w-5' />
+
+                        <div>
+                          <div className='flex items-center gap-2'>
+                            <h3 className='text-base font-medium'>
+                              {professionalBodies?.[index]?.organisation_name || 'New membership'}
+                            </h3>
+
+                            {professionalBodies?.[index]?.is_active && (
+                              <Badge className='border-green-200 bg-green-100 text-xs text-green-700'>
+                                Active
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
+
+                      <Button
+                        type='button'
+                        size='icon'
+                        variant='ghost'
+                        className='h-8 w-8'
+                        onClick={() => handleRemove(index)}
+                      >
+                        <Trash2 className='text-destructive h-4 w-4' />
+                      </Button>
                     </div>
 
                     <Button
@@ -389,7 +404,7 @@ export default function ProfessionalBodySettings() {
                                     'w-full pl-3 text-left font-normal',
                                     !field.value && 'text-muted-foreground'
                                   )}
-                                  disabled={form.watch(`professional_bodies.${index}.is_active`)}
+                                  disabled={professionalBodies?.[index]?.is_active}
                                 >
                                   {field.value ? (
                                     format(field.value, 'PPP')

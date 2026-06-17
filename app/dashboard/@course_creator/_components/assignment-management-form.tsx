@@ -1,22 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  BookOpen,
-  BookOpenCheck,
-  Calendar,
-  ClipboardCheck,
-  Grip,
-  MoreVertical,
-  PlusCircle,
-  Trash,
-  XIcon,
-} from 'lucide-react';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import z from 'zod';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,6 +37,23 @@ import {
   getCourseLessonsOptions,
   updateAssignmentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  BookOpen,
+  BookOpenCheck,
+  Calendar,
+  ClipboardCheck,
+  Grip,
+  MoreVertical,
+  PlusCircle,
+  Trash,
+  XIcon,
+} from 'lucide-react';
+import { useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import z from 'zod';
 import DeleteModal from '../../../../components/custom-modals/delete-modal';
 import RichTextRenderer from '../../../../components/editors/richTextRenders';
 import {
@@ -136,6 +136,12 @@ function AssignmentForm({
       ...initialValues,
     },
   });
+
+  const submissionTypes =
+    useWatch({
+      control: form.control,
+      name: 'submission_types',
+    }) ?? [];
 
   const qc = useQueryClient();
   const user = useUserProfile();
@@ -317,10 +323,13 @@ function AssignmentForm({
                 <div className='mb-1 flex items-center gap-2'>
                   <Select
                     onValueChange={type => {
-                      const current = form.watch('submission_types') || [];
                       const selectedType = type as AssignmentSubmissionType;
-                      if (selectedType && !current.includes(selectedType)) {
-                        form.setValue('submission_types', [...current, selectedType]);
+
+                      if (selectedType && !submissionTypes.includes(selectedType)) {
+                        form.setValue('submission_types', [...submissionTypes, selectedType], {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
                       }
                     }}
                   >
@@ -330,27 +339,27 @@ function AssignmentForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {SUBMISSION_TYPES.filter(
-                        type => !(form.watch('submission_types') || []).includes(type)
-                      ).map(type => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
+                      {SUBMISSION_TYPES
+                        .filter(type => !submissionTypes.includes(type))
+                        .map(type => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Display selected submission types as badges */}
                 <div className='flex flex-wrap gap-2'>
-                  {(form.watch('submission_types') || []).map((type: string, index: number) => (
+                  {(submissionTypes || []).map((type: string, index: number) => (
                     <Badge key={type} variant='secondary' className='flex items-center gap-1'>
                       {type}
                       <button
                         type='button'
                         className='ml-2'
                         onClick={() => {
-                          const current = form.watch('submission_types') || [];
+                          const current = submissionTypes || [];
                           form.setValue(
                             'submission_types',
                             current.filter((_, currentIndex) => currentIndex !== index)
@@ -448,7 +457,7 @@ function AssignmentDialog({
             className='px-6 pb-6'
             assignmentId={editingAssignmetId}
             courseId={courseId as string}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>

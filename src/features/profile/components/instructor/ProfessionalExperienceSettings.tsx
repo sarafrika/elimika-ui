@@ -1,12 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
-import { Grip, PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -39,6 +32,13 @@ import {
 } from '@/src/features/profile/components/profile-view-field';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
+import { Grip, PlusCircle, Trash2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 
 const ExperienceSchema = zInstructorExperience
   .omit({
@@ -116,6 +116,9 @@ export default function ProfessionalExperienceSettings() {
     },
     mode: 'onChange',
   });
+
+
+  const experiences = useWatch({ control: form.control, name: 'experiences', });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -295,138 +298,156 @@ export default function ProfessionalExperienceSettings() {
               </Button>
             }
           >
-            <div className='space-y-4'>
-              {fields.map((field, index) => (
-                <div
-                  key={field.id}
-                  className='bg-card group hover:bg-accent/5 relative rounded-md border transition-all'
-                >
-                  <div className='space-y-5 p-5'>
-                    <div className='flex items-start justify-between gap-4'>
-                      <div className='flex items-start gap-3'>
-                        <Grip className='text-muted-foreground mt-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100' />
-                        <div>
-                          <h3 className='text-base font-medium'>
-                            {form.watch(`experiences.${index}.organisation_name`) ||
-                              'New experience'}
-                          </h3>
-                          <p className='text-muted-foreground text-sm'>
-                            {form.watch(`experiences.${index}.position`) || 'Role not set'}
-                          </p>
+            <div className="space-y-4">
+              {fields.map((field, index) => {
+                const exp = experiences?.[index];
+
+                return (
+                  <div
+                    key={field.id}
+                    className="bg-card group hover:bg-accent/5 relative rounded-md border transition-all"
+                  >
+                    <div className="space-y-5 p-5">
+
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <Grip className="text-muted-foreground mt-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100" />
+
+                          <div>
+                            <h3 className="text-base font-medium">
+                              {exp?.organisation_name || 'New experience'}
+                            </h3>
+
+                            <p className="text-muted-foreground text-sm">
+                              {exp?.position || 'Role not set'}
+                            </p>
+                          </div>
                         </div>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-destructive-foreground h-8 w-8"
+                          onClick={() => onDelete(index)}
+                        >
+                          <Trash2 className="text-destructive h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='icon'
-                        className='hover:bg-destructive-foreground h-8 w-8'
-                        onClick={() => onDelete(index)}
-                      >
-                        <Trash2 className='text-destructive h-4 w-4' />
-                      </Button>
-                    </div>
 
-                    <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
-                      <FormField
-                        control={form.control}
-                        name={`experiences.${index}.organisation_name`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Organisation</FormLabel>
-                            <FormControl>
-                              <Input placeholder='e.g. WHO' {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`experiences.${index}.position`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Job title</FormLabel>
-                            <FormControl>
-                              <Input placeholder='e.g. Analyst' {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                      {/* Row 1 */}
+                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name={`experiences.${index}.organisation_name`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Organisation</FormLabel>
+                              <FormControl>
+                                <Input placeholder="e.g. WHO" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                    <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
+                        <FormField
+                          control={form.control}
+                          name={`experiences.${index}.position`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Job title</FormLabel>
+                              <FormControl>
+                                <Input placeholder="e.g. Analyst" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Row 2 */}
+                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name={`experiences.${index}.start_date`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Start date</FormLabel>
+                              <FormControl>
+                                <Input type="month" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`experiences.${index}.end_date`}
+                          render={({ field }) => {
+                            const isCurrent = exp?.is_current_position;
+
+                            return (
+                              <FormItem>
+                                <FormLabel>End date</FormLabel>
+
+                                <FormControl>
+                                  <Input
+                                    type="month"
+                                    disabled={isCurrent}
+                                    {...field}
+                                  />
+                                </FormControl>
+
+                                <div className="mt-2 flex items-center space-x-2">
+                                  <FormField
+                                    control={form.control}
+                                    name={`experiences.${index}.is_current_position`}
+                                    render={({ field }) => (
+                                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                        <FormControl>
+                                          <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                          />
+                                        </FormControl>
+                                        <FormLabel>I currently work here</FormLabel>
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
+
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      </div>
+
+                      {/* Description */}
                       <FormField
                         control={form.control}
-                        name={`experiences.${index}.start_date`}
+                        name={`experiences.${index}.responsibilities`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Start date</FormLabel>
+                            <FormLabel>Work description</FormLabel>
                             <FormControl>
-                              <Input type='month' {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`experiences.${index}.end_date`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>End date</FormLabel>
-                            <FormControl>
-                              <Input
-                                type='month'
-                                disabled={form.watch(`experiences.${index}.is_current_position`)}
+                              <Textarea
+                                placeholder="Responsibilities, accomplishments…"
+                                className="min-h-24 resize-y"
                                 {...field}
                               />
                             </FormControl>
-                            <div className='mt-2 flex items-center space-x-2'>
-                              <FormField
-                                control={form.control}
-                                name={`experiences.${index}.is_current_position`}
-                                render={({ field }) => (
-                                  <FormItem className='flex flex-row items-start space-y-0 space-x-3'>
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
-                                    </FormControl>
-                                    <div className='leading-none'>
-                                      <FormLabel>I currently work here</FormLabel>
-                                    </div>
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
-
-                    <FormField
-                      control={form.control}
-                      name={`experiences.${index}.responsibilities`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Work description</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder='Responsibilities, accomplishments…'
-                              className='min-h-24 resize-y'
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <Button

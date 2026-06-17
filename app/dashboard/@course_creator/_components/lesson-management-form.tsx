@@ -1,43 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import clsx from 'clsx';
-import {
-  BookOpen,
-  BookOpenCheck,
-  ChevronDown,
-  ChevronRight,
-  CircleCheckBig,
-  ClipboardCheck,
-  Clock,
-  Eye,
-  FileAudio,
-  FileIcon,
-  FileText,
-  FileVideo,
-  Grip,
-  LinkIcon,
-  MoreVertical,
-  PenLine,
-  PlusCircle,
-  Save,
-  Trash,
-  VideoIcon,
-  X,
-  Youtube,
-} from 'lucide-react';
-import Link from 'next/link';
-import React, { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  type Control,
-  type FieldErrors,
-  type SubmitHandler,
-  useFieldArray,
-  useForm,
-} from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Button } from '@/components/ui/button';
@@ -92,12 +54,49 @@ import {
   uploadLessonMediaMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
-  ContentType as ApiContentType,
-  Course,
   CourseAssessment,
   Lesson,
-  LessonContent,
+  LessonContent
 } from '@/services/client/types.gen';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import clsx from 'clsx';
+import {
+  BookOpen,
+  BookOpenCheck,
+  ChevronDown,
+  ChevronRight,
+  CircleCheckBig,
+  ClipboardCheck,
+  Clock,
+  Eye,
+  FileAudio,
+  FileIcon,
+  FileText,
+  FileVideo,
+  Grip,
+  LinkIcon,
+  MoreVertical,
+  PenLine,
+  PlusCircle,
+  Save,
+  Trash,
+  VideoIcon,
+  X,
+  Youtube,
+} from 'lucide-react';
+import Link from 'next/link';
+import React, { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type Control,
+  type FieldErrors,
+  type SubmitHandler,
+  useFieldArray,
+  useForm,
+  useWatch,
+} from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import { useUserProfile } from '../../../../context/profile-context';
 import { cn } from '../../../../lib/utils';
 import { useRubricsWithCriteriaAndScoring } from '../rubrics/rubric-chaining';
@@ -1185,21 +1184,22 @@ function LessonContentForm({
     }
   }, [draftKey]);
 
-  const { setValue, watch } = form;
-  const watchedValues = form.watch();
+  const { setValue } = form;
+  const watchedValues = useWatch({ control: form.control, });
 
   const [draftSaved, setDraftSaved] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timeout = setTimeout(() => {
-      localStorage.setItem(draftKey, JSON.stringify(watchedValues));
+      localStorage.setItem(draftKey, JSON.stringify(watchedValues ?? {}));
     }, 600); // debounce
 
     return () => clearTimeout(timeout);
   }, [watchedValues, draftKey]);
 
   const isEditMode = !!initialValues?.uuid;
-  const contentTypeUuid = watch('content_type_uuid');
+
+  const contentTypeUuid = useWatch({ control: form.control, name: 'content_type_uuid', });
 
   // GET COURSE CONTENT TYPES
   const { data: contentTypeList } = useQuery(
@@ -1412,7 +1412,7 @@ function LessonContentForm({
                       {contentTypeData.map(value => {
                         const Icon =
                           ContentTypeIcons[
-                            value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
                           ];
                         return (
                           <SelectItem key={value.uuid} value={JSON.stringify(value)}>
@@ -1691,7 +1691,8 @@ function AssessmentCreationForm({
     return rubricsWithDetails || [];
   }, [rubricsWithDetails]);
 
-  const selectedRubricUuid = form.watch('rubric_uuid');
+  const selectedRubricUuid = useWatch({ control: form.control, name: 'rubric_uuid', });
+
   const [expandedRubricUuid, setExpandedRubricUuid] = useState<string | null>(null);
   const toggleExpand = (uuid: string) => {
     setExpandedRubricUuid(prev => (prev === uuid ? null : uuid));
@@ -1790,7 +1791,7 @@ function AssessmentCreationForm({
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   return (
@@ -2289,7 +2290,7 @@ function LessonDialog({
             className='px-6 pb-6'
             courseId={courseId}
             lessonId={lessonId}
-            refetch={refetch ?? (() => {})}
+            refetch={refetch ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>
@@ -2370,7 +2371,7 @@ function EditLessonDialog({
             lessonId={lessonId}
             initialValues={initialValues}
             onCancel={() => onOpenChange(false)}
-            refetch={refetch ?? (() => {})}
+            refetch={refetch ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>
@@ -2408,5 +2409,6 @@ export {
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  LessonList,
+  LessonList
 };
+

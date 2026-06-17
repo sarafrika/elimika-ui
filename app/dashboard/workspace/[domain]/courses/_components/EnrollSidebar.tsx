@@ -120,7 +120,6 @@ export default function EnrollSidebar({
         },
         onError: (error) => {
           toast.error('Failed to delete class');
-          console.error(error);
         },
       }
     );

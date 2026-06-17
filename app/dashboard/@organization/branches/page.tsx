@@ -1,8 +1,14 @@
 'use client';
 
-import { elimikaDesignSystem } from '@/lib/design-system';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DataTable } from '@/components/ui/data-table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -10,13 +16,15 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
-  SheetTitle,
+  SheetTitle
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { elimikaDesignSystem } from '@/lib/design-system';
+import type { TrainingBranch, User } from '@/services/client';
 import {
   assignUserToBranchMutation,
   createTrainingBranch1Mutation,
@@ -28,36 +36,27 @@ import {
   removeUserFromBranchMutation,
   updateTrainingBranchMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { TrainingBranch, User } from '@/services/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
+  AlertCircle,
+  Building2,
   GitBranch,
   Loader2,
+  Mail,
   MapPin,
+  MoreVertical,
   Pencil,
+  Phone,
   Plus,
   Trash2,
   Users,
-  Phone,
-  Mail,
-  Building2,
-  AlertCircle,
-  MoreVertical,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Skeleton } from '@/components/ui/skeleton';
-import { DataTable } from '@/components/ui/data-table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { z } from 'zod';
 
 const branchSchema = z.object({
   branch_name: z.string().min(1, 'Branch name is required'),
@@ -193,6 +192,7 @@ export default function BranchesPage() {
     enabled: Boolean(organisationUuid),
   });
 
+
   const branchesPage = extractPage<TrainingBranch>(branchesQuery.data);
   const branches = branchesPage.items;
   const totalBranches = getTotalFromMetadata(branchesPage.metadata);
@@ -211,15 +211,15 @@ export default function BranchesPage() {
   const branchUsersQuery = useQuery({
     ...(branchUserDomain
       ? getBranchUsersByDomainOptions({
-          path: {
-            uuid: organisationUuid,
-            branchUuid: selectedBranchId ?? '',
-            domainName: branchUserDomain,
-          },
-        })
+        path: {
+          uuid: organisationUuid,
+          branchUuid: selectedBranchId ?? '',
+          domainName: branchUserDomain,
+        },
+      })
       : getBranchUsersOptions({
-          path: { uuid: organisationUuid, branchUuid: selectedBranchId ?? '' },
-        })),
+        path: { uuid: organisationUuid, branchUuid: selectedBranchId ?? '' },
+      })),
     enabled: Boolean(organisationUuid && selectedBranchId),
   });
 
@@ -318,14 +318,14 @@ export default function BranchesPage() {
     if (!selectedBranchId || !organisationUuid) return;
     const branchUsersKey = branchUserDomain
       ? getBranchUsersByDomainOptions({
-          path: {
-            uuid: organisationUuid,
-            branchUuid: selectedBranchId,
-            domainName: branchUserDomain,
-          },
-        }).queryKey
+        path: {
+          uuid: organisationUuid,
+          branchUuid: selectedBranchId,
+          domainName: branchUserDomain,
+        },
+      }).queryKey
       : getBranchUsersOptions({ path: { uuid: organisationUuid, branchUuid: selectedBranchId } })
-          .queryKey;
+        .queryKey;
 
     assignUser.mutate(
       {
@@ -346,14 +346,14 @@ export default function BranchesPage() {
     if (!selectedBranchId || !organisationUuid) return;
     const branchUsersKey = branchUserDomain
       ? getBranchUsersByDomainOptions({
-          path: {
-            uuid: organisationUuid,
-            branchUuid: selectedBranchId,
-            domainName: branchUserDomain,
-          },
-        }).queryKey
+        path: {
+          uuid: organisationUuid,
+          branchUuid: selectedBranchId,
+          domainName: branchUserDomain,
+        },
+      }).queryKey
       : getBranchUsersOptions({ path: { uuid: organisationUuid, branchUuid: selectedBranchId } })
-          .queryKey;
+        .queryKey;
 
     removeUser.mutate(
       { path: { uuid: organisationUuid, branchUuid: selectedBranchId, userUuid } },
@@ -603,6 +603,11 @@ function BranchDrawer({
     },
   });
 
+  const active = useWatch({
+    control: form.control,
+    name: 'active',
+  });
+
   useEffect(() => {
     if (defaultValues) {
       form.reset({
@@ -724,23 +729,28 @@ function BranchDrawer({
                 <div className='flex items-center justify-between pl-7'>
                   <div className='flex items-center gap-4'>
                     <Switch
-                      checked={form.watch('active')}
+                      checked={!!active}
                       onCheckedChange={checked => form.setValue('active', checked)}
                     />
+
                     <div>
-                      <Label className='text-foreground text-base font-medium'>Active Status</Label>
+                      <Label className='text-foreground text-base font-medium'>
+                        Active Status
+                      </Label>
+
                       <p className='text-muted-foreground mt-0.5 text-sm'>
-                        {form.watch('active')
+                        {active
                           ? 'Branch is active and available for assignments'
                           : 'Branch is inactive and hidden from assignments'}
                       </p>
                     </div>
                   </div>
+
                   <Badge
-                    variant={form.watch('active') ? 'secondary' : 'outline'}
+                    variant={active ? 'secondary' : 'outline'}
                     className='text-xs'
                   >
-                    {form.watch('active') ? 'Active' : 'Inactive'}
+                    {active ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
               </div>
