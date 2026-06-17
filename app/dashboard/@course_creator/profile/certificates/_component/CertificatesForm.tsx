@@ -3,7 +3,7 @@
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
 
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
@@ -132,6 +132,8 @@ export default function CertificatesSettings() {
     control: form.control,
     name: 'certifications',
   });
+
+  const watchedCertifications = useWatch({ control: form.control, name: 'certifications', });
 
   const uploadDocumentMut = useMutation(uploadCourseCreatorDocumentMutation());
   const handleUplod = () => {
@@ -350,18 +352,16 @@ export default function CertificatesSettings() {
                         <div>
                           <div className='flex items-center gap-2'>
                             <h3 className='text-base font-medium'>
-                              {form.watch(`certifications.${index}.certification_name`) ||
-                                'New certification'}
+                              {watchedCertifications?.[index]?.certification_name || 'New certification'}
                             </h3>
-                            {form.watch(`certifications.${index}.is_verified`) && (
+                            {watchedCertifications?.[index]?.is_verified && (
                               <Badge className='border-success/30 bg-success/15 text-xs text-success'>
                                 Verified
                               </Badge>
                             )}
                           </div>
                           <p className='text-muted-foreground text-sm'>
-                            {form.watch(`certifications.${index}.issuing_organization`) ||
-                              'Issuer not set'}
+                            {watchedCertifications?.[index]?.issuing_organization || 'Issuer not set'}
                           </p>
                         </div>
                       </div>

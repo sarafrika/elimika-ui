@@ -62,7 +62,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import {
   type CourseCreationFormValues,
@@ -341,8 +341,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       getAllCategoriesOptions({ query: { pageable: { page: 0, size: 100 } } })
     );
 
-    const creatorShare = form.watch('creator_share_percentage');
-    const instructorShare = form.watch('instructor_share_percentage');
+    const creatorShare = useWatch({ control: form.control, name: 'creator_share_percentage', }) ?? [];
+    const instructorShare = useWatch({ control: form.control, name: 'instructor_share_percentage', }) ?? [];
 
     useEffect(() => {
       if (typeof instructorShare === 'number' && instructorShare >= 0 && instructorShare <= 100) {
@@ -532,7 +532,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       submit: () => form.handleSubmit(onSubmit)(),
     }));
 
-    const isFree = form.watch('is_free');
+
+    const isFree = useWatch({ control: form.control, name: 'is_free', }) ?? [];
+    const categoriesSelected = useWatch({ control: form.control, name: 'categories', }) ?? [];
 
     useEffect(() => {
       if (isFree) {
@@ -601,7 +603,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   <Select
                     value=''
                     onValueChange={uuid => {
-                      if (uuid && !form.watch('categories').includes(uuid)) {
+                      if (uuid && !categoriesSelected.includes(uuid)) {
                         appendCategory(uuid);
                       }
                     }}
@@ -617,7 +619,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                         {(categories?.data?.content as CategoryItem[] | undefined)
                           ?.filter(
                             (cat: CategoryItem) =>
-                              !form.watch('categories').includes(cat.uuid ?? '')
+                              !categoriesSelected.includes(cat.uuid ?? '')
                           )
                           .map((cat: CategoryItem) => (
                             <SelectItem key={cat.uuid} value={cat.uuid as string}>
@@ -680,21 +682,22 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               </FormItem>
 
               <div className='flex flex-wrap gap-2'>
-                {form.watch('categories').map((uuid: string, index: number) => {
-                  const cat = (categories?.data?.content as CategoryItem[] | undefined)?.find(
+                {categoriesSelected.map((uuid: string, index: number) => {
+                  const cat = categories?.data?.content?.find(
                     (c: CategoryItem) => c.uuid === uuid
                   );
+
                   if (!cat) return null;
+
                   return (
-                    <Badge key={uuid} variant='secondary' className='flex items-center gap-1'>
+                    <Badge key={uuid} variant="secondary" className="flex items-center gap-1">
                       {cat.name}
                       <button
-                        type='button'
-                        className='ml-2'
+                        type="button"
+                        className="ml-2"
                         onClick={() => removeCategory(index)}
-                        aria-label={`Remove category ${cat.name}`}
                       >
-                        <XIcon className='h-3 w-3' />
+                        <XIcon className="h-3 w-3" />
                       </button>
                     </Badge>
                   );

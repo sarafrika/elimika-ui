@@ -1,24 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { format } from 'date-fns';
-import { toast } from 'sonner';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Form,
   FormControl,
@@ -28,6 +13,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -35,15 +22,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
 import {
   useCreateSystemRule,
   useSystemRule,
   useUpdateSystemRule,
   type SystemRule,
 } from '@/services/admin/system-config';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
 import {
   AlertCircle,
   ArrowRight,
@@ -58,6 +54,10 @@ import {
   SlidersHorizontal,
   Sparkles,
 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
 const categoryOptions = [
   { value: 'PLATFORM_FEE', label: 'Platform fee' },
@@ -215,7 +215,17 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
     }
   }, [fetchedRule, form, initialRule, open]);
 
-  const watchAll = form.watch();
+  const scope = useWatch({ control: form.control, name: 'scope' });
+  const status = useWatch({ control: form.control, name: 'status' });
+  const valuePayload = useWatch({ control: form.control, name: 'valuePayload' });
+  const conditions = useWatch({ control: form.control, name: 'conditions' });
+  const effectiveFrom = useWatch({ control: form.control, name: 'effectiveFrom' });
+  const effectiveTo = useWatch({ control: form.control, name: 'effectiveTo' });
+  const category = useWatch({ control: form.control, name: 'category' });
+  const priority = useWatch({ control: form.control, name: 'priority' });
+  const key = useWatch({ control: form.control, name: 'key' });
+  const scopeReference = useWatch({ control: form.control, name: 'scopeReference' });
+
 
   const handlePrettyPrint = (field: 'valuePayload' | 'conditions') => {
     const raw = form.getValues(field);
@@ -301,25 +311,25 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
 
   const timeline = useMemo(
     () => ({
-      from: formatDate(watchAll.effectiveFrom),
-      to: formatDate(watchAll.effectiveTo),
+      from: formatDate(effectiveFrom),
+      to: formatDate(effectiveTo),
     }),
-    [watchAll.effectiveFrom, watchAll.effectiveTo]
+    [effectiveFrom, effectiveTo]
   );
 
   const summaryItems = [
     {
       label: 'Category',
-      value: categoryOptions.find(item => item.value === watchAll.category)?.label,
+      value: categoryOptions.find(item => item.value === category)?.label,
     },
-    { label: 'Key', value: watchAll.key || 'Not set' },
-    { label: 'Scope', value: watchAll.scope },
+    { label: 'Key', value: key || 'Not set' },
+    { label: 'Scope', value: scope },
     {
       label: 'Reference',
-      value: watchAll.scope === 'GLOBAL' ? 'Global' : watchAll.scopeReference || '—',
+      value: scope === 'GLOBAL' ? 'Global' : scopeReference || '—',
     },
-    { label: 'Status', value: watchAll.status },
-    { label: 'Priority', value: watchAll.priority ?? 'Not set' },
+    { label: 'Status', value: status },
+    { label: 'Priority', value: priority ?? 'Not set' },
   ];
 
   const disableSave = !form.formState.isValid || isSubmitting;
@@ -548,7 +558,7 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                       )}
                     />
 
-                    {watchAll.scope !== 'GLOBAL' ? (
+                    {scope !== 'GLOBAL' ? (
                       <FormField
                         control={form.control}
                         name='scopeReference'
@@ -821,7 +831,7 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                   </div>
                 </div>
                 <Badge variant='outline' className='rounded-full'>
-                  {watchAll.status}
+                  {status}
                 </Badge>
               </div>
               <Separator className='my-4' />
@@ -859,7 +869,7 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
               <p className='text-muted-foreground mt-1 text-xs'>JSON value structure</p>
               <ScrollArea className='border-border/70 bg-muted/40 mt-3 h-48 rounded-lg border border-dashed p-3 shadow-inner'>
                 <pre className='text-foreground font-mono text-xs break-all whitespace-pre-wrap'>
-                  {watchAll.valuePayload || '{}'}
+                  {valuePayload || '{}'}
                 </pre>
               </ScrollArea>
             </div>
@@ -872,8 +882,8 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
               <p className='text-muted-foreground mt-1 text-xs'>Optional rule constraints</p>
               <ScrollArea className='border-border/70 bg-muted/30 mt-3 h-32 rounded-lg border border-dashed p-3 shadow-inner'>
                 <pre className='text-muted-foreground font-mono text-xs break-all whitespace-pre-wrap'>
-                  {watchAll.conditions?.trim()
-                    ? watchAll.conditions
+                  {conditions?.trim()
+                    ? conditions
                     : 'No conditions. Rule always applies.'}
                 </pre>
               </ScrollArea>

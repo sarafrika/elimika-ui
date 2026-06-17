@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileText, FileUp, Headphones, ImageIcon, PlusCircle, Trash2, Video } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '../../../../components/ui/button';
@@ -120,7 +120,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
     },
   });
 
-  const watchedType = contentForm.watch('content_type');
+  const watchedType = useWatch({ control: contentForm.control, name: 'content_type', });
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [lessonContents, setLessonContents] = useState<LessonContentFormItem[]>([]);
@@ -132,7 +132,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
   const [creatingDraft, setCreatingDraft] = useState(false);
 
   // GET COURSE CONTENT TYPES
-  const contentTypeUuid = contentForm.watch('content_type_uuid');
+  const contentTypeUuid = useWatch({ control: contentForm.control, name: 'content_type_uuid', });
 
   const { data: contentTypeList } = useQuery(
     getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } })
@@ -459,7 +459,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const handleDeleteContent = async (resolvedId: string, lessonId: string, contentId: string) => {
@@ -484,7 +484,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const getContentIcon = (type: string) => {

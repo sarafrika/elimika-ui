@@ -31,7 +31,7 @@ import {
   updateProgramRequirementMutation,
   updateTrainingProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { ProgramRequirement, TrainingProgram } from '@/services/client/types.gen';
+import type { TrainingProgram } from '@/services/client/types.gen';
 import { RequirementTypeEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -49,7 +49,7 @@ import Spinner from '@/components/ui/spinner';
 import { useInstructor } from '@/context/instructor-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -140,6 +140,8 @@ function ProgramCreationForm({
       ...initialValues,
     },
   });
+
+  const isFree = useWatch({ control: form.control, name: 'is_free', });
 
   const queryClient = useQueryClient();
   const instructor = useInstructor();
@@ -386,7 +388,7 @@ function ProgramCreationForm({
                       min='0'
                       step='0.01'
                       {...field}
-                      disabled={form.watch('is_free')}
+                      disabled={isFree}
                     />
                   </FormControl>
                   <FormMessage />
@@ -484,9 +486,8 @@ function AddCourseToProgramForm({
       has_prerequisites: !!values.prerequisite_course_uuid,
       association_category: values.is_required ? 'Required Course' : 'Optional Course',
       requirement_status: values.is_required ? 'Mandatory Course' : 'Elective Course',
-      curriculum_summary: `${
-        values.is_required ? 'Required' : 'Optional'
-      } course${values.prerequisite_course_uuid ? ' with prerequisites' : ''} in sequence position ${values.sequence_order}`,
+      curriculum_summary: `${values.is_required ? 'Required' : 'Optional'
+        } course${values.prerequisite_course_uuid ? ' with prerequisites' : ''} in sequence position ${values.sequence_order}`,
     };
 
     addProgramCourses.mutate(

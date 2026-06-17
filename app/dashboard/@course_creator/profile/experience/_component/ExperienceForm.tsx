@@ -1,10 +1,8 @@
 'use client';
 
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { UseMutationResult } from '@tanstack/react-query';
-import { useEffect } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
 
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
@@ -101,20 +99,6 @@ const formatDisplayDate = (value?: Date | string) => {
 };
 
 export default function ProfessionalExperienceSettings() {
-  const { replaceBreadcrumbs } = useBreadcrumb();
-
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'profile', title: 'Profile', url: '/dashboard/profile' },
-      {
-        id: 'experience',
-        title: 'Experience',
-        url: '/dashboard/profile/experience',
-        isLast: true,
-      },
-    ]);
-  }, [replaceBreadcrumbs]);
-
   const qc = useQueryClient();
   const user = useUserProfile();
   const { courseCreator, invalidateQuery } = user!;
@@ -140,6 +124,8 @@ export default function ProfessionalExperienceSettings() {
     course_creator_uuid: courseCreator?.uuid!,
   };
 
+
+
   const passExperiences = (exp: CourseCreatorExperience) => ({
     ...defaultExperience,
     ...exp,
@@ -157,6 +143,8 @@ export default function ProfessionalExperienceSettings() {
     },
     mode: 'onChange',
   });
+
+  const experiences = useWatch({ control: form.control, name: 'experiences', });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -369,11 +357,10 @@ export default function ProfessionalExperienceSettings() {
                         <Grip className='text-muted-foreground mt-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100' />
                         <div>
                           <h3 className='text-base font-medium'>
-                            {form.watch(`experiences.${index}.organisation_name`) ||
-                              'New experience'}
+                            {experiences?.[index]?.organisation_name || 'New experience'}
                           </h3>
                           <p className='text-muted-foreground text-sm'>
-                            {form.watch(`experiences.${index}.position`) || 'Role not set'}
+                            {experiences?.[index]?.position || 'Role not set'}
                           </p>
                         </div>
                       </div>
@@ -440,8 +427,7 @@ export default function ProfessionalExperienceSettings() {
                             <FormControl>
                               <Input
                                 type='month'
-                                disabled={form.watch(`experiences.${index}.is_current_position`)}
-                                {...field}
+                                disabled={experiences?.[index]?.is_current_position}
                               />
                             </FormControl>
                             <div className='mt-2 flex items-center space-x-2'>

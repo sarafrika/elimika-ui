@@ -1,18 +1,18 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
 
+import HTMLTextPreview from '@/components/editors/html-text-preview';
 import ImageSelector, { type ImageType } from '@/components/image-selector';
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { ProfileViewField, ProfileViewGrid } from '@/components/profile/profile-view-field';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
-import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -136,8 +136,9 @@ export default function CourseCreatorProfile() {
     },
   });
 
-  const courseCreatorLatitude = form.watch('courseCreator.latitude');
-  const courseCreatorLongitude = form.watch('courseCreator.longitude');
+
+  const courseCreatorLatitude = useWatch({ control: form.control, name: 'courseCreator.latitude', });
+  const courseCreatorLongitude = useWatch({ control: form.control, name: 'courseCreator.longitude', });
 
   const normalizeCoordinate = (value: unknown) => {
     if (typeof value === 'number' && Number.isFinite(value)) {
@@ -190,14 +191,14 @@ export default function CourseCreatorProfile() {
           const manageCourseCreator = () =>
             courseCreator
               ? updateCourseCreator({
-                  path: {
-                    uuid: courseCreator.uuid!,
-                  },
-                  body: updatedProfileData.courseCreator,
-                })
+                path: {
+                  uuid: courseCreator.uuid!,
+                },
+                body: updatedProfileData.courseCreator,
+              })
               : createCourseCreator({
-                  body: updatedProfileData.courseCreator,
-                });
+                body: updatedProfileData.courseCreator,
+              });
 
           const response = await Promise.all([
             updateUser({

@@ -1,12 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { useRef, useState } from 'react';
-import { type Path, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import CustomLoader from '@/components/custom-loader';
 import ImageSelector, { type ImageType } from '@/components/image-selector';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,7 +13,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { asRecord, getFieldErrorMessage } from '@/lib/error-utils';
 import { profilePicSvg } from '@/lib/utils';
 import { type User, updateOrganisation, updateUser } from '@/services/client';
@@ -41,6 +33,13 @@ import {
 } from '@/src/features/profile/components/profile-form-layout';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { type Path, useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 
 const trainingCenterSchema = organisationProfileSchema.merge(
   z.object({
@@ -96,8 +95,8 @@ export default function TrainingCenterForm() {
     },
   });
 
-  const latitudeWatch = form.watch('latitude');
-  const longitudeWatch = form.watch('longitude');
+  const latitudeWatch = useWatch({ control: form.control, name: 'latitude', });
+  const longitudeWatch = useWatch({ control: form.control, name: 'longitude', });
 
   const watchedCoordinates = {
     latitude: normalizeCoordinateValue(latitudeWatch),

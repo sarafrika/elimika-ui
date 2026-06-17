@@ -1,5 +1,6 @@
 'use client';
 
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -15,11 +16,10 @@ import {
   X,
 } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { LessonContentViewerDialog } from '../../../../components/content-preview/LessonContentPreview';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
 import {
@@ -120,7 +120,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
     },
   });
 
-  const watchedType = contentForm.watch('content_type');
+  const watchedType = useWatch({ control: contentForm.control, name: 'content_type', });
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [lessonContents, setLessonContents] = useState<LessonContentFormItem[]>([]);
@@ -143,8 +143,6 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   };
 
   // GET COURSE CONTENT TYPES
-  const contentTypeUuid = contentForm.watch('content_type_uuid');
-
   const { data: contentTypeList } = useQuery(
     getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } })
   );

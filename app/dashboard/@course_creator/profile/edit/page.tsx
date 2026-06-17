@@ -4,14 +4,14 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
 
+import HTMLTextPreview from '@/components/editors/html-text-preview';
 import ImageSelector, { type ImageType } from '@/components/image-selector';
 import LocationInput from '@/components/locationInput';
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { ProfileViewField, ProfileViewGrid } from '@/components/profile/profile-view-field';
-import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -127,6 +127,11 @@ export default function CourseCreatorProfile() {
     },
   });
 
+  const location = useWatch({
+    control: form.control,
+    name: 'location',
+  });
+
   useEffect(() => {
     if (!user?.data || !profile) return;
 
@@ -165,7 +170,7 @@ export default function CourseCreatorProfile() {
       .join(' ');
   };
 
-  function onSubmit(_updatedProfileData: GeneralProfileFormValues) {}
+  function onSubmit(_updatedProfileData: GeneralProfileFormValues) { }
 
   return (
     <ProfileFormShell
@@ -416,7 +421,7 @@ export default function CourseCreatorProfile() {
             viewContent={
               <div className='space-y-6'>
                 <ProfileViewGrid>
-                  <ProfileViewField label='Primary location' value={form.watch('location')} />
+                  <ProfileViewField label='Primary location' value={location} />
                   <ProfileViewField
                     label='Professional headline'
                     value={profile?.professional_headline}

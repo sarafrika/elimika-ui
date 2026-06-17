@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
 
 import RichTextRenderer from '@/components/editors/richTextRenders';
@@ -113,12 +113,13 @@ export function CourseProposal({ data, selectedCourse, onDataChange }: CoursePro
   });
 
   // Sync form state with external `onDataChange`
+  const formValues = useWatch({
+    control: form.control,
+  });
+
   useEffect(() => {
-    const subscription = form.watch(value => {
-      onDataChange(value);
-    });
-    return () => subscription.unsubscribe();
-  }, [form, form.watch, onDataChange]);
+    onDataChange(formValues);
+  }, [formValues, onDataChange]);
 
   const onSubmit = (_values: CourseProposalFormValues) => {
     toast.success('Send course proposal details to db');

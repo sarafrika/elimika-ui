@@ -9,7 +9,7 @@ import {
 } from '../../../../../services/client/@tanstack/react-query.gen';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type FieldErrors, useForm } from 'react-hook-form';
+import { type FieldErrors, useForm, useWatch } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -124,8 +124,9 @@ export const ClassDetailsFormPage = ({
       }));
   }, [courses, appliedCourses]);
 
-  const selectedCourseUuid = form.watch('course_uuid');
-  const selectedClassType = form.watch('class_type');
+
+  const selectedCourseUuid = useWatch({ control: form.control, name: 'course_uuid', });
+  const selectedClassType = useWatch({ control: form.control, name: 'class_type', });
 
   const selectedCourse = useMemo(() => {
     return approvedCourses.find(course => course.uuid === selectedCourseUuid);
@@ -178,7 +179,7 @@ export const ClassDetailsFormPage = ({
 
     const rate =
       selectedCourse.application.rate_card[
-        selectedClassType as keyof typeof selectedCourse.application.rate_card
+      selectedClassType as keyof typeof selectedCourse.application.rate_card
       ];
 
     if (rate !== undefined) {

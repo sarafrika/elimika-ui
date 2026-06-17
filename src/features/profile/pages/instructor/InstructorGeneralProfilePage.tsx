@@ -1,13 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import ImageSelector, { type ImageType } from '@/components/image-selector';
 import LocationInput from '@/components/locationInput';
@@ -53,6 +45,14 @@ import {
 } from '@/src/features/profile/components/profile-view-field';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 
 const generalProfileSchema = z.object({
   user: zUser
@@ -132,8 +132,8 @@ export default function InstructorProfile() {
     },
   });
 
-  const instructorLatitude = form.watch('instructor.latitude');
-  const instructorLongitude = form.watch('instructor.longitude');
+  const instructorLatitude = useWatch({ control: form.control, name: 'instructor.latitude', });
+  const instructorLongitude = useWatch({ control: form.control, name: 'instructor.longitude', });
 
   const normalizeCoordinate = (value: unknown) => {
     if (typeof value === 'number' && Number.isFinite(value)) {
@@ -186,14 +186,14 @@ export default function InstructorProfile() {
           const manageInstructor = () =>
             instructor
               ? updateInstructor({
-                  path: {
-                    uuid: instructor.uuid!,
-                  },
-                  body: updatedProfileData.instructor,
-                })
+                path: {
+                  uuid: instructor.uuid!,
+                },
+                body: updatedProfileData.instructor,
+              })
               : createInstructor({
-                  body: updatedProfileData.instructor,
-                });
+                body: updatedProfileData.instructor,
+              });
 
           const response = await Promise.all([
             updateUser({

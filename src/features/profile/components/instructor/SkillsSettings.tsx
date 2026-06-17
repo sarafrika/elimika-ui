@@ -1,12 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '@/components/ui/dialog';
@@ -31,16 +24,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import type { Instructor, InstructorSkill, ProficiencyLevelEnum } from '@/services/client';
-import { zInstructorSkill } from '@/services/client/zod.gen';
 import {
   addInstructorSkillMutation,
   deleteInstructorSkillMutation,
   getInstructorSkillsQueryKey,
   updateInstructorSkillMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { zInstructorSkill } from '@/services/client/zod.gen';
 import { ProfileFormSection, ProfileFormShell } from '@/src/features/profile/components/profile-form-layout';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { PlusCircle, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import { InstructorSkillCard } from './InstructorSkillCard';
 
 const SkillSchema = zInstructorSkill;
@@ -121,6 +121,8 @@ export default function SkillsSettings({
     },
     mode: 'onChange',
   });
+
+  const skills = useWatch({ control: form.control, name: 'skills', });
 
   useEffect(() => {
     if (instructorSkills && instructorSkills.length > 0) {
@@ -303,7 +305,7 @@ export default function SkillsSettings({
                   <div key={field.id} className='rounded-md border'>
                     <div className='flex items-center justify-between border-b p-4'>
                       <h3 className='text-sm font-medium'>
-                        {form.watch(`skills.${index}.skill_name`) || 'New skill'}
+                        {skills?.[index]?.skill_name || 'New skill'}
                       </h3>
                       <Button
                         type='button'

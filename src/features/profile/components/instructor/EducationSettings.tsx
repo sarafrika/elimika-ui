@@ -1,12 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
-import { Grip, PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -47,6 +40,13 @@ import {
 } from '@/src/features/profile/components/profile-view-field';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
+import { Grip, PlusCircle, Trash2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 
 const DEGREE_OPTIONS = {
   'Ph.D.': 'Ph.D.',
@@ -129,6 +129,8 @@ export default function EducationSettings() {
     },
     mode: 'onChange',
   });
+
+  const educations = useWatch({ control: form.control, name: 'educations', });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -286,174 +288,192 @@ export default function EducationSettings() {
               </Button>
             }
           >
-            <div className='space-y-4'>
-              {fields.map((field, index) => (
-                <div
-                  key={field.id}
-                  className='bg-card group hover:bg-accent/5 relative rounded-md border transition-all'
-                >
-                  <div className='space-y-5 p-5'>
-                    <div className='flex items-start justify-between gap-4'>
-                      <div className='flex items-start gap-2'>
-                        <Grip className='text-muted-foreground mt-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100' />
-                        <div>
-                          <h3 className='text-base font-medium'>
-                            {form.watch(`educations.${index}.school_name`) || 'New Institution'}
-                          </h3>
-                          <p className='text-muted-foreground text-sm'>
-                            {form.watch(`educations.${index}.qualification`)} in{' '}
-                            {form.watch(`educations.${index}.field_of_study`)}
-                          </p>
+            <div className="space-y-4">
+              {fields.map((field, index) => {
+                const edu = educations?.[index];
+
+                return (
+                  <div
+                    key={field.id}
+                    className="bg-card group hover:bg-accent/5 relative rounded-md border transition-all"
+                  >
+                    <div className="space-y-5 p-5">
+
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-2">
+                          <Grip className="text-muted-foreground mt-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100" />
+
+                          <div>
+                            <h3 className="text-base font-medium">
+                              {edu?.school_name || 'New Institution'}
+                            </h3>
+
+                            <p className="text-muted-foreground text-sm">
+                              {edu?.qualification || '—'} in {edu?.field_of_study || '—'}
+                            </p>
+                          </div>
                         </div>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onRemove(index)}
+                          className="hover:bg-destructive-foreground h-8 w-8 transition-colors"
+                        >
+                          <Trash2 className="text-destructive h-4 w-4" />
+                        </Button>
                       </div>
 
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='icon'
-                        onClick={() => onRemove(index)}
-                        className='hover:bg-destructive-foreground h-8 w-8 transition-colors'
-                      >
-                        <Trash2 className='text-destructive h-4 w-4' />
-                      </Button>
-                    </div>
-
-                    <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
-                      <FormField
-                        control={form.control}
-                        name={`educations.${index}.school_name`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Institution</FormLabel>
-                            <FormControl>
-                              <Input placeholder='e.g. University of Nairobi' {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`educations.${index}.qualification`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Degree</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      {/* Row 1 */}
+                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name={`educations.${index}.school_name`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Institution</FormLabel>
                               <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Select degree' />
-                                </SelectTrigger>
+                                <Input placeholder="e.g. University of Nairobi" {...field} />
                               </FormControl>
-                              <SelectContent>
-                                {Object.entries(DEGREE_OPTIONS).map(([value, label]) => (
-                                  <SelectItem key={value} value={value}>
-                                    {label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                    <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
+                        <FormField
+                          control={form.control}
+                          name={`educations.${index}.qualification`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Degree</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select degree" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {Object.entries(DEGREE_OPTIONS).map(([value, label]) => (
+                                    <SelectItem key={value} value={value}>
+                                      {label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Row 2 */}
+                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name={`educations.${index}.field_of_study`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Field of study</FormLabel>
+                              <FormControl>
+                                <Input placeholder="e.g. Computer Science" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`educations.${index}.certificate_number`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Certificate number</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Enter certificate number"
+                                  {...field}
+                                  value={field.value ?? ''}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Year + checkbox */}
                       <FormField
                         control={form.control}
-                        name={`educations.${index}.field_of_study`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Field of study</FormLabel>
-                            <FormControl>
-                              <Input placeholder='e.g. Computer Science' {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        name={`educations.${index}.year_completed`}
+                        render={({ field }) => {
+                          const isCurrent = edu?.is_recent_qualification;
+
+                          return (
+                            <FormItem>
+                              <FormLabel>End year</FormLabel>
+
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="YYYY"
+                                  disabled={isCurrent}
+                                  {...field}
+                                />
+                              </FormControl>
+
+                              <div className="mt-2">
+                                <FormField
+                                  control={form.control}
+                                  name={`educations.${index}.is_recent_qualification`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center space-x-2">
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value}
+                                          onCheckedChange={field.onChange}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal">
+                                        Currently studying here
+                                      </FormLabel>
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
+
+                      {/* Description */}
                       <FormField
                         control={form.control}
-                        name={`educations.${index}.certificate_number`}
+                        name={`educations.${index}.full_description`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Certificate number</FormLabel>
+                            <FormLabel>Additional information</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder='Enter certificate number'
+                                placeholder="e.g. Honors, GPA, thesis title..."
                                 {...field}
                                 value={field.value ?? ''}
                               />
                             </FormControl>
+                            <FormDescription>
+                              Add any notable achievements or specialisations.
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
-
-                    <div className='grid grid-cols-1 gap-5'>
-                      <FormField
-                        control={form.control}
-                        name={`educations.${index}.year_completed`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>End year</FormLabel>
-                            <FormControl>
-                              <Input
-                                type='number'
-                                placeholder='YYYY'
-                                disabled={form.watch(`educations.${index}.is_recent_qualification`)}
-                                {...field}
-                              />
-                            </FormControl>
-                            <div className='mt-2'>
-                              <FormField
-                                control={form.control}
-                                name={`educations.${index}.is_recent_qualification`}
-                                render={({ field }) => (
-                                  <FormItem className='flex flex-row items-center space-x-2'>
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
-                                    </FormControl>
-                                    <FormLabel className='font-normal'>
-                                      Currently studying here
-                                    </FormLabel>
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name={`educations.${index}.full_description`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Additional information</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder='e.g. Honors, GPA, thesis title...'
-                              {...field}
-                              value={field.value ?? ''}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Add any notable achievements or specialisations.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <Button

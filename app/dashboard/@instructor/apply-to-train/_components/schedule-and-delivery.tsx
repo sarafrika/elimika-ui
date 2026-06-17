@@ -22,7 +22,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { Globe, MapPin, Monitor, Plus, Search, X } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 type Trainer = {
@@ -159,6 +159,8 @@ export function ScheduleAndDelivery({
       max_students: courseDetails?.data?.class_limit ?? '',
     },
   });
+
+  const trainingMode = useWatch({ control: form.control, name: 'trainingMode', });
 
   const [leadTrainer, setLeadTrainer] = useState<Trainer | null>(data?.leadTrainer || null);
   const [supportTrainers, setSupportTrainers] = useState<Trainer[]>(data?.supportTrainers || []);
@@ -342,7 +344,7 @@ export function ScheduleAndDelivery({
         </Card>
 
         {/* Location Details */}
-        {['IN_PERSON', 'HYBRID'].includes(form.watch('trainingMode')) && (
+        {['IN_PERSON', 'HYBRID'].includes(trainingMode) && (
           <Card>
             <CardHeader>
               <CardTitle>Training Location</CardTitle>
