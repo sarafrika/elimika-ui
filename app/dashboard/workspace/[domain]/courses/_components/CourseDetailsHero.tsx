@@ -28,7 +28,7 @@ type Props = {
   assignmentCount: number;
   quizCount: number;
   durationLabel: string;
-  type?: 'course' | 'class';
+  type?: string | undefined;
 };
 
 export default function CourseDetailsHero({
@@ -43,7 +43,7 @@ export default function CourseDetailsHero({
   assignmentCount,
   quizCount,
   durationLabel,
-  type = 'course',
+  type,
 }: Props) {
   const totalAssessments = assignmentCount + quizCount;
   const displayRating = averageRating ? Number(averageRating) : 0;

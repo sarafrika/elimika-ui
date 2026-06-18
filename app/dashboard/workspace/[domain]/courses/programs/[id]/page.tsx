@@ -1,6 +1,6 @@
-import { notFound } from 'next/navigation';
-import ProgramDetailsPage from '@/src/features/dashboard/courses/pages/ProgramDetailsPage';
 import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
+import { notFound } from 'next/navigation';
+import ClassProgramDetailsPage from '../../_components/ClassProgramDetaisPage';
 
 type WorkspaceProgramDetailsPageProps = {
   params: Promise<{ domain: string; id: string }>;
@@ -20,5 +20,5 @@ export default async function WorkspaceProgramDetailsPage({
     notFound();
   }
 
-  return <ProgramDetailsPage programId={id} />;
+  return <ClassProgramDetailsPage programId={id} type='program' />;
 }

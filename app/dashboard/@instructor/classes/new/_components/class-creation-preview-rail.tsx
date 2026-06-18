@@ -201,13 +201,25 @@ export function ClassCreationPreviewRail({ data }: { data: ClassCreationPreviewD
 
       <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
         <div className='px-4 py-4'>
-          <h3 className='text-foreground text-sm font-semibold sm:text-base'>Class Invite Link</h3>
-          <p className='text-muted-foreground mt-1 text-sm'>
-            Share this link to invite students to your class.
-          </p>
-          <div className='mt-4 flex gap-2'>
-            <Input value={data.inviteLink} readOnly />
-            <CopyButton value={data.inviteLink} />
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-foreground text-sm font-semibold sm:text-base">
+                Class Invite Link
+              </h3>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Available after the class is created. Share this link with students to
+                invite them to join.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Input
+                value={data.inviteLink}
+                placeholder="Invite link will appear here"
+                readOnly
+              />
+              <CopyButton value={data.inviteLink} />
+            </div>
           </div>
 
           <div className='mt-4 space-y-3'>

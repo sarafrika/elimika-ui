@@ -71,9 +71,11 @@ function getDurationLabel(course?: Course) {
 export default function ClassCourseDetailsPage({
     courseId,
     classData,
+    type,
 }: {
     courseId: string;
     classData?: CombinedClassDetailsData;
+    type: string | undefined
 }) {
     const router = useRouter();
     const params = useParams();
@@ -456,13 +458,6 @@ export default function ClassCourseDetailsPage({
         );
     };
 
-    const type = classData?.class?.uuid && classData?.course?.uuid
-        ? 'class'
-        : course?.uuid
-            ? 'course'
-            : undefined;
-
-
     const [siteOrigin, setSiteOrigin] = useState('');
     useEffect(() => {
         setSiteOrigin(window.location.origin);
@@ -474,10 +469,6 @@ export default function ClassCourseDetailsPage({
         if (course?.uuid) {
             return `${siteOrigin}/dashboard/workspace/student/courses/available-classes/${course.uuid}/enroll?id=${classId}`;
         }
-
-        // if (program?.uuid) {
-        //     return `${siteOrigin}/dashboard/workspace/student/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
-        // }
 
         return '';
     }, [classId, course?.uuid, siteOrigin]);

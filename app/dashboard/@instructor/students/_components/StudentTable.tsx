@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "../../../../../components/ui/select";
 
+import { Skeleton } from "../../../../../components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -67,7 +68,7 @@ export function StudentTable() {
     level: "all",
   });
 
-  const { students, courseTabs, filterOptions } = useInstructorStudentsData();
+  const { students, courseTabs, filterOptions, loading } = useInstructorStudentsData();
 
   const filteredStudents = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -112,6 +113,32 @@ export function StudentTable() {
     startIndex,
     startIndex + rowsPerPage
   );
+
+
+  if (loading) {
+    return (
+      <div className="flex-1 min-w-0 space-y-4">
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-9 w-32" />
+        </div>
+
+        <div className="flex gap-2">
+          <Skeleton className="h-10 flex-1 max-w-xs" />
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-10 w-40" />
+        </div>
+
+        <div className="rounded-md border p-4 space-y-3">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 min-w-0 space-y-4">
@@ -260,6 +287,12 @@ export function StudentTable() {
               <StudentCard student={student} />
             </div>
           ))}
+
+          {!loading && paginatedStudents.length === 0 && (
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              No students found.
+            </div>
+          )}
         </div>
 
         <Pagination

@@ -324,7 +324,7 @@ export default function EnrollSidebar({
             />
           )}
 
-          <div className="border-t border-border p-4 sm:p-5">
+          {profile?.user_domain === "instructor" && <div className="border-t border-border p-4 sm:p-5">
             <Button
               variant="outline"
               size="sm"
@@ -337,7 +337,8 @@ export default function EnrollSidebar({
             >
               Edit Schedule
             </Button>
-          </div>
+          </div>}
+
         </div>
       )}
 

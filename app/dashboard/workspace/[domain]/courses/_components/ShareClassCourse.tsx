@@ -10,16 +10,19 @@ import {
 type ShareClassCourseProps = {
     courseTitle: string;
     courseUrl: string;
+    type?: string
 };
 
 type ShareClassProps = {
     classTitle: string;
     classUrl: string;
+    type?: string
 };
 
 export default function ShareClassCourse({
     courseTitle,
     courseUrl,
+    type = 'course'
 }: ShareClassCourseProps) {
     const handleCopyLink = async () => {
         try {
@@ -66,7 +69,7 @@ export default function ShareClassCourse({
     return (
         <div className="bg-card border border-border rounded-md p-4 sm:p-5 shadow-sm">
             <h3 className="mb-3 text-sm font-bold text-foreground sm:text-base">
-                Share this course
+                Share this {type === "course" ? "course" : "program"}
             </h3>
 
             <div className="flex items-center gap-3">
@@ -110,6 +113,8 @@ export default function ShareClassCourse({
 export function ShareClass({
     classTitle,
     classUrl,
+    type = 'course'
+
 }: ShareClassProps) {
     const handleCopyLink = async () => {
         try {
@@ -156,7 +161,7 @@ export function ShareClass({
     return (
         <div className="bg-card border border-border rounded-md p-4 sm:p-5 shadow-sm">
             <h3 className="mb-3 text-sm font-bold text-foreground sm:text-base">
-                Share this class
+                Share this {type === "course" ? "course" : "program"}
             </h3>
 
             <div className="flex items-center gap-3">

@@ -68,12 +68,21 @@ export function useCourseLessonsWithContent({ courseUuid, enabled = true }: Para
   const isAllLessonsDataLoading = lessonsLoading || isLessonContentLoading;
   const isAllLessonsDataFetching = lessonsFetching || isLessonContentFetching;
 
-  const lessonsWithContent = cLessons?.data?.content?.map(
-    (lesson, index): CourseLessonWithContent => ({
-      lesson,
-      content: lessonContentQueries[index]?.data,
-    })
+  const lessonContentData = useMemo(
+    () => lessonContentQueries.map(q => q.data),
+    [lessonContentQueries]
   );
+
+  const lessonsWithContent = useMemo(() => {
+    return (
+      cLessons?.data?.content?.map(
+        (lesson, index): CourseLessonWithContent => ({
+          lesson,
+          content: lessonContentData[index],
+        })
+      ) ?? []
+    );
+  }, [cLessons?.data?.content, lessonContentData]);
 
   const { data: contentTypeList, isFetching: contentTypeFetching } = useQuery(
     {

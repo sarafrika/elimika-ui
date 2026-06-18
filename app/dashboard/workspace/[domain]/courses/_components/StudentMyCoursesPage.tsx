@@ -223,8 +223,8 @@ export function StudentMyCoursesPage() {
       const course = item.course;
       const classDetails = item.classDetails;
       const classId = item.uuid;
-      const activeEnrollment = item.enrollments.find(
-        enrollment => enrollment.enrollment_status !== 'CANCELLED'
+      const activeEnrollment = item?.classEnrollments?.find(
+        enrollment => enrollment.status !== 'CANCELLED'
       );
 
       if (!course?.uuid || !activeEnrollment) return;
@@ -232,12 +232,12 @@ export function StudentMyCoursesPage() {
       const presentation = getCardPresentation(index);
       if (cards.has(course.uuid)) return;
 
-      const scheduleCount = item.schedules?.length ?? item.enrollments.length;
+      const scheduleCount = item.schedules?.length ?? item?.classEnrollments.length;
 
       // Derive status from enrollment data
-      const enrollmentStatus = activeEnrollment.enrollment_status ?? '';
+      const enrollmentStatus = activeEnrollment?.status ?? '';
       const isCompleted =
-        enrollmentStatus === 'COMPLETED' || enrollmentStatus === 'GRADUATED';
+        (enrollmentStatus == 'COMPLETED') || (enrollmentStatus == 'GRADUATED');
       const status: CourseStatus = isCompleted ? 'completed' : 'in_progress';
 
       cards.set(course.uuid, {
@@ -268,6 +268,15 @@ export function StudentMyCoursesPage() {
         imageUrl: course.banner_url ?? course.thumbnail_url,
         sortTitle: course.name,
         status,
+        enrolledClasses: item.classEnrollments,
+        enrollmentCount: item?.classEnrollments?.length,
+
+        // temporary defaults
+        rating: 0,
+        reviewCount: 0,
+        minimumRate: 0,
+        ctaDisabled: false,
+        ctaTone: isCompleted ? 'success' : 'primary',
       });
     });
 
