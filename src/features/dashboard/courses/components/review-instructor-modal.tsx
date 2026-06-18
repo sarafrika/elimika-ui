@@ -100,9 +100,8 @@ export function FeedbackDialog({
           </div>
 
           <div
-            className={`mb-8 grid gap-4 ${
-              isInstructor ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
-            }`}
+            className={`mb-8 grid gap-4 ${isInstructor ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
+              }`}
           >
             <RatingField label='Overall Rating' value={rating} onChange={onRatingChange} />
 
@@ -133,7 +132,7 @@ export function FeedbackDialog({
             Cancel
           </Button>
 
-          <Button onClick={onSubmit} disabled={isSubmitting}>
+          <Button onClick={onSubmit} disabled={isSubmitting} className='min-w-[120px]'>
             {isSubmitting ? <Spinner /> : 'Submit Feedback'}
           </Button>
         </DialogFooter>

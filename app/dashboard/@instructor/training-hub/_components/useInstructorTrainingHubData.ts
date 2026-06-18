@@ -1,9 +1,9 @@
 'use client';
 
 import { useInstructor } from '@/context/instructor-context';
-import { dayjs } from '@/lib/date';
 import { useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
+import { dayjs } from '@/lib/date';
 import {
   getAllCoursesOptions,
   getEnrollmentsForClassOptions,
@@ -148,10 +148,15 @@ export function useInstructorTrainingHubData() {
 
   const relevantClasses = useMemo(
     () =>
-      classes.filter(
-        classItem =>
-          Boolean(classItem.course_uuid) && approvedApplicationMap.has(classItem.course_uuid ?? '')
-      ),
+      classes.filter(classItem => {
+        const resourceUuid =
+          classItem?.course_uuid ?? classItem?.program_uuid;
+
+        return (
+          Boolean(resourceUuid) &&
+          approvedApplicationMap.has(resourceUuid as string)
+        );
+      }),
     [approvedApplicationMap, classes]
   );
 

@@ -71,13 +71,13 @@ export function StudentRow({ student }: StudentRowProps) {
 
       {/* Progress */}
       <td className="py-3 px-4 hidden md:table-cell">
-        {joinedDate
+        {/* {joinedDate
           ? new Intl.DateTimeFormat("en-GB", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
           }).format(joinedDate)
-          : "—"}
+          : "—"} */}
       </td>
 
       {/* Actions */}

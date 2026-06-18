@@ -2,10 +2,17 @@
 
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import type { Course } from '@/services/client';
-import { CheckCircle2, ChevronDown, ChevronUp, Play, User2 } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { CheckCircle2, ChevronDown, ChevronUp, Star, User2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import HTMLTextPreview from '../../../../../../components/editors/html-text-preview';
+import { Button } from '../../../../../../components/ui/button';
+import { useUserProfile } from '../../../../../../context/profile-context';
 import { CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
+import { useCourseEnrollmentsMap } from '../../../../../../hooks/use-enrollment-map';
+import { getClassDefinitionsForInstructorOptions, getInstructorRatingSummaryOptions, submitInstructorReviewMutation } from '../../../../../../services/client/@tanstack/react-query.gen';
+import { FeedbackDialog } from '../../../../_components/review-instructor-modal';
 
 type LessonContentItem = {
   lesson: {
@@ -131,11 +138,6 @@ export function ClassCourseCurriculum({
                     {mod?.content?.data?.length || 0} Lessons
                   </span>
                   {/* <span>{String(mod.duration)}h</span> */}
-                  <span
-                    className="flex h-5 w-5 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-                  >
-                    <Play className="h-2.5 w-2.5" />
-                  </span>
                 </div>
               </button>
 
@@ -191,6 +193,7 @@ export default function CourseOverview({
   reviewCount,
   averageRating,
 }: Props) {
+  const userProfile = useUserProfile()
   const [expanded, setExpanded] = useState(false);
   const [openModules, setOpenModules] = useState<number[]>([]);
 
@@ -233,25 +236,105 @@ export default function CourseOverview({
 
   const instructor = classData?.instructor?.data
 
+  const { data: instructorClassResp } = useQuery({
+    ...getClassDefinitionsForInstructorOptions({
+      path: { instructorUuid: instructor?.uuid as string }
+    }),
+    enabled: !!instructor?.uuid
+  })
+  const instructorClasses = instructorClassResp?.data?.filter(
+    (item) => item.class_definition?.is_active
+  ) || []
+  const { data: instructorReviewResp } = useQuery({
+    ...getInstructorRatingSummaryOptions({
+      path: { instructorUuid: instructor?.uuid as string }
+    }),
+    enabled: !!instructor?.uuid
+  })
+
   const profile = type === "course"
     ? {
       name: creatorName,
       headline: creatorHeadline,
       bio: creatorBio,
       courses: creatorCourseItems.length,
+      rating: 0
     }
     : {
       name: instructor?.full_name,
       headline: instructor?.professional_headline,
       bio: instructor?.bio,
-      courses: 0,
+      courses: instructorClasses?.length,
+      rating: instructorReviewResp?.data?.average_rating
     };
 
   const stats = [
     { val: profile.courses, label: "Courses" },
     { val: 0, label: "Students" },
-    { val: 0, label: "Rating" },
+    { val: profile?.rating, label: "Rating" },
   ];
+
+  const studentUuid = userProfile?.student?.uuid as string;
+  const { courseEnrollmentMap } = useCourseEnrollmentsMap([classData?.course?.uuid as string]);
+  const courseEnrollments =
+    courseEnrollmentMap?.[classData?.course?.uuid as string] || [];
+
+  const enrollment = courseEnrollments?.enrollments?.find(
+    (e) => e.student_uuid === studentUuid
+  );
+
+  const enrollmentUuid = enrollment?.uuid;
+
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [clarityRating, setClarityRating] = useState(0);
+  const [engagementRating, setEngagementRating] = useState(0);
+  const [punctualityRating, setPunctualityRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [headline, setHeadline] = useState('');
+
+  const reviewInstructor = useMutation(submitInstructorReviewMutation());
+  const handleSubmitFeedback = () => {
+    if (!classData?.class || !classData?.class?.uuid || !instructor?.uuid || !studentUuid) {
+      toast.error('Class or student enrollment not found');
+      return;
+    }
+
+    const instructorUuid = instructor.uuid;
+
+    reviewInstructor.mutate(
+      {
+        body: {
+          enrollment_uuid: enrollmentUuid,
+          instructor_uuid: instructorUuid,
+          student_uuid: studentUuid,
+          comments: feedbackComment,
+          headline: headline,
+          is_anonymous: false,
+          rating: rating,
+          clarity_rating: clarityRating,
+          engagement_rating: engagementRating,
+          punctuality_rating: punctualityRating,
+        },
+        path: { instructorUuid },
+      },
+      {
+        onSuccess: (data) => {
+          toast.success(data?.message);
+          setShowFeedbackDialog(false);
+          setFeedbackComment('');
+          setHeadline('');
+          setRating(0);
+          setClarityRating(0);
+          setEngagementRating(0);
+          setPunctualityRating(0);
+        },
+        onError: (data) => {
+          toast.error(data?.message);
+        },
+      }
+    );
+  };
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
@@ -357,11 +440,6 @@ export default function CourseOverview({
                       {mod?.content?.data?.length || 0} Lessons
                     </span>
                     {/* <span>{String(mod.duration)}h</span> */}
-                    <span
-                      className="flex h-5 w-5 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-                    >
-                      <Play className="h-2.5 w-2.5" />
-                    </span>
                   </div>
                 </button>
 
@@ -404,9 +482,21 @@ export default function CourseOverview({
 
       {/* INSTRUCTOR */}
       <section>
-        <h2 className="mb-3 text-base font-bold text-foreground sm:mb-4 sm:text-lg">
-          Meet your {type === "course" ? "Course Creator" : "Instructor"}
-        </h2>
+        <div className='flex flex-row items-center justify-between'>
+          <h2 className="mb-3 text-base font-bold text-foreground sm:mb-4 sm:text-lg">
+            Meet your {type === "course" ? "Course Creator" : "Instructor"}
+          </h2>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => setShowFeedbackDialog(true)}
+            className='gap-2 rounded-sm shadow-none'
+          >
+            <Star className='h-4 w-4' />
+            Write a Review
+          </Button>
+        </div>
+
 
         <div className="flex flex-col items-start gap-4 rounded-md border border-border bg-muted/40 p-4 sm:flex-row sm:gap-6 sm:p-5">
           <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-muted sm:h-20 sm:w-20">
@@ -457,6 +547,24 @@ export default function CourseOverview({
         </div>
       </section>
 
+      <FeedbackDialog
+        open={showFeedbackDialog}
+        onOpenChange={setShowFeedbackDialog}
+        headline={headline}
+        onHeadlineChange={setHeadline}
+        feedback={feedbackComment}
+        onFeedbackChange={setFeedbackComment}
+        rating={rating}
+        onRatingChange={setRating}
+        clarityRating={clarityRating}
+        onClarityRatingChange={setClarityRating}
+        engagementRating={engagementRating}
+        onEngagementRatingChange={setEngagementRating}
+        punctualityRating={punctualityRating}
+        onPunctualityRatingChange={setPunctualityRating}
+        isSubmitting={reviewInstructor.isPending}
+        onSubmit={handleSubmitFeedback}
+      />
     </div>
   );
 }

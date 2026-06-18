@@ -20,6 +20,5 @@ export default async function WorkspaceCourseDetailsPage({
     notFound();
   }
 
-  return <ClassCourseDetailsPage courseId={id} />
-  // return <CourseDetailsPage courseId={id} />;
+  return <ClassCourseDetailsPage courseId={id} type='course' />
 }

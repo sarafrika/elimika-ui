@@ -5,6 +5,7 @@ import React from 'react';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import { EnrollmentLoadingState } from '../../../../../src/features/dashboard/courses/components/EnrollmentLoadingState';
 import ClassCourseDetailsPage from '../../../workspace/[domain]/courses/_components/ClassCourseDetailsPage';
+import ClassProgramDetailsPage from '../../../workspace/[domain]/courses/_components/ClassProgramDetaisPage';
 
 
 type Props = {
@@ -53,6 +54,7 @@ export default function StudentClassCoursePage({ params }: Props) {
 
     const { data: classData, isLoading, isError } = useClassDetails(classId);
 
+
     if (isLoading) {
         return (
             <EnrollmentLoadingState
@@ -62,15 +64,30 @@ export default function StudentClassCoursePage({ params }: Props) {
         );
     }
 
-    if (isError || !classData?.course?.uuid) {
-        return (<PageNotFound />);
+    if (isError || !classData) {
+        return <PageNotFound />;
     }
 
-    return (
-        <ClassCourseDetailsPage
-            courseId={classData.course.uuid}
-            classData={classData}
-        />
-    );
+    if (classData?.course?.uuid) {
+        return (
+            <ClassCourseDetailsPage
+                courseId={classData.course.uuid}
+                classData={classData}
+                type={'class'}
+            />
+        );
+    }
+
+    if (classData?.program?.uuid) {
+        return (
+            <ClassProgramDetailsPage
+                programId={classData.program.uuid}
+                classData={classData}
+                type={"class"}
+            />
+        );
+    }
+
+    return <PageNotFound />;
 }
 
