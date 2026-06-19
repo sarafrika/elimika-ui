@@ -7,9 +7,7 @@ import {
   Copy,
   Facebook,
   Globe,
-  ImagePlus,
   Linkedin,
-  Loader2,
   LucideIcon,
   Mail,
   MapPin,
@@ -17,8 +15,7 @@ import {
   MoreHorizontal,
   PenTool,
   TimerReset,
-  Users,
-  VideoIcon,
+  Users
 } from 'lucide-react';
 import { useRef, useState, type ComponentType } from 'react';
 
@@ -127,7 +124,7 @@ export function ClassCreationPreviewRail({
         <div className='bg-background flex flex-col gap-2 px-4 pt-4 sm:flex-row sm:items-center sm:justify-between'>
           <h3 className='text-foreground text-sm font-semibold sm:text-base'>Class Preview</h3>
 
-          <div className='flex flex-wrap items-center gap-2'>
+          {/* <div className='flex flex-wrap items-center gap-2'>
             <input
               ref={thumbnailInputRef}
               type='file'
@@ -174,14 +171,14 @@ export function ClassCreationPreviewRail({
               )}
               Add Class Intro Video
             </Button>
-          </div>
+          </div> */}
         </div>
 
-        {!classCreated && (
+        {/* {!classCreated && (
           <p className='text-muted-foreground px-4 pt-2 text-[11px]'>
             Save or publish the class first to enable thumbnail and video uploads.
           </p>
-        )}
+        )} */}
 
         <div className='overflow-hidden rounded-md border border-primary/20 bg-background mt-3'>
           {/* HERO IMAGE */}

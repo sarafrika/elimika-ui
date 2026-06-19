@@ -22,10 +22,13 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
+import { ClassMediaUpload, type MediaFile } from './_components/class-media-upload';
+import { ServiceTypeSelector, type ServiceType } from './_components/service-type-selector';
 
 import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { Calendar } from '../../../../../components/ui/calendar';
+import { Checkbox } from '../../../../../components/ui/checkbox';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import { normalizeLocationType, requiresPhysicalLocation, trimToUndefined } from '../../../../../lib/location-types';
@@ -59,7 +62,6 @@ import {
 import {
   type ClassCreationRateSummary
 } from './_components/class-creation-rate-card';
-import { ClassCreationSummaryStrip } from './_components/class-creation-summary-strip';
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new-class-creation';
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
@@ -418,17 +420,28 @@ const expandSessionsForConflictCheck = (
 };
 
 const NewClassCreationPage = () => {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const qc = useQueryClient();
   const instructor = useInstructor();
-  const classId = searchParams.get('id');
+
+  // Use state instead of direct useSearchParams to avoid hot-reload issues
+  const [classId, setClassId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+
+  // Initialize classId from search params after first render
+  useEffect(() => {
+    const id = searchParams.get('id');
+    setClassId(id);
+  }, [searchParams]);
 
   const [draftSavedTick, setDraftSavedTick] = useState(0);
   const [savedClassUuid, setSavedClassUuid] = useState<string | null>(null);
   const [isDataInitialized, setIsDataInitialized] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState('');
   const [schedulePreset, setSchedulePreset] = useState<SchedulePreset>('standard');
+  const [serviceType, setServiceType] = useState<ServiceType | undefined>(undefined);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [classDetails, setClassDetails] = useState<ClassDetails>(() =>
     createInitialClassDetails(instructor?.full_name)
   );
@@ -468,22 +481,21 @@ const NewClassCreationPage = () => {
 
   const createClassDefinition = useMutation(createClassDefinitionMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
-  const addClassThumbnailMut = useMutation(uploadClassThumbnailMutation())
-  const addClassIntroVideoMut = useMutation(uploadClassPromotionalVideoMutation())
+  const addClassThumbnailMut = useMutation(uploadClassThumbnailMutation());
+  const addClassIntroVideoMut = useMutation(uploadClassPromotionalVideoMutation());
 
-  const handleAddClassThumbnail = () => {
-    addClassThumbnailMut.mutate({
-      path: { uuid: "createdclassuuid" },
-      body: { thumbnail: "blob file" }
-    })
-  }
-
-  const handleAddClassIntroVideo = () => {
-    addClassIntroVideoMut.mutate({
-      path: { uuid: "createdclassuuid" },
-      body: { promotional_video: "blob file" }
-    })
-  }
+  const handleServiceTypeChange = (
+    newServiceType: ServiceType,
+    classType: 'PRIVATE' | 'GROUP',
+    locationType: 'ONLINE' | 'IN_PERSON' | 'HYBRID'
+  ) => {
+    setServiceType(newServiceType);
+    setClassDetails(prev => ({
+      ...prev,
+      class_type: classType === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
+      location_type: locationType,
+    }));
+  };
 
   const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
   const { data: appliedCourses } = useQuery({
@@ -702,6 +714,29 @@ const NewClassCreationPage = () => {
       setLocationLatitude(typeof classRecord.location_latitude === 'number' ? String(classRecord.location_latitude) : '');
       setLocationLongitude(typeof classRecord.location_longitude === 'number' ? String(classRecord.location_longitude) : '');
 
+      // Set service type based on loaded class type and location type
+      const loadedLocationType = normalizeLocationType(classRecord.location_type);
+      const classTypeValue = classRecord.class_visibility === 'PRIVATE' ? 'PRIVATE' : 'GROUP';
+      let computedServiceType: ServiceType | undefined;
+
+      if (classTypeValue === 'PRIVATE' && loadedLocationType === 'ONLINE') {
+        computedServiceType = 'PRIVATE_ONLINE';
+      } else if (classTypeValue === 'GROUP' && loadedLocationType === 'ONLINE') {
+        computedServiceType = 'GROUP_ONLINE';
+      } else if (classTypeValue === 'GROUP' && loadedLocationType === 'IN_PERSON') {
+        computedServiceType = 'GROUP_INPERSON';
+      } else if (classTypeValue === 'PRIVATE' && loadedLocationType === 'IN_PERSON') {
+        computedServiceType = 'PRIVATE_INPERSON';
+        // } else if (classTypeValue === 'PRIVATE' && loadedLocationType === 'HYBRID') {
+        //   computedServiceType = 'PRIVATE_HYBRID';
+        // } else if (classTypeValue === 'GROUP' && loadedLocationType === 'HYBRID') {
+        //   computedServiceType = 'GROUP_HYBRID';
+      }
+
+      if (computedServiceType) {
+        setServiceType(computedServiceType);
+      }
+
       if (classRecord.academic_period_start_date || classRecord.academic_period_end_date ||
         classRecord.registration_period_start_date || classRecord.registration_period_end_date) {
         setScheduleSettings(prev => ({
@@ -746,6 +781,9 @@ const NewClassCreationPage = () => {
     }
     if (!classDetails.title.trim()) {
       toast.error('Please enter a class title'); return false;
+    }
+    if (!serviceType) {
+      toast.error('Please select a service type'); return false;
     }
     const locationType = normalizeLocationType(classDetails.location_type);
     if (!locationType) {
@@ -917,7 +955,41 @@ const NewClassCreationPage = () => {
       session_templates,
     };
 
-    const onSuccess = () => {
+    const onSuccess = (createdUuid?: string) => {
+      const finalUuid = createdUuid || resolvedId;
+
+      // Handle deferred media uploads if this is a new class
+      if (finalUuid && !isDraft && (selectedThumbnail || selectedVideo)) {
+        // Upload media files using the created/updated class UUID
+        if (selectedThumbnail) {
+          const formData = new FormData();
+          formData.append('thumbnail', selectedThumbnail);
+          addClassThumbnailMut.mutate(
+            {
+              path: { uuid: finalUuid },
+              body: { thumbnail: selectedThumbnail } as any,
+            },
+            {
+              onSuccess: () => toast.success('Thumbnail uploaded'),
+              onError: error => toast.error(getMutationErrorMessage(error, 'Failed to upload thumbnail')),
+            }
+          );
+        }
+
+        if (selectedVideo) {
+          addClassIntroVideoMut.mutate(
+            {
+              path: { uuid: finalUuid },
+              body: { promotional_video: selectedVideo } as any,
+            },
+            {
+              onSuccess: () => toast.success('Video uploaded'),
+              onError: error => toast.error(getMutationErrorMessage(error, 'Failed to upload video')),
+            }
+          );
+        }
+      }
+
       qc.invalidateQueries({ queryKey: getClassDefinitionsForInstructorQueryKey({ path: { instructorUuid: instructor?.uuid as string } }) });
       qc.invalidateQueries({ queryKey: getAllClassDefinitionsQueryKey({ query: { pageable: {} } }) });
       if (resolvedId) qc.invalidateQueries({ queryKey: getClassDefinitionQueryKey({ path: { uuid: resolvedId } }) });
@@ -929,7 +1001,10 @@ const NewClassCreationPage = () => {
     if (resolvedId) {
       updateClassDefinition.mutate(
         { path: { uuid: resolvedId }, body: payload },
-        { onSuccess, onError: error => toast.error(getMutationErrorMessage(error, 'Failed to update class')) }
+        {
+          onSuccess: () => onSuccess(resolvedId),
+          onError: error => toast.error(getMutationErrorMessage(error, 'Failed to update class'))
+        }
       );
     } else {
       createClassDefinition.mutate(
@@ -937,8 +1012,12 @@ const NewClassCreationPage = () => {
         {
           onSuccess: response => {
             const savedUuid = response?.data?.class_definition?.uuid;
-            if (savedUuid) setSavedClassUuid(savedUuid);
-            onSuccess();
+            if (savedUuid) {
+              setSavedClassUuid(savedUuid);
+              onSuccess(savedUuid);
+            } else {
+              onSuccess();
+            }
           },
           onError: error => toast.error(getMutationErrorMessage(error, 'Failed to create class')),
         }
@@ -1348,33 +1427,11 @@ const NewClassCreationPage = () => {
                 </div>
 
                 <div className='border-t border-border/60 px-2 py-4 sm:px-3'>
-
-
-                  <div className='flex flex-col gap-4 md:flex-row'>
-                    <div className='flex-1'>
-                      <ChoiceGroup
-                        label='Class Type *'
-                        options={CLASS_TYPE_OPTIONS}
-                        value={classDetails.class_type}
-                        onChange={value => setClassDetails(prev => ({ ...prev, class_type: value }))}
-                      />
-                    </div>
-                    <div className='flex-1'>
-                      <ChoiceGroup
-                        label='Lecture Type *'
-                        options={LECTURE_TYPE_OPTIONS}
-                        value={classDetails.location_type}
-                        onChange={value =>
-                          setClassDetails(prev => ({
-                            ...prev,
-                            location_type: normalizeLocationType(value),
-                            ...(normalizeLocationType(value) === 'ONLINE' ? { location_name: '' } : {}),
-                            ...(normalizeLocationType(value) === 'IN_PERSON' ? { meeting_link: '' } : {}),
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
+                  <ServiceTypeSelector
+                    value={serviceType}
+                    onChange={handleServiceTypeChange}
+                    rateCard={rateCard as any}
+                  />
 
                   <div className='mt-4 flex flex-col gap-4 md:flex-row'>
                     <div className='flex-1'>
@@ -1704,90 +1761,114 @@ const NewClassCreationPage = () => {
               </div>
             </Card>
 
+            {/* ── Class Media Upload Card ───────────────────────────────── */}
+            <ClassMediaUpload
+              onMediaSelect={(media: MediaFile) => {
+                if (media.type === 'thumbnail') {
+                  setSelectedThumbnail(media.file);
+                } else if (media.type === 'video') {
+                  setSelectedVideo(media.file);
+                }
+              }}
+              selectedThumbnail={selectedThumbnail}
+              selectedVideo={selectedVideo}
+              onRemoveThumbnail={() => setSelectedThumbnail(null)}
+              onRemoveVideo={() => setSelectedVideo(null)}
+            />
+
             {/* ── Reminder Options Card ──────────────────────────────────── */}
-            <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
-              <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
-                <h3 className='text-foreground text-lg font-semibold'>Reminder Options</h3>
+            <Card className="overflow-hidden border pt-0 shadow-sm rounded-md">
+              <div className="flex items-center justify-between gap-3 px-2 pt-4 sm:px-4">
+                <h3 className="text-lg font-semibold text-foreground">
+                  Reminder Options
+                </h3>
               </div>
-              <div className='flex flex-col gap-4 px-2 pb-4 sm:px-4 sm:pb-6 lg:flex-row'>
-                <div className='flex-1'>
-                  <ReminderCard
-                    title='Student Reminders'
-                    enabled={notificationSettings.reminder !== ''}
-                    onEnabledChange={() =>
-                      setNotificationSettings(prev => ({ ...prev, reminder: prev.reminder ? '' : '24h' }))
+
+              <div className="px-2 pb-4 sm:px-4 sm:pb-6 space-y-5">
+
+                {/* Reminder */}
+                <div className="flex items-center gap-4">
+                  <label className="text-xs font-semibold text-foreground w-[80px]">
+                    Reminder
+                  </label>
+
+                  <Select
+                    value={notificationSettings.reminder}
+                    onValueChange={value =>
+                      setNotificationSettings(prev => ({
+                        ...prev,
+                        reminder: value,
+                      }))
                     }
                   >
-                    <FieldGroup label='Email Reminder'>
-                      <Select
-                        value={notificationSettings.reminder}
-                        onValueChange={value => setNotificationSettings(prev => ({ ...prev, reminder: value }))}
-                      >
-                        <SelectTrigger className='h-11'><SelectValue placeholder='Select reminder' /></SelectTrigger>
-                        <SelectContent>
-                          {REMINDER_OPTIONS.map(item => (
-                            <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FieldGroup>
-                    <FieldGroup label='SMS Reminder'>
-                      <Select defaultValue='1h'>
-                        <SelectTrigger className='h-11'><SelectValue placeholder='Select reminder' /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='1h'>1 hour before class</SelectItem>
-                          <SelectItem value='30m'>30 minutes before class</SelectItem>
-                          <SelectItem value='15m'>15 minutes before class</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FieldGroup>
-                  </ReminderCard>
+                    <SelectTrigger className="h-9 w-[120px]">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {REMINDER_OPTIONS.map(item => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className='flex-1'>
-                  <ReminderCard title='Instructor Reminders' enabled onEnabledChange={() => undefined}>
-                    <FieldGroup label='Email Reminder'>
-                      <Select defaultValue='1d'>
-                        <SelectTrigger className='h-11'><SelectValue placeholder='Select reminder' /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='1d'>1 day before class</SelectItem>
-                          <SelectItem value='12h'>12 hours before class</SelectItem>
-                          <SelectItem value='1h'>1 hour before class</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FieldGroup>
-                    <FieldGroup label='SMS Reminder'>
-                      <Select defaultValue='30m'>
-                        <SelectTrigger className='h-11'><SelectValue placeholder='Select reminder' /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='30m'>30 minutes before class</SelectItem>
-                          <SelectItem value='15m'>15 minutes before class</SelectItem>
-                          <SelectItem value='5m'>5 minutes before class</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FieldGroup>
-                  </ReminderCard>
-                </div>
-                <div className='w-full lg:w-[220px] lg:shrink-0'>
-                  <div className='bg-muted/20 flex h-full items-center justify-center rounded-md border border-border/60 px-4 py-4 text-center'>
-                    <div className='space-y-2'>
-                      <div className='bg-primary/10 text-primary mx-auto flex h-12 w-12 items-center justify-center rounded-full'>
-                        <BellRing className='h-5 w-5' />
-                      </div>
-                      <p className='text-muted-foreground text-xs leading-relaxed'>
-                        Reminders help reduce no-shows and keep your class on track.
-                      </p>
+
+                <div className='flex flex-row items-start justify-between' >
+                  {/* Send To */}
+                  <div className="flex flex-col items-start gap-4">
+                    <label className="text-xs font-semibold text-foreground w-[80px]">
+                      Send To
+                    </label>
+
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 text-xs">
+                        <Checkbox />
+                        Students
+                      </label>
+
+                      <label className="flex items-center gap-2 text-xs">
+                        <Checkbox />
+                        Instructor
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Send Via */}
+                  <div className="flex flex-col items-start gap-4">
+                    <label className="text-xs font-semibold text-foreground w-[80px]">
+                      Send Via
+                    </label>
+
+                    <div className="flex items-center gap-4 flex-wrap">
+                      <label className="flex items-center gap-2 text-xs">
+                        <Checkbox />
+                        Email
+                      </label>
+
+                      <label className="flex items-center gap-2 text-xs">
+                        <Checkbox />
+                        SMS
+                      </label>
+
+                      <label className="flex items-center gap-2 text-xs">
+                        <Checkbox />
+                        Push Notification
+                      </label>
                     </div>
                   </div>
                 </div>
+
               </div>
             </Card>
-
+            {/* 
             <ClassCreationSummaryStrip
               currency={rateCard?.currency as string | undefined || 'KES'}
               maxParticipants={classDetails.class_limit}
               totalAmount={totalAmount}
               totalSessions={totalSessions}
-            />
+            /> */}
           </div>
 
           <div className='w-full xl:w-[360px] xl:shrink-0'>
