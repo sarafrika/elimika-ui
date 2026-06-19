@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { BookOpen, Calendar, Flame, Heart, Search } from 'lucide-react';
+import { BookOpen, Calendar, Search } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '../../../../../../components/ui/avatar';
@@ -50,12 +50,12 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
           )}
         >
           <div className="absolute inset-x-0 top-3 z-10 flex items-center justify-between">
-            <span className="inline-flex items-center gap-1 rounded-r-sm bg-warning px-2.5 py-1 text-[11px] font-semibold text-warning-foreground shadow-md">
+            {/* <span className="inline-flex items-center gap-1 rounded-r-sm bg-warning px-2.5 py-1 text-[11px] font-semibold text-warning-foreground shadow-md">
               <Flame className="size-3" />
               Best Seller
-            </span>
+            </span> */}
 
-            <button
+            {/* <button
               type="button"
               className="mr-3 inline-flex size-8 items-center justify-center rounded-full bg-background/30 text-foreground backdrop-blur-md ring-1 ring-border/30 transition-transform hover:scale-110 hover:bg-background/40"
               onClick={(e) => {
@@ -67,7 +67,7 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
                 className="size-4 text-foreground drop-shadow-sm"
                 strokeWidth={2.2}
               />
-            </button>
+            </button> */}
           </div>
 
           {imageUrl ? (

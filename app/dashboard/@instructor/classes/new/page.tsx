@@ -39,6 +39,8 @@ import {
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
   updateClassDefinitionMutation,
+  uploadClassPromotionalVideoMutation,
+  uploadClassThumbnailMutation,
 } from '../../../../../services/client/@tanstack/react-query.gen';
 import type { CreateClassDefinitionData } from '../../../../../services/client/types.gen';
 import {
@@ -55,8 +57,7 @@ import {
   type ClassCreationPreviewData
 } from './_components/class-creation-preview-rail';
 import {
-  ClassCreationRateCard,
-  type ClassCreationRateSummary,
+  type ClassCreationRateSummary
 } from './_components/class-creation-rate-card';
 import { ClassCreationSummaryStrip } from './_components/class-creation-summary-strip';
 
@@ -467,6 +468,22 @@ const NewClassCreationPage = () => {
 
   const createClassDefinition = useMutation(createClassDefinitionMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
+  const addClassThumbnailMut = useMutation(uploadClassThumbnailMutation())
+  const addClassIntroVideoMut = useMutation(uploadClassPromotionalVideoMutation())
+
+  const handleAddClassThumbnail = () => {
+    addClassThumbnailMut.mutate({
+      path: { uuid: "createdclassuuid" },
+      body: { thumbnail: "blob file" }
+    })
+  }
+
+  const handleAddClassIntroVideo = () => {
+    addClassIntroVideoMut.mutate({
+      path: { uuid: "createdclassuuid" },
+      body: { promotional_video: "blob file" }
+    })
+  }
 
   const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
   const { data: appliedCourses } = useQuery({
@@ -1262,11 +1279,21 @@ const NewClassCreationPage = () => {
             {/* ── Class Details Card ─────────────────────────────────────── */}
             <div ref={classDetailsCardRef} className='scroll-mt-24'>
               <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
-                <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
-                  <h3 className='text-foreground text-lg font-semibold'>Class Details</h3>
+                <div className="px-2 pt-4 sm:px-4">
+                  <Input
+                    value={classDetails.title}
+                    onChange={e =>
+                      setClassDetails(prev => ({
+                        ...prev,
+                        title: e.target.value,
+                      }))
+                    }
+                    placeholder="Class Title"
+                    className="text-md border-0 border-b border-muted-foreground/30 rounded-none px-0 py-2.5 focus-visible:ring-0 focus-visible:border-primary"
+                  />
                 </div>
 
-                <div className='flex flex-col gap-4 px-2 pb-4 sm:px-3 sm:pb-6 lg:flex-row'>
+                <div className='flex flex-col gap-4 px-2 sm:px-3 lg:flex-row'>
                   <div className='min-w-0 flex-1 space-y-4'>
                     <FieldGroup label='Select Course *'>
                       <Select
@@ -1304,17 +1331,9 @@ const NewClassCreationPage = () => {
                         </SelectContent>
                       </Select>
                     </FieldGroup>
-
-                    <FieldGroup label='Class Title *'>
-                      <Input
-                        value={classDetails.title}
-                        onChange={e => setClassDetails(prev => ({ ...prev, title: e.target.value }))}
-                        placeholder='UI/UX Design Fundamentals'
-                      />
-                    </FieldGroup>
                   </div>
 
-                  <div className='w-full lg:w-[300px] lg:shrink-0'>
+                  {/* <div className='w-full lg:w-[300px] lg:shrink-0'>
                     <ClassCreationRateCard
                       totalHours={totalHours}
                       pricePerHour={ratePerHour}
@@ -1325,10 +1344,12 @@ const NewClassCreationPage = () => {
                         classDetailsCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                       }
                     />
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className='border-t border-border/60 px-2 py-4 sm:px-3'>
+
+
                   <div className='flex flex-col gap-4 md:flex-row'>
                     <div className='flex-1'>
                       <ChoiceGroup

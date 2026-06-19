@@ -10,20 +10,20 @@ export const useStudentsMap = (studentUuids: string[]) => {
       if (!studentUuids?.length) return {};
 
       const results = await Promise.all(
-        studentUuids.map(uuid =>
-          getStudentById({ path: { uuid } })
-            .then(res => res?.data)
-            .catch(() => null)
-        )
+        studentUuids.map(async (uuid) => {
+          const res = await getStudentById({ path: { uuid } });
+          console.log("raw student response:", uuid, res);
+          return res?.data ?? null;
+        })
       );
 
       const mapped: Record<string, StudentRecord> = {};
 
-      results.forEach((student: StudentRecord | null | undefined) => {
+      for (const student of results) {
         if (student?.uuid) {
           mapped[student.uuid] = student;
         }
-      });
+      }
 
       return mapped;
     },

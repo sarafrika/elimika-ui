@@ -17,13 +17,12 @@ import {
     getAllDifficultyLevelsOptions,
     getAllQuizzesOptions,
     getAllTrainingProgramsOptions,
-    getCourseByUuidOptions,
     getCourseCreatorByUuidOptions,
     getCourseReviewsOptions,
     getPublishedCoursesOptions,
     searchTrainingApplicationsOptions,
     searchTrainingApplicationsQueryKey,
-    submitTrainingApplicationMutation,
+    submitTrainingApplicationMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
@@ -187,11 +186,11 @@ export default function ClassCourseDetailsPage({
         [courses]
     );
 
-    const { data: courseResponse, isLoading: courseLoading, isFetching: courseFetching, } = useQuery({
-        ...getCourseByUuidOptions({ path: { uuid: resolvedCourseId }, }),
-        enabled: !!resolvedCourseId,
-    });
-    const course = courseResponse?.data as Course | undefined;
+    const course = useMemo(() => {
+        if (!resolvedCourseId) return undefined;
+
+        return courses.find(c => c.uuid === resolvedCourseId);
+    }, [courses, resolvedCourseId]);
 
     const courseShareLink =
         typeof window !== 'undefined'
@@ -474,8 +473,6 @@ export default function ClassCourseDetailsPage({
     }, [classId, course?.uuid, siteOrigin]);
 
     const isEverythingReady = !(
-        courseLoading ||
-        courseFetching ||
         creatorLoading ||
         reviewsLoading ||
         difficultyLoading ||
