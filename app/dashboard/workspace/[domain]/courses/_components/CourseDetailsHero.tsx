@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import HTMLTextPreview from '../../../../../../components/editors/html-text-preview';
 import { ClassDetailsScheduleItem, CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
+import { toAuthenticatedMediaUrl } from '../../../../../../src/lib/media-url';
 import StarRating from './StarRating';
 
 type Props = {
@@ -84,13 +85,14 @@ export default function CourseDetailsHero({
     ).values()
   );
 
+  const videoUrl = toAuthenticatedMediaUrl(course?.intro_video_url);
 
   return (
     <div className='flex flex-col gap-4 sm:gap-6'>
       <div className="bg-primary text-primary-foreground group relative aspect-video overflow-hidden rounded-xl shadow-lg">
         {course?.intro_video_url ? (
           <video
-            src={course.intro_video_url}
+            src={videoUrl as string}
             controls
             className="h-full w-full object-cover"
             poster={course?.thumbnail_url}

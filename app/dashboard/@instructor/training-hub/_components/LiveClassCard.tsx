@@ -24,11 +24,11 @@ import {
   isAuthenticatedMediaUrl,
   toAuthenticatedMediaUrl,
 } from '@/src/lib/media-url';
-import { Checkbox } from '@radix-ui/react-checkbox';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
   CalendarDays,
+  CircleCheck,
   EllipsisVertical,
   Eye,
   Pencil,
@@ -41,16 +41,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { LinkShareCard } from '../../../../../components/shared/link-share-card';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../../../../../components/ui/sheet';
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
-import { useStudentsMap } from '../../../../../hooks/use-studentsMap';
-import { buildSocialShareUrl, openShareWindow } from '../../../../../lib/share';
 import { cn } from '../../../../../lib/utils';
-import { deactivateClassDefinitionMutation, getClassDefinitionsForInstructorQueryKey, getCourseEnrollmentsOptions } from '../../../../../services/client/@tanstack/react-query.gen';
+import { deactivateClassDefinitionMutation, getAllStudentsOptions, getClassDefinitionsForInstructorQueryKey, getCourseEnrollmentsOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 import { RichTextPreview } from '../../classes/class-training/[id]/_components/ClassTrainingPage';
-import { socialShareActions } from '../../classes/overview/[id]/page';
 import type { TrainingHubLiveClass } from './training-hub-data';
 
 type LiveClassCardProps = {
@@ -63,11 +59,18 @@ export function LiveClassCard({
   const qc = useQueryClient()
   const profile = useUserProfile()
 
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<'all' | 'enrolled' | 'not_enrolled'>('all');
+
   const { data: courseEnrollments } = useQuery({
     ...getCourseEnrollmentsOptions({
       path: { courseUuid: liveClass?.class?.course_uuid as string },
       query: { pageable: {} }
     })
+  })
+
+  const { data: allStudents } = useQuery({
+    ...getAllStudentsOptions({ query: { pageable: {} } })
   })
 
   const studentUuids = useMemo(
@@ -78,18 +81,36 @@ export function LiveClassCard({
     [courseEnrollments]
   );
 
-  const { studentsMap } = useStudentsMap(studentUuids);
+  const enrolledSet = useMemo(() => {
+    return new Set(studentUuids);
+  }, [studentUuids]);
 
-  const students = useMemo(
-    () =>
-      studentUuids
-        .map(uuid => studentsMap?.[uuid])
-        .filter(Boolean),
-    [studentUuids, studentsMap]
-  );
+  const students = useMemo(() => {
+    const all = allStudents?.data?.content ?? [];
 
-  // console.log(studentUuids, "STUD IDS")
-  // console.log(students, "map")
+    return all.filter(student => enrolledSet.has(student?.uuid as string));
+  }, [allStudents, enrolledSet]);
+
+  const filteredStudents = useMemo(() => {
+    const all = allStudents?.data?.content ?? [];
+
+    return all
+      .filter(student => {
+        const isEnrolled = enrolledSet.has(student?.uuid as string);
+
+        if (filter === 'enrolled') return isEnrolled;
+        if (filter === 'not_enrolled') return !isEnrolled;
+        return true;
+      })
+
+      .filter(student => {
+        if (!search.trim()) return true;
+
+        return student.full_name
+          ?.toLowerCase()
+          .includes(search.toLowerCase());
+      });
+  }, [allStudents, enrolledSet, filter, search]);
 
   const [selectedStudentUuids, setSelectedStudentUuids] = useState<string[]>([]);
 
@@ -487,7 +508,7 @@ export function LiveClassCard({
           side="right"
           className="flex w-full flex-col p-0 sm:max-w-xl"
         >
-          <div className="border-b p-6">
+          <div className="border-b px-3">
             <SheetHeader>
               <SheetTitle>Invite Students</SheetTitle>
 
@@ -499,14 +520,49 @@ export function LiveClassCard({
 
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto">
-            <div className="space-y-6 p-6">
+            <div className="space-y-6 px-3">
               <div>
                 <h3 className="mb-3 text-sm font-medium">
                   Select students
                 </h3>
 
+                <div className="flex flex-col gap-2 mb-3">
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search students..."
+                    className="h-9 w-full rounded-md border px-3 text-sm"
+                  />
+
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant={filter === 'all' ? 'default' : 'outline'}
+                      onClick={() => setFilter('all')}
+                    >
+                      All
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant={filter === 'enrolled' ? 'default' : 'outline'}
+                      onClick={() => setFilter('enrolled')}
+                    >
+                      Enrolled
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant={filter === 'not_enrolled' ? 'default' : 'outline'}
+                      onClick={() => setFilter('not_enrolled')}
+                    >
+                      Not enrolled
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  {students.map(student => {
+                  {filteredStudents.map(student => {
                     const selected = selectedStudentUuids.includes(
                       student?.uuid as string
                     );
@@ -522,24 +578,37 @@ export function LiveClassCard({
                           "border-primary bg-primary/5"
                         )}
                       >
-                        <div className="min-w-0">
-                          <p className="truncate font-medium">
+                        <div className="min-w-0 w-full flex flex-row items-center justify-between">
+                          <p className="truncate font-medium text-sm">
                             {student?.full_name}
                           </p>
 
-                          <p className="text-muted-foreground truncate text-sm">
-                            {student?.full_name}
-                          </p>
+
+                          <div className='flex flex-row items-center gapp-2' >
+                            <p className="truncate font-medium flex items-center gap-2">
+                              {enrolledSet.has(student?.uuid as string) && (
+                                <span className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary">
+                                  Enrolled
+                                </span>
+                              )}
+                            </p>
+                            <CircleCheck
+                              className={cn(
+                                "h-5 w-5 transition-colors",
+                                selected ? "text-primary" : "hidden"
+                              )}
+                            />
+                          </div>
+
                         </div>
 
-                        <Checkbox checked={selected} />
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              <LinkShareCard
+              {/* <LinkShareCard
                 title="Registration Link"
                 description="Copy or share the registration link for enrollment."
                 url={registrationLink}
@@ -576,7 +645,7 @@ export function LiveClassCard({
                     </div>
                   </div>
                 }
-              />
+              /> */}
             </div>
           </div>
 
