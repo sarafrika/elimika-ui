@@ -30,6 +30,7 @@ import {
     type CourseLessonContent,
     type CourseLessonWithContent,
 } from '@/hooks/use-courselessonwithcontent';
+import { dayjs } from '@/lib/date';
 import {
     createAssignmentScheduleMutation,
     createQuizScheduleMutation,
@@ -71,7 +72,6 @@ import {
     PanelRight,
     Search
 } from 'lucide-react';
-import { dayjs } from '@/lib/date';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -567,6 +567,20 @@ function AssessmentTasksSection({
                                     />
                                 </div>
                             )}
+
+                            {/* 🚨 Preview mode warning */}
+                            <div className='mt-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive'>
+                                <span className='mt-0.5 text-destructive'>⚠</span>
+                                <p>
+                                    You are currently in <span className='font-medium'>preview mode</span>.{' '}
+                                    <a
+                                        href={'/dashboard/assignment'}
+                                        className='shrink-0 font-medium text-destructive underline underline-offset-2 hover:opacity-80'
+                                    >
+                                        Go to assignment/quiz page
+                                    </a> to take the quiz and assignments.
+                                </p>
+                            </div>
                         </div>
 
                         {previewAssignment?.instructions && (
@@ -632,6 +646,23 @@ function AssessmentTasksSection({
                                     Quiz Preview
                                 </Badge>
                             </div>
+
+                            {/* 🚨 Preview warning */}
+                            <div className='mt-4 flex items-start justify-between gap-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive'>
+                                <div className='flex items-start gap-2'>
+                                    <span className='mt-0.5 text-destructive'>⚠</span>
+                                    <p>
+                                        You are currently in <span className='font-medium'>preview mode</span>.{' '}
+                                        <a
+                                            href={'/dashboard/assignment'}
+                                            className='shrink-0 font-medium text-destructive underline underline-offset-2 hover:opacity-80'
+                                        >
+                                            Go to assignment/quiz page
+                                        </a> to take the quiz and assignments.
+                                    </p>
+                                </div>
+
+                            </div>
                         </div>
 
                         {previewQuiz?.uuid ? (
@@ -667,137 +698,6 @@ function ConsoleSkeleton() {
                     <p className='text-muted-foreground text-sm'>
                         Please wait while we retrieve session details...
                     </p>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function RosterPanel({
-    activeInstanceStudentsCount,
-    filteredRoster,
-    activeInstanceStudents,
-    activeSchedule,
-    studentSearch,
-    setStudentSearch,
-    selectedStudentId,
-    onSelectStudent,
-    onMarkAllPresent,
-    isMarkingAllAttendance,
-}: {
-    activeInstanceStudentsCount: number;
-    filteredRoster: RosterEntry[];
-    activeInstanceStudents: RosterEntry[];
-    activeSchedule: TrainingSchedule | null;
-    studentSearch: string;
-    setStudentSearch: (value: string) => void;
-    selectedStudentId: string;
-    onSelectStudent: (entry: RosterEntry) => void;
-    onMarkAllPresent: () => void;
-    isMarkingAllAttendance: boolean;
-}) {
-    const presentCount = activeInstanceStudents.filter(
-        entry => getStudentAttendanceState(entry) === 'present'
-    ).length;
-    const absentCount = activeInstanceStudents.filter(
-        entry => getStudentAttendanceState(entry) === 'absent'
-    ).length;
-    const pendingCount = activeInstanceStudents.filter(
-        entry => getStudentAttendanceState(entry) === 'pending'
-    ).length;
-
-    return (
-        <div className='flex h-full min-h-0 flex-col'>
-            <div className='border-border/70 bg-card/90 space-y-3 border-b p-3'>
-                <div className='flex items-center justify-between gap-3'>
-                    <div className='min-w-0'>
-                        <p className='text-foreground text-sm font-semibold'>All Students</p>
-                        <p className='text-muted-foreground text-xs'>Attendance rubric tracker</p>
-                    </div>
-                    <Badge variant='outline' className='bg-primary/5 text-primary'>
-                        {activeInstanceStudentsCount}
-                    </Badge>
-                </div>
-                <Button
-                    size='sm'
-                    variant='outline'
-                    className='w-full'
-                    disabled={isMarkingAllAttendance || pendingCount === 0}
-                    onClick={onMarkAllPresent}
-                >
-                    Mark All Present
-                </Button>
-                <div className='relative'>
-                    <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-                    <Input
-                        value={studentSearch}
-                        onChange={event => setStudentSearch(event.target.value)}
-                        placeholder='Search students'
-                        className='bg-background/80 h-9 rounded-md pl-9 text-sm'
-                    />
-                </div>
-            </div>
-            <ScrollArea className='min-h-0 flex-1 bg-background'>
-                <div className='space-y-1.5 p-2'>
-                    {filteredRoster.map((entry: RosterEntry) => {
-                        const attendanceState = getStudentAttendanceState(entry);
-                        const isSelected = selectedStudentId === (entry.enrollment?.uuid ?? '');
-
-                        return (
-                            <button
-                                type='button'
-                                key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
-                                onClick={() => onSelectStudent(entry)}
-                                className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected ? 'border-primary/30 bg-primary/8' : 'hover:bg-primary/5 border-transparent'
-                                    }`}
-                            >
-                                <div className='flex items-start gap-2.5'>
-                                    <Avatar className='border-border/60 size-8 border'>
-                                        <AvatarImage
-                                            src={entry.user?.profile_image_url ?? undefined}
-                                            alt={entry.user?.full_name || 'Student'}
-                                        />
-                                        <AvatarFallback>{getInitials(entry.user?.full_name)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className='min-w-0 flex-1'>
-                                        <p className='truncate text-sm font-semibold'>
-                                            {entry.user?.full_name || 'Unknown student'}
-                                        </p>
-                                        <div className='text-muted-foreground mt-1 flex items-center justify-between gap-2 text-xs'>
-                                            <span className='truncate'>
-                                                {entry.enrollment?.is_attendance_marked ? 'Attended' : 'Attendance pending'}
-                                            </span>
-                                            <span className='capitalize'>{attendanceState}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </button>
-                        );
-                    })}
-
-                    {filteredRoster.length === 0 && (
-                        <div className='text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm'>
-                            {activeSchedule
-                                ? 'No learners are attached to this class instance yet.'
-                                : 'No class instance was selected.'}
-                        </div>
-                    )}
-                </div>
-            </ScrollArea>
-            <div className='border-border/70 bg-card/90 border-t p-3'>
-                <div className='grid grid-cols-3 gap-2 text-xs'>
-                    <div>
-                        <p className='text-muted-foreground'>Present</p>
-                        <p className='font-semibold'>{presentCount}</p>
-                    </div>
-                    <div>
-                        <p className='text-muted-foreground'>Pending</p>
-                        <p className='font-semibold'>{pendingCount}</p>
-                    </div>
-                    <div>
-                        <p className='text-muted-foreground'>Absent</p>
-                        <p className='font-semibold'>{absentCount}</p>
-                    </div>
                 </div>
             </div>
         </div>

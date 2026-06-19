@@ -34,7 +34,7 @@ import {
   Search,
   Sparkles,
   SunMedium,
-  Wallet,
+  Wallet
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
@@ -100,6 +100,7 @@ export default function DashboardTopBar() {
   const isCourseCreator = activeDomain === 'course_creator';
   const isInstructor = activeDomain === 'instructor';
   const isOrganisation = activeDomain === 'organisation';
+  const isStudent = activeDomain === "student"
 
   const profileName = getProfileName(profile);
   const profileInitials = getInitials(profileName);
@@ -201,6 +202,20 @@ export default function DashboardTopBar() {
                 <Link href={createClassHref}>
                   <Sparkles className='h-4 w-4' />
                   Create Class
+                  <ChevronDown className='h-4 w-4' />
+                </Link>
+              </Button>
+            )}
+
+            {isStudent && (
+              <Button
+                asChild
+                size='sm'
+                className='h-10 rounded-md px-4 font-semibold md:inline-flex'
+              >
+                <Link href="/dashboard/workspace/student/courses">
+                  <Sparkles className='h-4 w-4' />
+                  Enroll Course
                   <ChevronDown className='h-4 w-4' />
                 </Link>
               </Button>

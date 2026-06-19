@@ -49,17 +49,20 @@ import {
   getAssignmentSubmissionsOptions,
   getClassScheduleQueryKey,
   getCourseAssessmentsOptions,
+  getCourseEnrollmentsOptions,
   getCourseRubricsOptions,
   getEnrollmentsForClassQueryKey,
   getQuizSchedulesOptions,
   getQuizSchedulesQueryKey,
   getRubricMatrixOptions,
+  getSubmissionAttachmentsOptions,
   markAttendanceMutation,
-  startScheduledInstanceMutation,
+  startScheduledInstanceMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
   AssignmentSubmission,
+  AssignmentSubmissionAttachment,
   ClassAssignmentSchedule,
   ClassQuizSchedule,
   CourseAssessment,
@@ -96,10 +99,12 @@ import Link from 'next/link';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { AttachmentResourceList } from '../../../../../../../components/assessment/AttachmentResourceList';
 import { AssignmentContentPreview } from '../../../../../../../components/content-preview/AssignmentContentPreview';
 import { LessonContentPreview } from '../../../../../../../components/content-preview/LessonContentPreview';
 import { QuizContentPreview } from '../../../../../../../components/content-preview/QuizContentPreview';
 import RichTextRenderer from '../../../../../../../components/editors/richTextRenders';
+import { toAttachmentResourceItems } from '../../../../../@student/_components/student-assignment-workspace';
 
 
 
@@ -1732,6 +1737,7 @@ function SubmissionPanel({
     onMarkAttendance(entry, attended);
   };
 
+
   return (
     <aside className='bg-card/95 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden'>
       <div className='border-border/70 border-b p-3'>
@@ -1888,8 +1894,9 @@ function SubmissionPanel({
               </div>
 
               {selectedStudentSubmissions.length > 0 ? (
-                selectedStudentSubmissions.map(item => {
+                selectedStudentSubmissions.map((item, index) => {
                   const status = getSubmissionDisplayStatus(item.submission);
+                  const attachments = item.submission?.attachments ?? [];
 
                   return (
                     <div
@@ -1901,6 +1908,7 @@ function SubmissionPanel({
                           <p className="flex-1 min-w-0 truncate text-sm font-semibold">
                             {item.assignmentTitle}
                           </p>
+
                           <Badge
                             variant={
                               status === 'graded'
@@ -1919,6 +1927,7 @@ function SubmissionPanel({
                           Due {formatDateTime(item.dueAt)}
                         </p>
                       </div>
+
                       <p className='text-muted-foreground mt-2 text-xs'>
                         {item.submission
                           ? item.submission.grade_display ||
@@ -1928,11 +1937,28 @@ function SubmissionPanel({
                             : 'Submission received')
                           : 'No submission recorded for this assignment yet.'}
                       </p>
+
                       {item.submission?.submitted_at ? (
                         <p className='text-muted-foreground mt-1 text-xs'>
                           Submitted {formatDateTime(item.submission.submitted_at)}
                         </p>
                       ) : null}
+
+                      {item.submission && (
+                        <div className='mt-3 space-y-2'>
+                          <p className='text-foreground text-sm font-medium'>
+                            Uploaded files
+                          </p>
+
+                          <AttachmentResourceList
+                            attachments={toAttachmentResourceItems(
+                              attachments as AssignmentSubmissionAttachment[]
+                            )}
+                            emptyMessage='No files were uploaded with the latest submission.'
+                            previewLabel='Read file'
+                          />
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -2642,32 +2668,94 @@ export default function ClassTrainingPage({
     quizGradingDueAt,
   ]);
 
+  const { data: courseEnrollmentResp } = useQuery({
+    ...getCourseEnrollmentsOptions({
+      path: { courseUuid: course?.uuid as string },
+      query: { pageable: {} },
+    }),
+  });
+  const studentEnrollments = courseEnrollmentResp?.data?.content ?? [];
+
+  // Find the enrollment record for the selected student
+  const selectedEnrollment = useMemo(
+    () =>
+      studentEnrollments.find(
+        enrollment =>
+          enrollment?.student_uuid === selectedStudent?.student?.data?.uuid
+      ),
+    [studentEnrollments, selectedStudent?.student?.data?.uuid]
+  );
+
   const submissionQueries = useQueries({
     queries: activeScheduleAssignments.map(item => ({
       ...getAssignmentSubmissionsOptions({
-        path: { assignmentUuid: item.assignment_uuid as string },
+        path: {
+          assignmentUuid: item.assignment_uuid!,
+        },
       }),
       enabled: !!item.assignment_uuid,
     })),
   });
 
-  const selectedStudentSubmissions = useMemo(
+
+  const studentSubmissions = useMemo(
     () =>
       activeScheduleAssignments.map((item, index) => {
         const submissions = submissionQueries[index]?.data?.data ?? [];
+
         const submission =
-          submissions.find(
-            entry => entry.enrollment_uuid === selectedStudent?.enrollment?.uuid
-          ) ?? null;
+          submissions.find(s => {
+            const enrollmentMatch =
+              s.enrollment_uuid === selectedEnrollment?.uuid;
+
+            return enrollmentMatch;
+          }) ?? null;
 
         return {
-          scheduleId: item.uuid ?? item.assignment_uuid ?? `assignment-${index}`,
-          assignmentTitle: item.assignment?.title || 'Assignment',
-          dueAt: item.due_at,
+          assignment: item,
           submission,
         };
       }),
-    [activeScheduleAssignments, selectedStudent?.enrollment?.uuid, submissionQueries]
+    [
+      activeScheduleAssignments,
+      submissionQueries,
+      selectedEnrollment?.uuid,
+    ]
+  );
+
+  const submissionAttachmentQueries = useQueries({
+    queries: studentSubmissions.map(({ assignment, submission }) => ({
+      ...getSubmissionAttachmentsOptions({
+        path: {
+          assignmentUuid: assignment.assignment_uuid!,
+          submissionUuid: submission?.uuid!,
+        },
+      }),
+      enabled: Boolean(
+        assignment.assignment_uuid && submission?.uuid
+      ),
+    })),
+  });
+
+  const selectedStudentSubmissions = useMemo(
+    () =>
+      studentSubmissions.map(({ assignment, submission }, index) => ({
+        scheduleId:
+          assignment.uuid ??
+          assignment.assignment_uuid ??
+          `assignment-${index}`,
+        assignmentTitle:
+          assignment.assignment?.title || 'Assignment',
+        dueAt: assignment.due_at,
+        submission: submission
+          ? {
+            ...submission,
+            attachments:
+              submissionAttachmentQueries[index]?.data?.data ?? [],
+          }
+          : null,
+      })),
+    [studentSubmissions, submissionAttachmentQueries]
   );
 
   const handleMarkAttendance = (entry: RosterEntry, attended: boolean) => {

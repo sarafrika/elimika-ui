@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 import type { LearningHubInvite } from './useStudentLearningHubData';
 
 type LearningHubClassInviteProps = {
@@ -36,7 +36,7 @@ export function LearningHubClassInvite({
 
   return (
     <Card className='rounded-[18px] border border-border/70 bg-background p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
-      <h2 className='text-[1rem] font-semibold text-foreground'>Class Invites (10)</h2>
+      <h2 className='text-[1rem] font-semibold text-foreground'>Class Invites (0)</h2>
       <div className='mt-3 rounded-[12px] border border-border/70 bg-background p-3'>
         <h3 className='text-[0.96rem] font-semibold text-foreground'>{invite.title}</h3>
         <p className='mt-1 text-[0.78rem] text-muted-foreground'>{invite.subtitle}</p>

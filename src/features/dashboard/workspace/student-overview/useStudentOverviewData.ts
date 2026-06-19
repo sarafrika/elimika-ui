@@ -297,29 +297,30 @@ export function useStudentOverviewData(): StudentOverviewData {
     return dedupedCourses;
   }, [certificatesByCourse, enrolledCourses]);
 
-  const verifiedSkills = certificates.filter(item => item.is_valid).length || 9;
-  const newSkillsThisMonth =
-    certificates.filter(item => {
-      const completionDate = item.completion_date ? new Date(item.completion_date) : null;
+  const verifiedSkills = certificates.filter(item => item.is_valid).length;
+  const newSkillsThisMonth = certificates.filter(item => {
+    const completionDate = item.completion_date ? new Date(item.completion_date) : null;
 
-      if (!completionDate || Number.isNaN(completionDate.getTime())) {
-        return false;
-      }
-
-      const now = new Date();
-
-      return (
-        completionDate.getMonth() === now.getMonth() && completionDate.getFullYear() === now.getFullYear()
-      );
-    }).length || 3;
-
-  const skillsProgress = (() => {
-    if (certificates.length === 0 && activeCourses.length === 0) {
-      return 75;
+    if (!completionDate || Number.isNaN(completionDate.getTime())) {
+      return false;
     }
 
-    const derived = Math.round((verifiedSkills / Math.max(verifiedSkills + activeCourses.length, 1)) * 100);
-    return Math.max(35, Math.min(95, derived));
+    const now = new Date();
+
+    return (
+      completionDate.getMonth() === now.getMonth() &&
+      completionDate.getFullYear() === now.getFullYear()
+    );
+  }).length;
+
+  const skillsProgress = (() => {
+    const totalItems = verifiedSkills + activeCourses.length;
+    if (certificates.length === 0 && activeCourses.length === 0) {
+      return 0;
+    }
+
+    const derived = Math.round((verifiedSkills / Math.max(totalItems, 1)) * 100);
+    return Math.max(0, Math.min(100, derived));
   })();
 
   return {

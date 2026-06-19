@@ -40,9 +40,9 @@ export function StudentOverviewSkillsCard({
           style={{
             background: `conic-gradient(
               color-mix(in srgb, var(--primary) 78%, white) 0 ${progress}%,
-              color-mix(in srgb, var(--success) 82%, white) ${progress}% ${Math.min(progress + 10, 100)}%,
-              color-mix(in srgb, var(--warning) 70%, white) ${Math.min(progress + 10, 100)}% ${Math.min(progress + 15, 100)}%,
-              rgba(191,219,254,0.55) ${Math.min(progress + 15, 100)}% 100%
+              color-mix(in srgb, var(--success) 82%, white) ${progress}% ${Math.min(progress, 100)}%,
+              color-mix(in srgb, var(--warning) 70%, white) ${Math.min(progress, 100)}% ${Math.min(progress, 100)}%,
+              rgba(191,219,254,0.55) ${Math.min(progress, 100)}% 100%
             )`,
           }}
         >

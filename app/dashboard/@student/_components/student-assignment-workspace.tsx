@@ -62,7 +62,7 @@ function normalizeAttachmentSize(value?: bigint | number) {
   return typeof value === 'bigint' ? Number(value) : value;
 }
 
-function toAttachmentResourceItems<T extends { file_size_bytes?: bigint | number }>(
+export function toAttachmentResourceItems<T extends { file_size_bytes?: bigint | number }>(
   attachments: T[]
 ) {
   return attachments.map(attachment => ({
