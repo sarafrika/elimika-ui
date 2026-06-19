@@ -12,7 +12,6 @@ export const useStudentsMap = (studentUuids: string[]) => {
       const results = await Promise.all(
         studentUuids.map(async (uuid) => {
           const res = await getStudentById({ path: { uuid } });
-          console.log("raw student response:", uuid, res);
           return res?.data ?? null;
         })
       );

@@ -15,17 +15,17 @@ import {
   Building2,
   CalendarDays,
   Globe,
+  Loader2,
   LockKeyhole,
   MapPin,
   Users
 } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { ClassMediaUpload, type MediaFile } from './_components/class-media-upload';
 import { ServiceTypeSelector, type ServiceType } from './_components/service-type-selector';
 
-import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { Calendar } from '../../../../../components/ui/calendar';
 import { Checkbox } from '../../../../../components/ui/checkbox';
@@ -59,9 +59,6 @@ import {
   ClassCreationPreviewRail,
   type ClassCreationPreviewData
 } from './_components/class-creation-preview-rail';
-import {
-  type ClassCreationRateSummary
-} from './_components/class-creation-rate-card';
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new-class-creation';
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
@@ -118,6 +115,11 @@ type ScheduleConflict = {
     startTime: string;
     endTime: string;
   };
+};
+
+type PerDayOccurrence = {
+  durationHours: number;
+  occurrenceCount: number;
 };
 
 const normalizeDateTimeValue = (value: string | Date | undefined | null) => {
@@ -369,9 +371,8 @@ const expandSessionsForConflictCheck = (
   if (unit === 'week') {
     if (days.length === 0) return [];
 
-    // For each selected weekday, walk from the first occurrence >= referenceDate
     for (const dayIndex of days) {
-      const override = scheduleSettings.weeklyDayTimes[dayIndex];
+      const override = scheduleSettings?.weeklyDayTimes[dayIndex];
       const startTime = scheduleSettings.allDay
         ? '00:00'
         : override?.startTime || scheduleSettings.startClass.startTime || '00:00';
@@ -379,9 +380,8 @@ const expandSessionsForConflictCheck = (
         ? '23:59'
         : override?.endTime || scheduleSettings.startClass.endTime || '23:59';
 
-      // Find the first date >= referenceDate that falls on this weekday (0=Mon…6=Sun)
       const cursor = new Date(referenceDate);
-      const cursorDow = (cursor.getDay() + 6) % 7; // convert Sun=0 → Mon=0
+      const cursorDow = (cursor.getDay() + 6) % 7;
       const daysUntil = (dayIndex - cursorDow + 7) % 7;
       cursor.setDate(cursor.getDate() + daysUntil);
 
@@ -424,24 +424,32 @@ const NewClassCreationPage = () => {
   const qc = useQueryClient();
   const instructor = useInstructor();
 
-  // Use state instead of direct useSearchParams to avoid hot-reload issues
   const [classId, setClassId] = useState<string | null>(null);
-  const searchParams = useSearchParams();
+  const [isClientReady, setIsClientReady] = useState(false);
 
-  // Initialize classId from search params after first render
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
     const id = searchParams.get('id');
     setClassId(id);
-  }, [searchParams]);
+    setIsClientReady(true);
+  }, []);
 
   const [draftSavedTick, setDraftSavedTick] = useState(0);
   const [savedClassUuid, setSavedClassUuid] = useState<string | null>(null);
+
+  // isDataInitialized gates draft restore (new-class path only).
   const [isDataInitialized, setIsDataInitialized] = useState(false);
+  // isEditHydrated gates edit-mode hydration independently so the two paths
+  // never share the same boolean and can't block each other.
+  const [isEditHydrated, setIsEditHydrated] = useState(false);
+
   const [catalogSearch, setCatalogSearch] = useState('');
   const [schedulePreset, setSchedulePreset] = useState<SchedulePreset>('standard');
   const [serviceType, setServiceType] = useState<ServiceType | undefined>(undefined);
   const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<string | null>(null);
+  const [existingVideoUrl, setExistingVideoUrl] = useState<string | null>(null);
   const [classDetails, setClassDetails] = useState<ClassDetails>(() =>
     createInitialClassDetails(instructor?.full_name)
   );
@@ -457,10 +465,12 @@ const NewClassCreationPage = () => {
   const [locationLongitude, setLocationLongitude] = useState('');
   const [pickedDates, setPickedDates] = useState<{ date: string; startTime: string; endTime: string }[]>([]);
 
+  const [perDayOccurrences, setPerDayOccurrences] = useState<Record<number, PerDayOccurrence>>({});
+
   const classDetailsCardRef = useRef<HTMLDivElement | null>(null);
 
   const resolvedId = classId || savedClassUuid;
-  const { data: combinedClass, isLoading } = useClassDetails(resolvedId || undefined);
+  const { data: combinedClass, isLoading } = useClassDetails(isClientReady && resolvedId ? resolvedId : undefined);
   const classData = combinedClass?.class;
 
   const { classes: instructorClasses = [] } = useInstructorClassesWithSchedules(instructor?.uuid);
@@ -473,11 +483,6 @@ const NewClassCreationPage = () => {
     () => findScheduleConflicts(sessionsForConflictCheck, instructorClasses, resolvedId, instructor?.uuid),
     [sessionsForConflictCheck, instructorClasses, resolvedId, instructor?.uuid]
   );
-
-  // if (scheduleConflicts.length > 0) {
-  //   toast.error('One or more sessions conflict with an existing class. Adjust the schedule before publishing.');
-  //   return false;
-  // }
 
   const createClassDefinition = useMutation(createClassDefinitionMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
@@ -574,25 +579,38 @@ const NewClassCreationPage = () => {
     return Number(rateCard[rateKey] ?? 0);
   }, [classDetails.class_type, classDetails.location_type, rateCard]);
 
-  const totalSessions = sessionsForConflictCheck.length;
-  const totalHours = useMemo(
-    () =>
-      sessionsForConflictCheck.reduce(
-        (sum, session) =>
-          sum + calculateSessionHours(session.startTime, session.endTime, scheduleSettings.allDay),
+  const totalSessions = sessionsForConflictCheck.length || classData?.scheduled_session_count;
+
+  const hasPerDayOccurrenceData = Object.keys(perDayOccurrences).length > 0;
+
+  const totalHours = useMemo(() => {
+    if (hasPerDayOccurrenceData && schedulePreset === 'standard' && scheduleSettings.repeat.unit === 'week') {
+      return Object.values(perDayOccurrences).reduce(
+        (sum, day) => sum + day.durationHours * day.occurrenceCount,
         0
-      ),
-    [scheduleSettings.allDay, sessionsForConflictCheck]
-  );
+      );
+    }
+
+    return sessionsForConflictCheck.reduce(
+      (sum, session) =>
+        sum + calculateSessionHours(session.startTime, session.endTime, scheduleSettings.allDay),
+      0
+    );
+  }, [
+    hasPerDayOccurrenceData,
+    perDayOccurrences,
+    schedulePreset,
+    scheduleSettings.allDay,
+    scheduleSettings.repeat.unit,
+    sessionsForConflictCheck,
+  ]);
+
   const totalHoursInMinutes = BigInt(Math.round(totalHours * 60));
 
-  const totalAmount = Math.max(ratePerHour * totalHours, 0);
+  const totalAmount = Math.max(ratePerHour * totalHours, 0) || Math.max(Number(classData?.training_fee) * totalHours);
 
-  const rateSummary: ClassCreationRateSummary | null = ratePerHour
-    ? { currency: rateCard?.currency as string | undefined, label: selectedCatalogItem?.label, ratePerHour }
-    : null;
 
-  // ── Derive the display time label from the first day/date for the preview ──
+
   const firstSessionTimeLabel = useMemo(() => {
     if (scheduleSettings.allDay) return 'All Day';
     if (schedulePreset === 'pick-dates') {
@@ -609,9 +627,16 @@ const NewClassCreationPage = () => {
     return formatScheduleTime(startTime, endTime, false);
   }, [schedulePreset, scheduleSettings, pickedDates]);
 
-  // ── Draft restore ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (resolvedId || isDataInitialized || typeof window === 'undefined') return;
+    if (resolvedId) {
+      setIsEditHydrated(false);
+    }
+  }, [resolvedId]);
+
+  // ── Draft restore (new-class path only) ───────────────────────────────────
+  useEffect(() => {
+    if (!isClientReady || resolvedId || isDataInitialized || typeof window === 'undefined') return;
+
     const savedDraft = window.localStorage.getItem(LOCAL_CLASS_DRAFT_KEY);
     if (!savedDraft) { setIsDataInitialized(true); return; }
     try {
@@ -653,7 +678,7 @@ const NewClassCreationPage = () => {
     } finally {
       setIsDataInitialized(true);
     }
-  }, [resolvedId, isDataInitialized]);
+  }, [resolvedId, isDataInitialized, isClientReady]);
 
   // ── Draft save ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -672,107 +697,235 @@ const NewClassCreationPage = () => {
     return () => window.clearTimeout(timeout);
   }, [classDetails, scheduleSettings, notificationSettings, schedulePreset, allowWaitlist, locationLatitude, locationLongitude, pickedDates, resolvedId, isDataInitialized]);
 
-  // ── Edit-mode hydration ────────────────────────────────────────────────────
   useEffect(() => {
-    if (resolvedId && classData && !isLoading && !isDataInitialized) {
-      const classRecord = classData as NonNullable<typeof classData> & {
-        categories?: string[] | string | null;
-        rate_card?: string | null;
-        targetAudience?: string | null;
-        training_fee?: string | null;
-        meeting_link?: string | null;
-        allow_waitlist?: boolean | null;
-        location_latitude?: number | null;
-        location_longitude?: number | null;
-      };
+    if (!isClientReady || !resolvedId || !classData || isLoading || isEditHydrated) return;
 
-      setClassDetails({
-        uuid: classRecord.uuid || '',
-        course_uuid: classRecord.course_uuid ?? '',
-        program_uuid: classRecord.program_uuid ?? null,
-        title: classRecord.title || '',
-        description: classRecord.description || '',
-        categories: Array.isArray(classRecord.categories) ? classRecord.categories : classRecord.categories ? [classRecord.categories] : [],
-        class_type: classRecord.class_visibility || 'PUBLIC',
-        location_type: normalizeLocationType(classRecord.location_type),
-        rate_card: classRecord.rate_card || classRecord.training_fee || '',
-        class_limit: classRecord.max_participants || 0,
-        targetAudience: classRecord.targetAudience || '',
-        location_name: classRecord.location_name || '',
-        startDate: '', endDate: '', allDay: false, repeatUnit: '1',
-        instructorName: instructor?.full_name,
-        meeting_link: classRecord.meeting_link || '',
-        classroom: '', class_color: classRecord.class_color || '', reminder: '',
-      });
+    const classRecord = classData as NonNullable<typeof classData> & {
+      categories?: string[] | string | null;
+      rate_card?: string | null;
+      targetAudience?: string | null;
+      training_fee?: string | null;
+      meeting_link?: string | null;
+      allow_waitlist?: boolean | null;
+      location_latitude?: number | null;
+      location_longitude?: number | null;
+      thumbnail_url?: string | null;
+      promotional_video_url?: string | null;
+      session_templates?: Array<{
+        start_time: string | Date;
+        end_time: string | Date;
+        recurrence?: {
+          recurrence_type?: string;
+          interval_value?: number;
+          days_of_week?: string;
+          occurrence_count?: number;
+        };
+      }>;
+    };
 
-      setNotificationSettings(prev => ({
-        ...prev,
-        reminder: reminderFromMinutes(classRecord.class_reminder_minutes) || prev.reminder,
-        classColour: classRecord.class_color || prev.classColour,
-      }));
-      setAllowWaitlist(classRecord.allow_waitlist ?? true);
-      setLocationLatitude(typeof classRecord.location_latitude === 'number' ? String(classRecord.location_latitude) : '');
-      setLocationLongitude(typeof classRecord.location_longitude === 'number' ? String(classRecord.location_longitude) : '');
+    setClassDetails({
+      uuid: classRecord.uuid || '',
+      course_uuid: classRecord.course_uuid ?? '',
+      program_uuid: classRecord.program_uuid ?? null,
+      title: classRecord.title || '',
+      description: classRecord.description || '',
+      categories: Array.isArray(classRecord.categories) ? classRecord.categories : classRecord.categories ? [classRecord.categories] : [],
+      class_type: classRecord.class_visibility || 'PUBLIC',
+      location_type: normalizeLocationType(classRecord.location_type),
+      rate_card: classRecord.rate_card || classRecord.training_fee || '',
+      class_limit: classRecord.max_participants || 0,
+      targetAudience: classRecord.targetAudience || '',
+      location_name: classRecord.location_name || '',
+      startDate: '', endDate: '', allDay: false, repeatUnit: '1',
+      instructorName: instructor?.full_name,
+      meeting_link: classRecord.meeting_link || '',
+      classroom: classRecord.classroom || '', class_color: classRecord.class_color || '', reminder: '',
+    });
 
-      // Set service type based on loaded class type and location type
-      const loadedLocationType = normalizeLocationType(classRecord.location_type);
-      const classTypeValue = classRecord.class_visibility === 'PRIVATE' ? 'PRIVATE' : 'GROUP';
-      let computedServiceType: ServiceType | undefined;
+    setNotificationSettings(prev => ({
+      ...prev,
+      reminder: reminderFromMinutes(classRecord.class_reminder_minutes) || prev.reminder,
+      classColour: classRecord.class_color || prev.classColour,
+    }));
+    setAllowWaitlist(classRecord.allow_waitlist ?? true);
+    setLocationLatitude(typeof classRecord.location_latitude === 'number' ? String(classRecord.location_latitude) : '');
+    setLocationLongitude(typeof classRecord.location_longitude === 'number' ? String(classRecord.location_longitude) : '');
 
-      if (classTypeValue === 'PRIVATE' && loadedLocationType === 'ONLINE') {
-        computedServiceType = 'PRIVATE_ONLINE';
-      } else if (classTypeValue === 'GROUP' && loadedLocationType === 'ONLINE') {
-        computedServiceType = 'GROUP_ONLINE';
-      } else if (classTypeValue === 'GROUP' && loadedLocationType === 'IN_PERSON') {
-        computedServiceType = 'GROUP_INPERSON';
-      } else if (classTypeValue === 'PRIVATE' && loadedLocationType === 'IN_PERSON') {
-        computedServiceType = 'PRIVATE_INPERSON';
-        // } else if (classTypeValue === 'PRIVATE' && loadedLocationType === 'HYBRID') {
-        //   computedServiceType = 'PRIVATE_HYBRID';
-        // } else if (classTypeValue === 'GROUP' && loadedLocationType === 'HYBRID') {
-        //   computedServiceType = 'GROUP_HYBRID';
-      }
+    if (classRecord.thumbnail_url) setExistingThumbnailUrl(classRecord.thumbnail_url);
+    if (classRecord.promotional_video_url) setExistingVideoUrl(classRecord.promotional_video_url);
 
-      if (computedServiceType) {
-        setServiceType(computedServiceType);
-      }
+    const loadedLocationType = normalizeLocationType(classRecord.location_type);
+    const classTypeValue = classRecord.class_visibility === 'PRIVATE' ? 'PRIVATE' : 'GROUP';
+    let computedServiceType: ServiceType | undefined;
 
-      if (classRecord.academic_period_start_date || classRecord.academic_period_end_date ||
-        classRecord.registration_period_start_date || classRecord.registration_period_end_date) {
-        setScheduleSettings(prev => ({
-          ...prev,
-          academicPeriod: {
-            start: classRecord.academic_period_start_date ? new Date(classRecord.academic_period_start_date).toISOString().slice(0, 10) : prev.academicPeriod.start,
-            end: classRecord.academic_period_end_date ? new Date(classRecord.academic_period_end_date).toISOString().slice(0, 10) : prev.academicPeriod.end,
-          },
-          registrationPeriod: {
-            ...prev.registrationPeriod,
-            start: classRecord.registration_period_start_date ? new Date(classRecord.registration_period_start_date).toISOString().slice(0, 10) : prev.registrationPeriod.start,
-            end: classRecord.registration_period_end_date ? new Date(classRecord.registration_period_end_date).toISOString().slice(0, 10) : prev.registrationPeriod.end,
-          },
-        }));
-      }
-
-      if (classRecord.default_start_time) {
-        const startDate = new Date(classRecord.default_start_time);
-        const endDate = new Date(classRecord.default_end_time || classRecord.default_start_time);
-        setScheduleSettings(prev => ({
-          ...prev,
-          startClass: {
-            ...prev.startClass,
-            date: startDate.toISOString().slice(0, 10),
-            startTime: startDate.toTimeString().slice(0, 5),
-            endTime: endDate.toTimeString().slice(0, 5),
-          },
-          endRepeat: startDate.toISOString().slice(0, 10),
-        }));
-      }
-
-      setIsDataInitialized(true);
-    } else if (!resolvedId && !isDataInitialized) {
-      setIsDataInitialized(true);
+    if (classTypeValue === 'PRIVATE' && loadedLocationType === 'ONLINE') {
+      computedServiceType = 'PRIVATE_ONLINE';
+    } else if (classTypeValue === 'GROUP' && loadedLocationType === 'ONLINE') {
+      computedServiceType = 'GROUP_ONLINE';
+    } else if (classTypeValue === 'GROUP' && loadedLocationType === 'IN_PERSON') {
+      computedServiceType = 'GROUP_INPERSON';
+    } else if (classTypeValue === 'PRIVATE' && loadedLocationType === 'IN_PERSON') {
+      computedServiceType = 'PRIVATE_INPERSON';
+    } else if (classTypeValue === 'PRIVATE' && loadedLocationType === 'HYBRID') {
+      //   computedServiceType = 'PRIVATE_HYBRID';
+      // } else if (classTypeValue === 'GROUP' && loadedLocationType === 'HYBRID') {
+      //   computedServiceType = 'GROUP_HYBRID';
     }
-  }, [classData, isLoading, resolvedId, isDataInitialized, instructor?.full_name]);
+
+    if (computedServiceType) setServiceType(computedServiceType);
+
+    if (Array.isArray(classRecord.session_templates) && classRecord.session_templates.length > 0) {
+      const templates = classRecord.session_templates;
+      const firstTemplate = templates[0];
+
+      if (!firstTemplate) {
+        setIsEditHydrated(true);
+        setIsDataInitialized(true);
+        return;
+      }
+
+      const firstStart = new Date(firstTemplate.start_time);
+      const firstEnd = new Date(firstTemplate.end_time);
+      const firstDate = firstStart.toISOString().slice(0, 10);
+      const startTime = firstStart.toTimeString().slice(0, 5);
+      const endTime = firstEnd.toTimeString().slice(0, 5);
+
+      const isAllDay = startTime === '00:00' && endTime === '23:59';
+
+      const recurrenceType = firstTemplate.recurrence?.recurrence_type?.toUpperCase();
+      const intervalValue = firstTemplate.recurrence?.interval_value || 1;
+
+      const likelyPickDates = templates.length > 1 &&
+        templates.every(t => t.recurrence?.recurrence_type?.toUpperCase() === 'DAILY' && t.recurrence?.occurrence_count === 1);
+
+      if (likelyPickDates) {
+        setSchedulePreset('pick-dates');
+        const picked = templates.map(t => {
+          const tStart = new Date(t.start_time);
+          const tEnd = new Date(t.end_time);
+          return {
+            date: tStart.toISOString().slice(0, 10),
+            startTime: isAllDay ? '00:00' : tStart.toTimeString().slice(0, 5),
+            endTime: isAllDay ? '23:59' : tEnd.toTimeString().slice(0, 5),
+          };
+        });
+        setPickedDates(picked);
+      } else if (recurrenceType === 'WEEKLY') {
+        setSchedulePreset('standard');
+
+        const weeklyDayTimes: Record<number, { startTime: string; endTime: string }> = {};
+        const allDaysSet = new Set<number>();
+        const nextPerDayOccurrences: Record<number, PerDayOccurrence> = {};
+
+        const weeklyTemplates = templates.filter(
+          t => t.recurrence?.recurrence_type?.toUpperCase() === 'WEEKLY'
+        );
+
+        const firstTemplateEnd = new Date(firstTemplate.end_time);
+
+        const recurrenceEndDate =
+          firstTemplate.recurrence?.end_date
+            ? new Date(firstTemplate.recurrence.end_date)
+            : null;
+
+        const maxEndDate = templates.reduce((max, t) => {
+          const d = new Date(t.end_time);
+          return d > max ? d : max;
+        }, firstTemplateEnd);
+
+        const endRepeatDate = (recurrenceEndDate ?? maxEndDate)
+          .toISOString()
+          .slice(0, 10);
+        // ────────────────────────────────────────────────────────────────
+
+        weeklyTemplates.forEach(template => {
+          const templateDaysStr = template.recurrence?.days_of_week;
+          if (!templateDaysStr) return;
+
+          const tStart = new Date(template.start_time);
+          const tEnd = new Date(template.end_time);
+          const tStartTime = isAllDay ? '00:00' : tStart.toTimeString().slice(0, 5);
+          const tEndTime = isAllDay ? '23:59' : tEnd.toTimeString().slice(0, 5);
+          const tOccurrenceCount = template.recurrence?.occurrence_count ?? 1;
+          const tDurationHours = calculateSessionHours(tStartTime, tEndTime, isAllDay);
+
+          templateDaysStr.split(',').forEach(rawDay => {
+            const dayIndex = DAY_NAMES.indexOf(rawDay.trim());
+            if (dayIndex < 0) return;
+
+            allDaysSet.add(dayIndex);
+            weeklyDayTimes[dayIndex] = { startTime: tStartTime, endTime: tEndTime };
+            nextPerDayOccurrences[dayIndex] = {
+              durationHours: tDurationHours,
+              occurrenceCount: tOccurrenceCount,
+            };
+          });
+        });
+
+        const daysArray = Array.from(allDaysSet).sort((a, b) => a - b);
+
+        setScheduleSettings(prev => ({
+          ...prev,
+          allDay: isAllDay,
+          startClass: { date: firstDate, startTime, endTime },
+          repeat: { interval: intervalValue, unit: 'week', days: daysArray },
+          weeklyDayTimes,
+          endRepeat: endRepeatDate,
+        }));
+
+        setPerDayOccurrences(nextPerDayOccurrences);
+      } else if (recurrenceType === 'DAILY' || recurrenceType === 'MONTHLY' || recurrenceType === 'YEARLY') {
+        setSchedulePreset('standard');
+        const repeatUnit = recurrenceType === 'DAILY' ? 'day' : recurrenceType === 'MONTHLY' ? 'month' : 'year';
+
+        setScheduleSettings(prev => ({
+          ...prev,
+          allDay: isAllDay,
+          startClass: { date: firstDate, startTime, endTime },
+          repeat: {
+            interval: intervalValue,
+            unit: repeatUnit as 'day' | 'week' | 'month' | 'year',
+            days: [],
+          },
+          endRepeat: firstDate,
+        }));
+      }
+    }
+
+    if (classRecord.academic_period_start_date || classRecord.academic_period_end_date ||
+      classRecord.registration_period_start_date || classRecord.registration_period_end_date) {
+      setScheduleSettings(prev => ({
+        ...prev,
+        academicPeriod: {
+          start: classRecord.academic_period_start_date ? new Date(classRecord.academic_period_start_date).toISOString().slice(0, 10) : prev.academicPeriod.start,
+          end: classRecord.academic_period_end_date ? new Date(classRecord.academic_period_end_date).toISOString().slice(0, 10) : prev.academicPeriod.end,
+        },
+        registrationPeriod: {
+          ...prev.registrationPeriod,
+          start: classRecord.registration_period_start_date ? new Date(classRecord.registration_period_start_date).toISOString().slice(0, 10) : prev.registrationPeriod.start,
+          end: classRecord.registration_period_end_date ? new Date(classRecord.registration_period_end_date).toISOString().slice(0, 10) : prev.registrationPeriod.end,
+        },
+      }));
+    }
+
+    if (classRecord.default_start_time) {
+      const startDate = new Date(classRecord.default_start_time);
+      const endDate = new Date(classRecord.default_end_time || classRecord.default_start_time);
+      setScheduleSettings(prev => ({
+        ...prev,
+        startClass: {
+          ...prev.startClass,
+          date: startDate.toISOString().slice(0, 10),
+          startTime: startDate.toTimeString().slice(0, 5),
+          endTime: endDate.toTimeString().slice(0, 5),
+        },
+        endRepeat: prev.endRepeat ?? startDate.toISOString().slice(0, 10),
+      }));
+    }
+
+    setIsEditHydrated(true);
+    setIsDataInitialized(true);
+  }, [classData, isLoading, resolvedId, isEditHydrated, instructor?.full_name, isClientReady]);
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const isFormValid = () => {
@@ -823,7 +976,6 @@ const NewClassCreationPage = () => {
     let referenceDate = scheduleSettings.startClass.date;
     if (schedulePreset === 'academic-period') referenceDate = scheduleSettings.academicPeriod.start;
 
-    // Determine a representative default start/end time from the first selected day (for payload fields)
     const getDefaultTimes = () => {
       if (scheduleSettings.allDay) return { startTime: '00:00', endTime: '23:59' };
       const sortedDays = [...(scheduleSettings.repeat.days || [])].sort((a, b) => a - b);
@@ -872,25 +1024,46 @@ const NewClassCreationPage = () => {
               : RecurrenceTypeEnum.YEARLY;
 
       if (scheduleSettings.repeat.unit === 'week') {
+        const seriesEndDate = scheduleSettings.endRepeat || referenceDate;
+
         session_templates = (scheduleSettings.repeat.days || []).map(dayIndex => {
           const override = scheduleSettings.weeklyDayTimes[dayIndex];
           const effectiveStartTime = scheduleSettings.allDay ? '00:00' : (override?.startTime || scheduleSettings.startClass.startTime || '00:00');
           const effectiveEndTime = scheduleSettings.allDay ? '23:59' : (override?.endTime || scheduleSettings.startClass.endTime || '23:59');
 
-          const startDateObj = new Date(referenceDate);
-          while (((startDateObj.getDay() + 6) % 7) !== dayIndex) {
-            startDateObj.setDate(startDateObj.getDate() + 1);
+          const firstOccurrence = new Date(referenceDate);
+          while (((firstOccurrence.getDay() + 6) % 7) !== dayIndex) {
+            firstOccurrence.setDate(firstOccurrence.getDate() + 1);
           }
-          const sessionDate = startDateObj.toISOString().split('T')[0]!;
+
+          const endBoundary = new Date(seriesEndDate);
+          let occurrenceCountForDay = 0;
+          let lastOccurrence = firstOccurrence;
+          const cursor = new Date(firstOccurrence);
+
+          while (cursor <= endBoundary) {
+            occurrenceCountForDay += 1;
+            lastOccurrence = new Date(cursor);
+            cursor.setDate(cursor.getDate() + scheduleSettings.repeat.interval * 7);
+          }
+
+          if (occurrenceCountForDay === 0) {
+            occurrenceCountForDay = 1;
+            lastOccurrence = firstOccurrence;
+          }
+
+          const firstSessionDate = firstOccurrence.toISOString().split('T')[0]!;
+          const lastSessionDate = lastOccurrence.toISOString().split('T')[0]!;
 
           return {
-            start_time: new Date(buildUtcIsoDateTime(sessionDate, effectiveStartTime)),
-            end_time: new Date(buildUtcIsoDateTime(sessionDate, effectiveEndTime)),
+            start_time: new Date(buildUtcIsoDateTime(firstSessionDate, effectiveStartTime)),
+            end_time: new Date(buildUtcIsoDateTime(lastSessionDate, effectiveEndTime)),
             recurrence: {
               recurrence_type: RecurrenceTypeEnum.WEEKLY,
               interval_value: scheduleSettings.repeat.interval,
               days_of_week: DAY_NAMES[dayIndex],
-              occurrence_count: totalOccurrences,
+              occurrence_count: occurrenceCountForDay,
+              end_date: new Date(buildUtcIsoDateTime(lastSessionDate, effectiveEndTime)),
             },
             conflict_resolution: ConflictResolutionEnum.FAIL,
           };
@@ -913,7 +1086,6 @@ const NewClassCreationPage = () => {
       }
     }
 
-    // For payload default_start_time / default_end_time use first picked date or reference date
     const payloadRefDate = schedulePreset === 'pick-dates' && pickedDates.length > 0
       ? pickedDates[0]!.date
       : referenceDate;
@@ -958,17 +1130,10 @@ const NewClassCreationPage = () => {
     const onSuccess = (createdUuid?: string) => {
       const finalUuid = createdUuid || resolvedId;
 
-      // Handle deferred media uploads if this is a new class
       if (finalUuid && !isDraft && (selectedThumbnail || selectedVideo)) {
-        // Upload media files using the created/updated class UUID
         if (selectedThumbnail) {
-          const formData = new FormData();
-          formData.append('thumbnail', selectedThumbnail);
           addClassThumbnailMut.mutate(
-            {
-              path: { uuid: finalUuid },
-              body: { thumbnail: selectedThumbnail } as any,
-            },
+            { path: { uuid: finalUuid }, body: { thumbnail: selectedThumbnail } },
             {
               onSuccess: () => toast.success('Thumbnail uploaded'),
               onError: error => toast.error(getMutationErrorMessage(error, 'Failed to upload thumbnail')),
@@ -978,10 +1143,7 @@ const NewClassCreationPage = () => {
 
         if (selectedVideo) {
           addClassIntroVideoMut.mutate(
-            {
-              path: { uuid: finalUuid },
-              body: { promotional_video: selectedVideo } as any,
-            },
+            { path: { uuid: finalUuid }, body: { promotional_video: selectedVideo } },
             {
               onSuccess: () => toast.success('Video uploaded'),
               onError: error => toast.error(getMutationErrorMessage(error, 'Failed to upload video')),
@@ -995,7 +1157,7 @@ const NewClassCreationPage = () => {
       if (resolvedId) qc.invalidateQueries({ queryKey: getClassDefinitionQueryKey({ path: { uuid: resolvedId } }) });
       if (typeof window !== 'undefined') window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
       toast.success(isDraft ? 'Class saved as draft' : resolvedId ? 'Class updated successfully' : 'Class created successfully');
-      router.push('/dashboard/classes');
+      router.push('/dashboard/training-hub');
     };
 
     if (resolvedId) {
@@ -1040,15 +1202,17 @@ const NewClassCreationPage = () => {
     setLocationLatitude('');
     setLocationLongitude('');
     setPickedDates([]);
+    setPerDayOccurrences({});
     setSavedClassUuid(null);
     setIsDataInitialized(true);
     toast.success('Draft cleared');
   };
 
+
   // ── Derived UI values ──────────────────────────────────────────────────────
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const inviteLink = resolvedId ? `${origin}/class-invite?id=${resolvedId}` : '';
-  const meetingLink = classDetails.meeting_link || 'https://skillswallet.co/meet/john/uix101';
+  const meetingLink = classDetails.meeting_link || 'Enter your meeting link.';
   const normalizedLocationType = normalizeLocationType(classDetails.location_type);
   const showMeetingLink = normalizedLocationType === 'ONLINE' || normalizedLocationType === 'HYBRID';
 
@@ -1086,7 +1250,7 @@ const NewClassCreationPage = () => {
     return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
   };
 
-  // ── Day-time grid (Mon–Sun rows with Start/End time per day) ──────────────
+  // ── Day-time grid ──────────────────────────────────────────────────────────
   const DayTimeGrid = (
     <div className='space-y-2'>
       {DAY_NAMES.map((day, index) => {
@@ -1169,7 +1333,7 @@ const NewClassCreationPage = () => {
     </div>
   );
 
-  // ── Right-column fields (Repeat Every, Start Date, End Repeat, Registration) ──
+  // ── Right-column fields ────────────────────────────────────────────────────
   const buildRightColumnFields = (preset: 'standard' | 'academic-period') => (
     <div className='space-y-4'>
       <div className='space-y-2'>
@@ -1341,6 +1505,27 @@ const NewClassCreationPage = () => {
     </div>
   );
 
+
+  if (isLoading) {
+    return <div className='fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm'>
+      <div className='flex flex-col items-center gap-4 text-center'>
+        <div className='flex items-center justify-center rounded-full bg-primary/10 p-4'>
+          <Loader2 className='text-primary h-8 w-8 animate-spin' />
+        </div>
+
+        {/* Text */}
+        <div className='space-y-1'>
+          <p className='text-foreground text-base font-semibold'>
+            Loading class details
+          </p>
+          <p className='text-muted-foreground text-sm'>
+            Please wait while we retrieve class details...
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+
   return (
     <div className='h-auto px-2 py-4 sm:px-3 sm:py-6 lg:px-6'>
       <form onSubmit={handleSubmit} className='space-y-6'>
@@ -1411,26 +1596,13 @@ const NewClassCreationPage = () => {
                       </Select>
                     </FieldGroup>
                   </div>
-
-                  {/* <div className='w-full lg:w-[300px] lg:shrink-0'>
-                    <ClassCreationRateCard
-                      totalHours={totalHours}
-                      pricePerHour={ratePerHour}
-                      totalAmount={totalAmount}
-                      totalSessions={totalSessions}
-                      summary={rateSummary}
-                      onEditRate={() =>
-                        classDetailsCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                      }
-                    />
-                  </div> */}
                 </div>
 
                 <div className='border-t border-border/60 px-2 py-4 sm:px-3'>
                   <ServiceTypeSelector
                     value={serviceType}
                     onChange={handleServiceTypeChange}
-                    rateCard={rateCard as any}
+                    rateCard={rateCard as Record<string, number | string | null | undefined> | undefined}
                   />
 
                   <div className='mt-4 flex flex-col gap-4 md:flex-row'>
@@ -1717,47 +1889,6 @@ const NewClassCreationPage = () => {
                     </AlertDescription>
                   </Alert>
                 )}
-
-                {/* <Collapsible
-                  open={showOptionalSettings}
-                  onOpenChange={setShowOptionalSettings}
-                  className='rounded-md border border-border/60'
-                >
-                  <CollapsibleTrigger asChild>
-                    <button type='button' className='flex w-full items-center justify-between gap-3 px-4 py-3 text-left'>
-                      <div>
-                        <p className='text-foreground text-sm font-semibold'>Optional Class Settings</p>
-                        <p className='text-muted-foreground text-xs'>Expand to adjust class color.</p>
-                      </div>
-                      <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${showOptionalSettings ? 'rotate-180' : ''}`} />
-                    </button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className='border-t border-border/60 px-4 py-4'>
-                    <div className='rounded-md border border-border/60 p-4'>
-                      <div className='flex flex-row flex-wrap gap-2 sm:items-center sm:justify-between'>
-                        <div>
-                          <p className='text-foreground text-sm font-semibold'>Class Color</p>
-                          <p className='text-muted-foreground text-xs'>Choose a color to represent your class.</p>
-                        </div>
-                        <div className='flex flex-wrap gap-3'>
-                          {CLASS_COLOR_OPTIONS.map(color => (
-                            <button
-                              key={color.value}
-                              type='button'
-                              onClick={() => {
-                                setNotificationSettings(prev => ({ ...prev, classColour: color.value }));
-                                setClassDetails(prev => ({ ...prev, class_color: color.value }));
-                              }}
-                              className={`h-8 w-8 rounded-full border-2 ${notificationSettings.classColour === color.value ? 'border-primary' : 'border-transparent'}`}
-                              style={{ backgroundColor: color.value }}
-                              aria-label={`Select class color ${color.label}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible> */}
               </div>
             </Card>
 
@@ -1774,6 +1905,8 @@ const NewClassCreationPage = () => {
               selectedVideo={selectedVideo}
               onRemoveThumbnail={() => setSelectedThumbnail(null)}
               onRemoveVideo={() => setSelectedVideo(null)}
+              existingThumbnailUrl={existingThumbnailUrl}
+              existingVideoUrl={existingVideoUrl}
             />
 
             {/* ── Reminder Options Card ──────────────────────────────────── */}
@@ -1785,8 +1918,6 @@ const NewClassCreationPage = () => {
               </div>
 
               <div className="px-2 pb-4 sm:px-4 sm:pb-6 space-y-5">
-
-                {/* Reminder */}
                 <div className="flex items-center gap-4">
                   <label className="text-xs font-semibold text-foreground w-[80px]">
                     Reminder
@@ -1815,8 +1946,7 @@ const NewClassCreationPage = () => {
                   </Select>
                 </div>
 
-                <div className='flex flex-row items-start justify-between' >
-                  {/* Send To */}
+                <div className='flex flex-row items-start justify-between'>
                   <div className="flex flex-col items-start gap-4">
                     <label className="text-xs font-semibold text-foreground w-[80px]">
                       Send To
@@ -1835,7 +1965,6 @@ const NewClassCreationPage = () => {
                     </div>
                   </div>
 
-                  {/* Send Via */}
                   <div className="flex flex-col items-start gap-4">
                     <label className="text-xs font-semibold text-foreground w-[80px]">
                       Send Via
@@ -1859,16 +1988,8 @@ const NewClassCreationPage = () => {
                     </div>
                   </div>
                 </div>
-
               </div>
             </Card>
-            {/* 
-            <ClassCreationSummaryStrip
-              currency={rateCard?.currency as string | undefined || 'KES'}
-              maxParticipants={classDetails.class_limit}
-              totalAmount={totalAmount}
-              totalSessions={totalSessions}
-            /> */}
           </div>
 
           <div className='w-full xl:w-[360px] xl:shrink-0'>
@@ -1883,8 +2004,6 @@ const NewClassCreationPage = () => {
 export default NewClassCreationPage;
 
 
-// ── Shared sub-components ────────────────────────────────────────────────────
-
 const FieldGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className='space-y-2'>
     <div className='text-foreground text-sm font-semibold'>{label}</div>
@@ -1892,55 +2011,3 @@ const FieldGroup = ({ label, children }: { label: string; children: React.ReactN
   </div>
 );
 
-const ChoiceGroup = ({
-  label, options, value, onChange,
-}: {
-  label: string;
-  options: { label: string; value: string; icon: typeof Users }[];
-  value: string;
-  onChange: (value: string) => void;
-}) => (
-  <div className='space-y-2'>
-    <div className='text-foreground text-xs font-semibold'>{label}</div>
-    <div className='flex flex-wrap gap-2 sm:flex-nowrap'>
-      {options.map(option => {
-        const Icon = option.icon;
-        const active = value === option.value;
-        return (
-          <button
-            key={option.value}
-            type='button'
-            onClick={() => onChange(option.value)}
-            className={`flex flex-1 items-center gap-2 rounded-md border px-2.5 py-2 text-left transition ${active ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
-              }`}
-          >
-            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-              <Icon className='h-3.5 w-3.5' />
-            </div>
-            <span className='text-xs font-medium leading-none'>{option.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  </div>
-);
-
-const ReminderCard = ({
-  title, enabled, onEnabledChange, children,
-}: {
-  children: React.ReactNode;
-  enabled: boolean;
-  onEnabledChange: (next: boolean) => void;
-  title: string;
-}) => (
-  <div className='rounded-md border border-border/60 p-4'>
-    <div className='flex items-center justify-between gap-3'>
-      <div>
-        <p className='text-foreground text-sm font-semibold'>{title}</p>
-        <p className='text-muted-foreground text-xs'>Set reminders for your students.</p>
-      </div>
-      <Switch checked={enabled} onCheckedChange={onEnabledChange} />
-    </div>
-    <div className='mt-4 space-y-4'>{children}</div>
-  </div>
-);
