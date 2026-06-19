@@ -13,13 +13,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -31,7 +24,8 @@ import {
   isAuthenticatedMediaUrl,
   toAuthenticatedMediaUrl,
 } from '@/src/lib/media-url';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Checkbox } from '@radix-ui/react-checkbox';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
   CalendarDays,
@@ -45,13 +39,16 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { LinkShareCard } from '../../../../../components/shared/link-share-card';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../../../../../components/ui/sheet';
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
+import { useStudentsMap } from '../../../../../hooks/use-studentsMap';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../lib/share';
-import { deactivateClassDefinitionMutation, getClassDefinitionsForInstructorQueryKey } from '../../../../../services/client/@tanstack/react-query.gen';
+import { cn } from '../../../../../lib/utils';
+import { deactivateClassDefinitionMutation, getClassDefinitionsForInstructorQueryKey, getCourseEnrollmentsOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 import { RichTextPreview } from '../../classes/class-training/[id]/_components/ClassTrainingPage';
 import { socialShareActions } from '../../classes/overview/[id]/page';
 import type { TrainingHubLiveClass } from './training-hub-data';
@@ -65,6 +62,66 @@ export function LiveClassCard({
 }: LiveClassCardProps) {
   const qc = useQueryClient()
   const profile = useUserProfile()
+
+  const { data: courseEnrollments } = useQuery({
+    ...getCourseEnrollmentsOptions({
+      path: { courseUuid: liveClass?.class?.course_uuid as string },
+      query: { pageable: {} }
+    })
+  })
+
+  const studentUuids = useMemo(
+    () =>
+      courseEnrollments?.data?.content
+        ?.map(enrollment => enrollment.student_uuid)
+        .filter(Boolean) ?? [],
+    [courseEnrollments]
+  );
+
+  const { studentsMap } = useStudentsMap(studentUuids);
+
+  const students = useMemo(
+    () =>
+      studentUuids
+        .map(uuid => studentsMap?.[uuid])
+        .filter(Boolean),
+    [studentUuids, studentsMap]
+  );
+
+  // console.log(studentUuids, "STUD IDS")
+  // console.log(students, "map")
+
+  const [selectedStudentUuids, setSelectedStudentUuids] = useState<string[]>([]);
+
+  const toggleStudent = (studentUuid: string) => {
+    setSelectedStudentUuids(current =>
+      current.includes(studentUuid)
+        ? current.filter(id => id !== studentUuid)
+        : [...current, studentUuid]
+    );
+  };
+
+  // const inviteStudentsMutation = useMutation({
+  //   mutationFn: async () => {
+  //     return inviteStudentsToLiveClass({
+  //       path: {
+  //         liveClassUuid: liveClass.uuid,
+  //       },
+  //       body: {
+  //         student_uuids: selectedStudentUuids,
+  //       },
+  //     });
+  //   },
+  //   onSuccess: () => {
+  //     toast.success(
+  //       `${selectedStudentUuids.length} student(s) invited`
+  //     );
+
+  //     setSelectedStudentUuids([]);
+  //     setInviteOpen(false);
+  //   },
+  // });
+
 
   const imageUrl = toAuthenticatedMediaUrl(liveClass.imageUrl);
   const deleteClassMut = useMutation(deactivateClassDefinitionMutation());
@@ -425,55 +482,127 @@ export function LiveClassCard({
       </AlertDialog>
 
 
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className='sm:max-w-lg'>
-          <DialogHeader>
-            <DialogTitle>Invite Students</DialogTitle>
-          </DialogHeader>
+      <Sheet open={inviteOpen} onOpenChange={setInviteOpen}>
+        <SheetContent
+          side="right"
+          className="flex w-full flex-col p-0 sm:max-w-xl"
+        >
+          <div className="border-b p-6">
+            <SheetHeader>
+              <SheetTitle>Invite Students</SheetTitle>
 
-          <DialogDescription>
-            Invite students to join your live class.
-          </DialogDescription>
+              <SheetDescription>
+                Invite students to join your live class.
+              </SheetDescription>
+            </SheetHeader>
+          </div>
 
-          <LinkShareCard
-            description='Copy or share the registration link for enrollment.'
-            title='Registration Link'
-            url={registrationLink}
-            footer={
-              <div className='space-y-3'>
-                <h4 className='text-sm font-medium'>Share via</h4>
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="space-y-6 p-6">
+              <div>
+                <h3 className="mb-3 text-sm font-medium">
+                  Select students
+                </h3>
 
-                <div className='flex flex-wrap gap-2'>
-                  {socialShareActions.map(
-                    ({ icon: Icon, label, platform }) => (
-                      <Button
-                        key={label}
-                        aria-label={`Share registration link on ${label}`}
-                        className='gap-2'
-                        disabled={!registrationLink}
-                        onClick={() =>
-                          openShareWindow(
-                            buildSocialShareUrl(platform, {
-                              title: liveClass.title,
-                              url: registrationLink,
-                              description: `Check out this class: ${liveClass.title}`,
-                            })
-                          )
-                        }
-                        size='sm'
-                        variant='outline'
+                <div className="space-y-2">
+                  {students.map(student => {
+                    const selected = selectedStudentUuids.includes(
+                      student?.uuid as string
+                    );
+
+                    return (
+                      <button
+                        key={student?.uuid}
+                        type="button"
+                        onClick={() => toggleStudent(student?.uuid as string)}
+                        className={cn(
+                          "flex w-full items-start justify-between rounded-lg border p-3 text-left transition-colors",
+                          selected &&
+                          "border-primary bg-primary/5"
+                        )}
                       >
-                        <Icon className='h-4 w-4' />
-                        {label}
-                      </Button>
-                    )
-                  )}
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">
+                            {student?.full_name}
+                          </p>
+
+                          <p className="text-muted-foreground truncate text-sm">
+                            {student?.full_name}
+                          </p>
+                        </div>
+
+                        <Checkbox checked={selected} />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            }
-          />
-        </DialogContent>
-      </Dialog>
+
+              <LinkShareCard
+                title="Registration Link"
+                description="Copy or share the registration link for enrollment."
+                url={registrationLink}
+                footer={
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-medium">
+                      Share via
+                    </h4>
+
+                    <div className="flex flex-wrap gap-2">
+                      {socialShareActions.map(
+                        ({ icon: Icon, label, platform }) => (
+                          <Button
+                            key={label}
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            disabled={!registrationLink}
+                            onClick={() =>
+                              openShareWindow(
+                                buildSocialShareUrl(platform, {
+                                  title: liveClass.title,
+                                  url: registrationLink,
+                                  description: `Check out this class: ${liveClass.title}`,
+                                })
+                              )
+                            }
+                          >
+                            <Icon className="h-4 w-4" />
+                            {label}
+                          </Button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                }
+              />
+            </div>
+          </div>
+
+          {/* Fixed footer */}
+          <div className="bg-background border-t p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-muted-foreground text-sm">
+                {selectedStudentUuids.length} selected
+              </p>
+
+              <Button
+              // disabled={
+              //   selectedStudentUuids.length === 0 ||
+              //   inviteStudentsMutation.isPending
+              // }
+              // onClick={() => inviteStudentsMutation.mutate()}
+              >
+                Send invite
+                {selectedStudentUuids.length > 0
+                  ? ` (${selectedStudentUuids.length})`
+                  : ""}
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </Card>
   );
 }

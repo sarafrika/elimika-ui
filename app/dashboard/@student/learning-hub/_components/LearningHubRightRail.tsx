@@ -29,16 +29,19 @@ export function LearningHubRightRail({
   );
   const hasMoreRecommendations = displayedRecommendations.length < recommendedCourses.length;
 
+  const hasPath = false;
+
   return (
     <aside className='space-y-3'>
       <Card className='rounded-[18px] border border-border/70 bg-background p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
         <div className='flex items-center justify-between gap-3'>
           <h2 className='text-[1rem] font-semibold text-foreground'>Class Invites</h2>
+
           <span className='inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[0.72rem] font-medium text-muted-foreground'>
             0
           </span>
         </div>
-        <div className='mt-3 rounded-[12px] border border-dashed border-border/70 bg-background p-5 text-center'>
+        <div className='rounded-[12px] border border-dashed border-border/70 bg-background p-5 text-center'>
           <p className='text-sm font-medium text-foreground'>No class invites yet</p>
           <p className='mt-1 text-xs text-muted-foreground'>
             Invite data will appear here once the endpoint is available.
@@ -48,7 +51,7 @@ export function LearningHubRightRail({
 
       <Card className='rounded-[18px] border border-border/70 bg-background p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
         <h2 className='text-[1rem] font-semibold text-foreground'>Recommended Pathways</h2>
-        <div className='mt-3 rounded-[12px] border border-border/70 bg-background p-3'>
+        <div className='rounded-[12px] border border-border/70 bg-background p-3'>
           {loading ? (
             <>
               <div className='flex gap-3'>
@@ -67,25 +70,63 @@ export function LearningHubRightRail({
                 <div className='grid size-10 place-items-center rounded-full bg-[linear-gradient(135deg,color-mix(in_srgb,var(--success)_76%,black_6%),color-mix(in_srgb,var(--success)_56%,white_26%))] text-white'>
                   ✦
                 </div>
+
                 <div className='min-w-0'>
-                  <h3 className='text-[0.95rem] font-semibold leading-tight text-foreground'>
-                    Discover Career Paths
-                  </h3>
-                  <p className='mt-1 text-[0.72rem] text-muted-foreground'>Advanced</p>
+                  {hasPath ? (
+                    <>
+                      <h3 className='text-[0.95rem] font-semibold leading-tight text-foreground'>
+                        Discover Career Paths
+                      </h3>
+                      <p className='mt-1 text-[0.72rem] text-muted-foreground'>
+                        Advanced
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className='text-[0.95rem] font-semibold leading-tight text-foreground'>
+                        No career path yet
+                      </h3>
+                      <p className='mt-1 text-[0.72rem] text-muted-foreground'>
+                        Start by exploring recommended paths
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
+
               <div className='mt-3 flex items-center gap-2 text-[0.72rem] text-muted-foreground'>
-                <span>4 Steps Completed</span>
-                <span className='size-1 rounded-full bg-border' />
-                <span>14 h</span>
+                {hasPath ? (
+                  <>
+                    <span>4 Steps Completed</span>
+                    <span className='size-1 rounded-full bg-border' />
+                    <span>14 h</span>
+                  </>
+                ) : (
+                  <>
+                    <span>0 Steps Completed</span>
+                    <span className='size-1 rounded-full bg-border' />
+                    <span>—</span>
+                  </>
+                )}
               </div>
-              <Link
-                prefetch
-                href='/dashboard/courses'
-                className='mt-4 inline-flex w-full items-center justify-center rounded-[8px] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_88%,black_8%),color-mix(in_srgb,var(--primary)_74%,black_18%))] px-4 py-2 text-[0.78rem] font-medium text-white transition hover:opacity-95'
-              >
-                Resume
-              </Link>
+
+              {hasPath ? (
+                <Link
+                  prefetch
+                  href='/dashboard/courses'
+                  className='mt-4 inline-flex w-full items-center justify-center rounded-[8px] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_88%,black_8%),color-mix(in_srgb,var(--primary)_74%,black_18%))] px-4 py-2 text-[0.78rem] font-medium text-white transition hover:opacity-95'
+                >
+                  Resume
+                </Link>
+              ) : (
+                <Link
+                  prefetch
+                  href='/dashboard/courses'
+                  className='mt-4 inline-flex w-full items-center justify-center rounded-[8px] bg-[color-mix(in_srgb,var(--primary)_12%,white)] px-4 py-2 text-[0.78rem] font-medium text-primary transition hover:opacity-95'
+                >
+                  Explore Paths
+                </Link>
+              )}
             </>
           )}
         </div>
@@ -103,7 +144,7 @@ export function LearningHubRightRail({
             <ChevronRight className='size-4' />
           </Link>
         </div>
-        <div className='mt-3 space-y-3'>
+        <div className='space-y-3'>
           {(loading ? recommendationPlaceholders : displayedRecommendations).map(course => (
             <div
               key={course.id}
@@ -118,7 +159,7 @@ export function LearningHubRightRail({
                   </div>
                 </>
               ) : (
-                <>
+                <Link href={`/dashboard/workspace/student/course/${course?.id}`} className='flex w-full min-w-0 flex-row items-center gap-3'>
                   <div className='grid size-8 place-items-center rounded-full bg-[color-mix(in_srgb,var(--primary)_10%,white)] text-primary'>
                     ⊕
                   </div>
@@ -130,7 +171,7 @@ export function LearningHubRightRail({
                       <span>{course.duration}</span>
                     </div>
                   </div>
-                </>
+                </Link>
               )}
             </div>
           ))}

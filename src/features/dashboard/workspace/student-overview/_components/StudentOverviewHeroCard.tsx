@@ -29,7 +29,7 @@ export function StudentOverviewHeroCard({
         <div className='space-y-1'>
           <h1 className='text-[1.55rem] font-semibold tracking-tight text-foreground sm:text-[1.95rem]'>
             Welcome back, {firstName}!{' '}
-            <span className='inline-block align-top text-xl'>🚀</span>
+            <span className='inline-block align-middle text-xl'>🚀</span>
           </h1>
 
           <p className='text-sm text-muted-foreground sm:text-base'>

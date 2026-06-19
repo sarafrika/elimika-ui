@@ -64,7 +64,7 @@ export function LearningHubContinueLearning({
           ))
           : visibleClasses.map(classItem => (
             <article key={classItem?.id} className='flex flex-col gap-2 rounded-md'>
-              <Link href={`/dashboard/learning-hub/${classItem?.id}`} className='space-y-1'>
+              <div className='space-y-1'>
                 <div className='border-border/60 h-[150px] overflow-hidden rounded-md border'>
                   {classItem?.bannerUrl ? (
                     <Image
@@ -105,16 +105,25 @@ export function LearningHubContinueLearning({
                     />
                   ))}
                 </div>
-              </Link>
+              </div>
 
-              <Link
-                prefetch
-                // href={classItem.href}
-                href={`/dashboard/learning-hub/classes/${classItem?.id}`}
-                className={`inline-flex w-full items-center justify-center rounded-[8px] px-3 py-2 text-[0.78rem] font-medium transition hover:opacity-95 ${buttonAccentClasses[classItem.accent]}`}
-              >
-                {classItem.ctaLabel}
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link
+                  prefetch
+                  href={`/dashboard/learning-hub/classes/${classItem?.id}`}
+                  className={`flex-1 inline-flex items-center justify-center rounded-[8px] px-3 py-2 text-[0.78rem] font-medium transition hover:opacity-95 bg-primary text-primary-foreground ${buttonAccentClasses[classItem.accent]}`}
+                >
+                  {classItem.ctaLabel}
+                </Link>
+
+                <Link
+                  prefetch
+                  href={`/dashboard/learning-hub/${classItem?.id}`}
+                  className="flex-1 inline-flex items-center justify-center rounded-[8px] px-3 py-2 text-[0.78rem] font-medium transition hover:opacity-95 border border-border text-muted-foreground hover:bg-muted"
+                >
+                  View detail
+                </Link>
+              </div>
             </article>
           ))}
       </div>

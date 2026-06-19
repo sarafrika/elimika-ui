@@ -127,11 +127,11 @@ function QuestionOptionsPreview({
                             type='button'
                             key={optionUuid ?? index}
                             disabled={submitted}
-                            onClick={() => {
-                                if (!isInstructor) {
-                                    onChange?.(optionUuid);
-                                }
-                            }}
+                            // onClick={() => {
+                            //     if (!isInstructor) {
+                            //         onChange?.(optionUuid);
+                            //     }
+                            // }}
                             className={cn(
                                 'flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all',
                                 selected &&
@@ -196,10 +196,10 @@ function QuestionOptionsPreview({
                     <Textarea
                         disabled={submitted}
                         value={typeof answer === 'string' ? answer : ''}
-                        onChange={(e) =>
-                            onChange?.(e.target.value)
-                        }
-                        placeholder='Write your response here...'
+                        // onChange={(e) =>
+                        //     onChange?.(e.target.value)
+                        // }
+                        // placeholder='Write your response here...'
                         className='min-h-[140px]'
                     />
                 )}
@@ -228,10 +228,10 @@ function QuestionOptionsPreview({
                     <Input
                         disabled={submitted}
                         value={typeof answer === 'string' ? answer : ''}
-                        onChange={(e) =>
-                            onChange?.(e.target.value)
-                        }
-                        placeholder='Enter your answer'
+                    // onChange={(e) =>
+                    //     onChange?.(e.target.value)
+                    // }
+                    // placeholder='Enter your answer'
                     />
                 )}
             </div>
@@ -274,14 +274,14 @@ function QuestionOptionsPreview({
                                 <select
                                     disabled={submitted}
                                     value={matchingAnswer[option.uuid ?? option.option_text] || ''}
-                                    onChange={(e) =>
-                                        onChange?.({
-                                            ...matchingAnswer,
-                                            [option.uuid ?? option.option_text]:
-                                                e.target
-                                                    .value,
-                                        })
-                                    }
+                                    // onChange={(e) =>
+                                    //     onChange?.({
+                                    //         ...matchingAnswer,
+                                    //         [option.uuid ?? option.option_text]:
+                                    //             e.target
+                                    //                 .value,
+                                    //     })
+                                    // }
                                     className='border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
                                 >
                                     <option value=''>
@@ -640,7 +640,7 @@ export function QuizContentPreview({
                                 }
                             )}
 
-                            {role === 'user' && (
+                            {role === 'preview' && (
                                 <div className='flex justify-end pt-4'>
                                     <Button
                                         disabled={
