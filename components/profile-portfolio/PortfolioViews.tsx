@@ -7,10 +7,14 @@ import {
   ChevronDown,
   ChevronRight,
   Clock3,
+  FolderOpen,
   Layers3,
   Play,
   Search,
+  ShieldCheck,
+  Sparkles,
   Trophy,
+  Video,
 } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
@@ -365,158 +369,6 @@ function SectionHeader({
   );
 }
 
-function ProjectsPanel({ content }: { content: ReturnType<typeof getPortfolioContent> }) {
-  return (
-    <div className='space-y-4 p-3 sm:p-5'>
-      <SectionHeader
-        title={content.copy.projectsHeading}
-        description={content.copy.projectListDescription}
-      />
-      <div className='bg-card overflow-hidden rounded-lg border shadow-sm'>
-        {content.projects.map(project => (
-          <CompactProjectRow key={project.id} project={project} showThumbnail />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function AssetPanel({
-  title,
-  description,
-  items,
-  actionLabel,
-}: {
-  title: string;
-  description: string;
-  items: PortfolioAsset[];
-  actionLabel?: string;
-}) {
-  return (
-    <div className='space-y-4 p-3 sm:p-5'>
-      <SectionHeader title={title} description={description} actionLabel={actionLabel} />
-      <div className='grid gap-3'>
-        {items.map(item => (
-          <CollectionItemCard key={item.id} item={item} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SidebarCard({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className='bg-card rounded-lg border p-4 shadow-sm' aria-labelledby={title}>
-      <h2 id={title} className='text-foreground mb-3 text-lg font-semibold'>
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function PortfolioSidebar({ content }: { content: ReturnType<typeof getPortfolioContent> }) {
-  const InsightIcon = content.insightHighlight.icon;
-  const verifiedEvidence = content.projects.reduce(
-    (total, project) => total + (project.status ? 1 : 0),
-    0
-  );
-  const totalEvidence = content.projects.reduce((total, project) => total + project.evidenceCount, 0);
-
-  return (
-    <aside className='grid gap-4 lg:grid-cols-2 xl:grid-cols-1 xl:content-start'>
-      <SidebarCard title={content.copy.sidebarInsightTitle}>
-        <div className='bg-secondary/40 rounded-md border p-3'>
-          <div className='grid grid-cols-3 gap-2 text-center'>
-            {content.evidenceItems.map(item => (
-              <div key={item.label}>
-                <p className='text-foreground text-2xl font-semibold'>{item.value}</p>
-                <p className='text-muted-foreground text-xs leading-4'>{item.label}</p>
-              </div>
-            ))}
-          </div>
-          <div className='my-4 border-t' />
-          <div className='space-y-3'>
-            <div className='flex items-center justify-between text-sm'>
-              <span className='text-muted-foreground font-medium'>Total Evidence:</span>
-              <span className='text-foreground font-semibold'>{totalEvidence} tracked</span>
-            </div>
-            <Progress
-              value={Math.min(100, verifiedEvidence * 20)}
-              className='bg-muted h-3'
-              indicatorClassName='bg-[color-mix(in_srgb,var(--el-accent-amber)_78%,var(--warning))]'
-            />
-            <div className='space-y-2 text-sm'>
-              <div className='flex justify-between'>
-                <span className='text-muted-foreground'>Pending Verifications:</span>
-                <strong className='text-foreground'>
-                  {Math.max(content.projects.length - verifiedEvidence, 0)}
-                </strong>
-              </div>
-              <div className='flex justify-between'>
-                <span className='text-muted-foreground'>Verified Evidence:</span>
-                <strong className='text-foreground'>{verifiedEvidence}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      </SidebarCard>
-
-      <SidebarCard title={content.copy.sidebarHighlightsTitle}>
-        <div className='bg-secondary/30 divide-y rounded-md border'>
-          {content.highlights.map(item => {
-            const Icon = item.icon;
-
-            return (
-              <article key={item.title} className='flex items-center gap-3 p-3'>
-                <span className='text-primary grid size-9 shrink-0 place-items-center rounded-md'>
-                  <Icon className='size-6' />
-                </span>
-                <div className='min-w-0'>
-                  <h3 className='text-foreground truncate text-sm font-semibold'>{item.title}</h3>
-                  <Rating value={item.rating} />
-                </div>
-              </article>
-            );
-          })}
-        </div>
-        <Button className='mt-4 w-full'>
-          {content.copy.sidebarReportAction}
-          <ChevronRight className='size-4' />
-        </Button>
-      </SidebarCard>
-
-      <SidebarCard title={content.copy.sidebarLedgerTitle}>
-        <div className='bg-secondary/30 rounded-md border'>
-          <div className='text-foreground flex items-center gap-2 border-b px-3 py-2 text-sm font-medium'>
-            <Trophy className='text-primary size-4' />
-            {content.copy.sidebarLedgerTitle}
-          </div>
-          <div className='p-3'>
-            <p className='text-muted-foreground text-sm'>{content.copy.sidebarLedgerLabel}</p>
-            <article className='mt-3 flex items-center gap-3'>
-              <span className='bg-success text-success-foreground grid size-10 shrink-0 place-items-center rounded-md'>
-                <InsightIcon className='size-6' />
-              </span>
-              <div>
-                <h3 className='text-foreground text-sm font-semibold'>
-                  {content.insightHighlight.title}
-                </h3>
-                <Rating value={content.insightHighlight.rating} />
-              </div>
-            </article>
-            <Progress value={78} className='bg-muted mt-3 h-2' indicatorClassName='bg-success' />
-          </div>
-        </div>
-        <Button className='mt-4 w-full'>
-          {content.copy.sidebarUploadAction}
-          <ChevronRight className='size-4' />
-        </Button>
-      </SidebarCard>
-    </aside>
-  );
-}
-
 function ProjectSections({
   content,
   onOpenProjects,
@@ -528,6 +380,34 @@ function ProjectSections({
   const compactProjects = content.projects.slice(0, 1);
   const featuredProjects = content.projects.slice(0, 2);
   const featuredCta = content.copy.featuredProjectsCta;
+
+  if (content.projects.length === 0) {
+    return (
+      <div className='flex min-h-[400px] flex-col items-center justify-center p-6 text-center'>
+        <div className='bg-muted mb-4 flex size-14 items-center justify-center rounded-full'>
+          <FolderOpen className='text-muted-foreground size-7' />
+        </div>
+
+        <h2 className='text-foreground text-lg font-semibold'>
+          No projects yet
+        </h2>
+
+        <p className='text-muted-foreground mt-2 max-w-md text-sm'>
+          Your portfolio projects will appear here once you create or import
+          them.
+        </p>
+
+        <Button
+          type='button'
+          className='mt-6'
+          onClick={onOpenProjects}
+        >
+          Add your first project
+          <ChevronRight className='size-4' />
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className='space-y-5 p-3 sm:p-5'>
@@ -601,6 +481,266 @@ function ProjectSections({
   );
 }
 
+function ProjectsPanel({ content }: { content: ReturnType<typeof getPortfolioContent> }) {
+  if (content.projects.length === 0) {
+    return (
+      <div className='flex min-h-[400px] flex-col items-center justify-center p-6 text-center'>
+        <div className='bg-muted mb-4 flex size-14 items-center justify-center rounded-full'>
+          <FolderOpen className='text-muted-foreground size-7' />
+        </div>
+
+        <h2 className='text-foreground text-lg font-semibold'>
+          No projects yet
+        </h2>
+
+        <p className='text-muted-foreground mt-2 max-w-md text-sm'>
+          Your portfolio projects will appear here once you create or import
+          them.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className='space-y-4 p-3 sm:p-5'>
+      <SectionHeader
+        title={content.copy.projectsHeading}
+        description={content.copy.projectListDescription}
+      />
+      <div className='bg-card overflow-hidden rounded-lg border shadow-sm'>
+        {content.projects.map(project => (
+          <CompactProjectRow key={project.id} project={project} showThumbnail />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AssetPanel({
+  title,
+  description,
+  items,
+  actionLabel,
+}: {
+  title: string;
+  description: string;
+  items: PortfolioAsset[];
+  actionLabel?: string;
+}) {
+  return (
+    <div className='space-y-4 p-3 sm:p-5'>
+      <SectionHeader title={title} description={description} actionLabel={actionLabel} />
+      <div className='grid gap-3'>
+        {items.map(item => (
+          <CollectionItemCard key={item.id} item={item} />
+        ))}
+
+        {items.length === 0 &&
+          <div className='flex min-h-[400px] flex-col items-center justify-center p-6 text-center'>
+            <div className='bg-muted mb-4 flex size-14 items-center justify-center rounded-full'>
+              <Video className='text-muted-foreground size-7' />
+            </div>
+
+            <h2 className='text-foreground text-lg font-semibold'>
+              No asset yet
+            </h2>
+
+            <p className='text-muted-foreground mt-2 max-w-md text-sm'>
+              Your portfolio projects will appear here once you create or import
+              them.
+            </p>
+          </div>}
+      </div>
+    </div>
+  );
+}
+
+function SidebarCard({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className='bg-card rounded-lg border p-4 shadow-sm' aria-labelledby={title}>
+      <h2 id={title} className='text-foreground mb-3 text-lg font-semibold'>
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+function PortfolioSidebar({ content }: { content: ReturnType<typeof getPortfolioContent> }) {
+  const hasProjects = content.projects.length > 0;
+  const hasHighlights = content.highlights.length > 0;
+  // const hasInsight = Boolean(content.insightHighlight);
+  const hasInsight = false
+
+  const verifiedEvidence = content.projects.reduce(
+    (total, project) => total + (project.status ? 1 : 0),
+    0
+  );
+
+  const totalEvidence = content.projects.reduce(
+    (total, project) => total + project.evidenceCount,
+    0
+  );
+
+  return (
+    <aside className='grid gap-4 lg:grid-cols-2 xl:grid-cols-1 xl:content-start'>
+      <SidebarCard title={content.copy.sidebarInsightTitle}>
+        {!hasProjects ? (
+          <div className='text-muted-foreground flex min-h-[220px] flex-col items-center justify-center rounded-md border border-dashed px-4 text-center'>
+            <ShieldCheck className='mb-3 size-8 opacity-50' />
+            <p className='font-medium'>No evidence tracked</p>
+            <p className='mt-1 text-xs'>
+              Evidence metrics will appear once projects are added.
+            </p>
+          </div>
+        ) : (
+          <div className='bg-secondary/40 rounded-md border p-3'>
+            <div className='grid grid-cols-3 gap-2 text-center'>
+              {content.evidenceItems.map(item => (
+                <div key={item.label}>
+                  <p className='text-foreground text-2xl font-semibold'>{item.value}</p>
+                  <p className='text-muted-foreground text-xs leading-4'>{item.label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className='my-4 border-t' />
+
+            <div className='space-y-3'>
+              <div className='flex items-center justify-between text-sm'>
+                <span className='text-muted-foreground font-medium'>
+                  Total Evidence:
+                </span>
+                <span className='text-foreground font-semibold'>
+                  {totalEvidence} tracked
+                </span>
+              </div>
+
+              <Progress
+                value={Math.min(100, verifiedEvidence * 20)}
+                className='bg-muted h-3'
+                indicatorClassName='bg-[color-mix(in_srgb,var(--el-accent-amber)_78%,var(--warning))]'
+              />
+
+              <div className='space-y-2 text-sm'>
+                <div className='flex justify-between'>
+                  <span className='text-muted-foreground'>
+                    Pending Verifications:
+                  </span>
+                  <strong className='text-foreground'>
+                    {Math.max(content.projects.length - verifiedEvidence, 0)}
+                  </strong>
+                </div>
+
+                <div className='flex justify-between'>
+                  <span className='text-muted-foreground'>
+                    Verified Evidence:
+                  </span>
+                  <strong className='text-foreground'>{verifiedEvidence}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </SidebarCard>
+
+      <SidebarCard title={content.copy.sidebarHighlightsTitle}>
+        {!hasHighlights ? (
+          <div className='text-muted-foreground flex min-h-[220px] flex-col items-center justify-center rounded-md border border-dashed px-4 text-center'>
+            <Sparkles className='mb-3 size-8 opacity-50' />
+            <p className='font-medium'>No highlights yet</p>
+            <p className='mt-1 text-xs'>
+              Featured skills and achievements will appear here.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className='bg-secondary/30 divide-y rounded-md border'>
+              {content.highlights.map(item => {
+                const Icon = item.icon;
+
+                return (
+                  <article key={item.title} className='flex items-center gap-3 p-3'>
+                    <span className='text-primary grid size-9 shrink-0 place-items-center rounded-md'>
+                      <Icon className='size-6' />
+                    </span>
+
+                    <div className='min-w-0'>
+                      <h3 className='text-foreground truncate text-sm font-semibold'>
+                        {item.title}
+                      </h3>
+                      <Rating value={item.rating} />
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            <Button className='mt-4 w-full'>
+              {content.copy.sidebarReportAction}
+              <ChevronRight className='size-4' />
+            </Button>
+          </>
+        )}
+      </SidebarCard>
+
+      <SidebarCard title={content.copy.sidebarLedgerTitle}>
+        {!hasInsight ? (
+          <div className='text-muted-foreground flex min-h-[220px] flex-col items-center justify-center rounded-md border border-dashed px-4 text-center'>
+            <Trophy className='mb-3 size-8 opacity-50' />
+            <p className='font-medium'>No featured insight</p>
+            <p className='mt-1 text-xs'>
+              Portfolio insights will appear after enough activity is recorded.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className='bg-secondary/30 rounded-md border'>
+              <div className='text-foreground flex items-center gap-2 border-b px-3 py-2 text-sm font-medium'>
+                <Trophy className='text-primary size-4' />
+                {content.copy.sidebarLedgerTitle}
+              </div>
+
+              <div className='p-3'>
+                <p className='text-muted-foreground text-sm'>
+                  {content.copy.sidebarLedgerLabel}
+                </p>
+
+                <article className='mt-3 flex items-center gap-3'>
+                  <span className='bg-success text-success-foreground grid size-10 shrink-0 place-items-center rounded-md'>
+                    <content.insightHighlight.icon className='size-6' />
+                  </span>
+
+                  <div>
+                    <h3 className='text-foreground text-sm font-semibold'>
+                      {content.insightHighlight.title}
+                    </h3>
+                    <Rating value={content.insightHighlight.rating} />
+                  </div>
+                </article>
+
+                <Progress
+                  value={78}
+                  className='bg-muted mt-3 h-2'
+                  indicatorClassName='bg-success'
+                />
+              </div>
+            </div>
+
+            <Button className='mt-4 w-full'>
+              {content.copy.sidebarUploadAction}
+              <ChevronRight className='size-4' />
+            </Button>
+          </>
+        )}
+      </SidebarCard>
+    </aside>
+  );
+}
+
+
+
+// ACTUAL COMPONENT
 export function SharedPortfolioShell({ role }: { role: PortfolioRole }) {
   const content = getPortfolioContent(role);
   const [activeTab, setActiveTab] = useState<PortfolioTabId>('dashboard');

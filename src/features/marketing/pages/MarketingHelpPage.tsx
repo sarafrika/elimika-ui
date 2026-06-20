@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Send } from 'lucide-react';
-import Link from 'next/link';
 import { Button } from '../../../../components/ui/button';
 import { SupportContactForm } from './SupportContactForm';
 
@@ -39,15 +38,6 @@ function ScrollHelpSection() {
           </p>
         </div>
         <div className='flex flex-wrap gap-3'>
-          <Button
-            asChild
-            className='rounded-full px-6'
-            variant='outline'
-          >
-            <Link href='/help'>
-              Help center
-            </Link>
-          </Button>
           <Button
             className='rounded-full px-6'
             onClick={() => {
