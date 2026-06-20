@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, FileText, GraduationCap, WalletCards } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { SkillsFundHeader } from './_components/SkillsFundHeader';
 import { SkillsFundMiniTrackerCard } from './_components/SkillsFundMiniTrackerCard';
@@ -65,10 +65,23 @@ export function SkillsFundHubPage({ role, profileName }: SkillsFundHubPageProps)
                 onSortChange={setSortValue}
               />
 
-              <section className='grid justify-start gap-3 min-[900px]:grid-cols-2 xl:gap-4 2xl:grid-cols-3'>
-                {featuredOpportunities.map(opportunity => (
-                  <SkillsFundOpportunityCard key={opportunity.id} opportunity={opportunity} />
-                ))}
+              <section>
+                {featuredOpportunities.length > 0 ? (
+                  <div className='grid justify-start gap-3 min-[900px]:grid-cols-2 xl:gap-4 2xl:grid-cols-3'>
+                    {featuredOpportunities.map(opportunity => (
+                      <SkillsFundOpportunityCard key={opportunity.id} opportunity={opportunity} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className='flex min-h-[280px] flex-col items-center justify-center rounded-[12px] border border-dashed border-border bg-muted/20 p-8 text-center'>
+                    <GraduationCap className='mb-4 size-10 text-muted-foreground' />
+                    <h3 className='text-lg font-semibold'>No funding opportunities available</h3>
+                    <p className='mt-2 max-w-md text-sm text-muted-foreground'>
+                      There are currently no bursaries, scholarships, sponsorships, or
+                      apprenticeships available. Check back later for new opportunities.
+                    </p>
+                  </div>
+                )}
               </section>
 
               <section className='rounded-[12px] border border-border bg-muted/20 p-3 sm:p-4'>
@@ -85,27 +98,50 @@ export function SkillsFundHubPage({ role, profileName }: SkillsFundHubPageProps)
                   </Button>
                 </div>
 
-                <div className='grid justify-start gap-3 min-[980px]:grid-cols-2'>
-                  {content.bottomCards.map(card => (
-                    <SkillsFundMiniTrackerCard key={card.id} card={card} />
-                  ))}
-                </div>
+                {content.bottomCards.length > 0 ? (
+                  <div className='grid justify-start gap-3 min-[980px]:grid-cols-2'>
+                    {content.bottomCards.map(card => (
+                      <SkillsFundMiniTrackerCard key={card.id} card={card} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className='flex min-h-[180px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-background/50 p-6 text-center'>
+                    <FileText className='mb-3 size-8 text-muted-foreground' />
+                    <h3 className='font-semibold'>No applications yet</h3>
+                    <p className='mt-1 text-sm text-muted-foreground'>
+                      Applications you submit will appear here for tracking.
+                    </p>
+                  </div>
+                )}
               </section>
             </div>
 
-            <SkillsFundSidebar
-              activityEntries={content.activityEntries}
-              resources={content.resources}
-              trackerEntries={content.trackerEntries}
-              walletActionLabel={content.walletActionLabel}
-              walletBalance={content.walletBalance}
-              walletRemaining={content.walletRemaining}
-              walletSecondaryActionLabel={content.walletSecondaryActionLabel}
-              walletSubtitle={content.walletSubtitle}
-              walletTitle={content.walletTitle}
-              walletUtilizationLabel={content.walletUtilizationLabel}
-              walletUtilizationPercent={content.walletUtilizationPercent}
-            />
+            {content.trackerEntries.length > 0 ||
+              content.activityEntries.length > 0 ||
+              content.resources.length > 0 ? (
+              <SkillsFundSidebar
+                activityEntries={content.activityEntries}
+                resources={content.resources}
+                trackerEntries={content.trackerEntries}
+                walletActionLabel={content.walletActionLabel}
+                walletBalance={content.walletBalance}
+                walletRemaining={content.walletRemaining}
+                walletSecondaryActionLabel={content.walletSecondaryActionLabel}
+                walletSubtitle={content.walletSubtitle}
+                walletTitle={content.walletTitle}
+                walletUtilizationLabel={content.walletUtilizationLabel}
+                walletUtilizationPercent={content.walletUtilizationPercent}
+              />
+            ) : (
+              <aside className='flex min-h-[500px] flex-col items-center justify-center rounded-[16px] border border-dashed border-border bg-muted/20 p-8 text-center'>
+                <WalletCards className='mb-4 size-10 text-muted-foreground' />
+                <h3 className='text-lg font-semibold'>No funding activity</h3>
+                <p className='mt-2 max-w-xs text-sm text-muted-foreground'>
+                  Your wallet, activity history, resources, and funding tracker will appear
+                  here once funding data becomes available.
+                </p>
+              </aside>
+            )}
           </div>
         </section>
       </div>

@@ -36,7 +36,7 @@ export function SettingsSupportWidget({
               Need Help?
             </p>
 
-            <p className='mt-0.5 text-xs leading-5 text-muted-foreground'>
+            <p className='mt-0.5 text-xs leading-5 text-primary underline'>
               Visit our help center.
             </p>
           </div>

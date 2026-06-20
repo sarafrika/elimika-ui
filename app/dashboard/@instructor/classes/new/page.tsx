@@ -1262,20 +1262,20 @@ const NewClassCreationPage = () => {
         return (
           <div
             key={day}
+            onClick={() =>
+              setScheduleSettings(prev => {
+                const currentDays = prev.repeat.days || [];
+                const nextDays = active
+                  ? currentDays.filter(d => d !== index)
+                  : [...currentDays, index].sort();
+                return { ...prev, repeat: { ...prev.repeat, days: nextDays, unit: 'week' } };
+              })
+            }
             className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${active ? 'border-primary bg-primary/5' : 'border-border bg-background'
               }`}
           >
             <button
               type='button'
-              onClick={() =>
-                setScheduleSettings(prev => {
-                  const currentDays = prev.repeat.days || [];
-                  const nextDays = active
-                    ? currentDays.filter(d => d !== index)
-                    : [...currentDays, index].sort();
-                  return { ...prev, repeat: { ...prev.repeat, days: nextDays, unit: 'week' } };
-                })
-              }
               className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${active
                 ? 'border-primary bg-primary text-primary-foreground'
                 : 'border-border bg-muted text-muted-foreground hover:border-primary/50'

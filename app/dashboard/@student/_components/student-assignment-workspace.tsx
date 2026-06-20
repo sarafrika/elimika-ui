@@ -857,97 +857,73 @@ export function StudentAssignmentWorkspace() {
               <SheetTitle className='text-2xl'>
                 {selectedAssignment?.assignment?.title || 'Assignment details'}
               </SheetTitle>
-              <SheetDescription>
-                {selectedAssignment?.classMeta.classTitle} • Due{' '}
-                {formatDate(
-                  selectedAssignment?.schedule?.due_at || selectedAssignment?.assignment?.due_date
-                )}
+              <SheetDescription className='flex flex-wrap items-center gap-x-2 gap-y-1'>
+                <span>
+                  {selectedAssignment?.classMeta.classTitle} • Due{' '}
+                  {formatDate(
+                    selectedAssignment?.schedule?.due_at ||
+                    selectedAssignment?.assignment?.due_date
+                  )}
+                </span>
+
+                <span className='text-muted-foreground'>•</span>
+
+                <span>
+                  Points:{' '}
+                  {selectedAssignment?.assignment?.points_display ||
+                    selectedAssignment?.assignment?.max_points ||
+                    'Not set'}
+                </span>
+
+                <span className='text-muted-foreground'>•</span>
+
+                <span>
+                  Attempts: {selectedAssignment?.submissions.length}
+                </span>
               </SheetDescription>
             </SheetHeader>
 
             {!selectedAssignment ? null : (
               <div className='space-y-6'>
-                <div className='grid gap-4 lg:grid-cols-[1.4fr_0.8fr]'>
-                  <Card className='border-border/60'>
-                    <CardHeader className='pb-3'>
-                      <CardTitle className='text-base'>Assignment brief</CardTitle>
-                    </CardHeader>
-                    <CardContent className='text-muted-foreground space-y-4 text-sm'>
-                      {selectedAssignment.assignment?.description ? (
-                        <div className='space-y-2'>
-                          <p className='text-foreground font-medium'>Description</p>
-                          <div className='space-y-2 [&_p]:leading-6'>
-                            <RichTextRenderer
-                              htmlString={selectedAssignment.assignment.description}
-                            />
-                          </div>
-                        </div>
-                      ) : null}
-                      {selectedAssignment.assignment?.instructions ? (
-                        <div className='space-y-2'>
-                          <p className='text-foreground font-medium'>Instructions</p>
-                          <div className='space-y-2 [&_p]:leading-6'>
-                            <RichTextRenderer
-                              htmlString={selectedAssignment.assignment.instructions}
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <p>No extra instructions were provided for this assignment.</p>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card className='border-border/60'>
-                    <CardHeader className='pb-3'>
-                      <CardTitle className='text-base'>Assignment summary</CardTitle>
-                    </CardHeader>
-                    <CardContent className='space-y-4'>
-                      <div className='grid grid-cols-2 gap-3'>
-                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
-                            Points
-                          </p>
-                          <p className='text-foreground mt-1 text-base font-semibold'>
-                            {selectedAssignment.assignment?.points_display ||
-                              selectedAssignment.assignment?.max_points ||
-                              'Not set'}
-                          </p>
-                        </div>
-                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
-                            Attempts
-                          </p>
-                          <p className='text-foreground mt-1 text-base font-semibold'>
-                            {selectedAssignment.submissions.length}
-                          </p>
-                        </div>
+                <div className='mx-auto max-w-4xl space-y-6'>
+                  {/* Description */}
+                  {selectedAssignment.assignment?.description && (
+                    <section>
+                      <h2 className='mb-3 text-lg font-semibold'>Description</h2>
+                      <div className='prose prose-sm dark:prose-invert max-w-none'>
+                        <RichTextRenderer
+                          htmlString={selectedAssignment.assignment.description}
+                        />
                       </div>
+                    </section>
+                  )}
 
-                      <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                        <p className='text-muted-foreground text-xs tracking-wide uppercase'>
-                          Accepted formats
-                        </p>
-                        <p className='text-foreground mt-1 text-sm'>
-                          {selectedSubmissionTypes.length > 0
-                            ? selectedSubmissionTypes.join(', ')
-                            : 'Text or instructor-defined format'}
-                        </p>
-                      </div>
+                  {/* Instructions */}
+                  <section>
+                    <h2 className='mb-3 text-lg font-semibold'>Instructions</h2>
 
-                      <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                        <p className='text-muted-foreground text-xs tracking-wide uppercase'>
-                          Due date
-                        </p>
-                        <p className='text-foreground mt-1 text-sm'>
-                          {formatDate(
-                            selectedAssignment.schedule?.due_at ||
-                            selectedAssignment.assignment?.due_date
-                          )}
-                        </p>
+                    {selectedAssignment.assignment?.instructions ? (
+                      <div className='prose prose-sm dark:prose-invert max-w-none'>
+                        <RichTextRenderer
+                          htmlString={selectedAssignment.assignment.instructions}
+                        />
                       </div>
-                    </CardContent>
-                  </Card>
+                    ) : (
+                      <p className='text-muted-foreground'>
+                        No extra instructions were provided.
+                      </p>
+                    )}
+                  </section>
+
+                  {/* Footer meta */}
+                  <section className='border-t pt-4'>
+                    <h3 className='mb-2 text-sm font-medium'>Submission requirements</h3>
+                    <p className='text-muted-foreground text-sm'>
+                      {selectedSubmissionTypes.length > 0
+                        ? selectedSubmissionTypes.join(', ')
+                        : 'Text or instructor-defined format'}
+                    </p>
+                  </section>
                 </div>
 
                 <Card className='border-border/60 space-y-0'>
@@ -1070,9 +1046,7 @@ export function StudentAssignmentWorkspace() {
                       </div>
                     </CardContent>
                   </Card>
-                ) : null}
-
-                <Card className='border-border/60'>
+                ) : (<Card className='border-border/60'>
                   <CardHeader className='pb-3'>
                     <CardTitle className='text-base'>
                       {showSubmissionForm
@@ -1328,7 +1302,9 @@ export function StudentAssignmentWorkspace() {
                       </>
                     )}
                   </CardContent>
-                </Card>
+                </Card>)}
+
+
               </div>
             )}
           </div>

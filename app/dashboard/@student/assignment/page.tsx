@@ -9,14 +9,14 @@ export default function AssignmentsPage() {
         <TabsList className="grid h-auto w-full grid-cols-2 rounded-xl p-1 md:w-auto">
           <TabsTrigger
             value="assignments"
-            className="h-11 rounded-lg px-6 text-sm font-medium"
+            className="h-9 rounded-lg px-6 text-sm font-medium"
           >
             Assignments
           </TabsTrigger>
 
           <TabsTrigger
             value="quizzes"
-            className="h-11 rounded-lg px-6 text-sm font-medium"
+            className="h-9 rounded-lg px-6 text-sm font-medium"
           >
             Quizzes
           </TabsTrigger>
