@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Search, X, XCircle } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import type { SubmissionStudent } from './assignment-types';
 
 type SubmissionStudentListProps = {
@@ -53,55 +53,58 @@ export function SubmissionStudentList({
         </div>
       </div>
 
-      <ScrollArea className='min-h-0 flex-1'>
+      <ScrollArea className="flex-1 min-h-0 overflow-hidden">
         {students.length === 0 ? (
-          <div className='flex h-full flex-col items-center justify-center p-6 text-center'>
-            <p className='text-muted-foreground text-sm'>
+          <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+            <p className="text-muted-foreground text-sm">
               No students have submitted their assignments yet.
             </p>
           </div>
         ) : (
-          <div className='space-y-2 p-2'>
+          <div className="space-y-2 p-1">
             {students.map(student => {
               const isActive = student.id === selectedStudentId;
 
               return (
                 <button
                   key={student.id}
-                  type='button'
+                  type="button"
                   onClick={() => onSelect(student.id)}
                   className={cn(
-                    'w-full rounded-lg border p-3 text-left transition-colors',
+                    "w-full rounded-lg border px-2 py-3 text-left transition-colors",
                     isActive
-                      ? 'border-primary/20 bg-primary/10 shadow-sm'
-                      : 'hover:bg-muted/40'
+                      ? "border-primary/20 bg-primary/10 shadow-sm"
+                      : "hover:bg-muted/40"
                   )}
                 >
-                  <div className='flex items-start gap-3'>
-                    <Avatar className='h-10 w-10 shrink-0'>
+                  <div className="flex items-start gap-3">
+                    <Avatar className="h-10 w-10 shrink-0">
                       <AvatarFallback>
                         {student.name.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
 
-                    <div className='min-w-0 flex-1'>
-                      <div className='flex items-center justify-between gap-2'>
-                        <p className='truncate text-base font-semibold'>
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <div className="flex items-center gap-2">
+                        <p
+                          className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold"
+                          title={student.name}
+                        >
                           {student.name}
                         </p>
 
-                        {isActive ? (
-                          <Badge variant='outline' className='shrink-0 rounded-full'>
-                            {student.attendanceLabel}
-                          </Badge>
-                        ) : student.attendanceLabel === 'Present' ? (
-                          <CheckCircle2 className='text-success h-4 w-4 shrink-0' />
-                        ) : (
-                          <XCircle className='text-destructive h-4 w-4 shrink-0' />
-                        )}
+                        <Badge
+                          variant="outline"
+                          className="shrink-0 rounded-full text-[10px]"
+                        >
+                          {student.insightLabel}
+                        </Badge>
                       </div>
 
-                      <p className='text-muted-foreground mt-1 text-sm truncate'>
+                      <p
+                        className="text-muted-foreground mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs"
+                        title={student.submissionStatus}
+                      >
                         {student.submissionStatus}
                       </p>
                     </div>

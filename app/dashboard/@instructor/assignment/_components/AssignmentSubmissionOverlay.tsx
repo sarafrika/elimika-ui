@@ -18,6 +18,7 @@ import {
   getQuizAttemptsOptions,
   getQuizByUuidOptions,
   getRubricMatrixOptions,
+  getSubmissionAttachmentsOptions,
   gradeSubmissionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AssignmentSubmission, QuizAttempt, RubricMatrix } from '@/services/client/types.gen';
@@ -125,17 +126,49 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
 
   const { courseEnrollmentMap } = useCourseEnrollmentsMap([courseId]);
   const submissions = assignmentSubmissionsQuery.data?.data ?? [];
+
   const enrollments =
     courseEnrollmentMap?.[courseId]?.enrollments ?? [];
 
-  const enrichedSubmissions: Array<
-    typeof submissions[number] & { student_uuid?: string }
-  > = submissions.map(submission => ({
-    ...submission,
-    student_uuid: enrollments.find(
-      enrollment => enrollment.uuid === submission.enrollment_uuid
-    )?.student_uuid,
-  }));
+  // Fetch attachments for every submission
+  const attachmentQueries = useQueries({
+    queries: submissions.map(submission =>
+      getSubmissionAttachmentsOptions({
+        path: {
+          assignmentUuid: submission.assignment_uuid,
+          submissionUuid: submission.uuid as string,
+        },
+      })
+    ),
+  });
+
+  // Build lookup table
+  const attachmentsBySubmissionId = useMemo(() => {
+    return submissions.reduce<
+      Record<string, unknown[]>
+    >((acc, submission, index) => {
+      acc[submission.uuid as string] =
+        attachmentQueries[index]?.data?.data ?? [];
+
+      return acc;
+    }, {});
+  }, [submissions, attachmentQueries]);
+
+  // Enrich submissions
+  const enrichedSubmissions = useMemo(
+    () =>
+      submissions.map(submission => ({
+        ...submission,
+
+        student_uuid: enrollments.find(
+          enrollment => enrollment.uuid === submission.enrollment_uuid
+        )?.student_uuid,
+
+        attachments:
+          attachmentsBySubmissionId[submission.uuid as string] ?? [],
+      })),
+    [submissions, enrollments, attachmentsBySubmissionId]
+  );
 
   const attempts = quizAttemptsQuery.data?.data?.content ?? [];
 
@@ -144,8 +177,9 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
       return enrichedSubmissions
         .map(submission => {
           const rosterEntry = rosterAllEnrollments.find(
-            entry => entry.enrollment?.student_uuid === submission.student_uuid
+            entry => entry?.enrollment?.student_uuid === submission?.student_uuid
           );
+
           if (!rosterEntry?.enrollment?.uuid) return null;
 
           return {
@@ -172,7 +206,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
     return attempts
       .map(attempt => {
         const rosterEntry = rosterAllEnrollments.find(
-          entry => entry.enrollment?.student_uuid === attempt?.student_uuid
+          entry => entry?.enrollment?.student_uuid === attempt?.student_uuid
         );
         if (!rosterEntry?.enrollment?.uuid) return null;
 
@@ -234,6 +268,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
       studentSummary: course?.name,
       subtitle: task.title,
       taskType: parsedTask.taskType,
+      max_point: task?.max_points
     };
   }, [classDetails.class?.title, course?.name, lessonTitle, parsedTask, rubricUuid, selectedAttempt?.submitted_at, task, taskId]);
 
@@ -287,6 +322,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
       </div>
     );
   }
+
 
   return (
     <div className='fixed inset-0 z-[100]'>

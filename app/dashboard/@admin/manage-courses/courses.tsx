@@ -1,29 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import {
-  Award,
-  BookOpen,
-  CheckCircle2,
-  Clock,
-  Edit,
-  Eye,
-  FileQuestion,
-  FileText,
-  Loader2,
-  Plus,
-  Search,
-  Trash2,
-  TrendingUp,
-  Users,
-  X,
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
 import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/data-table';
 import { LessonContentViewerDialog } from '@/components/content-preview/LessonContentPreview';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +31,30 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  Award,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  Edit,
+  Eye,
+  FileQuestion,
+  FileText,
+  Loader2,
+  Plus,
+  Search,
+  Trash2,
+  TrendingUp,
+  Users,
+  X,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 import {
   getAllCoursesOptions,
   getAllCoursesQueryKey,
@@ -185,7 +185,6 @@ export default function CoursesPage() {
         query: {
           pageable: {
             page: 0,
-            size: 1, // We only need the metadata for counts
           },
         },
       }),
