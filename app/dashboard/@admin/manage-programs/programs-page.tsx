@@ -161,7 +161,6 @@ export default function AdminProgramsPage() {
         query: {
           pageable: {
             page: 0,
-            size: 1,
           },
         },
       }),

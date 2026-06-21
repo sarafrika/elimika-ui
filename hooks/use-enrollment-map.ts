@@ -24,7 +24,7 @@ export function useCourseEnrollmentsMap(courseUuids: string[]) {
     queries: courseUuids.map(uuid => ({
       ...getCourseEnrollmentsOptions({
         path: { courseUuid: uuid },
-        query: { pageable: { page: 0, size: 1 } },
+        query: { pageable: { page: 0 } },
       }),
       enabled: !!uuid,
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -33,6 +33,7 @@ export function useCourseEnrollmentsMap(courseUuids: string[]) {
       refetchOnReconnect: false,
     })),
   });
+
 
   const courseEnrollmentMap = useMemo<EnrollmentMap>(() => {
     const map: EnrollmentMap = {};

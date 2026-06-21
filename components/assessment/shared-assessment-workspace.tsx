@@ -1299,6 +1299,7 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
       getFilteredAssessments(instructorAssessments, activeTab, search, skill, statusFilter, sort),
     [activeTab, instructorAssessments, search, skill, sort, statusFilter]
   );
+
   const filteredCompetencies = useMemo(
     () => getFilteredCompetencies(competencies, search, skill, statusFilter, sort),
     [search, skill, sort, statusFilter]
@@ -1336,6 +1337,7 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
   if (role === 'student') {
     return <StudentAssessmentList role={role} />;
   }
+
 
   return (
     <main className='bg-muted/30 min-h-screen overflow-hidden'>
