@@ -84,31 +84,51 @@ export const getPreferredScheduleInstance = (
 ) => {
   const sortedSchedule = [...schedule]
     .filter(isNonCancelledInstance)
-    .sort((left, right) => new Date(left.start_time).getTime() - new Date(right.start_time).getTime());
+    .sort(
+      (left, right) =>
+        new Date(left.start_time).getTime() -
+        new Date(right.start_time).getTime()
+    );
 
   if (sortedSchedule.length === 0) {
     return null;
   }
 
   if (requestedScheduleUuid) {
-    const requestedSchedule = sortedSchedule.find(instance => instance.uuid === requestedScheduleUuid);
+    const requestedSchedule = sortedSchedule.find(
+      instance => instance.uuid === requestedScheduleUuid
+    );
+
     if (requestedSchedule) {
       return requestedSchedule;
     }
   }
 
   const now = new Date();
-  const nextSchedule = sortedSchedule.find(instance => {
-    const endTime = new Date(instance.end_time);
-    if (!Number.isNaN(endTime.getTime())) {
-      return endTime >= now;
-    }
 
-    const startTime = new Date(instance.start_time);
-    return !Number.isNaN(startTime.getTime()) && startTime >= now;
+  // Find first schedule whose day has not yet arrived
+  const nextIndex = sortedSchedule.findIndex(instance => {
+    const start = new Date(instance.start_time);
+
+    return (
+      start.getFullYear() > now.getFullYear() ||
+      start.getMonth() > now.getMonth() ||
+      start.getDate() > now.getDate() ||
+      (
+        start.getFullYear() === now.getFullYear() &&
+        start.getMonth() === now.getMonth() &&
+        start.getDate() === now.getDate()
+      )
+    );
   });
 
-  return nextSchedule ?? sortedSchedule[sortedSchedule.length - 1] ?? null;
+  if (nextIndex === -1) {
+    return sortedSchedule[sortedSchedule.length - 1];
+  }
+
+  return nextIndex > 0
+    ? sortedSchedule[nextIndex - 1]
+    : sortedSchedule[0];
 };
 
 export const formatPreferredScheduleLabel = (classItem: InstructorClassWithSchedule) => {
