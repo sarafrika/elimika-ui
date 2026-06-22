@@ -3059,7 +3059,7 @@ export default function ClassTrainingPage({
             </p>
           </div>
           <Button asChild variant='outline'>
-            <Link href='/dashboard/classes'>Back to classes</Link>
+            <Link href='/dashboard/training-hub'>Back to classes</Link>
           </Button>
         </div>
       </div>
