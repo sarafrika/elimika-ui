@@ -2969,27 +2969,25 @@ export default function ClassTrainingPage({
   const [remainingTime, setRemainingTime] = useState('');
 
   useEffect(() => {
-    if (!activeSchedule?.started_at || !activeSchedule?.duration_minutes) {
+    if (!activeSchedule?.started_at) {
       setRemainingTime('');
       return;
     }
 
-    const durationMinutes = Number(activeSchedule.duration_minutes);
-
     const startedAt = new Date(activeSchedule.started_at).getTime();
-    const classEndsAt = startedAt + durationMinutes * 60 * 1000;
 
-    const updateCountdown = () => {
-      const diff = classEndsAt - Date.now();
+    const updateElapsedTime = () => {
+      // Subtract 1 hour (3600000 ms)
+      const elapsed = Date.now() - startedAt - 60 * 60 * 1000;
 
-      if (diff <= 0) {
+      if (elapsed <= 0) {
         setRemainingTime('00:00:00');
         return;
       }
 
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const hours = Math.floor(elapsed / (1000 * 60 * 60));
+      const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
 
       setRemainingTime(
         `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
@@ -2999,12 +2997,13 @@ export default function ClassTrainingPage({
       );
     };
 
-    updateCountdown();
+    updateElapsedTime();
 
-    const interval = setInterval(updateCountdown, 1000);
+    const interval = setInterval(updateElapsedTime, 1000);
 
     return () => clearInterval(interval);
-  }, [activeSchedule?.started_at, activeSchedule?.duration_minutes]);
+  }, [activeSchedule?.started_at]);
+
 
   // const endClassMut = useMutation(endScheduledInstanceMutation());
   // const handleEndClass = () => {

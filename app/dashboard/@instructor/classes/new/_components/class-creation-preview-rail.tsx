@@ -39,9 +39,9 @@ export type ClassCreationPreviewData = {
   scheduleLabel: string;
   timeLabel: string;
   totalHoursLabel: string;
-  pricePerHourLabel: string;
+  pricePerHourLabel: string | number;
   totalSessionsLabel: string;
-  totalAmountLabel: string;
+  totalAmountLabel: string | number;
   meetingLink: string;
   inviteLink: string;
   classroom: string;
@@ -117,6 +117,8 @@ export function ClassCreationPreviewRail({
     if (file) onUploadIntroVideo?.(file);
     e.target.value = '';
   };
+
+  console.log(data, "Data here")
 
   return (
     <aside className='space-y-4'>
@@ -234,8 +236,16 @@ export function ClassCreationPreviewRail({
             <PreviewRow icon={MapPin} label='Classroom' value={data.classroom || 'N/A'} />
             <PreviewRow icon={Clock3} label='Total Hours' value={data.totalHoursLabel} />
             <PreviewRow icon={TimerReset} label='Price per Hour' value={data.pricePerHourLabel} />
-            <PreviewRow icon={CalendarDays} label='Total Classes' value={data.totalSessionsLabel} />
-            <PreviewRow icon={Banknote} label='Total Amount' value={data.totalAmountLabel} />
+            <PreviewRow
+              icon={CalendarDays}
+              label='Total Classes'
+              value={data?.totalSessionsLabel ?? "0"}
+            />
+            <PreviewRow
+              icon={Banknote}
+              label='Total Amount'
+              value={data?.totalAmountLabel || "0"}
+            />
           </div>
 
           {data.summaryItems?.length ? (
@@ -308,7 +318,7 @@ export const PreviewRow = ({
 }: {
   icon: ComponentType<{ className?: string }>;
   label: string;
-  value: string;
+  value: string | number;
 }) => (
   <div className='grid gap-2 px-4 py-2.5 sm:px-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center'>
     <div className='flex items-center gap-3'>

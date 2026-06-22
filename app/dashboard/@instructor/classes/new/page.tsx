@@ -607,7 +607,7 @@ const NewClassCreationPage = () => {
 
   const totalHoursInMinutes = BigInt(Math.round(totalHours * 60));
 
-  const totalAmount = Math.max(ratePerHour * totalHours, 0) || Math.max(Number(classData?.training_fee) * totalHours);
+  const totalAmount = Math.max(ratePerHour * totalHours, 0) || Math.max(Number(classData?.training_fee) * totalHours) | 0;
 
 
 
@@ -1233,8 +1233,8 @@ const NewClassCreationPage = () => {
     classroom: classDetails.classroom,
     totalHoursLabel: `${totalHours || 0} ${totalHours === 1 ? 'Hour' : 'Hours'}`,
     pricePerHourLabel: `${rateCard?.currency || 'KES'} ${ratePerHour.toLocaleString()}`,
-    totalSessionsLabel: `${totalSessions} Class${totalSessions === 1 ? '' : 'es'}`,
-    totalAmountLabel: `${rateCard?.currency || 'KES'} ${totalAmount.toLocaleString()}`,
+    totalSessionsLabel: `${totalSessions || 0} Class${totalSessions === 1 ? '' : 'es'}`,
+    totalAmountLabel: `${rateCard?.currency || 'KES'} ${totalAmount.toLocaleString() || "0"}`,
     meetingLink,
     inviteLink,
     summaryItems: [
@@ -1259,23 +1259,42 @@ const NewClassCreationPage = () => {
         const effectiveStartTime = override?.startTime || scheduleSettings.startClass.startTime || '';
         const effectiveEndTime = override?.endTime || scheduleSettings.startClass.endTime || '';
 
+        const toggleDay = () =>
+          setScheduleSettings(prev => {
+            const currentDays = prev.repeat.days || [];
+            const nextDays = active
+              ? currentDays.filter(d => d !== index)
+              : [...currentDays, index].sort();
+
+            return {
+              ...prev,
+              repeat: {
+                ...prev.repeat,
+                days: nextDays,
+                unit: 'week',
+              },
+            };
+          });
+
+
         return (
           <div
             key={day}
-            onClick={() =>
-              setScheduleSettings(prev => {
-                const currentDays = prev.repeat.days || [];
-                const nextDays = active
-                  ? currentDays.filter(d => d !== index)
-                  : [...currentDays, index].sort();
-                return { ...prev, repeat: { ...prev.repeat, days: nextDays, unit: 'week' } };
-              })
-            }
+            onClick={toggleDay}
             className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${active ? 'border-primary bg-primary/5' : 'border-border bg-background'
               }`}
           >
             <button
               type='button'
+              // onClick={() =>
+              //   setScheduleSettings(prev => {
+              //     const currentDays = prev.repeat.days || [];
+              //     const nextDays = active
+              //       ? currentDays.filter(d => d !== index)
+              //       : [...currentDays, index].sort();
+              //     return { ...prev, repeat: { ...prev.repeat, days: nextDays, unit: 'week' } };
+              //   })
+              // }
               className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${active
                 ? 'border-primary bg-primary text-primary-foreground'
                 : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
@@ -1284,10 +1303,13 @@ const NewClassCreationPage = () => {
               {DAY_SHORT[index]}
             </button>
 
-            <div className='flex flex-1 flex-col gap-0.5'>
+            <div className='flex flex-1 flex-col gap-0.5'
+            >
               <span className='text-muted-foreground text-[10px] font-medium'>Start Time</span>
               <Input
                 type='time'
+                onClick={e => e.stopPropagation()}
+
                 disabled={!active || scheduleSettings.allDay}
                 value={normalizeTime(effectiveStartTime)}
                 onChange={e =>
@@ -1306,12 +1328,15 @@ const NewClassCreationPage = () => {
               />
             </div>
 
-            <div className='flex flex-1 flex-col gap-0.5'>
+            <div className='flex flex-1 flex-col gap-0.5'
+            >
               <span className='text-muted-foreground text-[10px] font-medium'>End Time</span>
               <Input
                 type='time'
                 disabled={!active || scheduleSettings.allDay}
                 value={normalizeTime(effectiveEndTime)}
+                onClick={e => e.stopPropagation()}
+
                 onChange={e =>
                   setScheduleSettings(prev => ({
                     ...prev,
