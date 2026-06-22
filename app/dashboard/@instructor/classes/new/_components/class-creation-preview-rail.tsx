@@ -118,8 +118,6 @@ export function ClassCreationPreviewRail({
     e.target.value = '';
   };
 
-  console.log(data, "Data here")
-
   return (
     <aside className='space-y-4'>
       <Card className='border border-border pt-0 shadow-sm rounded-md'>
