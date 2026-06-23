@@ -383,6 +383,7 @@ function renderLessonContentPreview(
         { name: string; mime_types: string[]; upload_category?: string; is_media_type?: boolean }
     >
 ) {
+    // console.log(content, "CTTT stude")
     return <LessonContentPreview content={content} contentTypeDetailsMap={contentTypeDetailsMap} />;
 }
 
@@ -572,13 +573,13 @@ function AssessmentTasksSection({
                             <div className='mt-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive'>
                                 <span className='mt-0.5 text-destructive'>⚠</span>
                                 <p>
-                                    You are currently in <span className='font-medium'>preview mode</span>.{' '}
+                                    You are currently in Assignment{' '}<span className='font-medium'>preview mode</span>.{' '}
                                     <a
-                                        href={'/dashboard/assignment'}
+                                        href={`/dashboard/assignment/${previewAssignment?.uuid}`}
                                         className='shrink-0 font-medium text-destructive underline underline-offset-2 hover:opacity-80'
                                     >
-                                        Go to assignment/quiz page
-                                    </a> to take the quiz and assignments.
+                                        Go to assignment page
+                                    </a> to take the assignment.
                                 </p>
                             </div>
                         </div>
@@ -652,13 +653,13 @@ function AssessmentTasksSection({
                                 <div className='flex items-start gap-2'>
                                     <span className='mt-0.5 text-destructive'>⚠</span>
                                     <p>
-                                        You are currently in <span className='font-medium'>preview mode</span>.{' '}
+                                        You are currently in Quiz{' '}<span className='font-medium'>preview mode</span>.{' '}
                                         <a
-                                            href={'/dashboard/assignment'}
+                                            href={`/dashboard/assignment/quiz/${previewQuiz?.uuid}`}
                                             className='shrink-0 font-medium text-destructive underline underline-offset-2 hover:opacity-80'
                                         >
-                                            Go to assignment/quiz page
-                                        </a> to take the quiz and assignments.
+                                            Go to quiz page
+                                        </a> to take the quiz.
                                     </p>
                                 </div>
 

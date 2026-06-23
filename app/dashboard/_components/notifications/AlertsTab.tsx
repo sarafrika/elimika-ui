@@ -35,7 +35,8 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { normalizeNotifications } from '../../../../src/features/dashboard/components/dashboard-notifications';
+import { useUserDomain } from '../../../../context/user-domain-context';
+import { getNotificationUrlPath } from '../../../../src/features/dashboard/components/dashboard-notifications';
 
 type NotificationTab = 'all' | 'unread' | 'popups' | 'archived';
 
@@ -178,6 +179,7 @@ function NotificationLoadingList() {
 
 export function AlertsTab() {
   const [activeTab, setActiveTab] = useState<NotificationTab>('all');
+  const { activeDomain } = useUserDomain()
   const [page, setPage] = useState(0);
   const queryParams = getQueryParams(activeTab, page);
   const notificationsQuery = useNotifications(queryParams);
@@ -185,8 +187,15 @@ export function AlertsTab() {
   const actionMutation = useNotificationAction();
   const markAllMutation = useMarkAllNotificationsRead();
 
+  const normalizeNotifications = (notifications: UserNotification[], activeDomain: string) => {
+    return notifications.map((notification: UserNotification) => ({
+      ...notification,
+      urlPath: getNotificationUrlPath(notification, activeDomain),
+    }));
+  };
+
   const notifications = notificationsQuery.data?.items ?? [];
-  const normalizedNotifications = normalizeNotifications(notifications);
+  const normalizedNotifications = normalizeNotifications(notifications, activeDomain as string);
 
   const unreadCount = countsQuery.data?.unread_count ?? 0;
   const popupCount = countsQuery.data?.popup_count ?? 0;

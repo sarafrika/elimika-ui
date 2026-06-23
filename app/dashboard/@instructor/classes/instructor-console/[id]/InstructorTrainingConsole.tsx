@@ -1,5 +1,6 @@
 'use client';
 
+import { getPreferredScheduleInstance } from '@/app/dashboard/@instructor/classes/_components/new-class-page.utils';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +25,7 @@ import {
   type CourseLessonContent,
   type CourseLessonWithContent,
 } from '@/hooks/use-courselessonwithcontent';
-import { getPreferredScheduleInstance } from '@/app/dashboard/@instructor/classes/_components/new-class-page.utils';
+import { dayjs } from '@/lib/date';
 import {
   cx,
   elimikaDesignSystem,
@@ -38,7 +39,6 @@ import {
   PanelRight,
   Search,
 } from 'lucide-react';
-import { dayjs } from '@/lib/date';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -195,6 +195,8 @@ function renderLessonContentPreview(
       </div>
     );
   }
+
+  // console.log(content, "nistructor ONTENT")
 
   const contentTypeName = getContentTypeName(content, contentTypeDetailsMap);
   const resolvedSource = resolveLessonContentSource(content, contentTypeName);
