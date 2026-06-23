@@ -113,6 +113,105 @@ function NotificationRow({
 }
 
 
+export const getNotificationUrlPath = (
+  notification: UserNotification,
+  activeDomain: string,
+): string => {
+  const { type, metadata, action_url } = notification;
+
+  switch (type) {
+    case 'QUIZ_DEADLINE_REMINDER':
+      if (activeDomain === 'student') {
+        return metadata.quiz_uuid && metadata.class_definition_uuid
+          ? `/dashboard/assignment/quiz/${metadata.quiz_uuid}`
+          : '';
+      }
+
+      return metadata.quiz_uuid && metadata.class_definition_uuid
+        ? `/dashboard/assignment/quiz_${metadata.quiz_uuid}?classId=${metadata.class_definition_uuid}`
+        : '';
+
+    case 'ASSIGNMENT_DUE_REMINDER':
+    case 'ASSIGNMENT_DEADLINE_REMINDER':
+    case 'ASSIGNMENT_RETURNED_FOR_REVISION':
+    case 'ASSIGNMENT_SUBMITTED_CONFIRMATION':
+    case 'ASSIGNMENT_GRADED':
+      if (activeDomain === 'student') {
+        return metadata.assignment_uuid && metadata.class_definition_uuid
+          ? `/dashboard/assignment/${metadata.assignment_uuid}`
+          : '';
+      }
+
+      return metadata.assignment_uuid && metadata.class_definition_uuid
+        ? `/dashboard/assignment/assignment_${metadata.assignment_uuid}?classId=${metadata.class_definition_uuid}`
+        : '';
+
+    case 'ASSESSMENT_COMPLETED':
+      return '/dashboard/assessment';
+
+    case 'CLASS_ENROLLMENT_CONFIRMED':
+    case 'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE':
+    case 'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE':
+      if (activeDomain === 'student') {
+        return metadata.class_definition_uuid
+          ? `/dashboard/learning-hub/classes/${metadata.class_definition_uuid}`
+          : '';
+      }
+
+      return metadata.class_definition_uuid
+        ? `/dashboard/classes/class-training/${metadata.class_definition_uuid}`
+        : '';
+
+    case 'UPCOMING_CLASS_REMINDER':
+      if (activeDomain === 'student') {
+        return metadata.class_definition_uuid
+          ? `/dashboard/learning-hub/classes/${metadata.class_definition_uuid}`
+          : '';
+      }
+
+      return metadata.class_definition_uuid
+        ? `/dashboard/classes/class-training/${metadata.class_definition_uuid}`
+        : '';
+
+    // Not yet implemented
+    case 'COURSE_ENROLLMENT_WELCOME':
+    case 'COURSE_COMPLETION_CERTIFICATE':
+    case 'LEARNING_MILESTONE_ACHIEVED':
+    case 'NEW_STUDENT_ENROLLMENT':
+    case 'NEW_ASSIGNMENT_SUBMISSION':
+    case 'CLASS_SCHEDULE_UPDATED':
+    case 'GRADING_REMINDER':
+    case 'COURSE_CONTENT_APPROVED':
+    case 'COURSE_CONTENT_REJECTED':
+    case 'PROGRAM_CONTENT_APPROVED':
+    case 'PROGRAM_CONTENT_REJECTED':
+    case 'COURSE_TRAINING_APPLICATION_SUBMITTED':
+    case 'COURSE_TRAINING_APPLICATION_APPROVED':
+    case 'COURSE_TRAINING_APPLICATION_REJECTED':
+    case 'COURSE_TRAINING_APPLICATION_REVOKED':
+    case 'PROGRAM_TRAINING_APPLICATION_SUBMITTED':
+    case 'PROGRAM_TRAINING_APPLICATION_APPROVED':
+    case 'PROGRAM_TRAINING_APPLICATION_REJECTED':
+    case 'PROGRAM_TRAINING_APPLICATION_REVOKED':
+    case 'COURSE_ENROLLMENT_MILESTONE':
+    case 'COURSE_ENROLLMENT_NOTICE':
+    case 'ACCOUNT_CREATED':
+    case 'PASSWORD_RESET_REQUEST':
+    case 'SECURITY_ALERT':
+    case 'ORDER_PAYMENT_RECEIPT':
+    case 'LEARNING_CERTIFICATE_ISSUED':
+    case 'PROFILE_DOCUMENT_VERIFIED':
+    case 'PROFILE_COMPLETION_REMINDER':
+    case 'WEEKLY_PROGRESS_SUMMARY':
+    case 'LEARNING_STREAK_ACHIEVEMENT':
+    case 'PEER_ACHIEVEMENT_CELEBRATION':
+      return '';
+
+    default:
+      return action_url || '';
+  }
+};
+
 
 export function DashboardNotifications({ notificationHref, activeDomain }: DashboardNotificationsProps) {
   const [open, setOpen] = useState(false);
@@ -120,72 +219,12 @@ export function DashboardNotifications({ notificationHref, activeDomain }: Dashb
   const actionMutation = useNotificationAction();
   const markAllMutation = useMarkAllNotificationsRead();
 
-  const getNotificationUrlPath = (
-    notification: UserNotification,
-    activeDomain: string,
-  ): string => {
-    const { type, metadata, action_url } = notification;
-
-    switch (type) {
-      case 'QUIZ_DEADLINE_REMINDER':
-        if (activeDomain === 'student') {
-          return metadata.quiz_uuid && metadata.class_definition_uuid ? `/dashboard/assignment/quiz/${metadata.quiz_uuid}` : '';
-        }
-
-        return metadata.quiz_uuid && metadata.class_definition_uuid
-          ? `/dashboard/assignment/quiz_${metadata.quiz_uuid}?classId=${metadata.class_definition_uuid}`
-          : '';
-
-      case 'ASSIGNMENT_DEADLINE_REMINDER':
-        if (activeDomain === 'student') {
-          return metadata.assignment_uuid && metadata.class_definition_uuid ? `/dashboard/assignment/${metadata.assignment_uuid}` : ''
-        }
-
-        return metadata.assignment_uuid && metadata.class_definition_uuid
-          ? `/dashboard/assignment/assignment_${metadata.assignment_uuid}?classId=${metadata.class_definition_uuid}`
-          : '';
-
-      case 'ASSESSMENT_COMPLETED':
-        if (activeDomain === 'student') {
-          return '/dashboard/assessment';
-        }
-
-        return '/dashboard/assessment'
-
-      case 'CLASS_ENROLLMENT_CONFIRMED':
-      case 'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE':
-      case 'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE':
-        if (activeDomain === 'student') {
-          return metadata.class_definition_uuid ? `/dashboard/learning-hub/classes/${metadata.class_definition_uuid}` : '';
-        }
-
-        return metadata.class_definition_uuid
-          ? `/dashboard/classes/class-training/${metadata.class_definition_uuid}`
-          : '';
-
-      case 'UPCOMING_CLASS_REMINDER':
-        if (activeDomain === 'student') {
-          return metadata.class_definition_uuid
-            ? `/dashboard/learning-hub/classes/${metadata.class_definition_uuid}`
-            : ''
-        }
-
-        return metadata.class_definition_uuid
-          ? `/dashboard/classes/class-training/${metadata.class_definition_uuid}`
-          : '';
-
-      default:
-        return action_url || '';
-    }
-  };
-
   const normalizeNotifications = (notifications: UserNotification[], activeDomain: string) => {
     return notifications.map((notification: UserNotification) => ({
       ...notification,
       urlPath: getNotificationUrlPath(notification, activeDomain),
     }));
   };
-
 
   // The badge needs counts and toasts need the popup feed, but the recent
   // list is only visible inside the dropdown — fetch it when opened instead

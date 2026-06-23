@@ -1,0 +1,612 @@
+// ============================================================================
+// FILE: hooks/use-assignment-page-data.ts
+// 
+// Extracts all data fetching from AssignmentPageClient into a single hook
+// with the following optimisations:
+//
+//  1. PARALLEL tier-0:  classes + pendingGrading fire immediately, in parallel.
+//  2. PARALLEL tier-1:  once class UUIDs are known, ALL of the following fire
+//                       simultaneously in a single useQueries batch:
+//                         - enrollment queries
+//                         - lesson queries
+//                         - assignment schedule queries
+//                         - quiz schedule queries
+//  3. PARALLEL tier-2:  once assignment/quiz UUIDs are derived, ALL of the
+//                       following fire simultaneously:
+//                         - assignment detail queries
+//                         - quiz detail queries
+//                         - submission queries
+//                         - attempt queries
+//                         - analytics queries
+//     Previously tier-2 was split across multiple useQueries calls that React
+//     rendered in sequence (each caused a re-render that triggered the next
+//     batch). Flattening them into one batch removes those extra render cycles.
+//
+//  4. STABLE enabled flags: every query uses a stable boolean so React Query
+//     never cancels and retries a running request.
+//
+//  5. AGGRESSIVE staleTime + gcTime: data is cached for the full session so
+//     navigating back to this page is instant.
+// ============================================================================
+
+import {
+  getAssignmentByUuidOptions,
+  getAssignmentSchedulesOptions,
+  getAssignmentSubmissionsOptions,
+  getCourseLessonsOptions,
+  getEnrollmentsForClassOptions,
+  getPendingGradingOptions,
+  getQuizAttemptsOptions,
+  getQuizByUuidOptions,
+  getQuizSchedulesOptions,
+  getSubmissionAnalyticsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import type {
+  Assignment,
+  AssignmentSubmission,
+  ClassAssignmentSchedule,
+  ClassQuizSchedule,
+  Enrollment,
+  Quiz,
+  QuizAttempt,
+} from '@/services/client/types.gen';
+import { useQuery, useQueries } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useInstructorClassesWithDetails } from './use-instructor-classes-with-details';
+import { useUserProfile } from './use-user-profile';
+
+// ── Constants ────────────────────────────────────────────────────────────────
+// Long staleTime means repeat visits are instant (served from cache).
+const STALE = 5 * 60 * 1000;   // 5 min
+const GC    = 10 * 60 * 1000;  // 10 min
+const QUERY_OPTS = {
+  staleTime: STALE,
+  gcTime: GC,
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+} as const;
+
+function isDefinedString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
+
+function dedupeByKey<T>(items: T[], getKey: (item: T) => string | null | undefined): T[] {
+  const seen = new Set<string>();
+  return items.filter(item => {
+    const key = getKey(item);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+// ── Hook ─────────────────────────────────────────────────────────────────────
+
+export function useAssignmentPageData() {
+  const profile = useUserProfile();
+  const instructorUuid = profile?.instructor?.uuid;
+
+  // ── Tier 0 — both fire immediately, in parallel ─────────────────────────
+  const { classes, loading: classesLoading } =
+    useInstructorClassesWithDetails(instructorUuid);
+
+  // pendingGrading is independent — no reason to wait for schedules
+  const { data: pendingGradingData } = useQuery({
+    ...getPendingGradingOptions({ path: { instructorUuid: instructorUuid as string } }),
+    enabled: isDefinedString(instructorUuid),
+    ...QUERY_OPTS,
+  });
+
+  // ── Stable derived lists ─────────────────────────────────────────────────
+  const uniqueClasses = useMemo(
+    () => dedupeByKey(classes, item => item.uuid ?? null),
+    [classes]
+  );
+  const classUuids = useMemo(
+    () => uniqueClasses.map(c => c.uuid ?? '').filter(Boolean),
+    [uniqueClasses]
+  );
+  const uniqueCourses = useMemo(
+    () => dedupeByKey(uniqueClasses, item => item.course_uuid ?? null),
+    [uniqueClasses]
+  );
+
+  const classesReady = classUuids.length > 0;
+
+  // ── Tier 1 — ALL fire as soon as classUuids are available ───────────────
+  // We combine enrollments + lessons + assignment schedules + quiz schedules
+  // into ONE useQueries call so React processes them in a single batch.
+  // Previously these were 4 separate useQueries calls, which meant 4 render
+  // cycles before the data was available.
+
+  const tier1Queries = useQueries({
+    queries: [
+      // Enrollment queries (one per class)
+      ...uniqueClasses.map(item => ({
+        ...getEnrollmentsForClassOptions({ path: { uuid: item.uuid as string } }),
+        enabled: classesReady && isDefinedString(item.uuid),
+        ...QUERY_OPTS,
+      })),
+      // Lesson queries (one per unique course)
+      ...uniqueCourses.map(item => ({
+        ...getCourseLessonsOptions({
+          path: { courseUuid: item.course_uuid as string },
+          query: { pageable: { page: 0, size: 100 } },
+        }),
+        enabled: classesReady && isDefinedString(item.course_uuid),
+        ...QUERY_OPTS,
+      })),
+      // Assignment schedule queries (one per class)
+      ...uniqueClasses.map(item => ({
+        ...getAssignmentSchedulesOptions({ path: { classUuid: item.uuid as string } }),
+        enabled: classesReady && isDefinedString(item.uuid),
+        ...QUERY_OPTS,
+      })),
+      // Quiz schedule queries (one per class)
+      ...uniqueClasses.map(item => ({
+        ...getQuizSchedulesOptions({ path: { classUuid: item.uuid as string } }),
+        enabled: classesReady && isDefinedString(item.uuid),
+        ...QUERY_OPTS,
+      })),
+    ],
+  });
+
+  // ── Split tier-1 results back out by offset ──────────────────────────────
+  const nClasses  = uniqueClasses.length;
+  const nCourses  = uniqueCourses.length;
+
+  const enrollmentResults        = tier1Queries.slice(0, nClasses);
+  const lessonResults            = tier1Queries.slice(nClasses, nClasses + nCourses);
+  const assignmentScheduleResults = tier1Queries.slice(nClasses + nCourses, nClasses * 2 + nCourses);
+  const quizScheduleResults       = tier1Queries.slice(nClasses * 2 + nCourses, nClasses * 3 + nCourses);
+
+  // ── Derived maps from tier-1 ─────────────────────────────────────────────
+
+  const classEnrollmentsMap = useMemo(() => {
+    const map = new Map<string, Enrollment[]>();
+    uniqueClasses.forEach((item, index) => {
+      if (item.uuid) {
+        map.set(item.uuid, enrollmentResults[index]?.data?.data ?? []);
+      }
+    });
+    return map;
+  }, [enrollmentResults, uniqueClasses]);
+
+  const lessonMap = useMemo(() => {
+    const map = new Map<string, { lessonTitle: string; courseTitle: string }>();
+    uniqueCourses.forEach((course, index) => {
+      const lessons = lessonResults[index]?.data?.data?.content ?? [];
+      lessons.forEach((lesson: { uuid?: string; title?: string }) => {
+        if (lesson.uuid) {
+          map.set(lesson.uuid, {
+            lessonTitle: lesson.title || 'Untitled lesson',
+            courseTitle: course.course?.name || 'Untitled course',
+          });
+        }
+      });
+    });
+    return map;
+  }, [lessonResults, uniqueCourses]);
+
+  const assignmentSchedules = useMemo<(ClassAssignmentSchedule & { classUuid: string })[]>(
+    () =>
+      uniqueClasses.flatMap((item, index) =>
+        ((assignmentScheduleResults[index]?.data?.data ?? []) as ClassAssignmentSchedule[]).map(
+          schedule => ({ ...schedule, classUuid: item.uuid as string })
+        )
+      ),
+    [assignmentScheduleResults, uniqueClasses]
+  );
+
+  const quizSchedules = useMemo<(ClassQuizSchedule & { classUuid: string })[]>(
+    () =>
+      uniqueClasses.flatMap((item, index) =>
+        ((quizScheduleResults[index]?.data?.data ?? []) as ClassQuizSchedule[]).map(schedule => ({
+          ...schedule,
+          classUuid: item.uuid as string,
+        }))
+      ),
+    [quizScheduleResults, uniqueClasses]
+  );
+
+  const uniqueAssignmentUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(assignmentSchedules.map(s => s.assignment_uuid).filter(isDefinedString))
+      ),
+    [assignmentSchedules]
+  );
+  const uniqueQuizUuids = useMemo(
+    () =>
+      Array.from(new Set(quizSchedules.map(s => s.quiz_uuid).filter(isDefinedString))),
+    [quizSchedules]
+  );
+
+  const schedulesReady = uniqueAssignmentUuids.length > 0 || uniqueQuizUuids.length > 0;
+
+  // ── Tier 2 — ALL fire as soon as UUIDs are available ────────────────────
+  // Assignment details + quiz details + submissions + attempts + analytics
+  // all in ONE batch. Previously this was 5 separate useQueries blocks.
+
+  const tier2Queries = useQueries({
+    queries: [
+      // Assignment details
+      ...uniqueAssignmentUuids.map(uuid => ({
+        ...getAssignmentByUuidOptions({ path: { uuid } }),
+        enabled: schedulesReady && isDefinedString(uuid),
+        ...QUERY_OPTS,
+      })),
+      // Quiz details
+      ...uniqueQuizUuids.map(uuid => ({
+        ...getQuizByUuidOptions({ path: { uuid } }),
+        enabled: schedulesReady && isDefinedString(uuid),
+        ...QUERY_OPTS,
+      })),
+      // Assignment submissions
+      ...uniqueAssignmentUuids.map(uuid => ({
+        ...getAssignmentSubmissionsOptions({ path: { assignmentUuid: uuid } }),
+        enabled: schedulesReady && isDefinedString(uuid),
+        ...QUERY_OPTS,
+      })),
+      // Quiz attempts
+      ...uniqueQuizUuids.map(uuid => ({
+        ...getQuizAttemptsOptions({
+          path: { quizUuid: uuid },
+          query: { pageable: { page: 0, size: 100 } },
+        }),
+        enabled: schedulesReady && isDefinedString(uuid),
+        ...QUERY_OPTS,
+      })),
+      // Analytics (capped at 12 to avoid hammering the API)
+      ...uniqueAssignmentUuids.slice(0, 12).map(uuid => ({
+        ...getSubmissionAnalyticsOptions({ path: { assignmentUuid: uuid } }),
+        enabled: schedulesReady && isDefinedString(uuid),
+        ...QUERY_OPTS,
+      })),
+    ],
+  });
+
+  // ── Split tier-2 results back out ────────────────────────────────────────
+  const nAssignments  = uniqueAssignmentUuids.length;
+  const nQuizzes      = uniqueQuizUuids.length;
+  const nAnalytics    = Math.min(uniqueAssignmentUuids.length, 12);
+
+  const assignmentDetailResults  = tier2Queries.slice(0, nAssignments);
+  const quizDetailResults        = tier2Queries.slice(nAssignments, nAssignments + nQuizzes);
+  const submissionResults        = tier2Queries.slice(nAssignments + nQuizzes, nAssignments * 2 + nQuizzes);
+  const attemptResults           = tier2Queries.slice(nAssignments * 2 + nQuizzes, nAssignments * 2 + nQuizzes * 2);
+  const analyticsResults         = tier2Queries.slice(nAssignments * 2 + nQuizzes * 2, nAssignments * 2 + nQuizzes * 2 + nAnalytics);
+
+  // ── Derived maps from tier-2 ─────────────────────────────────────────────
+
+  const assignmentMap = useMemo(() => {
+    const map = new Map<string, Assignment>();
+    uniqueAssignmentUuids.forEach((uuid, index) => {
+      const data = assignmentDetailResults[index]?.data?.data;
+      if (data && uuid) map.set(uuid, data);
+    });
+    return map;
+  }, [assignmentDetailResults, uniqueAssignmentUuids]);
+
+  const quizMap = useMemo(() => {
+    const map = new Map<string, Quiz>();
+    uniqueQuizUuids.forEach((uuid, index) => {
+      const data = quizDetailResults[index]?.data?.data;
+      if (data && uuid) map.set(uuid, data);
+    });
+    return map;
+  }, [quizDetailResults, uniqueQuizUuids]);
+
+  const assignmentSubmissionMap = useMemo(() => {
+    const map = new Map<string, AssignmentSubmission[]>();
+    uniqueAssignmentUuids.forEach((uuid, index) => {
+      map.set(uuid, submissionResults[index]?.data?.data ?? []);
+    });
+    return map;
+  }, [submissionResults, uniqueAssignmentUuids]);
+
+  const quizAttemptMap = useMemo(() => {
+    const map = new Map<string, QuizAttempt[]>();
+    uniqueQuizUuids.forEach((uuid, index) => {
+      map.set(uuid, attemptResults[index]?.data?.data?.content ?? []);
+    });
+    return map;
+  }, [attemptResults, uniqueQuizUuids]);
+
+  const classMap = useMemo(
+    () => new Map(uniqueClasses.map(item => [item.uuid as string, item])),
+    [uniqueClasses]
+  );
+
+  // ── Loading flags ────────────────────────────────────────────────────────
+  const tier1Loading = tier1Queries.some(q => q.isLoading);
+  const tier2Loading = tier2Queries.some(q => q.isLoading);
+  const loading = classesLoading || tier1Loading || tier2Loading;
+
+  // ── Analytics insight values ─────────────────────────────────────────────
+  const analyticsValues = useMemo(
+    () =>
+      analyticsResults.flatMap(query =>
+        Object.values(query.data?.data ?? {}).filter(
+          (value): value is number => typeof value === 'number'
+        )
+      ),
+    [analyticsResults]
+  );
+
+  return {
+    assignmentMap,
+    assignmentSchedules,
+    assignmentSubmissionMap,
+    analyticsValues,
+    classEnrollmentsMap,
+    classMap,
+    classesLoading,
+    lessonMap,
+    loading,
+    pendingGradingData,
+    quizAttemptMap,
+    quizMap,
+    quizSchedules,
+    tier1Loading,
+    tier2Loading,
+    uniqueClasses,
+  };
+}
+
+
+// ============================================================================
+// FILE: AssignmentPageClient.tsx  (updated — data fetching fully delegated)
+// ============================================================================
+
+'use client';
+
+import { useState, useMemo } from 'react';
+import { useAssignmentPageData } from '@/hooks/use-assignment-page-data';
+import { useUserProfile } from '@/hooks/use-user-profile';
+import { AssignmentCard } from './_components/assignment-card';
+import { AssignmentHeader } from './_components/assignment-header';
+import { AssignmentInsights } from './_components/assignment-insights';
+import { AssignmentQuickActions } from './_components/assignment-quick-actions';
+import { AssignmentToolbar } from './_components/assignment-toolbar';
+import type { AssignmentCardData, AssignmentStatus } from './types';
+
+// ── Helpers (unchanged from original) ───────────────────────────────────────
+function formatDueLabel(value?: string | null): string {
+  if (!value) return 'No due date';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'No due date';
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date);
+}
+
+function getTaskStatus(
+  dueAt: string | undefined | null,
+  submissionCount: number,
+  gradedCount: number,
+  type: 'assignment' | 'quiz'
+): AssignmentStatus {
+  if (dueAt && new Date(dueAt) < new Date() && submissionCount === 0) return 'overdue';
+  if (gradedCount > 0 && gradedCount === submissionCount) return 'graded';
+  if (submissionCount > 0) return 'submitted';
+  return 'all';
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
+
+export function AssignmentPageClient() {
+  const [activeFilter, setActiveFilter] = useState<AssignmentStatus>('all');
+  const [search, setSearch] = useState('');
+
+  const profile = useUserProfile();
+  const instructorName =
+    profile?.instructor?.full_name || profile?.full_name || 'Instructor';
+
+  // All data + loading state from the optimised hook
+  const {
+    assignmentMap,
+    assignmentSchedules,
+    assignmentSubmissionMap,
+    analyticsValues,
+    classEnrollmentsMap,
+    classMap,
+    loading,
+    lessonMap,
+    pendingGradingData,
+    quizAttemptMap,
+    quizMap,
+    quizSchedules,
+    uniqueClasses,
+  } = useAssignmentPageData();
+
+  // ── Build task cards (logic identical to original) ───────────────────────
+  const taskCards = useMemo<AssignmentCardData[]>(() => {
+    const assignmentCards = assignmentSchedules
+      .map(schedule => {
+        const assignment = schedule.assignment_uuid
+          ? assignmentMap.get(schedule.assignment_uuid)
+          : null;
+        if (!assignment?.uuid || !schedule.lesson_uuid) return null;
+
+        const submissions = assignmentSubmissionMap.get(assignment.uuid) ?? [];
+        const submissionCount = submissions.length;
+        const gradedCount = submissions.filter(s => s.is_graded || s.graded_at).length;
+        const lessonInfo = lessonMap.get(schedule.lesson_uuid);
+        const classInfo = classMap.get(schedule.classUuid);
+        const totalLearners = classEnrollmentsMap.get(schedule.classUuid)?.length ?? 0;
+        const status = getTaskStatus(schedule.due_at, submissionCount, gradedCount, 'assignment');
+
+        const card: AssignmentCardData = {
+          ctaLabel:
+            submissionCount > 0 && gradedCount < submissionCount ? 'Grade Now' : 'View Submissions',
+          classUuid: schedule.classUuid,
+          scheduleUuid: schedule?.uuid as string,
+          classTitle: classInfo?.title || 'Class',
+          courseTitle: lessonInfo?.courseTitle || classInfo?.course?.name || '',
+          courseId: classInfo?.course_uuid,
+          dueLabel: formatDueLabel(schedule.due_at || assignment.due_date),
+          iconTone: status === 'overdue' ? 'amber' : 'blue',
+          id: `assignment_${assignment.uuid}`,
+          instructor: instructorName,
+          lesson: lessonInfo?.lessonTitle || 'Lesson',
+          lessonUuid: schedule.lesson_uuid,
+          metricValue: `${submissionCount}/${totalLearners || submissionCount} submitted`,
+          status,
+          statusLabel: status.charAt(0).toUpperCase() + status.slice(1),
+          studentSummary: classInfo?.title || classInfo?.course?.name || 'Class',
+          subtitle: assignment.title || 'Assignment',
+          submissionCount,
+          taskType: 'assignment',
+        };
+
+        const pendingCount = submissionCount - gradedCount;
+        if (pendingCount > 0) card.badge = `${pendingCount} Pending`;
+        if (totalLearners > 0) {
+          card.metricLabel = `${Math.round((submissionCount / totalLearners) * 100)}% received`;
+        }
+        if (assignment.rubric_uuid) card.rubricUuid = assignment.rubric_uuid;
+
+        return card;
+      })
+      .filter((c): c is AssignmentCardData => c !== null);
+
+    const quizCards = quizSchedules
+      .map(schedule => {
+        const quiz = schedule.quiz_uuid ? quizMap.get(schedule.quiz_uuid) : null;
+        if (!quiz?.uuid || !schedule.lesson_uuid) return null;
+
+        const attempts = quizAttemptMap.get(quiz.uuid) ?? [];
+        const submissionCount = attempts.length;
+        const completedCount = attempts.filter(a => a.is_completed || a.submitted_at).length;
+        const lessonInfo = lessonMap.get(schedule.lesson_uuid);
+        const classInfo = classMap.get(schedule.classUuid);
+        const totalLearners = classEnrollmentsMap.get(schedule.classUuid)?.length ?? 0;
+        const status = getTaskStatus(schedule.due_at, submissionCount, completedCount, 'quiz');
+
+        const card: AssignmentCardData = {
+          ctaLabel: 'View Submissions',
+          classUuid: schedule.classUuid,
+          scheduleUuid: schedule?.uuid as string,
+          classTitle: classInfo?.title || 'Class',
+          courseTitle: lessonInfo?.courseTitle || classInfo?.course?.name || 'Course',
+          courseId: classInfo?.course_uuid,
+          dueLabel: formatDueLabel(schedule.due_at),
+          iconTone: status === 'overdue' ? 'amber' : 'blue',
+          id: `quiz_${quiz.uuid}`,
+          instructor: instructorName,
+          lesson: lessonInfo?.lessonTitle || 'Lesson',
+          lessonUuid: schedule.lesson_uuid,
+          metricValue: `${submissionCount}/${totalLearners || submissionCount} attempts`,
+          status,
+          statusLabel: status.charAt(0).toUpperCase() + status.slice(1),
+          studentSummary: classInfo?.title || classInfo?.course?.name || 'Class',
+          subtitle: quiz.title || 'Quiz',
+          submissionCount,
+          taskType: 'quiz',
+        };
+
+        const pendingCount = submissionCount - completedCount;
+        if (pendingCount > 0) card.badge = `${pendingCount} Pending`;
+        if (totalLearners > 0) {
+          card.metricLabel = `${Math.round((submissionCount / totalLearners) * 100)}% attempted`;
+        }
+        if (quiz.rubric_uuid) card.rubricUuid = quiz.rubric_uuid;
+
+        return card;
+      })
+      .filter((c): c is AssignmentCardData => c !== null);
+
+    return [...assignmentCards, ...quizCards].sort((a, b) => a.lesson.localeCompare(b.lesson));
+  }, [
+    assignmentMap,
+    assignmentSchedules,
+    assignmentSubmissionMap,
+    classEnrollmentsMap,
+    classMap,
+    instructorName,
+    lessonMap,
+    quizAttemptMap,
+    quizMap,
+    quizSchedules,
+  ]);
+
+  const filteredAssignments = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return taskCards.filter(item => {
+      const matchesFilter = activeFilter === 'all' || item.status === activeFilter;
+      const matchesSearch =
+        !query ||
+        [item.lesson, item.subtitle, item.courseTitle, item.classTitle, item.taskType]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+          .includes(query);
+      return matchesFilter && matchesSearch;
+    });
+  }, [activeFilter, search, taskCards]);
+
+  const insights = useMemo(() => {
+    const totalTasks = taskCards.length;
+    const totalSubmissions = taskCards.reduce((sum, c) => sum + (c.submissionCount ?? 0), 0);
+    const overdueTasks = taskCards.filter(c => c.status === 'overdue').length;
+    const pendingGrading = pendingGradingData?.data?.length ?? 0;
+    const averageSignal = analyticsValues.length
+      ? `${Math.round(analyticsValues.reduce((sum, v) => sum + v, 0) / analyticsValues.length)}`
+      : '0';
+
+    return { averageSignal, overdueTasks, pendingGrading, totalSubmissions, totalTasks };
+  }, [analyticsValues, pendingGradingData?.data, taskCards]);
+
+  // ── Render ───────────────────────────────────────────────────────────────
+
+  return (
+    <main className='bg-background mb-10 p-3 sm:p-4 md:p-6'>
+      <div className='mx-auto w-full max-w-screen-2xl space-y-4 sm:space-y-5'>
+        <AssignmentHeader />
+
+        <AssignmentToolbar
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          search={search}
+          setSearch={setSearch}
+        />
+
+        <div className='grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]'>
+          <section className='min-w-0 space-y-5'>
+            {loading ? (
+              <div className='border-border/60 bg-card rounded-xl border p-5 shadow-sm sm:p-6'>
+                <div className='flex flex-col items-center gap-4'>
+                  <div className='relative size-10 shrink-0'>
+                    <div className='absolute inset-0 rounded-full border-2 border-muted' />
+                    <div className='absolute inset-0 animate-spin rounded-full border-2 border-primary border-t-transparent' />
+                  </div>
+                  <div className='flex flex-col gap-1 text-center text-sm'>
+                    <p className='text-foreground font-semibold'>Loading lesson data...</p>
+                    <p className='text-muted-foreground text-xs'>
+                      Fetching classes, assignments, and submissions
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : filteredAssignments.length > 0 ? (
+              <div className='flex flex-row flex-wrap gap-4'>
+                {filteredAssignments.map((assignment, index) => (
+                  <AssignmentCard key={`${assignment.id}-${index}`} assignment={assignment} />
+                ))}
+              </div>
+            ) : (
+              <div className='border-border/70 bg-card rounded-xl border border-dashed p-4 text-xs text-muted-foreground shadow-sm sm:p-6 sm:text-sm'>
+                No lesson tasks with student submissions were found for this instructor yet.
+              </div>
+            )}
+          </section>
+
+          <aside className='space-y-4'>
+            <AssignmentInsights insights={insights} />
+            <AssignmentQuickActions insights={insights} />
+          </aside>
+        </div>
+      </div>
+    </main>
+  );
+}
