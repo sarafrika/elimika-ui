@@ -93,7 +93,8 @@ export default function DashboardTopBar() {
   const profile = useUserProfile();
   const domain = useUserDomain();
 
-  const activeDomain = domain.activeDomain ?? domain.domains[0] ?? null;
+  const activeDomain = domain.activeDomain ?? null;
+
   const activeDomainConfig = activeDomain
     ? dashboardDomainDisplayConfig[activeDomain as keyof typeof dashboardDomainDisplayConfig]
     : null;
@@ -221,7 +222,7 @@ export default function DashboardTopBar() {
               </Button>
             )}
 
-            <DashboardNotifications notificationHref={notificationHref} />
+            <DashboardNotifications notificationHref={notificationHref} activeDomain={activeDomain} />
 
             <div className='border-border/70 bg-card/80 hidden h-10 items-center gap-2 rounded-md border px-3 shadow-sm xl:flex'>
               <div className='bg-success/10 text-success flex h-8 w-8 items-center justify-center rounded-full'>

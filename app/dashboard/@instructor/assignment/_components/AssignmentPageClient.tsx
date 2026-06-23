@@ -182,6 +182,7 @@ export function AssignmentPageClient() {
       refetchOnReconnect: false,
     })),
   });
+
   const quizQueries = useQueries({
     queries: uniqueQuizUuids.map(uuid => ({
       ...getQuizByUuidOptions({ path: { uuid } }),
@@ -215,6 +216,9 @@ export function AssignmentPageClient() {
     });
     return map;
   }, [quizQueries, uniqueQuizUuids]);
+
+  // const { assignmentMap } = useAssignmentsMap();
+  // const { quizMap } = useQuizMap();
 
   const assignmentSubmissionQueries = useQueries({
     queries: uniqueAssignmentUuids.map(uuid => ({

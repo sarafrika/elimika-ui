@@ -51,6 +51,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import DragDropUpload from '../assignment/drag-drop';
@@ -122,7 +123,7 @@ export function StudentAssignmentWorkspace() {
   const student = useStudent();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  const [activeTab, setActiveTab] = useState<FilterTab>('pending');
   const [searchValue, setSearchValue] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('due');
   const [selectedAssignment, setSelectedAssignment] = useState<StudentAssignmentRow | null>(null);
@@ -663,7 +664,6 @@ export function StudentAssignmentWorkspace() {
             >
               <div className='overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/70 [&::-webkit-scrollbar-track]:bg-transparent'>
                 <TabsList className='inline-flex min-w-max gap-2'>
-                  <TabsTrigger value='all'>All ({stats.total})</TabsTrigger>
                   <TabsTrigger value='pending'>
                     Pending ({stats.pending})
                   </TabsTrigger>
@@ -676,6 +676,8 @@ export function StudentAssignmentWorkspace() {
                   <TabsTrigger value='returned'>
                     Returned ({stats.returned})
                   </TabsTrigger>
+                  <TabsTrigger value='all'>All ({stats.total})</TabsTrigger>
+
                 </TabsList>
               </div>
             </Tabs>
@@ -801,14 +803,24 @@ export function StudentAssignmentWorkspace() {
                         </p>
                       </div>
 
-                      <Button
-                        className='rounded-full sm:min-w-[160px]'
+
+                      <Button className='max-w-fit'
                         onClick={() => handleOpenAssignment(row)}
+
                       >
-                        {row.hasSubmission
-                          ? 'Open submission'
-                          : 'Submit assignment'}
+                        View
                       </Button>
+                      <Button
+                        className='sm:min-w-[160px]'
+                      >
+                        <Link href={`/dashboard/assignment/${row?.assignment?.uuid}`}  >
+                          {row.hasSubmission
+                            ? 'Open submission'
+                            : 'Submit assignment'}
+                        </Link>
+                      </Button>
+
+
                     </div>
 
                     {row.hasSubmission && row.latestSubmission ? (
@@ -1303,8 +1315,6 @@ export function StudentAssignmentWorkspace() {
                     )}
                   </CardContent>
                 </Card>)}
-
-
               </div>
             )}
           </div>

@@ -45,6 +45,7 @@ import {
   Trophy,
   XCircle,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Student } from '../../../../services/api/schema';
 
@@ -580,9 +581,18 @@ export function StudentQuizWorkspace() {
 
                     <div className='flex flex-wrap gap-3'>
                       <Button className='gap-2' onClick={() => setSelectedQuiz(row)}>
-                        <FileQuestion className='h-4 w-4' />
-                        Attempt quiz
+                        View
                       </Button>
+
+                      <Button >
+                        <Link className='flex flex-row gap-2' href={`/dashboard/assignment/quiz/${row?.quiz?.uuid}`} >
+                          <FileQuestion className='h-4 w-4' />
+                          Attempt quiz
+                        </Link>
+                      </Button>
+
+
+
                       {latestAttempt ? (
                         <Badge variant='outline' className='px-3 py-2'>
                           Latest score:{' '}
