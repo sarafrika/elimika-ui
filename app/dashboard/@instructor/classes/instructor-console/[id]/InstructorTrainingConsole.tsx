@@ -196,8 +196,6 @@ function renderLessonContentPreview(
     );
   }
 
-  // console.log(content, "nistructor ONTENT")
-
   const contentTypeName = getContentTypeName(content, contentTypeDetailsMap);
   const resolvedSource = resolveLessonContentSource(content, contentTypeName);
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
@@ -14,7 +15,7 @@ import {
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
+import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
@@ -414,29 +415,51 @@ export const AssignmentCreationForm = ({
             </div>
 
             {assignments?.data?.content?.length ? (
-              <ul className='flex flex-col gap-2'>
+              <div className='flex flex-col gap-2'>
                 {assignments.data.content
                   .filter((a: Assignment) => Boolean(a.assignment_category && a.uuid))
-                  .map((assignment: Assignment, idx: number) => (
-                    <li
-                      key={assignment.uuid}
-                      onClick={() => {
-                        if (!assignment.uuid) return;
-                        setSelectedAssignmentUuid(assignment.uuid);
-                        handleAssignmentSelect(assignment.uuid);
-                      }}
-                      className={cn(
-                        'cursor-pointer truncate rounded-md border px-4 py-2 text-sm font-medium transition-all',
-                        selectedAssignmentUuid === assignment.uuid
-                          ? 'bg-primary/20 border-primary text-primary'
-                          : 'bg-primary/5 hover:bg-muted border-transparent'
-                      )}
-                      title={assignment.title}
-                    >
-                      {idx + 1} - {assignment.title}
-                    </li>
-                  ))}
-              </ul>
+                  .map((assignment: Assignment, idx: number) => {
+                    const isSelected = selectedAssignmentUuid === assignment.uuid
+                    const isDraft = !assignment.is_published
+
+                    return (
+                      <div
+                        key={assignment.uuid}
+                        onClick={() => {
+                          if (!assignment.uuid) return
+                          setSelectedAssignmentUuid(assignment.uuid)
+                          handleAssignmentSelect(assignment.uuid)
+                        }}
+                        className={cn(
+                          'flex cursor-pointer items-center justify-between gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-all',
+                          isSelected
+                            ? 'border-primary bg-primary/20 text-primary'
+                            : 'border-transparent bg-muted/40 hover:bg-muted'
+                        )}
+                        title={assignment.title}
+                      >
+                        <span className='truncate'>
+                          {idx + 1} - {assignment.title}
+                        </span>
+
+                        {isDraft ? (
+                          <Badge
+                            variant='destructive'
+                            className='text-[10px]'
+                          >
+                            Draft
+                          </Badge>
+                        ) : (
+                          <Badge
+                            className='bg-success/10 text-success border border-success/20 text-[10px]'
+                          >
+                            Published
+                          </Badge>
+                        )}
+                      </div>
+                    )
+                  })}
+              </div>
             ) : (
               <div className='text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-sm'>
                 No assignments created yet
@@ -456,6 +479,11 @@ export const AssignmentCreationForm = ({
           {assignmentUuid !== null && (
             <div className='flex flex-col gap-6'>
               <Separator />
+              {!assignmentData?.is_published && assignmentData?.title && (
+                <div className='rounded-md border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive'>
+                  This assignment is in draft mode and is not visible to instructors until it is published.
+                </div>
+              )}
 
               {/* Title */}
               <div className='flex flex-col gap-2'>

@@ -711,7 +711,11 @@ export function LessonContentPreview({
 
     return resolvedSource ? (
       <div className='border-border/60 bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden border p-4'>
-        <video controls className='aspect-video block w-full max-w-full rounded-2xl' src={resolvedSource} />
+        <video
+          controls
+          className="aspect-video block w-full max-w-full rounded-2xl"
+          src={resolvedSource}
+        />
       </div>
     ) : (
       <div className='text-muted-foreground flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>

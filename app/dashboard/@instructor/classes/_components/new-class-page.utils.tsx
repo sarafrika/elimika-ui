@@ -104,31 +104,19 @@ export const getPreferredScheduleInstance = (
     }
   }
 
-  const now = new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  // Find first schedule whose day has not yet arrived
-  const nextIndex = sortedSchedule.findIndex(instance => {
-    const start = new Date(instance.start_time);
+  // Find first schedule that is today or in the future
+  const upcomingSchedule = sortedSchedule.find(instance => {
+    const startDate = new Date(instance.start_time);
+    startDate.setHours(0, 0, 0, 0);
 
-    return (
-      start.getFullYear() > now.getFullYear() ||
-      start.getMonth() > now.getMonth() ||
-      start.getDate() > now.getDate() ||
-      (
-        start.getFullYear() === now.getFullYear() &&
-        start.getMonth() === now.getMonth() &&
-        start.getDate() === now.getDate()
-      )
-    );
+    return startDate >= today;
   });
 
-  if (nextIndex === -1) {
-    return sortedSchedule[sortedSchedule.length - 1];
-  }
-
-  return nextIndex > 0
-    ? sortedSchedule[nextIndex - 1]
-    : sortedSchedule[0];
+  // If all schedules are in the past, return the latest one
+  return upcomingSchedule ?? sortedSchedule[sortedSchedule.length - 1];
 };
 
 export const formatPreferredScheduleLabel = (classItem: InstructorClassWithSchedule) => {
