@@ -37,6 +37,7 @@ import { toast } from 'sonner';
 
 type DashboardNotificationsProps = {
   notificationHref: string;
+  activeDomain: string | null
 };
 
 const iconByType: Array<[RegExp, LucideIcon]> = [
@@ -111,42 +112,80 @@ function NotificationRow({
   );
 }
 
-const getNotificationUrlPath = (notification: UserNotification): string => {
-  const { type, metadata, action_url } = notification;
 
-  switch (type) {
-    case 'QUIZ_DEADLINE_REMINDER':
-      return metadata.quiz_uuid && metadata.class_definition_uuid
-        ? `/dashboard/assignment/quiz_${metadata.quiz_uuid}?classId=${metadata.class_definition_uuid}`
-        : '';
 
-    case 'ASSIGNMENT_DEADLINE_REMINDER':
-      return metadata.assignment_uuid && metadata.class_definition_uuid
-        ? `/dashboard/assignment/assignment_${metadata.assignment_uuid}?classId=${metadata.class_definition_uuid}`
-        : '';
-
-    case 'UPCOMING_CLASS_REMINDER':
-      return metadata.class_definition_uuid
-        ? `/dashboard/classes/class-training/${metadata.class_definition_uuid}`
-        : '';
-
-    default:
-      return action_url || '';
-  }
-};
-
-export const normalizeNotifications = (notifications: UserNotification[]) => {
-  return notifications.map((notification: UserNotification) => ({
-    ...notification,
-    urlPath: getNotificationUrlPath(notification),
-  }));
-};
-
-export function DashboardNotifications({ notificationHref }: DashboardNotificationsProps) {
+export function DashboardNotifications({ notificationHref, activeDomain }: DashboardNotificationsProps) {
   const [open, setOpen] = useState(false);
   const shownPopupIds = useRef<Set<string>>(new Set());
   const actionMutation = useNotificationAction();
   const markAllMutation = useMarkAllNotificationsRead();
+
+  const getNotificationUrlPath = (
+    notification: UserNotification,
+    activeDomain: string,
+  ): string => {
+    const { type, metadata, action_url } = notification;
+
+    switch (type) {
+      case 'QUIZ_DEADLINE_REMINDER':
+        if (activeDomain === 'student') {
+          return metadata.quiz_uuid && metadata.class_definition_uuid ? `/dashboard/assignment/quiz/${metadata.quiz_uuid}` : '';
+        }
+
+        return metadata.quiz_uuid && metadata.class_definition_uuid
+          ? `/dashboard/assignment/quiz_${metadata.quiz_uuid}?classId=${metadata.class_definition_uuid}`
+          : '';
+
+      case 'ASSIGNMENT_DEADLINE_REMINDER':
+        if (activeDomain === 'student') {
+          return metadata.assignment_uuid && metadata.class_definition_uuid ? `/dashboard/assignment/${metadata.assignment_uuid}` : ''
+        }
+
+        return metadata.assignment_uuid && metadata.class_definition_uuid
+          ? `/dashboard/assignment/assignment_${metadata.assignment_uuid}?classId=${metadata.class_definition_uuid}`
+          : '';
+
+      case 'ASSESSMENT_COMPLETED':
+        if (activeDomain === 'student') {
+          return '/dashboard/assessment';
+        }
+
+        return '/dashboard/assessment'
+
+      case 'CLASS_ENROLLMENT_CONFIRMED':
+      case 'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE':
+      case 'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE':
+        if (activeDomain === 'student') {
+          return metadata.class_definition_uuid ? `/dashboard/learning-hub/classes/${metadata.class_definition_uuid}` : '';
+        }
+
+        return metadata.class_definition_uuid
+          ? `/dashboard/classes/class-training/${metadata.class_definition_uuid}`
+          : '';
+
+      case 'UPCOMING_CLASS_REMINDER':
+        if (activeDomain === 'student') {
+          return metadata.class_definition_uuid
+            ? `/dashboard/learning-hub/classes/${metadata.class_definition_uuid}`
+            : ''
+        }
+
+        return metadata.class_definition_uuid
+          ? `/dashboard/classes/class-training/${metadata.class_definition_uuid}`
+          : '';
+
+      default:
+        return action_url || '';
+    }
+  };
+
+  const normalizeNotifications = (notifications: UserNotification[], activeDomain: string) => {
+    return notifications.map((notification: UserNotification) => ({
+      ...notification,
+      urlPath: getNotificationUrlPath(notification, activeDomain),
+    }));
+  };
+
 
   // The badge needs counts and toasts need the popup feed, but the recent
   // list is only visible inside the dropdown — fetch it when opened instead
@@ -169,7 +208,7 @@ export function DashboardNotifications({ notificationHref }: DashboardNotificati
   const unreadCount = countsQuery.data?.unread_count ?? 0;
   const recentNotifications = recentQuery.data?.items ?? [];
   const popupNotifications = popupQuery.data?.items ?? [];
-  const normalizedNotifications = normalizeNotifications(recentNotifications);
+  const normalizedNotifications = normalizeNotifications(recentNotifications, activeDomain as string);
 
   useEffect(() => {
     for (const notification of popupNotifications) {
