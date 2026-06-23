@@ -66,7 +66,7 @@ import {
     ArrowLeft,
     BookOpen,
     ClipboardCheck,
-    Eye,
+    FileQuestion,
     Loader2,
     MessageSquareText,
     PanelRight,
@@ -383,7 +383,6 @@ function renderLessonContentPreview(
         { name: string; mime_types: string[]; upload_category?: string; is_media_type?: boolean }
     >
 ) {
-    // console.log(content, "CTTT stude")
     return <LessonContentPreview content={content} contentTypeDetailsMap={contentTypeDetailsMap} />;
 }
 
@@ -483,16 +482,11 @@ function AssessmentTasksSection({
                                 </div>
 
                                 {item.assignment && (
-                                    <Button
-                                        size='sm'
-                                        variant='outline'
-                                        onClick={() => {
-                                            setPreviewAssignment(item.assignment!);
-                                            setIsAssignmentPreviewOpen(true);
-                                        }}
-                                    >
-                                        <Eye className='mr-1 size-3.5' />
-                                        View
+                                    <Button >
+                                        <Link className='flex flex-row gap-2' href={`/dashboard/assignment/${item?.assignment?.uuid}`} >
+                                            <FileQuestion className='h-4 w-4' />
+                                            Attempt assignment
+                                        </Link>
                                     </Button>
                                 )}
                             </div>
@@ -521,16 +515,11 @@ function AssessmentTasksSection({
                                 </div>
 
                                 {item.quiz && (
-                                    <Button
-                                        size='sm'
-                                        variant='outline'
-                                        onClick={() => {
-                                            setPreviewQuiz(item.quiz!);
-                                            setIsQuizPreviewOpen(true);
-                                        }}
-                                    >
-                                        <Eye className='mr-1 size-3.5' />
-                                        View
+                                    <Button >
+                                        <Link className='flex flex-row gap-2' href={`/dashboard/assignment/quiz/${item?.quiz?.uuid}`} >
+                                            <FileQuestion className='h-4 w-4' />
+                                            Attempt quiz
+                                        </Link>
                                     </Button>
                                 )}
                             </div>

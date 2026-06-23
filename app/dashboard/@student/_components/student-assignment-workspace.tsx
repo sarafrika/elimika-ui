@@ -803,13 +803,12 @@ export function StudentAssignmentWorkspace() {
                         </p>
                       </div>
 
-
-                      <Button className='max-w-fit'
+                      {/* <Button className='max-w-fit'
                         onClick={() => handleOpenAssignment(row)}
 
                       >
                         View
-                      </Button>
+                      </Button> */}
                       <Button
                         className='sm:min-w-[160px]'
                       >

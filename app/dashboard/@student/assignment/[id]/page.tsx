@@ -209,7 +209,7 @@ export default function StudentAssignmentSubmissionPage() {
 
     if (isLoading) {
         return (
-            <div className='mx-auto max-w-4xl space-y-6 p-5 sm:p-6'>
+            <div className='mx-auto w-full max-w-7xl space-y-6 p-5 sm:p-6'>
                 <Skeleton className='h-10 w-40 rounded-full' />
                 <Skeleton className='h-32 rounded-2xl' />
                 <Skeleton className='h-48 rounded-2xl' />
@@ -237,7 +237,7 @@ export default function StudentAssignmentSubmissionPage() {
     // ── Render ───────────────────────────────────────────────────────────────
     // Mirrors the Sheet content from StudentAssignmentWorkspace 1-to-1
     return (
-        <div className='mx-auto max-w-4xl space-y-6 p-5 sm:p-6'>
+        <div className='mx-auto w-full max-w-8xl space-y-6 p-5 sm:p-6'>
 
             {/* ── Page header (replaces SheetHeader) ─────────────────────────── */}
             <div className='border-border/60 space-y-3 border-b pb-5'>
@@ -251,7 +251,7 @@ export default function StudentAssignmentSubmissionPage() {
                     All assignments
                 </Button>
 
-                <div className='flex flex-wrap items-center gap-2'>
+                <div className='flex flex-wrap items-start gap-2'>
                     <Badge variant='outline' className='border-primary/20 bg-primary/10 text-primary'>
                         {selectedAssignment.classMeta.courseTitle}
                     </Badge>
@@ -288,7 +288,7 @@ export default function StudentAssignmentSubmissionPage() {
             </div>
 
             {/* ── Body (exact mirror of Sheet body) ──────────────────────────── */}
-            <div className='mx-auto max-w-4xl space-y-6'>
+            <div className='space-y-6'>
 
                 {/* Description */}
                 {selectedAssignment.assignment?.description && (

@@ -580,9 +580,9 @@ export function StudentQuizWorkspace() {
                     </div>
 
                     <div className='flex flex-wrap gap-3'>
-                      <Button className='gap-2' onClick={() => setSelectedQuiz(row)}>
+                      {/* <Button className='gap-2' onClick={() => setSelectedQuiz(row)}>
                         View
-                      </Button>
+                      </Button> */}
 
                       <Button >
                         <Link className='flex flex-row gap-2' href={`/dashboard/assignment/quiz/${row?.quiz?.uuid}`} >

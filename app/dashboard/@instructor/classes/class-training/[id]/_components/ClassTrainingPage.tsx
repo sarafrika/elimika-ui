@@ -104,7 +104,9 @@ import { AssignmentContentPreview } from '../../../../../../../components/conten
 import { LessonContentPreview } from '../../../../../../../components/content-preview/LessonContentPreview';
 import { QuizContentPreview } from '../../../../../../../components/content-preview/QuizContentPreview';
 import RichTextRenderer from '../../../../../../../components/editors/richTextRenders';
+import Spinner from '../../../../../../../components/ui/spinner';
 import { toAttachmentResourceItems } from '../../../../../@student/_components/student-assignment-workspace';
+import { RubricGradingMatrix, RubricSummaryPreview, useRubricGradeSelections } from './RubricGradingMatrix';
 
 
 
@@ -403,7 +405,7 @@ const TAB_ITEMS = [
 
 const LEFT_TAB_ITEMS = [
   { value: 'students', label: 'Students' },
-  { value: 'lessons', label: 'Lessons' },
+  // { value: 'lessons', label: 'Lessons' },
   { value: 'evaluation', label: 'Evaluation' },
 ];
 
@@ -464,6 +466,13 @@ function AssessmentTasksSection({
 }) {
   const [activeTab, setActiveTab] = React.useState<'add' | 'assigned'>('assigned');
   const [addType, setAddType] = React.useState<'assignment' | 'quiz'>('assignment');
+
+  const selectedAssignment = lessonAssignments.find(
+    assignment => assignment.uuid === selectedAssignmentUuid
+  )
+
+  const isSelectedAssignmentDraft =
+    selectedAssignment && !selectedAssignment.is_published
 
   const [isAssignmentPreviewOpen, setIsAssignmentPreviewOpen] =
     React.useState(false);
@@ -574,14 +583,23 @@ function AssessmentTasksSection({
                   <div className='space-y-2 overflow-y-auto pr-1'>
                     {lessonAssignments.map(assignment => {
                       const isSelected = selectedAssignmentUuid === assignment.uuid
+                      const isDraft = !assignment.is_published
+
+
 
                       return (
                         <div
                           key={assignment.uuid}
-                          onClick={() => onAssignmentSelect(assignment.uuid ?? '')}
-                          className={`cursor-pointer rounded-lg border p-3 transition-all ${isSelected
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:bg-muted/40'
+                          onClick={() => {
+                            if (isDraft) return
+
+                            onAssignmentSelect(assignment.uuid ?? '')
+                          }}
+                          className={`rounded-lg border p-3 transition-all ${isDraft
+                            ? 'cursor-not-allowed opacity-60'
+                            : isSelected
+                              ? 'border-primary bg-primary/5 cursor-pointer'
+                              : 'border-border hover:bg-muted/40 cursor-pointer'
                             }`}
                         >
                           <div className='flex items-start justify-between gap-3'>
@@ -592,12 +610,18 @@ function AssessmentTasksSection({
                                   {assignment.title}
                                 </p>
 
-                                {assignment.is_published && (
+                                {assignment.is_published ? (
                                   <Badge
                                     variant='secondary'
                                     className='text-[10px]'
                                   >
                                     Published
+                                  </Badge>
+                                ) : (
+                                  <Badge
+                                    className='bg-destructive/20 text-destructive/800 hover:bg-destructive/10 text-[10px] border border-destructive/20'
+                                  >
+                                    Draft
                                   </Badge>
                                 )}
                               </div>
@@ -697,6 +721,7 @@ function AssessmentTasksSection({
                   </div>
 
 
+
                   {lessonAssignments.length === 0 && (
                     <div className='text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm'>
                       No assignments available yet.
@@ -736,12 +761,19 @@ function AssessmentTasksSection({
                   </div>
                 </div>
 
+                {isSelectedAssignmentDraft && (
+                  <div className='rounded-md border border-destructive/20 bg-destructive/10 p-2 text-xs text-destructive'>
+                    This assignment is still in draft mode and cannot be assigned to students until it is published.
+                  </div>
+                )}
+
                 <Button
                   onClick={onAssignAssignment}
                   disabled={
                     !selectedAssignmentUuid ||
                     !activeSchedule ||
-                    isAssigningAssignment
+                    isAssigningAssignment ||
+                    isSelectedAssignmentDraft
                   }
                   className='w-full'
                 >
@@ -1379,6 +1411,10 @@ function RosterPanel({
   onSelectStudent,
   onMarkAllPresent,
   isMarkingAllAttendance,
+  markingStudentId,
+  onMarkAttendance,
+  isMarkingAttendance
+
 }: {
   activeInstanceStudentsCount: number;
   filteredRoster: RosterEntry[];
@@ -1390,6 +1426,9 @@ function RosterPanel({
   onSelectStudent: (entry: RosterEntry) => void;
   onMarkAllPresent: () => void;
   isMarkingAllAttendance: boolean;
+  markingStudentId: string;
+  onMarkAttendance: (entry: RosterEntry, attended: boolean) => void;
+  isMarkingAttendance: boolean;
 }) {
   const isSessionExpired = useMemo(() => {
     if (!activeSchedule?.end_time) return false;
@@ -1433,7 +1472,7 @@ function RosterPanel({
         </div>
 
         {/* MARK ALL PRESENT BUTTON */}
-        <Button
+        {/* <Button
           size="sm"
           variant="outline"
           className="w-full"
@@ -1445,7 +1484,7 @@ function RosterPanel({
           onClick={onMarkAllPresent}
         >
           Mark All Present
-        </Button>
+        </Button> */}
 
         {/* STATUS MESSAGE (NEW UX) */}
         <div
@@ -1479,6 +1518,13 @@ function RosterPanel({
             const isSelected =
               selectedStudentId === (entry.enrollment?.uuid ?? '');
 
+            const enrollmentId = entry.enrollment?.uuid ?? '';
+            const isLoading = markingStudentId === enrollmentId;
+
+            const isPresent =
+              attendanceState === 'present' ||
+              entry.enrollment?.is_attendance_marked;
+
             return (
               <button
                 type="button"
@@ -1504,19 +1550,31 @@ function RosterPanel({
                     </AvatarFallback>
                   </Avatar>
 
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 flex-row flex-wrap items-center justify-between">
                     <p className="truncate text-sm font-semibold">
                       {entry.user?.full_name || 'Unknown student'}
                     </p>
 
-                    <div className="text-muted-foreground mt-1 flex items-center justify-between gap-2 text-xs">
-                      <span className="truncate">
-                        {entry.enrollment?.is_attendance_marked
-                          ? 'Attended'
-                          : 'Attendance pending'}
-                      </span>
-                      <span className="capitalize">{attendanceState}</span>
+                    <div>
+                      {isPresent ? (
+                        <span className="text-success text-[11px] font-medium">
+                          Present
+                        </span>
+                      ) : (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onMarkAttendance(entry, true);
+                          }}
+                          disabled={isLoading}
+                          size="sm"
+                          className="rounded h-6 text-[11px]"
+                        >
+                          {isLoading ? <Spinner /> : 'Admit'}
+                        </Button>
+                      )}
                     </div>
+
                   </div>
                 </div>
               </button>
@@ -1650,6 +1708,68 @@ function EvaluationSummary({
   );
 }
 
+function AssessmentRubricCard({
+  assessment,
+  rubric,
+}: {
+  assessment: {
+    uuid?: string;
+    title: string;
+    description?: string | null;
+    assessment_type?: string;
+    is_required?: boolean;
+    weight_percentage?: number;
+  };
+  rubric: RubricMatrix | null;
+}) {
+  const { selections, setSelection } = useRubricGradeSelections();
+
+  return (
+    <div className='border-border/70 bg-background/80 rounded-md border p-3'>
+      <div className='mb-2 flex items-center justify-between gap-3'>
+        <div className='min-w-0'>
+          <p className='truncate text-sm font-semibold'>{assessment.title}</p>
+          <p className='text-muted-foreground text-xs'>
+            {formatEnum(assessment.assessment_type)} ·{' '}
+            {assessment.is_required ? 'Required' : 'Optional'}
+          </p>
+        </div>
+        <span className='text-primary text-sm font-semibold'>
+          {formatPercentage(assessment.weight_percentage)}
+        </span>
+      </div>
+
+      {assessment.description ? (
+        <p className='text-muted-foreground mb-3 text-xs'>{assessment.description}</p>
+      ) : null}
+
+      <div className='space-y-2 rounded-md border border-dashed p-3'>
+        <div className='flex items-center justify-between gap-3'>
+          <p className='text-xs font-medium'>
+            {rubric?.rubric.title || 'No rubric attached'}
+          </p>
+          {rubric?.rubric.max_score ? (
+            <Badge variant='outline'>Max {rubric.rubric.max_score}</Badge>
+          ) : null}
+        </div>
+
+        {rubric ? (
+          <RubricGradingMatrix
+            matrix={rubric}
+            selections={selections}
+            onChange={setSelection}
+          />
+        ) : (
+          <p className='text-muted-foreground text-xs'>
+            This assessment has no rubric matrix linked yet.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 function SubmissionPanel({
   activeSchedule,
   activeInstanceStudentsCount,
@@ -1702,13 +1822,13 @@ function SubmissionPanel({
   isStartingClass: boolean;
   isEndingClass: boolean;
 }) {
-  const [activePanel, setActivePanel] = useState<'submissions' | 'rubric' | 'notes'>(
+  const [activePanel, setActivePanel] = useState<'submissions' | 'trackers' | 'notes'>(
     'submissions'
   );
   const selectedStudentAttendanceState = getStudentAttendanceState(selectedStudent);
   const panelTabs = [
     { value: 'submissions' as const, label: 'Submissions', icon: ClipboardCheck },
-    { value: 'rubric' as const, label: 'Rubric', icon: ShieldCheck },
+    { value: 'trackers' as const, label: 'Trackers', icon: ShieldCheck },
     // { value: 'notes' as const, label: 'Notes', icon: MessageSquareText },
   ];
 
@@ -1736,7 +1856,6 @@ function SubmissionPanel({
 
     onMarkAttendance(entry, attended);
   };
-
 
   return (
     <aside className='bg-card/95 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden'>
@@ -1838,7 +1957,7 @@ function SubmissionPanel({
                 onClick={() =>
                   selectedStudent && handleAttendanceClick(selectedStudent, true)
                 }              >
-                Mark Present
+                Admit
               </Button>
               <Button
                 size='sm'
@@ -1972,7 +2091,8 @@ function SubmissionPanel({
             </>
           ) : null}
 
-          {activePanel === 'rubric' ? (
+
+          {activePanel === 'trackers' ? (
             <div className='space-y-3'>
               {courseAssessments.length > 0 ? (
                 courseAssessments.map(assessment => {
@@ -1981,58 +2101,11 @@ function SubmissionPanel({
                     : null;
 
                   return (
-                    <div
+                    <AssessmentRubricCard
                       key={assessment.uuid ?? assessment.title}
-                      className='border-border/70 bg-background/80 rounded-md border p-3'
-                    >
-                      <div className='mb-2 flex items-center justify-between gap-3'>
-                        <div className='min-w-0'>
-                          <p className='truncate text-sm font-semibold'>{assessment.title}</p>
-                          <p className='text-muted-foreground text-xs'>
-                            {formatEnum(assessment.assessment_type)} ·{' '}
-                            {assessment.is_required ? 'Required' : 'Optional'}
-                          </p>
-                        </div>
-                        <span className='text-primary text-sm font-semibold'>
-                          {formatPercentage(assessment.weight_percentage)}
-                        </span>
-                      </div>
-                      {assessment.description ? (
-                        <p className='text-muted-foreground mb-3 text-xs'>{assessment.description}</p>
-                      ) : null}
-                      <div className='space-y-2 rounded-md border border-dashed p-3'>
-                        <div className='flex items-center justify-between gap-3'>
-                          <p className='text-xs font-medium'>
-                            {rubric?.rubric.title || 'No rubric attached'}
-                          </p>
-                          {rubric?.rubric.max_score ? (
-                            <Badge variant='outline'>Max {rubric.rubric.max_score}</Badge>
-                          ) : null}
-                        </div>
-                        {rubric ? (
-                          <>
-                            <p className='text-muted-foreground text-xs'>
-                              {rubric.criteria.length} criteria · {rubric.scoring_levels.length}{' '}
-                              scoring levels
-                            </p>
-                            <div className='space-y-2'>
-                              {rubric.criteria.slice(0, 3).map(criteria => (
-                                <div key={criteria.uuid ?? criteria.component_name}>
-                                  <p className='text-xs font-medium'>{criteria.component_name}</p>
-                                  <p className='text-muted-foreground text-[11px]'>
-                                    {criteria.description || criteria.weight_suggestion || 'Criteria'}
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
-                          </>
-                        ) : (
-                          <p className='text-muted-foreground text-xs'>
-                            This assessment has no rubric matrix linked yet.
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                      assessment={assessment}
+                      rubric={rubric}
+                    />
                   );
                 })
               ) : (
@@ -2063,6 +2136,11 @@ function SubmissionPanel({
                           <p className='text-muted-foreground mt-1 text-[11px]'>
                             {association.usage_context || rubric?.rubric.rubric_type || 'General use'}
                           </p>
+                          {rubric ? (
+                            <div className='mt-2'>
+                              <RubricSummaryPreview matrix={rubric} />
+                            </div>
+                          ) : null}
                         </div>
                       );
                     })}
@@ -2266,7 +2344,8 @@ export default function ClassTrainingPage({
   const appliedRouteContentSelectionRef = useRef('');
 
   const [activeTab, setActiveTab] = useState<'content' | 'practice' | 'assessment'>('content');
-  const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>('students');
+  const [activeLefTab, setActiveLeftTab] = useState<'students' | 'evaluation'>('students');
+  // const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>('students');
 
   const classData = data.class;
   const course = data.course ?? data?.pCourses?.[0] ?? null;
@@ -2758,8 +2837,10 @@ export default function ClassTrainingPage({
     [studentSubmissions, submissionAttachmentQueries]
   );
 
+  const [markingStudentId, setMarkingStudentId] = useState<string | null>(null);
   const handleMarkAttendance = (entry: RosterEntry, attended: boolean) => {
     if (!entry.enrollment?.uuid) return;
+    setMarkingStudentId(entry.enrollment?.uuid);
 
     markAttendanceMut.mutate(
       {
@@ -3004,7 +3085,6 @@ export default function ClassTrainingPage({
     return () => clearInterval(interval);
   }, [activeSchedule?.started_at]);
 
-
   // const endClassMut = useMutation(endScheduledInstanceMutation());
   // const handleEndClass = () => {
   //   if (!requestedScheduleId) return;
@@ -3151,6 +3231,9 @@ export default function ClassTrainingPage({
                 onSelectStudent={entry => setSelectedStudentId(entry.enrollment?.uuid ?? '')}
                 onMarkAllPresent={handleMarkAllPresent}
                 isMarkingAllAttendance={markAttendanceMut.isPending}
+                onMarkAttendance={handleMarkAttendance}
+                isMarkingAttendance={markAttendanceMut.isPending}
+                markingStudentId={markingStudentId as string}
               />
             </SheetContent>
           </Sheet>
@@ -3194,7 +3277,7 @@ export default function ClassTrainingPage({
                 handleEndClass={handleEndClass}
                 isEndClassConfirmOpen={isEndClassConfirmOpen}
                 setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
-              />
+                remainingTime={remainingTime} />
             </SheetContent>
           </Sheet>
 
@@ -3212,14 +3295,14 @@ export default function ClassTrainingPage({
         </div>
       </header>
 
-      <section className='grid min-h-0 flex-1 gap-0 overflow-hidden xl:grid-cols-[420px_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]'>
+      <section className='grid min-h-0 flex-1 gap-0 overflow-hidden flex xl:grid-cols-[420px_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]'>
         <section>
           <Tabs
             value={activeLefTab}
             onValueChange={value => setActiveLeftTab(value as typeof activeLefTab)}
             className='w-full max-w-xl mt-2'
           >
-            <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
+            <TabsList className='bg-muted grid w-full grid-cols-2 rounded-lg p-1 dark:bg-muted/60'>
               {LEFT_TAB_ITEMS.map(tab => (
                 <TabsTrigger
                   key={tab.value}
@@ -3256,18 +3339,21 @@ export default function ClassTrainingPage({
                   onSelectStudent={entry => setSelectedStudentId(entry.enrollment?.uuid ?? '')}
                   onMarkAllPresent={handleMarkAllPresent}
                   isMarkingAllAttendance={markAttendanceMut.isPending}
+                  onMarkAttendance={handleMarkAttendance}
+                  isMarkingAttendance={markAttendanceMut.isPending}
+                  markingStudentId={markingStudentId as string}
                 />
               </aside>
             ) : null}
 
-            {activeLefTab === 'lessons' ? (
+            {/* {activeLefTab === 'lessons' ? (
               <div className='border-border/70 bg-card/90 rounded-lg border border-dashed p-8 text-center'>
                 <p className='text-foreground text-sm font-semibold'>Lessons</p>
                 <p className='text-muted-foreground mt-1 text-sm'>
                   Lesson tools will be added here soon.
                 </p>
               </div>
-            ) : null}
+            ) : null} */}
 
             {activeLefTab === 'evaluation' ? (
               <div className='border-border/70 bg-card/90 space-y-4 rounded-lg border p-4 shadow-sm xl:hidden'>
@@ -3789,7 +3875,6 @@ export default function ClassTrainingPage({
             )}
           </section>
         }
-
 
         {/* <aside className='border-border/70 hidden min-h-0 border-l xl:block'>
           <SubmissionPanel

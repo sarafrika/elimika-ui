@@ -5,6 +5,7 @@ import { AlertTriangle, Check, Plus, PlusCircle, Trash2, X } from 'lucide-react'
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
 import { Checkbox } from '../../../../components/ui/checkbox';
 import { Input } from '../../../../components/ui/input';
@@ -178,23 +179,20 @@ const QuestionRow = ({
               <div
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
-                  opt.isCorrect
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-primary/50'
-                }`}
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border hover:border-primary/50'
+                  }`}
               >
                 <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                    opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
-                  }`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
+                    }`}
                 >
                   {opt.isCorrect && <Check className='text-primary-foreground h-3 w-3' />}
                 </div>
                 <span
-                  className={`text-sm font-medium ${
-                    opt.isCorrect ? 'text-primary' : 'text-foreground'
-                  }`}
+                  className={`text-sm font-medium ${opt.isCorrect ? 'text-primary' : 'text-foreground'
+                    }`}
                 >
                   {opt.text}
                 </span>
@@ -574,36 +572,58 @@ export const QuizCreationForm = ({
                 </div>
               </div>
 
-              <ul className='flex flex-col space-y-2'>
+              <div className='flex flex-col space-y-2'>
                 {quizzes?.data?.content?.length ? (
-                  quizzes.data.content.map((quiz, idx: number) => (
-                    <li
-                      key={`quiz-${quiz.uuid}`}
-                      onClick={() => handleQuizSelect(quiz.uuid ?? null)}
-                      className={cn(
-                        'group flex cursor-pointer items-center justify-between rounded-md border px-4 py-2.5 text-sm font-medium transition-all',
-                        quizUuid === quiz.uuid
-                          ? 'bg-primary/20 border-primary text-primary shadow-sm'
-                          : 'bg-primary/5 hover:bg-muted text-foreground border-transparent'
-                      )}
-                    >
-                      <span className='truncate'>
-                        {idx + 1} - {quiz.title}
-                      </span>
-                    </li>
-                  ))
+                  quizzes.data.content.map((quiz, idx: number) => {
+                    const isSelected = quizUuid === quiz.uuid
+
+                    return (
+                      <div
+                        key={`quiz-${quiz.uuid}`}
+                        onClick={() => handleQuizSelect(quiz.uuid ?? null)}
+                        className={cn(
+                          'group flex cursor-pointer items-center justify-between rounded-md border px-4 py-2.5 text-sm font-medium transition-all',
+                          isSelected
+                            ? 'bg-primary/20 border-primary text-primary shadow-sm'
+                            : 'bg-primary/5 hover:bg-muted text-foreground border-transparent'
+                        )}
+                      >
+                        {/* Title */}
+                        <span className='truncate'>
+                          {idx + 1} - {quiz.title}
+                        </span>
+
+                        {/* Status badge */}
+                        {quiz.is_published ? (
+                          <Badge variant='secondary' className='text-[10px]'>
+                            Published
+                          </Badge>
+                        ) : (
+                          <Badge className='bg-destructive/10 text-destructive border border-destructive/20 text-[10px]'>
+                            Draft
+                          </Badge>
+                        )}
+                      </div>
+                    )
+                  })
                 ) : (
-                  <li className='text-muted-foreground rounded-lg border border-dashed py-4 text-center text-sm'>
+                  <div className='text-muted-foreground rounded-lg border border-dashed py-4 text-center text-sm'>
                     No quizzes available for this lesson yet.
-                  </li>
+                  </div>
                 )}
-              </ul>
+              </div>
             </div>
           </div>
 
           {/* Quiz fields */}
           <div className='flex flex-col gap-6'>
             <Separator />
+            {selectedQuizData.title && selectedQuizData?.status !== "published" && (
+              <div className='rounded-md border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive'>
+                This quiz is in draft mode and is not visible to instructors until it is published.
+              </div>
+            )}
+
             <div className='-my-4 flex items-center justify-between'>
               <h2 className='text-foreground text-lg font-bold tracking-tight'>
                 {quizUuid && quizUuid !== '' ? 'Edit Quiz' : 'Create New Quiz'}
