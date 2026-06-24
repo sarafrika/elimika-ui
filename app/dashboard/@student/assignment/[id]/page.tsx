@@ -168,11 +168,17 @@ export default function StudentAssignmentSubmissionPage() {
                     enrollment_uuid: activeEnrollmentUuid,
                     student_uuid: selectedAssignment.classMeta.studentUuid,
                     submission_text: submissionContent,
+                    file_urls: ["/assignment.pdf"],
                 },
                 query: {
                     enrollmentUuid: activeEnrollmentUuid,
                     content: submissionContent,
                     enrollment_uuid: activeEnrollmentUuid,
+                    file_urls: ["/assignment.pdf"],
+                    fileUrls: ["/assignment.pdf"],
+                    student_uuid: selectedAssignment.classMeta.studentUuid,
+                    studentUuid: selectedAssignment.classMeta.studentUuid,
+                    submission_text: submissionContent,
                 },
             });
 
