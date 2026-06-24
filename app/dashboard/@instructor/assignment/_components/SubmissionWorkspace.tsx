@@ -240,114 +240,119 @@ export function SubmissionWorkspace({
                 <h3 className='text-xl font-semibold'>{rubricMatrix?.rubric.title || 'Assessment Rubric'}</h3>
               </div>
 
-              <section className="overflow-hidden rounded-lg border bg-background">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/30">
-                        <th className="min-w-[220px] px-2 py-2 text-left text-xs font-semibold uppercase tracking-wide">
-                          Criterion
-                        </th>
-
-                        {rubricMatrix?.scoring_levels.map(level => (
-                          <th
-                            key={level.uuid}
-                            className="min-w-[120px] px-2 py-2 text-center"
-                          >
-                            <div className="space-y-0.5">
-                              <p className="text-xs font-semibold leading-none">
-                                {level.name}
-                              </p>
-
-                              <p className="text-primary text-sm font-bold leading-none">
-                                {level.points} pts
-                              </p>
-
-                              <p className="text-muted-foreground text-[10px] leading-tight">
-                                {level.performance_indicator}
-                              </p>
-                            </div>
+              {!rubricMatrix ?
+                <div className="p-3 rounded border bg-surface-muted border-border-muted text-text-muted text-sm font-medium">
+                  No rubric assessment assigned to this assignment
+                </div>
+                : <section className="overflow-hidden rounded-lg border bg-background">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/30">
+                          <th className="min-w-[220px] px-2 py-2 text-left text-xs font-semibold uppercase tracking-wide">
+                            Criterion
                           </th>
-                        ))}
-                      </tr>
-                    </thead>
 
-                    <tbody>
-                      {rubricMatrix?.criteria.map(criteria => (
-                        <tr
-                          key={criteria.uuid}
-                          className="border-b last:border-b-0"
-                        >
-                          <td className="px-2 py-2 align-top">
-                            <div className="space-y-0.5">
-                              <p className="text-sm font-medium leading-tight">
-                                {criteria.component_name}
-                              </p>
+                          {rubricMatrix?.scoring_levels.map(level => (
+                            <th
+                              key={level.uuid}
+                              className="min-w-[120px] px-2 py-2 text-center"
+                            >
+                              <div className="space-y-0.5">
+                                <p className="text-xs font-semibold leading-none">
+                                  {level.name}
+                                </p>
 
-                              <p className="text-muted-foreground text-xs leading-snug">
-                                {criteria.description}
-                              </p>
-                            </div>
-                          </td>
+                                <p className="text-primary text-sm font-bold leading-none">
+                                  {level.points} pts
+                                </p>
 
-                          {rubricMatrix.scoring_levels.map(level => {
-                            const selected =
-                              selectedLevels[criteria.uuid as string] ===
-                              level.uuid;
-
-                            return (
-                              <td
-                                key={level.uuid}
-                                className="px-2 py-2 text-center"
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setSelectedLevels(prev => ({
-                                      ...prev,
-                                      [criteria.uuid]: level.uuid as string,
-                                    }))
-                                  }
-                                  className={cn(
-                                    "inline-flex h-7 w-7 items-center justify-center rounded-full border text-xs font-medium transition-all",
-                                    selected
-                                      ? "border-primary bg-primary text-primary-foreground"
-                                      : "hover:bg-muted"
-                                  )}
-                                >
-                                  {selected ? "✓" : ""}
-                                </button>
-                              </td>
-                            );
-                          })}
+                                <p className="text-muted-foreground text-[10px] leading-tight">
+                                  {level.performance_indicator}
+                                </p>
+                              </div>
+                            </th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
 
-                <div className="flex items-center justify-between border-t bg-muted/20 px-3 py-2">
-                  <div>
-                    <p className="text-muted-foreground text-[11px] uppercase tracking-wide">
-                      Total Score
-                    </p>
+                      <tbody>
+                        {rubricMatrix?.criteria.map(criteria => (
+                          <tr
+                            key={criteria.uuid}
+                            className="border-b last:border-b-0"
+                          >
+                            <td className="px-2 py-2 align-top">
+                              <div className="space-y-0.5">
+                                <p className="text-sm font-medium leading-tight">
+                                  {criteria.component_name}
+                                </p>
 
-                    <p className="text-base font-semibold">
-                      {rubricSummary.earned} / {rubricSummary.possible}
-                    </p>
+                                <p className="text-muted-foreground text-xs leading-snug">
+                                  {criteria.description}
+                                </p>
+                              </div>
+                            </td>
+
+                            {rubricMatrix.scoring_levels.map(level => {
+                              const selected =
+                                selectedLevels[criteria.uuid as string] ===
+                                level.uuid;
+
+                              return (
+                                <td
+                                  key={level.uuid}
+                                  className="px-2 py-2 text-center"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setSelectedLevels(prev => ({
+                                        ...prev,
+                                        [criteria.uuid]: level.uuid as string,
+                                      }))
+                                    }
+                                    className={cn(
+                                      "inline-flex h-7 w-7 items-center justify-center rounded-full border text-xs font-medium transition-all",
+                                      selected
+                                        ? "border-primary bg-primary text-primary-foreground"
+                                        : "hover:bg-muted"
+                                    )}
+                                  >
+                                    {selected ? "✓" : ""}
+                                  </button>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
 
-                  <div className="text-right">
-                    <p className="text-muted-foreground text-[11px] uppercase tracking-wide">
-                      Final Grade
-                    </p>
+                  <div className="flex items-center justify-between border-t bg-muted/20 px-3 py-2">
+                    <div>
+                      <p className="text-muted-foreground text-[11px] uppercase tracking-wide">
+                        Total Score
+                      </p>
 
-                    <p className="text-primary text-xl font-bold">
-                      {rubricSummary.percentage.toFixed(1)}%
-                    </p>
+                      <p className="text-base font-semibold">
+                        {rubricSummary.earned} / {rubricSummary.possible}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-muted-foreground text-[11px] uppercase tracking-wide">
+                        Final Grade
+                      </p>
+
+                      <p className="text-primary text-xl font-bold">
+                        {rubricSummary.percentage.toFixed(1)}%
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </section>
+                </section>}
+
 
               {taskType === 'assignment' ? (
                 <div className='grid gap-4 rounded-xl border bg-background p-4'>
@@ -359,7 +364,12 @@ export function SubmissionWorkspace({
                         min="0"
                         max={maxScore}
                         value={displayScore}
-                        onChange={event => onScoreChange(event.target.value)}
+                        onChange={event => {
+                          const value = Number(event.target.value);
+
+                          const clamped = Math.min(Math.max(value, 0), maxScore);
+                          onScoreChange(clamped);
+                        }}
                         disabled={rubricScore !== null}
                       />
                       {rubricScore !== null ? (
