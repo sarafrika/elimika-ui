@@ -848,7 +848,6 @@ export default function ClassCourseDetailsPage({
 }
 
 function CourseScheduleInfo({ type, classData, schedule }: { type: "course" | "class" | undefined, classData: CombinedClassDetailsData, schedule: ClassDetailsScheduleItem }) {
-    console.log(schedule, "SCHED")
     const getDuration = (start?: string, end?: string) => {
         if (!start || !end) return "-";
 

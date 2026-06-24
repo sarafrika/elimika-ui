@@ -141,6 +141,8 @@ type NoteEntry = {
   sentAt: string;
 };
 
+export const GRACE_PERIOD_MS = 15 * 60 * 1000;
+
 function formatPercentage(value?: number | null) {
   if (typeof value !== 'number' || Number.isNaN(value)) return 'N/A';
   return `${value}%`;
@@ -1430,9 +1432,13 @@ function RosterPanel({
   onMarkAttendance: (entry: RosterEntry, attended: boolean) => void;
   isMarkingAttendance: boolean;
 }) {
+
   const isSessionExpired = useMemo(() => {
     if (!activeSchedule?.end_time) return false;
-    return new Date(activeSchedule.end_time).getTime() < Date.now();
+
+    const endTime = new Date(activeSchedule.end_time).getTime();
+
+    return endTime + GRACE_PERIOD_MS < Date.now();
   }, [activeSchedule?.end_time]);
 
   const presentCount = activeInstanceStudents.filter(
@@ -1836,7 +1842,10 @@ function SubmissionPanel({
 
   const isSessionExpired = useMemo(() => {
     if (!activeSchedule?.end_time) return false;
-    return new Date(activeSchedule.end_time).getTime() < Date.now();
+
+    const endTime = new Date(activeSchedule.end_time).getTime();
+
+    return endTime + GRACE_PERIOD_MS < Date.now();
   }, [activeSchedule?.end_time]);
 
   const attendanceActionDisabled =
