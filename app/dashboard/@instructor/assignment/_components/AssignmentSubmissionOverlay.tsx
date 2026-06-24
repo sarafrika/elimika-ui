@@ -111,6 +111,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
     classDetails.lessons.find(lesson => lesson.uuid === task?.lesson_uuid)?.title || 'Lesson';
   const rubricUuid = task?.rubric_uuid ?? null;
 
+
   const rubricQuery = useQueries({
     queries: rubricUuid
       ? [

@@ -61,9 +61,9 @@ export type CoursesCatalogCardData = {
   icon: LucideIcon;
   imageTone: 'primary' | 'warning' | 'success';
   imageUrl?: string;
-  rating: number;
-  reviewCount: number
-  enrollmentCount: number | undefined
+  rating?: number;
+  reviewCount?: number
+  enrollmentCount?: number | undefined
 };
 
 export type CoursesRecommendationCardData = {
