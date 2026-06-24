@@ -5,7 +5,6 @@ import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 import { ChevronsUpDown, LogOut, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { signOut } from 'next-auth/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -21,6 +20,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import type { MenuItem } from '@/src/features/dashboard/config/menu';
+import { useLogout } from '@/src/features/auth/logout';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
@@ -34,6 +34,7 @@ export function NavUser({ items }: NavUserProps) {
   const router = useRouter();
   const user = useUserProfile();
   const userDomain = useUserDomain();
+  const logout = useLogout();
   const { isMobile } = useSidebar();
   // const { data: session } = useSession();
   const activeDomain = userDomain.activeDomain ?? userDomain.domains[0] ?? '';
@@ -154,12 +155,12 @@ export function NavUser({ items }: NavUserProps) {
 
                 <div
                   className='text-destructive hover:bg-destructive/10 hover:text-destructive flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
-                  onClick={async () =>
-                    await signOut().then(() => {
-                      userDomain.clearDomain();
-                      user?.clearProfile();
-                    })
-                  }
+                  onClick={async () => {
+                    await logout({
+                      clearDomain: userDomain.clearDomain,
+                      clearProfile: user?.clearProfile,
+                    });
+                  }}
                 >
                   <LogOut className='size-4' />
                   <span>Log out</span>

@@ -1,3 +1,4 @@
+import { clearPrivateBffCacheForUser } from '@/lib/api/private-bff-cache';
 import NextAuth, { type NextAuthConfig } from 'next-auth';
 import Keycloak from 'next-auth/providers/keycloak';
 
@@ -32,9 +33,15 @@ function decodeJWT(token: string) {
 
 type SessionWithUser = {
   user?: {
+    email?: string | null;
+    id?: string | null;
     id_token?: string | null;
   };
 };
+
+function getFirstString(...values: unknown[]) {
+  return values.find((value): value is string => typeof value === 'string' && value.length > 0);
+}
 
 function getSessionIdToken(session: unknown): string | undefined {
   if (!session || typeof session !== 'object') {
@@ -48,6 +55,28 @@ function getSessionIdToken(session: unknown): string | undefined {
 
   const idToken = user.id_token;
   return typeof idToken === 'string' ? idToken : undefined;
+}
+
+function getSessionCacheUserId(session: unknown): string | undefined {
+  if (!session || typeof session !== 'object') {
+    return undefined;
+  }
+
+  const user = (session as SessionWithUser).user;
+  if (!user || typeof user !== 'object') {
+    return undefined;
+  }
+
+  return getFirstString(user.id, user.email);
+}
+
+function getTokenCacheUserId(token: unknown): string | undefined {
+  if (!token || typeof token !== 'object') {
+    return undefined;
+  }
+
+  const typedToken = token as { email?: unknown; id?: unknown };
+  return getFirstString(typedToken.id, typedToken.email);
 }
 
 const config: NextAuthConfig = {
@@ -130,6 +159,17 @@ const config: NextAuthConfig = {
   },
   events: {
     async signOut(event) {
+      const cacheUserId =
+        'token' in event
+          ? getTokenCacheUserId(event.token)
+          : 'session' in event
+            ? getSessionCacheUserId(event.session)
+            : undefined;
+
+      if (cacheUserId) {
+        clearPrivateBffCacheForUser(cacheUserId);
+      }
+
       // Try to get ID token from either source
       let idToken: string | undefined;
 

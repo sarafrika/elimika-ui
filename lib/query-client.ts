@@ -13,11 +13,15 @@ export const STALE_TIMES = {
   live: 1000 * 60,
 } as const;
 
+export const CLIENT_QUERY_CACHE_STORAGE_KEY = 'elimika-query-cache-v1';
+export const CLIENT_QUERY_CACHE_MAX_AGE_MS = 1000 * 60 * 30;
+export const CLIENT_QUERY_CACHE_BUSTER = 'elimika-query-cache:2026-06-24';
+
 export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        gcTime: 1000 * 60 * 60 * 24, // 24 hours
+        gcTime: CLIENT_QUERY_CACHE_MAX_AGE_MS,
         staleTime: STALE_TIMES.entity,
       },
     },

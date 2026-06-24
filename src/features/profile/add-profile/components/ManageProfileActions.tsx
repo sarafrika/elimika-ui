@@ -2,7 +2,6 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { AlertTriangle, BookOpen, GraduationCap, Trash2, Users } from 'lucide-react';
-import { signOut } from 'next-auth/react';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -28,6 +27,7 @@ import {
   deleteStudentMutation,
   deleteUserMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useLogout } from '@/src/features/auth/logout';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 type RemovableDomain = 'student' | 'instructor' | 'course_creator';
@@ -47,6 +47,7 @@ const domainOrder: RemovableDomain[] = ['student', 'instructor', 'course_creator
 
 export default function ManageProfileActions({ className = '' }: { className?: string }) {
   const profile = useUserProfile();
+  const logout = useLogout();
   const [selectedDomain, setSelectedDomain] = useState<RemovableDomain | null>(null);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
 
@@ -179,7 +180,7 @@ export default function ManageProfileActions({ className = '' }: { className?: s
       });
       toast.success('Your account has been deleted.');
       setAccountDialogOpen(false);
-      await signOut({ callbackUrl: '/' });
+      await logout({ callbackUrl: '/', clearProfile: profile?.clearProfile });
     } catch (error) {
       toast.error(getErrorMessage(error, 'Unable to delete account. Please try again.'));
     }

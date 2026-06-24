@@ -16,6 +16,7 @@ import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import type { ApiResponseWallet } from '@/services/client';
 import { getWalletOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useLogout } from '@/src/features/auth/logout';
 import { dashboardDomainDisplayConfig } from '@/src/features/dashboard/config/domain-display';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import {
@@ -36,7 +37,6 @@ import {
   SunMedium,
   Wallet
 } from 'lucide-react';
-import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -92,6 +92,7 @@ export default function DashboardTopBar() {
   const pathname = usePathname();
   const profile = useUserProfile();
   const domain = useUserDomain();
+  const logout = useLogout();
 
   const activeDomain = domain.activeDomain ?? null;
 
@@ -254,9 +255,10 @@ export default function DashboardTopBar() {
                 router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/add-profile'))
               }
               onLogout={async () => {
-                await signOut();
-                domain.clearDomain();
-                profile?.clearProfile();
+                await logout({
+                  clearDomain: domain.clearDomain,
+                  clearProfile: profile?.clearProfile,
+                });
               }}
             />
           </div>
