@@ -180,88 +180,90 @@ export function RubricGradingMatrix({
             </div>
 
             {/* ── Grading grid ── */}
-            <div className="overflow-x-auto rounded-md border border-border/70">
-                <table className="w-full min-w-[640px] border-collapse text-left">
-                    <thead>
-                        <tr className="bg-muted/40">
-                            <th className="sticky left-0 z-10 min-w-[180px] border-b border-border/70 bg-muted/40 px-3 py-2 text-xs font-semibold text-foreground">
-                                Criteria
-                            </th>
-                            {sortedLevels.map(level => (
-                                <th
-                                    key={level.uuid}
-                                    className="border-b border-border/70 px-3 py-2 text-xs font-semibold text-foreground"
-                                >
-                                    <div className="flex flex-col gap-0.5">
-                                        <span>{level.name}</span>
-                                        <span className="text-muted-foreground text-[10px] font-normal">
-                                            {level.points} pts
-                                        </span>
-                                    </div>
+            <div className="w-full overflow-x-auto">
+                <div className="min-w-[640px]">
+                    <table className="w-full min-w-[640px] border-collapse text-left">
+                        <thead>
+                            <tr className="bg-muted/40">
+                                <th className="sticky left-0 z-10 min-w-[180px] border-b border-border/70 bg-muted/40 px-3 py-2 text-xs font-semibold text-foreground">
+                                    Criteria
                                 </th>
-                            ))}
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {sortedCriteria.map((criteria, rowIdx) => {
-                            const selectedLevelUuid = selections[criteria.uuid];
-
-                            return (
-                                <tr
-                                    key={criteria.uuid}
-                                    className={rowIdx % 2 === 1 ? 'bg-muted/10' : undefined}
-                                >
-                                    <td className="sticky left-0 z-10 min-w-[180px] border-b border-border/50 bg-background px-3 py-2 align-top">
-                                        <p className="text-xs font-medium text-foreground">{criteria.component_name}</p>
-                                        {criteria.description ? (
-                                            <p className="text-muted-foreground mt-0.5 text-[11px]">{criteria.description}</p>
-                                        ) : null}
-                                        {criteria.weight_suggestion ? (
-                                            <span className="text-muted-foreground mt-1 inline-block text-[10px] italic">
-                                                {criteria.weight_suggestion}
+                                {sortedLevels.map(level => (
+                                    <th
+                                        key={level.uuid}
+                                        className="border-b border-border/70 px-3 py-2 text-xs font-semibold text-foreground"
+                                    >
+                                        <div className="flex flex-col gap-0.5">
+                                            <span>{level.name}</span>
+                                            <span className="text-muted-foreground text-[10px] font-normal">
+                                                {level.points} pts
                                             </span>
-                                        ) : null}
-                                    </td>
+                                        </div>
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
 
-                                    {sortedLevels.map(level => {
-                                        const cell = matrix.matrix_cells[cellKey(criteria.uuid, level.uuid)];
-                                        const isSelected = selectedLevelUuid === level.uuid;
+                        <tbody>
+                            {sortedCriteria.map((criteria, rowIdx) => {
+                                const selectedLevelUuid = selections[criteria.uuid];
 
-                                        return (
-                                            <td
-                                                key={level.uuid}
-                                                className="border-b border-border/50 px-2 py-2 align-top"
-                                            >
-                                                <button
-                                                    type="button"
-                                                    disabled={readOnly}
-                                                    onClick={() => !readOnly && onChange?.(criteria.uuid, level.uuid)}
-                                                    aria-pressed={isSelected}
-                                                    className={`flex w-full flex-col items-start gap-1 rounded-md border px-2.5 py-2 text-left text-[11px] transition disabled:cursor-default ${getLevelAccentClasses(level, isSelected)}`}
+                                return (
+                                    <tr
+                                        key={criteria.uuid}
+                                        className={rowIdx % 2 === 1 ? 'bg-muted/10' : undefined}
+                                    >
+                                        <td className="sticky left-0 z-10 min-w-[180px] border-b border-border/50 bg-background px-3 py-2 align-top">
+                                            <p className="text-xs font-medium text-foreground">{criteria.component_name}</p>
+                                            {criteria.description ? (
+                                                <p className="text-muted-foreground mt-0.5 text-[11px]">{criteria.description}</p>
+                                            ) : null}
+                                            {criteria.weight_suggestion ? (
+                                                <span className="text-muted-foreground mt-1 inline-block text-[10px] italic">
+                                                    {criteria.weight_suggestion}
+                                                </span>
+                                            ) : null}
+                                        </td>
+
+                                        {sortedLevels.map(level => {
+                                            const cell = matrix.matrix_cells[cellKey(criteria.uuid, level.uuid)];
+                                            const isSelected = selectedLevelUuid === level.uuid;
+
+                                            return (
+                                                <td
+                                                    key={level.uuid}
+                                                    className="border-b border-border/50 px-2 py-2 align-top"
                                                 >
-                                                    <span className="flex w-full items-center justify-between gap-1">
-                                                        <span className="font-medium">
-                                                            {level.performance_indicator || level.name}
+                                                    <button
+                                                        type="button"
+                                                        disabled={readOnly}
+                                                        onClick={() => !readOnly && onChange?.(criteria.uuid, level.uuid)}
+                                                        aria-pressed={isSelected}
+                                                        className={`flex w-full flex-col items-start gap-1 rounded-md border px-2.5 py-2 text-left text-[11px] transition disabled:cursor-default ${getLevelAccentClasses(level, isSelected)}`}
+                                                    >
+                                                        <span className="flex w-full items-center justify-between gap-1">
+                                                            <span className="font-medium">
+                                                                {level.performance_indicator || level.name}
+                                                            </span>
+                                                            {isSelected ? (
+                                                                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                                                            ) : null}
                                                         </span>
-                                                        {isSelected ? (
-                                                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                                                        {cell?.description ? (
+                                                            <span className="text-muted-foreground leading-snug">
+                                                                {cell.description}
+                                                            </span>
                                                         ) : null}
-                                                    </span>
-                                                    {cell?.description ? (
-                                                        <span className="text-muted-foreground leading-snug">
-                                                            {cell.description}
-                                                        </span>
-                                                    ) : null}
-                                                </button>
-                                            </td>
-                                        );
-                                    })}
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                                                    </button>
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
