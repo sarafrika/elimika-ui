@@ -182,6 +182,7 @@ export default function ClassCourseDetailsPage({
                 secondaryMeta:
                     course.category_names?.[0] ??
                     (course.price && course.price > 0 ? 'Paid Course' : 'Free Course'),
+
             })),
         [courses]
     );
@@ -728,7 +729,7 @@ export default function ClassCourseDetailsPage({
                                     Provider:{' '}
                                     <span className='font-medium'>{creatorName || 'Course Creator'}</span>
                                     {durationLabel ? ` · Duration: ${durationLabel}` : ''}
-                                    {course.category_names?.[0] ? ` · Focus: ${course.category_names[0]}` : ''}
+                                    {course?.category_names?.[0] ? ` · Focus: ${course?.category_names[0]}` : ''}
                                 </p>
                                 <p>
                                     Submit your application notes and set the amount you want to charge students
@@ -847,6 +848,23 @@ export default function ClassCourseDetailsPage({
 }
 
 function CourseScheduleInfo({ type, classData, schedule }: { type: "course" | "class" | undefined, classData: CombinedClassDetailsData, schedule: ClassDetailsScheduleItem }) {
+    console.log(schedule, "SCHED")
+    const getDuration = (start?: string, end?: string) => {
+        if (!start || !end) return "-";
+
+        const diff = new Date(end).getTime() - new Date(start).getTime();
+
+        if (isNaN(diff) || diff < 0) return "-";
+
+        const minutes = Math.floor(diff / (1000 * 60));
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+
+        return hours > 0
+            ? `${hours}h ${remainingMinutes}m`
+            : `${remainingMinutes}m`;
+    };
+
     return <>
         {type === "course" ?
             <div className="rounded-lg border border-muted/50 bg-muted/30 p-6">
@@ -885,9 +903,8 @@ function CourseScheduleInfo({ type, classData, schedule }: { type: "course" | "c
                             <TableHead>#</TableHead>
                             <TableHead>Title</TableHead>
                             <TableHead>Date & Time</TableHead>
-                            <TableHead>Duration</TableHead>
-                            <TableHead>Format</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Time Spent</TableHead>
                         </TableRow>
                     </TableHeader>
 
@@ -920,13 +937,19 @@ function CourseScheduleInfo({ type, classData, schedule }: { type: "course" | "c
                                                         hour: "2-digit",
                                                         minute: "2-digit",
                                                     })}
+                                                    {"   "}
+                                                    ({instance.duration_formatted})
                                                 </span>
                                             </div>
                                         </TableCell>
 
-                                        <TableCell>{instance.duration_formatted}</TableCell>
-                                        <TableCell>{instance.location_type}</TableCell>
                                         <TableCell>{instance.status}</TableCell>
+
+                                        <TableCell>
+                                            {instance.status === "scheduled" || !instance.started_at || !instance.concluded_at
+                                                ? "Pending"
+                                                : getDuration(instance.started_at, instance.concluded_at)}
+                                        </TableCell>
                                     </TableRow>
                                 ))
                         ) : (

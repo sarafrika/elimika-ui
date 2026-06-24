@@ -28,9 +28,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
   CalendarDays,
+  Check,
   CircleCheck,
   EllipsisVertical,
   Eye,
+  Filter,
   Pencil,
   Plus,
   Trash2,
@@ -45,7 +47,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
 import { cn } from '../../../../../lib/utils';
-import { deactivateClassDefinitionMutation, getAllStudentsOptions, getClassDefinitionsForInstructorQueryKey, getCourseEnrollmentsOptions } from '../../../../../services/client/@tanstack/react-query.gen';
+import { deactivateClassDefinitionMutation, getAllStudentsOptions, getClassDefinitionsForInstructorQueryKey, getCourseEnrollmentsOptions, getEnrollmentsForClassOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 import { RichTextPreview } from '../../classes/class-training/[id]/_components/ClassTrainingPage';
 import type { TrainingHubLiveClass } from './training-hub-data';
 
@@ -69,6 +71,12 @@ export function LiveClassCard({
     })
   })
 
+  const { data: classEnrollments } = useQuery({
+    ...getEnrollmentsForClassOptions({
+      path: { uuid: liveClass?.class?.uuid as string },
+    })
+  })
+
   const { data: allStudents } = useQuery({
     ...getAllStudentsOptions({ query: { pageable: {} } })
   })
@@ -85,6 +93,12 @@ export function LiveClassCard({
     return new Set(studentUuids);
   }, [studentUuids]);
 
+  const classEnrolledSet = useMemo(() => {
+    return new Set(
+      (classEnrollments?.data ?? []).map(e => e.student_uuid)
+    );
+  }, [classEnrollments]);
+
   const students = useMemo(() => {
     const all = allStudents?.data?.content ?? [];
 
@@ -96,7 +110,7 @@ export function LiveClassCard({
 
     return all
       .filter(student => {
-        const isEnrolled = enrolledSet.has(student?.uuid as string);
+        const isEnrolled = classEnrolledSet.has(student?.uuid as string);
 
         if (filter === 'enrolled') return isEnrolled;
         if (filter === 'not_enrolled') return !isEnrolled;
@@ -111,6 +125,18 @@ export function LiveClassCard({
           .includes(search.toLowerCase());
       });
   }, [allStudents, enrolledSet, filter, search]);
+
+
+
+
+  const inviteStudents = useMemo(() => {
+    const all = allStudents?.data?.content ?? [];
+
+    return all.filter(student => {
+      const uuid = student?.uuid as string;
+      return !classEnrolledSet.has(uuid);
+    });
+  }, [allStudents, classEnrolledSet]);
 
   const [selectedStudentUuids, setSelectedStudentUuids] = useState<string[]>([]);
 
@@ -526,7 +552,7 @@ export function LiveClassCard({
                   Select students
                 </h3>
 
-                <div className="flex flex-col gap-2 mb-3">
+                <div className="flex flex-row gap-2 mb-3">
                   <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -534,31 +560,49 @@ export function LiveClassCard({
                     className="h-9 w-full rounded-md border px-3 text-sm"
                   />
 
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant={filter === 'all' ? 'default' : 'outline'}
-                      onClick={() => setFilter('all')}
-                    >
-                      All
-                    </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Filter className="h-4 w-4 mr-2" />
+                        Filter
+                      </Button>
+                    </DropdownMenuTrigger>
 
-                    <Button
-                      size="sm"
-                      variant={filter === 'enrolled' ? 'default' : 'outline'}
-                      onClick={() => setFilter('enrolled')}
-                    >
-                      Enrolled
-                    </Button>
+                    <DropdownMenuContent className="w-48" align="start">
+                      <DropdownMenuItem
+                        onClick={() => setFilter("all")}
+                        className={cn(
+                          "flex items-center justify-between",
+                          filter === "all" && "bg-muted font-medium"
+                        )}
+                      >
+                        All
+                        {filter === "all" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
 
-                    <Button
-                      size="sm"
-                      variant={filter === 'not_enrolled' ? 'default' : 'outline'}
-                      onClick={() => setFilter('not_enrolled')}
-                    >
-                      Not enrolled
-                    </Button>
-                  </div>
+                      <DropdownMenuItem
+                        onClick={() => setFilter("enrolled")}
+                        className={cn(
+                          "flex items-center justify-between",
+                          filter === "enrolled" && "bg-muted font-medium"
+                        )}
+                      >
+                        Enrolled
+                        {filter === "enrolled" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        onClick={() => setFilter("not_enrolled")}
+                        className={cn(
+                          "flex items-center justify-between",
+                          filter === "not_enrolled" && "bg-muted font-medium"
+                        )}
+                      >
+                        Not enrolled
+                        {filter === "not_enrolled" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
                 <div className="space-y-2">
@@ -586,7 +630,7 @@ export function LiveClassCard({
 
                           <div className='flex flex-row items-center gapp-2' >
                             <p className="truncate font-medium flex items-center gap-2">
-                              {enrolledSet.has(student?.uuid as string) && (
+                              {classEnrolledSet.has(student?.uuid as string) && (
                                 <span className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary">
                                   Enrolled
                                 </span>

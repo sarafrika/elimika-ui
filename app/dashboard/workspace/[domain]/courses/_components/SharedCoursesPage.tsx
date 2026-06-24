@@ -92,9 +92,9 @@ export type UnifiedContentItem = {
   secondaryMeta: string;
   enrolledClasses: number;
   bundledCourseCount?: number;
-  rating: number,
-  reviewCount: number
-  enrollmentCount: number | undefined
+  rating?: number,
+  reviewCount?: number
+  enrollmentCount?: number | undefined
   imageTone?: string,
   icon?: string | undefined
 };
