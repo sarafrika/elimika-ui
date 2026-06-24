@@ -3,6 +3,7 @@ import { ProgressBar } from "./ProgressBar";
 import { StatusBadge } from "./StatusBadge";
 
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import type { StudentRosterEntry } from "../types";
 
 interface StudentRowProps {
@@ -10,12 +11,20 @@ interface StudentRowProps {
 }
 
 export function StudentRow({ student }: StudentRowProps) {
+  const router = useRouter()
   const classCount = student.classes.length;
   const courseCount = student.courses.length;
   const joinedDate = student.profile?.created_date;
 
   return (
-    <tr className="border-b border-border hover:bg-muted/40 transition-colors">
+    <tr
+      onClick={() =>
+        router.push(
+          `/dashboard/students/${student?.student?.user_uuid}?sId=${student?.student?.uuid}`
+        )
+      }
+      className="cursor-pointer border-b border-border hover:bg-muted/40 transition-colors"
+    >
       {/* Student */}
       <td className="py-3 px-2">
         <div className="flex items-center gap-2.5 min-w-0">

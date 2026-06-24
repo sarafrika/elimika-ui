@@ -144,11 +144,64 @@ function calculateQuizResult(
             else incorrectCount++;
         }
 
-        if (type === 'short_answer' || type === 'short_text') {
-            const expected = question.options?.find(o => o.is_correct)?.option_text?.trim().toLowerCase() ?? '';
-            const isCorrect = normalizeAnswer(String(answer || '')) === normalizeAnswer(expected);
-            if (isCorrect) { earnedPoints += points; correctCount++; }
-            else incorrectCount++;
+        if (type === 'true_false') {
+            const correctOption = question.options.find(o => o.is_correct);
+            const correctValue = correctOption?.option_text?.toLowerCase();
+
+            const studentAnswer = String(answer || '').toLowerCase().trim();
+
+            const isCorrect =
+                studentAnswer === correctValue ||
+                studentAnswer === String(correctOption?.uuid) ||
+                studentAnswer === (correctValue === 'true' ? 't' : 'f');
+
+            if (isCorrect) {
+                earnedPoints += points;
+                correctCount++;
+            } else {
+                incorrectCount++;
+            }
+        }
+
+        if (type === 'short_answer' || type === 'essay') {
+            const expected = question.options?.find(o => o.is_correct)?.option_text ?? '';
+            const student = String(answer || '');
+
+            const normalize = (text: string) =>
+                text
+                    .toLowerCase()
+                    .replace(/[^a-z0-9\s]/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
+            const expectedNorm = normalize(expected);
+            const studentNorm = normalize(student);
+
+            // ✅ KEY FIX: direct containment checks (both directions)
+            const isContainedMatch =
+                expectedNorm.includes(studentNorm) ||   // student is subset of expected
+                studentNorm.includes(expectedNorm);     // student is full/expanded version
+
+            // fallback keyword overlap (for partial answers)
+            const expectedWords = expectedNorm.split(' ').filter(w => w.length > 3);
+            const studentWords = new Set(studentNorm.split(' '));
+
+            const matched = expectedWords.filter(word => studentWords.has(word));
+
+            const score =
+                expectedWords.length > 0
+                    ? matched.length / expectedWords.length
+                    : 0;
+
+            // ✅ FINAL DECISION
+            const isCorrect = isContainedMatch || score >= 0.01;
+
+            if (isCorrect) {
+                earnedPoints += points;
+                correctCount++;
+            } else {
+                incorrectCount++;
+            }
         }
     });
 
@@ -561,14 +614,22 @@ export default function StudentQuizSubmissionPage() {
                                 mode === 'review'
                                     ? (() => {
                                         const type = String(question.question_type || '').toLowerCase();
-                                        if (type === 'multiple_choice') {
+                                        if (type === 'multiple_choice' || type === 'true_false') {
                                             const correctIds = (question.options ?? [])
                                                 .filter(o => o.is_correct)
                                                 .map(o => o.uuid);
+
+                                            const selected = selectedOptionValues;
+
                                             return (
-                                                selectedOptionValues.length === correctIds.length &&
-                                                selectedOptionValues.every(id => correctIds.includes(id))
+                                                selected.length === correctIds.length &&
+                                                selected.every(id => correctIds.includes(id))
                                             );
+                                        }
+                                        if (type === 'true_false') {
+                                            const correctOption = (question.options ?? []).find(o => o.is_correct)?.uuid;
+
+                                            return selectedOptionValues[0] === correctOption;
                                         }
                                         if (
                                             type === 'short_answer' ||
@@ -627,9 +688,11 @@ export default function StudentQuizSubmissionPage() {
 
                                             {(question.options?.length ?? 0) > 0 && (
                                                 <p className='text-muted-foreground text-xs'>
-                                                    {multipleAnswersAllowed
-                                                        ? 'Select all options that apply.'
-                                                        : 'Select one answer.'}
+                                                    {questionType === 'MULTIPLE_CHOICE'
+                                                        ? (multipleAnswersAllowed ? 'Select all options that apply.' : 'Select one answer.')
+                                                        : questionType === 'TRUE_FALSE'
+                                                            ? 'Select True or False.'
+                                                            : 'Select one answer.'}
                                                 </p>
                                             )}
                                         </div>

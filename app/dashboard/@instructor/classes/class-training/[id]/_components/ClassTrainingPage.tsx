@@ -1743,9 +1743,9 @@ function AssessmentRubricCard({
         <p className='text-muted-foreground mb-3 text-xs'>{assessment.description}</p>
       ) : null}
 
-      <div className='space-y-2 rounded-md border border-dashed p-3'>
-        <div className='flex items-center justify-between gap-3'>
-          <p className='text-xs font-medium'>
+      <div className="space-y-2 rounded-md border border-dashed p-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-medium">
             {rubric?.rubric.title || 'No rubric attached'}
           </p>
           {rubric?.rubric.max_score ? (
@@ -1754,11 +1754,13 @@ function AssessmentRubricCard({
         </div>
 
         {rubric ? (
-          <RubricGradingMatrix
-            matrix={rubric}
-            selections={selections}
-            onChange={setSelection}
-          />
+          <div className="w-full overflow-x-auto">
+            <RubricGradingMatrix
+              matrix={rubric}
+              selections={selections}
+              onChange={setSelection}
+            />
+          </div>
         ) : (
           <p className='text-muted-foreground text-xs'>
             This assessment has no rubric matrix linked yet.
@@ -1858,7 +1860,7 @@ function SubmissionPanel({
   };
 
   return (
-    <aside className='bg-card/95 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden'>
+    <aside className='bg-card/95 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden mb-12'>
       <div className='border-border/70 border-b p-3'>
         <div className='mb-3 flex min-w-0 items-center justify-between gap-3'>
           <div className='min-w-0'>
@@ -1916,6 +1918,8 @@ function SubmissionPanel({
 
       <ScrollArea className='min-h-0 flex-1'>
         <div className='max-w-full space-y-3 p-3'>
+
+
           <div className='border-border/70 bg-background/90 rounded-md border p-3'>
             <div className='flex items-start justify-between gap-3'>
               <div className='min-w-0'>
@@ -3210,31 +3214,66 @@ export default function ClassTrainingPage({
                 className='text-foreground gap-2 hover:bg-muted xl:hidden'
               >
                 <PanelLeft className='h-4 w-4' />
-                Roster
+                {activeLefTab === 'evaluation' ? 'Evaluation' : 'Roster'}
               </Button>
             </SheetTrigger>
-            <SheetContent side='left' className='w-[88vw] max-w-sm p-0'>
+            <SheetContent side='left' className='flex w-[88vw] max-w-sm flex-col p-0'>
               <SheetHeader className='sr-only'>
                 <SheetTitle>Class roster</SheetTitle>
                 <SheetDescription>
-                  Students assigned to this selected class instance.
+                  Students assigned to this selected class instance, and the
+                  Students/Evaluation mode switch for the main viewport.
                 </SheetDescription>
               </SheetHeader>
-              <RosterPanel
-                activeInstanceStudentsCount={activeInstanceStudents.length}
-                activeInstanceStudents={activeInstanceStudents}
-                filteredRoster={filteredRoster}
-                activeSchedule={activeSchedule}
-                studentSearch={studentSearch}
-                setStudentSearch={setStudentSearch}
-                selectedStudentId={selectedStudentId}
-                onSelectStudent={entry => setSelectedStudentId(entry.enrollment?.uuid ?? '')}
-                onMarkAllPresent={handleMarkAllPresent}
-                isMarkingAllAttendance={markAttendanceMut.isPending}
-                onMarkAttendance={handleMarkAttendance}
-                isMarkingAttendance={markAttendanceMut.isPending}
-                markingStudentId={markingStudentId as string}
-              />
+
+              <div className='border-border/70 border-b bg-card px-2 pt-2'>
+                <Tabs
+                  value={activeLefTab}
+                  onValueChange={value => setActiveLeftTab(value as typeof activeLefTab)}
+                  className='w-full'
+                >
+                  <TabsList className='bg-muted grid w-full grid-cols-2 rounded-lg p-1 dark:bg-muted/60'>
+                    {LEFT_TAB_ITEMS.map(tab => (
+                      <TabsTrigger
+                        key={tab.value}
+                        value={tab.value}
+                        className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
+                      >
+                        {tab.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </div>
+
+              {activeLefTab === 'evaluation' ? (
+                <div className='border-border/70 bg-card/90 border-b p-3'>
+                  <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+                    Evaluation roster
+                  </p>
+                  <p className='text-foreground mt-1 text-sm font-medium'>
+                    Select a student to review their evaluation details.
+                  </p>
+                </div>
+              ) : null}
+
+              <div className='min-h-0 flex-1'>
+                <RosterPanel
+                  activeInstanceStudentsCount={activeInstanceStudents.length}
+                  activeInstanceStudents={activeInstanceStudents}
+                  filteredRoster={filteredRoster}
+                  activeSchedule={activeSchedule}
+                  studentSearch={studentSearch}
+                  setStudentSearch={setStudentSearch}
+                  selectedStudentId={selectedStudentId}
+                  onSelectStudent={entry => setSelectedStudentId(entry.enrollment?.uuid ?? '')}
+                  onMarkAllPresent={handleMarkAllPresent}
+                  isMarkingAllAttendance={markAttendanceMut.isPending}
+                  onMarkAttendance={handleMarkAttendance}
+                  isMarkingAttendance={markAttendanceMut.isPending}
+                  markingStudentId={markingStudentId as string}
+                />
+              </div>
             </SheetContent>
           </Sheet>
 
@@ -3249,7 +3288,7 @@ export default function ClassTrainingPage({
                 Work
               </Button>
             </SheetTrigger>
-            <SheetContent side='right' className='w-[94vw] max-w-2xl p-0'>
+            <SheetContent side="right" className="w-screen max-w-none p-0">
               <SheetHeader className='sr-only'>
                 <SheetTitle>Class work</SheetTitle>
                 <SheetDescription>Submissions, rubric, and notes.</SheetDescription>
@@ -3295,8 +3334,8 @@ export default function ClassTrainingPage({
         </div>
       </header>
 
-      <section className='grid min-h-0 flex-1 gap-0 overflow-hidden flex xl:grid-cols-[420px_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]'>
-        <section>
+      <section className='grid min-h-0 flex-1 gap-0 overflow-hidden xl:grid-cols-[420px_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]'>
+        <section className='hidden xl:block'>
           <Tabs
             value={activeLefTab}
             onValueChange={value => setActiveLeftTab(value as typeof activeLefTab)}
@@ -3368,296 +3407,9 @@ export default function ClassTrainingPage({
           </ScrollArea>
         </section>
 
-        {activeLefTab !== 'evaluation' &&
-          <section className='min-h-0 overflow-hidden bg-background'>
-            <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
-              <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-                <div className='min-w-0 w-full'>
-                  <div className='flex flex-row items-center justify-between' >
-                    <h2 className='truncate text-lg font-semibold'>
-                      {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
-                    </h2>
-
-                    <div className='border-border/70 border-t p-3 max-w-[500px]'>
-                      {(() => {
-                        const status = activeSchedule?.status?.toUpperCase();
-                        const isCancelled = status === 'CANCELLED';
-                        const isBlocked = status === 'BLOCKED';
-                        const isConcluded = Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
-                        const canStart =
-                          !!activeSchedule &&
-                          !isCancelled &&
-                          !isBlocked &&
-                          !isConcluded &&
-                          (activeSchedule.can_be_started ?? status === 'SCHEDULED');
-                        const canEnd =
-                          !!activeSchedule &&
-                          !isCancelled &&
-                          !isBlocked &&
-                          !isConcluded &&
-                          (activeSchedule.can_be_ended ?? status === 'ONGOING');
-                        const isLifecycleLoading =
-                          startScheduledInstanceMut.isPending || endScheduledInstanceMut.isPending;
-
-                        return (
-                          <div className='flex flex-col gap-3'>
-                            {isConcluded ? (
-                              <Button disabled className='h-10 w-full gap-2 rounded-md'>
-                                <CheckCircle className='h-4 w-4' />
-                                Class ended
-                              </Button>
-                            ) : canEnd ? (
-                              <Button
-                                variant="destructive"
-                                className="h-10 w-full gap-2 rounded-md"
-                                disabled={isLifecycleLoading}
-                                onClick={handleEndClass}
-                              >
-                                {endScheduledInstanceMut.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <CheckCircle className="h-4 w-4" />
-                                )}
-
-                                <div className="flex items-center gap-2">
-                                  <span>End Class</span>
-                                  {remainingTime && (
-                                    <span className="rounded px-2 py-0.5 text-xs">
-                                      {remainingTime}
-                                    </span>
-                                  )}
-                                </div>
-                              </Button>
-                            ) : (
-                              <Button
-                                className='h-10 w-full gap-2 rounded-md'
-                                disabled={!canStart || isLifecycleLoading}
-                                onClick={handleStartClass}  // ✅ use the real handler
-                              >
-                                {startScheduledInstanceMut.isPending ? (
-                                  <Loader2 className='h-4 w-4 animate-spin' />
-                                ) : (
-                                  <Video className='h-4 w-4' />
-                                )}
-                                {isCancelled
-                                  ? 'Cancelled'
-                                  : isBlocked
-                                    ? 'Blocked'
-                                    : !activeSchedule
-                                      ? 'Select a session'
-                                      : 'Start Class'}
-                              </Button>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-
-                  <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
-                    <Tabs
-                      value={activeTab}
-                      onValueChange={value => setActiveTab(value as typeof activeTab)}
-                      className='w-full max-w-xl'
-                    >
-                      <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
-                        {TAB_ITEMS.map(tab => (
-                          <TabsTrigger
-                            key={tab.value}
-                            value={tab.value}
-                            className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
-                          >
-                            {tab.label}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                    </Tabs>
-
-                    <div className='flex flex-col items-start lg:w-72 lg:justify-end'>
-                      <p className='text-muted-foreground text-sm'>Lesson</p>
-                      <Select
-                        value={selectedContentId}
-                        onValueChange={handleContentChange}
-                        disabled={lessonModules.length === 0}
-                      >
-                        <SelectTrigger className="h-9 w-full lg:min-w-52">
-                          <SelectValue placeholder="Select content" />
-                        </SelectTrigger>
-
-                        <SelectContent>
-                          {sortedLessonModules.map((module) => (
-                            <div key={module.lesson.uuid}>
-                              <div className="px-2 py-1 text-[13px] italic font-semibold text-muted-foreground bg-muted/60 rounded my-1 border border-muted">
-                                {module.lesson.title}
-                              </div>
-
-                              {module.content?.data
-                                ?.slice()
-                                .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-                                .map((content) => (
-                                  <SelectItem key={content.uuid} value={content.uuid}>
-                                    {content.title}
-                                  </SelectItem>
-                                ))}
-                            </div>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <ScrollArea className='h-[calc(100vh-8.5rem)]'>
-              {activeTab === 'content' && (
-                <div className='mx-auto space-y-4 p-2 md:p-2 mb-40'>
-                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                    <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
-                      <Badge variant='outline' className='capitalize'>
-                        {selectedContentType}
-                      </Badge>
-                      <span>Beginner</span>
-                      <span>{activeInstanceStudents.length} students</span>
-                      <span>{selectedContentDuration || 'Open during class'}</span>
-                    </div>
-
-                    <div className='border-border/70 border-b p-4'>
-                      <p className='text-muted-foreground text-xs'>
-                        {activeLessonCourse?.name || course?.name}
-                      </p>
-                      <h3 className='mt-1 text-xl font-semibold'>{activeLesson?.title}</h3>
-                    </div>
-                    <div className='p-4'>
-                      {selectedContent?.title ? (
-                        <div className='border-border/60 bg-background mb-4 rounded-md border p-4'>
-                          <p className='text-muted-foreground text-sm leading-7'>
-                            {selectedContent.title}
-                          </p>
-                        </div>
-                      ) : null}
-
-                      <div className='max-w-[inherit]' >
-                        {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
-                      </div>
-                    </div>
-                  </article>
-
-                  {/* <section className='border-border/70 bg-card rounded-lg border p-4 shadow-sm'>
-                <div className='mb-3 flex items-center justify-between gap-3'>
-                  <h3 className='font-semibold'>Class discussion</h3>
-                  <Button variant='outline' size='sm'>
-                    View comments
-                  </Button>
-                </div>
-                <div className='space-y-3'>
-                  {activeInstanceStudents.slice(0, 3).map((entry, index) => (
-                    <div
-                      key={entry.enrollment?.uuid ?? entry.user?.uuid ?? `discussion-${index}`}
-                      className='flex gap-3'
-                    >
-                      <Avatar className='size-8'>
-                        <AvatarFallback>{getInitials(entry.user?.full_name)}</AvatarFallback>
-                      </Avatar>
-                      <div className='bg-muted min-w-0 flex-1 rounded-md p-3'>
-                        <p className='text-sm font-semibold'>
-                          {entry.user?.full_name || 'Student'}
-                        </p>
-                        <p className='text-muted-foreground mt-1 text-sm'>
-                          Reminder to review your notes before the next class and complete the quiz.
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  {activeInstanceStudents.length === 0 ? (
-                    <div className='text-muted-foreground rounded-md border border-dashed p-4 text-sm'>
-                      Discussion previews will appear when students are attached to this session.
-                    </div>
-                  ) : null}
-                </div>
-                <div className='mt-4 flex gap-2'>
-                  <Input placeholder='Add a comment...' className='h-10 rounded-md' />
-                  <Button size='icon' className='h-10 w-10 rounded-md'>
-                    <Send className='h-4 w-4' />
-                  </Button>
-                </div>
-              </section> */}
-                </div>
-              )}
-
-              {activeTab === 'practice' && (
-                <div className='mx-auto space-y-4 p-2 md:p-2'>
-                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                    <div className='border-border/70 border-b p-4'>
-                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
-                        Practice Activities
-                      </p>
-                      <h3 className='mt-1 text-xl font-semibold'>
-                        {activeLesson?.title || 'Practice activities'}
-                      </h3>
-                      <p className='text-muted-foreground mt-2 text-sm'>
-                        Class activities tied to this skill — guide learners through these during class.
-                      </p>
-                    </div>
-                    <div className='p-4'>
-                      <PracticeActivityList
-                        courseUuid={activeLessonCourseUuid || undefined}
-                        lessonUuid={activeLesson?.uuid}
-                        variant='instructor'
-                      />
-                    </div>
-                  </article>
-                </div>
-              )}
-
-              {activeTab === 'assessment' && (
-                <div className='mx-auto space-y-4 p-2 md:p-2'>
-                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                    <div className='border-border/70 border-b p-4'>
-                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
-                        Assessment Tasks
-                      </p>
-                      <h3 className='mt-1 text-xl font-semibold'>
-                        {activeLesson?.title || 'Assessment tasks'}
-                      </h3>
-                      <p className='text-muted-foreground mt-2 text-sm'>
-                        Manage lesson assignments and quizzes from this tab.
-                      </p>
-                    </div>
-                    <div className='p-4'>
-                      <AssessmentTasksSection
-                        activeSchedule={activeSchedule}
-                        lessonAssignments={lessonAssignments}
-                        lessonQuizzes={lessonQuizzes}
-                        activeScheduleAssignments={activeScheduleAssignments}
-                        activeScheduleQuizzes={activeScheduleQuizzes}
-                        selectedAssignmentUuid={selectedAssignmentUuid}
-                        selectedQuizUuid={selectedQuizUuid}
-                        assignmentDueAt={assignmentDueAt}
-                        assignmentGradingDueAt={assignmentGradingDueAt}
-                        quizDueAt={quizDueAt}
-                        quizGradingDueAt={quizGradingDueAt}
-                        onAssignmentSelect={setSelectedAssignmentUuid}
-                        onQuizSelect={setSelectedQuizUuid}
-                        onAssignmentDueAtChange={setAssignmentDueAt}
-                        onAssignmentGradingDueAtChange={setAssignmentGradingDueAt}
-                        onQuizDueAtChange={setQuizDueAt}
-                        onQuizGradingDueAtChange={setQuizGradingDueAt}
-                        onAssignAssignment={handleAssignAssignment}
-                        onAssignQuiz={handleAssignQuiz}
-                        isAssigningAssignment={addAssignmentScheduleMut.isPending}
-                        isAssigningQuiz={addQuizScheduleMut.isPending}
-                      />
-                    </div>
-                  </article>
-                </div>
-              )}
-            </ScrollArea>
-          </section>
-        }
-
-        {activeLefTab === "evaluation" &&
-          <section className='min-h-0 overflow-hidden bg-background'>
+        {/* // on mobile, this part should only be visible when I select evaluation on activelefttab */}
+        {activeLefTab === "evaluation" ?
+          (<section className='min-h-0 overflow-hidden bg-background'>
             {activeLefTab === 'evaluation' ? (
               <div className='h-full overflow-hidden'>
                 <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
@@ -3676,33 +3428,31 @@ export default function ClassTrainingPage({
                   </div>
                 </div>
 
-                <ScrollArea className='h-[calc(100vh-8.5rem)]'>
-                  <div className='p-3'>
-                    <SubmissionPanel
-                      activeSchedule={activeSchedule}
-                      activeInstanceStudentsCount={activeInstanceStudents.length}
-                      selectedContentType={selectedContentType}
-                      selectedStudent={selectedStudent}
-                      courseAssessments={courseAssessments}
-                      rubricAssociations={rubricAssociations}
-                      rubricMatrices={rubricMatrices}
-                      noteDraft={noteDraft}
-                      sentNotes={sentNotes}
-                      selectedStudentSubmissions={selectedStudentSubmissions}
-                      onNoteDraftChange={setNoteDraft}
-                      handleEndClass={handleEndClass}
-                      isEndClassConfirmOpen={isEndClassConfirmOpen}
-                      setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
-                      isEndingClass={endScheduledInstanceMut.isPending}
-                      onSendNote={handleSendNote}
-                      onMarkAttendance={handleMarkAttendance}
-                      isMarkingAttendance={markAttendanceMut.isPending}
-                      onStartClass={handleStartClass}
-                      remainingTime={remainingTime}
-                      onEndClass={handleEndClass}
-                      isStartingClass={startScheduledInstanceMut.isPending}
-                    />
-                  </div>
+                <ScrollArea className='h-[calc(100vh-8.5rem)] w-full'>
+                  <SubmissionPanel
+                    activeSchedule={activeSchedule}
+                    activeInstanceStudentsCount={activeInstanceStudents.length}
+                    selectedContentType={selectedContentType}
+                    selectedStudent={selectedStudent}
+                    courseAssessments={courseAssessments}
+                    rubricAssociations={rubricAssociations}
+                    rubricMatrices={rubricMatrices}
+                    noteDraft={noteDraft}
+                    sentNotes={sentNotes}
+                    selectedStudentSubmissions={selectedStudentSubmissions}
+                    onNoteDraftChange={setNoteDraft}
+                    handleEndClass={handleEndClass}
+                    isEndClassConfirmOpen={isEndClassConfirmOpen}
+                    setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
+                    isEndingClass={endScheduledInstanceMut.isPending}
+                    onSendNote={handleSendNote}
+                    onMarkAttendance={handleMarkAttendance}
+                    isMarkingAttendance={markAttendanceMut.isPending}
+                    onStartClass={handleStartClass}
+                    remainingTime={remainingTime}
+                    onEndClass={handleEndClass}
+                    isStartingClass={startScheduledInstanceMut.isPending}
+                  />
                 </ScrollArea>
               </div>
             ) : (
@@ -3873,7 +3623,293 @@ export default function ClassTrainingPage({
                 </ScrollArea>
               </div>
             )}
-          </section>
+          </section>) :
+          (<section className='min-h-0 overflow-hidden bg-background'>
+            <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
+              <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+                <div className='min-w-0 w-full'>
+                  <div className='flex flex-row items-center justify-between' >
+                    <h2 className='truncate text-lg font-semibold'>
+                      {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
+                    </h2>
+
+                    <div className='border-border/70 border-t p-3 max-w-[500px]'>
+                      {(() => {
+                        const status = activeSchedule?.status?.toUpperCase();
+                        const isCancelled = status === 'CANCELLED';
+                        const isBlocked = status === 'BLOCKED';
+                        const isConcluded = Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
+                        const canStart =
+                          !!activeSchedule &&
+                          !isCancelled &&
+                          !isBlocked &&
+                          !isConcluded &&
+                          (activeSchedule.can_be_started ?? status === 'SCHEDULED');
+                        const canEnd =
+                          !!activeSchedule &&
+                          !isCancelled &&
+                          !isBlocked &&
+                          !isConcluded &&
+                          (activeSchedule.can_be_ended ?? status === 'ONGOING');
+                        const isLifecycleLoading =
+                          startScheduledInstanceMut.isPending || endScheduledInstanceMut.isPending;
+
+                        return (
+                          <div className='flex flex-col gap-3'>
+                            {isConcluded ? (
+                              <Button disabled className='h-10 w-full gap-2 rounded-md'>
+                                <CheckCircle className='h-4 w-4' />
+                                Class ended
+                              </Button>
+                            ) : canEnd ? (
+                              <Button
+                                variant="destructive"
+                                className="h-10 w-full gap-2 rounded-md"
+                                disabled={isLifecycleLoading}
+                                onClick={handleEndClass}
+                              >
+                                {endScheduledInstanceMut.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4" />
+                                )}
+
+                                <div className="flex items-center gap-2">
+                                  <span>End Class</span>
+                                  {remainingTime && (
+                                    <span className="rounded px-2 py-0.5 text-xs">
+                                      {remainingTime}
+                                    </span>
+                                  )}
+                                </div>
+                              </Button>
+                            ) : (
+                              <Button
+                                className='h-10 w-full gap-2 rounded-md'
+                                disabled={!canStart || isLifecycleLoading}
+                                onClick={handleStartClass}  // ✅ use the real handler
+                              >
+                                {startScheduledInstanceMut.isPending ? (
+                                  <Loader2 className='h-4 w-4 animate-spin' />
+                                ) : (
+                                  <Video className='h-4 w-4' />
+                                )}
+                                {isCancelled
+                                  ? 'Cancelled'
+                                  : isBlocked
+                                    ? 'Blocked'
+                                    : !activeSchedule
+                                      ? 'Select a session'
+                                      : 'Start Class'}
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
+                    <Tabs
+                      value={activeTab}
+                      onValueChange={value => setActiveTab(value as typeof activeTab)}
+                      className='w-full max-w-xl'
+                    >
+                      <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
+                        {TAB_ITEMS.map(tab => (
+                          <TabsTrigger
+                            key={tab.value}
+                            value={tab.value}
+                            className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
+                          >
+                            {tab.label}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
+
+                    <div className='flex flex-col items-start lg:w-72 lg:justify-end'>
+                      <p className='text-muted-foreground text-sm'>Lesson</p>
+                      <Select
+                        value={selectedContentId}
+                        onValueChange={handleContentChange}
+                        disabled={lessonModules.length === 0}
+                      >
+                        <SelectTrigger className="h-9 w-full lg:min-w-52">
+                          <SelectValue placeholder="Select content" />
+                        </SelectTrigger>
+
+                        <SelectContent>
+                          {sortedLessonModules.map((module) => (
+                            <div key={module.lesson.uuid}>
+                              <div className="px-2 py-1 text-[13px] italic font-semibold text-muted-foreground bg-muted/60 rounded my-1 border border-muted">
+                                {module.lesson.title}
+                              </div>
+
+                              {module.content?.data
+                                ?.slice()
+                                .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                                .map((content) => (
+                                  <SelectItem key={content.uuid} value={content.uuid}>
+                                    {content.title}
+                                  </SelectItem>
+                                ))}
+                            </div>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* on mobile, this part should always be visible, except when i select evaluation on the activelefttab */}
+            <ScrollArea className='flex h-[calc(100vh-8.5rem)]'>
+              {activeTab === 'content' && (
+                <div className='mx-auto space-y-4 p-2 md:p-2 mb-40'>
+                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                    <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
+                      <Badge variant='outline' className='capitalize'>
+                        {selectedContentType}
+                      </Badge>
+                      <span>Beginner</span>
+                      <span>{activeInstanceStudents.length} students</span>
+                      <span>{selectedContentDuration || 'Open during class'}</span>
+                    </div>
+
+                    <div className='border-border/70 border-b p-4'>
+                      <p className='text-muted-foreground text-xs'>
+                        {activeLessonCourse?.name || course?.name}
+                      </p>
+                      <h3 className='mt-1 text-xl font-semibold'>{activeLesson?.title}</h3>
+                    </div>
+                    <div className='p-4'>
+                      {selectedContent?.title ? (
+                        <div className='border-border/60 bg-background mb-4 rounded-md border p-4'>
+                          <p className='text-muted-foreground text-sm leading-7'>
+                            {selectedContent.title}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      <div className='max-w-[inherit]' >
+                        {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
+                      </div>
+                    </div>
+                  </article>
+
+                  {/* <section className='border-border/70 bg-card rounded-lg border p-4 shadow-sm'>
+                <div className='mb-3 flex items-center justify-between gap-3'>
+                  <h3 className='font-semibold'>Class discussion</h3>
+                  <Button variant='outline' size='sm'>
+                    View comments
+                  </Button>
+                </div>
+                <div className='space-y-3'>
+                  {activeInstanceStudents.slice(0, 3).map((entry, index) => (
+                    <div
+                      key={entry.enrollment?.uuid ?? entry.user?.uuid ?? `discussion-${index}`}
+                      className='flex gap-3'
+                    >
+                      <Avatar className='size-8'>
+                        <AvatarFallback>{getInitials(entry.user?.full_name)}</AvatarFallback>
+                      </Avatar>
+                      <div className='bg-muted min-w-0 flex-1 rounded-md p-3'>
+                        <p className='text-sm font-semibold'>
+                          {entry.user?.full_name || 'Student'}
+                        </p>
+                        <p className='text-muted-foreground mt-1 text-sm'>
+                          Reminder to review your notes before the next class and complete the quiz.
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  {activeInstanceStudents.length === 0 ? (
+                    <div className='text-muted-foreground rounded-md border border-dashed p-4 text-sm'>
+                      Discussion previews will appear when students are attached to this session.
+                    </div>
+                  ) : null}
+                </div>
+                <div className='mt-4 flex gap-2'>
+                  <Input placeholder='Add a comment...' className='h-10 rounded-md' />
+                  <Button size='icon' className='h-10 w-10 rounded-md'>
+                    <Send className='h-4 w-4' />
+                  </Button>
+                </div>
+              </section> */}
+                </div>
+              )}
+
+              {activeTab === 'practice' && (
+                <div className='mx-auto space-y-4 p-2 md:p-2'>
+                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                    <div className='border-border/70 border-b p-4'>
+                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                        Practice Activities
+                      </p>
+                      <h3 className='mt-1 text-xl font-semibold'>
+                        {activeLesson?.title || 'Practice activities'}
+                      </h3>
+                      <p className='text-muted-foreground mt-2 text-sm'>
+                        Class activities tied to this skill — guide learners through these during class.
+                      </p>
+                    </div>
+                    <div className='p-4'>
+                      <PracticeActivityList
+                        courseUuid={activeLessonCourseUuid || undefined}
+                        lessonUuid={activeLesson?.uuid}
+                        variant='instructor'
+                      />
+                    </div>
+                  </article>
+                </div>
+              )}
+
+              {activeTab === 'assessment' && (
+                <div className='mx-auto space-y-4 p-2 md:p-2'>
+                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                    <div className='border-border/70 border-b p-4'>
+                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                        Assessment Tasks
+                      </p>
+                      <h3 className='mt-1 text-xl font-semibold'>
+                        {activeLesson?.title || 'Assessment tasks'}
+                      </h3>
+                      <p className='text-muted-foreground mt-2 text-sm'>
+                        Manage lesson assignments and quizzes from this tab.
+                      </p>
+                    </div>
+                    <div className='p-4'>
+                      <AssessmentTasksSection
+                        activeSchedule={activeSchedule}
+                        lessonAssignments={lessonAssignments}
+                        lessonQuizzes={lessonQuizzes}
+                        activeScheduleAssignments={activeScheduleAssignments}
+                        activeScheduleQuizzes={activeScheduleQuizzes}
+                        selectedAssignmentUuid={selectedAssignmentUuid}
+                        selectedQuizUuid={selectedQuizUuid}
+                        assignmentDueAt={assignmentDueAt}
+                        assignmentGradingDueAt={assignmentGradingDueAt}
+                        quizDueAt={quizDueAt}
+                        quizGradingDueAt={quizGradingDueAt}
+                        onAssignmentSelect={setSelectedAssignmentUuid}
+                        onQuizSelect={setSelectedQuizUuid}
+                        onAssignmentDueAtChange={setAssignmentDueAt}
+                        onAssignmentGradingDueAtChange={setAssignmentGradingDueAt}
+                        onQuizDueAtChange={setQuizDueAt}
+                        onQuizGradingDueAtChange={setQuizGradingDueAt}
+                        onAssignAssignment={handleAssignAssignment}
+                        onAssignQuiz={handleAssignQuiz}
+                        isAssigningAssignment={addAssignmentScheduleMut.isPending}
+                        isAssigningQuiz={addQuizScheduleMut.isPending}
+                      />
+                    </div>
+                  </article>
+                </div>
+              )}
+            </ScrollArea>
+          </section>)
         }
 
         {/* <aside className='border-border/70 hidden min-h-0 border-l xl:block'>

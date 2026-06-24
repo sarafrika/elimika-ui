@@ -28,6 +28,7 @@ import {
 } from '../../../../components/ui/select';
 import { Separator } from '../../../../components/ui/separator';
 import Spinner from '../../../../components/ui/spinner';
+import { Switch } from '../../../../components/ui/switch';
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import { cn } from '../../../../lib/utils';
 import {
@@ -485,6 +486,25 @@ export const AssignmentCreationForm = ({
                 </div>
               )}
 
+              <div className="flex gap-2 self-start items-end justify-end">
+                <Label className="text-foreground text-sm font-medium">
+                  Status {":"}
+                </Label>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    {assignmentData.is_published ? "Published" : "Draft"}
+                  </span>
+
+                  <Switch
+                    checked={assignmentData.is_published}
+                    onCheckedChange={(checked) =>
+                      handleAssignmentInputChange("is_published", checked)
+                    }
+                  />
+                </div>
+              </div>
+
               {/* Title */}
               <div className='flex flex-col gap-2'>
                 <Label className='text-foreground text-sm font-medium'>Assignment Title</Label>
@@ -669,24 +689,6 @@ export const AssignmentCreationForm = ({
                 )}
               </div>
 
-              {/* Status */}
-              <div className='flex flex-col gap-2'>
-                <Label className='text-foreground text-sm font-medium'>Status</Label>
-                <Select
-                  value={assignmentData.is_published ? 'PUBLISHED' : 'DRAFT'}
-                  onValueChange={value =>
-                    handleAssignmentInputChange('is_published', value === 'PUBLISHED')
-                  }
-                >
-                  <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='Select status' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='DRAFT'>Draft</SelectItem>
-                    <SelectItem value='PUBLISHED'>Published</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               {/* Active toggle */}
               {/* <div className='flex items-center gap-3'>
