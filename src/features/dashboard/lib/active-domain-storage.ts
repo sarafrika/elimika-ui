@@ -2,6 +2,7 @@ import type { UserDomain } from '@/lib/types';
 
 export const ACTIVE_DASHBOARD_COOKIE = 'elimika-active-dashboard';
 export const ACTIVE_DASHBOARD_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const DASHBOARD_STORAGE_KEY_PREFIX = 'elimika-dashboard-view:';
 
 const ALLOWED_DOMAINS: UserDomain[] = [
   'student',
@@ -58,6 +59,19 @@ export function clearPersistedDashboardDomain(storageKey: string) {
   window.document.cookie = `${ACTIVE_DASHBOARD_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
 }
 
+export function clearAllPersistedDashboardDomains() {
+  if (typeof window === 'undefined') return;
+
+  for (let index = window.localStorage.length - 1; index >= 0; index -= 1) {
+    const key = window.localStorage.key(index);
+    if (key?.startsWith(DASHBOARD_STORAGE_KEY_PREFIX)) {
+      window.localStorage.removeItem(key);
+    }
+  }
+
+  window.document.cookie = `${ACTIVE_DASHBOARD_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
+}
+
 export function buildDashboardSwitchPath(domain: UserDomain, nextPath = '/dashboard/overview') {
   const searchParams = new URLSearchParams({ next: nextPath });
   return `/dashboard/switch/${domain}?${searchParams.toString()}`;
@@ -68,7 +82,7 @@ export function isInternalDashboardPath(path?: string | null) {
 }
 
 function splitDashboardPath(path: string) {
-  const [pathname, search = ''] = path.split('?');
+  const [pathname = '', search = ''] = path.split('?');
 
   return {
     pathname,
