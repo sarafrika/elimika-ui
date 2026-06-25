@@ -110,7 +110,7 @@ export default function CategoriesPage() {
         meta: { label: 'Category' },
         cell: ({ row }) => (
           <div className='flex items-center gap-3'>
-            <span className='flex size-9 items-center justify-center rounded-xl border border-border/60 bg-muted/40'>
+            <span className='flex size-9 items-center justify-center rounded-md border border-border/60 bg-muted/40'>
               <FolderTree className='size-4 text-muted-foreground' />
             </span>
             <div className='min-w-0'>
@@ -229,7 +229,7 @@ export default function CategoriesPage() {
                 className='min-h-20'
               />
             </div>
-            <div className='flex items-center justify-between rounded-xl border border-border/70 bg-muted/30 px-4 py-3'>
+            <div className='flex items-center justify-between rounded-md border border-border/70 bg-muted/30 px-4 py-3'>
               <Label htmlFor='is_active'>Active</Label>
               <Switch
                 id='is_active'

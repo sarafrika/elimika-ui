@@ -394,7 +394,7 @@ export default function ActivityFeed({
                 return (
                   <div
                     key={key}
-                    className='hover:bg-muted/50 flex flex-col gap-3 rounded-lg border p-4 transition-colors md:flex-row md:items-center md:justify-between'
+                    className='hover:bg-muted/50 flex flex-col gap-3 rounded-md border p-4 transition-colors md:flex-row md:items-center md:justify-between'
                   >
                     <div className='flex w-full flex-1 gap-4'>
                       <div className='bg-primary/10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full'>

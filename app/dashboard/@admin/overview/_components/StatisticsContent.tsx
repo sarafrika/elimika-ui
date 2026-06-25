@@ -182,7 +182,7 @@ export default function StatisticsContent() {
               {missionStats.map(stat => (
                 <div
                   key={stat.label}
-                  className='border-border/60 bg-muted/40 rounded-2xl border p-4 shadow-inner'
+                  className='border-border/60 bg-muted/40 rounded-md border p-4 shadow-inner'
                 >
                   <p className='text-muted-foreground text-xs tracking-wide uppercase'>
                     {stat.label}
@@ -194,7 +194,7 @@ export default function StatisticsContent() {
           </div>
         </div>
 
-        <div className='border-border/60 bg-card rounded-2xl border p-4 shadow-sm'>
+        <div className='border-border/60 bg-card rounded-md border p-4 shadow-sm'>
           <div className='flex flex-wrap items-center gap-3'>
             <div className='relative min-w-[220px] flex-1'>
               <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />

@@ -281,7 +281,7 @@ export default function CurrenciesPage() {
                 />
               </div>
             </div>
-            <div className='flex items-center justify-between rounded-xl border border-border/70 bg-muted/30 px-4 py-3'>
+            <div className='flex items-center justify-between rounded-md border border-border/70 bg-muted/30 px-4 py-3'>
               <Label htmlFor='active'>Active</Label>
               <Switch
                 id='active'
@@ -290,7 +290,7 @@ export default function CurrenciesPage() {
               />
             </div>
             {!editing ? (
-              <div className='flex items-center justify-between rounded-xl border border-border/70 bg-muted/30 px-4 py-3'>
+              <div className='flex items-center justify-between rounded-md border border-border/70 bg-muted/30 px-4 py-3'>
                 <Label htmlFor='default_currency'>Set as default</Label>
                 <Switch
                   id='default_currency'

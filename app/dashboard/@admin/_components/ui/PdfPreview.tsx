@@ -95,7 +95,7 @@ export function PdfPreview({
     <div
       ref={previewContainerRef}
       className={cn(
-        'relative overflow-hidden rounded-t-[16px] border-b border-border/60 bg-muted/20 p-3',
+        'relative overflow-hidden rounded-t-md border-b border-border/60 bg-muted/20 p-3',
         fullHeight ? 'h-auto' : 'overflow-hidden'
       )}
       style={!fullHeight ? { height } : undefined}
@@ -103,7 +103,7 @@ export function PdfPreview({
       <div className='pointer-events-none absolute left-4 top-4 z-10 rounded-full border border-border/70 bg-background/85 px-3 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur'>
         {error ? 'Preview unavailable' : documentTitle}
       </div>
-      <div className='h-full overflow-hidden rounded-[12px] border border-border/70 bg-background shadow-sm'>
+      <div className='h-full overflow-hidden rounded-sm border border-border/70 bg-background shadow-sm'>
         {error ? (
           <div className='flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground'>
             {error}

@@ -13,7 +13,7 @@ import { StatusBadge } from '../../_components/ui/StatusBadge';
 function Thumb({ url, alt }: { url?: string | null; alt: string }) {
   const src = url ? toAuthenticatedMediaUrl(url) || url : undefined;
   return (
-    <div className='flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-muted/40'>
+    <div className='flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/60 bg-muted/40'>
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt={alt} className='h-full w-full object-cover' loading='lazy' />

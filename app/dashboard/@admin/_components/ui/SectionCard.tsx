@@ -30,7 +30,7 @@ export function SectionCard({
   return (
     <section
       className={cn(
-        bare ? '' : 'rounded-[18px] border border-border/70 bg-card shadow-sm',
+        bare ? '' : 'rounded-md border border-border/70 bg-card shadow-sm',
         className
       )}
     >
@@ -59,7 +59,7 @@ export function SectionCardSkeleton({
   className?: string;
 }) {
   return (
-    <section className={cn('rounded-[18px] border border-border/70 bg-card shadow-sm', className)}>
+    <section className={cn('rounded-md border border-border/70 bg-card shadow-sm', className)}>
       {withHeader ? (
         <div className='space-y-2 border-b border-border/60 px-5 py-4'>
           <Skeleton className='h-4 w-40' />

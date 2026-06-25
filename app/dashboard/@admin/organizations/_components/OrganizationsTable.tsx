@@ -55,7 +55,7 @@ export function OrganizationsTable() {
         meta: { label: 'Organisation' },
         cell: ({ row }) => (
           <div className='flex items-center gap-3'>
-            <span className='flex size-9 items-center justify-center rounded-xl border border-border/60 bg-muted/40'>
+            <span className='flex size-9 items-center justify-center rounded-md border border-border/60 bg-muted/40'>
               <Building2 className='size-4 text-muted-foreground' />
             </span>
             <div className='min-w-0'>

@@ -41,7 +41,7 @@ export function CredentialDocumentCard({
 }) {
   const previewUrl = resolvePreview(document);
   return (
-    <div className='flex flex-col overflow-hidden rounded-[16px] border border-border/70 bg-card shadow-sm'>
+    <div className='flex flex-col overflow-hidden rounded-md border border-border/70 bg-card shadow-sm'>
       {previewUrl ? (
         <PdfPreview documentUrl={previewUrl} documentTitle={document.documentTypeLabel} height={170} />
       ) : (
@@ -63,7 +63,7 @@ export function CredentialDocumentCard({
           {document.roleLabel} · {document.fileSize ?? 'Unknown size'}
           {document.uploadedAt ? ` · ${document.uploadedAt}` : ''}
         </p>
-        <Button variant='outline' size='sm' className='mt-auto rounded-lg' onClick={onReview}>
+        <Button variant='outline' size='sm' className='mt-auto rounded-md' onClick={onReview}>
           <ShieldCheck className='size-4' />
           Review &amp; verify
         </Button>
@@ -133,7 +133,7 @@ export function CredentialReviewDialog({
             </DialogHeader>
 
             {previewUrl ? (
-              <div className='overflow-hidden rounded-[16px] border border-border/70'>
+              <div className='overflow-hidden rounded-md border border-border/70'>
                 <PdfPreview documentUrl={previewUrl} documentTitle={document.title} fullHeight />
               </div>
             ) : null}
@@ -149,7 +149,7 @@ export function CredentialReviewDialog({
             </div>
 
             {document.notes ? (
-              <div className='rounded-xl border border-dashed border-border/60 bg-muted/20 p-3 text-sm'>
+              <div className='rounded-md border border-dashed border-border/60 bg-muted/20 p-3 text-sm'>
                 <p className='font-medium text-foreground'>Existing notes</p>
                 <p className='text-muted-foreground'>{document.notes}</p>
               </div>
@@ -160,7 +160,7 @@ export function CredentialReviewDialog({
                 value={notes}
                 onChange={event => setNotes(event.target.value)}
                 placeholder='Add an audit note (optional) before verifying…'
-                className='min-h-24 rounded-xl'
+                className='min-h-24 rounded-md'
               />
             ) : null}
 

@@ -223,7 +223,7 @@ export function UserIdentityForm({ user }: { user: User }) {
           control={form.control}
           name='active'
           render={({ field }) => (
-            <FormItem className='flex flex-row items-center justify-between rounded-xl border border-border/70 bg-muted/30 p-4'>
+            <FormItem className='flex flex-row items-center justify-between rounded-md border border-border/70 bg-muted/30 p-4'>
               <div className='space-y-0.5'>
                 <FormLabel>Account status</FormLabel>
                 <p className='text-xs text-muted-foreground'>

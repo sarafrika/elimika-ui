@@ -26,7 +26,7 @@ function ProgramsTableView({
         meta: { label: 'Program' },
         cell: ({ row }) => (
           <div className='flex items-start gap-3'>
-            <div className='flex h-12 w-16 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/40'>
+            <div className='flex h-12 w-16 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/40'>
               <Layers className='size-5 text-muted-foreground' />
             </div>
             <div className='min-w-0 max-w-md'>

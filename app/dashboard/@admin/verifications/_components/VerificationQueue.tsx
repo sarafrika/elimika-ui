@@ -74,11 +74,11 @@ export function VerificationQueue({
               value={search}
               onChange={event => setSearch(event.target.value)}
               placeholder='Search by owner or document…'
-              className='h-9 rounded-xl border-border/70 bg-background pl-9 shadow-sm'
+              className='h-9 rounded-md border-border/70 bg-background pl-9 shadow-sm'
             />
           </div>
           <Select value={status} onValueChange={value => setStatus(value as StatusFilter)}>
-            <SelectTrigger className='h-9 w-[150px] rounded-xl border-border/70 bg-background shadow-sm'>
+            <SelectTrigger className='h-9 w-[150px] rounded-md border-border/70 bg-background shadow-sm'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

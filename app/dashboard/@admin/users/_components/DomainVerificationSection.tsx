@@ -28,7 +28,7 @@ function RecordList({ title, records }: { title: string; records: CredentialReco
       <p className={adminTheme.sectionLabel}>{title}</p>
       <div className='space-y-3'>
         {records.map(record => (
-          <div key={record.id} className='rounded-xl border border-border/60 bg-muted/20 p-3'>
+          <div key={record.id} className='rounded-md border border-border/60 bg-muted/20 p-3'>
             <div className='mb-2'>
               <p className='text-sm font-medium text-foreground'>{record.title}</p>
               {record.subtitle ? (
@@ -147,7 +147,7 @@ export function DomainVerificationSection({
               ))}
             </div>
           ) : (
-            <p className='flex items-center gap-2 rounded-xl border border-dashed border-border/60 bg-muted/20 px-3 py-3 text-sm text-muted-foreground'>
+            <p className='flex items-center gap-2 rounded-md border border-dashed border-border/60 bg-muted/20 px-3 py-3 text-sm text-muted-foreground'>
               <ShieldCheck className='size-4' />
               No documents uploaded for this domain.
             </p>

@@ -5,13 +5,13 @@ export function UsersTableSkeleton() {
   return (
     <div className='flex flex-col gap-3'>
       <div className='flex items-center justify-between'>
-        <Skeleton className='h-9 w-72 rounded-xl' />
+        <Skeleton className='h-9 w-72 rounded-md' />
         <div className='flex gap-2'>
-          <Skeleton className='h-9 w-24 rounded-xl' />
-          <Skeleton className='h-9 w-24 rounded-xl' />
+          <Skeleton className='h-9 w-24 rounded-md' />
+          <Skeleton className='h-9 w-24 rounded-md' />
         </div>
       </div>
-      <div className='overflow-hidden rounded-[18px] border border-border/70 bg-card shadow-sm'>
+      <div className='overflow-hidden rounded-md border border-border/70 bg-card shadow-sm'>
         <div className='border-b border-border/60 bg-muted/60 px-4 py-3'>
           <Skeleton className='h-4 w-40' />
         </div>
@@ -22,7 +22,7 @@ export function UsersTableSkeleton() {
               <Skeleton className='h-3.5 w-48' />
               <Skeleton className='h-3 w-32' />
             </div>
-            <Skeleton className='h-5 w-16 rounded-lg' />
+            <Skeleton className='h-5 w-16 rounded-md' />
           </div>
         ))}
       </div>

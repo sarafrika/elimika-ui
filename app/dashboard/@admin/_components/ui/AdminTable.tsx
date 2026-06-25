@@ -172,7 +172,7 @@ export function AdminTable<TData, TValue>({
               value={globalFilter}
               onChange={event => setGlobalFilter(event.target.value)}
               placeholder={searchPlaceholder}
-              className='h-9 rounded-xl border-border/70 bg-background pl-9 shadow-sm'
+              className='h-9 rounded-md border-border/70 bg-background pl-9 shadow-sm'
             />
             {globalFilter ? (
               <Button
@@ -197,7 +197,7 @@ export function AdminTable<TData, TValue>({
           <Button
             variant='outline'
             size='sm'
-            className='h-9 rounded-xl'
+            className='h-9 rounded-md'
             onClick={() => setDense(value => !value)}
             title={dense ? 'Comfortable rows' : 'Compact rows'}
           >
@@ -206,7 +206,7 @@ export function AdminTable<TData, TValue>({
           {hideableColumns.length > 0 ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant='outline' size='sm' className='h-9 rounded-xl'>
+                <Button variant='outline' size='sm' className='h-9 rounded-md'>
                   <Columns3 className='mr-1.5 size-4' />
                   Columns
                 </Button>
@@ -232,7 +232,7 @@ export function AdminTable<TData, TValue>({
 
       {/* Bulk action bar */}
       {enableRowSelection && selectedRows.length > 0 ? (
-        <div className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5'>
+        <div className='flex flex-wrap items-center justify-between gap-3 rounded-md border border-primary/30 bg-primary/5 px-4 py-2.5'>
           <span className='text-sm font-medium text-foreground'>
             {selectedRows.length} selected
           </span>
@@ -253,7 +253,7 @@ export function AdminTable<TData, TValue>({
       {/* Table */}
       <div
         className={cn(
-          'overflow-hidden rounded-[18px] border border-border/70 bg-card shadow-sm',
+          'overflow-hidden rounded-md border border-border/70 bg-card shadow-sm',
           fill && 'flex min-h-0 flex-1 flex-col'
         )}
       >
@@ -372,7 +372,7 @@ function FacetedFilterMenu<TData, TValue>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant='outline' size='sm' className='h-9 rounded-xl border-dashed'>
+        <Button variant='outline' size='sm' className='h-9 rounded-md border-dashed'>
           <SlidersHorizontal className='mr-1.5 size-4' />
           {filter.title}
           {selected.size > 0 ? (
@@ -432,7 +432,7 @@ function TablePagination<TData>({ table }: { table: TableInstance<TData> }) {
         <Button
           variant='outline'
           size='sm'
-          className='rounded-lg'
+          className='rounded-md'
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
@@ -444,7 +444,7 @@ function TablePagination<TData>({ table }: { table: TableInstance<TData> }) {
         <Button
           variant='outline'
           size='sm'
-          className='rounded-lg'
+          className='rounded-md'
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >

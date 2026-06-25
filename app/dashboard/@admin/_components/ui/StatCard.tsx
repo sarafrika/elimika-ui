@@ -19,7 +19,7 @@ export function StatCard({ label, value, hint, icon: Icon, tone = 'info', classN
   return (
     <div
       className={cn(
-        'flex items-start justify-between gap-3 rounded-[18px] border border-border/70 bg-card p-5 shadow-sm',
+        'flex items-start justify-between gap-3 rounded-md border border-border/70 bg-card p-5 shadow-sm',
         className
       )}
     >
@@ -33,7 +33,7 @@ export function StatCard({ label, value, hint, icon: Icon, tone = 'info', classN
       {Icon ? (
         <span
           className={cn(
-            'flex size-10 shrink-0 items-center justify-center rounded-xl border',
+            'flex size-10 shrink-0 items-center justify-center rounded-md border',
             statusToneClass[tone]
           )}
         >
@@ -49,7 +49,7 @@ export function StatCardSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'flex items-start justify-between gap-3 rounded-[18px] border border-border/70 bg-card p-5 shadow-sm',
+        'flex items-start justify-between gap-3 rounded-md border border-border/70 bg-card p-5 shadow-sm',
         className
       )}
     >
@@ -58,7 +58,7 @@ export function StatCardSkeleton({ className }: { className?: string }) {
         <Skeleton className='h-7 w-16' />
         <Skeleton className='h-3 w-20' />
       </div>
-      <Skeleton className='size-10 rounded-xl' />
+      <Skeleton className='size-10 rounded-md' />
     </div>
   );
 }

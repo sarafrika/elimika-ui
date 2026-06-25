@@ -13,12 +13,12 @@ export const adminTheme = {
   pageStack: 'flex w-full flex-col gap-4',
 
   /** Card surfaces. */
-  card: 'rounded-[18px] border border-border/70 bg-card shadow-sm',
-  cardMuted: 'rounded-[18px] border border-border/60 bg-muted/30',
-  cardPadded: 'rounded-[18px] border border-border/70 bg-card p-5 shadow-sm',
+  card: 'rounded-md border border-border/70 bg-card shadow-sm',
+  cardMuted: 'rounded-md border border-border/60 bg-muted/30',
+  cardPadded: 'rounded-md border border-border/70 bg-card p-5 shadow-sm',
 
   /** Controls. */
-  control: 'rounded-xl border-border/70 bg-background shadow-sm',
+  control: 'rounded-md border-border/70 bg-background shadow-sm',
 
   /** Section heading inside a card. */
   sectionLabel: 'text-xs font-medium uppercase tracking-wide text-muted-foreground',

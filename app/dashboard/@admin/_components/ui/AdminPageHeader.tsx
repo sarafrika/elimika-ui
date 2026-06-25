@@ -25,7 +25,7 @@ export function AdminPageHeader({
   return (
     <header
       className={cn(
-        'rounded-[18px] border border-border/70 bg-card px-5 py-5 shadow-sm sm:px-6 lg:px-7',
+        'rounded-md border border-border/70 bg-card px-5 py-5 shadow-sm sm:px-6 lg:px-7',
         className
       )}
     >

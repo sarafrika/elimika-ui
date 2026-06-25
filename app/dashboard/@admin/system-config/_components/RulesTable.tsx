@@ -110,7 +110,7 @@ export function RulesTable() {
         getRowId={(rule, index) => rule.uuid ?? String(index)}
         onRowClick={rule => setDrawer({ open: true, mode: 'edit', rule })}
         toolbar={
-          <Button size='sm' className='h-9 rounded-xl' onClick={() => setDrawer({ open: true, mode: 'create', rule: null })}>
+          <Button size='sm' className='h-9 rounded-md' onClick={() => setDrawer({ open: true, mode: 'create', rule: null })}>
             <Plus className='size-4' />
             New rule
           </Button>
