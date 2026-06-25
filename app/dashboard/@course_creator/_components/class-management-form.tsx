@@ -31,12 +31,13 @@ import Spinner from '@/components/ui/spinner';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import {
+  createClassDefinitionMultipartMutation,
   createClassDefinitionMultipartMutation as createClassDefinitionMutation,
   getAllActiveClassDefinitionsQueryKey,
   getAllCoursesOptions,
   scheduleClassMutation,
   updateClassDefinitionMutation,
-  updateScheduledInstanceStatusMutation,
+  updateScheduledInstanceStatusMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import {
   LocationTypeEnum,
@@ -80,10 +81,10 @@ type RecurrenceInitialValues = Partial<Omit<RecurrenceFormValues, 'days_of_week'
 };
 
 type CreateClassDefinitionVariables = MutationVariables<
-  ReturnType<typeof createClassDefinitionMutation>
+  ReturnType<typeof createClassDefinitionMultipartMutation>
 >;
 type CreateClassDefinitionResult = MutationResponse<
-  ReturnType<typeof createClassDefinitionMutation>
+  ReturnType<typeof createClassDefinitionMultipartMutation>
 >;
 type UpdateClassDefinitionVariables = MutationVariables<
   ReturnType<typeof updateClassDefinitionMutation>
@@ -177,7 +178,7 @@ function ClassForm({
 
   const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
 
-  const createAssignment = useMutation(createClassDefinitionMutation());
+  const createAssignment = useMutation(createClassDefinitionMultipartMutation());
   const updateAssignment = useMutation(updateClassDefinitionMutation());
 
   const handleSubmit = async (values: ClassFormValues) => {
@@ -1051,7 +1052,7 @@ function ClassDialog({
             initialValues={initialValues}
             className='px-6 pb-6'
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>
@@ -1094,7 +1095,7 @@ function RecurrenceDialog({
             initialValues={initialValues}
             className='px-6 pb-6'
             recurrenceId={editingRecurrenceId}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>
@@ -1144,7 +1145,7 @@ function ScheduleDialog({
             className='px-6 pb-6'
             scheduleId={editingScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>
@@ -1196,7 +1197,7 @@ function TimetableScheduleDialog({
             className='px-6 pb-6'
             timetableScheduleId={timetableScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => {})}
+            onSuccess={onSuccess ?? (() => { })}
             status={status}
           />
         </ScrollArea>

@@ -1,20 +1,12 @@
 "use client";
 
+import { EmptyState } from '@/components/ui/empty-state';
+import { useInstructorAnalyticsData } from "../useInstructorAnalyticsData";
+
 interface ProgramBarProps {
   name: string;
   rate: number;
 }
-
-const programs: ProgramBarProps[] = [
-  { name: "Project Management Fundamentals", rate: 88 },
-  { name: "Effective Communication Skills", rate: 90 },
-  { name: "Excel for Beginners", rate: 100 },
-  { name: "Cybersecurity Awareness", rate: 63 },
-  { name: "Sales Techniques Mastery", rate: 89 },
-  { name: "Leadership & Team Management", rate: 85 },
-  { name: "Advanced Excel for Analysts", rate: 76 },
-  { name: "Customer Experience Excellence", rate: 80 },
-];
 
 function ProgramBar({ name, rate }: ProgramBarProps) {
   const color =
@@ -43,6 +35,29 @@ function ProgramBar({ name, rate }: ProgramBarProps) {
 }
 
 export function CompletionByProgram() {
+  const { programCompletion, isLoading } = useInstructorAnalyticsData();
+
+  if (isLoading) {
+    return (
+      <div className="h-full p-3 sm:p-4 bg-card rounded-xl border border-border shadow-sm">
+        <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+          Loading program completion data...
+        </div>
+      </div>
+    );
+  }
+
+  if (programCompletion.length === 0) {
+    return (
+      <EmptyState
+        icon={() => null}
+        title="No program completion data"
+        description="Your completion rates will appear once sessions are scheduled and completed."
+        variant="card"
+      />
+    );
+  }
+
   return (
     <div className="h-full p-3 sm:p-4 bg-card rounded-xl border border-border shadow-sm">
       <div className="flex items-center justify-between mb-3 gap-2">
@@ -55,7 +70,7 @@ export function CompletionByProgram() {
       </div>
 
       <div className="space-y-2.5">
-        {programs.map((p) => (
+        {programCompletion.map((p) => (
           <ProgramBar key={p.name} {...p} />
         ))}
       </div>

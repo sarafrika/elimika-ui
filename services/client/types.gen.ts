@@ -2203,13 +2203,13 @@ export type LessonPracticeActivity = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Whether the activity is published.
-   */
-  readonly is_published?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable estimated duration.
    */
   readonly estimated_duration?: string;
+  /**
+   * **[READ-ONLY]** Whether the activity is published.
+   */
+  readonly is_published?: boolean;
 };
 
 export type ApiResponseLessonPracticeActivity = {
@@ -3313,13 +3313,13 @@ export type ClassDefinition = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
-   */
-  readonly capacity_info?: string;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   */
+  readonly capacity_info?: string;
 };
 
 /**
@@ -3391,9 +3391,13 @@ export type ClassMarketplaceJobRequest = {
    */
   organisation_uuid: string;
   /**
-   * **[REQUIRED]** Course backing the advertised class.
+   * **[OPTIONAL]** Course backing the advertised class. Required when program_uuid is not provided.
    */
-  course_uuid: string;
+  course_uuid?: string | null;
+  /**
+   * **[OPTIONAL]** Training program backing the advertised class. Required when course_uuid is not provided.
+   */
+  program_uuid?: string | null;
   /**
    * **[REQUIRED]** Advert title for the class job.
    */
@@ -3484,6 +3488,7 @@ export type ClassMarketplaceJob = {
   status?: StatusEnum5;
   readonly organisation_uuid?: string;
   readonly course_uuid?: string;
+  readonly program_uuid?: string;
   class_visibility?: ClassVisibilityEnum;
   session_format?: SessionFormatEnum;
   readonly default_start_time?: Date;
@@ -4997,12 +5002,12 @@ export type MultiValueMapStringString = {
   };
   empty?: boolean;
   [key: string]:
-    | Array<string>
-    | {
-        [key: string]: string;
-      }
-    | boolean
-    | undefined;
+  | Array<string>
+  | {
+    [key: string]: string;
+  }
+  | boolean
+  | undefined;
 };
 
 /**
@@ -19585,6 +19590,7 @@ export type ListJobsData = {
   query: {
     organisation_uuid?: string;
     course_uuid?: string;
+    program_uuid?: string;
     status?: string;
     pageable: Pageable;
   };
@@ -28048,7 +28054,7 @@ export type RemoveAdminDomainResponse =
 
 export type ClientOptions = {
   baseUrl:
-    | 'https://api.elimika.staging.sarafrika.com'
-    | 'https://api.elimika.sarafrika.com'
-    | (string & {});
+  | 'https://api.elimika.staging.sarafrika.com'
+  | 'https://api.elimika.sarafrika.com'
+  | (string & {});
 };

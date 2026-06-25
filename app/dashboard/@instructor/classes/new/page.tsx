@@ -43,7 +43,7 @@ import {
   trimToUndefined,
 } from '../../../../../lib/location-types';
 import {
-  createClassDefinitionMultipartMutation as createClassDefinitionMutation,
+  createClassDefinitionMultipartMutation,
   getAllClassDefinitionsQueryKey,
   getAllCoursesOptions,
   getAllTrainingProgramsOptions,
@@ -91,7 +91,6 @@ const LECTURE_TYPE_OPTIONS = [
 
 const REMINDER_OPTIONS = [
   { label: '24 hours before class', value: '24h' },
-  { label: '1 day before class', value: '1d' },
   { label: '1 hour before class', value: '1h' },
   { label: '30 minutes before class', value: '30m' },
 ];
@@ -508,7 +507,7 @@ const NewClassCreationPage = () => {
     [sessionsForConflictCheck, instructorClasses, resolvedId, instructor?.uuid]
   );
 
-  const createClassDefinition = useMutation(createClassDefinitionMutation());
+  const createClassDefinition = useMutation(createClassDefinitionMultipartMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
   const addClassThumbnailMut = useMutation(uploadClassThumbnailMutation());
   const addClassIntroVideoMut = useMutation(uploadClassPromotionalVideoMutation());
@@ -1434,9 +1433,8 @@ const NewClassCreationPage = () => {
           <div
             key={day}
             onClick={toggleDay}
-            className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${
-              active ? 'border-primary bg-primary/5' : 'border-border bg-background'
-            }`}
+            className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${active ? 'border-primary bg-primary/5' : 'border-border bg-background'
+              }`}
           >
             <button
               type='button'
@@ -1449,11 +1447,10 @@ const NewClassCreationPage = () => {
               //     return { ...prev, repeat: { ...prev.repeat, days: nextDays, unit: 'week' } };
               //   })
               // }
-              className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${
-                active
+              className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${active
                   ? 'border-primary bg-primary text-primary-foreground'
                   : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
-              }`}
+                }`}
             >
               {DAY_SHORT[index]}
             </button>
@@ -1868,11 +1865,10 @@ const NewClassCreationPage = () => {
                       key={option.key}
                       type='button'
                       onClick={() => setSchedulePreset(option.key)}
-                      className={`flex-1 rounded-md border px-4 py-3 text-left transition ${
-                        schedulePreset === option.key
+                      className={`flex-1 rounded-md border px-4 py-3 text-left transition ${schedulePreset === option.key
                           ? 'border-primary bg-primary/5'
                           : 'border-border hover:border-primary/40'
-                      }`}
+                        }`}
                     >
                       <div className='text-sm font-semibold'>{option.title}</div>
                       <div className='text-muted-foreground mt-1 text-xs'>{option.description}</div>

@@ -4588,11 +4588,6 @@ export const LessonPracticeActivitySchema = {
       description: '**[READ-ONLY]** User who last updated the practice activity.',
       readOnly: true,
     },
-    is_published: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Whether the activity is published.',
-      readOnly: true,
-    },
     estimated_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable estimated duration.',
@@ -7109,17 +7104,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -7260,9 +7255,16 @@ export const ClassMarketplaceJobRequestSchema = {
       description: '**[REQUIRED]** Organisation posting the marketplace class job.',
     },
     course_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
-      description: '**[REQUIRED]** Course backing the advertised class.',
+      description:
+        '**[OPTIONAL]** Course backing the advertised class. Required when program_uuid is not provided.',
+    },
+    program_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Training program backing the advertised class. Required when course_uuid is not provided.',
     },
     title: {
       type: 'string',
@@ -7367,7 +7369,6 @@ export const ClassMarketplaceJobRequestSchema = {
   },
   required: [
     'class_visibility',
-    'course_uuid',
     'default_end_time',
     'default_start_time',
     'location_type',
@@ -7421,6 +7422,11 @@ export const ClassMarketplaceJobSchema = {
       readOnly: true,
     },
     course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    program_uuid: {
       type: 'string',
       format: 'uuid',
       readOnly: true,

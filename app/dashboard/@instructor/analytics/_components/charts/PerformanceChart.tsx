@@ -1,14 +1,36 @@
 "use client";
 
-const weeks = ["May 1-7", "May 8-14", "May 15-21", "May 22-28", "May 29-31"];
-
-// Sessions completed (bar1), Participants trained (bar2), Completion rate line
-const sessionsData = [4, 6, 8, 7, 7];
-const participantsData = [120, 240, 380, 560, 610];
-const completionData = [60, 65, 72, 95, 75]; // percent
+import { EmptyState } from '@/components/ui/empty-state';
+import { useInstructorAnalyticsData } from "../useInstructorAnalyticsData";
 
 export function PerformanceChart() {
-  const maxParticipants = 800;
+  const { performance, isLoading } = useInstructorAnalyticsData();
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-border bg-card shadow-sm p-3 sm:p-4 h-full">
+        <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+          Loading performance data...
+        </div>
+      </div>
+    );
+  }
+
+  if (performance.length === 0) {
+    return (
+      <EmptyState
+        icon={() => null}
+        title="No performance data yet"
+        description="Complete one or more sessions to see performance trends over time."
+        variant="card"
+      />
+    );
+  }
+
+  const weeks = performance.map((point) => point.label);
+  const sessionsData = performance.map((point) => point.sessions);
+  const participantsData = performance.map((point) => point.participants);
+  const completionData = performance.map((point) => point.completion);
   const chartH = 160;
   const chartW = 420;
   const padL = 36;
@@ -17,6 +39,7 @@ export function PerformanceChart() {
   const plotW = chartW - padL - 20;
   const plotH = chartH - padB - padT;
   const n = weeks.length;
+  const maxParticipants = Math.max(100, ...participantsData);
   const groupW = plotW / n;
   const barW = groupW * 0.18;
 

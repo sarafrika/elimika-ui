@@ -14,12 +14,13 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { CreateClassDefinitionMultipartData } from '@/services/client/types.gen';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
+  createClassDefinitionMultipartMutation,
   createClassDefinitionMultipartMutation as createClassDefinitionMutation,
   getAllClassDefinitionsQueryKey,
   getClassDefinitionQueryKey,
@@ -34,8 +35,8 @@ import { ScheduleSection } from './ScheduleSection';
 import {
   buildUtcIsoDateTime,
   generateScheduleInstances,
-  ScheduleMode,
   ScheduledSessionInstance,
+  ScheduleMode,
 } from './schedule-utils';
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new';
@@ -330,7 +331,7 @@ const ClassBuilderPage = ({
   const courseDetail = combinedClass?.course;
   const courseLessons = combinedClass?.lessons;
 
-  const createClassDefinition = useMutation(createClassDefinitionMutation());
+  const createClassDefinition = useMutation(createClassDefinitionMultipartMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
   const { classes: instructorClasses = [] } = useInstructorClassesWithSchedules(instructor?.uuid);
 
@@ -701,39 +702,39 @@ const ClassBuilderPage = ({
       const sessionTemplates: CreateClassDefinitionMultipartData['body']['session_templates'] =
         scheduleMode === 'custom'
           ? sortedCustomSessions.map(session => ({
-              start_time: new Date(buildUtcIsoDateTime(session.date, session.startTime)),
-              end_time: new Date(buildUtcIsoDateTime(session.date, session.endTime)),
-              conflict_resolution: 'FAIL',
-            }))
+            start_time: new Date(buildUtcIsoDateTime(session.date, session.startTime)),
+            end_time: new Date(buildUtcIsoDateTime(session.date, session.endTime)),
+            conflict_resolution: 'FAIL',
+          }))
           : (() => {
-              const startTime = scheduleSettings.allDay
-                ? '00:00'
-                : (scheduleSettings.startClass.startTime as string);
-              const endTime = scheduleSettings.allDay
-                ? '23:59'
-                : (scheduleSettings.startClass.endTime as string);
-              const startTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, startTime);
-              const endTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, endTime);
-              const selectedDays = scheduleSettings.repeat.days || [];
-              const days_of_week = selectedDays
-                .sort()
-                .map(dayIndex => DAY_NAMES[dayIndex])
-                .join(',');
+            const startTime = scheduleSettings.allDay
+              ? '00:00'
+              : (scheduleSettings.startClass.startTime as string);
+            const endTime = scheduleSettings.allDay
+              ? '23:59'
+              : (scheduleSettings.startClass.endTime as string);
+            const startTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, startTime);
+            const endTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, endTime);
+            const selectedDays = scheduleSettings.repeat.days || [];
+            const days_of_week = selectedDays
+              .sort()
+              .map(dayIndex => DAY_NAMES[dayIndex])
+              .join(',');
 
-              return [
-                {
-                  start_time: new Date(startTimeIso),
-                  end_time: new Date(endTimeIso),
-                  recurrence: {
-                    recurrence_type: RECURRENCE_TYPE_MAP[scheduleSettings.repeat.unit],
-                    interval_value: scheduleSettings.repeat.interval,
-                    days_of_week: days_of_week || undefined,
-                    occurrence_count: occurrenceCount,
-                  },
-                  conflict_resolution: 'FAIL',
+            return [
+              {
+                start_time: new Date(startTimeIso),
+                end_time: new Date(endTimeIso),
+                recurrence: {
+                  recurrence_type: RECURRENCE_TYPE_MAP[scheduleSettings.repeat.unit],
+                  interval_value: scheduleSettings.repeat.interval,
+                  days_of_week: days_of_week || undefined,
+                  occurrence_count: occurrenceCount,
                 },
-              ];
-            })();
+                conflict_resolution: 'FAIL',
+              },
+            ];
+          })();
 
       const payload: CreateClassDefinitionMultipartData['body'] = {
         course_uuid: classDetails.course_uuid ?? undefined,
@@ -755,29 +756,29 @@ const ClassBuilderPage = ({
         default_start_time:
           scheduleMode === 'custom'
             ? new Date(
-                buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].startTime)
-              )
+              buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].startTime)
+            )
             : new Date(
-                buildUtcIsoDateTime(
-                  scheduleSettings.startClass.date,
-                  scheduleSettings.allDay
-                    ? '00:00'
-                    : (scheduleSettings.startClass.startTime as string)
-                )
-              ),
+              buildUtcIsoDateTime(
+                scheduleSettings.startClass.date,
+                scheduleSettings.allDay
+                  ? '00:00'
+                  : (scheduleSettings.startClass.startTime as string)
+              )
+            ),
         default_end_time:
           scheduleMode === 'custom'
             ? new Date(
-                buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].endTime)
-              )
+              buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].endTime)
+            )
             : new Date(
-                buildUtcIsoDateTime(
-                  scheduleSettings.startClass.date,
-                  scheduleSettings.allDay
-                    ? '23:59'
-                    : (scheduleSettings.startClass.endTime as string)
-                )
-              ),
+              buildUtcIsoDateTime(
+                scheduleSettings.startClass.date,
+                scheduleSettings.allDay
+                  ? '23:59'
+                  : (scheduleSettings.startClass.endTime as string)
+              )
+            ),
         meeting_link: meetingLinkAllowed ? trimToUndefined(classDetails.meeting_link) : undefined,
         session_templates: sessionTemplates,
       };

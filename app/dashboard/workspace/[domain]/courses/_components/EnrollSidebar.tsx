@@ -312,7 +312,7 @@ export default function EnrollSidebar({
 
           <PreviewRow
             icon={Clock}
-            label="Class Duration"
+            label="Total Class Duration"
             value={totalDuration || "N/A"}
           />
 

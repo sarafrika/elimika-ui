@@ -3066,14 +3066,14 @@ export const zLessonPracticeActivity = z
       .describe('**[READ-ONLY]** User who last updated the practice activity.')
       .readonly()
       .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether the activity is published.')
-      .readonly()
-      .optional(),
     estimated_duration: z
       .string()
       .describe('**[READ-ONLY]** Human-readable estimated duration.')
+      .readonly()
+      .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether the activity is published.')
       .readonly()
       .optional(),
   })
@@ -4474,16 +4474,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
+      .readonly()
+      .optional(),
     capacity_info: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
-      .readonly()
-      .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
   })
@@ -4514,7 +4514,8 @@ export const zClassMarketplaceJobRequest = z
       .string()
       .uuid()
       .describe('**[REQUIRED]** Organisation posting the marketplace class job.'),
-    course_uuid: z.string().uuid().describe('**[REQUIRED]** Course backing the advertised class.'),
+    course_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    program_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     title: z.string().min(0).max(255).describe('**[REQUIRED]** Advert title for the class job.'),
     description: z.union([z.string().min(0).max(2000), z.null()]).optional(),
     class_visibility: zClassVisibilityEnum,
@@ -4563,6 +4564,7 @@ export const zClassMarketplaceJob = z
     status: zStatusEnum5.optional(),
     organisation_uuid: z.string().uuid().readonly().optional(),
     course_uuid: z.string().uuid().readonly().optional(),
+    program_uuid: z.string().uuid().readonly().optional(),
     class_visibility: zClassVisibilityEnum.optional(),
     session_format: zSessionFormatEnum.optional(),
     default_start_time: z.string().datetime().readonly().optional(),
@@ -14228,6 +14230,7 @@ export const zListJobsData = z.object({
   query: z.object({
     organisation_uuid: z.string().uuid().optional(),
     course_uuid: z.string().uuid().optional(),
+    program_uuid: z.string().uuid().optional(),
     status: z.string().optional(),
     pageable: zPageable,
   }),

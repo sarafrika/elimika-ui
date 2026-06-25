@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, ChevronDown, Download, Filter } from "lucide-react";
+import { Calendar, ChevronDown, Filter } from "lucide-react";
 
 export function HeaderBar() {
   return (
@@ -45,10 +45,10 @@ export function HeaderBar() {
         </button>
 
         {/* Export */}
-        <button className="flex items-center gap-1.5 rounded-sm border border-primary bg-background px-2.5 py-1.5 text-xs text-primary shadow-sm transition-colors hover:bg-primary/10 sm:text-sm">
+        {/* <button className="flex items-center gap-1.5 rounded-sm border border-primary bg-background px-2.5 py-1.5 text-xs text-primary shadow-sm transition-colors hover:bg-primary/10 sm:text-sm">
           <Download className="h-3.5 w-3.5 shrink-0" />
           <span>Export</span>
-        </button>
+        </button> */}
       </div>
     </div>
   );

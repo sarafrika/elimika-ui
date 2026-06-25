@@ -14,16 +14,16 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FormEvent } from 'react';
 import { toast } from 'sonner';
-import type { CreateClassDefinitionMultipartData } from '@/services/client/types.gen';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { cn } from '../../../../../lib/utils';
+import { CreateClassDefinitionMultipartData } from '../../../../../services/client';
 import {
-  createClassDefinitionMultipartMutation as createClassDefinitionMutation,
+  createClassDefinitionMultipartMutation,
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
   updateClassDefinitionMutation,
 } from '../../../../../services/client/@tanstack/react-query.gen';
-import { ScheduleSettings } from './page';
+import { ClassDetails, ScheduleSettings } from '../create-new/page';
 
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 const RECURRENCE_TYPE_MAP: Record<string, string> = {
@@ -50,7 +50,7 @@ export const ClassScheduleFormPage = ({
 }) => {
   const qc = useQueryClient();
   const instructor = useInstructor();
-  const createClassDefinition = useMutation(createClassDefinitionMutation());
+  const createClassDefinition = useMutation(createClassDefinitionMultipartMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
   const getErrorMessage = (error: unknown, fallback: string) => {
     if (error && typeof error === 'object' && 'message' in error) {

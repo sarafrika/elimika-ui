@@ -8,7 +8,7 @@ import { DetailedMetrics } from "./_components/DetailedMetrics";
 import { HeaderBar } from "./_components/HeaderBar";
 import { KPIRow } from "./_components/KPIRow";
 import { SatisfactionDistribution } from "./_components/SatisfactionDistribution";
-import { SessionTable } from "./_components/SessionTable";
+import { SessionTable, SessionTableSummary } from "./_components/SessionTable";
 import { TabNav } from "./_components/TabNav";
 import { PlaceholderTab } from "./_components/tabs/PlaceholderTab";
 import { TopLocations } from "./_components/TopLocations";
@@ -24,7 +24,7 @@ const TABS = [
   "Custom Report",
 ];
 
-export default function TrainingDashboard() {
+export default function InstructorAnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState("Overview");
 
   return (
@@ -50,7 +50,7 @@ export default function TrainingDashboard() {
               </div>
             </div>
 
-            <SessionTable />
+            <SessionTableSummary />
 
             <div className="flex flex-wrap gap-4">
               <div className="flex-1 min-w-[240px]">
@@ -66,7 +66,7 @@ export default function TrainingDashboard() {
         )}
 
         {activeTab === "Session Report" && <div>
-          <PlaceholderTab tabName={activeTab} />
+          <SessionTable />
         </div>}
 
 
