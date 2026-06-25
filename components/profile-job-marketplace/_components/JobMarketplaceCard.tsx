@@ -7,7 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import type { ClassMarketplaceJob, Course } from '@/services/client/types.gen';
+import type { ClassMarketplaceJob, Course, TrainingProgram } from '@/services/client/types.gen';
+
+type ClassMarketplaceJobWithProgram = ClassMarketplaceJob & {
+  readonly program_uuid?: string | null;
+};
 
 function formatEnumLabel(value?: string | null) {
   if (!value) return 'Not provided';
@@ -46,19 +50,32 @@ function getDisplayOrganisationLabel(job: ClassMarketplaceJob, organisationName?
   return 'Organisation';
 }
 
-function getDisplayCourseLabel(job: ClassMarketplaceJob, course?: Course | null) {
+function getJobProgramUuid(job: ClassMarketplaceJobWithProgram) {
+  return job.program_uuid ?? null;
+}
+
+function getDisplayContentLabel(
+  job: ClassMarketplaceJobWithProgram,
+  course?: Course | null,
+  program?: TrainingProgram | null
+) {
+  const programUuid = getJobProgramUuid(job);
+  if (program?.title) return program.title;
+  if (programUuid) return `Program ${shortId(programUuid)}`;
   if (course?.name) return course.name;
   if (job.course_uuid) return `Course ${shortId(job.course_uuid)}`;
-  return 'Course';
+  return 'Course or program';
 }
 
 function JobBadgeRow({
   job,
   course,
+  program,
   organisationName,
 }: {
-  job: ClassMarketplaceJob;
+  job: ClassMarketplaceJobWithProgram;
   course?: Course | null;
+  program?: TrainingProgram | null;
   organisationName?: string | null;
 }) {
   return (
@@ -79,7 +96,7 @@ function JobBadgeRow({
         {getDisplayOrganisationLabel(job, organisationName)}
       </Badge>
       <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {getDisplayCourseLabel(job, course)}
+        {getDisplayContentLabel(job, course, program)}
       </Badge>
     </div>
   );
@@ -92,17 +109,19 @@ export function JobCard({
   onCancel,
   isManagementView,
   course,
+  program,
   organisationName,
   applicationStatus,
   hasApplied,
   applicationsHref,
 }: {
-  job: ClassMarketplaceJob;
+  job: ClassMarketplaceJobWithProgram;
   onView: () => void;
   onEdit?: () => void;
   onCancel?: () => void;
   isManagementView: boolean;
   course?: Course | null;
+  program?: TrainingProgram | null;
   organisationName?: string | null;
   applicationStatus?: string | null;
   hasApplied?: boolean;
@@ -145,7 +164,7 @@ export function JobCard({
               <h3 className='truncate text-lg font-semibold text-foreground'>{title}</h3>
             </div>
             <p className='mt-0.5 text-sm text-muted-foreground'>
-              {getDisplayOrganisationLabel(job, organisationName)} · {getDisplayCourseLabel(job, course)}
+              {getDisplayOrganisationLabel(job, organisationName)} · {getDisplayContentLabel(job, course, program)}
             </p>
           </div>
           <Badge variant={job.status === 'open' ? 'secondary' : 'outline'} className='rounded-full px-3 py-1'>
@@ -153,7 +172,12 @@ export function JobCard({
           </Badge>
         </div>
 
-        <JobBadgeRow job={job} course={course} organisationName={organisationName} />
+        <JobBadgeRow
+          job={job}
+          course={course}
+          program={program}
+          organisationName={organisationName}
+        />
 
         <div className='grid gap-2 sm:grid-cols-2'>
           <div className='flex items-center gap-2 text-sm text-muted-foreground'>

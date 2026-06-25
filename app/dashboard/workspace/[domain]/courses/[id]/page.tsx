@@ -1,5 +1,5 @@
-import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
 import { notFound } from 'next/navigation';
+import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
 import ClassCourseDetailsPage from '../_components/ClassCourseDetailsPage';
 
 type WorkspaceCourseDetailsPageProps = {
@@ -15,10 +15,12 @@ export default async function WorkspaceCourseDetailsPage({
   if (
     normalizedDomain !== 'student' &&
     normalizedDomain !== 'instructor' &&
-    normalizedDomain !== 'course_creator'
+    normalizedDomain !== 'course_creator' &&
+    normalizedDomain !== 'organisation' &&
+    normalizedDomain !== 'organisation_user'
   ) {
     notFound();
   }
 
-  return <ClassCourseDetailsPage courseId={id} type='course' />
+  return <ClassCourseDetailsPage courseId={id} type='course' />;
 }

@@ -311,10 +311,12 @@ function ApplicationListSkeleton() {
 
 export function JobOverviewPanel({
   job,
+  contentLabel,
   organisationUuid,
   isLoading,
 }: {
   job: ClassMarketplaceJob | null;
+  contentLabel?: string | null;
   organisationUuid?: string | null;
   isLoading: boolean;
 }) {
@@ -325,6 +327,7 @@ export function JobOverviewPanel({
       <h2 className='text-lg font-semibold'>Job overview</h2>
       <div className='mt-4 space-y-3'>
         <OverviewTile label='Job title' value={job?.title ?? 'Not found'} />
+        <OverviewTile label='Course / program' value={contentLabel ?? 'Not available'} />
         <OverviewTile label='Organisation' value={job?.organisation_uuid ?? organisationUuid ?? 'Not available'} />
         <div className='rounded-2xl border bg-background/70 p-3'>
           <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
@@ -369,7 +372,7 @@ function JobOverviewSkeleton() {
     <Card className='h-fit rounded-[18px] border border-border bg-card/95 p-4 shadow-sm'>
       <Skeleton className='h-6 w-32 rounded-md' />
       <div className='mt-4 space-y-3'>
-        {[0, 1, 2, 3].map(item => (
+        {[0, 1, 2, 3, 4].map(item => (
           <Skeleton key={item} className='h-20 rounded-2xl' />
         ))}
       </div>

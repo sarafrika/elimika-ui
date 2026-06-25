@@ -1,8 +1,5 @@
-export default function CoursesPage() {
-  return (
-    <div>
-      <h1 className='text-2xl font-bold'>Manage Courses</h1>
-      <p>This page is under construction. Check back later for updates.</p>
-    </div>
-  );
+import { SharedCoursesPage } from '@/app/dashboard/workspace/[domain]/courses/_components/SharedCoursesPage';
+
+export default function OrganisationCoursesPage() {
+  return <SharedCoursesPage domain='organisation' />;
 }

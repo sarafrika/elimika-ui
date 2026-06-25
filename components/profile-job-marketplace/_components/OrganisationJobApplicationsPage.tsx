@@ -20,7 +20,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Label } from '@/components/ui/label';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
+import { useCoursesByIds, useInstructorsByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import type {
   ClassMarketplaceJob,
   ClassMarketplaceJobApplication,
@@ -35,19 +35,32 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import {
+  type ApplicationStatusFilter,
   ApplicationsFilterBar,
   ApplicationsListSection,
   JobApplicationsHeader,
   JobOverviewPanel,
-  type ApplicationStatusFilter,
 } from './OrganisationJobApplicationsSections';
 
 type JobApplicationsPageProps = {
   jobUuid: string;
 };
 
+type ClassMarketplaceJobWithProgram = ClassMarketplaceJob & {
+  readonly program_uuid?: string | null;
+};
+
 const JOB_PAGE_SIZE = 50;
 const APPLICATION_PAGE_SIZE = 100;
+
+function shortId(value?: string | null) {
+  if (!value) return 'Unknown';
+  return value.slice(0, 8);
+}
+
+function getJobProgramUuid(job?: ClassMarketplaceJobWithProgram | null) {
+  return job?.program_uuid ?? null;
+}
 
 export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPageProps) {
   const router = useRouter();
@@ -80,7 +93,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
     enabled: Boolean(organisationUuid),
   });
 
-  const job =
+  const job: ClassMarketplaceJobWithProgram | null =
     (jobsResponse?.data?.content ?? []).find((item: ClassMarketplaceJob) => item.uuid === jobUuid) ??
     null;
 
@@ -96,6 +109,14 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
     [applications]
   );
   const { instructorMap, isLoading: isInstructorsLoading } = useInstructorsByIds(instructorUuids);
+  const programUuid = getJobProgramUuid(job);
+  const { courseMap } = useCoursesByIds(job?.course_uuid ? [job.course_uuid] : []);
+  const { programMap } = useProgramsByIds(programUuid ? [programUuid] : []);
+  const contentLabel = programUuid
+    ? programMap[programUuid]?.title ?? `Program ${shortId(programUuid)}`
+    : job?.course_uuid
+      ? courseMap[job.course_uuid]?.name ?? `Course ${shortId(job.course_uuid)}`
+      : 'Course or program';
 
   const reviewMutation = useMutation({
     ...reviewApplicationMutation(),
@@ -143,6 +164,8 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
         application.review_notes,
         application.status,
         application.instructor_uuid,
+        job?.title,
+        contentLabel,
       ]
         .filter(Boolean)
         .join(' ')
@@ -152,7 +175,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
       const matchesStatus = statusFilter === 'ALL' || application.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [applications, instructorMap, searchQuery, statusFilter]);
+  }, [applications, contentLabel, instructorMap, job?.title, searchQuery, statusFilter]);
 
   const stats = useMemo(
     () => ({
@@ -260,6 +283,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
 
           <JobOverviewPanel
             job={job}
+            contentLabel={contentLabel}
             organisationUuid={organisation?.uuid}
             isLoading={isJobsLoading && !jobsResponse}
           />

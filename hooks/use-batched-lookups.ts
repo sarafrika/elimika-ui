@@ -3,12 +3,13 @@
 import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { STALE_TIMES } from '@/lib/query-client';
-import type { Course, Instructor, SearchResponse, Student, User } from '@/services/client';
+import type { Course, Instructor, SearchResponse, Student, TrainingProgram, User } from '@/services/client';
 import {
   searchCoursesOptions,
   searchInstructorsOptions,
   searchOptions,
   searchStudentsOptions,
+  searchTrainingProgramsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 
 /**
@@ -91,6 +92,15 @@ export function useUsersByIds(ids: string[]) {
 export function useCoursesByIds(ids: string[]) {
   const { map, isLoading } = useSearchByIds<Course>(ids, searchCoursesOptions, STALE_TIMES.reference);
   return { courseMap: map, isLoading };
+}
+
+export function useProgramsByIds(ids: string[]) {
+  const { map, isLoading } = useSearchByIds<TrainingProgram>(
+    ids,
+    searchTrainingProgramsOptions,
+    STALE_TIMES.reference
+  );
+  return { programMap: map, isLoading };
 }
 
 export function useInstructorsByIds(ids: string[]) {
