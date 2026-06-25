@@ -265,9 +265,9 @@ export type Student = {
    * **[OPTIONAL]** Short biography or notes about the student. Used in student profiles.
    */
   bio?: string | null;
-  primaryGuardianContact?: string;
   secondaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
+  primaryGuardianContact?: string;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
    */
@@ -4065,6 +4065,18 @@ export type ScheduledInstance = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
+   */
+  readonly can_be_started?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
+   */
+  readonly can_be_ended?: boolean;
+  /**
    * **[READ-ONLY]** Duration of the scheduled instance in minutes.
    */
   readonly duration_minutes?: bigint;
@@ -4080,18 +4092,6 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
-   */
-  readonly can_be_started?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
-   */
-  readonly can_be_ended?: boolean;
 };
 
 /**
@@ -5002,12 +5002,12 @@ export type MultiValueMapStringString = {
   };
   empty?: boolean;
   [key: string]:
-    | Array<string>
-    | {
-        [key: string]: string;
-      }
-    | boolean
-    | undefined;
+  | Array<string>
+  | {
+    [key: string]: string;
+  }
+  | boolean
+  | undefined;
 };
 
 /**
@@ -6204,13 +6204,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the student attended this class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
   readonly is_upcoming?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended this class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponseListScheduledInstance = {
@@ -6284,8 +6284,8 @@ export type PageableObject = {
 
 export type SortObject = {
   empty?: boolean;
-  sorted?: boolean;
   unsorted?: boolean;
+  sorted?: boolean;
 };
 
 export type ApiResponsePagedDtoAssessmentRubric = {
@@ -28054,7 +28054,7 @@ export type RemoveAdminDomainResponse =
 
 export type ClientOptions = {
   baseUrl:
-    | 'https://api.elimika.staging.sarafrika.com'
-    | 'https://api.elimika.sarafrika.com'
-    | (string & {});
+  | 'https://api.elimika.staging.sarafrika.com'
+  | 'https://api.elimika.sarafrika.com'
+  | (string & {});
 };

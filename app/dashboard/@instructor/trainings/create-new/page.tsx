@@ -11,16 +11,17 @@ import {
   requiresPhysicalLocation,
   trimToUndefined,
 } from '@/lib/location-types';
-import type { CreateClassDefinitionData } from '@/services/client/types.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import type { CreateClassDefinitionMultipartData } from '@/services/client/types.gen';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
   createClassDefinitionMultipartMutation,
+  createClassDefinitionMultipartMutation as createClassDefinitionMutation,
   getAllClassDefinitionsQueryKey,
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
@@ -101,7 +102,7 @@ export interface ScheduleSettings {
   pin: string;
   classroom: string;
   totalSlots: number;
-  weekly
+  weekly;
 }
 
 export interface NotificationSettings {
@@ -434,7 +435,6 @@ const ClassBuilderPage = ({
     }));
   }, [initialSlot, resolveId]);
 
-
   useEffect(() => {
     if (resolveId || isDataInitialized || typeof window === 'undefined') return;
 
@@ -562,7 +562,6 @@ const ClassBuilderPage = ({
     }
   }, [classData, isLoading, courseDetail, resolveId, isDataInitialized, instructor?.full_name]);
 
-
   useEffect(() => {
     if (resolveId || !isDataInitialized || typeof window === 'undefined') return;
 
@@ -600,15 +599,15 @@ const ClassBuilderPage = ({
     scheduleSettings.repeat.unit === 'week' ? scheduleSettings.repeat.days : undefined
   );
   const classScheduleInstances = generateScheduleInstances(scheduleSettings);
-  const sortedCustomSessions = customSessions
-    .slice()
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const sortedCustomSessions = customSessions.slice().sort((a, b) => a.date.localeCompare(b.date));
   const classScheduleConflicts = useMemo(
-    () => findScheduleConflicts(classScheduleInstances, instructorClasses, resolveId, instructor?.uuid),
+    () =>
+      findScheduleConflicts(classScheduleInstances, instructorClasses, resolveId, instructor?.uuid),
     [classScheduleInstances, instructorClasses, instructor?.uuid, resolveId]
   );
   const customScheduleConflicts = useMemo(
-    () => findScheduleConflicts(sortedCustomSessions, instructorClasses, resolveId, instructor?.uuid),
+    () =>
+      findScheduleConflicts(sortedCustomSessions, instructorClasses, resolveId, instructor?.uuid),
     [sortedCustomSessions, instructorClasses, instructor?.uuid, resolveId]
   );
   const activeScheduleConflicts =
@@ -700,7 +699,7 @@ const ClassBuilderPage = ({
 
       const physicalLocationRequired = requiresPhysicalLocation(locationType);
       const meetingLinkAllowed = locationType === 'ONLINE' || locationType === 'HYBRID';
-      const sessionTemplates: CreateClassDefinitionData['body']['session_templates'] =
+      const sessionTemplates: CreateClassDefinitionMultipartData['body']['session_templates'] =
         scheduleMode === 'custom'
           ? sortedCustomSessions.map(session => ({
             start_time: new Date(buildUtcIsoDateTime(session.date, session.startTime)),
@@ -737,7 +736,7 @@ const ClassBuilderPage = ({
             ];
           })();
 
-      const payload: CreateClassDefinitionData['body'] = {
+      const payload: CreateClassDefinitionMultipartData['body'] = {
         course_uuid: classDetails.course_uuid ?? undefined,
         program_uuid: classDetails.program_uuid ?? undefined,
         title: classDetails.title,
@@ -820,7 +819,7 @@ const ClassBuilderPage = ({
         );
       } else {
         createClassDefinition.mutate(
-          { body: payload },
+          { body: payload, query: { formFields: {} } },
           {
             onSuccess: response => {
               const savedUuid = response?.data?.class_definition?.uuid;

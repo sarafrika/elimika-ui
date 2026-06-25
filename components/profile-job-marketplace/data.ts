@@ -104,11 +104,12 @@ const roleConfig: Record<JobMarketplaceRole, JobMarketplaceRoleConfig> = {
     emptyStateLabel: 'No active opportunities are available right now.',
   },
   organization: {
-    title: 'Opportunities',
-    description: 'Create, manage, and review the job postings published by your organisation.',
+    title: 'Class Jobs',
+    description:
+      'Create organisation-owned class adverts, review instructor applications, and assign delivery.',
     showManagementRail: false,
     showCreateAction: true,
-    emptyStateLabel: 'No jobs have been created by your organisation yet.',
+    emptyStateLabel: 'No class jobs have been created by your organisation yet.',
   },
 };
 

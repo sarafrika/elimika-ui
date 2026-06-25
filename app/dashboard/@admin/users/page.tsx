@@ -1,30 +1,17 @@
-import { Badge } from '../../../../components/ui/badge';
-import { Card } from '../../../../components/ui/card';
-import AdminUsersPage from './users-page';
+import { adminTheme } from '../_components/ui/admin-theme';
+import { AdminPageHeader } from '../_components/ui/AdminPageHeader';
+import { PeopleTableSection } from './_components/PeopleTableSection';
 
-export default function Page() {
+export default function UsersPage() {
   return (
-    <div className='flex flex-col gap-6 p-6'>
-      <div>
-        <Badge
-          variant='outline'
-          className='border-primary/60 bg-primary/10 text-xs font-semibold tracking-wide uppercase'
-        >
-          Users Management
-        </Badge>
-        <div className='bg-card relative mt-4 overflow-hidden rounded-3xl'>
-          <div className='flex flex-col'>
-            <p className='text-muted-foreground max-w-3xl text-sm leading-relaxed'>
-              Manage user accounts, assign roles and permissions, and monitor system access from a
-              centralized dashboard.
-            </p>
-          </div>
-        </div>
+    <main className={adminTheme.page}>
+      <div className={adminTheme.pageStack}>
+        <AdminPageHeader
+          title='Users'
+          description='Manage accounts, review credentials, and verify users from a single 360° view.'
+        />
+        <PeopleTableSection />
       </div>
-
-      <Card className='p-2'>
-        <AdminUsersPage />;
-      </Card>
-    </div>
+    </main>
   );
 }

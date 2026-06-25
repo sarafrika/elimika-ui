@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, BookOpen, GraduationCap, Users } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Building2, GraduationCap, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -76,6 +76,22 @@ const profileTypes: ProfileType[] = [
       glow: 'from-accent/40',
     },
   },
+  {
+    id: 'organisation_user',
+    title: 'Organisation',
+    description: 'Register an organisation, manage teams, and coordinate training delivery.',
+    href: '/onboarding/organisation',
+    icon: Building2,
+    accent: {
+      icon: 'text-primary',
+      iconBg: 'bg-primary/10',
+      titleHover: 'group-hover:text-primary',
+      cardAccent: 'hover:border-primary/40 focus-visible:ring-primary/20',
+      buttonAccent:
+        'group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground',
+      glow: 'from-primary/40',
+    },
+  },
 ];
 
 export default function AddProfileSelector() {
@@ -91,9 +107,13 @@ export default function AddProfileSelector() {
         : []
     ).map(domain => String(domain))
   );
-  const availableProfiles = profileTypes.filter(
-    profileType => !existingDomains.has(profileType.id)
-  );
+  const availableProfiles = profileTypes.filter(profileType => {
+    if (profileType.id === 'organisation_user') {
+      return !existingDomains.has('organisation_user') && !existingDomains.has('organisation');
+    }
+
+    return !existingDomains.has(profileType.id);
+  });
 
   // If user already has all profile types, show a message
   if (availableProfiles.length === 0) {

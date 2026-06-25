@@ -1,4 +1,3 @@
-import type { UserDomain } from '@/lib/types';
 import {
   Award,
   BadgeCheck,
@@ -36,6 +35,7 @@ import {
   Wallet
 } from 'lucide-react';
 import type { ComponentType } from 'react';
+import type { UserDomain } from '@/lib/types';
 
 export type MenuItem = {
   title: string;
@@ -444,11 +444,6 @@ export default {
       icon: UsersIcon,
     },
     {
-      title: 'Courses',
-      url: '/dashboard/courses',
-      icon: School,
-    },
-    {
       title: 'Manage Courses',
       url: '/dashboard/manage-courses',
       icon: BookOpen,
@@ -495,11 +490,6 @@ export default {
       icon: CalendarClock,
     },
     {
-      title: 'Verifications',
-      url: '/dashboard/verifications',
-      icon: Award, // changed (certification/badges)
-    },
-    {
       title: 'Catalogue',
       url: '/dashboard/catalogue',
       icon: ShoppingBag,
@@ -532,9 +522,24 @@ export default {
       icon: LayoutDashboard,
     },
     {
+      title: 'Organisation Profile',
+      url: '/dashboard/account/training-center',
+      icon: Building2,
+    },
+    {
+      title: 'Credentials Vault',
+      url: '/dashboard/credentials',
+      icon: Award,
+    },
+    {
       title: 'Courses',
       url: '/dashboard/courses',
       icon: School,
+    },
+    {
+      title: 'Classes',
+      url: '/dashboard/classes',
+      icon: ClipboardList,
     },
     {
       title: 'Schedule',

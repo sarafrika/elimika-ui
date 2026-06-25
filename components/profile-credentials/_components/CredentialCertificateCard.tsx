@@ -18,7 +18,7 @@ import { loadPdfjs, type PDFDocumentProxy, type PDFPageProxy } from '@/lib/pdfjs
 import { cn } from '@/lib/utils';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
-import { PdfPreview } from '../../../app/dashboard/@admin/verifications/_components/DocumentsVerificationPage';
+import { PdfPreview } from '../../../app/dashboard/@admin/_components/ui/PdfPreview';
 import type { CredentialItem } from '../data';
 import { CredentialDetailGrid } from './CredentialDetailGrid';
 

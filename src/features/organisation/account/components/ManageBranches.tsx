@@ -1,13 +1,13 @@
 'use client';
 
-import { WatchedText } from '@/components/form/watched-value';
-import { useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { type Path, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
+import { WatchedText } from '@/components/form/watched-value';
 import LocationInput from '@/components/locationInput';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,8 +21,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { extractPage } from '@/lib/api-helpers';
 import { asRecord, getFieldErrorMessage } from '@/lib/error-utils';
 import { type ApiResponse, createTrainingBranch, updateTrainingBranch } from '@/services/client';
+import { getTrainingBranchesByOrganisationOptions } from '@/services/client/@tanstack/react-query.gen';
 import { zTrainingBranch } from '@/services/client/zod.gen';
 import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
@@ -51,6 +53,16 @@ const branchesSchema = z.object({
 type BranchType = z.infer<typeof branchSchema>;
 type BranchesFormValues = z.infer<typeof branchesSchema>;
 
+const BRANCHES_PAGEABLE = { page: 0, size: 50 };
+
+const defaultBranch = (): BranchType => ({
+  branch_name: 'Main Campus',
+  active: true,
+  poc_name: '',
+  poc_email: '',
+  poc_telephone: '',
+});
+
 export default function ManageBranch() {
   const queryClient = useQueryClient();
   useOrganisationAccountBreadcrumb('branches', 'Branches', '/dashboard/account/branches');
@@ -58,14 +70,37 @@ export default function ManageBranch() {
   const userProfile = useUserProfile();
   const organisation = useOrganisation();
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
+  const organisationUuid = organisation?.uuid;
 
-  const defaultBranch = (): BranchType => ({
-    branch_name: 'Main Campus',
-    active: true,
-    poc_name: '',
-    poc_email: '',
-    poc_telephone: '',
+  const branchesQueryOptions = useMemo(
+    () =>
+      organisationUuid
+        ? getTrainingBranchesByOrganisationOptions({
+            path: { uuid: organisationUuid },
+            query: { pageable: BRANCHES_PAGEABLE },
+          })
+        : null,
+    [organisationUuid]
+  );
+
+  const branchesQuery = useQuery({
+    queryKey: branchesQueryOptions?.queryKey ?? ['organisation', 'branches', 'disabled'],
+    queryFn: context =>
+      branchesQueryOptions?.queryFn
+        ? branchesQueryOptions.queryFn(context as never)
+        : Promise.resolve(null),
+    enabled: Boolean(branchesQueryOptions),
   });
+
+  const loadedBranches = useMemo(
+    () => extractPage<BranchType>(branchesQuery.data).items,
+    [branchesQuery.data]
+  );
+
+  const branchDefaults = useMemo(
+    () => (loadedBranches.length > 0 ? loadedBranches : [defaultBranch()]),
+    [loadedBranches]
+  );
 
   const domainBadges = (
     Array.isArray(userProfile?.user_domain)
@@ -83,12 +118,15 @@ export default function ManageBranch() {
   const form = useForm<BranchesFormValues>({
     resolver: zodResolver(branchesSchema),
     defaultValues: {
-      branches:
-        (organisation?.branches?.length ?? 0) > 0
-          ? (organisation?.branches ?? [])
-          : [defaultBranch()],
+      branches: branchDefaults,
     },
   });
+  const isDirty = form.formState.isDirty;
+
+  useEffect(() => {
+    if (!branchesQuery.isSuccess || isDirty) return;
+    form.reset({ branches: branchDefaults });
+  }, [branchDefaults, branchesQuery.isSuccess, form, isDirty]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -157,7 +195,9 @@ export default function ManageBranch() {
 
           toast.success('Branch details updated successfully');
           disableEditing();
-          queryClient.invalidateQueries({ queryKey: ['organization'] });
+          if (branchesQueryOptions) {
+            queryClient.invalidateQueries({ queryKey: branchesQueryOptions.queryKey });
+          }
         } catch (_error) {
           toast.error('Unable to save branch details right now. Please try again.');
         } finally {
@@ -249,7 +289,7 @@ export default function ManageBranch() {
                         <FormItem>
                           <FormLabel>Location</FormLabel>
                           <FormControl>
-                            <LocationInput {...field} />
+                            <LocationInput {...field} value={field.value ?? undefined} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

@@ -8,6 +8,7 @@ import {
   UserCog,
   Settings,
   Briefcase,
+  BriefcaseBusiness,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -45,6 +46,11 @@ const organizationMenuItems = [
     title: 'Classes',
     url: '/dashboard/classes',
     icon: ClipboardList,
+  },
+  {
+    title: 'Class Jobs',
+    url: '/dashboard/opportunities',
+    icon: BriefcaseBusiness,
   },
   {
     title: 'Branches',

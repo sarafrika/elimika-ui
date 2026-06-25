@@ -1,9 +1,9 @@
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { BookOpen, Calendar, Search } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { Avatar, AvatarFallback, AvatarImage } from '../../../../../../components/ui/avatar';
 import type { CoursesCatalogCardData } from './courses-data';
 import { StarRatingSummary } from './StarRating';
@@ -123,7 +123,7 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
             </div>
 
             <StarRatingSummary
-              rating={card.rating}
+              rating={card.rating ?? 0}
               reviewCount={card.reviewCount}
               showCount={true}
             />

@@ -1,11 +1,12 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { FileText } from 'lucide-react';
 import { useState } from 'react';
-
+import { toast } from 'sonner';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
+import { extractList, extractPage } from '@/lib/api-helpers';
 import type { UserProfileType } from '@/lib/types';
 import {
   deleteCourseCreatorDocumentMutation,
@@ -39,9 +40,7 @@ import type {
   InstructorExperience,
   InstructorProfessionalMembership,
 } from '@/services/client/types.gen';
-
-import { toast } from 'sonner';
-import { useUserDomain } from '../../../context/user-domain-context';
+import { useOrganisation } from '../../../context/organisation-context';
 import type { CredentialsRole, CredentialsStatusFilter, CredentialsTabId } from '../data';
 import { buildCredentialsContent } from '../live-data';
 import { CredentialCertificateCard } from './CredentialCertificateCard';
@@ -58,81 +57,151 @@ type CredentialsVaultPageProps = {
 
 const PAGEABLE = { page: 0, size: 200 };
 type CredentialListItem = ReturnType<typeof buildCredentialsContent>['credentialsByTab'][CredentialsTabId][number];
+type OptionalGeneratedQueryOptions = {
+  queryKey: readonly unknown[];
+  queryFn?: unknown;
+};
+
+function useOptionalGeneratedQuery(
+  options: OptionalGeneratedQueryOptions | null,
+  disabledKey: readonly unknown[]
+) {
+  return useQuery({
+    queryKey: options?.queryKey ?? disabledKey,
+    queryFn: context =>
+      typeof options?.queryFn === 'function'
+        ? Promise.resolve(options.queryFn(context as never))
+        : Promise.resolve(null),
+    enabled: Boolean(options),
+  });
+}
 
 export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const user = useUserProfile();
-  const qc = useQueryClient();
+  const organisation = useOrganisation();
   const [searchValue, setSearchValue] = useState('');
   const [statusFilter, setStatusFilter] = useState<CredentialsStatusFilter>('all');
   const [isUploadSheetOpen, setIsUploadSheetOpen] = useState(false);
+  const canManageCredentials = role === 'instructor' || role === 'course_creator';
 
   const profile =
     role === 'instructor'
       ? user?.instructor
       : role === 'course_creator'
         ? user?.courseCreator
-        : user?.student;
-  const profileData = user as UserProfileType | undefined;
+        : role === 'organisation'
+          ? organisation
+          : user?.student;
+  const profileData =
+    role === 'organisation' && organisation
+      ? ({ ...(user ?? {}), organizations: [organisation] } as UserProfileType)
+      : (user as UserProfileType | undefined);
 
   const profileUuid = profile?.uuid;
-  const studentCertificatesQuery = useQuery({
-    ...getStudentCertificatesOptions({ path: { studentUuid: profileUuid ?? '' } }),
-    enabled: role === 'student' && !!profileUuid,
-  });
+  const studentCertificatesOptions =
+    role === 'student' && profileUuid
+      ? getStudentCertificatesOptions({ path: { studentUuid: profileUuid } })
+      : null;
+  const studentCertificatesQuery = useOptionalGeneratedQuery(studentCertificatesOptions, [
+    'credentials',
+    'student-certificates',
+    'disabled',
+  ]);
 
-  const instructorDocumentsQuery = useQuery({
-    ...getInstructorDocumentsOptions({ path: { instructorUuid: profileUuid ?? '' } }),
-    enabled: role === 'instructor' && !!profileUuid,
-  });
+  const instructorDocumentsOptions =
+    role === 'instructor' && profileUuid
+      ? getInstructorDocumentsOptions({ path: { instructorUuid: profileUuid } })
+      : null;
+  const instructorDocumentsQuery = useOptionalGeneratedQuery(instructorDocumentsOptions, [
+    'credentials',
+    'instructor-documents',
+    'disabled',
+  ]);
 
-  const courseCreatorDocumentsQuery = useQuery({
-    ...getCourseCreatorDocumentsOptions({ path: { courseCreatorUuid: profileUuid ?? '' } }),
-    enabled: role === 'course_creator' && !!profileUuid,
-  });
+  const courseCreatorDocumentsOptions =
+    role === 'course_creator' && profileUuid
+      ? getCourseCreatorDocumentsOptions({ path: { courseCreatorUuid: profileUuid } })
+      : null;
+  const courseCreatorDocumentsQuery = useOptionalGeneratedQuery(courseCreatorDocumentsOptions, [
+    'credentials',
+    'course-creator-documents',
+    'disabled',
+  ]);
 
-  const instructorEducationQuery = useQuery({
-    ...getInstructorEducationOptions({ path: { instructorUuid: profileUuid ?? '' } }),
-    enabled: role === 'instructor' && !!profileUuid,
-  });
-  const instructorMembershipsQuery = useQuery({
-    ...getInstructorMembershipsOptions({
-      path: { instructorUuid: profileUuid ?? '' },
-      query: { pageable: PAGEABLE },
-    }),
-    enabled: role === 'instructor' && !!profileUuid,
-  });
-  const instructorExperienceQuery = useQuery({
-    ...getInstructorExperienceOptions({
-      path: { instructorUuid: profileUuid ?? '' },
-      query: { pageable: PAGEABLE },
-    }),
-    enabled: role === 'instructor' && !!profileUuid,
-  });
+  const instructorEducationOptions =
+    role === 'instructor' && profileUuid
+      ? getInstructorEducationOptions({ path: { instructorUuid: profileUuid } })
+      : null;
+  const instructorEducationQuery = useOptionalGeneratedQuery(instructorEducationOptions, [
+    'credentials',
+    'instructor-education',
+    'disabled',
+  ]);
+  const instructorMembershipsOptions =
+    role === 'instructor' && profileUuid
+      ? getInstructorMembershipsOptions({
+          path: { instructorUuid: profileUuid },
+          query: { pageable: PAGEABLE },
+        })
+      : null;
+  const instructorMembershipsQuery = useOptionalGeneratedQuery(instructorMembershipsOptions, [
+    'credentials',
+    'instructor-memberships',
+    'disabled',
+  ]);
+  const instructorExperienceOptions =
+    role === 'instructor' && profileUuid
+      ? getInstructorExperienceOptions({
+          path: { instructorUuid: profileUuid },
+          query: { pageable: PAGEABLE },
+        })
+      : null;
+  const instructorExperienceQuery = useOptionalGeneratedQuery(instructorExperienceOptions, [
+    'credentials',
+    'instructor-experience',
+    'disabled',
+  ]);
 
-  const courseCreatorEducationQuery = useQuery({
-    ...getCourseCreatorEducationOptions({
-      path: { courseCreatorUuid: profileUuid ?? '' },
-      query: { pageable: PAGEABLE },
-    }),
-    enabled: role === 'course_creator' && !!profileUuid,
-  });
-  const courseCreatorMembershipsQuery = useQuery({
-    ...getCourseCreatorMembershipsOptions({
-      path: { courseCreatorUuid: profileUuid ?? '' },
-      query: { pageable: PAGEABLE },
-    }),
-    enabled: role === 'course_creator' && !!profileUuid,
-  });
-  const courseCreatorExperienceQuery = useQuery({
-    ...getCourseCreatorExperienceOptions({
-      path: { courseCreatorUuid: profileUuid ?? '' },
-      query: { pageable: PAGEABLE },
-    }),
-    enabled: role === 'course_creator' && !!profileUuid,
-  });
+  const courseCreatorEducationOptions =
+    role === 'course_creator' && profileUuid
+      ? getCourseCreatorEducationOptions({
+          path: { courseCreatorUuid: profileUuid },
+          query: { pageable: PAGEABLE },
+        })
+      : null;
+  const courseCreatorEducationQuery = useOptionalGeneratedQuery(courseCreatorEducationOptions, [
+    'credentials',
+    'course-creator-education',
+    'disabled',
+  ]);
+  const courseCreatorMembershipsOptions =
+    role === 'course_creator' && profileUuid
+      ? getCourseCreatorMembershipsOptions({
+          path: { courseCreatorUuid: profileUuid },
+          query: { pageable: PAGEABLE },
+        })
+      : null;
+  const courseCreatorMembershipsQuery = useOptionalGeneratedQuery(courseCreatorMembershipsOptions, [
+    'credentials',
+    'course-creator-memberships',
+    'disabled',
+  ]);
+  const courseCreatorExperienceOptions =
+    role === 'course_creator' && profileUuid
+      ? getCourseCreatorExperienceOptions({
+          path: { courseCreatorUuid: profileUuid },
+          query: { pageable: PAGEABLE },
+        })
+      : null;
+  const courseCreatorExperienceQuery = useOptionalGeneratedQuery(courseCreatorExperienceOptions, [
+    'credentials',
+    'course-creator-experience',
+    'disabled',
+  ]);
 
   const documentTypesQuery = useQuery({
     ...listDocumentTypesOptions(),
+    enabled: canManageCredentials,
   });
 
   const deleteInstructorDocument = useMutation(deleteInstructorDocumentMutation());
@@ -146,38 +215,38 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
 
   const documents =
     role === 'instructor'
-      ? ((instructorDocumentsQuery.data?.data ?? []) as InstructorDocument[])
+      ? extractList<InstructorDocument>(instructorDocumentsQuery.data)
       : role === 'course_creator'
-        ? ((courseCreatorDocumentsQuery.data?.data ?? []) as CourseCreatorDocumentDto[])
+        ? extractList<CourseCreatorDocumentDto>(courseCreatorDocumentsQuery.data)
         : [];
   const certificates =
-    role === 'student'
-      ? ((studentCertificatesQuery.data?.data ?? []) as Certificate[])
-      : [];
+    role === 'student' ? extractList<Certificate>(studentCertificatesQuery.data) : [];
   const instructorEducations =
-    role === 'instructor' ? ((instructorEducationQuery.data?.data ?? []) as InstructorEducation[]) : [];
+    role === 'instructor'
+      ? extractList<InstructorEducation>(instructorEducationQuery.data)
+      : [];
   const instructorMemberships =
     role === 'instructor'
-      ? ((instructorMembershipsQuery.data?.data?.content ?? []) as InstructorProfessionalMembership[])
+      ? extractPage<InstructorProfessionalMembership>(instructorMembershipsQuery.data).items
       : [];
   const instructorExperiences =
     role === 'instructor'
-      ? ((instructorExperienceQuery.data?.data?.content ?? []) as InstructorExperience[])
+      ? extractPage<InstructorExperience>(instructorExperienceQuery.data).items
       : [];
   const courseCreatorEducations =
     role === 'course_creator'
-      ? ((courseCreatorEducationQuery.data?.data?.content ?? []) as CourseCreatorEducation[])
+      ? extractPage<CourseCreatorEducation>(courseCreatorEducationQuery.data).items
       : [];
   const courseCreatorMemberships =
     role === 'course_creator'
-      ? ((courseCreatorMembershipsQuery.data?.data?.content ?? []) as CourseCreatorProfessionalMembership[])
+      ? extractPage<CourseCreatorProfessionalMembership>(courseCreatorMembershipsQuery.data).items
       : [];
   const courseCreatorExperiences =
     role === 'course_creator'
-      ? ((courseCreatorExperienceQuery.data?.data?.content ?? []) as CourseCreatorExperience[])
+      ? extractPage<CourseCreatorExperience>(courseCreatorExperienceQuery.data).items
       : [];
 
-  const documentTypes = (documentTypesQuery.data?.data ?? []) as DocumentTypeOption[];
+  const documentTypes = extractList<DocumentTypeOption>(documentTypesQuery.data);
 
   const content = buildCredentialsContent({
     role,
@@ -303,7 +372,7 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
           addLabel={content.addLabel}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
-          onAddClick={role === 'student' ? undefined : () => setIsUploadSheetOpen(true)}
+          onAddClick={canManageCredentials ? () => setIsUploadSheetOpen(true) : undefined}
         />
 
         <Tabs defaultValue='all' className='gap-4'>
@@ -316,11 +385,12 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
                 badges={content.summary.badges}
                 blockchain={content.summary.blockchain}
                 shares={content.summary.shares}
+                role={role}
                 statusFilter={statusFilter}
                 onStatusFilterChange={setStatusFilter}
                 items={content.credentialsByTab[tab.id as CredentialsTabId]}
                 timeline={content.timeline}
-                onDeleteItem={role === 'student' ? undefined : removeCredential}
+                onDeleteItem={canManageCredentials ? removeCredential : undefined}
                 deleting={
                   deleteInstructorDocument.isPending ||
                   deleteCourseCreatorDocument.isPending ||
@@ -337,14 +407,16 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
         </Tabs>
       </div>
 
-      <CredentialsUploadSheet
-        open={isUploadSheetOpen}
-        onOpenChange={setIsUploadSheetOpen}
-        role={role}
-        profileUuid={profileUuid}
-        documentTypes={documentTypes}
-        onSaved={refreshDocuments}
-      />
+      {canManageCredentials ? (
+        <CredentialsUploadSheet
+          open={isUploadSheetOpen}
+          onOpenChange={setIsUploadSheetOpen}
+          role={role}
+          profileUuid={profileUuid}
+          documentTypes={documentTypes}
+          onSaved={refreshDocuments}
+        />
+      ) : null}
     </main>
   );
 }
@@ -354,6 +426,7 @@ type CredentialsPanelProps = {
   badges: string;
   blockchain: string;
   shares: string;
+  role: CredentialsRole;
   statusFilter: CredentialsStatusFilter;
   onStatusFilterChange: (value: CredentialsStatusFilter) => void;
   items: ReturnType<typeof buildCredentialsContent>['credentialsByTab'][CredentialsTabId];
@@ -367,6 +440,7 @@ function CredentialsPanel({
   badges,
   blockchain,
   shares,
+  role,
   statusFilter,
   onStatusFilterChange,
   items,
@@ -374,9 +448,6 @@ function CredentialsPanel({
   onDeleteItem,
   deleting,
 }: CredentialsPanelProps) {
-  const domain = useUserDomain()
-  const activeDomain = domain?.activeDomain
-
   return (
     <>
       <section className='grid gap-4 2xl:grid-cols-[320px_minmax(0,1fr)]'>
@@ -403,7 +474,7 @@ function CredentialsPanel({
               ))}
             </div>
           ) : (
-            <EmptyVaultState role={activeDomain as string} />
+            <EmptyVaultState role={role} />
           )}
         </div>
       </section>
@@ -414,8 +485,9 @@ function CredentialsPanel({
   );
 }
 
-function EmptyVaultState({ role }: { role?: string }) {
+function EmptyVaultState({ role }: { role?: CredentialsRole }) {
   const isStudent = role === 'student';
+  const isOrganisation = role === 'organisation';
 
   return (
     <div className='min-h-[360px]'>
@@ -432,6 +504,8 @@ function EmptyVaultState({ role }: { role?: string }) {
           <p className='text-muted-foreground max-w-md text-sm leading-6'>
             {isStudent
               ? 'Certificates you acquired on Elimika platform will appear here once they are verified.'
+              : isOrganisation
+                ? 'Validation documents and approvals linked to this organisation will appear here when available.'
               : 'Uploaded documents will appear here once they are added and verified.'}
           </p>
         </div>

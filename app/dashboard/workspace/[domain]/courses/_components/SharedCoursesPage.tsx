@@ -1,5 +1,11 @@
 'use client';
 
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowRight, type LucideIcon, SlidersHorizontal, SquareDashedMousePointer } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,10 +34,9 @@ import {
   getAllCategoriesOptions,
   getAllDifficultyLevelsOptions,
   getAllTrainingProgramsOptions,
-  getCourseCreatorByUuidOptions,
   getCourseReviewsOptions,
-  getProgramCoursesOptions,
   getPublishedCoursesOptions,
+  searchCourseCreatorsOptions,
   searchProgramTrainingApplicationsOptions,
   searchProgramTrainingApplicationsQueryKey,
   searchTrainingApplicationsOptions,
@@ -41,11 +46,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Category, CourseReview } from '@/services/client/types.gen';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, SlidersHorizontal, SquareDashedMousePointer } from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { useOrganisation } from '../../../../../../context/organisation-context';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { useCourseEnrollmentsMap } from '../../../../../../hooks/use-enrollment-map';
 import { averageRating, useCourseReviewsMap } from '../../../../../../hooks/use-reviews-map';
@@ -53,6 +54,10 @@ import { CoursesCatalogCard } from './CoursesCatalogCard';
 import { CoursesCategoryFilters } from './CoursesCategoryFilters';
 import { CoursesRecommendationCard } from './CoursesRecommendationCard';
 import {
+  type CoursesCatalogCardData,
+  type CoursesCatalogTab,
+  type CoursesFilterSection,
+  type CoursesRecommendationCardData,
   catalogTabs,
   formatDurationFromParts,
   getApplyToTrainHref,
@@ -62,11 +67,7 @@ import {
   getDurationBucket,
   getEnrollHref,
   getInstructorHref,
-  stripHtml,
-  type CoursesCatalogCardData,
-  type CoursesCatalogTab,
-  type CoursesFilterSection,
-  type CoursesRecommendationCardData
+  stripHtml
 } from './courses-data';
 
 type SharedCoursesPageProps = {
@@ -92,11 +93,11 @@ export type UnifiedContentItem = {
   secondaryMeta: string;
   enrolledClasses: number;
   bundledCourseCount?: number;
-  rating?: number,
-  reviewCount?: number
-  enrollmentCount?: number | undefined
-  imageTone?: string,
-  icon?: string | undefined
+  rating?: number;
+  reviewCount?: number;
+  enrollmentCount?: number | undefined;
+  imageTone?: string;
+  icon?: LucideIcon | undefined;
 };
 
 type FilterValues = Record<CoursesFilterSection['key'], string>;
@@ -111,11 +112,21 @@ const defaultFilterValues: FilterValues = {
 
 const CATALOG_PAGE_SIZE = 18;
 
+function normalizeApplicationStatus(status?: string | null) {
+  return status?.toLowerCase() ?? null;
+}
+
+function isCourseCreatorLookup(value: unknown): value is { uuid?: string; full_name?: string } {
+  return typeof value === 'object' && value !== null && 'uuid' in value;
+}
+
 const createCatalogCards = (
   items: UnifiedContentItem[],
   domain: UserDomain,
   creatorMap: Map<string, string>,
   canApplyToTrain: boolean,
+  isOrganisationDomain: boolean,
+  canOrganisationApply: boolean,
   instructorCourseApplicationMap: Map<string, { status?: string | null }>,
   instructorProgramApplicationMap: Map<string, { status?: string | null }>
 ): CoursesCatalogCardData[] =>
@@ -126,13 +137,17 @@ const createCatalogCards = (
       item.kind === 'program'
         ? instructorProgramApplicationMap.get(item.id)
         : instructorCourseApplicationMap.get(item.id);
-    const applicationStatus = application?.status ?? null;
+    const applicationStatus = normalizeApplicationStatus(application?.status);
     const ctaLabel = !isInstructorApplyCard
       ? item.kind === 'program'
         ? 'Enroll Classes'
         : 'Enroll Classes'
-      : applicationStatus === 'approved'
-        ? 'Approved'
+      : isOrganisationDomain && !canOrganisationApply
+        ? 'Verify Organisation'
+        : isOrganisationDomain && applicationStatus === 'approved'
+          ? 'Create Class Job'
+          : applicationStatus === 'approved'
+            ? 'Approved'
         : applicationStatus === 'pending'
           ? 'Pending'
           : applicationStatus === 'revoked'
@@ -141,6 +156,7 @@ const createCatalogCards = (
 
     return {
       id: item.id,
+      contentKind: item.kind,
       title: item.title,
       provider: creatorMap.get(item.creatorUuid) ?? item.creatorName ?? 'Course Creator',
       duration: item.durationLabel,
@@ -150,9 +166,13 @@ const createCatalogCards = (
         item.levelLabel ||
         item.categoryLabels[0] ||
         (item.kind === 'program' ? 'Training Program' : 'Course'),
+      applicationStatus,
       ctaLabel,
       ctaDisabled: isInstructorApplyCard
-        ? Boolean(applicationStatus && applicationStatus !== 'revoked')
+        ? isOrganisationDomain
+          ? !canOrganisationApply ||
+            Boolean(applicationStatus && applicationStatus !== 'revoked' && applicationStatus !== 'approved')
+          : Boolean(applicationStatus && applicationStatus !== 'revoked')
         : false,
       ctaKind: isInstructorApplyCard
         ? item.kind === 'program'
@@ -216,10 +236,10 @@ const createRecommendationCards = (
 
 export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const qc = useQueryClient();
+  const router = useRouter();
   const user = useUserProfile();
   const instructor = useInstructor();
-  // const organisation = useOrganisation();
-  const organisation = user?.organisation_affiliations?.[0];
+  const organisation = useOrganisation();
   const student = user?.student;
   const { classDefinitions, loading: studentCoursesLoading } = useStudentClassDefinitions(
     domain === 'student' ? student ?? undefined : undefined
@@ -229,7 +249,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const isStudentDomain = domain === 'student';
   const isOrganisationDomain = domain === 'organisation' || domain === 'organisation_user';
   const canApplyToTrain = isInstructorDomain || isOrganisationDomain;
-  const applicantUuid = isInstructorDomain ? instructor?.uuid : organisation?.organisation_uuid;
+  const organisationUuid = organisation?.uuid;
+  const canOrganisationApply = !isOrganisationDomain || organisation?.admin_verified === true;
+  const applicantUuid = isInstructorDomain ? instructor?.uuid : organisationUuid;
   const applicantType = isInstructorDomain
     ? ApplicantTypeEnum.INSTRUCTOR
     : ApplicantTypeEnum.ORGANISATION;
@@ -304,17 +326,17 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   const { data: organisationCourseApplications } = useQuery({
     ...searchTrainingApplicationsOptions({
-      query: { pageable: {}, searchParams: { applicant_uuid_eq: organisation?.organisation_uuid as string } },
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: organisationUuid as string } },
     }),
-    enabled: isOrganisationDomain && Boolean(organisation?.organisation_uuid),
+    enabled: isOrganisationDomain && Boolean(organisationUuid),
     refetchOnWindowFocus: false,
   });
 
   const { data: organisationProgramApplications } = useQuery({
     ...searchProgramTrainingApplicationsOptions({
-      query: { pageable: {}, searchParams: { applicant_uuid_eq: organisation?.organisation_uuid as string } },
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: organisationUuid as string } },
     }),
-    enabled: isOrganisationDomain && Boolean(organisation?.organisation_uuid),
+    enabled: isOrganisationDomain && Boolean(organisationUuid),
     refetchOnWindowFocus: false,
   });
 
@@ -352,7 +374,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           : undefined;
 
         const reviews = reviewMap[program.uuid ?? ''];
-        const enrollments = courseEnrollmentMap[program.uuid ?? '']
+        const enrollments = courseEnrollmentMap[program.uuid ?? ''];
 
         return {
           id: program.uuid ?? '',
@@ -365,8 +387,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           categoryLabels: categoryLabel ? [categoryLabel] : [],
           creatorUuid: program.course_creator_uuid,
           creatorName: '',
-          price: program.price,
-          minimumRate: program.price,
+          price: program.price ?? undefined,
+          minimumRate: program.price ?? undefined,
           imageUrl: undefined,
           href: getContentHref(domain, 'program', program.uuid ?? ''),
           enrolledClasses: 1,
@@ -378,17 +400,17 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           // reviewCount: Number(reviews?.count) ?? 0,
           reviewCount: 0,
           rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
-          enrollmentCount: enrollments?.count
+          enrollmentCount: enrollments?.count,
         };
       }),
-    [categoryMap, domain, programs]
+    [categoryMap, courseEnrollmentMap, domain, programs, reviewMap]
   );
 
   const mappedCourses = useMemo<UnifiedContentItem[]>(
     () =>
       courses.map(course => {
         const reviews = reviewMap[course.uuid ?? ''];
-        const enrollments = courseEnrollmentMap[course.uuid ?? '']
+        const enrollments = courseEnrollmentMap[course.uuid ?? ''];
 
         return {
           id: course.uuid ?? '',
@@ -408,9 +430,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           creatorUuid: course.course_creator_uuid,
           creatorName: '',
           levelLabel: difficultyMap.get(course.difficulty_uuid ?? ''),
-          price: course.price,
-          minimumRate: course.minimum_training_fee ?? course.price,
-          imageUrl: course.banner_url ?? course.thumbnail_url,
+          price: course.price ?? undefined,
+          minimumRate: course.minimum_training_fee ?? course.price ?? undefined,
+          imageUrl: course.banner_url ?? course.thumbnail_url ?? undefined,
           href: getContentHref(domain, 'course', course.uuid ?? ''),
           enrolledClasses: 1,
           secondaryMeta:
@@ -419,23 +441,59 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             (course.price && course.price > 0 ? 'Paid Course' : 'Free Course'),
           reviewCount: Number(reviews?.count) ?? 0,
           rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
-          enrollmentCount: enrollments?.count
+          enrollmentCount: enrollments?.count,
         };
       }),
-    [courses, difficultyMap, domain, reviewMap]
+    [courseEnrollmentMap, courses, difficultyMap, domain, reviewMap]
   );
 
   const approvedInstructorCourseIds = useMemo(() => {
     const ids = new Set<string>();
 
     instructorCourseApplications?.data?.content?.forEach(application => {
-      if (application.status === 'approved' && application.course_uuid) {
+      if (normalizeApplicationStatus(application.status) === 'approved' && application.course_uuid) {
         ids.add(application.course_uuid);
       }
     });
 
     return ids;
   }, [instructorCourseApplications]);
+
+  const approvedInstructorProgramIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    instructorProgramApplications?.data?.content?.forEach(application => {
+      if (normalizeApplicationStatus(application.status) === 'approved' && application.program_uuid) {
+        ids.add(application.program_uuid);
+      }
+    });
+
+    return ids;
+  }, [instructorProgramApplications]);
+
+  const approvedOrganisationCourseIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    organisationCourseApplications?.data?.content?.forEach(application => {
+      if (normalizeApplicationStatus(application.status) === 'approved' && application.course_uuid) {
+        ids.add(application.course_uuid);
+      }
+    });
+
+    return ids;
+  }, [organisationCourseApplications]);
+
+  const approvedOrganisationProgramIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    organisationProgramApplications?.data?.content?.forEach(application => {
+      if (normalizeApplicationStatus(application.status) === 'approved' && application.program_uuid) {
+        ids.add(application.program_uuid);
+      }
+    });
+
+    return ids;
+  }, [organisationProgramApplications]);
 
   const myCourseItems = useMemo<UnifiedContentItem[]>(() => {
     if (isStudentDomain) {
@@ -448,7 +506,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         }
 
         const reviews = reviewMap[course.uuid ?? ''];
-        const enrollments = courseEnrollmentMap[course.uuid ?? '']
+        const enrollments = courseEnrollmentMap[course.uuid ?? ''];
 
         const classCount = definition.classEnrollments.length || definition.schedules?.length || 0;
         const existing = uniqueCourses.get(course.uuid);
@@ -470,9 +528,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           creatorUuid: course.course_creator_uuid,
           creatorName: existing?.creatorName ?? '',
           levelLabel: difficultyMap.get(course.difficulty_uuid ?? ''),
-          price: course.price,
-          minimumRate: course.minimum_training_fee ?? course.price,
-          imageUrl: course.banner_url ?? course.thumbnail_url,
+          price: course.price ?? undefined,
+          minimumRate: course.minimum_training_fee ?? course.price ?? undefined,
+          imageUrl: course.banner_url ?? course.thumbnail_url ?? undefined,
           href: getContentHref(domain, 'course', course.uuid),
           enrolledClasses: 2,
           secondaryMeta:
@@ -484,7 +542,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           imageTone: existing?.imageTone ?? presentation.imageTone,
           reviewCount: Number(reviews?.count) ?? 0,
           rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
-          enrollmentCount: enrollments?.count
+          enrollmentCount: enrollments?.count,
         });
       });
 
@@ -494,7 +552,17 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     }
 
     if (isInstructorDomain) {
-      return mappedCourses.filter(course => approvedInstructorCourseIds.has(course.id));
+      return [
+        ...mappedCourses.filter(course => approvedInstructorCourseIds.has(course.id)),
+        ...mappedPrograms.filter(program => approvedInstructorProgramIds.has(program.id)),
+      ].sort((left, right) => right.createdAt - left.createdAt);
+    }
+
+    if (isOrganisationDomain) {
+      return [
+        ...mappedCourses.filter(course => approvedOrganisationCourseIds.has(course.id)),
+        ...mappedPrograms.filter(program => approvedOrganisationProgramIds.has(program.id)),
+      ].sort((left, right) => right.createdAt - left.createdAt);
     }
 
     const courseCreatorUuid = user?.courseCreator?.uuid;
@@ -505,12 +573,19 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     return [];
   }, [
     approvedInstructorCourseIds,
+    approvedInstructorProgramIds,
+    approvedOrganisationCourseIds,
+    approvedOrganisationProgramIds,
     classDefinitions,
+    courseEnrollmentMap,
     difficultyMap,
     domain,
     isInstructorDomain,
+    isOrganisationDomain,
     isStudentDomain,
     mappedCourses,
+    mappedPrograms,
+    reviewMap,
     user?.courseCreator?.uuid,
   ]);
 
@@ -595,26 +670,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
     return allCoursesFeed;
   }, [activeTab, allCoursesFeed, mappedCourses, mappedPrograms, myCourseItems]);
-
-  const programCourseQueries = useQueries({
-    queries: mappedPrograms.map(program => ({
-      ...getProgramCoursesOptions({ path: { programUuid: program.id } }),
-      enabled: Boolean(program.id),
-      refetchOnWindowFocus: false,
-    })),
-  });
-
-  const bundledCoursesCountMap = useMemo(() => {
-    const map = new Map<string, number>();
-
-    programCourseQueries.forEach((query, index) => {
-      const program = mappedPrograms[index];
-      if (!program?.id) return;
-      map.set(program.id, query.data?.data?.length ?? 0);
-    });
-
-    return map;
-  }, [mappedPrograms, programCourseQueries]);
 
   const filteredItems = useMemo(
     () =>
@@ -740,28 +795,28 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     [filteredItems, recommendedBase]
   );
 
-  const creatorQueries = useQueries({
-    queries: creatorIds.map(uuid => ({
-      ...getCourseCreatorByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      refetchOnWindowFocus: false,
-    })),
+  const creatorQuery = useQuery({
+    ...searchCourseCreatorsOptions({
+      query: {
+        searchParams: { uuid_in: creatorIds.join(',') },
+        pageable: { page: 0, size: Math.max(creatorIds.length, 1) },
+      },
+    }),
+    enabled: creatorIds.length > 0,
+    refetchOnWindowFocus: false,
   });
 
   const creatorMap = useMemo(() => {
     const map = new Map<string, string>();
 
-    creatorQueries.forEach((query, index) => {
-      const uuid = creatorIds[index];
-      const name = query.data?.data?.full_name;
-
-      if (uuid && name) {
-        map.set(uuid, name);
+    creatorQuery.data?.content?.filter(isCourseCreatorLookup).forEach(creator => {
+      if (creator.uuid) {
+        map.set(creator.uuid, creator.full_name || 'Course Creator');
       }
     });
 
     return map;
-  }, [creatorIds, creatorQueries]);
+  }, [creatorQuery.data]);
 
   const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
   const applyToTrainProgramMut = useMutation(submitProgramTrainingApplicationMutation());
@@ -803,27 +858,23 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const catalogCards = useMemo(
     () =>
       createCatalogCards(
-        paginatedItems.map(item =>
-          item.kind === 'program'
-            ? {
-              ...item,
-              secondaryMeta: `${bundledCoursesCountMap.get(item.id) ?? 0} Courses`,
-            }
-            : item
-        ),
+        paginatedItems,
         domain,
         creatorMap,
         canApplyToTrain,
+        isOrganisationDomain,
+        canOrganisationApply,
         activeCourseApplicationMap,
         activeProgramApplicationMap
       ),
     [
-      bundledCoursesCountMap,
       activeCourseApplicationMap,
       activeProgramApplicationMap,
       canApplyToTrain,
+      canOrganisationApply,
       creatorMap,
       domain,
+      isOrganisationDomain,
       paginatedItems,
     ]
   );
@@ -882,6 +933,21 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     }
 
     if (card.ctaKind !== 'apply-course' && card.ctaKind !== 'apply-program') {
+      return;
+    }
+
+    if (isOrganisationDomain && !canOrganisationApply) {
+      toast.error('Your organisation must be verified before applying to train.');
+      return;
+    }
+
+    if (isOrganisationDomain && card.applicationStatus === 'approved') {
+      const params = new URLSearchParams({
+        create: '1',
+        type: card.contentKind,
+        id: card.id,
+      });
+      router.push(`/dashboard/opportunities?${params.toString()}`);
       return;
     }
 

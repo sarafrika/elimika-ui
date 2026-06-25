@@ -3,7 +3,13 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   useInstructorClassesWithSchedules,
   type InstructorClassWithSchedule,
@@ -18,7 +24,7 @@ import {
   Loader2,
   LockKeyhole,
   MapPin,
-  Users
+  Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
@@ -31,7 +37,11 @@ import { Calendar } from '../../../../../components/ui/calendar';
 import { Checkbox } from '../../../../../components/ui/checkbox';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
-import { normalizeLocationType, requiresPhysicalLocation, trimToUndefined } from '../../../../../lib/location-types';
+import {
+  normalizeLocationType,
+  requiresPhysicalLocation,
+  trimToUndefined,
+} from '../../../../../lib/location-types';
 import {
   createClassDefinitionMultipartMutation,
   getAllClassDefinitionsQueryKey,
@@ -45,7 +55,7 @@ import {
   uploadClassPromotionalVideoMutation,
   uploadClassThumbnailMutation,
 } from '../../../../../services/client/@tanstack/react-query.gen';
-import type { CreateClassDefinitionData } from '../../../../../services/client/types.gen';
+import type { CreateClassDefinitionMultipartData } from '../../../../../services/client/types.gen';
 import {
   ConflictResolutionEnum,
   LocationTypeEnum,
@@ -53,11 +63,15 @@ import {
   SessionFormatEnum,
 } from '../../../../../services/client/types.gen';
 import { CLASS_COLOR_OPTIONS } from '../../../_components/class-colors';
-import { ClassDetails, NotificationSettings, ScheduleSettings } from '../../trainings/create-new/page';
+import {
+  ClassDetails,
+  NotificationSettings,
+  ScheduleSettings,
+} from '../../trainings/create-new/page';
 import { ClassCreationHeader } from './_components/class-creation-header';
 import {
   ClassCreationPreviewRail,
-  type ClassCreationPreviewData
+  type ClassCreationPreviewData,
 } from './_components/class-creation-preview-rail';
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new-class-creation';
@@ -101,7 +115,7 @@ type CatalogItem = {
   rateCard?: CatalogRateCard;
   source: CatalogSource;
   uuid: string;
-  thumbnailUrl: string
+  thumbnailUrl: string;
 };
 
 type ScheduledSession = { date: string; startTime: string; endTime: string };
@@ -293,7 +307,6 @@ const getRepeatSummary = (scheduleSettings: ScheduleSettings) => {
   return `Every ${interval}\n${scheduleSettings.repeat.unit}(s)`;
 };
 
-
 const findScheduleConflicts = (
   sessions: ScheduledSession[],
   instructorClasses: InstructorClassWithSchedule[],
@@ -323,7 +336,8 @@ const findScheduleConflicts = (
   return sessions.flatMap(session => {
     const proposedStart = new Date(buildUtcIsoDateTime(session.date, session.startTime)).getTime();
     const proposedEnd = new Date(buildUtcIsoDateTime(session.date, session.endTime)).getTime();
-    if (Number.isNaN(proposedStart) || Number.isNaN(proposedEnd) || proposedStart >= proposedEnd) return [];
+    if (Number.isNaN(proposedStart) || Number.isNaN(proposedEnd) || proposedStart >= proposedEnd)
+      return [];
 
     return existingSchedules
       .filter(existing => {
@@ -462,14 +476,18 @@ const NewClassCreationPage = () => {
   const [allowWaitlist, setAllowWaitlist] = useState(true);
   const [locationLatitude, setLocationLatitude] = useState('');
   const [locationLongitude, setLocationLongitude] = useState('');
-  const [pickedDates, setPickedDates] = useState<{ date: string; startTime: string; endTime: string }[]>([]);
+  const [pickedDates, setPickedDates] = useState<
+    { date: string; startTime: string; endTime: string }[]
+  >([]);
 
   const [perDayOccurrences, setPerDayOccurrences] = useState<Record<number, PerDayOccurrence>>({});
 
   const classDetailsCardRef = useRef<HTMLDivElement | null>(null);
 
   const resolvedId = classId || savedClassUuid;
-  const { data: combinedClass, isLoading } = useClassDetails(isClientReady && resolvedId ? resolvedId : undefined);
+  const { data: combinedClass, isLoading } = useClassDetails(
+    isClientReady && resolvedId ? resolvedId : undefined
+  );
   const classData = combinedClass?.class;
 
   const { classes: instructorClasses = [] } = useInstructorClassesWithSchedules(instructor?.uuid);
@@ -479,7 +497,13 @@ const NewClassCreationPage = () => {
   );
 
   const scheduleConflicts = useMemo(
-    () => findScheduleConflicts(sessionsForConflictCheck, instructorClasses, resolvedId, instructor?.uuid),
+    () =>
+      findScheduleConflicts(
+        sessionsForConflictCheck,
+        instructorClasses,
+        resolvedId,
+        instructor?.uuid
+      ),
     [sessionsForConflictCheck, instructorClasses, resolvedId, instructor?.uuid]
   );
 
@@ -545,7 +569,7 @@ const NewClassCreationPage = () => {
       source: 'course',
       uuid: String(course.uuid),
       classLimit: course.class_limit ?? 0,
-      thumbnailUrl: course?.thumbnail_url || "NF",
+      thumbnailUrl: course?.thumbnail_url || 'NF',
       rateCard: course.application?.rate_card as CatalogRateCard | undefined,
     }));
     const programItems: CatalogItem[] = approvedPrograms.map(program => ({
@@ -572,8 +596,7 @@ const NewClassCreationPage = () => {
   const ratePerHour = useMemo(() => {
     if (!rateCard || !classDetails.class_type || !classDetails.location_type) return 0;
     const classType = classDetails.class_type === 'PRIVATE' ? 'private' : 'group';
-    const locationType =
-      classDetails.location_type === 'ONLINE' ? 'online' : 'inperson';
+    const locationType = classDetails.location_type === 'ONLINE' ? 'online' : 'inperson';
     const rateKey = `${classType}_${locationType}_rate`;
     return Number(rateCard[rateKey] ?? 0);
   }, [classDetails.class_type, classDetails.location_type, rateCard]);
@@ -583,7 +606,11 @@ const NewClassCreationPage = () => {
   const hasPerDayOccurrenceData = Object.keys(perDayOccurrences).length > 0;
 
   const totalHours = useMemo(() => {
-    if (hasPerDayOccurrenceData && schedulePreset === 'standard' && scheduleSettings.repeat.unit === 'week') {
+    if (
+      hasPerDayOccurrenceData &&
+      schedulePreset === 'standard' &&
+      scheduleSettings.repeat.unit === 'week'
+    ) {
       return Object.values(perDayOccurrences).reduce(
         (sum, day) => sum + day.durationHours * day.occurrenceCount,
         0
@@ -606,9 +633,9 @@ const NewClassCreationPage = () => {
 
   const totalHoursInMinutes = BigInt(Math.round(totalHours * 60));
 
-  const totalAmount = Math.max(ratePerHour * totalHours, 0) || Math.max(Number(classData?.training_fee) * totalHours) | 0;
-
-
+  const totalAmount =
+    Math.max(ratePerHour * totalHours, 0) ||
+    Math.max(Number(classData?.training_fee) * totalHours) | 0;
 
   const firstSessionTimeLabel = useMemo(() => {
     if (scheduleSettings.allDay) return 'All Day';
@@ -637,7 +664,10 @@ const NewClassCreationPage = () => {
     if (!isClientReady || resolvedId || isDataInitialized || typeof window === 'undefined') return;
 
     const savedDraft = window.localStorage.getItem(LOCAL_CLASS_DRAFT_KEY);
-    if (!savedDraft) { setIsDataInitialized(true); return; }
+    if (!savedDraft) {
+      setIsDataInitialized(true);
+      return;
+    }
     try {
       const parsed = JSON.parse(savedDraft) as {
         classDetails?: Partial<ClassDetails>;
@@ -651,26 +681,37 @@ const NewClassCreationPage = () => {
       };
       if (parsed.classDetails) {
         const saved = parsed.classDetails;
-        setClassDetails(prev => ({ ...prev, ...saved, location_type: normalizeLocationType(saved.location_type) }));
+        setClassDetails(prev => ({
+          ...prev,
+          ...saved,
+          location_type: normalizeLocationType(saved.location_type),
+        }));
       }
       if (parsed.scheduleSettings) {
         setScheduleSettings(prev => ({
-          ...prev, ...parsed.scheduleSettings,
+          ...prev,
+          ...parsed.scheduleSettings,
           academicPeriod: { ...prev.academicPeriod, ...parsed.scheduleSettings?.academicPeriod },
-          registrationPeriod: { ...prev.registrationPeriod, ...parsed.scheduleSettings?.registrationPeriod },
+          registrationPeriod: {
+            ...prev.registrationPeriod,
+            ...parsed.scheduleSettings?.registrationPeriod,
+          },
           startClass: { ...prev.startClass, ...parsed.scheduleSettings?.startClass },
           repeat: { ...prev.repeat, ...parsed.scheduleSettings?.repeat },
           timetable: {
-            ...prev.timetable, ...parsed.scheduleSettings?.timetable,
+            ...prev.timetable,
+            ...parsed.scheduleSettings?.timetable,
             time: { ...prev.timetable.time, ...parsed.scheduleSettings?.timetable?.time },
           },
         }));
       }
-      if (parsed.notificationSettings) setNotificationSettings(prev => ({ ...prev, ...parsed.notificationSettings }));
+      if (parsed.notificationSettings)
+        setNotificationSettings(prev => ({ ...prev, ...parsed.notificationSettings }));
       if (parsed.schedulePreset) setSchedulePreset(parsed.schedulePreset);
       if (typeof parsed.allowWaitlist === 'boolean') setAllowWaitlist(parsed.allowWaitlist);
       if (typeof parsed.locationLatitude === 'string') setLocationLatitude(parsed.locationLatitude);
-      if (typeof parsed.locationLongitude === 'string') setLocationLongitude(parsed.locationLongitude);
+      if (typeof parsed.locationLongitude === 'string')
+        setLocationLongitude(parsed.locationLongitude);
       if (Array.isArray(parsed.pickedDates)) setPickedDates(parsed.pickedDates);
     } catch {
       window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
@@ -686,15 +727,32 @@ const NewClassCreationPage = () => {
       window.localStorage.setItem(
         LOCAL_CLASS_DRAFT_KEY,
         JSON.stringify({
-          classDetails, scheduleSettings, notificationSettings, schedulePreset,
-          allowWaitlist, locationLatitude, locationLongitude, pickedDates,
+          classDetails,
+          scheduleSettings,
+          notificationSettings,
+          schedulePreset,
+          allowWaitlist,
+          locationLatitude,
+          locationLongitude,
+          pickedDates,
           savedAt: new Date().toISOString(),
         })
       );
       setDraftSavedTick(prev => prev + 1);
     }, 500);
     return () => window.clearTimeout(timeout);
-  }, [classDetails, scheduleSettings, notificationSettings, schedulePreset, allowWaitlist, locationLatitude, locationLongitude, pickedDates, resolvedId, isDataInitialized]);
+  }, [
+    classDetails,
+    scheduleSettings,
+    notificationSettings,
+    schedulePreset,
+    allowWaitlist,
+    locationLatitude,
+    locationLongitude,
+    pickedDates,
+    resolvedId,
+    isDataInitialized,
+  ]);
 
   useEffect(() => {
     if (!isClientReady || !resolvedId || !classData || isLoading || isEditHydrated) return;
@@ -728,17 +786,26 @@ const NewClassCreationPage = () => {
       program_uuid: classRecord.program_uuid ?? null,
       title: classRecord.title || '',
       description: classRecord.description || '',
-      categories: Array.isArray(classRecord.categories) ? classRecord.categories : classRecord.categories ? [classRecord.categories] : [],
+      categories: Array.isArray(classRecord.categories)
+        ? classRecord.categories
+        : classRecord.categories
+          ? [classRecord.categories]
+          : [],
       class_type: classRecord.class_visibility || 'PUBLIC',
       location_type: normalizeLocationType(classRecord.location_type),
       rate_card: classRecord.rate_card || classRecord.training_fee || '',
       class_limit: classRecord.max_participants || 0,
       targetAudience: classRecord.targetAudience || '',
       location_name: classRecord.location_name || '',
-      startDate: '', endDate: '', allDay: false, repeatUnit: '1',
+      startDate: '',
+      endDate: '',
+      allDay: false,
+      repeatUnit: '1',
       instructorName: instructor?.full_name,
       meeting_link: classRecord.meeting_link || '',
-      classroom: classRecord.classroom || '', class_color: classRecord.class_color || '', reminder: '',
+      classroom: classRecord.classroom || '',
+      class_color: classRecord.class_color || '',
+      reminder: '',
     });
 
     setNotificationSettings(prev => ({
@@ -747,8 +814,14 @@ const NewClassCreationPage = () => {
       classColour: classRecord.class_color || prev.classColour,
     }));
     setAllowWaitlist(classRecord.allow_waitlist ?? true);
-    setLocationLatitude(typeof classRecord.location_latitude === 'number' ? String(classRecord.location_latitude) : '');
-    setLocationLongitude(typeof classRecord.location_longitude === 'number' ? String(classRecord.location_longitude) : '');
+    setLocationLatitude(
+      typeof classRecord.location_latitude === 'number' ? String(classRecord.location_latitude) : ''
+    );
+    setLocationLongitude(
+      typeof classRecord.location_longitude === 'number'
+        ? String(classRecord.location_longitude)
+        : ''
+    );
 
     if (classRecord.thumbnail_url) setExistingThumbnailUrl(classRecord.thumbnail_url);
     if (classRecord.promotional_video_url) setExistingVideoUrl(classRecord.promotional_video_url);
@@ -794,8 +867,13 @@ const NewClassCreationPage = () => {
       const recurrenceType = firstTemplate.recurrence?.recurrence_type?.toUpperCase();
       const intervalValue = firstTemplate.recurrence?.interval_value || 1;
 
-      const likelyPickDates = templates.length > 1 &&
-        templates.every(t => t.recurrence?.recurrence_type?.toUpperCase() === 'DAILY' && t.recurrence?.occurrence_count === 1);
+      const likelyPickDates =
+        templates.length > 1 &&
+        templates.every(
+          t =>
+            t.recurrence?.recurrence_type?.toUpperCase() === 'DAILY' &&
+            t.recurrence?.occurrence_count === 1
+        );
 
       if (likelyPickDates) {
         setSchedulePreset('pick-dates');
@@ -822,19 +900,16 @@ const NewClassCreationPage = () => {
 
         const firstTemplateEnd = new Date(firstTemplate.end_time);
 
-        const recurrenceEndDate =
-          firstTemplate.recurrence?.end_date
-            ? new Date(firstTemplate.recurrence.end_date)
-            : null;
+        const recurrenceEndDate = firstTemplate.recurrence?.end_date
+          ? new Date(firstTemplate.recurrence.end_date)
+          : null;
 
         const maxEndDate = templates.reduce((max, t) => {
           const d = new Date(t.end_time);
           return d > max ? d : max;
         }, firstTemplateEnd);
 
-        const endRepeatDate = (recurrenceEndDate ?? maxEndDate)
-          .toISOString()
-          .slice(0, 10);
+        const endRepeatDate = (recurrenceEndDate ?? maxEndDate).toISOString().slice(0, 10);
         // ────────────────────────────────────────────────────────────────
 
         weeklyTemplates.forEach(template => {
@@ -873,9 +948,14 @@ const NewClassCreationPage = () => {
         }));
 
         setPerDayOccurrences(nextPerDayOccurrences);
-      } else if (recurrenceType === 'DAILY' || recurrenceType === 'MONTHLY' || recurrenceType === 'YEARLY') {
+      } else if (
+        recurrenceType === 'DAILY' ||
+        recurrenceType === 'MONTHLY' ||
+        recurrenceType === 'YEARLY'
+      ) {
         setSchedulePreset('standard');
-        const repeatUnit = recurrenceType === 'DAILY' ? 'day' : recurrenceType === 'MONTHLY' ? 'month' : 'year';
+        const repeatUnit =
+          recurrenceType === 'DAILY' ? 'day' : recurrenceType === 'MONTHLY' ? 'month' : 'year';
 
         setScheduleSettings(prev => ({
           ...prev,
@@ -891,18 +971,30 @@ const NewClassCreationPage = () => {
       }
     }
 
-    if (classRecord.academic_period_start_date || classRecord.academic_period_end_date ||
-      classRecord.registration_period_start_date || classRecord.registration_period_end_date) {
+    if (
+      classRecord.academic_period_start_date ||
+      classRecord.academic_period_end_date ||
+      classRecord.registration_period_start_date ||
+      classRecord.registration_period_end_date
+    ) {
       setScheduleSettings(prev => ({
         ...prev,
         academicPeriod: {
-          start: classRecord.academic_period_start_date ? new Date(classRecord.academic_period_start_date).toISOString().slice(0, 10) : prev.academicPeriod.start,
-          end: classRecord.academic_period_end_date ? new Date(classRecord.academic_period_end_date).toISOString().slice(0, 10) : prev.academicPeriod.end,
+          start: classRecord.academic_period_start_date
+            ? new Date(classRecord.academic_period_start_date).toISOString().slice(0, 10)
+            : prev.academicPeriod.start,
+          end: classRecord.academic_period_end_date
+            ? new Date(classRecord.academic_period_end_date).toISOString().slice(0, 10)
+            : prev.academicPeriod.end,
         },
         registrationPeriod: {
           ...prev.registrationPeriod,
-          start: classRecord.registration_period_start_date ? new Date(classRecord.registration_period_start_date).toISOString().slice(0, 10) : prev.registrationPeriod.start,
-          end: classRecord.registration_period_end_date ? new Date(classRecord.registration_period_end_date).toISOString().slice(0, 10) : prev.registrationPeriod.end,
+          start: classRecord.registration_period_start_date
+            ? new Date(classRecord.registration_period_start_date).toISOString().slice(0, 10)
+            : prev.registrationPeriod.start,
+          end: classRecord.registration_period_end_date
+            ? new Date(classRecord.registration_period_end_date).toISOString().slice(0, 10)
+            : prev.registrationPeriod.end,
         },
       }));
     }
@@ -929,27 +1021,34 @@ const NewClassCreationPage = () => {
   // ── Validation ─────────────────────────────────────────────────────────────
   const isFormValid = () => {
     if (!classDetails.course_uuid && !classDetails.program_uuid) {
-      toast.error('Please select a course or program'); return false;
+      toast.error('Please select a course or program');
+      return false;
     }
     if (!classDetails.title.trim()) {
-      toast.error('Please enter a class title'); return false;
+      toast.error('Please enter a class title');
+      return false;
     }
     if (!serviceType) {
-      toast.error('Please select a service type'); return false;
+      toast.error('Please select a service type');
+      return false;
     }
     const locationType = normalizeLocationType(classDetails.location_type);
     if (!locationType) {
-      toast.error('Please select a lecture type'); return false;
+      toast.error('Please select a lecture type');
+      return false;
     }
     if (requiresPhysicalLocation(locationType) && !trimToUndefined(classDetails.location_name)) {
-      toast.error('Please enter a location'); return false;
+      toast.error('Please enter a location');
+      return false;
     }
     if (schedulePreset === 'pick-dates' && pickedDates.length === 0) {
-      toast.error('Please select at least one date'); return false;
+      toast.error('Please select at least one date');
+      return false;
     }
     if (schedulePreset === 'academic-period') {
       if (!scheduleSettings.academicPeriod.start || !scheduleSettings.academicPeriod.end) {
-        toast.error('Please set the academic period dates'); return false;
+        toast.error('Please set the academic period dates');
+        return false;
       }
     }
     return true;
@@ -968,7 +1067,9 @@ const NewClassCreationPage = () => {
     const academicPeriodEnd = buildDateFromInput(scheduleSettings.academicPeriod.end);
     const registrationPeriodStart = buildDateFromInput(scheduleSettings.registrationPeriod.start);
     const registrationPeriodEnd = buildDateFromInput(scheduleSettings.registrationPeriod.end);
-    const selectedClassColor = trimToUndefined(notificationSettings.classColour || classDetails.class_color);
+    const selectedClassColor = trimToUndefined(
+      notificationSettings.classColour || classDetails.class_color
+    );
 
     const totalOccurrences = totalSessions || 1;
 
@@ -994,14 +1095,16 @@ const NewClassCreationPage = () => {
 
     const { startTime: defaultStart, endTime: defaultEnd } = getDefaultTimes();
 
-    let session_templates: CreateClassDefinitionData['body']['session_templates'];
+    let session_templates: CreateClassDefinitionMultipartData['body']['session_templates'];
 
     if (schedulePreset === 'pick-dates') {
       session_templates = pickedDates
         .slice()
         .sort((a, b) => a.date.localeCompare(b.date))
         .map(item => {
-          const effectiveStartTime = scheduleSettings.allDay ? '00:00' : (item.startTime ?? '00:00');
+          const effectiveStartTime = scheduleSettings.allDay
+            ? '00:00'
+            : (item.startTime ?? '00:00');
           const effectiveEndTime = scheduleSettings.allDay ? '23:59' : (item.endTime ?? '23:59');
           return {
             start_time: new Date(buildUtcIsoDateTime(item.date, effectiveStartTime)),
@@ -1017,9 +1120,12 @@ const NewClassCreationPage = () => {
         });
     } else {
       const recurrenceType =
-        scheduleSettings.repeat.unit === 'day' ? RecurrenceTypeEnum.DAILY
-          : scheduleSettings.repeat.unit === 'week' ? RecurrenceTypeEnum.WEEKLY
-            : scheduleSettings.repeat.unit === 'month' ? RecurrenceTypeEnum.MONTHLY
+        scheduleSettings.repeat.unit === 'day'
+          ? RecurrenceTypeEnum.DAILY
+          : scheduleSettings.repeat.unit === 'week'
+            ? RecurrenceTypeEnum.WEEKLY
+            : scheduleSettings.repeat.unit === 'month'
+              ? RecurrenceTypeEnum.MONTHLY
               : RecurrenceTypeEnum.YEARLY;
 
       if (scheduleSettings.repeat.unit === 'week') {
@@ -1027,11 +1133,15 @@ const NewClassCreationPage = () => {
 
         session_templates = (scheduleSettings.repeat.days || []).map(dayIndex => {
           const override = scheduleSettings.weeklyDayTimes[dayIndex];
-          const effectiveStartTime = scheduleSettings.allDay ? '00:00' : (override?.startTime || scheduleSettings.startClass.startTime || '00:00');
-          const effectiveEndTime = scheduleSettings.allDay ? '23:59' : (override?.endTime || scheduleSettings.startClass.endTime || '23:59');
+          const effectiveStartTime = scheduleSettings.allDay
+            ? '00:00'
+            : override?.startTime || scheduleSettings.startClass.startTime || '00:00';
+          const effectiveEndTime = scheduleSettings.allDay
+            ? '23:59'
+            : override?.endTime || scheduleSettings.startClass.endTime || '23:59';
 
           const firstOccurrence = new Date(referenceDate);
-          while (((firstOccurrence.getDay() + 6) % 7) !== dayIndex) {
+          while ((firstOccurrence.getDay() + 6) % 7 !== dayIndex) {
             firstOccurrence.setDate(firstOccurrence.getDate() + 1);
           }
 
@@ -1070,39 +1180,57 @@ const NewClassCreationPage = () => {
       } else {
         const startTimeIso = buildUtcIsoDateTime(referenceDate, defaultStart);
         const endTimeIso = buildUtcIsoDateTime(referenceDate, defaultEnd);
-        const daysOfWeekString = (scheduleSettings.repeat.days || []).slice().sort().map(idx => DAY_NAMES[idx]).join(',') || undefined;
-        session_templates = [{
-          start_time: new Date(startTimeIso),
-          end_time: new Date(endTimeIso),
-          recurrence: {
-            recurrence_type: recurrenceType,
-            interval_value: scheduleSettings.repeat.interval,
-            days_of_week: daysOfWeekString,
-            occurrence_count: totalOccurrences,
+        const daysOfWeekString =
+          (scheduleSettings.repeat.days || [])
+            .slice()
+            .sort()
+            .map(idx => DAY_NAMES[idx])
+            .join(',') || undefined;
+        session_templates = [
+          {
+            start_time: new Date(startTimeIso),
+            end_time: new Date(endTimeIso),
+            recurrence: {
+              recurrence_type: recurrenceType,
+              interval_value: scheduleSettings.repeat.interval,
+              days_of_week: daysOfWeekString,
+              occurrence_count: totalOccurrences,
+            },
+            conflict_resolution: ConflictResolutionEnum.FAIL,
           },
-          conflict_resolution: ConflictResolutionEnum.FAIL,
-        }];
+        ];
       }
     }
 
-    const payloadRefDate = schedulePreset === 'pick-dates' && pickedDates.length > 0
-      ? pickedDates[0]!.date
-      : referenceDate;
-    const payloadStartTime = schedulePreset === 'pick-dates' && pickedDates.length > 0
-      ? (scheduleSettings.allDay ? '00:00' : (pickedDates[0]!.startTime || '00:00'))
-      : defaultStart;
-    const payloadEndTime = schedulePreset === 'pick-dates' && pickedDates.length > 0
-      ? (scheduleSettings.allDay ? '23:59' : (pickedDates[0]!.endTime || '23:59'))
-      : defaultEnd;
+    const payloadRefDate =
+      schedulePreset === 'pick-dates' && pickedDates.length > 0
+        ? pickedDates[0]!.date
+        : referenceDate;
+    const payloadStartTime =
+      schedulePreset === 'pick-dates' && pickedDates.length > 0
+        ? scheduleSettings.allDay
+          ? '00:00'
+          : pickedDates[0]!.startTime || '00:00'
+        : defaultStart;
+    const payloadEndTime =
+      schedulePreset === 'pick-dates' && pickedDates.length > 0
+        ? scheduleSettings.allDay
+          ? '23:59'
+          : pickedDates[0]!.endTime || '23:59'
+        : defaultEnd;
 
-    const payload: CreateClassDefinitionData['body'] = {
+    const payload: CreateClassDefinitionMultipartData['body'] = {
       course_uuid: selectedSource === 'course' ? classDetails.course_uuid || undefined : undefined,
-      program_uuid: selectedSource === 'program' ? classDetails.program_uuid || undefined : undefined,
+      program_uuid:
+        selectedSource === 'program' ? classDetails.program_uuid || undefined : undefined,
       title: classDetails.title,
       description: classDetails.description || undefined,
       default_instructor_uuid: instructor?.uuid as string,
       class_visibility: classDetails.class_type === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
-      session_format: classDetails.class_type === 'PRIVATE' ? SessionFormatEnum.INDIVIDUAL : SessionFormatEnum.GROUP,
+      session_format:
+        classDetails.class_type === 'PRIVATE'
+          ? SessionFormatEnum.INDIVIDUAL
+          : SessionFormatEnum.GROUP,
       location_type: LocationTypeEnum[locationType as keyof typeof LocationTypeEnum],
       location_name: trimToUndefined(classDetails.location_name),
       location_latitude: -1.292066,
@@ -1135,7 +1263,8 @@ const NewClassCreationPage = () => {
             { path: { uuid: finalUuid }, body: { thumbnail: selectedThumbnail } },
             {
               onSuccess: () => toast.success('Thumbnail uploaded'),
-              onError: error => toast.error(getMutationErrorMessage(error, 'Failed to upload thumbnail')),
+              onError: error =>
+                toast.error(getMutationErrorMessage(error, 'Failed to upload thumbnail')),
             }
           );
         }
@@ -1145,17 +1274,33 @@ const NewClassCreationPage = () => {
             { path: { uuid: finalUuid }, body: { promotional_video: selectedVideo } },
             {
               onSuccess: () => toast.success('Video uploaded'),
-              onError: error => toast.error(getMutationErrorMessage(error, 'Failed to upload video')),
+              onError: error =>
+                toast.error(getMutationErrorMessage(error, 'Failed to upload video')),
             }
           );
         }
       }
 
-      qc.invalidateQueries({ queryKey: getClassDefinitionsForInstructorQueryKey({ path: { instructorUuid: instructor?.uuid as string } }) });
-      qc.invalidateQueries({ queryKey: getAllClassDefinitionsQueryKey({ query: { pageable: {} } }) });
-      if (resolvedId) qc.invalidateQueries({ queryKey: getClassDefinitionQueryKey({ path: { uuid: resolvedId } }) });
+      qc.invalidateQueries({
+        queryKey: getClassDefinitionsForInstructorQueryKey({
+          path: { instructorUuid: instructor?.uuid as string },
+        }),
+      });
+      qc.invalidateQueries({
+        queryKey: getAllClassDefinitionsQueryKey({ query: { pageable: {} } }),
+      });
+      if (resolvedId)
+        qc.invalidateQueries({
+          queryKey: getClassDefinitionQueryKey({ path: { uuid: resolvedId } }),
+        });
       if (typeof window !== 'undefined') window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
-      toast.success(isDraft ? 'Class saved as draft' : resolvedId ? 'Class updated successfully' : 'Class created successfully');
+      toast.success(
+        isDraft
+          ? 'Class saved as draft'
+          : resolvedId
+            ? 'Class updated successfully'
+            : 'Class created successfully'
+      );
       router.push('/dashboard/training-hub');
     };
 
@@ -1164,12 +1309,12 @@ const NewClassCreationPage = () => {
         { path: { uuid: resolvedId }, body: payload },
         {
           onSuccess: () => onSuccess(resolvedId),
-          onError: error => toast.error(getMutationErrorMessage(error, 'Failed to update class'))
+          onError: error => toast.error(getMutationErrorMessage(error, 'Failed to update class')),
         }
       );
     } else {
       createClassDefinition.mutate(
-        { body: payload },
+        { body: payload, query: { formFields: {} } },
         {
           onSuccess: response => {
             const savedUuid = response?.data?.class_definition?.uuid;
@@ -1207,13 +1352,13 @@ const NewClassCreationPage = () => {
     toast.success('Draft cleared');
   };
 
-
   // ── Derived UI values ──────────────────────────────────────────────────────
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const inviteLink = resolvedId ? `${origin}/class-invite?id=${resolvedId}` : '';
   const meetingLink = classDetails.meeting_link || 'Enter your meeting link.';
   const normalizedLocationType = normalizeLocationType(classDetails.location_type);
-  const showMeetingLink = normalizedLocationType === 'ONLINE' || normalizedLocationType === 'HYBRID';
+  const showMeetingLink =
+    normalizedLocationType === 'ONLINE' || normalizedLocationType === 'HYBRID';
 
   const previewData: ClassCreationPreviewData = {
     thumbnailUrl: selectedCatalogItem?.thumbnailUrl as string,
@@ -1233,13 +1378,21 @@ const NewClassCreationPage = () => {
     totalHoursLabel: `${totalHours || 0} ${totalHours === 1 ? 'Hour' : 'Hours'}`,
     pricePerHourLabel: `${rateCard?.currency || 'KES'} ${ratePerHour.toLocaleString()}`,
     totalSessionsLabel: `${totalSessions || 0} Class${totalSessions === 1 ? '' : 'es'}`,
-    totalAmountLabel: `${rateCard?.currency || 'KES'} ${totalAmount.toLocaleString() || "0"}`,
+    totalAmountLabel: `${rateCard?.currency || 'KES'} ${totalAmount.toLocaleString() || '0'}`,
     meetingLink,
     inviteLink,
     summaryItems: [
       { icon: CalendarDays, label: 'Repeat', value: getRepeatSummary(scheduleSettings) },
-      { icon: BellRing, label: 'Reminder', value: notificationSettings.reminder || '24 hours before class' },
-      { icon: MapPin, label: 'Timezone', value: scheduleSettings.timezone || 'EAT East Africa Time' },
+      {
+        icon: BellRing,
+        label: 'Reminder',
+        value: notificationSettings.reminder || '24 hours before class',
+      },
+      {
+        icon: MapPin,
+        label: 'Timezone',
+        value: scheduleSettings.timezone || 'EAT East Africa Time',
+      },
     ],
   };
 
@@ -1255,7 +1408,8 @@ const NewClassCreationPage = () => {
       {DAY_NAMES.map((day, index) => {
         const active = scheduleSettings.repeat.days?.includes(index);
         const override = scheduleSettings.weeklyDayTimes[index];
-        const effectiveStartTime = override?.startTime || scheduleSettings.startClass.startTime || '';
+        const effectiveStartTime =
+          override?.startTime || scheduleSettings.startClass.startTime || '';
         const effectiveEndTime = override?.endTime || scheduleSettings.startClass.endTime || '';
 
         const toggleDay = () =>
@@ -1274,7 +1428,6 @@ const NewClassCreationPage = () => {
               },
             };
           });
-
 
         return (
           <div
@@ -1295,20 +1448,18 @@ const NewClassCreationPage = () => {
               //   })
               // }
               className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${active
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
                 }`}
             >
               {DAY_SHORT[index]}
             </button>
 
-            <div className='flex flex-1 flex-col gap-0.5'
-            >
+            <div className='flex flex-1 flex-col gap-0.5'>
               <span className='text-muted-foreground text-[10px] font-medium'>Start Time</span>
               <Input
                 type='time'
                 onClick={e => e.stopPropagation()}
-
                 disabled={!active || scheduleSettings.allDay}
                 value={normalizeTime(effectiveStartTime)}
                 onChange={e =>
@@ -1318,7 +1469,8 @@ const NewClassCreationPage = () => {
                       ...prev.weeklyDayTimes,
                       [index]: {
                         startTime: normalizeTime(e.target.value),
-                        endTime: prev.weeklyDayTimes[index]?.endTime || prev.startClass.endTime || '',
+                        endTime:
+                          prev.weeklyDayTimes[index]?.endTime || prev.startClass.endTime || '',
                       },
                     },
                   }))
@@ -1327,22 +1479,21 @@ const NewClassCreationPage = () => {
               />
             </div>
 
-            <div className='flex flex-1 flex-col gap-0.5'
-            >
+            <div className='flex flex-1 flex-col gap-0.5'>
               <span className='text-muted-foreground text-[10px] font-medium'>End Time</span>
               <Input
                 type='time'
                 disabled={!active || scheduleSettings.allDay}
                 value={normalizeTime(effectiveEndTime)}
                 onClick={e => e.stopPropagation()}
-
                 onChange={e =>
                   setScheduleSettings(prev => ({
                     ...prev,
                     weeklyDayTimes: {
                       ...prev.weeklyDayTimes,
                       [index]: {
-                        startTime: prev.weeklyDayTimes[index]?.startTime || prev.startClass.startTime || '',
+                        startTime:
+                          prev.weeklyDayTimes[index]?.startTime || prev.startClass.startTime || '',
                         endTime: normalizeTime(e.target.value),
                       },
                     },
@@ -1388,7 +1539,9 @@ const NewClassCreationPage = () => {
               }))
             }
           >
-            <SelectTrigger className='flex-1'><SelectValue /></SelectTrigger>
+            <SelectTrigger className='flex-1'>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value='day'>Day</SelectItem>
               <SelectItem value='week'>Week</SelectItem>
@@ -1512,10 +1665,14 @@ const NewClassCreationPage = () => {
           value={scheduleSettings.timezone}
           onValueChange={value => setScheduleSettings(prev => ({ ...prev, timezone: value }))}
         >
-          <SelectTrigger><SelectValue placeholder='Select timezone' /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder='Select timezone' />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
-            <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
+            <SelectItem value='UTC Coordinated Universal Time'>
+              UTC Coordinated Universal Time
+            </SelectItem>
             <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
           </SelectContent>
         </Select>
@@ -1529,25 +1686,24 @@ const NewClassCreationPage = () => {
     </div>
   );
 
-
   if (isLoading) {
-    return <div className='fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm'>
-      <div className='flex flex-col items-center gap-4 text-center'>
-        <div className='flex items-center justify-center rounded-full bg-primary/10 p-4'>
-          <Loader2 className='text-primary h-8 w-8 animate-spin' />
-        </div>
+    return (
+      <div className='bg-background/95 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm'>
+        <div className='flex flex-col items-center gap-4 text-center'>
+          <div className='bg-primary/10 flex items-center justify-center rounded-full p-4'>
+            <Loader2 className='text-primary h-8 w-8 animate-spin' />
+          </div>
 
-        {/* Text */}
-        <div className='space-y-1'>
-          <p className='text-foreground text-base font-semibold'>
-            Loading class details
-          </p>
-          <p className='text-muted-foreground text-sm'>
-            Please wait while we retrieve class details...
-          </p>
+          {/* Text */}
+          <div className='space-y-1'>
+            <p className='text-foreground text-base font-semibold'>Loading class details</p>
+            <p className='text-muted-foreground text-sm'>
+              Please wait while we retrieve class details...
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    );
   }
 
   return (
@@ -1558,16 +1714,20 @@ const NewClassCreationPage = () => {
           onSaveDraft={() => submitClass(true)}
           onPublish={() => submitClass(false)}
           onClearDraft={clearDraft}
-          hasDraft={isDataInitialized && typeof window !== 'undefined' && !!window.localStorage.getItem(LOCAL_CLASS_DRAFT_KEY)}
+          hasDraft={
+            isDataInitialized &&
+            typeof window !== 'undefined' &&
+            !!window.localStorage.getItem(LOCAL_CLASS_DRAFT_KEY)
+          }
           draftSavedTick={draftSavedTick}
         />
 
-        <div className="flex flex-col items-start gap-4 xl:flex-row xl:sticky xl:top-4 h-fit self-start">
+        <div className='flex h-fit flex-col items-start gap-4 self-start xl:sticky xl:top-4 xl:flex-row'>
           <div className='min-w-0 flex-1 space-y-4'>
             {/* ── Class Details Card ─────────────────────────────────────── */}
             <div ref={classDetailsCardRef} className='scroll-mt-24'>
-              <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
-                <div className="px-2 pt-4 sm:px-4">
+              <Card className='overflow-hidden rounded-md border pt-0 shadow-sm'>
+                <div className='px-2 pt-4 sm:px-4'>
                   <Input
                     value={classDetails.title}
                     onChange={e =>
@@ -1576,8 +1736,8 @@ const NewClassCreationPage = () => {
                         title: e.target.value,
                       }))
                     }
-                    placeholder="Class Title"
-                    className="text-md border-0 border-b border-muted-foreground/30 rounded-none px-0 py-2.5 focus-visible:ring-0 focus-visible:border-primary"
+                    placeholder='Class Title'
+                    className='text-md border-muted-foreground/30 focus-visible:border-primary rounded-none border-0 border-b px-0 py-2.5 focus-visible:ring-0'
                   />
                 </div>
 
@@ -1590,9 +1750,19 @@ const NewClassCreationPage = () => {
                           const item = catalogItems.find(c => c.uuid === value);
                           if (!item) return;
                           if (item.source === 'course') {
-                            setClassDetails(prev => ({ ...prev, course_uuid: item.uuid, program_uuid: null, class_limit: item.classLimit }));
+                            setClassDetails(prev => ({
+                              ...prev,
+                              course_uuid: item.uuid,
+                              program_uuid: null,
+                              class_limit: item.classLimit,
+                            }));
                           } else {
-                            setClassDetails(prev => ({ ...prev, program_uuid: item.uuid, course_uuid: '', class_limit: item.classLimit }));
+                            setClassDetails(prev => ({
+                              ...prev,
+                              program_uuid: item.uuid,
+                              course_uuid: '',
+                              class_limit: item.classLimit,
+                            }));
                           }
                         }}
                       >
@@ -1601,12 +1771,20 @@ const NewClassCreationPage = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {catalogItems.filter(item =>
-                            `${item.source} ${item.label}`.toLowerCase().includes(catalogSearch.toLowerCase())
+                            `${item.source} ${item.label}`
+                              .toLowerCase()
+                              .includes(catalogSearch.toLowerCase())
                           ).length === 0 ? (
-                            <div className='text-muted-foreground p-4 text-center text-sm'>No matching classes found</div>
+                            <div className='text-muted-foreground p-4 text-center text-sm'>
+                              No matching classes found
+                            </div>
                           ) : (
                             catalogItems
-                              .filter(item => `${item.source} ${item.label}`.toLowerCase().includes(catalogSearch.toLowerCase()))
+                              .filter(item =>
+                                `${item.source} ${item.label}`
+                                  .toLowerCase()
+                                  .includes(catalogSearch.toLowerCase())
+                              )
                               .map(item => (
                                 <SelectItem key={`${item.source}-${item.uuid}`} value={item.uuid}>
                                   {item.label}
@@ -1622,11 +1800,13 @@ const NewClassCreationPage = () => {
                   </div>
                 </div>
 
-                <div className='border-t border-border/60 px-2 py-4 sm:px-3'>
+                <div className='border-border/60 border-t px-2 py-4 sm:px-3'>
                   <ServiceTypeSelector
                     value={serviceType}
                     onChange={handleServiceTypeChange}
-                    rateCard={rateCard as Record<string, number | string | null | undefined> | undefined}
+                    rateCard={
+                      rateCard as Record<string, number | string | null | undefined> | undefined
+                    }
                   />
 
                   <div className='mt-4 flex flex-col gap-4 md:flex-row'>
@@ -1634,7 +1814,9 @@ const NewClassCreationPage = () => {
                       <FieldGroup label='Location *'>
                         <Input
                           value={classDetails.location_name}
-                          onChange={e => setClassDetails(prev => ({ ...prev, location_name: e.target.value }))}
+                          onChange={e =>
+                            setClassDetails(prev => ({ ...prev, location_name: e.target.value }))
+                          }
                           placeholder='Nairobi, Kenya'
                         />
                       </FieldGroup>
@@ -1643,7 +1825,9 @@ const NewClassCreationPage = () => {
                       <FieldGroup label='Classroom *'>
                         <Input
                           value={classDetails.classroom}
-                          onChange={e => setClassDetails(prev => ({ ...prev, classroom: e.target.value }))}
+                          onChange={e =>
+                            setClassDetails(prev => ({ ...prev, classroom: e.target.value }))
+                          }
                           placeholder='Room 101'
                         />
                       </FieldGroup>
@@ -1656,7 +1840,9 @@ const NewClassCreationPage = () => {
                         <Input
                           type='url'
                           value={classDetails.meeting_link}
-                          onChange={e => setClassDetails(prev => ({ ...prev, meeting_link: e.target.value }))}
+                          onChange={e =>
+                            setClassDetails(prev => ({ ...prev, meeting_link: e.target.value }))
+                          }
                           placeholder='https://meet.google.com/abc-defg-hij'
                         />
                       </FieldGroup>
@@ -1667,7 +1853,7 @@ const NewClassCreationPage = () => {
             </div>
 
             {/* ── Schedule Options Card ──────────────────────────────────── */}
-            <Card className='overflow-hidden border pt-0 shadow-sm rounded-md'>
+            <Card className='overflow-hidden rounded-md border pt-0 shadow-sm'>
               <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-3'>
                 <h3 className='text-foreground text-lg font-semibold'>Schedule Options</h3>
               </div>
@@ -1680,8 +1866,8 @@ const NewClassCreationPage = () => {
                       type='button'
                       onClick={() => setSchedulePreset(option.key)}
                       className={`flex-1 rounded-md border px-4 py-3 text-left transition ${schedulePreset === option.key
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/40'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/40'
                         }`}
                     >
                       <div className='text-sm font-semibold'>{option.title}</div>
@@ -1692,7 +1878,7 @@ const NewClassCreationPage = () => {
 
                 {/* ── STANDARD SCHEDULE ─────────────────────────────────── */}
                 {schedulePreset === 'standard' && (
-                  <div className='rounded-md border border-border/60 p-4'>
+                  <div className='border-border/60 rounded-md border p-4'>
                     <div className='mb-4'>
                       <p className='text-foreground text-sm font-semibold'>Standard Schedule</p>
                       <p className='text-muted-foreground mt-1 text-xs'>
@@ -1711,21 +1897,28 @@ const NewClassCreationPage = () => {
                 {/* ── PICK DATES ────────────────────────────────────────── */}
                 {schedulePreset === 'pick-dates' && (
                   <div className='flex flex-col gap-4 min-[1110px]:flex-row min-[1280px]:flex-col min-[1440px]:flex-row'>
-                    <div className='min-w-0 flex-[1.2] space-y-4 rounded-md border border-border/60 p-4'>
+                    <div className='border-border/60 min-w-0 flex-[1.2] space-y-4 rounded-md border p-4'>
                       <Calendar
                         mode='multiple'
                         selected={pickedDates.map(item => new Date(item.date))}
                         onSelect={dates => {
-                          if (!dates) { setPickedDates([]); return; }
+                          if (!dates) {
+                            setPickedDates([]);
+                            return;
+                          }
                           const next = dates.map(date => {
                             const formatted = format(date, 'yyyy-MM-dd');
                             const existing = pickedDates.find(item => item.date === formatted);
-                            return existing || { date: formatted, startTime: '09:00', endTime: '10:00' };
+                            return (
+                              existing || { date: formatted, startTime: '09:00', endTime: '10:00' }
+                            );
                           });
                           setPickedDates(next);
                         }}
                         className='w-full'
-                        classNames={{ day: 'mx-auto flex h-7 w-7 items-center justify-center rounded-md text-[11px] transition' }}
+                        classNames={{
+                          day: 'mx-auto flex h-7 w-7 items-center justify-center rounded-md text-[11px] transition',
+                        }}
                       />
 
                       <div className='flex flex-col gap-4 sm:flex-row'>
@@ -1749,7 +1942,12 @@ const NewClassCreationPage = () => {
                             <Input
                               type='date'
                               value={scheduleSettings.endRepeat}
-                              onChange={e => setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))}
+                              onChange={e =>
+                                setScheduleSettings(prev => ({
+                                  ...prev,
+                                  endRepeat: e.target.value,
+                                }))
+                              }
                             />
                           </FieldGroup>
                         </div>
@@ -1759,7 +1957,9 @@ const NewClassCreationPage = () => {
                         <input
                           type='checkbox'
                           checked={scheduleSettings.allDay}
-                          onChange={e => setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))}
+                          onChange={e =>
+                            setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
+                          }
                           className='h-4 w-4 rounded'
                         />
                         All Day
@@ -1768,25 +1968,38 @@ const NewClassCreationPage = () => {
                       <FieldGroup label='Timezone'>
                         <Select
                           value={scheduleSettings.timezone}
-                          onValueChange={value => setScheduleSettings(prev => ({ ...prev, timezone: value }))}
+                          onValueChange={value =>
+                            setScheduleSettings(prev => ({ ...prev, timezone: value }))
+                          }
                         >
-                          <SelectTrigger className='h-11 w-full'><SelectValue placeholder='Select timezone' /></SelectTrigger>
+                          <SelectTrigger className='h-11 w-full'>
+                            <SelectValue placeholder='Select timezone' />
+                          </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
-                            <SelectItem value='UTC Coordinated Universal Time'>UTC Coordinated Universal Time</SelectItem>
-                            <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
+                            <SelectItem value='EAT East Africa Time'>
+                              EAT East Africa Time
+                            </SelectItem>
+                            <SelectItem value='UTC Coordinated Universal Time'>
+                              UTC Coordinated Universal Time
+                            </SelectItem>
+                            <SelectItem value='WAT West Africa Time'>
+                              WAT West Africa Time
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </FieldGroup>
                     </div>
 
-                    <div className='flex-[1.5] space-y-2 rounded-md border border-border/60 p-3'>
+                    <div className='border-border/60 flex-[1.5] space-y-2 rounded-md border p-3'>
                       {pickedDates.length > 0 && (
                         <div className='space-y-2'>
                           <div className='flex items-center justify-between'>
-                            <p className='text-xs font-semibold text-foreground'>Selected Sessions</p>
+                            <p className='text-foreground text-xs font-semibold'>
+                              Selected Sessions
+                            </p>
                             <div className='bg-primary/10 text-primary border-primary/20 rounded border px-2 py-0.5 text-[10px] font-semibold'>
-                              {pickedDates.length} {pickedDates.length === 1 ? 'Session' : 'Sessions'}
+                              {pickedDates.length}{' '}
+                              {pickedDates.length === 1 ? 'Session' : 'Sessions'}
                             </div>
                           </div>
                           <div className='space-y-1.5'>
@@ -1798,10 +2011,10 @@ const NewClassCreationPage = () => {
                                 return (
                                   <div
                                     key={item.date}
-                                    className='flex flex-col gap-2 rounded-md border border-border/50 px-2.5 py-2 sm:flex-row sm:items-center sm:justify-between'
+                                    className='border-border/50 flex flex-col gap-2 rounded-md border px-2.5 py-2 sm:flex-row sm:items-center sm:justify-between'
                                   >
                                     <div className='min-w-0 flex-1'>
-                                      <p className='truncate text-[11px] font-medium text-foreground'>
+                                      <p className='text-foreground truncate text-[11px] font-medium'>
                                         {format(new Date(item.date), 'EEE, MMM d, yyyy')}
                                       </p>
                                     </div>
@@ -1812,18 +2025,26 @@ const NewClassCreationPage = () => {
                                           value={normalizeTime(item.startTime)}
                                           onChange={e => {
                                             const next = [...pickedDates];
-                                            if (next[origIdx]) next[origIdx] = { ...next[origIdx]!, startTime: normalizeTime(e.target.value) };
+                                            if (next[origIdx])
+                                              next[origIdx] = {
+                                                ...next[origIdx]!,
+                                                startTime: normalizeTime(e.target.value),
+                                              };
                                             setPickedDates(next);
                                           }}
                                           className='h-7 w-[92px] px-2 text-[11px]'
                                         />
-                                        <span className='text-[10px] text-muted-foreground'>→</span>
+                                        <span className='text-muted-foreground text-[10px]'>→</span>
                                         <Input
                                           type='time'
                                           value={normalizeTime(item.endTime)}
                                           onChange={e => {
                                             const next = [...pickedDates];
-                                            if (next[origIdx]) next[origIdx] = { ...next[origIdx]!, endTime: normalizeTime(e.target.value) };
+                                            if (next[origIdx])
+                                              next[origIdx] = {
+                                                ...next[origIdx]!,
+                                                endTime: normalizeTime(e.target.value),
+                                              };
                                             setPickedDates(next);
                                           }}
                                           className='h-7 w-[92px] px-2 text-[11px]'
@@ -1832,8 +2053,10 @@ const NewClassCreationPage = () => {
                                     )}
                                     <button
                                       type='button'
-                                      onClick={() => setPickedDates(prev => prev.filter((_, i) => i !== origIdx))}
-                                      className='text-[11px] font-medium text-muted-foreground transition hover:text-destructive'
+                                      onClick={() =>
+                                        setPickedDates(prev => prev.filter((_, i) => i !== origIdx))
+                                      }
+                                      className='text-muted-foreground hover:text-destructive text-[11px] font-medium transition'
                                     >
                                       Remove
                                     </button>
@@ -1849,11 +2072,12 @@ const NewClassCreationPage = () => {
 
                 {/* ── ACADEMIC PERIOD ───────────────────────────────────── */}
                 {schedulePreset === 'academic-period' && (
-                  <div className='rounded-md border border-border/60 p-4'>
+                  <div className='border-border/60 rounded-md border p-4'>
                     <div className='mb-4'>
                       <p className='text-foreground text-sm font-semibold'>Academic Period</p>
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        Toggle days and set times. Configure the academic term and recurrence on the right.
+                        Toggle days and set times. Configure the academic term and recurrence on the
+                        right.
                       </p>
                     </div>
                     <div className='flex flex-wrap gap-6'>
@@ -1879,34 +2103,45 @@ const NewClassCreationPage = () => {
                         One or more sessions overlap with this instructor&apos;s existing classes.
                         Adjust the times below before publishing.
                       </p>
-                      <ul className='marker:text-destructive list-disc space-y-1.5 pl-5 text-sm text-muted-foreground'>
+                      <ul className='marker:text-destructive text-muted-foreground list-disc space-y-1.5 pl-5 text-sm'>
                         {scheduleConflicts.slice(0, 5).map(conflict => (
                           <li
                             key={`${conflict.proposed.date}-${conflict.proposed.startTime}-${conflict.existing.classTitle}-${conflict.existing.startTime}`}
                             className='leading-relaxed'
                           >
-                            <span className='font-medium text-foreground'>
-                              {new Date(`${conflict.proposed.date}T00:00:00`).toLocaleDateString('en-US', {
-                                weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
-                              })}
-                              {' '}{conflict.proposed.startTime}–{conflict.proposed.endTime}
+                            <span className='text-foreground font-medium'>
+                              {new Date(`${conflict.proposed.date}T00:00:00`).toLocaleDateString(
+                                'en-US',
+                                {
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                }
+                              )}{' '}
+                              {conflict.proposed.startTime}–{conflict.proposed.endTime}
                             </span>{' '}
                             overlaps with{' '}
-                            <span className='font-medium text-foreground'>
+                            <span className='text-foreground font-medium'>
                               {conflict.existing.classTitle}
                             </span>{' '}
-                            ({new Date(conflict.existing.startTime).toLocaleTimeString('en-US', {
-                              hour: 'numeric', minute: '2-digit',
-                            })}
-                            {' '}–{' '}
+                            (
+                            {new Date(conflict.existing.startTime).toLocaleTimeString('en-US', {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}{' '}
+                            –{' '}
                             {new Date(conflict.existing.endTime).toLocaleTimeString('en-US', {
-                              hour: 'numeric', minute: '2-digit',
-                            })})
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                            )
                           </li>
                         ))}
                         {scheduleConflicts.length > 5 && (
                           <li className='font-medium'>
-                            …and {scheduleConflicts.length - 5} more conflict{scheduleConflicts.length - 5 > 1 ? 's' : ''}.
+                            …and {scheduleConflicts.length - 5} more conflict
+                            {scheduleConflicts.length - 5 > 1 ? 's' : ''}.
                           </li>
                         )}
                       </ul>
@@ -1934,18 +2169,14 @@ const NewClassCreationPage = () => {
             />
 
             {/* ── Reminder Options Card ──────────────────────────────────── */}
-            <Card className="overflow-hidden border pt-0 shadow-sm rounded-md">
-              <div className="flex items-center justify-between gap-3 px-2 pt-4 sm:px-4">
-                <h3 className="text-lg font-semibold text-foreground">
-                  Reminder Options
-                </h3>
+            <Card className='overflow-hidden rounded-md border pt-0 shadow-sm'>
+              <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
+                <h3 className='text-foreground text-lg font-semibold'>Reminder Options</h3>
               </div>
 
-              <div className="px-2 pb-4 sm:px-4 sm:pb-6 space-y-5">
-                <div className="flex items-center gap-4">
-                  <label className="text-xs font-semibold text-foreground w-[80px]">
-                    Reminder
-                  </label>
+              <div className='space-y-5 px-2 pb-4 sm:px-4 sm:pb-6'>
+                <div className='flex items-center gap-4'>
+                  <label className='text-foreground w-[80px] text-xs font-semibold'>Reminder</label>
 
                   <Select
                     value={notificationSettings.reminder}
@@ -1956,8 +2187,8 @@ const NewClassCreationPage = () => {
                       }))
                     }
                   >
-                    <SelectTrigger className="h-9 w-[120px]">
-                      <SelectValue placeholder="Select" />
+                    <SelectTrigger className='h-9 w-[120px]'>
+                      <SelectValue placeholder='Select' />
                     </SelectTrigger>
 
                     <SelectContent>
@@ -1971,41 +2202,41 @@ const NewClassCreationPage = () => {
                 </div>
 
                 <div className='flex flex-row items-start justify-between'>
-                  <div className="flex flex-col items-start gap-4">
-                    <label className="text-xs font-semibold text-foreground w-[80px]">
+                  <div className='flex flex-col items-start gap-4'>
+                    <label className='text-foreground w-[80px] text-xs font-semibold'>
                       Send To
                     </label>
 
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2 text-xs">
+                    <div className='flex items-center gap-4'>
+                      <label className='flex items-center gap-2 text-xs'>
                         <Checkbox />
                         Students
                       </label>
 
-                      <label className="flex items-center gap-2 text-xs">
+                      <label className='flex items-center gap-2 text-xs'>
                         <Checkbox />
                         Instructor
                       </label>
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-start gap-4">
-                    <label className="text-xs font-semibold text-foreground w-[80px]">
+                  <div className='flex flex-col items-start gap-4'>
+                    <label className='text-foreground w-[80px] text-xs font-semibold'>
                       Send Via
                     </label>
 
-                    <div className="flex items-center gap-4 flex-wrap">
-                      <label className="flex items-center gap-2 text-xs">
+                    <div className='flex flex-wrap items-center gap-4'>
+                      <label className='flex items-center gap-2 text-xs'>
                         <Checkbox />
                         Email
                       </label>
 
-                      <label className="flex items-center gap-2 text-xs">
+                      <label className='flex items-center gap-2 text-xs'>
                         <Checkbox />
                         SMS
                       </label>
 
-                      <label className="flex items-center gap-2 text-xs">
+                      <label className='flex items-center gap-2 text-xs'>
                         <Checkbox />
                         Push Notification
                       </label>
@@ -2027,11 +2258,9 @@ const NewClassCreationPage = () => {
 
 export default NewClassCreationPage;
 
-
 const FieldGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className='space-y-2'>
     <div className='text-foreground text-sm font-semibold'>{label}</div>
     {children}
   </div>
 );
-

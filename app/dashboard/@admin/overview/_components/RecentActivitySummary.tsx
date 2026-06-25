@@ -53,7 +53,7 @@ export function RecentActivitySummary({ events, isLoading }: RecentActivitySumma
             return (
               <div
                 key={event.id ?? event.uuid ?? `${event.summary}-${timestamp}`}
-                className='border-border/50 flex items-start gap-3 rounded-xl border p-3'
+                className='border-border/50 flex items-start gap-3 rounded-md border p-3'
               >
                 <div className='bg-muted text-muted-foreground flex size-9 items-center justify-center rounded-full'>
                   <Activity className='h-4 w-4' />

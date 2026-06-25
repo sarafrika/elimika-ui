@@ -42,17 +42,17 @@ export function EnrollmentComplianceCard({ metrics }: EnrollmentComplianceCardPr
         {hasData ? (
           <>
             <div className='grid grid-cols-2 gap-3 text-sm'>
-              <div className='border-border/60 rounded-xl border p-3'>
+              <div className='border-border/60 rounded-md border p-3'>
                 <p className='text-muted-foreground text-xs uppercase'>Age-gated enrollments</p>
                 <p className='text-2xl font-semibold'>{metrics?.age_gate_enrollments_30d ?? '—'}</p>
               </div>
-              <div className='border-border/60 rounded-xl border p-3'>
+              <div className='border-border/60 rounded-md border p-3'>
                 <p className='text-muted-foreground text-xs uppercase'>Age gate denials</p>
                 <p className='text-2xl font-semibold'>
                   {metrics?.age_gate_denials_30d ?? metrics?.age_restriction_exceptions_30d ?? '—'}
                 </p>
               </div>
-              <div className='border-border/60 rounded-xl border p-3'>
+              <div className='border-border/60 rounded-md border p-3'>
                 <p className='text-muted-foreground text-xs uppercase'>Missing DOB</p>
                 <p className='text-2xl font-semibold'>
                   {metrics?.missing_dob_percentage !== undefined
@@ -60,7 +60,7 @@ export function EnrollmentComplianceCard({ metrics }: EnrollmentComplianceCardPr
                     : '—'}
                 </p>
               </div>
-              <div className='border-border/60 rounded-xl border p-3'>
+              <div className='border-border/60 rounded-md border p-3'>
                 <p className='text-muted-foreground text-xs uppercase'>Exceptions</p>
                 <p className='text-2xl font-semibold'>
                   {metrics?.age_restriction_exceptions_30d ?? metrics?.age_gate_denials_30d ?? '—'}
@@ -77,7 +77,7 @@ export function EnrollmentComplianceCard({ metrics }: EnrollmentComplianceCardPr
                   {topCourses.map(course => (
                     <div
                       key={course.course_uuid ?? course.course_name}
-                      className='border-border/60 flex items-center justify-between rounded-xl border border-dashed px-3 py-2 text-sm'
+                      className='border-border/60 flex items-center justify-between rounded-md border border-dashed px-3 py-2 text-sm'
                     >
                       <div>
                         <p className='font-medium'>{course.course_name ?? 'Untitled course'}</p>
@@ -93,7 +93,7 @@ export function EnrollmentComplianceCard({ metrics }: EnrollmentComplianceCardPr
             )}
           </>
         ) : (
-          <div className='border-border/60 space-y-3 rounded-2xl border border-dashed p-4 text-sm'>
+          <div className='border-border/60 space-y-3 rounded-md border border-dashed p-4 text-sm'>
             <p className='font-medium'>No enrollment compliance telemetry yet.</p>
             <p className='text-muted-foreground text-xs'>
               Once the platform emits age-gate analytics, they will surface here automatically.

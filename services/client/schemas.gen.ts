@@ -602,9 +602,6 @@ export const StudentSchema = {
       maxLength: 2000,
       minLength: 0,
     },
-    primaryGuardianContact: {
-      type: 'string',
-    },
     secondaryGuardianContact: {
       type: 'string',
     },
@@ -613,6 +610,9 @@ export const StudentSchema = {
       items: {
         type: 'string',
       },
+    },
+    primaryGuardianContact: {
+      type: 'string',
     },
     full_name: {
       type: 'string',
@@ -4594,11 +4594,6 @@ export const LessonPracticeActivitySchema = {
       example: '15 minutes',
       readOnly: true,
     },
-    is_published: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Whether the activity is published.',
-      readOnly: true,
-    },
   },
   required: ['instructions', 'title'],
 } as const;
@@ -8570,6 +8565,25 @@ export const ScheduledInstanceSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_started: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_ended: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
+      example: false,
+      readOnly: true,
+    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
@@ -8593,25 +8607,6 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
-      example: false,
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_started: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_ended: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
       example: false,
       readOnly: true,
     },
@@ -12392,16 +12387,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
-      readOnly: true,
-    },
     is_upcoming: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this class is upcoming.',
       example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -12606,10 +12601,10 @@ export const SortObjectSchema = {
     empty: {
       type: 'boolean',
     },
-    sorted: {
+    unsorted: {
       type: 'boolean',
     },
-    unsorted: {
+    sorted: {
       type: 'boolean',
     },
   },

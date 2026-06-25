@@ -1,4 +1,3 @@
-import type { UserDomain } from '@/lib/types';
 import type { LucideIcon } from 'lucide-react';
 import {
   BadgeCheck,
@@ -16,6 +15,7 @@ import {
   Trophy,
   Users,
 } from 'lucide-react';
+import type { UserDomain } from '@/lib/types';
 
 export type CoursesHeroAction = {
   title: string;
@@ -44,11 +44,13 @@ export type CoursesCategoryTileData = {
 
 export type CoursesCatalogCardData = {
   id: string;
+  contentKind: 'course' | 'program';
   title: string;
   provider: string;
   duration: string;
   secondaryMeta: string;
   enrolledClasses: number;
+  applicationStatus?: string | null;
   ctaLabel: string;
   ctaDisabled?: boolean;
   ctaKind?: 'link' | 'apply-course' | 'apply-program';

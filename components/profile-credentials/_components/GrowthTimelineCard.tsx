@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 import { useState } from 'react';
-import { PdfPreview } from '../../../app/dashboard/@admin/verifications/_components/DocumentsVerificationPage';
+import { PdfPreview } from '../../../app/dashboard/@admin/_components/ui/PdfPreview';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../../ui/sheet';
 import type { GrowthItem } from '../data';
 

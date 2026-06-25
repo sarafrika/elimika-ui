@@ -1,7 +1,7 @@
 'use client';
 
 import { elimikaDesignSystem } from '@/lib/design-system';
-import { GitBranch, BookOpen, Settings, FileText } from 'lucide-react';
+import { BriefcaseBusiness, GitBranch, BookOpen, Settings, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 export function QuickActions() {
@@ -11,28 +11,35 @@ export function QuickActions() {
       description: 'Set up a new training location',
       icon: GitBranch,
       href: '/dashboard/branches',
-      color: 'green' as const,
+      tone: 'success' as const,
+    },
+    {
+      title: 'Create Class Job',
+      description: 'Publish an instructor assignment posting',
+      icon: BriefcaseBusiness,
+      href: '/dashboard/opportunities',
+      tone: 'primary' as const,
     },
     {
       title: 'Manage Courses',
       description: 'View and organize your course catalog',
       icon: BookOpen,
       href: '/dashboard/course-management',
-      color: 'purple' as const,
+      tone: 'accent' as const,
     },
     {
       title: 'Organization Settings',
       description: 'Update organization profile and preferences',
       icon: Settings,
       href: '/dashboard/account/training-center',
-      color: 'slate' as const,
+      tone: 'muted' as const,
     },
     {
       title: 'Browse Catalogue',
       description: 'Explore available courses and programs',
       icon: FileText,
       href: '/dashboard/catalogue',
-      color: 'pink' as const,
+      tone: 'warning' as const,
     },
   ];
 
@@ -40,7 +47,7 @@ export function QuickActions() {
     <div className='grid gap-4 sm:grid-cols-2 2xl:grid-cols-3'>
       {actions.map(action => {
         const Icon = action.icon;
-        const colorStyles = getActionColorStyles(action.color);
+        const colorStyles = getActionColorStyles(action.tone);
 
         return (
           <Link key={action.title} href={action.href}>
@@ -58,33 +65,14 @@ export function QuickActions() {
   );
 }
 
-function getActionColorStyles(color: 'blue' | 'green' | 'purple' | 'orange' | 'slate' | 'pink') {
+function getActionColorStyles(tone: 'primary' | 'success' | 'accent' | 'warning' | 'muted') {
   const styles = {
-    blue: {
-      icon: 'text-primary dark:text-blue-400',
-      bg: 'bg-primary/15 dark:bg-blue-900/30',
-    },
-    green: {
-      icon: 'text-success dark:text-success',
-      bg: 'bg-success/15 dark:bg-success/25',
-    },
-    purple: {
-      icon: 'text-accent-foreground dark:text-purple-400',
-      bg: 'bg-accent dark:bg-purple-900/30',
-    },
-    orange: {
-      icon: 'text-orange-600 dark:text-orange-400',
-      bg: 'bg-orange-100 dark:bg-orange-900/30',
-    },
-    slate: {
-      icon: 'text-muted-foreground dark:text-slate-400',
-      bg: 'bg-muted dark:bg-slate-900/30',
-    },
-    pink: {
-      icon: 'text-pink-600 dark:text-pink-400',
-      bg: 'bg-pink-100 dark:bg-pink-900/30',
-    },
+    primary: { icon: 'text-primary', bg: 'bg-primary/15' },
+    success: { icon: 'text-success', bg: 'bg-success/15' },
+    accent: { icon: 'text-accent-foreground', bg: 'bg-accent' },
+    warning: { icon: 'text-warning', bg: 'bg-warning/15' },
+    muted: { icon: 'text-muted-foreground', bg: 'bg-muted' },
   };
 
-  return styles[color];
+  return styles[tone];
 }

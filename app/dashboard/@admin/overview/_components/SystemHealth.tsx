@@ -142,7 +142,7 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
         <Separator />
 
         {/* Quick Stats */}
-        <div className='bg-muted space-y-3 rounded-lg p-4'>
+        <div className='bg-muted space-y-3 rounded-md p-4'>
           <h4 className='text-sm font-semibold'>Admin Activity</h4>
           <div className='grid grid-cols-2 gap-4'>
             <div>

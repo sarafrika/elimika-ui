@@ -1,30 +1,17 @@
-import { Badge } from '../../../../components/ui/badge';
-import { Card } from '../../../../components/ui/card';
-import CourseCreatorsPage from './_components/CreatorsPage';
+import { adminTheme } from '../_components/ui/admin-theme';
+import { AdminPageHeader } from '../_components/ui/AdminPageHeader';
+import { RoleMembersSection } from '../_components/RoleMembersSection';
 
-export default function Page() {
+export default function CourseCreatorsPage() {
   return (
-    <div className='flex flex-col gap-6 p-6'>
-      <div>
-        <Badge
-          variant='outline'
-          className='border-primary/60 bg-primary/10 text-xs font-semibold tracking-wide uppercase'
-        >
-          Administrator Management
-        </Badge>
-        <div className='bg-card relative mt-4 overflow-hidden rounded-3xl'>
-          <div className='flex flex-col'>
-            <p className='text-muted-foreground max-w-3xl text-sm leading-relaxed'>
-              Manage administrator accounts, assign roles and permissions, and monitor system access
-              from a centralized dashboard.
-            </p>
-          </div>
-        </div>
+    <main className={adminTheme.page}>
+      <div className={adminTheme.pageStack}>
+        <AdminPageHeader
+          title='Course creators'
+          description='Manage course creator accounts and verify their credentials from the 360° profile.'
+        />
+        <RoleMembersSection role='course_creator' />
       </div>
-
-      <Card className='p-2'>
-        <CourseCreatorsPage />;
-      </Card>
-    </div>
+    </main>
   );
 }

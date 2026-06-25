@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowDownWideNarrow,
   ArrowUpWideNarrow,
@@ -10,18 +10,16 @@ import {
   Filter,
   Globe2,
   GraduationCap,
-  Loader2,
   MapPin,
   Pencil,
   Plus,
   Search,
-  ShieldCheck,
   SlidersHorizontal,
   Star,
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -30,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -55,44 +54,55 @@ import {
   createJobMutation,
   getAllCoursesOptions,
   getAllOrganisationsOptions,
-  listJobApplicationsOptions,
+  getAllTrainingProgramsOptions,
+  listJobApplicationsQueryKey,
   listJobsOptions,
   listJobsQueryKey,
   listMyApplicationsOptions,
-  updateJobMutation
+  listMyApplicationsQueryKey,
+  updateJobMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
-  ApplyToJobData,
-  CancelJobData,
   ClassMarketplaceJob,
   ClassMarketplaceJobRequest,
   ClassVisibilityEnum,
   Course,
-  CreateJobData,
   LocationTypeEnum,
   Organisation,
   SessionFormatEnum,
-  StatusEnum4,
-  UpdateJobData
+  StatusEnum5,
+  TrainingProgram,
 } from '@/services/client/types.gen';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 import { extractPage } from '../../../lib/api-helpers';
-import { cn } from '../../../lib/utils';
 import type { JobMarketplaceRole } from '../data';
 import { getJobMarketplaceRoleConfig } from '../data';
+import { JobCard } from './JobMarketplaceCard';
+import { JobListSkeleton, MarketplaceSidebarSkeleton, SelectSkeleton } from './JobMarketplaceSkeletons';
 import { MarketplaceRail } from './MarketplaceRail';
 import { MarketplaceSidebar } from './MarketplaceSidebar';
 import { MarketplaceTabs } from './MarketplaceTabs';
 
-type JobFilter = 'all' | StatusEnum4;
+type JobFilter = 'all' | StatusEnum5;
 type MarketplaceTabId = 'all' | 'full-time' | 'freelance' | 'internship' | 'remote';
 type JobSortDirection = 'newest' | 'oldest';
+type MarketplaceContentType = 'course' | 'program';
+type JobContentPrefill = { type: MarketplaceContentType; id: string };
+type ClassMarketplaceJobWithProgram = ClassMarketplaceJob & {
+  readonly program_uuid?: string | null;
+};
+type ClassMarketplaceJobRequestWithProgram = Omit<ClassMarketplaceJobRequest, 'course_uuid'> & {
+  course_uuid?: string | null;
+  program_uuid?: string | null;
+};
 
 type JobFormState = {
   organisation_uuid: string;
+  content_type: MarketplaceContentType;
   course_uuid: string;
+  program_uuid: string;
   title: string;
   description: string;
   class_visibility: ClassVisibilityEnum;
@@ -115,7 +125,8 @@ type JobFormState = {
   session_template_end_time: string;
 };
 
-const PAGE_SIZE = 1000;
+const JOB_PAGE_SIZE = 50;
+const LOOKUP_PAGE_SIZE = 100;
 const DEFAULT_LOCATION_LATITUDE = -1.286389;
 const DEFAULT_LOCATION_LONGITUDE = 36.817223;
 
@@ -134,14 +145,14 @@ const marketplaceTabs: Array<{
   count: number;
   icon: typeof BriefcaseBusiness;
 }> = [
-    { id: 'all', label: 'All', count: 0, icon: BriefcaseBusiness },
-    { id: 'full-time', label: 'Full-Time', count: 0, icon: BriefcaseBusiness },
-    { id: 'internship', label: 'Internship', count: 0, icon: GraduationCap },
-    { id: 'freelance', label: 'Freelance', count: 0, icon: Star },
-    { id: 'remote', label: 'Remote', count: 0, icon: Globe2 },
-  ];
+  { id: 'all', label: 'All', count: 0, icon: BriefcaseBusiness },
+  { id: 'full-time', label: 'Full-Time', count: 0, icon: BriefcaseBusiness },
+  { id: 'internship', label: 'Internship', count: 0, icon: GraduationCap },
+  { id: 'freelance', label: 'Freelance', count: 0, icon: Star },
+  { id: 'remote', label: 'Remote', count: 0, icon: Globe2 },
+];
 
-function matchesMarketplaceTab(job: ClassMarketplaceJob, tabId: MarketplaceTabId) {
+function matchesMarketplaceTab(job: ClassMarketplaceJobWithProgram, tabId: MarketplaceTabId) {
   const searchable = [job.title, job.description, job.location_name, job.meeting_link]
     .filter(Boolean)
     .join(' ')
@@ -220,7 +231,7 @@ function getApplicationStatusLabel(status?: string | null) {
   return formatEnumLabel(status);
 }
 
-function sortJobs(jobs: ClassMarketplaceJob[], sortBy: JobSortDirection) {
+function sortJobs(jobs: ClassMarketplaceJobWithProgram[], sortBy: JobSortDirection) {
   return [...jobs].sort((left, right) => {
     const leftCreated = left.created_date ? new Date(left.created_date).getTime() : 0;
     const rightCreated = right.created_date ? new Date(right.created_date).getTime() : 0;
@@ -246,17 +257,40 @@ function getDisplayOrganisationLabel(job: ClassMarketplaceJob, organisationName?
   return 'Organisation';
 }
 
-function getDisplayCourseLabel(job: ClassMarketplaceJob, course?: Course | null) {
-  if (course?.name) return course.name;
-  if (job.course_uuid) return `Course ${shortId(job.course_uuid)}`;
-  return 'Course';
+function getJobProgramUuid(job: ClassMarketplaceJobWithProgram) {
+  return job.program_uuid ?? null;
 }
 
-function getInitialFormState(organisationUuid: string, job?: ClassMarketplaceJob | null): JobFormState {
+function getJobContentType(job: ClassMarketplaceJobWithProgram): MarketplaceContentType {
+  return getJobProgramUuid(job) ? 'program' : 'course';
+}
+
+function getDisplayContentLabel(
+  job: ClassMarketplaceJobWithProgram,
+  course?: Course | null,
+  program?: TrainingProgram | null
+) {
+  const programUuid = getJobProgramUuid(job);
+  if (program?.title) return program.title;
+  if (programUuid) return `Program ${shortId(programUuid)}`;
+  if (course?.name) return course.name;
+  if (job.course_uuid) return `Course ${shortId(job.course_uuid)}`;
+  return 'Course or program';
+}
+
+function getInitialFormState(
+  organisationUuid: string,
+  job?: ClassMarketplaceJobWithProgram | null,
+  initialContent?: JobContentPrefill | null
+): JobFormState {
   const defaultStart = job?.default_start_time ? new Date(job.default_start_time) : new Date();
   const defaultEnd = job?.default_end_time
     ? new Date(job.default_end_time)
     : new Date(defaultStart.getTime() + 60 * 60 * 1000);
+  const jobProgramUuid = job ? getJobProgramUuid(job) : null;
+  const contentType = job
+    ? getJobContentType(job)
+    : (initialContent?.type ?? 'course');
 
   const sessionTemplateStart = job?.session_templates?.[0]?.start_time
     ? new Date(job.session_templates[0].start_time)
@@ -267,7 +301,11 @@ function getInitialFormState(organisationUuid: string, job?: ClassMarketplaceJob
 
   return {
     organisation_uuid: job?.organisation_uuid ?? organisationUuid,
-    course_uuid: job?.course_uuid ?? '',
+    content_type: contentType,
+    course_uuid:
+      job?.course_uuid ?? (initialContent?.type === 'course' ? initialContent.id : ''),
+    program_uuid:
+      jobProgramUuid ?? (initialContent?.type === 'program' ? initialContent.id : ''),
     title: job?.title ?? '',
     description: job?.description ?? '',
     class_visibility: job?.class_visibility ?? 'PUBLIC',
@@ -317,10 +355,9 @@ function parseDateTime(value: string) {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 }
 
-function buildJobPayload(form: JobFormState): ClassMarketplaceJobRequest {
-  return {
+function buildJobPayload(form: JobFormState): ClassMarketplaceJobRequestWithProgram {
+  const payload: ClassMarketplaceJobRequestWithProgram = {
     organisation_uuid: form.organisation_uuid,
-    course_uuid: form.course_uuid,
     title: form.title.trim(),
     description: form.description.trim() || undefined,
     class_visibility: form.class_visibility,
@@ -347,31 +384,14 @@ function buildJobPayload(form: JobFormState): ClassMarketplaceJobRequest {
       },
     ],
   };
-}
 
-function JobBadgeRow({ job, course, organisationName }: { job: ClassMarketplaceJob; course?: Course | null; organisationName?: string | null; }) {
-  return (
-    <div className='flex flex-wrap items-center gap-2'>
-      <Badge variant='secondary' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {formatEnumLabel(job.status)}
-      </Badge>
-      <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {formatEnumLabel(job.class_visibility)}
-      </Badge>
-      <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {formatEnumLabel(job.session_format)}
-      </Badge>
-      <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {formatEnumLabel(job.location_type)}
-      </Badge>
-      <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {getDisplayOrganisationLabel(job, organisationName)}
-      </Badge>
-      <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {getDisplayCourseLabel(job, course)}
-      </Badge>
-    </div>
-  );
+  if (form.content_type === 'program') {
+    payload.program_uuid = form.program_uuid;
+  } else {
+    payload.course_uuid = form.course_uuid;
+  }
+
+  return payload;
 }
 
 function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
@@ -405,128 +425,6 @@ function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
   );
 }
 
-function JobCard({
-  job,
-  onView,
-  onEdit,
-  onCancel,
-  isManagementView,
-  course,
-  organisationName,
-  applicationStatus,
-  hasApplied,
-  applicationCount,
-  applicationsHref,
-}: {
-  job: ClassMarketplaceJob;
-  onView: () => void;
-  onEdit?: () => void;
-  onCancel?: () => void;
-  isManagementView: boolean;
-  course?: Course | null;
-  organisationName?: string | null;
-  applicationStatus?: string | null;
-  hasApplied?: boolean;
-  applicationCount?: number;
-  applicationsHref?: string;
-}) {
-  const title = job.title ?? 'Untitled job';
-  const applicationLabel = getApplicationStatusLabel(applicationStatus);
-  const statusStyles: Record<string, string> = {
-    pending: 'bg-muted text-muted-foreground border-border',
-    approved: 'bg-success/10 text-success border-success/30',
-    rejected: 'bg-destructive/10 text-destructive border-destructive/30',
-  };
-
-  return (
-    <Card className='group flex gap-4 rounded-[22px] border-border border-1 bg-card/50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md'>
-      <div className='flex flex-row items-center justify-between' >
-        <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_14%,white),color-mix(in_srgb,var(--el-accent-azure)_24%,white))] text-primary'>
-          {isManagementView ? <ShieldCheck className='size-5' /> : <BriefcaseBusiness className='size-5' />}
-        </div>
-
-        <div>
-          {!isManagementView && applicationStatus ? (
-            <Badge
-              variant='outline'
-              className={cn(
-                'rounded-full px-3 py-1 capitalize',
-                statusStyles[applicationStatus.toLowerCase()] || 'bg-muted text-muted-foreground'
-              )}
-            >
-              {applicationLabel}
-            </Badge>
-          ) : null}
-        </div>
-      </div>
-
-      <div className='min-w-0 flex-1 space-y-3'>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          <div className='min-w-0'>
-            <div className='flex flex-wrap items-center gap-2'>
-              <h3 className='truncate text-lg font-semibold text-foreground'>{title}</h3>
-            </div>
-            <p className='mt-0.5 text-sm text-muted-foreground'>
-              {getDisplayOrganisationLabel(job, organisationName)} · {getDisplayCourseLabel(job, course)}
-            </p>
-          </div>
-          <Badge variant={job.status === 'open' ? 'secondary' : 'outline'} className='rounded-full px-3 py-1'>
-            {formatEnumLabel(job.status)}
-          </Badge>
-        </div>
-
-        <JobBadgeRow job={job} course={course} organisationName={organisationName} />
-
-        <div className='grid gap-2 sm:grid-cols-2'>
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <CalendarDays className='size-4 text-primary' />
-            <span>{formatDateTime(job.default_start_time)}</span>
-          </div>
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <MapPin className='size-4 text-primary' />
-            <span>{job.location_name || formatEnumLabel(job.location_type)}</span>
-          </div>
-        </div>
-
-        <p className='line-clamp-3 text-sm leading-6 text-muted-foreground'>
-          {job.description || 'No description has been provided for this posting yet.'}
-        </p>
-
-        <div className='flex flex-wrap items-center gap-2 pt-1'>
-          <Button variant='outline' className='rounded-xl' onClick={onView}>
-            View
-          </Button>
-          {isManagementView && applicationsHref ? (
-            <Button asChild variant='secondary' className='rounded-xl'>
-              <Link href={applicationsHref}>
-                View applications{typeof applicationCount === 'number' ? ` (${applicationCount})` : ''}
-              </Link>
-            </Button>
-          ) : null}
-          {isManagementView && onEdit ? (
-            <Button variant='outline' className='rounded-xl' onClick={onEdit}>
-              <Pencil className='mr-1 size-4' />
-              Edit
-            </Button>
-          ) : null}
-          {isManagementView && onCancel ? (
-            <Button variant='destructive' className='rounded-xl' onClick={onCancel}>
-              <Trash2 className='mr-1 size-4' />
-              Cancel
-            </Button>
-          ) : null}
-
-          {!isManagementView && hasApplied ? (
-            <Badge className='bg-success/75 text-white rounded-full px-3 py-1'>
-              You already applied to this job
-            </Badge>
-          ) : null}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
 function JobDetailsSheet({
   job,
   open,
@@ -534,17 +432,19 @@ function JobDetailsSheet({
   isManagementView,
   organisationName,
   course,
+  program,
   onEdit,
   onCancel,
   application,
   myApplicationsHref,
 }: {
-  job: ClassMarketplaceJob | null;
+  job: ClassMarketplaceJobWithProgram | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isManagementView: boolean;
   organisationName?: string | null;
   course?: Course | null;
+  program?: TrainingProgram | null;
   onEdit?: () => void;
   onCancel?: () => void;
   application?: { status?: string | null; application_note?: string | null } | null;
@@ -554,6 +454,7 @@ function JobDetailsSheet({
   const [applicationNote, setApplicationNote] = useState('');
   const [showAllSessions, setShowAllSessions] = useState(false);
   const alreadyApplied = Boolean(application);
+  const jobUuid = job?.uuid;
 
 
   const applyMutation = useMutation({
@@ -562,8 +463,18 @@ function JobDetailsSheet({
       toast.success('Application submitted successfully.');
       setApplicationNote('');
       onOpenChange(false);
-      await queryClient.invalidateQueries({ queryKey: ['listJobApplications'] });
-      await queryClient.invalidateQueries({ queryKey: ['listMyApplications'] });
+      await queryClient.invalidateQueries({
+        queryKey: listMyApplicationsQueryKey({ query: { pageable: {} } }),
+      });
+
+      if (jobUuid) {
+        await queryClient.invalidateQueries({
+          queryKey: listJobApplicationsQueryKey({
+            path: { jobUuid },
+            query: { pageable: {} },
+          }),
+        });
+      }
     },
     onError: error => {
       toast.error(error instanceof Error ? error.message : 'Unable to apply for this posting.');
@@ -572,13 +483,15 @@ function JobDetailsSheet({
 
   if (!job) return null;
 
+  const sessionTemplateCount = job.session_templates?.length ?? 0;
+
   const handleApply = () => {
-    if (!job.uuid) return;
+    if (!jobUuid) return;
 
     applyMutation.mutate({
-      path: { jobUuid: job.uuid },
+      path: { jobUuid },
       body: applicationNote.trim() ? { application_note: applicationNote.trim() } : undefined,
-    } satisfies ApplyToJobData);
+    });
   };
 
   return (
@@ -600,7 +513,7 @@ function JobDetailsSheet({
             </div>
             <SheetTitle className='text-2xl'>{job.title || 'Untitled job'}</SheetTitle>
             <SheetDescription>
-              {getDisplayOrganisationLabel(job, organisationName)} · {getDisplayCourseLabel(job, course)}
+              {getDisplayOrganisationLabel(job, organisationName)} · {getDisplayContentLabel(job, course, program)}
             </SheetDescription>
           </SheetHeader>
 
@@ -630,13 +543,13 @@ function JobDetailsSheet({
               </div>
             ) : null}
 
-            <div className="rounded-2xl border bg-background/70 p-4">
-              <h3 className="flex flex-row items-center gap-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className='rounded-2xl border bg-background/70 p-4'>
+              <h3 className='flex flex-row items-center gap-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
                 Sessions
-                <p>                  ({job?.session_templates?.length})                </p>
+                <span>({sessionTemplateCount})</span>
               </h3>
 
-              <div className="mt-3 space-y-2">
+              <div className='mt-3 space-y-2'>
                 {(showAllSessions
                   ? job.session_templates
                   : job.session_templates?.slice(0, 10)
@@ -650,36 +563,37 @@ function JobDetailsSheet({
                   return (
                     <div
                       key={idx}
-                      className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                      className='flex flex-wrap items-center justify-between gap-2 text-sm'
                     >
                       <div className='flex flex-row gap-2'>
-                        <p className="font-medium">
+                        <p className='font-medium'>
                           {start.toLocaleDateString()}
                         </p>
-                        <p className="text-muted-foreground">(
-                          {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{" "}
-                          -{" "}
+                        <p className='text-muted-foreground'>
+                          (
+                          {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{' '}
+                          -{' '}
                           {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
                         </p>
                       </div>
 
-                      <Badge className="bg-primary text-primary-foreground">
-                        {hours} hr{hours !== 1 ? "s" : ""}
+                      <Badge className='bg-primary text-primary-foreground'>
+                        {hours} hr{hours !== 1 ? 's' : ''}
                       </Badge>
                     </div>
                   );
                 })}
               </div>
 
-              {job?.session_templates?.length > 10 && (
-                <div className="mt-3">
+              {sessionTemplateCount > 10 && (
+                <div className='mt-3'>
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    className="px-0"
+                    variant='ghost'
+                    size='sm'
+                    className='px-0'
                     onClick={() => setShowAllSessions(prev => !prev)}
                   >
-                    {showAllSessions ? "Show less" : `Show all (${job.session_templates.length})`}
+                    {showAllSessions ? 'Show less' : `Show all (${sessionTemplateCount})`}
                   </Button>
                 </div>
               )}
@@ -790,32 +704,38 @@ function JobFormSheet({
   onOpenChange,
   job,
   organisationUuid,
+  courses,
+  programs,
+  initialContent,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  job: ClassMarketplaceJob | null;
+  job: ClassMarketplaceJobWithProgram | null;
   organisationUuid: string;
+  courses: Course[];
+  programs: TrainingProgram[];
+  initialContent: JobContentPrefill | null;
   onSaved: () => void;
 }) {
   const queryClient = useQueryClient();
   const isEditMode = Boolean(job?.uuid);
-  const [form, setForm] = useState<JobFormState>(() => getInitialFormState(organisationUuid, job));
-  const [selectedCourseUuid, setSelectedCourseUuid] = useState('');
-
-  const { data: coursesResponse } = useQuery({
-    ...getAllCoursesOptions({
-      query: {
-        pageable: {
-          page: 0,
-          size: PAGE_SIZE,
-          sort: ['name,asc'],
-        },
-      },
-    }),
-  });
-  const courses = (coursesResponse?.data?.content ?? []).filter(
-    course => course.active === true && course.admin_approved === true
+  const [form, setForm] = useState<JobFormState>(() =>
+    getInitialFormState(organisationUuid, job, initialContent)
+  );
+  const availableCourses = useMemo(
+    () => courses.filter(course => course.active === true && course.admin_approved === true),
+    [courses]
+  );
+  const availablePrograms = useMemo(
+    () =>
+      programs.filter(
+        program =>
+          program.active === true &&
+          program.published === true &&
+          program.admin_approved === true
+      ),
+    [programs]
   );
 
   const createMutation = useMutation({
@@ -825,7 +745,12 @@ function JobFormSheet({
       onOpenChange(false);
       onSaved();
       await queryClient.invalidateQueries({
-        queryKey: listJobsQueryKey({ query: { pageable: {} } }),
+        queryKey: listJobsQueryKey({
+          query: {
+            pageable: { page: 0, size: JOB_PAGE_SIZE },
+            organisation_uuid: organisationUuid,
+          },
+        }),
       });
     },
     onError: error => {
@@ -839,7 +764,12 @@ function JobFormSheet({
       onOpenChange(false);
       onSaved();
       await queryClient.invalidateQueries({
-        queryKey: listJobsQueryKey({ query: { pageable: {} } }),
+        queryKey: listJobsQueryKey({
+          query: {
+            pageable: { page: 0, size: JOB_PAGE_SIZE },
+            organisation_uuid: organisationUuid,
+          },
+        }),
       });
     },
     onError: error => {
@@ -849,17 +779,29 @@ function JobFormSheet({
 
   useEffect(() => {
     if (!open) return;
-    setForm(getInitialFormState(organisationUuid, job));
-    setSelectedCourseUuid(job?.course_uuid ?? '');
-  }, [job, open, organisationUuid]);
-
-  useEffect(() => {
-    if (!open || isEditMode || selectedCourseUuid || courses.length === 0) return;
-    setSelectedCourseUuid(courses[0]?.uuid ?? '');
-  }, [courses, isEditMode, open, selectedCourseUuid]);
+    setForm(getInitialFormState(organisationUuid, job, initialContent));
+  }, [initialContent, job, open, organisationUuid]);
 
   const updateField = <K extends keyof JobFormState>(key: K, value: JobFormState[K]) => {
     setForm(previous => ({ ...previous, [key]: value }));
+  };
+
+  const handleContentTypeChange = (value: MarketplaceContentType) => {
+    setForm(previous => ({
+      ...previous,
+      content_type: value,
+      course_uuid: value === 'course' ? previous.course_uuid : '',
+      program_uuid: value === 'program' ? previous.program_uuid : '',
+    }));
+  };
+
+  const handleContentChange = (value: string) => {
+    if (form.content_type === 'program') {
+      updateField('program_uuid', value);
+      return;
+    }
+
+    updateField('course_uuid', value);
   };
 
   const handleSubmit = () => {
@@ -873,15 +815,19 @@ function JobFormSheet({
       return;
     }
 
-    if (!selectedCourseUuid) {
+    if (form.content_type === 'course' && !form.course_uuid) {
       toast.error('Please choose a course.');
+      return;
+    }
+
+    if (form.content_type === 'program' && !form.program_uuid) {
+      toast.error('Please choose a program.');
       return;
     }
 
     const payload = buildJobPayload({
       ...form,
       organisation_uuid: organisationUuid,
-      course_uuid: selectedCourseUuid,
     });
 
     if (!payload.default_start_time || !payload.default_end_time) {
@@ -892,14 +838,14 @@ function JobFormSheet({
     if (isEditMode && job?.uuid) {
       updateMutation.mutate({
         path: { jobUuid: job.uuid },
-        body: payload,
-      } satisfies UpdateJobData);
+        body: payload as ClassMarketplaceJobRequest,
+      });
       return;
     }
 
     createMutation.mutate({
-      body: payload,
-    } satisfies CreateJobData);
+      body: payload as ClassMarketplaceJobRequest,
+    });
   };
 
   return (
@@ -926,20 +872,51 @@ function JobFormSheet({
 
           <div className='grid gap-4'>
             <SectionShell title='Basic details'>
-              <div className='grid gap-4 md:grid-cols-2'>
+              <div className='grid gap-4 md:grid-cols-3'>
                 <Field label='Job title *'>
                   <Input value={form.title} onChange={event => updateField('title', event.target.value)} />
                 </Field>
-                <Field label='Course *'>
-                  <Select value={selectedCourseUuid} onValueChange={setSelectedCourseUuid}>
+                <Field label='Content type *'>
+                  <Select
+                    value={form.content_type}
+                    onValueChange={value => handleContentTypeChange(value as MarketplaceContentType)}
+                    disabled={isEditMode}
+                  >
+                    <SelectTrigger className='w-full min-w-0 rounded-xl'>
+                      <SelectValue placeholder='Choose type' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='course'>Course</SelectItem>
+                      <SelectItem value='program'>Program</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label={form.content_type === 'program' ? 'Program *' : 'Course *'}>
+                  <Select
+                    value={form.content_type === 'program' ? form.program_uuid : form.course_uuid}
+                    onValueChange={handleContentChange}
+                    disabled={isEditMode}
+                  >
                     <SelectTrigger className='w-full min-w-0 rounded-xl'>
                       <SelectValue
-                        placeholder='Choose course'
+                        placeholder={form.content_type === 'program' ? 'Choose program' : 'Choose course'}
                         className='min-w-0 truncate'
                       />
                     </SelectTrigger>
 
-                    <SelectContent> {courses.map(course => (<SelectItem key={course.uuid} value={course.uuid ?? ''}> {course.name} </SelectItem>))} </SelectContent>
+                    <SelectContent>
+                      {form.content_type === 'program'
+                        ? availablePrograms.map(program => (
+                          <SelectItem key={program.uuid} value={program.uuid ?? ''}>
+                            {program.title}
+                          </SelectItem>
+                        ))
+                        : availableCourses.map(course => (
+                          <SelectItem key={course.uuid} value={course.uuid ?? ''}>
+                            {course.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
                   </Select>
                 </Field>
               </div>
@@ -1183,6 +1160,10 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const profile = useUserProfile();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const createJobParam = searchParams.get('create');
+  const createContentTypeParam = searchParams.get('type');
+  const createContentIdParam = searchParams.get('id');
   const isOrganizationView = role === 'organization';
   const organisationUuid = organisation?.uuid ?? '';
   const userUuid = profile?.uuid ?? '';
@@ -1194,36 +1175,48 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const [locationFilter, setLocationFilter] = useState<'all' | LocationTypeEnum>('all');
   const [marketplaceTab, setMarketplaceTab] = useState<MarketplaceTabId>('all');
   const [organisationFilter, setOrganisationFilter] = useState<'all' | string>('all');
-  const [courseFilter, setCourseFilter] = useState<'all' | string>('all');
+  const [contentFilter, setContentFilter] = useState<'all' | string>('all');
   const [sortDirection, setSortDirection] = useState<JobSortDirection>('newest');
   const [selectedJobUuid, setSelectedJobUuid] = useState<string | null>(null);
-  const [pendingCancelJob, setPendingCancelJob] = useState<ClassMarketplaceJob | null>(null);
+  const [pendingCancelJob, setPendingCancelJob] = useState<ClassMarketplaceJobWithProgram | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [editingJob, setEditingJob] = useState<ClassMarketplaceJob | null>(null);
+  const [editingJob, setEditingJob] = useState<ClassMarketplaceJobWithProgram | null>(null);
+  const [initialContent, setInitialContent] = useState<JobContentPrefill | null>(null);
+  const canLoadJobs = !isOrganizationView || Boolean(organisationUuid);
+  const jobsListOptions = {
+    query: {
+      pageable: {
+        page: 0,
+        size: JOB_PAGE_SIZE,
+      },
+      ...(isOrganizationView ? { organisation_uuid: organisationUuid } : {}),
+    },
+  };
+
+  useEffect(() => {
+    if (!isOrganizationView || !organisationUuid) return;
+    if (createJobParam !== '1') return;
+
+    const contentType: MarketplaceContentType =
+      createContentTypeParam === 'program' ? 'program' : 'course';
+    const contentId = createContentIdParam?.trim();
+
+    setEditingJob(null);
+    setInitialContent(contentId ? { type: contentType, id: contentId } : null);
+    setFormOpen(true);
+  }, [
+    createContentIdParam,
+    createContentTypeParam,
+    createJobParam,
+    isOrganizationView,
+    organisationUuid,
+  ]);
 
   const { data: jobsResponse, isLoading: isJobsLoading } = useQuery({
-    ...listJobsOptions({
-      query: {
-        pageable: {
-          page: 0,
-          size: PAGE_SIZE,
-        },
-        ...(isOrganizationView && organisationUuid ? { organisation_uuid: organisationUuid } : {}),
-      },
-    }),
-    enabled: true,
+    ...listJobsOptions(jobsListOptions),
+    enabled: canLoadJobs,
   });
-  const jobs = jobsResponse?.data?.content ?? [];
-
-  const jobApplicationsQueryResults = useQueries({
-    queries: jobs.map(job => ({
-      ...listJobApplicationsOptions({
-        path: { jobUuid: job.uuid ?? '' },
-        query: { pageable: { page: 0, size: 1 } },
-      }),
-      enabled: Boolean(isOrganizationView && job.uuid),
-    })),
-  });
+  const jobs: ClassMarketplaceJobWithProgram[] = jobsResponse?.data?.content ?? [];
 
   const myApplicationsQuery = useQuery({
     ...listMyApplicationsOptions({
@@ -1234,24 +1227,34 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     enabled: Boolean(!isOrganizationView && userUuid),
   });
 
-  const { data: coursesResponse } = useQuery({
+  const { data: coursesResponse, isLoading: isCoursesLoading } = useQuery({
     ...getAllCoursesOptions({
       query: {
         pageable: {
           page: 0,
-          size: PAGE_SIZE,
-          // sort: ['name,asc'],
+          size: LOOKUP_PAGE_SIZE,
         },
       },
     }),
   });
 
-  const { data: organisationsResponse } = useQuery({
+  const { data: programsResponse, isLoading: isProgramsLoading } = useQuery({
+    ...getAllTrainingProgramsOptions({
+      query: {
+        pageable: {
+          page: 0,
+          size: LOOKUP_PAGE_SIZE,
+        },
+      },
+    }),
+  });
+
+  const { data: organisationsResponse, isLoading: isOrganisationsLoading } = useQuery({
     ...getAllOrganisationsOptions({
       query: {
         pageable: {
           page: 0,
-          size: PAGE_SIZE,
+          size: LOOKUP_PAGE_SIZE,
         },
       },
     }),
@@ -1259,6 +1262,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   });
 
   const courses = coursesResponse?.data?.content ?? [];
+  const programs = programsResponse?.data?.content ?? [];
   const organisations = extractPage<Organisation>(organisationsResponse).items;
   const myApplications = myApplicationsQuery.data?.data?.content ?? [];
   const organisationOptions = useMemo(() => {
@@ -1287,6 +1291,39 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     [courses]
   );
 
+  const programOptions = useMemo(
+    () =>
+      programs
+        .filter(
+          program =>
+            program.uuid &&
+            program.active === true &&
+            program.published === true &&
+            program.admin_approved === true
+        )
+        .map(program => ({
+          label: program.title,
+          value: program.uuid as string,
+        })),
+    [programs]
+  );
+
+  const contentOptions = useMemo(
+    () => [
+      ...courseOptions.map(option => ({
+        ...option,
+        label: `Course: ${option.label}`,
+        value: `course:${option.value}`,
+      })),
+      ...programOptions.map(option => ({
+        ...option,
+        label: `Program: ${option.label}`,
+        value: `program:${option.value}`,
+      })),
+    ],
+    [courseOptions, programOptions]
+  );
+
   const jobsByCourseId = useMemo(
     () =>
       new Map(
@@ -1295,6 +1332,16 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
           .filter(([uuid]) => Boolean(uuid))
       ),
     [courses]
+  );
+
+  const jobsByProgramId = useMemo(
+    () =>
+      new Map(
+        programs
+          .map(program => [program.uuid ?? '', program] as const)
+          .filter(([uuid]) => Boolean(uuid))
+      ),
+    [programs]
   );
 
   const selectedJob = useMemo(
@@ -1306,25 +1353,9 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     return new Map(myApplications.map(application => [application.job_uuid ?? '', application]));
   }, [myApplications]);
 
-  const applicationCountsByJobUuid = useMemo(() => {
-    const counts = new Map<string, number>();
-
-    jobApplicationsQueryResults.forEach((queryResult, index) => {
-      const jobUuid = jobs[index]?.uuid ?? '';
-      if (!jobUuid) return;
-
-      const totalValue =
-        queryResult.data?.data?.metadata?.totalElements ??
-        queryResult.data?.data?.content?.length ??
-        0;
-      counts.set(jobUuid, Number(totalValue));
-    });
-
-    return counts;
-  }, [jobApplicationsQueryResults, jobs]);
-
   const jobsBeforeStatusFilter = useMemo(() => {
     return jobs.filter(job => {
+      const programUuid = getJobProgramUuid(job);
       const searchable = [
         job.title,
         job.description,
@@ -1335,6 +1366,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         job.session_format,
         job.organisation_uuid,
         job.course_uuid,
+        programUuid,
       ]
         .filter(Boolean)
         .join(' ')
@@ -1346,17 +1378,20 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       const matchesLocation = locationFilter === 'all' || job.location_type === locationFilter;
       const matchesOrganisation =
         organisationFilter === 'all' || job.organisation_uuid === organisationFilter;
-      const matchesCourse = courseFilter === 'all' || job.course_uuid === courseFilter;
+      const matchesContent =
+        contentFilter === 'all' ||
+        (job.course_uuid ? contentFilter === `course:${job.course_uuid}` : false) ||
+        (programUuid ? contentFilter === `program:${programUuid}` : false);
 
       return (
         matchesSearch &&
         matchesOrganisation &&
-        matchesCourse &&
+        matchesContent &&
         matchesSessionFormat &&
         matchesLocation
       );
     });
-  }, [courseFilter, jobs, locationFilter, organisationFilter, search, sessionFormatFilter]);
+  }, [contentFilter, jobs, locationFilter, organisationFilter, search, sessionFormatFilter]);
 
   const filteredJobs = useMemo(() => {
     return jobsBeforeStatusFilter.filter(job => statusFilter === 'all' || job.status === statusFilter);
@@ -1382,27 +1417,34 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     onSuccess: async () => {
       toast.success('Job posting cancelled.');
       setPendingCancelJob(null);
-      await queryClient.invalidateQueries({ queryKey: ['listJobs'] });
+      await queryClient.invalidateQueries({ queryKey: listJobsQueryKey(jobsListOptions) });
     },
     onError: error => {
       toast.error(error instanceof Error ? error.message : 'Unable to cancel this posting.');
     },
   });
 
-  const handleEdit = (job: ClassMarketplaceJob) => {
+  const handleEdit = (job: ClassMarketplaceJobWithProgram) => {
     setEditingJob(job);
+    setInitialContent(null);
     setFormOpen(true);
   };
 
   const handleCreate = () => {
     setEditingJob(null);
+    setInitialContent(null);
     setFormOpen(true);
   };
 
-  if (isJobsLoading && !jobsResponse) {
+  if (!canLoadJobs) {
     return (
-      <main className='flex min-h-[60vh] items-center justify-center px-3 py-4 sm:px-5 lg:px-7'>
-        <Loader2 className='text-muted-foreground size-8 animate-spin' />
+      <main className='min-h-screen px-3 py-4 sm:px-5 lg:px-7'>
+        <EmptyState
+          icon={BriefcaseBusiness}
+          title='No organisation profile found'
+          description='An active organisation profile is required before class jobs can be created or reviewed.'
+          variant='card'
+        />
       </main>
     );
   }
@@ -1412,42 +1454,50 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       <div className='mx-auto max-w-[1560px]'>
         <div className='grid gap-4 xl:grid-cols-[270px_minmax(0,1fr)] 2xl:grid-cols-[270px_minmax(0,1fr)_300px]'>
           <div className='hidden xl:sticky xl:top-4 xl:block xl:self-start'>
-            <MarketplaceSidebar
-              heading='Filters'
-              count={`${filteredJobs.length} job posting${filteredJobs.length === 1 ? '' : 's'}`}
-              groups={[
-                {
-                  title: 'Status',
-                  icon: Filter,
-                  items: statusOptions.map(option => ({
-                    label: option.label,
-                    count:
-                      option.value === 'all'
-                        ? String(jobsBeforeStatusFilter.length)
-                        : String(
-                          jobsBeforeStatusFilter.filter(job => job.status === option.value).length
-                        ),
-                    active: statusFilter === option.value,
-                    onSelect: () => setStatusFilter(option.value),
-                  })),
-                },
-                {
-                  title: 'Location',
-                  icon: MapPin,
-                  items: locationTypeOptions.map(option => ({
-                    label: formatEnumLabel(option),
-                    count: String(jobsBeforeStatusFilter.filter(job => job.location_type === option).length),
-                    active: locationFilter === option,
-                    onSelect: () => setLocationFilter(option),
-                  })),
-                },
-              ]}
-              setAlertLabel='Set Alerts'
-              applicationsLabel='My Applications'
-              onApplicationsClick={
-                !isOrganizationView ? () => router.push('/dashboard/opportunities/my-applications') : undefined
-              }
-            />
+            {isJobsLoading && !jobsResponse ? (
+              <MarketplaceSidebarSkeleton />
+            ) : (
+              <MarketplaceSidebar
+                heading='Filters'
+                count={`${filteredJobs.length} job posting${filteredJobs.length === 1 ? '' : 's'}`}
+                groups={[
+                  {
+                    title: 'Status',
+                    icon: Filter,
+                    items: statusOptions.map(option => ({
+                      label: option.label,
+                      count:
+                        option.value === 'all'
+                          ? String(jobsBeforeStatusFilter.length)
+                          : String(
+                            jobsBeforeStatusFilter.filter(job => job.status === option.value).length
+                          ),
+                      active: statusFilter === option.value,
+                      onSelect: () => setStatusFilter(option.value),
+                    })),
+                  },
+                  {
+                    title: 'Location',
+                    icon: MapPin,
+                    items: locationTypeOptions.map(option => ({
+                      label: formatEnumLabel(option),
+                      count: String(
+                        jobsBeforeStatusFilter.filter(job => job.location_type === option).length
+                      ),
+                      active: locationFilter === option,
+                      onSelect: () => setLocationFilter(option),
+                    })),
+                  },
+                ]}
+                setAlertLabel='Set Alerts'
+                applicationsLabel='My Applications'
+                onApplicationsClick={
+                  !isOrganizationView
+                    ? () => router.push('/dashboard/opportunities/my-applications')
+                    : undefined
+                }
+              />
+            )}
           </div>
 
           <div className='space-y-4'>
@@ -1486,45 +1536,53 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
               <div className='flex sm:flex-row items-center gap-3 flex-wrap border-b px-5 py-4'>
                 {!isOrganizationView ? (
                   <div className='min-w-[220px] flex-1'>
-                    <Select
-                      value={organisationFilter}
-                      onValueChange={value => setOrganisationFilter(value)}
-                    >
+                    {isOrganisationsLoading ? (
+                      <SelectSkeleton />
+                    ) : (
+                      <Select
+                        value={organisationFilter}
+                        onValueChange={value => setOrganisationFilter(value)}
+                      >
+                        <SelectTrigger className='h-11 w-full rounded-md border border-border bg-background/80'>
+                          <Building2 className='text-muted-foreground mr-2 size-4 shrink-0' />
+                          <SelectValue placeholder='All organisations' />
+                        </SelectTrigger>
+
+                        <SelectContent>
+                          <SelectItem value='all'>All organisations</SelectItem>
+
+                          {organisationOptions.map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                ) : null}
+
+                <div className='min-w-[220px] flex-1'>
+                  {isCoursesLoading || isProgramsLoading ? (
+                    <SelectSkeleton />
+                  ) : (
+                    <Select value={contentFilter} onValueChange={value => setContentFilter(value)}>
                       <SelectTrigger className='h-11 w-full rounded-md border border-border bg-background/80'>
-                        <Building2 className='text-muted-foreground mr-2 size-4 shrink-0' />
-                        <SelectValue placeholder='All organisations' />
+                        <GraduationCap className='text-muted-foreground mr-2 size-4 shrink-0' />
+                        <SelectValue placeholder='All content' />
                       </SelectTrigger>
 
                       <SelectContent>
-                        <SelectItem value='all'>All organisations</SelectItem>
+                        <SelectItem value='all'>All content</SelectItem>
 
-                        {organisationOptions.map(option => (
+                        {contentOptions.map(option => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                ) : null}
-
-                <div className='min-w-[220px] flex-1'>
-                  <Select value={courseFilter} onValueChange={value => setCourseFilter(value)}>
-                    <SelectTrigger className='h-11 w-full rounded-md border border-border bg-background/80'>
-                      <GraduationCap className='text-muted-foreground mr-2 size-4 shrink-0' />
-                      <SelectValue placeholder='All courses' />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      <SelectItem value='all'>All courses</SelectItem>
-
-                      {courseOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  )}
                 </div>
 
                 <div className='min-w-[240px] flex-1'>
@@ -1615,86 +1673,102 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                                   <SheetTitle>Filters</SheetTitle>
                                   <SheetDescription>Explore job marketplace filters and quick actions.</SheetDescription>
                                 </SheetHeader>
-                                <MarketplaceSidebar
-                                  heading='Filters'
-                                  count={`${jobs.length} job posting${jobs.length === 1 ? '' : 's'}`}
-                                  groups={[
-                                    {
-                                      title: 'Status',
-                                      icon: Filter,
-                                      items: statusOptions.map(option => ({
-                                        label: option.label,
-                                        count:
-                                          option.value === 'all'
-                                            ? String(jobsBeforeStatusFilter.length)
-                                            : String(
-                                              jobsBeforeStatusFilter.filter(
-                                                job => job.status === option.value
-                                              ).length
-                                            ),
-                                        active: statusFilter === option.value,
-                                        onSelect: () => setStatusFilter(option.value),
-                                      })),
-                                    },
-                                    {
-                                      title: 'Location',
-                                      icon: MapPin,
-                                      items: locationTypeOptions.map(option => ({
-                                        label: formatEnumLabel(option),
-                                        count: String(
-                                          jobsBeforeStatusFilter.filter(job => job.location_type === option).length
-                                        ),
-                                        active: locationFilter === option,
-                                        onSelect: () => setLocationFilter(option),
-                                      })),
-                                    },
-                                  ]}
-                                  setAlertLabel='Set Alerts'
-                                  applicationsLabel='My Applications'
-                                  onApplicationsClick={
-                                    !isOrganizationView
-                                      ? () => router.push('/dashboard/opportunities/my-applications')
-                                      : undefined
-                                  }
-                                />
+                                {isJobsLoading && !jobsResponse ? (
+                                  <MarketplaceSidebarSkeleton />
+                                ) : (
+                                  <MarketplaceSidebar
+                                    heading='Filters'
+                                    count={`${jobs.length} job posting${jobs.length === 1 ? '' : 's'}`}
+                                    groups={[
+                                      {
+                                        title: 'Status',
+                                        icon: Filter,
+                                        items: statusOptions.map(option => ({
+                                          label: option.label,
+                                          count:
+                                            option.value === 'all'
+                                              ? String(jobsBeforeStatusFilter.length)
+                                              : String(
+                                                jobsBeforeStatusFilter.filter(
+                                                  job => job.status === option.value
+                                                ).length
+                                              ),
+                                          active: statusFilter === option.value,
+                                          onSelect: () => setStatusFilter(option.value),
+                                        })),
+                                      },
+                                      {
+                                        title: 'Location',
+                                        icon: MapPin,
+                                        items: locationTypeOptions.map(option => ({
+                                          label: formatEnumLabel(option),
+                                          count: String(
+                                            jobsBeforeStatusFilter.filter(
+                                              job => job.location_type === option
+                                            ).length
+                                          ),
+                                          active: locationFilter === option,
+                                          onSelect: () => setLocationFilter(option),
+                                        })),
+                                      },
+                                    ]}
+                                    setAlertLabel='Set Alerts'
+                                    applicationsLabel='My Applications'
+                                    onApplicationsClick={
+                                      !isOrganizationView
+                                        ? () => router.push('/dashboard/opportunities/my-applications')
+                                        : undefined
+                                    }
+                                  />
+                                )}
                               </SheetContent>
                             </Sheet>
                           </div>
                         </div>
 
-                        <div className='grid gap-4 3xl:grid-cols-2'>
-                          {tabJobs.map(job => {
-                            const course = jobsByCourseId.get(job.course_uuid ?? '') ?? null;
-                            const application = applicationByJobUuid.get(job.uuid ?? '') ?? null;
-                            const applicationCount = applicationCountsByJobUuid.get(job.uuid ?? '') ?? 0;
+                        {isJobsLoading && !jobsResponse ? (
+                          <JobListSkeleton />
+                        ) : (
+                          <div className='grid gap-4 3xl:grid-cols-2'>
+                            {tabJobs.map(job => {
+                              const course = jobsByCourseId.get(job.course_uuid ?? '') ?? null;
+                              const program = jobsByProgramId.get(getJobProgramUuid(job) ?? '') ?? null;
+                              const application = applicationByJobUuid.get(job.uuid ?? '') ?? null;
 
-                            return (
-                              <JobCard
-                                key={job.uuid}
-                                job={job}
-                                course={course}
-                                isManagementView={isOrganizationView}
-                                organisationName={organisationName}
-                                onView={() => setSelectedJobUuid(job.uuid ?? null)}
-                                onEdit={isOrganizationView ? () => handleEdit(job) : undefined}
-                                onCancel={isOrganizationView ? () => setPendingCancelJob(job) : undefined}
-                                applicationStatus={application?.status ?? null}
-                                hasApplied={Boolean(application)}
-                                applicationCount={isOrganizationView ? applicationCount : undefined}
-                                applicationsHref={
-                                  isOrganizationView && job.uuid
-                                    ? `/dashboard/opportunities/${job.uuid}`
-                                    : undefined
-                                }
-                              />
-                            );
-                          })}
-                        </div>
-
-                        {!tabJobs.length ? (
-                          <div className='rounded-[16px] border border-dashed border-border border-1 bg-background/80 px-4 py-8 text-sm text-muted-foreground'>
-                            {config.emptyStateLabel}
+                              return (
+                                <JobCard
+                                  key={job.uuid}
+                                  job={job}
+                                  course={course}
+                                  program={program}
+                                  isManagementView={isOrganizationView}
+                                  organisationName={organisationName}
+                                  onView={() => setSelectedJobUuid(job.uuid ?? null)}
+                                  onEdit={isOrganizationView ? () => handleEdit(job) : undefined}
+                                  onCancel={
+                                    isOrganizationView ? () => setPendingCancelJob(job) : undefined
+                                  }
+                                  applicationStatus={application?.status ?? null}
+                                  hasApplied={Boolean(application)}
+                                  applicationsHref={
+                                    isOrganizationView && job.uuid
+                                      ? `/dashboard/opportunities/${job.uuid}`
+                                      : undefined
+                                  }
+                                />
+                              );
+                            })}
                           </div>
+                        )}
+
+                        {!isJobsLoading && !tabJobs.length ? (
+                          <EmptyState
+                            icon={BriefcaseBusiness}
+                            title='No class jobs found'
+                            description={config.emptyStateLabel}
+                            variant='compact'
+                            className='bg-background/80'
+                          />
                         ) : null}
                       </div>
                     </TabsContent>
@@ -1732,6 +1806,9 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         isManagementView={isOrganizationView}
         organisationName={organisationName}
         course={selectedJob ? jobsByCourseId.get(selectedJob.course_uuid ?? '') ?? null : null}
+        program={
+          selectedJob ? jobsByProgramId.get(getJobProgramUuid(selectedJob) ?? '') ?? null : null
+        }
         onEdit={selectedJob ? () => handleEdit(selectedJob) : undefined}
         onCancel={selectedJob ? () => setPendingCancelJob(selectedJob) : undefined}
         application={
@@ -1746,12 +1823,19 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
             open={formOpen}
             onOpenChange={open => {
               setFormOpen(open);
-              if (!open) setEditingJob(null);
+              if (!open) {
+                setEditingJob(null);
+                setInitialContent(null);
+              }
             }}
             job={editingJob}
             organisationUuid={organisationUuid}
+            courses={courses}
+            programs={programs}
+            initialContent={initialContent}
             onSaved={() => {
               setEditingJob(null);
+              setInitialContent(null);
             }}
           />
         ) : null}
@@ -1775,7 +1859,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
 
           cancelMutation.mutate({
             path: { jobUuid: pendingCancelJob.uuid },
-          } satisfies CancelJobData);
+          });
         }}
         isLoading={cancelMutation.isPending}
       />

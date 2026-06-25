@@ -159,7 +159,7 @@ export default function OrganisationVerificationPage() {
         <div>
           <h1 className='text-2xl font-semibold'>Verification & compliance</h1>
           <p className='text-muted-foreground text-sm'>
-            Pending queue comes from GET /api/v1/admin/organizations/pending. Actions post to the
+            Pending queue comes from GET /api/v1/admin/organisations/pending. Actions post to the
             moderation endpoint.
           </p>
         </div>
@@ -199,7 +199,7 @@ export default function OrganisationVerificationPage() {
             Moderation action
           </div>
           <p className='text-muted-foreground text-sm'>
-            POST /api/v1/admin/organizations/{'{uuid}'}
+            POST /api/v1/admin/organisations/{'{uuid}'}
             /moderate?action=approve|reject|revoke&reason=...
           </p>
           <div className='mt-4 space-y-3'>

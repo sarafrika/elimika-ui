@@ -10,10 +10,10 @@ import {
   Globe,
   GraduationCap,
   Star,
-  WalletCards
+  WalletCards,
 } from 'lucide-react';
 
-export type CredentialsRole = 'student' | 'instructor' | 'course_creator';
+export type CredentialsRole = 'student' | 'instructor' | 'course_creator' | 'organisation';
 export type CredentialsTabId = 'all' | 'badges' | 'certificates' | 'blockchain';
 export type CredentialsStatusFilter = 'all' | 'verified' | 'pending' | 'rejected';
 
@@ -117,6 +117,20 @@ const courseCreatorTabs: CredentialsTab[] = [
   { id: 'certificates', label: 'Certificates', icon: Award },
   { id: 'blockchain', label: 'Blockchain', icon: CheckCircle2 },
 ];
+
+const organisationTabs: CredentialsTab[] = [
+  { id: 'all', label: '0 Credentials', icon: WalletCards },
+  { id: 'badges', label: 'Organisation Badges', icon: BadgeCheck },
+  { id: 'certificates', label: 'Validation Documents', icon: Award },
+  { id: 'blockchain', label: 'Blockchain', icon: CheckCircle2 },
+];
+
+const emptyCredentials: Record<CredentialsTabId, CredentialItem[]> = {
+  all: [],
+  badges: [],
+  certificates: [],
+  blockchain: [],
+};
 
 const studentCredentials: Record<CredentialsTabId, CredentialItem[]> = {
   all: [
@@ -595,6 +609,35 @@ export function getCredentialsContent(role: CredentialsRole): CredentialsContent
       },
       credentialsByTab: instructorCredentials,
       timeline: courseCreatorTimeline,
+    };
+  }
+
+  if (role === 'organisation') {
+    return {
+      pageTitle: 'Credentials Vault',
+      pageDescription: 'Review the organisation validation documents used for admin approval.',
+      addLabel: 'Add Credential',
+      searchPlaceholder: 'Search credentials...',
+      tabs: organisationTabs,
+      profile: {
+        name: 'Organisation Profile',
+        title: 'Training organisation',
+        profileImageUrl: undefined,
+        website: 'Location not set',
+        email: 'Email not set',
+        phone: 'Phone not set',
+        joined: 'Recently',
+        entriesLabel: '0 Validation Documents',
+        levelLabel: 'Pending Verification',
+        initials: 'OP',
+      },
+      summary: {
+        badges: '0 Documents',
+        blockchain: 'Pending Verification',
+        shares: '0 Shares',
+      },
+      credentialsByTab: emptyCredentials,
+      timeline: [],
     };
   }
 

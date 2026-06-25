@@ -31,6 +31,8 @@ import Spinner from '@/components/ui/spinner';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import {
+  createClassDefinitionMultipartMutation,
+  createClassDefinitionMultipartMutation as createClassDefinitionMutation,
   getAllActiveClassDefinitionsQueryKey,
   getAllCoursesOptions,
   scheduleClassMutation,
@@ -204,7 +206,10 @@ function ClassForm({
       );
     } else {
       createAssignment.mutate(
-        { body: payload as CreateClassDefinitionVariables['body'] },
+        {
+          body: payload as CreateClassDefinitionVariables['body'],
+          query: { formFields: {} },
+        },
         {
           onSuccess: (data: CreateClassDefinitionResult) => {
             qc.invalidateQueries({
