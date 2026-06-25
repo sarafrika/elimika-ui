@@ -8,7 +8,7 @@ import { ProgramsTable } from './_components/ProgramsTable';
 
 async function ProgramsSection() {
   const { data } = await getAllTrainingPrograms({
-    query: { pageable: { page: 0, size: 200, sort: ['updated_date,desc'] } },
+    query: { pageable: { page: 0, size: 200 } },
   }).catch(() => ({ data: undefined }));
   const programs = (data?.data?.content ?? []) as TrainingProgram[];
   return <ProgramsTable programs={programs} />;
