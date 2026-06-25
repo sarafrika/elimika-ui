@@ -1,30 +1,47 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
+import { useQuery } from '@tanstack/react-query';
 import { BookOpen } from 'lucide-react';
 import { useMemo } from 'react';
-import type { AdminCourse } from '@/services/admin';
+import type { Course } from '@/services/client';
+import { getAllCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { AdminTable } from '../../_components/ui/AdminTable';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
 
-export function CoursesTable({ courses }: { courses: AdminCourse[] }) {
-  const columns = useMemo<ColumnDef<AdminCourse>[]>(
+function Thumb({ url, alt }: { url?: string | null; alt: string }) {
+  const src = url ? toAuthenticatedMediaUrl(url) || url : undefined;
+  return (
+    <div className='flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-muted/40'>
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt={alt} className='h-full w-full object-cover' loading='lazy' />
+      ) : (
+        <BookOpen className='size-5 text-muted-foreground' />
+      )}
+    </div>
+  );
+}
+
+function CoursesTableView({ courses, isLoading }: { courses: Course[]; isLoading: boolean }) {
+  const columns = useMemo<ColumnDef<Course>[]>(
     () => [
       {
         id: 'name',
-        accessorFn: row => row.name ?? '',
+        accessorFn: row => `${row.name ?? ''} ${row.description ?? ''}`,
         header: 'Course',
         meta: { label: 'Course' },
         cell: ({ row }) => (
-          <div className='flex items-center gap-3'>
-            <span className='flex size-9 items-center justify-center rounded-xl border border-border/60 bg-muted/40'>
-              <BookOpen className='size-4 text-muted-foreground' />
-            </span>
-            <div className='min-w-0'>
-              <p className='truncate text-sm font-medium text-foreground'>{row.original.name}</p>
-              <p className='truncate text-xs text-muted-foreground'>
-                {row.original.description || '—'}
-              </p>
+          <div className='flex items-start gap-3'>
+            <Thumb url={row.original.thumbnail_url ?? row.original.banner_url} alt={row.original.name ?? ''} />
+            <div className='min-w-0 max-w-md'>
+              <p className='truncate font-medium text-foreground'>{row.original.name}</p>
+              {row.original.description ? (
+                <p className='mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground'>
+                  {row.original.description}
+                </p>
+              ) : null}
             </div>
           </div>
         ),
@@ -40,29 +57,12 @@ export function CoursesTable({ courses }: { courses: AdminCourse[] }) {
       },
       {
         id: 'price',
-        accessorFn: row => row.price ?? 0,
+        accessorFn: row => Number(row.price ?? 0),
         header: 'Price',
         meta: { label: 'Price' },
         cell: ({ row }) => (
-          <span className='text-sm text-muted-foreground'>
+          <span className='whitespace-nowrap text-sm text-muted-foreground'>
             {row.original.price != null ? Number(row.original.price).toLocaleString() : '—'}
-          </span>
-        ),
-      },
-      {
-        id: 'updated',
-        accessorFn: row => (row.updated_date ? new Date(row.updated_date).getTime() : 0),
-        header: 'Updated',
-        meta: { label: 'Updated' },
-        cell: ({ row }) => (
-          <span className='text-sm text-muted-foreground'>
-            {row.original.updated_date
-              ? new Date(row.original.updated_date).toLocaleDateString(undefined, {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })
-              : '—'}
           </span>
         ),
       },
@@ -74,6 +74,7 @@ export function CoursesTable({ courses }: { courses: AdminCourse[] }) {
     <AdminTable
       columns={columns}
       data={courses}
+      isLoading={isLoading}
       searchPlaceholder='Search courses…'
       getRowId={(course, index) => course.uuid ?? String(index)}
       facetedFilters={[
@@ -88,9 +89,17 @@ export function CoursesTable({ courses }: { courses: AdminCourse[] }) {
           ],
         },
       ]}
-      pageSize={15}
+      pageSize={12}
       emptyTitle='No courses found'
       emptyDescription='No courses match your search or filters.'
     />
   );
+}
+
+export function CoursesTable() {
+  const { data, isLoading } = useQuery(
+    getAllCoursesOptions({ query: { pageable: { page: 0, size: 100 } } })
+  );
+  const courses = (data?.data?.content ?? []) as Course[];
+  return <CoursesTableView courses={courses} isLoading={isLoading} />;
 }

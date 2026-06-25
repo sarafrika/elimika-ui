@@ -16,14 +16,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   type AdminOrganisation,
+  useAdminOrganisations,
   useUnverifyAdminOrganisation,
   useVerifyAdminOrganisation,
 } from '@/services/admin';
 import { AdminTable } from '../../_components/ui/AdminTable';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
 
-export function OrganizationsTable({ organisations }: { organisations: AdminOrganisation[] }) {
+export function OrganizationsTable() {
   const router = useRouter();
+  const { data, isLoading } = useAdminOrganisations({ page: 0, size: 100 });
+  const organisations = (data?.items ?? []) as AdminOrganisation[];
   const verify = useVerifyAdminOrganisation();
   const unverify = useUnverifyAdminOrganisation();
 
@@ -146,6 +149,7 @@ export function OrganizationsTable({ organisations }: { organisations: AdminOrga
     <AdminTable
       columns={columns}
       data={organisations}
+      isLoading={isLoading}
       searchPlaceholder='Search organisations…'
       getRowId={(org, index) => org.uuid ?? String(index)}
       facetedFilters={[

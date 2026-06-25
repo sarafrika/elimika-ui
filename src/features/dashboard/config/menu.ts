@@ -490,11 +490,6 @@ export default {
       icon: CalendarClock,
     },
     {
-      title: 'Verifications',
-      url: '/dashboard/verifications',
-      icon: Award, // changed (certification/badges)
-    },
-    {
       title: 'Catalogue',
       url: '/dashboard/catalogue',
       icon: ShoppingBag,

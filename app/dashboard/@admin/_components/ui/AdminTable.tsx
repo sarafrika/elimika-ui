@@ -105,7 +105,7 @@ export function AdminTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [globalFilter, setGlobalFilter] = useState('');
-  const [dense, setDense] = useState(true);
+  const [dense, setDense] = useState(false);
 
   const selectionColumn = useMemo<ColumnDef<TData, TValue>[]>(() => {
     if (!enableRowSelection) return [];
@@ -159,7 +159,7 @@ export function AdminTable<TData, TValue>({
 
   const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
   const hideableColumns = table.getAllColumns().filter(column => column.getCanHide());
-  const cellPad = dense ? 'px-3 py-2' : 'px-4 py-3';
+  const cellPad = dense ? 'px-3 py-2.5' : 'px-4 py-4';
 
   return (
     <div className={cn('flex flex-col gap-3', fill && 'h-full min-h-0')}>

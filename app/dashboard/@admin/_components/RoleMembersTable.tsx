@@ -20,11 +20,13 @@ function initials(name: string): string {
 
 export function RoleMembersTable({
   members,
+  isLoading = false,
   searchPlaceholder = 'Search members…',
   emptyTitle = 'No members found',
   emptyDescription = 'No records match your search.',
 }: {
   members: RoleMember[];
+  isLoading?: boolean;
   searchPlaceholder?: string;
   emptyTitle?: string;
   emptyDescription?: string;
@@ -77,6 +79,7 @@ export function RoleMembersTable({
     <AdminTable
       columns={columns}
       data={members}
+      isLoading={isLoading}
       searchPlaceholder={searchPlaceholder}
       getRowId={(member, index) => member.userUuid ?? String(index)}
       onRowClick={member => member.userUuid && router.push(`/dashboard/users/${member.userUuid}`)}

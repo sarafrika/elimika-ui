@@ -77,10 +77,13 @@ export function CredentialReviewDialog({
   document,
   verifierIdentity,
   onClose,
+  onVerified,
 }: {
   document: CredentialDocument | null;
   verifierIdentity: string;
   onClose: () => void;
+  /** Called after a successful verification — use to refetch client-side data. */
+  onVerified?: () => void;
 }) {
   const router = useRouter();
   const [notes, setNotes] = useState('');
@@ -110,7 +113,8 @@ export function CredentialReviewDialog({
       toast.success('Document verified.');
       setNotes('');
       onClose();
-      router.refresh();
+      if (onVerified) onVerified();
+      else router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to verify document.');
     }

@@ -1,9 +1,14 @@
-import 'server-only';
 import {
   getAllCourseCreators,
   getAllInstructors,
   getCourseCreatorDocuments,
+  getCourseCreatorEducation,
+  getCourseCreatorExperience,
+  getCourseCreatorMemberships,
   getInstructorDocuments,
+  getInstructorEducation,
+  getInstructorExperience,
+  getInstructorMemberships,
   listDocumentTypes,
   searchCourseCreators,
   searchDocuments,
@@ -215,7 +220,7 @@ export async function fetchVerificationQueue(): Promise<CredentialDocument[]> {
     const docsRes = await searchDocuments({
       query: { searchParams: { instructor_uuid_in: csv }, pageable: { page: 0, size: 1000 } },
     }).catch(() => null);
-    const documents = (docsRes?.data?.content ?? []) as unknown as InstructorDocument[];
+    const documents = (docsRes?.data?.data?.content ?? []) as unknown as InstructorDocument[];
     for (const document of documents) {
       const ownerUuid = document.instructor_uuid;
       if (!ownerUuid) continue;
@@ -244,4 +249,195 @@ export async function fetchVerificationQueue(): Promise<CredentialDocument[]> {
   // Pending first, then newest.
   const rank = (item: CredentialDocument) => (item.statusTone === 'warning' ? 0 : item.isVerified ? 2 : 1);
   return items.sort((a, b) => rank(a) - rank(b) || b.uploadedTimestamp - a.uploadedTimestamp);
+}
+
+/* ------------------------------------------------------------------ *
+ * Per-domain verification profile (powers the rich User-360 view)     *
+ * ------------------------------------------------------------------ */
+
+/** A normalized education / experience / membership record for display. */
+export interface CredentialRecord {
+  id: string;
+  title: string;
+  subtitle?: string;
+  details: Array<{ label: string; value: string }>;
+}
+
+/** All verification context for a single domain a user holds. */
+export interface DomainVerification {
+  role: CredentialRole;
+  roleLabel: string;
+  profileUuid: string;
+  fullName: string;
+  headline?: string;
+  location?: string;
+  /** Domain-level verification status (admin-verified instructor / course creator). */
+  adminVerified: boolean;
+  documents: CredentialDocument[];
+  education: CredentialRecord[];
+  experience: CredentialRecord[];
+  memberships: CredentialRecord[];
+}
+
+interface RawEducation {
+  uuid?: string;
+  qualification?: string | null;
+  school_name?: string | null;
+  field_of_study?: string | null;
+  year_completed?: number | string | null;
+  certificate_number?: string | null;
+}
+interface RawExperience {
+  uuid?: string;
+  position?: string | null;
+  organisation_name?: string | null;
+  responsibilities?: string | null;
+  years_of_experience?: number | string | null;
+  start_date?: Date | string | null;
+  end_date?: Date | string | null;
+  is_current_position?: boolean | null;
+}
+interface RawMembership {
+  uuid?: string;
+  organisation_name?: string | null;
+  membership_number?: string | null;
+  start_date?: Date | string | null;
+  end_date?: Date | string | null;
+  is_active?: boolean | null;
+}
+
+function year(value?: number | string | Date | null): string {
+  if (value == null || value === '') return '—';
+  if (typeof value === 'number') return String(value);
+  const parsed = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? String(value) : String(parsed.getFullYear());
+}
+
+function period(start?: Date | string | null, end?: Date | string | null, current?: boolean | null): string {
+  const fmt = (v?: Date | string | null) => {
+    if (!v) return undefined;
+    const d = v instanceof Date ? v : new Date(v);
+    return Number.isNaN(d.getTime()) ? undefined : d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+  };
+  return [fmt(start), current ? 'Present' : fmt(end)].filter(Boolean).join(' – ') || '—';
+}
+
+function mapEducation(record: RawEducation): CredentialRecord {
+  return {
+    id: `edu-${record.uuid}`,
+    title: record.qualification || 'Education',
+    subtitle: record.school_name || undefined,
+    details: [
+      { label: 'Field of study', value: record.field_of_study || '—' },
+      { label: 'Year completed', value: year(record.year_completed) },
+      { label: 'Certificate no.', value: record.certificate_number || '—' },
+    ],
+  };
+}
+
+function mapExperience(record: RawExperience): CredentialRecord {
+  return {
+    id: `exp-${record.uuid}`,
+    title: record.position || 'Experience',
+    subtitle: record.organisation_name || undefined,
+    details: [
+      { label: 'Period', value: period(record.start_date, record.end_date, record.is_current_position) },
+      { label: 'Years', value: year(record.years_of_experience) },
+      { label: 'Responsibilities', value: record.responsibilities || '—' },
+    ],
+  };
+}
+
+function mapMembership(record: RawMembership): CredentialRecord {
+  return {
+    id: `mem-${record.uuid}`,
+    title: record.organisation_name || 'Membership',
+    subtitle: record.membership_number ? `No. ${record.membership_number}` : undefined,
+    details: [
+      { label: 'Period', value: period(record.start_date, record.end_date) },
+      { label: 'Status', value: record.is_active ? 'Active' : 'Inactive' },
+    ],
+  };
+}
+
+function listOf<T>(payload: unknown): T[] {
+  const data = (payload as { data?: { data?: unknown } })?.data?.data;
+  if (Array.isArray(data)) return data as T[];
+  const content = (data as { content?: unknown })?.content;
+  return Array.isArray(content) ? (content as T[]) : [];
+}
+
+/**
+ * Fetch the full per-domain verification profile for a user: their instructor and/or
+ * course-creator profiles, each with documents, education, experience, and memberships,
+ * plus the domain-level admin-verified status. Each domain verifies independently.
+ */
+export async function fetchUserVerification(userUuid: string): Promise<DomainVerification[]> {
+  const [instructorsRes, creatorsRes, typesRes] = await Promise.all([
+    searchInstructors({ query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE } }).catch(() => null),
+    searchCourseCreators({ query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE } }).catch(() => null),
+    listDocumentTypes().catch(() => null),
+  ]);
+
+  const types = (typesRes?.data?.data ?? []) as DocumentTypeOption[];
+  const typeMap = new Map(types.filter(t => t.uuid).map(t => [t.uuid as string, t]));
+
+  const instructor = (instructorsRes?.data?.content ?? [])[0] as Instructor | undefined;
+  const creator = (creatorsRes?.data?.content ?? [])[0] as CourseCreator | undefined;
+
+  const domains: DomainVerification[] = [];
+
+  if (instructor?.uuid) {
+    const uuid = instructor.uuid;
+    const [docsRes, eduRes, expRes, memRes] = await Promise.all([
+      getInstructorDocuments({ path: { instructorUuid: uuid } }).catch(() => null),
+      getInstructorEducation({ path: { instructorUuid: uuid } }).catch(() => null),
+      getInstructorExperience({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
+      getInstructorMemberships({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
+    ]);
+    const ownerName = instructor.full_name || 'Instructor';
+    domains.push({
+      role: 'instructor',
+      roleLabel: 'Instructor',
+      profileUuid: uuid,
+      fullName: ownerName,
+      headline: instructor.professional_headline ?? undefined,
+      location: instructor.formatted_location ?? undefined,
+      adminVerified: Boolean(instructor.admin_verified),
+      documents: ((docsRes?.data?.data ?? []) as InstructorDocument[]).map(d =>
+        mapInstructorDocument(d, uuid, ownerName, typeMap)
+      ),
+      education: listOf<RawEducation>(eduRes).map(mapEducation),
+      experience: listOf<RawExperience>(expRes).map(mapExperience),
+      memberships: listOf<RawMembership>(memRes).map(mapMembership),
+    });
+  }
+
+  if (creator?.uuid) {
+    const uuid = creator.uuid;
+    const [docsRes, eduRes, expRes, memRes] = await Promise.all([
+      getCourseCreatorDocuments({ path: { courseCreatorUuid: uuid } }).catch(() => null),
+      getCourseCreatorEducation({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
+      getCourseCreatorExperience({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
+      getCourseCreatorMemberships({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
+    ]);
+    const ownerName = creator.full_name || 'Course creator';
+    domains.push({
+      role: 'course_creator',
+      roleLabel: 'Course creator',
+      profileUuid: uuid,
+      fullName: ownerName,
+      headline: creator.professional_headline ?? undefined,
+      location: undefined,
+      adminVerified: Boolean(creator.admin_verified),
+      documents: ((docsRes?.data?.data ?? []) as CourseCreatorDocumentDto[]).map(d =>
+        mapCreatorDocument(d, uuid, ownerName, typeMap)
+      ),
+      education: listOf<RawEducation>(eduRes).map(mapEducation),
+      experience: listOf<RawExperience>(expRes).map(mapExperience),
+      memberships: listOf<RawMembership>(memRes).map(mapMembership),
+    });
+  }
+
+  return domains;
 }

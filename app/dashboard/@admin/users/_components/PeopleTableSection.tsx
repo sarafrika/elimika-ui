@@ -1,5 +1,9 @@
-import { getAllUsers } from '@/services/client';
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import type { User } from '@/services/client';
+import { getAllUsersOptions } from '@/services/client/@tanstack/react-query.gen';
 import { UsersTable } from './UsersTable';
 
 function hasDomain(user: User, domain: string): boolean {
@@ -9,16 +13,19 @@ function hasDomain(user: User, domain: string): boolean {
 }
 
 /**
- * Server component: fetches users (optionally filtered to a single domain) and renders the
- * powerful table. Used by the Users page and every role page so they all share one 360° view.
+ * Client component: fetches users through the proxy (carrying the admin session) and
+ * renders the table. Optionally filters to a single domain.
  */
-export async function PeopleTableSection({ domain }: { domain?: string }) {
-  const { data } = await getAllUsers({
-    query: { pageable: { page: 0, size: 500, sort: ['created_date,desc'] } },
-  }).catch(() => ({ data: undefined }));
+export function PeopleTableSection({ domain }: { domain?: string }) {
+  const { data, isLoading } = useQuery(
+    getAllUsersOptions({ query: { pageable: { page: 0, size: 100, sort: ['created_date,desc'] } } })
+  );
 
-  let users = (data?.data?.content ?? []) as User[];
-  if (domain) users = users.filter(user => hasDomain(user, domain));
+  const users = useMemo(() => {
+    let list = (data?.data?.content ?? []) as User[];
+    if (domain) list = list.filter(user => hasDomain(user, domain));
+    return list;
+  }, [data?.data?.content, domain]);
 
-  return <UsersTable users={users} hideRoleFilter={Boolean(domain)} />;
+  return <UsersTable users={users} hideRoleFilter={Boolean(domain)} isLoading={isLoading} />;
 }

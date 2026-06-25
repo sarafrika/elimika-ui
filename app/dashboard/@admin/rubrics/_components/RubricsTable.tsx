@@ -4,11 +4,13 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ClipboardList } from 'lucide-react';
 import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
-import type { AdminRubric } from '@/services/admin';
+import { type AdminRubric, useAdminRubrics } from '@/services/admin';
 import { AdminTable } from '../../_components/ui/AdminTable';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
 
-export function RubricsTable({ rubrics }: { rubrics: AdminRubric[] }) {
+export function RubricsTable() {
+  const { data, isLoading } = useAdminRubrics({ page: 0, size: 100 });
+  const rubrics = (data?.items ?? []) as AdminRubric[];
   const columns = useMemo<ColumnDef<AdminRubric>[]>(
     () => [
       {
@@ -75,6 +77,7 @@ export function RubricsTable({ rubrics }: { rubrics: AdminRubric[] }) {
     <AdminTable
       columns={columns}
       data={rubrics}
+      isLoading={isLoading}
       searchPlaceholder='Search rubrics…'
       getRowId={(rubric, index) => rubric.uuid ?? String(index)}
       facetedFilters={[

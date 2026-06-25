@@ -21,9 +21,11 @@ function initials(user: User): string {
 export function UsersTable({
   users,
   hideRoleFilter = false,
+  isLoading = false,
 }: {
   users: User[];
   hideRoleFilter?: boolean;
+  isLoading?: boolean;
 }) {
   const router = useRouter();
 
@@ -125,6 +127,7 @@ export function UsersTable({
     <AdminTable
       columns={columns}
       data={users}
+      isLoading={isLoading}
       searchPlaceholder='Search users by name or email…'
       getRowId={(user, index) => user.uuid ?? String(index)}
       onRowClick={user => user.uuid && router.push(`/dashboard/users/${user.uuid}`)}

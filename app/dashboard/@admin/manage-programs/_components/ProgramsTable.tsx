@@ -1,31 +1,41 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Layers } from 'lucide-react';
 import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import type { TrainingProgram } from '@/services/client';
+import { getAllTrainingProgramsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { AdminTable } from '../../_components/ui/AdminTable';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
 
-export function ProgramsTable({ programs }: { programs: TrainingProgram[] }) {
+function ProgramsTableView({
+  programs,
+  isLoading,
+}: {
+  programs: TrainingProgram[];
+  isLoading: boolean;
+}) {
   const columns = useMemo<ColumnDef<TrainingProgram>[]>(
     () => [
       {
         id: 'title',
-        accessorFn: row => row.title ?? '',
+        accessorFn: row => `${row.title ?? ''} ${row.description ?? ''}`,
         header: 'Program',
         meta: { label: 'Program' },
         cell: ({ row }) => (
-          <div className='flex items-center gap-3'>
-            <span className='flex size-9 items-center justify-center rounded-xl border border-border/60 bg-muted/40'>
-              <Layers className='size-4 text-muted-foreground' />
-            </span>
-            <div className='min-w-0'>
-              <p className='truncate text-sm font-medium text-foreground'>{row.original.title}</p>
-              <p className='truncate text-xs text-muted-foreground'>
-                {row.original.description || '—'}
-              </p>
+          <div className='flex items-start gap-3'>
+            <div className='flex h-12 w-16 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/40'>
+              <Layers className='size-5 text-muted-foreground' />
+            </div>
+            <div className='min-w-0 max-w-md'>
+              <p className='truncate font-medium text-foreground'>{row.original.title}</p>
+              {row.original.description ? (
+                <p className='mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground'>
+                  {row.original.description}
+                </p>
+              ) : null}
             </div>
           </div>
         ),
@@ -45,18 +55,18 @@ export function ProgramsTable({ programs }: { programs: TrainingProgram[] }) {
         header: 'Visibility',
         meta: { label: 'Visibility' },
         cell: ({ getValue }) => (
-          <Badge variant='outline' className='text-xs'>
+          <Badge variant='outline' className='whitespace-nowrap text-xs'>
             {getValue() as string}
           </Badge>
         ),
       },
       {
         id: 'price',
-        accessorFn: row => row.price ?? 0,
+        accessorFn: row => Number(row.price ?? 0),
         header: 'Price',
         meta: { label: 'Price' },
         cell: ({ row }) => (
-          <span className='text-sm text-muted-foreground'>
+          <span className='whitespace-nowrap text-sm text-muted-foreground'>
             {row.original.price != null ? Number(row.original.price).toLocaleString() : '—'}
           </span>
         ),
@@ -69,6 +79,7 @@ export function ProgramsTable({ programs }: { programs: TrainingProgram[] }) {
     <AdminTable
       columns={columns}
       data={programs}
+      isLoading={isLoading}
       searchPlaceholder='Search programs…'
       getRowId={(program, index) => program.uuid ?? String(index)}
       facetedFilters={[
@@ -83,9 +94,17 @@ export function ProgramsTable({ programs }: { programs: TrainingProgram[] }) {
           ],
         },
       ]}
-      pageSize={15}
+      pageSize={12}
       emptyTitle='No programs found'
       emptyDescription='No training programs match your search or filters.'
     />
   );
+}
+
+export function ProgramsTable() {
+  const { data, isLoading } = useQuery(
+    getAllTrainingProgramsOptions({ query: { pageable: { page: 0, size: 100 } } })
+  );
+  const programs = (data?.data?.content ?? []) as TrainingProgram[];
+  return <ProgramsTableView programs={programs} isLoading={isLoading} />;
 }
