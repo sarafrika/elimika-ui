@@ -16,11 +16,11 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import type { CreateClassDefinitionData } from '@/services/client/types.gen';
+import type { CreateClassDefinitionMultipartData } from '@/services/client/types.gen';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
-  createClassDefinitionMutation,
+  createClassDefinitionMultipartMutation as createClassDefinitionMutation,
   getAllClassDefinitionsQueryKey,
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
@@ -101,7 +101,7 @@ export interface ScheduleSettings {
   pin: string;
   classroom: string;
   totalSlots: number;
-  weekly
+  weekly;
 }
 
 export interface NotificationSettings {
@@ -434,7 +434,6 @@ const ClassBuilderPage = ({
     }));
   }, [initialSlot, resolveId]);
 
-
   useEffect(() => {
     if (resolveId || isDataInitialized || typeof window === 'undefined') return;
 
@@ -562,7 +561,6 @@ const ClassBuilderPage = ({
     }
   }, [classData, isLoading, courseDetail, resolveId, isDataInitialized, instructor?.full_name]);
 
-
   useEffect(() => {
     if (resolveId || !isDataInitialized || typeof window === 'undefined') return;
 
@@ -600,15 +598,15 @@ const ClassBuilderPage = ({
     scheduleSettings.repeat.unit === 'week' ? scheduleSettings.repeat.days : undefined
   );
   const classScheduleInstances = generateScheduleInstances(scheduleSettings);
-  const sortedCustomSessions = customSessions
-    .slice()
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const sortedCustomSessions = customSessions.slice().sort((a, b) => a.date.localeCompare(b.date));
   const classScheduleConflicts = useMemo(
-    () => findScheduleConflicts(classScheduleInstances, instructorClasses, resolveId, instructor?.uuid),
+    () =>
+      findScheduleConflicts(classScheduleInstances, instructorClasses, resolveId, instructor?.uuid),
     [classScheduleInstances, instructorClasses, instructor?.uuid, resolveId]
   );
   const customScheduleConflicts = useMemo(
-    () => findScheduleConflicts(sortedCustomSessions, instructorClasses, resolveId, instructor?.uuid),
+    () =>
+      findScheduleConflicts(sortedCustomSessions, instructorClasses, resolveId, instructor?.uuid),
     [sortedCustomSessions, instructorClasses, instructor?.uuid, resolveId]
   );
   const activeScheduleConflicts =
@@ -700,44 +698,44 @@ const ClassBuilderPage = ({
 
       const physicalLocationRequired = requiresPhysicalLocation(locationType);
       const meetingLinkAllowed = locationType === 'ONLINE' || locationType === 'HYBRID';
-      const sessionTemplates: CreateClassDefinitionData['body']['session_templates'] =
+      const sessionTemplates: CreateClassDefinitionMultipartData['body']['session_templates'] =
         scheduleMode === 'custom'
           ? sortedCustomSessions.map(session => ({
-            start_time: new Date(buildUtcIsoDateTime(session.date, session.startTime)),
-            end_time: new Date(buildUtcIsoDateTime(session.date, session.endTime)),
-            conflict_resolution: 'FAIL',
-          }))
+              start_time: new Date(buildUtcIsoDateTime(session.date, session.startTime)),
+              end_time: new Date(buildUtcIsoDateTime(session.date, session.endTime)),
+              conflict_resolution: 'FAIL',
+            }))
           : (() => {
-            const startTime = scheduleSettings.allDay
-              ? '00:00'
-              : (scheduleSettings.startClass.startTime as string);
-            const endTime = scheduleSettings.allDay
-              ? '23:59'
-              : (scheduleSettings.startClass.endTime as string);
-            const startTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, startTime);
-            const endTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, endTime);
-            const selectedDays = scheduleSettings.repeat.days || [];
-            const days_of_week = selectedDays
-              .sort()
-              .map(dayIndex => DAY_NAMES[dayIndex])
-              .join(',');
+              const startTime = scheduleSettings.allDay
+                ? '00:00'
+                : (scheduleSettings.startClass.startTime as string);
+              const endTime = scheduleSettings.allDay
+                ? '23:59'
+                : (scheduleSettings.startClass.endTime as string);
+              const startTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, startTime);
+              const endTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, endTime);
+              const selectedDays = scheduleSettings.repeat.days || [];
+              const days_of_week = selectedDays
+                .sort()
+                .map(dayIndex => DAY_NAMES[dayIndex])
+                .join(',');
 
-            return [
-              {
-                start_time: new Date(startTimeIso),
-                end_time: new Date(endTimeIso),
-                recurrence: {
-                  recurrence_type: RECURRENCE_TYPE_MAP[scheduleSettings.repeat.unit],
-                  interval_value: scheduleSettings.repeat.interval,
-                  days_of_week: days_of_week || undefined,
-                  occurrence_count: occurrenceCount,
+              return [
+                {
+                  start_time: new Date(startTimeIso),
+                  end_time: new Date(endTimeIso),
+                  recurrence: {
+                    recurrence_type: RECURRENCE_TYPE_MAP[scheduleSettings.repeat.unit],
+                    interval_value: scheduleSettings.repeat.interval,
+                    days_of_week: days_of_week || undefined,
+                    occurrence_count: occurrenceCount,
+                  },
+                  conflict_resolution: 'FAIL',
                 },
-                conflict_resolution: 'FAIL',
-              },
-            ];
-          })();
+              ];
+            })();
 
-      const payload: CreateClassDefinitionData['body'] = {
+      const payload: CreateClassDefinitionMultipartData['body'] = {
         course_uuid: classDetails.course_uuid ?? undefined,
         program_uuid: classDetails.program_uuid ?? undefined,
         title: classDetails.title,
@@ -757,29 +755,29 @@ const ClassBuilderPage = ({
         default_start_time:
           scheduleMode === 'custom'
             ? new Date(
-              buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].startTime)
-            )
-            : new Date(
-              buildUtcIsoDateTime(
-                scheduleSettings.startClass.date,
-                scheduleSettings.allDay
-                  ? '00:00'
-                  : (scheduleSettings.startClass.startTime as string)
+                buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].startTime)
               )
-            ),
+            : new Date(
+                buildUtcIsoDateTime(
+                  scheduleSettings.startClass.date,
+                  scheduleSettings.allDay
+                    ? '00:00'
+                    : (scheduleSettings.startClass.startTime as string)
+                )
+              ),
         default_end_time:
           scheduleMode === 'custom'
             ? new Date(
-              buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].endTime)
-            )
-            : new Date(
-              buildUtcIsoDateTime(
-                scheduleSettings.startClass.date,
-                scheduleSettings.allDay
-                  ? '23:59'
-                  : (scheduleSettings.startClass.endTime as string)
+                buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].endTime)
               )
-            ),
+            : new Date(
+                buildUtcIsoDateTime(
+                  scheduleSettings.startClass.date,
+                  scheduleSettings.allDay
+                    ? '23:59'
+                    : (scheduleSettings.startClass.endTime as string)
+                )
+              ),
         meeting_link: meetingLinkAllowed ? trimToUndefined(classDetails.meeting_link) : undefined,
         session_templates: sessionTemplates,
       };
@@ -820,7 +818,7 @@ const ClassBuilderPage = ({
         );
       } else {
         createClassDefinition.mutate(
-          { body: payload },
+          { body: payload, query: { formFields: {} } },
           {
             onSuccess: response => {
               const savedUuid = response?.data?.class_definition?.uuid;

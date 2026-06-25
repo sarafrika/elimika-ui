@@ -790,15 +790,21 @@ import type {
   GetAllClassDefinitionsData,
   GetAllClassDefinitionsResponses,
   GetAllClassDefinitionsErrors,
-  CreateClassDefinitionData,
-  CreateClassDefinitionResponses,
-  CreateClassDefinitionErrors,
+  CreateClassDefinitionMultipartData,
+  CreateClassDefinitionMultipartResponses,
+  CreateClassDefinitionMultipartErrors,
   UploadClassThumbnailData,
   UploadClassThumbnailResponses,
   UploadClassThumbnailErrors,
   AddSessionTemplateData,
   AddSessionTemplateResponses,
   AddSessionTemplateErrors,
+  GetClassReviewsData,
+  GetClassReviewsResponses,
+  GetClassReviewsErrors,
+  SubmitClassReviewData,
+  SubmitClassReviewResponses,
+  SubmitClassReviewErrors,
   UploadClassPromotionalVideoData,
   UploadClassPromotionalVideoResponses,
   UploadClassPromotionalVideoErrors,
@@ -817,9 +823,9 @@ import type {
   GetClassDefinitionsForProgramData,
   GetClassDefinitionsForProgramResponses,
   GetClassDefinitionsForProgramErrors,
-  CreateClassDefinitionForProgramData,
-  CreateClassDefinitionForProgramResponses,
-  CreateClassDefinitionForProgramErrors,
+  CreateClassDefinitionForProgramMultipartData,
+  CreateClassDefinitionForProgramMultipartResponses,
+  CreateClassDefinitionForProgramMultipartErrors,
   ListJobsData,
   ListJobsResponses,
   ListJobsErrors,
@@ -1093,12 +1099,18 @@ import type {
   GetQuizTotalPointsData,
   GetQuizTotalPointsResponses,
   GetQuizTotalPointsErrors,
+  GetStudentQuizViewData,
+  GetStudentQuizViewResponses,
+  GetStudentQuizViewErrors,
   GetQuestionDistributionData,
   GetQuestionDistributionResponses,
   GetQuestionDistributionErrors,
   GetQuizAttemptsData,
   GetQuizAttemptsResponses,
   GetQuizAttemptsErrors,
+  GetStudentQuizReviewData,
+  GetStudentQuizReviewResponses,
+  GetStudentQuizReviewErrors,
   SearchQuizzesData,
   SearchQuizzesResponses,
   SearchQuizzesErrors,
@@ -1369,6 +1381,9 @@ import type {
   GetClassScheduleData,
   GetClassScheduleResponses,
   GetClassScheduleErrors,
+  GetClassRatingSummaryData,
+  GetClassRatingSummaryResponses,
+  GetClassRatingSummaryErrors,
   GetEnrollmentsForClassData,
   GetEnrollmentsForClassResponses,
   GetEnrollmentsForClassErrors,
@@ -1736,16 +1751,18 @@ import {
   addItemResponseTransformer,
   completeCartResponseTransformer,
   getAllClassDefinitionsResponseTransformer,
-  createClassDefinitionResponseTransformer,
+  createClassDefinitionMultipartResponseTransformer,
   uploadClassThumbnailResponseTransformer,
   addSessionTemplateResponseTransformer,
+  getClassReviewsResponseTransformer,
+  submitClassReviewResponseTransformer,
   uploadClassPromotionalVideoResponseTransformer,
   getQuizSchedulesResponseTransformer,
   createQuizScheduleResponseTransformer,
   getAssignmentSchedulesResponseTransformer,
   createAssignmentScheduleResponseTransformer,
   getClassDefinitionsForProgramResponseTransformer,
-  createClassDefinitionForProgramResponseTransformer,
+  createClassDefinitionForProgramMultipartResponseTransformer,
   listJobsResponseTransformer,
   createJobResponseTransformer,
   cancelJobResponseTransformer,
@@ -1890,6 +1907,7 @@ import {
   resolveByCourseOrClassResponseTransformer,
   getClassSchedulingConflictsResponseTransformer,
   getClassScheduleResponseTransformer,
+  getClassRatingSummaryResponseTransformer,
   getEnrollmentsForClassResponseTransformer,
   getClassDefinitionsForOrganisationResponseTransformer,
   listMyApplicationsResponseTransformer,
@@ -9828,15 +9846,15 @@ export const getAllClassDefinitions = <ThrowOnError extends boolean = false>(
 /**
  * Create a new class definition
  */
-export const createClassDefinition = <ThrowOnError extends boolean = false>(
-  options: Options<CreateClassDefinitionData, ThrowOnError>
+export const createClassDefinitionMultipart = <ThrowOnError extends boolean = false>(
+  options: Options<CreateClassDefinitionMultipartData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).post<
-    CreateClassDefinitionResponses,
-    CreateClassDefinitionErrors,
+    CreateClassDefinitionMultipartResponses,
+    CreateClassDefinitionMultipartErrors,
     ThrowOnError
   >({
-    responseTransformer: createClassDefinitionResponseTransformer,
+    responseTransformer: createClassDefinitionMultipartResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -9911,6 +9929,64 @@ export const addSessionTemplate = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/{uuid}/session-templates',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get reviews for a class
+ */
+export const getClassReviews = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassReviewsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassReviewsResponses,
+    GetClassReviewsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassReviewsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/reviews',
+    ...options,
+  });
+};
+
+/**
+ * Submit or update a class review
+ */
+export const submitClassReview = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitClassReviewData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SubmitClassReviewResponses,
+    SubmitClassReviewErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitClassReviewResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/reviews',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -10097,15 +10173,15 @@ export const getClassDefinitionsForProgram = <ThrowOnError extends boolean = fal
 /**
  * Create a new class definition for a training program
  */
-export const createClassDefinitionForProgram = <ThrowOnError extends boolean = false>(
-  options: Options<CreateClassDefinitionForProgramData, ThrowOnError>
+export const createClassDefinitionForProgramMultipart = <ThrowOnError extends boolean = false>(
+  options: Options<CreateClassDefinitionForProgramMultipartData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).post<
-    CreateClassDefinitionForProgramResponses,
-    CreateClassDefinitionForProgramErrors,
+    CreateClassDefinitionForProgramMultipartResponses,
+    CreateClassDefinitionForProgramMultipartErrors,
     ThrowOnError
   >({
-    responseTransformer: createClassDefinitionForProgramResponseTransformer,
+    responseTransformer: createClassDefinitionForProgramMultipartResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -12679,6 +12755,33 @@ export const getQuizTotalPoints = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get student-safe quiz view
+ * Retrieves a quiz payload for students without configured answer keys.
+ */
+export const getStudentQuizView = <ThrowOnError extends boolean = false>(
+  options: Options<GetStudentQuizViewData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetStudentQuizViewResponses,
+    GetStudentQuizViewErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/quizzes/{quizUuid}/student-view',
+    ...options,
+  });
+};
+
+/**
  * Get question category distribution
  * Returns distribution of question types within a quiz.
  */
@@ -12729,6 +12832,33 @@ export const getQuizAttempts = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/quizzes/{quizUuid}/attempts',
+    ...options,
+  });
+};
+
+/**
+ * Get graded student quiz review
+ * Retrieves a student's graded quiz review, including correct answers after grading.
+ */
+export const getStudentQuizReview = <ThrowOnError extends boolean = false>(
+  options: Options<GetStudentQuizReviewData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetStudentQuizReviewResponses,
+    GetStudentQuizReviewErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/quizzes/{quizUuid}/attempts/{attemptUuid}/review',
     ...options,
   });
 };
@@ -15520,6 +15650,33 @@ export const getClassSchedule = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/{uuid}/schedule',
+    ...options,
+  });
+};
+
+/**
+ * Get class rating summary
+ */
+export const getClassRatingSummary = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassRatingSummaryData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassRatingSummaryResponses,
+    GetClassRatingSummaryErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassRatingSummaryResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/reviews/summary',
     ...options,
   });
 };

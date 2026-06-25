@@ -3,9 +3,7 @@
 export const ResponseDTOVoidSchema = {
   type: 'object',
   properties: {
-    data: {
-      type: 'object',
-    },
+    data: {},
     status: {
       type: 'integer',
       format: 'int32',
@@ -68,7 +66,7 @@ export const UserSchema = {
       minLength: 0,
     },
     middle_name: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         "**[OPTIONAL]** User's middle name or initial. Can be null or empty if not applicable.",
       example: 'A.',
@@ -108,7 +106,7 @@ export const UserSchema = {
       example: '1990-01-01',
     },
     phone_number: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         "**[OPTIONAL]** User's contact phone number. Should include country code for international numbers when provided.",
       example: '+254712345678',
@@ -123,7 +121,7 @@ export const UserSchema = {
       example: true,
     },
     keycloak_id: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Keycloak user identifier for authentication integration. Links the user to their Keycloak identity for SSO functionality.',
       example: 'keycloak-user-123',
@@ -140,13 +138,13 @@ export const UserSchema = {
       type: 'string',
       description:
         '**[READ-ONLY]** Unique numeric identifier used for payments and admissions. Auto-generated with a Verhoeff check digit.',
-      example: 123456789,
+      example: '123456789',
       maxLength: 9,
       minLength: 9,
       readOnly: true,
     },
     profile_image_url: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uri',
       description:
         "**[READ-ONLY]** URL to the user's profile image/avatar. Automatically generated after image upload and cannot be directly modified.",
@@ -184,7 +182,7 @@ export const UserSchema = {
       readOnly: true,
     },
     organisation_affiliations: {
-      type: 'array',
+      type: ['array', 'null'],
       description:
         "**[READ-ONLY]** List of organization affiliations showing the user's specific roles within each organization they belong to. Includes organization details, branch assignments, and temporal information.",
       example: [
@@ -269,9 +267,7 @@ export const ApiResponseUserSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -313,9 +309,9 @@ export const TrainingBranchSchema = {
       minLength: 0,
     },
     address: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[OPTIONAL]** Physical address of the training branch.',
-      example: 123,
+      example: '123 University Way, Nairobi',
     },
     poc_name: {
       type: 'string',
@@ -326,6 +322,7 @@ export const TrainingBranchSchema = {
     },
     poc_email: {
       type: 'string',
+      format: 'email',
       description: '**[REQUIRED]** Email address of the point of contact for this branch.',
       example: 'john.doe@example.com',
       maxLength: 320,
@@ -382,15 +379,11 @@ export const ApiResponseTrainingBranchSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
-export const JsonNodeSchema = {
-  type: 'object',
-} as const;
+export const JsonNodeSchema = {} as const;
 
 export const SystemRuleRequestSchema = {
   type: 'object',
@@ -417,7 +410,7 @@ export const SystemRuleRequestSchema = {
     priority: {
       type: 'integer',
       format: 'int32',
-      default: '0',
+      default: 0,
       description: 'Priority used when multiple rules match',
     },
     status: {
@@ -460,9 +453,7 @@ export const ApiResponseSystemRuleResponseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -587,7 +578,7 @@ export const StudentSchema = {
       pattern: '^(\\+254|0)?[17]\\d{8}$',
     },
     second_guardian_name: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Full name of the secondary guardian/parent. Additional emergency contact for the student.',
       example: 'Jane Doe',
@@ -595,7 +586,7 @@ export const StudentSchema = {
       minLength: 0,
     },
     second_guardian_mobile: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.',
       example: '+254787654321',
@@ -604,15 +595,12 @@ export const StudentSchema = {
       pattern: '^(\\+254|0)?[17]\\d{8}$',
     },
     bio: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Short biography or notes about the student. Used in student profiles.',
       example: 'Curious learner who loves science and robotics clubs.',
       maxLength: 2000,
       minLength: 0,
-    },
-    primaryGuardianContact: {
-      type: 'string',
     },
     secondaryGuardianContact: {
       type: 'string',
@@ -622,6 +610,9 @@ export const StudentSchema = {
       items: {
         type: 'string',
       },
+    },
+    primaryGuardianContact: {
+      type: 'string',
     },
     full_name: {
       type: 'string',
@@ -844,9 +835,7 @@ export const ApiResponseAssessmentRubricSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -1000,9 +989,7 @@ export const ApiResponseRubricScoringLevelSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -1057,9 +1044,7 @@ export const ApiResponseRubricMatrixSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -1326,9 +1311,7 @@ export const ApiResponseRubricCriteriaSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -1419,7 +1402,7 @@ export const RubricScoringSchema = {
     score_range: {
       type: 'string',
       description: '**[READ-ONLY]** Expected score range for this performance level.',
-      example: 5,
+      example: '5 points',
       readOnly: true,
     },
     is_passing_level: {
@@ -1451,9 +1434,7 @@ export const ApiResponseRubricScoringSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -1503,7 +1484,7 @@ export const QuizSchema = {
       $ref: '#/components/schemas/ScopeEnum2',
     },
     class_definition_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to the class definition that owns this quiz when scope is CLASS_CLONE.',
@@ -1533,7 +1514,7 @@ export const QuizSchema = {
       minLength: 0,
     },
     time_limit_minutes: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description:
         '**[OPTIONAL]** Time limit for completing the quiz in minutes. Null means no time limit.',
@@ -1556,7 +1537,7 @@ export const QuizSchema = {
       minimum: 0,
     },
     rubric_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to assessment rubric UUID for detailed grading criteria.',
@@ -1572,7 +1553,7 @@ export const QuizSchema = {
       example: true,
     },
     source_quiz_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[READ-ONLY]** UUID of the course-level quiz that served as the template for this class clone.',
@@ -1618,7 +1599,7 @@ export const QuizSchema = {
     time_limit_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of quiz time limit.',
-      example: 30,
+      example: '30 minutes',
       readOnly: true,
     },
     is_timed: {
@@ -1649,9 +1630,7 @@ export const ApiResponseQuizSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -1761,7 +1740,7 @@ export const QuizQuestionSchema = {
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
-      example: 2,
+      example: '2.0 points',
       readOnly: true,
     },
     question_number: {
@@ -1786,9 +1765,7 @@ export const ApiResponseQuizQuestionSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -1930,9 +1907,7 @@ export const ApiResponseQuizQuestionOptionSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -1988,7 +1963,7 @@ export const TrainingProgramSchema = {
       example: 'c1r2e3a4-5t6o-7r8u-9u10-abcdefghijkl',
     },
     category_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to the category UUID for program organization and discovery.',
@@ -2040,14 +2015,14 @@ export const TrainingProgramSchema = {
       minimum: 0,
     },
     class_limit: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description: '**[OPTIONAL]** Maximum number of students that can enroll in the program.',
       example: 50,
       minimum: 1,
     },
     price: {
-      type: 'number',
+      type: ['number', 'null'],
       description:
         '**[OPTIONAL]** Program price in the system currency. Set to null or 0 for free programs.',
       example: 899.99,
@@ -2110,7 +2085,7 @@ export const TrainingProgramSchema = {
     total_duration_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of total program duration.',
-      example: 120,
+      example: '120 hours 30 minutes',
       readOnly: true,
     },
   },
@@ -2136,9 +2111,7 @@ export const ApiResponseTrainingProgramSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -2275,9 +2248,7 @@ export const ApiResponseProgramRequirementSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -2336,7 +2307,7 @@ export const ProgramCourseSchema = {
       example: true,
     },
     prerequisite_course_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to the prerequisite course UUID that must be completed before this course.',
@@ -2421,9 +2392,7 @@ export const ApiResponseProgramCourseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -2464,7 +2433,7 @@ export const OrganisationSchema = {
       minLength: 0,
     },
     description: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         "**[OPTIONAL]** Detailed description of the organisation. Provides additional context about the organisation's purpose and activities.",
       example: 'Leading educational institution in Kenya',
@@ -2476,20 +2445,20 @@ export const OrganisationSchema = {
       example: true,
     },
     licence_no: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Official licence number or registration number for the organisation. Used for regulatory compliance and verification.',
       example: 'EDU-2024-001',
       maxLength: 100,
     },
     location: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[OPTIONAL]** Physical location or address of the organisation.',
       example: 'Nairobi, Kenya',
       maxLength: 200,
     },
     country: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[OPTIONAL]** Country where the organisation is located.',
       example: 'Kenya',
       maxLength: 100,
@@ -2502,12 +2471,12 @@ export const OrganisationSchema = {
       readOnly: true,
     },
     latitude: {
-      type: 'number',
+      type: ['number', 'null'],
       description: "**[OPTIONAL]** Latitude coordinate for the organisation's location.",
       example: -1.2921,
     },
     longitude: {
-      type: 'number',
+      type: ['number', 'null'],
       description: "**[OPTIONAL]** Longitude coordinate for the organisation's location.",
       example: 36.8219,
     },
@@ -2550,9 +2519,7 @@ export const ApiResponseOrganisationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -2593,7 +2560,7 @@ export const InstructorSchema = {
       example: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
     },
     latitude: {
-      type: 'number',
+      type: ['number', 'null'],
       description:
         "**[OPTIONAL]** Geographical latitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations.",
       example: -1.2921,
@@ -2601,7 +2568,7 @@ export const InstructorSchema = {
       minimum: -90,
     },
     longitude: {
-      type: 'number',
+      type: ['number', 'null'],
       description:
         "**[OPTIONAL]** Geographical longitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations.",
       example: 36.8219,
@@ -2609,7 +2576,7 @@ export const InstructorSchema = {
       minimum: -180,
     },
     website: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uri',
       description:
         "**[OPTIONAL]** Professional website or portfolio URL. Used to showcase instructor's work, testimonials, and additional credentials.",
@@ -2618,7 +2585,7 @@ export const InstructorSchema = {
       minLength: 0,
     },
     bio: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         "**[OPTIONAL]** Professional biography describing instructor's background, expertise, teaching philosophy, and experience. Used in instructor profiles and course descriptions.",
       example:
@@ -2627,7 +2594,7 @@ export const InstructorSchema = {
       minLength: 0,
     },
     professional_headline: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         "**[OPTIONAL]** Professional headline or title that summarizes instructor's expertise and role. Used in search results and instructor listings.",
       example: 'Senior Software Development Instructor & Tech Consultant',
@@ -2642,7 +2609,7 @@ export const InstructorSchema = {
       readOnly: true,
     },
     admin_verified: {
-      type: 'boolean',
+      type: ['boolean', 'null'],
       description:
         '**[READ-ONLY]** Indicates whether the instructor has been verified by an administrator. True if verified, false if not verified, null if verification status is unknown or pending.',
       example: true,
@@ -2693,7 +2660,7 @@ export const InstructorSchema = {
       readOnly: true,
     },
     formatted_location: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
       example: '-1.292100, 36.821900',
@@ -2815,9 +2782,7 @@ export const ApiResponseInstructorSkillSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -2872,7 +2837,7 @@ export const InstructorProfessionalMembershipSchema = {
       minLength: 0,
     },
     membership_number: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Official membership number or identifier issued by the organisation.',
       example: 'IEEE-92345678',
@@ -2880,20 +2845,20 @@ export const InstructorProfessionalMembershipSchema = {
       minLength: 0,
     },
     start_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description: '**[OPTIONAL]** Date when the membership began or was first obtained.',
       example: '2020-03-15',
     },
     end_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description:
         '**[OPTIONAL]** Date when the membership ended or expired. Should be null for active memberships.',
       example: null,
     },
     is_active: {
-      type: 'boolean',
+      type: ['boolean', 'null'],
       description:
         '**[OPTIONAL]** Indicates whether the membership is currently active. True for active memberships, false for inactive or expired.',
       example: true,
@@ -2948,16 +2913,16 @@ export const InstructorProfessionalMembershipSchema = {
       readOnly: true,
     },
     formatted_duration: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
-      example: 4,
+      example: '4 years, 3 months',
       readOnly: true,
     },
     membership_status: {
       $ref: '#/components/schemas/MembershipStatusEnum',
     },
     membership_period: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[READ-ONLY]** Formatted membership period showing start and end dates.',
       example: 'Mar 2020 - Present',
       readOnly: true,
@@ -2980,7 +2945,7 @@ export const InstructorProfessionalMembershipSchema = {
       $ref: '#/components/schemas/OrganisationTypeEnum',
     },
     years_of_membership: {
-      type: 'number',
+      type: ['number', 'null'],
       format: 'double',
       description: '**[READ-ONLY]** Years of membership calculated with decimal precision.',
       example: 4.25,
@@ -2994,7 +2959,7 @@ export const InstructorProfessionalMembershipSchema = {
       readOnly: true,
     },
     membership_duration_months: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description:
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
@@ -3017,9 +2982,7 @@ export const ApiResponseInstructorProfessionalMembershipSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -3083,7 +3046,7 @@ export const InstructorExperienceSchema = {
       minLength: 0,
     },
     responsibilities: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Detailed description of key responsibilities, achievements, and duties performed in this position.',
       example:
@@ -3092,7 +3055,7 @@ export const InstructorExperienceSchema = {
       minLength: 0,
     },
     years_of_experience: {
-      type: 'number',
+      type: ['number', 'null'],
       description:
         '**[OPTIONAL]** Total years of experience in this position, including fractional years for more precise representation.',
       example: 5.5,
@@ -3100,20 +3063,20 @@ export const InstructorExperienceSchema = {
       minimum: 0,
     },
     start_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description: '**[OPTIONAL]** Date when employment in this position began.',
       example: '2019-01-15',
     },
     end_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description:
         '**[OPTIONAL]** Date when employment in this position ended. Should be null for current positions.',
       example: '2024-06-30',
     },
     is_current_position: {
-      type: 'boolean',
+      type: ['boolean', 'null'],
       description:
         "**[OPTIONAL]** Indicates whether this is the instructor's current position. True for ongoing employment.",
       example: false,
@@ -3162,7 +3125,7 @@ export const InstructorExperienceSchema = {
       readOnly: true,
     },
     duration_in_months: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description:
         '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
@@ -3170,13 +3133,13 @@ export const InstructorExperienceSchema = {
       readOnly: true,
     },
     formatted_duration: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
-      example: 5,
+      example: '5 years, 5 months',
       readOnly: true,
     },
     employment_period: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[READ-ONLY]** Formatted employment period showing start and end dates.',
       example: 'Jan 2019 - Jun 2024',
       readOnly: true,
@@ -3204,7 +3167,7 @@ export const InstructorExperienceSchema = {
       readOnly: true,
     },
     calculated_years: {
-      type: 'number',
+      type: ['number', 'null'],
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
@@ -3226,9 +3189,7 @@ export const ApiResponseInstructorExperienceSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -3279,7 +3240,7 @@ export const InstructorEducationSchema = {
       minLength: 0,
     },
     field_of_study: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Academic field of study or specialization for the qualification.',
       example: 'Computer Science',
@@ -3295,7 +3256,7 @@ export const InstructorEducationSchema = {
       minLength: 0,
     },
     year_completed: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description:
         '**[OPTIONAL]** Year when the qualification was completed or awarded. Must be a valid year not in the future.',
@@ -3304,7 +3265,7 @@ export const InstructorEducationSchema = {
       minimum: 1950,
     },
     certificate_number: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Official certificate, diploma, or degree number issued by the educational institution.',
       example: 'MSC/CS/2020/0456',
@@ -3365,11 +3326,11 @@ export const InstructorEducationSchema = {
     formatted_completion: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
-      example: 2020,
+      example: '2020 - University of Nairobi',
       readOnly: true,
     },
     years_since_completion: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description: '**[READ-ONLY]** Number of years since the qualification was completed.',
       example: 4,
@@ -3401,9 +3362,7 @@ export const ApiResponseInstructorEducationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -3468,21 +3427,21 @@ export const InstructorDocumentSchema = {
       example: 'dt123456-7890-abcd-ef01-234567890abc',
     },
     education_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to specific education record UUID if this document supports an educational qualification.',
       example: 'edu12345-6789-abcd-ef01-234567890abc',
     },
     experience_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to specific experience record UUID if this document supports work experience.',
       example: 'exp12345-6789-abcd-ef01-234567890abc',
     },
     membership_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to specific membership record UUID if this document supports professional body membership.',
@@ -3505,7 +3464,7 @@ export const InstructorDocumentSchema = {
       minLength: 0,
     },
     description: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Detailed description of the document content and its relevance to instructor qualifications.',
       example:
@@ -3517,7 +3476,7 @@ export const InstructorDocumentSchema = {
       $ref: '#/components/schemas/StatusEnum2',
     },
     expiry_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description:
         '**[OPTIONAL]** Expiry date of the document if applicable. Used for certificates and time-limited credentials.',
@@ -3568,7 +3527,7 @@ export const InstructorDocumentSchema = {
       readOnly: true,
     },
     is_verified: {
-      type: 'boolean',
+      type: ['boolean', 'null'],
       description:
         '**[READ-ONLY]** Verification status of the document. True if verified by admin, false if not verified, null if pending.',
       example: true,
@@ -3590,7 +3549,7 @@ export const InstructorDocumentSchema = {
       readOnly: true,
     },
     verification_notes: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[READ-ONLY]** Notes or comments from the verification process. Includes details about verification outcome.',
       example: 'Certificate verified against AWS official database. Valid credential confirmed.',
@@ -3645,11 +3604,11 @@ export const InstructorDocumentSchema = {
     file_size_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted file size.',
-      example: 2,
+      example: '2.0 MB',
       readOnly: true,
     },
     days_until_expiry: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description:
         '**[READ-ONLY]** Number of days until document expiry. Returns null if no expiry date or already expired.',
@@ -3687,9 +3646,7 @@ export const ApiResponseInstructorDocumentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -3780,7 +3737,7 @@ export const CourseSchema = {
       uniqueItems: true,
     },
     difficulty_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to the difficulty level UUID indicating course complexity.',
@@ -3829,20 +3786,20 @@ export const CourseSchema = {
       minimum: 0,
     },
     class_limit: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description: '**[OPTIONAL]** Maximum number of students that can enroll in the course.',
       example: 25,
       minimum: 1,
     },
     price: {
-      type: 'number',
+      type: ['number', 'null'],
       description:
         '**[OPTIONAL]** Legacy course list price. Leave blank while pricing workflows are under review.',
       minimum: 0,
     },
     minimum_training_fee: {
-      type: 'number',
+      type: ['number', 'null'],
       description:
         '**[OPTIONAL]** Minimum rate per trainee per hour that any instructor-led class for this course must meet or exceed.',
       example: 180,
@@ -3865,7 +3822,7 @@ export const CourseSchema = {
       minimum: 0,
     },
     revenue_share_notes: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Additional context explaining how revenue is allocated between course creator and instructors.',
       example: 'Creator retains 60% to cover tooling; instructors earn 40% net.',
@@ -3873,7 +3830,7 @@ export const CourseSchema = {
       minLength: 0,
     },
     age_lower_limit: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description: '**[OPTIONAL]** Minimum age requirement for course enrollment.',
       example: 18,
@@ -3881,7 +3838,7 @@ export const CourseSchema = {
       minimum: 1,
     },
     age_upper_limit: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description: '**[OPTIONAL]** Maximum age requirement for course enrollment.',
       example: 65,
@@ -3889,7 +3846,7 @@ export const CourseSchema = {
       minimum: 1,
     },
     thumbnail_url: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uri',
       description: '**[OPTIONAL]** URL to course thumbnail image for course listings and previews.',
       example: 'https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg',
@@ -3897,7 +3854,7 @@ export const CourseSchema = {
       minLength: 0,
     },
     intro_video_url: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uri',
       description:
         '**[OPTIONAL]** URL to course introduction video for marketing and preview purposes.',
@@ -3906,7 +3863,7 @@ export const CourseSchema = {
       minLength: 0,
     },
     banner_url: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uri',
       description: '**[OPTIONAL]** URL to course banner image for detailed course pages.',
       example: 'https://cdn.sarafrika.com/courses/java-advanced-banner.jpg',
@@ -3930,7 +3887,7 @@ export const CourseSchema = {
       readOnly: true,
     },
     training_requirements: {
-      type: 'array',
+      type: ['array', 'null'],
       description:
         '**[READ-ONLY]** Structured resources required to deliver this course during instructor-led training sessions.',
       items: {
@@ -3978,6 +3935,13 @@ export const CourseSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    accepts_new_enrollments: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
+      example: true,
+      readOnly: true,
+    },
     is_published: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is published and discoverable.',
@@ -4002,17 +3966,10 @@ export const CourseSchema = {
       example: false,
       readOnly: true,
     },
-    accepts_new_enrollments: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
-      example: true,
-      readOnly: true,
-    },
     total_duration_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of total course duration.',
-      example: 40,
+      example: '40 hours 30 minutes',
       readOnly: true,
     },
     has_multiple_categories: {
@@ -4152,9 +4109,7 @@ export const ApiResponseCourseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -4170,9 +4125,7 @@ export const ApiResponseCourseTrainingRequirementSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -4188,9 +4141,7 @@ export const ApiResponseCourseRubricAssociationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -4371,9 +4322,7 @@ export const ApiResponseCourseRequirementSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -4515,9 +4464,7 @@ export const ApiResponseLessonSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -4649,7 +4596,7 @@ export const LessonPracticeActivitySchema = {
     estimated_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable estimated duration.',
-      example: 15,
+      example: '15 minutes',
       readOnly: true,
     },
   },
@@ -4668,9 +4615,7 @@ export const ApiResponseLessonPracticeActivitySchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -4736,13 +4681,13 @@ export const LessonContentSchema = {
       minLength: 0,
     },
     content_text: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Text content for text-based content types. Null for file-based content.',
       example: null,
     },
     file_url: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uri',
       description: '**[OPTIONAL]** URL to the uploaded content file. Null for text-based content.',
       example: 'https://cdn.sarafrika.com/lessons/oop-intro.mp4',
@@ -4763,7 +4708,7 @@ export const LessonContentSchema = {
       example: true,
     },
     file_size_bytes: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int64',
       description: '**[READ-ONLY]** Size of the uploaded file in bytes. Null for text content.',
       example: 157286400,
@@ -4816,7 +4761,7 @@ export const LessonContentSchema = {
     file_size_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of file size.',
-      example: 150,
+      example: '150 MB',
       readOnly: true,
     },
   },
@@ -4835,9 +4780,7 @@ export const ApiResponseLessonContentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -4914,7 +4857,7 @@ export const CourseAssessmentSchema = {
       $ref: '#/components/schemas/AggregationStrategyEnum',
     },
     rubric_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to assessment rubric UUID for detailed grading criteria.',
@@ -4961,18 +4904,6 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
-    is_major_assessment: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
-      example: false,
-      readOnly: true,
-    },
     contribution_level: {
       type: 'string',
       description: '**[READ-ONLY]** Level of contribution to final grade based on weight.',
@@ -4992,6 +4923,18 @@ export const CourseAssessmentSchema = {
       example: 'Participation Component',
       readOnly: true,
     },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
+    is_major_assessment: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
+      example: false,
+      readOnly: true,
+    },
   },
   required: ['assessment_type', 'course_uuid', 'title', 'weight_percentage'],
 } as const;
@@ -5008,9 +4951,7 @@ export const ApiResponseCourseAssessmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -5128,9 +5069,7 @@ export const ApiResponseCourseAssessmentLineItemSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -5206,7 +5145,7 @@ export const CourseAssessmentLineItemScoreSchema = {
     },
     grade_display: {
       type: 'string',
-      example: 18,
+      example: '18 / 20 (90%)',
       readOnly: true,
     },
   },
@@ -5224,9 +5163,7 @@ export const ApiResponseCourseAssessmentLineItemScoreSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -5347,9 +5284,7 @@ export const ApiResponseCourseAssessmentLineItemRubricEvaluationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -5395,7 +5330,7 @@ export const CourseCreatorSchema = {
       minLength: 1,
     },
     bio: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         "**[OPTIONAL]** Professional biography describing course creator's background, expertise, and content creation philosophy. Used in creator profiles and course descriptions.",
       example:
@@ -5404,7 +5339,7 @@ export const CourseCreatorSchema = {
       minLength: 0,
     },
     professional_headline: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         "**[OPTIONAL]** Professional headline or title that summarizes course creator's expertise and role. Used in search results and creator listings.",
       example: 'Educational Content Designer & Course Architect',
@@ -5412,7 +5347,7 @@ export const CourseCreatorSchema = {
       minLength: 0,
     },
     website: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uri',
       description:
         "**[OPTIONAL]** Professional website or portfolio URL. Used to showcase course creator's work and additional credentials.",
@@ -5542,9 +5477,7 @@ export const ApiResponseCourseCreatorSkillSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -5630,9 +5563,7 @@ export const ApiResponseCourseCreatorProfessionalMembershipSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -5727,9 +5658,7 @@ export const ApiResponseCourseCreatorExperienceSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -5823,9 +5752,7 @@ export const ApiResponseCourseCreatorEducationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -5958,11 +5885,11 @@ export const CourseCreatorDocumentDTOSchema = {
     file_size_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted file size.',
-      example: 2,
+      example: '2.0 MB',
       readOnly: true,
     },
     days_until_expiry: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description:
         '**[READ-ONLY]** Number of days until document expiry. Returns null if no expiry date or already expired.',
@@ -6000,9 +5927,7 @@ export const ApiResponseCourseCreatorDocumentDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -6104,9 +6029,7 @@ export const ApiResponseCourseCreatorCertificationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -6214,9 +6137,7 @@ export const ApiResponseGradingLevelSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -6329,9 +6250,7 @@ export const ApiResponseDifficultyLevelSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -6380,7 +6299,7 @@ export const ContentTypeSchema = {
       minItems: 1,
     },
     max_file_size_mb: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description:
         '**[OPTIONAL]** Maximum file size allowed in megabytes. Null means no size limit.',
@@ -6438,7 +6357,7 @@ export const ContentTypeSchema = {
     size_limit_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of maximum file size.',
-      example: 500,
+      example: '500 MB',
       readOnly: true,
     },
   },
@@ -6457,9 +6376,7 @@ export const ApiResponseContentTypeSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -6504,7 +6421,7 @@ export const CategorySchema = {
       minLength: 0,
     },
     parent_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to parent category UUID for hierarchical organization. Null for root categories.',
@@ -6575,9 +6492,7 @@ export const ApiResponseCategorySchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -6604,11 +6519,13 @@ export const CommerceCatalogueItemUpsertRequestSchema = {
       type: 'string',
       description: 'Internal commerce product code',
       example: 'course-01J0ABCXYZ',
+      minLength: 1,
     },
     variant_code: {
       type: 'string',
       description: 'Internal commerce variant code',
       example: 'variant-01J0ABCXYZ',
+      minLength: 1,
     },
     currency_code: {
       type: 'string',
@@ -6639,9 +6556,7 @@ export const ApiResponseCommerceCatalogueItemSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -6868,9 +6783,7 @@ export const ApiResponseClassDefinitionResponseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -6949,7 +6862,7 @@ export const ClassDefinitionSchema = {
       minLength: 0,
     },
     description: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Detailed description of the class content, objectives, and what students will learn.',
       example:
@@ -6958,7 +6871,7 @@ export const ClassDefinitionSchema = {
       minLength: 0,
     },
     thumbnail_url: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[OPTIONAL]** URL to class thumbnail image for class listings and previews.',
       example:
         '/api/v1/classes/media/class_thumbnails/cd123456-7890-abcd-ef01-234567890abc/thumbnail.jpg',
@@ -6966,7 +6879,7 @@ export const ClassDefinitionSchema = {
       minLength: 0,
     },
     promotional_video_url: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** URL to class promotional video for marketing and preview purposes.',
       example:
@@ -6982,28 +6895,28 @@ export const ClassDefinitionSchema = {
       example: 'inst1234-5678-90ab-cdef-123456789abc',
     },
     organisation_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to the organisation UUID that owns this class definition.',
       example: 'org12345-6789-abcd-ef01-234567890abc',
     },
     course_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to the course UUID if this class is part of a structured course.',
       example: 'course123-4567-89ab-cdef-123456789abc',
     },
     program_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to the training program UUID if this class is part of a training programme.',
       example: 'program123-4567-89ab-cdef-123456789abc',
     },
     training_fee: {
-      type: 'number',
+      type: ['number', 'null'],
       description:
         '**[OPTIONAL]** Training fee charged for sessions created from this class definition. Must match the approved training rate for linked courses or training programs.',
       example: 220,
@@ -7028,31 +6941,31 @@ export const ClassDefinitionSchema = {
       example: '2025-01-15T10:30:00Z',
     },
     academic_period_start_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description: '**[OPTIONAL]** Academic period start date for the class lifecycle.',
       example: '2025-01-15',
     },
     academic_period_end_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description: '**[OPTIONAL]** Academic period end date for the class lifecycle.',
       example: '2025-03-15',
     },
     registration_period_start_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description: '**[OPTIONAL]** Registration period start date for learner enrollment.',
       example: '2024-12-15',
     },
     registration_period_end_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description: '**[OPTIONAL]** Registration period end date for learner enrollment.',
       example: '2025-01-10',
     },
     class_reminder_minutes: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description:
         '**[OPTIONAL]** Number of minutes before class start when reminders should be triggered.',
@@ -7060,7 +6973,7 @@ export const ClassDefinitionSchema = {
       minimum: 0,
     },
     class_color: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Hex color code used to visually distinguish the class in UI surfaces.',
       example: '#1F6FEB',
@@ -7070,26 +6983,26 @@ export const ClassDefinitionSchema = {
       $ref: '#/components/schemas/LocationTypeEnum',
     },
     location_name: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Human-readable name for the primary class location, used for Mapbox forward/reverse geocoding (e.g., campus, room, or venue name). Required when location_type is IN_PERSON or HYBRID.',
       example: 'Nairobi HQ – Room 101',
       maxLength: 255,
     },
     location_latitude: {
-      type: 'number',
+      type: ['number', 'null'],
       description:
         '**[OPTIONAL]** Latitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.',
       example: -1.292066,
     },
     location_longitude: {
-      type: 'number',
+      type: ['number', 'null'],
       description:
         '**[OPTIONAL]** Longitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.',
       example: 36.821945,
     },
     meeting_link: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Virtual meeting URL for online participation (e.g., Zoom, Google Meet, Teams).',
       example: 'https://meet.google.com/abc-defg-hij',
@@ -7296,6 +7209,7 @@ export const ClassSessionTemplateSchema = {
       example: '2025-01-15T15:30:00',
     },
     recurrence: {
+      type: 'null',
       $ref: '#/components/schemas/ClassRecurrence',
       description: 'Inline recurrence rule for this session template',
     },
@@ -7357,7 +7271,7 @@ export const ClassMarketplaceJobRequestSchema = {
       minLength: 0,
     },
     description: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Optional description for instructors evaluating the class job.',
       maxLength: 2000,
       minLength: 0,
@@ -7379,32 +7293,32 @@ export const ClassMarketplaceJobRequestSchema = {
       description: '**[REQUIRED]** Default end date-time for the advertised class (UTC).',
     },
     academic_period_start_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description: 'Optional academic period start date.',
     },
     academic_period_end_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description: 'Optional academic period end date.',
     },
     registration_period_start_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description: 'Optional registration period start date.',
     },
     registration_period_end_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date',
       description: 'Optional registration period end date.',
     },
     class_reminder_minutes: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description: 'Optional reminder lead time in minutes.',
     },
     class_color: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Optional UI color for the class advert.',
       pattern: '^#[0-9A-Fa-f]{6}$',
     },
@@ -7412,32 +7326,32 @@ export const ClassMarketplaceJobRequestSchema = {
       $ref: '#/components/schemas/LocationTypeEnum',
     },
     location_name: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Optional human-readable location name. Required for IN_PERSON and HYBRID.',
       maxLength: 255,
       minLength: 0,
     },
     location_latitude: {
-      type: 'number',
+      type: ['number', 'null'],
       description: 'Optional location latitude. Required for IN_PERSON and HYBRID.',
     },
     location_longitude: {
-      type: 'number',
+      type: ['number', 'null'],
       description: 'Optional location longitude. Required for IN_PERSON and HYBRID.',
     },
     meeting_link: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Optional virtual meeting link for ONLINE or HYBRID delivery.',
       maxLength: 1000,
       minLength: 0,
     },
     max_participants: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description: 'Optional maximum participant count.',
     },
     allow_waitlist: {
-      type: 'boolean',
+      type: ['boolean', 'null'],
       description: 'Optional waitlist toggle for the eventual class.',
     },
     session_templates: {
@@ -7476,9 +7390,7 @@ export const ApiResponseClassMarketplaceJobSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -7681,14 +7593,14 @@ export const CertificateSchema = {
       example: 's1t2u3d4-5e6n-7t8u-9s10-abcdefghijkl',
     },
     course_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to the course UUID if this is a course completion certificate. Mutually exclusive with program_uuid.',
       example: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
     },
     program_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to the program UUID if this is a program completion certificate. Mutually exclusive with course_uuid.',
@@ -7708,7 +7620,7 @@ export const CertificateSchema = {
       example: '2024-05-15T15:45:00',
     },
     final_grade: {
-      type: 'number',
+      type: ['number', 'null'],
       description: '**[OPTIONAL]** Final grade percentage achieved by the student.',
       example: 87.5,
       maximum: 100,
@@ -7742,17 +7654,17 @@ export const CertificateSchema = {
       readOnly: true,
     },
     revoked_at: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the certificate was revoked, if applicable.',
-      example: null,
       readOnly: true,
+      example: null,
     },
     revoked_reason: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[READ-ONLY]** Reason for certificate revocation, if applicable.',
-      example: null,
       readOnly: true,
+      example: null,
     },
     created_date: {
       type: 'string',
@@ -7824,9 +7736,7 @@ export const ApiResponseCertificateSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -7956,9 +7866,7 @@ export const ApiResponseCertificateTemplateSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -8009,7 +7917,7 @@ export const AssignmentSchema = {
       $ref: '#/components/schemas/ScopeEnum2',
     },
     class_definition_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to the class definition that owns this assignment when scope is CLASS_CLONE.',
@@ -8051,7 +7959,7 @@ export const AssignmentSchema = {
       minimum: 0,
     },
     rubric_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description: '**[OPTIONAL]** Reference to the rubric UUID used for grading this assignment.',
       example: 'r1u2b3r4-5i6c-7a8s-9s10-abcdefghijkl',
@@ -8066,7 +7974,7 @@ export const AssignmentSchema = {
       example: true,
     },
     source_assignment_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[READ-ONLY]** UUID of the course-level assignment this class clone originates from.',
@@ -8113,7 +8021,7 @@ export const AssignmentSchema = {
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: 100,
+      example: '100.00 points',
       readOnly: true,
     },
     assignment_scope: {
@@ -8125,7 +8033,7 @@ export const AssignmentSchema = {
     submission_summary: {
       type: 'string',
       description: '**[READ-ONLY]** Summary of accepted submission types for this assignment.',
-      example: 3,
+      example: '3 submission types accepted',
       readOnly: true,
     },
   },
@@ -8144,9 +8052,7 @@ export const ApiResponseAssignmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -8201,9 +8107,7 @@ export const ApiResponseCurrencySchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -8297,9 +8201,7 @@ export const ApiResponseWalletTransferResponseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -8425,9 +8327,7 @@ export const ApiResponseWalletSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -8487,9 +8387,7 @@ export const ApiResponseBooleanSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -8505,9 +8403,7 @@ export const ApiResponseScheduledInstanceSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -8586,18 +8482,18 @@ export const ScheduledInstanceSchema = {
       $ref: '#/components/schemas/LocationTypeEnum',
     },
     location_name: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** Human-readable name for the session location (cached from class definition or overridden per instance).',
       example: 'Nairobi HQ – Room 101',
     },
     location_latitude: {
-      type: 'number',
+      type: ['number', 'null'],
       description: '**[OPTIONAL]** Latitude coordinate for this scheduled instance location.',
       example: -1.292066,
     },
     location_longitude: {
-      type: 'number',
+      type: ['number', 'null'],
       description: '**[OPTIONAL]** Longitude coordinate for this scheduled instance location.',
       example: 36.821945,
     },
@@ -8613,12 +8509,12 @@ export const ScheduledInstanceSchema = {
       $ref: '#/components/schemas/StatusEnum6',
     },
     cancellation_reason: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[OPTIONAL]** Reason for cancellation if status is CANCELLED.',
       example: 'Instructor unavailable due to illness',
     },
     started_at: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date-time',
       description:
         '**[READ-ONLY]** Actual UTC timestamp when the instructor explicitly started the class session.',
@@ -8626,7 +8522,7 @@ export const ScheduledInstanceSchema = {
       readOnly: true,
     },
     concluded_at: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date-time',
       description:
         '**[READ-ONLY]** Actual UTC timestamp when the instructor explicitly concluded the class session.',
@@ -8663,6 +8559,25 @@ export const ScheduledInstanceSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_started: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_ended: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
+      example: false,
+      readOnly: true,
+    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
@@ -8687,25 +8602,6 @@ export const ScheduledInstanceSchema = {
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
-      readOnly: true,
-    },
-    can_be_ended: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
-      example: false,
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_started: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
-      example: true,
       readOnly: true,
     },
   },
@@ -8767,9 +8663,7 @@ export const ApiResponseStudentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -8788,9 +8682,7 @@ export const ApiResponseListRubricScoringLevelSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -8800,15 +8692,11 @@ export const ApiResponseObjectSchema = {
     success: {
       type: 'boolean',
     },
-    data: {
-      type: 'object',
-    },
+    data: {},
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -8824,9 +8712,7 @@ export const ApiResponseStringSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -8834,7 +8720,7 @@ export const CourseTrainingRateCardSchema = {
   type: 'object',
   properties: {
     currency: {
-      type: 'string',
+      type: ['string', 'null'],
       description:
         '**[OPTIONAL]** ISO currency applied to every rate entry in the card. Defaults to the platform currency when omitted.',
       example: 'KES',
@@ -8904,7 +8790,7 @@ export const ProgramTrainingApplicationRequestSchema = {
         '**[REQUIRED]** Instructor rate card across session format and delivery modality combinations.',
     },
     application_notes: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Optional notes to help the program creator evaluate the request.',
       maxLength: 2000,
       minLength: 0,
@@ -8925,9 +8811,7 @@ export const ApiResponseProgramTrainingApplicationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -8967,19 +8851,19 @@ export const ProgramTrainingApplicationSchema = {
       $ref: '#/components/schemas/StatusEnum7',
     },
     application_notes: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Submission notes provided by the applicant.',
     },
     review_notes: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Decision notes provided by the program creator.',
     },
     reviewed_by: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Reviewer identifier captured when the request is approved or rejected.',
     },
     reviewed_at: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date-time',
       description: 'Timestamp of the review decision.',
     },
@@ -9015,13 +8899,13 @@ export const ProgramTrainingApplicationSchema = {
       readOnly: true,
     },
     updated_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date-time',
       description: '**[READ-ONLY]** When the application was last updated.',
       readOnly: true,
     },
     updated_by: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[READ-ONLY]** Audit user who last modified the application.',
       readOnly: true,
     },
@@ -9036,7 +8920,7 @@ export const ProgramTrainingApplicationDecisionRequestSchema = {
   },
   properties: {
     review_notes: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Optional notes captured alongside the decision.',
       maxLength: 2000,
       minLength: 0,
@@ -9101,7 +8985,7 @@ export const ProgramReviewSchema = {
       readOnly: true,
     },
     student_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description:
         '**[READ-ONLY]** Student who left the review. Null for anonymous public responses.',
@@ -9116,7 +9000,7 @@ export const ProgramReviewSchema = {
       readOnly: true,
     },
     created_by: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[READ-ONLY]** Created by identifier. Null for anonymous public responses.',
       example: 'student@example.com',
       readOnly: true,
@@ -9129,7 +9013,7 @@ export const ProgramReviewSchema = {
       readOnly: true,
     },
     updated_by: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[READ-ONLY]** Updated by identifier. Null for anonymous public responses.',
       example: 'student@example.com',
       readOnly: true,
@@ -9197,9 +9081,7 @@ export const ApiResponseProgramReviewSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -9209,15 +9091,11 @@ export const ApiResponseVoidSchema = {
     success: {
       type: 'boolean',
     },
-    data: {
-      type: 'object',
-    },
+    data: {},
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -9233,9 +9111,7 @@ export const ApiResponseNotificationActionResultDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -9264,9 +9140,7 @@ export const ApiResponseNotificationDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -9307,9 +9181,7 @@ export const NotificationDTOSchema = {
     },
     metadata: {
       type: 'object',
-      additionalProperties: {
-        type: 'object',
-      },
+      additionalProperties: {},
     },
     occurred_at: {
       type: 'string',
@@ -9346,9 +9218,7 @@ export const ApiResponseInstructorSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -9421,21 +9291,21 @@ export const InstructorReviewSchema = {
       minLength: 0,
     },
     clarity_rating: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description: 'Optional clarity rating (1-5).',
       maximum: 5,
       minimum: 1,
     },
     engagement_rating: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description: 'Optional engagement rating (1-5).',
       maximum: 5,
       minimum: 1,
     },
     punctuality_rating: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
       description: 'Optional punctuality rating (1-5).',
       maximum: 5,
@@ -9488,9 +9358,7 @@ export const ApiResponseInstructorReviewSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -9564,7 +9432,7 @@ export const GuardianStudentLinkRequestSchema = {
     },
     isPrimary: {
       type: 'boolean',
-      default: 'false',
+      default: false,
       description: 'Marks this guardian as the primary contact',
     },
     notes: {
@@ -9614,9 +9482,7 @@ export const ApiResponseListEnrollmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -9660,7 +9526,7 @@ export const EnrollmentSchema = {
       $ref: '#/components/schemas/StatusEnum10',
     },
     attendance_marked_at: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date-time',
       description: '**[OPTIONAL]** Timestamp when attendance was marked for this enrollment.',
       example: '2024-09-15T09:15:00',
@@ -9734,15 +9600,11 @@ export const ApiResponseSchema = {
     success: {
       type: 'boolean',
     },
-    data: {
-      type: 'object',
-    },
+    data: {},
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -9776,7 +9638,7 @@ export const CourseTrainingApplicationRequestSchema = {
         '**[REQUIRED]** Instructor rate card across session format and delivery modality combinations.',
     },
     application_notes: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Optional notes to help the course creator evaluate the request.',
       maxLength: 2000,
       minLength: 0,
@@ -9797,9 +9659,7 @@ export const ApiResponseCourseTrainingApplicationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -9839,19 +9699,19 @@ export const CourseTrainingApplicationSchema = {
       $ref: '#/components/schemas/StatusEnum11',
     },
     application_notes: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Submission notes provided by the applicant.',
     },
     review_notes: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Decision notes provided by the course creator.',
     },
     reviewed_by: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Reviewer identifier captured when the request is approved or rejected.',
     },
     reviewed_at: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date-time',
       description: 'Timestamp of the review decision.',
     },
@@ -9887,13 +9747,13 @@ export const CourseTrainingApplicationSchema = {
       readOnly: true,
     },
     updated_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date-time',
       description: '**[READ-ONLY]** When the application was last updated.',
       readOnly: true,
     },
     updated_by: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[READ-ONLY]** Audit user who last modified the application.',
       readOnly: true,
     },
@@ -9908,7 +9768,7 @@ export const CourseTrainingApplicationDecisionRequestSchema = {
   },
   properties: {
     review_notes: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Optional notes captured alongside the decision.',
       maxLength: 2000,
       minLength: 0,
@@ -10021,9 +9881,7 @@ export const ApiResponseCourseReviewSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -10039,9 +9897,7 @@ export const ApiResponseCourseCreatorSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -10087,9 +9943,7 @@ export const CartItemResponseSchema = {
     },
     metadata: {
       type: 'object',
-      additionalProperties: {
-        type: 'object',
-      },
+      additionalProperties: {},
       description:
         'System-managed metadata describing the catalogue context for the line item (read-only)',
     },
@@ -10108,7 +9962,7 @@ export const OrderResponseSchema = {
     display_id: {
       type: 'string',
       description: 'Human friendly order number',
-      example: 100012,
+      example: '100012',
     },
     payment_status: {
       type: 'string',
@@ -10197,11 +10051,14 @@ export const CheckoutRequestSchema = {
       type: 'string',
       description: 'Identifier of the cart being checked out',
       example: '2f6d4d1e-5f2a-4b2e-9f8d-0b7c3e9b5c1a',
+      minLength: 1,
     },
     customer_email: {
       type: 'string',
+      format: 'email',
       description: 'Email address of the purchasing customer',
       example: 'learner@example.com',
+      minLength: 1,
     },
     shipping_address_id: {
       type: 'string',
@@ -10217,6 +10074,7 @@ export const CheckoutRequestSchema = {
       type: 'string',
       description: 'Payment provider identifier to use for the checkout',
       example: 'manual',
+      minLength: 1,
     },
   },
   required: ['cart_id', 'customer_email', 'payment_provider_id'],
@@ -10235,9 +10093,7 @@ export const ApiResponseIntegerSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -10320,6 +10176,7 @@ export const CartLineItemRequestSchema = {
       type: 'string',
       description: 'Identifier of the internal product variant to add to the cart',
       example: 'course-seat-advanced-excel',
+      minLength: 1,
     },
     quantity: {
       type: 'integer',
@@ -10340,6 +10197,7 @@ export const CreateCartRequestSchema = {
       type: 'string',
       description: 'Currency code the cart is priced in',
       example: 'USD',
+      minLength: 1,
     },
     region_code: {
       type: 'string',
@@ -10348,6 +10206,7 @@ export const CreateCartRequestSchema = {
     },
     items: {
       type: 'array',
+      description: 'Optional collection of line items to pre-populate the cart',
       items: {
         $ref: '#/components/schemas/CartLineItemRequest',
       },
@@ -10364,9 +10223,32 @@ export const SelectPaymentSessionRequestSchema = {
       type: 'string',
       description: "Identifier of the payment provider (e.g. 'manual', 'stripe')",
       example: 'manual',
+      minLength: 1,
     },
   },
   required: ['provider_id'],
+} as const;
+
+export const MultiValueMapStringStringSchema = {
+  type: 'object',
+  additionalProperties: {
+    type: 'array',
+    items: {
+      type: 'string',
+    },
+  },
+  properties: {
+    all: {
+      type: 'object',
+      additionalProperties: {
+        type: 'string',
+      },
+      writeOnly: true,
+    },
+    empty: {
+      type: 'boolean',
+    },
+  },
 } as const;
 
 export const ClassDefinitionCreateRequestSchema = {
@@ -10540,9 +10422,7 @@ export const ApiResponseClassSessionTemplateScheduleResponseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -10598,6 +10478,163 @@ export const ClassSessionTemplateScheduleResponseSchema = {
       items: {
         $ref: '#/components/schemas/ClassSchedulingConflict',
       },
+    },
+  },
+} as const;
+
+export const ClassReviewRequestSchema = {
+  type: 'object',
+  description: 'Payload for submitting or updating a student review for a class.',
+  example: {
+    student_uuid: '4d91801f-0d0f-4078-9b70-7f68f7531c8a',
+    rating: 5,
+    headline: 'Practical class',
+    comments: 'The class session was clear and hands-on.',
+    is_anonymous: false,
+  },
+  properties: {
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Student leaving the review.',
+      example: '4d91801f-0d0f-4078-9b70-7f68f7531c8a',
+    },
+    rating: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[REQUIRED]** Overall rating for the class (1-5).',
+      example: 5,
+      maximum: 5,
+      minimum: 1,
+    },
+    headline: {
+      type: 'string',
+      description: 'Optional short headline for the review.',
+      example: 'Practical class',
+      maxLength: 255,
+      minLength: 0,
+    },
+    comments: {
+      type: 'string',
+      description: 'Detailed feedback from the student.',
+      example: 'The class session was clear and hands-on.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    is_anonymous: {
+      type: 'boolean',
+      description: 'Whether the review should be shown anonymously in public views.',
+      example: false,
+    },
+  },
+  required: ['rating', 'student_uuid'],
+} as const;
+
+export const ApiResponseClassReviewSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassReview',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassReviewSchema = {
+  type: 'object',
+  description: 'Student review and rating for a class.',
+  example: {
+    uuid: 'd41707bc-e652-4ea4-8db0-ea9c85ff7d5c',
+    class_definition_uuid: '640d0a57-76cc-46f2-ad46-72f5635d973a',
+    student_uuid: '4d91801f-0d0f-4078-9b70-7f68f7531c8a',
+    rating: 5,
+    headline: 'Practical class',
+    comments: 'The class session was clear and hands-on.',
+    is_anonymous: false,
+    created_date: '2026-06-22T17:00:00',
+    created_by: 'student@example.com',
+    updated_date: '2026-06-22T17:00:00',
+    updated_by: 'student@example.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for the review.',
+      example: 'd41707bc-e652-4ea4-8db0-ea9c85ff7d5c',
+      readOnly: true,
+    },
+    rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Overall rating for the class (1-5).',
+      example: 5,
+      maximum: 5,
+      minimum: 1,
+    },
+    headline: {
+      type: 'string',
+      description: 'Optional short headline for the review.',
+      example: 'Practical class',
+      maxLength: 255,
+    },
+    comments: {
+      type: 'string',
+      description: 'Detailed feedback from the student.',
+      example: 'The class session was clear and hands-on.',
+      maxLength: 5000,
+    },
+    is_anonymous: {
+      type: 'boolean',
+      description: 'Whether the review should be shown anonymously in public views.',
+      example: false,
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Class definition being reviewed.',
+      example: '640d0a57-76cc-46f2-ad46-72f5635d973a',
+      readOnly: true,
+    },
+    student_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** Student who left the review. Null for anonymous public responses.',
+      example: '4d91801f-0d0f-4078-9b70-7f68f7531c8a',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the review was created.',
+      example: '2026-06-22T17:00:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Created by identifier. Null for anonymous public responses.',
+      example: 'student@example.com',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the review was last updated.',
+      example: '2026-06-22T17:00:00',
+      readOnly: true,
+    },
+    updated_by: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Updated by identifier. Null for anonymous public responses.',
+      example: 'student@example.com',
+      readOnly: true,
     },
   },
 } as const;
@@ -10739,9 +10776,7 @@ export const ApiResponseClassQuizScheduleSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -10877,9 +10912,7 @@ export const ApiResponseClassAssignmentScheduleSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -10907,9 +10940,7 @@ export const ApiResponseClassMarketplaceJobAssignmentResponseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -10931,7 +10962,7 @@ export const ClassMarketplaceJobApplicationRequestSchema = {
   description: 'Application submitted by an instructor against a marketplace class job',
   properties: {
     application_note: {
-      type: 'string',
+      type: ['string', 'null'],
       description: 'Optional note to support the instructor application.',
       maxLength: 2000,
       minLength: 0,
@@ -10951,9 +10982,7 @@ export const ApiResponseClassMarketplaceJobApplicationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -11092,9 +11121,7 @@ export const ApiResponseBookingResponseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -11227,9 +11254,7 @@ export const ApiResponseBookingPaymentSessionSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -11270,6 +11295,7 @@ export const BookingPaymentUpdateRequestSchema = {
     payment_reference: {
       type: 'string',
       description: 'Payment reference provided by the payment engine',
+      minLength: 1,
     },
     payment_status: {
       $ref: '#/components/schemas/PaymentStatusEnum',
@@ -11295,9 +11321,7 @@ export const ApiResponseAssignmentSubmissionSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -11417,7 +11441,7 @@ export const AssignmentSubmissionSchema = {
       example: '2024-04-12T16:45:00',
     },
     graded_by_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description: '**[OPTIONAL]** Reference to the instructor UUID who graded this submission.',
       example: 'i1n2s3t4-5r6u-7c8t-9o10-abcdefghijkl',
@@ -11468,7 +11492,7 @@ export const AssignmentSubmissionSchema = {
     grade_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
+      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
     submission_status_display: {
@@ -11481,7 +11505,7 @@ export const AssignmentSubmissionSchema = {
     file_count_display: {
       type: 'string',
       description: '**[READ-ONLY]** Summary of files attached to this submission.',
-      example: 2,
+      example: '2 files attached',
       readOnly: true,
     },
   },
@@ -11535,9 +11559,7 @@ export const ApiResponseAssignmentSubmissionAttachmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -11644,9 +11666,7 @@ export const ApiResponseAssignmentAttachmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -11794,6 +11814,7 @@ export const AdminCreateUserRequestDTOSchema = {
     },
     email: {
       type: 'string',
+      format: 'email',
       description: 'Email address of the admin user',
       example: 'jane.doe@example.com',
       maxLength: 150,
@@ -11836,6 +11857,7 @@ export const OrganisationUserCreateRequestDTOSchema = {
     },
     email: {
       type: 'string',
+      format: 'email',
       description: 'Email address of the user',
       example: 'jane.doe@example.com',
       maxLength: 150,
@@ -11896,7 +11918,7 @@ export const CurrencyCreateRequestSchema = {
     decimal_places: {
       type: 'integer',
       format: 'int32',
-      default: '2',
+      default: 2,
       description: 'Number of fractional decimal places',
       example: 2,
       maximum: 6,
@@ -11904,12 +11926,12 @@ export const CurrencyCreateRequestSchema = {
     },
     active: {
       type: 'boolean',
-      default: 'true',
+      default: true,
       description: 'Whether the currency is active immediately',
     },
     default_currency: {
       type: 'boolean',
-      default: 'false',
+      default: false,
       description: 'Whether to set this currency as the platform default',
     },
   },
@@ -11945,6 +11967,7 @@ export const UpdateCartRequestSchema = {
   properties: {
     email: {
       type: 'string',
+      format: 'email',
       description: 'Email address of the customer',
       example: 'learner@example.com',
     },
@@ -12000,9 +12023,7 @@ export const ApiResponsePagedDTOWalletTransactionSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12169,9 +12190,7 @@ export const ApiResponsePagedDTOUserSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12205,9 +12224,7 @@ export const ApiResponsePagedDTOTrainingBranchSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12244,9 +12261,7 @@ export const ApiResponseListStudentScheduleSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12353,7 +12368,7 @@ export const StudentScheduleSchema = {
       $ref: '#/components/schemas/EnrollmentStatusEnum',
     },
     attendance_marked_at: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when attendance was marked (if applicable).',
       example: '2024-09-15T09:15:00',
@@ -12366,16 +12381,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
-      readOnly: true,
-    },
     is_upcoming: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this class is upcoming.',
       example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -12396,9 +12411,7 @@ export const ApiResponseListScheduledInstanceSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12414,9 +12427,7 @@ export const ApiResponsePagedDTOSystemRuleResponseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12450,9 +12461,7 @@ export const ApiResponsePagedDTOStudentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12486,9 +12495,7 @@ export const ApiResponsePagedDTOBookingResponseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12533,9 +12540,7 @@ export const PageSchema = {
     },
     content: {
       type: 'array',
-      items: {
-        type: 'object',
-      },
+      items: {},
     },
     number: {
       type: 'integer',
@@ -12590,10 +12595,10 @@ export const SortObjectSchema = {
     empty: {
       type: 'boolean',
     },
-    sorted: {
+    unsorted: {
       type: 'boolean',
     },
-    unsorted: {
+    sorted: {
       type: 'boolean',
     },
   },
@@ -12611,9 +12616,7 @@ export const ApiResponsePagedDTOAssessmentRubricSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12647,9 +12650,7 @@ export const ApiResponseMatrixValidationResultSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12695,9 +12696,7 @@ export const ApiResponsePagedDTORubricScoringLevelSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12731,9 +12730,7 @@ export const ApiResponseMatrixStatisticsSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12745,16 +12742,12 @@ export const ApiResponseMapStringObjectSchema = {
     },
     data: {
       type: 'object',
-      additionalProperties: {
-        type: 'object',
-      },
+      additionalProperties: {},
     },
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12770,9 +12763,7 @@ export const ApiResponsePagedDTORubricCriteriaSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12806,9 +12797,7 @@ export const ApiResponsePagedDTORubricScoringSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12846,9 +12835,7 @@ export const ApiResponseMapStringLongSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -12864,9 +12851,7 @@ export const ApiResponseRevenueDashboardDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13012,9 +12997,7 @@ export const ApiResponseRevenueAnalyticsOverviewDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13062,9 +13045,7 @@ export const ApiResponsePagedDTORevenueSaleLineItemDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13183,9 +13164,7 @@ export const ApiResponseListRevenueAmountDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13201,9 +13180,7 @@ export const ApiResponsePagedDTORevenuePaymentDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13276,9 +13253,7 @@ export const ApiResponsePagedDTOQuizSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13312,8 +13287,126 @@ export const ApiResponseBigDecimalSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
+    error: {},
+  },
+} as const;
+
+export const ApiResponseStudentQuizSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/StudentQuiz',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const StudentQuizSchema = {
+  type: 'object',
+  description: 'Student-safe quiz payload without configured answer keys',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    scope: {
+      $ref: '#/components/schemas/ScopeEnum2',
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    title: {
+      type: 'string',
+    },
+    description: {
+      type: 'string',
+    },
+    instructions: {
+      type: 'string',
+    },
+    time_limit_minutes: {
+      type: 'integer',
+      format: 'int32',
+    },
+    attempts_allowed: {
+      type: 'integer',
+      format: 'int32',
+    },
+    passing_score: {
+      type: 'number',
+    },
+    questions: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/StudentQuizQuestion',
+      },
+    },
+  },
+} as const;
+
+export const StudentQuizQuestionSchema = {
+  type: 'object',
+  description: 'Student-safe quiz question payload',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    quiz_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    question_text: {
+      type: 'string',
+    },
+    question_type: {
+      $ref: '#/components/schemas/QuestionTypeEnum2',
+    },
+    points: {
+      type: 'number',
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
+    },
+    options: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/StudentQuizQuestionOption',
+      },
+    },
+  },
+} as const;
+
+export const StudentQuizQuestionOptionSchema = {
+  type: 'object',
+  description: 'Student-safe quiz option payload without configured correctness',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    question_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    option_text: {
+      type: 'string',
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
     },
   },
 } as const;
@@ -13333,9 +13426,7 @@ export const ApiResponseListQuizQuestionSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13351,9 +13442,7 @@ export const ApiResponsePagedDTOQuizQuestionOptionSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13387,9 +13476,7 @@ export const ApiResponsePagedDTOQuizAttemptSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13474,7 +13561,7 @@ export const QuizAttemptSchema = {
       example: '2024-04-10T14:15:00',
     },
     submitted_at: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date-time',
       description: '**[OPTIONAL]** Timestamp when the student submitted the quiz attempt.',
       example: '2024-04-10T15:30:00',
@@ -13554,13 +13641,13 @@ export const QuizAttemptSchema = {
     grade_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
+      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: 1,
+      example: '1 hour 15 minutes',
       readOnly: true,
     },
     attempt_category: {
@@ -13579,6 +13666,153 @@ export const QuizAttemptSchema = {
   required: ['enrollment_uuid', 'quiz_uuid', 'status'],
 } as const;
 
+export const ApiResponseStudentQuizReviewSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/StudentQuizReview',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const OptionReviewDTOSchema = {
+  type: 'object',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    question_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    option_text: {
+      type: 'string',
+    },
+    is_correct: {
+      type: 'boolean',
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
+    },
+  },
+} as const;
+
+export const QuestionReviewDTOSchema = {
+  type: 'object',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    quiz_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    question_text: {
+      type: 'string',
+    },
+    question_type: {
+      $ref: '#/components/schemas/QuestionTypeEnum2',
+    },
+    points: {
+      type: 'number',
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
+    },
+    response: {
+      $ref: '#/components/schemas/ResponseReviewDTO',
+    },
+    options: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OptionReviewDTO',
+      },
+    },
+  },
+} as const;
+
+export const ResponseReviewDTOSchema = {
+  type: 'object',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    attempt_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    question_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    selected_option_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    text_response: {
+      type: 'string',
+    },
+    points_earned: {
+      type: 'number',
+    },
+    is_correct: {
+      type: 'boolean',
+    },
+  },
+} as const;
+
+export const StudentQuizReviewSchema = {
+  type: 'object',
+  description: 'Post-grading student quiz review with submitted answers and correct answers',
+  properties: {
+    quiz_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    attempt_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum16',
+    },
+    score: {
+      type: 'number',
+    },
+    max_score: {
+      type: 'number',
+    },
+    percentage: {
+      type: 'number',
+    },
+    is_passed: {
+      type: 'boolean',
+    },
+    questions: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/QuestionReviewDTO',
+      },
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOQuizQuestionSchema = {
   type: 'object',
   properties: {
@@ -13591,9 +13825,7 @@ export const ApiResponsePagedDTOQuizQuestionSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13627,9 +13859,7 @@ export const ApiResponsePagedDTOTrainingProgramSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13663,9 +13893,7 @@ export const ApiResponsePagedDTOProgramTrainingApplicationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13692,9 +13920,7 @@ export const PagedDTOSchema = {
   properties: {
     content: {
       type: 'array',
-      items: {
-        type: 'object',
-      },
+      items: {},
     },
     metadata: {
       $ref: '#/components/schemas/PageMetadata',
@@ -13721,7 +13947,7 @@ export const ProgramRatingSummarySchema = {
       example: '640d0a57-76cc-46f2-ad46-72f5635d973a',
     },
     average_rating: {
-      type: 'number',
+      type: ['number', 'null'],
       format: 'double',
       description:
         'Average overall rating across all program reviews (1-5). Null when there are no reviews.',
@@ -13748,9 +13974,7 @@ export const ApiResponsePagedDTOProgramRequirementSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13784,9 +14008,7 @@ export const ApiResponsePagedDTOProgramEnrollmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13859,14 +14081,14 @@ export const ProgramEnrollmentSchema = {
       example: '2024-04-01T09:00:00',
     },
     completion_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date-time',
       description:
         '**[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.',
       example: '2024-06-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum16',
+      $ref: '#/components/schemas/StatusEnum17',
     },
     progress_percentage: {
       type: 'number',
@@ -13918,23 +14140,23 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
       example: 'Completed Program Enrollment',
       readOnly: true,
     },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
+      example: '100.00% Complete',
+      readOnly: true,
+    },
     enrollment_duration: {
       type: 'string',
       description:
         '**[READ-ONLY]** Duration of the enrollment from start to completion or current date.',
-      example: 90,
+      example: '90 days',
       readOnly: true,
     },
     status_summary: {
@@ -13963,9 +14185,7 @@ export const ApiResponseListCourseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -13982,9 +14202,7 @@ export const ApiResponseDoubleSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14000,9 +14218,7 @@ export const ApiResponsePagedDTOCertificateSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14036,9 +14252,7 @@ export const ApiResponsePagedDTOProgramCourseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14072,9 +14286,7 @@ export const ApiResponsePagedDTOOrganisationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14111,9 +14323,7 @@ export const ApiResponseListUserSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14129,9 +14339,7 @@ export const ApiResponsePagedDTONotificationDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14165,9 +14373,7 @@ export const ApiResponseNotificationCountsDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14197,9 +14403,7 @@ export const ApiResponsePagedDTOInstructorSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14233,9 +14437,7 @@ export const ApiResponsePagedDTOInstructorSkillSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14272,9 +14474,7 @@ export const ApiResponseListInstructorReviewSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14290,9 +14490,7 @@ export const ApiResponseInstructorRatingSummarySchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14312,7 +14510,7 @@ export const InstructorRatingSummarySchema = {
       example: 'inst-1234-5678-90ab-cdef12345678',
     },
     average_rating: {
-      type: 'number',
+      type: ['number', 'null'],
       format: 'double',
       description:
         'Average overall rating across all reviews (1-5). Null when there are no reviews.',
@@ -14339,9 +14537,7 @@ export const ApiResponsePagedDTOInstructorProfessionalMembershipSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14375,9 +14571,7 @@ export const ApiResponsePagedDTOInstructorExperienceSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14414,9 +14608,7 @@ export const ApiResponseListInstructorEducationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14435,9 +14627,7 @@ export const ApiResponseListInstructorDocumentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14456,9 +14646,7 @@ export const ApiResponseListInstructorCalendarEntrySchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14533,9 +14721,7 @@ export const ApiResponsePagedDTOInstructorEducationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14569,9 +14755,7 @@ export const ApiResponsePagedDTOInstructorDocumentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14693,9 +14877,7 @@ export const ApiResponseListGuardianStudentSummaryDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14740,9 +14922,7 @@ export const ApiResponseEnrollmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14758,9 +14938,7 @@ export const ApiResponsePagedDTOEnrollmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14794,9 +14972,7 @@ export const ApiResponseStudentEnrollmentOverviewSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14944,9 +15120,7 @@ export const ApiResponsePagedDTOStudentCourseEnrollmentSummarySchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14962,9 +15136,7 @@ export const ApiResponsePagedDTOStudentClassEnrollmentSummarySchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -14981,9 +15153,7 @@ export const ApiResponseLongSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15002,9 +15172,7 @@ export const ApiResponseListDocumentTypeOptionSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15061,9 +15229,7 @@ export const ApiResponsePagedDTOCurrencySchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15097,9 +15263,7 @@ export const ApiResponsePagedDTOCourseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15136,9 +15300,7 @@ export const ApiResponseListContentStatusSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15154,9 +15316,7 @@ export const ApiResponsePagedDTOCourseTrainingRequirementSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15190,9 +15350,7 @@ export const ApiResponsePagedDTOCourseTrainingApplicationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15226,9 +15384,7 @@ export const ApiResponsePagedDTOCourseRubricAssociationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15265,9 +15421,7 @@ export const ApiResponseListCourseReviewSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15283,9 +15437,7 @@ export const ApiResponsePagedDTOCourseRequirementSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15319,9 +15471,7 @@ export const ApiResponsePagedDTOLessonSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15355,9 +15505,7 @@ export const ApiResponsePagedDTOLessonPracticeActivitySchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15394,9 +15542,7 @@ export const ApiResponseListLessonContentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15412,9 +15558,7 @@ export const ApiResponseCourseGradeBookSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15510,7 +15654,7 @@ export const CourseAssessmentScoreSchema = {
       example: '2024-04-15T14:30:00',
     },
     graded_by_uuid: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'uuid',
       description: '**[OPTIONAL]** Reference to the instructor UUID who graded this assessment.',
       example: 'i1n2s3t4-5r6u-7c8t-9o10-abcdefghijkl',
@@ -15564,7 +15708,7 @@ export const CourseAssessmentScoreSchema = {
     grade_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 87.5,
+      example: '87.50 / 100.00 (87.50%)',
       readOnly: true,
     },
     score_category: {
@@ -15646,9 +15790,7 @@ export const ApiResponsePagedDTOCourseEnrollmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15702,14 +15844,14 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-01T09:00:00',
     },
     completion_date: {
-      type: 'string',
+      type: ['string', 'null'],
       format: 'date-time',
       description:
         '**[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.',
       example: '2024-04-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum16',
+      $ref: '#/components/schemas/StatusEnum17',
     },
     progress_percentage: {
       type: 'number',
@@ -15761,23 +15903,23 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
       example: 'Completed Enrollment',
       readOnly: true,
     },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
+      example: '100.00% Complete',
+      readOnly: true,
+    },
     enrollment_duration: {
       type: 'string',
       description:
         '**[READ-ONLY]** Duration of the enrollment from start to completion or current date.',
-      example: 29,
+      example: '29 days',
       readOnly: true,
     },
     status_summary: {
@@ -15824,9 +15966,7 @@ export const ApiResponseListCourseCategoryMappingSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15936,9 +16076,7 @@ export const ApiResponsePagedDTOCourseAssessmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15975,9 +16113,7 @@ export const ApiResponseListCourseAssessmentLineItemSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -15993,9 +16129,7 @@ export const ApiResponsePagedDTOCourseCreatorSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16029,9 +16163,7 @@ export const ApiResponsePagedDTOCourseCreatorSkillSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16065,9 +16197,7 @@ export const ApiResponsePagedDTOCourseCreatorProfessionalMembershipSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16101,9 +16231,7 @@ export const ApiResponsePagedDTOCourseCreatorExperienceSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16137,9 +16265,7 @@ export const ApiResponsePagedDTOCourseCreatorEducationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16176,9 +16302,7 @@ export const ApiResponseListCourseCreatorDocumentDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16194,9 +16318,7 @@ export const ApiResponsePagedDTOCourseCreatorCertificationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16230,9 +16352,7 @@ export const ApiResponsePagedDTOGradingLevelSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16269,9 +16389,7 @@ export const ApiResponseListDifficultyLevelSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16287,9 +16405,7 @@ export const ApiResponsePagedDTOContentTypeSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16326,9 +16442,7 @@ export const ApiResponseListContentTypeSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16344,9 +16458,7 @@ export const ApiResponsePagedDTOCategorySchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16383,9 +16495,7 @@ export const ApiResponseListCategorySchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16404,9 +16514,7 @@ export const ApiResponseListCommerceCatalogueItemSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16422,9 +16530,7 @@ export const ApiResponsePagedDTOCommerceCatalogueItemSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16458,9 +16564,7 @@ export const ApiResponsePagedDTOClassDefinitionResponseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16494,9 +16598,7 @@ export const ApiResponsePagedDTOClassSchedulingConflictSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16530,9 +16632,7 @@ export const ApiResponsePagedDTOScheduledInstanceSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16554,6 +16654,87 @@ export const PagedDTOScheduledInstanceSchema = {
   },
 } as const;
 
+export const ApiResponsePagedDTOClassReviewSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOClassReview',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOClassReviewSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassReview',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseClassRatingSummarySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassRatingSummary',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassRatingSummarySchema = {
+  type: 'object',
+  description: 'Aggregate review metrics for a class.',
+  example: {
+    class_definition_uuid: '640d0a57-76cc-46f2-ad46-72f5635d973a',
+    average_rating: 4.7,
+    review_count: 12,
+  },
+  properties: {
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'UUID of the class definition.',
+      example: '640d0a57-76cc-46f2-ad46-72f5635d973a',
+    },
+    average_rating: {
+      type: ['number', 'null'],
+      format: 'double',
+      description:
+        'Average overall rating across all class reviews (1-5). Null when there are no reviews.',
+      example: 4.7,
+    },
+    review_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Total number of reviews for this class.',
+      example: 12,
+    },
+  },
+} as const;
+
 export const ApiResponseListClassQuizScheduleSchema = {
   type: 'object',
   properties: {
@@ -16569,9 +16750,7 @@ export const ApiResponseListClassQuizScheduleSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16590,9 +16769,7 @@ export const ApiResponseListClassAssignmentScheduleSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16611,9 +16788,7 @@ export const ApiResponseListClassDefinitionResponseSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16629,9 +16804,7 @@ export const ApiResponsePagedDTOClassMarketplaceJobSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16665,9 +16838,7 @@ export const ApiResponsePagedDTOClassMarketplaceJobApplicationSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16701,9 +16872,7 @@ export const ApiResponsePagedDTOCertificateTemplateSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16740,9 +16909,7 @@ export const ApiResponseListCertificateSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16758,9 +16925,7 @@ export const ApiResponsePagedDTOAssignmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16797,9 +16962,7 @@ export const ApiResponseListAssignmentSubmissionSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16818,9 +16981,7 @@ export const ApiResponseListAssignmentSubmissionAttachmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16839,9 +17000,7 @@ export const ApiResponseListAssignmentAttachmentSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16857,9 +17016,7 @@ export const ApiResponsePagedDTOAssignmentSubmissionSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -16896,9 +17053,7 @@ export const ApiResponseListDomainDTOSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -17014,9 +17169,7 @@ export const ApiResponseAdminDashboardStatsSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -17405,9 +17558,7 @@ export const ApiResponsePagedDTOAdminActivityEventSchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -17444,9 +17595,7 @@ export const ApiResponseListCurrencySchema = {
     message: {
       type: 'string',
     },
-    error: {
-      type: 'object',
-    },
+    error: {},
   },
 } as const;
 
@@ -17574,7 +17723,7 @@ export const SchemaEnum6Schema = {
 } as const;
 
 export const GenderEnumSchema = {
-  type: 'string',
+  type: ['string', 'null'],
   description:
     "**[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.",
   enum: ['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'],
@@ -17999,6 +18148,7 @@ export const PaymentStatusEnumSchema = {
   type: 'string',
   description: 'Payment status reported by the engine',
   enum: ['succeeded', 'failed'],
+  minLength: 1,
   pattern: '^(succeeded|failed)$',
 } as const;
 
@@ -18014,6 +18164,7 @@ export const AssignmentTypeEnumSchema = {
   description: 'Type of assignment - global or organization-specific',
   enum: ['global', 'organization'],
   example: 'global',
+  minLength: 1,
 } as const;
 
 export const DomainNameEnumSchema = {
@@ -18021,6 +18172,7 @@ export const DomainNameEnumSchema = {
   description: 'Domain/role to assign within the organisation',
   enum: ['student', 'instructor', 'admin', 'organisation_user', 'course_creator'],
   example: 'organisation_user',
+  minLength: 1,
 } as const;
 
 export const TransactionTypeEnumSchema = {
@@ -18047,6 +18199,11 @@ export const EnrollmentStatusEnumSchema = {
   readOnly: true,
 } as const;
 
+export const QuestionTypeEnum2Schema = {
+  type: 'string',
+  enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
+} as const;
+
 export const StatusEnum15Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the quiz attempt.',
@@ -18055,6 +18212,11 @@ export const StatusEnum15Schema = {
 } as const;
 
 export const StatusEnum16Schema = {
+  type: 'string',
+  enum: ['in_progress', 'submitted', 'graded'],
+} as const;
+
+export const StatusEnum17Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -18069,6 +18231,510 @@ export const EntryTypeEnumSchema = {
 } as const;
 
 export const AvailabilityTypeEnumSchema = {
+  type: 'string',
+  description: 'Availability type when the entry is derived from availability patterns',
+  enum: ['daily', 'weekly', 'monthly', 'custom'],
+  example: 'WEEKLY',
+} as const;
+
+export const JsonNodeWritableSchema = {} as const;
+
+export const AfricanPhoneNumberWritableSchema = {
+  format: 'phone',
+  description: 'Valid African phone number in international or local format',
+  example: '+254712345678',
+  pattern: '^\\+?[1-9]\\d{7,14}$',
+} as const;
+
+export const KenyanPhoneNumberWritableSchema = {
+  format: 'phone',
+  description: 'Valid Kenyan mobile phone number (Safaricom, Airtel formats)',
+  example: '+254712345678',
+  pattern: '^(\\+254|0)?[17]\\d{8}$',
+} as const;
+
+export const NigerianPhoneNumberWritableSchema = {
+  format: 'phone',
+  description: 'Valid Nigerian mobile phone number (MTN, Glo, Airtel, 9mobile formats)',
+  example: '+2348012345678',
+  pattern: '^(\\+234|0)?[789]\\d{9}$',
+} as const;
+
+export const EastAfricanPhoneNumberWritableSchema = {
+  format: 'phone',
+  description:
+    'Valid East African phone number (Kenya, Uganda, Tanzania, Rwanda, Burundi, South Sudan)',
+  example: '+254712345678',
+  pattern: '^(\\+25[0-6]|0)?[1-9]\\d{7,9}$',
+} as const;
+
+export const WestAfricanPhoneNumberWritableSchema = {
+  format: 'phone',
+  description: 'Valid West African phone number (Nigeria, Ghana, Senegal, Mali, etc.)',
+  example: '+2348012345678',
+  pattern: '^(\\+2[2-3][0-9]|0)?[1-9]\\d{6,9}$',
+} as const;
+
+export const SouthernAfricanPhoneNumberWritableSchema = {
+  format: 'phone',
+  description:
+    'Valid Southern African phone number (South Africa, Zimbabwe, Zambia, Botswana, etc.)',
+  example: '+27821234567',
+  pattern: '^(\\+2[67]\\d|0)?[1-9]\\d{6,9}$',
+} as const;
+
+export const InternationalPhoneNumberWritableSchema = {
+  format: 'phone',
+  description: 'Valid international phone number in E.164 format',
+  example: '+1234567890',
+  pattern: '^\\+?[1-9]\\d{7,14}$',
+} as const;
+
+export const ValidUrlWritableSchema = {
+  format: 'uri',
+  description: 'A valid URL with HTTP or HTTPS protocol',
+  example: 'https://example.com',
+  pattern: '^https?://[^\\s/$.?#].[^\\s]*$',
+} as const;
+
+export const WebsiteUrlWritableSchema = {
+  format: 'uri',
+  description: 'A valid website URL for personal or business websites',
+  example: 'https://sarafrika.com',
+  pattern: '^https?://[^\\s/$.?#].[^\\s]*$',
+} as const;
+
+export const ApiUrlWritableSchema = {
+  format: 'uri',
+  description: 'A secure HTTPS URL for API endpoints',
+  example: 'https://api.elimika.sarafrika.com',
+  pattern: '^https://[^\\s/$.?#].[^\\s]*$',
+} as const;
+
+export const ImageUrlWritableSchema = {
+  format: 'uri',
+  description: 'A valid URL pointing to an image file',
+  example: 'https://images.sarafrika.com/logo.png',
+  pattern: '^https?://[^\\s/$.?#].[^\\s]*\\.(jpg|jpeg|png|gif|webp|svg)$',
+} as const;
+
+export const DocumentUrlWritableSchema = {
+  format: 'uri',
+  description: 'A valid URL pointing to a document file',
+  example: 'https://docs.sarafrika.com/manual.pdf',
+  pattern: '^https?://[^\\s/$.?#].[^\\s]*\\.(pdf|doc|docx|xls|xlsx|ppt|pptx)$',
+} as const;
+
+export const SocialMediaUrlWritableSchema = {
+  format: 'uri',
+  description: 'A valid social media profile URL',
+  example: 'https://linkedin.com/company/sarafrika',
+  pattern: '^https?://(www\\.)?(facebook|twitter|instagram|linkedin|youtube|tiktok)\\.com/[^\\s]*$',
+} as const;
+
+export const SchemaEnumWritableSchema = {
+  type: 'string',
+  enum: ['PLATFORM_FEE', 'AGE_GATE', 'ENROLLMENT_GUARD', 'CUSTOM'],
+} as const;
+
+export const SchemaEnum2WritableSchema = {
+  type: 'string',
+  enum: ['DRAFT', 'ACTIVE', 'INACTIVE'],
+} as const;
+
+export const SchemaEnum3WritableSchema = {
+  type: 'string',
+  enum: ['approve', 'reject', 'revoke'],
+} as const;
+
+export const SchemaEnum4WritableSchema = {
+  type: 'string',
+  enum: ['draft', 'in_review', 'published', 'archived'],
+} as const;
+
+export const SchemaEnum5WritableSchema = {
+  type: 'string',
+  enum: ['student', 'instructor', 'admin', 'parent', 'organisation_user', 'course_creator'],
+} as const;
+
+export const SchemaEnum6WritableSchema = {
+  type: 'string',
+  enum: ['admin', 'organisation_user'],
+} as const;
+
+export const GenderEnumWritableSchema = {
+  type: ['string', 'null'],
+  description:
+    "**[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.",
+  enum: ['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'],
+  example: 'FEMALE',
+} as const;
+
+export const ScopeEnumWritableSchema = {
+  type: 'string',
+  default: 'GLOBAL',
+  description: 'Scope the rule applies to',
+  enum: ['GLOBAL', 'TENANT', 'REGION', 'DEMOGRAPHIC', 'SEGMENT'],
+} as const;
+
+export const ValueTypeEnumWritableSchema = {
+  type: 'string',
+  default: 'JSON',
+  description: 'Payload interpretation hint',
+  enum: ['JSON', 'DECIMAL', 'INTEGER', 'BOOLEAN', 'STRING'],
+} as const;
+
+export const StatusEnumWritableSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Rubric publication status in the content workflow.',
+  enum: ['DRAFT', 'IN_REVIEW', 'PUBLISHED', 'ARCHIVED'],
+  example: 'PUBLISHED',
+} as const;
+
+export const WeightUnitEnumWritableSchema = {
+  type: 'string',
+  description: '**[OPTIONAL]** Unit of measurement for weight calculations.',
+  enum: ['percentage', 'points', 'ratio'],
+  example: 'percentage',
+} as const;
+
+export const ScopeEnum2WritableSchema = {
+  type: 'string',
+  description:
+    '**[OPTIONAL]** Scope of the quiz definition. Course templates act as blueprints, while class clones belong to a single class.',
+  enum: ['COURSE_TEMPLATE', 'CLASS_CLONE'],
+  example: 'COURSE_TEMPLATE',
+} as const;
+
+export const QuestionTypeEnumWritableSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Type of question determining the answer format and validation.',
+  enum: ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY'],
+  example: 'MULTIPLE_CHOICE',
+} as const;
+
+export const RequirementTypeEnumWritableSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Type of requirement classification for this program element.',
+  enum: ['STUDENT', 'TRAINING_CENTER', 'INSTRUCTOR'],
+  example: 'STUDENT',
+} as const;
+
+export const ProficiencyLevelEnumWritableSchema = {
+  type: 'string',
+  description:
+    "**[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.",
+  enum: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'],
+  example: 'EXPERT',
+} as const;
+
+export const RequirementTypeEnum2WritableSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Resource category.',
+  enum: ['material', 'equipment', 'facility', 'other'],
+  example: 'equipment',
+} as const;
+
+export const ProvidedByEnumWritableSchema = {
+  type: 'string',
+  description: '**[OPTIONAL]** Party responsible for providing this requirement.',
+  enum: ['course_creator', 'instructor', 'organisation', 'student'],
+  example: 'organisation',
+} as const;
+
+export const ActivityTypeEnumWritableSchema = {
+  type: 'string',
+  description: '**[OPTIONAL]** Practice activity format.',
+  enum: ['EXERCISE', 'DISCUSSION', 'CASE_STUDY', 'ROLE_PLAY', 'REFLECTION', 'HANDS_ON'],
+  example: 'DISCUSSION',
+} as const;
+
+export const GroupingEnumWritableSchema = {
+  type: 'string',
+  description: '**[OPTIONAL]** Student grouping mode for the activity.',
+  enum: ['INDIVIDUAL', 'PAIR', 'SMALL_GROUP', 'WHOLE_CLASS'],
+  example: 'PAIR',
+} as const;
+
+export const AggregationStrategyEnumWritableSchema = {
+  type: 'string',
+  description:
+    '**[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.',
+  enum: ['points_sum', 'weighted_average'],
+  example: 'weighted_average',
+} as const;
+
+export const ItemTypeEnumWritableSchema = {
+  type: 'string',
+  enum: [
+    'assignment',
+    'quiz',
+    'attendance',
+    'project',
+    'discussion',
+    'exam',
+    'practical',
+    'performance',
+    'participation',
+    'manual',
+  ],
+} as const;
+
+export const ProficiencyLevelEnum2WritableSchema = {
+  type: 'string',
+  enum: ['beginner', 'intermediate', 'advanced', 'expert'],
+} as const;
+
+export const ClassVisibilityEnumWritableSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Class visibility.',
+  enum: ['PUBLIC', 'PRIVATE'],
+} as const;
+
+export const SessionFormatEnumWritableSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Session format.',
+  enum: ['INDIVIDUAL', 'GROUP'],
+} as const;
+
+export const LocationTypeEnumWritableSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Delivery location type.',
+  enum: ['ONLINE', 'IN_PERSON', 'HYBRID'],
+} as const;
+
+export const RecurrenceTypeEnumWritableSchema = {
+  type: 'string',
+  description: 'Recurrence type to apply for the session template',
+  enum: ['DAILY', 'WEEKLY', 'MONTHLY'],
+  example: 'WEEKLY',
+} as const;
+
+export const ConflictResolutionEnumWritableSchema = {
+  type: 'string',
+  description: 'Conflict handling strategy: FAIL (default), SKIP, ROLLOVER',
+  enum: ['FAIL', 'SKIP', 'ROLLOVER'],
+  example: 'FAIL',
+} as const;
+
+export const TemplateTypeEnumWritableSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Type of certificate this template is designed for.',
+  enum: ['COURSE_COMPLETION', 'PARTICIPATION', 'ACHIEVEMENT', 'CUSTOM'],
+  example: 'COURSE_COMPLETION',
+} as const;
+
+export const SubmissionTypesEnumWritableSchema = {
+  type: 'array',
+  description: '**[OPTIONAL]** Array of accepted submission types for this assignment.',
+  enum: ['TEXT', 'DOCUMENT', 'IMAGE', 'AUDIO', 'VIDEO', 'URL'],
+  example: ['DOCUMENT', 'AUDIO', 'TEXT'],
+  items: {
+    type: 'string',
+  },
+} as const;
+
+export const StatusEnum6WritableSchema = {
+  type: 'string',
+  description: '**[OPTIONAL]** Current status of the scheduled instance.',
+  enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'],
+  example: 'SCHEDULED',
+} as const;
+
+export const ApplicantTypeEnumWritableSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Applicant type initiating the request.',
+  enum: ['instructor', 'organisation'],
+} as const;
+
+export const TypeEnumWritableSchema = {
+  type: 'string',
+  enum: [
+    'COURSE_ENROLLMENT_WELCOME',
+    'COURSE_COMPLETION_CERTIFICATE',
+    'LEARNING_MILESTONE_ACHIEVED',
+    'ASSIGNMENT_DUE_REMINDER',
+    'ASSIGNMENT_SUBMITTED_CONFIRMATION',
+    'ASSIGNMENT_GRADED',
+    'ASSIGNMENT_RETURNED_FOR_REVISION',
+    'ASSIGNMENT_DEADLINE_REMINDER',
+    'ASSESSMENT_COMPLETED',
+    'NEW_STUDENT_ENROLLMENT',
+    'NEW_ASSIGNMENT_SUBMISSION',
+    'CLASS_SCHEDULE_UPDATED',
+    'GRADING_REMINDER',
+    'COURSE_CONTENT_APPROVED',
+    'COURSE_CONTENT_REJECTED',
+    'PROGRAM_CONTENT_APPROVED',
+    'PROGRAM_CONTENT_REJECTED',
+    'COURSE_TRAINING_APPLICATION_SUBMITTED',
+    'COURSE_TRAINING_APPLICATION_APPROVED',
+    'COURSE_TRAINING_APPLICATION_REJECTED',
+    'COURSE_TRAINING_APPLICATION_REVOKED',
+    'PROGRAM_TRAINING_APPLICATION_SUBMITTED',
+    'PROGRAM_TRAINING_APPLICATION_APPROVED',
+    'PROGRAM_TRAINING_APPLICATION_REJECTED',
+    'PROGRAM_TRAINING_APPLICATION_REVOKED',
+    'CLASS_ENROLLMENT_CONFIRMED',
+    'COURSE_ENROLLMENT_MILESTONE',
+    'COURSE_ENROLLMENT_NOTICE',
+    'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE',
+    'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE',
+    'UPCOMING_CLASS_REMINDER',
+    'ACCOUNT_CREATED',
+    'PASSWORD_RESET_REQUEST',
+    'SECURITY_ALERT',
+    'ORDER_PAYMENT_RECEIPT',
+    'LEARNING_CERTIFICATE_ISSUED',
+    'PROFILE_DOCUMENT_VERIFIED',
+    'PROFILE_COMPLETION_REMINDER',
+    'WEEKLY_PROGRESS_SUMMARY',
+    'LEARNING_STREAK_ACHIEVEMENT',
+    'PEER_ACHIEVEMENT_CELEBRATION',
+  ],
+} as const;
+
+export const CategoryEnumWritableSchema = {
+  type: 'string',
+  enum: [
+    'LEARNING_PROGRESS',
+    'ASSIGNMENTS_GRADING',
+    'COURSE_MANAGEMENT',
+    'SOCIAL_LEARNING',
+    'SYSTEM_ADMIN',
+  ],
+} as const;
+
+export const PriorityEnumWritableSchema = {
+  type: 'string',
+  enum: ['LOW', 'NORMAL', 'HIGH', 'CRITICAL'],
+} as const;
+
+export const PresentationEnumWritableSchema = {
+  type: 'string',
+  enum: ['POPUP', 'INBOX'],
+} as const;
+
+export const StatusEnum8WritableSchema = {
+  type: 'string',
+  enum: ['UNREAD', 'READ', 'ARCHIVED'],
+} as const;
+
+export const RelationshipTypeEnumWritableSchema = {
+  type: 'string',
+  enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
+} as const;
+
+export const ShareScopeEnumWritableSchema = {
+  type: 'string',
+  enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
+} as const;
+
+export const StatusEnum9WritableSchema = {
+  type: 'string',
+  enum: ['PENDING', 'ACTIVE', 'REVOKED'],
+} as const;
+
+export const StatusEnum10WritableSchema = {
+  type: 'string',
+  description: '**[OPTIONAL]** Current enrollment and attendance status.',
+  enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
+  example: 'ENROLLED',
+} as const;
+
+export const ModeEnumWritableSchema = {
+  type: 'string',
+  description: 'How the platform fee was configured',
+  enum: ['PERCENTAGE', 'FLAT'],
+  example: 'PERCENTAGE',
+} as const;
+
+export const ReleaseStrategyEnumWritableSchema = {
+  type: 'string',
+  description:
+    '**[REQUIRED]** Strategy describing how this class schedule derives from the template.',
+  enum: ['INHERITED', 'CUSTOM', 'CLONE'],
+  example: 'CUSTOM',
+} as const;
+
+export const StatusEnum13WritableSchema = {
+  type: 'string',
+  description: 'Current status of the booking',
+  enum: [
+    'payment_required',
+    'confirmed',
+    'cancelled',
+    'payment_failed',
+    'expired',
+    'accepted',
+    'declined',
+    'accepted_confirmed',
+  ],
+} as const;
+
+export const PaymentStatusEnumWritableSchema = {
+  type: 'string',
+  description: 'Payment status reported by the engine',
+  enum: ['succeeded', 'failed'],
+  minLength: 1,
+  pattern: '^(succeeded|failed)$',
+} as const;
+
+export const StatusEnum14WritableSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
+  enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
+  example: 'GRADED',
+} as const;
+
+export const AssignmentTypeEnumWritableSchema = {
+  type: 'string',
+  description: 'Type of assignment - global or organization-specific',
+  enum: ['global', 'organization'],
+  example: 'global',
+  minLength: 1,
+} as const;
+
+export const DomainNameEnumWritableSchema = {
+  type: 'string',
+  description: 'Domain/role to assign within the organisation',
+  enum: ['student', 'instructor', 'admin', 'organisation_user', 'course_creator'],
+  example: 'organisation_user',
+  minLength: 1,
+} as const;
+
+export const QuestionTypeEnum2WritableSchema = {
+  type: 'string',
+  enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
+} as const;
+
+export const StatusEnum15WritableSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Current status of the quiz attempt.',
+  enum: ['IN_PROGRESS', 'SUBMITTED', 'GRADED'],
+  example: 'GRADED',
+} as const;
+
+export const StatusEnum16WritableSchema = {
+  type: 'string',
+  enum: ['in_progress', 'submitted', 'graded'],
+} as const;
+
+export const StatusEnum17WritableSchema = {
+  type: 'string',
+  description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
+  enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
+  example: 'COMPLETED',
+} as const;
+
+export const EntryTypeEnumWritableSchema = {
+  type: 'string',
+  description: 'Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE',
+  enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'],
+  example: 'SCHEDULED_INSTANCE',
+} as const;
+
+export const AvailabilityTypeEnumWritableSchema = {
   type: 'string',
   description: 'Availability type when the entry is derived from availability patterns',
   enum: ['daily', 'weekly', 'monthly', 'custom'],

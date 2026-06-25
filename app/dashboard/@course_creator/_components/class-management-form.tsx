@@ -31,7 +31,7 @@ import Spinner from '@/components/ui/spinner';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import {
-  createClassDefinitionMutation,
+  createClassDefinitionMultipartMutation as createClassDefinitionMutation,
   getAllActiveClassDefinitionsQueryKey,
   getAllCoursesOptions,
   scheduleClassMutation,
@@ -205,7 +205,10 @@ function ClassForm({
       );
     } else {
       createAssignment.mutate(
-        { body: payload as CreateClassDefinitionVariables['body'] },
+        {
+          body: payload as CreateClassDefinitionVariables['body'],
+          query: { formFields: {} },
+        },
         {
           onSuccess: (data: CreateClassDefinitionResult) => {
             qc.invalidateQueries({
@@ -1048,7 +1051,7 @@ function ClassDialog({
             initialValues={initialValues}
             className='px-6 pb-6'
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -1091,7 +1094,7 @@ function RecurrenceDialog({
             initialValues={initialValues}
             className='px-6 pb-6'
             recurrenceId={editingRecurrenceId}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -1141,7 +1144,7 @@ function ScheduleDialog({
             className='px-6 pb-6'
             scheduleId={editingScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -1193,7 +1196,7 @@ function TimetableScheduleDialog({
             className='px-6 pb-6'
             timetableScheduleId={timetableScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
             status={status}
           />
         </ScrollArea>

@@ -76,19 +76,29 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       },
       organisation: {
         verified: organisationVerified,
-        allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX, ADD_PROFILE_PREFIX, '/dashboard/settings'],
+        allowedPrefixes: [
+          ACCOUNT_PREFIX,
+          PROFILE_PREFIX,
+          ADD_PROFILE_PREFIX,
+          '/dashboard/settings',
+        ],
         fallback: `${ACCOUNT_PREFIX}/training-center`,
         title: 'Organisation verification pending',
         description:
-          'Review and submit your organisation information so your workspace can be approved.',
+          'Your organisation profile and validation documents are under admin review. Setup screens remain available while verified-only tools are locked.',
       },
       organisation_user: {
         verified: organisationVerified,
-        allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX, ADD_PROFILE_PREFIX, '/dashboard/settings'],
+        allowedPrefixes: [
+          ACCOUNT_PREFIX,
+          PROFILE_PREFIX,
+          ADD_PROFILE_PREFIX,
+          '/dashboard/settings',
+        ],
         fallback: `${ACCOUNT_PREFIX}/training-center`,
         title: 'Organisation verification pending',
         description:
-          'Review and submit your organisation information so your workspace can be approved.',
+          'Your organisation profile and validation documents are under admin review. Setup screens remain available while verified-only tools are locked.',
       },
     } as const;
 

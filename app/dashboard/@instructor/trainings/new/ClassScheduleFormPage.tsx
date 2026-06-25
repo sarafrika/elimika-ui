@@ -14,11 +14,11 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FormEvent } from 'react';
 import { toast } from 'sonner';
-import type { CreateClassDefinitionData } from '@/services/client/types.gen';
+import type { CreateClassDefinitionMultipartData } from '@/services/client/types.gen';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { cn } from '../../../../../lib/utils';
 import {
-  createClassDefinitionMutation,
+  createClassDefinitionMultipartMutation as createClassDefinitionMutation,
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
   updateClassDefinitionMutation,
@@ -105,7 +105,7 @@ export const ClassScheduleFormPage = ({
         .map(dayIndex => DAY_NAMES[dayIndex])
         .join(',');
 
-      const payload: CreateClassDefinitionData['body'] = {
+      const payload: CreateClassDefinitionMultipartData['body'] = {
         course_uuid: classDetails.course_uuid ?? undefined,
         program_uuid: classDetails.program_uuid ?? undefined,
         title: classDetails.title,
@@ -114,7 +114,7 @@ export const ClassScheduleFormPage = ({
         class_visibility: 'PUBLIC',
         session_format: 'GROUP',
         location_type:
-          classDetails.location_type as CreateClassDefinitionData['body']['location_type'],
+          classDetails.location_type as CreateClassDefinitionMultipartData['body']['location_type'],
         location_name: classDetails.location_name,
         location_latitude: -1.292066,
         location_longitude: 36.821945,
@@ -165,7 +165,7 @@ export const ClassScheduleFormPage = ({
         );
       } else {
         createClassDefinition.mutate(
-          { body: payload },
+          { body: payload, query: { formFields: {} } },
           {
             onSuccess: response => {
               const savedUuid = response?.data?.class_definition?.uuid;
