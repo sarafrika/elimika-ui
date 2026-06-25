@@ -1,14 +1,32 @@
 "use client";
 
-const locations = [
-  { name: "Nairobi, Kenya", sessions: 24, pct: 50 },
-  { name: "Online", sessions: 12, pct: 25 },
-  { name: "Mombasa, Kenya", sessions: 6, pct: 13 },
-  { name: "Kisumu, Kenya", sessions: 4, pct: 8 },
-  { name: "Other Locations", sessions: 2, pct: 4 },
-];
+import { EmptyState } from '@/components/ui/empty-state';
+import { useInstructorAnalyticsData } from './useInstructorAnalyticsData';
 
 export function TopLocations() {
+  const { locations, isLoading } = useInstructorAnalyticsData();
+
+  if (isLoading) {
+    return (
+      <div className="bg-card rounded-xl border border-border shadow-sm p-3 sm:p-4 h-full">
+        <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+          Loading location analytics...
+        </div>
+      </div>
+    );
+  }
+
+  if (locations.length === 0) {
+    return (
+      <EmptyState
+        icon={() => null}
+        title="No locations yet"
+        description="Your top locations will update once sessions are added."
+        variant="card"
+      />
+    );
+  }
+
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm p-3 sm:p-4 h-full">
       <div className="flex items-center justify-between mb-3 gap-2">
@@ -38,7 +56,7 @@ export function TopLocations() {
             <div className="w-full h-2 rounded-full bg-muted">
               <div
                 className="h-2 rounded-full bg-primary/90 transition-all duration-500"
-                style={{ width: `${pct * 2}%` }}
+                style={{ width: `${pct}%` }}
               />
             </div>
           </div>

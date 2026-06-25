@@ -31,7 +31,7 @@ function MetricCard({ label, value, change, positive, icon, iconBg }: MetricCard
             >
               {positive ? "▲" : "▼"} {change}
             </span>
-            <span className="text-xs text-muted-foreground truncate">vs Apr 1 – Apr 30</span>
+            {/* <span className="text-xs text-muted-foreground truncate">vs Apr 1 – Apr 30</span> */}
           </div>
         </div>
       </div>

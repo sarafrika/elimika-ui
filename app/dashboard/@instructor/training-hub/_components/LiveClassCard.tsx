@@ -126,9 +126,6 @@ export function LiveClassCard({
       });
   }, [allStudents, enrolledSet, filter, search]);
 
-
-
-
   const inviteStudents = useMemo(() => {
     const all = allStudents?.data?.content ?? [];
 

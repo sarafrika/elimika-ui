@@ -11,16 +11,16 @@ import {
   requiresPhysicalLocation,
   trimToUndefined,
 } from '@/lib/location-types';
+import type { CreateClassDefinitionData } from '@/services/client/types.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import type { CreateClassDefinitionData } from '@/services/client/types.gen';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
-  createClassDefinitionMutation,
+  createClassDefinitionMultipartMutation,
   getAllClassDefinitionsQueryKey,
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
@@ -34,8 +34,8 @@ import { ScheduleSection } from './ScheduleSection';
 import {
   buildUtcIsoDateTime,
   generateScheduleInstances,
-  ScheduleMode,
   ScheduledSessionInstance,
+  ScheduleMode,
 } from './schedule-utils';
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new';
@@ -330,7 +330,7 @@ const ClassBuilderPage = ({
   const courseDetail = combinedClass?.course;
   const courseLessons = combinedClass?.lessons;
 
-  const createClassDefinition = useMutation(createClassDefinitionMutation());
+  const createClassDefinition = useMutation(createClassDefinitionMultipartMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
   const { classes: instructorClasses = [] } = useInstructorClassesWithSchedules(instructor?.uuid);
 

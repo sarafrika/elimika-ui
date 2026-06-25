@@ -264,16 +264,18 @@ import {
   addItem,
   completeCart,
   getAllClassDefinitions,
-  createClassDefinition,
+  createClassDefinitionMultipart,
   uploadClassThumbnail,
   addSessionTemplate,
+  getClassReviews,
+  submitClassReview,
   uploadClassPromotionalVideo,
   getQuizSchedules,
   createQuizSchedule,
   getAssignmentSchedules,
   createAssignmentSchedule,
   getClassDefinitionsForProgram,
-  createClassDefinitionForProgram,
+  createClassDefinitionForProgramMultipart,
   listJobs,
   createJob,
   cancelJob,
@@ -365,8 +367,10 @@ import {
   listPayments,
   getRevenueDashboard1,
   getQuizTotalPoints,
+  getStudentQuizView,
   getQuestionDistribution,
   getQuizAttempts,
+  getStudentQuizReview,
   searchQuizzes,
   searchQuestions,
   searchAttempts,
@@ -457,6 +461,7 @@ import {
   resolveByCourseOrClass,
   getClassSchedulingConflicts,
   getClassSchedule,
+  getClassRatingSummary,
   getEnrollmentsForClass,
   getClassDefinitionsForOrganisation,
   getClassMedia,
@@ -1206,15 +1211,21 @@ import type {
   GetAllClassDefinitionsData,
   GetAllClassDefinitionsError,
   GetAllClassDefinitionsResponse,
-  CreateClassDefinitionData,
-  CreateClassDefinitionError,
-  CreateClassDefinitionResponse,
+  CreateClassDefinitionMultipartData,
+  CreateClassDefinitionMultipartError,
+  CreateClassDefinitionMultipartResponse,
   UploadClassThumbnailData,
   UploadClassThumbnailError,
   UploadClassThumbnailResponse,
   AddSessionTemplateData,
   AddSessionTemplateError,
   AddSessionTemplateResponse,
+  GetClassReviewsData,
+  GetClassReviewsError,
+  GetClassReviewsResponse,
+  SubmitClassReviewData,
+  SubmitClassReviewError,
+  SubmitClassReviewResponse,
   UploadClassPromotionalVideoData,
   UploadClassPromotionalVideoError,
   UploadClassPromotionalVideoResponse,
@@ -1227,9 +1238,9 @@ import type {
   CreateAssignmentScheduleError,
   CreateAssignmentScheduleResponse,
   GetClassDefinitionsForProgramData,
-  CreateClassDefinitionForProgramData,
-  CreateClassDefinitionForProgramError,
-  CreateClassDefinitionForProgramResponse,
+  CreateClassDefinitionForProgramMultipartData,
+  CreateClassDefinitionForProgramMultipartError,
+  CreateClassDefinitionForProgramMultipartResponse,
   ListJobsData,
   ListJobsError,
   ListJobsResponse,
@@ -1463,10 +1474,12 @@ import type {
   ListPaymentsResponse,
   GetRevenueDashboard1Data,
   GetQuizTotalPointsData,
+  GetStudentQuizViewData,
   GetQuestionDistributionData,
   GetQuizAttemptsData,
   GetQuizAttemptsError,
   GetQuizAttemptsResponse,
+  GetStudentQuizReviewData,
   SearchQuizzesData,
   SearchQuizzesError,
   SearchQuizzesResponse,
@@ -1665,6 +1678,7 @@ import type {
   GetClassScheduleData,
   GetClassScheduleError,
   GetClassScheduleResponse,
+  GetClassRatingSummaryData,
   GetEnrollmentsForClassData,
   GetClassDefinitionsForOrganisationData,
   GetClassMediaData,
@@ -12648,16 +12662,19 @@ export const getAllClassDefinitionsInfiniteOptions = (
   );
 };
 
-export const createClassDefinitionQueryKey = (options: Options<CreateClassDefinitionData>) =>
-  createQueryKey('createClassDefinition', options);
+export const createClassDefinitionMultipartQueryKey = (
+  options: Options<CreateClassDefinitionMultipartData>
+) => createQueryKey('createClassDefinitionMultipart', options);
 
 /**
  * Create a new class definition
  */
-export const createClassDefinitionOptions = (options: Options<CreateClassDefinitionData>) => {
+export const createClassDefinitionMultipartOptions = (
+  options: Options<CreateClassDefinitionMultipartData>
+) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await createClassDefinition({
+      const { data } = await createClassDefinitionMultipart({
         ...options,
         ...queryKey[0],
         signal,
@@ -12665,27 +12682,27 @@ export const createClassDefinitionOptions = (options: Options<CreateClassDefinit
       });
       return data;
     },
-    queryKey: createClassDefinitionQueryKey(options),
+    queryKey: createClassDefinitionMultipartQueryKey(options),
   });
 };
 
 /**
  * Create a new class definition
  */
-export const createClassDefinitionMutation = (
-  options?: Partial<Options<CreateClassDefinitionData>>
+export const createClassDefinitionMultipartMutation = (
+  options?: Partial<Options<CreateClassDefinitionMultipartData>>
 ): UseMutationOptions<
-  CreateClassDefinitionResponse,
-  CreateClassDefinitionError,
-  Options<CreateClassDefinitionData>
+  CreateClassDefinitionMultipartResponse,
+  CreateClassDefinitionMultipartError,
+  Options<CreateClassDefinitionMultipartData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateClassDefinitionResponse,
-    CreateClassDefinitionError,
-    Options<CreateClassDefinitionData>
+    CreateClassDefinitionMultipartResponse,
+    CreateClassDefinitionMultipartError,
+    Options<CreateClassDefinitionMultipartData>
   > = {
     mutationFn: async localOptions => {
-      const { data } = await createClassDefinition({
+      const { data } = await createClassDefinitionMultipart({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -12782,6 +12799,117 @@ export const addSessionTemplateMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await addSessionTemplate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getClassReviewsQueryKey = (options: Options<GetClassReviewsData>) =>
+  createQueryKey('getClassReviews', options);
+
+/**
+ * Get reviews for a class
+ */
+export const getClassReviewsOptions = (options: Options<GetClassReviewsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassReviews({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassReviewsQueryKey(options),
+  });
+};
+
+export const getClassReviewsInfiniteQueryKey = (
+  options: Options<GetClassReviewsData>
+): QueryKey<Options<GetClassReviewsData>> => createQueryKey('getClassReviews', options, true);
+
+/**
+ * Get reviews for a class
+ */
+export const getClassReviewsInfiniteOptions = (options: Options<GetClassReviewsData>) => {
+  return infiniteQueryOptions<
+    GetClassReviewsResponse,
+    GetClassReviewsError,
+    InfiniteData<GetClassReviewsResponse>,
+    QueryKey<Options<GetClassReviewsData>>,
+    number | Pick<QueryKey<Options<GetClassReviewsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetClassReviewsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getClassReviews({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getClassReviewsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const submitClassReviewQueryKey = (options: Options<SubmitClassReviewData>) =>
+  createQueryKey('submitClassReview', options);
+
+/**
+ * Submit or update a class review
+ */
+export const submitClassReviewOptions = (options: Options<SubmitClassReviewData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await submitClassReview({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: submitClassReviewQueryKey(options),
+  });
+};
+
+/**
+ * Submit or update a class review
+ */
+export const submitClassReviewMutation = (
+  options?: Partial<Options<SubmitClassReviewData>>
+): UseMutationOptions<
+  SubmitClassReviewResponse,
+  SubmitClassReviewError,
+  Options<SubmitClassReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubmitClassReviewResponse,
+    SubmitClassReviewError,
+    Options<SubmitClassReviewData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await submitClassReview({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -13005,19 +13133,19 @@ export const getClassDefinitionsForProgramOptions = (
   });
 };
 
-export const createClassDefinitionForProgramQueryKey = (
-  options: Options<CreateClassDefinitionForProgramData>
-) => createQueryKey('createClassDefinitionForProgram', options);
+export const createClassDefinitionForProgramMultipartQueryKey = (
+  options: Options<CreateClassDefinitionForProgramMultipartData>
+) => createQueryKey('createClassDefinitionForProgramMultipart', options);
 
 /**
  * Create a new class definition for a training program
  */
-export const createClassDefinitionForProgramOptions = (
-  options: Options<CreateClassDefinitionForProgramData>
+export const createClassDefinitionForProgramMultipartOptions = (
+  options: Options<CreateClassDefinitionForProgramMultipartData>
 ) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await createClassDefinitionForProgram({
+      const { data } = await createClassDefinitionForProgramMultipart({
         ...options,
         ...queryKey[0],
         signal,
@@ -13025,27 +13153,27 @@ export const createClassDefinitionForProgramOptions = (
       });
       return data;
     },
-    queryKey: createClassDefinitionForProgramQueryKey(options),
+    queryKey: createClassDefinitionForProgramMultipartQueryKey(options),
   });
 };
 
 /**
  * Create a new class definition for a training program
  */
-export const createClassDefinitionForProgramMutation = (
-  options?: Partial<Options<CreateClassDefinitionForProgramData>>
+export const createClassDefinitionForProgramMultipartMutation = (
+  options?: Partial<Options<CreateClassDefinitionForProgramMultipartData>>
 ): UseMutationOptions<
-  CreateClassDefinitionForProgramResponse,
-  CreateClassDefinitionForProgramError,
-  Options<CreateClassDefinitionForProgramData>
+  CreateClassDefinitionForProgramMultipartResponse,
+  CreateClassDefinitionForProgramMultipartError,
+  Options<CreateClassDefinitionForProgramMultipartData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateClassDefinitionForProgramResponse,
-    CreateClassDefinitionForProgramError,
-    Options<CreateClassDefinitionForProgramData>
+    CreateClassDefinitionForProgramMultipartResponse,
+    CreateClassDefinitionForProgramMultipartError,
+    Options<CreateClassDefinitionForProgramMultipartData>
   > = {
     mutationFn: async localOptions => {
-      const { data } = await createClassDefinitionForProgram({
+      const { data } = await createClassDefinitionForProgramMultipart({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -17189,6 +17317,28 @@ export const getQuizTotalPointsOptions = (options: Options<GetQuizTotalPointsDat
   });
 };
 
+export const getStudentQuizViewQueryKey = (options: Options<GetStudentQuizViewData>) =>
+  createQueryKey('getStudentQuizView', options);
+
+/**
+ * Get student-safe quiz view
+ * Retrieves a quiz payload for students without configured answer keys.
+ */
+export const getStudentQuizViewOptions = (options: Options<GetStudentQuizViewData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStudentQuizView({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStudentQuizViewQueryKey(options),
+  });
+};
+
 export const getQuestionDistributionQueryKey = (options: Options<GetQuestionDistributionData>) =>
   createQueryKey('getQuestionDistribution', options);
 
@@ -17274,6 +17424,28 @@ export const getQuizAttemptsInfiniteOptions = (options: Options<GetQuizAttemptsD
       queryKey: getQuizAttemptsInfiniteQueryKey(options),
     }
   );
+};
+
+export const getStudentQuizReviewQueryKey = (options: Options<GetStudentQuizReviewData>) =>
+  createQueryKey('getStudentQuizReview', options);
+
+/**
+ * Get graded student quiz review
+ * Retrieves a student's graded quiz review, including correct answers after grading.
+ */
+export const getStudentQuizReviewOptions = (options: Options<GetStudentQuizReviewData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStudentQuizReview({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStudentQuizReviewQueryKey(options),
+  });
 };
 
 export const searchQuizzesQueryKey = (options: Options<SearchQuizzesData>) =>
@@ -22313,6 +22485,27 @@ export const getClassScheduleInfiniteOptions = (options: Options<GetClassSchedul
       queryKey: getClassScheduleInfiniteQueryKey(options),
     }
   );
+};
+
+export const getClassRatingSummaryQueryKey = (options: Options<GetClassRatingSummaryData>) =>
+  createQueryKey('getClassRatingSummary', options);
+
+/**
+ * Get class rating summary
+ */
+export const getClassRatingSummaryOptions = (options: Options<GetClassRatingSummaryData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassRatingSummary({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassRatingSummaryQueryKey(options),
+  });
 };
 
 export const getEnrollmentsForClassQueryKey = (options: Options<GetEnrollmentsForClassData>) =>

@@ -33,7 +33,7 @@ import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import { normalizeLocationType, requiresPhysicalLocation, trimToUndefined } from '../../../../../lib/location-types';
 import {
-  createClassDefinitionMutation,
+  createClassDefinitionMultipartMutation,
   getAllClassDefinitionsQueryKey,
   getAllCoursesOptions,
   getAllTrainingProgramsOptions,
@@ -77,7 +77,6 @@ const LECTURE_TYPE_OPTIONS = [
 
 const REMINDER_OPTIONS = [
   { label: '24 hours before class', value: '24h' },
-  { label: '1 day before class', value: '1d' },
   { label: '1 hour before class', value: '1h' },
   { label: '30 minutes before class', value: '30m' },
 ];
@@ -484,7 +483,7 @@ const NewClassCreationPage = () => {
     [sessionsForConflictCheck, instructorClasses, resolvedId, instructor?.uuid]
   );
 
-  const createClassDefinition = useMutation(createClassDefinitionMutation());
+  const createClassDefinition = useMutation(createClassDefinitionMultipartMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
   const addClassThumbnailMut = useMutation(uploadClassThumbnailMutation());
   const addClassIntroVideoMut = useMutation(uploadClassPromotionalVideoMutation());

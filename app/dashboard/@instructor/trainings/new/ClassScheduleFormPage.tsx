@@ -11,14 +11,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import type { CreateClassDefinitionData } from '@/services/client/types.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FormEvent } from 'react';
 import { toast } from 'sonner';
-import type { CreateClassDefinitionData } from '@/services/client/types.gen';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { cn } from '../../../../../lib/utils';
 import {
-  createClassDefinitionMutation,
+  createClassDefinitionMultipartMutation,
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
   updateClassDefinitionMutation,
@@ -50,7 +50,7 @@ export const ClassScheduleFormPage = ({
 }) => {
   const qc = useQueryClient();
   const instructor = useInstructor();
-  const createClassDefinition = useMutation(createClassDefinitionMutation());
+  const createClassDefinition = useMutation(createClassDefinitionMultipartMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
   const getErrorMessage = (error: unknown, fallback: string) => {
     if (error && typeof error === 'object' && 'message' in error) {

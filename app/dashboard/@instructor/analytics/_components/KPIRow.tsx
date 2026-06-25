@@ -1,6 +1,7 @@
 "use client";
 
 import { Calendar, CheckCircle, Clock, Users } from "lucide-react";
+import { useInstructorAnalyticsData } from "./useInstructorAnalyticsData";
 
 interface KPICardProps {
   label: string;
@@ -49,9 +50,9 @@ function KPICard({
               {positive ? "▲" : "▼"} {change}
             </span>
 
-            <span className="truncate text-xs text-muted-foreground">
+            {/* <span className="truncate text-xs text-muted-foreground">
               vs Apr 1 – Apr 30
-            </span>
+            </span> */}
           </div>
         </div>
 
@@ -66,43 +67,42 @@ function KPICard({
 }
 
 export function KPIRow() {
+  const { metrics } = useInstructorAnalyticsData();
+
   const kpis: KPICardProps[] = [
     {
       label: "Total Sessions",
-      value: "48",
-      change: "12%",
+      value: String(metrics.totalSessions),
+      change: "—",
       positive: true,
       iconBg: "bg-primary/5",
-      icon: (
-        <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-      ),
+      icon: <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
     },
     {
       label: "Sessions Completed",
-      value: "32",
-      sub: "(67%)",
-      change: "8%",
+      value: String(metrics.completedSessions),
+      sub:
+        metrics.totalSessions > 0
+          ? `(${Math.round((metrics.completedSessions / metrics.totalSessions) * 100)}%)`
+          : "(0%)",
+      change: "—",
       positive: true,
       iconBg: "bg-success/5",
-      icon: (
-        <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-success" />
-      ),
+      icon: <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-success" />,
     },
     {
       label: "Participants Trained",
-      value: "612",
-      change: "15%",
-      positive: true,
+      value: String(metrics.participantsTrained),
+      change: "—",
+      positive: metrics.participantsTrained >= 0,
       iconBg: "bg-warning/5",
-      icon: (
-        <Users className="h-4 w-4 sm:h-5 sm:w-5 text-warning" />
-      ),
+      icon: <Users className="h-4 w-4 sm:h-5 sm:w-5 text-warning" />,
     },
     {
       label: "Completion Rate",
-      value: "84%",
-      change: "6%",
-      positive: true,
+      value: `${metrics.completionRate}%`,
+      change: "—",
+      positive: metrics.completionRate >= 0,
       iconBg: "bg-accent/5",
       icon: (
         <svg viewBox="0 0 36 36" className="h-4 w-4 sm:h-5 sm:w-5">
@@ -123,7 +123,7 @@ export function KPIRow() {
             stroke="currentColor"
             className="text-primary/55"
             strokeWidth="3"
-            strokeDasharray="79 20"
+            strokeDasharray={`${Math.min(metrics.completionRate, 100)} 100`}
             strokeLinecap="round"
             transform="rotate(-90 18 18)"
           />
@@ -132,10 +132,13 @@ export function KPIRow() {
     },
     {
       label: "Average Satisfaction",
-      value: "4.6",
-      sub: "/5",
-      change: "0.3",
-      positive: true,
+      value:
+        metrics.averageSatisfaction !== null
+          ? metrics.averageSatisfaction.toFixed(1)
+          : "N/A",
+      sub: metrics.averageSatisfaction !== null ? "/5" : undefined,
+      change: "—",
+      positive: metrics.averageSatisfaction !== null,
       iconBg: "bg-destructive/10",
       icon: (
         <svg
@@ -148,13 +151,11 @@ export function KPIRow() {
     },
     {
       label: "Training Hours Delivered",
-      value: "1,248",
-      change: "18%",
-      positive: true,
+      value: String(metrics.trainingHours),
+      change: "—",
+      positive: metrics.trainingHours >= 0,
       iconBg: "bg-muted",
-      icon: (
-        <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-      ),
+      icon: <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />,
     },
   ];
 

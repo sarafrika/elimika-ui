@@ -1853,7 +1853,6 @@ function SubmissionPanel({
     !selectedStudent?.enrollment?.uuid ||
     isSessionExpired;
 
-
   const handleAttendanceClick = (entry: RosterEntry, attended: boolean) => {
     if (isSessionExpired) {
       toast({
@@ -1927,8 +1926,6 @@ function SubmissionPanel({
 
       <ScrollArea className='min-h-0 flex-1'>
         <div className='max-w-full space-y-3 p-3'>
-
-
           <div className='border-border/70 bg-background/90 rounded-md border p-3'>
             <div className='flex items-start justify-between gap-3'>
               <div className='min-w-0'>
@@ -1962,27 +1959,29 @@ function SubmissionPanel({
               ) : null}
             </div>
 
-            <div className='mt-3 flex gap-2'>
-              <Button
-                size='sm'
-                className='flex-1'
-                disabled={attendanceActionDisabled}
-                onClick={() =>
-                  selectedStudent && handleAttendanceClick(selectedStudent, true)
-                }              >
-                Admit
-              </Button>
-              <Button
-                size='sm'
-                variant='outline'
-                className='flex-1'
-                disabled={attendanceActionDisabled}
-                onClick={() =>
-                  selectedStudent && handleAttendanceClick(selectedStudent, false)
-                }              >
-                Mark Absent
-              </Button>
-            </div>
+            {!isSessionExpired &&
+              <div className='mt-3 flex gap-2'>
+                <Button
+                  size='sm'
+                  className='flex-1'
+                  disabled={selectedStudentAttendanceState === 'present'}
+                  onClick={() =>
+                    selectedStudent && handleAttendanceClick(selectedStudent, true)
+                  }              >
+                  Admit
+                </Button>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  className='flex-1'
+                  disabled={attendanceActionDisabled}
+                  onClick={() =>
+                    selectedStudent && handleAttendanceClick(selectedStudent, false)
+                  }              >
+                  Mark Absent
+                </Button>
+              </div>}
+
 
             {isSessionExpired ? (
               <p className="text-xs text-destructive mt-2">
@@ -2011,18 +2010,19 @@ function SubmissionPanel({
 
           {activePanel === 'submissions' ? (
             <>
-              <div className='border-border/70 bg-background/80 min-w-0 rounded-md border p-3'>
+              <div className='bg-background/80 min-w-0 rounded-md border p-3'>
+                <p className='text-muted-foreground text-sm font-bold'>
+                  {selectedStudent
+                    ? `Showing assignment submissions for ${selectedStudent.user?.full_name ?? 'the selected student'}.`
+                    : 'Select a student to review their lesson submissions.'}
+                </p>
                 <div className='mb-3 flex items-center justify-between text-xs'>
                   <span className='text-muted-foreground'>Due date</span>
                   <span className='truncate pl-2 text-right font-semibold'>
                     {formatDateTime(activeSchedule?.end_time)}
                   </span>
                 </div>
-                <p className='text-muted-foreground text-xs'>
-                  {selectedStudent
-                    ? `Showing assignment submissions for ${selectedStudent.user?.full_name ?? 'the selected student'}.`
-                    : 'Select a student to review their lesson submissions.'}
-                </p>
+
               </div>
 
               {selectedStudentSubmissions.length > 0 ? (
@@ -2041,18 +2041,20 @@ function SubmissionPanel({
                             {item.assignmentTitle}
                           </p>
 
-                          <Badge
-                            variant={
-                              status === 'graded'
-                                ? 'success'
-                                : status === 'submitted'
-                                  ? 'warning'
-                                  : 'destructive'
-                            }
-                            className="shrink-0 max-w-[80px] truncate"
-                          >
-                            {status}
-                          </Badge>
+                          <div>
+                            <Badge
+                              variant={
+                                status === 'graded'
+                                  ? 'success'
+                                  : status === 'submitted'
+                                    ? 'warning'
+                                    : 'destructive'
+                              }
+                              className="shrink-0 max-w-[80px] truncate"
+                            >
+                              {status}
+                            </Badge>
+                          </div>
                         </div>
 
                         <p className="text-muted-foreground truncate text-xs">

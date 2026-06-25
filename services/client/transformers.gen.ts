@@ -206,16 +206,18 @@ import type {
   AddItemResponse,
   CompleteCartResponse,
   GetAllClassDefinitionsResponse,
-  CreateClassDefinitionResponse,
+  CreateClassDefinitionMultipartResponse,
   UploadClassThumbnailResponse,
   AddSessionTemplateResponse,
+  GetClassReviewsResponse,
+  SubmitClassReviewResponse,
   UploadClassPromotionalVideoResponse,
   GetQuizSchedulesResponse,
   CreateQuizScheduleResponse,
   GetAssignmentSchedulesResponse,
   CreateAssignmentScheduleResponse,
   GetClassDefinitionsForProgramResponse,
-  CreateClassDefinitionForProgramResponse,
+  CreateClassDefinitionForProgramMultipartResponse,
   ListJobsResponse,
   CreateJobResponse,
   CancelJobResponse,
@@ -360,6 +362,7 @@ import type {
   ResolveByCourseOrClassResponse,
   GetClassSchedulingConflictsResponse,
   GetClassScheduleResponse,
+  GetClassRatingSummaryResponse,
   GetEnrollmentsForClassResponse,
   GetClassDefinitionsForOrganisationResponse,
   ListMyApplicationsResponse,
@@ -3843,9 +3846,9 @@ export const getAllClassDefinitionsResponseTransformer = async (
   return data;
 };
 
-export const createClassDefinitionResponseTransformer = async (
+export const createClassDefinitionMultipartResponseTransformer = async (
   data: any
-): Promise<CreateClassDefinitionResponse> => {
+): Promise<CreateClassDefinitionMultipartResponse> => {
   data = apiResponseClassDefinitionResponseSchemaResponseTransformer(data);
   return data;
 };
@@ -3895,6 +3898,56 @@ export const addSessionTemplateResponseTransformer = async (
   data: any
 ): Promise<AddSessionTemplateResponse> => {
   data = apiResponseClassSessionTemplateScheduleResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const classReviewSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const pagedDtoClassReviewSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return classReviewSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoClassReviewSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoClassReviewSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getClassReviewsResponseTransformer = async (
+  data: any
+): Promise<GetClassReviewsResponse> => {
+  data = apiResponsePagedDtoClassReviewSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseClassReviewSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = classReviewSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const submitClassReviewResponseTransformer = async (
+  data: any
+): Promise<SubmitClassReviewResponse> => {
+  data = apiResponseClassReviewSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4016,9 +4069,9 @@ export const getClassDefinitionsForProgramResponseTransformer = async (
   return data;
 };
 
-export const createClassDefinitionForProgramResponseTransformer = async (
+export const createClassDefinitionForProgramMultipartResponseTransformer = async (
   data: any
-): Promise<CreateClassDefinitionForProgramResponse> => {
+): Promise<CreateClassDefinitionForProgramMultipartResponse> => {
   data = apiResponseClassDefinitionResponseSchemaResponseTransformer(data);
   return data;
 };
@@ -6035,6 +6088,27 @@ export const getClassScheduleResponseTransformer = async (
   data: any
 ): Promise<GetClassScheduleResponse> => {
   data = apiResponsePagedDtoScheduledInstanceSchemaResponseTransformer(data);
+  return data;
+};
+
+const classRatingSummarySchemaResponseTransformer = (data: any) => {
+  if (data.review_count) {
+    data.review_count = BigInt(data.review_count.toString());
+  }
+  return data;
+};
+
+const apiResponseClassRatingSummarySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = classRatingSummarySchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getClassRatingSummaryResponseTransformer = async (
+  data: any
+): Promise<GetClassRatingSummaryResponse> => {
+  data = apiResponseClassRatingSummarySchemaResponseTransformer(data);
   return data;
 };
 

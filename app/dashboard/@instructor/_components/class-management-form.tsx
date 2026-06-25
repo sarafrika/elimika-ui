@@ -31,7 +31,7 @@ import Spinner from '@/components/ui/spinner';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import {
-  createClassDefinitionMutation,
+  createClassDefinitionMultipartMutation,
   getAllActiveClassDefinitionsQueryKey,
   getAllCoursesOptions,
   scheduleClassMutation,
@@ -80,10 +80,10 @@ type RecurrenceInitialValues = Partial<Omit<RecurrenceFormValues, 'days_of_week'
 };
 
 type CreateClassDefinitionVariables = MutationVariables<
-  ReturnType<typeof createClassDefinitionMutation>
+  ReturnType<typeof createClassDefinitionMultipartMutation>
 >;
 type CreateClassDefinitionResult = MutationResponse<
-  ReturnType<typeof createClassDefinitionMutation>
+  ReturnType<typeof createClassDefinitionMultipartMutation>
 >;
 type UpdateClassDefinitionVariables = MutationVariables<
   ReturnType<typeof updateClassDefinitionMutation>
@@ -160,7 +160,7 @@ function ClassForm({
 
   const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
 
-  const createAssignment = useMutation(createClassDefinitionMutation());
+  const createAssignment = useMutation(createClassDefinitionMultipartMutation());
   const updateAssignment = useMutation(updateClassDefinitionMutation());
 
   const handleSubmit = async (values: ClassFormValues) => {

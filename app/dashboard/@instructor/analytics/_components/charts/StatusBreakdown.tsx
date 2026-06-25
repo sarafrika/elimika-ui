@@ -1,45 +1,22 @@
 "use client";
 
-const statuses = [
-  {
-    label: "Completed",
-    value: 32,
-    pct: 67,
-    color: "text-success",
-  },
-  {
-    label: "In Progress",
-    value: 8,
-    pct: 17,
-    color: "text-warning",
-  },
-  {
-    label: "Upcoming",
-    value: 6,
-    pct: 13,
-    color: "text-primary",
-  },
-  {
-    label: "Cancelled",
-    value: 2,
-    pct: 4,
-    color: "text-destructive",
-  },
-];
+import { EmptyState } from '@/components/ui/empty-state';
+import { useInstructorAnalyticsData } from "../useInstructorAnalyticsData";
 
-function DonutChart() {
+function DonutChart({ breakdown }: { breakdown: Array<{ value: number; pct: number; color: string }> }) {
   const r = 40;
   const cx = 60;
   const cy = 60;
   const circumference = 2 * Math.PI * r;
   let offset = 0;
+  const total = breakdown.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <svg
       viewBox="0 0 120 120"
       className="mx-auto h-28 w-28 shrink-0 sm:h-32 sm:w-32"
     >
-      {statuses.map(({ pct, color }, i) => {
+      {breakdown.map(({ pct, color }, i) => {
         const dash = (pct / 100) * circumference;
         const gap = circumference - dash;
         const rotation = (offset / 100) * 360 - 90;
@@ -71,7 +48,7 @@ function DonutChart() {
         fontWeight="700"
         className="fill-foreground"
       >
-        48
+        {total}
       </text>
 
       <text
@@ -88,6 +65,29 @@ function DonutChart() {
 }
 
 export function StatusBreakdown() {
+  const { statusBreakdown, isLoading } = useInstructorAnalyticsData();
+
+  if (isLoading) {
+    return (
+      <div className="h-full rounded-xl border border-border bg-card p-3 shadow-sm sm:p-4">
+        <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+          Loading status breakdown...
+        </div>
+      </div>
+    );
+  }
+
+  if (statusBreakdown.length === 0) {
+    return (
+      <EmptyState
+        icon={() => null}
+        title="No session statuses yet"
+        description="Status breakdown appears once your sessions are scheduled and completed."
+        variant="card"
+      />
+    );
+  }
+
   return (
     <div className="h-full rounded-xl border border-border bg-card p-3 shadow-sm sm:p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
@@ -100,10 +100,10 @@ export function StatusBreakdown() {
         </button>
       </div>
 
-      <DonutChart />
+      <DonutChart breakdown={statusBreakdown} />
 
       <div className="mt-3 space-y-1.5">
-        {statuses.map(({ label, value, pct, color }) => (
+        {statusBreakdown.map(({ label, value, pct, color }) => (
           <div
             key={label}
             className="flex items-center justify-between gap-2"

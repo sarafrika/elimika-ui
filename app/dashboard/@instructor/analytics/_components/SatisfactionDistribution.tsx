@@ -1,13 +1,32 @@
 "use client";
 
-const levels = [
-  { label: "Excellent (4.5 – 5)", pct: 62, color: "bg-success" },
-  { label: "Good (3.5 – 4.4)", pct: 28, color: "bg-primary" },
-  { label: "Average (2.5 – 3.4)", pct: 8, color: "bg-warning" },
-  { label: "Poor (1 – 2.4)", pct: 2, color: "bg-destructive" },
-];
+import { EmptyState } from '@/components/ui/empty-state';
+import { useInstructorAnalyticsData } from './useInstructorAnalyticsData';
 
 export function SatisfactionDistribution() {
+  const { satisfactionBuckets, reviewCount, isLoading } = useInstructorAnalyticsData();
+
+  if (isLoading) {
+    return (
+      <div className="bg-card rounded-xl border border-border shadow-sm p-3 sm:p-4 h-full">
+        <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+          Loading satisfaction metrics...
+        </div>
+      </div>
+    );
+  }
+
+  if (reviewCount === 0) {
+    return (
+      <EmptyState
+        icon={() => null}
+        title="No review data yet"
+        description="Instructor satisfaction will appear once learners submit reviews."
+        variant="card"
+      />
+    );
+  }
+
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm p-3 sm:p-4 h-full">
       <div className="flex items-center justify-between mb-3 gap-2">
@@ -20,7 +39,7 @@ export function SatisfactionDistribution() {
       </div>
 
       <div className="space-y-3">
-        {levels.map(({ label, pct, color }) => (
+        {satisfactionBuckets.map(({ label, pct, color }) => (
           <div key={label}>
             <div className="flex items-center justify-between mb-1 gap-2">
               <span className="text-xs text-muted-foreground truncate">{label}</span>
@@ -29,7 +48,7 @@ export function SatisfactionDistribution() {
             <div className="w-full bg-muted rounded-full h-2">
               <div
                 className={`${color} h-2 rounded-full transition-all duration-500`}
-                style={{ width: `${pct * 1.6}%` }}
+                style={{ width: `${pct}%` }}
               />
             </div>
           </div>
