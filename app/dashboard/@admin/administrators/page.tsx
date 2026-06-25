@@ -1,36 +1,21 @@
-import { Badge } from '../../../../components/ui/badge';
-import { Card } from '../../../../components/ui/card';
-import { AdminUserWorkspace } from '../users/_components/user-workspace';
+import { Suspense } from 'react';
+import { adminTheme } from '../_components/ui/admin-theme';
+import { AdminPageHeader } from '../_components/ui/AdminPageHeader';
+import { PeopleTableSection } from '../users/_components/PeopleTableSection';
+import { UsersTableSkeleton } from '../users/_components/UsersTableSkeleton';
 
-export default function AdminAdministratorsPage() {
+export default function AdministratorsPage() {
   return (
-    <div className='flex flex-col gap-6 p-6'>
-      <div>
-        <Badge
-          variant='outline'
-          className='border-primary/60 bg-primary/10 text-xs font-semibold tracking-wide uppercase'
-        >
-          Administrator Management
-        </Badge>
-        <div className='bg-card relative mt-4 overflow-hidden rounded-3xl'>
-          <div className='flex flex-col'>
-            <p className='text-muted-foreground max-w-3xl text-sm leading-relaxed'>
-              Manage administrator accounts, assign roles and permissions, and monitor system access
-              from a centralized dashboard.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <Card className='h-[calc(75vh-4rem)] gap-0 overflow-hidden p-2 sm:h-[calc(82vh-4rem)] md:h-[calc(81vh)]'>
-        <AdminUserWorkspace
-          title='Admin roster'
-          fixedDomain='admin'
-          useAdminEndpoint
-          emptyStateTitle='No administrators match your filters'
-          emptyStateDescription='Adjust search criteria or filters to find other administrators.'
+    <main className={adminTheme.page}>
+      <div className={adminTheme.pageStack}>
+        <AdminPageHeader
+          title='Administrators'
+          description='Manage administrator accounts and platform access from a single roster.'
         />
-      </Card>
-    </div>
+        <Suspense fallback={<UsersTableSkeleton />}>
+          <PeopleTableSection domain='admin' />
+        </Suspense>
+      </div>
+    </main>
   );
 }

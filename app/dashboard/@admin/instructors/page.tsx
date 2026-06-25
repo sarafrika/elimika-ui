@@ -1,30 +1,21 @@
-import { Badge } from '../../../../components/ui/badge';
-import { Card } from '../../../../components/ui/card';
-import InstructorsPage from './_components/InstructorsPage';
+import { Suspense } from 'react';
+import { adminTheme } from '../_components/ui/admin-theme';
+import { AdminPageHeader } from '../_components/ui/AdminPageHeader';
+import { PeopleTableSection } from '../users/_components/PeopleTableSection';
+import { UsersTableSkeleton } from '../users/_components/UsersTableSkeleton';
 
-export default function Page() {
+export default function InstructorsPage() {
   return (
-    <div className='flex flex-col gap-6 p-6'>
-      <div>
-        <Badge
-          variant='outline'
-          className='border-primary/60 bg-primary/10 text-xs font-semibold tracking-wide uppercase'
-        >
-          Instructor Management
-        </Badge>
-        <div className='bg-card relative mt-4 overflow-hidden rounded-3xl'>
-          <div className='flex flex-col'>
-            <p className='text-muted-foreground max-w-3xl text-sm leading-relaxed'>
-              Manage instructor accounts, assign roles and permissions, and monitor system access
-              from a centralized dashboard.
-            </p>
-          </div>
-        </div>
+    <main className={adminTheme.page}>
+      <div className={adminTheme.pageStack}>
+        <AdminPageHeader
+          title='Instructors'
+          description='Manage instructor accounts and verify their credentials from the 360° profile.'
+        />
+        <Suspense fallback={<UsersTableSkeleton />}>
+          <PeopleTableSection domain='instructor' />
+        </Suspense>
       </div>
-
-      <Card className='p-2'>
-        <InstructorsPage />;
-      </Card>
-    </div>
+    </main>
   );
 }

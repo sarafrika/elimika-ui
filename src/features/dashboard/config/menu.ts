@@ -444,11 +444,6 @@ export default {
       icon: UsersIcon,
     },
     {
-      title: 'Courses',
-      url: '/dashboard/courses',
-      icon: School,
-    },
-    {
       title: 'Manage Courses',
       url: '/dashboard/manage-courses',
       icon: BookOpen,
