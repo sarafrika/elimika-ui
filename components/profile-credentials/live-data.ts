@@ -2,19 +2,18 @@
 
 import {
   Award,
+  BriefcaseBusiness,
+  Building2,
   CheckCircle2,
   Cloud,
   Eye,
   FileText,
   Globe,
   GraduationCap,
-  BriefcaseBusiness,
-  Building2,
   Star,
   WalletCards,
 } from 'lucide-react';
 import type { UserProfileType } from '@/lib/types';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type {
   Certificate,
   CourseCreatorDocumentDto,
@@ -27,12 +26,13 @@ import type {
   InstructorExperience,
   InstructorProfessionalMembership,
 } from '@/services/client/types.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type {
   CredentialItem,
   CredentialsContent,
-  CredentialsStatusFilter,
   CredentialsProfile,
   CredentialsRole,
+  CredentialsStatusFilter,
   CredentialsTabId,
   GrowthItem,
 } from './data';
@@ -52,14 +52,14 @@ const badgeKeywords = ['badge', 'award', 'badge'];
 const certificateKeywords = ['certificate', 'diploma', 'degree', 'qualification', 'transcript'];
 const blockchainKeywords = ['blockchain', 'wallet', 'verified', 'verification'];
 
-function formatMonthYear(value?: Date | string) {
+function formatMonthYear(value?: Date | string | null) {
   if (!value) return 'Recently';
   const parsed = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(parsed.getTime())) return 'Recently';
   return parsed.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
 }
 
-function formatLongDate(value?: Date | string) {
+function formatLongDate(value?: Date | string | null) {
   if (!value) return 'Recently';
   const parsed = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(parsed.getTime())) return 'Recently';
@@ -88,8 +88,12 @@ function formatYearValue(value?: number | string | Date | null) {
   return Number.isNaN(parsed.getTime()) ? String(value) : `${parsed.getFullYear()}`;
 }
 
-function formatDateRange(start?: Date | string, end?: Date | string, active?: boolean) {
-  const formatDate = (value?: Date | string) => {
+function formatDateRange(
+  start?: Date | string | null,
+  end?: Date | string | null,
+  active?: boolean | null
+) {
+  const formatDate = (value?: Date | string | null) => {
     if (!value) return undefined;
     const parsed = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(parsed.getTime())) return undefined;
@@ -642,6 +646,7 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
   const student = profile?.student;
   const instructor = profile?.instructor;
   const courseCreator = profile?.courseCreator;
+  const organisation = profile?.organizations?.[0];
   const displayName =
     getFirstValue(user?.full_name, user?.display_name, user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : undefined) ??
     'Profile';
@@ -651,7 +656,7 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
     return {
       name: displayName,
       title: getFirstValue(instructor?.professional_headline, 'Instructor') ?? 'Instructor',
-      profileImageUrl: user?.profile_image_url,
+      profileImageUrl: user?.profile_image_url ?? undefined,
       website: getFirstValue(instructor?.website, 'Website not set') ?? 'Website not set',
       email: user?.email ?? 'Email not set',
       phone: getFirstValue(user?.phone_number, 'Phone not set') ?? 'Phone not set',
@@ -666,7 +671,7 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
     return {
       name: getFirstValue(courseCreator?.full_name, displayName) ?? displayName,
       title: getFirstValue(courseCreator?.professional_headline, 'Course Creator') ?? 'Course Creator',
-      profileImageUrl: user?.profile_image_url,
+      profileImageUrl: user?.profile_image_url ?? undefined,
       website: getFirstValue(courseCreator?.website, 'Website not set') ?? 'Website not set',
       email: user?.email ?? 'Email not set',
       phone: getFirstValue(user?.phone_number, 'Phone not set') ?? 'Phone not set',
@@ -677,10 +682,27 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
     };
   }
 
+  if (role === 'organisation') {
+    const organisationName = getFirstValue(organisation?.name, displayName) ?? displayName;
+
+    return {
+      name: organisationName,
+      title: getFirstValue(organisation?.description, 'Training Organisation') ?? 'Training Organisation',
+      profileImageUrl: user?.profile_image_url ?? undefined,
+      website: getFirstValue(organisation?.location, organisation?.country, 'Location not set') ?? 'Location not set',
+      email: user?.email ?? 'Email not set',
+      phone: getFirstValue(user?.phone_number, 'Phone not set') ?? 'Phone not set',
+      joined: formatMonthYear(organisation?.created_date ?? user?.created_date),
+      entriesLabel: `${organisation?.licence_no ? 1 : 0} Validation Document${organisation?.licence_no ? '' : 's'}`,
+      levelLabel: organisation?.admin_verified ? 'Verified Organisation' : 'Pending Verification',
+      initials: getInitials(organisationName),
+    };
+  }
+
   return {
     name: displayName,
     title: getFirstValue(student?.bio, 'Student') ?? 'Student',
-    profileImageUrl: user?.profile_image_url,
+    profileImageUrl: user?.profile_image_url ?? undefined,
     website: 'Website not set',
     email: user?.email ?? 'Email not set',
     phone: getFirstValue(user?.phone_number, 'Phone not set') ?? 'Phone not set',

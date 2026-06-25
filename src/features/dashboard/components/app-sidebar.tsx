@@ -1,4 +1,9 @@
 'use client';
+import { Menu } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import type * as React from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -12,13 +17,19 @@ import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-dom
 import { SettingsSupportWidget } from '@/src/features/dashboard/settings/_components/settings-support-widget';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { Menu } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import type * as React from 'react';
 import { NavMain } from './nav-main';
 import { NavSecondary } from './nav-secondary';
+
+const UNVERIFIED_ORGANISATION_MENU_PREFIXES = [
+  '/dashboard/account/training-center',
+  '/dashboard/profile',
+  '/dashboard/credentials',
+];
+
+function isUnverifiedOrganisationMenuItem(item: MenuItem) {
+  if (!item.url) return false;
+  return UNVERIFIED_ORGANISATION_MENU_PREFIXES.some(prefix => item.url?.startsWith(prefix));
+}
 
 export function AppSidebar({
   activeDomain,
@@ -29,6 +40,10 @@ export function AppSidebar({
   const profile = useUserProfile();
   const pathname = usePathname();
   const isAdmin = profile?.user_domain?.includes('admin');
+  const isOrganisationDomain =
+    activeDomain === 'organisation' || activeDomain === 'organisation_user';
+  const isUnverifiedOrganisation =
+    isOrganisationDomain && organisation?.admin_verified !== true;
 
   // Helper to get menu items for a domain
   const getMenuItems = (domain: UserDomain): MenuItem[] => {
@@ -36,7 +51,13 @@ export function AppSidebar({
     const menuKey: Exclude<keyof typeof menu, 'main' | 'secondary' | 'user'> =
       domain === 'organisation' ? 'organisation_user' : domain;
 
-    return menu[menuKey] ?? [];
+    const domainItems = menu[menuKey] ?? [];
+
+    if (isUnverifiedOrganisation) {
+      return domainItems.filter(isUnverifiedOrganisationMenuItem);
+    }
+
+    return domainItems;
   };
 
 

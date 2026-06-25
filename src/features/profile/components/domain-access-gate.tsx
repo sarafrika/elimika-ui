@@ -22,7 +22,10 @@ type DomainGateState = {
 
 const PROFILE_PREFIX = '/dashboard/profile';
 const ACCOUNT_PREFIX = '/dashboard/account';
+const ORGANISATION_PROFILE_PREFIX = `${ACCOUNT_PREFIX}/training-center`;
 const ADD_PROFILE_PREFIX = '/dashboard/add-profile';
+const CREDENTIALS_PREFIX = '/dashboard/credentials';
+const SETTINGS_PREFIX = '/dashboard/settings';
 
 function resolveOrganisationVerified(
   organisation?: (Organisation & { adminVerified?: boolean }) | null
@@ -42,8 +45,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
 
   const hasOrganisation = Boolean(profile?.organisation_affiliations?.length);
   const organisationVerifiedFlag = resolveOrganisationVerified(organisation);
-  // Default to true while organisation data is loading; only gate when explicitly false
-  const organisationVerified = hasOrganisation ? organisationVerifiedFlag !== false : true;
+  const organisationVerified = hasOrganisation ? organisationVerifiedFlag === true : true;
 
   const state: DomainGateState = useMemo(() => {
     if (!profile || profile.isLoading) {
@@ -58,7 +60,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
     const shared = {
       instructor: {
         verified: Boolean(profile.instructor?.admin_verified),
-        allowedPrefixes: [PROFILE_PREFIX, ADD_PROFILE_PREFIX, '/dashboard/settings'],
+        allowedPrefixes: [PROFILE_PREFIX, ADD_PROFILE_PREFIX, SETTINGS_PREFIX],
         fallback: `${PROFILE_PREFIX}/general`,
         title: 'Instructor verification pending',
         description:
@@ -68,7 +70,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
         verified: Boolean(
           courseCreator?.profile?.admin_verified ?? profile.courseCreator?.admin_verified
         ),
-        allowedPrefixes: [PROFILE_PREFIX, ADD_PROFILE_PREFIX, '/dashboard/settings'],
+        allowedPrefixes: [PROFILE_PREFIX, ADD_PROFILE_PREFIX, SETTINGS_PREFIX],
         fallback: PROFILE_PREFIX,
         title: 'Course creator verification pending',
         description:
@@ -76,29 +78,21 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       },
       organisation: {
         verified: organisationVerified,
-        allowedPrefixes: [
-          ACCOUNT_PREFIX,
-          PROFILE_PREFIX,
-          ADD_PROFILE_PREFIX,
-          '/dashboard/settings',
-        ],
-        fallback: `${ACCOUNT_PREFIX}/training-center`,
+        allowedExactPaths: [ACCOUNT_PREFIX],
+        allowedPrefixes: [ORGANISATION_PROFILE_PREFIX, PROFILE_PREFIX, CREDENTIALS_PREFIX],
+        fallback: ORGANISATION_PROFILE_PREFIX,
         title: 'Organisation verification pending',
         description:
-          'Your organisation profile and validation documents are under admin review. Setup screens remain available while verified-only tools are locked.',
+          'Your organisation profile and validation documents are under admin review. Verified-only tools are locked until admin approval is complete.',
       },
       organisation_user: {
         verified: organisationVerified,
-        allowedPrefixes: [
-          ACCOUNT_PREFIX,
-          PROFILE_PREFIX,
-          ADD_PROFILE_PREFIX,
-          '/dashboard/settings',
-        ],
-        fallback: `${ACCOUNT_PREFIX}/training-center`,
+        allowedExactPaths: [ACCOUNT_PREFIX],
+        allowedPrefixes: [ORGANISATION_PROFILE_PREFIX, PROFILE_PREFIX, CREDENTIALS_PREFIX],
+        fallback: ORGANISATION_PROFILE_PREFIX,
         title: 'Organisation verification pending',
         description:
-          'Your organisation profile and validation documents are under admin review. Setup screens remain available while verified-only tools are locked.',
+          'Your organisation profile and validation documents are under admin review. Verified-only tools are locked until admin approval is complete.',
       },
     } as const;
 
@@ -112,7 +106,9 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       return { renderChildren: true };
     }
 
-    const isAllowed = config.allowedPrefixes.some(prefix => pathname.startsWith(prefix));
+    const isAllowed =
+      ('allowedExactPaths' in config && config.allowedExactPaths.some(path => pathname === path)) ||
+      config.allowedPrefixes.some(prefix => pathname.startsWith(prefix));
 
     if (!isAllowed) {
       return {
@@ -152,15 +148,14 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       {state.notice ? (
         <Alert
           className={cn(
-            'mx-auto mb-4 w-full max-w-5xl border-yellow-500/30 bg-yellow-50 text-yellow-900 shadow-sm',
-            'dark:border-yellow-500/40 dark:bg-yellow-950/30 dark:text-yellow-100'
+            'border-warning/30 bg-warning/10 mx-auto mb-4 w-full max-w-5xl text-foreground shadow-sm'
           )}
         >
-          <ShieldAlert className='col-start-1 self-start text-yellow-600 dark:text-yellow-400' />
-          <AlertTitle className='text-xs font-semibold tracking-[0.15em] text-yellow-700 uppercase dark:text-yellow-300'>
+          <ShieldAlert className='text-warning col-start-1 self-start' />
+          <AlertTitle className='text-xs font-semibold tracking-[0.15em] uppercase'>
             {state.notice.title}
           </AlertTitle>
-          <AlertDescription className='text-sm text-yellow-800/80 dark:text-yellow-200/80'>
+          <AlertDescription className='text-muted-foreground text-sm'>
             {state.notice.description}
           </AlertDescription>
         </Alert>

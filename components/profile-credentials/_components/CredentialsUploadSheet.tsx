@@ -41,16 +41,19 @@ import {
 import type { DocumentTypeOption } from '@/services/client/types.gen';
 import type { CredentialsRole } from '../data';
 
+type UploadCredentialsRole = Extract<CredentialsRole, 'instructor' | 'course_creator'>;
+
 type CredentialsUploadSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  role: CredentialsRole;
+  role: UploadCredentialsRole;
   profileUuid?: string;
   documentTypes: DocumentTypeOption[];
   onSaved: () => void | Promise<void>;
 };
 
 type ActiveTab = 'education' | 'membership' | 'experience';
+type MutationResponseWithUuid = { data?: { uuid?: string } };
 
 type DraftState = {
   education: {
@@ -121,7 +124,7 @@ function isPdfFile(candidate: File) {
   return candidate.type === 'application/pdf' || candidate.name.toLowerCase().endsWith('.pdf');
 }
 
-function getRoleLabel(role: CredentialsRole) {
+function getRoleLabel(role: UploadCredentialsRole) {
   return role === 'instructor' ? 'Instructor' : 'Course creator';
 }
 
@@ -243,7 +246,6 @@ export function CredentialsUploadSheet({
     draft.description.trim().length > 0;
 
   const canSubmit =
-    role !== 'student' &&
     !!profileUuid &&
     !!file &&
     sectionIsComplete &&
@@ -276,11 +278,6 @@ export function CredentialsUploadSheet({
   const toDateValue = (value: string) => new Date(`${value}T00:00:00`);
 
   const submitRecord = async () => {
-    if (role === 'student') {
-      toast.info('Students do not upload supporting documents from this sheet.');
-      return;
-    }
-
     if (!profileUuid) {
       toast.error('Profile data is still loading.');
       return;
@@ -328,13 +325,13 @@ export function CredentialsUploadSheet({
               certificate_number: draft.education.certificateNumber.trim() || undefined,
             };
 
-        const response = await roleMutations.education.mutateAsync({
+        const response = (await roleMutations.education.mutateAsync({
           path:
             role === 'instructor'
               ? { instructorUuid: profileUuid }
               : { courseCreatorUuid: profileUuid },
           body,
-        });
+        } as never)) as MutationResponseWithUuid;
         createdUuid = response.data?.uuid ?? '';
       }
 
@@ -362,13 +359,13 @@ export function CredentialsUploadSheet({
               is_active: draft.membership.isActive,
             };
 
-        const response = await roleMutations.membership.mutateAsync({
+        const response = (await roleMutations.membership.mutateAsync({
           path:
             role === 'instructor'
               ? { instructorUuid: profileUuid }
               : { courseCreatorUuid: profileUuid },
           body,
-        });
+        } as never)) as MutationResponseWithUuid;
         createdUuid = response.data?.uuid ?? '';
       }
 
@@ -404,13 +401,13 @@ export function CredentialsUploadSheet({
               is_current_position: draft.experience.isCurrentPosition,
             };
 
-        const response = await roleMutations.experience.mutateAsync({
+        const response = (await roleMutations.experience.mutateAsync({
           path:
             role === 'instructor'
               ? { instructorUuid: profileUuid }
               : { courseCreatorUuid: profileUuid },
           body,
-        });
+        } as never)) as MutationResponseWithUuid;
         createdUuid = response.data?.uuid ?? '';
       }
 
@@ -434,7 +431,7 @@ export function CredentialsUploadSheet({
             ? { instructorUuid: profileUuid }
             : { courseCreatorUuid: profileUuid },
         query: uploadQuery as never,
-      });
+      } as never);
 
       toast.success(`${selectedTabLabel} record and supporting document saved.`);
       resetDraft();
@@ -444,48 +441,6 @@ export function CredentialsUploadSheet({
       toast.error(error instanceof Error ? error.message : 'Unable to save the record.');
     }
   };
-
-  if (role === 'student') {
-    return (
-      <Sheet open={open} onOpenChange={openState => !isSubmitting && onOpenChange(openState)}>
-        <SheetContent side='right' className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[640px]'>
-          <SheetHeader className='border-border/70 border-b px-6 py-5 text-left'>
-            <div className='flex items-center gap-3'>
-              <span className='bg-primary/10 text-primary grid size-10 place-items-center rounded-xl'>
-                <FileUp className='size-5' />
-              </span>
-              <div>
-                <SheetTitle className='text-2xl'>Student credentials</SheetTitle>
-                <SheetDescription>
-                  Students use certificates directly, so this sheet stays read-only for them.
-                </SheetDescription>
-              </div>
-            </div>
-          </SheetHeader>
-
-          <div className='space-y-5 px-6 py-5'>
-            <div className='rounded-2xl border bg-card px-4 py-4'>
-              <div className='flex items-start gap-3'>
-                <AlertCircle className='text-muted-foreground mt-0.5 size-4 shrink-0' />
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium'>No manual upload needed</p>
-                  <p className='text-muted-foreground text-sm'>
-                    Student credentials are sourced from the certificates endpoint and do not use this upload flow.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className='flex items-center justify-end gap-3'>
-              <Button type='button' variant='outline' onClick={closeSheet}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-    );
-  }
 
   return (
     <Sheet open={open} onOpenChange={openState => !isSubmitting && onOpenChange(openState)}>

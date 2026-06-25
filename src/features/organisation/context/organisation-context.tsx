@@ -5,22 +5,16 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import CustomLoader from '@/components/custom-loader';
-import type { ApiResponse, SearchResponse } from '@/services/client';
+import type { ApiResponse } from '@/services/client';
 import {
   getOrganisationByUuid,
-  getTrainingBranchesByOrganisation,
-  getUsersByOrganisation,
   type Organisation,
-  type TrainingBranch,
-  type User,
   type UserOrganisationAffiliationDto,
 } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
-type OrganisationContextValue =
-  | (Organisation & { branches?: TrainingBranch[]; users?: User[] })
-  | null;
+type OrganisationContextValue = Organisation | null;
 
 const OrganisationContext = createContext<OrganisationContextValue>(null);
 
@@ -81,6 +75,17 @@ export default function OrganisationProvider({
     }
   }, [hasOrgDomain, hydrated, activeOrgId, userProfile?.isLoading, router]);
 
+  const { data, isLoading } = useQuery(
+    createQueryOptions(activeOrgId, {
+      enabled:
+        !initialOrganisation &&
+        hasOrgDomain &&
+        !!userProfile &&
+        !!session?.user &&
+        !!activeOrgId,
+    })
+  );
+
   if (initialOrganisation) {
     return (
       <OrganisationContext.Provider value={initialOrganisation}>
@@ -97,12 +102,6 @@ export default function OrganisationProvider({
   if (hasOrgDomain && !activeOrgId) {
     return <CustomLoader />;
   }
-
-  const { data, isLoading } = useQuery(
-    createQueryOptions(activeOrgId, {
-      enabled: !!userProfile && !!session?.user && !!activeOrgId,
-    })
-  );
 
   return (
     <OrganisationContext.Provider value={data ?? null}>
@@ -128,36 +127,7 @@ function createQueryOptions(
         return null;
       }
 
-      const organisationData = {
-        ...orgRespData.data,
-      } as OrganisationContextValue;
-
-      // Branches and users are optional; swallow errors to stay lean
-      try {
-        const branchesResp = (await getTrainingBranchesByOrganisation({
-          path: { uuid: organisationData?.uuid! },
-          query: { pageable: { page: 0, size: 5 } },
-        })) as ApiResponse;
-
-        const branchesData = branchesResp.data as SearchResponse;
-        if (branchesData.data?.content && organisationData) {
-          organisationData.branches = branchesData.data.content as unknown as TrainingBranch[];
-        }
-      } catch (_error) {}
-
-      try {
-        const orgUsersResp = (await getUsersByOrganisation({
-          path: { uuid: organisationData?.uuid! },
-          query: { pageable: { page: 0, size: 5 } },
-        })) as ApiResponse;
-
-        const orgUsersData = orgUsersResp.data as SearchResponse;
-        if (orgUsersData.data?.content && organisationData) {
-          organisationData.users = orgUsersData.data.content as unknown as User[];
-        }
-      } catch (_error) {}
-
-      return organisationData;
+      return { ...orgRespData.data } as OrganisationContextValue;
     },
     staleTime: 1000 * 60 * 15,
     refetchOnWindowFocus: true,

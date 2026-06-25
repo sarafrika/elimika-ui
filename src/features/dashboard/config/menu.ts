@@ -527,6 +527,16 @@ export default {
       icon: LayoutDashboard,
     },
     {
+      title: 'Organisation Profile',
+      url: '/dashboard/account/training-center',
+      icon: Building2,
+    },
+    {
+      title: 'Credentials Vault',
+      url: '/dashboard/credentials',
+      icon: Award,
+    },
+    {
       title: 'Courses',
       url: '/dashboard/courses',
       icon: School,

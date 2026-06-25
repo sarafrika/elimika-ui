@@ -12,22 +12,32 @@ type ProfileOverviewCardProps = {
 };
 
 export function ProfileOverviewCard({ profile }: ProfileOverviewCardProps) {
+  const organisation = profile?.organizations?.[0];
   const displayName =
+    organisation?.name ??
     profile?.full_name ??
     profile?.display_name ??
     [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') ??
     'Profile';
   const avatarUrl = profile?.profile_image_url;
   const title =
+    organisation?.description ??
     profile?.instructor?.professional_headline ??
     profile?.courseCreator?.professional_headline ??
     profile?.student?.bio ??
     'Profile';
-  const website = profile?.instructor?.website ?? profile?.courseCreator?.website ?? 'Website not set';
+  const website =
+    profile?.instructor?.website ??
+    profile?.courseCreator?.website ??
+    organisation?.location ??
+    organisation?.country ??
+    'Website not set';
   const entriesLabel = profile?.instructor
     ? `${profile?.instructor?.educations?.length} Education Entries`
     : profile?.courseCreator
       ? `${profile?.courseCreator?.uuid ? 1 : 0} Creator Entries`
+      : organisation
+        ? `${organisation.licence_no ? 1 : 0} Validation Document${organisation.licence_no ? '' : 's'}`
       : profile?.student
         ? 'Student Profile'
         : 'Profile';
@@ -35,17 +45,21 @@ export function ProfileOverviewCard({ profile }: ProfileOverviewCardProps) {
     ? 'Verified Instructor'
     : profile?.courseCreator?.admin_verified
       ? 'Verified Creator'
+      : organisation
+        ? organisation.admin_verified
+          ? 'Verified Organisation'
+          : 'Pending Verification'
       : profile?.student
         ? 'Learner Profile'
         : 'Profile';
 
   return (
-    <Card className='gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm'>
-      <div className='bg-[color-mix(in_srgb,var(--el-accent-azure)_45%,white_55%)] dark:bg-[color-mix(in_srgb,var(--el-accent-azure)_60%,black_40%)] px-3 py-4'>
+    <Card className='gap-0 overflow-hidden rounded-[18px] border-border bg-card/95 py-0 shadow-sm'>
+      <div className='bg-[color-mix(in_srgb,var(--el-accent-azure)_45%,var(--background)_55%)] dark:bg-[color-mix(in_srgb,var(--el-accent-azure)_60%,var(--background)_40%)] px-3 py-4'>
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
-          <Avatar className='size-16 border-2 border-white/70 shadow-md'>
+          <Avatar className='size-16 border-2 border-background/70 shadow-md'>
             {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
-            <AvatarFallback className='bg-[linear-gradient(135deg,var(--el-accent-azure),color-mix(in_srgb,var(--el-accent-amber)_55%,white))] text-lg font-semibold text-white'>
+            <AvatarFallback className='text-primary-foreground bg-[linear-gradient(135deg,var(--el-accent-azure),color-mix(in_srgb,var(--el-accent-amber)_55%,var(--background)))] text-lg font-semibold'>
               {displayName
                 .split(/\s+/)
                 .filter(Boolean)
