@@ -13,7 +13,7 @@ import { RoleMembersTable, type RoleMember } from './RoleMembersTable';
 
 type Role = 'student' | 'instructor' | 'course_creator' | 'admin';
 
-const PAGEABLE = { page: 0, size: 100, sort: ['created_date,desc'] };
+const PAGEABLE = { page: 0, size: 100 };
 
 /** Client section that loads role members through the proxy and renders the members table. */
 export function RoleMembersSection({ role }: { role: Role }) {

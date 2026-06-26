@@ -62,11 +62,13 @@ function buildOrganisationFilters(params: AdminOrganisationListParams) {
 export async function fetchAdminOrganisations(
   params: AdminOrganisationListParams = {}
 ): Promise<AdminOrganisationListResult> {
-  const { page = 0, size = 20, sortField = 'created_date', sortOrder = 'desc' } = params;
+  const { page = 0, size = 20 } = params;
+  // NOTE: the upstream list/search endpoints reject a `sort` pageable param for these
+  // projections (they 500 on the property reference), so ordering is done client-side in
+  // the table. Keep the pageable to page/size only — mirrors the working course/program lists.
   const pageable = {
     page,
     size,
-    sort: [`${sortField},${sortOrder}`],
   };
 
   const filters = buildOrganisationFilters(params);

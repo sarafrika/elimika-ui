@@ -58,11 +58,11 @@ function buildRubricFilters(params: AdminRubricListParams) {
 export async function fetchAdminRubrics(
   params: AdminRubricListParams = {}
 ): Promise<AdminRubricListResult> {
-  const { page = 0, size = 20, sortField = 'updated_date', sortOrder = 'desc' } = params;
+  const { page = 0, size = 20 } = params;
+  // Upstream rejects a `sort` pageable param for this projection — order client-side instead.
   const pageable = {
     page,
     size,
-    sort: [`${sortField},${sortOrder}`],
   };
 
   const filters = buildRubricFilters(params);

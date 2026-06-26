@@ -1,9 +1,10 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { BadgeCheck, GraduationCap, ShieldCheck, ShieldX } from 'lucide-react';
+import { BadgeCheck, GraduationCap, ShieldCheck, ShieldX, Star } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { CredentialDocument, CredentialRecord, DomainVerification } from '@/services/admin/credential-review';
 import {
@@ -154,9 +155,57 @@ export function DomainVerificationSection({
           )}
         </div>
 
+        {/* Skills */}
+        {domain.skills.length ? (
+          <div className='space-y-2'>
+            <p className={adminTheme.sectionLabel}>Skills</p>
+            <div className='flex flex-wrap gap-1.5'>
+              {domain.skills.map(skill => (
+                <Badge key={skill} variant='secondary' className='font-normal capitalize'>
+                  {skill}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         <RecordList title='Education' records={domain.education} />
+        <RecordList title='Certifications' records={domain.certifications} />
         <RecordList title='Experience' records={domain.experience} />
         <RecordList title='Memberships' records={domain.memberships} />
+
+        {/* Authored content */}
+        <RecordList title={domain.contentLabel} records={domain.content} />
+
+        {/* Reviews */}
+        {domain.reviews.length ? (
+          <div className='space-y-2'>
+            <p className={adminTheme.sectionLabel}>
+              <span className='flex items-center gap-1.5'>
+                Reviews
+                {domain.averageRating != null ? (
+                  <span className='inline-flex items-center gap-1 text-foreground'>
+                    <Star className='size-3.5 fill-warning text-warning' />
+                    {domain.averageRating} · {domain.reviewCount}
+                  </span>
+                ) : null}
+              </span>
+            </p>
+            <div className='space-y-3'>
+              {domain.reviews.map(record => (
+                <div key={record.id} className='rounded-md border border-border/60 bg-muted/20 p-3'>
+                  <div className='mb-2'>
+                    <p className='text-sm font-medium text-foreground'>{record.title}</p>
+                    {record.subtitle ? (
+                      <p className='text-xs text-muted-foreground'>{record.subtitle}</p>
+                    ) : null}
+                  </div>
+                  <DetailGrid items={record.details} columns={2} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <CredentialReviewDialog

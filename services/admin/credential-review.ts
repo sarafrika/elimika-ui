@@ -1,25 +1,37 @@
 import {
   getAllCourseCreators,
   getAllInstructors,
+  getCourseCreatorCertifications,
   getCourseCreatorDocuments,
   getCourseCreatorEducation,
   getCourseCreatorExperience,
   getCourseCreatorMemberships,
+  getCourseCreatorSkills,
+  getCoursesByInstructor,
   getInstructorDocuments,
   getInstructorEducation,
   getInstructorExperience,
   getInstructorMemberships,
+  getInstructorReviews,
+  getInstructorSkills,
+  getProgramsByCourseCreator,
   listDocumentTypes,
   searchCourseCreators,
   searchDocuments,
   searchInstructors,
 } from '@/services/client';
 import type {
+  Course,
   CourseCreator,
+  CourseCreatorCertification,
   CourseCreatorDocumentDto,
+  CourseCreatorSkill,
   DocumentTypeOption,
   Instructor,
   InstructorDocument,
+  InstructorReview,
+  InstructorSkill,
+  TrainingProgram,
 } from '@/services/client';
 import type { StatusTone } from '@/app/dashboard/@admin/_components/ui/admin-theme';
 
@@ -277,6 +289,18 @@ export interface DomainVerification {
   education: CredentialRecord[];
   experience: CredentialRecord[];
   memberships: CredentialRecord[];
+  /** Skills declared on the profile (name · proficiency). */
+  skills: string[];
+  /** Professional certifications (course-creator profiles). */
+  certifications: CredentialRecord[];
+  /** Reviews left by students. */
+  reviews: CredentialRecord[];
+  /** Average review rating (out of 5), when any reviews exist. */
+  averageRating?: number;
+  reviewCount: number;
+  /** Authored content — courses for instructors, programs for course creators. */
+  content: CredentialRecord[];
+  contentLabel: string;
 }
 
 interface RawEducation {
@@ -360,6 +384,71 @@ function mapMembership(record: RawMembership): CredentialRecord {
   };
 }
 
+function mapReview(record: InstructorReview): CredentialRecord {
+  return {
+    id: `rev-${record.uuid}`,
+    title: record.headline || `Rated ${record.rating}/5`,
+    subtitle: record.comments || undefined,
+    details: [
+      { label: 'Rating', value: `${record.rating}/5` },
+      { label: 'Date', value: formatDate(record.created_date) || '—' },
+    ],
+  };
+}
+
+function mapCertification(record: CourseCreatorCertification): CredentialRecord {
+  return {
+    id: `cert-${record.uuid}`,
+    title: record.certification_name || 'Certification',
+    subtitle: record.issuing_organisation || undefined,
+    details: [
+      { label: 'Issued', value: formatDate(record.issued_date) || '—' },
+      { label: 'Expires', value: formatDate(record.expiry_date) || '—' },
+      { label: 'Credential ID', value: record.credential_id || '—' },
+      {
+        label: 'Status',
+        value: record.is_verified ? 'Verified' : record.is_expired ? 'Expired' : 'Unverified',
+      },
+    ],
+  };
+}
+
+function mapCourseContent(record: Course): CredentialRecord {
+  return {
+    id: `course-${record.uuid}`,
+    title: record.name || 'Course',
+    subtitle: record.category_names?.length ? record.category_names.join(', ') : undefined,
+    details: [
+      { label: 'Status', value: record.status ? String(record.status) : '—' },
+      { label: 'Published', value: record.is_published ? 'Yes' : 'No' },
+    ],
+  };
+}
+
+function mapProgramContent(record: TrainingProgram): CredentialRecord {
+  return {
+    id: `program-${record.uuid}`,
+    title: record.title || 'Program',
+    details: [
+      { label: 'Status', value: record.status ? String(record.status) : '—' },
+      { label: 'Published', value: record.published ? 'Yes' : 'No' },
+    ],
+  };
+}
+
+function skillLabel(name?: string | null, proficiency?: string | null): string {
+  const label = (name || '').trim();
+  const level = (proficiency || '').replace(/_/g, ' ').trim();
+  if (label && level) return `${label} · ${level.toLowerCase()}`;
+  return label || level || 'Skill';
+}
+
+function average(values: number[]): number | undefined {
+  if (!values.length) return undefined;
+  const sum = values.reduce((total, value) => total + value, 0);
+  return Math.round((sum / values.length) * 10) / 10;
+}
+
 function listOf<T>(payload: unknown): T[] {
   const data = (payload as { data?: { data?: unknown } })?.data?.data;
   if (Array.isArray(data)) return data as T[];
@@ -389,13 +478,17 @@ export async function fetchUserVerification(userUuid: string): Promise<DomainVer
 
   if (instructor?.uuid) {
     const uuid = instructor.uuid;
-    const [docsRes, eduRes, expRes, memRes] = await Promise.all([
+    const [docsRes, eduRes, expRes, memRes, skillRes, reviewRes, courseRes] = await Promise.all([
       getInstructorDocuments({ path: { instructorUuid: uuid } }).catch(() => null),
       getInstructorEducation({ path: { instructorUuid: uuid } }).catch(() => null),
       getInstructorExperience({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
       getInstructorMemberships({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
+      getInstructorSkills({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
+      getInstructorReviews({ path: { instructorUuid: uuid } }).catch(() => null),
+      getCoursesByInstructor({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
     ]);
     const ownerName = instructor.full_name || 'Instructor';
+    const reviews = ((reviewRes?.data?.data ?? []) as InstructorReview[]) ?? [];
     domains.push({
       role: 'instructor',
       roleLabel: 'Instructor',
@@ -410,16 +503,28 @@ export async function fetchUserVerification(userUuid: string): Promise<DomainVer
       education: listOf<RawEducation>(eduRes).map(mapEducation),
       experience: listOf<RawExperience>(expRes).map(mapExperience),
       memberships: listOf<RawMembership>(memRes).map(mapMembership),
+      skills: listOf<InstructorSkill>(skillRes).map(s =>
+        skillLabel(s.display_name || s.skill_name, s.proficiency_description || s.proficiency_level)
+      ),
+      certifications: [],
+      reviews: reviews.map(mapReview),
+      averageRating: average(reviews.map(r => r.rating).filter(n => typeof n === 'number')),
+      reviewCount: reviews.length,
+      content: listOf<Course>(courseRes).map(mapCourseContent),
+      contentLabel: 'Courses taught',
     });
   }
 
   if (creator?.uuid) {
     const uuid = creator.uuid;
-    const [docsRes, eduRes, expRes, memRes] = await Promise.all([
+    const [docsRes, eduRes, expRes, memRes, skillRes, certRes, programRes] = await Promise.all([
       getCourseCreatorDocuments({ path: { courseCreatorUuid: uuid } }).catch(() => null),
       getCourseCreatorEducation({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
       getCourseCreatorExperience({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
       getCourseCreatorMemberships({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
+      getCourseCreatorSkills({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
+      getCourseCreatorCertifications({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
+      getProgramsByCourseCreator({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
     ]);
     const ownerName = creator.full_name || 'Course creator';
     domains.push({
@@ -436,6 +541,15 @@ export async function fetchUserVerification(userUuid: string): Promise<DomainVer
       education: listOf<RawEducation>(eduRes).map(mapEducation),
       experience: listOf<RawExperience>(expRes).map(mapExperience),
       memberships: listOf<RawMembership>(memRes).map(mapMembership),
+      skills: listOf<CourseCreatorSkill>(skillRes).map(s =>
+        skillLabel(s.display_name || s.skill_name, s.proficiency_description || s.proficiency_level)
+      ),
+      certifications: listOf<CourseCreatorCertification>(certRes).map(mapCertification),
+      reviews: [],
+      averageRating: undefined,
+      reviewCount: 0,
+      content: listOf<TrainingProgram>(programRes).map(mapProgramContent),
+      contentLabel: 'Programs authored',
     });
   }
 
