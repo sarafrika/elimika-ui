@@ -602,6 +602,9 @@ export const StudentSchema = {
       maxLength: 2000,
       minLength: 0,
     },
+    primaryGuardianContact: {
+      type: 'string',
+    },
     secondaryGuardianContact: {
       type: 'string',
     },
@@ -610,9 +613,6 @@ export const StudentSchema = {
       items: {
         type: 'string',
       },
-    },
-    primaryGuardianContact: {
-      type: 'string',
     },
     full_name: {
       type: 'string',
@@ -4594,6 +4594,11 @@ export const LessonPracticeActivitySchema = {
       example: '15 minutes',
       readOnly: true,
     },
+    is_published: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Whether the activity is published.',
+      readOnly: true,
+    },
   },
   required: ['instructions', 'title'],
 } as const;
@@ -8565,25 +8570,6 @@ export const ScheduledInstanceSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_started: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_ended: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
-      example: false,
-      readOnly: true,
-    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
@@ -8607,6 +8593,25 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
+      example: false,
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_started: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_ended: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
       example: false,
       readOnly: true,
     },
@@ -12387,16 +12392,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    is_upcoming: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
-      example: true,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended this class.',
       example: false,
+      readOnly: true,
+    },
+    is_upcoming: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
+      example: true,
       readOnly: true,
     },
   },
@@ -12601,10 +12606,10 @@ export const SortObjectSchema = {
     empty: {
       type: 'boolean',
     },
-    unsorted: {
+    sorted: {
       type: 'boolean',
     },
-    sorted: {
+    unsorted: {
       type: 'boolean',
     },
   },
@@ -17696,6 +17701,126 @@ export const SocialMediaUrlSchema = {
   description: 'A valid social media profile URL',
   example: 'https://linkedin.com/company/sarafrika',
   pattern: '^https?://(www\\.)?(facebook|twitter|instagram|linkedin|youtube|tiktok)\\.com/[^\\s]*$',
+} as const;
+
+export const AdminUserActivityEventSchema = {
+  type: 'object',
+  description: 'Represents a request audit event related to a specific user',
+  properties: {
+    event_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Unique identifier for the activity event',
+    },
+    occurred_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the activity occurred (UTC)',
+    },
+    summary: {
+      type: 'string',
+      description: 'Human-readable summary of the activity',
+    },
+    category: {
+      type: 'string',
+      description: 'Audit category derived from the endpoint',
+    },
+    scope: {
+      type: 'string',
+      description: 'Whether the selected user performed the action, was targeted by it, or both',
+    },
+    http_method: {
+      type: 'string',
+      description: 'HTTP method invoked by the request',
+    },
+    endpoint: {
+      type: 'string',
+      description: 'Endpoint path that was called',
+    },
+    query: {
+      type: 'string',
+      description: 'Query string that accompanied the request',
+    },
+    response_status: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Response status returned for the request',
+    },
+    processing_time_ms: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Processing time in milliseconds',
+    },
+    actor_name: {
+      type: 'string',
+      description: 'Actor name captured by the request audit log',
+    },
+    actor_email: {
+      type: 'string',
+      description: 'Actor email captured by the request audit log',
+    },
+    actor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Actor user UUID captured by the request audit log',
+    },
+    actor_domains: {
+      type: 'string',
+      description: 'Actor domains captured during the request',
+    },
+    target_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Selected dossier user UUID',
+    },
+    related_entity_type: {
+      type: 'string',
+      description: 'Related profile/entity type when derived from the endpoint',
+    },
+    related_entity_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Related profile/entity UUID when derived from the endpoint',
+    },
+    request_id: {
+      type: 'string',
+      description: 'Unique request identifier captured by the audit trail',
+    },
+  },
+} as const;
+
+export const PagedDTOAdminUserActivityEventSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AdminUserActivityEvent',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOAdminUserActivityEventSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOAdminUserActivityEvent',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
 export const SchemaEnumSchema = {

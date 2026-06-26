@@ -373,9 +373,9 @@ export const zStudent = z
       ])
       .optional(),
     bio: z.union([z.string().min(0).max(2000), z.null()]).optional(),
+    primaryGuardianContact: z.string().optional(),
     secondaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
-    primaryGuardianContact: z.string().optional(),
     full_name: z
       .string()
       .describe(
@@ -5238,21 +5238,6 @@ export const zScheduledInstance = z
       )
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-    can_be_started: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
-      .readonly()
-      .optional(),
-    can_be_ended: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
-      .readonly()
-      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
@@ -5273,6 +5258,21 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
+      .readonly()
+      .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -7537,14 +7537,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    is_upcoming: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended this class.')
+      .readonly()
+      .optional(),
+    is_upcoming: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
       .readonly()
       .optional(),
   })
@@ -7605,8 +7605,8 @@ export const zApiResponsePagedDtoBookingResponse = z.object({
 
 export const zSortObject = z.object({
   empty: z.boolean().optional(),
-  unsorted: z.boolean().optional(),
   sorted: z.boolean().optional(),
+  unsorted: z.boolean().optional(),
 });
 
 export const zPageableObject = z.object({
@@ -9988,6 +9988,66 @@ export const zDocumentUrl = z.unknown().describe('A valid URL pointing to a docu
  * A valid social media profile URL
  */
 export const zSocialMediaUrl = z.unknown().describe('A valid social media profile URL');
+
+/**
+ * Represents a request audit event related to a specific user
+ */
+export const zAdminUserActivityEvent = z
+  .object({
+    event_uuid: z.string().uuid().describe('Unique identifier for the activity event').optional(),
+    occurred_at: z.string().datetime().describe('When the activity occurred (UTC)').optional(),
+    summary: z.string().describe('Human-readable summary of the activity').optional(),
+    category: z.string().describe('Audit category derived from the endpoint').optional(),
+    scope: z
+      .string()
+      .describe('Whether the selected user performed the action, was targeted by it, or both')
+      .optional(),
+    http_method: z.string().describe('HTTP method invoked by the request').optional(),
+    endpoint: z.string().describe('Endpoint path that was called').optional(),
+    query: z.string().describe('Query string that accompanied the request').optional(),
+    response_status: z
+      .number()
+      .int()
+      .describe('Response status returned for the request')
+      .optional(),
+    processing_time_ms: z.coerce.bigint().describe('Processing time in milliseconds').optional(),
+    actor_name: z.string().describe('Actor name captured by the request audit log').optional(),
+    actor_email: z.string().describe('Actor email captured by the request audit log').optional(),
+    actor_uuid: z
+      .string()
+      .uuid()
+      .describe('Actor user UUID captured by the request audit log')
+      .optional(),
+    actor_domains: z.string().describe('Actor domains captured during the request').optional(),
+    target_user_uuid: z.string().uuid().describe('Selected dossier user UUID').optional(),
+    related_entity_type: z
+      .string()
+      .describe('Related profile/entity type when derived from the endpoint')
+      .optional(),
+    related_entity_uuid: z
+      .string()
+      .uuid()
+      .describe('Related profile/entity UUID when derived from the endpoint')
+      .optional(),
+    request_id: z
+      .string()
+      .describe('Unique request identifier captured by the audit trail')
+      .optional(),
+  })
+  .describe('Represents a request audit event related to a specific user');
+
+export const zPagedDtoAdminUserActivityEvent = z.object({
+  content: z.array(zAdminUserActivityEvent).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoAdminUserActivityEvent = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoAdminUserActivityEvent.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
 
 export const zSchemaEnum3 = z.enum(['approve', 'reject', 'revoke']);
 
@@ -17607,3 +17667,38 @@ export const zRemoveAdminDomainData = z.object({
  * Admin domain removed successfully
  */
 export const zRemoveAdminDomainResponse = zApiResponseUser;
+
+export const zGetUserActivityData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.object({
+    scope: z.string().optional().default('all'),
+    category: z.string().optional(),
+    target_uuids: z.string().optional(),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * User activity retrieved successfully
+ */
+export const zGetUserActivityResponse = zApiResponsePagedDtoAdminUserActivityEvent;
+
+export const zListInstructorApplicationsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    status: z.string().optional(),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zListInstructorApplicationsResponse =
+  zApiResponsePagedDtoClassMarketplaceJobApplication;

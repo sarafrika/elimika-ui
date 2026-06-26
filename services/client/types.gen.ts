@@ -265,9 +265,9 @@ export type Student = {
    * **[OPTIONAL]** Short biography or notes about the student. Used in student profiles.
    */
   bio?: string | null;
+  primaryGuardianContact?: string;
   secondaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
-  primaryGuardianContact?: string;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
    */
@@ -4065,18 +4065,6 @@ export type ScheduledInstance = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
-   */
-  readonly can_be_started?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
-   */
-  readonly can_be_ended?: boolean;
-  /**
    * **[READ-ONLY]** Duration of the scheduled instance in minutes.
    */
   readonly duration_minutes?: bigint;
@@ -4092,6 +4080,18 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
+   */
+  readonly can_be_started?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
+   */
+  readonly can_be_ended?: boolean;
 };
 
 /**
@@ -5002,12 +5002,12 @@ export type MultiValueMapStringString = {
   };
   empty?: boolean;
   [key: string]:
-  | Array<string>
-  | {
-    [key: string]: string;
-  }
-  | boolean
-  | undefined;
+    | Array<string>
+    | {
+        [key: string]: string;
+      }
+    | boolean
+    | undefined;
 };
 
 /**
@@ -6204,13 +6204,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if this class is upcoming.
-   */
-  readonly is_upcoming?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended this class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if this class is upcoming.
+   */
+  readonly is_upcoming?: boolean;
 };
 
 export type ApiResponseListScheduledInstance = {
@@ -6284,8 +6284,8 @@ export type PageableObject = {
 
 export type SortObject = {
   empty?: boolean;
-  unsorted?: boolean;
   sorted?: boolean;
+  unsorted?: boolean;
 };
 
 export type ApiResponsePagedDtoAssessmentRubric = {
@@ -8493,6 +8493,97 @@ export type DocumentUrl = unknown;
  * A valid social media profile URL
  */
 export type SocialMediaUrl = unknown;
+
+/**
+ * Represents a request audit event related to a specific user
+ */
+export type AdminUserActivityEvent = {
+  /**
+   * Unique identifier for the activity event
+   */
+  event_uuid?: string;
+  /**
+   * When the activity occurred (UTC)
+   */
+  occurred_at?: Date;
+  /**
+   * Human-readable summary of the activity
+   */
+  summary?: string;
+  /**
+   * Audit category derived from the endpoint
+   */
+  category?: string;
+  /**
+   * Whether the selected user performed the action, was targeted by it, or both
+   */
+  scope?: string;
+  /**
+   * HTTP method invoked by the request
+   */
+  http_method?: string;
+  /**
+   * Endpoint path that was called
+   */
+  endpoint?: string;
+  /**
+   * Query string that accompanied the request
+   */
+  query?: string;
+  /**
+   * Response status returned for the request
+   */
+  response_status?: number;
+  /**
+   * Processing time in milliseconds
+   */
+  processing_time_ms?: bigint;
+  /**
+   * Actor name captured by the request audit log
+   */
+  actor_name?: string;
+  /**
+   * Actor email captured by the request audit log
+   */
+  actor_email?: string;
+  /**
+   * Actor user UUID captured by the request audit log
+   */
+  actor_uuid?: string;
+  /**
+   * Actor domains captured during the request
+   */
+  actor_domains?: string;
+  /**
+   * Selected dossier user UUID
+   */
+  target_user_uuid?: string;
+  /**
+   * Related profile/entity type when derived from the endpoint
+   */
+  related_entity_type?: string;
+  /**
+   * Related profile/entity UUID when derived from the endpoint
+   */
+  related_entity_uuid?: string;
+  /**
+   * Unique request identifier captured by the audit trail
+   */
+  request_id?: string;
+};
+
+export type PagedDtoAdminUserActivityEvent = {
+  content?: Array<AdminUserActivityEvent>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoAdminUserActivityEvent = {
+  success?: boolean;
+  data?: PagedDtoAdminUserActivityEvent;
+  message?: string;
+  error?: unknown;
+};
 
 export const SchemaEnum = {
   PLATFORM_FEE: 'PLATFORM_FEE',
@@ -28052,9 +28143,81 @@ export type RemoveAdminDomainResponses = {
 export type RemoveAdminDomainResponse =
   RemoveAdminDomainResponses[keyof RemoveAdminDomainResponses];
 
+export type GetUserActivityData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query: {
+    scope?: string;
+    category?: string;
+    target_uuids?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/admin/users/{uuid}/activity-feed';
+};
+
+export type GetUserActivityErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetUserActivityError = GetUserActivityErrors[keyof GetUserActivityErrors];
+
+export type GetUserActivityResponses = {
+  /**
+   * User activity retrieved successfully
+   */
+  200: ApiResponsePagedDtoAdminUserActivityEvent;
+};
+
+export type GetUserActivityResponse = GetUserActivityResponses[keyof GetUserActivityResponses];
+
+export type ListInstructorApplicationsData = {
+  body?: never;
+  path: {
+    instructorUuid: string;
+  };
+  query: {
+    status?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/classes/jobs/applications/instructor/{instructorUuid}';
+};
+
+export type ListInstructorApplicationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListInstructorApplicationsError =
+  ListInstructorApplicationsErrors[keyof ListInstructorApplicationsErrors];
+
+export type ListInstructorApplicationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoClassMarketplaceJobApplication;
+};
+
+export type ListInstructorApplicationsResponse =
+  ListInstructorApplicationsResponses[keyof ListInstructorApplicationsResponses];
+
 export type ClientOptions = {
   baseUrl:
-  | 'https://api.elimika.staging.sarafrika.com'
-  | 'https://api.elimika.sarafrika.com'
-  | (string & {});
+    | 'https://api.elimika.staging.sarafrika.com'
+    | 'https://api.elimika.sarafrika.com'
+    | (string & {});
 };
