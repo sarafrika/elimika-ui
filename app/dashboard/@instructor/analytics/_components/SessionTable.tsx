@@ -4,6 +4,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from 'react';
 import { Button } from '../../../../../components/ui/button';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../../../../../components/ui/dropdown-menu';
 import { useInstructorAnalyticsData } from "./useInstructorAnalyticsData";
 
 function StatusBadge({ status }: { status: string }) {
@@ -107,6 +108,33 @@ export function SessionTable() {
   );
 
 
+  const [visibleColumns, setVisibleColumns] = useState({
+    program: true,
+    session: true,
+    date: true,
+    location: true,
+    participants: true,
+    completion: true,
+    satisfaction: true,
+    trainingHours: true,
+    status: true,
+  });
+
+
+  const toggleColumn = (column: keyof typeof visibleColumns) => {
+    setVisibleColumns(prev => ({
+      ...prev,
+      [column]: !prev[column],
+    }));
+  };
+
+  const afterParticipantsColSpan = [
+    visibleColumns.completion,
+    visibleColumns.satisfaction,
+    visibleColumns.trainingHours,
+    visibleColumns.status,
+  ].filter(Boolean).length;
+
 
   return (
     <div className="bg-card rounded-xl border border-border p-3 shadow-sm sm:p-4">
@@ -170,59 +198,132 @@ export function SessionTable() {
               ))}
             </div>
 
+
+            <div className="flex justify-end mb-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Columns
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end">
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.location}
+                    onCheckedChange={() => toggleColumn("location")}
+                  >
+                    Location
+                  </DropdownMenuCheckboxItem>
+
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.participants}
+                    onCheckedChange={() => toggleColumn("participants")}
+                  >
+                    Participants
+                  </DropdownMenuCheckboxItem>
+
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.completion}
+                    onCheckedChange={() => toggleColumn("completion")}
+                  >
+                    Completion Rate
+                  </DropdownMenuCheckboxItem>
+
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.satisfaction}
+                    onCheckedChange={() => toggleColumn("satisfaction")}
+                  >
+                    Avg. Satisfaction
+                  </DropdownMenuCheckboxItem>
+
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.trainingHours}
+                    onCheckedChange={() => toggleColumn("trainingHours")}
+                  >
+                    Training Hours
+                  </DropdownMenuCheckboxItem>
+
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.status}
+                    onCheckedChange={() => toggleColumn("status")}
+                  >
+                    Status
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
             <table className="w-full min-w-[700px] text-xs">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-2 py-2 text-left font-medium text-muted-foreground">
                     Program
                   </th>
+
                   <th className="px-2 py-2 text-left font-medium text-muted-foreground">
                     Session Name
                   </th>
+
                   <th className="px-2 py-2 text-left font-medium text-muted-foreground">
                     Date
                   </th>
-                  <th className="px-2 py-2 text-left font-medium text-muted-foreground">
-                    Location
-                  </th>
 
-                  {/* <th className="px-2 py-2 text-left font-medium text-muted-foreground">
-        Instructor
-      </th> */}
+                  {visibleColumns.location && (
+                    <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                      Location
+                    </th>
+                  )}
 
-                  <th
-                    className="px-2 py-2 text-center font-medium text-muted-foreground"
-                    colSpan={2}
-                  >
-                    Participants
-                  </th>
+                  {visibleColumns.participants && (
+                    <th
+                      className="px-2 py-2 text-center font-medium text-muted-foreground"
+                      colSpan={2}
+                    >
+                      Participants
+                    </th>
+                  )}
 
-                  <th className="px-2 py-2 text-left font-medium text-muted-foreground">
-                    Completion Rate
-                  </th>
-                  <th className="px-2 py-2 text-left font-medium text-muted-foreground">
-                    Avg. Satisfaction
-                  </th>
-                  <th className="px-2 py-2 text-left font-medium text-muted-foreground">
-                    Training Hours
-                  </th>
-                  <th className="px-2 py-2 text-left font-medium text-muted-foreground">
-                    Status
-                  </th>
+                  {visibleColumns.completion && (
+                    <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                      Completion Rate
+                    </th>
+                  )}
+
+                  {visibleColumns.satisfaction && (
+                    <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                      Avg. Satisfaction
+                    </th>
+                  )}
+
+                  {visibleColumns.trainingHours && (
+                    <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                      Training Hours
+                    </th>
+                  )}
+
+                  {visibleColumns.status && (
+                    <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                      Status
+                    </th>
+                  )}
                 </tr>
 
                 <tr className="border-b border-border/50">
-                  {/* FIX: 4 columns before Participants (Instructor is hidden) */}
-                  <th colSpan={4} />
+                  <th colSpan={3 + (visibleColumns.location ? 1 : 0)} />
 
-                  <th className="px-2 py-1 text-center text-muted-foreground font-normal">
-                    Enrolled
-                  </th>
-                  <th className="px-2 py-1 text-center text-muted-foreground font-normal">
-                    Attended
-                  </th>
+                  {visibleColumns.participants && (
+                    <>
+                      <th className="px-2 py-1 text-center text-muted-foreground font-normal">
+                        Enrolled
+                      </th>
 
-                  <th colSpan={4} />
+                      <th className="px-2 py-1 text-center text-muted-foreground font-normal">
+                        Attended
+                      </th>
+                    </>
+                  )}
+
+                  <th colSpan={afterParticipantsColSpan} />
                 </tr>
               </thead>
 
@@ -232,41 +333,73 @@ export function SessionTable() {
                     key={s.id}
                     className="border-b border-border/50 hover:bg-muted/10 transition-colors"
                   >
-                    <td className="px-2 py-2.5 text-foreground">{s.program}</td>
-                    <td className="px-2 py-2.5 font-medium text-foreground">{s.session}</td>
-                    <td className="px-2 py-2.5 whitespace-nowrap text-muted-foreground">
-                      {s.dateRange}
-                    </td>
-                    <td className="px-2 py-2.5 whitespace-nowrap text-muted-foreground">
-                      {s.location}
-                    </td>
-
-                    {/* <td className="px-2 py-2.5 whitespace-nowrap text-foreground">
-          {s.instructor}
-        </td> */}
-
-                    <td className="px-2 py-2.5 text-center text-foreground">
-                      {s.enrolled}
-                    </td>
-                    <td className="px-2 py-2.5 text-center text-foreground">
-                      {s.attended}
-                    </td>
-
                     <td className="px-2 py-2.5">
-                      <CompletionBar pct={s.completionRate} />
+                      <div className="max-w-[220px] line-clamp-2">
+                        {s.program}
+                      </div>
                     </td>
 
-                    <td className="px-2 py-2.5">
-                      <StarRating value={s.satisfaction} />
+                    <td className="px-2 py-2.5 font-medium">
+                      <div className="max-w-[220px] line-clamp-2">
+                        {s.session}
+                      </div>
                     </td>
 
-                    <td className="px-2 py-2.5 text-center text-foreground">
-                      {s.totalHours}
+                    <td className="px-2 py-2.5 text-muted-foreground w-[120px]">
+                      {/* {(() => {
+                        const [startDate, endDate] = s.dateRange.split(" - ");
+
+                        return (
+                          <>
+                            <div>{startDate}</div>
+                            {endDate && <div>{endDate}</div>}
+                          </>
+                        );
+                      })()} */}
+                      sdflsdf
                     </td>
 
-                    <td className="px-2 py-2.5">
-                      <StatusBadge status={s.status} />
-                    </td>
+                    {visibleColumns.location && (
+                      <td className="px-2 py-2.5 whitespace-nowrap text-muted-foreground max-w-[120px] truncate">
+                        {s.location}
+                      </td>
+                    )}
+
+                    {visibleColumns.participants && (
+                      <>
+                        <td className="px-2 py-2.5 text-center">
+                          {s.enrolled}
+                        </td>
+
+                        <td className="px-2 py-2.5 text-center">
+                          {s.attended}
+                        </td>
+                      </>
+                    )}
+
+                    {visibleColumns.completion && (
+                      <td className="px-2 py-2.5">
+                        <CompletionBar pct={s.completionRate} />
+                      </td>
+                    )}
+
+                    {visibleColumns.satisfaction && (
+                      <td className="px-2 py-2.5">
+                        <StarRating value={s.satisfaction} />
+                      </td>
+                    )}
+
+                    {visibleColumns.trainingHours && (
+                      <td className="px-2 py-2.5 text-center">
+                        {s.totalHours}
+                      </td>
+                    )}
+
+                    {visibleColumns.status && (
+                      <td className="px-2 py-2.5">
+                        <StatusBadge status={s.status} />
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -339,6 +472,33 @@ export function SessionTableSummary() {
     sessions.length
   );
 
+  const [visibleColumns, setVisibleColumns] = useState({
+    program: true,
+    session: true,
+    date: true,
+    location: true,
+    participants: true,
+    completion: true,
+    satisfaction: true,
+    trainingHours: true,
+    status: true,
+  });
+
+  const toggleColumn = (column: keyof typeof visibleColumns) => {
+    setVisibleColumns(prev => ({
+      ...prev,
+      [column]: !prev[column],
+    }));
+  };
+
+  const afterParticipantsColSpan = [
+    visibleColumns.completion,
+    visibleColumns.satisfaction,
+    visibleColumns.trainingHours,
+    visibleColumns.status,
+  ].filter(Boolean).length;
+
+
   return (
     <div className="bg-card rounded-xl border border-border p-3 shadow-sm sm:p-4">
       <h3 className="mb-3 text-xs font-semibold text-foreground sm:text-sm">
@@ -375,59 +535,131 @@ export function SessionTableSummary() {
               ))}
             </div>
 
+            <div className="flex justify-end mb-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Columns
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end">
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.location}
+                    onCheckedChange={() => toggleColumn("location")}
+                  >
+                    Location
+                  </DropdownMenuCheckboxItem>
+
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.participants}
+                    onCheckedChange={() => toggleColumn("participants")}
+                  >
+                    Participants
+                  </DropdownMenuCheckboxItem>
+
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.completion}
+                    onCheckedChange={() => toggleColumn("completion")}
+                  >
+                    Completion Rate
+                  </DropdownMenuCheckboxItem>
+
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.satisfaction}
+                    onCheckedChange={() => toggleColumn("satisfaction")}
+                  >
+                    Avg. Satisfaction
+                  </DropdownMenuCheckboxItem>
+
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.trainingHours}
+                    onCheckedChange={() => toggleColumn("trainingHours")}
+                  >
+                    Training Hours
+                  </DropdownMenuCheckboxItem>
+
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.status}
+                    onCheckedChange={() => toggleColumn("status")}
+                  >
+                    Status
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
             <table className="w-full min-w-[700px] text-xs">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-2 py-2 text-left font-medium text-muted-foreground">
                     Program
                   </th>
+
                   <th className="px-2 py-2 text-left font-medium text-muted-foreground">
                     Session Name
                   </th>
+
                   <th className="px-2 py-2 text-left font-medium text-muted-foreground">
                     Date
                   </th>
-                  <th className="px-2 py-2 text-left font-medium text-muted-foreground">
-                    Location
-                  </th>
 
-                  {/* <th className="px-2 py-2 text-left font-medium text-muted-foreground">
-        Instructor
-      </th> */}
+                  {visibleColumns.location && (
+                    <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                      Location
+                    </th>
+                  )}
 
-                  <th
-                    className="px-2 py-2 text-center font-medium text-muted-foreground"
-                    colSpan={2}
-                  >
-                    Participants
-                  </th>
+                  {visibleColumns.participants && (
+                    <th
+                      className="px-2 py-2 text-center font-medium text-muted-foreground"
+                      colSpan={2}
+                    >
+                      Participants
+                    </th>
+                  )}
 
-                  <th className="px-2 py-2 text-left font-medium text-muted-foreground">
-                    Completion Rate
-                  </th>
-                  <th className="px-2 py-2 text-left font-medium text-muted-foreground">
-                    Avg. Satisfaction
-                  </th>
-                  <th className="px-2 py-2 text-left font-medium text-muted-foreground">
-                    Training Hours
-                  </th>
-                  <th className="px-2 py-2 text-left font-medium text-muted-foreground">
-                    Status
-                  </th>
+                  {visibleColumns.completion && (
+                    <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                      Completion Rate
+                    </th>
+                  )}
+
+                  {visibleColumns.satisfaction && (
+                    <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                      Avg. Satisfaction
+                    </th>
+                  )}
+
+                  {visibleColumns.trainingHours && (
+                    <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                      Training Hours
+                    </th>
+                  )}
+
+                  {visibleColumns.status && (
+                    <th className="px-2 py-2 text-left font-medium text-muted-foreground">
+                      Status
+                    </th>
+                  )}
                 </tr>
 
                 <tr className="border-b border-border/50">
-                  {/* FIX: 4 columns before Participants (Instructor is hidden) */}
-                  <th colSpan={4} />
+                  <th colSpan={3 + (visibleColumns.location ? 1 : 0)} />
 
-                  <th className="px-2 py-1 text-center text-muted-foreground font-normal">
-                    Enrolled
-                  </th>
-                  <th className="px-2 py-1 text-center text-muted-foreground font-normal">
-                    Attended
-                  </th>
+                  {visibleColumns.participants && (
+                    <>
+                      <th className="px-2 py-1 text-center text-muted-foreground font-normal">
+                        Enrolled
+                      </th>
 
-                  <th colSpan={4} />
+                      <th className="px-2 py-1 text-center text-muted-foreground font-normal">
+                        Attended
+                      </th>
+                    </>
+                  )}
+
+                  <th colSpan={afterParticipantsColSpan} />
                 </tr>
               </thead>
 
@@ -437,41 +669,73 @@ export function SessionTableSummary() {
                     key={s.id}
                     className="border-b border-border/50 hover:bg-muted/10 transition-colors"
                   >
-                    <td className="px-2 py-2.5 text-foreground">{s.program}</td>
-                    <td className="px-2 py-2.5 font-medium text-foreground">{s.session}</td>
-                    <td className="px-2 py-2.5 whitespace-nowrap text-muted-foreground">
-                      {s.dateRange}
-                    </td>
-                    <td className="px-2 py-2.5 whitespace-nowrap text-muted-foreground">
-                      {s.location}
-                    </td>
-
-                    {/* <td className="px-2 py-2.5 whitespace-nowrap text-foreground">
-          {s.instructor}
-        </td> */}
-
-                    <td className="px-2 py-2.5 text-center text-foreground">
-                      {s.enrolled}
-                    </td>
-                    <td className="px-2 py-2.5 text-center text-foreground">
-                      {s.attended}
-                    </td>
-
                     <td className="px-2 py-2.5">
-                      <CompletionBar pct={s.completionRate} />
+                      <div className="max-w-[220px] line-clamp-2">
+                        {s.program}
+                      </div>
                     </td>
 
-                    <td className="px-2 py-2.5">
-                      <StarRating value={s.satisfaction} />
+                    <td className="px-2 py-2.5 font-medium">
+                      <div className="max-w-[220px] line-clamp-2">
+                        {s.session}
+                      </div>
                     </td>
 
-                    <td className="px-2 py-2.5 text-center text-foreground">
-                      {s.totalHours}
+                    <td className="px-2 py-2.5 text-muted-foreground w-[120px]">
+                      {/* {(() => {
+                        const [startDate, endDate] = s.dateRange.split(" - ");
+
+                        return (
+                          <>
+                            <div>{startDate}</div>
+                            {endDate && <div>{endDate}</div>}
+                          </>
+                        );
+                      })()} */}
+                      sfd
                     </td>
 
-                    <td className="px-2 py-2.5">
-                      <StatusBadge status={s.status} />
-                    </td>
+                    {visibleColumns.location && (
+                      <td className="px-2 py-2.5 whitespace-nowrap text-muted-foreground max-w-[120px] truncate">
+                        {s.location}
+                      </td>
+                    )}
+
+                    {visibleColumns.participants && (
+                      <>
+                        <td className="px-2 py-2.5 text-center">
+                          {s.enrolled}
+                        </td>
+
+                        <td className="px-2 py-2.5 text-center">
+                          {s.attended}
+                        </td>
+                      </>
+                    )}
+
+                    {visibleColumns.completion && (
+                      <td className="px-2 py-2.5">
+                        <CompletionBar pct={s.completionRate} />
+                      </td>
+                    )}
+
+                    {visibleColumns.satisfaction && (
+                      <td className="px-2 py-2.5">
+                        <StarRating value={s.satisfaction} />
+                      </td>
+                    )}
+
+                    {visibleColumns.trainingHours && (
+                      <td className="px-2 py-2.5 text-center">
+                        {s.totalHours}
+                      </td>
+                    )}
+
+                    {visibleColumns.status && (
+                      <td className="px-2 py-2.5">
+                        <StatusBadge status={s.status} />
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
