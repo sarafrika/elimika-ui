@@ -1,3 +1,19 @@
+import type { StatusTone } from '@/app/dashboard/@admin/_components/ui/admin-theme';
+import type {
+  Course,
+  CourseCreator,
+  CourseCreatorCertification,
+  CourseCreatorDocumentDto,
+  CourseCreatorSkill,
+  DocumentTypeOption,
+  Instructor,
+  InstructorDocument,
+  InstructorRatingSummary,
+  InstructorReview,
+  InstructorSkill,
+  Student,
+  TrainingProgram,
+} from '@/services/client';
 import {
   getAllCourseCreators,
   getAllInstructors,
@@ -12,28 +28,17 @@ import {
   getInstructorEducation,
   getInstructorExperience,
   getInstructorMemberships,
+  getInstructorRatingSummary,
   getInstructorReviews,
   getInstructorSkills,
   getProgramsByCourseCreator,
   listDocumentTypes,
   searchCourseCreators,
+  searchCourses,
   searchDocuments,
   searchInstructors,
+  searchStudents,
 } from '@/services/client';
-import type {
-  Course,
-  CourseCreator,
-  CourseCreatorCertification,
-  CourseCreatorDocumentDto,
-  CourseCreatorSkill,
-  DocumentTypeOption,
-  Instructor,
-  InstructorDocument,
-  InstructorReview,
-  InstructorSkill,
-  TrainingProgram,
-} from '@/services/client';
-import type { StatusTone } from '@/app/dashboard/@admin/_components/ui/admin-theme';
 
 export type CredentialRole = 'instructor' | 'course_creator';
 
@@ -47,6 +52,8 @@ export interface CredentialDocument {
   documentUuid?: string;
   documentTypeLabel: string;
   title: string;
+  /** Education record this document is the supporting certificate for, if any. */
+  educationUuid?: string;
   fileUrl?: string;
   statusLabel: string;
   statusTone: StatusTone;
@@ -160,6 +167,7 @@ function mapInstructorDocument(
     documentUuid: document.uuid,
     documentTypeLabel: typeLabel(document.document_type_uuid, typeMap),
     title: document.title || document.original_filename || 'Document',
+    educationUuid: document.education_uuid ?? undefined,
     fileUrl: document.file_url ?? document.file_path ?? undefined,
     statusLabel: status.label,
     statusTone: status.tone,
@@ -189,6 +197,7 @@ function mapCreatorDocument(
     documentUuid: document.uuid,
     documentTypeLabel: typeLabel(document.document_type_uuid, typeMap),
     title: document.title || document.original_filename || 'Document',
+    educationUuid: document.education_uuid ?? undefined,
     fileUrl: document.file_url ?? document.file_path ?? undefined,
     statusLabel: status.label,
     statusTone: status.tone,
@@ -270,9 +279,26 @@ export async function fetchVerificationQueue(): Promise<CredentialDocument[]> {
 /** A normalized education / experience / membership record for display. */
 export interface CredentialRecord {
   id: string;
+  /** Raw profile-record UUID (used to attach supporting documents). */
+  recordUuid?: string;
   title: string;
   subtitle?: string;
   details: Array<{ label: string; value: string }>;
+  /** Supporting certificate documents for this record (e.g. an education's diploma). */
+  documents?: CredentialDocument[];
+}
+
+/** A course or program authored/taught, with moderation status for the approvals view. */
+export interface ContentItem {
+  uuid: string;
+  type: 'course' | 'program';
+  title: string;
+  subtitle?: string;
+  status: string;
+  statusTone: StatusTone;
+  /** Awaiting admin approval (in review or not yet admin-approved). */
+  pending: boolean;
+  published: boolean;
 }
 
 /** All verification context for a single domain a user holds. */
@@ -298,9 +324,11 @@ export interface DomainVerification {
   /** Average review rating (out of 5), when any reviews exist. */
   averageRating?: number;
   reviewCount: number;
-  /** Authored content — courses for instructors, programs for course creators. */
-  content: CredentialRecord[];
+  /** Authored/taught courses + programs, for the Content & Approvals view. */
+  contentItems: ContentItem[];
   contentLabel: string;
+  /** Number of contentItems awaiting admin approval. */
+  pendingCount: number;
 }
 
 interface RawEducation {
@@ -349,6 +377,7 @@ function period(start?: Date | string | null, end?: Date | string | null, curren
 function mapEducation(record: RawEducation): CredentialRecord {
   return {
     id: `edu-${record.uuid}`,
+    recordUuid: record.uuid ?? undefined,
     title: record.qualification || 'Education',
     subtitle: record.school_name || undefined,
     details: [
@@ -362,6 +391,7 @@ function mapEducation(record: RawEducation): CredentialRecord {
 function mapExperience(record: RawExperience): CredentialRecord {
   return {
     id: `exp-${record.uuid}`,
+    recordUuid: record.uuid ?? undefined,
     title: record.position || 'Experience',
     subtitle: record.organisation_name || undefined,
     details: [
@@ -375,6 +405,7 @@ function mapExperience(record: RawExperience): CredentialRecord {
 function mapMembership(record: RawMembership): CredentialRecord {
   return {
     id: `mem-${record.uuid}`,
+    recordUuid: record.uuid ?? undefined,
     title: record.organisation_name || 'Membership',
     subtitle: record.membership_number ? `No. ${record.membership_number}` : undefined,
     details: [
@@ -413,27 +444,65 @@ function mapCertification(record: CourseCreatorCertification): CredentialRecord 
   };
 }
 
-function mapCourseContent(record: Course): CredentialRecord {
+/** Status label + tone + pending flag for a course/program from its workflow status. */
+function contentStatus(
+  status?: string | null,
+  adminApproved?: boolean | null
+): { label: string; tone: StatusTone; pending: boolean } {
+  const normalized = String(status ?? '').toLowerCase();
+  const pending = normalized === 'in_review' || adminApproved === false;
+  if (normalized === 'published') return { label: 'Published', tone: 'success', pending: false };
+  if (normalized === 'in_review') return { label: 'In review', tone: 'warning', pending: true };
+  if (normalized === 'archived') return { label: 'Archived', tone: 'neutral', pending: false };
+  if (normalized === 'draft') return { label: 'Draft', tone: 'neutral', pending };
+  return { label: status ? String(status) : '—', tone: 'neutral', pending };
+}
+
+function mapCourseItem(record: Course): ContentItem {
+  const status = contentStatus(record.status, record.admin_approved);
   return {
-    id: `course-${record.uuid}`,
+    uuid: record.uuid ?? '',
+    type: 'course',
     title: record.name || 'Course',
     subtitle: record.category_names?.length ? record.category_names.join(', ') : undefined,
-    details: [
-      { label: 'Status', value: record.status ? String(record.status) : '—' },
-      { label: 'Published', value: record.is_published ? 'Yes' : 'No' },
-    ],
+    status: status.label,
+    statusTone: status.tone,
+    pending: status.pending,
+    published: Boolean(record.is_published),
   };
 }
 
-function mapProgramContent(record: TrainingProgram): CredentialRecord {
+function mapProgramItem(record: TrainingProgram): ContentItem {
+  const status = contentStatus(record.status, record.admin_approved);
   return {
-    id: `program-${record.uuid}`,
+    uuid: record.uuid ?? '',
+    type: 'program',
     title: record.title || 'Program',
-    details: [
-      { label: 'Status', value: record.status ? String(record.status) : '—' },
-      { label: 'Published', value: record.published ? 'Yes' : 'No' },
-    ],
+    status: status.label,
+    statusTone: status.tone,
+    pending: status.pending,
+    published: Boolean(record.published),
   };
+}
+
+/**
+ * Attach supporting documents (those carrying an `educationUuid`) to their education record,
+ * returning the enriched education list plus the documents that remain general (unlinked).
+ */
+function attachEducationDocuments(
+  education: CredentialRecord[],
+  documents: CredentialDocument[]
+): { education: CredentialRecord[]; remaining: CredentialDocument[] } {
+  const attached = new Set<string>();
+  const enriched = education.map(record => {
+    if (!record.recordUuid) return record;
+    const supporting = documents.filter(doc => doc.educationUuid === record.recordUuid);
+    if (!supporting.length) return record;
+    supporting.forEach(doc => attached.add(doc.id));
+    return { ...record, documents: supporting };
+  });
+  const remaining = documents.filter(doc => !attached.has(doc.id));
+  return { education: enriched, remaining };
 }
 
 function skillLabel(name?: string | null, proficiency?: string | null): string {
@@ -456,39 +525,81 @@ function listOf<T>(payload: unknown): T[] {
   return Array.isArray(content) ? (content as T[]) : [];
 }
 
+/** The domain profiles a user holds, resolved once and shared across the rich profile tabs. */
+export interface ResolvedUserProfiles {
+  instructorUuid?: string;
+  courseCreatorUuid?: string;
+  studentUuid?: string;
+  instructor?: Instructor;
+  creator?: CourseCreator;
+  student?: Student;
+}
+
 /**
- * Fetch the full per-domain verification profile for a user: their instructor and/or
- * course-creator profiles, each with documents, education, experience, and memberships,
- * plus the domain-level admin-verified status. Each domain verifies independently.
+ * Resolve a user's instructor / course-creator / student profile UUIDs from their user UUID.
+ * Each lookup is independent and failure-tolerant, so one missing profile never blocks others.
  */
-export async function fetchUserVerification(userUuid: string): Promise<DomainVerification[]> {
-  const [instructorsRes, creatorsRes, typesRes] = await Promise.all([
+export async function resolveUserProfiles(userUuid: string): Promise<ResolvedUserProfiles> {
+  const [instructorsRes, creatorsRes, studentsRes] = await Promise.all([
     searchInstructors({ query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE } }).catch(() => null),
     searchCourseCreators({ query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE } }).catch(() => null),
+    searchStudents({ query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE } }).catch(() => null),
+  ]);
+
+  const instructor = (instructorsRes?.data?.content ?? [])[0] as Instructor | undefined;
+  const creator = (creatorsRes?.data?.content ?? [])[0] as CourseCreator | undefined;
+  const student = (studentsRes?.data?.content ?? [])[0] as Student | undefined;
+
+  return {
+    instructorUuid: instructor?.uuid,
+    courseCreatorUuid: creator?.uuid,
+    studentUuid: student?.uuid,
+    instructor,
+    creator,
+    student,
+  };
+}
+
+/**
+ * Fetch the full per-domain verification profile for a user: their instructor and/or
+ * course-creator profiles, each with documents (supporting certificates nested under their
+ * education record), education, experience, memberships, skills, certifications, reviews,
+ * authored/taught content with moderation status, and the domain-level admin-verified status.
+ */
+export async function fetchUserVerification(userUuid: string): Promise<DomainVerification[]> {
+  const [{ instructor, creator }, typesRes] = await Promise.all([
+    resolveUserProfiles(userUuid),
     listDocumentTypes().catch(() => null),
   ]);
 
   const types = (typesRes?.data?.data ?? []) as DocumentTypeOption[];
   const typeMap = new Map(types.filter(t => t.uuid).map(t => [t.uuid as string, t]));
 
-  const instructor = (instructorsRes?.data?.content ?? [])[0] as Instructor | undefined;
-  const creator = (creatorsRes?.data?.content ?? [])[0] as CourseCreator | undefined;
-
   const domains: DomainVerification[] = [];
 
   if (instructor?.uuid) {
     const uuid = instructor.uuid;
-    const [docsRes, eduRes, expRes, memRes, skillRes, reviewRes, courseRes] = await Promise.all([
+    const [docsRes, eduRes, expRes, memRes, skillRes, reviewRes, summaryRes, courseRes] = await Promise.all([
       getInstructorDocuments({ path: { instructorUuid: uuid } }).catch(() => null),
       getInstructorEducation({ path: { instructorUuid: uuid } }).catch(() => null),
       getInstructorExperience({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
       getInstructorMemberships({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
       getInstructorSkills({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
       getInstructorReviews({ path: { instructorUuid: uuid } }).catch(() => null),
+      getInstructorRatingSummary({ path: { instructorUuid: uuid } }).catch(() => null),
       getCoursesByInstructor({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
     ]);
     const ownerName = instructor.full_name || 'Instructor';
     const reviews = ((reviewRes?.data?.data ?? []) as InstructorReview[]) ?? [];
+    const summary = (summaryRes?.data?.data ?? null) as InstructorRatingSummary | null;
+    const allDocs = ((docsRes?.data?.data ?? []) as InstructorDocument[]).map(d =>
+      mapInstructorDocument(d, uuid, ownerName, typeMap)
+    );
+    const { education, remaining } = attachEducationDocuments(
+      listOf<RawEducation>(eduRes).map(mapEducation),
+      allDocs
+    );
+    const contentItems = listOf<Course>(courseRes).map(mapCourseItem);
     domains.push({
       role: 'instructor',
       roleLabel: 'Instructor',
@@ -497,10 +608,8 @@ export async function fetchUserVerification(userUuid: string): Promise<DomainVer
       headline: instructor.professional_headline ?? undefined,
       location: instructor.formatted_location ?? undefined,
       adminVerified: Boolean(instructor.admin_verified),
-      documents: ((docsRes?.data?.data ?? []) as InstructorDocument[]).map(d =>
-        mapInstructorDocument(d, uuid, ownerName, typeMap)
-      ),
-      education: listOf<RawEducation>(eduRes).map(mapEducation),
+      documents: remaining,
+      education,
       experience: listOf<RawExperience>(expRes).map(mapExperience),
       memberships: listOf<RawMembership>(memRes).map(mapMembership),
       skills: listOf<InstructorSkill>(skillRes).map(s =>
@@ -508,16 +617,18 @@ export async function fetchUserVerification(userUuid: string): Promise<DomainVer
       ),
       certifications: [],
       reviews: reviews.map(mapReview),
-      averageRating: average(reviews.map(r => r.rating).filter(n => typeof n === 'number')),
-      reviewCount: reviews.length,
-      content: listOf<Course>(courseRes).map(mapCourseContent),
+      averageRating:
+        summary?.average_rating ?? average(reviews.map(r => r.rating).filter(n => typeof n === 'number')),
+      reviewCount: summary?.review_count != null ? Number(summary.review_count) : reviews.length,
+      contentItems,
       contentLabel: 'Courses taught',
+      pendingCount: contentItems.filter(c => c.pending).length,
     });
   }
 
   if (creator?.uuid) {
     const uuid = creator.uuid;
-    const [docsRes, eduRes, expRes, memRes, skillRes, certRes, programRes] = await Promise.all([
+    const [docsRes, eduRes, expRes, memRes, skillRes, certRes, programRes, courseRes] = await Promise.all([
       getCourseCreatorDocuments({ path: { courseCreatorUuid: uuid } }).catch(() => null),
       getCourseCreatorEducation({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
       getCourseCreatorExperience({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
@@ -525,8 +636,19 @@ export async function fetchUserVerification(userUuid: string): Promise<DomainVer
       getCourseCreatorSkills({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
       getCourseCreatorCertifications({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
       getProgramsByCourseCreator({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
+      searchCourses({ query: { searchParams: { course_creator_uuid: uuid }, pageable: PAGEABLE } }).catch(() => null),
     ]);
     const ownerName = creator.full_name || 'Course creator';
+    const allDocs = ((docsRes?.data?.data ?? []) as CourseCreatorDocumentDto[]).map(d =>
+      mapCreatorDocument(d, uuid, ownerName, typeMap)
+    );
+    const { education, remaining } = attachEducationDocuments(
+      listOf<RawEducation>(eduRes).map(mapEducation),
+      allDocs
+    );
+    const courses = listOf<Course>(courseRes).map(mapCourseItem);
+    const programs = listOf<TrainingProgram>(programRes).map(mapProgramItem);
+    const contentItems = [...courses, ...programs];
     domains.push({
       role: 'course_creator',
       roleLabel: 'Course creator',
@@ -535,10 +657,8 @@ export async function fetchUserVerification(userUuid: string): Promise<DomainVer
       headline: creator.professional_headline ?? undefined,
       location: undefined,
       adminVerified: Boolean(creator.admin_verified),
-      documents: ((docsRes?.data?.data ?? []) as CourseCreatorDocumentDto[]).map(d =>
-        mapCreatorDocument(d, uuid, ownerName, typeMap)
-      ),
-      education: listOf<RawEducation>(eduRes).map(mapEducation),
+      documents: remaining,
+      education,
       experience: listOf<RawExperience>(expRes).map(mapExperience),
       memberships: listOf<RawMembership>(memRes).map(mapMembership),
       skills: listOf<CourseCreatorSkill>(skillRes).map(s =>
@@ -548,8 +668,9 @@ export async function fetchUserVerification(userUuid: string): Promise<DomainVer
       reviews: [],
       averageRating: undefined,
       reviewCount: 0,
-      content: listOf<TrainingProgram>(programRes).map(mapProgramContent),
-      contentLabel: 'Programs authored',
+      contentItems,
+      contentLabel: 'Courses & programs authored',
+      pendingCount: contentItems.filter(c => c.pending).length,
     });
   }
 

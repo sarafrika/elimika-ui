@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { BadgeCheck, GraduationCap, ShieldCheck, ShieldX, Star } from 'lucide-react';
+import { BadgeCheck, GraduationCap, ShieldCheck, ShieldX } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +22,15 @@ import { DetailGrid } from '../../_components/ui/DetailPanel';
 import { SectionCard } from '../../_components/ui/SectionCard';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
 
-function RecordList({ title, records }: { title: string; records: CredentialRecord[] }) {
+function RecordList({
+  title,
+  records,
+  onReviewDocument,
+}: {
+  title: string;
+  records: CredentialRecord[];
+  onReviewDocument?: (document: CredentialDocument) => void;
+}) {
   if (!records.length) return null;
   return (
     <div className='space-y-2'>
@@ -37,6 +45,20 @@ function RecordList({ title, records }: { title: string; records: CredentialReco
               ) : null}
             </div>
             <DetailGrid items={record.details} columns={3} />
+            {record.documents?.length ? (
+              <div className='mt-3 space-y-2 border-t border-border/60 pt-3'>
+                <p className={adminTheme.sectionLabel}>Supporting certificate</p>
+                <div className='grid gap-3 sm:grid-cols-2'>
+                  {record.documents.map(document => (
+                    <CredentialDocumentCard
+                      key={document.id}
+                      document={document}
+                      onReview={() => onReviewDocument?.(document)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         ))}
       </div>
@@ -169,43 +191,10 @@ export function DomainVerificationSection({
           </div>
         ) : null}
 
-        <RecordList title='Education' records={domain.education} />
+        <RecordList title='Education' records={domain.education} onReviewDocument={setActive} />
         <RecordList title='Certifications' records={domain.certifications} />
         <RecordList title='Experience' records={domain.experience} />
         <RecordList title='Memberships' records={domain.memberships} />
-
-        {/* Authored content */}
-        <RecordList title={domain.contentLabel} records={domain.content} />
-
-        {/* Reviews */}
-        {domain.reviews.length ? (
-          <div className='space-y-2'>
-            <p className={adminTheme.sectionLabel}>
-              <span className='flex items-center gap-1.5'>
-                Reviews
-                {domain.averageRating != null ? (
-                  <span className='inline-flex items-center gap-1 text-foreground'>
-                    <Star className='size-3.5 fill-warning text-warning' />
-                    {domain.averageRating} · {domain.reviewCount}
-                  </span>
-                ) : null}
-              </span>
-            </p>
-            <div className='space-y-3'>
-              {domain.reviews.map(record => (
-                <div key={record.id} className='rounded-md border border-border/60 bg-muted/20 p-3'>
-                  <div className='mb-2'>
-                    <p className='text-sm font-medium text-foreground'>{record.title}</p>
-                    {record.subtitle ? (
-                      <p className='text-xs text-muted-foreground'>{record.subtitle}</p>
-                    ) : null}
-                  </div>
-                  <DetailGrid items={record.details} columns={2} />
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
       </div>
 
       <CredentialReviewDialog

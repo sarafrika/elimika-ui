@@ -24,12 +24,15 @@ export function RoleMembersTable({
   searchPlaceholder = 'Search members…',
   emptyTitle = 'No members found',
   emptyDescription = 'No records match your search.',
+  basePath = '/dashboard/users',
 }: {
   members: RoleMember[];
   isLoading?: boolean;
   searchPlaceholder?: string;
   emptyTitle?: string;
   emptyDescription?: string;
+  /** Detail route base — row click navigates to `${basePath}/${userUuid}`. */
+  basePath?: string;
 }) {
   const router = useRouter();
 
@@ -82,7 +85,7 @@ export function RoleMembersTable({
       isLoading={isLoading}
       searchPlaceholder={searchPlaceholder}
       getRowId={(member, index) => member.userUuid ?? String(index)}
-      onRowClick={member => member.userUuid && router.push(`/dashboard/users/${member.userUuid}`)}
+      onRowClick={member => member.userUuid && router.push(`${basePath}/${member.userUuid}`)}
       pageSize={15}
       emptyTitle={emptyTitle}
       emptyDescription={emptyDescription}

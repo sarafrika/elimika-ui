@@ -9,7 +9,7 @@ import {
   getAllInstructorsOptions,
   getAllStudentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { RoleMembersTable, type RoleMember } from './RoleMembersTable';
+import { type RoleMember, RoleMembersTable } from './RoleMembersTable';
 
 type Role = 'student' | 'instructor' | 'course_creator' | 'admin';
 
@@ -101,6 +101,14 @@ export function RoleMembersSection({ role }: { role: Role }) {
     },
   };
 
+  // Each role keeps its own URL but renders the shared UserDetailView component.
+  const basePaths: Record<Role, string> = {
+    student: '/dashboard/students',
+    instructor: '/dashboard/instructors',
+    course_creator: '/dashboard/course-creators',
+    admin: '/dashboard/administrators',
+  };
+
   return (
     <RoleMembersTable
       members={members}
@@ -108,6 +116,7 @@ export function RoleMembersSection({ role }: { role: Role }) {
       searchPlaceholder={labels[role].search}
       emptyTitle={labels[role].emptyTitle}
       emptyDescription={labels[role].emptyDescription}
+      basePath={basePaths[role]}
     />
   );
 }
