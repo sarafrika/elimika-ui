@@ -32,7 +32,7 @@ export interface AdminUserListResult {
 export async function fetchAdminUsers(
   params: AdminUserListParams = {}
 ): Promise<AdminUserListResult> {
-  const { page = 0, size = 20, sortField = 'created_date', sortOrder = 'desc' } = params;
+  const { page = 0, size = 20, sortField = 'createdDate', sortOrder = 'desc' } = params;
   const pageable = {
     page,
     size,
@@ -78,7 +78,7 @@ export function useAdminUsers(
   const normalizedParams: AdminUserListParams = {
     page: params.page ?? 0,
     size: params.size ?? 20,
-    sortField: params.sortField ?? 'created_date',
+    sortField: params.sortField ?? 'createdDate',
     sortOrder: params.sortOrder ?? 'desc',
   };
 

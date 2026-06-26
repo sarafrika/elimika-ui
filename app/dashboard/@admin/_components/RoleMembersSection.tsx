@@ -13,7 +13,8 @@ import { RoleMembersTable, type RoleMember } from './RoleMembersTable';
 
 type Role = 'student' | 'instructor' | 'course_creator' | 'admin';
 
-const PAGEABLE = { page: 0, size: 100 };
+// Spring expects camelCase entity property names in sort, not snake_case column names.
+const PAGEABLE = { page: 0, size: 100, sort: ['createdDate,desc', 'lastModifiedDate,desc'] };
 
 /** Client section that loads role members through the proxy and renders the members table. */
 export function RoleMembersSection({ role }: { role: Role }) {

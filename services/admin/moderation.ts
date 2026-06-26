@@ -118,7 +118,7 @@ export async function fetchModerationQueue(
         pageable: {
           page,
           size,
-          sort: ['submitted_at,desc'],
+          sort: ['submittedAt,desc'],
         },
         searchParams: filters,
       },
