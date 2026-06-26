@@ -152,6 +152,7 @@ export function OrganizationsTable() {
       isLoading={isLoading}
       searchPlaceholder='Search organisations…'
       getRowId={(org, index) => org.uuid ?? String(index)}
+      onRowClick={org => org.uuid && router.push(`/dashboard/organizations/${org.uuid}`)}
       facetedFilters={[
         {
           columnId: 'status',
