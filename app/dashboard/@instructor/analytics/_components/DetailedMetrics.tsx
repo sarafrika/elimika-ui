@@ -1,6 +1,7 @@
 "use client";
 
 import { Award, Calendar, ClipboardList, FileCheck, Users } from "lucide-react";
+import { useInstructorAnalyticsData } from "./useInstructorAnalyticsData";
 
 interface MetricCardProps {
   label: string;
@@ -40,51 +41,53 @@ function MetricCard({ label, value, change, positive, icon, iconBg }: MetricCard
 }
 
 export function DetailedMetrics() {
+  const { metrics: metData } = useInstructorAnalyticsData();
+
   const metrics: MetricCardProps[] = [
     {
       label: "No. of Programs",
-      value: "8",
-      change: "2",
+      value: String(metData.numberOfPrograms),
+      change: "0",
       positive: true,
       iconBg: "bg-primary/10",
       icon: <Calendar className="w-4 h-4 text-primary" />,
     },
     {
       label: "No. of Instructors",
-      value: "14",
-      change: "1",
+      value: String(metData.totalInstructors),
+      change: "0",
       positive: true,
       iconBg: "bg-primary/10",
       icon: <Users className="w-4 h-4 text-primary" />,
     },
     {
       label: "Active Participants",
-      value: "512",
-      change: "13%",
+      value: String(metData.activeParticipants),
+      change: "0%",
       positive: true,
       iconBg: "bg-success/10",
       icon: <Users className="w-4 h-4 text-success" />,
     },
     {
       label: "Assessments Conducted",
-      value: "36",
-      change: "20%",
+      value: String(metData.assessmentsConducted),
+      change: "0%",
       positive: true,
       iconBg: "bg-warning/10",
       icon: <ClipboardList className="w-4 h-4 text-warning" />,
     },
     {
       label: "Certificates Issued",
-      value: "132",
-      change: "18%",
+      value: String(metData.certificatesIssues),
+      change: "0%",
       positive: true,
       iconBg: "bg-accent/10",
       icon: <Award className="w-4 h-4 text-accent" />,
     },
     {
       label: "Surveys Completed",
-      value: "76",
-      change: "10%",
+      value: String(metData.surveysCompleted),
+      change: "0%",
       positive: true,
       iconBg: "bg-success/10",
       icon: <FileCheck className="w-4 h-4 text-success" />,
