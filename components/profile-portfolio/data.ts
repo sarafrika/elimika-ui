@@ -1,14 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Award,
-  BarChart3,
-  BriefcaseBusiness,
-  Code2,
-  FileArchive,
-  FileCheck2,
-  GraduationCap,
-  PlaySquare,
-  ShieldCheck
+  BarChart3
 } from 'lucide-react';
 
 export type PortfolioRole = 'student' | 'instructor';
@@ -214,7 +206,6 @@ const portfolioTabs: PortfolioTab[] = [
 //     outcome: 'Created a polished case study page to document project learning outcomes.',
 //   },
 // ];
-const studentProjects: PortfolioProject[] = []
 
 // const studentVideos: PortfolioAsset[] = [
 //   {
@@ -262,7 +253,6 @@ const studentProjects: PortfolioProject[] = []
 //     rating: 4,
 //   },
 // ];
-const studentVideos: PortfolioAsset[] = []
 
 // const studentAssessments: PortfolioAsset[] = [
 //   {
@@ -299,7 +289,6 @@ const studentVideos: PortfolioAsset[] = []
 //     rating: 4,
 //   },
 // ];
-const studentAssessments: PortfolioAsset[] = []
 
 // const studentFiles: PortfolioAsset[] = [
 //   {
@@ -343,8 +332,10 @@ const studentAssessments: PortfolioAsset[] = []
 //     status: 'Attached',
 //   },
 // ];
-const studentFiles: PortfolioAsset[] = []
 
+
+const studentAssessments: PortfolioAsset[] = []
+const studentFiles: PortfolioAsset[] = []
 // const studentBadges: PortfolioAsset[] = [
 //   {
 //     id: 'responsive-layout',
@@ -381,6 +372,8 @@ const studentFiles: PortfolioAsset[] = []
 //   },
 // ];
 const studentBadges: PortfolioAsset[] = []
+const studentVideos: PortfolioAsset[] = []
+const studentProjects: PortfolioProject[] = []
 
 
 const studentDataset: PortfolioDataset = {
@@ -409,168 +402,174 @@ const studentDataset: PortfolioDataset = {
   highlights: [],
 };
 
-const instructorProjects: PortfolioProject[] = [
-  {
-    id: 'ux-cohort-capstone',
-    title: 'UX Cohort Capstone',
-    date: 'May 8, 2024',
-    badge: 'Mentored Delivery',
-    description: 'Guided a cohort through end-to-end product design and final stakeholder review.',
-    category: 'Instructional Delivery',
-    accent: 'presentation',
-    icon: GraduationCap,
-    status: 'approved',
-    sponsor: 'Design School Board',
-    progress: 84,
-    evidenceCount: 10,
-    tools: ['Mentorship', 'Critique', 'Capstone Review', 'Learning Outcomes'],
-    outcome: 'Led learners from discovery to final presentation with strong completion rates.',
-  },
-  {
-    id: 'frontend-bootcamp-sprint',
-    title: 'Frontend Bootcamp Sprint',
-    date: 'April 24, 2024',
-    badge: 'Live Facilitation',
-    description: 'Delivered a two-week sprint on semantic HTML, CSS systems, and responsive builds.',
-    category: 'Technical Training',
-    accent: 'document',
-    icon: Code2,
-    status: 'verified',
-    sponsor: 'Elimika Academy',
-    progress: 79,
-    evidenceCount: 7,
-    tools: ['Live Classes', 'Code Reviews', 'Rubrics', 'Assessments'],
-    outcome: 'Improved learner project quality through structured demos and review cycles.',
-  },
-  {
-    id: 'career-readiness-workshop',
-    title: 'Career Readiness Workshop',
-    date: 'April 11, 2024',
-    badge: 'Workshop Series',
-    description: 'Created a portfolio and interview-prep workshop for graduating learners.',
-    category: 'Career Coaching',
-    accent: 'video',
-    icon: BriefcaseBusiness,
-    progress: 73,
-    evidenceCount: 5,
-    tools: ['Workshop Design', 'Portfolio Reviews', 'Mock Interviews'],
-    outcome: 'Prepared learners with portfolio narratives, case studies, and interview practice.',
-  },
-  {
-    id: 'data-literacy-lab',
-    title: 'Data Literacy Lab',
-    date: 'March 29, 2024',
-    badge: 'Assessment Design',
-    description: 'Designed practical analytics tasks and rubric-based evaluation for student teams.',
-    category: 'Assessment Portfolio',
-    accent: 'presentation',
-    icon: BarChart3,
-    status: 'approved',
-    sponsor: 'Quality Assurance Panel',
-    progress: 88,
-    evidenceCount: 9,
-    tools: ['Curriculum Design', 'Evaluation Rubrics', 'Feedback'],
-    outcome: 'Established an assessment flow that improved clarity and grading consistency.',
-  },
-];
+// const instructorProjects: PortfolioProject[] = [
+//   {
+//     id: 'ux-cohort-capstone',
+//     title: 'UX Cohort Capstone',
+//     date: 'May 8, 2024',
+//     badge: 'Mentored Delivery',
+//     description: 'Guided a cohort through end-to-end product design and final stakeholder review.',
+//     category: 'Instructional Delivery',
+//     accent: 'presentation',
+//     icon: GraduationCap,
+//     status: 'approved',
+//     sponsor: 'Design School Board',
+//     progress: 84,
+//     evidenceCount: 10,
+//     tools: ['Mentorship', 'Critique', 'Capstone Review', 'Learning Outcomes'],
+//     outcome: 'Led learners from discovery to final presentation with strong completion rates.',
+//   },
+//   {
+//     id: 'frontend-bootcamp-sprint',
+//     title: 'Frontend Bootcamp Sprint',
+//     date: 'April 24, 2024',
+//     badge: 'Live Facilitation',
+//     description: 'Delivered a two-week sprint on semantic HTML, CSS systems, and responsive builds.',
+//     category: 'Technical Training',
+//     accent: 'document',
+//     icon: Code2,
+//     status: 'verified',
+//     sponsor: 'Elimika Academy',
+//     progress: 79,
+//     evidenceCount: 7,
+//     tools: ['Live Classes', 'Code Reviews', 'Rubrics', 'Assessments'],
+//     outcome: 'Improved learner project quality through structured demos and review cycles.',
+//   },
+//   {
+//     id: 'career-readiness-workshop',
+//     title: 'Career Readiness Workshop',
+//     date: 'April 11, 2024',
+//     badge: 'Workshop Series',
+//     description: 'Created a portfolio and interview-prep workshop for graduating learners.',
+//     category: 'Career Coaching',
+//     accent: 'video',
+//     icon: BriefcaseBusiness,
+//     progress: 73,
+//     evidenceCount: 5,
+//     tools: ['Workshop Design', 'Portfolio Reviews', 'Mock Interviews'],
+//     outcome: 'Prepared learners with portfolio narratives, case studies, and interview practice.',
+//   },
+//   {
+//     id: 'data-literacy-lab',
+//     title: 'Data Literacy Lab',
+//     date: 'March 29, 2024',
+//     badge: 'Assessment Design',
+//     description: 'Designed practical analytics tasks and rubric-based evaluation for student teams.',
+//     category: 'Assessment Portfolio',
+//     accent: 'presentation',
+//     icon: BarChart3,
+//     status: 'approved',
+//     sponsor: 'Quality Assurance Panel',
+//     progress: 88,
+//     evidenceCount: 9,
+//     tools: ['Curriculum Design', 'Evaluation Rubrics', 'Feedback'],
+//     outcome: 'Established an assessment flow that improved clarity and grading consistency.',
+//   },
+// ];
 
-const instructorVideos: PortfolioAsset[] = [
-  {
-    id: 'classroom-demo',
-    title: 'Classroom Facilitation Demo',
-    date: 'May 5, 2024',
-    description: 'Recording of a live design critique session with structured learner feedback.',
-    category: 'Facilitation',
-    icon: PlaySquare,
-    meta: '07:12 video',
-    status: 'Verified',
-    rating: 5,
-  },
-  {
-    id: 'bootcamp-recap',
-    title: 'Bootcamp Sprint Recap',
-    date: 'April 26, 2024',
-    description: 'Highlights from the frontend sprint showing instruction flow and learner outcomes.',
-    category: 'Technical Training',
-    icon: PlaySquare,
-    meta: '05:48 video',
-    status: 'Uploaded',
-    rating: 4,
-  },
-];
+// const instructorVideos: PortfolioAsset[] = [
+//   {
+//     id: 'classroom-demo',
+//     title: 'Classroom Facilitation Demo',
+//     date: 'May 5, 2024',
+//     description: 'Recording of a live design critique session with structured learner feedback.',
+//     category: 'Facilitation',
+//     icon: PlaySquare,
+//     meta: '07:12 video',
+//     status: 'Verified',
+//     rating: 5,
+//   },
+//   {
+//     id: 'bootcamp-recap',
+//     title: 'Bootcamp Sprint Recap',
+//     date: 'April 26, 2024',
+//     description: 'Highlights from the frontend sprint showing instruction flow and learner outcomes.',
+//     category: 'Technical Training',
+//     icon: PlaySquare,
+//     meta: '05:48 video',
+//     status: 'Uploaded',
+//     rating: 4,
+//   },
+// ];
 
-const instructorAssessments: PortfolioAsset[] = [
-  {
-    id: 'cohort-review-rubric',
-    title: 'Cohort Review Rubric',
-    date: 'May 7, 2024',
-    description: 'Evaluation pack used to assess learner capstones across usability and execution.',
-    category: 'Rubric Design',
-    icon: FileCheck2,
-    meta: '94% rubric quality',
-    status: 'Approved',
-    rating: 5,
-  },
-  {
-    id: 'teaching-observation',
-    title: 'Teaching Observation',
-    date: 'April 29, 2024',
-    description: 'Observer notes on pacing, learner participation, and instructional clarity.',
-    category: 'Instructional Review',
-    icon: FileCheck2,
-    meta: '4.8/5 score',
-    status: 'Reviewed',
-    rating: 5,
-  },
-];
+// const instructorAssessments: PortfolioAsset[] = [
+//   {
+//     id: 'cohort-review-rubric',
+//     title: 'Cohort Review Rubric',
+//     date: 'May 7, 2024',
+//     description: 'Evaluation pack used to assess learner capstones across usability and execution.',
+//     category: 'Rubric Design',
+//     icon: FileCheck2,
+//     meta: '94% rubric quality',
+//     status: 'Approved',
+//     rating: 5,
+//   },
+//   {
+//     id: 'teaching-observation',
+//     title: 'Teaching Observation',
+//     date: 'April 29, 2024',
+//     description: 'Observer notes on pacing, learner participation, and instructional clarity.',
+//     category: 'Instructional Review',
+//     icon: FileCheck2,
+//     meta: '4.8/5 score',
+//     status: 'Reviewed',
+//     rating: 5,
+//   },
+// ];
 
-const instructorFiles: PortfolioAsset[] = [
-  {
-    id: 'lesson-plan-kit',
-    title: 'Lesson Plan Kit',
-    date: 'May 2, 2024',
-    description: 'Session plans, facilitation prompts, and challenge briefs for the cohort sprint.',
-    category: 'Teaching Resources',
-    icon: FileArchive,
-    meta: '3.1 MB',
-    status: 'Attached',
-  },
-  {
-    id: 'grading-template',
-    title: 'Grading Template',
-    date: 'April 17, 2024',
-    description: 'Reusable spreadsheet for learner scoring, comments, and progression tracking.',
-    category: 'Assessment Tool',
-    icon: FileArchive,
-    meta: '1.2 MB',
-    status: 'Verified',
-  },
-];
+// const instructorFiles: PortfolioAsset[] = [
+//   {
+//     id: 'lesson-plan-kit',
+//     title: 'Lesson Plan Kit',
+//     date: 'May 2, 2024',
+//     description: 'Session plans, facilitation prompts, and challenge briefs for the cohort sprint.',
+//     category: 'Teaching Resources',
+//     icon: FileArchive,
+//     meta: '3.1 MB',
+//     status: 'Attached',
+//   },
+//   {
+//     id: 'grading-template',
+//     title: 'Grading Template',
+//     date: 'April 17, 2024',
+//     description: 'Reusable spreadsheet for learner scoring, comments, and progression tracking.',
+//     category: 'Assessment Tool',
+//     icon: FileArchive,
+//     meta: '1.2 MB',
+//     status: 'Verified',
+//   },
+// ];
 
-const instructorBadges: PortfolioAsset[] = [
-  {
-    id: 'facilitation-excellence',
-    title: 'Facilitation Excellence',
-    date: 'May 6, 2024',
-    description: 'Recognizes strong session delivery, engagement, and classroom energy.',
-    category: 'Instruction',
-    icon: Award,
-    meta: 'Expert',
-    status: 'Earned',
-    rating: 5,
-  },
-  {
-    id: 'assessment-lead',
-    title: 'Assessment Lead',
-    date: 'April 30, 2024',
-    description: 'Awarded for building reliable review systems and actionable learner feedback.',
-    category: 'Quality Assurance',
-    icon: ShieldCheck,
-    meta: 'Advanced',
-    status: 'Earned',
-    rating: 4,
-  },
-];
+// const instructorBadges: PortfolioAsset[] = [
+//   {
+//     id: 'facilitation-excellence',
+//     title: 'Facilitation Excellence',
+//     date: 'May 6, 2024',
+//     description: 'Recognizes strong session delivery, engagement, and classroom energy.',
+//     category: 'Instruction',
+//     icon: Award,
+//     meta: 'Expert',
+//     status: 'Earned',
+//     rating: 5,
+//   },
+//   {
+//     id: 'assessment-lead',
+//     title: 'Assessment Lead',
+//     date: 'April 30, 2024',
+//     description: 'Awarded for building reliable review systems and actionable learner feedback.',
+//     category: 'Quality Assurance',
+//     icon: ShieldCheck,
+//     meta: 'Advanced',
+//     status: 'Earned',
+//     rating: 4,
+//   },
+// ];
+
+const instructorAssessments: PortfolioAsset[] = []
+const instructorFiles: PortfolioAsset[] = []
+const instructorBadges: PortfolioAsset[] = []
+const instructorVideos: PortfolioAsset[] = []
+const instructorProjects: PortfolioProject[] = []
 
 const instructorDataset: PortfolioDataset = {
   tabs: portfolioTabs,
@@ -579,21 +578,29 @@ const instructorDataset: PortfolioDataset = {
   assessments: instructorAssessments,
   files: instructorFiles,
   badges: instructorBadges,
-  evidenceItems: [
-    { label: 'Programs Led', value: 4 },
-    { label: 'Reviews Shared', value: 6 },
-    { label: 'Evidence Sets', value: 11 },
-  ],
-  highlights: [
-    { title: 'UX Cohort Capstone', icon: GraduationCap, rating: 5, variant: 'flag' },
-    { title: 'Data Literacy Lab', icon: BarChart3, rating: 4, variant: 'bars' },
-  ],
+  // evidenceItems: [
+  //   { label: 'Programs Led', value: 4 },
+  //   { label: 'Reviews Shared', value: 6 },
+  //   { label: 'Evidence Sets', value: 11 },
+  // ],
+  // highlights: [
+  //   { title: 'UX Cohort Capstone', icon: GraduationCap, rating: 5, variant: 'flag' },
+  //   { title: 'Data Literacy Lab', icon: BarChart3, rating: 4, variant: 'bars' },
+  // ],
+  // insightHighlight: {
+  //   title: 'Learner Outcomes',
+  //   icon: BriefcaseBusiness,
+  //   rating: 5,
+  //   variant: 'cube',
+  // },
   insightHighlight: {
-    title: 'Learner Outcomes',
-    icon: BriefcaseBusiness,
-    rating: 5,
-    variant: 'cube',
+    title: 'Data Analysis',
+    icon: BarChart3,
+    rating: 4,
+    variant: 'bars',
   },
+  evidenceItems: [],
+  highlights: [],
 };
 
 const portfolioCopy: Record<PortfolioRole, PortfolioCopy> = {

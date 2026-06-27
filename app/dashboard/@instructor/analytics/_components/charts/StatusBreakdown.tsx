@@ -69,9 +69,45 @@ export function StatusBreakdown() {
 
   if (isLoading) {
     return (
-      <div className="h-full rounded-xl border border-border bg-card p-3 shadow-sm sm:p-4">
-        <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-          Loading status breakdown...
+      <div className="h-full rounded-xl border border-border bg-card p-3 shadow-sm sm:p-4 animate-pulse">
+        {/* Header skeleton */}
+        <div className="mb-3 flex items-center justify-between">
+          <div className="h-3 w-36 bg-muted rounded" />
+          <div className="h-3 w-20 bg-muted rounded" />
+        </div>
+
+        {/* Donut skeleton */}
+        <div className="flex justify-center">
+          <div className="relative h-28 w-28 sm:h-32 sm:w-32 rounded-full bg-muted/40">
+            {/* fake ring segments */}
+            <div className="absolute inset-0 rounded-full border-8 border-muted/60" />
+            <div className="absolute inset-4 rounded-full bg-card" />
+
+            {/* center text skeleton */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+              <div className="h-4 w-10 bg-muted rounded" />
+              <div className="h-2 w-20 bg-muted rounded" />
+            </div>
+          </div>
+        </div>
+
+        {/* Legend skeleton */}
+        <div className="mt-3 space-y-1.5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between gap-2"
+            >
+              {/* label */}
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <div className="h-2.5 w-2.5 rounded-full bg-muted shrink-0" />
+                <div className="h-3 w-24 bg-muted rounded" />
+              </div>
+
+              {/* value */}
+              <div className="h-3 w-16 bg-muted rounded shrink-0" />
+            </div>
+          ))}
         </div>
       </div>
     );

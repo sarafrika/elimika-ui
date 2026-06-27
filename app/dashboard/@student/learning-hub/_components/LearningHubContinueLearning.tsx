@@ -37,7 +37,7 @@ export function LearningHubContinueLearning({
   const hiddenClassCount = Math.max(0, classes.length - INITIAL_VISIBLE_CLASSES);
 
   return (
-    <Card className='border-border/70 bg-background rounded-[18px] border p-3.5 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
+    <Card className='border-border/70 bg-background rounded-md border p-3.5 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
       <div className='flex items-center justify-between gap-3'>
         <h2 className='text-foreground text-[1.08rem] font-semibold'>Continue Learning</h2>
       </div>

@@ -23,10 +23,8 @@ import {
   Globe,
   Infinity,
   MapPin,
-  Monitor,
   MoveRight,
   Search,
-  Shield,
   Video,
   Wrench
 } from "lucide-react";
@@ -231,7 +229,7 @@ export default function EnrollSidebar({
           </>
         )}
 
-        <div className="mt-4 flex flex-col gap-3 pt-1">
+        {/* <div className="mt-4 flex flex-col gap-3 pt-1">
           {[
             {
               icon: <Shield className="h-4 w-4 text-muted-foreground" />,
@@ -251,7 +249,7 @@ export default function EnrollSidebar({
               <span className="text-sm text-muted-foreground">{item.text}</span>
             </div>
           ))}
-        </div>
+        </div> */}
       </div>
 
       {/* COURSE META */}
@@ -312,7 +310,7 @@ export default function EnrollSidebar({
 
           <PreviewRow
             icon={Clock}
-            label="Total Class Duration"
+            label="Total Hours"
             value={totalDuration || "N/A"}
           />
 

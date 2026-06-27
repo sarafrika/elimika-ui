@@ -24,7 +24,7 @@ export function LearningHubSidebar({ studentName }: LearningHubSidebarProps) {
         </nav>
       </Card>
 
-      <Card className='rounded-[18px] border border-border/70 bg-background p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
+      <Card className='rounded-md border border-border/70 bg-background p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
         <div className='overflow-hidden rounded-[12px] border border-border/50 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_8%,white),white)] p-3'>
           <div className='mb-3 h-[84px] rounded-[10px] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_38%,white),color-mix(in_srgb,var(--primary)_12%,white))]' />
           <h3 className='text-[1.05rem] leading-tight font-semibold text-foreground'>

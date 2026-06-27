@@ -44,7 +44,6 @@ import {
     MoveRight,
     Play,
     Share2,
-    Shield,
     Star,
     User2,
     Users,
@@ -1136,7 +1135,7 @@ function ProgramSidebar({
                     </Button>
                 </div>
 
-                <div className="mt-4 flex flex-col gap-3 pt-1">
+                {/* <div className="mt-4 flex flex-col gap-3 pt-1">
                     {[
                         {
                             icon: <Shield className="h-4 w-4 text-muted-foreground" />,
@@ -1156,7 +1155,7 @@ function ProgramSidebar({
                             <span className="text-sm text-muted-foreground">{item.text}</span>
                         </div>
                     ))}
-                </div>
+                </div> */}
             </div>
 
             <div className="rounded-xl border border-border bg-card shadow-sm p-4 sm:p-5">

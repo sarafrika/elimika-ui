@@ -411,7 +411,12 @@ export function useStudentLearningHubData(): LearningHubData {
         scheduleLabel:
           scheduleCount === 1 ? '1 scheduled session' : `${scheduleCount} scheduled sessions`,
         progress,
-        ctaLabel: progress >= 80 ? 'View class' : 'Resume class',
+        ctaLabel:
+          progress === 100
+            ? "Class completed"
+            : progress > 0
+              ? "Resume class"
+              : "Start class",
         href: `/dashboard/learning-hub/classes/${classDetails?.uuid}`,
         bannerUrl: course?.banner_url,
         accent: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',

@@ -257,15 +257,9 @@ export function StudentTable() {
                   Progress
                 </TableHead>
 
-                <TableHead className="text-xs hidden lg:table-cell">
-                  Skills Wallet
-                </TableHead>
-
                 <TableHead className="text-xs hidden xl:table-cell">
                   Joined
                 </TableHead>
-
-                <TableHead className="text-xs">Actions</TableHead>
               </TableRow>
             </TableHeader>
 

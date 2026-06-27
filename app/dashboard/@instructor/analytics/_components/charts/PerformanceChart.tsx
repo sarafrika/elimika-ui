@@ -8,9 +8,55 @@ export function PerformanceChart() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-card shadow-sm p-3 sm:p-4 h-full">
-        <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-          Loading performance data...
+      <div className="rounded-xl border border-border bg-card shadow-sm p-3 sm:p-4 h-full animate-pulse">
+        <div className="h-3 w-40 bg-muted rounded mb-3" />
+
+        <div className="flex gap-3 mb-3">
+          <div className="h-3 w-24 bg-muted rounded" />
+          <div className="h-3 w-28 bg-muted rounded" />
+          <div className="h-3 w-32 bg-muted rounded" />
+        </div>
+
+        <div className="overflow-x-auto">
+          <div
+            className="bg-muted/40 rounded"
+            style={{
+              height: 160,
+              minWidth: 240,
+              width: "100%",
+            }}
+          >
+            <div className="relative w-full h-full">
+              {/* Grid lines */}
+              <div className="absolute inset-0 flex flex-col justify-between py-2 px-8">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-px bg-muted/60 w-full" />
+                ))}
+              </div>
+
+              {/* Bars skeleton */}
+              <div className="absolute inset-0 flex items-end justify-around px-10 pb-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex gap-1 items-end">
+                    <div className="w-2.5 bg-primary/40 rounded-sm h-10" />
+                    <div className="w-2.5 bg-success/40 rounded-sm h-16" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Line skeleton */}
+              <div className="absolute inset-0 flex items-center">
+                <svg viewBox="0 0 420 160" className="w-full h-full">
+                  <polyline
+                    points="0,120 80,100 160,110 240,80 320,90 400,70"
+                    fill="none"
+                    className="stroke-warning/40"
+                    strokeWidth="2"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

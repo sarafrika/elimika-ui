@@ -28,7 +28,6 @@ import {
 } from '../../../../components/ui/select';
 import { Separator } from '../../../../components/ui/separator';
 import Spinner from '../../../../components/ui/spinner';
-import { Switch } from '../../../../components/ui/switch';
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import { cn } from '../../../../lib/utils';
 import {
@@ -259,6 +258,46 @@ export const AssignmentCreationForm = ({
     }
   };
 
+  const handlePublishAssignment = async () => {
+    if (!assignmentUuid) return;
+
+    try {
+      await updateAssignmentForLesson(assignmentUuid, {
+        ...assignmentData,
+        is_published: true,
+      });
+
+      setAssignmentData(prev => ({
+        ...prev,
+        is_published: true,
+      }));
+
+      toast.success("Assignment published successfully!");
+    } catch (err) {
+      toast.error("Failed to publish assignment.");
+    }
+  };
+
+  const handleUnpublishAssignment = async () => {
+    if (!assignmentUuid) return;
+
+    try {
+      await updateAssignmentForLesson(assignmentUuid, {
+        ...assignmentData,
+        is_published: false,
+      });
+
+      setAssignmentData(prev => ({
+        ...prev,
+        is_published: true,
+      }));
+
+      toast.success("Assignment published successfully!");
+    } catch (err) {
+      toast.error("Failed to publish assignment.");
+    }
+  };
+
   const handleDeleteAssignment = async () => {
     if (!assignmentUuid) return;
     if (!confirm('Are you sure you want to delete this assignment? This action cannot be undone.'))
@@ -486,7 +525,7 @@ export const AssignmentCreationForm = ({
                 </div>
               )}
 
-              <div className="flex gap-2 self-start items-end justify-end">
+              {/* <div className="flex gap-2 self-start items-end justify-end">
                 <Label className="text-foreground text-sm font-medium">
                   Status {":"}
                 </Label>
@@ -503,7 +542,7 @@ export const AssignmentCreationForm = ({
                     }
                   />
                 </div>
-              </div>
+              </div> */}
 
               {/* Title */}
               <div className='flex flex-col gap-2'>
@@ -834,33 +873,74 @@ export const AssignmentCreationForm = ({
               </div>
 
               {/* Save / delete */}
-              <div className='flex items-end justify-end gap-4 pt-2'>
+              <div className="flex items-end justify-end gap-4 pt-2">
                 {assignmentUuid && (
                   <Button
-                    size='sm'
-                    variant='destructive'
+                    size="sm"
+                    variant="destructive"
                     onClick={handleDeleteAssignment}
                     disabled={isDeletingAssignment}
                   >
                     {isDeletingAssignment ? <Spinner /> : <Trash2 />}
                   </Button>
                 )}
-                <Button size='sm' onClick={handleSaveAssignment} disabled={isSavingAssignment}>
+
+                {assignmentUuid &&
+                  (assignmentData.is_published ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleUnpublishAssignment}
+                      disabled={isSavingAssignment}
+                    >
+                      {isSavingAssignment ? (
+                        <>
+                          <Spinner className="mr-2 h-4 w-4" />
+                          Unpublishing...
+                        </>
+                      ) : (
+                        "Unpublish"
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={handlePublishAssignment}
+                      disabled={isSavingAssignment}
+                    >
+                      {isSavingAssignment ? (
+                        <>
+                          <Spinner className="mr-2 h-4 w-4" />
+                          Publishing...
+                        </>
+                      ) : (
+                        "Publish"
+                      )}
+                    </Button>
+                  ))}
+
+                <Button
+                  size="sm"
+                  onClick={handleSaveAssignment}
+                  disabled={isSavingAssignment}
+                >
                   {isSavingAssignment ? (
                     <>
-                      <Spinner className='mr-2 h-4 w-4' />
-                      {isSavingWithAttachment ? 'Saving and uploading...' : 'Saving...'}
+                      <Spinner className="mr-2 h-4 w-4" />
+                      {isSavingWithAttachment
+                        ? "Saving and uploading..."
+                        : "Saving..."}
                     </>
+                  ) : assignmentUuid ? (
+                    "Update Assignment"
+                  ) : isSavingWithAttachment ? (
+                    "Save Assignment and Upload Attachment"
                   ) : (
-                    <>
-                      {assignmentUuid
-                        ? 'Update Assignment'
-                        : isSavingWithAttachment
-                          ? 'Save Assignment and Upload Attachment'
-                          : 'Save Assignment'}
-                    </>
+                    "Save Assignment"
                   )}
                 </Button>
+
+
               </div>
             </div>
           )}
