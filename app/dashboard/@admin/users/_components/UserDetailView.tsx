@@ -35,6 +35,10 @@ const CredentialsAsyncTab = lazy(async () => {
   const module = await import('./DossierAsyncTabs');
   return { default: module.CredentialsAsyncTab };
 });
+const ProfessionalProfileAsyncTab = lazy(async () => {
+  const module = await import('./DossierAsyncTabs');
+  return { default: module.ProfessionalProfileAsyncTab };
+});
 const ContentAsyncTab = lazy(async () => {
   const module = await import('./DossierAsyncTabs');
   return { default: module.ContentAsyncTab };
@@ -287,6 +291,11 @@ export function UserDetailView({
               </TabsTrigger>
             ) : null}
             {hasCredentials ? (
+              <TabsTrigger value='professional-profile' className={tabTriggerClass}>
+                Professional profile
+              </TabsTrigger>
+            ) : null}
+            {hasCredentials ? (
               <TabsTrigger value='content' className={tabTriggerClass}>
                 Content & approvals
               </TabsTrigger>
@@ -417,6 +426,19 @@ export function UserDetailView({
               <Suspense fallback={<SectionCardSkeleton rows={6} />}>
                 <CredentialsAsyncTab
                   active={tab === 'credentials'}
+                  userUuid={uuid}
+                  verifierIdentity={verifier}
+                />
+              </Suspense>
+            </TabsContent>
+          ) : null}
+
+          {/* Professional profile */}
+          {hasCredentials ? (
+            <TabsContent value='professional-profile' className='mt-4'>
+              <Suspense fallback={<SectionCardSkeleton rows={6} />}>
+                <ProfessionalProfileAsyncTab
+                  active={tab === 'professional-profile'}
                   userUuid={uuid}
                   verifierIdentity={verifier}
                 />

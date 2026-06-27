@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
+  Award,
   BriefcaseBusiness,
   CalendarClock,
   FileClock,
@@ -12,10 +13,17 @@ import {
   ReceiptText,
   ShieldCheck,
 } from 'lucide-react';
+import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
-import { fetchUserVerification } from '@/services/admin/credential-review';
+import {
+  type CredentialDocument,
+  type CredentialRecord,
+  type DomainVerification,
+  fetchUserVerification,
+} from '@/services/admin/credential-review';
 import {
   getInstructorBookingsOptions,
   getUserActivityOptions,
@@ -29,6 +37,10 @@ import { adminTheme } from '../../_components/ui/admin-theme';
 import { DetailGrid } from '../../_components/ui/DetailPanel';
 import { SectionCard, SectionCardSkeleton } from '../../_components/ui/SectionCard';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
+import {
+  CredentialDocumentCard,
+  CredentialReviewDialog,
+} from '../../_components/ui/credential-review';
 import { ContentApprovalsTab } from './ContentApprovalsTab';
 import { DomainVerificationSection } from './DomainVerificationSection';
 import { ReviewsRatingsTab } from './ReviewsRatingsTab';
@@ -125,6 +137,236 @@ export function CredentialsAsyncTab({
           onChanged={() => verificationQuery.refetch()}
         />
       ))}
+    </div>
+  );
+}
+
+function RecordCollection({
+  title,
+  records,
+  emptyTitle,
+  onReviewDocument,
+}: {
+  title: string;
+  records: CredentialRecord[];
+  emptyTitle: string;
+  onReviewDocument: (document: CredentialDocument) => void;
+}) {
+  return (
+    <SectionCard
+      title={title}
+      description={`${records.length} record${records.length === 1 ? '' : 's'}`}
+    >
+      {records.length ? (
+        <div className='space-y-3'>
+          {records.map(record => (
+            <div key={record.id} className='border-border/60 bg-muted/20 rounded-md border p-3'>
+              <div className='mb-3'>
+                <p className='text-foreground text-sm font-medium'>{record.title}</p>
+                {record.subtitle ? (
+                  <p className='text-muted-foreground text-xs'>{record.subtitle}</p>
+                ) : null}
+              </div>
+              <DetailGrid items={record.details} columns={3} />
+              {record.documents?.length ? (
+                <div className='border-border/60 mt-3 space-y-2 border-t pt-3'>
+                  <p className={adminTheme.sectionLabel}>Supporting certificates</p>
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    {record.documents.map(document => (
+                      <CredentialDocumentCard
+                        key={document.id}
+                        document={document}
+                        onReview={() => onReviewDocument(document)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={FileClock}
+          title={emptyTitle}
+          description='Nothing has been submitted in this section yet.'
+          variant='compact'
+        />
+      )}
+    </SectionCard>
+  );
+}
+
+function ProfessionalDomainProfile({
+  domain,
+  onReviewDocument,
+}: {
+  domain: DomainVerification;
+  onReviewDocument: (document: CredentialDocument) => void;
+}) {
+  const verifiedDocuments = [
+    ...domain.documents,
+    ...domain.education.flatMap(record => record.documents ?? []),
+  ].filter(document => document.isVerified).length;
+  const totalDocuments =
+    domain.documents.length +
+    domain.education.reduce((sum, record) => sum + (record.documents?.length ?? 0), 0);
+
+  return (
+    <div className='space-y-4'>
+      <SectionCard
+        title={`${domain.roleLabel} profile`}
+        description={domain.headline || domain.fullName}
+        actions={
+          <StatusBadge
+            status={domain.adminVerified ? 'verified' : 'pending'}
+            label={domain.adminVerified ? 'Verified' : 'Pending verification'}
+          />
+        }
+      >
+        <div className='space-y-4'>
+          <DetailGrid
+            columns={3}
+            items={[
+              {
+                label: 'Profile UUID',
+                value: <span className='font-mono text-xs break-all'>{domain.profileUuid}</span>,
+              },
+              { label: 'Location', value: domain.location || '-' },
+              { label: 'Documents', value: `${verifiedDocuments}/${totalDocuments} verified` },
+              {
+                label: 'Content',
+                value: `${domain.contentItems.length} item${domain.contentItems.length === 1 ? '' : 's'}`,
+              },
+            ]}
+          />
+
+          <div className='space-y-2'>
+            <p className={adminTheme.sectionLabel}>Skills</p>
+            {domain.skills.length ? (
+              <div className='flex flex-wrap gap-1.5'>
+                {domain.skills.map(skill => (
+                  <Badge key={skill} variant='secondary' className='font-normal capitalize'>
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className='text-muted-foreground text-sm'>No skills submitted.</p>
+            )}
+          </div>
+        </div>
+      </SectionCard>
+
+      <div className='grid gap-4 xl:grid-cols-2'>
+        <RecordCollection
+          title='Education and certificates'
+          records={domain.education}
+          emptyTitle='No education records'
+          onReviewDocument={onReviewDocument}
+        />
+        <RecordCollection
+          title='Training experience'
+          records={domain.experience}
+          emptyTitle='No experience records'
+          onReviewDocument={onReviewDocument}
+        />
+        <RecordCollection
+          title='Professional memberships'
+          records={domain.memberships}
+          emptyTitle='No memberships'
+          onReviewDocument={onReviewDocument}
+        />
+        <RecordCollection
+          title='Certifications'
+          records={domain.certifications}
+          emptyTitle='No certifications'
+          onReviewDocument={onReviewDocument}
+        />
+      </div>
+
+      <SectionCard
+        title='General documents'
+        description='Documents not attached to a specific education record.'
+      >
+        {domain.documents.length ? (
+          <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
+            {domain.documents.map(document => (
+              <CredentialDocumentCard
+                key={document.id}
+                document={document}
+                onReview={() => onReviewDocument(document)}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={ShieldCheck}
+            title='No general documents'
+            description='Education certificates appear inside their matching education records.'
+            variant='compact'
+          />
+        )}
+      </SectionCard>
+    </div>
+  );
+}
+
+export function ProfessionalProfileAsyncTab({
+  active,
+  userUuid,
+  verifierIdentity,
+}: {
+  active: boolean;
+  userUuid: string;
+  verifierIdentity: string;
+}) {
+  const [activeDocument, setActiveDocument] = useState<CredentialDocument | null>(null);
+  const verificationQuery = useQuery({
+    enabled: active,
+    queryFn: () => fetchUserVerification(userUuid),
+    queryKey: ['user-verification', userUuid],
+    staleTime: STALE_TIMES.entity,
+  });
+
+  if (verificationQuery.isLoading) return <SectionCardSkeleton rows={6} />;
+  if (verificationQuery.isError)
+    return <InlineError message='Unable to load professional profile.' />;
+
+  const domains = verificationQuery.data ?? [];
+
+  if (!domains.length) {
+    return (
+      <SectionCard
+        title='Professional profile'
+        description='Instructor and course creator profile details.'
+      >
+        <EmptyState
+          icon={Award}
+          title='No professional profile'
+          description='Education, certificates, training experience, and skills appear when the user has an instructor or course creator profile.'
+          variant='compact'
+        />
+      </SectionCard>
+    );
+  }
+
+  return (
+    <div className='space-y-5'>
+      {domains.map(domain => (
+        <ProfessionalDomainProfile
+          key={domain.role}
+          domain={domain}
+          onReviewDocument={setActiveDocument}
+        />
+      ))}
+
+      <CredentialReviewDialog
+        document={activeDocument}
+        verifierIdentity={verifierIdentity}
+        onClose={() => setActiveDocument(null)}
+        onVerified={() => verificationQuery.refetch()}
+      />
     </div>
   );
 }
