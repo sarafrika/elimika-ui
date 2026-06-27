@@ -38,10 +38,9 @@ import {
   addLessonContentMutation,
   deleteLessonContentMutation,
   getAllContentTypesOptions,
-  getLessonContentOptions,
   getLessonContentQueryKey,
   updateLessonContentMutation,
-  uploadLessonMediaMutation,
+  uploadLessonMediaMutation
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type {
   ApiResponseCourse,
@@ -214,15 +213,15 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
     return map;
   }, [lessons, lessonContentsMap, contentTypeData]);
 
-  const { data } = useQuery({
-    ...getLessonContentOptions({
-      path: {
-        courseUuid: course?.data?.uuid as string,
-        lessonUuid: activeLessonId as string,
-      },
-    }),
-    enabled: !!activeLessonId,
-  });
+  // const { data } = useQuery({
+  //   ...getLessonContentOptions({
+  //     path: {
+  //       courseUuid: course?.data?.uuid as string,
+  //       lessonUuid: activeLessonId as string,
+  //     },
+  //   }),
+  //   enabled: !!activeLessonId,
+  // });
 
   const uploadLessonMedia = useMutation(uploadLessonMediaMutation());
 
@@ -478,7 +477,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                     Add and manage content blocks for this lesson
                   </p>
                 </div>
-                {activeLessonId && (
+                {/* {activeLessonId && (
                   <Button
                     size='sm'
                     variant='outline'
@@ -489,7 +488,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                   >
                     <PlusCircle /> Add New Content
                   </Button>
-                )}
+                )} */}
               </div>
 
               <CardContent className='space-y-4 pt-6'>
@@ -579,12 +578,22 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
 
                       {(enrichedLessonContentsMap.get(activeLessonId)?.length ?? 0) === 0 &&
                         !showContentForm && (
-                          <div className='bg-muted border-border rounded-lg border-2 border-dashed px-4 py-16 text-center'>
+                          <div className='bg-muted border-border rounded-lg border-2 border-dashed px-4 space-y-4 py-16 text-center'>
                             <p className='text-foreground font-medium'>No lesson content yet</p>
                             <p className='text-muted-foreground mt-1 text-sm'>
                               Click <span className='font-semibold'>"Add New Content"</span> to get
                               started.
                             </p>
+                            <Button
+                              size='sm'
+                              variant='outline'
+                              onClick={() => {
+                                resetContentForm();
+                                setShowContentForm(true);
+                              }}
+                            >
+                              <PlusCircle /> Add New Content
+                            </Button>
                           </div>
                         )}
                     </div>
@@ -891,6 +900,23 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                   </>
                 )}
               </CardContent>
+
+              {(enrichedLessonContentsMap.get(activeLessonId as string) || [])?.length > 0 &&
+                <div className="flex justify-end w-full mt-3">
+                  {activeLessonId && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        resetContentForm();
+                        setShowContentForm(true);
+                      }}
+                    >
+                      <PlusCircle /> Add New Content
+                    </Button>
+                  )}
+                </div>}
+
             </div>
           )}
 

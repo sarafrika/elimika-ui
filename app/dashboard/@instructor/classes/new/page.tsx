@@ -33,6 +33,7 @@ import { ClassMediaUpload, type MediaFile } from './_components/class-media-uplo
 import { ServiceTypeSelector, type ServiceType } from './_components/service-type-selector';
 
 import { format } from 'date-fns';
+import { Button } from '../../../../../components/ui/button';
 import { Calendar } from '../../../../../components/ui/calendar';
 import { Checkbox } from '../../../../../components/ui/checkbox';
 import { useInstructor } from '../../../../../context/instructor-context';
@@ -1448,8 +1449,8 @@ const NewClassCreationPage = () => {
               //   })
               // }
               className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${active
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
                 }`}
             >
               {DAY_SHORT[index]}
@@ -1866,8 +1867,8 @@ const NewClassCreationPage = () => {
                       type='button'
                       onClick={() => setSchedulePreset(option.key)}
                       className={`flex-1 rounded-md border px-4 py-3 text-left transition ${schedulePreset === option.key
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/40'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/40'
                         }`}
                     >
                       <div className='text-sm font-semibold'>{option.title}</div>
@@ -2245,6 +2246,17 @@ const NewClassCreationPage = () => {
                 </div>
               </div>
             </Card>
+
+            <div className='w-full flex self-end justify-end'>
+              <Button
+                type='button'
+                className='h-10 rounded-md bg-primary px-5 text-sm font-medium shadow-sm sm:w-auto'
+                onClick={() => submitClass(false)}
+                disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
+              >
+                Publish Class
+              </Button>
+            </div>
           </div>
 
           <div className='w-full xl:w-[360px] xl:shrink-0'>

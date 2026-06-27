@@ -1,8 +1,6 @@
-import { MoreVertical } from "lucide-react";
 import { ProgressBar } from "./ProgressBar";
 import { StatusBadge } from "./StatusBadge";
 
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import type { StudentRosterEntry } from "../types";
 
@@ -14,7 +12,9 @@ export function StudentRow({ student }: StudentRowProps) {
   const router = useRouter()
   const classCount = student.classes.length;
   const courseCount = student.courses.length;
-  const joinedDate = student.profile?.created_date;
+  const joinedDate = student.profile?.created_date
+    ? new Date(student.profile.created_date)
+    : null;
 
   return (
     <tr
@@ -73,33 +73,18 @@ export function StudentRow({ student }: StudentRowProps) {
         <ProgressBar value={student.progress} />
       </td>
 
-      {/* Progress */}
-      <td className="py-3 px-4 hidden md:table-cell">
-        Ksh {student.walletBalance.toLocaleString()}
-      </td>
 
-      {/* Progress */}
+      {/* Joined date */}
       <td className="py-3 px-4 hidden md:table-cell">
-        {/* {joinedDate
+        {joinedDate && !isNaN(joinedDate.getTime())
           ? new Intl.DateTimeFormat("en-GB", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
           }).format(joinedDate)
-          : "—"} */}
+          : "—"}
       </td>
 
-      {/* Actions */}
-      <td className="py-3 px-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          aria-label={`More options for ${student.student.full_name}`}
-        >
-          <MoreVertical className="h-4 w-4" />
-        </Button>
-      </td>
     </tr>
   );
 }

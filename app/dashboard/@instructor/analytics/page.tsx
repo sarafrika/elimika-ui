@@ -1,8 +1,18 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo } from 'react';
 
+import { AnalyticsFiltersProvider, useAnalyticsFilters } from './_components/analytics-filters-context';
+import {
+  buildAnalyticsSearchParams,
+  parseAnalyticsFiltersFromSearchParams,
+  parseAnalyticsTabFromSearchParams,
+  type AnalyticsTab,
+} from './_components/analytics-url';
+import { CompletionByProgram } from './_components/charts/CompletionByProgram';
+import { PerformanceChart } from './_components/charts/PerformanceChart';
+import { StatusBreakdown } from './_components/charts/StatusBreakdown';
 import { DetailedMetrics } from './_components/DetailedMetrics';
 import { HeaderBar } from './_components/HeaderBar';
 import { KPIRow } from './_components/KPIRow';
@@ -11,17 +21,7 @@ import { SessionTable, SessionTableSummary } from './_components/SessionTable';
 import { TabNav } from './_components/TabNav';
 import { PlaceholderTab } from './_components/tabs/PlaceholderTab';
 import { TopLocations } from './_components/TopLocations';
-import { CompletionByProgram } from './_components/charts/CompletionByProgram';
-import { PerformanceChart } from './_components/charts/PerformanceChart';
-import { StatusBreakdown } from './_components/charts/StatusBreakdown';
 import { useInstructorAnalyticsData } from './_components/useInstructorAnalyticsData';
-import { AnalyticsFiltersProvider, useAnalyticsFilters } from './_components/analytics-filters-context';
-import {
-  buildAnalyticsSearchParams,
-  parseAnalyticsFiltersFromSearchParams,
-  parseAnalyticsTabFromSearchParams,
-  type AnalyticsTab,
-} from './_components/analytics-url';
 
 const TABS: AnalyticsTab[] = [
   'Overview',

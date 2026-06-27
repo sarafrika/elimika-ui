@@ -10,7 +10,6 @@ import { useStudentLearningHubData } from './useStudentLearningHubData';
 export function StudentLearningHubPage() {
   const data = useStudentLearningHubData();
 
-
   return (
     <main className='w-full py-3 sm:py-4'>
       <div className='space-y-4'>

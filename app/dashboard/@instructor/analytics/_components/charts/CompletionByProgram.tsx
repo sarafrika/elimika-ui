@@ -39,9 +39,27 @@ export function CompletionByProgram() {
 
   if (isLoading) {
     return (
-      <div className="h-full p-3 sm:p-4 bg-card rounded-xl border border-border shadow-sm">
-        <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-          Loading program completion data...
+      <div className="h-full p-3 sm:p-4 bg-card rounded-xl border border-border shadow-sm animate-pulse">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="h-3 w-40 bg-muted rounded" />
+          <div className="h-3 w-24 bg-muted rounded" />
+        </div>
+
+        {/* Rows skeleton */}
+        <div className="space-y-2.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-2">
+              {/* name */}
+              <div className="flex-1 h-3 bg-muted rounded" />
+
+              {/* bar */}
+              <div className="w-24 sm:w-28 h-2 bg-muted rounded-full shrink-0" />
+
+              {/* percentage */}
+              <div className="w-8 h-3 bg-muted rounded shrink-0" />
+            </div>
+          ))}
         </div>
       </div>
     );

@@ -161,7 +161,7 @@ export function ShareClass({
     return (
         <div className="bg-card border border-border rounded-md p-4 sm:p-5 shadow-sm">
             <h3 className="mb-3 text-sm font-bold text-foreground sm:text-base">
-                Share this {type === "course" ? "course" : "program"}
+                Share this {type === "course" ? "class" : "class"}
             </h3>
 
             <div className="flex items-center gap-3">
