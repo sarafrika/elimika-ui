@@ -605,6 +605,7 @@ function ProgramOverview({
 }) {
     const userProfile = useUserProfile()
     const [expanded, setExpanded] = useState(false);
+    const [showFullBio, setShowFullBio] = useState(false);
 
     const learnings = useMemo(
         () => splitBullets(program.objectives || program.description),
@@ -832,9 +833,28 @@ function ProgramOverview({
                                 {profile.headline}
                             </p>
 
-                            <div className="mb-3 text-xs leading-relaxed text-muted-foreground sm:mb-4 sm:text-sm">
-                                <HTMLTextPreview htmlContent={profile.bio} />
+                            <div className="mb-3 sm:mb-4">
+                                <div
+                                    className={`text-xs leading-relaxed text-muted-foreground sm:text-sm ${showFullBio ? "" : "line-clamp-2"
+                                        }`}
+                                >
+                                    <HTMLTextPreview htmlContent={profile.bio} />
+                                </div>
+
+                                {profile.bio && (
+                                    <Button
+                                        variant="link"
+                                        className="mt-1 h-auto p-0 text-xs sm:text-sm"
+                                        onClick={() => setShowFullBio((prev) => !prev)}
+                                    >
+                                        {showFullBio ? "Show less" : "Show more"}
+                                    </Button>
+                                )}
                             </div>
+
+                            {/* <div className="mb-3 text-xs leading-relaxed text-muted-foreground sm:mb-4 sm:text-sm">
+                                <HTMLTextPreview htmlContent={profile.bio} />
+                            </div> */}
 
                             <div className="flex flex-wrap gap-6 sm:gap-12">
                                 {stats.map((stat) => (

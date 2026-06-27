@@ -4,6 +4,7 @@ import { useInstructor } from '@/context/instructor-context';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import type {
     Assignment,
+    ClassReview,
     Course,
     CourseReview,
     DifficultyLevel,
@@ -17,6 +18,7 @@ import {
     getAllDifficultyLevelsOptions,
     getAllQuizzesOptions,
     getAllTrainingProgramsOptions,
+    getClassReviewsOptions,
     getCourseCreatorByUuidOptions,
     getCourseReviewsOptions,
     getPublishedCoursesOptions,
@@ -46,7 +48,7 @@ import { CourseTrainingRequirements } from '../../../../_components/course-train
 import CourseDetailsHero from './CourseDetailsHero';
 import CourseFaq from './CourseFaq';
 import CourseOverview, { ClassCourseCurriculum } from './CourseOverview';
-import CourseRating from './CourseRating';
+import CourseRating, { ClassRating } from './CourseRating';
 import CourseReviews from './CourseReviews';
 import { formatDurationFromParts, getContentHref, getEnrollHref, stripHtml } from './courses-data';
 import ClassCourseTabNav from './CourseTabNav';
@@ -226,8 +228,15 @@ export default function ClassCourseDetailsPage({
         staleTime: 5 * 60 * 1000,
         refetchOnWindowFocus: false,
     });
+    const courseReviews: CourseReview[] = reviewsResponse?.data ?? [];
 
-    const reviews: CourseReview[] = reviewsResponse?.data ?? [];
+    const { data: classReviewsResponse, isLoading: classReviewsLoading } = useQuery({
+        ...getClassReviewsOptions({ path: { uuid: classId as string }, query: { pageable: {} } }),
+        enabled: !!resolvedCourseId,
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
+    const classReviews: ClassReview[] = classReviewsResponse?.data?.content ?? [];
 
     const { data: difficultyResponse, isLoading: difficultyLoading } =
         useQuery(getAllDifficultyLevelsOptions());
@@ -340,17 +349,31 @@ export default function ClassCourseDetailsPage({
         [course?.difficulty_uuid, difficultyLevels]
     );
 
-    const reviewCount = reviews.length;
-
-    const avgRating =
-        reviewCount > 0
+    const courseReviewCount = courseReviews.length;
+    const courseAvgRating =
+        courseReviewCount > 0
             ? (
-                reviews.reduce(
+                courseReviews.reduce(
                     (sum, review) => sum + (review.rating || 0),
                     0
-                ) / reviewCount
+                ) / courseReviewCount
             ).toFixed(1)
             : null;
+
+    const classReviewCount = classReviews.length;
+    const classAvgRating =
+        classReviewCount > 0
+            ? (
+                classReviews.reduce(
+                    (sum, review) => sum + (review.rating || 0),
+                    0
+                ) / classReviewCount
+            ).toFixed(1)
+            : null;
+
+    const reviewCount = type === "course" ? courseReviewCount : classReviewCount;
+    const avgRating = type === "course" ? courseAvgRating : classAvgRating;
+
 
     const creatorName = creator?.full_name ?? '';
     const creatorBio = creator?.bio ?? '';
@@ -620,9 +643,13 @@ export default function ClassCourseDetailsPage({
                                         classData={classData}
                                     />)}
 
-                                {activeTab === `Reviews (${reviewCount})` &&
-                                    <CourseReviews reviews={reviews} />
-                                }
+                                {activeTab === `Reviews (${reviewCount})` && (
+                                    type === "course" ? (
+                                        <CourseReviews reviews={courseReviews} />
+                                    ) : (
+                                        <CourseReviews reviews={classReviews} />
+                                    )
+                                )}
 
                                 {activeTab === "FAQs" && <CourseFaq faqs={[]} />}
 
@@ -692,12 +719,22 @@ export default function ClassCourseDetailsPage({
                             }}
                         />
 
-                        <CourseRating
-                            reviewCount={reviewCount}
-                            averageRating={avgRating}
-                            reviews={reviews}
-                            courseId={resolvedCourseId}
-                        />
+                        {type === "course" ?
+                            <CourseRating
+                                reviewCount={courseReviewCount}
+                                averageRating={courseAvgRating}
+                                reviews={courseReviews}
+                                courseId={resolvedCourseId}
+                            /> :
+                            <ClassRating
+                                reviewCount={classReviewCount}
+                                averageRating={classAvgRating}
+                                reviews={classReviews}
+                                courseId={resolvedCourseId}
+                                classId={classId}
+                            />}
+
+
 
                         {type === "course" ? <ShareClassCourse
                             courseTitle={course?.name ?? ''}
