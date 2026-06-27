@@ -18,7 +18,11 @@ function hasDomain(user: User, domain: string): boolean {
  */
 export function PeopleTableSection({ domain }: { domain?: string }) {
   const { data, isLoading } = useQuery(
-    getAllUsersOptions({ query: { pageable: { page: 0, size: 100, sort: ['created_date,desc'] } } })
+    getAllUsersOptions({
+      query: {
+        pageable: { page: 0, size: 100, sort: ['createdDate,desc', 'lastModifiedDate,desc'] },
+      },
+    })
   );
 
   const users = useMemo(() => {

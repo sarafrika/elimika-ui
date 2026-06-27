@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { BadgeCheck, GraduationCap, ShieldCheck, ShieldX } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { CredentialDocument, CredentialRecord, DomainVerification } from '@/services/admin/credential-review';
 import {
@@ -21,7 +22,15 @@ import { DetailGrid } from '../../_components/ui/DetailPanel';
 import { SectionCard } from '../../_components/ui/SectionCard';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
 
-function RecordList({ title, records }: { title: string; records: CredentialRecord[] }) {
+function RecordList({
+  title,
+  records,
+  onReviewDocument,
+}: {
+  title: string;
+  records: CredentialRecord[];
+  onReviewDocument?: (document: CredentialDocument) => void;
+}) {
   if (!records.length) return null;
   return (
     <div className='space-y-2'>
@@ -36,6 +45,20 @@ function RecordList({ title, records }: { title: string; records: CredentialReco
               ) : null}
             </div>
             <DetailGrid items={record.details} columns={3} />
+            {record.documents?.length ? (
+              <div className='mt-3 space-y-2 border-t border-border/60 pt-3'>
+                <p className={adminTheme.sectionLabel}>Supporting certificate</p>
+                <div className='grid gap-3 sm:grid-cols-2'>
+                  {record.documents.map(document => (
+                    <CredentialDocumentCard
+                      key={document.id}
+                      document={document}
+                      onReview={() => onReviewDocument?.(document)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         ))}
       </div>
@@ -154,7 +177,22 @@ export function DomainVerificationSection({
           )}
         </div>
 
-        <RecordList title='Education' records={domain.education} />
+        {/* Skills */}
+        {domain.skills.length ? (
+          <div className='space-y-2'>
+            <p className={adminTheme.sectionLabel}>Skills</p>
+            <div className='flex flex-wrap gap-1.5'>
+              {domain.skills.map(skill => (
+                <Badge key={skill} variant='secondary' className='font-normal capitalize'>
+                  {skill}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <RecordList title='Education' records={domain.education} onReviewDocument={setActive} />
+        <RecordList title='Certifications' records={domain.certifications} />
         <RecordList title='Experience' records={domain.experience} />
         <RecordList title='Memberships' records={domain.memberships} />
       </div>

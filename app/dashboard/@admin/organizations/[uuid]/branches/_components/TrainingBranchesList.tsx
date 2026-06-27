@@ -54,7 +54,7 @@ export default function TrainingBranchesList({
   const isSelected = (branch: TrainingBranch) =>
     !selectedBranch ? true : selectedBranch?.uuid === branch.uuid;
 
-  const hasActiveFilters = searchQuery || activeFilter !== 'all' || sortField !== 'branch_name';
+  const hasActiveFilters = searchQuery || activeFilter !== 'all' || sortField !== 'branchName';
 
   return (
     <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
@@ -92,10 +92,10 @@ export default function TrainingBranchesList({
               <SelectValue placeholder='Sort by' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='branch_name'>Name</SelectItem>
+              <SelectItem value='branchName'>Name</SelectItem>
               <SelectItem value='address'>Location</SelectItem>
-              <SelectItem value='poc_name'>Contact</SelectItem>
-              <SelectItem value='created_date'>Date Created</SelectItem>
+              <SelectItem value='pocName'>Contact</SelectItem>
+              <SelectItem value='createdDate'>Date Created</SelectItem>
             </SelectContent>
           </Select>
 

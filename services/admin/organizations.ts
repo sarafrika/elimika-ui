@@ -62,7 +62,8 @@ function buildOrganisationFilters(params: AdminOrganisationListParams) {
 export async function fetchAdminOrganisations(
   params: AdminOrganisationListParams = {}
 ): Promise<AdminOrganisationListResult> {
-  const { page = 0, size = 20, sortField = 'created_date', sortOrder = 'desc' } = params;
+  // Sort uses camelCase entity property names (createdDate), not snake_case columns.
+  const { page = 0, size = 20, sortField = 'createdDate', sortOrder = 'desc' } = params;
   const pageable = {
     page,
     size,
@@ -126,7 +127,7 @@ export function useAdminOrganisations(
     search: params.search ?? '',
     status: params.status ?? 'all',
     verification: params.verification ?? 'all',
-    sortField: params.sortField ?? 'created_date',
+    sortField: params.sortField ?? 'createdDate',
     sortOrder: params.sortOrder ?? 'desc',
   };
 

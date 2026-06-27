@@ -32,7 +32,7 @@ import {
   UserIcon,
   Users,
   UsersIcon,
-  Wallet
+  Wallet,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { UserDomain } from '@/lib/types';
@@ -478,6 +478,11 @@ export default {
       title: 'Organizations',
       url: '/dashboard/organizations',
       icon: Building2,
+    },
+    {
+      title: 'Pending Approvals',
+      url: '/dashboard/pending-approvals',
+      icon: ClipboardList,
     },
     {
       title: 'Opportunities',

@@ -203,7 +203,7 @@ const InstructorStudentsDetailPage = () => {
     const searchParams = useSearchParams();
     const router = useRouter()
 
-    const userUuid = params?.id as string;
+    const userUuid = params?.uuid as string;
     const studentId = searchParams.get('sId');
 
     const { students, loading } = useInstructorStudentsData();

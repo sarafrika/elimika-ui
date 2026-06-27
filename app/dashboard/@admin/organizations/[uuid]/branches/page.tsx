@@ -25,7 +25,7 @@ async function TrainingBranchesContent({
 }) {
   const searchQuery = (searchParams?.search as string) ?? '';
   const activeFilter = (searchParams?.active as string) ?? 'all';
-  const sortField = (searchParams?.sortField as string) ?? 'branch_name';
+  const sortField = (searchParams?.sortField as string) ?? 'branchName';
   const sortOrder = (searchParams?.sortOrder as 'asc' | 'desc') ?? 'asc';
 
   const { data, error } = await getTrainingBranchesByOrganisation({

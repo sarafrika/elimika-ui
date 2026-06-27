@@ -395,6 +395,8 @@ import type {
   ListPendingCoursesResponse,
   RemoveItemResponse,
   RemoveAdminDomainResponse,
+  GetUserActivityResponse,
+  ListInstructorApplicationsResponse,
 } from './types.gen';
 
 const userOrganisationAffiliationDtoSchemaResponseTransformer = (data: any) => {
@@ -6683,5 +6685,48 @@ export const removeAdminDomainResponseTransformer = async (
   data: any
 ): Promise<RemoveAdminDomainResponse> => {
   data = apiResponseUserSchemaResponseTransformer(data);
+  return data;
+};
+
+const adminUserActivityEventSchemaResponseTransformer = (data: any) => {
+  if (data.occurred_at) {
+    data.occurred_at = new Date(data.occurred_at);
+  }
+  if (data.processing_time_ms) {
+    data.processing_time_ms = BigInt(data.processing_time_ms.toString());
+  }
+  return data;
+};
+
+const pagedDtoAdminUserActivityEventSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return adminUserActivityEventSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoAdminUserActivityEventSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoAdminUserActivityEventSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getUserActivityResponseTransformer = async (
+  data: any
+): Promise<GetUserActivityResponse> => {
+  data = apiResponsePagedDtoAdminUserActivityEventSchemaResponseTransformer(data);
+  return data;
+};
+
+export const listInstructorApplicationsResponseTransformer = async (
+  data: any
+): Promise<ListInstructorApplicationsResponse> => {
+  data = apiResponsePagedDtoClassMarketplaceJobApplicationSchemaResponseTransformer(data);
   return data;
 };

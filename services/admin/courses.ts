@@ -50,7 +50,7 @@ function buildCourseFilters(params: AdminCourseListParams) {
 export async function fetchAdminCourses(
   params: AdminCourseListParams = {}
 ): Promise<AdminCourseListResult> {
-  const { page = 0, size = 20, sortField = 'updated_date', sortOrder = 'desc' } = params;
+  const { page = 0, size = 20, sortField = 'lastModifiedDate', sortOrder = 'desc' } = params;
   const pageable = {
     page,
     size,
@@ -113,7 +113,7 @@ export function useAdminCourses(
     size: params.size ?? 20,
     search: params.search ?? '',
     status: params.status ?? 'all',
-    sortField: params.sortField ?? 'updated_date',
+    sortField: params.sortField ?? 'lastModifiedDate',
     sortOrder: params.sortOrder ?? 'desc',
   };
 

@@ -58,7 +58,8 @@ function buildRubricFilters(params: AdminRubricListParams) {
 export async function fetchAdminRubrics(
   params: AdminRubricListParams = {}
 ): Promise<AdminRubricListResult> {
-  const { page = 0, size = 20, sortField = 'updated_date', sortOrder = 'desc' } = params;
+  // Sort uses camelCase entity property names (lastModifiedDate), not snake_case columns.
+  const { page = 0, size = 20, sortField = 'lastModifiedDate', sortOrder = 'desc' } = params;
   const pageable = {
     page,
     size,
@@ -114,7 +115,7 @@ export function useAdminRubrics(
     search: params.search ?? '',
     status: params.status ?? 'all',
     visibility: params.visibility ?? 'all',
-    sortField: params.sortField ?? 'updated_date',
+    sortField: params.sortField ?? 'lastModifiedDate',
     sortOrder: params.sortOrder ?? 'desc',
   };
 

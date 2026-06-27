@@ -25,7 +25,7 @@ async function OrganizationUsersContent({
 }) {
   const searchQuery = (searchParams?.search as string) ?? '';
   const roleFilter = (searchParams?.role as string) ?? 'all';
-  const sortField = (searchParams?.sortField as string) ?? 'created_date';
+  const sortField = (searchParams?.sortField as string) ?? 'createdDate';
   const sortOrder = (searchParams?.sortOrder as 'asc' | 'desc') ?? 'desc';
 
   const { data, error } = await getUsersByOrganisation({

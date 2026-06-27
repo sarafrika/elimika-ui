@@ -9,11 +9,12 @@ import {
   getAllInstructorsOptions,
   getAllStudentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { RoleMembersTable, type RoleMember } from './RoleMembersTable';
+import { type RoleMember, RoleMembersTable } from './RoleMembersTable';
 
 type Role = 'student' | 'instructor' | 'course_creator' | 'admin';
 
-const PAGEABLE = { page: 0, size: 100, sort: ['created_date,desc'] };
+// Spring expects camelCase entity property names in sort, not snake_case column names.
+const PAGEABLE = { page: 0, size: 100, sort: ['createdDate,desc', 'lastModifiedDate,desc'] };
 
 /** Client section that loads role members through the proxy and renders the members table. */
 export function RoleMembersSection({ role }: { role: Role }) {
@@ -100,6 +101,14 @@ export function RoleMembersSection({ role }: { role: Role }) {
     },
   };
 
+  // Each role keeps its own URL but renders the shared UserDetailView component.
+  const basePaths: Record<Role, string> = {
+    student: '/dashboard/students',
+    instructor: '/dashboard/instructors',
+    course_creator: '/dashboard/course-creators',
+    admin: '/dashboard/administrators',
+  };
+
   return (
     <RoleMembersTable
       members={members}
@@ -107,6 +116,7 @@ export function RoleMembersSection({ role }: { role: Role }) {
       searchPlaceholder={labels[role].search}
       emptyTitle={labels[role].emptyTitle}
       emptyDescription={labels[role].emptyDescription}
+      basePath={basePaths[role]}
     />
   );
 }
