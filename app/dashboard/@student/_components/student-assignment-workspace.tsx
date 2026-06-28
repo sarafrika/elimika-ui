@@ -698,13 +698,47 @@ export function StudentAssignmentWorkspace() {
           <div className='grid gap-4 lg:grid-cols-2'>
             {processedRows.map(row => {
               const dueSummary = getDueSummary(row.schedule?.due_at ?? row.assignment?.due_date);
-              const status = row.hasSubmission
-                ? {
-                  label: 'Submitted',
-                  helper: 'You have submitted this assignment.',
-                  variant: 'default' as const,
-                }
+
+              const latestSubmission =
+                row.latestSubmission ??
+                row.submissions?.[row.submissions.length - 1];
+
+              const status = latestSubmission
+                ? (() => {
+                  switch (latestSubmission.status?.toLowerCase()) {
+                    case "graded":
+                      return {
+                        label: "Graded",
+                        helper: "Your assignment has been graded.",
+                        variant: "success" as const,
+                      };
+
+                    case "submitted":
+                      return {
+                        label: "Submitted",
+                        helper: "Your submission is awaiting grading.",
+                        variant: "default" as const,
+                      };
+
+                    case "late":
+                      return {
+                        label: "Late",
+                        helper: "Submitted after the due date.",
+                        variant: "destructive" as const,
+                      };
+
+                    default:
+                      return {
+                        label:
+                          latestSubmission.submission_status_display ??
+                          latestSubmission.status,
+                        helper: "Submission received.",
+                        variant: "default" as const,
+                      };
+                  }
+                })()
                 : getStudentAssignmentSubmissionState(row);
+
               const percentage = row.latestSubmission?.percentage;
 
               return (
@@ -720,10 +754,13 @@ export function StudentAssignmentWorkspace() {
                             {row.classMeta.courseTitle}
                           </Badge>
                           <Badge variant={status.variant}>{status.label}</Badge>
-                          <Badge className={dueSummary.badgeClassName} variant='outline'>
-                            <CalendarDays className='mr-1 h-3.5 w-3.5' />
-                            {dueSummary.label}
-                          </Badge>
+
+                          {!["Submitted", "Graded"].includes(status.label) && (
+                            <Badge className={dueSummary.badgeClassName} variant="outline">
+                              <CalendarDays className="mr-1 h-3.5 w-3.5" />
+                              {dueSummary.label}
+                            </Badge>
+                          )}
                         </div>
 
                         <div>

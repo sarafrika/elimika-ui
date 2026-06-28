@@ -3,7 +3,7 @@
 import { EmptyState } from '@/components/ui/empty-state';
 import { useInstructorAnalyticsData } from './useInstructorAnalyticsData';
 
-export function SatisfactionDistribution() {
+export function SatisfactionDistribution({ handleViewSatisfactionDistribution }: { handleViewSatisfactionDistribution?: () => void }) {
   const { satisfactionBuckets, reviewCount, isLoading } = useInstructorAnalyticsData();
 
   if (isLoading) {
@@ -33,7 +33,7 @@ export function SatisfactionDistribution() {
         <h3 className="text-xs sm:text-sm font-semibold text-foreground">
           Satisfaction Distribution
         </h3>
-        <button className="text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap shrink-0">
+        <button onClick={handleViewSatisfactionDistribution} className="text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap shrink-0">
           View Report
         </button>
       </div>

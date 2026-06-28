@@ -3,7 +3,7 @@
 import { EmptyState } from '@/components/ui/empty-state';
 import { useInstructorAnalyticsData } from "../useInstructorAnalyticsData";
 
-function DonutChart({ breakdown }: { breakdown: Array<{ value: number; pct: number; color: string }> }) {
+export function DonutChart({ breakdown }: { breakdown: Array<{ value: number; pct: number; color: string }> }) {
   const r = 40;
   const cx = 60;
   const cy = 60;
@@ -64,7 +64,9 @@ function DonutChart({ breakdown }: { breakdown: Array<{ value: number; pct: numb
   );
 }
 
-export function StatusBreakdown() {
+export function StatusBreakdown(
+  { handleViewStatusBreakdown }: { handleViewStatusBreakdown?: () => void }
+) {
   const { statusBreakdown, isLoading } = useInstructorAnalyticsData();
 
   if (isLoading) {
@@ -131,7 +133,7 @@ export function StatusBreakdown() {
           Status Breakdown
         </h3>
 
-        <button className="shrink-0 whitespace-nowrap text-xs text-primary transition-colors hover:opacity-80">
+        <button onClick={handleViewStatusBreakdown} className="shrink-0 whitespace-nowrap text-xs text-primary transition-colors hover:opacity-80">
           View Report
         </button>
       </div>

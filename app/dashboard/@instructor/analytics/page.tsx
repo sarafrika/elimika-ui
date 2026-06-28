@@ -107,10 +107,10 @@ function AnalyticsDashboardBody({
                 <PerformanceChart />
               </div>
               <div className='min-w-[260px] flex-1'>
-                <CompletionByProgram />
+                <CompletionByProgram handeViewProgramReport={() => setActiveTab("Program Report")} />
               </div>
               <div className='w-full lg:min-w-[220px] lg:w-auto xl:min-w-[240px]'>
-                <StatusBreakdown />
+                <StatusBreakdown handleViewStatusBreakdown={() => setActiveTab("Location Report")} />
               </div>
             </div>
 
@@ -118,10 +118,10 @@ function AnalyticsDashboardBody({
 
             <div className='flex flex-wrap gap-4'>
               <div className='min-w-[240px] flex-1'>
-                <TopLocations />
+                <TopLocations handleViewTopLocations={() => setActiveTab("Location Report")} />
               </div>
               <div className='min-w-[240px] flex-1'>
-                <SatisfactionDistribution />
+                <SatisfactionDistribution handleViewSatisfactionDistribution={() => setActiveTab('Participant Report')} />
               </div>
             </div>
 

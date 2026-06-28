@@ -3,7 +3,7 @@
 import { EmptyState } from '@/components/ui/empty-state';
 import { useInstructorAnalyticsData } from './useInstructorAnalyticsData';
 
-export function TopLocations() {
+export function TopLocations({ handleViewTopLocations }: { handleViewTopLocations?: () => void }) {
   const { locations, isLoading } = useInstructorAnalyticsData();
 
   if (isLoading) {
@@ -33,7 +33,7 @@ export function TopLocations() {
         <h3 className="text-xs sm:text-sm font-semibold text-foreground">
           Top Locations by Sessions
         </h3>
-        <button className="text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap shrink-0">
+        <button onClick={handleViewTopLocations} className="text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap shrink-0">
           View Report
         </button>
       </div>
