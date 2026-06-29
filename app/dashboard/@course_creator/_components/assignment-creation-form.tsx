@@ -85,6 +85,24 @@ const EMPTY_ASSIGNMENT = {
   lesson_uuid: '',
 };
 
+export const ASSIGNMENT_CATEGORIES = [
+  { value: 'HOMEWORK', label: 'Homework' },
+  { value: 'PROJECT', label: 'Project' },
+  { value: 'QUIZ', label: 'Quiz' },
+  { value: 'LAB', label: 'Lab' },
+  { value: 'PRACTICAL', label: 'Practical' },
+  { value: 'ESSAY', label: 'Essay' },
+  { value: 'CASE_STUDY', label: 'Case Study' },
+  { value: 'PRESENTATION', label: 'Presentation' },
+  { value: 'DISCUSSION', label: 'Discussion' },
+  { value: 'READING', label: 'Reading Assignment' },
+  { value: 'RESEARCH', label: 'Research Assignment' },
+  { value: 'REFLECTION', label: 'Reflection' },
+  { value: 'PORTFOLIO', label: 'Portfolio' },
+  { value: 'EXAM_PREPARATION', label: 'Exam Preparation' },
+  { value: 'OTHER', label: 'Other' },
+] as const;
+
 type AssignmentFormState = typeof EMPTY_ASSIGNMENT;
 
 const getErrorMessage = (error: unknown, fallback: string) =>
@@ -94,6 +112,10 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 const toSubmissionTypes = (
   value: SubmissionTypesEnum | SubmissionTypesEnum[] | undefined
 ): string[] => (Array.isArray(value) ? value : value ? [value] : []);
+
+
+type AssignmentAction = 'save' | 'publish' | 'unpublish' | null;
+
 
 export const AssignmentCreationForm = ({
   courseId,
@@ -111,6 +133,9 @@ export const AssignmentCreationForm = ({
 }: AssignmentCreationFormProps) => {
   const qc = useQueryClient();
   const creator = useCourseCreator();
+
+  const [assignmentAction, setAssignmentAction] =
+    useState<AssignmentAction>(null);
 
   // ── Rubrics ───────────────────────────────────────────────────────────────
   const { data: searchRubs, isLoading: isLoadingRubrics } = useQuery({
@@ -228,6 +253,8 @@ export const AssignmentCreationForm = ({
     }
 
     try {
+      setAssignmentAction('save');
+
       if (assignmentUuid) {
         await updateAssignmentForLesson(assignmentUuid, assignmentData);
         toast.success('Assignment updated successfully!');
@@ -236,6 +263,7 @@ export const AssignmentCreationForm = ({
           selectedLessonId,
           assignmentData
         );
+
         setSelectedAssignmentUuid(createdAssignmentUuid);
         onSelectAssignment?.(createdAssignmentUuid);
 
@@ -247,7 +275,7 @@ export const AssignmentCreationForm = ({
           toast.success('Assignment created successfully!');
         }
       }
-    } catch (err) {
+    } catch {
       toast.error(
         assignmentUuid
           ? 'Failed to update assignment.'
@@ -255,6 +283,8 @@ export const AssignmentCreationForm = ({
             ? 'Failed to save assignment and upload attachment.'
             : 'Failed to create assignment.'
       );
+    } finally {
+      setAssignmentAction(null);
     }
   };
 
@@ -262,8 +292,11 @@ export const AssignmentCreationForm = ({
     if (!assignmentUuid) return;
 
     try {
+      setAssignmentAction('publish');
+
       await updateAssignmentForLesson(assignmentUuid, {
         ...assignmentData,
+        lesson_uuid: selectedLessonId,
         is_published: true,
       });
 
@@ -272,9 +305,11 @@ export const AssignmentCreationForm = ({
         is_published: true,
       }));
 
-      toast.success("Assignment published successfully!");
-    } catch (err) {
-      toast.error("Failed to publish assignment.");
+      toast.success('Assignment published successfully!');
+    } catch {
+      toast.error('Failed to publish assignment.');
+    } finally {
+      setAssignmentAction(null);
     }
   };
 
@@ -282,19 +317,24 @@ export const AssignmentCreationForm = ({
     if (!assignmentUuid) return;
 
     try {
+      setAssignmentAction('unpublish');
+
       await updateAssignmentForLesson(assignmentUuid, {
         ...assignmentData,
+        lesson_uuid: selectedLessonId,
         is_published: false,
       });
 
       setAssignmentData(prev => ({
         ...prev,
-        is_published: true,
+        is_published: false,
       }));
 
-      toast.success("Assignment published successfully!");
-    } catch (err) {
-      toast.error("Failed to publish assignment.");
+      toast.success('Assignment unpublished successfully!');
+    } catch {
+      toast.error('Failed to unpublish assignment.');
+    } finally {
+      setAssignmentAction(null);
     }
   };
 
@@ -373,6 +413,16 @@ export const AssignmentCreationForm = ({
       }
     );
   };
+
+  const isSaving =
+    assignmentAction === 'save' &&
+    (isPending || uploadAssignmentMut.isPending);
+
+  const isPublishing =
+    assignmentAction === 'publish' && isPending;
+
+  const isUnpublishing =
+    assignmentAction === 'unpublish' && isPending;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -589,16 +639,34 @@ export const AssignmentCreationForm = ({
                     }
                   />
                 </div>
-                <div className='flex flex-col gap-2'>
-                  <Label className='text-foreground text-sm font-medium'>Category (optional)</Label>
-                  <Input
-                    type='text'
-                    placeholder='e.g., Homework, Project'
-                    value={assignmentData.assignment_category}
-                    onChange={e =>
-                      handleAssignmentInputChange('assignment_category', e.target.value)
+                <div className="flex flex-col gap-2">
+                  <Label className="text-foreground text-sm font-medium">
+                    Category (optional)
+                  </Label>
+
+                  <Select
+                    value={assignmentData.assignment_category || "__none__"}
+                    onValueChange={(value) =>
+                      handleAssignmentInputChange(
+                        "assignment_category",
+                        value === "__none__" ? "" : value
+                      )
                     }
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select assignment category" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+
+                      {ASSIGNMENT_CATEGORIES.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -890,13 +958,13 @@ export const AssignmentCreationForm = ({
                     <Button
                       size="sm"
                       variant="outline"
+                      className='min-w-[100px]'
                       onClick={handleUnpublishAssignment}
-                      disabled={isSavingAssignment}
+                      disabled={isPending}
                     >
-                      {isSavingAssignment ? (
+                      {isUnpublishing ? (
                         <>
                           <Spinner className="mr-2 h-4 w-4" />
-                          Unpublishing...
                         </>
                       ) : (
                         "Unpublish"
@@ -905,13 +973,13 @@ export const AssignmentCreationForm = ({
                   ) : (
                     <Button
                       size="sm"
+                      className='min-w-[100px]'
                       onClick={handlePublishAssignment}
-                      disabled={isSavingAssignment}
+                      disabled={isPending}
                     >
-                      {isSavingAssignment ? (
+                      {isPublishing ? (
                         <>
                           <Spinner className="mr-2 h-4 w-4" />
-                          Publishing...
                         </>
                       ) : (
                         "Publish"
@@ -922,9 +990,9 @@ export const AssignmentCreationForm = ({
                 <Button
                   size="sm"
                   onClick={handleSaveAssignment}
-                  disabled={isSavingAssignment}
+                  disabled={isPending || uploadAssignmentMut.isPending}
                 >
-                  {isSavingAssignment ? (
+                  {isSaving ? (
                     <>
                       <Spinner className="mr-2 h-4 w-4" />
                       {isSavingWithAttachment
@@ -939,8 +1007,6 @@ export const AssignmentCreationForm = ({
                     "Save Assignment"
                   )}
                 </Button>
-
-
               </div>
             </div>
           )}

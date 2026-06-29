@@ -106,7 +106,7 @@ import { QuizContentPreview } from '../../../../../../../components/content-prev
 import RichTextRenderer from '../../../../../../../components/editors/richTextRenders';
 import Spinner from '../../../../../../../components/ui/spinner';
 import { toAttachmentResourceItems } from '../../../../../@student/_components/student-assignment-workspace';
-import { RubricGradingMatrix, RubricSummaryPreview, useRubricGradeSelections } from './RubricGradingMatrix';
+import { RubricGradingMatrix, useRubricGradeSelections } from './RubricGradingMatrix';
 
 
 
@@ -2129,7 +2129,7 @@ function SubmissionPanel({
                 </div>
               )}
 
-              {rubricAssociations.length > 0 ? (
+              {/* {rubricAssociations.length > 0 ? (
                 <div className='border-border/70 bg-background/80 rounded-md border p-3'>
                   <p className='text-sm font-semibold'>Course rubric associations</p>
                   <div className='mt-3 space-y-2'>
@@ -2161,7 +2161,7 @@ function SubmissionPanel({
                     })}
                   </div>
                 </div>
-              ) : null}
+              ) : null} */}
             </div>
           ) : null}
 

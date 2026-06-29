@@ -49,6 +49,7 @@ import type {
   QuizAttempt,
   StudentSchedule,
 } from '../../../../services/client/types.gen';
+import { DonutChart } from '../../@instructor/analytics/_components/charts/StatusBreakdown';
 
 type StudentAnalyticsTab = 'Overview' | 'Enrollments' | 'Assessments';
 
@@ -678,14 +679,35 @@ export default function StudentAnalyticsDashboard() {
     };
   }, [scheduleRows]);
 
-  const statusRows = useMemo(
-    () => [
-      { label: 'Upcoming', value: sessionSummary.upcoming, tone: 'secondary' as const },
-      { label: 'Ongoing', value: sessionSummary.ongoing, tone: 'warning' as const },
-      { label: 'Completed', value: sessionSummary.completed, tone: 'success' as const },
-    ],
-    [sessionSummary.completed, sessionSummary.ongoing, sessionSummary.upcoming]
-  );
+  const statusRows = useMemo(() => {
+    const total = sessionSummary.total;
+
+    return [
+      {
+        label: "Upcoming",
+        value: sessionSummary.upcoming,
+        pct: total > 0 ? Math.round((sessionSummary.upcoming / total) * 100) : 0,
+        color: "text-primary",
+      },
+      {
+        label: "Ongoing",
+        value: sessionSummary.ongoing,
+        pct: total > 0 ? Math.round((sessionSummary.ongoing / total) * 100) : 0,
+        color: "text-warning",
+      },
+      {
+        label: "Completed",
+        value: sessionSummary.completed,
+        pct: total > 0 ? Math.round((sessionSummary.completed / total) * 100) : 0,
+        color: "text-success",
+      },
+    ];
+  }, [
+    sessionSummary.total,
+    sessionSummary.upcoming,
+    sessionSummary.ongoing,
+    sessionSummary.completed,
+  ]);
 
   const courseProgressStats = useMemo(() => {
     const total = courseEnrollmentRows.length;
@@ -864,18 +886,40 @@ export default function StudentAnalyticsDashboard() {
 
           <div className='grid gap-4 lg:grid-cols-3'>
             <SectionCard
-              title='Status Breakdown'
-              description='Upcoming, ongoing, and completed sessions in the selected range.'
+              title="Status Breakdown"
+              description="Upcoming, ongoing, and completed sessions in the selected range."
             >
-              <div className='space-y-4'>
-                {statusRows.map(row => (
-                  <ProgressRow
-                    key={row.label}
-                    label={row.label}
-                    value={row.value}
-                    total={sessionSummary.total}
-                  />
-                ))}
+              <div className="space-y-5">
+                <DonutChart breakdown={statusRows} />
+
+                <div className="space-y-2">
+                  {statusRows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className={`h-2.5 w-2.5 rounded-full shrink-0 ${row.color.replace(
+                            "text-",
+                            "bg-"
+                          )}`}
+                        />
+
+                        <span className="truncate text-sm text-muted-foreground">
+                          {row.label}
+                        </span>
+                      </div>
+
+                      <span className="shrink-0 text-sm font-semibold text-foreground">
+                        {metricValue(row.value)}{" "}
+                        <span className="font-normal text-muted-foreground">
+                          ({row.pct}%)
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </SectionCard>
 

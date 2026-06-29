@@ -34,7 +34,9 @@ function ProgramBar({ name, rate }: ProgramBarProps) {
   );
 }
 
-export function CompletionByProgram() {
+export function CompletionByProgram(
+  { handeViewProgramReport }: { handeViewProgramReport?: () => void }
+) {
   const { programCompletion, isLoading } = useInstructorAnalyticsData();
 
   if (isLoading) {
@@ -82,7 +84,7 @@ export function CompletionByProgram() {
         <h3 className="text-xs sm:text-sm font-semibold text-foreground">
           Completion Rate by Program
         </h3>
-        <button className="text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap shrink-0">
+        <button onClick={handeViewProgramReport} className="text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap shrink-0">
           View Full Report
         </button>
       </div>

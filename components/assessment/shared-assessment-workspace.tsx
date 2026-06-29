@@ -1032,10 +1032,12 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
     [assignmentRows]
   );
 
-  const filteredAssessments = useMemo(
-    () => getFilteredAssessments(studentAssessments, activeTab, search, skill, statusFilter, sort),
-    [activeTab, search, skill, sort, statusFilter, studentAssessments]
-  );
+  // const filteredAssessments = useMemo(
+  //   () => getFilteredAssessments(studentAssessments, activeTab, search, skill, statusFilter, sort),
+  //   [activeTab, search, skill, sort, statusFilter, studentAssessments]
+  // );
+  const filteredAssessments = studentAssessments
+
   const filteredCompetencies = useMemo(
     () => getFilteredCompetencies(competencies, search, skill, statusFilter, sort),
     [search, skill, sort, statusFilter]
@@ -1161,7 +1163,7 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
   const classEnrollmentQueries = useQueries({
     queries: classes.map(classItem => ({
       ...getEnrollmentsForClassOptions({ path: { uuid: classItem.uuid as string } }),
-      enabled: role === 'instructor' && Boolean(classItem.uuid),
+      enabled: Boolean(classItem.uuid),
       staleTime: 60 * 1000,
     })),
   });
@@ -1172,7 +1174,7 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
         path: { courseUuid: classItem.course_uuid as string },
         query: { pageable: { page: 0, size: 100 } },
       }),
-      enabled: role === 'instructor' && Boolean(classItem.course_uuid),
+      enabled: Boolean(classItem.course_uuid),
       staleTime: 5 * 60 * 1000,
     })),
   });
@@ -1180,7 +1182,7 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
   const assignmentScheduleQueries = useQueries({
     queries: classes.map(classItem => ({
       ...getAssignmentSchedulesOptions({ path: { classUuid: classItem.uuid as string } }),
-      enabled: role === 'instructor' && Boolean(classItem.uuid),
+      enabled: Boolean(classItem.uuid),
       staleTime: 60 * 1000,
     })),
   });
@@ -1215,7 +1217,7 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
   const assignmentQueries = useQueries({
     queries: uniqueAssignmentUuids.map(uuid => ({
       ...getAssignmentByUuidOptions({ path: { uuid } }),
-      enabled: role === 'instructor' && Boolean(uuid),
+      enabled: Boolean(uuid),
       staleTime: 5 * 60 * 1000,
     })),
   });
@@ -1223,7 +1225,7 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
   const assignmentSubmissionQueries = useQueries({
     queries: uniqueAssignmentUuids.map(uuid => ({
       ...getAssignmentSubmissionsOptions({ path: { assignmentUuid: uuid } }),
-      enabled: role === 'instructor' && Boolean(uuid),
+      enabled: Boolean(uuid),
       staleTime: 60 * 1000,
     })),
   });
