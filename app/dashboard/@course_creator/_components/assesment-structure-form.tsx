@@ -2,11 +2,13 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -272,7 +274,7 @@ function AssessmentSheet({
     const body = {
       title: form.title.trim(),
       description: form.description.trim(),
-      rubric_uuid: '',
+      rubric_uuid: form.rubric_uuid,
       weight_percentage: Number(form.weight_percentage),
       is_required: form.is_required,
       assessment_type: 'course_template',
@@ -402,7 +404,7 @@ function AssessmentSheet({
             </div>
 
             {/* Rubric */}
-            {/* <div className='flex flex-col gap-1.5'>
+            <div className='flex flex-col gap-1.5'>
               <Label className='text-sm font-medium'>Rubric (optional)</Label>
               <p className='text-muted-foreground text-xs'>
                 Associate a grading rubric with this assessment
@@ -487,7 +489,7 @@ function AssessmentSheet({
                   )}
                 </>
               )}
-            </div> */}
+            </div>
 
             {/* Toggles */}
             <div className='bg-muted/40 flex flex-col gap-4 rounded-xl border p-4'>
@@ -742,11 +744,10 @@ export const CourseAssessmentStructure = ({
                           {a.weight_percentage}% (0–{a.weight_percentage})
                         </span>
                         <span
-                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            a.is_required
-                              ? 'bg-success/10 text-success/70'
-                              : 'bg-muted-foreground/10 text-muted-foreground'
-                          }`}
+                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
+                            ? 'bg-success/10 text-success/70'
+                            : 'bg-muted-foreground/10 text-muted-foreground'
+                            }`}
                         >
                           {a.is_required ? 'Required' : 'Not required'}
                         </span>

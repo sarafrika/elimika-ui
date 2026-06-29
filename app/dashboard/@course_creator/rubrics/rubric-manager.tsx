@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import {
   addRubricCriterionMutation,
   addRubricScoringMutation,
@@ -58,6 +59,30 @@ import {
 
 // const DEFAULT_LEVEL_NAMES = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
 const DEFAULT_LEVEL_NAMES = ['Good', 'Fair'];
+
+export const RUBRIC_TYPES = [
+  "Assignment",
+  "Homework",
+  "Quiz",
+  "Test",
+  "Examination",
+  "Project",
+  "Presentation",
+  "Practical",
+  "Laboratory",
+  "Essay",
+  "Report",
+  "Attendance",
+  "Participation",
+  "Behavior",
+  "Group Work",
+  "Portfolio",
+  "Research",
+  "Performance",
+  "Continuous Assessment",
+  "Final Assessment",
+  "General",
+];
 
 type RubricCardLevel = Rubric['scoringLevels'][number] & {
   color_code?: string;
@@ -341,10 +366,10 @@ const RubricManager: React.FC = () => {
         uuid: criterion.uuid || '',
         scoring: Array.isArray(criterion.scoring)
           ? criterion.scoring.map(score => ({
-              ...score,
-              uuid: score.uuid || '',
-              points: score.score_range || '0',
-            }))
+            ...score,
+            uuid: score.uuid || '',
+            points: score.score_range || '0',
+          }))
           : [],
       })),
     };
@@ -916,12 +941,14 @@ const RubricManager: React.FC = () => {
                   rows={2}
                 />
               </div>
+
+
               {(
                 [
                   {
                     key: 'rubric_type',
                     label: 'Rubric Type',
-                    placeholder: 'e.g. Assessment, Grading',
+                    placeholder: 'Select rubric type',
                     required: true,
                   },
                   {
@@ -938,18 +965,37 @@ const RubricManager: React.FC = () => {
                   },
                 ] as const
               ).map(({ key, label, placeholder, required }) => (
-                <div key={key} className='flex flex-col gap-1.5'>
-                  <Label className='text-sm font-medium'>
+                <div key={key} className="flex flex-col gap-1.5">
+                  <Label className="text-sm font-medium">
                     {label}
-                    {required && <span className='text-destructive ml-1'>*</span>}
+                    {required && <span className="ml-1 text-destructive">*</span>}
                   </Label>
-                  <input
-                    className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none'
-                    value={currentRubric[key] as string}
-                    onChange={e => updateRubricField(key, e.target.value)}
-                    placeholder={placeholder}
-                    required={required}
-                  />
+
+                  {key === "rubric_type" ? (
+                    <Select
+                      value={currentRubric.rubric_type}
+                      onValueChange={(value) => updateRubricField("rubric_type", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select rubric type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RUBRIC_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <input
+                      className="border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+                      value={currentRubric[key] as string}
+                      onChange={(e) => updateRubricField(key, e.target.value)}
+                      placeholder={placeholder}
+                      required={required}
+                    />
+                  )}
                 </div>
               ))}
 
@@ -1057,8 +1103,8 @@ const RubricManager: React.FC = () => {
                           const matchingScoring =
                             (scoringLevel.uuid
                               ? c.scoring.find(
-                                  s => s.rubric_scoring_level_uuid === scoringLevel.uuid
-                                )
+                                s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                              )
                               : undefined) ?? c.scoring[slIdx];
 
                           const scoringEntry = matchingScoring || {
@@ -1073,8 +1119,8 @@ const RubricManager: React.FC = () => {
                           // - Otherwise fall back to position index (slIdx)
                           const actualIdx = scoringLevel.uuid
                             ? c.scoring.findIndex(
-                                s => s.rubric_scoring_level_uuid === scoringLevel.uuid
-                              )
+                              s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                            )
                             : slIdx;
 
                           const resolvedIdx = actualIdx !== -1 ? actualIdx : slIdx;
