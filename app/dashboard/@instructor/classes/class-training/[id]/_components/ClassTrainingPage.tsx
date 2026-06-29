@@ -141,7 +141,7 @@ type NoteEntry = {
   sentAt: string;
 };
 
-export const GRACE_PERIOD_MS = 15 * 60 * 1000;
+export const GRACE_PERIOD_MS = 60 * 60 * 1000;
 
 function formatPercentage(value?: number | null) {
   if (typeof value !== 'number' || Number.isNaN(value)) return 'N/A';
@@ -1877,9 +1877,6 @@ function SubmissionPanel({
               {activeInstanceStudentsCount} students · {selectedContentType}
             </p>
           </div>
-          <Button variant='ghost' size='sm' className='h-8 shrink-0 text-xs'>
-            View Rubric
-          </Button>
         </div>
         <div className='bg-muted grid grid-cols-3 gap-1 rounded-md p-1 dark:bg-muted/60'>
           {panelTabs.map(tab => {

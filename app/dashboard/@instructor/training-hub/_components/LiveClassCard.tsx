@@ -29,6 +29,7 @@ import {
   BookOpen,
   CalendarDays,
   Check,
+  CheckCircle2,
   CircleCheck,
   EllipsisVertical,
   Eye,
@@ -225,6 +226,8 @@ export function LiveClassCard({
   const progress = liveClass?.class?.class_progress_percentage;
   const sessionsRemaining =
     Number(liveClass?.sessions) - Number(liveClass?.class?.completed_session_count);
+
+  const completed = sessionsRemaining === 0
 
   const formattedDate = liveClass?.class?.default_start_time
     ? new Date(liveClass.class.default_start_time).toLocaleDateString('en-KE', {
@@ -448,45 +451,83 @@ export function LiveClassCard({
             </div>
           </div>
 
-          {/* BOTTOM SECTION */}
-          <div className='border-t border-border/60 bg-muted/20 px-4 py-4'>
-            <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
-              {/* PROGRESS */}
-              <div className='min-w-0 flex-1'>
-                <div className='mb-2 flex items-center justify-between gap-3'>
-                  <p className='text-sm font-medium text-foreground'>
-                    Overall Progress
-                  </p>
 
-                  <p className='text-sm font-semibold text-primary'>
-                    {sessionsRemaining} Sessions Remaining
+
+
+          {/* BOTTOM SECTION */}
+          {completed ? <div className="flex flex-col gap-4 bg-success/5 p-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success">
+                <CheckCircle2 className="h-7 w-7" />
+              </div>
+
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <h3 className="font-semibold text-foreground">
+                    Training Completed
+                  </h3>
+
+                  <span className="rounded-full bg-success/15 px-2.5 py-1 text-xs font-medium text-success">
+                    Completed
+                  </span>
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  You've successfully delivered all scheduled sessions for this class.
+                </p>
+              </div>
+            </div>
+
+            {/* <Link
+              href="/dashboard/classes"
+              className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Explore More Classes
+            </Link> */}
+          </div> :
+            <div className='border-t border-border/60 bg-muted/20 px-4 py-4'>
+              <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
+                {/* PROGRESS */}
+                <div className='min-w-0 flex-1'>
+                  <div className='mb-2 flex items-center justify-between gap-3'>
+                    <p className='text-sm font-medium text-foreground'>
+                      Overall Progress
+                    </p>
+
+                    <p className='text-sm font-semibold text-primary'>
+                      {sessionsRemaining} Sessions Remaining
+                    </p>
+                  </div>
+
+                  <Progress
+                    value={progress}
+                    className='bg-muted h-2'
+                    indicatorClassName='bg-primary'
+                  />
+
+                  <p className='text-muted-foreground mt-2 text-sm'>
+                    {progress}% completed
                   </p>
                 </div>
 
-                <Progress
-                  value={progress}
-                  className='bg-muted h-2'
-                  indicatorClassName='bg-primary'
-                />
-
-                <p className='text-muted-foreground mt-2 text-sm'>
-                  {progress}% completed
-                </p>
+                {/* ACTIONS */}
+                <div className='flex items-center gap-2'>
+                  <Link
+                    href={(() => {
+                      return `/dashboard/classes/class-training/${liveClass.classUuid}`;
+                    })()}
+                    className='inline-flex h-9 min-w-[120px] items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90'
+                  >
+                    Start Class
+                  </Link>
+                </div>
               </div>
 
-              {/* ACTIONS */}
-              <div className='flex items-center gap-2'>
-                <Link
-                  href={(() => {
-                    return `/dashboard/classes/class-training/${liveClass.classUuid}`;
-                  })()}
-                  className='inline-flex h-9 min-w-[120px] items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90'
-                >
-                  Start Class
-                </Link>
-              </div>
             </div>
-          </div>
+          }
+
+
+
         </div>
       </CardContent>
 
