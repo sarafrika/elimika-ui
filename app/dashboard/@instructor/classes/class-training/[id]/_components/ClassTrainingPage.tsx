@@ -429,14 +429,18 @@ function AssessmentTasksSection({
   activeScheduleQuizzes,
   selectedAssignmentUuid,
   selectedQuizUuid,
+  assignmentVisibleAt,
   assignmentDueAt,
   assignmentGradingDueAt,
+  quizVisibleAt,
   quizDueAt,
   quizGradingDueAt,
   onAssignmentSelect,
   onQuizSelect,
   onAssignmentDueAtChange,
   onAssignmentGradingDueAtChange,
+  onQuizVisibleAtChange,
+  onAssignmentVisibleAtChange,
   onQuizDueAtChange,
   onQuizGradingDueAtChange,
   onAssignAssignment,
@@ -451,14 +455,18 @@ function AssessmentTasksSection({
   activeScheduleQuizzes: QuizScheduleItem[];
   selectedAssignmentUuid: string;
   selectedQuizUuid: string;
+  assignmentVisibleAt: string;
   assignmentDueAt: string;
   assignmentGradingDueAt: string;
+  quizVisibleAt: string
   quizDueAt: string;
   quizGradingDueAt: string;
   onAssignmentSelect: (value: string) => void;
   onQuizSelect: (value: string) => void;
+  onAssignmentVisibleAtChange: (value: string) => void;
   onAssignmentDueAtChange: (value: string) => void;
   onAssignmentGradingDueAtChange: (value: string) => void;
+  onQuizVisibleAtChange: (value: string) => void;
   onQuizDueAtChange: (value: string) => void;
   onQuizGradingDueAtChange: (value: string) => void;
   onAssignAssignment: () => void;
@@ -582,147 +590,215 @@ function AssessmentTasksSection({
                 <div className='space-y-2'>
                   <Label className='text-xs'>Select assignment</Label>
 
-                  <div className='space-y-2 overflow-y-auto pr-1'>
+                  <div className="space-y-2 overflow-y-auto pr-1">
                     {lessonAssignments.map(assignment => {
                       const isSelected = selectedAssignmentUuid === assignment.uuid
                       const isDraft = !assignment.is_published
 
-
-
                       return (
                         <div
                           key={assignment.uuid}
-                          onClick={() => {
-                            if (isDraft) return
-
-                            onAssignmentSelect(assignment.uuid ?? '')
-                          }}
-                          className={`rounded-lg border p-3 transition-all ${isDraft
-                            ? 'cursor-not-allowed opacity-60'
+                          className={`rounded-lg border transition-all ${isDraft
+                            ? "opacity-60"
                             : isSelected
-                              ? 'border-primary bg-primary/5 cursor-pointer'
-                              : 'border-border hover:bg-muted/40 cursor-pointer'
+                              ? "border-primary bg-primary/5"
+                              : "border-border"
                             }`}
                         >
-                          <div className='flex items-start justify-between gap-3'>
-                            <div className='min-w-0 flex-1'>
-                              {/* Title */}
-                              <div className='flex items-center gap-2'>
-                                <p className='truncate text-sm font-medium'>
-                                  {assignment.title}
-                                </p>
-
-                                {assignment.is_published ? (
-                                  <Badge
-                                    variant='secondary'
-                                    className='text-[10px]'
-                                  >
-                                    Published
-                                  </Badge>
-                                ) : (
-                                  <Badge
-                                    className='bg-destructive/20 text-destructive/800 hover:bg-destructive/10 text-[10px] border border-destructive/20'
-                                  >
-                                    Draft
-                                  </Badge>
-                                )}
-                              </div>
-
-                              {/* Description */}
-                              {assignment.description && (
-                                <div className='text-muted-foreground mt-1 text-xs'>
-                                  <RichTextRenderer htmlString={assignment.description} maxChars={500} />
-                                </div>
-                              )}
-
-                              {/* Instructions */}
-                              {assignment.instructions && (
-                                <div className='text-muted-foreground mt-2 text-[11px] italic'>
-                                  <RichTextRenderer htmlString={assignment.instructions} />
-                                </div>
-                              )}
-
-                              {/* Meta info */}
-                              <div className='text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-[11px]'>
-                                {/* Max points */}
-                                {assignment.max_points && (
-                                  <Badge
-                                    variant='outline'
-                                    className='font-normal'
-                                  >
-                                    🎯 {assignment.points_display ??
-                                      `${assignment.max_points} points`}
-                                  </Badge>
-                                )}
-
-                                {/* Submission types */}
-                                {assignment.submission_types?.length > 0 && (
-                                  <Badge
-                                    variant='outline'
-                                    className='font-normal'
-                                  >
-                                    📤 {assignment.submission_summary ??
-                                      `${assignment.submission_types.length} submission types`}
-                                  </Badge>
-                                )}
-
-                                {/* Assignment category */}
-                                {assignment.assignment_category && (
-                                  <Badge
-                                    variant='outline'
-                                    className='font-normal'
-                                  >
-                                    📝 {assignment.assignment_category}
-                                  </Badge>
-                                )}
-                              </div>
-
-                              {/* Individual submission types */}
-                              {assignment.submission_types?.length > 0 && (
-                                <div className='mt-2 flex flex-wrap items-center gap-1'>
-                                  <p className='text-muted-foreground line-clamp-2 text-xs'>
-                                    Accepted Submissions:
+                          <div
+                            onClick={() => {
+                              if (isDraft) return
+                              onAssignmentSelect(assignment.uuid ?? "")
+                            }}
+                            className={`p-3 ${isDraft
+                              ? "cursor-not-allowed"
+                              : "hover:bg-muted/40 cursor-pointer"
+                              }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="truncate text-sm font-medium">
+                                    {assignment.title}
                                   </p>
-                                  {assignment.submission_types.map(type => (
+
+                                  {assignment.is_published ? (
                                     <Badge
-                                      key={type}
-                                      variant='secondary'
-                                      className='text-[10px]'
+                                      variant="secondary"
+                                      className="text-[10px]"
                                     >
-                                      {type}
+                                      Published
                                     </Badge>
-                                  ))}
+                                  ) : (
+                                    <Badge className="border border-destructive/20 bg-destructive/20 text-[10px] text-destructive">
+                                      Draft
+                                    </Badge>
+                                  )}
                                 </div>
-                              )}
-                            </div>
 
-                            <div className='flex items-center gap-2'>
-                              <Button
-                                size='sm'
-                                variant='outline'
-                                onClick={e => {
-                                  e.stopPropagation();
+                                {assignment.description && (
+                                  <div className="text-muted-foreground mt-1 text-xs">
+                                    <RichTextRenderer
+                                      htmlString={assignment.description}
+                                      maxChars={500}
+                                    />
+                                  </div>
+                                )}
 
-                                  setPreviewAssignment(assignment);
-                                  setIsAssignmentPreviewOpen(true);
-                                }}
-                              >
-                                View
-                              </Button>
+                                {assignment.instructions && (
+                                  <div className="text-muted-foreground mt-2 text-[11px] italic">
+                                    <RichTextRenderer
+                                      htmlString={assignment.instructions}
+                                    />
+                                  </div>
+                                )}
 
-                              {isSelected && (
-                                <Badge className='text-[10px]'>
-                                  Selected
-                                </Badge>
-                              )}
+                                <div className="text-muted-foreground mt-3 flex flex-wrap gap-2 text-[11px]">
+                                  {assignment.max_points && (
+                                    <Badge variant="outline">
+                                      🎯{" "}
+                                      {assignment.points_display ??
+                                        `${assignment.max_points} points`}
+                                    </Badge>
+                                  )}
+
+                                  {assignment.submission_types?.length > 0 && (
+                                    <Badge variant="outline">
+                                      📤{" "}
+                                      {assignment.submission_summary ??
+                                        `${assignment.submission_types.length} submission types`}
+                                    </Badge>
+                                  )}
+
+                                  {assignment.assignment_category && (
+                                    <Badge variant="outline">
+                                      📝 {assignment.assignment_category}
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                {assignment.submission_types?.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-1">
+                                    <p className="text-muted-foreground text-xs">
+                                      Accepted Submissions:
+                                    </p>
+
+                                    {assignment.submission_types.map(type => (
+                                      <Badge
+                                        key={type}
+                                        variant="secondary"
+                                        className="text-[10px]"
+                                      >
+                                        {type}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    setPreviewAssignment(assignment)
+                                    setIsAssignmentPreviewOpen(true)
+                                  }}
+                                >
+                                  View
+                                </Button>
+
+                                {isSelected && (
+                                  <Badge className="text-[10px]">
+                                    Selected
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
+
+                          {isSelected && (
+                            <div className="border-t bg-muted/30 p-4">
+                              <p className="text-muted-foreground mb-3 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide">
+                                <CalendarClock className="size-3" />
+                                Deadlines
+                              </p>
+
+                              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs">
+                                    Task visible date
+                                  </Label>
+
+                                  <Input
+                                    type="datetime-local"
+                                    value={assignmentVisibleAt}
+                                    onChange={e =>
+                                      onAssignmentVisibleAtChange(e.target.value)
+                                    }
+                                  />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs">
+                                    Student due date
+                                  </Label>
+
+                                  <Input
+                                    type="datetime-local"
+                                    value={assignmentDueAt}
+                                    onChange={e =>
+                                      onAssignmentDueAtChange(e.target.value)
+                                    }
+                                  />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs">
+                                    Grading due date
+                                  </Label>
+
+                                  <Input
+                                    type="datetime-local"
+                                    value={assignmentGradingDueAt}
+                                    onChange={e =>
+                                      onAssignmentGradingDueAtChange(
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </div>
+
+                              {isDraft && (
+                                <div className="mt-4 rounded-md border border-destructive/20 bg-destructive/10 p-2 text-xs text-destructive">
+                                  This assignment is still in draft mode and cannot be assigned.
+                                </div>
+                              )}
+
+                              <Button
+                                className="mt-4 w-full"
+                                onClick={onAssignAssignment}
+                                disabled={
+                                  !selectedAssignmentUuid ||
+                                  !activeSchedule ||
+                                  isAssigningAssignment ||
+                                  isDraft
+                                }
+                              >
+                                <SquarePen className="mr-2 size-4" />
+
+                                {isAssigningAssignment
+                                  ? "Assigning…"
+                                  : "Assign Assignment"}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )
                     })}
                   </div>
-
-
 
                   {lessonAssignments.length === 0 && (
                     <div className='text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm'>
@@ -731,60 +807,11 @@ function AssessmentTasksSection({
                   )}
                 </div>
 
-                {/* Deadlines */}
-                <div className='bg-muted/40 rounded-md p-3'>
-                  <p className='text-muted-foreground mb-2.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide'>
-                    <CalendarClock className='size-3' />
-                    Deadlines
-                  </p>
-
-                  <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2'>
-                    <div className='space-y-1.5'>
-                      <Label className='text-xs'>Student due date</Label>
-
-                      <Input
-                        type='datetime-local'
-                        value={assignmentDueAt}
-                        onChange={e => onAssignmentDueAtChange(e.target.value)}
-                        className='h-9'
-                      />
-                    </div>
-
-                    <div className='space-y-1.5'>
-                      <Label className='text-xs'>Grading due date</Label>
-
-                      <Input
-                        type='datetime-local'
-                        value={assignmentGradingDueAt}
-                        onChange={e => onAssignmentGradingDueAtChange(e.target.value)}
-                        className='h-9'
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 {isSelectedAssignmentDraft && (
                   <div className='rounded-md border border-destructive/20 bg-destructive/10 p-2 text-xs text-destructive'>
                     This assignment is still in draft mode and cannot be assigned to students until it is published.
                   </div>
                 )}
-
-                <Button
-                  onClick={onAssignAssignment}
-                  disabled={
-                    !selectedAssignmentUuid ||
-                    !activeSchedule ||
-                    isAssigningAssignment ||
-                    isSelectedAssignmentDraft
-                  }
-                  className='w-full'
-                >
-                  <SquarePen className='mr-2 size-4' />
-
-                  {isAssigningAssignment
-                    ? 'Assigning…'
-                    : 'Assign Assignment'}
-                </Button>
               </div>
             </div>
           )}
@@ -810,169 +837,182 @@ function AssessmentTasksSection({
                 <div className='space-y-2'>
                   <Label className='text-xs'>Select quiz</Label>
 
-                  <div className='space-y-2 overflow-y-auto pr-1'>
+                  <div className="space-y-2 overflow-y-auto pr-1">
                     {lessonQuizzes.map(quiz => {
                       const isSelected = selectedQuizUuid === quiz.uuid
 
                       return (
                         <div
                           key={quiz.uuid}
-                          onClick={() => onQuizSelect(quiz.uuid ?? '')}
-                          className={`cursor-pointer rounded-lg border p-3 transition-all ${isSelected
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:bg-muted/40'
+                          className={`rounded-lg border transition-all ${isSelected
+                            ? "border-primary bg-primary/5"
+                            : "border-border"
                             }`}
                         >
-                          <div className='flex items-start justify-between gap-3'>
-                            <div className='min-w-0 flex-1'>
-                              {/* Title */}
-                              <div className='flex items-center gap-2'>
-                                <p className='truncate text-sm font-medium'>
-                                  {quiz.title}
-                                </p>
+                          <div
+                            onClick={() => onQuizSelect(quiz.uuid ?? "")}
+                            className="hover:bg-muted/40 cursor-pointer p-3"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="truncate text-sm font-medium">
+                                    {quiz.title}
+                                  </p>
 
-                                {quiz.is_published && (
-                                  <Badge
-                                    variant='secondary'
-                                    className='text-[10px]'
-                                  >
-                                    Published
+                                  {quiz.is_published && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-[10px]"
+                                    >
+                                      Published
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                {quiz.description && (
+                                  <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">
+                                    {quiz.description}
+                                  </p>
+                                )}
+
+                                {quiz.instructions && (
+                                  <p className="text-muted-foreground mt-2 line-clamp-2 text-[11px] italic">
+                                    {quiz.instructions}
+                                  </p>
+                                )}
+
+                                <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+                                  {quiz.is_timed && quiz.time_limit_minutes && (
+                                    <Badge variant="outline">
+                                      ⏱{" "}
+                                      {quiz.time_limit_display ??
+                                        `${quiz.time_limit_minutes} mins`}
+                                    </Badge>
+                                  )}
+
+                                  {quiz.passing_score && (
+                                    <Badge variant="outline">
+                                      🎯 Pass: {quiz.passing_score}%
+                                    </Badge>
+                                  )}
+
+                                  {quiz.attempts_allowed && (
+                                    <Badge variant="outline">
+                                      🔁 {quiz.attempts_allowed}{" "}
+                                      {quiz.attempts_allowed === 1
+                                        ? "Attempt"
+                                        : "Attempts"}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={e => {
+                                    e.stopPropagation()
+
+                                    setPreviewQuiz(quiz)
+                                    setIsQuizPreviewOpen(true)
+                                  }}
+                                >
+                                  View Quiz
+                                </Button>
+
+                                {isSelected && (
+                                  <Badge className="text-[10px]">
+                                    Selected
                                   </Badge>
                                 )}
                               </div>
-
-                              {/* Description */}
-                              {quiz.description && (
-                                <p className='text-muted-foreground mt-1 line-clamp-2 text-xs'>
-                                  {quiz.description}
-                                </p>
-                              )}
-
-                              {/* Instructions */}
-                              {quiz.instructions && (
-                                <p className='text-muted-foreground mt-2 line-clamp-2 text-[11px] italic'>
-                                  {quiz.instructions}
-                                </p>
-                              )}
-
-                              {/* Meta info */}
-                              <div className='text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-[11px]'>
-                                {/* Time limit */}
-                                {quiz.is_timed && quiz.time_limit_minutes && (
-                                  <Badge
-                                    variant='outline'
-                                    className='font-normal'
-                                  >
-                                    ⏱ {quiz.time_limit_display ??
-                                      `${quiz.time_limit_minutes} mins`}
-                                  </Badge>
-                                )}
-
-                                {/* Passing score */}
-                                {quiz.passing_score && (
-                                  <Badge
-                                    variant='outline'
-                                    className='font-normal'
-                                  >
-                                    🎯 Pass: {quiz.passing_score}%
-                                  </Badge>
-                                )}
-
-                                {/* Attempts */}
-                                {quiz.attempts_allowed && (
-                                  <Badge
-                                    variant='outline'
-                                    className='font-normal'
-                                  >
-                                    🔁 {quiz.attempts_allowed}{' '}
-                                    {quiz.attempts_allowed === 1
-                                      ? 'Attempt'
-                                      : 'Attempts'}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className='flex items-center gap-2'>
-                              <Button
-                                size='sm'
-                                variant='outline'
-                                onClick={e => {
-                                  e.stopPropagation();
-
-                                  setPreviewQuiz(quiz);
-                                  setIsQuizPreviewOpen(true);
-                                }}
-                              >
-                                View Quiz
-                              </Button>
-
-                              {isSelected && (
-                                <Badge className='text-[10px]'>
-                                  Selected
-                                </Badge>
-                              )}
                             </div>
                           </div>
+
+                          {isSelected && (
+                            <div className="border-t bg-muted/30 p-4">
+                              <p className="text-muted-foreground mb-3 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide">
+                                <CalendarClock className="size-3" />
+                                Deadlines
+                              </p>
+
+                              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs">
+                                    Task visible date
+                                  </Label>
+
+                                  <Input
+                                    type="datetime-local"
+                                    value={quizVisibleAt}
+                                    onChange={e =>
+                                      onQuizVisibleAtChange(e.target.value)
+                                    }
+                                    className="h-9"
+                                  />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs">
+                                    Student due date
+                                  </Label>
+
+                                  <Input
+                                    type="datetime-local"
+                                    value={quizDueAt}
+                                    onChange={e =>
+                                      onQuizDueAtChange(e.target.value)
+                                    }
+                                    className="h-9"
+                                  />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs">
+                                    Grading due date
+                                  </Label>
+
+                                  <Input
+                                    type="datetime-local"
+                                    value={quizGradingDueAt}
+                                    onChange={e =>
+                                      onQuizGradingDueAtChange(e.target.value)
+                                    }
+                                    className="h-9"
+                                  />
+                                </div>
+                              </div>
+
+                              <Button
+                                className="mt-4 w-full"
+                                onClick={onAssignQuiz}
+                                disabled={
+                                  !selectedQuizUuid ||
+                                  !activeSchedule ||
+                                  isAssigningQuiz
+                                }
+                              >
+                                <ClipboardList className="mr-2 size-4" />
+
+                                {isAssigningQuiz
+                                  ? "Assigning…"
+                                  : "Assign Quiz"}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )
                     })}
 
                     {lessonQuizzes.length === 0 && (
-                      <div className='text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm'>
+                      <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
                         No quizzes available yet.
                       </div>
                     )}
                   </div>
                 </div>
-
-                {/* Deadlines */}
-                <div className='bg-muted/40 rounded-md p-3'>
-                  <p className='text-muted-foreground mb-2.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide'>
-                    <CalendarClock className='size-3' />
-                    Deadlines
-                  </p>
-
-                  <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2'>
-                    <div className='space-y-1.5'>
-                      <Label className='text-xs'>Student due date</Label>
-
-                      <Input
-                        type='datetime-local'
-                        value={quizDueAt}
-                        onChange={e => onQuizDueAtChange(e.target.value)}
-                        className='h-9'
-                      />
-                    </div>
-
-                    <div className='space-y-1.5'>
-                      <Label className='text-xs'>Grading due date</Label>
-
-                      <Input
-                        type='datetime-local'
-                        value={quizGradingDueAt}
-                        onChange={e => onQuizGradingDueAtChange(e.target.value)}
-                        className='h-9'
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={onAssignQuiz}
-                  disabled={
-                    !selectedQuizUuid ||
-                    !activeSchedule ||
-                    isAssigningQuiz
-                  }
-                  className='w-full'
-                >
-                  <ClipboardList className='mr-2 size-4' />
-
-                  {isAssigningQuiz
-                    ? 'Assigning…'
-                    : 'Assign Quiz'}
-                </Button>
               </div>
             </div>
           )}
@@ -2346,8 +2386,10 @@ export default function ClassTrainingPage({
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState('');
   const [selectedQuizUuid, setSelectedQuizUuid] = useState('');
+  const [assignmentVisibleAt, setAssignmentVisibleAt] = useState('');
   const [assignmentDueAt, setAssignmentDueAt] = useState('');
   const [assignmentGradingDueAt, setAssignmentGradingDueAt] = useState('');
+  const [quizVisibleAt, setQuizVisibleAt] = useState('');
   const [quizDueAt, setQuizDueAt] = useState('');
   const [quizGradingDueAt, setQuizGradingDueAt] = useState('');
   const [noteDraft, setNoteDraft] = useState('');
@@ -3623,6 +3665,10 @@ export default function ClassTrainingPage({
                             onAssignQuiz={handleAssignQuiz}
                             isAssigningAssignment={addAssignmentScheduleMut.isPending}
                             isAssigningQuiz={addQuizScheduleMut.isPending}
+                            assignmentVisibleAt={assignmentVisibleAt}
+                            quizVisibleAt={quizVisibleAt}
+                            onAssignmentVisibleAtChange={setAssignmentVisibleAt}
+                            onQuizVisibleAtChange={setQuizVisibleAt}
                           />
                         </div>
                       </article>
@@ -3911,6 +3957,10 @@ export default function ClassTrainingPage({
                         onAssignQuiz={handleAssignQuiz}
                         isAssigningAssignment={addAssignmentScheduleMut.isPending}
                         isAssigningQuiz={addQuizScheduleMut.isPending}
+                        assignmentVisibleAt={assignmentVisibleAt}
+                        quizVisibleAt={quizVisibleAt}
+                        onAssignmentVisibleAtChange={setAssignmentVisibleAt}
+                        onQuizVisibleAtChange={setQuizVisibleAt}
                       />
                     </div>
                   </article>

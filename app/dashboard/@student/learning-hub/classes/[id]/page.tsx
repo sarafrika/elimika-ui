@@ -1836,6 +1836,10 @@ export default function StudentClassTrainingPage({
                                             onAssignQuiz={handleAssignQuiz}
                                             isAssigningAssignment={addAssignmentScheduleMut.isPending}
                                             isAssigningQuiz={addQuizScheduleMut.isPending}
+                                        // assignmentVisibleAt={''}
+                                        // quizVisibleAt={''}
+                                        // onAssignmentVisibleAtChange={() => { }}
+                                        // onQuizVisibleAtChange={() => { }}
                                         />
                                     </div>
                                 </article>
