@@ -9,6 +9,7 @@ import { useQueries } from '@tanstack/react-query';
 import {
   ArrowRight,
   Award,
+  BookOpen,
   BookOpenCheck,
   CheckCircle2,
   ChevronDown,
@@ -18,11 +19,12 @@ import {
   Plus,
   Search,
   Star,
-  Trophy,
+  Trophy
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useUserProfile } from '../../../../../../context/profile-context';
+import { cn } from '../../../../../../lib/utils';
 import { CoursesCatalogCard } from './CoursesCatalogCard';
 import {
   formatDurationFromParts,
@@ -210,7 +212,7 @@ export function StudentMyCoursesPage() {
     const map = new Map<string, string>();
     creatorQueries.forEach((query, index) => {
       const uuid = creatorIds[index];
-      const name = query.data?.full_name;
+      const name = query.data?.data?.full_name;
       if (uuid && name) map.set(uuid, name);
     });
     return map;
@@ -233,12 +235,23 @@ export function StudentMyCoursesPage() {
       if (cards.has(course.uuid)) return;
 
       const scheduleCount = item.schedules?.length ?? item?.classEnrollments.length;
+      const enrolledClasses = item.classEnrollments.filter((s) => s.student_uuid === student?.uuid)
 
       // Derive status from enrollment data
       const enrollmentStatus = activeEnrollment?.status ?? '';
-      const isCompleted =
-        (enrollmentStatus == 'COMPLETED') || (enrollmentStatus == 'GRADUATED');
-      const status: CourseStatus = isCompleted ? 'completed' : 'in_progress';
+
+      const rawProgress = item?.classDetails?.class_progress_percentage ?? 0;
+
+      const progress = Math.min(
+        100,
+        Math.max(0, Math.round(rawProgress))
+      );
+
+      const isCompleted = progress === 100;
+
+      const status: CourseStatus = isCompleted
+        ? "completed"
+        : "in_progress";
 
       cards.set(course.uuid, {
         id: course.uuid,
@@ -257,6 +270,7 @@ export function StudentMyCoursesPage() {
         ctaKind: 'link',
         showInstructorCta: false,
         detailsHref: buildWorkspaceAliasPath('student', `/dashboard/courses/${course.uuid}`),
+        certificateHref: buildWorkspaceAliasPath('student', `/dashboard/credentials`),
         // enrollHref: buildWorkspaceAliasPath('student', `/dashboard/learning-hub/classes/${classId}`),
         enrollHref: buildWorkspaceAliasPath('student', `/dashboard/learning-hub/classes`),
         instructorHref: buildWorkspaceAliasPath(
@@ -268,8 +282,8 @@ export function StudentMyCoursesPage() {
         imageUrl: course.banner_url ?? course.thumbnail_url,
         sortTitle: course.name,
         status,
-        enrolledClasses: item.classEnrollments,
-        enrollmentCount: item?.classEnrollments?.length,
+        enrolledClasses,
+        enrollmentCount: enrolledClasses?.length,
 
         // temporary defaults
         rating: 0,
@@ -457,7 +471,7 @@ export function StudentMyCoursesPage() {
                           c => !searchQuery || c.title.toLowerCase().includes(searchQuery.toLowerCase())
                         )
                         .map(({ sortTitle: _sortTitle, status: _status, ...card }) => (
-                          <CoursesCatalogCard key={card.id} card={card} />
+                          <CoursesCatalogCard type='class' key={card.id} card={card} />
                         ))}
                     </div>
                   </section>
@@ -482,7 +496,7 @@ export function StudentMyCoursesPage() {
                           c => !searchQuery || c.title.toLowerCase().includes(searchQuery.toLowerCase())
                         )
                         .map(({ sortTitle: _sortTitle, status: _status, ...card }) => (
-                          <CoursesCatalogCard key={card.id} card={card} />
+                          <CoursesCatalogCard type='class' key={card.id} card={card} />
                         ))}
                     </div>
                   </section>
@@ -533,55 +547,89 @@ export function StudentMyCoursesPage() {
           </div>
 
           {/* Learning Milestones */}
-          <div className='border-border bg-card rounded-2xl border p-4 shadow-sm'>
-            <h3 className='text-foreground mb-3 text-sm font-semibold'>
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <h3 className="mb-3 text-sm font-semibold text-foreground">
               Learning Milestones
             </h3>
 
-            {learningMilestonesData.length > 0 ? (
+            {learningMilestonesData?.length > 0 ? (
               <>
-                <div className='space-y-4'>
-                  <div className='space-y-2'>
-                    <MilestoneItem
-                      icon='award'
-                      title='Illustrator & Photoshop Skills'
-                      subtitle='✅ Certificate Earned · Frustrstor Level 1 · Photoshop Level 1'
-                    />
-                  </div>
+                <div className="space-y-3">
+                  {learningMilestonesData.map((item) => {
+                    const attendedClasses = item.enrolledClasses?.filter(
+                      (c) => c.did_attend
+                    ).length;
 
-                  <div className='space-y-2'>
-                    <MilestoneItem
-                      icon='trophy'
-                      title='Public Speaking Basics'
-                      rating={4}
-                      subtitle='Edit 4 2068'
-                    />
-                  </div>
+                    const totalClasses = item.enrolledClasses?.length ?? 0;
 
-                  <div className='space-y-2'>
-                    <MilestoneItem
-                      icon='trophy'
-                      title='Graphic Design Basics'
-                      rating={4}
-                      subtitle='Completed on Feb 10 2024'
-                    />
-                  </div>
+                    const progress =
+                      totalClasses > 0
+                        ? Math.round((attendedClasses / totalClasses) * 100)
+                        : 0;
+
+                    const isCompleted = item.status === "completed";
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-start gap-3 rounded-xl bg-muted/20 py-3"
+                      >
+                        <div
+                          className={cn(
+                            "mt-0.5 flex h-8 w-8 items-center justify-center rounded-full",
+                            isCompleted
+                              ? "bg-success/15 text-success"
+                              : "bg-primary/10 text-primary"
+                          )}
+                        >
+                          {isCompleted ? (
+                            <CheckCircle2 className="size-4" />
+                          ) : (
+                            <BookOpen className="size-4" />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          {/* COURSE TITLE */}
+                          <p className="truncate text-sm font-semibold text-foreground">
+                            {item.title}
+                          </p>
+
+                          {/* CLASS + META */}
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                            {item.secondaryMeta}
+                          </p>
+
+                          {/* EXTRA CONTEXT */}
+                          {/* <div className="mt-1 flex flex-col gap-1 text-[11px] text-muted-foreground">
+                            <span className="truncate">
+                              Course: {item.title}
+                            </span>
+
+                            <span className="truncate">
+                              Progress: {progress}% · {attendedClasses}/{totalClasses} classes attended
+                            </span>
+                          </div> */}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <Button
                   asChild
-                  size='sm'
-                  className='mt-4 w-full rounded-xl bg-primary/60 text-xs font-semibold text-white shadow-none hover:bg-primary/70'
+                  size="sm"
+                  className="mt-4 w-full rounded-xl bg-primary/60 text-xs font-semibold text-white shadow-none hover:bg-primary/70"
                 >
-                  <Link href='/dashboard/workspace/student/report'>
+                  <Link href="/dashboard/workspace/student/report">
                     View Report
-                    <ArrowRight className='size-3.5' />
+                    <ArrowRight className="size-3.5" />
                   </Link>
                 </Button>
               </>
             ) : (
-              <div className='flex min-h-[160px] items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 text-center'>
-                <p className='text-muted-foreground text-xs'>
+              <div className="flex min-h-[160px] items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 text-center">
+                <p className="text-xs text-muted-foreground">
                   No learning milestones yet
                 </p>
               </div>

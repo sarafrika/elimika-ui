@@ -264,10 +264,12 @@ export default function StudentAssignmentSubmissionPage() {
                     {selectedStatus && (
                         <Badge variant={selectedStatus.variant}>{selectedStatus.label}</Badge>
                     )}
-                    <Badge className={dueSummary.badgeClassName} variant='outline'>
+
+                    {!selectedAssignment?.latestSubmission && <Badge className={dueSummary.badgeClassName} variant='outline'>
                         <CalendarDays className='mr-1 h-3.5 w-3.5' />
                         {dueSummary.label}
-                    </Badge>
+                    </Badge>}
+
                 </div>
 
                 <h1 className='text-foreground text-2xl font-semibold'>

@@ -96,8 +96,6 @@ type LearningHubData = {
   loading: boolean;
 };
 
-const COURSE_PROGRESS_FALLBACK = [72, 61, 54, 45];
-
 const MOCK_RECOMMENDED_COURSES: LearningHubRecommendedCourse[] = [
   // { id: 'seo', title: 'SEO Essentials', level: 'Beginner', duration: '6 h' },
   // { id: 'excel', title: 'Advanced Excel Analysis', level: 'Intermediate', duration: '5 h' },
@@ -389,37 +387,59 @@ export function useStudentLearningHubData(): LearningHubData {
     return map;
   }, [certificates]);
 
+
   const continueLearning = useMemo<LearningHubClass[]>(() => {
     return classDefinitions.map((item, index) => {
-      const course = item.course;
-      const classDetails = item.classDetails;
-      const fallbackProgress =
-        COURSE_PROGRESS_FALLBACK[index % COURSE_PROGRESS_FALLBACK.length] ?? 0;
-      const progress = course?.uuid
-        ? (certificateMap.get(course.uuid) ?? fallbackProgress)
-        : fallbackProgress;
+      const course = item?.course;
+      const classDetails = item?.classDetails;
+
+      const rawProgress =
+        course?.uuid
+          ? item?.classDetails?.class_progress_percentage
+          : 0;
+
+      const progress = Math.min(
+        100,
+        Math.max(0, Math.round(rawProgress ?? 0))
+      );
+
       const scheduleCount = item.schedules?.length ?? 0;
+
+      const statusLabel =
+        progress === 0
+          ? `Not started ${progress}%`
+          : progress === 100
+            ? `Completed ${progress}%`
+            : `In progress ${progress}%`;
+
+      const isCompleted = progress === 100;
 
       return {
         id: item.uuid,
-        title: classDetails?.title ?? course?.name ?? 'Untitled class',
-        courseName: course?.name ?? 'Standalone class',
-        statusLabel: getClassStatusLabel(
-          classDetails?.academic_period_start_date ?? classDetails?.default_start_time,
-          classDetails?.academic_period_end_date ?? classDetails?.default_end_time
-        ),
+        title: classDetails?.title ?? "",
+        courseName: course?.name ?? "",
+
+        statusLabel,
+
         scheduleLabel:
-          scheduleCount === 1 ? '1 scheduled session' : `${scheduleCount} scheduled sessions`,
+          scheduleCount === 1
+            ? "1 scheduled session"
+            : `${scheduleCount} scheduled sessions`,
+
         progress,
-        ctaLabel:
-          progress === 100
-            ? "Class completed"
-            : progress > 0
-              ? "Resume class"
-              : "Start class",
+        isCompleted,
+
+        ctaLabel: isCompleted
+          ? "Class completed"
+          : progress > 0
+            ? "Resume class"
+            : "Start class",
+
         href: `/dashboard/learning-hub/classes/${classDetails?.uuid}`,
         bannerUrl: course?.banner_url,
-        accent: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
+
+        accent:
+          index % 3 === 0 ? "blue" : index % 3 === 1 ? "slate" : "green",
       };
     });
   }, [certificateMap, classDefinitions]);

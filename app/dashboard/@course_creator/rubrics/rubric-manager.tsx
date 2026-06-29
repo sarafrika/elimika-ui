@@ -84,6 +84,40 @@ export const RUBRIC_TYPES = [
   "General",
 ];
 
+export const RUBRIC_CATEGORIES = [
+  "Class",
+  "Lesson",
+  "Module",
+  "Unit",
+  "Course",
+  "Assignment",
+  "Homework",
+  "Quiz",
+  "Test",
+  "Examination",
+  "Project",
+  "Presentation",
+  "Practical",
+  "Laboratory",
+  "Workshop",
+  "Seminar",
+  "Field Work",
+  "Research",
+  "Case Study",
+  "Essay",
+  "Report",
+  "Portfolio",
+  "Performance",
+  "Internship",
+  "Capstone",
+  "Participation",
+  "Behavior",
+  "Attendance",
+  "Continuous Assessment",
+  "Final Assessment",
+  "General",
+];
+
 type RubricCardLevel = Rubric['scoringLevels'][number] & {
   color_code?: string;
   name?: string;
@@ -942,25 +976,24 @@ const RubricManager: React.FC = () => {
                 />
               </div>
 
-
               {(
                 [
                   {
-                    key: 'rubric_type',
-                    label: 'Rubric Type',
-                    placeholder: 'Select rubric type',
+                    key: "rubric_type",
+                    label: "Rubric Type",
+                    placeholder: "Select rubric type",
                     required: true,
                   },
                   {
-                    key: 'rubric_category',
-                    label: 'Rubric Category',
-                    placeholder: 'e.g. Skills, Knowledge',
+                    key: "rubric_category",
+                    label: "Rubric Category",
+                    placeholder: "Select rubric category",
                     required: false,
                   },
                   {
-                    key: 'assessment_scope',
-                    label: 'Assessment Scope',
-                    placeholder: 'e.g. Course, Module',
+                    key: "assessment_scope",
+                    label: "Assessment Scope",
+                    placeholder: "e.g. Course, Module",
                     required: false,
                   },
                 ] as const
@@ -977,12 +1010,28 @@ const RubricManager: React.FC = () => {
                       onValueChange={(value) => updateRubricField("rubric_type", value)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select rubric type" />
+                        <SelectValue placeholder={placeholder} />
                       </SelectTrigger>
                       <SelectContent>
                         {RUBRIC_TYPES.map((type) => (
                           <SelectItem key={type} value={type}>
                             {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : key === "rubric_category" ? (
+                    <Select
+                      value={currentRubric.rubric_category}
+                      onValueChange={(value) => updateRubricField("rubric_category", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={placeholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RUBRIC_CATEGORIES.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
                           </SelectItem>
                         ))}
                       </SelectContent>

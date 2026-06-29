@@ -1,11 +1,5 @@
 'use client';
 
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, type LucideIcon, SlidersHorizontal, SquareDashedMousePointer } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,6 +40,12 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Category, CourseReview } from '@/services/client/types.gen';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowRight, type LucideIcon, SlidersHorizontal, SquareDashedMousePointer } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { useOrganisation } from '../../../../../../context/organisation-context';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { useCourseEnrollmentsMap } from '../../../../../../hooks/use-enrollment-map';
@@ -148,11 +148,11 @@ const createCatalogCards = (
           ? 'Create Class Job'
           : applicationStatus === 'approved'
             ? 'Approved'
-        : applicationStatus === 'pending'
-          ? 'Pending'
-          : applicationStatus === 'revoked'
-            ? 'Reapply to Train'
-            : 'Apply to Train';
+            : applicationStatus === 'pending'
+              ? 'Pending'
+              : applicationStatus === 'revoked'
+                ? 'Reapply to Train'
+                : 'Apply to Train';
 
     return {
       id: item.id,
@@ -171,7 +171,7 @@ const createCatalogCards = (
       ctaDisabled: isInstructorApplyCard
         ? isOrganisationDomain
           ? !canOrganisationApply ||
-            Boolean(applicationStatus && applicationStatus !== 'revoked' && applicationStatus !== 'approved')
+          Boolean(applicationStatus && applicationStatus !== 'revoked' && applicationStatus !== 'approved')
           : Boolean(applicationStatus && applicationStatus !== 'revoked')
         : false,
       ctaKind: isInstructorApplyCard
@@ -809,7 +809,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const creatorMap = useMemo(() => {
     const map = new Map<string, string>();
 
-    creatorQuery.data?.content?.filter(isCourseCreatorLookup).forEach(creator => {
+    creatorQuery.data?.data?.content?.filter(isCourseCreatorLookup).forEach(creator => {
       if (creator.uuid) {
         map.set(creator.uuid, creator.full_name || 'Course Creator');
       }
@@ -817,6 +817,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
     return map;
   }, [creatorQuery.data]);
+
 
   const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
   const applyToTrainProgramMut = useMutation(submitProgramTrainingApplicationMutation());
@@ -1122,6 +1123,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                     <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">
                       {catalogCards.map(card => (
                         <CoursesCatalogCard
+                          type='general'
                           key={card.id}
                           card={card}
                           onPrimaryAction={handleCatalogCardAction}
