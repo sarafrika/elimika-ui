@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { BookOpen, Calendar, Search } from 'lucide-react';
+import { Award, BookOpen, Calendar, Search } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '../../../../../../components/ui/avatar';
@@ -16,6 +16,7 @@ const imageToneClasses = {
 
 type CoursesCatalogCardProps = {
   card: CoursesCatalogCardData;
+  type: string;
   onPrimaryAction?: (card: CoursesCatalogCardData) => void;
 };
 
@@ -36,7 +37,7 @@ const levelStyles: Record<string, string> = {
   advanced: "bg-primary/5 text-primary border-primary/20 border",
 };
 
-export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCardProps) {
+export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatalogCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
   const level = card.secondaryMeta.toLowerCase();
 
@@ -131,7 +132,7 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
         </div>
 
         <div className="flex flex-col gap-x-4 gap-y-2 text-xs sm:text-[0.8rem]">
-          <span>{card.enrollmentCount} students</span>
+          <span>{card.enrollmentCount} {type === "general" ? "students" : "classes"}</span>
           <span
             className={cn(
               "max-w-fit inline-flex items-center gap-1.5 rounded px-2 py-1 font-medium",
@@ -143,33 +144,60 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
           </span>
         </div>
 
-        <div className={cn('grid gap-2', card.showInstructorCta !== false && 'sm:grid-cols-2')}>
-          {card.showInstructorCta !== false ? (
-            <Button asChild variant='outline' className='h-9 rounded-sm text-sm shadow-none'>
+        <div
+          className={cn(
+            "grid gap-2",
+            card.showInstructorCta !== false && "sm:grid-cols-2"
+          )}
+        >
+          {/* Instructor CTA */}
+          {card.showInstructorCta !== false && (
+            <Button
+              asChild
+              variant="outline"
+              className="h-9 rounded-sm text-sm shadow-none"
+            >
               <Link href={card.instructorHref}>
-                <Search className='size-4' />
+                <Search className="size-4" />
                 Search Instructor
               </Link>
             </Button>
-          ) : null}
+          )}
 
-          {card.ctaKind === 'apply-course' || card.ctaKind === 'apply-program' ? (
+          {/* Primary CTA */}
+          {card.ctaKind === "apply-course" ||
+            card.ctaKind === "apply-program" ? (
             <Button
-              type='button'
+              type="button"
               className={cn(
-                'h-9 rounded-sm text-sm shadow-none',
-                ctaToneClasses[card.ctaTone ?? 'default']
+                "h-9 rounded-sm text-sm shadow-none",
+                ctaToneClasses[card.ctaTone ?? "default"]
               )}
               disabled={card.ctaDisabled}
               onClick={() => onPrimaryAction?.(card)}
             >
-              <BookOpen className='size-4' />
+              <BookOpen className="size-4" />
               {card.ctaLabel}
             </Button>
+          ) : card.ctaLabel === "View Certificate" ? (
+            <Button
+              asChild
+              className="h-9 rounded-sm text-sm shadow-none"
+              disabled={card.ctaDisabled}
+            >
+              <Link href={card.certificateHref}>
+                <Award className="size-4" />
+                {card.ctaLabel}
+              </Link>
+            </Button>
           ) : (
-            <Button asChild className='h-9 rounded-sm text-sm shadow-none' disabled={card.ctaDisabled}>
+            <Button
+              asChild
+              className="h-9 rounded-sm text-sm shadow-none"
+              disabled={card.ctaDisabled}
+            >
               <Link href={card.enrollHref}>
-                <Calendar className='size-4' />
+                <Calendar className="size-4" />
                 {card.ctaLabel}
               </Link>
             </Button>

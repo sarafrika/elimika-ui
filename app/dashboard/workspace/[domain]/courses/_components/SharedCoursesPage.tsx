@@ -1123,6 +1123,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                     <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">
                       {catalogCards.map(card => (
                         <CoursesCatalogCard
+                          type='general'
                           key={card.id}
                           card={card}
                           onPrimaryAction={handleCatalogCardAction}
