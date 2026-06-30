@@ -1,9 +1,5 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { FileText } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
 import { extractList, extractPage } from '@/lib/api-helpers';
@@ -40,6 +36,11 @@ import type {
   InstructorExperience,
   InstructorProfessionalMembership,
 } from '@/services/client/types.gen';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { FileText } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { useOrganisation } from '../../../context/organisation-context';
 import type { CredentialsRole, CredentialsStatusFilter, CredentialsTabId } from '../data';
 import { buildCredentialsContent } from '../live-data';
@@ -140,9 +141,9 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const instructorMembershipsOptions =
     role === 'instructor' && profileUuid
       ? getInstructorMembershipsOptions({
-          path: { instructorUuid: profileUuid },
-          query: { pageable: PAGEABLE },
-        })
+        path: { instructorUuid: profileUuid },
+        query: { pageable: PAGEABLE },
+      })
       : null;
   const instructorMembershipsQuery = useOptionalGeneratedQuery(instructorMembershipsOptions, [
     'credentials',
@@ -152,9 +153,9 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const instructorExperienceOptions =
     role === 'instructor' && profileUuid
       ? getInstructorExperienceOptions({
-          path: { instructorUuid: profileUuid },
-          query: { pageable: PAGEABLE },
-        })
+        path: { instructorUuid: profileUuid },
+        query: { pageable: PAGEABLE },
+      })
       : null;
   const instructorExperienceQuery = useOptionalGeneratedQuery(instructorExperienceOptions, [
     'credentials',
@@ -165,9 +166,9 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const courseCreatorEducationOptions =
     role === 'course_creator' && profileUuid
       ? getCourseCreatorEducationOptions({
-          path: { courseCreatorUuid: profileUuid },
-          query: { pageable: PAGEABLE },
-        })
+        path: { courseCreatorUuid: profileUuid },
+        query: { pageable: PAGEABLE },
+      })
       : null;
   const courseCreatorEducationQuery = useOptionalGeneratedQuery(courseCreatorEducationOptions, [
     'credentials',
@@ -177,9 +178,9 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const courseCreatorMembershipsOptions =
     role === 'course_creator' && profileUuid
       ? getCourseCreatorMembershipsOptions({
-          path: { courseCreatorUuid: profileUuid },
-          query: { pageable: PAGEABLE },
-        })
+        path: { courseCreatorUuid: profileUuid },
+        query: { pageable: PAGEABLE },
+      })
       : null;
   const courseCreatorMembershipsQuery = useOptionalGeneratedQuery(courseCreatorMembershipsOptions, [
     'credentials',
@@ -189,9 +190,9 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const courseCreatorExperienceOptions =
     role === 'course_creator' && profileUuid
       ? getCourseCreatorExperienceOptions({
-          path: { courseCreatorUuid: profileUuid },
-          query: { pageable: PAGEABLE },
-        })
+        path: { courseCreatorUuid: profileUuid },
+        query: { pageable: PAGEABLE },
+      })
       : null;
   const courseCreatorExperienceQuery = useOptionalGeneratedQuery(courseCreatorExperienceOptions, [
     'credentials',
@@ -365,6 +366,8 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   return (
     <main className='min-h-screen bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,var(--el-accent-azure)_4%),color-mix(in_srgb,var(--background)_94%,white_6%))] px-3 py-4 sm:px-5 lg:px-7'>
       <div className='mx-auto flex w-full max-w-[1520px] flex-col gap-4'>
+        <Link href={`/dashboard/credentials/certificate`}>View sample certificate</Link>
+
         <CredentialsHeader
           title={content.pageTitle}
           description={content.pageDescription}
@@ -506,7 +509,7 @@ function EmptyVaultState({ role }: { role?: CredentialsRole }) {
               ? 'Certificates you acquired on Elimika platform will appear here once they are verified.'
               : isOrganisation
                 ? 'Validation documents and approvals linked to this organisation will appear here when available.'
-              : 'Uploaded documents will appear here once they are added and verified.'}
+                : 'Uploaded documents will appear here once they are added and verified.'}
           </p>
         </div>
       </div>

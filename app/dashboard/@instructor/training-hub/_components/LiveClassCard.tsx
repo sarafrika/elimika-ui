@@ -478,12 +478,12 @@ export function LiveClassCard({
               </div>
             </div>
 
-            {/* <Link
-              href="/dashboard/classes"
-              className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            <Link
+              href={`/dashboard/classes/class-training/${liveClass.classUuid}`}
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
             >
-              Explore More Classes
-            </Link> */}
+              View Class
+            </Link>
           </div> :
             <div className='border-t border-border/60 bg-muted/20 px-4 py-4'>
               <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
@@ -525,9 +525,6 @@ export function LiveClassCard({
 
             </div>
           }
-
-
-
         </div>
       </CardContent>
 

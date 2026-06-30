@@ -1,13 +1,13 @@
 'use client';
 
-import { localDate } from '@/lib/date';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
-import type { InstructorCalendarEntry } from '@/services/client/types.gen';
+import { localDate } from '@/lib/date';
 import {
   getInstructorCalendarOptions,
   getInstructorScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { InstructorCalendarEntry } from '@/services/client/types.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import AvailabilityManager from './components/availability-manager';

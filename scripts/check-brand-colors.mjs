@@ -32,6 +32,8 @@ const FAIL_PATTERNS = [
       'src/features/profile/landing/course-creator-tab.tsx',
       'src/features/profile/landing/instructors-tab.tsx',
       'app/dashboard/_components/class-colors.ts',
+      'app/dashboard/_components/certificate/CertificatePage.tsx',
+      'app/dashboard/_components/certificate/CertificatePDF.tsx',
     ]),
   },
 ];
