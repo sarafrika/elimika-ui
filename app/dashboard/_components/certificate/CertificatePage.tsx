@@ -4,22 +4,7 @@ import { PDFViewer } from "@react-pdf/renderer";
 import { CertificateData, CertificateDocument } from "./CertificatePDF";
 
 
-
-export default function CertificatePage() {
-    const certData: CertificateData = {
-        studentName: "John Doe",
-        courseName: "React Fundamentals",
-        institutionName: "SkillBridge Academy",
-        certificateType: "certificate-of-completion",
-        completionDate: "January 1st 2027",
-        certificateId: "SBA-2027-000123",
-        signatoryName: "Joy Adebayo",
-        signatoryTitle: "Program Director",
-        watermarkSrc: "/assets/watermark.png",
-        logoSrc: "/assets/logo.png",
-        accentColor: "#0061ed",
-    };
-
+export default function CertificatePage({ certData }: { certData: CertificateData }) {
     return (
         <div className="p-6 space-y-6">
             {/* Preview */}

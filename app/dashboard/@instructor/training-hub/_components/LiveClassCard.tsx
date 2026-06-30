@@ -518,7 +518,7 @@ export function LiveClassCard({
                     })()}
                     className='inline-flex h-9 min-w-[120px] items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90'
                   >
-                    Start Class
+                    Open Class
                   </Link>
                 </div>
               </div>

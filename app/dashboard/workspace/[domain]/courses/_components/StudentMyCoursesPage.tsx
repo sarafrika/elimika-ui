@@ -270,7 +270,10 @@ export function StudentMyCoursesPage() {
         ctaKind: 'link',
         showInstructorCta: false,
         detailsHref: buildWorkspaceAliasPath('student', `/dashboard/courses/${course.uuid}`),
-        certificateHref: buildWorkspaceAliasPath('student', `/dashboard/credentials`),
+        certificateHref: buildWorkspaceAliasPath(
+          'student',
+          `/dashboard/credentials/certificate?csid=${student?.uuid}&ccid=${course?.uuid}&clid=${classDetails?.uuid}`
+        ),
         // enrollHref: buildWorkspaceAliasPath('student', `/dashboard/learning-hub/classes/${classId}`),
         enrollHref: buildWorkspaceAliasPath('student', `/dashboard/learning-hub/classes`),
         instructorHref: buildWorkspaceAliasPath(

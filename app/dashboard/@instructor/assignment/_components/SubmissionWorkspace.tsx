@@ -50,6 +50,8 @@ export function SubmissionWorkspace({
   const quiz_maxScore = quizAttempt?.max_score ?? 0
   const maxScore = assignment_maxScore || quiz_maxScore
 
+  const studentGradedScore = submission?.score
+
   const rubricScore = useMemo(() => {
     if (!rubricMatrix) return null;
 
@@ -177,7 +179,7 @@ export function SubmissionWorkspace({
 
           <div className='flex flex-wrap items-center gap-3'>
             <Badge variant="outline" className="h-10 rounded-lg px-4 text-sm">
-              Score {scaledRubricScore?.toFixed(1) ?? resolvedScore} / {maxScore}
+              Score {studentGradedScore} / {maxScore}
             </Badge>
             <Button variant='outline' onClick={onCloseDetails} className='h-10 rounded-lg'>
               <X className='mr-2 h-4 w-4' />
@@ -396,7 +398,7 @@ export function SubmissionWorkspace({
 
               <div className='flex flex-row items-center gap-4 justify-end'>
                 {taskType === 'assignment' ? (
-                  <Button className='h-11 rounded-lg disabled:bg-red-500' onClick={onGradeSubmission} disabled={isSavingGrade}>
+                  <Button className='h-11 rounded-lg disabled:bg-destructive/40' onClick={onGradeSubmission} disabled={isSavingGrade || studentGradedScore !== null}>
                     {isSavingGrade ? 'Saving...' : 'Save Grade'}
                   </Button>
                 ) : null}

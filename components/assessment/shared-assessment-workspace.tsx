@@ -53,7 +53,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { RichTextPreview } from '../../app/dashboard/@instructor/classes/class-training/[id]/_components/ClassTrainingPage';
 
 export type AssessmentWorkspaceRole = 'student' | 'instructor';
 type AssessmentTab = 'active' | 'completed' | 'competencies';
@@ -63,6 +62,8 @@ type AssessmentStatusFilter = 'all' | AssessmentStatus;
 
 type AssessmentListItem = {
   assignmentUuid?: string;
+  courseUuid?: string;
+  classUuid?: string;
   category: string;
   comments?: string;
   dueAt: number | null;
@@ -623,9 +624,19 @@ function AssessmentCard({
       : assessment.score === null
         ? 'Awaiting Grade'
         : 'View Grade';
-  const detailHref = assessment.assignmentUuid
-    ? `/dashboard/assignment/assignment_${assessment.assignmentUuid}`
+
+  const viewSubmissionHref = assessment.assignmentUuid
+    ? `/dashboard/assignment/assignment_${assessment.assignmentUuid}?course_uuid=${assessment.courseUuid}&classId=${assessment.classUuid}`
     : undefined;
+
+  const viewGradeDetailsHref = assessment.assignmentUuid
+    ? `/dashboard/assignment/${assessment.assignmentUuid}`
+    : undefined;
+
+  const actionHref =
+    role === 'instructor'
+      ? viewSubmissionHref
+      : viewGradeDetailsHref;
 
   return (
     <article className="border-border/70 bg-card w-full min-w-0 overflow-hidden rounded-md border shadow-xs">
@@ -649,9 +660,9 @@ function AssessmentCard({
         <div className="flex min-w-0 items-start gap-2">
           <Star className="text-warning fill-warning mt-0.5 size-4 shrink-0" />
 
-          <div className="text-muted-foreground min-w-0 text-sm">
+          {/* <div className="text-muted-foreground min-w-0 text-sm">
             <RichTextPreview html={assessment.summary} />
-          </div>
+          </div> */}
         </div>
 
         <div className="grid gap-3 md:grid-cols-[120px_minmax(0,1fr)_auto] md:items-center">
@@ -671,13 +682,14 @@ function AssessmentCard({
             </span>
           </div>
 
-          {detailHref && role === 'instructor' ? (
+          {actionHref ? (
             <Button
               asChild
               className="h-9 w-full rounded-md px-5 sm:w-auto"
+              disabled={role === 'student' && assessment.score === null}
               type="button"
             >
-              <Link href={detailHref}>
+              <Link href={actionHref}>
                 {primaryAction}
                 <ArrowUpRight className="size-4" />
               </Link>
@@ -685,7 +697,7 @@ function AssessmentCard({
           ) : (
             <Button
               className="h-9 w-full rounded-md px-5 sm:w-auto"
-              disabled={role === 'student' && assessment.score === null}
+              disabled
               type="button"
             >
               {primaryAction}
@@ -983,6 +995,7 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
   const [statusFilter, setStatusFilter] = useState<AssessmentStatusFilter>('all');
   const { assignmentRows, isLoading } = useStudentAssignmentData();
 
+  // UPDATE DATA POINTS
   const studentAssessments = useMemo<AssessmentListItem[]>(
     () =>
       assignmentRows.map(row => {
@@ -995,6 +1008,9 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
 
         return {
           category: row.assignment.assignment_category || 'Assignment',
+          assignmentUuid: row.assignment?.uuid,
+          classUuid: row.classMeta?.classUuid,
+          courseUuid: row.classMeta?.courseUuid,
           dueAt: dueTime,
           dueLabel: dueAt ? `Due ${formatDate(dueAt)}` : 'Self paced',
           fileName:
@@ -1032,11 +1048,10 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
     [assignmentRows]
   );
 
-  // const filteredAssessments = useMemo(
-  //   () => getFilteredAssessments(studentAssessments, activeTab, search, skill, statusFilter, sort),
-  //   [activeTab, search, skill, sort, statusFilter, studentAssessments]
-  // );
-  const filteredAssessments = studentAssessments
+  const filteredAssessments = useMemo(
+    () => getFilteredAssessments(studentAssessments, activeTab, search, skill, statusFilter, sort),
+    [activeTab, search, skill, sort, statusFilter, studentAssessments]
+  );
 
   const filteredCompetencies = useMemo(
     () => getFilteredCompetencies(competencies, search, skill, statusFilter, sort),
@@ -1158,7 +1173,19 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
   const [skill, setSkill] = useState('all');
   const [sort, setSort] = useState<AssessmentSort>('newest');
   const [statusFilter, setStatusFilter] = useState<AssessmentStatusFilter>('all');
-  const { classes, loading: classesLoading } = useInstructorClassesWithDetails(instructor?.uuid);
+  const { classes: rawClasses, loading: classesLoading } = useInstructorClassesWithDetails(
+    instructor?.uuid
+  );
+
+  const classes = useMemo(() => {
+    const seen = new Set<string>();
+    return rawClasses.filter(classItem => {
+      const uuid = classItem.uuid;
+      if (!uuid || seen.has(uuid)) return false;
+      seen.add(uuid);
+      return true;
+    });
+  }, [rawClasses]);
 
   const classEnrollmentQueries = useQueries({
     queries: classes.map(classItem => ({
@@ -1168,13 +1195,21 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
     })),
   });
 
+  const uniqueCourseUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(classes.map(c => c.course_uuid).filter((id): id is string => Boolean(id)))
+      ),
+    [classes]
+  );
+
   const lessonQueries = useQueries({
-    queries: classes.map(classItem => ({
+    queries: uniqueCourseUuids.map(courseUuid => ({
       ...getCourseLessonsOptions({
-        path: { courseUuid: classItem.course_uuid as string },
+        path: { courseUuid },
         query: { pageable: { page: 0, size: 100 } },
       }),
-      enabled: Boolean(classItem.course_uuid),
+      enabled: Boolean(courseUuid),
       staleTime: 5 * 60 * 1000,
     })),
   });
@@ -1249,13 +1284,17 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
 
   const lessonMap = useMemo(() => {
     const map = new Map<string, { courseTitle: string; lessonTitle: string }>();
+    const courseTitleByUuid = new Map<string, string>();
+    classes.forEach(c => {
+      if (c.course_uuid) courseTitleByUuid.set(c.course_uuid, c.course?.name || 'Course');
+    });
 
-    classes.forEach((classItem, index) => {
+    uniqueCourseUuids.forEach((courseUuid, index) => {
       const lessons = lessonQueries[index]?.data?.data?.content ?? [];
       lessons.forEach(lesson => {
         if (lesson.uuid) {
           map.set(lesson.uuid, {
-            courseTitle: classItem.course?.name || 'Course',
+            courseTitle: courseTitleByUuid.get(courseUuid) || 'Course',
             lessonTitle: lesson.title || 'Lesson',
           });
         }
@@ -1263,7 +1302,7 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
     });
 
     return map;
-  }, [classes, lessonQueries]);
+  }, [classes, lessonQueries, uniqueCourseUuids]);
 
   const enrollmentCountMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -1336,10 +1375,9 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
     assignmentQueries.some(query => query.isLoading || query.isFetching) ||
     assignmentSubmissionQueries.some(query => query.isLoading || query.isFetching);
 
-  if (role === 'student') {
+  if (role) {
     return <StudentAssessmentList role={role} />;
   }
-
 
   return (
     <main className='bg-muted/30 min-h-screen overflow-hidden'>
