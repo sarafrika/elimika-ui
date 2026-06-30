@@ -963,15 +963,7 @@ export function StudentAssignmentWorkspace() {
                     )}
                   </section>
 
-                  {/* Footer meta */}
-                  <section className='border-t pt-4'>
-                    <h3 className='mb-2 text-sm font-medium'>Submission requirements</h3>
-                    <p className='text-muted-foreground text-sm'>
-                      {selectedSubmissionTypes.length > 0
-                        ? selectedSubmissionTypes.join(', ')
-                        : 'Text or instructor-defined format'}
-                    </p>
-                  </section>
+
                 </div>
 
                 <Card className='border-border/60 space-y-0'>

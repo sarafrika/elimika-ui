@@ -1,3 +1,4 @@
+import type { UserDomain } from '@/lib/types';
 import {
   Award,
   BadgeCheck,
@@ -35,7 +36,6 @@ import {
   Wallet,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
-import type { UserDomain } from '@/lib/types';
 
 export type MenuItem = {
   title: string;
@@ -157,14 +157,14 @@ export default {
       icon: BookOpen,
     },
     {
-      title: 'Assessment',
-      url: '/dashboard/assessment',
-      icon: BarChart3,
-    },
-    {
       title: 'Assignment',
       url: '/dashboard/assignment',
       icon: FileText,
+    },
+    {
+      title: 'Assessment',
+      url: '/dashboard/assessment',
+      icon: BarChart3,
     },
     {
       title: 'Schedule',

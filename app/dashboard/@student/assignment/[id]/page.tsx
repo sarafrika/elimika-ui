@@ -435,6 +435,16 @@ export default function StudentAssignmentSubmissionPage() {
                         {/* If returned — show the resubmit form below the latest submission */}
                         {canResubmit && (
                             <div className='border-border/60 border-t pt-4'>
+                                {/* Submission requirements */}
+                                <section className='border-t pt-4'>
+                                    <h3 className='mb-2 text-sm font-medium'>Submission requirements</h3>
+                                    <p className='text-muted-foreground text-sm'>
+                                        {selectedSubmissionTypes.length > 0
+                                            ? selectedSubmissionTypes.join(', ')
+                                            : 'Text or instructor-defined format'}
+                                    </p>
+                                </section>
+
                                 <SubmissionForm
                                     submissionText={submissionText}
                                     setSubmissionText={setSubmissionText}
@@ -458,6 +468,17 @@ export default function StudentAssignmentSubmissionPage() {
                     <CardHeader className='pb-3'>
                         <CardTitle className='text-base'>Submit your work</CardTitle>
                     </CardHeader>
+
+                    {/* Submission requirements */}
+                    <section className='border-t pt-4'>
+                        <h3 className='mb-2 text-sm font-medium'>Submission requirements</h3>
+                        <p className='text-muted-foreground text-sm'>
+                            {selectedSubmissionTypes.length > 0
+                                ? selectedSubmissionTypes.join(', ')
+                                : 'Text or instructor-defined format'}
+                        </p>
+                    </section>
+
                     <CardContent>
                         <SubmissionForm
                             submissionText={submissionText}
