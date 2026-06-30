@@ -520,7 +520,7 @@ function AssessmentTasksSection({
             }`}
         >
           <ListChecks className='size-3.5' />
-          Assigned
+          Assigned Tasks
           {totalAssigned > 0 && (
             <span className='bg-primary text-primary-foreground flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold'>
               {totalAssigned}
@@ -536,7 +536,7 @@ function AssessmentTasksSection({
             }`}
         >
           <Plus className='size-3.5' />
-          Add Task
+          Issue a new task
         </button>
       </div>
 
@@ -790,8 +790,8 @@ function AssessmentTasksSection({
                                 <SquarePen className="mr-2 size-4" />
 
                                 {isAssigningAssignment
-                                  ? "Assigning…"
-                                  : "Assign Assignment"}
+                                  ? "Issuing…"
+                                  : "Issue Assignment"}
                               </Button>
                             </div>
                           )}
@@ -997,8 +997,8 @@ function AssessmentTasksSection({
                                 <ClipboardList className="mr-2 size-4" />
 
                                 {isAssigningQuiz
-                                  ? "Assigning…"
-                                  : "Assign Quiz"}
+                                  ? "Issuing…"
+                                  : "Issue Quiz"}
                               </Button>
                             </div>
                           )}
@@ -1025,9 +1025,9 @@ function AssessmentTasksSection({
           {totalAssigned === 0 ? (
             <div className='border-border/60 rounded-lg border border-dashed px-4 py-8 text-center'>
               <ListChecks className='text-muted-foreground/40 mx-auto mb-2 size-8' />
-              <p className='text-muted-foreground text-sm'>No tasks assigned yet.</p>
+              <p className='text-muted-foreground text-sm'>No tasks issued yet.</p>
               <p className='text-muted-foreground mt-1 text-xs'>
-                Switch to "Add Task" to attach assignments or quizzes.
+                Switch to "Issue a new task" to issue out assignments or quizzes to students for this course.
               </p>
             </div>
           ) : (

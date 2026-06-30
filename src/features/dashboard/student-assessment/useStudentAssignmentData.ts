@@ -40,6 +40,7 @@ export type StudentAssignmentClassMeta = {
   classUuid: string;
   classTitle: string;
   courseTitle: string;
+  courseUuid: string;
   studentUuid?: string
   enrollmentUuid?: string;
   courseEnrollmentUuid?: string
@@ -58,6 +59,7 @@ type StudentAssignmentClassItem = {
   classTitle: string;
   classUuid: string;
   courseTitle: string;
+  courseUuid: string;
   studentUuid?: string;
   enrollmentUuid?: string;
   courseEnrollmentUuid?: string
@@ -238,6 +240,7 @@ export function useStudentAssignmentData() {
                 classDefinition.course?.name as string ||
                 classDetails?.course_name as string,
               studentUuid,
+              courseUuid: classDefinition?.course?.uuid,
               enrollmentUuid,
               courseEnrollmentUuid
             };
