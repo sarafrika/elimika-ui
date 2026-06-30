@@ -48,8 +48,7 @@ import {
   Plus,
   Search,
   Settings2,
-  Star,
-  UploadCloud,
+  UploadCloud
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -657,13 +656,13 @@ function AssessmentCard({
       </div>
 
       <div className="border-border/60 space-y-4 border-b p-4">
-        <div className="flex min-w-0 items-start gap-2">
+        {/* <div className="flex min-w-0 items-start gap-2">
           <Star className="text-warning fill-warning mt-0.5 size-4 shrink-0" />
 
-          {/* <div className="text-muted-foreground min-w-0 text-sm">
+          <div className="text-muted-foreground min-w-0 text-sm">
             <RichTextPreview html={assessment.summary} />
-          </div> */}
-        </div>
+          </div>
+        </div> */}
 
         <div className="grid gap-3 md:grid-cols-[120px_minmax(0,1fr)_auto] md:items-center">
           <Badge className="bg-primary/15 text-primary inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium">
