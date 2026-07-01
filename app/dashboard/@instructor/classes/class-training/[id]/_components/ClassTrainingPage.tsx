@@ -2991,6 +2991,7 @@ export default function ClassTrainingPage({
           queryClient.invalidateQueries({
             queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: classId } }),
           });
+
         },
         onError: error => {
           toast.error(getApiToastMessage(error, 'Failed to attach assignment.'));
@@ -3061,7 +3062,6 @@ export default function ClassTrainingPage({
   };
 
   const [remainingTime, setRemainingTime] = useState('');
-
   useEffect(() => {
     if (!activeSchedule?.started_at) {
       setRemainingTime('');
@@ -3071,8 +3071,7 @@ export default function ClassTrainingPage({
     const startedAt = new Date(activeSchedule.started_at).getTime();
 
     const updateElapsedTime = () => {
-      // Subtract 1 hour (3600000 ms)
-      const elapsed = Date.now() - startedAt - 60 * 60 * 1000;
+      const elapsed = Date.now() - startedAt;
 
       if (elapsed <= 0) {
         setRemainingTime('00:00:00');

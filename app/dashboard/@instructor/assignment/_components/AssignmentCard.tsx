@@ -1,6 +1,5 @@
 'use client';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback } from '../../../../../components/ui/avatar';
 import {
   deleteAssignmentScheduleMutation,
   deleteQuizScheduleMutation,
@@ -183,18 +183,31 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
           </div>
 
           {/* student summary */}
-          {assignment.studentSummary ? (
+          {assignment.classTitle ? (
             <div className='flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-muted/40 p-3'>
-              <div className='flex min-w-0 flex-1 items-center gap-2'>
-                <Avatar className='h-7 w-7 shrink-0'>
-                  <AvatarFallback className='text-[10px]'>
-                    SO
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <Avatar className="h-7 w-7 shrink-0">
+                  <AvatarFallback className="text-[10px]">
+                    {assignment.classTitle
+                      ?.split(" ")
+                      .filter(Boolean)
+                      .map((word) => word[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
 
-                <span className='truncate text-xs text-muted-foreground sm:text-sm'>
-                  {assignment.studentSummary}
+                <span className="truncate text-xs text-muted-foreground sm:text-sm">
+                  {assignment.classTitle}
                 </span>
+                {assignment.uniqueEnrollmentCount !== undefined && (
+                  <span className="truncate text-xs text-muted-foreground sm:text-sm">
+                    ( {assignment.uniqueEnrollmentCount} enrolled,{" "}
+                    {assignment.availableCount} available seat
+                    {assignment.availableCount !== 1 ? "s" : ""} )
+                  </span>
+                )}
               </div>
 
               {assignment.badge && (

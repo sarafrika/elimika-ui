@@ -22,6 +22,8 @@ export type AssignmentCardData = {
   studentSummary?: string;
   subtitle: string;
   submissionCount?: number;
+  availableCount?: number;
+  uniqueEnrollmentCount?: number;
   taskType?: 'assignment' | 'quiz';
 };
 

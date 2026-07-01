@@ -470,7 +470,7 @@ export default function StudentAssignmentSubmissionPage() {
                     </CardHeader>
 
                     {/* Submission requirements */}
-                    <section className='border-t pt-4'>
+                    <section className='pl-6 border-t pt-4'>
                         <h3 className='mb-2 text-sm font-medium'>Submission requirements</h3>
                         <p className='text-muted-foreground text-sm'>
                             {selectedSubmissionTypes.length > 0

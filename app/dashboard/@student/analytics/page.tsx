@@ -6,6 +6,7 @@ import {
   BookOpen,
   CheckCircle2,
   Clock3,
+  FileText,
   GraduationCap,
   Layers3,
   ListChecks,
@@ -30,26 +31,32 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import { localDate } from '@/lib/date';
+import { AttachmentResourceList } from '../../../../components/assessment/AttachmentResourceList';
+import RichTextRenderer from '../../../../components/editors/richTextRenders';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../../../../components/ui/sheet';
 import { useStudent } from '../../../../context/student-context';
 import { cn } from '../../../../lib/utils';
 import {
   getAllActiveClassDefinitionsOptions,
   getEnrollmentOverviewForStudentOptions,
-  getStudentScheduleOptions,
-  searchAssignmentsOptions,
+  getStudentScheduleOptions, getSubmissionAttachmentsOptions, searchAssignmentsOptions,
   searchAttemptsOptions,
   searchQuizzesOptions,
-  searchSubmissionsOptions,
+  searchSubmissionsOptions
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
+  AssignmentAttachment,
   AssignmentSubmission,
+  AssignmentSubmissionAttachment,
   ClassDefinition,
   Quiz,
   QuizAttempt,
   StudentSchedule,
 } from '../../../../services/client/types.gen';
+import { useStudentAssignmentData } from '../../../../src/features/dashboard/student-assessment/useStudentAssignmentData';
 import { DonutChart } from '../../@instructor/analytics/_components/charts/StatusBreakdown';
+import { toAttachmentResourceItems } from '../_components/student-assignment-workspace';
 
 type StudentAnalyticsTab = 'Overview' | 'Enrollments' | 'Assessments';
 
@@ -113,6 +120,15 @@ function formatDurationMinutes(minutes?: number | bigint | null) {
   }
 
   return `${Math.round(totalMinutes)}m`;
+}
+
+function getAssignmentPassingScore(assignment?: Assignment | null) {
+  const assignmentWithThreshold = assignment as (Assignment & {
+    passing_score?: number | null;
+    min_passing_score?: number | null;
+  }) | null;
+
+  return assignmentWithThreshold?.passing_score ?? assignmentWithThreshold?.min_passing_score ?? 50;
 }
 
 function formatStatusLabel(status?: string | null) {
@@ -303,6 +319,14 @@ function ProgressRow({ label, value, total }: { label: string; value: number; to
 export default function StudentAnalyticsDashboard() {
   const student = useStudent();
   const [activeTab, setActiveTab] = useState<StudentAnalyticsTab>('Overview');
+  const [selectedSubmission, setSelectedSubmission] = useState<{
+    assignment: Assignment;
+    submission: AssignmentSubmission;
+    attachments: AssignmentAttachment[];
+    courseName: string;
+    className: string;
+  } | null>(null);
+  const [isSubmissionSheetOpen, setIsSubmissionSheetOpen] = useState(false);
 
   const studentUuid = student?.uuid;
 
@@ -360,6 +384,7 @@ export default function StudentAnalyticsDashboard() {
       Array.from(
         new Set(
           classDefinitionIds
+            .filter((classDefinitionId): classDefinitionId is string => !!classDefinitionId)
             .map(classDefinitionId => classDefinitionMap.get(classDefinitionId)?.course_uuid)
             .filter((courseUuid): courseUuid is string => !!courseUuid)
         )
@@ -372,15 +397,16 @@ export default function StudentAnalyticsDashboard() {
       Array.from(
         new Set(
           classDefinitionIds
+            .filter((classDefinitionId): classDefinitionId is string => !!classDefinitionId)
             .map(classDefinitionId => classDefinitionMap.get(classDefinitionId)?.program_uuid)
-            .filter((courseUuid): courseUuid is string => !!courseUuid)
+            .filter((programUuid): programUuid is string => !!programUuid)
         )
       ),
     [classDefinitionIds, classDefinitionMap]
   );
 
   const { courseMap } = useCoursesByIds(courseIdsFromClasses);
-  const { programMap } = useProgramsByIds(programIdsFromClasses)
+  const { programMap } = useProgramsByIds(programIdsFromClasses);
 
   const courseEnrollmentRows = overviewQuery.data?.data?.course_enrollments?.content ?? [];
   const classEnrollmentRows = overviewQuery.data?.data?.class_enrollments?.content ?? [];
@@ -396,16 +422,6 @@ export default function StudentAnalyticsDashboard() {
 
     return lookup;
   }, [courseEnrollmentRows]);
-
-  const programLookupById = useMemo(() => {
-    const lookup = new Map<string, string>();
-    for (const enrollment of classEnrollmentRows) {        // ← program enrollments
-      if (enrollment.program_uuid && enrollment.program_name) {
-        lookup.set(enrollment.program_uuid, enrollment.program_name);
-      }
-    }
-    return lookup;
-  }, [classEnrollmentRows]);
 
   const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
 
@@ -451,10 +467,7 @@ export default function StudentAnalyticsDashboard() {
           courseMap[courseUuid]?.name
         )
         : programUuid
-          ? (
-            programLookupById.get(programUuid) ??
-            programMap[programUuid]?.title
-          )
+          ? programMap[programUuid]?.title
           : undefined;
 
     const parentType = courseUuid ? "Course" : programUuid ? "Program" : null;
@@ -656,8 +669,8 @@ export default function StudentAnalyticsDashboard() {
     const attended = scheduleRows.filter(row => row.did_attend || row.enrollment_status === 'ATTENDED').length;
     const completedMinutes = scheduleRows
       .filter(row => row.scheduling_status === 'COMPLETED')
-      .reduce((sum, row) => sum + Number(row.duration_minutes ?? 0n), 0);
-    const totalMinutes = scheduleRows.reduce((sum, row) => sum + Number(row.duration_minutes ?? 0n), 0);
+      .reduce((sum, row) => sum + Number(row.duration_minutes ?? 0), 0);
+    const totalMinutes = scheduleRows.reduce((sum, row) => sum + Number(row.duration_minutes ?? 0), 0);
 
     return {
       total,
@@ -752,12 +765,58 @@ export default function StudentAnalyticsDashboard() {
     [assignmentLookup, classDefinitionMap, courseLookupById, courseMap, latestSubmissionsByAssignment]
   );
 
-  // FIX: this useMemo's dependency array referenced `attemptsByQuiz`, a
-  // variable that doesn't exist anywhere in this file (it was presumably
-  // meant to be `latestAttemptsByQuiz`, which is what the memo body
-  // actually iterates over via `Object.values(latestAttemptsByQuiz)`
-  // a few lines below). The typo'd name would throw a ReferenceError at
-  // runtime / fail type-checking, since nothing ever defines it.
+  const { assignmentRows: studentAssignmentRows, isLoading: isStudentAssignmentDataLoading } = useStudentAssignmentData();
+
+  const assignmentAnalyticsRows = useMemo(() => {
+    return studentAssignmentRows
+      .filter(row => row.latestSubmission && row.assignment)
+      .map(row => {
+        const submission = row.latestSubmission;
+        const assignment = row.assignment;
+
+        const gradePercentage =
+          submission?.percentage ??
+          (submission?.max_score && submission.max_score > 0 && submission.score != null
+            ? Math.round((submission.score / submission.max_score) * 100)
+            : undefined);
+
+        const passingScore = getAssignmentPassingScore(assignment);
+        const isPassing = gradePercentage != null ? gradePercentage >= passingScore : false;
+
+        return {
+          id:
+            submission?.uuid ??
+            assignment?.uuid ??
+            `${assignment?.title ?? 'assignment'}-${row.classMeta.classUuid}`,
+          assignment,
+          submission: submission!,
+          courseName: row.classMeta.courseTitle ?? '—',
+          className: row.classMeta.classTitle ?? '—',
+          gradePercentage,
+          passingScore,
+          isPassing,
+          attachments: row.attachments ?? [],
+        };
+      })
+      .sort((a, b) => {
+        const aTime = new Date(a.submission.submitted_at ?? a.submission.created_date ?? 0).getTime();
+        const bTime = new Date(b.submission.submitted_at ?? b.submission.created_date ?? 0).getTime();
+        return bTime - aTime;
+      });
+  }, [studentAssignmentRows]);
+
+  const selectedSubmissionAttachmentsQuery = useQuery({
+    ...getSubmissionAttachmentsOptions({
+      path: {
+        assignmentUuid: selectedSubmission?.assignment.uuid ?? '',
+        submissionUuid: selectedSubmission?.submission.uuid ?? '',
+      },
+    }),
+    enabled: !!selectedSubmission?.assignment.uuid && !!selectedSubmission?.submission.uuid,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   const quizRows = useMemo(
     () =>
       Object.values(latestAttemptsByQuiz)
@@ -781,27 +840,34 @@ export default function StudentAnalyticsDashboard() {
   );
 
   const assessmentSummary = useMemo(() => {
-    const submissions = assignmentSubmissionsQuery.data?.data?.content ?? [];
-    const attempts = attemptQuery.data?.data?.content ?? [];
+    const submissionRows = assignmentAnalyticsRows;
+    const attemptRows = quizRows;
 
-    const gradedSubmissions = submissions.filter(submission => submission.status === 'GRADED').length;
+    const gradedSubmissions = submissionRows.filter(row => row.submission.status === 'GRADED' || row.submission.percentage != null).length;
     const averageSubmissionScore =
-      submissions.filter(submission => typeof submission.percentage === 'number').reduce((sum, submission) => sum + (submission.percentage ?? 0), 0) /
-      Math.max(1, submissions.filter(submission => typeof submission.percentage === 'number').length);
-    const passedAttempts = attempts.filter(attempt => attempt.is_passed).length;
+      submissionRows
+        .map(row => row.gradePercentage)
+        .filter((percentage): percentage is number => percentage != null)
+        .reduce((sum, percentage) => sum + percentage, 0) /
+      Math.max(1, submissionRows.filter(row => row.gradePercentage != null).length);
+
+    const passedAttempts = attemptRows.filter(({ attempt }) => attempt.is_passed).length;
     const averageAttemptScore =
-      attempts.filter(attempt => typeof attempt.percentage === 'number').reduce((sum, attempt) => sum + (attempt.percentage ?? 0), 0) /
-      Math.max(1, attempts.filter(attempt => typeof attempt.percentage === 'number').length);
+      attemptRows
+        .map(({ attempt }) => attempt.percentage)
+        .filter((percentage): percentage is number => percentage != null)
+        .reduce((sum, percentage) => sum + percentage, 0) /
+      Math.max(1, attemptRows.filter(({ attempt }) => attempt.percentage != null).length);
 
     return {
-      submissionCount: submissions.length,
+      submissionCount: submissionRows.length,
       gradedSubmissions,
       averageSubmissionScore: Math.round(averageSubmissionScore || 0),
-      attemptCount: attempts.length,
+      attemptCount: attemptRows.length,
       passedAttempts,
       averageAttemptScore: Math.round(averageAttemptScore || 0),
     };
-  }, [assignmentSubmissionsQuery.data, attemptQuery.data]);
+  }, [assignmentAnalyticsRows, quizRows]);
 
   const isLoading =
     overviewQuery.isLoading ||
@@ -810,7 +876,8 @@ export default function StudentAnalyticsDashboard() {
     assignmentSubmissionsQuery.isLoading ||
     attemptQuery.isLoading ||
     assignmentLookupQuery.isLoading ||
-    quizLookupQuery.isLoading;
+    quizLookupQuery.isLoading ||
+    isStudentAssignmentDataLoading;
 
   if (!studentUuid) {
     return (
@@ -1240,50 +1307,60 @@ export default function StudentAnalyticsDashboard() {
           </div>
 
           <SectionCard
-            title='Assignment Report'
-            description='Latest assignment submissions for the student.'
+            title='Assignment submissions'
+            description='Submitted assignments with the latest grade, pass/fail outcome, and drill-down details.'
           >
             <div className='overflow-x-auto'>
-              <table className='w-full min-w-[980px] text-sm'>
+              <table className='w-full min-w-[920px] text-sm'>
                 <thead>
                   <tr className='text-muted-foreground border-b border-border text-left text-xs uppercase tracking-wide'>
                     <th className='py-3 pr-4'>Assignment</th>
                     <th className='py-3 pr-4'>Course</th>
                     <th className='py-3 pr-4'>Class</th>
-                    <th className='py-3 pr-4'>Status</th>
-                    <th className='py-3 pr-4'>Score</th>
-                    <th className='py-3 pr-4'>Submitted At</th>
-                    <th className='py-3 pr-4'>Graded At</th>
+                    <th className='py-3 pr-4'>Grade</th>
+                    <th className='py-3 pr-4'>Result</th>
+                    <th className='py-3 pr-4'>Submitted</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {assignmentRows.map(({ submission, assignment, courseName, className }) => (
-                    <tr key={submission.uuid ?? `${submission.assignment_uuid}-${submission.submitted_at ?? ''}`} className='border-border border-b last:border-b-0'>
+                  {assignmentAnalyticsRows.map(row => (
+                    <tr
+                      key={row.id}
+                      className='border-border cursor-pointer border-b last:border-b-0 hover:bg-muted/40'
+                      onClick={() => {
+                        setSelectedSubmission({
+                          assignment: row.assignment,
+                          submission: row.submission,
+                          attachments: row.attachments,
+                          courseName: row.courseName,
+                          className: row.className,
+                        });
+                        setIsSubmissionSheetOpen(true);
+                      }}
+                    >
                       <td className='text-foreground py-3 pr-4 font-medium'>
-                        {assignment?.title ?? submission.assignment_uuid}
+                        <div className='flex items-center gap-2'>
+                          <FileText className='text-muted-foreground h-4 w-4 shrink-0' />
+                          <span>{row.assignment?.title ?? row.submission.assignment_uuid}</span>
+                        </div>
                       </td>
-                      <td className='text-muted-foreground py-3 pr-4'>{courseName}</td>
-                      <td className='text-muted-foreground py-3 pr-4'>{className}</td>
+                      <td className='text-muted-foreground py-3 pr-4'>{row.courseName}</td>
+                      <td className='text-muted-foreground py-3 pr-4'>{row.className}</td>
+                      <td className='text-muted-foreground py-3 pr-4'>
+                        {row.gradePercentage != null ? formatPercent(row.gradePercentage) : '—'}
+                      </td>
                       <td className='py-3 pr-4'>
-                        <Badge variant={getAssessmentBadgeVariant(submission.status)}>
-                          {formatStatusLabel(submission.status)}
+                        <Badge variant={row.isPassing ? 'success' : 'destructive'}>
+                          {row.isPassing ? 'Pass' : 'Fail'}
                         </Badge>
                       </td>
-                      <td className='text-muted-foreground py-3 pr-4'>
-                        {submission.percentage !== undefined && submission.percentage !== null
-                          ? `${Math.round(submission.percentage)}%`
-                          : submission.score !== undefined && submission.max_score !== undefined
-                            ? `${submission.score}/${submission.max_score}`
-                            : '—'}
-                      </td>
-                      <td className='text-muted-foreground py-3 pr-4'>{formatDateTime(submission.submitted_at)}</td>
-                      <td className='text-muted-foreground py-3 pr-4'>{formatDateTime(submission.graded_at)}</td>
+                      <td className='text-muted-foreground py-3 pr-4'>{formatDateTime(row.submission.submitted_at)}</td>
                     </tr>
                   ))}
 
-                  {assignmentRows.length === 0 && (
+                  {assignmentAnalyticsRows.length === 0 && (
                     <tr>
-                      <td colSpan={7} className='py-8'>
+                      <td colSpan={6} className='py-8'>
                         <EmptyState
                           icon={BookOpen}
                           title='No assignment submissions found'
@@ -1297,6 +1374,7 @@ export default function StudentAnalyticsDashboard() {
               </table>
             </div>
           </SectionCard>
+
 
           <SectionCard title='Quiz Report' description='Latest quiz attempts for the student.'>
             <div className='overflow-x-auto'>
@@ -1353,6 +1431,141 @@ export default function StudentAnalyticsDashboard() {
           </SectionCard>
         </div>
       )}
+
+      <Sheet open={isSubmissionSheetOpen} onOpenChange={open => {
+        setIsSubmissionSheetOpen(open);
+        if (!open) {
+          setSelectedSubmission(null);
+        }
+      }}>
+        <SheetContent side='right' className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[760px]'>
+          <SheetHeader className='border-border/70 border-b px-6 py-5 text-left'>
+            <div className='flex flex-wrap items-center gap-2'>
+              <Badge variant='outline'>{selectedSubmission?.courseName ?? 'Assignment'}</Badge>
+              {selectedSubmission && (
+                <Badge variant={selectedSubmission.submission.percentage != null && selectedSubmission.submission.percentage >= getAssignmentPassingScore(selectedSubmission.assignment) ? 'success' : 'destructive'}>
+                  {selectedSubmission.submission.percentage != null && selectedSubmission.submission.percentage >= getAssignmentPassingScore(selectedSubmission.assignment) ? 'Pass' : 'Fail'}
+                </Badge>
+              )}
+            </div>
+            <SheetTitle className='text-2xl'>
+              {selectedSubmission?.assignment.title ?? 'Assignment submission'}
+            </SheetTitle>
+            <SheetDescription>
+              {selectedSubmission?.className ?? 'Student submission details'}
+            </SheetDescription>
+          </SheetHeader>
+
+
+          {selectedSubmission && (
+            <div className='space-y-6 px-6 py-6'>
+              {selectedSubmission.submission.instructor_comments && (
+                <div className='rounded-lg border border-border/70 bg-muted/20 p-3'>
+                  <p className='text-foreground text-sm font-medium'>Instructor feedback</p>
+                  <p className='text-muted-foreground mt-1 text-sm'>
+                    {selectedSubmission.submission.instructor_comments}
+                  </p>
+                </div>
+              )}
+
+
+
+              <div className='space-y-3'>
+                <div className='grid gap-3 md:grid-cols-2'>
+                  <div className='rounded-xl border border-border/70 bg-muted/20 p-3'>
+                    <p className='text-muted-foreground text-xs uppercase tracking-wide'>Grade</p>
+                    <p className='text-foreground mt-1 text-xl font-semibold'>
+                      {selectedSubmission.submission.percentage != null
+                        ? formatPercent(selectedSubmission.submission.percentage)
+                        : selectedSubmission.submission.score != null && selectedSubmission.submission.max_score != null
+                          ? `${selectedSubmission.submission.score}/${selectedSubmission.submission.max_score}`
+                          : '—'}
+                    </p>
+                  </div>
+                  <div className='rounded-xl border border-border/70 bg-muted/20 p-3'>
+                    <p className='text-muted-foreground text-xs uppercase tracking-wide'>Submitted</p>
+                    <p className='text-foreground mt-1 text-sm font-medium'>
+                      {formatDateTime(selectedSubmission.submission.submitted_at)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className='rounded-xl border border-border/70 bg-card p-4'>
+                  <h3 className='text-foreground text-sm font-semibold'>Assignment details</h3>
+                  <div className="text-muted-foreground mt-2 space-y-2 text-sm">
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <RichTextRenderer
+                        htmlString={
+                          selectedSubmission.assignment.description ||
+                          "<p>No description provided.</p>"
+                        }
+                      />
+                    </div>
+
+                    {selectedSubmission.assignment.instructions && (
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <RichTextRenderer
+                          htmlString={selectedSubmission.assignment.instructions}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+
+                <div className='rounded-xl border border-border/70 bg-card p-4'>
+                  <h3 className='text-foreground text-sm font-semibold'>Assignment Attachments</h3>
+                  <div className='mt-3 space-y-3'>
+
+                    <AttachmentResourceList
+                      attachments={selectedSubmission.attachments.map(attachment => ({
+                        ...attachment,
+                        file_size_bytes: typeof attachment.file_size_bytes === 'bigint'
+                          ? Number(attachment.file_size_bytes)
+                          : attachment.file_size_bytes,
+                      }))}
+                      emptyMessage='No attachments were included with this question.'
+                      previewLabel='Open file'
+                    />
+                  </div>
+                </div>
+
+                <div className='rounded-xl border border-border/70 bg-card p-4'>
+                  <h3 className='text-foreground text-sm font-semibold'>Submission summary</h3>
+                  <div className='text-muted-foreground mt-3 space-y-2 text-sm'>
+                    {selectedSubmission.submission.submission_text ? (
+                      <div className='prose prose-sm dark:prose-invert max-w-none'>
+                        <RichTextRenderer htmlString={selectedSubmission.submission.submission_text} />
+                      </div>
+                    ) : (
+                      <p>No written submission content was provided.</p>
+                    )}
+
+
+                    <AttachmentResourceList
+                      attachments={toAttachmentResourceItems(
+                        (selectedSubmissionAttachmentsQuery.data?.data ??
+                          []) as AssignmentSubmissionAttachment[]
+                      )}
+                      emptyMessage='No files were uploaded with the latest submission.'
+                      previewLabel='Read file'
+                    />
+
+                    {selectedSubmissionAttachmentsQuery.data?.data && selectedSubmissionAttachmentsQuery.data.data.length > 0 && (
+                      <div className='rounded-lg border border-border/70 bg-muted/20 p-3 text-sm text-muted-foreground'>
+                        {selectedSubmissionAttachmentsQuery.data.data.length} submission attachment(s) available.
+                      </div>
+                    )}
+
+
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
