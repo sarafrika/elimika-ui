@@ -769,23 +769,27 @@ export default function StudentAnalyticsDashboard() {
 
   const assignmentAnalyticsRows = useMemo(() => {
     return studentAssignmentRows
-      .filter(row => row.submissions)
+      .filter(row => row.latestSubmission && row.assignment)
       .map(row => {
-        const submission = row.latestSubmission!;
+        const submission = row.latestSubmission;
+        const assignment = row.assignment;
+
         const gradePercentage =
-          submission.percentage ??
-          (submission.max_score && submission.max_score > 0 && submission.score != null
+          submission?.percentage ??
+          (submission?.max_score && submission.max_score > 0 && submission.score != null
             ? Math.round((submission.score / submission.max_score) * 100)
             : undefined);
 
-        const passingScore = getAssignmentPassingScore(row.assignment);
+        const passingScore = getAssignmentPassingScore(assignment);
         const isPassing = gradePercentage != null ? gradePercentage >= passingScore : false;
 
-
         return {
-          id: submission.uuid ?? row.assignment.uuid ?? `${row.assignment.title}-${row.classMeta.classUuid}`,
-          assignment: row.assignment,
-          submission,
+          id:
+            submission?.uuid ??
+            assignment?.uuid ??
+            `${assignment?.title ?? 'assignment'}-${row.classMeta.classUuid}`,
+          assignment,
+          submission: submission!,
           courseName: row.classMeta.courseTitle ?? '—',
           className: row.classMeta.classTitle ?? '—',
           gradePercentage,
@@ -836,27 +840,34 @@ export default function StudentAnalyticsDashboard() {
   );
 
   const assessmentSummary = useMemo(() => {
-    const submissions = assignmentSubmissionsQuery.data?.data?.content ?? [];
-    const attempts = attemptQuery.data?.data?.content ?? [];
+    const submissionRows = assignmentAnalyticsRows;
+    const attemptRows = quizRows;
 
-    const gradedSubmissions = submissions.filter(submission => submission.status === 'GRADED').length;
+    const gradedSubmissions = submissionRows.filter(row => row.submission.status === 'GRADED' || row.submission.percentage != null).length;
     const averageSubmissionScore =
-      submissions.filter(submission => typeof submission.percentage === 'number').reduce((sum, submission) => sum + (submission.percentage ?? 0), 0) /
-      Math.max(1, submissions.filter(submission => typeof submission.percentage === 'number').length);
-    const passedAttempts = attempts.filter(attempt => attempt.is_passed).length;
+      submissionRows
+        .map(row => row.gradePercentage)
+        .filter((percentage): percentage is number => percentage != null)
+        .reduce((sum, percentage) => sum + percentage, 0) /
+      Math.max(1, submissionRows.filter(row => row.gradePercentage != null).length);
+
+    const passedAttempts = attemptRows.filter(({ attempt }) => attempt.is_passed).length;
     const averageAttemptScore =
-      attempts.filter(attempt => typeof attempt.percentage === 'number').reduce((sum, attempt) => sum + (attempt.percentage ?? 0), 0) /
-      Math.max(1, attempts.filter(attempt => typeof attempt.percentage === 'number').length);
+      attemptRows
+        .map(({ attempt }) => attempt.percentage)
+        .filter((percentage): percentage is number => percentage != null)
+        .reduce((sum, percentage) => sum + percentage, 0) /
+      Math.max(1, attemptRows.filter(({ attempt }) => attempt.percentage != null).length);
 
     return {
-      submissionCount: submissions.length,
+      submissionCount: submissionRows.length,
       gradedSubmissions,
       averageSubmissionScore: Math.round(averageSubmissionScore || 0),
-      attemptCount: attempts.length,
+      attemptCount: attemptRows.length,
       passedAttempts,
       averageAttemptScore: Math.round(averageAttemptScore || 0),
     };
-  }, [assignmentSubmissionsQuery.data, attemptQuery.data]);
+  }, [assignmentAnalyticsRows, quizRows]);
 
   const isLoading =
     overviewQuery.isLoading ||
