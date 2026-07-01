@@ -2991,6 +2991,7 @@ export default function ClassTrainingPage({
           queryClient.invalidateQueries({
             queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: classId } }),
           });
+
         },
         onError: error => {
           toast.error(getApiToastMessage(error, 'Failed to attach assignment.'));

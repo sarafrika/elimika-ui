@@ -296,13 +296,18 @@ export function AssignmentPageClient() {
         const gradedCount = submissions.filter(item => item.is_graded || item.graded_at).length;
         const lessonInfo = lessonMap.get(schedule.lesson_uuid);
         const classInfo = classMap.get(schedule.classUuid);
+
+        const uniqueCount = new Set(
+          classInfo?.enrollment?.map((e) => e.student_uuid)
+        ).size;
+
         const totalLearners = classEnrollmentsMap.get(schedule.classUuid)?.length ?? 0;
         const status = getTaskStatus(schedule.due_at, submissionCount, gradedCount, 'assignment');
         const pendingBadge =
           gradedCount < submissionCount ? `${submissionCount - gradedCount} Pending` : null;
         const metricLabel =
-          totalLearners > 0
-            ? `${Math.round((submissionCount / totalLearners) * 100)}% received`
+          uniqueCount > 0
+            ? `${Math.round((submissionCount / uniqueCount) * 100)}% received`
             : null;
 
         const assignmentCard: AssignmentCardData = {
@@ -314,14 +319,16 @@ export function AssignmentPageClient() {
           scheduleUuid: schedule?.uuid as string,
           classTitle: classInfo?.title || 'Class',
           courseTitle: lessonInfo?.courseTitle || classInfo?.course?.name || '',
-          courseId: classInfo?.course_uuid,
+          courseId: classInfo?.course_uuid as string,
+          uniqueEnrollmentCount: uniqueCount,
+          availableCount: (totalLearners - uniqueCount),
           dueLabel: formatDueLabel(schedule.due_at || assignment.due_date),
           iconTone: status === 'overdue' ? 'amber' : 'blue',
           id: `assignment_${assignment.uuid}`,
           instructor: instructorName,
           lesson: lessonInfo?.lessonTitle || 'Lesson',
           lessonUuid: schedule.lesson_uuid,
-          metricValue: `${submissionCount}/${totalLearners || submissionCount} submitted`,
+          metricValue: `${submissionCount}/${uniqueCount || submissionCount} submitted`,
           status,
           statusLabel: status.charAt(0).toUpperCase() + status.slice(1),
           studentSummary: classInfo?.title || classInfo?.course?.name || 'Class',
@@ -355,13 +362,18 @@ export function AssignmentPageClient() {
         const completedCount = attempts.filter(item => item.is_completed || item.submitted_at).length;
         const lessonInfo = lessonMap.get(schedule.lesson_uuid);
         const classInfo = classMap.get(schedule.classUuid);
+
+        const uniqueCount = new Set(
+          classInfo?.enrollment?.map((e) => e.student_uuid)
+        ).size;
+
         const totalLearners = classEnrollmentsMap.get(schedule.classUuid)?.length ?? 0;
         const status = getTaskStatus(schedule.due_at, submissionCount, completedCount, 'quiz');
         const pendingBadge =
           completedCount < submissionCount ? `${submissionCount - completedCount} Pending` : null;
         const metricLabel =
-          totalLearners > 0
-            ? `${Math.round((submissionCount / totalLearners) * 100)}% attempted`
+          uniqueCount > 0
+            ? `${Math.round((submissionCount / uniqueCount) * 100)}% attempted`
             : null;
 
         const quizCard: AssignmentCardData = {
@@ -370,14 +382,16 @@ export function AssignmentPageClient() {
           scheduleUuid: schedule?.uuid as string,
           classTitle: classInfo?.title || 'Class',
           courseTitle: lessonInfo?.courseTitle || classInfo?.course?.name || 'Course',
-          courseId: classInfo?.course_uuid,
+          courseId: classInfo?.course_uuid as string,
+          uniqueEnrollmentCount: uniqueCount,
+          availableCount: (totalLearners - uniqueCount),
           dueLabel: formatDueLabel(schedule.due_at),
           iconTone: status === 'overdue' ? 'amber' : 'blue',
           id: `quiz_${quiz.uuid}`,
           instructor: instructorName,
           lesson: lessonInfo?.lessonTitle || 'Lesson',
           lessonUuid: schedule.lesson_uuid,
-          metricValue: `${submissionCount}/${totalLearners || submissionCount} attempts`,
+          metricValue: `${submissionCount}/${uniqueCount || submissionCount} attempts`,
           status,
           statusLabel: status.charAt(0).toUpperCase() + status.slice(1),
           studentSummary: classInfo?.title || classInfo?.course?.name || 'Class',
