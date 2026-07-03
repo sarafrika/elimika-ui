@@ -141,6 +141,34 @@ type NoteEntry = {
   sentAt: string;
 };
 
+const CLASS_RELATED_ASSESSMENT_CATEGORIES = [
+  "Class",
+  "Lesson",
+  "Module",
+  "Unit",
+  "Workshop",
+  "Seminar",
+  "Participation",
+  "Behavior",
+  "Attendance",
+  "Presentation",
+  "Continuous Assessment",
+  "General",
+];
+
+const CLASS_RELATED_ASSESSMENT_TYPES = [
+  "Attendance",
+  "Assignment",
+  "Homework",
+  "Quiz",
+  "Performance",
+  "Continuous Assessment",
+  "Participation",
+  "Behavior",
+  "Presentation",
+  "General",
+];
+
 export const GRACE_PERIOD_MS = 60 * 60 * 1000;
 
 function formatPercentage(value?: number | null) {
@@ -1722,6 +1750,7 @@ function AssessmentRubricCard({
     title: string;
     description?: string | null;
     assessment_type?: string;
+    assessment_category?: string;
     is_required?: boolean;
     weight_percentage?: number;
   };
@@ -1832,6 +1861,7 @@ function SubmissionPanel({
   const [activePanel, setActivePanel] = useState<'submissions' | 'trackers' | 'notes'>(
     'submissions'
   );
+
   const selectedStudentAttendanceState = getStudentAttendanceState(selectedStudent);
   const panelTabs = [
     { value: 'submissions' as const, label: 'Submissions', icon: ClipboardCheck },
@@ -1865,6 +1895,18 @@ function SubmissionPanel({
 
     onMarkAttendance(entry, attended);
   };
+
+  const classAssessments = courseAssessments.filter((assessment) => {
+    const category = assessment.assessment_category;
+    const type = assessment.assessment_type;
+
+    return (
+      category === "General" ||
+      type === "General" ||
+      CLASS_RELATED_ASSESSMENT_CATEGORIES.includes(category) ||
+      CLASS_RELATED_ASSESSMENT_TYPES.includes(type)
+    );
+  });
 
   return (
     <aside className='bg-card/95 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden mb-12'>
@@ -2105,8 +2147,8 @@ function SubmissionPanel({
 
           {activePanel === 'trackers' ? (
             <div className='space-y-3'>
-              {courseAssessments.length > 0 ? (
-                courseAssessments.map(assessment => {
+              {classAssessments.length > 0 ? (
+                classAssessments.map(assessment => {
                   const rubric = assessment.rubric_uuid
                     ? rubricMatrices[assessment.rubric_uuid]
                     : null;
