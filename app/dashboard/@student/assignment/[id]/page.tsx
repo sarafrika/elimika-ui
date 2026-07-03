@@ -26,6 +26,7 @@ import {
     ArrowLeft,
     CalendarDays,
     CheckCircle2,
+    FileQuestion,
     FileText,
     Loader2,
     Upload,
@@ -226,12 +227,29 @@ export default function StudentAssignmentSubmissionPage() {
 
     if (!selectedAssignment) {
         return (
-            <div className='flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center'>
-                <p className='text-muted-foreground text-sm'>Assignment not found.</p>
-                <Button variant='outline' onClick={() => router.push('/dashboard/assignment')}>
-                    <ArrowLeft className='mr-2 h-4 w-4' />
-                    Back to assignments
-                </Button>
+            <div className="flex min-h-[70vh] items-center justify-center px-6">
+                <div className="max-w-md rounded-2xl border bg-background p-8 text-center shadow-sm">
+                    <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                        <FileQuestion className="h-8 w-8 text-muted-foreground" />
+                    </div>
+
+                    <h2 className="text-xl font-semibold tracking-tight">
+                        Assignment Not Found
+                    </h2>
+
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        The assignment you're looking for may have been deleted,
+                        moved, or you may not have permission to access it.
+                    </p>
+
+                    <Button
+                        className="mt-8"
+                        onClick={() => router.push("/dashboard/assignment")}
+                    >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Assignments
+                    </Button>
+                </div>
             </div>
         );
     }

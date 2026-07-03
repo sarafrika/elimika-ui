@@ -634,30 +634,30 @@ export function useStudentLearningHubData(): LearningHubData {
       ? Math.round(
         continueLearning.reduce((sum, item) => sum + item.progress, 0) / continueLearning.length
       )
-      : 87;
+      : 0;
 
   const stats: LearningHubStat[] = [
     {
       id: 'active-classes',
-      value: String(activeClassesCount || 3),
+      value: String(activeClassesCount),
       label: 'Active Classes',
       tone: 'blue',
     },
     {
       id: 'weekly-learning-time',
-      value: formatHours(weeklyMinutes || 150),
+      value: formatHours(weeklyMinutes || 0),
       label: 'Weekly Learning Time',
       tone: 'green',
     },
     {
       id: 'assignments-due',
-      value: String(assignmentsDueCount || 14),
+      value: String(assignmentsDueCount),
       label: 'Assignments Due',
       tone: 'red',
     },
     {
       id: 'overall-progress',
-      value: `${overallProgress || 87}%`,
+      value: `${overallProgress}%`,
       label: 'Overall Progress',
       tone: 'orange',
     },

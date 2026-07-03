@@ -60,10 +60,13 @@ import {
 // const DEFAULT_LEVEL_NAMES = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
 const DEFAULT_LEVEL_NAMES = ['Good', 'Fair'];
 
-export const RUBRIC_TYPES = [
+export const ASSESSMENT_TYPES = [
+  "Attendance",
   "Assignment",
   "Homework",
   "Quiz",
+  "Performance",
+  "Continuous Assessment",
   "Test",
   "Examination",
   "Project",
@@ -72,19 +75,16 @@ export const RUBRIC_TYPES = [
   "Laboratory",
   "Essay",
   "Report",
-  "Attendance",
   "Participation",
   "Behavior",
   "Group Work",
   "Portfolio",
   "Research",
-  "Performance",
-  "Continuous Assessment",
   "Final Assessment",
   "General",
 ];
 
-export const RUBRIC_CATEGORIES = [
+export const ASSESSMENT_CATEGORIES = [
   "Class",
   "Lesson",
   "Module",
@@ -1013,7 +1013,7 @@ const RubricManager: React.FC = () => {
                         <SelectValue placeholder={placeholder} />
                       </SelectTrigger>
                       <SelectContent>
-                        {RUBRIC_TYPES.map((type) => (
+                        {ASSESSMENT_TYPES.map((type) => (
                           <SelectItem key={type} value={type}>
                             {type}
                           </SelectItem>
@@ -1029,7 +1029,7 @@ const RubricManager: React.FC = () => {
                         <SelectValue placeholder={placeholder} />
                       </SelectTrigger>
                       <SelectContent>
-                        {RUBRIC_CATEGORIES.map((category) => (
+                        {ASSESSMENT_CATEGORIES.map((category) => (
                           <SelectItem key={category} value={category}>
                             {category}
                           </SelectItem>
