@@ -260,6 +260,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
       ),
       iconTone: 'blue',
       id: taskId,
+      uuid: task.uuid,
       instructor: classDetails.class?.title || 'Instructor task',
       lesson: lessonTitle,
       lessonUuid: task.lesson_uuid,
