@@ -160,23 +160,23 @@ export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
     };
   }
 
-  if (isGraded) {
+  if (isReturned) {
     return {
-      key: 'graded' as const,
-      label: 'Graded',
-      variant: 'success',
-      helper:
-        row.latestSubmission?.grade_display ??
-        'Instructor feedback available',
+      key: "returned" as const,
+      label: "Returned",
+      variant: "warning",
+      helper: "Requires revision and resubmission",
     };
   }
 
-  if (isReturned) {
+  if (isGraded) {
     return {
-      key: 'returned' as const,
-      label: 'Returned',
-      variant: 'warning',
-      helper: 'Requires revision and resubmission',
+      key: "graded" as const,
+      label: "Graded",
+      variant: "success",
+      helper:
+        row.latestSubmission?.grade_display ??
+        "Instructor feedback available",
     };
   }
 

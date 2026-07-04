@@ -546,6 +546,27 @@ function AssessmentTasksSection({
     setIsQuizPreviewOpen(true);
   }
 
+  const assignedAssignmentUuids = new Set(
+    activeScheduleAssignments
+      .map(item => item.assignment_uuid)
+      .filter(Boolean)
+  );
+
+  const assignedQuizUuids = new Set(
+    activeScheduleQuizzes
+      .map(item => item.quiz_uuid)
+      .filter(Boolean)
+  );
+
+  const filteredLessonAssignments = lessonAssignments.filter(
+    assignment => !assignedAssignmentUuids.has(assignment.uuid)
+  );
+
+  const filteredLessonQuizzes = lessonQuizzes.filter(
+    quiz => !assignedQuizUuids.has(quiz.uuid)
+  );
+
+
   return (
     <div className='space-y-3 mb-20'>
       {/* Tab bar */}
@@ -630,7 +651,7 @@ function AssessmentTasksSection({
                   <Label className='text-xs'>Select assignment</Label>
 
                   <div className="space-y-2 overflow-y-auto pr-1">
-                    {lessonAssignments.map(assignment => {
+                    {filteredLessonAssignments.map(assignment => {
                       const isSelected = selectedAssignmentUuid === assignment.uuid
                       const isDraft = !assignment.is_published
 
@@ -742,7 +763,7 @@ function AssessmentTasksSection({
                     })}
                   </div>
 
-                  {lessonAssignments.length === 0 && (
+                  {filteredLessonAssignments.length === 0 && (
                     <div className='text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm'>
                       No assignments available yet.
                     </div>
@@ -774,7 +795,7 @@ function AssessmentTasksSection({
                   <Label className='text-xs'>Select quiz</Label>
 
                   <div className="space-y-2 overflow-y-auto pr-1">
-                    {lessonQuizzes.map(quiz => {
+                    {filteredLessonQuizzes.map(quiz => {
                       const isSelected = selectedQuizUuid === quiz.uuid
 
                       return (
@@ -856,7 +877,7 @@ function AssessmentTasksSection({
                       )
                     })}
 
-                    {lessonQuizzes.length === 0 && (
+                    {filteredLessonQuizzes.length === 0 && (
                       <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
                         No quizzes available yet.
                       </div>

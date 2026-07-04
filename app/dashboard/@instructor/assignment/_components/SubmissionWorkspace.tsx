@@ -3,10 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { AssignmentSubmission, AssignmentSubmissionAttachment, QuizAttempt, RubricMatrix } from '@/services/client/types.gen';
-import { Files, UserRound, X } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
+import { ArrowLeft, Files, Loader2, RotateCcw, Save, UserRound, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { Label } from 'recharts';
 import { AttachmentResourceList } from '../../../../../components/assessment/AttachmentResourceList';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../../../../components/ui/dialog';
 import { cn } from '../../../../../lib/utils';
+import { returnSubmissionMutation } from '../../../../../services/client/@tanstack/react-query.gen';
 import { toAttachmentResourceItems } from '../../../@student/_components/student-assignment-workspace';
 import type { AssignmentCardData, SubmissionStudent } from './assignment-types';
 
@@ -49,6 +53,30 @@ export function SubmissionWorkspace({
   const assignment_maxScore = assignment?.max_point ?? 0;
   const quiz_maxScore = quizAttempt?.max_score ?? 0
   const maxScore = assignment_maxScore || quiz_maxScore
+
+  const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
+  const [returnFeedback, setReturnFeedback] = useState("");
+
+  const returnSubmissionMut = useMutation(returnSubmissionMutation())
+  const handleReturnSubmission = () => {
+    returnSubmissionMut.mutate(
+      {
+        path: {
+          assignmentUuid: assignment?.uuid ?? '',
+          submissionUuid: submission?.uuid ?? "",
+        },
+        query: {
+          feedback: returnFeedback,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsReturnDialogOpen(false);
+          setReturnFeedback("");
+        },
+      }
+    );
+  };
 
   const studentGradedScore = submission?.score
 
@@ -396,18 +424,146 @@ export function SubmissionWorkspace({
                 </div>
               ) : null}
 
-              <div className='flex flex-row items-center gap-4 justify-end'>
-                {taskType === 'assignment' ? (
-                  <Button className='h-11 rounded-lg disabled:bg-destructive/40' onClick={onGradeSubmission} disabled={isSavingGrade || studentGradedScore !== null}>
-                    {isSavingGrade ? 'Saving...' : 'Save Grade'}
-                  </Button>
-                ) : null}
-                <Button variant='outline' onClick={onCloseDetails} className='h-11 rounded-lg'>
-                  Return to List
+
+              <div className="flex items-center justify-end gap-2 border-t pt-4">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-9 rounded-md px-3 text-muted-foreground hover:text-foreground"
+                  onClick={onCloseDetails}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to List
                 </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 rounded-md px-3"
+                  onClick={() => setIsReturnDialogOpen(true)}
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Return Submission
+                </Button>
+
+                {taskType === "assignment" && (
+                  <Button
+                    size="sm"
+                    className="h-9 rounded-md px-4"
+                    onClick={onGradeSubmission}
+                    disabled={isSavingGrade || studentGradedScore !== null}
+                  >
+                    {isSavingGrade ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Grade
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           </article>
+
+
+          <Dialog
+            open={isReturnDialogOpen}
+            onOpenChange={setIsReturnDialogOpen}
+          >
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Return Submission</DialogTitle>
+
+                <DialogDescription>
+                  Return this submission to the student for revision. The student
+                  will be able to review your feedback and submit an updated
+                  version.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <dl className="space-y-0.5 text-sm">
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Student</dt>
+                      <dd className="font-medium">
+                        {student?.name ?? "-"}
+                      </dd>
+                    </div>
+
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Assignment</dt>
+                      <dd className="max-w-[220px] text-right font-medium">
+                        {assignment.subtitle}
+                      </dd>
+                    </div>
+
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Submitted</dt>
+                      <dd>
+                        {student?.submittedAt ?? "-"}
+                      </dd>
+                    </div>
+
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Current Score</dt>
+                      <dd>
+                        {studentGradedScore ?? "Not graded"}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Feedback to student</Label>
+
+                  <Textarea
+                    rows={5}
+                    value={returnFeedback}
+                    onChange={(e) => setReturnFeedback(e.target.value)}
+                    placeholder="Explain what needs to be revised before the student submits again..."
+                  />
+
+                  <p className="text-xs text-muted-foreground">
+                    This feedback will be visible to the student when the submission
+                    is returned.
+                  </p>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsReturnDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  onClick={handleReturnSubmission}
+                  disabled={returnSubmissionMut.isPending}
+                >
+                  {returnSubmissionMut.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Returning...
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Return Submission
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </section>

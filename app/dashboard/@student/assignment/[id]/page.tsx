@@ -33,7 +33,7 @@ import {
     X,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { toAttachmentResourceItems } from '../../_components/student-assignment-workspace';
 import DragDropUpload from '../drag-drop';
@@ -83,13 +83,7 @@ export default function StudentAssignmentSubmissionPage() {
         [assignmentRows, assignmentId]
     );
 
-    const [submissionText, setSubmissionText] = useState(() => {
-        // Pre-fill on RETURNED status, same as workspace handleOpenAssignment
-        if (selectedAssignment?.latestSubmission?.status === 'RETURNED') {
-            return selectedAssignment.latestSubmission.submission_text || '';
-        }
-        return '';
-    });
+    const [submissionText, setSubmissionText] = useState("");
     const [queuedFiles, setQueuedFiles] = useState<File[]>([]);
 
     // ── Derived values (mirrors workspace) ──────────────────────────────────
@@ -105,16 +99,28 @@ export default function StudentAssignmentSubmissionPage() {
         : null;
     const canUploadFiles = acceptsFileSubmission(selectedSubmissionTypes);
 
+    const submissionStatus = String(
+        selectedAssignment?.latestSubmission?.status ?? ""
+    ).toUpperCase();
+
+    const hasSubmission = !!selectedAssignment?.latestSubmission;
+
+    const canResubmit = submissionStatus === "RETURNED";
+
+    useEffect(() => {
+        if (canResubmit) {
+            setSubmissionText(
+                selectedAssignment?.latestSubmission?.submission_text ?? ""
+            );
+        }
+    }, [canResubmit, selectedAssignment]);
+
+    const showSubmissionForm = !hasSubmission || canResubmit;
+
     const canSubmitSelected =
         !!activeEnrollmentUuid &&
         (!selectedAssignment?.latestSubmission ||
-            ['RETURNED', 'DRAFT'].includes(
-                String(selectedAssignment.latestSubmission.status).toUpperCase()
-            ));
-
-    const hasSubmission = !!selectedAssignment?.latestSubmission;
-    const canResubmit = selectedAssignment?.latestSubmission?.status === 'RETURNED';
-    const showSubmissionForm = !hasSubmission || canResubmit;
+            ["RETURNED", "DRAFT"].includes(submissionStatus));
 
     // ── Submission attachments query (same as workspace) ────────────────────
     const selectedSubmissionAttachmentsQuery = useQuery({
@@ -453,6 +459,18 @@ export default function StudentAssignmentSubmissionPage() {
                         {/* If returned — show the resubmit form below the latest submission */}
                         {canResubmit && (
                             <div className='border-border/60 border-t pt-4'>
+                                <div className="mb-5 rounded-xl border border-warning bg-warning/10 p-4">
+                                    <h3 className="text-sm font-semibold text-warning-foreground">
+                                        Submission Returned
+                                    </h3>
+
+                                    <p className="mt-1 text-sm text-warning-foreground/90">
+                                        Your instructor has returned this submission for revision. Review the
+                                        feedback above, make the requested changes, and submit an updated
+                                        version.
+                                    </p>
+                                </div>
+
                                 {/* Submission requirements */}
                                 <section className='border-t pt-4'>
                                     <h3 className='mb-2 text-sm font-medium'>Submission requirements</h3>
