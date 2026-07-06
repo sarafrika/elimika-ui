@@ -22,7 +22,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import {
   isAuthenticatedMediaUrl,
-  toAuthenticatedMediaUrl,
+  toAuthenticatedMediaUrl
 } from '@/src/lib/media-url';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -168,7 +168,9 @@ export function LiveClassCard({
   // });
 
 
-  const imageUrl = toAuthenticatedMediaUrl(liveClass.imageUrl);
+  const imageUrl = toAuthenticatedMediaUrl(liveClass.imageUrl as string);
+  const promotionalVideoUrl = toAuthenticatedMediaUrl(liveClass.promotionalVideoUrl as string);
+
   const deleteClassMut = useMutation(deactivateClassDefinitionMutation());
 
   const handleDeleteClass = () => {

@@ -436,7 +436,7 @@ export function useStudentLearningHubData(): LearningHubData {
             : "Start class",
 
         href: `/dashboard/learning-hub/classes/${classDetails?.uuid}`,
-        bannerUrl: course?.banner_url,
+        bannerUrl: item?.classDetails?.thumbnail_url ?? '',
 
         accent:
           index % 3 === 0 ? "blue" : index % 3 === 1 ? "slate" : "green",

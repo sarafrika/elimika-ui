@@ -29,6 +29,7 @@ export type TrainingHubLiveClass = {
   status: 'published' | 'draft' | 'scheduled';
   href: string;
   imageUrl?: string;
+  promotionalVideoUrl?: string;
   manageHref: string;
   inviteHref: string;
   duration_minutes: string;

@@ -79,7 +79,7 @@ export function ClassCreationHeader({
           onClick={onPublish}
           disabled={isSubmitting}
         >
-          Publish Class
+          {isSubmitting ? 'Publishing...' : 'Publish Class'}
         </Button>
       </div>
     </header>
