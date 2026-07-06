@@ -86,7 +86,7 @@ export type UnifiedContentItem = {
   creatorUuid: string;
   creatorName: string;
   levelLabel?: string;
-  price?: number;
+  price: string | number | undefined;
   minimumRate?: number;
   imageUrl?: string;
   href: string;

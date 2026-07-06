@@ -63,6 +63,7 @@ import {
   RecurrenceTypeEnum,
   SessionFormatEnum,
 } from '../../../../../services/client/types.gen';
+import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
 import { CLASS_COLOR_OPTIONS } from '../../../_components/class-colors';
 import {
   ClassDetails,
@@ -514,6 +515,7 @@ const ClassCreationPage = () => {
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
   const addClassThumbnailMut = useMutation(uploadClassThumbnailMutation());
   const addClassIntroVideoMut = useMutation(uploadClassPromotionalVideoMutation());
+  const isSubmitting = createClassDefinition.isPending || updateClassDefinition.isPending
 
   const handleServiceTypeChange = (
     newServiceType: ServiceType,
@@ -809,6 +811,8 @@ const ClassCreationPage = () => {
       classroom: classRecord.classroom || '',
       class_color: classRecord.class_color || '',
       reminder: '',
+      thumbnail_url: classRecord.thumbnail_url || '',
+      promotional_video_url: classRecord.promotional_video_url || '',
     });
 
     setNotificationSettings(prev => ({
@@ -826,8 +830,15 @@ const ClassCreationPage = () => {
         : ''
     );
 
-    if (classRecord.thumbnail_url) setExistingThumbnailUrl(classRecord.thumbnail_url);
-    if (classRecord.promotional_video_url) setExistingVideoUrl(classRecord.promotional_video_url);
+    const thumbnailUrl = toAuthenticatedMediaUrl(classRecord?.thumbnail_url);
+    if (thumbnailUrl) {
+      setExistingThumbnailUrl(thumbnailUrl);
+    }
+
+    const videoUrl = toAuthenticatedMediaUrl(classRecord?.promotional_video_url);
+    if (videoUrl) {
+      setExistingVideoUrl(videoUrl);
+    }
 
     const loadedLocationType = normalizeLocationType(classRecord.location_type);
     const classTypeValue = classRecord.class_visibility === 'PRIVATE' ? 'PRIVATE' : 'GROUP';
@@ -1258,45 +1269,67 @@ const ClassCreationPage = () => {
       session_templates,
     };
 
-    const onSuccess = (createdUuid?: string) => {
+    const onSuccess = async (createdUuid?: string) => {
       const finalUuid = createdUuid || resolvedId;
 
-      if (finalUuid && !isDraft && (selectedThumbnail || selectedVideo)) {
+      if (finalUuid && !isDraft) {
+        const uploads: Promise<unknown>[] = [];
+
         if (selectedThumbnail) {
-          addClassThumbnailMut.mutate(
-            { path: { uuid: finalUuid }, body: { thumbnail: selectedThumbnail } },
-            {
-              onSuccess: () => toast.success('Thumbnail uploaded'),
-              onError: error =>
-                toast.error(getMutationErrorMessage(error, 'Failed to upload thumbnail')),
-            }
+          uploads.push(
+            addClassThumbnailMut.mutateAsync({
+              path: { uuid: finalUuid },
+              body: { thumbnail: selectedThumbnail },
+            })
           );
         }
 
         if (selectedVideo) {
-          addClassIntroVideoMut.mutate(
-            { path: { uuid: finalUuid }, body: { promotional_video: selectedVideo } },
-            {
-              onSuccess: () => toast.success('Video uploaded'),
-              onError: error =>
-                toast.error(getMutationErrorMessage(error, 'Failed to upload video')),
-            }
+          uploads.push(
+            addClassIntroVideoMut.mutateAsync({
+              path: { uuid: finalUuid },
+              body: { promotional_video: selectedVideo },
+            })
+          );
+        }
+
+        try {
+          await Promise.all(uploads);
+
+          if (selectedThumbnail) {
+            toast.success('Thumbnail uploaded');
+          }
+
+          if (selectedVideo) {
+            toast.success('Video uploaded');
+          }
+        } catch (error) {
+          toast.error(
+            getMutationErrorMessage(error, 'Failed to upload class media')
           );
         }
       }
 
-      qc.invalidateQueries({
-        queryKey: getClassDefinitionsForInstructorQueryKey({
-          path: { instructorUuid: instructor?.uuid as string },
-        }),
-      });
-      qc.invalidateQueries({
-        queryKey: getAllClassDefinitionsQueryKey({ query: { pageable: {} } }),
-      });
-      if (resolvedId)
+      await Promise.all([
         qc.invalidateQueries({
-          queryKey: getClassDefinitionQueryKey({ path: { uuid: resolvedId } }),
-        });
+          queryKey: getClassDefinitionsForInstructorQueryKey({
+            path: { instructorUuid: instructor?.uuid as string },
+          }),
+        }),
+        qc.invalidateQueries({
+          queryKey: getAllClassDefinitionsQueryKey({
+            query: { pageable: {} },
+          }),
+        }),
+        resolvedId
+          ? qc.invalidateQueries({
+            queryKey: getClassDefinitionQueryKey({
+              path: { uuid: resolvedId },
+            }),
+          })
+          : Promise.resolve(),
+      ]);
+
       if (typeof window !== 'undefined') window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
       toast.success(
         isDraft
@@ -2170,6 +2203,7 @@ const ClassCreationPage = () => {
               onRemoveVideo={() => setSelectedVideo(null)}
               existingThumbnailUrl={existingThumbnailUrl}
               existingVideoUrl={existingVideoUrl}
+              classId={classId}
             />
 
             {/* ── Reminder Options Card ──────────────────────────────────── */}
@@ -2255,9 +2289,9 @@ const ClassCreationPage = () => {
                 type='button'
                 className='h-10 rounded-md bg-primary px-5 text-sm font-medium shadow-sm sm:w-auto'
                 onClick={() => submitClass(false)}
-                disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
+                disabled={isSubmitting}
               >
-                Publish Class
+                {isSubmitting ? 'Publishing...' : 'Publish Class'}
               </Button>
             </div>
           </div>

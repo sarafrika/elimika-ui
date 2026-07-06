@@ -85,20 +85,49 @@ export default function CourseDetailsHero({
     ).values()
   );
 
-  const videoUrl = toAuthenticatedMediaUrl(course?.intro_video_url);
+  const isCourse = type === "course";
+
+  const videoUrl = isCourse
+    ? toAuthenticatedMediaUrl(course?.intro_video_url)
+    : toAuthenticatedMediaUrl(classData?.class?.promotional_video_url ?? "");
+
+  const imageUrl = isCourse
+    ? toAuthenticatedMediaUrl(course?.thumbnail_url)
+    : toAuthenticatedMediaUrl(classData?.class?.thumbnail_url ?? "");
+
+  const hasVideo = isCourse
+    ? !!course?.intro_video_url
+    : !!classData?.class?.promotional_video_url;
+
+  const title = isCourse ? course?.name : classData?.class?.title;
+  const category = isCourse
+    ? course?.category_names?.[0]?.toUpperCase()
+    : '';
 
   return (
     <div className='flex flex-col gap-4 sm:gap-6'>
       <div className="bg-primary text-primary-foreground group relative aspect-video overflow-hidden rounded-xl shadow-lg">
-        {course?.intro_video_url ? (
+        {hasVideo ? (
           <video
             src={videoUrl as string}
             controls
             className="h-full w-full object-cover"
-            poster={course?.thumbnail_url}
+            poster={imageUrl as string}
           />
         ) : (
           <>
+            {/* Show thumbnail as background if available */}
+            {imageUrl && (
+              <img
+                src={imageUrl as string}
+                alt={title ?? "Preview"}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            )}
+
+            {/* Optional dark overlay */}
+            <div className="absolute inset-0 bg-black/40" />
+
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <div className="mb-3 flex items-center justify-center">
@@ -106,15 +135,15 @@ export default function CourseDetailsHero({
                 </div>
 
                 <p className="text-lg font-black tracking-tight drop-shadow sm:text-xl lg:text-2xl">
-                  {course.category_names?.[0]?.toUpperCase() || "COURSE"}
+                  {category || (isCourse ? "COURSE" : "CLASS")}
                 </p>
 
                 <p className="text-base font-bold sm:text-lg lg:text-xl">
-                  {course.name}
+                  {title}
                 </p>
 
                 <p className="text-primary-foreground/80 text-xs sm:text-sm">
-                  {difficultyName || "Live course details"}
+                  {difficultyName || "Live details"}
                 </p>
               </div>
             </div>
@@ -140,16 +169,19 @@ export default function CourseDetailsHero({
       </div>
 
       <div className='flex flex-col gap-3 sm:gap-4'>
-        {type === "course" ? <h1 className='text-foreground text-xl font-black leading-tight sm:text-2xl lg:text-3xl'>
-          {course.name}
-        </h1> : <div>
+        {isCourse ?
           <h1 className='text-foreground text-xl font-black leading-tight sm:text-2xl lg:text-3xl'>
-            {classData?.class?.title}
-          </h1>
-          <p className="text-base font-bold sm:text-lg lg:text-xl">
             {course.name}
-          </p>
-        </div>}
+          </h1>
+          :
+          <div>
+            <h1 className='text-foreground text-xl font-black leading-tight sm:text-2xl lg:text-3xl'>
+              {classData?.class?.title}
+            </h1>
+            <p className="text-base font-bold sm:text-lg lg:text-xl">
+              {course.name}
+            </p>
+          </div>}
 
         <div className='flex flex-wrap items-center gap-2'>
           <span className='bg-success/5 text-success border-border flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold sm:text-sm'>
@@ -175,7 +207,7 @@ export default function CourseDetailsHero({
           <HTMLTextPreview htmlContent={course.description || ''} />
         </div>
 
-        {type === "course" ?
+        {isCourse ?
           (<div className='flex flex-wrap items-center gap-12 w-full text-sm'>
             <div className='flex items-start gap-2'>
               <div className='bg-muted flex h-8 w-8 items-center justify-center rounded-full'>

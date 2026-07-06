@@ -3,6 +3,7 @@
 import { Card } from '@/components/ui/card';
 import { FileVideo, Image, X } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { Button } from '../../../../../../components/ui/button';
 
 export interface MediaFile {
     type: 'thumbnail' | 'video';
@@ -18,6 +19,7 @@ interface ClassMediaUploadProps {
     onRemoveVideo?: () => void;
     existingThumbnailUrl?: string | null;
     existingVideoUrl?: string | null;
+    classId?: string | null;
 }
 
 export function ClassMediaUpload({
@@ -28,6 +30,7 @@ export function ClassMediaUpload({
     onRemoveVideo,
     existingThumbnailUrl,
     existingVideoUrl,
+    classId,
 }: ClassMediaUploadProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const videoInputRef = useRef<HTMLInputElement>(null);
@@ -107,16 +110,26 @@ export function ClassMediaUpload({
                                         <Image className='text-muted-foreground h-8 w-8' />
                                     </div>
                                 )}
-                                <button
+
+                                {thumbnailPreview && <button
                                     type='button'
                                     onClick={handleRemoveThumbnail}
                                     className='absolute right-2 top-2 rounded-full bg-destructive/90 p-1.5 text-white hover:bg-destructive'
                                 >
                                     <X className='h-4 w-4' />
-                                </button>
-                                <p className='text-muted-foreground absolute bottom-2 left-2 text-xs'>
-                                    {thumbnailPreview && selectedThumbnail?.name ? selectedThumbnail.name : existingThumbnailUrl ? 'Existing thumbnail' : 'Image selected'}
-                                </p>
+                                </button>}
+
+                                {existingThumbnailUrl && !thumbnailPreview && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-full rounded-none"
+                                    >
+                                        Replace thumbnail
+                                    </Button>
+                                )}
                             </div>
                         ) : (
                             <button
@@ -140,6 +153,8 @@ export function ClassMediaUpload({
                         />
                     </div>
 
+
+
                     {/* Video Upload */}
                     <div className='space-y-3'>
                         <label className='text-foreground text-sm font-semibold'>Promotional Video</label>
@@ -162,16 +177,26 @@ export function ClassMediaUpload({
                                         <FileVideo className='text-muted-foreground h-8 w-8' />
                                     </div>
                                 )}
-                                <button
+
+                                {videoPreview && <button
                                     type='button'
                                     onClick={handleRemoveVideo}
                                     className='absolute right-2 top-2 rounded-full bg-destructive/90 p-1.5 text-white hover:bg-destructive'
                                 >
                                     <X className='h-4 w-4' />
-                                </button>
-                                <p className='text-muted-foreground absolute bottom-2 left-2 text-xs'>
-                                    {videoPreview && selectedVideo?.name ? selectedVideo.name : existingVideoUrl ? 'Existing video' : 'Video selected'}
-                                </p>
+                                </button>}
+
+                                {existingVideoUrl && !videoPreview && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => videoInputRef.current?.click()}
+                                        className="w-full rounded-none"
+                                    >
+                                        Replace video
+                                    </Button>
+                                )}
                             </div>
                         ) : (
                             <button

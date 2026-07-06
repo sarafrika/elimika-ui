@@ -11,21 +11,20 @@ import {
   requiresPhysicalLocation,
   trimToUndefined,
 } from '@/lib/location-types';
+import type { CreateClassDefinitionMultipartData } from '@/services/client/types.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import type { CreateClassDefinitionMultipartData } from '@/services/client/types.gen';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
   createClassDefinitionMultipartMutation,
-  createClassDefinitionMultipartMutation as createClassDefinitionMutation,
   getAllClassDefinitionsQueryKey,
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
-  updateClassDefinitionMutation,
+  updateClassDefinitionMutation
 } from '../../../../../services/client/@tanstack/react-query.gen';
 import { ClassDetailsSection } from './ClassDetailsSection';
 import { ClassInformationSection } from './ClassInfoSection';
@@ -64,6 +63,8 @@ export interface ClassDetails {
   classroom: string;
   class_color: string;
   reminder: string;
+  thumbnail_url?: string;
+  promotional_video_url?: string;
 }
 
 export interface ScheduleSettings {
@@ -384,6 +385,7 @@ const ClassBuilderPage = ({
     pin: '',
     classroom: '',
     totalSlots: 0,
+    weekly: false,
   });
 
   // Notification Settings State
@@ -421,7 +423,7 @@ const ClassBuilderPage = ({
         days:
           prev.timetable.days && prev.timetable.days.length > 0
             ? prev.timetable.days
-            : [DAY_NAMES[normalizedWeekday]],
+            : [DAY_NAMES[normalizedWeekday]] as unknown as string[],
         time: {
           ...prev.timetable.time,
           duration:
@@ -549,7 +551,7 @@ const ClassBuilderPage = ({
         setScheduleSettings(prev => ({
           ...prev,
           startClass: {
-            date: startDate.toISOString().split('T')[0],
+            date: startDate.toISOString().split('T')[0] as string,
             startTime: startDate.toTimeString().slice(0, 5),
             endTime: endDate.toTimeString().slice(0, 5),
           },

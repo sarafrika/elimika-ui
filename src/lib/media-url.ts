@@ -15,7 +15,7 @@ function toProxyMediaUrl(pathname: string) {
   return `${PROXY_MEDIA_ROUTE}${pathname}`;
 }
 
-export function toAuthenticatedMediaUrl(url?: string | null) {
+export function toAuthenticatedMediaUrl(url?: string | null | undefined) {
   if (!url) {
     return url;
   }
@@ -48,6 +48,14 @@ export function toAuthenticatedMediaUrl(url?: string | null) {
   }
 }
 
+// export function isAuthenticatedMediaUrl(url?: string | null) {
+//   return typeof url === 'string' && url.startsWith(`${AUTHENTICATED_MEDIA_ROUTE}?`);
+// }
+
 export function isAuthenticatedMediaUrl(url?: string | null) {
-  return typeof url === 'string' && url.startsWith(`${AUTHENTICATED_MEDIA_ROUTE}?`);
+  return (
+    typeof url === 'string' &&
+    (url.startsWith('/api?') ||
+      url.startsWith('/api/proxy/'))
+  );
 }
