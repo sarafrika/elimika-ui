@@ -110,7 +110,7 @@ import { RubricGradingMatrix, useRubricGradeSelections } from './RubricGradingMa
 
 
 
-type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
+export type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
 type LessonContentItem = CourseLessonContent;
 type LessonModule = CourseLessonWithContent & {
   course?: {
@@ -231,7 +231,7 @@ function formatEnum(value?: string | null) {
     .join(' ');
 }
 
-function toSortableNumber(value: unknown) {
+export function toSortableNumber(value: unknown) {
   const numericValue = Number(value);
   return Number.isFinite(numericValue) ? numericValue : 0;
 }
@@ -1450,7 +1450,7 @@ function ConsoleSkeleton() {
   );
 }
 
-function RosterPanel({
+export function RosterPanel({
   activeInstanceStudentsCount,
   filteredRoster,
   activeInstanceStudents,

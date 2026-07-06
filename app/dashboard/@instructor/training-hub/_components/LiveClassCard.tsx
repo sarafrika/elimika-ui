@@ -480,12 +480,20 @@ export function LiveClassCard({
               </div>
             </div>
 
-            <Link
-              href={`/dashboard/classes/class-training/${liveClass.classUuid}`}
-              className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
-            >
-              View Class
-            </Link>
+            <div>
+              <Link
+                href={`/dashboard/classes/class-training/${liveClass.classUuid}`}
+                className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
+              >
+                View Class
+              </Link>
+              <Link
+                href={`/dashboard/classes/class-training/${liveClass.classUuid}/award-certificates`}
+                className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
+              >
+                Award Certificates
+              </Link>
+            </div>
           </div> :
             <div className='border-t border-border/60 bg-muted/20 px-4 py-4'>
               <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>

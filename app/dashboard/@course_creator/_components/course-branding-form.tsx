@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import { tanstackClient } from '@/services/api/tanstack-client';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Upload } from 'lucide-react';
 import Image from 'next/image';
-import type React from 'react';
 import { forwardRef, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -16,11 +17,11 @@ import * as z from 'zod';
 import { Button } from '../../../../components/ui/button';
 import Spinner from '../../../../components/ui/spinner';
 import { useStepper } from '../../../../components/ui/stepper';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import {
   getCourseByUuidQueryKey,
   updateCourseMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import DragDropUpload from '../../@student/assignment/drag-drop';
 import { FormSection } from './course-creation-form';
 import {
   type CourseCreationFormValues,
@@ -137,12 +138,9 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
     );
 
     const handleFileUpload = async (
-      e: React.ChangeEvent<HTMLInputElement>,
+      file: File,
       { key, setPreview, upload, onChange }: UploadOptions
     ) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
       if (key === 'intro_video' && file.size > MAX_VIDEO_SIZE_BYTES) {
         toast.error(`Video too large. Max size: ${MAX_VIDEO_SIZE_MB}MB.`);
         return;
@@ -318,46 +316,15 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 <FormItem>
                   <FormControl>
                     <div className='flex flex-col gap-4'>
-                      {/* Stylish Upload Area */}
-                      <div>
-                        <label
-                          htmlFor='introVideoUpload'
-                          className='border-primary/40 text-primary hover:border-primary hover:bg-primary/5 dark:hover:border-primary/80 dark:hover:bg-primary/10 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-10 text-center transition'
-                        >
-                          {/* Icon */}
-                          <svg
-                            xmlns='http://www.w3.org/2000/svg'
-                            className='text-primary h-12 w-12'
-                            fill='none'
-                            viewBox='0 0 24 24'
-                            stroke='currentColor'
-                            strokeWidth={1.5}
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              d='M15.75 10.5V6.75A2.25 2.25 0 0013.5 4.5h-6A2.25 2.25 0 005.25 6.75v10.5A2.25 2.25 0 007.5 19.5h6a2.25 2.25 0 002.25-2.25v-3.75m0-2.25l5.25-3v9l-5.25-3z'
-                            />
-                          </svg>
+                      {!videoPreview ? (
+                        <DragDropUpload
+                          accept="video/*"
+                          multiple={false}
+                          onFilesAdded={files => {
+                            const file = files[0];
+                            if (!file) return;
 
-                          <p className='text-sm font-medium'>
-                            <span className='text-primary'>Click to upload</span> or drag a video
-                            file here
-                          </p>
-
-                          <p className='text-muted-foreground text-xs'>
-                            MP4 up to {MAX_VIDEO_SIZE_MB}MB
-                          </p>
-                        </label>
-
-                        {/* Hidden File Input */}
-                        <Input
-                          id='introVideoUpload'
-                          type='file'
-                          accept='video/*'
-                          className='hidden'
-                          onChange={e =>
-                            handleFileUpload(e, {
+                            handleFileUpload(file, {
                               key: 'intro_video',
                               setPreview: setVideoPreview,
                               upload: (file, callbacks) =>
@@ -369,26 +336,74 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                                   callbacks
                                 ),
                               onChange: field.onChange,
-                            })
-                          }
-                        />
-                      </div>
+                            });
+                          }}
+                        >
+                          <div className="flex flex-col items-center gap-2">
+                            <Upload className="h-6 w-6 text-muted-foreground" />
+                            <p className="text-sm">Drag & drop or click to upload video</p>
+                            <p className="text-xs text-muted-foreground">
+                              MP4 up to {MAX_VIDEO_SIZE_MB}MB
+                            </p>
+                          </div>
+                        </DragDropUpload>
+                      ) : (
+                        <div className='space-y-3'>
+                          <div className='flex items-center justify-between'>
+                            <span className='text-sm font-medium'>Current promotional video</span>
 
-                      {/* OR text input for video URL */}
+                            <Button
+                              type='button'
+                              variant='outline'
+                              size='sm'
+                              onClick={() =>
+                                document.getElementById('introVideoUpload')?.click()
+                              }
+                            >
+                              Replace
+                            </Button>
+                          </div>
+
+                          <video controls className='w-full max-w-md rounded shadow'>
+                            <source src={videoPreview} type='video/mp4' />
+                            Your browser does not support the video tag.
+                          </video>
+                        </div>
+                      )}
+
+                      <Input
+                        id='introVideoUpload'
+                        type='file'
+                        accept='video/*'
+                        className='hidden'
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          handleFileUpload(file, {
+                            key: 'intro_video',
+                            setPreview: setVideoPreview,
+                            upload: (file, callbacks) =>
+                              courseIntroVideoMutation.mutate(
+                                {
+                                  body: { intro_video: file.name },
+                                  params: {
+                                    path: { uuid: editingCourseId as string },
+                                  },
+                                },
+                                callbacks
+                              ),
+                            onChange: field.onChange,
+                          });
+                        }}
+                      />
+
                       <Input
                         type='text'
                         placeholder='Or paste video link (e.g. Vimeo, YouTube)'
                         value={isString(field.value) ? field.value : ''}
                         onChange={field.onChange}
                       />
-
-                      {/* Video Preview */}
-                      {videoPreview && (
-                        <video controls className='w-full max-w-md rounded shadow'>
-                          <source src={videoPreview} type='video/mp4' />
-                          Your browser does not support the video tag.
-                        </video>
-                      )}
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -406,46 +421,15 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 <FormItem>
                   <FormControl>
                     <div className='flex flex-col gap-4'>
-                      {/* Stylish Banner Upload */}
-                      <div>
-                        <label
-                          htmlFor='bannerUpload'
-                          className='border-primary/40 text-primary hover:border-primary hover:bg-primary/5 dark:hover:border-primary/80 dark:hover:bg-primary/10 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-10 text-center transition'
-                        >
-                          {/* Icon */}
-                          <svg
-                            xmlns='http://www.w3.org/2000/svg'
-                            className='text-primary h-12 w-12'
-                            fill='none'
-                            viewBox='0 0 24 24'
-                            stroke='currentColor'
-                            strokeWidth={1.5}
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              d='M3.75 4.5h16.5m-16.5 0A2.25 2.25 0 001.5 6.75v10.5A2.25 2.25 0 003.75 19.5h16.5a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0020.25 4.5m-16.5 0v2.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V4.5'
-                            />
-                          </svg>
+                      {!bannerPreview ? (
+                        <DragDropUpload
+                          accept="image/*"
+                          multiple={false}
+                          onFilesAdded={files => {
+                            const file = files[0];
+                            if (!file) return;
 
-                          <p className='text-sm font-medium'>
-                            <span className='text-primary'>Click to upload</span> or drag a banner
-                            image here
-                          </p>
-
-                          <p className='text-muted-foreground text-xs'>
-                            PNG or JPG, recommended ratio 4:1
-                          </p>
-                        </label>
-
-                        {/* Hidden File Input */}
-                        <Input
-                          id='bannerUpload'
-                          type='file'
-                          accept='image/*'
-                          className='hidden'
-                          onChange={e =>
-                            handleFileUpload(e, {
+                            handleFileUpload(file, {
                               key: 'banner',
                               setPreview: setBannerPreview,
                               upload: (file, callbacks) =>
@@ -457,22 +441,72 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                                   callbacks
                                 ),
                               onChange: field.onChange,
-                            })
-                          }
-                        />
-                      </div>
+                            });
+                          }}
+                        >
+                          <div className="flex flex-col items-center gap-2">
+                            <Upload className="h-6 w-6 text-muted-foreground" />
+                            <p className="text-sm">Drag & drop or click to upload banner</p>
+                            <p className="text-xs text-muted-foreground">
+                              PNG or JPG (4:1 ratio)
+                            </p>
+                          </div>
+                        </DragDropUpload>
+                      ) : (
+                        <div className='space-y-3'>
+                          <div className='flex items-center justify-between'>
+                            <span className='text-sm font-medium'>Current banner</span>
 
-                      {bannerPreview && (
-                        <div className='h-24 w-full max-w-3xl overflow-hidden rounded border'>
-                          <Image
-                            src={bannerPreview}
-                            alt='Banner Preview'
-                            width={1200}
-                            height={300}
-                            className='h-full w-full object-contain'
-                          />
+                            <Button
+                              type='button'
+                              variant='outline'
+                              size='sm'
+                              onClick={() =>
+                                document.getElementById('bannerUpload')?.click()
+                              }
+                            >
+                              Replace
+                            </Button>
+                          </div>
+
+                          <div className='h-24 w-full max-w-3xl overflow-hidden rounded border'>
+                            <Image
+                              src={bannerPreview}
+                              alt='Banner Preview'
+                              width={1200}
+                              height={300}
+                              className='h-full w-full object-contain'
+                            />
+                          </div>
                         </div>
                       )}
+
+                      <Input
+                        id='bannerUpload'
+                        type='file'
+                        accept='image/*'
+                        className='hidden'
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          handleFileUpload(file, {
+                            key: 'banner',
+                            setPreview: setBannerPreview,
+                            upload: (file, callbacks) =>
+                              courseBannerMutation.mutate(
+                                {
+                                  body: { banner: file.name },
+                                  params: {
+                                    path: { uuid: editingCourseId as string },
+                                  },
+                                },
+                                callbacks
+                              ),
+                            onChange: field.onChange,
+                          });
+                        }}
+                      />
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -490,44 +524,15 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 <FormItem>
                   <FormControl>
                     <div className='flex flex-col gap-4'>
-                      {/* Stylish Thumbnail Upload */}
-                      <div>
-                        <label
-                          htmlFor='thumbnailUpload'
-                          className='border-primary/40 text-primary hover:border-primary hover:bg-primary/5 dark:hover:border-primary/80 dark:hover:bg-primary/10 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-10 text-center transition'
-                        >
-                          {/* Icon */}
-                          <svg
-                            xmlns='http://www.w3.org/2000/svg'
-                            className='text-primary h-12 w-12'
-                            fill='none'
-                            viewBox='0 0 24 24'
-                            stroke='currentColor'
-                            strokeWidth={1.5}
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              d='M3 5.25C3 4.007 4.007 3 5.25 3h13.5A2.25 2.25 0 0121 5.25v13.5A2.25 2.25 0 0118.75 21H5.25A2.25 2.25 0 013 18.75V5.25zM7.5 12l2.25 2.25L13.5 10.5l4.5 6H6l1.5-4.5z'
-                            />
-                          </svg>
+                      {!thumbnailPreview ? (
+                        <DragDropUpload
+                          accept="image/*"
+                          multiple={false}
+                          onFilesAdded={files => {
+                            const file = files[0];
+                            if (!file) return;
 
-                          <p className='text-sm font-medium'>
-                            <span className='text-primary'>Click to upload</span> or drag an image
-                            here
-                          </p>
-
-                          <p className='text-muted-foreground text-xs'>PNG or JPG up to 15MB</p>
-                        </label>
-
-                        {/* Hidden File Input */}
-                        <Input
-                          id='thumbnailUpload'
-                          type='file'
-                          accept='image/*'
-                          className='hidden'
-                          onChange={e =>
-                            handleFileUpload(e, {
+                            handleFileUpload(file, {
                               key: 'thumbnail',
                               setPreview: setThumbnailPreview,
                               upload: (file, callbacks) =>
@@ -539,25 +544,78 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                                   callbacks
                                 ),
                               onChange: field.onChange,
-                            })
-                          }
-                        />
-                      </div>
+                            });
+                          }}
+                        >
+                          <div className="flex flex-col items-center gap-2">
+                            <Upload className="h-6 w-6 text-muted-foreground" />
+                            <p className="text-sm">Drag & drop or click to upload image</p>
+                            <p className="text-xs text-muted-foreground">
+                              PNG or JPG up to 15MB
+                            </p>
+                          </div>
+                        </DragDropUpload>
+                      ) : (
+                        <div className='space-y-3'>
+                          <div className='flex items-center justify-between'>
+                            <span className='text-sm font-medium'>Current thumbnail</span>
 
-                      {thumbnailPreview && (
-                        <div className='h-32 w-48 overflow-hidden rounded border'>
-                          <Image
-                            src={toAuthenticatedMediaUrl(thumbnailPreview) || thumbnailPreview}
-                            width={192}
-                            height={128}
-                            alt='Thumbnail Preview'
-                            className='h-full w-full object-cover'
-                            unoptimized={isAuthenticatedMediaUrl(
-                              toAuthenticatedMediaUrl(thumbnailPreview)
-                            )}
-                          />
+                            <Button
+                              type='button'
+                              variant='outline'
+                              size='sm'
+                              onClick={() =>
+                                document.getElementById('thumbnailUpload')?.click()
+                              }
+                            >
+                              Replace
+                            </Button>
+                          </div>
+
+                          <div className='h-32 w-48 overflow-hidden rounded border'>
+                            <Image
+                              src={
+                                toAuthenticatedMediaUrl(thumbnailPreview) ||
+                                thumbnailPreview
+                              }
+                              width={192}
+                              height={128}
+                              alt='Thumbnail Preview'
+                              className='h-full w-full object-cover'
+                              unoptimized={isAuthenticatedMediaUrl(
+                                toAuthenticatedMediaUrl(thumbnailPreview)
+                              )}
+                            />
+                          </div>
                         </div>
                       )}
+
+                      <Input
+                        id='thumbnailUpload'
+                        type='file'
+                        accept='image/*'
+                        className='hidden'
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          handleFileUpload(file, {
+                            key: 'thumbnail',
+                            setPreview: setThumbnailPreview,
+                            upload: (file, callbacks) =>
+                              courseThumbnailMutation.mutate(
+                                {
+                                  body: { thumbnail: file.name },
+                                  params: {
+                                    path: { uuid: editingCourseId as string },
+                                  },
+                                },
+                                callbacks
+                              ),
+                            onChange: field.onChange,
+                          });
+                        }}
+                      />
                     </div>
                   </FormControl>
                   <FormMessage />
