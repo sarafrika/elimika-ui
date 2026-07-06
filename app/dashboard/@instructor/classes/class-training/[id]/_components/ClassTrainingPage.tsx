@@ -3127,7 +3127,7 @@ export default function ClassTrainingPage({
   const [remainingTime, setRemainingTime] = useState('');
   useEffect(() => {
     if (!activeSchedule?.started_at) {
-      setRemainingTime('');
+      setRemainingTime("");
       return;
     }
 
@@ -3137,19 +3137,19 @@ export default function ClassTrainingPage({
       const elapsed = Date.now() - startedAt;
 
       if (elapsed <= 0) {
-        setRemainingTime('00:00:00');
+        setRemainingTime("00:00:00");
         return;
       }
 
-      const hours = Math.floor(elapsed / (1000 * 60 * 60));
-      const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
+      const hours = Math.floor(elapsed / 3_600_000);
+      const minutes = Math.floor((elapsed % 3_600_000) / 60_000);
+      const seconds = Math.floor((elapsed % 60_000) / 1000);
 
       setRemainingTime(
-        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
+        `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
           2,
-          '0'
-        )}:${String(seconds).padStart(2, '0')}`
+          "0"
+        )}:${String(seconds).padStart(2, "0")}`
       );
     };
 
@@ -3625,7 +3625,7 @@ export default function ClassTrainingPage({
                   )}
 
                   {activeTab === 'practice' && (
-                    <div className='mx-auto space-y-4 p-2 md:p-2'>
+                    <div className="mx-auto space-y-4 p-2 md:p-2 pb-40">
                       <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
                         <div className='border-border/70 border-b p-4'>
                           <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
@@ -3638,6 +3638,7 @@ export default function ClassTrainingPage({
                             Class activities tied to this skill — guide learners through these during class.
                           </p>
                         </div>
+
                         <div className='p-4'>
                           <PracticeActivityList
                             courseUuid={activeLessonCourseUuid || undefined}

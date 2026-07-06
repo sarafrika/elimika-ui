@@ -29,3 +29,21 @@ export function useCountdown(expiry?: string | Date | null) {
 
   return { expired: secondsLeft <= 0, hours, minutes, seconds };
 }
+
+export function toLocalISOString(date: string | Date): string {
+  const d = new Date(date);
+
+  const pad = (n: number) => n.toString().padStart(2, "0");
+
+  return [
+    d.getFullYear(),
+    pad(d.getMonth() + 1),
+    pad(d.getDate()),
+  ].join("-") +
+    "T" +
+    [
+      pad(d.getHours()),
+      pad(d.getMinutes()),
+      pad(d.getSeconds()),
+    ].join(":");
+}

@@ -142,7 +142,7 @@ function supportsWorkspaceAliasPath(domain: UserDomain, path: string) {
   }
 
   if (child === 'instructor') {
-    return domain === 'student' || domain === 'instructor' || domain === 'course_creator';
+    return domain === 'student' || domain === 'instructor' || domain === 'course_creator' || domain === 'organisation_user' || domain === 'organisation';
   }
 
   if (
@@ -150,11 +150,11 @@ function supportsWorkspaceAliasPath(domain: UserDomain, path: string) {
     child === 'available-programs' ||
     child === 'available-classes'
   ) {
-    return domain === 'student' || domain === 'instructor' || domain === 'course_creator';
+    return domain === 'student' || domain === 'instructor' || domain === 'course_creator' || domain === 'organisation_user' || domain === 'organisation';
   }
 
   if (segments.length === 2) {
-    return domain === 'student' || domain === 'instructor' || domain === 'course_creator';
+    return domain === 'student' || domain === 'instructor' || domain === 'course_creator' || domain === 'organisation_user' || domain === 'organisation';
   }
 
   return false;

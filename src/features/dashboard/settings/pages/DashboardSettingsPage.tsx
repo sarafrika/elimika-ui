@@ -100,6 +100,24 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
   const uploadProfileImage = useMutation(uploadProfileImageMutation());
   const [isEditing, setIsEditing] = useState(false);
 
+  const updateLastActive = () => {
+    localStorage.setItem("lastActive", new Date().toISOString());
+  };
+
+  ["click", "mousemove", "keydown", "scroll", "touchstart"].forEach((event) => {
+    window.addEventListener(event, updateLastActive);
+  });
+
+  const lastActive = localStorage.getItem("lastActive");
+  const formattedLastActive = new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(lastActive as string));
+
   const form = useForm<UserDetailsFormValues>({
     resolver: zodResolver(userDetailsSchema),
     defaultValues: {
@@ -911,7 +929,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                     <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
                       <SettingsField
                         label='Last active'
-                        value={formatDate(profile?.updated_date ?? null)}
+                        value={formattedLastActive as string}
                         helperText='Most recent account activity recorded on this profile.'
                       />
                       <SettingsField
