@@ -36,7 +36,7 @@ import { format } from 'date-fns';
 import { Button } from '../../../../../components/ui/button';
 import { Calendar } from '../../../../../components/ui/calendar';
 import { Checkbox } from '../../../../../components/ui/checkbox';
-import { useInstructor } from '../../../../../context/instructor-context';
+import { useUserProfile } from '../../../../../context/profile-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
   normalizeLocationType,
@@ -433,10 +433,12 @@ const expandSessionsForConflictCheck = (
   return sessions;
 };
 
-const NewClassCreationPage = () => {
+const ClassCreationPage = () => {
   const router = useRouter();
   const qc = useQueryClient();
-  const instructor = useInstructor();
+  const profile = useUserProfile()
+  const instructor = profile?.instructor
+  const organisation = profile?.organisation_affiliations?.[0]
 
   const [classId, setClassId] = useState<string | null>(null);
   const [isClientReady, setIsClientReady] = useState(false);
@@ -1221,12 +1223,13 @@ const NewClassCreationPage = () => {
         : defaultEnd;
 
     const payload: CreateClassDefinitionMultipartData['body'] = {
+      default_instructor_uuid: instructor?.uuid as string,
+      organisation_uuid: organisation?.organisation_uuid as string,
       course_uuid: selectedSource === 'course' ? classDetails.course_uuid || undefined : undefined,
       program_uuid:
         selectedSource === 'program' ? classDetails.program_uuid || undefined : undefined,
       title: classDetails.title,
       description: classDetails.description || undefined,
-      default_instructor_uuid: instructor?.uuid as string,
       class_visibility: classDetails.class_type === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
       session_format:
         classDetails.class_type === 'PRIVATE'
@@ -2268,7 +2271,7 @@ const NewClassCreationPage = () => {
   );
 };
 
-export default NewClassCreationPage;
+export default ClassCreationPage;
 
 const FieldGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className='space-y-2'>

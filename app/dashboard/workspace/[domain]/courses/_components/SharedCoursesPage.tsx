@@ -201,6 +201,7 @@ const createCatalogCards = (
       rating: item.rating,
       reviewCount: item.reviewCount,
       enrollmentCount: item.enrollmentCount,
+      certificateHref: ''
     };
   });
 
@@ -247,7 +248,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   const isInstructorDomain = domain === 'instructor';
   const isStudentDomain = domain === 'student';
-  const isOrganisationDomain = domain === 'organisation' || domain === 'organisation_user';
+  const isOrganisationDomain = domain === 'organisation_user' || domain === 'organisation';
   const canApplyToTrain = isInstructorDomain || isOrganisationDomain;
   const organisationUuid = organisation?.uuid;
   const canOrganisationApply = !isOrganisationDomain || organisation?.admin_verified === true;

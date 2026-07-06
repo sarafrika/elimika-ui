@@ -5,6 +5,7 @@ import { Award, BookOpen, Calendar, Search } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '../../../../../../components/ui/avatar';
+import { Skeleton } from '../../../../../../components/ui/skeleton';
 import type { CoursesCatalogCardData } from './courses-data';
 import { StarRatingSummary } from './StarRating';
 
@@ -40,6 +41,8 @@ const levelStyles: Record<string, string> = {
 export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatalogCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
   const level = card.secondaryMeta.toLowerCase();
+
+  const isLoading = !card.provider;
 
   return (
     <article className='border-border bg-card group overflow-hidden rounded-sm border'>
@@ -109,25 +112,37 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
           </Link>
 
           <div className="flex flex-row items-center justify-between mt-1">
-            <div className="flex flex-row items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="" alt={card.provider} />
+            {isLoading ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-6 w-24" />
+                </div>
 
-                <AvatarFallback className="text-[12px] font-medium leading-none">
-                  {card.provider?.slice(0, 2).toUpperCase() || '??'}
-                </AvatarFallback>
-              </Avatar>
+                <Skeleton className="h-6 w-20" />
+              </>
+            ) : (
+              <>
+                <div className="flex flex-row items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="" alt={card.provider} />
+                    <AvatarFallback className="text-[12px] font-medium leading-none">
+                      {card.provider?.slice(0, 2).toUpperCase() || "??"}
+                    </AvatarFallback>
+                  </Avatar>
 
-              <p className="text-muted-foreground text-[14px]">
-                {card.provider}
-              </p>
-            </div>
+                  <p className="text-muted-foreground text-[14px]">
+                    {card.provider}
+                  </p>
+                </div>
 
-            <StarRatingSummary
-              rating={card.rating ?? 0}
-              reviewCount={card.reviewCount}
-              showCount={true}
-            />
+                <StarRatingSummary
+                  rating={card.rating ?? 0}
+                  reviewCount={card.reviewCount}
+                  showCount
+                />
+              </>
+            )}
           </div>
         </div>
 
