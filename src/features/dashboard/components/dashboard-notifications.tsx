@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { absoluteDateTime, relativeTimeFromNow } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import {
   useMarkAllNotificationsRead,
@@ -18,7 +19,6 @@ import {
   useNotifications,
   type UserNotification,
 } from '@/services/notifications';
-import { formatDistanceToNow } from 'date-fns';
 import {
   Award,
   Bell,
@@ -56,16 +56,7 @@ function notificationIcon(type: string) {
 
 function notificationTime(notification: UserNotification) {
   const rawDate = notification.occurred_at ?? notification.created_at;
-  if (!rawDate) {
-    return '';
-  }
-
-  const date = new Date(rawDate);
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-
-  return formatDistanceToNow(date, { addSuffix: true });
+  return relativeTimeFromNow(rawDate);
 }
 
 function NotificationRow({
@@ -105,7 +96,12 @@ function NotificationRow({
           <p className='text-muted-foreground mt-1 line-clamp-2 text-xs leading-5'>
             {notification.body}
           </p>
-          <p className='text-muted-foreground mt-2 text-[11px]'>{notificationTime(notification)}</p>
+          <p
+            className='text-muted-foreground mt-2 text-[11px]'
+            title={absoluteDateTime(notification.occurred_at ?? notification.created_at)}
+          >
+            {notificationTime(notification)}
+          </p>
         </div>
       </div>
     </Link>

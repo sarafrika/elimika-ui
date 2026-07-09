@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { absoluteDateTime, relativeTimeFromNow } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import {
   useMarkAllNotificationsRead,
@@ -16,7 +17,6 @@ import {
   type NotificationListParams,
   type UserNotification,
 } from '@/services/notifications';
-import { format, formatDistanceToNow } from 'date-fns';
 import {
   Archive,
   Award,
@@ -89,28 +89,14 @@ function getQueryParams(tab: NotificationTab, page: number): NotificationListPar
   return { page, size: pageSize };
 }
 
-function notificationDate(notification: UserNotification) {
-  const rawDate = notification.occurred_at ?? notification.created_at;
-  if (!rawDate) {
-    return null;
-  }
-
-  const date = new Date(rawDate);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date;
-}
-
 function notificationTime(notification: UserNotification) {
-  const date = notificationDate(notification);
-  return date ? formatDistanceToNow(date, { addSuffix: true }) : 'Recently';
+  const rawDate = notification.occurred_at ?? notification.created_at;
+  return relativeTimeFromNow(rawDate, 'Recently');
 }
 
 function notificationExactTime(notification: UserNotification) {
-  const date = notificationDate(notification);
-  return date ? format(date, 'PPp') : 'Recently';
+  const rawDate = notification.occurred_at ?? notification.created_at;
+  return absoluteDateTime(rawDate, 'Recently');
 }
 
 function notificationTypeLabel(value: string) {

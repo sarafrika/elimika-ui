@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDistanceToNow } from 'date-fns';
+import { relativeTimeFromNow } from '@/lib/date';
 import Link from 'next/link';
 import {
   AlertCircle,
@@ -116,14 +116,7 @@ const getEventIcon = (event: AdminActivityEvent) => {
 
 const resolveEventTimestamp = (event: AdminActivityEvent): string => {
   const timestamp = event.occurred_at ?? event.created_at ?? event.timestamp;
-  if (!timestamp) return 'a few moments ago';
-
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) {
-    return 'a few moments ago';
-  }
-
-  return formatDistanceToNow(date, { addSuffix: true });
+  return relativeTimeFromNow(timestamp, 'a few moments ago');
 };
 
 const resolveEventSummary = (event: AdminActivityEvent): string =>

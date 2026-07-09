@@ -7,7 +7,7 @@ import { useUserProfile } from '@/context/profile-context';
 import { getDashboardStatisticsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useAdminActivityFeed } from '@/services/admin';
 import { useQuery } from '@tanstack/react-query';
-import { formatDistanceToNow } from 'date-fns';
+import { relativeTimeFromNow } from '@/lib/date';
 import { Activity, BarChart3, ShieldQuestion } from 'lucide-react';
 
 export default function AuditActivityPage() {
@@ -89,9 +89,7 @@ export default function AuditActivityPage() {
               >
                 <p className='font-medium'>{event.title ?? 'Admin event'}</p>
                 <p className='text-muted-foreground text-xs'>
-                  {event.timestamp
-                    ? formatDistanceToNow(new Date(event.timestamp), { addSuffix: true })
-                    : '—'}
+                  {event.timestamp ? relativeTimeFromNow(event.timestamp, '—') : '—'}
                 </p>
                 {event.description ? (
                   <p className='text-muted-foreground text-xs'>{event.description}</p>
