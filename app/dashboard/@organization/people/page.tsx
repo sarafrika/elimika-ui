@@ -18,7 +18,8 @@ import {
   Wallet as WalletIcon,
   X,
 } from 'lucide-react';
-import { type FormEvent, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -254,7 +255,13 @@ export default function OrganisationPeoplePage() {
   const qc = useQueryClient();
   const organisationUuid = organisation?.uuid ?? '';
 
-  const [domainFilter, setDomainFilter] = useState('');
+  const searchParams = useSearchParams();
+  const domainParam = searchParams.get('domain') ?? '';
+  const [domainFilter, setDomainFilter] = useState(domainParam);
+  // Keep the role filter in sync when navigating between Students/Instructors nav links.
+  useEffect(() => {
+    setDomainFilter(domainParam);
+  }, [domainParam]);
   const [isMemberSheetOpen, setIsMemberSheetOpen] = useState(false);
   const [memberForm, setMemberForm] = useState<MemberFormState>(() => initialMemberFormState());
 
