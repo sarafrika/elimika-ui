@@ -540,11 +540,6 @@ export const zAssessmentRubric = z
       .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
       .readonly()
       .optional(),
-    rubric_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the rubric based on its type.')
-      .readonly()
-      .optional(),
     assessment_scope: z
       .string()
       .describe(
@@ -555,6 +550,11 @@ export const zAssessmentRubric = z
     usage_status: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive status indicating usage and accessibility.')
+      .readonly()
+      .optional(),
+    rubric_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the rubric based on its type.')
       .readonly()
       .optional(),
   })
@@ -3396,16 +3396,6 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
-      .readonly()
-      .optional(),
-    is_major_assessment: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
-      .readonly()
-      .optional(),
     contribution_level: z
       .string()
       .describe('**[READ-ONLY]** Level of contribution to final grade based on weight.')
@@ -3421,6 +3411,16 @@ export const zCourseAssessment = z
     assessment_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
+      .readonly()
+      .optional(),
+    is_major_assessment: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
       .readonly()
       .optional(),
   })
@@ -5953,24 +5953,24 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
-      .readonly()
-      .optional(),
-    status_description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
     can_be_cancelled: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
+    status_description: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
       .readonly()
       .optional(),
   })
@@ -7650,14 +7650,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    is_upcoming: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended this class.')
+      .readonly()
+      .optional(),
+    is_upcoming: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
       .readonly()
       .optional(),
   })
@@ -9719,6 +9719,34 @@ export const zApiResponseListClassAssignmentSchedule = z.object({
 export const zApiResponseListClassDefinitionResponse = z.object({
   success: z.boolean().optional(),
   data: z.array(zClassDefinitionResponse).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Amount an organisation owes an instructor for delivered class sessions
+ */
+export const zOrganisationInstructorPayable = z
+  .object({
+    instructor_uuid: z.string().uuid().describe('UUID of the instructor owed').optional(),
+    amount_owed: z
+      .number()
+      .describe('Total amount owed = sum(training_fee x completed sessions)')
+      .optional(),
+    class_count: z.coerce
+      .bigint()
+      .describe("Number of the organisation's classes assigned to this instructor")
+      .optional(),
+    session_count: z.coerce
+      .bigint()
+      .describe('Total completed sessions across those classes')
+      .optional(),
+  })
+  .describe('Amount an organisation owes an instructor for delivered class sessions');
+
+export const zApiResponseListOrganisationInstructorPayable = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zOrganisationInstructorPayable).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -17259,6 +17287,20 @@ export const zGetClassDefinitionsForOrganisationData = z.object({
  * Class definitions retrieved successfully
  */
 export const zGetClassDefinitionsForOrganisationResponse = zApiResponseListClassDefinitionResponse;
+
+export const zGetInstructorPayablesForOrganisationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid().describe('UUID of the organisation'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Instructor payables retrieved successfully
+ */
+export const zGetInstructorPayablesForOrganisationResponse =
+  zApiResponseListOrganisationInstructorPayable;
 
 export const zGetClassMediaData = z.object({
   body: z.never().optional(),

@@ -1,10 +1,18 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Coins, Receipt, ShoppingCart, TrendingUp } from 'lucide-react';
+import { Coins, HandCoins, Receipt, ShoppingCart, TrendingUp } from 'lucide-react';
+import { useMemo } from 'react';
+import { useOrganisation } from '@/context/organisation-context';
+import { useInstructorsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { extractEntity } from '@/lib/api-helpers';
-import type { RevenueAmountDto, RevenueDashboardDto } from '@/services/client';
+import type {
+  OrganisationInstructorPayable,
+  RevenueAmountDto,
+  RevenueDashboardDto,
+} from '@/services/client';
 import {
+  getInstructorPayablesForOrganisationOptions,
   getPlatformFeeSummaryOptions,
   getRevenueDashboardOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -31,7 +39,15 @@ const money = (amounts?: RevenueAmountDto[]): string => {
 const count = (value?: bigint | number | null): string =>
   value === undefined || value === null ? '—' : Number(value).toLocaleString();
 
+const amount = (value?: number | null): string =>
+  value === undefined || value === null
+    ? '—'
+    : Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 export default function OrganisationRevenuePage() {
+  const organisation = useOrganisation();
+  const organisationUuid = organisation?.uuid ?? '';
+
   const dashboardQuery = useQuery({
     ...getRevenueDashboardOptions({ query: { domain: 'organisation_user' } }),
   });
@@ -40,9 +56,45 @@ export default function OrganisationRevenuePage() {
     ...getPlatformFeeSummaryOptions(),
   });
 
+  const payablesQuery = useQuery({
+    ...getInstructorPayablesForOrganisationOptions({ path: { organisationUuid } }),
+    enabled: Boolean(organisationUuid),
+  });
+
   const dashboard = extractEntity<RevenueDashboardDto>(dashboardQuery.data) ?? {};
   const platformFees = (platformFeesQuery.data?.data ?? []) as RevenueAmountDto[];
   const isLoading = dashboardQuery.isLoading;
+
+  const payables = useMemo(
+    () => (payablesQuery.data?.data ?? []) as OrganisationInstructorPayable[],
+    [payablesQuery.data]
+  );
+  const totalOwed = useMemo(
+    () => payables.reduce((sum, p) => sum + Number(p.amount_owed ?? 0), 0),
+    [payables]
+  );
+
+  const instructorIds = useMemo(
+    () => payables.map(p => p.instructor_uuid ?? '').filter(Boolean),
+    [payables]
+  );
+  const { instructorMap } = useInstructorsByIds(instructorIds);
+  const userIds = useMemo(
+    () =>
+      instructorIds
+        .map(id => instructorMap[id]?.user_uuid ?? '')
+        .filter(Boolean),
+    [instructorIds, instructorMap]
+  );
+  const { userMap } = useUsersByIds(userIds);
+
+  const instructorName = (instructorUuid?: string) => {
+    if (!instructorUuid) return 'Instructor';
+    const userUuid = instructorMap[instructorUuid]?.user_uuid;
+    const user = userUuid ? userMap[userUuid] : undefined;
+    const name = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim();
+    return name || `${instructorUuid.slice(0, 8)}…`;
+  };
 
   const kpis = [
     { label: 'Gross revenue', value: money(dashboard.gross_totals), icon: Coins, tone: 'success' as const },
@@ -123,6 +175,58 @@ export default function OrganisationRevenuePage() {
             )}
           </SectionCard>
         </div>
+
+        <SectionCard
+          title='Payables to instructors'
+          description='What your organisation owes instructors for delivered class sessions'
+        >
+          <div className='mb-4'>
+            <StatCard
+              label='Total owed to instructors'
+              value={amount(totalOwed)}
+              icon={HandCoins}
+              tone='warning'
+            />
+          </div>
+          {payablesQuery.isLoading ? (
+            <p className='text-sm text-muted-foreground'>Loading…</p>
+          ) : payables.length === 0 ? (
+            <p className='text-sm text-muted-foreground'>
+              Nothing owed yet — payables accrue as instructors complete class sessions.
+            </p>
+          ) : (
+            <div className='overflow-x-auto'>
+              <table className='w-full text-sm'>
+                <thead>
+                  <tr className='border-b border-border/60 text-left text-xs uppercase tracking-wide text-muted-foreground'>
+                    <th className='py-2 pr-3 font-medium'>Instructor</th>
+                    <th className='py-2 pr-3 font-medium'>Classes</th>
+                    <th className='py-2 pr-3 font-medium'>Sessions delivered</th>
+                    <th className='py-2 pr-3 text-right font-medium'>Amount owed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payables.map(payable => (
+                    <tr key={payable.instructor_uuid} className='border-b border-border/40'>
+                      <td className='py-2.5 pr-3 font-medium text-foreground'>
+                        {instructorName(payable.instructor_uuid)}
+                      </td>
+                      <td className='py-2.5 pr-3 tabular-nums text-muted-foreground'>
+                        {count(payable.class_count)}
+                      </td>
+                      <td className='py-2.5 pr-3 tabular-nums text-muted-foreground'>
+                        {count(payable.session_count)}
+                      </td>
+                      <td className='py-2.5 pr-3 text-right font-semibold tabular-nums text-foreground'>
+                        {amount(payable.amount_owed)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </SectionCard>
       </div>
     </div>
   );

@@ -470,6 +470,7 @@ import {
   getClassRatingSummary,
   getEnrollmentsForClass,
   getClassDefinitionsForOrganisation,
+  getInstructorPayablesForOrganisation,
   getClassMedia,
   listMyApplications,
   listInstructorApplications,
@@ -1701,6 +1702,7 @@ import type {
   GetClassRatingSummaryData,
   GetEnrollmentsForClassData,
   GetClassDefinitionsForOrganisationData,
+  GetInstructorPayablesForOrganisationData,
   GetClassMediaData,
   ListMyApplicationsData,
   ListMyApplicationsError,
@@ -22755,6 +22757,31 @@ export const getClassDefinitionsForOrganisationOptions = (
       return data;
     },
     queryKey: getClassDefinitionsForOrganisationQueryKey(options),
+  });
+};
+
+export const getInstructorPayablesForOrganisationQueryKey = (
+  options: Options<GetInstructorPayablesForOrganisationData>
+) => createQueryKey('getInstructorPayablesForOrganisation', options);
+
+/**
+ * Get what an organisation owes each instructor
+ * Payables per instructor = sum(per-class training_fee x completed sessions) across the organisation's classes assigned to that instructor.
+ */
+export const getInstructorPayablesForOrganisationOptions = (
+  options: Options<GetInstructorPayablesForOrganisationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorPayablesForOrganisation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorPayablesForOrganisationQueryKey(options),
   });
 };
 

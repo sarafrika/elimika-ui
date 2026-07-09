@@ -369,6 +369,7 @@ import type {
   GetClassRatingSummaryResponse,
   GetEnrollmentsForClassResponse,
   GetClassDefinitionsForOrganisationResponse,
+  GetInstructorPayablesForOrganisationResponse,
   ListMyApplicationsResponse,
   ListInstructorApplicationsResponse,
   GetClassDefinitionsForInstructorResponse,
@@ -6224,6 +6225,32 @@ export const getClassDefinitionsForOrganisationResponseTransformer = async (
   data: any
 ): Promise<GetClassDefinitionsForOrganisationResponse> => {
   data = apiResponseListClassDefinitionResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const organisationInstructorPayableSchemaResponseTransformer = (data: any) => {
+  if (data.class_count) {
+    data.class_count = BigInt(data.class_count.toString());
+  }
+  if (data.session_count) {
+    data.session_count = BigInt(data.session_count.toString());
+  }
+  return data;
+};
+
+const apiResponseListOrganisationInstructorPayableSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return organisationInstructorPayableSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getInstructorPayablesForOrganisationResponseTransformer = async (
+  data: any
+): Promise<GetInstructorPayablesForOrganisationResponse> => {
+  data = apiResponseListOrganisationInstructorPayableSchemaResponseTransformer(data);
   return data;
 };
 

@@ -800,12 +800,6 @@ export const AssessmentRubricSchema = {
       example: true,
       readOnly: true,
     },
-    rubric_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the rubric based on its type.',
-      example: 'Performance Assessment',
-      readOnly: true,
-    },
     assessment_scope: {
       type: 'string',
       description:
@@ -817,6 +811,12 @@ export const AssessmentRubricSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive status indicating usage and accessibility.',
       example: 'Active Public Rubric',
+      readOnly: true,
+    },
+    rubric_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the rubric based on its type.',
+      example: 'Performance Assessment',
       readOnly: true,
     },
   },
@@ -5105,18 +5105,6 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
-    is_major_assessment: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
-      example: false,
-      readOnly: true,
-    },
     contribution_level: {
       type: 'string',
       description: '**[READ-ONLY]** Level of contribution to final grade based on weight.',
@@ -5134,6 +5122,18 @@ export const CourseAssessmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Category classification of the assessment type.',
       example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
+    is_major_assessment: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
+      example: false,
       readOnly: true,
     },
   },
@@ -9791,9 +9791,21 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
       example: false,
       readOnly: true,
     },
@@ -9801,18 +9813,6 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
       readOnly: true,
     },
   },
@@ -12606,16 +12606,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    is_upcoming: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
-      example: true,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended this class.',
       example: false,
+      readOnly: true,
+    },
+    is_upcoming: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
+      example: true,
       readOnly: true,
     },
   },
@@ -17143,6 +17143,51 @@ export const ApiResponseListClassDefinitionResponseSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const ApiResponseListOrganisationInstructorPayableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OrganisationInstructorPayable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const OrganisationInstructorPayableSchema = {
+  type: 'object',
+  description: 'Amount an organisation owes an instructor for delivered class sessions',
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'UUID of the instructor owed',
+    },
+    amount_owed: {
+      type: 'number',
+      description: 'Total amount owed = sum(training_fee x completed sessions)',
+    },
+    class_count: {
+      type: 'integer',
+      format: 'int64',
+      description: "Number of the organisation's classes assigned to this instructor",
+    },
+    session_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Total completed sessions across those classes',
+    },
   },
 } as const;
 

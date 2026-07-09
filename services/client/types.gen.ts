@@ -361,10 +361,6 @@ export type AssessmentRubric = {
    */
   readonly is_published?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the rubric based on its type.
-   */
-  readonly rubric_category?: string;
-  /**
    * **[READ-ONLY]** Scope of the rubric usage. All rubrics are general-use and can be associated with multiple courses.
    */
   readonly assessment_scope?: string;
@@ -372,6 +368,10 @@ export type AssessmentRubric = {
    * **[READ-ONLY]** Comprehensive status indicating usage and accessibility.
    */
   readonly usage_status?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the rubric based on its type.
+   */
+  readonly rubric_category?: string;
 };
 
 export type ApiResponseAssessmentRubric = {
@@ -2460,14 +2460,6 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this is a major assessment component.
-   */
-  readonly is_major_assessment?: boolean;
-  /**
    * **[READ-ONLY]** Level of contribution to final grade based on weight.
    */
   readonly contribution_level?: string;
@@ -2479,6 +2471,14 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Category classification of the assessment type.
    */
   readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is a major assessment component.
+   */
+  readonly is_major_assessment?: boolean;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -4688,21 +4688,21 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
-   */
-  readonly is_attendance_marked?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable description of the enrollment status.
-   */
-  readonly status_description?: string;
-  /**
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
+   */
+  readonly is_attendance_marked?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable description of the enrollment status.
+   */
+  readonly status_description?: string;
 };
 
 export type ApiResponse = {
@@ -6312,13 +6312,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if this class is upcoming.
-   */
-  readonly is_upcoming?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended this class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if this class is upcoming.
+   */
+  readonly is_upcoming?: boolean;
 };
 
 export type ApiResponseListScheduledInstance = {
@@ -8238,6 +8238,35 @@ export type ApiResponseListClassDefinitionResponse = {
   data?: Array<ClassDefinitionResponse>;
   message?: string;
   error?: unknown;
+};
+
+export type ApiResponseListOrganisationInstructorPayable = {
+  success?: boolean;
+  data?: Array<OrganisationInstructorPayable>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Amount an organisation owes an instructor for delivered class sessions
+ */
+export type OrganisationInstructorPayable = {
+  /**
+   * UUID of the instructor owed
+   */
+  instructor_uuid?: string;
+  /**
+   * Total amount owed = sum(training_fee x completed sessions)
+   */
+  amount_owed?: number;
+  /**
+   * Number of the organisation's classes assigned to this instructor
+   */
+  class_count?: bigint;
+  /**
+   * Total completed sessions across those classes
+   */
+  session_count?: bigint;
 };
 
 export type ApiResponsePagedDtoClassMarketplaceJob = {
@@ -26816,6 +26845,42 @@ export type GetClassDefinitionsForOrganisationResponses = {
 
 export type GetClassDefinitionsForOrganisationResponse =
   GetClassDefinitionsForOrganisationResponses[keyof GetClassDefinitionsForOrganisationResponses];
+
+export type GetInstructorPayablesForOrganisationData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation
+     */
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/organisation/{organisationUuid}/instructor-payables';
+};
+
+export type GetInstructorPayablesForOrganisationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetInstructorPayablesForOrganisationError =
+  GetInstructorPayablesForOrganisationErrors[keyof GetInstructorPayablesForOrganisationErrors];
+
+export type GetInstructorPayablesForOrganisationResponses = {
+  /**
+   * Instructor payables retrieved successfully
+   */
+  200: ApiResponseListOrganisationInstructorPayable;
+};
+
+export type GetInstructorPayablesForOrganisationResponse =
+  GetInstructorPayablesForOrganisationResponses[keyof GetInstructorPayablesForOrganisationResponses];
 
 export type GetClassMediaData = {
   body?: never;

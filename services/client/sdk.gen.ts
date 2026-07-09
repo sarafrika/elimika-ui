@@ -1408,6 +1408,9 @@ import type {
   GetClassDefinitionsForOrganisationData,
   GetClassDefinitionsForOrganisationResponses,
   GetClassDefinitionsForOrganisationErrors,
+  GetInstructorPayablesForOrganisationData,
+  GetInstructorPayablesForOrganisationResponses,
+  GetInstructorPayablesForOrganisationErrors,
   GetClassMediaData,
   GetClassMediaResponses,
   GetClassMediaErrors,
@@ -1938,6 +1941,7 @@ import {
   getClassRatingSummaryResponseTransformer,
   getEnrollmentsForClassResponseTransformer,
   getClassDefinitionsForOrganisationResponseTransformer,
+  getInstructorPayablesForOrganisationResponseTransformer,
   listMyApplicationsResponseTransformer,
   listInstructorApplicationsResponseTransformer,
   getClassDefinitionsForInstructorResponseTransformer,
@@ -15939,6 +15943,34 @@ export const getClassDefinitionsForOrganisation = <ThrowOnError extends boolean 
       },
     ],
     url: '/api/v1/classes/organisation/{organisationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get what an organisation owes each instructor
+ * Payables per instructor = sum(per-class training_fee x completed sessions) across the organisation's classes assigned to that instructor.
+ */
+export const getInstructorPayablesForOrganisation = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorPayablesForOrganisationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorPayablesForOrganisationResponses,
+    GetInstructorPayablesForOrganisationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInstructorPayablesForOrganisationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/organisation/{organisationUuid}/instructor-payables',
     ...options,
   });
 };
