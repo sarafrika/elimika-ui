@@ -1,11 +1,18 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Activity, Building2, GraduationCap, ShieldQuestion, Users } from 'lucide-react';
-import { useUserProfile } from '@/context/profile-context';
-import { relativeTimeFromNow } from '@/lib/date';
-import { useAdminActivityFeed } from '@/services/admin';
-import { getDashboardStatisticsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { Briefcase, Building, GraduationCap, Users } from 'lucide-react';
+import { useMemo } from 'react';
+import { useOrganisation } from '@/context/organisation-context';
+import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import type { ClassDefinition, CourseTrainingApplication } from '@/services/client';
+import {
+  getClassDefinitionsForOrganisationOptions,
+  getTrainingBranchesByOrganisationOptions,
+  getUsersByOrganisationAndDomainOptions,
+  getUsersByOrganisationOptions,
+  searchTrainingApplicationsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import {
   AdminPageHeader,
   adminTheme,
@@ -18,61 +25,101 @@ import {
 const num = (value?: bigint | number | null): string =>
   value === undefined || value === null ? '—' : Number(value).toLocaleString();
 
+/**
+ * Organisation Reports & Analytics — strictly scoped to the current organisation
+ * (its own members, branches, classes and training applications), never platform-wide.
+ */
 export default function OrganisationReportsPage() {
-  const profile = useUserProfile();
-  const isAdmin = profile?.user_domain?.includes('admin');
+  const organisation = useOrganisation();
+  const organisationUuid = organisation?.uuid ?? '';
+  const enabled = Boolean(organisationUuid);
 
-  const statsQuery = useQuery({
-    ...getDashboardStatisticsOptions(),
-    enabled: isAdmin,
+  const membersQuery = useQuery({
+    ...getUsersByOrganisationOptions({
+      path: { uuid: organisationUuid },
+      query: { pageable: { page: 0, size: 1 } },
+    }),
+    enabled,
+  });
+  const studentsQuery = useQuery({
+    ...getUsersByOrganisationAndDomainOptions({
+      path: { uuid: organisationUuid, domainName: 'student' },
+    }),
+    enabled,
+  });
+  const instructorsQuery = useQuery({
+    ...getUsersByOrganisationAndDomainOptions({
+      path: { uuid: organisationUuid, domainName: 'instructor' },
+    }),
+    enabled,
+  });
+  const branchesQuery = useQuery({
+    ...getTrainingBranchesByOrganisationOptions({
+      path: { uuid: organisationUuid },
+      query: { pageable: { page: 0, size: 1 } },
+    }),
+    enabled,
+  });
+  const classesQuery = useQuery({
+    ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
+    enabled,
+  });
+  const applicationsQuery = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: {
+        searchParams: { applicant_uuid_eq: organisationUuid, applicant_type_eq: 'organisation' },
+        pageable: { page: 0, size: 100 },
+      },
+    }),
+    enabled,
   });
 
-  const {
-    data: activityFeed,
-    isLoading: isActivityLoading,
-    error: activityError,
-  } = useAdminActivityFeed({ enabled: isAdmin });
+  const studentsPage = extractPage(studentsQuery.data);
+  const instructorsPage = extractPage(instructorsQuery.data);
+  const totalMembers = getTotalFromMetadata(extractPage(membersQuery.data).metadata);
+  const totalStudents = getTotalFromMetadata(studentsPage.metadata) || studentsPage.items.length;
+  const totalInstructors =
+    getTotalFromMetadata(instructorsPage.metadata) || instructorsPage.items.length;
+  const totalBranches = getTotalFromMetadata(extractPage(branchesQuery.data).metadata);
 
-  if (!isAdmin) {
-    return (
-      <div className={adminTheme.page}>
-        <div className={adminTheme.pageStack}>
-          <AdminPageHeader
-            title='Reports & Analytics'
-            description='Platform-wide insights across organisations, learners and content.'
-          />
-          <SectionCard title='Administrators only'>
-            <div className='flex items-center gap-3 text-sm text-muted-foreground'>
-              <ShieldQuestion className='size-5' />
-              Reports and analytics are visible only to system administrators.
-            </div>
-          </SectionCard>
-        </div>
-      </div>
-    );
-  }
+  const classes = useMemo(
+    () =>
+      (classesQuery.data?.data ?? [])
+        .map(item => item.class_definition)
+        .filter((c): c is ClassDefinition => Boolean(c?.uuid)),
+    [classesQuery.data]
+  );
+  const activeClasses = classes.filter(c => c.is_active).length;
+  const avgClassProgress = classes.length
+    ? Math.round(
+        classes.reduce((sum, c) => sum + Number(c.class_progress_percentage ?? 0), 0) /
+          classes.length
+      )
+    : 0;
 
-  const stats = statsQuery.data?.data ?? {};
-  const org = stats.organisation_metrics ?? {};
-  const users = stats.user_metrics ?? {};
-  const learning = stats.learning_metrics ?? {};
-  const isLoading = statsQuery.isLoading;
+  const applications = (applicationsQuery.data?.data?.content ?? []) as CourseTrainingApplication[];
+  const appCounts = useMemo(() => {
+    const counts = { pending: 0, approved: 0, rejected: 0 };
+    for (const a of applications) {
+      if (a.status === 'pending') counts.pending += 1;
+      else if (a.status === 'approved') counts.approved += 1;
+      else if (a.status === 'rejected') counts.rejected += 1;
+    }
+    return counts;
+  }, [applications]);
+
+  const kpiLoading = membersQuery.isLoading || branchesQuery.isLoading;
 
   const kpis = [
-    { label: 'Organisations', value: num(org.total_organisations), icon: Building2, tone: 'info' as const },
-    { label: 'Total users', value: num(users.total_users), icon: Users, tone: 'neutral' as const },
+    { label: 'Members', value: num(totalMembers), icon: Users, tone: 'info' as const },
+    { label: 'Students', value: num(totalStudents), icon: GraduationCap, tone: 'success' as const },
     {
-      label: 'Published courses',
-      value: num(learning.published_courses),
-      icon: GraduationCap,
-      tone: 'success' as const,
+      label: 'Instructors',
+      value: num(totalInstructors),
+      icon: Briefcase,
+      tone: 'neutral' as const,
     },
-    {
-      label: 'Active enrollments',
-      value: num(learning.active_course_enrollments),
-      icon: Activity,
-      tone: 'warning' as const,
-    },
+    { label: 'Branches', value: num(totalBranches), icon: Building, tone: 'warning' as const },
   ];
 
   return (
@@ -80,90 +127,48 @@ export default function OrganisationReportsPage() {
       <div className={adminTheme.pageStack}>
         <AdminPageHeader
           title='Reports & Analytics'
-          description='Platform-wide insights across organisations, learners and content.'
+          description='Insights for your organisation — your members, classes and applications.'
         />
 
         <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-          {isLoading
-            ? kpis.map(kpi => <StatCardSkeleton key={kpi.label} />)
-            : kpis.map(kpi => (
-                <StatCard
-                  key={kpi.label}
-                  label={kpi.label}
-                  value={kpi.value}
-                  icon={kpi.icon}
-                  tone={kpi.tone}
-                />
+          {kpiLoading
+            ? kpis.map(k => <StatCardSkeleton key={k.label} />)
+            : kpis.map(k => (
+                <StatCard key={k.label} label={k.label} value={k.value} icon={k.icon} tone={k.tone} />
               ))}
         </div>
 
         <div className='grid gap-4 xl:grid-cols-2'>
-          <SectionCard title='Organisations' description='Verification and status breakdown'>
+          <SectionCard title='Classes' description='Your organisation’s classes and delivery'>
             <DetailGrid
               items={[
-                { label: 'Total', value: num(org.total_organisations) },
-                { label: 'Active', value: num(org.active_organisations) },
-                { label: 'Pending approval', value: num(org.pending_approvals) },
-                { label: 'Suspended', value: num(org.suspended_organisations) },
+                { label: 'Total classes', value: num(classes.length) },
+                { label: 'Active classes', value: num(activeClasses) },
+                { label: 'Avg class progress', value: `${avgClassProgress}%` },
+                {
+                  label: 'Sessions completed',
+                  value: num(
+                    classes.reduce((s, c) => s + Number(c.completed_session_count ?? 0), 0)
+                  ),
+                },
               ]}
             />
           </SectionCard>
 
-          <SectionCard title='Users' description='Registration and activity'>
+          <SectionCard
+            title='Training applications'
+            description='Applications your organisation has submitted'
+          >
             <DetailGrid
               items={[
-                { label: 'Total users', value: num(users.total_users) },
-                { label: 'Active (24h)', value: num(users.active_users_24h) },
-                { label: 'New (7d)', value: num(users.new_registrations_7d) },
-                { label: 'Suspended', value: num(users.suspended_accounts) },
+                { label: 'Total submitted', value: num(applications.length) },
+                { label: 'Pending', value: num(appCounts.pending) },
+                { label: 'Approved', value: num(appCounts.approved) },
+                { label: 'Rejected', value: num(appCounts.rejected) },
               ]}
             />
           </SectionCard>
         </div>
-
-        <SectionCard title='Learning' description='Courses, programs and enrollment performance'>
-          <DetailGrid
-            columns={3}
-            items={[
-              { label: 'Published courses', value: num(learning.published_courses) },
-              { label: 'Draft courses', value: num(learning.draft_courses) },
-              { label: 'In review', value: num(learning.in_review_courses) },
-              { label: 'Total enrollments', value: num(learning.total_course_enrollments) },
-              { label: 'Active enrollments', value: num(learning.active_course_enrollments) },
-              { label: 'New enrollments (7d)', value: num(learning.new_course_enrollments_7d) },
-              { label: 'Training programs', value: num(learning.total_training_programs) },
-              { label: 'Published programs', value: num(learning.published_training_programs) },
-              { label: 'Program enrollments', value: num(learning.program_enrollments) },
-            ]}
-          />
-        </SectionCard>
-
-        <SectionCard title='Recent activity' description='Latest platform events'>
-          {activityError ? (
-            <p className='text-sm text-muted-foreground'>Unable to load activity.</p>
-          ) : isActivityLoading ? (
-            <p className='text-sm text-muted-foreground'>Loading activity…</p>
-          ) : (activityFeed?.events?.length ?? 0) === 0 ? (
-            <p className='text-sm text-muted-foreground'>No recent activity.</p>
-          ) : (
-            <ul className='space-y-3'>
-              {activityFeed?.events?.slice(0, 10).map((event, index) => (
-                <li
-                  key={`${event.title}-${event.timestamp}-${index}`}
-                  className='rounded-md border border-border/60 bg-muted/20 p-3'
-                >
-                  <p className='text-sm font-medium text-foreground'>{event.title ?? 'Event'}</p>
-                  {event.description ? (
-                    <p className='mt-0.5 text-xs text-muted-foreground'>{event.description}</p>
-                  ) : null}
-                  <p className='mt-0.5 text-xs text-muted-foreground'>
-                    {event.timestamp ? relativeTimeFromNow(event.timestamp, '—') : '—'}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </SectionCard>
       </div>
     </div>
   );
