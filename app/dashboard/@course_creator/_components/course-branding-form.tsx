@@ -1,10 +1,5 @@
 'use client';
 
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useOptionalCourseCreator } from '@/context/course-creator-context';
-import { useInstructor } from '@/context/instructor-context';
-import { tanstackClient } from '@/services/api/tanstack-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
@@ -13,13 +8,20 @@ import { forwardRef, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useOptionalCourseCreator } from '@/context/course-creator-context';
+import { useInstructor } from '@/context/instructor-context';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { Button } from '../../../../components/ui/button';
 import Spinner from '../../../../components/ui/spinner';
 import { useStepper } from '../../../../components/ui/stepper';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import {
   getCourseByUuidQueryKey,
   updateCourseMutation,
+  uploadCourseBannerMutation,
+  uploadCourseIntroVideoMutation,
+  uploadCourseThumbnailMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import { FormSection } from './course-creation-form';
 import {
@@ -123,18 +125,9 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const [videoPreview, setVideoPreview] = useState<string | null>(null);
 
-    const courseBannerMutation = tanstackClient.useMutation(
-      'post',
-      '/api/v1/courses/{uuid}/banner'
-    );
-    const courseThumbnailMutation = tanstackClient.useMutation(
-      'post',
-      '/api/v1/courses/{uuid}/thumbnail'
-    );
-    const courseIntroVideoMutation = tanstackClient.useMutation(
-      'post',
-      '/api/v1/courses/{uuid}/intro-video'
-    );
+    const courseBannerMutation = useMutation(uploadCourseBannerMutation());
+    const courseThumbnailMutation = useMutation(uploadCourseThumbnailMutation());
+    const courseIntroVideoMutation = useMutation(uploadCourseIntroVideoMutation());
 
     const handleFileUpload = async (
       e: React.ChangeEvent<HTMLInputElement>,
@@ -363,8 +356,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               upload: (file, callbacks) =>
                                 courseIntroVideoMutation.mutate(
                                   {
-                                    body: { intro_video: file.name },
-                                    params: { path: { uuid: editingCourseId as string } },
+                                    body: { intro_video: file },
+                                    path: { uuid: editingCourseId as string },
                                   },
                                   callbacks
                                 ),
@@ -451,8 +444,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               upload: (file, callbacks) =>
                                 courseBannerMutation.mutate(
                                   {
-                                    body: { banner: file.name },
-                                    params: { path: { uuid: editingCourseId as string } },
+                                    body: { banner: file },
+                                    path: { uuid: editingCourseId as string },
                                   },
                                   callbacks
                                 ),
@@ -533,8 +526,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               upload: (file, callbacks) =>
                                 courseThumbnailMutation.mutate(
                                   {
-                                    body: { thumbnail: file.name },
-                                    params: { path: { uuid: editingCourseId as string } },
+                                    body: { thumbnail: file },
+                                    path: { uuid: editingCourseId as string },
                                   },
                                   callbacks
                                 ),
