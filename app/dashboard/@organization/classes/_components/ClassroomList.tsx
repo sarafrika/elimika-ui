@@ -25,6 +25,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, ClassMarketplaceJob } from '@/services/client/types.gen';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
+import { EnrollStudentDialog } from './EnrollStudentDialog';
 
 const CLASS_JOB_PAGE_SIZE = 50;
 
@@ -201,6 +202,15 @@ function ClassesSection({
             </span>
             <span>{formatLabel(classDefinition.session_format)}</span>
           </div>
+
+          {classDefinition.uuid ? (
+            <div className='mt-4 flex justify-end border-t border-border/60 pt-3'>
+              <EnrollStudentDialog
+                classDefinitionUuid={classDefinition.uuid}
+                classTitle={classDefinition.title ?? 'this class'}
+              />
+            </div>
+          ) : null}
         </Card>
       ))}
     </div>
