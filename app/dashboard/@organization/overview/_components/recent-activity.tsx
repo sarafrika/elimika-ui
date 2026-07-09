@@ -1,11 +1,11 @@
 'use client';
 
-import { elimikaDesignSystem } from '@/lib/design-system';
+import { format } from 'date-fns';
+import { BookOpen, Clock, Settings, UserPlus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
 import { useAdminActivityFeed } from '@/services/admin';
-import { format } from 'date-fns';
-import { Clock, UserPlus, BookOpen, Settings, AlertCircle } from 'lucide-react';
+import { SectionCard } from '../../_components/ui';
 
 export function RecentActivity() {
   const profile = useUserProfile();
@@ -19,114 +19,81 @@ export function RecentActivity() {
     enabled: isSystemAdmin,
   });
 
+  const emptyState = (message: string) => (
+    <SectionCard title='Recent activity'>
+      <div className='flex flex-col items-center justify-center py-8 text-center'>
+        <Clock className='mb-3 size-8 text-muted-foreground' />
+        <p className='text-sm text-muted-foreground'>{message}</p>
+      </div>
+    </SectionCard>
+  );
+
   if (!isSystemAdmin) {
-    return (
-      <div className={elimikaDesignSystem.components.card.base}>
-        <div className='flex flex-col items-center justify-center py-8 text-center'>
-          <Clock className='text-muted-foreground mb-3 h-10 w-10' />
-          <p className='text-muted-foreground text-sm'>
-            Activity tracking is available for system administrators
-          </p>
-        </div>
-      </div>
-    );
+    return emptyState('Activity tracking is available for system administrators.');
   }
-
   if (error) {
-    return (
-      <div className={elimikaDesignSystem.components.card.base}>
-        <div className='flex flex-col items-center justify-center py-8 text-center'>
-          <AlertCircle className='text-destructive mb-3 h-10 w-10' />
-          <p className='text-muted-foreground text-sm'>Unable to load activity feed</p>
-        </div>
-      </div>
-    );
+    return emptyState('Unable to load the activity feed.');
   }
-
   if (isLoading) {
     return (
-      <div className={elimikaDesignSystem.components.card.base}>
-        <div className='space-y-4'>
-          <Skeleton className='h-16 w-full' />
-          <Skeleton className='h-16 w-full' />
-          <Skeleton className='h-16 w-full' />
+      <SectionCard title='Recent activity'>
+        <div className='space-y-3'>
+          <Skeleton className='h-14 w-full' />
+          <Skeleton className='h-14 w-full' />
+          <Skeleton className='h-14 w-full' />
         </div>
-      </div>
+      </SectionCard>
     );
   }
 
   const events = activityFeed?.events ?? [];
-
   if (events.length === 0) {
-    return (
-      <div className={elimikaDesignSystem.components.card.base}>
-        <div className='flex flex-col items-center justify-center py-8 text-center'>
-          <Clock className='text-muted-foreground mb-3 h-10 w-10' />
-          <p className='text-muted-foreground text-sm'>No recent activity to display</p>
-        </div>
-      </div>
-    );
+    return emptyState('No recent activity to display.');
   }
 
   return (
-    <div className={elimikaDesignSystem.components.card.base}>
-      <div className='space-y-3'>
+    <SectionCard title='Recent activity'>
+      <ul className='space-y-3'>
         {events.slice(0, 5).map((event, index) => {
           const Icon = getActivityIcon(event.title);
-
           return (
-            <div
+            <li
               key={`${event.title}-${event.timestamp}-${index}`}
-              className='border-border bg-muted/30 hover:bg-muted/50 rounded-xl border p-3 transition'
+              className='flex items-start gap-3 rounded-md border border-border/60 bg-muted/20 p-3'
             >
-              <div className='flex items-start gap-3'>
-                <div className='bg-muted mt-0.5 rounded-lg p-2'>
-                  <Icon className='text-primary h-4 w-4' />
-                </div>
-                <div className='flex-1'>
-                  <p className='text-foreground text-sm font-medium'>
-                    {event.title ?? 'Activity Event'}
-                  </p>
-                  {event.description && (
-                    <p className='text-muted-foreground mt-1 text-xs'>{event.description}</p>
-                  )}
-                  <p className='text-muted-foreground mt-1 text-xs'>
-                    {event.timestamp
-                      ? format(new Date(event.timestamp), 'MMM dd, yyyy • HH:mm')
-                      : 'Recently'}
-                  </p>
-                </div>
+              <span className='mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/40'>
+                <Icon className='size-4 text-muted-foreground' />
+              </span>
+              <div className='min-w-0'>
+                <p className='text-sm font-medium text-foreground'>
+                  {event.title ?? 'Activity event'}
+                </p>
+                {event.description ? (
+                  <p className='mt-0.5 text-xs text-muted-foreground'>{event.description}</p>
+                ) : null}
+                <p className='mt-0.5 text-xs text-muted-foreground'>
+                  {event.timestamp
+                    ? format(new Date(event.timestamp), 'MMM dd, yyyy • HH:mm')
+                    : 'Recently'}
+                </p>
               </div>
-            </div>
+            </li>
           );
         })}
-      </div>
-    </div>
+      </ul>
+    </SectionCard>
   );
 }
 
 function getActivityIcon(title?: string) {
   if (!title) return Clock;
-
-  const lowerTitle = title.toLowerCase();
-
-  if (
-    lowerTitle.includes('user') ||
-    lowerTitle.includes('member') ||
-    lowerTitle.includes('invite')
-  ) {
+  const lower = title.toLowerCase();
+  if (lower.includes('user') || lower.includes('member') || lower.includes('invite')) {
     return UserPlus;
   }
-  if (lowerTitle.includes('course') || lowerTitle.includes('learn')) {
-    return BookOpen;
-  }
-  if (
-    lowerTitle.includes('setting') ||
-    lowerTitle.includes('config') ||
-    lowerTitle.includes('update')
-  ) {
+  if (lower.includes('course') || lower.includes('learn')) return BookOpen;
+  if (lower.includes('setting') || lower.includes('config') || lower.includes('update')) {
     return Settings;
   }
-
   return Clock;
 }

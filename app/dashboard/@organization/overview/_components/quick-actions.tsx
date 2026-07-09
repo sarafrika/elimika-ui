@@ -1,78 +1,80 @@
 'use client';
 
-import { elimikaDesignSystem } from '@/lib/design-system';
-import { BriefcaseBusiness, GitBranch, BookOpen, Settings, FileText } from 'lucide-react';
+import { BookOpen, Building2, GitBranch, Handshake, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { type StatusTone, statusToneClass } from '../../_components/ui';
+
+const actions: Array<{
+  title: string;
+  description: string;
+  icon: typeof BookOpen;
+  href: string;
+  tone: StatusTone;
+}> = [
+  {
+    title: 'Manage people',
+    description: 'Invite and organise members',
+    icon: GitBranch,
+    href: '/dashboard/people',
+    tone: 'info',
+  },
+  {
+    title: 'Post a class job',
+    description: 'Publish an instructor assignment',
+    icon: Handshake,
+    href: '/dashboard/opportunities',
+    tone: 'success',
+  },
+  {
+    title: 'Manage courses',
+    description: 'Draft, publish and organise courses',
+    icon: BookOpen,
+    href: '/dashboard/course-management',
+    tone: 'neutral',
+  },
+  {
+    title: 'Browse catalogue',
+    description: 'Explore available courses',
+    icon: ShoppingBag,
+    href: '/dashboard/catalogue',
+    tone: 'warning',
+  },
+  {
+    title: 'Organisation profile',
+    description: 'Update details and preferences',
+    icon: Building2,
+    href: '/dashboard/account/training-center',
+    tone: 'neutral',
+  },
+];
 
 export function QuickActions() {
-  const actions = [
-    {
-      title: 'Create Branch',
-      description: 'Set up a new training location',
-      icon: GitBranch,
-      href: '/dashboard/branches',
-      tone: 'success' as const,
-    },
-    {
-      title: 'Create Class Job',
-      description: 'Publish an instructor assignment posting',
-      icon: BriefcaseBusiness,
-      href: '/dashboard/opportunities',
-      tone: 'primary' as const,
-    },
-    {
-      title: 'Manage Courses',
-      description: 'View and organize your course catalog',
-      icon: BookOpen,
-      href: '/dashboard/course-management',
-      tone: 'accent' as const,
-    },
-    {
-      title: 'Organization Settings',
-      description: 'Update organization profile and preferences',
-      icon: Settings,
-      href: '/dashboard/account/training-center',
-      tone: 'muted' as const,
-    },
-    {
-      title: 'Browse Catalogue',
-      description: 'Explore available courses and programs',
-      icon: FileText,
-      href: '/dashboard/catalogue',
-      tone: 'warning' as const,
-    },
-  ];
-
   return (
-    <div className='grid gap-4 sm:grid-cols-2 2xl:grid-cols-3'>
+    <div className='grid gap-3 sm:grid-cols-2'>
       {actions.map(action => {
         const Icon = action.icon;
-        const colorStyles = getActionColorStyles(action.tone);
-
         return (
-          <Link key={action.title} href={action.href}>
-            <div className={`${elimikaDesignSystem.components.listCard.base} h-full`}>
-              <div className={`${colorStyles.bg} mb-4 inline-flex rounded-xl p-3`}>
-                <Icon className={`h-5 w-5 ${colorStyles.icon}`} />
-              </div>
-              <h3 className='text-foreground mb-2 text-base font-semibold'>{action.title}</h3>
-              <p className='text-muted-foreground text-sm'>{action.description}</p>
-            </div>
+          <Link
+            key={action.title}
+            href={action.href}
+            className='flex h-full items-start gap-3 rounded-md border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border hover:bg-muted/30'
+          >
+            <span
+              className={cn(
+                'flex size-9 shrink-0 items-center justify-center rounded-md border',
+                statusToneClass[action.tone]
+              )}
+            >
+              <Icon className='size-4' />
+            </span>
+            <span className='min-w-0'>
+              <span className='block text-sm font-semibold text-foreground'>{action.title}</span>
+              <span className='block text-xs text-muted-foreground'>{action.description}</span>
+            </span>
           </Link>
         );
       })}
     </div>
   );
-}
-
-function getActionColorStyles(tone: 'primary' | 'success' | 'accent' | 'warning' | 'muted') {
-  const styles = {
-    primary: { icon: 'text-primary', bg: 'bg-primary/15' },
-    success: { icon: 'text-success', bg: 'bg-success/15' },
-    accent: { icon: 'text-accent-foreground', bg: 'bg-accent' },
-    warning: { icon: 'text-warning', bg: 'bg-warning/15' },
-    muted: { icon: 'text-muted-foreground', bg: 'bg-muted' },
-  };
-
-  return styles[tone];
 }

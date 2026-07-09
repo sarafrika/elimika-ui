@@ -1,4 +1,3 @@
-import type { UserDomain } from '@/lib/types';
 import {
   Award,
   BadgeCheck,
@@ -36,6 +35,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
+import type { UserDomain } from '@/lib/types';
 
 export type MenuItem = {
   title: string;
@@ -527,24 +527,52 @@ export default {
       icon: LayoutDashboard,
     },
     {
-      title: 'Organisation Profile',
-      url: '/dashboard/account/training-center',
-      icon: Building2,
+      title: 'People',
+      url: '/dashboard/people',
+      icon: Users,
     },
     {
-      title: 'Credentials Vault',
-      url: '/dashboard/credentials',
-      icon: Award,
-    },
-    {
-      title: 'Courses',
-      url: '/dashboard/courses',
-      icon: School,
+      title: 'Courses & Programs',
+      icon: BookOpen,
+      items: [
+        {
+          title: 'Courses',
+          url: '/dashboard/courses',
+          icon: School,
+        },
+        {
+          title: 'Catalogue',
+          url: '/dashboard/catalogue',
+          icon: ShoppingBag,
+        },
+        {
+          title: 'Course Management',
+          url: '/dashboard/course-management',
+          icon: ClipboardList,
+          items: [
+            {
+              title: 'Create New Course',
+              url: '/dashboard/course-management/create-new-course',
+              icon: PlusCircle,
+            },
+            {
+              title: 'Drafts',
+              url: '/dashboard/course-management/drafts',
+              icon: FileText,
+            },
+            {
+              title: 'Published',
+              url: '/dashboard/course-management/published',
+              icon: FileCheck,
+            },
+          ],
+        },
+      ],
     },
     {
       title: 'Classes',
       url: '/dashboard/classes',
-      icon: ClipboardList,
+      icon: Layers2,
     },
     {
       title: 'Schedule',
@@ -552,69 +580,57 @@ export default {
       icon: CalendarClock,
     },
     {
-      title: 'Opportunities',
-      url: '/dashboard/opportunities',
-      icon: Handshake,
-    },
-    {
-      title: 'Catalogue',
-      url: '/dashboard/catalogue',
-      icon: ShoppingBag,
-    },
-    {
-      title: 'Training Applications',
-      url: '/dashboard/training-applications',
-      icon: GraduationCap,
-    },
-    {
-      title: 'My Applications',
-      url: '/dashboard/my-applications',
-      icon: FileText,
-    },
-    {
       title: 'Branches',
       url: '/dashboard/branches',
       icon: Building,
     },
     {
-      title: 'People',
-      url: '/dashboard/people',
-      icon: Users,
-    },
-
-    {
-      title: 'Course Management',
-      url: '/dashboard/course-management',
-      icon: ClipboardList,
+      title: 'Applications',
+      icon: GraduationCap,
       items: [
         {
-          title: 'Create New Course',
-          url: '/dashboard/course-management/create-new-course',
-          icon: PlusCircle,
+          title: 'Training Applications',
+          url: '/dashboard/training-applications',
+          icon: GraduationCap,
         },
         {
-          title: 'Drafts',
-          url: '/dashboard/course-management/drafts',
+          title: 'My Applications',
+          url: '/dashboard/my-applications',
           icon: FileText,
         },
         {
-          title: 'Published',
-          url: '/dashboard/course-management/published',
-          icon: FileCheck,
+          title: 'Opportunities',
+          url: '/dashboard/opportunities',
+          icon: Handshake,
         },
       ],
     },
     {
-      title: 'Verification',
+      title: 'Credentials',
+      url: '/dashboard/credentials',
+      icon: Award,
+    },
+    {
+      title: 'Approvals',
       url: '/dashboard/verification',
       icon: ShieldCheck,
       requiresAdmin: true,
     },
     {
-      title: 'Audit & Activity',
+      title: 'Revenue',
+      url: '/dashboard/revenue',
+      icon: DollarSign,
+    },
+    {
+      title: 'Reports & Analytics',
       url: '/dashboard/audit',
-      icon: ClipboardList,
+      icon: BarChart3,
       requiresAdmin: true,
+    },
+    {
+      title: 'Organisation Profile',
+      url: '/dashboard/account/training-center',
+      icon: Building2,
     },
     {
       title: 'Settings',

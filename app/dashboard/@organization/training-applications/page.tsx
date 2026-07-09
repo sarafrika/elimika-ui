@@ -1,5 +1,22 @@
 'use client';
 
+import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  BookOpen,
+  Building2,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  FileText,
+  Loader2,
+  Search,
+  ThumbsDown,
+  ThumbsUp,
+  User,
+  XCircle,
+} from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,28 +41,12 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useOrganisation } from '@/context/organisation-context';
+import type { CourseTrainingApplication } from '@/services/client';
 import {
   decideOnTrainingApplicationMutation,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import {
-  BookOpen,
-  Building2,
-  CheckCircle2,
-  Clock,
-  DollarSign,
-  FileText,
-  Loader2,
-  Search,
-  ThumbsDown,
-  ThumbsUp,
-  User,
-  XCircle,
-} from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import type { CourseTrainingApplication } from '@/services/client';
+import { AdminPageHeader, StatCard } from '../_components/ui';
 
 type TrainingApplicationRow = CourseTrainingApplication & {
   course_name?: string;
@@ -181,7 +182,7 @@ export default function TrainingApplicationsPage() {
           label: 'Pending Review',
           variant: 'secondary' as const,
           icon: Clock,
-          color: 'text-yellow-600',
+          color: 'text-warning',
         };
       case 'APPROVED':
         return {
@@ -217,61 +218,17 @@ export default function TrainingApplicationsPage() {
 
   return (
     <div className='space-y-6 p-6'>
-      {/* Header */}
-      <div className='flex items-start justify-between'>
-        <div className='flex items-start gap-4'>
-          <div className='bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg border'>
-            <FileText className='text-primary h-6 w-6' />
-          </div>
-          <div>
-            <h1 className='text-2xl font-bold'>Training Applications</h1>
-            <p className='text-muted-foreground'>
-              Review and manage applications to train your courses
-            </p>
-          </div>
-        </div>
-      </div>
+      <AdminPageHeader
+        title='Training Applications'
+        description='Review and manage applications to train your courses'
+      />
 
       {/* Stats Cards */}
       <div className='grid gap-4 sm:grid-cols-4'>
-        <Card>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-muted-foreground text-sm font-medium'>
-              Total Applications
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{stats.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-muted-foreground text-sm font-medium'>
-              Pending Review
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-yellow-600'>{stats.pending}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-muted-foreground text-sm font-medium'>Approved</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-success'>{stats.approved}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-muted-foreground text-sm font-medium'>
-              Unique Trainers
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{stats.instructors}</div>
-          </CardContent>
-        </Card>
+        <StatCard label='Total Applications' value={stats.total} icon={FileText} tone='info' />
+        <StatCard label='Pending Review' value={stats.pending} icon={Clock} tone='warning' />
+        <StatCard label='Approved' value={stats.approved} icon={CheckCircle2} tone='success' />
+        <StatCard label='Unique Trainers' value={stats.instructors} icon={User} tone='neutral' />
       </div>
 
       {/* Filters */}

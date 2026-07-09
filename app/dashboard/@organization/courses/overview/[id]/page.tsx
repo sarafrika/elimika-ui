@@ -30,7 +30,6 @@ import {
   CalendarDays,
   CheckCircle,
   Clock,
-  Edit,
   Eye,
   Facebook,
   FileQuestion,
@@ -43,7 +42,7 @@ import {
   Twitter,
   Users
 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { LessonContentViewerDialog } from '../../../../../../components/content-preview/LessonContentPreview';
 import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
@@ -87,7 +86,6 @@ type ShareOptions = {
 };
 
 export default function ClassPreviewPage() {
-  const router = useRouter();
   const params = useParams();
   const classId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -386,15 +384,6 @@ export default function ClassPreviewPage() {
             )}
           </div>
         </div>
-
-        <Button
-          onClick={() => router.push(`/dashboard/classes/new?id=${classData?.uuid}`)}
-          variant='outline'
-          className='gap-2'
-        >
-          <Edit className='h-4 w-4' />
-          Edit Class
-        </Button>
       </div>
 
       {/* Class Preview Card */}

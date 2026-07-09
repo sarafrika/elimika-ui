@@ -1,5 +1,10 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { Loader2, ShieldQuestion, Workflow } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { AdminDataTable } from '@/components/admin/data-table/data-table';
 import type { AdminDataTableColumn } from '@/components/admin/data-table/types';
 import { Badge } from '@/components/ui/badge';
@@ -10,18 +15,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import type { Organisation, SchemaEnum3 } from '@/services/client';
 import {
   getOrganisationByUuidOptions,
   getPendingOrganisationsOptions,
   isOrganisationVerifiedOptions,
   moderateOrganisationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Organisation, SchemaEnum3 } from '@/services/client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { Loader2, ShieldAlert, ShieldCheck, ShieldQuestion, Workflow } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { AdminPageHeader, StatusBadge } from '../_components/ui';
 
 const actions: Array<{ value: SchemaEnum3; label: string }> = [
   { value: 'approve', label: 'Approve' },
@@ -141,7 +142,7 @@ export default function OrganisationVerificationPage() {
 
   if (!isAdmin) {
     return (
-      <div className='border-border/60 bg-card rounded-2xl border p-6 shadow-sm'>
+      <div className='rounded-md border border-border/70 bg-card p-6 shadow-sm'>
         <div className='flex items-center gap-2 text-sm font-semibold'>
           <ShieldQuestion className='h-4 w-4' />
           Verification actions are restricted to system admins.
@@ -155,22 +156,19 @@ export default function OrganisationVerificationPage() {
 
   return (
     <div className='space-y-6'>
-      <div className='border-border/60 bg-card flex flex-col gap-3 rounded-3xl border p-6 shadow-sm md:flex-row md:items-center md:justify-between'>
-        <div>
-          <h1 className='text-2xl font-semibold'>Verification & compliance</h1>
-          <p className='text-muted-foreground text-sm'>
-            Pending queue comes from GET /api/v1/admin/organisations/pending. Actions post to the
-            moderation endpoint.
-          </p>
-        </div>
-        <Badge variant={isVerified ? 'default' : 'secondary'} className='gap-2'>
-          {isVerified ? <ShieldCheck className='h-4 w-4' /> : <ShieldAlert className='h-4 w-4' />}
-          {isVerified ? 'Verified' : 'Pending verification'}
-        </Badge>
-      </div>
+      <AdminPageHeader
+        title='Approvals & Verification'
+        description='Review pending organisations and moderate their verification status.'
+        actions={
+          <StatusBadge
+            status={isVerified ? 'verified' : 'pending'}
+            label={isVerified ? 'Verified' : 'Pending verification'}
+          />
+        }
+      />
 
       <div className='grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]'>
-        <div className='border-border/60 bg-card rounded-2xl border p-5 shadow-sm'>
+        <div className='rounded-md border border-border/70 bg-card p-5 shadow-sm'>
           <AdminDataTable
             title='Pending approvals'
             description='Select an organisation to approve, reject, or revoke.'
@@ -193,14 +191,13 @@ export default function OrganisationVerificationPage() {
           />
         </div>
 
-        <div className='border-border/60 bg-card rounded-2xl border p-5 shadow-sm'>
+        <div className='rounded-md border border-border/70 bg-card p-5 shadow-sm'>
           <div className='flex items-center gap-2 text-sm font-semibold'>
             <Workflow className='h-4 w-4' />
             Moderation action
           </div>
           <p className='text-muted-foreground text-sm'>
-            POST /api/v1/admin/organisations/{'{uuid}'}
-            /moderate?action=approve|reject|revoke&reason=...
+            Approve, reject, or revoke verification for the selected organisation.
           </p>
           <div className='mt-4 space-y-3'>
             <div className='space-y-1'>

@@ -1,6 +1,25 @@
 'use client';
 
-import { elimikaDesignSystem } from '@/lib/design-system';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ColumnDef } from '@tanstack/react-table';
+import { format } from 'date-fns';
+import {
+  BookOpen,
+  Building2,
+  Calendar,
+  Filter,
+  GraduationCap,
+  Loader2,
+  Mail,
+  MoreVertical,
+  Plus,
+  UserCog,
+  Users,
+  Wallet as WalletIcon,
+  X,
+} from 'lucide-react';
+import { type FormEvent, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
@@ -28,35 +47,19 @@ import {
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
-import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { elimikaDesignSystem } from '@/lib/design-system';
 import { STALE_TIMES } from '@/lib/query-client';
+import type { DomainDto, DomainNameEnum, TrainingBranch, User, Wallet } from '@/services/client';
 import {
   createOrganisationUserMutation,
   getOrganisationSupportedDomainsOptions,
   getTrainingBranchesByOrganisationOptions,
   getUsersByOrganisationAndDomainOptions,
   getUsersByOrganisationOptions,
+  getWalletOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { DomainDto, DomainNameEnum, TrainingBranch, User } from '@/services/client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
-import { type FormEvent, useMemo, useState } from 'react';
-import {
-  BookOpen,
-  Building2,
-  Calendar,
-  Filter,
-  GraduationCap,
-  Loader2,
-  Mail,
-  MoreVertical,
-  Plus,
-  UserCog,
-  Users,
-  X,
-} from 'lucide-react';
-import { toast } from 'sonner';
+import { AdminPageHeader, StatCard } from '../_components/ui';
 
 const domainOptions: Array<{ value: DomainNameEnum | ''; label: string }> = [
   { value: '', label: 'All roles' },
@@ -129,6 +132,31 @@ function buildRoleOptions(domainData: DomainDto[]) {
   return apiOptions.length > 0 ? apiOptions : fallbackRoleOptions;
 }
 
+/** Lazily fetches a member's Skills Wallet balance. Only ~10 render per table page. */
+function WalletBalanceCell({ userUuid }: { userUuid?: string }) {
+  const walletQuery = useQuery({
+    ...getWalletOptions({ path: { userUuid: userUuid ?? '' } }),
+    enabled: Boolean(userUuid),
+    staleTime: STALE_TIMES.reference,
+    retry: false,
+  });
+
+  if (!userUuid) return <span className='text-muted-foreground text-sm'>—</span>;
+  if (walletQuery.isLoading) return <Skeleton className='h-4 w-16' />;
+
+  const wallet = extractEntity<Wallet>(walletQuery.data);
+  if (walletQuery.isError || !wallet || wallet.balance_amount === undefined) {
+    return <span className='text-muted-foreground text-sm'>—</span>;
+  }
+
+  return (
+    <span className='text-foreground flex items-center gap-1.5 text-sm font-medium tabular-nums'>
+      <WalletIcon className='text-muted-foreground h-3.5 w-3.5' />
+      {`${wallet.currency_code ?? ''} ${Number(wallet.balance_amount).toLocaleString()}`.trim()}
+    </span>
+  );
+}
+
 function createPeopleColumns(organisationUuid: string): ColumnDef<User>[] {
   return [
     {
@@ -177,6 +205,11 @@ function createPeopleColumns(organisationUuid: string): ColumnDef<User>[] {
             <span>{format(new Date(row.original.created_date), 'MMM dd, yyyy')}</span>
           </div>
         ) : null,
+    },
+    {
+      id: 'wallet',
+      header: 'Skills Wallet',
+      cell: ({ row }) => <WalletBalanceCell userUuid={row.original.uuid} />,
     },
     {
       id: 'actions',
@@ -339,70 +372,26 @@ export default function OrganisationPeoplePage() {
 
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
-      {/* Compact Header */}
-      <section className='mb-6'>
-        <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-          <div>
-            <h1 className='text-foreground text-2xl font-bold'>People</h1>
-            <p className='text-muted-foreground text-sm'>Manage members and team roles</p>
-          </div>
-          <Button onClick={() => setIsMemberSheetOpen(true)} className='w-full sm:w-auto'>
-            <Plus className='h-4 w-4' />
+      {/* Header */}
+      <AdminPageHeader
+        title='People'
+        description='Manage members and team roles'
+        className='mb-6'
+        actions={
+          <Button onClick={() => setIsMemberSheetOpen(true)}>
+            <Plus className='mr-2 size-4' />
             Add member
           </Button>
-        </div>
+        }
+      />
 
-        {/* Stats */}
-        <div className='grid gap-3 sm:grid-cols-4'>
-          <div className='border-border bg-card rounded-lg border p-3'>
-            <div className='flex items-center gap-3'>
-              <div className='bg-muted rounded-lg p-2'>
-                <Users className='text-primary h-4 w-4' />
-              </div>
-              <div>
-                <p className='text-muted-foreground text-xs'>Total Members</p>
-                <p className='text-foreground text-lg font-bold'>{stats.total}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className='border-border bg-card rounded-lg border p-3'>
-            <div className='flex items-center gap-3'>
-              <div className='bg-muted rounded-lg p-2'>
-                <Building2 className='text-primary h-4 w-4' />
-              </div>
-              <div>
-                <p className='text-muted-foreground text-xs'>Org Users</p>
-                <p className='text-foreground text-lg font-bold'>{stats.orgUsers}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className='border-border bg-card rounded-lg border p-3'>
-            <div className='flex items-center gap-3'>
-              <div className='bg-muted rounded-lg p-2'>
-                <BookOpen className='text-primary h-4 w-4' />
-              </div>
-              <div>
-                <p className='text-muted-foreground text-xs'>Instructors</p>
-                <p className='text-foreground text-lg font-bold'>{stats.instructors}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className='border-border bg-card rounded-lg border p-3'>
-            <div className='flex items-center gap-3'>
-              <div className='bg-muted rounded-lg p-2'>
-                <GraduationCap className='text-primary h-4 w-4' />
-              </div>
-              <div>
-                <p className='text-muted-foreground text-xs'>Students</p>
-                <p className='text-foreground text-lg font-bold'>{stats.students}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Stats */}
+      <div className='mb-6 grid gap-3 sm:grid-cols-4'>
+        <StatCard label='Total Members' value={stats.total} icon={Users} tone='info' />
+        <StatCard label='Org Users' value={stats.orgUsers} icon={Building2} tone='neutral' />
+        <StatCard label='Instructors' value={stats.instructors} icon={BookOpen} tone='neutral' />
+        <StatCard label='Students' value={stats.students} icon={GraduationCap} tone='success' />
+      </div>
 
       {/* Filters */}
       <section className='mb-6'>

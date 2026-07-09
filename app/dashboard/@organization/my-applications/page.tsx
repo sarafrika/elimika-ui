@@ -1,20 +1,5 @@
 'use client';
 
-import RichTextRenderer from '@/components/editors/richTextRenders';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { useOrganisation } from '@/context/organisation-context';
-import { searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -29,7 +14,23 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { useOrganisation } from '@/context/organisation-context';
 import type { CourseTrainingApplication } from '@/services/client';
+import { searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { AdminPageHeader, StatCard } from '../_components/ui';
 
 type TrainingApplicationRow = CourseTrainingApplication & {
   course_name?: string;
@@ -131,55 +132,17 @@ export default function MyApplicationsPage() {
 
   return (
     <div className='space-y-6 p-6'>
-      {/* Header */}
-      <div className='flex items-start justify-between'>
-        <div className='flex items-start gap-4'>
-          <div className='bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg border'>
-            <FileText className='text-primary h-6 w-6' />
-          </div>
-          <div>
-            <h1 className='text-2xl font-bold'>My Training Applications</h1>
-            <p className='text-muted-foreground'>Track and manage your submitted applications</p>
-          </div>
-        </div>
-      </div>
+      <AdminPageHeader
+        title='My Training Applications'
+        description='Track and manage your submitted applications'
+      />
 
       {/* Stats Cards */}
       <div className='grid gap-4 sm:grid-cols-4'>
-        <Card>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-muted-foreground text-sm font-medium'>
-              Total Applications
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{stats.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-muted-foreground text-sm font-medium'>Pending</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-muted-foreground text-2xl font-bold'>{stats.pending}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-muted-foreground text-sm font-medium'>Approved</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-primary text-2xl font-bold'>{stats.approved}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-muted-foreground text-sm font-medium'>Rejected</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-destructive text-2xl font-bold'>{stats.rejected}</div>
-          </CardContent>
-        </Card>
+        <StatCard label='Total Applications' value={stats.total} icon={FileText} tone='info' />
+        <StatCard label='Pending' value={stats.pending} icon={Clock} tone='warning' />
+        <StatCard label='Approved' value={stats.approved} icon={CheckCircle2} tone='success' />
+        <StatCard label='Rejected' value={stats.rejected} icon={XCircle} tone='destructive' />
       </div>
 
       {/* Filters */}
