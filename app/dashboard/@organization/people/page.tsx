@@ -18,6 +18,7 @@ import {
   Wallet as WalletIcon,
   X,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -164,17 +165,20 @@ function createPeopleColumns(organisationUuid: string): ColumnDef<User>[] {
       accessorKey: 'first_name',
       header: 'Member',
       cell: ({ row }) => (
-        <div className='flex items-center gap-3'>
+        <Link
+          href={row.original.uuid ? `/dashboard/people/${row.original.uuid}` : '#'}
+          className='group flex items-center gap-3'
+        >
           <div className='bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full'>
             <span className='text-base font-semibold'>
               {(row.original.first_name?.[0] || row.original.email?.[0] || '?').toUpperCase()}
             </span>
           </div>
-          <div className='text-foreground font-semibold'>
+          <div className='text-foreground font-semibold group-hover:text-primary group-hover:underline'>
             {`${row.original.first_name ?? ''} ${row.original.last_name ?? ''}`.trim() ||
               'Unnamed User'}
           </div>
-        </div>
+        </Link>
       ),
     },
     {
@@ -224,14 +228,14 @@ function createPeopleColumns(organisationUuid: string): ColumnDef<User>[] {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
-              <DropdownMenuItem
-                onClick={e => {
-                  e.stopPropagation();
-                  // Handle view profile action
-                }}
-              >
-                <Users className='h-4 w-4' />
-                View Profile
+              <DropdownMenuItem asChild>
+                <Link
+                  href={row.original.uuid ? `/dashboard/people/${row.original.uuid}` : '#'}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <Users className='h-4 w-4' />
+                  View Profile
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={e => {
