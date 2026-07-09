@@ -172,6 +172,12 @@ import type {
   UpdateInstructorDocumentData,
   UpdateInstructorDocumentResponses,
   UpdateInstructorDocumentErrors,
+  DeleteAvailabilitySlotData,
+  DeleteAvailabilitySlotResponses,
+  DeleteAvailabilitySlotErrors,
+  UpdateAvailabilitySlotData,
+  UpdateAvailabilitySlotResponses,
+  UpdateAvailabilitySlotErrors,
   DeleteCourseData,
   DeleteCourseResponses,
   DeleteCourseErrors,
@@ -574,6 +580,12 @@ import type {
   UploadInstructorDocumentData,
   UploadInstructorDocumentResponses,
   UploadInstructorDocumentErrors,
+  GetAvailabilitySlotsData,
+  GetAvailabilitySlotsResponses,
+  GetAvailabilitySlotsErrors,
+  CreateAvailabilitySlotData,
+  CreateAvailabilitySlotResponses,
+  CreateAvailabilitySlotErrors,
   CreateLinkData,
   CreateLinkResponses,
   CreateLinkErrors,
@@ -1586,6 +1598,7 @@ import {
   updateInstructorExperienceResponseTransformer,
   updateInstructorEducationResponseTransformer,
   updateInstructorDocumentResponseTransformer,
+  updateAvailabilitySlotResponseTransformer,
   getCourseByUuidResponseTransformer,
   updateCourseResponseTransformer,
   updateCourseTrainingRequirementResponseTransformer,
@@ -1689,6 +1702,8 @@ import {
   addInstructorDocumentResponseTransformer,
   verifyDocumentResponseTransformer,
   uploadInstructorDocumentResponseTransformer,
+  getAvailabilitySlotsResponseTransformer,
+  createAvailabilitySlotResponseTransformer,
   createLinkResponseTransformer,
   enrollStudentResponseTransformer,
   joinWaitlistResponseTransformer,
@@ -3547,6 +3562,65 @@ export const updateInstructorDocument = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/instructors/{instructorUuid}/documents/{documentUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete a single availability slot
+ * Removes one availability slot belonging to the instructor.
+ */
+export const deleteAvailabilitySlot = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteAvailabilitySlotData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteAvailabilitySlotResponses,
+    DeleteAvailabilitySlotErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/slots/{slotUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update an availability slot
+ * Updates an existing availability slot for the instructor.
+ */
+export const updateAvailabilitySlot = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateAvailabilitySlotData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateAvailabilitySlotResponses,
+    UpdateAvailabilitySlotErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateAvailabilitySlotResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/slots/{slotUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -7551,6 +7625,66 @@ export const uploadInstructorDocument = <ThrowOnError extends boolean = false>(
     ...options,
     headers: {
       'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * List availability slots for an instructor
+ * Returns all availability slots configured for the instructor.
+ */
+export const getAvailabilitySlots = <ThrowOnError extends boolean = false>(
+  options: Options<GetAvailabilitySlotsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetAvailabilitySlotsResponses,
+    GetAvailabilitySlotsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAvailabilitySlotsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/slots',
+    ...options,
+  });
+};
+
+/**
+ * Create an availability slot for an instructor
+ * Creates a new availability slot for the instructor.
+ */
+export const createAvailabilitySlot = <ThrowOnError extends boolean = false>(
+  options: Options<CreateAvailabilitySlotData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateAvailabilitySlotResponses,
+    CreateAvailabilitySlotErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createAvailabilitySlotResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/slots',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
       ...options.headers,
     },
   });

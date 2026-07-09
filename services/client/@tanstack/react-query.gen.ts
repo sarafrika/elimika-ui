@@ -58,6 +58,8 @@ import {
   updateInstructorEducation,
   deleteInstructorDocument,
   updateInstructorDocument,
+  deleteAvailabilitySlot,
+  updateAvailabilitySlot,
   deleteCourse,
   getCourseByUuid,
   updateCourse,
@@ -192,6 +194,8 @@ import {
   addInstructorDocument,
   verifyDocument,
   uploadInstructorDocument,
+  getAvailabilitySlots,
+  createAvailabilitySlot,
   createLink,
   enrollStudent,
   joinWaitlist,
@@ -656,6 +660,12 @@ import type {
   UpdateInstructorDocumentData,
   UpdateInstructorDocumentError,
   UpdateInstructorDocumentResponse,
+  DeleteAvailabilitySlotData,
+  DeleteAvailabilitySlotError,
+  DeleteAvailabilitySlotResponse,
+  UpdateAvailabilitySlotData,
+  UpdateAvailabilitySlotError,
+  UpdateAvailabilitySlotResponse,
   DeleteCourseData,
   DeleteCourseError,
   DeleteCourseResponse,
@@ -1011,6 +1021,10 @@ import type {
   UploadInstructorDocumentData,
   UploadInstructorDocumentError,
   UploadInstructorDocumentResponse,
+  GetAvailabilitySlotsData,
+  CreateAvailabilitySlotData,
+  CreateAvailabilitySlotError,
+  CreateAvailabilitySlotResponse,
   CreateLinkData,
   CreateLinkError,
   CreateLinkResponse,
@@ -3224,6 +3238,62 @@ export const updateInstructorDocumentMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateInstructorDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete a single availability slot
+ * Removes one availability slot belonging to the instructor.
+ */
+export const deleteAvailabilitySlotMutation = (
+  options?: Partial<Options<DeleteAvailabilitySlotData>>
+): UseMutationOptions<
+  DeleteAvailabilitySlotResponse,
+  DeleteAvailabilitySlotError,
+  Options<DeleteAvailabilitySlotData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteAvailabilitySlotResponse,
+    DeleteAvailabilitySlotError,
+    Options<DeleteAvailabilitySlotData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteAvailabilitySlot({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update an availability slot
+ * Updates an existing availability slot for the instructor.
+ */
+export const updateAvailabilitySlotMutation = (
+  options?: Partial<Options<UpdateAvailabilitySlotData>>
+): UseMutationOptions<
+  UpdateAvailabilitySlotResponse,
+  UpdateAvailabilitySlotError,
+  Options<UpdateAvailabilitySlotData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateAvailabilitySlotResponse,
+    UpdateAvailabilitySlotError,
+    Options<UpdateAvailabilitySlotData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateAvailabilitySlot({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -8669,6 +8739,78 @@ export const uploadInstructorDocumentMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await uploadInstructorDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getAvailabilitySlotsQueryKey = (options: Options<GetAvailabilitySlotsData>) =>
+  createQueryKey('getAvailabilitySlots', options);
+
+/**
+ * List availability slots for an instructor
+ * Returns all availability slots configured for the instructor.
+ */
+export const getAvailabilitySlotsOptions = (options: Options<GetAvailabilitySlotsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAvailabilitySlots({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAvailabilitySlotsQueryKey(options),
+  });
+};
+
+export const createAvailabilitySlotQueryKey = (options: Options<CreateAvailabilitySlotData>) =>
+  createQueryKey('createAvailabilitySlot', options);
+
+/**
+ * Create an availability slot for an instructor
+ * Creates a new availability slot for the instructor.
+ */
+export const createAvailabilitySlotOptions = (options: Options<CreateAvailabilitySlotData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createAvailabilitySlot({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createAvailabilitySlotQueryKey(options),
+  });
+};
+
+/**
+ * Create an availability slot for an instructor
+ * Creates a new availability slot for the instructor.
+ */
+export const createAvailabilitySlotMutation = (
+  options?: Partial<Options<CreateAvailabilitySlotData>>
+): UseMutationOptions<
+  CreateAvailabilitySlotResponse,
+  CreateAvailabilitySlotError,
+  Options<CreateAvailabilitySlotData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateAvailabilitySlotResponse,
+    CreateAvailabilitySlotError,
+    Options<CreateAvailabilitySlotData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createAvailabilitySlot({
         ...options,
         ...localOptions,
         throwOnError: true,
