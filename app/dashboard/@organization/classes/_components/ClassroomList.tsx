@@ -224,11 +224,11 @@ function JobsSection({
     return (
       <EmptyState
         icon={BriefcaseBusiness}
-        title='No open class jobs'
-        description='Create a class job from an approved course or program to invite instructor applications.'
+        title='No open classes'
+        description='Create a class for an approved course; instructors can then apply and you assign one.'
         action={
           <Button asChild variant='outline'>
-            <Link href='/dashboard/opportunities?create=1'>Create job</Link>
+            <Link href='/dashboard/classes/new'>Create class</Link>
           </Button>
         }
         variant='compact'
@@ -365,10 +365,10 @@ export default function ClassroomList() {
             Track assigned classes and the class jobs waiting for instructor applications.
           </p>
         </div>
-        <Button asChild className='rounded-xl'>
-          <Link href='/dashboard/opportunities?create=1'>
+        <Button asChild>
+          <Link href='/dashboard/classes/new'>
             <Plus className='mr-2 size-4' />
-            Create class job
+            Create class
           </Link>
         </Button>
       </div>
