@@ -7,32 +7,52 @@ on:
       - completed
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      deployment_reason:
+        description: 'Reason for manual deployment (optional)'
+        required: false
+        default: 'Manual deployment'
+        type: string
 
 jobs:
   deploy:
-    name: Deploy to Self-Hosted Server
+    name: Deploy to Staging VPS
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
+    # For workflow_run: only deploy if the triggering build succeeded.
+    # For workflow_dispatch: always deploy.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - name: Setup SSH Connection & Deploy
-        run: |
-          echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
-          chmod 600 private_key
+      - name: Run Deployment over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DEPLOYMENT_REASON: ${{ github.event.inputs.deployment_reason }}
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USERNAME }}
+          password: ${{ secrets.STAGING_SSH_PASSWORD }}
+          envs: EVENT_NAME,DEPLOYMENT_REASON
+          script: |
+            set -e
 
-          ssh -i private_key -o StrictHostKeyChecking=no "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}" <<'EOF'
-            set -e  # Exit script on error
+            if [ "$EVENT_NAME" == "workflow_dispatch" ]; then
+              echo "🚀 Manual Deployment Triggered — $DEPLOYMENT_REASON"
+            else
+              echo "🔄 Automatic Deployment (triggered by successful build)"
+            fi
 
-            echo "🛑 Stopping and removing existing containers..."
-            # Adjust these commands if the container name is different on your server
-            docker stop elimika-ui || true
-            docker rm elimika-ui || true
+            # The elimika-ui service is part of the shared backend compose stack.
+            cd /opt/sarafrika/elimika
 
-            echo "🚀 Pulling latest Docker image from Docker Hub..."
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/elimika-ui:latest
+            echo "📥 Pulling latest elimika-ui image..."
+            docker compose pull elimika-ui
 
-            echo "🚀 Starting the application with latest image..."
-            docker compose -f ~/products/elimika-ui/docker/compose.yaml up -d
+            echo "🚀 Recreating the elimika-ui container..."
+            docker compose up -d elimika-ui
 
-            echo "✅ Deployment complete!"
-          EOF
+            echo "🧹 Pruning dangling images..."
+            docker image prune -f || true
+
+            echo "✅ UI deployment complete!"
+            echo "🌍 Available at https://elimika.staging.sarafrika.com"
