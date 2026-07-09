@@ -212,28 +212,31 @@ export const getNotificationUrlPath = (
 export function DashboardNotifications({ notificationHref, activeDomain }: DashboardNotificationsProps) {
   const [open, setOpen] = useState(false);
   const shownPopupIds = useRef<Set<string>>(new Set());
+  const domain = activeDomain ?? undefined;
   const actionMutation = useNotificationAction();
-  const markAllMutation = useMarkAllNotificationsRead();
+  const markAllMutation = useMarkAllNotificationsRead(domain);
 
   const normalizeNotifications = (notifications: UserNotification[], activeDomain: string) => {
     return notifications.map((notification: UserNotification) => ({
       ...notification,
-      urlPath: getNotificationUrlPath(notification, activeDomain),
+      urlPath: getNotificationUrlPath(notification, notification.recipient_domain ?? activeDomain),
     }));
   };
 
   // The badge needs counts and toasts need the popup feed, but the recent
   // list is only visible inside the dropdown — fetch it when opened instead
-  // of on every page load.
-  const countsQuery = useNotificationCounts({ refetchInterval: 60_000 });
+  // of on every page load. Every query is scoped to the active dashboard
+  // domain so a multi-domain user only sees the relevant notifications here.
+  const countsQuery = useNotificationCounts(domain, { refetchInterval: 60_000 });
   const recentQuery = useNotifications(
-    { page: 0, size: 6 },
+    { page: 0, size: 6, domain },
     { enabled: open, refetchInterval: open ? 30_000 : false }
   );
   const popupQuery = useNotifications(
     {
       page: 0,
       size: 5,
+      domain,
       presentation: 'POPUP',
       popupSeen: false,
     },
