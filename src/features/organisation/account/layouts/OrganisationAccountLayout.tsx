@@ -8,6 +8,7 @@ import { ProfileSectionNav } from '@/src/features/profile/components/profile-sec
 const sections = [
   { label: 'Training centre', href: '/dashboard/account/training-center', exact: true },
   { label: 'Branches', href: '/dashboard/account/branches' },
+  { label: 'Fees & scheduling', href: '/dashboard/account/fees-scheduling' },
   { label: 'Admin', href: '/dashboard/account/admin' },
 ];
 
