@@ -1192,6 +1192,9 @@ import type {
   GetBranchUsersByDomainData,
   GetBranchUsersByDomainResponses,
   GetBranchUsersByDomainErrors,
+  GetOrganisationStatisticsData,
+  GetOrganisationStatisticsResponses,
+  GetOrganisationStatisticsErrors,
   Search2Data,
   Search2Responses,
   Search2Errors,
@@ -1877,6 +1880,7 @@ import {
   getUsersByOrganisationAndDomainResponseTransformer,
   getBranchUsersResponseTransformer,
   getBranchUsersByDomainResponseTransformer,
+  getOrganisationStatisticsResponseTransformer,
   search2ResponseTransformer,
   getCountsResponseTransformer,
   getInstructorRatingSummaryResponseTransformer,
@@ -13716,6 +13720,34 @@ export const getBranchUsersByDomain = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/users/domain/{domainName}',
+    ...options,
+  });
+};
+
+/**
+ * Get organisation-scoped dashboard statistics
+ * Returns statistics limited strictly to the given organisation — its members, students, instructors, administrators and training branches. Never platform-wide.
+ */
+export const getOrganisationStatistics = <ThrowOnError extends boolean = false>(
+  options: Options<GetOrganisationStatisticsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetOrganisationStatisticsResponses,
+    GetOrganisationStatisticsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getOrganisationStatisticsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{uuid}/statistics',
     ...options,
   });
 };

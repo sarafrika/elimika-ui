@@ -314,6 +314,7 @@ import type {
   GetUsersByOrganisationAndDomainResponse,
   GetBranchUsersResponse,
   GetBranchUsersByDomainResponse,
+  GetOrganisationStatisticsResponse,
   Search2Response,
   GetCountsResponse,
   GetInstructorRatingSummaryResponse,
@@ -5381,6 +5382,42 @@ export const getBranchUsersByDomainResponseTransformer = async (
   data: any
 ): Promise<GetBranchUsersByDomainResponse> => {
   data = apiResponseListUserSchemaResponseTransformer(data);
+  return data;
+};
+
+const organisationDashboardStatsSchemaResponseTransformer = (data: any) => {
+  if (data.timestamp) {
+    data.timestamp = new Date(data.timestamp);
+  }
+  if (data.total_members) {
+    data.total_members = BigInt(data.total_members.toString());
+  }
+  if (data.total_students) {
+    data.total_students = BigInt(data.total_students.toString());
+  }
+  if (data.total_instructors) {
+    data.total_instructors = BigInt(data.total_instructors.toString());
+  }
+  if (data.total_admins) {
+    data.total_admins = BigInt(data.total_admins.toString());
+  }
+  if (data.total_branches) {
+    data.total_branches = BigInt(data.total_branches.toString());
+  }
+  return data;
+};
+
+const apiResponseOrganisationDashboardStatsSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = organisationDashboardStatsSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getOrganisationStatisticsResponseTransformer = async (
+  data: any
+): Promise<GetOrganisationStatisticsResponse> => {
+  data = apiResponseOrganisationDashboardStatsSchemaResponseTransformer(data);
   return data;
 };
 

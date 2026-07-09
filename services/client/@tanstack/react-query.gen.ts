@@ -398,6 +398,7 @@ import {
   getUsersByOrganisationAndDomain,
   getBranchUsers,
   getBranchUsersByDomain,
+  getOrganisationStatistics,
   search2,
   getCounts,
   getInstructorRatingSummary,
@@ -1551,6 +1552,7 @@ import type {
   GetUsersByOrganisationAndDomainData,
   GetBranchUsersData,
   GetBranchUsersByDomainData,
+  GetOrganisationStatisticsData,
   Search2Data,
   Search2Error,
   Search2Response,
@@ -18998,6 +19000,31 @@ export const getBranchUsersByDomainOptions = (options: Options<GetBranchUsersByD
       return data;
     },
     queryKey: getBranchUsersByDomainQueryKey(options),
+  });
+};
+
+export const getOrganisationStatisticsQueryKey = (
+  options: Options<GetOrganisationStatisticsData>
+) => createQueryKey('getOrganisationStatistics', options);
+
+/**
+ * Get organisation-scoped dashboard statistics
+ * Returns statistics limited strictly to the given organisation — its members, students, instructors, administrators and training branches. Never platform-wide.
+ */
+export const getOrganisationStatisticsOptions = (
+  options: Options<GetOrganisationStatisticsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrganisationStatistics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getOrganisationStatisticsQueryKey(options),
   });
 };
 

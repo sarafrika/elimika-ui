@@ -4,13 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Briefcase, Building, GraduationCap, Users } from 'lucide-react';
 import { useMemo } from 'react';
 import { useOrganisation } from '@/context/organisation-context';
-import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import type { ClassDefinition, CourseTrainingApplication } from '@/services/client';
 import {
   getClassDefinitionsForOrganisationOptions,
-  getTrainingBranchesByOrganisationOptions,
-  getUsersByOrganisationAndDomainOptions,
-  getUsersByOrganisationOptions,
+  getOrganisationStatisticsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import {
@@ -34,30 +31,8 @@ export default function OrganisationReportsPage() {
   const organisationUuid = organisation?.uuid ?? '';
   const enabled = Boolean(organisationUuid);
 
-  const membersQuery = useQuery({
-    ...getUsersByOrganisationOptions({
-      path: { uuid: organisationUuid },
-      query: { pageable: { page: 0, size: 1 } },
-    }),
-    enabled,
-  });
-  const studentsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({
-      path: { uuid: organisationUuid, domainName: 'student' },
-    }),
-    enabled,
-  });
-  const instructorsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({
-      path: { uuid: organisationUuid, domainName: 'instructor' },
-    }),
-    enabled,
-  });
-  const branchesQuery = useQuery({
-    ...getTrainingBranchesByOrganisationOptions({
-      path: { uuid: organisationUuid },
-      query: { pageable: { page: 0, size: 1 } },
-    }),
+  const statsQuery = useQuery({
+    ...getOrganisationStatisticsOptions({ path: { uuid: organisationUuid } }),
     enabled,
   });
   const classesQuery = useQuery({
@@ -74,13 +49,11 @@ export default function OrganisationReportsPage() {
     enabled,
   });
 
-  const studentsPage = extractPage(studentsQuery.data);
-  const instructorsPage = extractPage(instructorsQuery.data);
-  const totalMembers = getTotalFromMetadata(extractPage(membersQuery.data).metadata);
-  const totalStudents = getTotalFromMetadata(studentsPage.metadata) || studentsPage.items.length;
-  const totalInstructors =
-    getTotalFromMetadata(instructorsPage.metadata) || instructorsPage.items.length;
-  const totalBranches = getTotalFromMetadata(extractPage(branchesQuery.data).metadata);
+  const stats = statsQuery.data?.data;
+  const totalMembers = stats?.total_members;
+  const totalStudents = stats?.total_students;
+  const totalInstructors = stats?.total_instructors;
+  const totalBranches = stats?.total_branches;
 
   const classes = useMemo(
     () =>
@@ -108,7 +81,7 @@ export default function OrganisationReportsPage() {
     return counts;
   }, [applications]);
 
-  const kpiLoading = membersQuery.isLoading || branchesQuery.isLoading;
+  const kpiLoading = statsQuery.isLoading;
 
   const kpis = [
     { label: 'Members', value: num(totalMembers), icon: Users, tone: 'info' as const },

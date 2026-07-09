@@ -442,13 +442,13 @@ export type RubricScoringLevel = {
    */
   readonly performance_indicator?: string;
   /**
-   * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
-   */
-  readonly is_highest_level?: boolean;
-  /**
    * **[READ-ONLY]** CSS-safe color class name derived from the color code.
    */
   readonly css_color_class?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
+   */
+  readonly is_highest_level?: boolean;
 };
 
 export type ApiResponseRubricScoringLevel = {
@@ -606,13 +606,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -754,6 +754,10 @@ export type Quiz = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the quiz is published and accessible to students.
+   */
+  readonly is_published?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable format of quiz time limit.
    */
   readonly time_limit_display?: string;
@@ -765,10 +769,6 @@ export type Quiz = {
    * **[READ-ONLY]** Indicates if students can take the quiz multiple times.
    */
   readonly has_multiple_attempts?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the quiz is published and accessible to students.
-   */
-  readonly is_published?: boolean;
 };
 
 export type ApiResponseQuiz = {
@@ -820,10 +820,6 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Human-readable category of the question type.
    */
   readonly question_category?: string;
@@ -835,6 +831,10 @@ export type QuizQuestion = {
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1720,13 +1720,13 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
-   */
-  readonly file_url?: string;
-  /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
   readonly is_expired?: boolean;
+  /**
+   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
+   */
+  readonly file_url?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -2229,13 +2229,13 @@ export type Lesson = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted lesson sequence for display purposes.
-   */
-  readonly lesson_sequence?: string;
-  /**
    * **[READ-ONLY]** Indicates if the lesson is published and accessible to students.
    */
   readonly is_published?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted lesson sequence for display purposes.
+   */
+  readonly lesson_sequence?: string;
 };
 
 export type ApiResponseLesson = {
@@ -2305,13 +2305,13 @@ export type LessonPracticeActivity = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable estimated duration.
-   */
-  readonly estimated_duration?: string;
-  /**
    * **[READ-ONLY]** Whether the activity is published.
    */
   readonly is_published?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable estimated duration.
+   */
+  readonly estimated_duration?: string;
 };
 
 export type ApiResponseLessonPracticeActivity = {
@@ -2386,13 +2386,13 @@ export type LessonContent = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of file size.
-   */
-  readonly file_size_display?: string;
-  /**
    * **[READ-ONLY]** Category of content based on its type and format.
    */
   readonly content_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of file size.
+   */
+  readonly file_size_display?: string;
 };
 
 export type ApiResponseLessonContent = {
@@ -2460,6 +2460,14 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Level of contribution to final grade based on weight.
+   */
+  readonly contribution_level?: string;
+  /**
+   * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
+   */
+  readonly aggregation_strategy_display?: string;
+  /**
    * **[READ-ONLY]** Category classification of the assessment type.
    */
   readonly assessment_category?: string;
@@ -2471,14 +2479,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
-  /**
-   * **[READ-ONLY]** Level of contribution to final grade based on weight.
-   */
-  readonly contribution_level?: string;
-  /**
-   * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
-   */
-  readonly aggregation_strategy_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -2769,13 +2769,13 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
-   */
-  readonly file_url?: string;
-  /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
   readonly is_expired?: boolean;
+  /**
+   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
+   */
+  readonly file_url?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -3698,14 +3698,6 @@ export type Certificate = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Letter grade representation of the final grade.
-   */
-  readonly grade_letter?: string;
-  /**
-   * **[READ-ONLY]** Current validity status of the certificate.
-   */
-  readonly validity_status?: string;
-  /**
    * **[READ-ONLY]** Type of certificate based on completion achievement.
    */
   readonly certificate_type?: string;
@@ -3713,6 +3705,14 @@ export type Certificate = {
    * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
    */
   readonly is_downloadable?: boolean;
+  /**
+   * **[READ-ONLY]** Letter grade representation of the final grade.
+   */
+  readonly grade_letter?: string;
+  /**
+   * **[READ-ONLY]** Current validity status of the certificate.
+   */
+  readonly validity_status?: string;
 };
 
 export type ApiResponseCertificate = {
@@ -3851,6 +3851,10 @@ export type Assignment = {
    */
   readonly assignment_category?: string;
   /**
+   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
+   */
+  readonly points_display?: string;
+  /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
   readonly assignment_scope?: string;
@@ -3858,10 +3862,6 @@ export type Assignment = {
    * **[READ-ONLY]** Summary of accepted submission types for this assignment.
    */
   readonly submission_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
-   */
-  readonly points_display?: string;
 };
 
 export type ApiResponseAssignment = {
@@ -6792,6 +6792,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -6803,10 +6807,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 export type ApiResponseStudentQuizReview = {
@@ -7078,6 +7078,47 @@ export type ApiResponseListUser = {
   data?: Array<User>;
   message?: string;
   error?: unknown;
+};
+
+export type ApiResponseOrganisationDashboardStats = {
+  success?: boolean;
+  data?: OrganisationDashboardStats;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Statistics scoped strictly to a single organisation
+ */
+export type OrganisationDashboardStats = {
+  /**
+   * Timestamp when statistics were generated
+   */
+  timestamp?: Date;
+  /**
+   * UUID of the organisation these statistics belong to
+   */
+  organisation_uuid?: string;
+  /**
+   * Total members affiliated with the organisation
+   */
+  total_members?: bigint;
+  /**
+   * Total members with the student domain
+   */
+  total_students?: bigint;
+  /**
+   * Total members with the instructor domain
+   */
+  total_instructors?: bigint;
+  /**
+   * Total organisation administrators
+   */
+  total_admins?: bigint;
+  /**
+   * Total active training branches
+   */
+  total_branches?: bigint;
 };
 
 export type ApiResponsePagedDtoNotificationDto = {
@@ -9325,6 +9366,8 @@ export const TypeEnum = {
   PROGRAM_TRAINING_APPLICATION_APPROVED: 'PROGRAM_TRAINING_APPLICATION_APPROVED',
   PROGRAM_TRAINING_APPLICATION_REJECTED: 'PROGRAM_TRAINING_APPLICATION_REJECTED',
   PROGRAM_TRAINING_APPLICATION_REVOKED: 'PROGRAM_TRAINING_APPLICATION_REVOKED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
   CLASS_ENROLLMENT_CONFIRMED: 'CLASS_ENROLLMENT_CONFIRMED',
   COURSE_ENROLLMENT_MILESTONE: 'COURSE_ENROLLMENT_MILESTONE',
   COURSE_ENROLLMENT_NOTICE: 'COURSE_ENROLLMENT_NOTICE',
@@ -10200,6 +10243,8 @@ export const TypeEnumWritable = {
   PROGRAM_TRAINING_APPLICATION_APPROVED: 'PROGRAM_TRAINING_APPLICATION_APPROVED',
   PROGRAM_TRAINING_APPLICATION_REJECTED: 'PROGRAM_TRAINING_APPLICATION_REJECTED',
   PROGRAM_TRAINING_APPLICATION_REVOKED: 'PROGRAM_TRAINING_APPLICATION_REVOKED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
   CLASS_ENROLLMENT_CONFIRMED: 'CLASS_ENROLLMENT_CONFIRMED',
   COURSE_ENROLLMENT_MILESTONE: 'COURSE_ENROLLMENT_MILESTONE',
   COURSE_ENROLLMENT_NOTICE: 'COURSE_ENROLLMENT_NOTICE',
@@ -24184,6 +24229,42 @@ export type GetBranchUsersByDomainResponses = {
 
 export type GetBranchUsersByDomainResponse =
   GetBranchUsersByDomainResponses[keyof GetBranchUsersByDomainResponses];
+
+export type GetOrganisationStatisticsData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation to get statistics for. Must be an existing organisation.
+     */
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{uuid}/statistics';
+};
+
+export type GetOrganisationStatisticsErrors = {
+  /**
+   * Organisation not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetOrganisationStatisticsError =
+  GetOrganisationStatisticsErrors[keyof GetOrganisationStatisticsErrors];
+
+export type GetOrganisationStatisticsResponses = {
+  /**
+   * Organisation statistics retrieved successfully
+   */
+  200: ApiResponseOrganisationDashboardStats;
+};
+
+export type GetOrganisationStatisticsResponse =
+  GetOrganisationStatisticsResponses[keyof GetOrganisationStatisticsResponses];
 
 export type Search2Data = {
   body?: never;

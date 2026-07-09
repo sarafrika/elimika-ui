@@ -657,16 +657,16 @@ export const zRubricScoringLevel = z
       )
       .readonly()
       .optional(),
+    css_color_class: z
+      .string()
+      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
+      .readonly()
+      .optional(),
     is_highest_level: z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).'
       )
-      .readonly()
-      .optional(),
-    css_color_class: z
-      .string()
-      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
       .readonly()
       .optional(),
   })
@@ -842,17 +842,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -1059,6 +1059,11 @@ export const zQuiz = z
       )
       .readonly()
       .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the quiz is published and accessible to students.')
+      .readonly()
+      .optional(),
     time_limit_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of quiz time limit.')
@@ -1072,11 +1077,6 @@ export const zQuiz = z
     has_multiple_attempts: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if students can take the quiz multiple times.')
-      .readonly()
-      .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the quiz is published and accessible to students.')
       .readonly()
       .optional(),
   })
@@ -1160,11 +1160,6 @@ export const zQuizQuestion = z
       )
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     question_category: z
       .string()
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
@@ -1180,6 +1175,11 @@ export const zQuizQuestion = z
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -2390,16 +2390,16 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
+    is_expired: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+      .readonly()
+      .optional(),
     file_url: z
       .string()
       .describe(
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
       )
-      .readonly()
-      .optional(),
-    is_expired: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
       .readonly()
       .optional(),
     file_size_formatted: z
@@ -3053,14 +3053,14 @@ export const zLesson = z
       )
       .readonly()
       .optional(),
-    lesson_sequence: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted lesson sequence for display purposes.')
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the lesson is published and accessible to students.')
+      .readonly()
+      .optional(),
+    lesson_sequence: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted lesson sequence for display purposes.')
       .readonly()
       .optional(),
   })
@@ -3174,14 +3174,14 @@ export const zLessonPracticeActivity = z
       .describe('**[READ-ONLY]** User who last updated the practice activity.')
       .readonly()
       .optional(),
-    estimated_duration: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable estimated duration.')
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Whether the activity is published.')
+      .readonly()
+      .optional(),
+    estimated_duration: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable estimated duration.')
       .readonly()
       .optional(),
   })
@@ -3283,14 +3283,14 @@ export const zLessonContent = z
       )
       .readonly()
       .optional(),
-    file_size_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of file size.')
-      .readonly()
-      .optional(),
     content_category: z
       .string()
       .describe('**[READ-ONLY]** Category of content based on its type and format.')
+      .readonly()
+      .optional(),
+    file_size_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of file size.')
       .readonly()
       .optional(),
   })
@@ -3396,6 +3396,18 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    contribution_level: z
+      .string()
+      .describe('**[READ-ONLY]** Level of contribution to final grade based on weight.')
+      .readonly()
+      .optional(),
+    aggregation_strategy_display: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
+      )
+      .readonly()
+      .optional(),
     assessment_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment type.')
@@ -3409,18 +3421,6 @@ export const zCourseAssessment = z
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
-      .readonly()
-      .optional(),
-    contribution_level: z
-      .string()
-      .describe('**[READ-ONLY]** Level of contribution to final grade based on weight.')
-      .readonly()
-      .optional(),
-    aggregation_strategy_display: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
-      )
       .readonly()
       .optional(),
   })
@@ -3776,16 +3776,16 @@ export const zCourseCreatorDocumentDto = z.object({
   created_by: z.string().readonly().optional(),
   updated_date: z.string().datetime().readonly().optional(),
   updated_by: z.string().readonly().optional(),
+  is_expired: z
+    .boolean()
+    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+    .readonly()
+    .optional(),
   file_url: z
     .string()
     .describe(
       '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
     )
-    .readonly()
-    .optional(),
-  is_expired: z
-    .boolean()
-    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
     .readonly()
     .optional(),
   file_size_formatted: z
@@ -4801,16 +4801,6 @@ export const zCertificate = z
       )
       .readonly()
       .optional(),
-    grade_letter: z
-      .string()
-      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
-      .readonly()
-      .optional(),
-    validity_status: z
-      .string()
-      .describe('**[READ-ONLY]** Current validity status of the certificate.')
-      .readonly()
-      .optional(),
     certificate_type: z
       .string()
       .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
@@ -4819,6 +4809,16 @@ export const zCertificate = z
     is_downloadable: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
+      .readonly()
+      .optional(),
+    grade_letter: z
+      .string()
+      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
+      .readonly()
+      .optional(),
+    validity_status: z
+      .string()
+      .describe('**[READ-ONLY]** Current validity status of the certificate.')
       .readonly()
       .optional(),
   })
@@ -5029,6 +5029,11 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
+      .readonly()
+      .optional(),
     assignment_scope: z
       .string()
       .describe('**[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.')
@@ -5037,11 +5042,6 @@ export const zAssignment = z
     submission_summary: z
       .string()
       .describe('**[READ-ONLY]** Summary of accepted submission types for this assignment.')
-      .readonly()
-      .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
   })
@@ -5697,6 +5697,8 @@ export const zTypeEnum = z.enum([
   'PROGRAM_TRAINING_APPLICATION_APPROVED',
   'PROGRAM_TRAINING_APPLICATION_REJECTED',
   'PROGRAM_TRAINING_APPLICATION_REVOKED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
   'CLASS_ENROLLMENT_CONFIRMED',
   'COURSE_ENROLLMENT_MILESTONE',
   'COURSE_ENROLLMENT_NOTICE',
@@ -8173,6 +8175,11 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -8186,11 +8193,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -8516,6 +8518,42 @@ export const zApiResponsePagedDtoOrganisation = z.object({
 export const zApiResponseListUser = z.object({
   success: z.boolean().optional(),
   data: z.array(zUser).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Statistics scoped strictly to a single organisation
+ */
+export const zOrganisationDashboardStats = z
+  .object({
+    timestamp: z
+      .string()
+      .datetime()
+      .describe('Timestamp when statistics were generated')
+      .optional(),
+    organisation_uuid: z
+      .string()
+      .uuid()
+      .describe('UUID of the organisation these statistics belong to')
+      .optional(),
+    total_members: z.coerce
+      .bigint()
+      .describe('Total members affiliated with the organisation')
+      .optional(),
+    total_students: z.coerce.bigint().describe('Total members with the student domain').optional(),
+    total_instructors: z.coerce
+      .bigint()
+      .describe('Total members with the instructor domain')
+      .optional(),
+    total_admins: z.coerce.bigint().describe('Total organisation administrators').optional(),
+    total_branches: z.coerce.bigint().describe('Total active training branches').optional(),
+  })
+  .describe('Statistics scoped strictly to a single organisation');
+
+export const zApiResponseOrganisationDashboardStats = z.object({
+  success: z.boolean().optional(),
+  data: zOrganisationDashboardStats.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -10506,6 +10544,8 @@ export const zTypeEnumWritable = z.enum([
   'PROGRAM_TRAINING_APPLICATION_APPROVED',
   'PROGRAM_TRAINING_APPLICATION_REJECTED',
   'PROGRAM_TRAINING_APPLICATION_REVOKED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
   'CLASS_ENROLLMENT_CONFIRMED',
   'COURSE_ENROLLMENT_MILESTONE',
   'COURSE_ENROLLMENT_NOTICE',
@@ -16187,6 +16227,24 @@ export const zGetBranchUsersByDomainData = z.object({
  * Filtered branch users retrieved successfully
  */
 export const zGetBranchUsersByDomainResponse = zApiResponseListUser;
+
+export const zGetOrganisationStatisticsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe(
+        'UUID of the organisation to get statistics for. Must be an existing organisation.'
+      ),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Organisation statistics retrieved successfully
+ */
+export const zGetOrganisationStatisticsResponse = zApiResponseOrganisationDashboardStats;
 
 export const zSearch2Data = z.object({
   body: z.never().optional(),
