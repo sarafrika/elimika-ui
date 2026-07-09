@@ -5105,6 +5105,18 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
+    is_major_assessment: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
+      example: false,
+      readOnly: true,
+    },
     contribution_level: {
       type: 'string',
       description: '**[READ-ONLY]** Level of contribution to final grade based on weight.',
@@ -5122,18 +5134,6 @@ export const CourseAssessmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Category classification of the assessment type.',
       example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
-    is_major_assessment: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
-      example: false,
       readOnly: true,
     },
   },
@@ -9797,12 +9797,6 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
-      readOnly: true,
-    },
     status_description: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
@@ -9813,6 +9807,12 @@ export const EnrollmentSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
       example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -12606,16 +12606,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
-      readOnly: true,
-    },
     is_upcoming: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this class is upcoming.',
       example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -16416,6 +16416,58 @@ export const ApiResponseListCourseAssessmentLineItemSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const ApiResponseListRecommendedCourseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RecommendedCourse',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const RecommendedCourseSchema = {
+  type: 'object',
+  description: 'A recommended course with an explanation',
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'UUID of the recommended course',
+    },
+    name: {
+      type: 'string',
+      description: 'Course name',
+    },
+    description: {
+      type: 'string',
+      description: 'Course description',
+    },
+    thumbnail_url: {
+      type: 'string',
+      description: 'Course thumbnail URL',
+    },
+    reason: {
+      type: 'string',
+      description: 'Short explanation of why this course was recommended',
+    },
+    score: {
+      type: 'number',
+      format: 'double',
+      description: 'Internal ranking score (higher is a stronger match)',
+    },
   },
 } as const;
 

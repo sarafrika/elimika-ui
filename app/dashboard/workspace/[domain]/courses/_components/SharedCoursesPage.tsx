@@ -45,6 +45,7 @@ import {
   getAllCategoriesOptions,
   getAllDifficultyLevelsOptions,
   getAllTrainingProgramsOptions,
+  getCourseRecommendationsOptions,
   getCourseReviewsOptions,
   getPublishedCoursesOptions,
   searchCourseCreatorsOptions,
@@ -221,7 +222,8 @@ const createRecommendationCards = (
   domain: UserDomain,
   creatorMap: Map<string, string>,
   ratingsMap: Map<string, string>,
-  isInstructorDomain: boolean
+  isInstructorDomain: boolean,
+  reasonMap?: Map<string, string>
 ): CoursesRecommendationCardData[] =>
   items.map((item, index) => {
     const presentation = getCardPresentation(index + 2);
@@ -243,6 +245,7 @@ const createRecommendationCards = (
       icon: presentation.icon,
       imageTone: presentation.imageTone,
       imageUrl: item.imageUrl,
+      reason: reasonMap?.get(item.id),
     };
   });
 
@@ -800,7 +803,34 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     ? organisationProgramApplicationMap
     : instructorProgramApplicationMap;
 
+  const recommendationsQuery = useQuery({
+    ...getCourseRecommendationsOptions({
+      query: { user_uuid: user?.uuid ?? '', limit: 6 },
+    }),
+    enabled: Boolean(user?.uuid),
+  });
+
+  const recommendationReasonMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const rec of recommendationsQuery.data?.data ?? []) {
+      if (rec.course_uuid && rec.reason) {
+        map.set(rec.course_uuid, rec.reason);
+      }
+    }
+    return map;
+  }, [recommendationsQuery.data]);
+
   const recommendedBase = useMemo(() => {
+    const feedById = new Map(allCoursesFeed.map(item => [item.id, item]));
+    const personalised = (recommendationsQuery.data?.data ?? [])
+      .map(rec => (rec.course_uuid ? feedById.get(rec.course_uuid) : undefined))
+      .filter((item): item is UnifiedContentItem => Boolean(item));
+
+    if (personalised.length > 0) {
+      return personalised.slice(0, 6);
+    }
+
+    // Fallback while recommendations load or when the user has no history yet.
     if (isInstructorDomain) {
       return allCoursesFeed
         .filter(item => item.kind === 'course' && !instructorCourseApplicationMap.has(item.id))
@@ -808,7 +838,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     }
 
     return allCoursesFeed.slice(0, 6);
-  }, [allCoursesFeed, instructorCourseApplicationMap, isInstructorDomain]);
+  }, [allCoursesFeed, instructorCourseApplicationMap, isInstructorDomain, recommendationsQuery.data]);
 
   const creatorIds = useMemo(
     () =>
@@ -904,8 +934,16 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   );
 
   const recommendationCards = useMemo(
-    () => createRecommendationCards(recommendedBase, domain, creatorMap, ratingsMap, isInstructorDomain),
-    [creatorMap, domain, isInstructorDomain, ratingsMap, recommendedBase]
+    () =>
+      createRecommendationCards(
+        recommendedBase,
+        domain,
+        creatorMap,
+        ratingsMap,
+        isInstructorDomain,
+        recommendationReasonMap
+      ),
+    [creatorMap, domain, isInstructorDomain, ratingsMap, recommendationReasonMap, recommendedBase]
   );
 
   const isLoading =

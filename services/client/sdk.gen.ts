@@ -1312,6 +1312,9 @@ import type {
   SearchCoursesData,
   SearchCoursesResponses,
   SearchCoursesErrors,
+  GetCourseRecommendationsData,
+  GetCourseRecommendationsResponses,
+  GetCourseRecommendationsErrors,
   GetPublishedCoursesData,
   GetPublishedCoursesResponses,
   GetPublishedCoursesErrors,
@@ -14968,6 +14971,37 @@ export const searchCourses = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/search',
+    ...options,
+  });
+};
+
+/**
+ * Get course recommendations for a user
+ * Returns published courses recommended for the given user, ranked by topic and
+ * level overlap with the user's past courses (authored and/or approved-to-train),
+ * excluding courses already taken. Falls back to the most recently published courses
+ * when the user has no usable history. Each result carries a short reason.
+ *
+ */
+export const getCourseRecommendations = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseRecommendationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseRecommendationsResponses,
+    GetCourseRecommendationsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/recommendations',
     ...options,
   });
 };

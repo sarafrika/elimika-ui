@@ -1,9 +1,9 @@
+import { Clock3, Sparkles, Star } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { Clock3, Star } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
 import type { CoursesRecommendationCardData } from './courses-data';
 
 const imageToneClasses = {
@@ -60,6 +60,12 @@ export function CoursesRecommendationCard({ card }: CoursesRecommendationCardPro
             </h3>
           </Link>
           <p className='text-muted-foreground mt-1 text-xs sm:text-[0.8rem]'>{card.provider}</p>
+          {card.reason ? (
+            <span className='bg-primary/10 text-primary mt-2 inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-[0.7rem] font-medium'>
+              <Sparkles className='size-3 shrink-0' />
+              <span className='truncate'>{card.reason}</span>
+            </span>
+          ) : null}
         </div>
 
         <div className='text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-[0.8rem]'>

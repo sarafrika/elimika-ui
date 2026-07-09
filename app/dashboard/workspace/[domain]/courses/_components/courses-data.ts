@@ -1,4 +1,3 @@
-import type { UserDomain } from '@/lib/types';
 import type { LucideIcon } from 'lucide-react';
 import {
   BadgeCheck,
@@ -16,6 +15,7 @@ import {
   Trophy,
   Users,
 } from 'lucide-react';
+import type { UserDomain } from '@/lib/types';
 
 export type CoursesHeroAction = {
   title: string;
@@ -83,6 +83,7 @@ export type CoursesRecommendationCardData = {
   icon: LucideIcon;
   imageTone: 'primary' | 'warning' | 'success';
   imageUrl?: string;
+  reason?: string;
 };
 
 export const heroActions: CoursesHeroAction[] = [

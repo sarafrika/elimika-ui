@@ -2460,6 +2460,14 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is a major assessment component.
+   */
+  readonly is_major_assessment?: boolean;
+  /**
    * **[READ-ONLY]** Level of contribution to final grade based on weight.
    */
   readonly contribution_level?: string;
@@ -2471,14 +2479,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Category classification of the assessment type.
    */
   readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this is a major assessment component.
-   */
-  readonly is_major_assessment?: boolean;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -4692,10 +4692,6 @@ export type Enrollment = {
    */
   readonly is_attendance_marked?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
@@ -4703,6 +4699,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponse = {
@@ -6312,13 +6312,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the student attended this class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
   readonly is_upcoming?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended this class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponseListScheduledInstance = {
@@ -7938,6 +7938,43 @@ export type ApiResponseListCourseAssessmentLineItem = {
   data?: Array<CourseAssessmentLineItem>;
   message?: string;
   error?: unknown;
+};
+
+export type ApiResponseListRecommendedCourse = {
+  success?: boolean;
+  data?: Array<RecommendedCourse>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A recommended course with an explanation
+ */
+export type RecommendedCourse = {
+  /**
+   * UUID of the recommended course
+   */
+  course_uuid?: string;
+  /**
+   * Course name
+   */
+  name?: string;
+  /**
+   * Course description
+   */
+  description?: string;
+  /**
+   * Course thumbnail URL
+   */
+  thumbnail_url?: string;
+  /**
+   * Short explanation of why this course was recommended
+   */
+  reason?: string;
+  /**
+   * Internal ranking score (higher is a stronger match)
+   */
+  score?: number;
 };
 
 export type ApiResponsePagedDtoCourseCreator = {
@@ -25666,6 +25703,46 @@ export type SearchCoursesResponses = {
 };
 
 export type SearchCoursesResponse = SearchCoursesResponses[keyof SearchCoursesResponses];
+
+export type GetCourseRecommendationsData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * UUID of the user to recommend for
+     */
+    user_uuid: string;
+    /**
+     * Maximum number of recommendations to return (default 6, max 50)
+     */
+    limit?: number;
+  };
+  url: '/api/v1/courses/recommendations';
+};
+
+export type GetCourseRecommendationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseRecommendationsError =
+  GetCourseRecommendationsErrors[keyof GetCourseRecommendationsErrors];
+
+export type GetCourseRecommendationsResponses = {
+  /**
+   * Recommendations retrieved successfully
+   */
+  200: ApiResponseListRecommendedCourse;
+};
+
+export type GetCourseRecommendationsResponse =
+  GetCourseRecommendationsResponses[keyof GetCourseRecommendationsResponses];
 
 export type GetPublishedCoursesData = {
   body?: never;

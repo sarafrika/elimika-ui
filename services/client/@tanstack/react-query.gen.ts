@@ -438,6 +438,7 @@ import {
   getCourseCategories,
   searchTrainingApplications,
   searchCourses,
+  getCourseRecommendations,
   getPublishedCourses,
   getCourseMedia,
   getCoursesByInstructor,
@@ -1634,6 +1635,7 @@ import type {
   SearchCoursesData,
   SearchCoursesError,
   SearchCoursesResponse,
+  GetCourseRecommendationsData,
   GetPublishedCoursesData,
   GetPublishedCoursesError,
   GetPublishedCoursesResponse,
@@ -21077,6 +21079,32 @@ export const searchCoursesInfiniteOptions = (options: Options<SearchCoursesData>
       queryKey: searchCoursesInfiniteQueryKey(options),
     }
   );
+};
+
+export const getCourseRecommendationsQueryKey = (options: Options<GetCourseRecommendationsData>) =>
+  createQueryKey('getCourseRecommendations', options);
+
+/**
+ * Get course recommendations for a user
+ * Returns published courses recommended for the given user, ranked by topic and
+ * level overlap with the user's past courses (authored and/or approved-to-train),
+ * excluding courses already taken. Falls back to the most recently published courses
+ * when the user has no usable history. Each result carries a short reason.
+ *
+ */
+export const getCourseRecommendationsOptions = (options: Options<GetCourseRecommendationsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseRecommendations({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseRecommendationsQueryKey(options),
+  });
 };
 
 export const getPublishedCoursesQueryKey = (options: Options<GetPublishedCoursesData>) =>

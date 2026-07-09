@@ -3396,6 +3396,16 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
+      .readonly()
+      .optional(),
+    is_major_assessment: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
+      .readonly()
+      .optional(),
     contribution_level: z
       .string()
       .describe('**[READ-ONLY]** Level of contribution to final grade based on weight.')
@@ -3411,16 +3421,6 @@ export const zCourseAssessment = z
     assessment_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
-      .readonly()
-      .optional(),
-    is_major_assessment: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
       .readonly()
       .optional(),
   })
@@ -5958,11 +5958,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
@@ -5971,6 +5966,11 @@ export const zEnrollment = z
     can_be_cancelled: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
   })
@@ -7650,14 +7650,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
-      .readonly()
-      .optional(),
     is_upcoming: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
       .readonly()
       .optional(),
   })
@@ -9442,6 +9442,27 @@ export const zApiResponsePagedDtoCourseAssessment = z.object({
 export const zApiResponseListCourseAssessmentLineItem = z.object({
   success: z.boolean().optional(),
   data: z.array(zCourseAssessmentLineItem).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * A recommended course with an explanation
+ */
+export const zRecommendedCourse = z
+  .object({
+    course_uuid: z.string().uuid().describe('UUID of the recommended course').optional(),
+    name: z.string().describe('Course name').optional(),
+    description: z.string().describe('Course description').optional(),
+    thumbnail_url: z.string().describe('Course thumbnail URL').optional(),
+    reason: z.string().describe('Short explanation of why this course was recommended').optional(),
+    score: z.number().describe('Internal ranking score (higher is a stronger match)').optional(),
+  })
+  .describe('A recommended course with an explanation');
+
+export const zApiResponseListRecommendedCourse = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zRecommendedCourse).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -16790,6 +16811,25 @@ export const zSearchCoursesData = z.object({
  * OK
  */
 export const zSearchCoursesResponse = zApiResponsePagedDtoCourse;
+
+export const zGetCourseRecommendationsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    user_uuid: z.string().uuid().describe('UUID of the user to recommend for'),
+    limit: z
+      .number()
+      .int()
+      .describe('Maximum number of recommendations to return (default 6, max 50)')
+      .optional()
+      .default(6),
+  }),
+});
+
+/**
+ * Recommendations retrieved successfully
+ */
+export const zGetCourseRecommendationsResponse = zApiResponseListRecommendedCourse;
 
 export const zGetPublishedCoursesData = z.object({
   body: z.never().optional(),
