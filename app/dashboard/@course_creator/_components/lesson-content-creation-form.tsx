@@ -1,6 +1,5 @@
 'use client';
 
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -19,6 +18,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { LessonContentViewerDialog } from '../../../../components/content-preview/LessonContentPreview';
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
@@ -820,16 +820,26 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                         disabled={!mediaFile || uploadLessonMedia.isPending}
                                         onClick={() => {
                                           if (!mediaFile) return;
+                                          const uploadCourseUuid = course?.data?.uuid;
+                                          const uploadContentTypeUuid =
+                                            contentForm.getValues('content_type_uuid');
+                                          if (!uploadCourseUuid || !activeLessonId) {
+                                            toast.error('Save the lesson before uploading media.');
+                                            return;
+                                          }
+                                          if (!uploadContentTypeUuid) {
+                                            toast.error('Select a content type first.');
+                                            return;
+                                          }
                                           uploadLessonMedia.mutate(
                                             {
                                               body: { file: mediaFile },
                                               path: {
-                                                courseUuid: course?.data?.uuid as string,
+                                                courseUuid: uploadCourseUuid,
                                                 lessonUuid: activeLessonId,
                                               },
                                               query: {
-                                                content_type_uuid:
-                                                  contentForm.getValues('content_type_uuid'),
+                                                content_type_uuid: uploadContentTypeUuid,
                                                 title: contentForm.getValues('title') || 'Untitled',
                                                 is_required: false,
                                                 description: 'N/A',
