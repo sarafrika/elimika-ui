@@ -265,8 +265,8 @@ export type Student = {
    * **[OPTIONAL]** Short biography or notes about the student. Used in student profiles.
    */
   bio?: string | null;
-  primaryGuardianContact?: string;
   secondaryGuardianContact?: string;
+  primaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
@@ -2203,13 +2203,13 @@ export type LessonPracticeActivity = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable estimated duration.
-   */
-  readonly estimated_duration?: string;
-  /**
    * **[READ-ONLY]** Whether the activity is published.
    */
   readonly is_published?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable estimated duration.
+   */
+  readonly estimated_duration?: string;
 };
 
 export type ApiResponseLessonPracticeActivity = {
@@ -4377,6 +4377,7 @@ export type ApiResponseNotificationDto = {
 export type NotificationDto = {
   uuid?: string;
   notification_id?: string;
+  recipient_domain?: string;
   type?: TypeEnum;
   category?: CategoryEnum;
   priority?: PriorityEnum;
@@ -4584,13 +4585,13 @@ export type Enrollment = {
    */
   readonly can_be_cancelled?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
-   */
-  readonly is_attendance_marked?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
+   */
+  readonly is_attendance_marked?: boolean;
   /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
@@ -5885,7 +5886,7 @@ export type AssignmentAttachment = {
  * Admin domain assignment request containing domain type, reason, and effective date
  */
 export type AdminDomainAssignmentRequest = {
-  domain_name: SchemaEnum6;
+  domain_name: SchemaEnum7;
   assignment_type: AssignmentTypeEnum;
   /**
    * Reason for assigning admin privileges
@@ -8140,6 +8141,97 @@ export type PagedDtoAssignmentSubmission = {
   links?: PageLinks;
 };
 
+/**
+ * Represents a request audit event related to a specific user
+ */
+export type AdminUserActivityEvent = {
+  /**
+   * Unique identifier for the activity event
+   */
+  event_uuid?: string;
+  /**
+   * When the activity occurred (UTC)
+   */
+  occurred_at?: Date;
+  /**
+   * Human-readable summary of the activity
+   */
+  summary?: string;
+  /**
+   * Audit category derived from the endpoint
+   */
+  category?: string;
+  /**
+   * Whether the selected user performed the action, was targeted by it, or both
+   */
+  scope?: string;
+  /**
+   * HTTP method invoked by the request
+   */
+  http_method?: string;
+  /**
+   * Endpoint path that was called
+   */
+  endpoint?: string;
+  /**
+   * Query string that accompanied the request
+   */
+  query?: string;
+  /**
+   * Response status returned for the request
+   */
+  response_status?: number;
+  /**
+   * Processing time in milliseconds
+   */
+  processing_time_ms?: bigint;
+  /**
+   * Actor name captured by the request audit log
+   */
+  actor_name?: string;
+  /**
+   * Actor email captured by the request audit log
+   */
+  actor_email?: string;
+  /**
+   * Actor user UUID captured by the request audit log
+   */
+  actor_uuid?: string;
+  /**
+   * Actor domains captured during the request
+   */
+  actor_domains?: string;
+  /**
+   * Selected dossier user UUID
+   */
+  target_user_uuid?: string;
+  /**
+   * Related profile/entity type when derived from the endpoint
+   */
+  related_entity_type?: string;
+  /**
+   * Related profile/entity UUID when derived from the endpoint
+   */
+  related_entity_uuid?: string;
+  /**
+   * Unique request identifier captured by the audit trail
+   */
+  request_id?: string;
+};
+
+export type ApiResponsePagedDtoAdminUserActivityEvent = {
+  success?: boolean;
+  data?: PagedDtoAdminUserActivityEvent;
+  message?: string;
+  error?: unknown;
+};
+
+export type PagedDtoAdminUserActivityEvent = {
+  content?: Array<AdminUserActivityEvent>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
 export type ApiResponseListDomainDto = {
   success?: boolean;
   data?: Array<DomainDto>;
@@ -8494,97 +8586,6 @@ export type DocumentUrl = unknown;
  */
 export type SocialMediaUrl = unknown;
 
-/**
- * Represents a request audit event related to a specific user
- */
-export type AdminUserActivityEvent = {
-  /**
-   * Unique identifier for the activity event
-   */
-  event_uuid?: string;
-  /**
-   * When the activity occurred (UTC)
-   */
-  occurred_at?: Date;
-  /**
-   * Human-readable summary of the activity
-   */
-  summary?: string;
-  /**
-   * Audit category derived from the endpoint
-   */
-  category?: string;
-  /**
-   * Whether the selected user performed the action, was targeted by it, or both
-   */
-  scope?: string;
-  /**
-   * HTTP method invoked by the request
-   */
-  http_method?: string;
-  /**
-   * Endpoint path that was called
-   */
-  endpoint?: string;
-  /**
-   * Query string that accompanied the request
-   */
-  query?: string;
-  /**
-   * Response status returned for the request
-   */
-  response_status?: number;
-  /**
-   * Processing time in milliseconds
-   */
-  processing_time_ms?: bigint;
-  /**
-   * Actor name captured by the request audit log
-   */
-  actor_name?: string;
-  /**
-   * Actor email captured by the request audit log
-   */
-  actor_email?: string;
-  /**
-   * Actor user UUID captured by the request audit log
-   */
-  actor_uuid?: string;
-  /**
-   * Actor domains captured during the request
-   */
-  actor_domains?: string;
-  /**
-   * Selected dossier user UUID
-   */
-  target_user_uuid?: string;
-  /**
-   * Related profile/entity type when derived from the endpoint
-   */
-  related_entity_type?: string;
-  /**
-   * Related profile/entity UUID when derived from the endpoint
-   */
-  related_entity_uuid?: string;
-  /**
-   * Unique request identifier captured by the audit trail
-   */
-  request_id?: string;
-};
-
-export type PagedDtoAdminUserActivityEvent = {
-  content?: Array<AdminUserActivityEvent>;
-  metadata?: PageMetadata;
-  links?: PageLinks;
-};
-
-export type ApiResponsePagedDtoAdminUserActivityEvent = {
-  success?: boolean;
-  data?: PagedDtoAdminUserActivityEvent;
-  message?: string;
-  error?: unknown;
-};
-
 export const SchemaEnum = {
   PLATFORM_FEE: 'PLATFORM_FEE',
   AGE_GATE: 'AGE_GATE',
@@ -8631,11 +8632,19 @@ export const SchemaEnum5 = {
 export type SchemaEnum5 = (typeof SchemaEnum5)[keyof typeof SchemaEnum5];
 
 export const SchemaEnum6 = {
+  ACTOR: 'actor',
+  TARGET: 'target',
+  ALL: 'all',
+} as const;
+
+export type SchemaEnum6 = (typeof SchemaEnum6)[keyof typeof SchemaEnum6];
+
+export const SchemaEnum7 = {
   ADMIN: 'admin',
   ORGANISATION_USER: 'organisation_user',
 } as const;
 
-export type SchemaEnum6 = (typeof SchemaEnum6)[keyof typeof SchemaEnum6];
+export type SchemaEnum7 = (typeof SchemaEnum7)[keyof typeof SchemaEnum7];
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -9642,11 +9651,19 @@ export const SchemaEnum5Writable = {
 export type SchemaEnum5Writable = (typeof SchemaEnum5Writable)[keyof typeof SchemaEnum5Writable];
 
 export const SchemaEnum6Writable = {
+  ACTOR: 'actor',
+  TARGET: 'target',
+  ALL: 'all',
+} as const;
+
+export type SchemaEnum6Writable = (typeof SchemaEnum6Writable)[keyof typeof SchemaEnum6Writable];
+
+export const SchemaEnum7Writable = {
   ADMIN: 'admin',
   ORGANISATION_USER: 'organisation_user',
 } as const;
 
-export type SchemaEnum6Writable = (typeof SchemaEnum6Writable)[keyof typeof SchemaEnum6Writable];
+export type SchemaEnum7Writable = (typeof SchemaEnum7Writable)[keyof typeof SchemaEnum7Writable];
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -16106,6 +16123,7 @@ export type ListNotificationsData = {
   body?: never;
   path?: never;
   query: {
+    domain?: string;
     status?: string;
     presentation?: string;
     type?: string;
@@ -16143,6 +16161,7 @@ export type ApplyBulkActionData = {
   path?: never;
   query: {
     action: string;
+    domain?: string;
     status?: string;
     presentation?: string;
     type?: string;
@@ -23940,7 +23959,9 @@ export type Search2Response = Search2Responses[keyof Search2Responses];
 export type GetCountsData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    domain?: string;
+  };
   url: '/api/v1/notifications/counts';
 };
 
@@ -26439,6 +26460,42 @@ export type ListMyApplicationsResponses = {
 export type ListMyApplicationsResponse =
   ListMyApplicationsResponses[keyof ListMyApplicationsResponses];
 
+export type ListInstructorApplicationsData = {
+  body?: never;
+  path: {
+    instructorUuid: string;
+  };
+  query: {
+    status?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/classes/jobs/applications/instructor/{instructorUuid}';
+};
+
+export type ListInstructorApplicationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListInstructorApplicationsError =
+  ListInstructorApplicationsErrors[keyof ListInstructorApplicationsErrors];
+
+export type ListInstructorApplicationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoClassMarketplaceJobApplication;
+};
+
+export type ListInstructorApplicationsResponse =
+  ListInstructorApplicationsResponses[keyof ListInstructorApplicationsResponses];
+
 export type GetClassDefinitionsForInstructorData = {
   body?: never;
   path: {
@@ -27357,6 +27414,54 @@ export type IsUserAdminResponses = {
 
 export type IsUserAdminResponse = IsUserAdminResponses[keyof IsUserAdminResponses];
 
+export type GetUserActivityData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the user dossier to inspect
+     */
+    uuid: string;
+  };
+  query: {
+    /**
+     * Audit scope to return
+     */
+    scope?: SchemaEnum6Writable;
+    /**
+     * Optional endpoint category filter
+     */
+    category?: string;
+    /**
+     * Optional comma-separated related profile UUIDs resolved by the caller
+     */
+    target_uuids?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/admin/users/{uuid}/activity-feed';
+};
+
+export type GetUserActivityErrors = {
+  /**
+   * User not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetUserActivityError = GetUserActivityErrors[keyof GetUserActivityErrors];
+
+export type GetUserActivityResponses = {
+  /**
+   * User activity retrieved successfully
+   */
+  200: ApiResponsePagedDtoAdminUserActivityEvent;
+};
+
+export type GetUserActivityResponse = GetUserActivityResponses[keyof GetUserActivityResponses];
+
 export type GetSystemAdminUsersData = {
   body?: never;
   path?: never;
@@ -28101,7 +28206,7 @@ export type RemoveAdminDomainData = {
     /**
      * Domain name to remove
      */
-    domain: SchemaEnum6Writable;
+    domain: SchemaEnum7Writable;
   };
   query?: {
     /**
@@ -28142,78 +28247,6 @@ export type RemoveAdminDomainResponses = {
 
 export type RemoveAdminDomainResponse =
   RemoveAdminDomainResponses[keyof RemoveAdminDomainResponses];
-
-export type GetUserActivityData = {
-  body?: never;
-  path: {
-    uuid: string;
-  };
-  query: {
-    scope?: string;
-    category?: string;
-    target_uuids?: string;
-    pageable: Pageable;
-  };
-  url: '/api/v1/admin/users/{uuid}/activity-feed';
-};
-
-export type GetUserActivityErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetUserActivityError = GetUserActivityErrors[keyof GetUserActivityErrors];
-
-export type GetUserActivityResponses = {
-  /**
-   * User activity retrieved successfully
-   */
-  200: ApiResponsePagedDtoAdminUserActivityEvent;
-};
-
-export type GetUserActivityResponse = GetUserActivityResponses[keyof GetUserActivityResponses];
-
-export type ListInstructorApplicationsData = {
-  body?: never;
-  path: {
-    instructorUuid: string;
-  };
-  query: {
-    status?: string;
-    pageable: Pageable;
-  };
-  url: '/api/v1/classes/jobs/applications/instructor/{instructorUuid}';
-};
-
-export type ListInstructorApplicationsErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ListInstructorApplicationsError =
-  ListInstructorApplicationsErrors[keyof ListInstructorApplicationsErrors];
-
-export type ListInstructorApplicationsResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePagedDtoClassMarketplaceJobApplication;
-};
-
-export type ListInstructorApplicationsResponse =
-  ListInstructorApplicationsResponses[keyof ListInstructorApplicationsResponses];
 
 export type ClientOptions = {
   baseUrl:

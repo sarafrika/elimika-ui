@@ -466,6 +466,7 @@ import {
   getClassDefinitionsForOrganisation,
   getClassMedia,
   listMyApplications,
+  listInstructorApplications,
   getClassDefinitionsForInstructor,
   getClassDefinitionsForCourse,
   getAllActiveClassDefinitions,
@@ -493,6 +494,7 @@ import {
   getPendingGrading,
   isUserSystemAdmin,
   isUserAdmin,
+  getUserActivity,
   getSystemAdminUsers,
   getOrganizationAdminUsers,
   getAdminEligibleUsers,
@@ -515,8 +517,6 @@ import {
   deleteSubmissionAttachment,
   deleteAssignmentAttachment,
   removeAdminDomain,
-  getUserActivity,
-  listInstructorApplications,
 } from '../sdk.gen';
 import {
   type UseMutationOptions,
@@ -1687,6 +1687,9 @@ import type {
   ListMyApplicationsData,
   ListMyApplicationsError,
   ListMyApplicationsResponse,
+  ListInstructorApplicationsData,
+  ListInstructorApplicationsError,
+  ListInstructorApplicationsResponse,
   GetClassDefinitionsForInstructorData,
   GetClassDefinitionsForCourseData,
   GetAllActiveClassDefinitionsData,
@@ -1722,6 +1725,9 @@ import type {
   GetPendingGradingData,
   IsUserSystemAdminData,
   IsUserAdminData,
+  GetUserActivityData,
+  GetUserActivityError,
+  GetUserActivityResponse,
   GetSystemAdminUsersData,
   GetSystemAdminUsersError,
   GetSystemAdminUsersResponse,
@@ -1774,12 +1780,6 @@ import type {
   RemoveAdminDomainData,
   RemoveAdminDomainError,
   RemoveAdminDomainResponse,
-  GetUserActivityData,
-  GetUserActivityError,
-  GetUserActivityResponse,
-  ListInstructorApplicationsData,
-  ListInstructorApplicationsError,
-  ListInstructorApplicationsResponse,
 } from '../types.gen';
 import { client as _heyApiClient } from '../client.gen';
 
@@ -22646,6 +22646,79 @@ export const listMyApplicationsInfiniteOptions = (options: Options<ListMyApplica
   );
 };
 
+export const listInstructorApplicationsQueryKey = (
+  options: Options<ListInstructorApplicationsData>
+) => createQueryKey('listInstructorApplications', options);
+
+/**
+ * List marketplace class job applications for an instructor
+ */
+export const listInstructorApplicationsOptions = (
+  options: Options<ListInstructorApplicationsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listInstructorApplications({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listInstructorApplicationsQueryKey(options),
+  });
+};
+
+export const listInstructorApplicationsInfiniteQueryKey = (
+  options: Options<ListInstructorApplicationsData>
+): QueryKey<Options<ListInstructorApplicationsData>> =>
+  createQueryKey('listInstructorApplications', options, true);
+
+/**
+ * List marketplace class job applications for an instructor
+ */
+export const listInstructorApplicationsInfiniteOptions = (
+  options: Options<ListInstructorApplicationsData>
+) => {
+  return infiniteQueryOptions<
+    ListInstructorApplicationsResponse,
+    ListInstructorApplicationsError,
+    InfiniteData<ListInstructorApplicationsResponse>,
+    QueryKey<Options<ListInstructorApplicationsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListInstructorApplicationsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListInstructorApplicationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listInstructorApplications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listInstructorApplicationsInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const getClassDefinitionsForInstructorQueryKey = (
   options: Options<GetClassDefinitionsForInstructorData>
 ) => createQueryKey('getClassDefinitionsForInstructor', options);
@@ -23518,6 +23591,71 @@ export const isUserAdminOptions = (options: Options<IsUserAdminData>) => {
   });
 };
 
+export const getUserActivityQueryKey = (options: Options<GetUserActivityData>) =>
+  createQueryKey('getUserActivity', options);
+
+/**
+ * Get a user-specific admin activity feed
+ * Retrieves request audit events where the selected user was the actor, the target, or both. Target events are derived from user, profile, organisation, and branch UUIDs seen in request paths or query strings.
+ */
+export const getUserActivityOptions = (options: Options<GetUserActivityData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getUserActivity({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getUserActivityQueryKey(options),
+  });
+};
+
+export const getUserActivityInfiniteQueryKey = (
+  options: Options<GetUserActivityData>
+): QueryKey<Options<GetUserActivityData>> => createQueryKey('getUserActivity', options, true);
+
+/**
+ * Get a user-specific admin activity feed
+ * Retrieves request audit events where the selected user was the actor, the target, or both. Target events are derived from user, profile, organisation, and branch UUIDs seen in request paths or query strings.
+ */
+export const getUserActivityInfiniteOptions = (options: Options<GetUserActivityData>) => {
+  return infiniteQueryOptions<
+    GetUserActivityResponse,
+    GetUserActivityError,
+    InfiniteData<GetUserActivityResponse>,
+    QueryKey<Options<GetUserActivityData>>,
+    number | Pick<QueryKey<Options<GetUserActivityData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetUserActivityData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getUserActivity({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getUserActivityInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const getSystemAdminUsersQueryKey = (options: Options<GetSystemAdminUsersData>) =>
   createQueryKey('getSystemAdminUsers', options);
 
@@ -24368,142 +24506,4 @@ export const removeAdminDomainMutation = (
     },
   };
   return mutationOptions;
-};
-
-export const getUserActivityQueryKey = (options: Options<GetUserActivityData>) =>
-  createQueryKey('getUserActivity', options);
-
-/**
- * Get a user-specific admin activity feed
- * Retrieves request audit events where the selected user was the actor, the target, or both. Target events are derived from user, profile, organisation, and branch UUIDs seen in request paths or query strings.
- */
-export const getUserActivityOptions = (options: Options<GetUserActivityData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getUserActivity({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getUserActivityQueryKey(options),
-  });
-};
-
-export const getUserActivityInfiniteQueryKey = (
-  options: Options<GetUserActivityData>
-): QueryKey<Options<GetUserActivityData>> => createQueryKey('getUserActivity', options, true);
-
-/**
- * Get a user-specific admin activity feed
- * Retrieves request audit events where the selected user was the actor, the target, or both. Target events are derived from user, profile, organisation, and branch UUIDs seen in request paths or query strings.
- */
-export const getUserActivityInfiniteOptions = (options: Options<GetUserActivityData>) => {
-  return infiniteQueryOptions<
-    GetUserActivityResponse,
-    GetUserActivityError,
-    InfiniteData<GetUserActivityResponse>,
-    QueryKey<Options<GetUserActivityData>>,
-    number | Pick<QueryKey<Options<GetUserActivityData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        const page: Pick<
-          QueryKey<Options<GetUserActivityData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  pageable: { page: pageParam },
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await getUserActivity({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: getUserActivityInfiniteQueryKey(options),
-    }
-  );
-};
-
-export const listInstructorApplicationsQueryKey = (
-  options: Options<ListInstructorApplicationsData>
-) => createQueryKey('listInstructorApplications', options);
-
-/**
- * List marketplace class job applications for an instructor
- */
-export const listInstructorApplicationsOptions = (
-  options: Options<ListInstructorApplicationsData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listInstructorApplications({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listInstructorApplicationsQueryKey(options),
-  });
-};
-
-export const listInstructorApplicationsInfiniteQueryKey = (
-  options: Options<ListInstructorApplicationsData>
-): QueryKey<Options<ListInstructorApplicationsData>> =>
-  createQueryKey('listInstructorApplications', options, true);
-
-/**
- * List marketplace class job applications for an instructor
- */
-export const listInstructorApplicationsInfiniteOptions = (
-  options: Options<ListInstructorApplicationsData>
-) => {
-  return infiniteQueryOptions<
-    ListInstructorApplicationsResponse,
-    ListInstructorApplicationsError,
-    InfiniteData<ListInstructorApplicationsResponse>,
-    QueryKey<Options<ListInstructorApplicationsData>>,
-    | number
-    | Pick<
-        QueryKey<Options<ListInstructorApplicationsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      >
-  >(
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        const page: Pick<
-          QueryKey<Options<ListInstructorApplicationsData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  pageable: { page: pageParam },
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await listInstructorApplications({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: listInstructorApplicationsInfiniteQueryKey(options),
-    }
-  );
 };

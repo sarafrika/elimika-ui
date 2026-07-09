@@ -10,7 +10,7 @@ const normalizedApiBaseUrl = apiBaseUrl.replace(/\/$/, '');
 
 export default defineConfig({
   input: {
-    path: `${normalizedApiBaseUrl}/v3/api-docs`,
+    path: process.env.OPENAPI_SPEC_FILE ?? `${normalizedApiBaseUrl}/v3/api-docs`,
     fetch: {
       headers: {
         accept: 'application/json',

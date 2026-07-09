@@ -602,10 +602,10 @@ export const StudentSchema = {
       maxLength: 2000,
       minLength: 0,
     },
-    primaryGuardianContact: {
+    secondaryGuardianContact: {
       type: 'string',
     },
-    secondaryGuardianContact: {
+    primaryGuardianContact: {
       type: 'string',
     },
     allGuardianContacts: {
@@ -4588,15 +4588,15 @@ export const LessonPracticeActivitySchema = {
       description: '**[READ-ONLY]** User who last updated the practice activity.',
       readOnly: true,
     },
+    is_published: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Whether the activity is published.',
+      readOnly: true,
+    },
     estimated_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable estimated duration.',
       example: '15 minutes',
-      readOnly: true,
-    },
-    is_published: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Whether the activity is published.',
       readOnly: true,
     },
   },
@@ -9166,6 +9166,9 @@ export const NotificationDTOSchema = {
       type: 'string',
       format: 'uuid',
     },
+    recipient_domain: {
+      type: 'string',
+    },
     type: {
       $ref: '#/components/schemas/TypeEnum',
     },
@@ -9583,15 +9586,15 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    is_attendance_marked: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
-      example: false,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
+      readOnly: true,
+    },
+    is_attendance_marked: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
       example: false,
       readOnly: true,
     },
@@ -11777,7 +11780,7 @@ export const AdminDomainAssignmentRequestSchema = {
   description: 'Admin domain assignment request containing domain type, reason, and effective date',
   properties: {
     domain_name: {
-      $ref: '#/components/schemas/SchemaEnum6',
+      $ref: '#/components/schemas/SchemaEnum7',
     },
     assignment_type: {
       $ref: '#/components/schemas/AssignmentTypeEnum',
@@ -17049,6 +17052,126 @@ export const PagedDTOAssignmentSubmissionSchema = {
   },
 } as const;
 
+export const AdminUserActivityEventSchema = {
+  type: 'object',
+  description: 'Represents a request audit event related to a specific user',
+  properties: {
+    event_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Unique identifier for the activity event',
+    },
+    occurred_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the activity occurred (UTC)',
+    },
+    summary: {
+      type: 'string',
+      description: 'Human-readable summary of the activity',
+    },
+    category: {
+      type: 'string',
+      description: 'Audit category derived from the endpoint',
+    },
+    scope: {
+      type: 'string',
+      description: 'Whether the selected user performed the action, was targeted by it, or both',
+    },
+    http_method: {
+      type: 'string',
+      description: 'HTTP method invoked by the request',
+    },
+    endpoint: {
+      type: 'string',
+      description: 'Endpoint path that was called',
+    },
+    query: {
+      type: 'string',
+      description: 'Query string that accompanied the request',
+    },
+    response_status: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Response status returned for the request',
+    },
+    processing_time_ms: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Processing time in milliseconds',
+    },
+    actor_name: {
+      type: 'string',
+      description: 'Actor name captured by the request audit log',
+    },
+    actor_email: {
+      type: 'string',
+      description: 'Actor email captured by the request audit log',
+    },
+    actor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Actor user UUID captured by the request audit log',
+    },
+    actor_domains: {
+      type: 'string',
+      description: 'Actor domains captured during the request',
+    },
+    target_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Selected dossier user UUID',
+    },
+    related_entity_type: {
+      type: 'string',
+      description: 'Related profile/entity type when derived from the endpoint',
+    },
+    related_entity_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Related profile/entity UUID when derived from the endpoint',
+    },
+    request_id: {
+      type: 'string',
+      description: 'Unique request identifier captured by the audit trail',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOAdminUserActivityEventSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOAdminUserActivityEvent',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOAdminUserActivityEventSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AdminUserActivityEvent',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
 export const ApiResponseListDomainDTOSchema = {
   type: 'object',
   properties: {
@@ -17703,126 +17826,6 @@ export const SocialMediaUrlSchema = {
   pattern: '^https?://(www\\.)?(facebook|twitter|instagram|linkedin|youtube|tiktok)\\.com/[^\\s]*$',
 } as const;
 
-export const AdminUserActivityEventSchema = {
-  type: 'object',
-  description: 'Represents a request audit event related to a specific user',
-  properties: {
-    event_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: 'Unique identifier for the activity event',
-    },
-    occurred_at: {
-      type: 'string',
-      format: 'date-time',
-      description: 'When the activity occurred (UTC)',
-    },
-    summary: {
-      type: 'string',
-      description: 'Human-readable summary of the activity',
-    },
-    category: {
-      type: 'string',
-      description: 'Audit category derived from the endpoint',
-    },
-    scope: {
-      type: 'string',
-      description: 'Whether the selected user performed the action, was targeted by it, or both',
-    },
-    http_method: {
-      type: 'string',
-      description: 'HTTP method invoked by the request',
-    },
-    endpoint: {
-      type: 'string',
-      description: 'Endpoint path that was called',
-    },
-    query: {
-      type: 'string',
-      description: 'Query string that accompanied the request',
-    },
-    response_status: {
-      type: 'integer',
-      format: 'int32',
-      description: 'Response status returned for the request',
-    },
-    processing_time_ms: {
-      type: 'integer',
-      format: 'int64',
-      description: 'Processing time in milliseconds',
-    },
-    actor_name: {
-      type: 'string',
-      description: 'Actor name captured by the request audit log',
-    },
-    actor_email: {
-      type: 'string',
-      description: 'Actor email captured by the request audit log',
-    },
-    actor_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: 'Actor user UUID captured by the request audit log',
-    },
-    actor_domains: {
-      type: 'string',
-      description: 'Actor domains captured during the request',
-    },
-    target_user_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: 'Selected dossier user UUID',
-    },
-    related_entity_type: {
-      type: 'string',
-      description: 'Related profile/entity type when derived from the endpoint',
-    },
-    related_entity_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: 'Related profile/entity UUID when derived from the endpoint',
-    },
-    request_id: {
-      type: 'string',
-      description: 'Unique request identifier captured by the audit trail',
-    },
-  },
-} as const;
-
-export const PagedDTOAdminUserActivityEventSchema = {
-  type: 'object',
-  properties: {
-    content: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/AdminUserActivityEvent',
-      },
-    },
-    metadata: {
-      $ref: '#/components/schemas/PageMetadata',
-    },
-    links: {
-      $ref: '#/components/schemas/PageLinks',
-    },
-  },
-} as const;
-
-export const ApiResponsePagedDTOAdminUserActivityEventSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/PagedDTOAdminUserActivityEvent',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {},
-  },
-} as const;
-
 export const SchemaEnumSchema = {
   type: 'string',
   enum: ['PLATFORM_FEE', 'AGE_GATE', 'ENROLLMENT_GUARD', 'CUSTOM'],
@@ -17849,6 +17852,11 @@ export const SchemaEnum5Schema = {
 } as const;
 
 export const SchemaEnum6Schema = {
+  type: 'string',
+  enum: ['actor', 'target', 'all'],
+} as const;
+
+export const SchemaEnum7Schema = {
   type: 'string',
   enum: ['admin', 'organisation_user'],
 } as const;
@@ -18489,6 +18497,11 @@ export const SchemaEnum5WritableSchema = {
 } as const;
 
 export const SchemaEnum6WritableSchema = {
+  type: 'string',
+  enum: ['actor', 'target', 'all'],
+} as const;
+
+export const SchemaEnum7WritableSchema = {
   type: 'string',
   enum: ['admin', 'organisation_user'],
 } as const;

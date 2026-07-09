@@ -1396,6 +1396,9 @@ import type {
   ListMyApplicationsData,
   ListMyApplicationsResponses,
   ListMyApplicationsErrors,
+  ListInstructorApplicationsData,
+  ListInstructorApplicationsResponses,
+  ListInstructorApplicationsErrors,
   GetClassDefinitionsForInstructorData,
   GetClassDefinitionsForInstructorResponses,
   GetClassDefinitionsForInstructorErrors,
@@ -1477,6 +1480,9 @@ import type {
   IsUserAdminData,
   IsUserAdminResponses,
   IsUserAdminErrors,
+  GetUserActivityData,
+  GetUserActivityResponses,
+  GetUserActivityErrors,
   GetSystemAdminUsersData,
   GetSystemAdminUsersResponses,
   GetSystemAdminUsersErrors,
@@ -1543,12 +1549,6 @@ import type {
   RemoveAdminDomainData,
   RemoveAdminDomainResponses,
   RemoveAdminDomainErrors,
-  GetUserActivityData,
-  GetUserActivityResponses,
-  GetUserActivityErrors,
-  ListInstructorApplicationsData,
-  ListInstructorApplicationsResponses,
-  ListInstructorApplicationsErrors,
 } from './types.gen';
 import { client as _heyApiClient } from './client.gen';
 import {
@@ -1917,6 +1917,7 @@ import {
   getEnrollmentsForClassResponseTransformer,
   getClassDefinitionsForOrganisationResponseTransformer,
   listMyApplicationsResponseTransformer,
+  listInstructorApplicationsResponseTransformer,
   getClassDefinitionsForInstructorResponseTransformer,
   getClassDefinitionsForCourseResponseTransformer,
   getAllActiveClassDefinitionsResponseTransformer,
@@ -1936,6 +1937,7 @@ import {
   searchSubmissionsResponseTransformer,
   searchAssignmentsResponseTransformer,
   getPendingGradingResponseTransformer,
+  getUserActivityResponseTransformer,
   getSystemAdminUsersResponseTransformer,
   getOrganizationAdminUsersResponseTransformer,
   getAdminEligibleUsersResponseTransformer,
@@ -1946,8 +1948,6 @@ import {
   listPendingCoursesResponseTransformer,
   removeItemResponseTransformer,
   removeAdminDomainResponseTransformer,
-  getUserActivityResponseTransformer,
-  listInstructorApplicationsResponseTransformer,
 } from './transformers.gen';
 
 export type Options<
@@ -15797,6 +15797,33 @@ export const listMyApplications = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List marketplace class job applications for an instructor
+ */
+export const listInstructorApplications = <ThrowOnError extends boolean = false>(
+  options: Options<ListInstructorApplicationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListInstructorApplicationsResponses,
+    ListInstructorApplicationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listInstructorApplicationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/applications/instructor/{instructorUuid}',
+    ...options,
+  });
+};
+
+/**
  * Get class definitions for an instructor
  */
 export const getClassDefinitionsForInstructor = <ThrowOnError extends boolean = false>(
@@ -16580,6 +16607,34 @@ export const isUserAdmin = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get a user-specific admin activity feed
+ * Retrieves request audit events where the selected user was the actor, the target, or both. Target events are derived from user, profile, organisation, and branch UUIDs seen in request paths or query strings.
+ */
+export const getUserActivity = <ThrowOnError extends boolean = false>(
+  options: Options<GetUserActivityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetUserActivityResponses,
+    GetUserActivityErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getUserActivityResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/users/{uuid}/activity-feed',
+    ...options,
+  });
+};
+
+/**
  * Get system admin users
  * Retrieves a paginated list of users with global system administrator privileges. These users have platform-wide administrative access.
  */
@@ -17174,61 +17229,6 @@ export const removeAdminDomain = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/users/{uuid}/domains/{domain}',
-    ...options,
-  });
-};
-
-/**
- * Get a user-specific admin activity feed
- * Retrieves request audit events where the selected user was the actor, the target, or both. Target events are derived from user, profile, organisation, and branch UUIDs seen in request paths or query strings.
- */
-export const getUserActivity = <ThrowOnError extends boolean = false>(
-  options: Options<GetUserActivityData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetUserActivityResponses,
-    GetUserActivityErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getUserActivityResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/admin/users/{uuid}/activity-feed',
-    ...options,
-  });
-};
-
-/**
- * List marketplace class job applications for an instructor
- */
-export const listInstructorApplications = <ThrowOnError extends boolean = false>(
-  options: Options<ListInstructorApplicationsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    ListInstructorApplicationsResponses,
-    ListInstructorApplicationsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: listInstructorApplicationsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/jobs/applications/instructor/{instructorUuid}',
     ...options,
   });
 };

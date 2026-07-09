@@ -373,8 +373,8 @@ export const zStudent = z
       ])
       .optional(),
     bio: z.union([z.string().min(0).max(2000), z.null()]).optional(),
-    primaryGuardianContact: z.string().optional(),
     secondaryGuardianContact: z.string().optional(),
+    primaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
     full_name: z
       .string()
@@ -3066,14 +3066,14 @@ export const zLessonPracticeActivity = z
       .describe('**[READ-ONLY]** User who last updated the practice activity.')
       .readonly()
       .optional(),
-    estimated_duration: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable estimated duration.')
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Whether the activity is published.')
+      .readonly()
+      .optional(),
+    estimated_duration: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable estimated duration.')
       .readonly()
       .optional(),
   })
@@ -5622,6 +5622,7 @@ export const zStatusEnum8 = z.enum(['UNREAD', 'READ', 'ARCHIVED']);
 export const zNotificationDto = z.object({
   uuid: z.string().uuid().optional(),
   notification_id: z.string().uuid().optional(),
+  recipient_domain: z.string().optional(),
   type: zTypeEnum.optional(),
   category: zCategoryEnum.optional(),
   priority: zPriorityEnum.optional(),
@@ -5845,14 +5846,14 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
     status_description: z
@@ -7184,7 +7185,7 @@ export const zApiResponseAssignmentAttachment = z.object({
   error: z.unknown().optional(),
 });
 
-export const zSchemaEnum6 = z.enum(['admin', 'organisation_user']);
+export const zSchemaEnum7 = z.enum(['admin', 'organisation_user']);
 
 /**
  * Type of assignment - global or organization-specific
@@ -7198,7 +7199,7 @@ export const zAssignmentTypeEnum = z
  */
 export const zAdminDomainAssignmentRequest = z
   .object({
-    domain_name: zSchemaEnum6,
+    domain_name: zSchemaEnum7,
     assignment_type: zAssignmentTypeEnum,
     reason: z.string().min(0).max(500).describe('Reason for assigning admin privileges').optional(),
     effective_date: z
@@ -9646,6 +9647,66 @@ export const zApiResponsePagedDtoAssignmentSubmission = z.object({
   error: z.unknown().optional(),
 });
 
+/**
+ * Represents a request audit event related to a specific user
+ */
+export const zAdminUserActivityEvent = z
+  .object({
+    event_uuid: z.string().uuid().describe('Unique identifier for the activity event').optional(),
+    occurred_at: z.string().datetime().describe('When the activity occurred (UTC)').optional(),
+    summary: z.string().describe('Human-readable summary of the activity').optional(),
+    category: z.string().describe('Audit category derived from the endpoint').optional(),
+    scope: z
+      .string()
+      .describe('Whether the selected user performed the action, was targeted by it, or both')
+      .optional(),
+    http_method: z.string().describe('HTTP method invoked by the request').optional(),
+    endpoint: z.string().describe('Endpoint path that was called').optional(),
+    query: z.string().describe('Query string that accompanied the request').optional(),
+    response_status: z
+      .number()
+      .int()
+      .describe('Response status returned for the request')
+      .optional(),
+    processing_time_ms: z.coerce.bigint().describe('Processing time in milliseconds').optional(),
+    actor_name: z.string().describe('Actor name captured by the request audit log').optional(),
+    actor_email: z.string().describe('Actor email captured by the request audit log').optional(),
+    actor_uuid: z
+      .string()
+      .uuid()
+      .describe('Actor user UUID captured by the request audit log')
+      .optional(),
+    actor_domains: z.string().describe('Actor domains captured during the request').optional(),
+    target_user_uuid: z.string().uuid().describe('Selected dossier user UUID').optional(),
+    related_entity_type: z
+      .string()
+      .describe('Related profile/entity type when derived from the endpoint')
+      .optional(),
+    related_entity_uuid: z
+      .string()
+      .uuid()
+      .describe('Related profile/entity UUID when derived from the endpoint')
+      .optional(),
+    request_id: z
+      .string()
+      .describe('Unique request identifier captured by the audit trail')
+      .optional(),
+  })
+  .describe('Represents a request audit event related to a specific user');
+
+export const zPagedDtoAdminUserActivityEvent = z.object({
+  content: z.array(zAdminUserActivityEvent).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoAdminUserActivityEvent = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoAdminUserActivityEvent.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zDomainDto = z.object({
   uuid: z.string().uuid().optional(),
   name: z.string().optional(),
@@ -9989,66 +10050,6 @@ export const zDocumentUrl = z.unknown().describe('A valid URL pointing to a docu
  */
 export const zSocialMediaUrl = z.unknown().describe('A valid social media profile URL');
 
-/**
- * Represents a request audit event related to a specific user
- */
-export const zAdminUserActivityEvent = z
-  .object({
-    event_uuid: z.string().uuid().describe('Unique identifier for the activity event').optional(),
-    occurred_at: z.string().datetime().describe('When the activity occurred (UTC)').optional(),
-    summary: z.string().describe('Human-readable summary of the activity').optional(),
-    category: z.string().describe('Audit category derived from the endpoint').optional(),
-    scope: z
-      .string()
-      .describe('Whether the selected user performed the action, was targeted by it, or both')
-      .optional(),
-    http_method: z.string().describe('HTTP method invoked by the request').optional(),
-    endpoint: z.string().describe('Endpoint path that was called').optional(),
-    query: z.string().describe('Query string that accompanied the request').optional(),
-    response_status: z
-      .number()
-      .int()
-      .describe('Response status returned for the request')
-      .optional(),
-    processing_time_ms: z.coerce.bigint().describe('Processing time in milliseconds').optional(),
-    actor_name: z.string().describe('Actor name captured by the request audit log').optional(),
-    actor_email: z.string().describe('Actor email captured by the request audit log').optional(),
-    actor_uuid: z
-      .string()
-      .uuid()
-      .describe('Actor user UUID captured by the request audit log')
-      .optional(),
-    actor_domains: z.string().describe('Actor domains captured during the request').optional(),
-    target_user_uuid: z.string().uuid().describe('Selected dossier user UUID').optional(),
-    related_entity_type: z
-      .string()
-      .describe('Related profile/entity type when derived from the endpoint')
-      .optional(),
-    related_entity_uuid: z
-      .string()
-      .uuid()
-      .describe('Related profile/entity UUID when derived from the endpoint')
-      .optional(),
-    request_id: z
-      .string()
-      .describe('Unique request identifier captured by the audit trail')
-      .optional(),
-  })
-  .describe('Represents a request audit event related to a specific user');
-
-export const zPagedDtoAdminUserActivityEvent = z.object({
-  content: z.array(zAdminUserActivityEvent).optional(),
-  metadata: zPageMetadata.optional(),
-  links: zPageLinks.optional(),
-});
-
-export const zApiResponsePagedDtoAdminUserActivityEvent = z.object({
-  success: z.boolean().optional(),
-  data: zPagedDtoAdminUserActivityEvent.optional(),
-  message: z.string().optional(),
-  error: z.unknown().optional(),
-});
-
 export const zSchemaEnum3 = z.enum(['approve', 'reject', 'revoke']);
 
 export const zSchemaEnum5 = z.enum([
@@ -10059,6 +10060,8 @@ export const zSchemaEnum5 = z.enum([
   'organisation_user',
   'course_creator',
 ]);
+
+export const zSchemaEnum6 = z.enum(['actor', 'target', 'all']);
 
 export const zJsonNodeWritable = z.unknown();
 
@@ -10167,7 +10170,9 @@ export const zSchemaEnum5Writable = z.enum([
   'course_creator',
 ]);
 
-export const zSchemaEnum6Writable = z.enum(['admin', 'organisation_user']);
+export const zSchemaEnum6Writable = z.enum(['actor', 'target', 'all']);
+
+export const zSchemaEnum7Writable = z.enum(['admin', 'organisation_user']);
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -12808,6 +12813,7 @@ export const zListNotificationsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
+    domain: z.string().optional(),
     status: z.string().optional(),
     presentation: z.string().optional(),
     type: z.string().optional(),
@@ -12826,6 +12832,7 @@ export const zApplyBulkActionData = z.object({
   path: z.never().optional(),
   query: z.object({
     action: z.string(),
+    domain: z.string().optional(),
     status: z.string().optional(),
     presentation: z.string().optional(),
     type: z.string().optional(),
@@ -16034,7 +16041,11 @@ export const zSearch2Response = zApiResponsePagedDtoOrganisation;
 export const zGetCountsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
-  query: z.never().optional(),
+  query: z
+    .object({
+      domain: z.string().optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -17014,6 +17025,23 @@ export const zListMyApplicationsData = z.object({
  */
 export const zListMyApplicationsResponse = zApiResponsePagedDtoClassMarketplaceJobApplication;
 
+export const zListInstructorApplicationsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    status: z.string().optional(),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zListInstructorApplicationsResponse =
+  zApiResponsePagedDtoClassMarketplaceJobApplication;
+
 export const zGetClassDefinitionsForInstructorData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -17378,6 +17406,27 @@ export const zIsUserAdminData = z.object({
  */
 export const zIsUserAdminResponse = zApiResponseBoolean;
 
+export const zGetUserActivityData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the user dossier to inspect'),
+  }),
+  query: z.object({
+    scope: zSchemaEnum6Writable.optional(),
+    category: z.string().describe('Optional endpoint category filter').optional(),
+    target_uuids: z
+      .string()
+      .describe('Optional comma-separated related profile UUIDs resolved by the caller')
+      .optional(),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * User activity retrieved successfully
+ */
+export const zGetUserActivityResponse = zApiResponsePagedDtoAdminUserActivityEvent;
+
 export const zGetSystemAdminUsersData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -17654,7 +17703,7 @@ export const zRemoveAdminDomainData = z.object({
   body: z.never().optional(),
   path: z.object({
     uuid: z.string().uuid().describe('UUID of the user to remove admin domain from'),
-    domain: zSchemaEnum6Writable,
+    domain: zSchemaEnum7Writable,
   }),
   query: z
     .object({
@@ -17667,38 +17716,3 @@ export const zRemoveAdminDomainData = z.object({
  * Admin domain removed successfully
  */
 export const zRemoveAdminDomainResponse = zApiResponseUser;
-
-export const zGetUserActivityData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z.string().uuid(),
-  }),
-  query: z.object({
-    scope: z.string().optional().default('all'),
-    category: z.string().optional(),
-    target_uuids: z.string().optional(),
-    pageable: zPageable,
-  }),
-});
-
-/**
- * User activity retrieved successfully
- */
-export const zGetUserActivityResponse = zApiResponsePagedDtoAdminUserActivityEvent;
-
-export const zListInstructorApplicationsData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    instructorUuid: z.string().uuid(),
-  }),
-  query: z.object({
-    status: z.string().optional(),
-    pageable: zPageable,
-  }),
-});
-
-/**
- * OK
- */
-export const zListInstructorApplicationsResponse =
-  zApiResponsePagedDtoClassMarketplaceJobApplication;
