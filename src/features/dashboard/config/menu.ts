@@ -555,6 +555,11 @@ export default {
       icon: Building,
     },
     {
+      title: 'Learning Progress',
+      url: '/dashboard/learning-progress',
+      icon: LineChart,
+    },
+    {
       title: 'Reports',
       url: '/dashboard/audit',
       icon: BarChart3,
