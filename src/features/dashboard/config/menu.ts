@@ -14,7 +14,6 @@ import {
   ChartNoAxesCombined,
   ClipboardList,
   DollarSign,
-  FileCheck,
   FileText,
   GraduationCap,
   Handshake,
@@ -23,7 +22,6 @@ import {
   LibraryIcon,
   LineChart,
   LucideLandmark,
-  PlusCircle,
   School,
   Settings,
   ShieldCheck,
@@ -532,42 +530,24 @@ export default {
       icon: Users,
     },
     {
-      title: 'Courses & Programs',
-      icon: BookOpen,
-      items: [
-        {
-          title: 'Courses',
-          url: '/dashboard/courses',
-          icon: School,
-        },
-        {
-          title: 'Catalogue',
-          url: '/dashboard/catalogue',
-          icon: ShoppingBag,
-        },
-        {
-          title: 'Course Management',
-          url: '/dashboard/course-management',
-          icon: ClipboardList,
-          items: [
-            {
-              title: 'Create New Course',
-              url: '/dashboard/course-management/create-new-course',
-              icon: PlusCircle,
-            },
-            {
-              title: 'Drafts',
-              url: '/dashboard/course-management/drafts',
-              icon: FileText,
-            },
-            {
-              title: 'Published',
-              url: '/dashboard/course-management/published',
-              icon: FileCheck,
-            },
-          ],
-        },
-      ],
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: School,
+    },
+    {
+      title: 'Catalogue',
+      url: '/dashboard/catalogue',
+      icon: ShoppingBag,
+    },
+    {
+      title: 'Course Management',
+      url: '/dashboard/course-management',
+      icon: ClipboardList,
+    },
+    {
+      title: 'Training Hub',
+      url: '/dashboard/training-hub',
+      icon: LibraryIcon,
     },
     {
       title: 'Classes',
@@ -585,25 +565,19 @@ export default {
       icon: Building,
     },
     {
-      title: 'Applications',
+      title: 'Training Applications',
+      url: '/dashboard/training-applications',
       icon: GraduationCap,
-      items: [
-        {
-          title: 'Training Applications',
-          url: '/dashboard/training-applications',
-          icon: GraduationCap,
-        },
-        {
-          title: 'My Applications',
-          url: '/dashboard/my-applications',
-          icon: FileText,
-        },
-        {
-          title: 'Opportunities',
-          url: '/dashboard/opportunities',
-          icon: Handshake,
-        },
-      ],
+    },
+    {
+      title: 'My Applications',
+      url: '/dashboard/my-applications',
+      icon: FileText,
+    },
+    {
+      title: 'Opportunities',
+      url: '/dashboard/opportunities',
+      icon: Handshake,
     },
     {
       title: 'Credentials',
