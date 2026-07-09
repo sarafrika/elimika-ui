@@ -1,18 +1,5 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useUserProfile } from '@/context/profile-context';
-import {
-  clearInstructorAvailabilityMutation,
-  getInstructorCalendarOptions,
-  getInstructorCalendarQueryKey,
-} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bell,
@@ -26,6 +13,21 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUserProfile } from '@/context/profile-context';
+import {
+  clearInstructorAvailabilityMutation,
+  createAvailabilitySlotMutation,
+  getAvailabilitySlotsQueryKey,
+  getInstructorCalendarOptions,
+  getInstructorCalendarQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
 import Spinner from '../../../../../components/ui/spinner';
 import { AvailabilityBooking } from './availability-booking';
 import { MonthlyAvailabilityGrid } from './monthly-availability-grid';
@@ -144,32 +146,42 @@ export default function AvailabilityManager({
   };
 
   // mutations
-  // const weeklyAvailabilityMutation = useMutation(setInstructorWeeklyAvailabilityMutation())
-  const handleWeeklyAvailability = () => {
-    const _payload = {
-      instructor_uuid: user?.instructor?.uuid as string,
-      day_of_week: 1,
-      start_time: workingHours?.start,
-      end_time: workingHours?.end,
-      is_available: quickAvailable,
-      recurrence_interval: 1,
-      // effective_start_date: workingHours?.startDate, // undefined // new Date("2024-09-01"),
-      // effective_end_date: workingHours?.endDate // "2024-12-31",
-    };
+  const createSlot = useMutation(createAvailabilitySlotMutation());
 
-    // weeklyAvailabilityMutation.mutate(
-    //     {
-    //         body: payload,
-    //         path: { instructorUuid: user?.instructor?.uuid as string },
-    //     },
-    //     {
-    //         onSuccess: (data) => {
-    //             qc.invalidateQueries({ queryKey: getInstructorAvailabilityQueryKey({ path: { instructorUuid: user?.instructor?.uuid as string } }) })
-    //             toast.success(data?.message || "Weekly availability set successfully");
-    //             setIsEditing(false);
-    //         },
-    //     }
-    // );
+  const handleWeeklyAvailability = async () => {
+    const instructorUuid = user?.instructor?.uuid;
+    if (!instructorUuid || !workingHours?.start || !workingHours?.end) {
+      toast.error('Set your working hours first.');
+      return;
+    }
+
+    try {
+      // Create a weekly slot for each weekday with the chosen working hours.
+      await Promise.all(
+        [1, 2, 3, 4, 5].map(dayOfWeek =>
+          createSlot.mutateAsync({
+            path: { instructorUuid },
+            body: {
+              instructor_uuid: instructorUuid,
+              availability_type: 'weekly',
+              day_of_week: dayOfWeek,
+              start_time: workingHours.start,
+              end_time: workingHours.end,
+              is_available: quickAvailable,
+              recurrence_interval: 1,
+            },
+          })
+        )
+      );
+
+      qc.invalidateQueries({
+        queryKey: getAvailabilitySlotsQueryKey({ path: { instructorUuid } }),
+      });
+      toast.success('Weekly availability saved successfully');
+      setIsEditing(false);
+    } catch (_error) {
+      toast.error('Unable to save your availability right now. Please try again.');
+    }
   };
 
   return (
@@ -206,21 +218,14 @@ export default function AvailabilityManager({
                     setIsEditing(true);
                   }
                 }}
-                // disabled={weeklyAvailabilityMutation?.isPending}
+                disabled={createSlot.isPending}
                 className='gap-2'
               >
-                {/* {weeklyAvailabilityMutation?.isPending ? (
-                                    <>
-                                        <Spinner />
-                                        <span>Saving...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Edit className="w-4 h-4" />
-                                        {isEditing ? 'Save Changes' : 'Edit Availability'}
-                                    </>
-                                )} */}
-                Edit Availability
+                {createSlot.isPending
+                  ? 'Saving…'
+                  : isEditing
+                    ? 'Save Changes'
+                    : 'Edit Availability'}
               </Button>
 
               {/* Settings hidden */}
@@ -349,7 +354,7 @@ export default function AvailabilityManager({
                   <span>Unavailable</span>
                 </div>
                 <div className='flex items-center gap-1'>
-                  <div className='h-3 w-3 rounded bg-yellow-500' />
+                  <div className='h-3 w-3 rounded bg-warning' />
                   <span>Reserved</span>
                 </div>
                 <div className='flex items-center gap-1'>
