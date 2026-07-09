@@ -1,5 +1,10 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CalendarClock, Heart, Share2 } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { useInstructor } from '@/context/instructor-context';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import type {
@@ -29,14 +34,9 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import NotesModal from '../../../../../../components/custom-modals/notes-modal';
-
-import { CalendarClock, Heart, Share2 } from 'lucide-react';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { QuizContentPreview } from '../../../../../../components/content-preview/QuizContentPreview';
+import NotesModal from '../../../../../../components/custom-modals/notes-modal';
 import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
 import { Button } from '../../../../../../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../../components/ui/dialog';
@@ -50,8 +50,8 @@ import CourseFaq from './CourseFaq';
 import CourseOverview, { ClassCourseCurriculum } from './CourseOverview';
 import CourseRating, { ClassRating } from './CourseRating';
 import CourseReviews from './CourseReviews';
-import { formatDurationFromParts, getContentHref, getEnrollHref, stripHtml } from './courses-data';
 import ClassCourseTabNav from './CourseTabNav';
+import { formatDurationFromParts, getContentHref, getEnrollHref, stripHtml } from './courses-data';
 import EnrollSidebar from './EnrollSidebar';
 import ShareClassCourse, { ShareClass } from './ShareClassCourse';
 import { UnifiedContentItem } from './SharedCoursesPage';
@@ -96,6 +96,19 @@ export default function ClassCourseDetailsPage({
 
     const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
     const isInstructorDomain = activeDomain === 'instructor';
+    const isOrganisationDomain =
+        activeDomain === 'organisation' || activeDomain === 'organisation_user';
+    // Both instructors and organisations may apply to train an approved course.
+    const canApplyToTrain = isInstructorDomain || isOrganisationDomain;
+    const userProfile = useUserProfile();
+    const organisationUuid = useMemo(() => {
+        const affiliations = userProfile?.organisation_affiliations ?? [];
+        return (affiliations.find(a => a.active) ?? affiliations[0])?.organisation_uuid;
+    }, [userProfile?.organisation_affiliations]);
+    const applicantUuid = isOrganisationDomain ? organisationUuid : instructor?.uuid;
+    const applicantType = isOrganisationDomain
+        ? ApplicantTypeEnum.ORGANISATION
+        : ApplicantTypeEnum.INSTRUCTOR;
 
     const { data: coursesResponse, isLoading: coursesLoading } = useQuery({
         ...getPublishedCoursesOptions({
@@ -300,12 +313,12 @@ export default function ClassCourseDetailsPage({
             query: {
                 pageable: {},
                 searchParams: {
-                    applicant_uuid_eq: instructor?.uuid ?? '',
+                    applicant_uuid_eq: applicantUuid ?? '',
                     course_uuid_eq: course?.uuid ?? '',
                 },
             },
         }),
-        enabled: isInstructorDomain && Boolean(instructor?.uuid) && Boolean(course?.uuid),
+        enabled: canApplyToTrain && Boolean(applicantUuid) && Boolean(course?.uuid),
         refetchOnWindowFocus: false,
     });
 
@@ -429,16 +442,19 @@ export default function ClassCourseDetailsPage({
             return;
         }
 
-        if (!instructor?.uuid) {
-            toast.error('Please wait for your instructor profile to load.');
+        if (!applicantUuid) {
+            toast.error('Please wait for your profile to load.');
             return;
         }
+
+        const submitterUuid = applicantUuid;
+        const submitCourseUuid = course.uuid;
 
         applyToTrainCourseMut.mutate(
             {
                 body: {
-                    applicant_type: ApplicantTypeEnum.INSTRUCTOR,
-                    applicant_uuid: instructor.uuid,
+                    applicant_type: applicantType,
+                    applicant_uuid: submitterUuid,
                     rate_card: {
                         currency: data.rate_currency,
                         private_online_rate: data.private_online_rate,
@@ -457,8 +473,8 @@ export default function ClassCourseDetailsPage({
                             query: {
                                 pageable: {},
                                 searchParams: {
-                                    applicant_uuid_eq: instructor.uuid,
-                                    course_uuid_eq: course.uuid,
+                                    applicant_uuid_eq: submitterUuid,
+                                    course_uuid_eq: submitCourseUuid,
                                 },
                             },
                         }),
@@ -467,7 +483,7 @@ export default function ClassCourseDetailsPage({
                         queryKey: searchTrainingApplicationsQueryKey({
                             query: {
                                 pageable: {},
-                                searchParams: { applicant_uuid_eq: instructor.uuid },
+                                searchParams: { applicant_uuid_eq: submitterUuid },
                             },
                         }),
                     });
@@ -682,12 +698,12 @@ export default function ClassCourseDetailsPage({
                             becomeInstructorLabel={instructorActionLabel}
                             becomeInstructorDisabled={instructorActionDisabled}
                             handleBecomeInstructor={() => {
-                                if (!isInstructorDomain) {
+                                if (!canApplyToTrain) {
                                     return;
                                 }
 
-                                if (!instructor?.uuid) {
-                                    toast.error('Please wait for your instructor profile to load.');
+                                if (!applicantUuid) {
+                                    toast.error('Please wait for your profile to load.');
                                     return;
                                 }
 
@@ -751,7 +767,7 @@ export default function ClassCourseDetailsPage({
                     </div>
                 </div>
 
-                {isInstructorDomain && course ? (
+                {canApplyToTrain && course ? (
                     <NotesModal
                         open={applyModalOpen}
                         setOpen={setApplyModalOpen}

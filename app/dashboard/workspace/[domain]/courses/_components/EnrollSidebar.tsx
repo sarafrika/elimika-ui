@@ -1,16 +1,5 @@
 "use client";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import type { Course } from "@/services/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Award,
@@ -31,6 +20,17 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import type { Course } from "@/services/client";
 import { Button } from "../../../../../../components/ui/button";
 import { useUserProfile } from "../../../../../../context/profile-context";
 import { CombinedClassDetailsData } from "../../../../../../hooks/use-class-details";
@@ -123,6 +123,12 @@ export default function EnrollSidebar({
     );
   };
 
+  // Instructors and organisations both apply to train a course.
+  const isTrainerDomain =
+    activeDomain === "instructor" ||
+    activeDomain === "organisation" ||
+    activeDomain === "organisation_user";
+
   const showActionCard =
     (type === "course" && activeDomain === "instructor") ||
     (type === "course" && activeDomain !== "instructor") ||
@@ -134,7 +140,7 @@ export default function EnrollSidebar({
       {/* ENROLL CARD */}
       {showActionCard && (
         <div className="rounded-xl border border-border bg-card text-card-foreground p-4 sm:p-5">
-          {type === "course" && activeDomain === "instructor" && (
+          {type === "course" && isTrainerDomain && (
             <>
               <div className="space-y-2">
                 <p className="text-md font-extrabold text-muted-foreground">
@@ -175,7 +181,7 @@ export default function EnrollSidebar({
             </>
           )}
 
-          {type === "course" && activeDomain !== "instructor" && (
+          {type === "course" && !isTrainerDomain && (
             <>
               <p className="mb-1 text-sm font-medium text-muted-foreground">
                 Enroll in this course
