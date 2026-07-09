@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useOrganisation } from '@/context/organisation-context';
-import { useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import type {
   ClassMarketplaceJobRequest,
   ClassVisibilityEnum,
@@ -27,6 +27,7 @@ import type {
 } from '@/services/client';
 import {
   createJobMutation,
+  searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { AdminPageHeader, adminTheme, SectionCard } from '../../_components/ui';
@@ -36,7 +37,7 @@ const WEEK_DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATU
 type Repeat = 'NONE' | 'WEEKLY';
 
 type FormState = {
-  courseUuid: string;
+  offering: string;
   title: string;
   description: string;
   classVisibility: ClassVisibilityEnum;
@@ -57,7 +58,7 @@ type FormState = {
 };
 
 const initialState: FormState = {
-  courseUuid: '',
+  offering: '',
   title: '',
   description: '',
   classVisibility: 'PUBLIC',
@@ -92,29 +93,71 @@ export default function OrganisationCreateClassPage() {
   const [form, setForm] = useState<FormState>(initialState);
   const update = (patch: Partial<FormState>) => setForm(current => ({ ...current, ...patch }));
 
-  // Courses the organisation has been approved to train (backend also enforces this).
-  const approvedQuery = useQuery({
+  // Offerings the organisation has been APPROVED to train (backend also enforces this on submit).
+  const approvedSearchParams = {
+    applicant_uuid_eq: organisationUuid,
+    applicant_type_eq: 'organisation',
+    status_eq: 'approved',
+  };
+
+  const approvedCoursesQuery = useQuery({
     ...searchTrainingApplicationsOptions({
-      query: {
-        searchParams: { applicant_uuid_eq: organisationUuid, status_eq: 'APPROVED' },
-        pageable: { page: 0, size: 100 },
-      },
+      query: { searchParams: approvedSearchParams, pageable: { page: 0, size: 100 } },
     }),
     enabled: Boolean(organisationUuid),
   });
 
-  const approvedCourseUuids = useMemo(() => {
-    const rows = approvedQuery.data?.data?.content ?? [];
-    return Array.from(
-      new Set(
-        rows
-          .map(row => row.course_uuid)
-          .filter((uuid): uuid is string => Boolean(uuid))
-      )
-    );
-  }, [approvedQuery.data]);
+  const approvedProgramsQuery = useQuery({
+    ...searchProgramTrainingApplicationsOptions({
+      query: { searchParams: approvedSearchParams, pageable: { page: 0, size: 100 } },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+
+  const approvedCourseUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (approvedCoursesQuery.data?.data?.content ?? [])
+            .map(row => row.course_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
+        )
+      ),
+    [approvedCoursesQuery.data]
+  );
+
+  const approvedProgramUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (approvedProgramsQuery.data?.data?.content ?? [])
+            .map(row => row.program_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
+        )
+      ),
+    [approvedProgramsQuery.data]
+  );
 
   const { courseMap } = useCoursesByIds(approvedCourseUuids);
+  const { programMap } = useProgramsByIds(approvedProgramUuids);
+
+  const offerings = useMemo(
+    () => [
+      ...approvedCourseUuids.map(uuid => ({
+        value: `course:${uuid}`,
+        label: courseMap[uuid]?.name ?? `Course ${uuid.slice(0, 8)}`,
+        kind: 'Course',
+      })),
+      ...approvedProgramUuids.map(uuid => ({
+        value: `program:${uuid}`,
+        label: programMap[uuid]?.title ?? `Program ${uuid.slice(0, 8)}`,
+        kind: 'Program',
+      })),
+    ],
+    [approvedCourseUuids, approvedProgramUuids, courseMap, programMap]
+  );
+
+  const approvedLoading = approvedCoursesQuery.isLoading || approvedProgramsQuery.isLoading;
 
   const occurrences = form.repeat === 'WEEKLY' ? Math.max(1, num(form.occurrenceCount) ?? 1) : 1;
   const feePerSession = num(form.trainingFee);
@@ -141,8 +184,8 @@ export default function OrganisationCreateClassPage() {
       toast.error('No active organisation.');
       return;
     }
-    if (!form.courseUuid) {
-      toast.error('Select an approved course.');
+    if (!form.offering) {
+      toast.error('Select an approved course or program.');
       return;
     }
     if (!form.title.trim()) {
@@ -164,10 +207,13 @@ export default function OrganisationCreateClassPage() {
 
     const start = new Date(form.startTime);
     const end = new Date(form.endTime);
+    const [offeringKind, offeringUuid] = form.offering.split(':');
 
     const payload: ClassMarketplaceJobRequest = {
       organisation_uuid: organisationUuid,
-      course_uuid: form.courseUuid,
+      ...(offeringKind === 'program'
+        ? { program_uuid: offeringUuid }
+        : { course_uuid: offeringUuid }),
       title: form.title.trim(),
       description: form.description.trim() || undefined,
       class_visibility: form.classVisibility,
@@ -209,7 +255,7 @@ export default function OrganisationCreateClassPage() {
       <form onSubmit={handleSubmit} className={adminTheme.pageStack}>
         <AdminPageHeader
           title='Create class'
-          description='Build a class for an approved course, then post it so instructors can apply. The class belongs to your organisation.'
+          description='Build a class for a course or program your organisation is approved to offer, then post it so instructors can apply. The class belongs to your organisation.'
           actions={
             <div className='flex gap-2'>
               <Button type='button' variant='outline' onClick={() => router.push('/dashboard/classes')}>
@@ -225,32 +271,35 @@ export default function OrganisationCreateClassPage() {
           }
         />
 
-        <SectionCard title='Course' description='Only courses your organisation is approved to train'>
+        <SectionCard
+          title='Course or program'
+          description='Only courses and programs your organisation is approved to offer'
+        >
           <div className='max-w-md space-y-2'>
-            <Label>Approved course</Label>
-            <Select value={form.courseUuid} onValueChange={value => update({ courseUuid: value })}>
+            <Label>Approved offering</Label>
+            <Select value={form.offering} onValueChange={value => update({ offering: value })}>
               <SelectTrigger>
                 <SelectValue
                   placeholder={
-                    approvedQuery.isLoading
-                      ? 'Loading approved courses…'
-                      : approvedCourseUuids.length === 0
-                        ? 'No approved courses yet'
-                        : 'Select a course'
+                    approvedLoading
+                      ? 'Loading approved offerings…'
+                      : offerings.length === 0
+                        ? 'No approved offerings yet'
+                        : 'Select a course or program'
                   }
                 />
               </SelectTrigger>
               <SelectContent>
-                {approvedCourseUuids.map(uuid => (
-                  <SelectItem key={uuid} value={uuid}>
-                    {courseMap[uuid]?.name ?? `Course ${uuid.slice(0, 8)}`}
+                {offerings.map(offering => (
+                  <SelectItem key={offering.value} value={offering.value}>
+                    {offering.label} · {offering.kind}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {approvedCourseUuids.length === 0 && !approvedQuery.isLoading ? (
+            {offerings.length === 0 && !approvedLoading ? (
               <p className='text-xs text-muted-foreground'>
-                Apply to train a course and get it approved before creating a class.
+                Apply to train a course or program and get it approved before creating a class.
               </p>
             ) : null}
           </div>
