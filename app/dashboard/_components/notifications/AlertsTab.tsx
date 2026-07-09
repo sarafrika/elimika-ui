@@ -7,7 +7,9 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { absoluteDateTime, relativeTimeFromNow } from '@/lib/date';
 import { cn } from '@/lib/utils';
+import type { UserDomain } from '@/lib/types';
 import {
   useMarkAllNotificationsRead,
   useNotificationAction,
@@ -16,7 +18,6 @@ import {
   type NotificationListParams,
   type UserNotification,
 } from '@/services/notifications';
-import { format, formatDistanceToNow } from 'date-fns';
 import {
   Archive,
   Award,
@@ -89,28 +90,14 @@ function getQueryParams(tab: NotificationTab, page: number): NotificationListPar
   return { page, size: pageSize };
 }
 
-function notificationDate(notification: UserNotification) {
-  const rawDate = notification.occurred_at ?? notification.created_at;
-  if (!rawDate) {
-    return null;
-  }
-
-  const date = new Date(rawDate);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date;
-}
-
 function notificationTime(notification: UserNotification) {
-  const date = notificationDate(notification);
-  return date ? formatDistanceToNow(date, { addSuffix: true }) : 'Recently';
+  const rawDate = notification.occurred_at ?? notification.created_at;
+  return relativeTimeFromNow(rawDate, 'Recently');
 }
 
 function notificationExactTime(notification: UserNotification) {
-  const date = notificationDate(notification);
-  return date ? format(date, 'PPp') : 'Recently';
+  const rawDate = notification.occurred_at ?? notification.created_at;
+  return absoluteDateTime(rawDate, 'Recently');
 }
 
 function notificationTypeLabel(value: string) {
@@ -179,18 +166,19 @@ function NotificationLoadingList() {
 
 export function AlertsTab() {
   const [activeTab, setActiveTab] = useState<NotificationTab>('all');
-  const { activeDomain } = useUserDomain()
+  const { activeDomain, setActiveDomain } = useUserDomain()
+  const domain = activeDomain ?? undefined;
   const [page, setPage] = useState(0);
-  const queryParams = getQueryParams(activeTab, page);
+  const queryParams = { ...getQueryParams(activeTab, page), domain };
   const notificationsQuery = useNotifications(queryParams);
-  const countsQuery = useNotificationCounts();
+  const countsQuery = useNotificationCounts(domain);
   const actionMutation = useNotificationAction();
-  const markAllMutation = useMarkAllNotificationsRead();
+  const markAllMutation = useMarkAllNotificationsRead(domain);
 
   const normalizeNotifications = (notifications: UserNotification[], activeDomain: string) => {
     return notifications.map((notification: UserNotification) => ({
       ...notification,
-      urlPath: getNotificationUrlPath(notification, activeDomain),
+      urlPath: getNotificationUrlPath(notification, notification.recipient_domain ?? activeDomain),
     }));
   };
 
@@ -218,6 +206,14 @@ export function AlertsTab() {
         onError: () => toast.error('Could not mark notification as read'),
       }
     );
+  };
+
+  const handleOpen = (notification: UserNotification) => {
+    const target = notification.recipient_domain;
+    if (target && target !== activeDomain) {
+      setActiveDomain(target as UserDomain);
+    }
+    handleMarkAsRead(notification);
   };
 
   const handleArchive = (notification: UserNotification) => {
@@ -445,7 +441,7 @@ export function AlertsTab() {
                                 <Button
                                   asChild
                                   size='sm'
-                                  onClick={() => handleMarkAsRead(notification)}
+                                  onClick={() => handleOpen(notification)}
                                 >
                                   <Link href={notification.urlPath}>
                                     <ExternalLink className='h-4 w-4' />

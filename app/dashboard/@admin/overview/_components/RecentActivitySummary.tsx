@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { AdminActivityEvent } from '@/services/admin/dashboard';
-import { formatDistanceToNow } from 'date-fns';
+import { relativeTimeFromNow } from '@/lib/date';
 import { Activity, ArrowUpRight } from 'lucide-react';
 
 interface RecentActivitySummaryProps {
@@ -47,7 +47,7 @@ export function RecentActivitySummary({ events, isLoading }: RecentActivitySumma
               event.occurred_at || event.timestamp || event.created_at || event.id || '';
             const relativeTime =
               typeof timestamp === 'string' && timestamp.length
-                ? formatDistanceToNow(new Date(timestamp), { addSuffix: true })
+                ? relativeTimeFromNow(timestamp, 'Just now')
                 : 'Just now';
 
             return (

@@ -18,6 +18,7 @@ const notificationMetadataSchema = z.object({
 const notificationSchema = z.object({
   uuid: z.string().uuid(),
   notification_id: z.string().uuid().nullable().optional(),
+  recipient_domain: z.string().nullable().optional(),
   type: z.string(),
   category: z.string().nullable().optional(),
   priority: z.string().default('NORMAL'),
@@ -78,6 +79,7 @@ export type UserNotification = z.infer<typeof notificationSchema>;
 export interface NotificationListParams {
   page?: number;
   size?: number;
+  domain?: string;
   status?: 'UNREAD' | 'READ' | 'ARCHIVED';
   presentation?: 'POPUP' | 'INBOX';
   type?: string;
@@ -107,7 +109,8 @@ const defaultListParams = {
 export const notificationListQueryKey = (params: NotificationListParams = {}) =>
   ['notifications', 'list', normalizeListParams(params)] as const;
 
-export const notificationCountsQueryKey = ['notifications', 'counts'] as const;
+export const notificationCountsQueryKey = (domain?: string) =>
+  ['notifications', 'counts', domain ?? null] as const;
 
 function normalizeListParams(params: NotificationListParams = {}): NotificationListParams {
   return {
@@ -127,6 +130,7 @@ export async function fetchNotifications(
         page: normalizedParams.page,
         size: normalizedParams.size,
         sort: 'createdDate,desc',
+        domain: normalizedParams.domain,
         status: normalizedParams.status,
         presentation: normalizedParams.presentation,
         type: normalizedParams.type,
@@ -166,8 +170,10 @@ export async function fetchNotifications(
   };
 }
 
-export async function fetchNotificationCounts(): Promise<NotificationCounts> {
-  const response = await fetchClient.GET('/api/v1/notifications/counts' as never);
+export async function fetchNotificationCounts(domain?: string): Promise<NotificationCounts> {
+  const response = await fetchClient.GET('/api/v1/notifications/counts' as never, {
+    params: { query: { domain } },
+  } as never);
 
   if (response.error) {
     throw new Error(
@@ -200,10 +206,10 @@ async function applyNotificationAction(uuid: string, action: 'read' | 'archive' 
   return notificationActionResponseSchema.parse(response.data ?? {});
 }
 
-async function markAllNotificationsRead() {
+async function markAllNotificationsRead(domain?: string) {
   const response = await fetchClient.POST('/api/v1/notifications' as never, {
     params: {
-      query: { action: 'read_all' },
+      query: { action: 'read_all', domain },
     },
   } as never);
 
@@ -231,11 +237,12 @@ export function useNotifications(
 }
 
 export function useNotificationCounts(
+  domain?: string,
   options?: Partial<UseQueryOptions<NotificationCounts, Error>>
 ) {
   return useQuery({
-    queryKey: notificationCountsQueryKey,
-    queryFn: fetchNotificationCounts,
+    queryKey: notificationCountsQueryKey(domain),
+    queryFn: () => fetchNotificationCounts(domain),
     refetchInterval: 30_000,
     ...options,
   });
@@ -253,11 +260,11 @@ export function useNotificationAction() {
   });
 }
 
-export function useMarkAllNotificationsRead() {
+export function useMarkAllNotificationsRead(domain?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: markAllNotificationsRead,
+    mutationFn: () => markAllNotificationsRead(domain),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
