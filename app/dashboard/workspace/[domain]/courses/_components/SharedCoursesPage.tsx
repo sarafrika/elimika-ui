@@ -1,7 +1,24 @@
 'use client';
 
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowRight,
+  GraduationCap,
+  Layers,
+  type LucideIcon,
+  Search,
+  SlidersHorizontal,
+  SquareDashedMousePointer,
+  Users,
+  X,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Pagination,
   PaginationContent,
@@ -40,12 +57,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Category, CourseReview } from '@/services/client/types.gen';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, type LucideIcon, SlidersHorizontal, SquareDashedMousePointer } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { useOrganisation } from '../../../../../../context/organisation-context';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { useCourseEnrollmentsMap } from '../../../../../../hooks/use-enrollment-map';
@@ -258,6 +269,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     : ApplicantTypeEnum.ORGANISATION;
 
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<CoursesCatalogTab>('all-courses');
   const [filters, setFilters] = useState<FilterValues>(defaultFilterValues);
   const [currentCatalogPage, setCurrentCatalogPage] = useState(1);
@@ -672,11 +684,20 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     return allCoursesFeed;
   }, [activeTab, allCoursesFeed, mappedCourses, mappedPrograms, myCourseItems]);
 
+  const normalizedSearch = search.trim().toLowerCase();
+
   const filteredItems = useMemo(
     () =>
       baseTabItems.filter(item => {
         const resolvedCategoryLabel = categoryMap.get(filters.category) ?? filters.category;
         const resolvedDifficultyLabel = difficultyMap.get(filters.level) ?? filters.level;
+
+        const matchesSearch =
+          normalizedSearch === '' ||
+          item.title.toLowerCase().includes(normalizedSearch) ||
+          item.creatorName.toLowerCase().includes(normalizedSearch) ||
+          item.description.toLowerCase().includes(normalizedSearch) ||
+          item.categoryLabels.some(label => label.toLowerCase().includes(normalizedSearch));
 
         const matchesCategory =
           filters.category === 'all' ||
@@ -702,6 +723,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           (filters.contentType === 'short-courses' && item.kind === 'course');
 
         return (
+          matchesSearch &&
           matchesCategory &&
           matchesLevel &&
           matchesDuration &&
@@ -709,12 +731,12 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           matchesContentType
         );
       }),
-    [baseTabItems, categoryMap, difficultyMap, filters]
+    [baseTabItems, categoryMap, difficultyMap, filters, normalizedSearch]
   );
 
   useEffect(() => {
     setCurrentCatalogPage(1);
-  }, [activeTab, filters]);
+  }, [activeTab, filters, normalizedSearch]);
 
   const totalCatalogPages = Math.max(1, Math.ceil(filteredItems.length / CATALOG_PAGE_SIZE));
 
@@ -1033,10 +1055,89 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     );
   };
 
+  const providerCount = useMemo(
+    () => new Set(allCoursesFeed.map(item => item.creatorUuid).filter(Boolean)).size,
+    [allCoursesFeed]
+  );
+
+  const activeFilterCount = useMemo(
+    () =>
+      (Object.keys(filters) as Array<keyof FilterValues>).filter(
+        key => filters[key] !== defaultFilterValues[key]
+      ).length,
+    [filters]
+  );
+
+  const catalogueSubtitle = isOrganisationDomain
+    ? 'Discover courses and programmes your organisation is approved to train.'
+    : isInstructorDomain
+      ? 'Browse the marketplace and apply to train the courses and programmes you know best.'
+      : isStudentDomain
+        ? 'Discover courses and programmes to enroll in and grow your skills.'
+        : domain === 'course_creator'
+          ? 'Explore the marketplace and see how your courses sit alongside the catalogue.'
+          : 'Discover courses and programmes across the platform.';
+
   return (
     <div className='mx-auto w-full max-w-[1680px] bg-background px-3 py-4 sm:px-4 lg:px-6 2xl:px-8'>
       <div className='space-y-6'>
-        {/* <CoursesHero actions={heroActions} domain={domain} /> */}
+        <header className='border-border bg-card rounded-xl border p-4 sm:p-5'>
+          <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+            <div className='min-w-0'>
+              <h1 className='text-foreground text-[clamp(1.35rem,2vw,1.75rem)] font-semibold tracking-[-0.02em]'>
+                Course Catalogue
+              </h1>
+              <p className='text-muted-foreground mt-1 max-w-2xl text-sm sm:text-[0.95rem]'>
+                {catalogueSubtitle}
+              </p>
+            </div>
+
+            <div className='flex flex-wrap gap-2'>
+              <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
+                <GraduationCap className='text-primary size-4' />
+                <span className='text-foreground text-sm font-semibold tabular-nums'>
+                  {mappedCourses.length}
+                </span>
+                <span className='text-muted-foreground text-xs'>Courses</span>
+              </span>
+              <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
+                <Layers className='text-primary size-4' />
+                <span className='text-foreground text-sm font-semibold tabular-nums'>
+                  {mappedPrograms.length}
+                </span>
+                <span className='text-muted-foreground text-xs'>Programmes</span>
+              </span>
+              <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
+                <Users className='text-primary size-4' />
+                <span className='text-foreground text-sm font-semibold tabular-nums'>
+                  {providerCount}
+                </span>
+                <span className='text-muted-foreground text-xs'>Providers</span>
+              </span>
+            </div>
+          </div>
+
+          <div className='relative mt-4'>
+            <Search className='text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2' />
+            <Input
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              placeholder='Search courses, programmes, providers…'
+              className='h-11 pl-9 pr-9'
+              aria-label='Search the course catalogue'
+            />
+            {search ? (
+              <button
+                type='button'
+                onClick={() => setSearch('')}
+                aria-label='Clear search'
+                className='text-muted-foreground hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2'
+              >
+                <X className='size-4' />
+              </button>
+            ) : null}
+          </div>
+        </header>
 
         <div className='flex flex-wrap gap-1.5'>
           {catalogTabs.map(tab => (
@@ -1059,16 +1160,39 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           <div className=''>
             <div className='space-y-2'>
               <div className='bg-card p-0 rounded-sm'>
-                <div className='flex flex-row items-center justify-between gap-3 py-2 min-[1180px]:flex-row min-[1180px]:items-center min-[1180px]:justify-between'>
+                <div className='border-border bg-card sticky top-0 z-10 flex flex-row items-center justify-between gap-3 border-b py-2.5'>
                   <p className="text-muted-foreground text-xs font-medium sm:text-sm">
-                    {filteredItems.length} course{filteredItems.length === 1 ? "" : "s"}
+                    <span className='text-foreground font-semibold tabular-nums'>{filteredItems.length}</span>{' '}
+                    result{filteredItems.length === 1 ? "" : "s"}
+                    {normalizedSearch ? (
+                      <span className='text-muted-foreground'> for “{search.trim()}”</span>
+                    ) : null}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {activeFilterCount > 0 || normalizedSearch ? (
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => {
+                          clearFilters();
+                          setSearch('');
+                        }}
+                        className='text-muted-foreground hover:text-foreground h-9 px-2 text-xs font-semibold'
+                      >
+                        Clear all
+                      </Button>
+                    ) : null}
                     <Sheet open={open} onOpenChange={setOpen}>
                       <SheetTrigger asChild>
-                        <Button variant="ghost" className='hover:bg-primary/75'>
+                        <Button variant="outline" size='sm' className='h-9 gap-2'>
                           <SlidersHorizontal className="size-4" />
+                          <span className='text-sm font-semibold'>Filters</span>
+                          {activeFilterCount > 0 ? (
+                            <span className='bg-primary text-primary-foreground inline-flex size-5 items-center justify-center rounded-full text-[0.7rem] font-semibold tabular-nums'>
+                              {activeFilterCount}
+                            </span>
+                          ) : null}
                         </Button>
                       </SheetTrigger>
 
