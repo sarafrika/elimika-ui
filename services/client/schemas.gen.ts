@@ -602,10 +602,10 @@ export const StudentSchema = {
       maxLength: 2000,
       minLength: 0,
     },
-    secondaryGuardianContact: {
+    primaryGuardianContact: {
       type: 'string',
     },
-    primaryGuardianContact: {
+    secondaryGuardianContact: {
       type: 'string',
     },
     allGuardianContacts: {
@@ -7361,6 +7361,12 @@ export const ClassMarketplaceJobRequestSchema = {
       type: ['boolean', 'null'],
       description: 'Optional waitlist toggle for the eventual class.',
     },
+    training_fee: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Fee charged per session for the advertised class (carried onto the class when an instructor is assigned).',
+      example: 240,
+    },
     session_templates: {
       type: 'array',
       description:
@@ -7434,6 +7440,10 @@ export const ClassMarketplaceJobSchema = {
     program_uuid: {
       type: 'string',
       format: 'uuid',
+      readOnly: true,
+    },
+    training_fee: {
+      type: 'number',
       readOnly: true,
     },
     class_visibility: {
@@ -9586,15 +9596,15 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
       example: false,
       readOnly: true,
     },

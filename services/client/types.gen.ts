@@ -265,8 +265,8 @@ export type Student = {
    * **[OPTIONAL]** Short biography or notes about the student. Used in student profiles.
    */
   bio?: string | null;
-  secondaryGuardianContact?: string;
   primaryGuardianContact?: string;
+  secondaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
@@ -3466,6 +3466,10 @@ export type ClassMarketplaceJobRequest = {
    */
   allow_waitlist?: boolean | null;
   /**
+   * **[OPTIONAL]** Fee charged per session for the advertised class (carried onto the class when an instructor is assigned).
+   */
+  training_fee?: number | null;
+  /**
    * **[REQUIRED]** Session templates that will be used when the class is assigned and created.
    */
   session_templates: Array<ClassSessionTemplate>;
@@ -3489,6 +3493,7 @@ export type ClassMarketplaceJob = {
   readonly organisation_uuid?: string;
   readonly course_uuid?: string;
   readonly program_uuid?: string;
+  readonly training_fee?: number;
   class_visibility?: ClassVisibilityEnum;
   session_format?: SessionFormatEnum;
   readonly default_start_time?: Date;
@@ -4585,13 +4590,13 @@ export type Enrollment = {
    */
   readonly can_be_cancelled?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
   /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */

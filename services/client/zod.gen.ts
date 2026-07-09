@@ -373,8 +373,8 @@ export const zStudent = z
       ])
       .optional(),
     bio: z.union([z.string().min(0).max(2000), z.null()]).optional(),
-    secondaryGuardianContact: z.string().optional(),
     primaryGuardianContact: z.string().optional(),
+    secondaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
     full_name: z
       .string()
@@ -4541,6 +4541,7 @@ export const zClassMarketplaceJobRequest = z
     meeting_link: z.union([z.string().min(0).max(1000), z.null()]).optional(),
     max_participants: z.union([z.number().int(), z.null()]).optional(),
     allow_waitlist: z.union([z.boolean(), z.null()]).optional(),
+    training_fee: z.union([z.number(), z.null()]).optional(),
     session_templates: z
       .array(zClassSessionTemplate)
       .min(1)
@@ -4565,6 +4566,7 @@ export const zClassMarketplaceJob = z
     organisation_uuid: z.string().uuid().readonly().optional(),
     course_uuid: z.string().uuid().readonly().optional(),
     program_uuid: z.string().uuid().readonly().optional(),
+    training_fee: z.number().readonly().optional(),
     class_visibility: zClassVisibilityEnum.optional(),
     session_format: zSessionFormatEnum.optional(),
     default_start_time: z.string().datetime().readonly().optional(),
@@ -5846,14 +5848,14 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
     status_description: z
