@@ -205,6 +205,11 @@ export default {
       icon: Wallet,
     },
     {
+      title: 'Payments',
+      url: '/dashboard/payments',
+      icon: DollarSign,
+    },
+    {
       title: 'Notifications',
       url: '/dashboard/notifications',
       icon: Bell,

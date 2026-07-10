@@ -43,7 +43,23 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getRevenueDashboardOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { RevenueAmountDto } from '@/services/client';
+import {
+  getPlatformFeeSummaryOptions,
+  getRevenueDashboardOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import { DetailGrid, SectionCard, StatCard } from '../../_components/ui';
+
+/** Format the first (primary-currency) amount from a revenue amount list. */
+const money = (amounts?: RevenueAmountDto[]): string => {
+  const primary = amounts?.[0];
+  if (!primary || primary.amount === undefined || primary.amount === null) return '—';
+  const value = Number(primary.amount).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `${primary.currency_code ?? ''} ${value}`.trim();
+};
 
 // Mock data for features not yet supported by API
 const paymentMethodData = [
@@ -112,6 +128,19 @@ export default function AdminFinancialOverview() {
       query: { domain: 'admin', start_date: startDate, end_date: endDate },
     })
   );
+
+  // Cross-domain roll-up: what instructors earned + platform fees collected.
+  const instructorQuery = useQuery(
+    getRevenueDashboardOptions({
+      query: { domain: 'instructor', start_date: startDate, end_date: endDate },
+    })
+  );
+  const platformFeesQuery = useQuery(getPlatformFeeSummaryOptions());
+
+  const studentsPaid = (data?.data?.gross_totals ?? []) as RevenueAmountDto[];
+  const instructorsEarned = (instructorQuery.data?.data?.estimated_earnings ?? []) as RevenueAmountDto[];
+  const platformGross = (data?.data?.gross_totals ?? []) as RevenueAmountDto[];
+  const platformFees = (platformFeesQuery.data?.data ?? []) as RevenueAmountDto[];
 
   // Process API data
   const processedData = useMemo(() => {
@@ -440,6 +469,54 @@ export default function AdminFinancialOverview() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Cross-domain roll-up — the full-360 view of money moving through the platform */}
+        <SectionCard
+          title='Platform 360'
+          description='Where the money flows across every domain for the selected period.'
+        >
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+            <StatCard
+              label='Students paid'
+              value={money(studentsPaid)}
+              hint='Gross paid by learners'
+              icon={Users}
+              tone='info'
+            />
+            <StatCard
+              label='Instructors earned'
+              value={money(instructorsEarned)}
+              hint='Estimated instructor earnings'
+              icon={Target}
+              tone='success'
+            />
+            <StatCard
+              label='Platform fees'
+              value={money(platformFees)}
+              hint='Fees collected by the platform'
+              icon={Wallet}
+              tone='warning'
+            />
+            <StatCard
+              label='Platform gross'
+              value={money(platformGross)}
+              hint='Total transacted on the platform'
+              icon={DollarSign}
+              tone='neutral'
+            />
+          </div>
+          <div className='mt-4'>
+            <DetailGrid
+              columns={2}
+              items={[
+                { label: 'Students paid (gross)', value: money(studentsPaid) },
+                { label: 'Instructors earned (net)', value: money(instructorsEarned) },
+                { label: 'Platform fees collected', value: money(platformFees) },
+                { label: 'Platform gross revenue', value: money(platformGross) },
+              ]}
+            />
+          </div>
+        </SectionCard>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue='overview' className='space-y-4 sm:space-y-6'>

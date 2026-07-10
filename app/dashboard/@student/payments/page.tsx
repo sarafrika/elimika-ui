@@ -28,9 +28,9 @@ const money = (amounts?: RevenueAmountDto[]): string => {
 const count = (value?: bigint | number | null): string =>
   value === undefined || value === null ? '—' : Number(value).toLocaleString();
 
-export default function ParentBillingPage() {
+export default function StudentPaymentsPage() {
   const dashboardQuery = useQuery({
-    ...getRevenueDashboardOptions({ query: { domain: 'parent' } }),
+    ...getRevenueDashboardOptions({ query: { domain: 'student' } }),
   });
 
   const dashboard = extractEntity<RevenueDashboardDto>(dashboardQuery.data) ?? {};
@@ -39,21 +39,21 @@ export default function ParentBillingPage() {
 
   const kpis = [
     {
-      label: 'Total billed',
+      label: 'Total spent',
       value: money(dashboard.gross_totals),
-      hint: "Across your children's learning",
+      hint: 'Across all your enrolments',
       icon: Coins,
       tone: 'info' as const,
     },
     {
       label: 'Orders',
       value: count(dashboard.order_count),
-      hint: 'Completed payments',
+      hint: 'Completed purchases',
       icon: ShoppingCart,
       tone: 'neutral' as const,
     },
     {
-      label: 'Items purchased',
+      label: 'Items bought',
       value: count(dashboard.units_sold),
       hint: 'Courses & classes',
       icon: Receipt,
@@ -72,8 +72,8 @@ export default function ParentBillingPage() {
     <div className={adminTheme.page}>
       <div className={adminTheme.pageStack}>
         <AdminPageHeader
-          title='Billing'
-          description="What your children have paid for across their learning journey."
+          title='Payments'
+          description='Everything you have paid for your learning, in one place.'
         />
 
         <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
@@ -92,10 +92,10 @@ export default function ParentBillingPage() {
         </div>
 
         <div className='grid gap-4 xl:grid-cols-2'>
-          <SectionCard title='Summary' description='Household spending for this period'>
+          <SectionCard title='Summary' description='Your spending for this period'>
             <DetailGrid
               items={[
-                { label: 'Total billed', value: money(dashboard.gross_totals) },
+                { label: 'Total spent', value: money(dashboard.gross_totals) },
                 { label: 'Average order value', value: money(dashboard.average_order_value) },
                 { label: 'Orders', value: count(dashboard.order_count) },
                 { label: 'Line items', value: count(dashboard.line_item_count) },
@@ -103,10 +103,10 @@ export default function ParentBillingPage() {
             />
           </SectionCard>
 
-          <SectionCard title='Spending by category' description='Where the money went'>
+          <SectionCard title='Spending by category' description='Where your money went'>
             {scopes.length === 0 ? (
               <p className='text-sm text-muted-foreground'>
-                {isLoading ? 'Loading…' : 'No billing recorded yet.'}
+                {isLoading ? 'Loading…' : 'No payments recorded yet.'}
               </p>
             ) : (
               <ul className='divide-y divide-border/60'>
