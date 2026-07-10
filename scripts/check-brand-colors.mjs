@@ -34,6 +34,7 @@ const FAIL_PATTERNS = [
       'app/dashboard/_components/class-colors.ts',
       'app/dashboard/_components/certificate/CertificatePage.tsx',
       'app/dashboard/_components/certificate/CertificatePDF.tsx',
+      'app/dashboard/_components/certificate/AwardCertificatePage.tsx',
     ]),
   },
 ];

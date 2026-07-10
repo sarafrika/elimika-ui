@@ -156,13 +156,26 @@ export function LearningHubContinueLearning({
 
                 <div className="flex items-center gap-3">
                   {isCompleted ? (
-                    <Link
-                      prefetch
-                      href={`/dashboard/learning-hub/${classItem.id}`}
-                      className="inline-flex w-full items-center justify-center rounded-[8px] bg-primary px-3 py-2 text-[0.78rem] font-medium text-primary-foreground transition hover:bg-primary/90"
-                    >
-                      View Details
-                    </Link>
+                    <div className="grid w-full grid-cols-2 gap-2">
+                      <Link
+                        prefetch
+                        href={`/dashboard/learning-hub/classes/${classItem.id}`}
+                        className={cn(
+                          "inline-flex w-full items-center justify-center rounded-[8px] px-3 py-2 text-center text-[0.78rem] font-medium text-primary-foreground transition hover:opacity-95",
+                          buttonAccentClasses[classItem.accent]
+                        )}
+                      >
+                        {classItem.ctaLabel}
+                      </Link>
+
+                      <Link
+                        prefetch
+                        href={`/dashboard/learning-hub/${classItem.id}`}
+                        className="inline-flex w-full items-center justify-center rounded-[8px] bg-primary px-3 py-2 text-center text-[0.78rem] font-medium text-primary-foreground transition hover:bg-primary/90"
+                      >
+                        View Details
+                      </Link>
+                    </div>
                   ) : (
                     <>
                       <Link

@@ -46,7 +46,8 @@ import {
     getQuizSchedulesOptions,
     getQuizSchedulesQueryKey,
     getRubricMatrixOptions,
-    markAttendanceMutation
+    markAttendanceMutation,
+    searchSubmissionsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
     Assignment,
@@ -408,6 +409,7 @@ function AssessmentTasksSection({
     onAssignQuiz,
     isAssigningAssignment,
     isAssigningQuiz,
+    classId
 }: {
     activeSchedule: TrainingSchedule | null;
     lessonAssignments: Assignment[];
@@ -430,6 +432,7 @@ function AssessmentTasksSection({
     onAssignQuiz: () => void;
     isAssigningAssignment: boolean;
     isAssigningQuiz: boolean;
+    classId: string
 }) {
     const [isAssignmentPreviewOpen, setIsAssignmentPreviewOpen] =
         React.useState(false);
@@ -452,6 +455,27 @@ function AssessmentTasksSection({
         enabled: !!previewAssignment?.uuid,
     });
 
+    const { data: assignmentSubmissionSearchResp } = useQuery({
+        ...searchSubmissionsOptions({
+            query: {
+                pageable: {},
+                searchParams: {}
+            }
+        })
+    })
+    const submissionMap = new Map(
+        assignmentSubmissionSearchResp?.data?.content?.map(submission => [
+            submission.assignment_uuid,
+            submission
+        ])
+    );
+
+    const filteredScheduledAssignments = activeScheduleAssignments.map(schedule => ({
+        ...schedule,
+        submission: submissionMap.get(schedule?.assignment?.uuid as string) || null,
+        hasSubmitted: submissionMap.has(schedule?.assignment_uuid as string)
+    }));
+
     return (
         <div className='space-y-3'>
             <div className='border-border/70 bg-background/80 rounded-md border p-3'>
@@ -461,7 +485,7 @@ function AssessmentTasksSection({
 
                 <div className='mt-3 space-y-2'>
                     {/* Assignments */}
-                    {activeScheduleAssignments.map(item => (
+                    {filteredScheduledAssignments.map(item => (
                         <div
                             key={item.uuid ?? item.assignment_uuid}
                             className='rounded-md border p-3'
@@ -481,11 +505,40 @@ function AssessmentTasksSection({
                                     </p>
                                 </div>
 
-                                {item.assignment && (
-                                    <Button >
-                                        <Link className='flex flex-row gap-2' href={`/dashboard/assignment/${item?.assignment?.uuid}`} >
-                                            <FileQuestion className='h-4 w-4' />
-                                            Attempt assignment
+                                {item.hasSubmitted ? (
+                                    <div className="flex gap-2">
+                                        {item?.submission?.status === "graded" && (
+                                            <Button variant="secondary">
+                                                Grade: {item?.submission?.score}/{item?.submission?.max_score}
+                                            </Button>
+                                        )}
+
+                                        {item?.submission?.status === "submitted" && (
+                                            <Button variant="outline" disabled>
+                                                Pending Review
+                                            </Button>
+                                        )}
+
+                                        {item?.submission?.status === "returned" && (
+                                            <Button asChild>
+                                                <Link
+                                                    href={`/dashboard/assignment/${item?.assignment?.uuid}`}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <FileQuestion className="h-4 w-4" />
+                                                    Resubmit Assignment
+                                                </Link>
+                                            </Button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <Button asChild>
+                                        <Link
+                                            href={`/dashboard/assignment/${item?.assignment?.uuid}`}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <FileQuestion className="h-4 w-4" />
+                                            Attempt Assignment
                                         </Link>
                                     </Button>
                                 )}
@@ -1836,6 +1889,7 @@ export default function StudentClassTrainingPage({
                                             onAssignQuiz={handleAssignQuiz}
                                             isAssigningAssignment={addAssignmentScheduleMut.isPending}
                                             isAssigningQuiz={addQuizScheduleMut.isPending}
+                                            classId={classId}
                                         // assignmentVisibleAt={''}
                                         // quizVisibleAt={''}
                                         // onAssignmentVisibleAtChange={() => { }}
