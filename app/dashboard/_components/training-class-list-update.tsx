@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -29,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import type { Enrollment } from '@/services/client';
@@ -40,7 +42,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../../components/ui/dropdown-menu';
-import { CustomLoadingState } from '../@course_creator/_components/loading-state';
 import type { DashboardClass } from './types';
 
 // ─── helpers (kept from original) ───────────────────────────────────────────
@@ -423,18 +424,18 @@ export function TrainingClassList({
     })),
   });
 
-  if (loading) {
-    return <CustomLoadingState subHeading='Loading training classes information' />;
-  }
-
   return (
     <div className='container mx-auto space-y-6'>
-      {/* Stats */}
-      <ClassKPICards
-        totalClasses={classesWithCourseAndInstructor?.length || 0}
-        activeClasses={publishedClasses?.length || 0}
-        inactiveClasses={draftClasses?.length || 0}
-      />
+      {/* Stats degrade independently — the shell and filters render immediately. */}
+      {loading ? (
+        <KPICardsSkeleton />
+      ) : (
+        <ClassKPICards
+          totalClasses={classesWithCourseAndInstructor?.length || 0}
+          activeClasses={publishedClasses?.length || 0}
+          inactiveClasses={draftClasses?.length || 0}
+        />
+      )}
 
       {/* Filters */}
       <div className='border-border-100/50 flex flex-col gap-4 rounded-xl border p-4 shadow-sm backdrop-blur-sm lg:flex-row lg:items-center'>
@@ -483,9 +484,43 @@ export function TrainingClassList({
         </div>
       </div>
 
-      {/* Grid */}
-      <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
-        {filteredClasses.map((cls, index: number) => {
+      {/* Grid — resolves its own loading / empty state locally */}
+      <AsyncSection
+        loading={loading}
+        empty={filteredClasses.length === 0}
+        skeleton={
+          <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
+            {Array.from({ length: 8 }).map((_, index) => (
+              <Card key={index} className='border-border bg-card flex h-full flex-col overflow-hidden border py-0'>
+                <div className='border-border from-primary/10 to-primary/5 border-b bg-gradient-to-r px-6 py-4'>
+                  <Skeleton className='mb-2 h-3 w-1/2' />
+                  <Skeleton className='h-6 w-3/4' />
+                </div>
+                <div className='flex-1 space-y-4 px-6 py-4'>
+                  <Skeleton className='h-10 w-full' />
+                  <Skeleton className='h-6 w-2/3' />
+                  <Skeleton className='h-12 w-full' />
+                </div>
+                <div className='border-border space-y-3 border-t px-6 py-4'>
+                  <Skeleton className='h-9 w-full' />
+                  <Skeleton className='h-9 w-full' />
+                </div>
+              </Card>
+            ))}
+          </div>
+        }
+        emptyState={
+          <div className='py-16 text-center'>
+            <div className='bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
+              <Search className='text-primary h-8 w-8' />
+            </div>
+            <h3>No classes found</h3>
+            <p className='text-muted-foreground mt-2'>Try adjusting your search or filters</p>
+          </div>
+        }
+      >
+        <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
+          {filteredClasses.map((cls, index: number) => {
           const difficultyName = cls.course?.difficulty_uuid
             ? difficultyMap[cls.course.difficulty_uuid] || 'N/A'
             : 'N/A';
@@ -511,18 +546,28 @@ export function TrainingClassList({
               onDeactivate={() => onDelete?.(cls.uuid)}
             />
           );
-        })}
-      </div>
-
-      {filteredClasses.length === 0 && (
-        <div className='py-16 text-center'>
-          <div className='bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
-            <Search className='text-primary h-8 w-8' />
-          </div>
-          <h3>No classes found</h3>
-          <p className='text-muted-foreground mt-2'>Try adjusting your search or filters</p>
+          })}
         </div>
-      )}
+      </AsyncSection>
+    </div>
+  );
+}
+
+function KPICardsSkeleton() {
+  return (
+    <div className='mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+      {Array.from({ length: 3 }).map((_, index) => (
+        <Card key={index} className='border-border bg-card border p-5'>
+          <div className='flex items-start justify-between'>
+            <div className='space-y-2'>
+              <Skeleton className='h-3 w-24' />
+              <Skeleton className='h-8 w-16' />
+              <Skeleton className='h-3 w-20' />
+            </div>
+            <Skeleton className='h-11 w-11 rounded-xl' />
+          </div>
+        </Card>
+      ))}
     </div>
   );
 }

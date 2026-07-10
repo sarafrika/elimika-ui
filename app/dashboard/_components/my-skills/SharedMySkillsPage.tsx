@@ -2,6 +2,7 @@
 
 import { BadgeCheck, ChevronRight, Sparkles } from 'lucide-react';
 
+import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -55,34 +56,39 @@ export function SharedMySkillsPage({
       : 0;
   const levelLabel = getLevelLabel(averageScore);
 
-  if (isLoading) {
-    return <SharedMySkillsSkeleton />;
-  }
+  const loading = Boolean(isLoading);
 
   return (
     <main className='bg-background px-3 py-3 sm:px-4 lg:px-5 mb-20'>
       <div className='flex w-full flex-col gap-4'>
+        {/* Non-data shell renders immediately; each region degrades locally. */}
         <SkillsWalletHeader
           profile={profile}
           shareUrl={shareUrl}
           levelLabel={levelLabel}
         />
 
-        <section className='grid items-start gap-3 xl:grid-cols-[minmax(230px,0.88fr)_minmax(300px,1.05fr)_minmax(280px,0.95fr)]'>
-          <SkillOverviewCard
-            profile={profile}
-            skills={sortedSkills}
-            averageScore={averageScore}
-            levelLabel={levelLabel}
-            shareUrl={shareUrl as string}
-          />
-          <TopSkillsPanel skills={sortedSkills} />
-          <CredentailSummaryPanel summary={displaySummary} timeline={orderedTimeline} />
-        </section>
+        <AsyncSection loading={loading} skeleton={<SkillsOverviewSkeleton />}>
+          <section className='grid items-start gap-3 xl:grid-cols-[minmax(230px,0.88fr)_minmax(300px,1.05fr)_minmax(280px,0.95fr)]'>
+            <SkillOverviewCard
+              profile={profile}
+              skills={sortedSkills}
+              averageScore={averageScore}
+              levelLabel={levelLabel}
+              shareUrl={shareUrl as string}
+            />
+            <TopSkillsPanel skills={sortedSkills} />
+            <CredentailSummaryPanel summary={displaySummary} timeline={orderedTimeline} />
+          </section>
+        </AsyncSection>
 
-        <GrowthTimeline items={orderedTimeline} />
+        <AsyncSection loading={loading} skeleton={<TimelineSectionSkeleton />}>
+          <GrowthTimeline items={orderedTimeline} />
+        </AsyncSection>
 
-        <CareerTimeline items={orderedTimeline} />
+        <AsyncSection loading={loading} skeleton={<TimelineSectionSkeleton />}>
+          <CareerTimeline items={orderedTimeline} />
+        </AsyncSection>
       </div>
     </main>
   );
@@ -210,23 +216,28 @@ function hasSummaryData(summary: SharedCredentialSummary) {
   return summary.badgesEarned > 0 || summary.certificatesEarned > 0 || summary.shares > 0;
 }
 
-function SharedMySkillsSkeleton() {
+function SkillsOverviewSkeleton() {
   return (
-    <main className='bg-background min-h-screen px-3 py-3 sm:px-4 lg:px-5'>
-      <div className='flex w-full flex-col gap-4'>
-        <Skeleton className='h-32 w-full rounded-lg' />
-        <div className='flex gap-2'>
-          <Skeleton className='h-8 w-20 rounded-md' />
-          <Skeleton className='h-8 w-24 rounded-md' />
-          <Skeleton className='h-8 w-28 rounded-md' />
-        </div>
-        <div className='grid gap-4 xl:grid-cols-3'>
-          <Skeleton className='h-72 rounded-lg' />
-          <Skeleton className='h-72 rounded-lg' />
-          <Skeleton className='h-72 rounded-lg' />
-        </div>
-        <Skeleton className='h-20 rounded-lg' />
+    <section className='grid items-start gap-3 xl:grid-cols-[minmax(230px,0.88fr)_minmax(300px,1.05fr)_minmax(280px,0.95fr)]'>
+      <Skeleton className='h-72 rounded-lg' />
+      <Skeleton className='h-72 rounded-lg' />
+      <Skeleton className='h-72 rounded-lg' />
+    </section>
+  );
+}
+
+function TimelineSectionSkeleton() {
+  return (
+    <section className='border-border/60 bg-card rounded-lg border p-3 shadow-sm sm:p-4'>
+      <div className='mb-4 flex items-center justify-between gap-3'>
+        <Skeleton className='h-5 w-40 rounded-md' />
+        <Skeleton className='h-8 w-32 rounded-md' />
       </div>
-    </main>
+      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Skeleton key={index} className='h-24 rounded-md' />
+        ))}
+      </div>
+    </section>
   );
 }

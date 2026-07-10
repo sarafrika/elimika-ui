@@ -18,11 +18,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { AsyncSection } from '@/components/data/async-section';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,11 +38,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import type { Enrollment } from '@/services/client';
 import { getEnrollmentsForClassOptions } from '@/services/client/@tanstack/react-query.gen';
-import { CustomLoadingState } from '../@course_creator/_components/loading-state';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type { DashboardClass } from './types';
 
 export const getLocationBadgeColor = (location: string) => {
@@ -142,39 +143,53 @@ export function TrainingClassList({
     })),
   });
 
-  if (loading) {
-    return <CustomLoadingState subHeading='Loading training classes information' />;
-  }
-
   return (
     <div className='container mx-auto space-y-6'>
+      {/* Stats degrade independently — the shell and filters render immediately. */}
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-        <Card>
-          <CardHeader>
-            <CardTitle className='text-muted-foreground text-sm'>Total Classes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-3xl font-semibold'>{classesWithCourseAndInstructor?.length}</div>
-          </CardContent>
-        </Card>
+        {loading ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <Skeleton className='h-4 w-24' />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className='h-9 w-16' />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle className='text-muted-foreground text-sm'>Total Classes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='text-3xl font-semibold'>
+                  {classesWithCourseAndInstructor?.length}
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className='text-muted-foreground text-sm'>Active Classes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-3xl font-semibold'>{publishedClasses?.length}</div>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className='text-muted-foreground text-sm'>Active Classes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='text-3xl font-semibold'>{publishedClasses?.length}</div>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className='text-muted-foreground text-sm'>Inactive Classes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-3xl font-semibold'>{draftClasses?.length}</div>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className='text-muted-foreground text-sm'>Inactive Classes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='text-3xl font-semibold'>{draftClasses?.length}</div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       <div className='border-border-100/50 flex flex-col gap-4 rounded-xl border p-4 shadow-sm backdrop-blur-sm lg:flex-row lg:items-center'>
@@ -226,9 +241,43 @@ export function TrainingClassList({
         </div>
       </div>
 
-      {/* Classes Grid */}
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
-        {filteredClasses.map((cls, index) => {
+      {/* Classes Grid — resolves its own loading / empty state locally */}
+      <AsyncSection
+        loading={loading}
+        empty={filteredClasses.length === 0}
+        skeleton={
+          <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div
+                key={index}
+                className='border-primary/40 bg-card h-full max-w-[380px] rounded-2xl border p-[2px] shadow-lg'
+              >
+                <div className='overflow-hidden rounded-2xl'>
+                  <Skeleton className='h-48 w-full rounded-none' />
+                  <div className='space-y-4 p-5'>
+                    <Skeleton className='h-5 w-3/4' />
+                    <Skeleton className='h-4 w-1/2' />
+                    <Skeleton className='h-12 w-full' />
+                    <Skeleton className='h-14 w-full' />
+                    <Skeleton className='h-9 w-28' />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        }
+        emptyState={
+          <div className='py-16 text-center'>
+            <div className='bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
+              <Search className='text-primary h-8 w-8' />
+            </div>
+            <h3>No classes found</h3>
+            <p className='text-muted-foreground mt-2'>Try adjusting your search or filters</p>
+          </div>
+        }
+      >
+        <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
+          {filteredClasses.map((cls, index) => {
           const isFull = (cls.current_enrollments ?? 0) >= (cls.max_participants ?? 0);
           const difficultyName = cls.course?.difficulty_uuid
             ? difficultyMap[cls.course.difficulty_uuid] || 'N/A'
@@ -440,18 +489,9 @@ export function TrainingClassList({
               </div>
             </div>
           );
-        })}
-      </div>
-
-      {filteredClasses.length === 0 && (
-        <div className='py-16 text-center'>
-          <div className='bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
-            <Search className='text-primary h-8 w-8' />
-          </div>
-          <h3>No classes found</h3>
-          <p className='text-muted-foreground mt-2'>Try adjusting your search or filters</p>
+          })}
         </div>
-      )}
+      </AsyncSection>
     </div>
   );
 }
