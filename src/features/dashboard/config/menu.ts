@@ -565,6 +565,11 @@ export default {
       icon: Building,
     },
     {
+      title: 'Training Hub',
+      url: '/dashboard/training-hub',
+      icon: Layers2,
+    },
+    {
       title: 'Learning Progress',
       url: '/dashboard/learning-progress',
       icon: LineChart,
@@ -583,6 +588,11 @@ export default {
       title: 'Training requests',
       url: '/dashboard/verification',
       icon: ShieldCheck,
+    },
+    {
+      title: 'Credentials',
+      url: '/dashboard/credentials',
+      icon: Award,
     },
     {
       title: 'Settings',
