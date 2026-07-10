@@ -7,6 +7,7 @@ import {
   BriefcaseBusiness,
   Building2,
   CalendarDays,
+  CheckCircle2,
   Filter,
   Globe2,
   GraduationCap,
@@ -17,16 +18,26 @@ import {
   SlidersHorizontal,
   Star,
   Trash2,
+  Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+  AdminPageHeader,
+  adminTheme,
+  DetailGrid,
+  SectionCard,
+  StatCard,
+  StatCardSkeleton,
+  StatusBadge,
+} from '@/app/dashboard/@admin/_components/ui';
 import DeleteModal from '@/components/custom-modals/delete-modal';
+import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
@@ -48,6 +59,7 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import {
   applyToJobMutation,
   cancelJobMutation,
@@ -81,7 +93,6 @@ import type { JobMarketplaceRole } from '../data';
 import { getJobMarketplaceRoleConfig } from '../data';
 import { JobCard } from './JobMarketplaceCard';
 import { JobListSkeleton, MarketplaceSidebarSkeleton, SelectSkeleton } from './JobMarketplaceSkeletons';
-import { MarketplaceRail } from './MarketplaceRail';
 import { MarketplaceSidebar } from './MarketplaceSidebar';
 import { MarketplaceTabs } from './MarketplaceTabs';
 
@@ -396,32 +407,40 @@ function buildJobPayload(form: JobFormState): ClassMarketplaceJobRequestWithProg
 
 function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
   return (
-    <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
-      <div className='rounded-2xl border bg-background/70 p-3'>
-        <div className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
-          Published
-        </div>
-        <div className='mt-1 text-sm font-medium'>{formatDateTime(job.created_date)}</div>
-      </div>
-      <div className='rounded-2xl border bg-background/70 p-3'>
-        <div className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
-          Start / End
-        </div>
-        <div className='mt-1 text-sm font-medium'>{formatDateTime(job.default_start_time)}</div>
-        <div className='text-muted-foreground text-xs'>to {formatDateTime(job.default_end_time)}</div>
-      </div>
-      <div className='rounded-2xl border bg-background/70 p-3'>
-        <div className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
-          Capacity
-        </div>
-        <div className='mt-1 text-sm font-medium'>
-          {typeof job.max_participants === 'number' ? `${job.max_participants} participants` : 'Not provided'}
-        </div>
-        <div className='text-muted-foreground text-xs'>
-          Waitlist {job.allow_waitlist ? 'enabled' : 'disabled'}
-        </div>
-      </div>
-    </div>
+    <DetailGrid
+      columns={3}
+      items={[
+        { label: 'Published', value: formatDateTime(job.created_date) },
+        {
+          label: 'Start / End',
+          value: (
+            <div className='space-y-0.5'>
+              <div className='text-sm font-medium text-foreground'>
+                {formatDateTime(job.default_start_time)}
+              </div>
+              <div className='text-xs text-muted-foreground'>
+                to {formatDateTime(job.default_end_time)}
+              </div>
+            </div>
+          ),
+        },
+        {
+          label: 'Capacity',
+          value: (
+            <div className='space-y-0.5'>
+              <div className='text-sm font-medium text-foreground'>
+                {typeof job.max_participants === 'number'
+                  ? `${job.max_participants} participants`
+                  : 'Not provided'}
+              </div>
+              <div className='text-xs text-muted-foreground'>
+                Waitlist {job.allow_waitlist ? 'enabled' : 'disabled'}
+              </div>
+            </div>
+          ),
+        },
+      ]}
+    />
   );
 }
 
@@ -501,17 +520,15 @@ function JobDetailsSheet({
         <div className='space-y-6 p-3 sm:p-6 mb-10'>
           <SheetHeader className='space-y-3 pr-10 text-left'>
             <div className='flex flex-wrap items-center gap-2'>
-              <Badge variant='secondary' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-                {formatEnumLabel(job.status)}
-              </Badge>
-              <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
+              <StatusBadge status={job.status} />
+              <Badge variant='outline' className='rounded-md px-2.5 py-0.5 text-xs font-medium'>
                 {formatEnumLabel(job.session_format)}
               </Badge>
-              <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
+              <Badge variant='outline' className='rounded-md px-2.5 py-0.5 text-xs font-medium'>
                 {formatEnumLabel(job.location_type)}
               </Badge>
             </div>
-            <SheetTitle className='text-2xl'>{job.title || 'Untitled job'}</SheetTitle>
+            <SheetTitle className='text-2xl tracking-tight'>{job.title || 'Untitled job'}</SheetTitle>
             <SheetDescription>
               {getDisplayOrganisationLabel(job, organisationName)} · {getDisplayContentLabel(job, course, program)}
             </SheetDescription>
@@ -521,16 +538,15 @@ function JobDetailsSheet({
             <JobStatsRow job={job} />
 
             {!isManagementView && application ? (
-              <div className='rounded-2xl border bg-background/70 p-4'>
-                <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
-                  Your application
-                </h3>
+              <div className={adminTheme.cardPadded}>
+                <h3 className={adminTheme.sectionLabel}>Your application</h3>
                 <div className='mt-2 flex flex-wrap items-center gap-2'>
-                  <Badge variant='secondary' className='rounded-full px-3 py-1'>
-                    {getApplicationStatusLabel(application.status)}
-                  </Badge>
+                  <StatusBadge
+                    status={application.status}
+                    label={getApplicationStatusLabel(application.status)}
+                  />
                   {myApplicationsHref ? (
-                    <Button asChild variant='outline' className='rounded-xl'>
+                    <Button asChild variant='outline' size='sm'>
                       <Link href={myApplicationsHref}>View my applications</Link>
                     </Button>
                   ) : null}
@@ -543,8 +559,8 @@ function JobDetailsSheet({
               </div>
             ) : null}
 
-            <div className='rounded-2xl border bg-background/70 p-4'>
-              <h3 className='flex flex-row items-center gap-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
+            <div className={adminTheme.cardPadded}>
+              <h3 className={cn(adminTheme.sectionLabel, 'flex flex-row items-center gap-2')}>
                 Sessions
                 <span>({sessionTemplateCount})</span>
               </h3>
@@ -577,7 +593,10 @@ function JobDetailsSheet({
                         </p>
                       </div>
 
-                      <Badge className='bg-primary text-primary-foreground'>
+                      <Badge
+                        variant='outline'
+                        className='rounded-md border-primary/30 bg-primary/10 px-2 py-0.5 text-primary tabular-nums'
+                      >
                         {hours} hr{hours !== 1 ? 's' : ''}
                       </Badge>
                     </div>
@@ -599,29 +618,29 @@ function JobDetailsSheet({
               )}
             </div>
 
-            <div className='rounded-2xl border bg-background/70 p-4'>
-              <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
-                Description
-              </h3>
+            <div className={adminTheme.cardPadded}>
+              <h3 className={adminTheme.sectionLabel}>Description</h3>
               <p className='mt-2 whitespace-pre-line text-sm leading-6 text-foreground'>
                 {job.description || 'No description has been provided for this posting yet.'}
               </p>
             </div>
 
-            <div className='grid gap-3 sm:grid-cols-2'>
-              <InfoTile label='Location name' value={job.location_name || 'Not provided'} />
-              <InfoTile label='Meeting link' value={job.meeting_link || 'Not provided'} />
-              <InfoTile label='Academic period start' value={formatDateTime(job.academic_period_start_date)} />
-              <InfoTile label='Academic period end' value={formatDateTime(job.academic_period_end_date)} />
-              <InfoTile label='Registration start' value={formatDateTime(job.registration_period_start_date)} />
-              <InfoTile label='Registration end' value={formatDateTime(job.registration_period_end_date)} />
-            </div>
+            <DetailGrid
+              columns={2}
+              items={[
+                { label: 'Location name', value: job.location_name || 'Not provided' },
+                { label: 'Meeting link', value: job.meeting_link || 'Not provided' },
+                { label: 'Academic period start', value: formatDateTime(job.academic_period_start_date) },
+                { label: 'Academic period end', value: formatDateTime(job.academic_period_end_date) },
+                { label: 'Registration start', value: formatDateTime(job.registration_period_start_date) },
+                { label: 'Registration end', value: formatDateTime(job.registration_period_end_date) },
+              ]}
+            />
           </div>
 
           {isManagementView ? (
             <div className='flex flex-wrap gap-2'>
               <Button
-                className='rounded-xl'
                 onClick={() => {
                   onOpenChange(false);
                   onEdit?.();
@@ -632,7 +651,6 @@ function JobDetailsSheet({
               </Button>
               <Button
                 variant='outline'
-                className='rounded-xl'
                 onClick={() => {
                   onOpenChange(false);
                   onCancel?.();
@@ -643,7 +661,7 @@ function JobDetailsSheet({
               </Button>
             </div>
           ) : (
-            <div className='space-y-3 rounded-2xl border bg-background/70 p-4'>
+            <div className={cn('space-y-3', adminTheme.cardPadded)}>
               <Label htmlFor='application-note' className='text-sm font-semibold'>
                 Application note
               </Label>
@@ -652,17 +670,15 @@ function JobDetailsSheet({
                 value={applicationNote}
                 onChange={event => setApplicationNote(event.target.value)}
                 placeholder='Add a short note to support your application.'
-                className='min-h-28 rounded-2xl'
+                className='min-h-28'
                 disabled={alreadyApplied}
               />
               {alreadyApplied ? (
-                <div className='flex flex-wrap items-center gap-2 rounded-xl border border-dashed bg-background/60 p-3 text-sm text-muted-foreground'>
-                  <Badge variant='success' className='rounded-full px-3 py-1'>
-                    Applied
-                  </Badge>
+                <div className='flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border/70 bg-muted/30 p-3 text-sm text-muted-foreground'>
+                  <StatusBadge status='approved' label='Applied' />
                   <span>You have already applied to this opportunity.</span>
                   {myApplicationsHref ? (
-                    <Button asChild variant='outline' className='rounded-xl'>
+                    <Button asChild variant='outline' size='sm'>
                       <Link href={myApplicationsHref}>View my applications</Link>
                     </Button>
                   ) : null}
@@ -670,13 +686,12 @@ function JobDetailsSheet({
               ) : null}
               <div className='flex flex-wrap gap-2'>
                 <Button
-                  className='rounded-xl'
                   onClick={handleApply}
                   disabled={applyMutation.isPending || alreadyApplied}
                 >
                   {applyMutation.isPending ? 'Submitting...' : 'Apply for job'}
                 </Button>
-                <Button variant='outline' className='rounded-xl' onClick={() => onOpenChange(false)}>
+                <Button variant='outline' onClick={() => onOpenChange(false)}>
                   Close
                 </Button>
               </div>
@@ -685,17 +700,6 @@ function JobDetailsSheet({
         </div>
       </SheetContent>
     </Sheet>
-  );
-}
-
-function InfoTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className='rounded-2xl border bg-background/70 p-4'>
-      <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-        {label}
-      </div>
-      <div className='mt-1 text-sm leading-6 text-foreground'>{value}</div>
-    </div>
   );
 }
 
@@ -855,14 +859,14 @@ function JobFormSheet({
         <div className='space-y-6'>
           <SheetHeader className='space-y-3 pr-10 text-left'>
             <div className='flex items-center gap-2'>
-              <Badge variant='secondary' className='rounded-full px-2.5 py-1 text-xs font-medium'>
+              <Badge variant='outline' className='rounded-md border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary'>
                 {isEditMode ? 'Edit job' : 'Create job'}
               </Badge>
-              <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
+              <Badge variant='outline' className='rounded-md px-2.5 py-0.5 text-xs font-medium'>
                 {formatEnumLabel(form.location_type)}
               </Badge>
             </div>
-            <SheetTitle className='text-2xl'>
+            <SheetTitle className='text-2xl tracking-tight'>
               {isEditMode ? 'Edit job posting' : 'Create a new job posting'}
             </SheetTitle>
             <SheetDescription>
@@ -882,7 +886,7 @@ function JobFormSheet({
                     onValueChange={value => handleContentTypeChange(value as MarketplaceContentType)}
                     disabled={isEditMode}
                   >
-                    <SelectTrigger className='w-full min-w-0 rounded-xl'>
+                    <SelectTrigger className='w-full min-w-0'>
                       <SelectValue placeholder='Choose type' />
                     </SelectTrigger>
                     <SelectContent>
@@ -897,7 +901,7 @@ function JobFormSheet({
                     onValueChange={handleContentChange}
                     disabled={isEditMode}
                   >
-                    <SelectTrigger className='w-full min-w-0 rounded-xl'>
+                    <SelectTrigger className='w-full min-w-0'>
                       <SelectValue
                         placeholder={form.content_type === 'program' ? 'Choose program' : 'Choose course'}
                         className='min-w-0 truncate'
@@ -925,7 +929,7 @@ function JobFormSheet({
                 <Textarea
                   value={form.description}
                   onChange={event => updateField('description', event.target.value)}
-                  className='min-h-32 rounded-2xl'
+                  className='min-h-32'
                   placeholder='Add a short summary of the job posting.'
                 />
               </Field>
@@ -936,7 +940,7 @@ function JobFormSheet({
                     value={form.class_visibility}
                     onValueChange={value => updateField('class_visibility', value as ClassVisibilityEnum)}
                   >
-                    <SelectTrigger className='rounded-xl'>
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -953,7 +957,7 @@ function JobFormSheet({
                     value={form.session_format}
                     onValueChange={value => updateField('session_format', value as SessionFormatEnum)}
                   >
-                    <SelectTrigger className='rounded-xl'>
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1050,7 +1054,7 @@ function JobFormSheet({
                     value={form.location_type}
                     onValueChange={value => updateField('location_type', value as LocationTypeEnum)}
                   >
-                    <SelectTrigger className='rounded-xl'>
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1102,7 +1106,7 @@ function JobFormSheet({
                 </Field>
               </div>
 
-              <label className='flex items-center gap-3 rounded-2xl border bg-background/70 px-4 py-3 text-sm'>
+              <label className='flex items-center gap-3 rounded-md border border-border/70 bg-muted/20 px-4 py-3 text-sm'>
                 <Checkbox
                   checked={form.allow_waitlist}
                   onCheckedChange={checked => updateField('allow_waitlist', checked === true)}
@@ -1112,9 +1116,8 @@ function JobFormSheet({
             </SectionShell>
           </div>
 
-          <div className='flex flex-wrap gap-2 border-t pt-4'>
+          <div className='flex flex-wrap gap-2 border-t border-border/60 pt-4'>
             <Button
-              className='rounded-xl'
               onClick={handleSubmit}
               disabled={createMutation.isPending || updateMutation.isPending}
             >
@@ -1124,7 +1127,7 @@ function JobFormSheet({
                   ? 'Update job'
                   : 'Create job'}
             </Button>
-            <Button variant='outline' className='rounded-xl' onClick={() => onOpenChange(false)}>
+            <Button variant='outline' onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
           </div>
@@ -1136,7 +1139,7 @@ function JobFormSheet({
 
 function SectionShell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className='rounded-[24px] border-border border-1 p-4 shadow-sm'>
+    <section className='rounded-md border border-border/70 bg-card p-5 shadow-sm'>
       <div className='mb-4 flex items-center justify-between gap-3'>
         <h3 className='text-base font-semibold text-foreground'>{title}</h3>
       </div>
@@ -1165,7 +1168,14 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const createContentTypeParam = searchParams.get('type');
   const createContentIdParam = searchParams.get('id');
   const isOrganizationView = role === 'organization';
+  // Domain access matrix — keep the UI in lock-step with the backend guards.
+  // Only organisations manage jobs; only instructors apply; students/parents are read-only.
+  const canManageJobs = role === 'organization';
+  const canApply = role === 'instructor';
   const organisationUuid = organisation?.uuid ?? '';
+  const isOrgVerified = Boolean(organisation?.admin_verified);
+  // Posting a class job requires an admin-verified organisation (mirrors the backend gate).
+  const canCreateJob = canManageJobs && isOrgVerified;
   const userUuid = profile?.uuid ?? '';
   const organisationName = organisation?.name ?? profile?.organizations?.[0]?.name ?? null;
 
@@ -1194,7 +1204,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   };
 
   useEffect(() => {
-    if (!isOrganizationView || !organisationUuid) return;
+    if (!canCreateJob || !organisationUuid) return;
     if (createJobParam !== '1') return;
 
     const contentType: MarketplaceContentType =
@@ -1205,18 +1215,24 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     setInitialContent(contentId ? { type: contentType, id: contentId } : null);
     setFormOpen(true);
   }, [
+    canCreateJob,
     createContentIdParam,
     createContentTypeParam,
     createJobParam,
-    isOrganizationView,
     organisationUuid,
   ]);
 
-  const { data: jobsResponse, isLoading: isJobsLoading } = useQuery({
+  const {
+    data: jobsResponse,
+    isLoading: isJobsLoading,
+    error: jobsError,
+    refetch: refetchJobs,
+  } = useQuery({
     ...listJobsOptions(jobsListOptions),
     enabled: canLoadJobs,
   });
   const jobs: ClassMarketplaceJobWithProgram[] = jobsResponse?.data?.content ?? [];
+  const jobsLoading = isJobsLoading && !jobsResponse;
 
   const myApplicationsQuery = useQuery({
     ...listMyApplicationsOptions({
@@ -1224,7 +1240,8 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         pageable: {},
       },
     }),
-    enabled: Boolean(!isOrganizationView && userUuid),
+    // Only appliers (instructors) have applications to reconcile against listings.
+    enabled: Boolean(canApply && userUuid),
   });
 
   const { data: coursesResponse, isLoading: isCoursesLoading } = useQuery({
@@ -1412,6 +1429,44 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     [filteredJobs]
   );
 
+  const kpis = useMemo(() => {
+    const openCount = jobs.filter(job => job.status === 'open').length;
+
+    if (isOrganizationView) {
+      return [
+        { label: 'Total postings', value: jobs.length, icon: BriefcaseBusiness, tone: 'info' as const },
+        { label: 'Open', value: openCount, icon: CheckCircle2, tone: 'success' as const },
+        {
+          label: 'Filled',
+          value: jobs.filter(job => job.status === 'filled').length,
+          icon: Users,
+          tone: 'neutral' as const,
+        },
+        {
+          label: 'Cancelled',
+          value: jobs.filter(job => job.status === 'cancelled').length,
+          icon: Trash2,
+          tone: 'destructive' as const,
+        },
+      ];
+    }
+
+    const distinctOrganisations = new Set(
+      jobs.map(job => job.organisation_uuid).filter(Boolean)
+    ).size;
+    const remoteCount = jobs.filter(job => job.location_type === 'ONLINE').length;
+
+    return [
+      { label: 'Open roles', value: openCount, icon: BriefcaseBusiness, tone: 'success' as const },
+      { label: 'Organisations', value: distinctOrganisations, icon: Building2, tone: 'info' as const },
+      // "Applied" only makes sense for applying roles (instructor); orgs don't apply.
+      ...(isOrganizationView
+        ? []
+        : [{ label: 'Applied', value: myApplications.length, icon: CheckCircle2, tone: 'neutral' as const }]),
+      { label: 'Remote', value: remoteCount, icon: Globe2, tone: 'warning' as const },
+    ];
+  }, [isOrganizationView, jobs, myApplications.length]);
+
   const cancelMutation = useMutation({
     ...cancelJobMutation(),
     onSuccess: async () => {
@@ -1431,6 +1486,10 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   };
 
   const handleCreate = () => {
+    if (!canCreateJob) {
+      toast.error('Your organisation must be verified before posting class jobs.');
+      return;
+    }
     setEditingJob(null);
     setInitialContent(null);
     setFormOpen(true);
@@ -1438,7 +1497,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
 
   if (!canLoadJobs) {
     return (
-      <main className='min-h-screen px-3 py-4 sm:px-5 lg:px-7'>
+      <main className={adminTheme.page}>
         <EmptyState
           icon={BriefcaseBusiness}
           title='No organisation profile found'
@@ -1449,46 +1508,79 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     );
   }
 
+  const filterGroups = [
+    {
+      title: 'Status',
+      icon: Filter,
+      items: statusOptions.map(option => ({
+        label: option.label,
+        count:
+          option.value === 'all'
+            ? String(jobsBeforeStatusFilter.length)
+            : String(jobsBeforeStatusFilter.filter(job => job.status === option.value).length),
+        active: statusFilter === option.value,
+        onSelect: () => setStatusFilter(option.value),
+      })),
+    },
+    {
+      title: 'Location',
+      icon: MapPin,
+      items: locationTypeOptions.map(option => ({
+        label: formatEnumLabel(option),
+        count: String(jobsBeforeStatusFilter.filter(job => job.location_type === option).length),
+        active: locationFilter === option,
+        onSelect: () => setLocationFilter(option),
+      })),
+    },
+  ];
+  const sidebarCount = `${filteredJobs.length} job posting${filteredJobs.length === 1 ? '' : 's'}`;
+
   return (
-    <main className='min-h-screen px-3 py-4 sm:px-5 lg:px-7 mb-20'>
-      <div className='mx-auto max-w-[1560px]'>
-        <div className='grid gap-4 xl:grid-cols-[270px_minmax(0,1fr)] 2xl:grid-cols-[270px_minmax(0,1fr)_300px]'>
+    <main className={cn(adminTheme.page, 'pb-16')}>
+      <div className={adminTheme.pageStack}>
+        <AdminPageHeader
+          title={config.title}
+          description={config.description}
+          actions={
+            <>
+              {!isOrganizationView ? (
+                <Button variant='outline' asChild>
+                  <Link href='/dashboard/opportunities/my-applications'>My applications</Link>
+                </Button>
+              ) : null}
+              {config.showCreateAction && canManageJobs ? (
+                <Button onClick={handleCreate}>
+                  <Plus className='mr-2 size-4' />
+                  Create job
+                </Button>
+              ) : null}
+            </>
+          }
+        />
+
+        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+          {jobsLoading
+            ? kpis.map(kpi => <StatCardSkeleton key={kpi.label} />)
+            : kpis.map(kpi => (
+                <StatCard
+                  key={kpi.label}
+                  label={kpi.label}
+                  value={kpi.value}
+                  icon={kpi.icon}
+                  tone={kpi.tone}
+                />
+              ))}
+        </div>
+
+        <div className='grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]'>
           <div className='hidden xl:sticky xl:top-4 xl:block xl:self-start'>
-            {isJobsLoading && !jobsResponse ? (
+            {jobsLoading ? (
               <MarketplaceSidebarSkeleton />
             ) : (
               <MarketplaceSidebar
                 heading='Filters'
-                count={`${filteredJobs.length} job posting${filteredJobs.length === 1 ? '' : 's'}`}
-                groups={[
-                  {
-                    title: 'Status',
-                    icon: Filter,
-                    items: statusOptions.map(option => ({
-                      label: option.label,
-                      count:
-                        option.value === 'all'
-                          ? String(jobsBeforeStatusFilter.length)
-                          : String(
-                            jobsBeforeStatusFilter.filter(job => job.status === option.value).length
-                          ),
-                      active: statusFilter === option.value,
-                      onSelect: () => setStatusFilter(option.value),
-                    })),
-                  },
-                  {
-                    title: 'Location',
-                    icon: MapPin,
-                    items: locationTypeOptions.map(option => ({
-                      label: formatEnumLabel(option),
-                      count: String(
-                        jobsBeforeStatusFilter.filter(job => job.location_type === option).length
-                      ),
-                      active: locationFilter === option,
-                      onSelect: () => setLocationFilter(option),
-                    })),
-                  },
-                ]}
+                count={sidebarCount}
+                groups={filterGroups}
                 setAlertLabel='Set Alerts'
                 applicationsLabel='My Applications'
                 onApplicationsClick={
@@ -1500,42 +1592,57 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
             )}
           </div>
 
-          <div className='space-y-4'>
-            <div className='gap-0 overflow-hidden rounded-[18px] border-border border-1 px-0 py-0 shadow-sm'>
-              <div className='flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4'>
-                <div className='space-y-1'>
-                  <h1 className='text-foreground text-[1.9rem] font-semibold tracking-tight'>
-                    {config.title}
-                  </h1>
-                  <p className='text-muted-foreground text-sm'>{config.description}</p>
-                </div>
-                {config.showCreateAction ? (
-                  <Button className='rounded-xl px-4' onClick={handleCreate}>
-                    <Plus className='mr-2 size-4' />
-                    Create job
-                  </Button>
-                ) : null}
-              </div>
+          <div className='min-w-0 space-y-4'>
+            <SectionCard
+              title='Filters'
+              actions={
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant='outline' size='sm' className='xl:hidden'>
+                      <SlidersHorizontal className='mr-1.5 size-4' />
+                      Filters
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side='left' className='w-[88vw] max-w-sm overflow-y-auto border-r p-4'>
+                    <SheetHeader className='sr-only'>
+                      <SheetTitle>Filters</SheetTitle>
+                      <SheetDescription>Explore job marketplace filters and quick actions.</SheetDescription>
+                    </SheetHeader>
+                    {jobsLoading ? (
+                      <MarketplaceSidebarSkeleton />
+                    ) : (
+                      <MarketplaceSidebar
+                        heading='Filters'
+                        count={sidebarCount}
+                        groups={filterGroups}
+                        setAlertLabel='Set Alerts'
+                        applicationsLabel='My Applications'
+                        onApplicationsClick={
+                          !isOrganizationView
+                            ? () => router.push('/dashboard/opportunities/my-applications')
+                            : undefined
+                        }
+                      />
+                    )}
+                  </SheetContent>
+                </Sheet>
+              }
+              bodyClassName='space-y-3'
+            >
+              <label className='relative block min-w-0'>
+                <span className='sr-only'>Search jobs</span>
+                <Input
+                  value={search}
+                  onChange={event => setSearch(event.target.value)}
+                  placeholder='Search job title, organisation, course, or location'
+                  className='h-10 pl-10'
+                />
+                <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+              </label>
 
-
-              <div className='px-5 pt-5'>
-                <label className='relative block min-w-0'>
-                  <span className='sr-only'>Search jobs</span>
-
-                  <Input
-                    value={search}
-                    onChange={event => setSearch(event.target.value)}
-                    placeholder='Search job title, organisation, course, or location'
-                    className='h-10 rounded-md pl-10'
-                  />
-
-                  <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-                </label>
-              </div>
-
-              <div className='flex sm:flex-row items-center gap-3 flex-wrap border-b px-5 py-4'>
+              <div className='flex flex-wrap items-center gap-3'>
                 {!isOrganizationView ? (
-                  <div className='min-w-[220px] flex-1'>
+                  <div className='min-w-[200px] flex-1'>
                     {isOrganisationsLoading ? (
                       <SelectSkeleton />
                     ) : (
@@ -1543,14 +1650,12 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                         value={organisationFilter}
                         onValueChange={value => setOrganisationFilter(value)}
                       >
-                        <SelectTrigger className='h-11 w-full rounded-md border border-border bg-background/80'>
+                        <SelectTrigger className='h-10 w-full'>
                           <Building2 className='text-muted-foreground mr-2 size-4 shrink-0' />
                           <SelectValue placeholder='All organisations' />
                         </SelectTrigger>
-
                         <SelectContent>
                           <SelectItem value='all'>All organisations</SelectItem>
-
                           {organisationOptions.map(option => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
@@ -1562,19 +1667,17 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                   </div>
                 ) : null}
 
-                <div className='min-w-[220px] flex-1'>
+                <div className='min-w-[200px] flex-1'>
                   {isCoursesLoading || isProgramsLoading ? (
                     <SelectSkeleton />
                   ) : (
                     <Select value={contentFilter} onValueChange={value => setContentFilter(value)}>
-                      <SelectTrigger className='h-11 w-full rounded-md border border-border bg-background/80'>
+                      <SelectTrigger className='h-10 w-full'>
                         <GraduationCap className='text-muted-foreground mr-2 size-4 shrink-0' />
                         <SelectValue placeholder='All content' />
                       </SelectTrigger>
-
                       <SelectContent>
                         <SelectItem value='all'>All content</SelectItem>
-
                         {contentOptions.map(option => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
@@ -1585,21 +1688,17 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                   )}
                 </div>
 
-                <div className='min-w-[240px] flex-1'>
+                <div className='min-w-[200px] flex-1'>
                   <Select
                     value={sessionFormatFilter}
-                    onValueChange={value =>
-                      setSessionFormatFilter(value as 'all' | SessionFormatEnum)
-                    }
+                    onValueChange={value => setSessionFormatFilter(value as 'all' | SessionFormatEnum)}
                   >
-                    <SelectTrigger className='h-11 w-full rounded-md border border-border bg-background/80'>
+                    <SelectTrigger className='h-10 w-full'>
                       <CalendarDays className='text-muted-foreground mr-2 size-4 shrink-0' />
                       <SelectValue placeholder='All session formats' />
                     </SelectTrigger>
-
                     <SelectContent>
                       <SelectItem value='all'>All session formats</SelectItem>
-
                       {sessionFormatOptions.map(option => (
                         <SelectItem key={option} value={option}>
                           {formatEnumLabel(option)}
@@ -1612,11 +1711,9 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 <Button
                   type='button'
                   variant='outline'
-                  className='h-11 shrink-0 whitespace-nowrap rounded-md border border-border bg-background/80 px-4'
+                  className='h-10 shrink-0 whitespace-nowrap'
                   onClick={() =>
-                    setSortDirection(previous =>
-                      previous === 'newest' ? 'oldest' : 'newest'
-                    )
+                    setSortDirection(previous => (previous === 'newest' ? 'oldest' : 'newest'))
                   }
                 >
                   {sortDirection === 'newest' ? (
@@ -1624,176 +1721,90 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                   ) : (
                     <ArrowUpWideNarrow className='size-4 shrink-0' />
                   )}
-
-                  <span>
-                    {sortDirection === 'newest' ? 'Newest first' : 'Oldest first'}
-                  </span>
+                  <span>{sortDirection === 'newest' ? 'Newest first' : 'Oldest first'}</span>
                 </Button>
               </div>
+            </SectionCard>
 
-              <Tabs
-                value={marketplaceTab}
-                onValueChange={value => setMarketplaceTab(value as MarketplaceTabId)}
-                className='gap-0'
-              >
-                <div className='px-5'>
-                  <MarketplaceTabs tabs={tabDefinitions} />
-                </div>
+            <Tabs
+              value={marketplaceTab}
+              onValueChange={value => setMarketplaceTab(value as MarketplaceTabId)}
+              className='gap-0'
+            >
+              <MarketplaceTabs tabs={tabDefinitions} />
 
-                {tabDefinitions.map(tab => {
-                  const tabJobs =
-                    tab.id === 'all'
-                      ? sortedJobs
-                      : sortJobs(
+              {tabDefinitions.map(tab => {
+                const tabJobs =
+                  tab.id === 'all'
+                    ? sortedJobs
+                    : sortJobs(
                         filteredJobs.filter(job => matchesMarketplaceTab(job, tab.id)),
                         sortDirection
                       );
 
-                  return (
-                    <TabsContent key={tab.id} value={tab.id} className='mt-0 space-y-4 py-4 sm:px-5'>
-                      <div className='gap-4 rounded-[16px] px-4 py-4'>
-                        <div className='flex flex-wrap items-center justify-between gap-3 pb-4'>
-                          <div className='text-foreground text-[1.05rem] font-medium'>
-                            {tabJobs.length} active job posting{tabJobs.length === 1 ? '' : 's'}
-                          </div>
-                          <div className='flex flex-wrap items-center gap-2'>
-                            <Sheet>
-                              <SheetTrigger asChild>
-                                <Button
-                                  variant='outline'
-                                  size='sm'
-                                  className='rounded-lg border-border border-1 bg-background/80 xl:hidden'
-                                >
-                                  <SlidersHorizontal className='size-4' />
-                                  Filters
-                                </Button>
-                              </SheetTrigger>
-                              <SheetContent side='left' className='w-[88vw] max-w-sm overflow-y-auto border-r p-4'>
-                                <SheetHeader className='sr-only'>
-                                  <SheetTitle>Filters</SheetTitle>
-                                  <SheetDescription>Explore job marketplace filters and quick actions.</SheetDescription>
-                                </SheetHeader>
-                                {isJobsLoading && !jobsResponse ? (
-                                  <MarketplaceSidebarSkeleton />
-                                ) : (
-                                  <MarketplaceSidebar
-                                    heading='Filters'
-                                    count={`${jobs.length} job posting${jobs.length === 1 ? '' : 's'}`}
-                                    groups={[
-                                      {
-                                        title: 'Status',
-                                        icon: Filter,
-                                        items: statusOptions.map(option => ({
-                                          label: option.label,
-                                          count:
-                                            option.value === 'all'
-                                              ? String(jobsBeforeStatusFilter.length)
-                                              : String(
-                                                jobsBeforeStatusFilter.filter(
-                                                  job => job.status === option.value
-                                                ).length
-                                              ),
-                                          active: statusFilter === option.value,
-                                          onSelect: () => setStatusFilter(option.value),
-                                        })),
-                                      },
-                                      {
-                                        title: 'Location',
-                                        icon: MapPin,
-                                        items: locationTypeOptions.map(option => ({
-                                          label: formatEnumLabel(option),
-                                          count: String(
-                                            jobsBeforeStatusFilter.filter(
-                                              job => job.location_type === option
-                                            ).length
-                                          ),
-                                          active: locationFilter === option,
-                                          onSelect: () => setLocationFilter(option),
-                                        })),
-                                      },
-                                    ]}
-                                    setAlertLabel='Set Alerts'
-                                    applicationsLabel='My Applications'
-                                    onApplicationsClick={
-                                      !isOrganizationView
-                                        ? () => router.push('/dashboard/opportunities/my-applications')
-                                        : undefined
-                                    }
-                                  />
-                                )}
-                              </SheetContent>
-                            </Sheet>
-                          </div>
-                        </div>
+                return (
+                  <TabsContent key={tab.id} value={tab.id} className='mt-4 space-y-4'>
+                    <div className='flex flex-wrap items-center justify-between gap-3'>
+                      <p className='text-muted-foreground text-sm'>
+                        <span className='text-foreground font-semibold tabular-nums'>
+                          {tabJobs.length}
+                        </span>{' '}
+                        active job posting{tabJobs.length === 1 ? '' : 's'}
+                      </p>
+                    </div>
 
-                        {isJobsLoading && !jobsResponse ? (
-                          <JobListSkeleton />
-                        ) : (
-                          <div className='grid gap-4 3xl:grid-cols-2'>
-                            {tabJobs.map(job => {
-                              const course = jobsByCourseId.get(job.course_uuid ?? '') ?? null;
-                              const program = jobsByProgramId.get(getJobProgramUuid(job) ?? '') ?? null;
-                              const application = applicationByJobUuid.get(job.uuid ?? '') ?? null;
+                    <AsyncSection
+                      loading={jobsLoading}
+                      error={jobsError}
+                      empty={!tabJobs.length}
+                      onRetry={() => refetchJobs()}
+                      skeleton={<JobListSkeleton />}
+                      errorTitle='Couldn’t load job postings'
+                      emptyState={
+                        <EmptyState
+                          icon={BriefcaseBusiness}
+                          title='No class jobs found'
+                          description={config.emptyStateLabel}
+                          variant='compact'
+                        />
+                      }
+                    >
+                      <div className='grid gap-4 3xl:grid-cols-2'>
+                        {tabJobs.map(job => {
+                          const course = jobsByCourseId.get(job.course_uuid ?? '') ?? null;
+                          const program = jobsByProgramId.get(getJobProgramUuid(job) ?? '') ?? null;
+                          const application = applicationByJobUuid.get(job.uuid ?? '') ?? null;
 
-                              return (
-                                <JobCard
-                                  key={job.uuid}
-                                  job={job}
-                                  course={course}
-                                  program={program}
-                                  isManagementView={isOrganizationView}
-                                  organisationName={organisationName}
-                                  onView={() => setSelectedJobUuid(job.uuid ?? null)}
-                                  onEdit={isOrganizationView ? () => handleEdit(job) : undefined}
-                                  onCancel={
-                                    isOrganizationView ? () => setPendingCancelJob(job) : undefined
-                                  }
-                                  applicationStatus={application?.status ?? null}
-                                  hasApplied={Boolean(application)}
-                                  applicationsHref={
-                                    isOrganizationView && job.uuid
-                                      ? `/dashboard/opportunities/${job.uuid}`
-                                      : undefined
-                                  }
-                                />
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {!isJobsLoading && !tabJobs.length ? (
-                          <EmptyState
-                            icon={BriefcaseBusiness}
-                            title='No class jobs found'
-                            description={config.emptyStateLabel}
-                            variant='compact'
-                            className='bg-background/80'
-                          />
-                        ) : null}
+                          return (
+                            <JobCard
+                              key={job.uuid}
+                              job={job}
+                              course={course}
+                              program={program}
+                              isManagementView={isOrganizationView}
+                              organisationName={organisationName}
+                              onView={() => setSelectedJobUuid(job.uuid ?? null)}
+                              onEdit={isOrganizationView ? () => handleEdit(job) : undefined}
+                              onCancel={
+                                isOrganizationView ? () => setPendingCancelJob(job) : undefined
+                              }
+                              applicationStatus={application?.status ?? null}
+                              hasApplied={Boolean(application)}
+                              applicationsHref={
+                                isOrganizationView && job.uuid
+                                  ? `/dashboard/opportunities/${job.uuid}`
+                                  : undefined
+                              }
+                            />
+                          );
+                        })}
                       </div>
-                    </TabsContent>
-                  );
-                })}
-              </Tabs>
-            </div>
+                    </AsyncSection>
+                  </TabsContent>
+                );
+              })}
+            </Tabs>
           </div>
-
-          {!isOrganizationView ? (
-            <div className='xl:col-start-2 2xl:col-start-auto 2xl:sticky 2xl:top-4 2xl:self-start'>
-              <MarketplaceRail
-                coursesTitle='Recommended Courses'
-                insightsTitle='Portfolio Insights'
-                matchingTitle='Matching Opportunities'
-                matchingDescription='We found active jobs based on your skills and profile.'
-                matchingAction='See All'
-                searchJobsPlaceholder='Search jobs'
-                sendLabel='Send'
-                insightsCount={String(jobs.length)}
-                courses={[]}
-                insights={[]}
-              />
-            </div>
-          ) : null}
         </div>
       </div>
 

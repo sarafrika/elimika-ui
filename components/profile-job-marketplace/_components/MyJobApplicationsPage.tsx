@@ -3,17 +3,31 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
-  Loader2,
+  BriefcaseBusiness,
+  CheckCircle2,
+  Clock,
   Search,
+  XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
+import {
+  AdminPageHeader,
+  adminTheme,
+  DetailGrid,
+  SectionCard,
+  StatCard,
+  StatCardSkeleton,
+  StatusBadge,
+} from '@/app/dashboard/@admin/_components/ui';
+import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { ClassMarketplaceJob } from '@/services/client';
 import {
   listJobsOptions,
@@ -79,7 +93,12 @@ export function MyJobApplicationsPage() {
     enabled: true,
   });
 
-  const { data: applicationsResponse, isLoading } = useQuery({
+  const {
+    data: applicationsResponse,
+    isLoading,
+    error: applicationsError,
+    refetch: refetchApplications,
+  } = useQuery({
     ...listMyApplicationsOptions({
       query: {
         pageable: {
@@ -137,160 +156,155 @@ export function MyJobApplicationsPage() {
     [applications]
   );
 
-  if (isLoading && !applicationsResponse) {
-    return (
-      <div className='flex min-h-[60vh] items-center justify-center'>
-        <Loader2 className='text-muted-foreground size-8 animate-spin' />
-      </div>
-    );
-  }
+  const applicationsLoading = isLoading && !applicationsResponse;
+
+  const kpis = [
+    { label: 'Total', value: stats.total, icon: BriefcaseBusiness, tone: 'info' as const },
+    { label: 'Pending', value: stats.pending, icon: Clock, tone: 'warning' as const },
+    { label: 'Approved', value: stats.approved, icon: CheckCircle2, tone: 'success' as const },
+    { label: 'Rejected', value: stats.rejected, icon: XCircle, tone: 'destructive' as const },
+  ];
 
   return (
-    <div className='space-y-6 p-4 sm:p-6'>
-      <div className='space-y-2'>
-        <h1 className='text-2xl font-semibold tracking-tight'>My Applications</h1>
-        <p className='text-muted-foreground'>
-          Search, filter, and track every marketplace job application you have submitted.
-        </p>
-      </div>
+    <div className={adminTheme.page}>
+      <div className={adminTheme.pageStack}>
+        <AdminPageHeader
+          title='My Applications'
+          description='Search, filter, and track every marketplace job application you have submitted.'
+        />
 
-      <div className='grid gap-4 sm:grid-cols-4'>
-        <Card className='rounded-2xl p-4 bg-transparent'>
-          <div className='text-sm text-muted-foreground'>Total</div>
-          <div className='mt-1 text-2xl font-semibold'>{stats.total}</div>
-        </Card>
-        <Card className='rounded-2xl p-4 bg-transparent'>
-          <div className='text-sm text-muted-foreground'>Pending</div>
-          <div className='mt-1 text-2xl font-semibold'>{stats.pending}</div>
-        </Card>
-        <Card className='rounded-2xl p-4 bg-transparent'>
-          <div className='text-sm text-muted-foreground'>Approved</div>
-          <div className='mt-1 text-2xl font-semibold'>{stats.approved}</div>
-        </Card>
-        <Card className='rounded-2xl p-4 bg-transparent'>
-          <div className='text-sm text-muted-foreground'>Rejected</div>
-          <div className='mt-1 text-2xl font-semibold'>{stats.rejected}</div>
-        </Card>
-      </div>
-
-      <Card className='space-y-4 rounded-lg border-border border-1 bg-transparent p-4 shadow-sm'>
-        <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px]'>
-          <label className='relative block'>
-            <span className='sr-only'>Search applications</span>
-            <Input
-              value={searchQuery}
-              onChange={event => setSearchQuery(event.target.value)}
-              placeholder='Search by job title, note, or job id'
-              className='h-11 rounded-md pl-10'
-            />
-            <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-          </label>
-
-          <Select value={statusFilter} onValueChange={value => setStatusFilter(value as typeof statusFilter)}>
-            <SelectTrigger className='h-11 rounded-md'>
-              <SelectValue placeholder='All statuses' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='ALL'>All statuses</SelectItem>
-              <SelectItem value='pending'>Pending</SelectItem>
-              <SelectItem value='approved'>Approved</SelectItem>
-              <SelectItem value='rejected'>Rejected</SelectItem>
-              <SelectItem value='assigned'>Assigned</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={sortBy} onValueChange={value => setSortBy(value as typeof sortBy)}>
-            <SelectTrigger className='h-11 rounded-md'>
-              <SelectValue placeholder='Sort by' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='newest'>Most Recent</SelectItem>
-              <SelectItem value='oldest'>Oldest First</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+          {applicationsLoading
+            ? kpis.map(kpi => <StatCardSkeleton key={kpi.label} />)
+            : kpis.map(kpi => (
+                <StatCard
+                  key={kpi.label}
+                  label={kpi.label}
+                  value={kpi.value}
+                  icon={kpi.icon}
+                  tone={kpi.tone}
+                />
+              ))}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {filteredApplications.length ? (
-            filteredApplications.map(application => {
-              const job = jobsByUuid.get(application.job_uuid ?? '');
+        <SectionCard title='Applications' bodyClassName='space-y-4'>
+          <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px]'>
+            <label className='relative block'>
+              <span className='sr-only'>Search applications</span>
+              <Input
+                value={searchQuery}
+                onChange={event => setSearchQuery(event.target.value)}
+                placeholder='Search by job title, note, or job id'
+                className='h-10 pl-10'
+              />
+              <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+            </label>
 
-              return (
-                <Card
-                  key={application.uuid}
-                  className="h-full rounded-2xl border bg-background/70 p-4 flex flex-col"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-semibold">
-                        {job?.title ?? 'Unknown job'}
-                      </h3>
-                      <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                        <span>
-                          {job?.location_name || formatLabel(job?.location_type)}
-                        </span>
-                        {job?.organisation_uuid ? (
-                          <span>{job.organisation_uuid}</span>
-                        ) : null}
+            <Select value={statusFilter} onValueChange={value => setStatusFilter(value as typeof statusFilter)}>
+              <SelectTrigger className='h-10'>
+                <SelectValue placeholder='All statuses' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='ALL'>All statuses</SelectItem>
+                <SelectItem value='pending'>Pending</SelectItem>
+                <SelectItem value='approved'>Approved</SelectItem>
+                <SelectItem value='rejected'>Rejected</SelectItem>
+                <SelectItem value='assigned'>Assigned</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={sortBy} onValueChange={value => setSortBy(value as typeof sortBy)}>
+              <SelectTrigger className='h-10'>
+                <SelectValue placeholder='Sort by' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='newest'>Most Recent</SelectItem>
+                <SelectItem value='oldest'>Oldest First</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <AsyncSection
+            loading={applicationsLoading}
+            error={applicationsError}
+            empty={!filteredApplications.length}
+            onRetry={() => refetchApplications()}
+            skeleton={
+              <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+                {[0, 1, 2].map(item => (
+                  <Skeleton key={item} className='h-48 rounded-md' />
+                ))}
+              </div>
+            }
+            errorTitle='Couldn’t load your applications'
+            emptyState={
+              <EmptyState
+                icon={BriefcaseBusiness}
+                title='No applications yet'
+                description='No applications match the current filters.'
+                variant='compact'
+              />
+            }
+          >
+            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+              {filteredApplications.map(application => {
+                const job = jobsByUuid.get(application.job_uuid ?? '');
+
+                return (
+                  <div
+                    key={application.uuid}
+                    className='flex h-full flex-col rounded-md border border-border/70 bg-card p-5 shadow-sm'
+                  >
+                    <div className='flex flex-wrap items-start justify-between gap-3'>
+                      <div className='min-w-0 space-y-1'>
+                        <h3 className='truncate text-base font-semibold tracking-tight'>
+                          {job?.title ?? 'Unknown job'}
+                        </h3>
+                        <div className='flex flex-wrap gap-2 text-sm text-muted-foreground'>
+                          <span>{job?.location_name || formatLabel(job?.location_type)}</span>
+                        </div>
                       </div>
+
+                      <StatusBadge status={application.status} label={formatLabel(application.status)} />
                     </div>
 
-                    <Badge variant="secondary" className="rounded-full px-3 py-1">
-                      {formatLabel(application.status)}
-                    </Badge>
-                  </div>
-
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    <div className="rounded-xl border bg-background/80 p-3">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Application note
-                      </div>
-                      <p className="mt-1 text-sm leading-6 text-foreground">
-                        {application.application_note || 'No note added.'}
-                      </p>
+                    <div className='mt-4'>
+                      <DetailGrid
+                        columns={1}
+                        items={[
+                          { label: 'Application note', value: application.application_note || 'No note added.' },
+                          { label: 'Review notes', value: application.review_notes || 'No review notes yet.' },
+                        ]}
+                      />
                     </div>
 
-                    <div className="rounded-xl border bg-background/80 p-3">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Review notes
-                      </div>
-                      <p className="mt-1 text-sm leading-6 text-foreground">
-                        {application.review_notes || 'No review notes yet.'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Push footer to bottom */}
-                  <div className="mt-auto pt-4 flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="rounded-full">
-                      Applied {formatDate(application.created_date)}
-                    </Badge>
-
-                    {application.reviewed_at ? (
-                      <Badge variant="outline" className="rounded-full">
-                        Reviewed {formatDate(application.reviewed_at)}
+                    <div className='mt-auto flex flex-wrap items-center gap-2 pt-4'>
+                      <Badge variant='outline' className='rounded-md'>
+                        Applied {formatDate(application.created_date)}
                       </Badge>
-                    ) : null}
 
-                    <div className="ml-auto flex flex-wrap gap-2">
-                      <Button asChild variant="outline" className="rounded-xl">
-                        <Link href="/dashboard/opportunities">
-                          View opportunities
-                          <ArrowRight className="ml-2 size-4" />
-                        </Link>
-                      </Button>
+                      {application.reviewed_at ? (
+                        <Badge variant='outline' className='rounded-md'>
+                          Reviewed {formatDate(application.reviewed_at)}
+                        </Badge>
+                      ) : null}
+
+                      <div className='ml-auto flex flex-wrap gap-2'>
+                        <Button asChild variant='outline' size='sm'>
+                          <Link href='/dashboard/opportunities'>
+                            View opportunities
+                            <ArrowRight className='ml-2 size-4' />
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </Card>
-              );
-            })
-          ) : (
-            <Card className="col-span-full rounded-2xl border-dashed p-10 text-center text-muted-foreground">
-              No applications match the current filters.
-            </Card>
-          )}
-        </div>
-      </Card>
+                );
+              })}
+            </div>
+          </AsyncSection>
+        </SectionCard>
+      </div>
     </div>
   );
 }

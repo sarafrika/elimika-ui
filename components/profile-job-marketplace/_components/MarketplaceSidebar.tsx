@@ -28,9 +28,9 @@ export function MarketplaceSidebar({
 }: MarketplaceSidebarProps) {
   return (
     <aside className='space-y-4'>
-      <div className='gap-4 rounded-md border-border border-1 space-y-4 px-4 py-4 shadow-sm'>
-        <div className='border-b pb-4'>
-          <h2 className='text-foreground text-lg font-semibold'>{heading}</h2>
+      <div className='space-y-4 rounded-md border border-border/70 bg-card px-4 py-4 shadow-sm'>
+        <div className='border-b border-border/60 pb-4'>
+          <h2 className='text-foreground text-base font-semibold'>{heading}</h2>
           <p className='text-muted-foreground mt-1 text-sm'>{count}</p>
         </div>
 
@@ -38,40 +38,41 @@ export function MarketplaceSidebar({
           const GroupIcon = group.icon;
 
           return (
-            <section key={group.title} className='space-y-3 border-b pb-4 last:border-b-0 last:pb-0'>
-              <div className='text-foreground flex items-center justify-between gap-3 text-base font-semibold'>
-                <span className='flex items-center gap-2'>
-                  <GroupIcon className='text-primary size-4' />
-                  {group.title}
-                </span>
-                <ChevronRight className='text-muted-foreground size-4' />
+            <section key={group.title} className='space-y-2 border-b border-border/60 pb-4 last:border-b-0 last:pb-0'>
+              <div className='text-muted-foreground text-xs font-medium uppercase tracking-wide flex items-center gap-2'>
+                <GroupIcon className='text-primary size-4' />
+                {group.title}
               </div>
 
-              <div className='space-y-2'>
+              <div className='space-y-1'>
                 {group.items.map(item => (
                   <button
                     key={item.label}
                     type='button'
                     onClick={item.onSelect}
-                    className='hover:bg-muted/40 flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left transition-colors'
+                    className={
+                      item.active
+                        ? 'bg-primary/10 flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-left transition-colors'
+                        : 'hover:bg-muted/40 flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-left transition-colors'
+                    }
                     aria-pressed={item.active}
                   >
-                    <span className='flex items-center gap-3'>
+                    <span className='flex items-center gap-2.5'>
                       <span
                         className={
                           item.active
-                            ? 'border-primary bg-primary/10 h-4 w-4 rounded-full border-2'
-                            : 'border-muted-foreground/40 h-4 w-4 rounded-full border-2'
+                            ? 'border-primary bg-primary size-3.5 rounded-full border-2'
+                            : 'border-muted-foreground/40 size-3.5 rounded-full border-2'
                         }
                       />
-                      <span className={item.active ? 'text-foreground font-medium' : 'text-muted-foreground'}>
+                      <span className={item.active ? 'text-foreground text-sm font-medium' : 'text-muted-foreground text-sm'}>
                         {item.label}
                       </span>
                     </span>
                     {item.count ? (
                       <Badge
-                        variant='secondary'
-                        className='rounded-md bg-[color-mix(in_srgb,var(--primary)_10%,white)] px-2 py-0.5 text-primary'
+                        variant='outline'
+                        className='rounded-md border-border/70 bg-muted/40 px-2 py-0.5 text-xs tabular-nums text-muted-foreground'
                       >
                         {item.count}
                       </Badge>
@@ -83,13 +84,13 @@ export function MarketplaceSidebar({
           );
         })}
 
-        <Button className='w-full rounded-xl' onClick={onSetAlertsClick} disabled={!onSetAlertsClick}>
+        <Button className='w-full' onClick={onSetAlertsClick} disabled={!onSetAlertsClick}>
           {setAlertLabel}
         </Button>
 
         <Button
           variant='outline'
-          className='w-full justify-between rounded-xl border-white/70 bg-background/80'
+          className='w-full justify-between'
           onClick={onApplicationsClick}
           disabled={!onApplicationsClick}
         >

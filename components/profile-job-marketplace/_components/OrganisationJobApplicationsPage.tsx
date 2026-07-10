@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { AdminPageHeader, adminTheme, SectionCard } from '@/app/dashboard/@admin/_components/ui';
+import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useCoursesByIds, useInstructorsByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
+import { cn } from '@/lib/utils';
 import type {
   ClassMarketplaceJob,
   ClassMarketplaceJobApplication,
@@ -35,10 +38,12 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import {
+  ApplicationListSkeleton,
+  ApplicationStatsCards,
   type ApplicationStatusFilter,
+  ApplicationsEmptyState,
   ApplicationsFilterBar,
   ApplicationsListSection,
-  JobApplicationsHeader,
   JobOverviewPanel,
 } from './OrganisationJobApplicationsSections';
 
@@ -226,7 +231,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
 
   if (!organisationUuid) {
     return (
-      <div className='mx-auto w-full max-w-3xl p-4 sm:p-6'>
+      <div className={cn(adminTheme.page, 'max-w-3xl')}>
         <Button variant='ghost' className='mb-4 px-0 text-muted-foreground' onClick={() => router.back()}>
           <ArrowLeft className='mr-2 size-4' />
           Back to opportunities
@@ -247,39 +252,55 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
   }
 
   return (
-    <div className='space-y-6 p-4 sm:p-6 max-w-7xl mx-auto w-full'>
-      <Button variant='ghost' className='px-0 text-muted-foreground' onClick={() => router.back()}>
-        <ArrowLeft className='mr-2 size-4' />
-        Back to opportunities
-      </Button>
+    <div className={adminTheme.page}>
+      <div className={adminTheme.pageStack}>
+        <Button
+          variant='ghost'
+          size='sm'
+          className='w-fit px-0 text-muted-foreground'
+          onClick={() => router.back()}
+        >
+          <ArrowLeft className='mr-2 size-4' />
+          Back to opportunities
+        </Button>
 
-      <JobApplicationsHeader
-        isJobLoading={isJobsLoading && !jobsResponse}
-        jobTitle={job?.title}
-        isStatsLoading={isApplicationsLoading}
-        stats={stats}
-      />
-
-      <div className='space-y-4 bg-card/95 p-4'>
-        <ApplicationsFilterBar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
+        <AdminPageHeader
+          title={isJobsLoading && !jobsResponse ? 'Job applications' : job?.title ?? 'Job applications'}
+          description='Review applicants, approve or reject submissions, then assign an approved instructor.'
         />
 
+        <ApplicationStatsCards isLoading={isApplicationsLoading} stats={stats} />
+
         <div className='grid gap-4 md:grid-cols-[minmax(0,1fr)_320px]'>
-          <ApplicationsListSection
-            applications={filteredApplications}
-            instructorMap={instructorMap}
-            isApplicationsLoading={isApplicationsLoading}
-            isInstructorsLoading={isInstructorsLoading}
-            isReviewPending={reviewMutation.isPending}
-            isAssignPending={assignMutation.isPending}
-            onApprove={application => openReviewDialog(application, 'APPROVE')}
-            onReject={application => openReviewDialog(application, 'REJECT')}
-            onAssign={handleAssign}
-          />
+          <SectionCard title='Applicants' bodyClassName='space-y-4'>
+            <ApplicationsFilterBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+            />
+
+            <AsyncSection
+              loading={isApplicationsLoading}
+              error={applicationsQuery.error}
+              empty={!filteredApplications.length}
+              onRetry={() => applicationsQuery.refetch()}
+              skeleton={<ApplicationListSkeleton />}
+              errorTitle='Couldn’t load applications'
+              emptyState={<ApplicationsEmptyState />}
+            >
+              <ApplicationsListSection
+                applications={filteredApplications}
+                instructorMap={instructorMap}
+                isInstructorsLoading={isInstructorsLoading}
+                isReviewPending={reviewMutation.isPending}
+                isAssignPending={assignMutation.isPending}
+                onApprove={application => openReviewDialog(application, 'APPROVE')}
+                onReject={application => openReviewDialog(application, 'REJECT')}
+                onAssign={handleAssign}
+              />
+            </AsyncSection>
+          </SectionCard>
 
           <JobOverviewPanel
             job={job}
@@ -288,7 +309,6 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
             isLoading={isJobsLoading && !jobsResponse}
           />
         </div>
-      </div>
 
       <Dialog
         open={reviewDialogOpen}
@@ -320,14 +340,13 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
               value={reviewNotes}
               onChange={event => setReviewNotes(event.target.value)}
               placeholder='Add optional notes for this review...'
-              className='min-h-32 rounded-2xl'
+              className='min-h-32'
             />
           </div>
 
           <DialogFooter>
             <Button
               variant='outline'
-              className='rounded-xl'
               onClick={() => {
                 setReviewDialogOpen(false);
                 setPendingReview(null);
@@ -338,7 +357,6 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
               Cancel
             </Button>
             <Button
-              className='rounded-xl'
               variant={pendingReview?.action === 'REJECT' ? 'destructive' : 'default'}
               onClick={handleReviewConfirm}
               disabled={reviewMutation.isPending || !pendingReview?.application.uuid}
@@ -356,7 +374,8 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+        </Dialog>
+      </div>
     </div>
   );
 }

@@ -3,10 +3,9 @@
 import { BriefcaseBusiness, CalendarDays, MapPin, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
+import { StatusBadge } from '@/app/dashboard/@admin/_components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob, Course, TrainingProgram } from '@/services/client/types.gen';
 
 type ClassMarketplaceJobWithProgram = ClassMarketplaceJob & {
@@ -67,6 +66,14 @@ function getDisplayContentLabel(
   return 'Course or program';
 }
 
+function MetaBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <Badge variant='outline' className='rounded-md px-2.5 py-0.5 text-xs font-medium'>
+      {children}
+    </Badge>
+  );
+}
+
 function JobBadgeRow({
   job,
   course,
@@ -80,24 +87,11 @@ function JobBadgeRow({
 }) {
   return (
     <div className='flex flex-wrap items-center gap-2'>
-      <Badge variant='secondary' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {formatEnumLabel(job.status)}
-      </Badge>
-      <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {formatEnumLabel(job.class_visibility)}
-      </Badge>
-      <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {formatEnumLabel(job.session_format)}
-      </Badge>
-      <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {formatEnumLabel(job.location_type)}
-      </Badge>
-      <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {getDisplayOrganisationLabel(job, organisationName)}
-      </Badge>
-      <Badge variant='outline' className='rounded-full px-2.5 py-1 text-xs font-medium'>
-        {getDisplayContentLabel(job, course, program)}
-      </Badge>
+      <MetaBadge>{formatEnumLabel(job.class_visibility)}</MetaBadge>
+      <MetaBadge>{formatEnumLabel(job.session_format)}</MetaBadge>
+      <MetaBadge>{formatEnumLabel(job.location_type)}</MetaBadge>
+      <MetaBadge>{getDisplayOrganisationLabel(job, organisationName)}</MetaBadge>
+      <MetaBadge>{getDisplayContentLabel(job, course, program)}</MetaBadge>
     </div>
   );
 }
@@ -129,47 +123,29 @@ export function JobCard({
 }) {
   const title = job.title ?? 'Untitled job';
   const applicationLabel = getApplicationStatusLabel(applicationStatus);
-  const statusStyles: Record<string, string> = {
-    pending: 'bg-muted text-muted-foreground border-border',
-    approved: 'bg-success/10 text-success border-success/30',
-    rejected: 'bg-destructive/10 text-destructive border-destructive/30',
-  };
 
   return (
-    <Card className='group flex gap-4 rounded-[22px] border-border border-1 bg-card/50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md'>
-      <div className='flex flex-row items-center justify-between'>
-        <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
+    <div className='group flex gap-4 rounded-md border border-border/70 bg-card p-5 shadow-sm transition hover:border-border hover:shadow-md'>
+      <div className='flex flex-col items-center gap-2'>
+        <div className='flex size-11 shrink-0 items-center justify-center rounded-md border border-primary/30 bg-primary/10 text-primary'>
           {isManagementView ? <ShieldCheck className='size-5' /> : <BriefcaseBusiness className='size-5' />}
-        </div>
-
-        <div>
-          {!isManagementView && applicationStatus ? (
-            <Badge
-              variant='outline'
-              className={cn(
-                'rounded-full px-3 py-1 capitalize',
-                statusStyles[applicationStatus.toLowerCase()] || 'bg-muted text-muted-foreground'
-              )}
-            >
-              {applicationLabel}
-            </Badge>
-          ) : null}
         </div>
       </div>
 
       <div className='min-w-0 flex-1 space-y-3'>
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='min-w-0'>
-            <div className='flex flex-wrap items-center gap-2'>
-              <h3 className='truncate text-lg font-semibold text-foreground'>{title}</h3>
-            </div>
+            <h3 className='truncate text-lg font-semibold tracking-tight text-foreground'>{title}</h3>
             <p className='mt-0.5 text-sm text-muted-foreground'>
               {getDisplayOrganisationLabel(job, organisationName)} · {getDisplayContentLabel(job, course, program)}
             </p>
           </div>
-          <Badge variant={job.status === 'open' ? 'secondary' : 'outline'} className='rounded-full px-3 py-1'>
-            {formatEnumLabel(job.status)}
-          </Badge>
+          <div className='flex shrink-0 flex-wrap items-center justify-end gap-2'>
+            <StatusBadge status={job.status} />
+            {!isManagementView && applicationStatus ? (
+              <StatusBadge status={applicationStatus} label={applicationLabel} />
+            ) : null}
+          </div>
         </div>
 
         <JobBadgeRow
@@ -195,34 +171,32 @@ export function JobCard({
         </p>
 
         <div className='flex flex-wrap items-center gap-2 pt-1'>
-          <Button variant='outline' className='rounded-xl' onClick={onView}>
+          <Button variant='outline' size='sm' onClick={onView}>
             View
           </Button>
           {isManagementView && applicationsHref ? (
-            <Button asChild variant='secondary' className='rounded-xl'>
+            <Button asChild variant='secondary' size='sm'>
               <Link href={applicationsHref}>View applications</Link>
             </Button>
           ) : null}
           {isManagementView && onEdit ? (
-            <Button variant='outline' className='rounded-xl' onClick={onEdit}>
+            <Button variant='outline' size='sm' onClick={onEdit}>
               <Pencil className='mr-1 size-4' />
               Edit
             </Button>
           ) : null}
           {isManagementView && onCancel ? (
-            <Button variant='destructive' className='rounded-xl' onClick={onCancel}>
+            <Button variant='destructive' size='sm' onClick={onCancel}>
               <Trash2 className='mr-1 size-4' />
               Cancel
             </Button>
           ) : null}
 
           {!isManagementView && hasApplied ? (
-            <Badge variant='success' className='rounded-full px-3 py-1'>
-              You already applied to this job
-            </Badge>
+            <StatusBadge status='approved' label='You already applied' />
           ) : null}
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
