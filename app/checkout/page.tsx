@@ -6,11 +6,15 @@ import {
   ArrowLeft,
   ArrowRight,
   CalendarDays,
+  CheckCircle2,
+  Clock,
   CreditCard,
   Loader2,
   Package,
   ShieldCheck,
-  Wallet
+  Smartphone,
+  Wallet,
+  XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -33,11 +37,17 @@ import type { CartItemResponse } from '@/services/client';
 import {
   completeCheckoutMutation,
   getCartOptions,
+  getPaymentStatusOptions,
+  payWithMpesaMutation,
   selectPaymentSessionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useCartStore } from '@/store/cart-store';
 
 const DEFAULT_CURRENCY = 'KES';
+
+// How long we wait for the customer to confirm the STK Push before giving up.
+const MPESA_POLL_INTERVAL_MS = 4000;
+const MPESA_TIMEOUT_MS = 120_000;
 
 const formatMoney = (amount: number | string | undefined, currency = DEFAULT_CURRENCY) => {
   if (amount === undefined || amount === null) return '—';
@@ -52,12 +62,39 @@ const formatMoney = (amount: number | string | undefined, currency = DEFAULT_CUR
   }).format(numAmount);
 };
 
-const checkoutFormSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  paymentType: z.enum(['full', 'installments']),
-  installmentPlan: z.enum(['3', '6', '12']).optional(),
-  paymentProvider: z.string().min(1, 'Please select a payment method'),
-});
+/**
+ * Normalize a Kenyan mobile number to MSISDN format (`254XXXXXXXXX`).
+ * Accepts `07XXXXXXXX`, `01XXXXXXXX`, `+2547…`, `2547…`, and `7XXXXXXXX`.
+ * Returns null when the value is not a valid Safaricom/Airtel mobile number.
+ */
+const normalizeMsisdn = (raw: string): string | null => {
+  if (!raw) return null;
+  let n = raw.replace(/[\s()-]/g, '').replace(/^\+/, '');
+  if (n.startsWith('0')) {
+    n = `254${n.slice(1)}`;
+  } else if ((n.startsWith('7') || n.startsWith('1')) && n.length === 9) {
+    n = `254${n}`;
+  }
+  return /^254[17]\d{8}$/.test(n) ? n : null;
+};
+
+const checkoutFormSchema = z
+  .object({
+    email: z.string().email('Invalid email address'),
+    paymentType: z.enum(['full', 'installments']),
+    installmentPlan: z.enum(['3', '6', '12']).optional(),
+    paymentProvider: z.string().min(1, 'Please select a payment method'),
+    mpesaPhone: z.string().optional(),
+  })
+  .superRefine((values, ctx) => {
+    if (values.paymentProvider === 'mpesa' && !normalizeMsisdn(values.mpesaPhone ?? '')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['mpesaPhone'],
+        message: 'Enter a valid M-Pesa number (e.g. 0712 345 678)',
+      });
+    }
+  });
 
 type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
 
@@ -73,19 +110,30 @@ const INSTALLMENT_PLANS: InstallmentPlan[] = [
   { months: 12, label: '12 Months', description: 'Pay over 12 monthly installments' },
 ];
 
+// M-Pesa STK Push lifecycle.
+type MpesaStatus = 'idle' | 'initiating' | 'waiting' | 'success' | 'failed' | 'timeout';
+
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cartId } = useCartStore();
+  const { cartId, clearCart } = useCartStore();
   const profile = useUserProfile();
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // M-Pesa flow state.
+  const [mpesaStatus, setMpesaStatus] = useState<MpesaStatus>('idle');
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [mpesaPhoneDisplay, setMpesaPhoneDisplay] = useState('');
+  const [waitStartedAt, setWaitStartedAt] = useState<number | null>(null);
+
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
+    mode: 'onChange',
     defaultValues: {
       email: profile?.email ?? '',
       paymentType: 'full',
       installmentPlan: '3',
       paymentProvider: 'mpesa', // Default to MPesa
+      mpesaPhone: '',
     },
   });
 
@@ -142,14 +190,137 @@ export default function CheckoutPage() {
 
   const selectPaymentSession = useMutation(selectPaymentSessionMutation());
   const completeCheckout = useMutation(completeCheckoutMutation());
+  const payWithMpesa = useMutation(payWithMpesaMutation());
 
   const paymentProvider = useWatch({
     control: form.control, name: 'paymentProvider',
   });
 
+  // Poll the payment status while the STK Push is awaiting confirmation.
+  const paymentStatusQuery = useQuery({
+    ...getPaymentStatusOptions({ path: { orderId: orderId ?? 'unset' } }),
+    enabled: mpesaStatus === 'waiting' && !!orderId,
+    refetchInterval: mpesaStatus === 'waiting' ? MPESA_POLL_INTERVAL_MS : false,
+    gcTime: 0,
+    retry: false,
+  });
+
+  // Resolve terminal states from the polled status.
+  useEffect(() => {
+    if (mpesaStatus !== 'waiting') return;
+    const status = paymentStatusQuery.data?.status?.toUpperCase();
+    if (!status) return;
+
+    if (status === 'SUCCESS' || status === 'CAPTURED') {
+      setMpesaStatus('success');
+    } else if (status === 'FAILED' || status === 'CANCELLED') {
+      setMpesaStatus('failed');
+    }
+  }, [paymentStatusQuery.data, mpesaStatus]);
+
+  // Give up if the customer never confirms.
+  useEffect(() => {
+    if (mpesaStatus !== 'waiting') return;
+    const timer = setTimeout(() => setMpesaStatus('timeout'), MPESA_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [mpesaStatus, waitStartedAt]);
+
+  // Handle a confirmed payment: clear the cart and move to the learner dashboard.
+  useEffect(() => {
+    if (mpesaStatus !== 'success') return;
+    toast.success('Payment received! Your courses are unlocked.');
+    clearCart();
+    const timer = setTimeout(() => router.push('/dashboard/my-classes'), 1500);
+    return () => clearTimeout(timer);
+  }, [mpesaStatus, clearCart, router]);
+
+  const startMpesaPayment = async (values: CheckoutFormValues) => {
+    if (!cartId) {
+      toast.error('No cart found');
+      return;
+    }
+
+    const phone = normalizeMsisdn(values.mpesaPhone ?? '');
+    if (!phone) {
+      toast.error('Enter a valid M-Pesa number');
+      return;
+    }
+
+    setMpesaPhoneDisplay(phone);
+    setMpesaStatus('initiating');
+
+    try {
+      await selectPaymentSession.mutateAsync({
+        path: { cartId },
+        body: { provider_id: 'mpesa' },
+      });
+
+      const order = await completeCheckout.mutateAsync({
+        body: {
+          cart_id: cartId,
+          customer_email: values.email,
+          payment_provider_id: 'mpesa',
+        },
+      });
+
+      const newOrderId = order?.id;
+      if (!newOrderId) {
+        throw new Error('Order id missing from checkout response');
+      }
+      setOrderId(newOrderId);
+
+      await payWithMpesa.mutateAsync({
+        path: { orderId: newOrderId },
+        body: { phone_number: phone },
+      });
+
+      setWaitStartedAt(Date.now());
+      setMpesaStatus('waiting');
+    } catch (_error) {
+      setMpesaStatus('failed');
+      toast.error('Could not start the M-Pesa payment. Please try again.');
+    }
+  };
+
+  const retryMpesaPayment = async () => {
+    const values = form.getValues();
+    const phone = normalizeMsisdn(values.mpesaPhone ?? '') ?? mpesaPhoneDisplay;
+
+    // If the order already exists, just re-trigger the STK Push on it.
+    if (orderId && phone) {
+      setMpesaStatus('initiating');
+      try {
+        await payWithMpesa.mutateAsync({
+          path: { orderId },
+          body: { phone_number: phone },
+        });
+        setWaitStartedAt(Date.now());
+        setMpesaStatus('waiting');
+      } catch (_error) {
+        setMpesaStatus('failed');
+        toast.error('Could not resend the M-Pesa prompt. Please try again.');
+      }
+      return;
+    }
+
+    await startMpesaPayment(values);
+  };
+
+  const cancelMpesaPayment = () => {
+    setMpesaStatus('idle');
+    setOrderId(null);
+    setWaitStartedAt(null);
+  };
+
   const onSubmit = async (values: CheckoutFormValues) => {
     if (!cartId) {
       toast.error('No cart found');
+      return;
+    }
+
+    // M-Pesa uses its own STK Push + polling lifecycle.
+    if (values.paymentProvider === 'mpesa') {
+      await startMpesaPayment(values);
       return;
     }
 
@@ -175,7 +346,7 @@ export default function CheckoutPage() {
         // installment_plan: values.paymentType === 'installments' ? parseInt(values.installmentPlan!) : undefined,
       };
 
-      const result = await completeCheckout.mutateAsync({
+      await completeCheckout.mutateAsync({
         body: checkoutData,
       });
 
@@ -190,12 +361,113 @@ export default function CheckoutPage() {
     }
   };
 
-  // Redirect if no cart
+  // Redirect if no cart. Skip while an M-Pesa payment is in-flight or settled — clearing the cart
+  // on success would otherwise bounce the learner to /cart instead of the confirmation screen.
   useEffect(() => {
+    if (mpesaStatus !== 'idle') return;
     if (!cartId && !cartQuery.isLoading) {
       router.push('/cart');
     }
-  }, [cartId, cartQuery.isLoading, router]);
+  }, [cartId, cartQuery.isLoading, router, mpesaStatus]);
+
+  // M-Pesa status screen (initiating / waiting / success / failed / timeout).
+  if (mpesaStatus !== 'idle') {
+    return (
+      <div className='bg-background min-h-screen'>
+        <PublicTopNav />
+        <div className='mx-auto flex max-w-md flex-col px-4 py-16 md:py-24'>
+          <Card>
+            <CardContent className='flex flex-col items-center gap-5 py-10 text-center'>
+              {(mpesaStatus === 'initiating' || mpesaStatus === 'waiting') && (
+                <>
+                  <div className='bg-primary/10 flex h-16 w-16 items-center justify-center rounded-full'>
+                    <Smartphone className='text-primary h-8 w-8' />
+                  </div>
+                  <div className='space-y-2'>
+                    <h2 className='text-xl font-bold'>
+                      {mpesaStatus === 'initiating'
+                        ? 'Sending M-Pesa prompt…'
+                        : 'Confirm on your phone'}
+                    </h2>
+                    <p className='text-muted-foreground text-sm'>
+                      {mpesaStatus === 'initiating' ? (
+                        'Please wait while we start your payment.'
+                      ) : (
+                        <>
+                          An M-Pesa prompt was sent to{' '}
+                          <span className='text-foreground font-semibold'>{mpesaPhoneDisplay}</span>.
+                          Enter your PIN to complete payment.
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                    {mpesaStatus === 'initiating' ? 'Starting…' : 'Waiting for confirmation…'}
+                  </div>
+                  <p className='text-primary text-lg font-bold'>{formatMoney(total, currency)}</p>
+                  {mpesaStatus === 'waiting' && (
+                    <Button variant='ghost' size='sm' onClick={cancelMpesaPayment}>
+                      Cancel
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {mpesaStatus === 'success' && (
+                <>
+                  <div className='bg-success/10 flex h-16 w-16 items-center justify-center rounded-full'>
+                    <CheckCircle2 className='text-success h-8 w-8' />
+                  </div>
+                  <div className='space-y-2'>
+                    <h2 className='text-xl font-bold'>Payment received</h2>
+                    <p className='text-muted-foreground text-sm'>
+                      Thank you! Redirecting you to your classes…
+                    </p>
+                  </div>
+                  <Loader2 className='text-muted-foreground h-4 w-4 animate-spin' />
+                </>
+              )}
+
+              {(mpesaStatus === 'failed' || mpesaStatus === 'timeout') && (
+                <>
+                  <div className='bg-destructive/10 flex h-16 w-16 items-center justify-center rounded-full'>
+                    {mpesaStatus === 'timeout' ? (
+                      <Clock className='text-destructive h-8 w-8' />
+                    ) : (
+                      <XCircle className='text-destructive h-8 w-8' />
+                    )}
+                  </div>
+                  <div className='space-y-2'>
+                    <h2 className='text-xl font-bold'>
+                      {mpesaStatus === 'timeout' ? 'Payment timed out' : 'Payment not completed'}
+                    </h2>
+                    <p className='text-muted-foreground text-sm'>
+                      {mpesaStatus === 'timeout'
+                        ? "We didn't get a confirmation in time. You can send the prompt again."
+                        : 'The M-Pesa payment was cancelled or failed. Please try again.'}
+                    </p>
+                  </div>
+                  <div className='flex w-full flex-col gap-2'>
+                    <Button
+                      onClick={retryMpesaPayment}
+                      disabled={payWithMpesa.isPending || completeCheckout.isPending}
+                      className='w-full'
+                    >
+                      Try again
+                    </Button>
+                    <Button variant='ghost' onClick={cancelMpesaPayment} className='w-full'>
+                      Back to checkout
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state
   if (cartQuery.isLoading || !cart) {
@@ -414,7 +686,7 @@ export default function CheckoutPage() {
                   <RadioGroup
                     value={paymentProvider}
                     onValueChange={value =>
-                      form.setValue('paymentProvider', value)
+                      form.setValue('paymentProvider', value, { shouldValidate: true })
                     }
                     className='space-y-3'
                   >
@@ -439,6 +711,32 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                     </label>
+
+                    {/* M-Pesa phone number */}
+                    {paymentProvider === 'mpesa' && (
+                      <div className='border-border bg-muted/30 space-y-2 rounded-lg border p-4'>
+                        <Label htmlFor='mpesaPhone' className='flex items-center gap-2'>
+                          <Smartphone className='text-primary h-4 w-4' />
+                          M-Pesa Phone Number *
+                        </Label>
+                        <Input
+                          id='mpesaPhone'
+                          type='tel'
+                          inputMode='tel'
+                          autoComplete='tel'
+                          placeholder='0712 345 678'
+                          {...form.register('mpesaPhone')}
+                        />
+                        <p className='text-muted-foreground text-xs'>
+                          You'll get a prompt on this number to enter your M-Pesa PIN.
+                        </p>
+                        {form.formState.errors.mpesaPhone && (
+                          <p className='text-destructive text-sm'>
+                            {form.formState.errors.mpesaPhone.message}
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     <label
                       className={`hover:border-primary/50 flex cursor-pointer items-center gap-4 rounded-lg border-2 p-4 transition-all ${paymentProvider === 'card'
@@ -547,6 +845,11 @@ export default function CheckoutPage() {
                       <>
                         <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                         Processing...
+                      </>
+                    ) : paymentProvider === 'mpesa' ? (
+                      <>
+                        <Smartphone className='mr-2 h-4 w-4' />
+                        Pay with M-Pesa
                       </>
                     ) : (
                       <>
