@@ -103,6 +103,18 @@ import type {
   UpdateTrainingProgramData,
   UpdateTrainingProgramResponses,
   UpdateTrainingProgramErrors,
+  WithdrawProgramTrainingApplicationData,
+  WithdrawProgramTrainingApplicationResponses,
+  WithdrawProgramTrainingApplicationErrors,
+  GetProgramTrainingApplicationData,
+  GetProgramTrainingApplicationResponses,
+  GetProgramTrainingApplicationErrors,
+  DecideOnProgramTrainingApplicationData,
+  DecideOnProgramTrainingApplicationResponses,
+  DecideOnProgramTrainingApplicationErrors,
+  UpdateProgramTrainingApplicationData,
+  UpdateProgramTrainingApplicationResponses,
+  UpdateProgramTrainingApplicationErrors,
   DeleteProgramRequirementData,
   DeleteProgramRequirementResponses,
   DeleteProgramRequirementErrors,
@@ -193,6 +205,18 @@ import type {
   UpdateCourseTrainingRequirementData,
   UpdateCourseTrainingRequirementResponses,
   UpdateCourseTrainingRequirementErrors,
+  WithdrawTrainingApplicationData,
+  WithdrawTrainingApplicationResponses,
+  WithdrawTrainingApplicationErrors,
+  GetTrainingApplicationData,
+  GetTrainingApplicationResponses,
+  GetTrainingApplicationErrors,
+  DecideOnTrainingApplicationData,
+  DecideOnTrainingApplicationResponses,
+  DecideOnTrainingApplicationErrors,
+  UpdateTrainingApplicationData,
+  UpdateTrainingApplicationResponses,
+  UpdateTrainingApplicationErrors,
   SetPrimaryRubricData,
   SetPrimaryRubricResponses,
   SetPrimaryRubricErrors,
@@ -481,12 +505,6 @@ import type {
   SubmitProgramTrainingApplicationData,
   SubmitProgramTrainingApplicationResponses,
   SubmitProgramTrainingApplicationErrors,
-  GetProgramTrainingApplicationData,
-  GetProgramTrainingApplicationResponses,
-  GetProgramTrainingApplicationErrors,
-  DecideOnProgramTrainingApplicationData,
-  DecideOnProgramTrainingApplicationResponses,
-  DecideOnProgramTrainingApplicationErrors,
   GetProgramReviewsData,
   GetProgramReviewsResponses,
   GetProgramReviewsErrors,
@@ -631,12 +649,6 @@ import type {
   SubmitTrainingApplicationData,
   SubmitTrainingApplicationResponses,
   SubmitTrainingApplicationErrors,
-  GetTrainingApplicationData,
-  GetTrainingApplicationResponses,
-  GetTrainingApplicationErrors,
-  DecideOnTrainingApplicationData,
-  DecideOnTrainingApplicationResponses,
-  DecideOnTrainingApplicationErrors,
   GetCourseRubricsData,
   GetCourseRubricsResponses,
   GetCourseRubricsErrors,
@@ -1600,6 +1612,9 @@ import {
   updateQuestionOptionResponseTransformer,
   getTrainingProgramByUuidResponseTransformer,
   updateTrainingProgramResponseTransformer,
+  getProgramTrainingApplicationResponseTransformer,
+  decideOnProgramTrainingApplicationResponseTransformer,
+  updateProgramTrainingApplicationResponseTransformer,
   updateProgramRequirementResponseTransformer,
   updateProgramCourseResponseTransformer,
   getOrganisationByUuidResponseTransformer,
@@ -1617,6 +1632,9 @@ import {
   getCourseByUuidResponseTransformer,
   updateCourseResponseTransformer,
   updateCourseTrainingRequirementResponseTransformer,
+  getTrainingApplicationResponseTransformer,
+  decideOnTrainingApplicationResponseTransformer,
+  updateTrainingApplicationResponseTransformer,
   setPrimaryRubricResponseTransformer,
   updateAssociationResponseTransformer,
   updateCourseRequirementResponseTransformer,
@@ -1687,8 +1705,6 @@ import {
   publishProgramResponseTransformer,
   listProgramTrainingApplicationsResponseTransformer,
   submitProgramTrainingApplicationResponseTransformer,
-  getProgramTrainingApplicationResponseTransformer,
-  decideOnProgramTrainingApplicationResponseTransformer,
   getProgramReviewsResponseTransformer,
   submitProgramReviewResponseTransformer,
   getProgramRequirementsResponseTransformer,
@@ -1734,8 +1750,6 @@ import {
   addCourseTrainingRequirementResponseTransformer,
   listTrainingApplicationsResponseTransformer,
   submitTrainingApplicationResponseTransformer,
-  getTrainingApplicationResponseTransformer,
-  decideOnTrainingApplicationResponseTransformer,
   getCourseRubricsResponseTransformer,
   associateRubricResponseTransformer,
   getCourseReviewsResponseTransformer,
@@ -2920,6 +2934,132 @@ export const updateTrainingProgram = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Withdraw program training application
+ * Allows the applicant (instructor or organisation) to withdraw their own program training
+ * application while it is still PENDING. Only pending applications owned by the caller can be withdrawn.
+ *
+ */
+export const withdrawProgramTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<WithdrawProgramTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    WithdrawProgramTrainingApplicationResponses,
+    WithdrawProgramTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get program training application
+ * Retrieves a specific training application for a program.
+ */
+export const getProgramTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgramTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetProgramTrainingApplicationResponses,
+    GetProgramTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getProgramTrainingApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Decide on program training application
+ * Applies a decision to an instructor or organisation application to deliver the training program.
+ * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ *
+ */
+export const decideOnProgramTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<DecideOnProgramTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DecideOnProgramTrainingApplicationResponses,
+    DecideOnProgramTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: decideOnProgramTrainingApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Update program training application
+ * Allows the applicant (instructor or organisation) to edit the rate card and notes on their own
+ * program training application while it is still PENDING. Requests for applications that are not
+ * pending, or that are not owned by the caller, are rejected.
+ *
+ */
+export const updateProgramTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateProgramTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateProgramTrainingApplicationResponses,
+    UpdateProgramTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateProgramTrainingApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Delete program requirement
  * Removes a requirement from a program.
  */
@@ -3801,6 +3941,132 @@ export const updateCourseTrainingRequirement = <ThrowOnError extends boolean = f
       },
     ],
     url: '/api/v1/courses/{courseUuid}/training-requirements/{requirementUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Withdraw training application
+ * Allows the applicant (instructor or organisation) to withdraw their own training application while
+ * it is still PENDING. Only pending applications owned by the caller can be withdrawn.
+ *
+ */
+export const withdrawTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<WithdrawTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    WithdrawTrainingApplicationResponses,
+    WithdrawTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get training application
+ * Retrieves a specific training application for a course.
+ */
+export const getTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<GetTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetTrainingApplicationResponses,
+    GetTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getTrainingApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Decide on training application
+ * Applies a decision to an instructor or organisation application to deliver the course.
+ * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ *
+ */
+export const decideOnTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<DecideOnTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DecideOnTrainingApplicationResponses,
+    DecideOnTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: decideOnTrainingApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Update training application
+ * Allows the applicant (instructor or organisation) to edit the rate card and notes on their own
+ * training application while it is still PENDING. Requests for applications that are not pending, or
+ * that are not owned by the caller, are rejected.
+ *
+ */
+export const updateTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateTrainingApplicationResponses,
+    UpdateTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateTrainingApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -6659,68 +6925,6 @@ export const submitProgramTrainingApplication = <ThrowOnError extends boolean = 
 };
 
 /**
- * Get program training application
- * Retrieves a specific training application for a program.
- */
-export const getProgramTrainingApplication = <ThrowOnError extends boolean = false>(
-  options: Options<GetProgramTrainingApplicationData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetProgramTrainingApplicationResponses,
-    GetProgramTrainingApplicationErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getProgramTrainingApplicationResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}',
-    ...options,
-  });
-};
-
-/**
- * Decide on program training application
- * Applies a decision to an instructor or organisation application to deliver the training program.
- * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
- *
- */
-export const decideOnProgramTrainingApplication = <ThrowOnError extends boolean = false>(
-  options: Options<DecideOnProgramTrainingApplicationData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    DecideOnProgramTrainingApplicationResponses,
-    DecideOnProgramTrainingApplicationErrors,
-    ThrowOnError
-  >({
-    responseTransformer: decideOnProgramTrainingApplicationResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
  * Get reviews for a program
  * Returns paginated public reviews for the specified training program.
  */
@@ -8263,68 +8467,6 @@ export const submitTrainingApplication = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{courseUuid}/training-applications',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
- * Get training application
- * Retrieves a specific training application for a course.
- */
-export const getTrainingApplication = <ThrowOnError extends boolean = false>(
-  options: Options<GetTrainingApplicationData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetTrainingApplicationResponses,
-    GetTrainingApplicationErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getTrainingApplicationResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}',
-    ...options,
-  });
-};
-
-/**
- * Decide on training application
- * Applies a decision to an instructor or organisation application to deliver the course.
- * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
- *
- */
-export const decideOnTrainingApplication = <ThrowOnError extends boolean = false>(
-  options: Options<DecideOnTrainingApplicationData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    DecideOnTrainingApplicationResponses,
-    DecideOnTrainingApplicationErrors,
-    ThrowOnError
-  >({
-    responseTransformer: decideOnTrainingApplicationResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',

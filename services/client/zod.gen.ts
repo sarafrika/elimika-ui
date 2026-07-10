@@ -842,17 +842,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
-      .readonly()
-      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -1160,11 +1160,6 @@ export const zQuizQuestion = z
       )
       .readonly()
       .optional(),
-    question_category: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable category of the question type.')
-      .readonly()
-      .optional(),
     requires_options: z
       .boolean()
       .describe(
@@ -1172,14 +1167,19 @@ export const zQuizQuestion = z
       )
       .readonly()
       .optional(),
-    points_display: z
+    question_category: z
       .string()
-      .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
     question_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the points value.')
       .readonly()
       .optional(),
   })
@@ -1422,6 +1422,113 @@ export const zTrainingProgram = z
 export const zApiResponseTrainingProgram = z.object({
   success: z.boolean().optional(),
   data: zTrainingProgram.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zCourseTrainingRateCard = z.object({
+  currency: z
+    .union([
+      z
+        .string()
+        .max(3)
+        .regex(/^[A-Za-z]{3}$/),
+      z.null(),
+    ])
+    .optional(),
+  private_online_rate: z
+    .number()
+    .gte(0)
+    .describe('1:1 private session rate when delivered online, per learner per hour.'),
+  private_inperson_rate: z
+    .number()
+    .gte(0)
+    .describe('1:1 private session rate when delivered in person, per learner per hour.'),
+  group_online_rate: z
+    .number()
+    .gte(0)
+    .describe('Group session rate when delivered online, per learner per hour.'),
+  group_inperson_rate: z
+    .number()
+    .gte(0)
+    .describe('Group session rate when delivered in person, per learner per hour.'),
+});
+
+/**
+ * Payload for an applicant editing the rate card or notes on a pending program training application
+ */
+export const zProgramTrainingApplicationUpdateRequest = z
+  .object({
+    rate_card: zCourseTrainingRateCard,
+    application_notes: z.union([z.string().min(0).max(2000), z.null()]).optional(),
+  })
+  .describe(
+    'Payload for an applicant editing the rate card or notes on a pending program training application'
+  );
+
+/**
+ * **[READ-ONLY]** Current status of the application.
+ */
+export const zStatusEnum2 = z
+  .enum(['pending', 'approved', 'rejected', 'revoked'])
+  .describe('**[READ-ONLY]** Current status of the application.');
+
+/**
+ * **[READ-ONLY]** Applicant type making the request.
+ */
+export const zApplicantTypeEnum = z
+  .enum(['instructor', 'organisation'])
+  .describe('**[READ-ONLY]** Applicant type making the request.');
+
+/**
+ * Represents an instructor or organisation request to deliver a training program
+ */
+export const zProgramTrainingApplication = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier for this application.')
+      .readonly()
+      .optional(),
+    status: zStatusEnum2.optional(),
+    application_notes: z.union([z.string(), z.null()]).optional(),
+    review_notes: z.union([z.string(), z.null()]).optional(),
+    reviewed_by: z.union([z.string(), z.null()]).optional(),
+    reviewed_at: z.union([z.string().datetime(), z.null()]).optional(),
+    program_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** The training program this application targets.')
+      .readonly()
+      .optional(),
+    applicant_type: zApplicantTypeEnum.optional(),
+    applicant_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** UUID of the applicant (Instructor or Organisation).')
+      .readonly()
+      .optional(),
+    rate_card: zCourseTrainingRateCard.optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** When the application was submitted.')
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe('**[READ-ONLY]** Audit user who submitted the application.')
+      .readonly()
+      .optional(),
+    updated_date: z.union([z.string().datetime().readonly(), z.null()]).readonly().optional(),
+    updated_by: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+  })
+  .describe('Represents an instructor or organisation request to deliver a training program');
+
+export const zApiResponseProgramTrainingApplication = z.object({
+  success: z.boolean().optional(),
+  data: zProgramTrainingApplication.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -2244,7 +2351,7 @@ export const zApiResponseInstructorEducation = z.object({
 /**
  * **[READ-ONLY]** Current status of the document in the verification workflow.
  */
-export const zStatusEnum2 = z
+export const zStatusEnum3 = z
   .enum(['PENDING', 'APPROVED', 'REJECTED', 'EXPIRED', 'UNDER_REVIEW'])
   .describe('**[READ-ONLY]** Current status of the document in the verification workflow.');
 
@@ -2298,7 +2405,7 @@ export const zInstructorDocument = z
         '**[REQUIRED]** Descriptive title for the document. Used for identification and display in document lists.'
       ),
     description: z.union([z.string().min(0).max(2000), z.null()]).optional(),
-    status: zStatusEnum2.optional(),
+    status: zStatusEnum3.optional(),
     expiry_date: z.union([z.string().date(), z.null()]).optional(),
     stored_filename: z
       .string()
@@ -2831,6 +2938,78 @@ export const zApiResponseCourse = z.object({
 export const zApiResponseCourseTrainingRequirement = z.object({
   success: z.boolean().optional(),
   data: zCourseTrainingRequirement.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Payload for an applicant editing the rate card or notes on a pending course training application
+ */
+export const zCourseTrainingApplicationUpdateRequest = z
+  .object({
+    rate_card: zCourseTrainingRateCard,
+    application_notes: z.union([z.string().min(0).max(2000), z.null()]).optional(),
+  })
+  .describe(
+    'Payload for an applicant editing the rate card or notes on a pending course training application'
+  );
+
+/**
+ * **[READ-ONLY]** Current status of the application.
+ */
+export const zStatusEnum4 = z
+  .enum(['pending', 'approved', 'rejected'])
+  .describe('**[READ-ONLY]** Current status of the application.');
+
+/**
+ * Represents an instructor or organisation request to deliver a course
+ */
+export const zCourseTrainingApplication = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier for this application.')
+      .readonly()
+      .optional(),
+    status: zStatusEnum4.optional(),
+    application_notes: z.union([z.string(), z.null()]).optional(),
+    review_notes: z.union([z.string(), z.null()]).optional(),
+    reviewed_by: z.union([z.string(), z.null()]).optional(),
+    reviewed_at: z.union([z.string().datetime(), z.null()]).optional(),
+    course_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** The course this application targets.')
+      .readonly()
+      .optional(),
+    applicant_type: zApplicantTypeEnum.optional(),
+    applicant_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** UUID of the applicant (Instructor or Organisation).')
+      .readonly()
+      .optional(),
+    rate_card: zCourseTrainingRateCard.optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** When the application was submitted.')
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe('**[READ-ONLY]** Audit user who submitted the application.')
+      .readonly()
+      .optional(),
+    updated_date: z.union([z.string().datetime().readonly(), z.null()]).readonly().optional(),
+    updated_by: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+  })
+  .describe('Represents an instructor or organisation request to deliver a course');
+
+export const zApiResponseCourseTrainingApplication = z.object({
+  success: z.boolean().optional(),
+  data: zCourseTrainingApplication.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -3509,7 +3688,7 @@ export const zApiResponseCourseAssessmentLineItemScore = z.object({
   error: z.unknown().optional(),
 });
 
-export const zStatusEnum3 = z.enum(['pending', 'completed']);
+export const zStatusEnum5 = z.enum(['pending', 'completed']);
 
 /**
  * Selected rubric scoring level for one criterion in a line-item evaluation
@@ -3536,7 +3715,7 @@ export const zCourseAssessmentLineItemRubricEvaluation = z
     uuid: z.string().uuid().readonly().optional(),
     line_item_uuid: z.string().uuid().optional(),
     enrollment_uuid: z.string().uuid().optional(),
-    status: zStatusEnum3.optional(),
+    status: zStatusEnum5.optional(),
     score: z.number().readonly().optional(),
     percentage: z.number().readonly().optional(),
     comments: z.string().min(0).max(5000).optional(),
@@ -3748,7 +3927,7 @@ export const zApiResponseCourseCreatorEducation = z.object({
   error: z.unknown().optional(),
 });
 
-export const zStatusEnum4 = z.enum(['Pending Review', 'Approved', 'Rejected', 'Expired']);
+export const zStatusEnum6 = z.enum(['Pending Review', 'Approved', 'Rejected', 'Expired']);
 
 export const zCourseCreatorDocumentDto = z.object({
   uuid: z.string().uuid().readonly().optional(),
@@ -3760,7 +3939,7 @@ export const zCourseCreatorDocumentDto = z.object({
   original_filename: z.string().min(0).max(255),
   title: z.string().min(0).max(255).optional(),
   description: z.string().min(0).max(2000).optional(),
-  status: zStatusEnum4.optional(),
+  status: zStatusEnum6.optional(),
   expiry_date: z.string().date().optional(),
   stored_filename: z.string().readonly().optional(),
   file_path: z.string().readonly().optional(),
@@ -4660,7 +4839,7 @@ export const zClassMarketplaceJobRequest = z
   })
   .describe('Draft class advert posted by an organisation before a final instructor is assigned');
 
-export const zStatusEnum5 = z.enum(['open', 'filled', 'cancelled']);
+export const zStatusEnum7 = z.enum(['open', 'filled', 'cancelled']);
 
 /**
  * Marketplace job advert for an organisation-owned class awaiting instructor assignment
@@ -4670,7 +4849,7 @@ export const zClassMarketplaceJob = z
     uuid: z.string().uuid().readonly().optional(),
     title: z.string().readonly().optional(),
     description: z.string().readonly().optional(),
-    status: zStatusEnum5.optional(),
+    status: zStatusEnum7.optional(),
     organisation_uuid: z.string().uuid().readonly().optional(),
     course_uuid: z.string().uuid().readonly().optional(),
     program_uuid: z.string().uuid().readonly().optional(),
@@ -4801,16 +4980,6 @@ export const zCertificate = z
       )
       .readonly()
       .optional(),
-    certificate_type: z
-      .string()
-      .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
-      .readonly()
-      .optional(),
-    is_downloadable: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
-      .readonly()
-      .optional(),
     grade_letter: z
       .string()
       .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
@@ -4819,6 +4988,16 @@ export const zCertificate = z
     validity_status: z
       .string()
       .describe('**[READ-ONLY]** Current validity status of the certificate.')
+      .readonly()
+      .optional(),
+    certificate_type: z
+      .string()
+      .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
+      .readonly()
+      .optional(),
+    is_downloadable: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
       .readonly()
       .optional(),
   })
@@ -5260,7 +5439,7 @@ export const zApiResponseBoolean = z.object({
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export const zStatusEnum6 = z
+export const zStatusEnum8 = z
   .enum(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'])
   .describe('**[OPTIONAL]** Current status of the scheduled instance.');
 
@@ -5314,7 +5493,7 @@ export const zScheduledInstance = z
         '**[OPTIONAL]** Maximum number of participants for this session (cached from class definition).'
       )
       .optional(),
-    status: zStatusEnum6.optional(),
+    status: zStatusEnum8.optional(),
     cancellation_reason: z.union([z.string(), z.null()]).optional(),
     started_at: z.union([z.string().datetime().readonly(), z.null()]).readonly().optional(),
     concluded_at: z.union([z.string().datetime().readonly(), z.null()]).readonly().optional(),
@@ -5447,41 +5626,6 @@ export const zApiResponseString = z.object({
   error: z.unknown().optional(),
 });
 
-export const zCourseTrainingRateCard = z.object({
-  currency: z
-    .union([
-      z
-        .string()
-        .max(3)
-        .regex(/^[A-Za-z]{3}$/),
-      z.null(),
-    ])
-    .optional(),
-  private_online_rate: z
-    .number()
-    .gte(0)
-    .describe('1:1 private session rate when delivered online, per learner per hour.'),
-  private_inperson_rate: z
-    .number()
-    .gte(0)
-    .describe('1:1 private session rate when delivered in person, per learner per hour.'),
-  group_online_rate: z
-    .number()
-    .gte(0)
-    .describe('Group session rate when delivered online, per learner per hour.'),
-  group_inperson_rate: z
-    .number()
-    .gte(0)
-    .describe('Group session rate when delivered in person, per learner per hour.'),
-});
-
-/**
- * **[REQUIRED]** Applicant type initiating the request.
- */
-export const zApplicantTypeEnum = z
-  .enum(['instructor', 'organisation'])
-  .describe('**[REQUIRED]** Applicant type initiating the request.');
-
 /**
  * Payload for instructors or organisations applying to deliver a training program
  */
@@ -5496,66 +5640,6 @@ export const zProgramTrainingApplicationRequest = z
     application_notes: z.union([z.string().min(0).max(2000), z.null()]).optional(),
   })
   .describe('Payload for instructors or organisations applying to deliver a training program');
-
-/**
- * **[READ-ONLY]** Current status of the application.
- */
-export const zStatusEnum7 = z
-  .enum(['pending', 'approved', 'rejected', 'revoked'])
-  .describe('**[READ-ONLY]** Current status of the application.');
-
-/**
- * Represents an instructor or organisation request to deliver a training program
- */
-export const zProgramTrainingApplication = z
-  .object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** Unique identifier for this application.')
-      .readonly()
-      .optional(),
-    status: zStatusEnum7.optional(),
-    application_notes: z.union([z.string(), z.null()]).optional(),
-    review_notes: z.union([z.string(), z.null()]).optional(),
-    reviewed_by: z.union([z.string(), z.null()]).optional(),
-    reviewed_at: z.union([z.string().datetime(), z.null()]).optional(),
-    program_uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** The training program this application targets.')
-      .readonly()
-      .optional(),
-    applicant_type: zApplicantTypeEnum.optional(),
-    applicant_uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** UUID of the applicant (Instructor or Organisation).')
-      .readonly()
-      .optional(),
-    rate_card: zCourseTrainingRateCard.optional(),
-    created_date: z
-      .string()
-      .datetime()
-      .describe('**[READ-ONLY]** When the application was submitted.')
-      .readonly()
-      .optional(),
-    created_by: z
-      .string()
-      .describe('**[READ-ONLY]** Audit user who submitted the application.')
-      .readonly()
-      .optional(),
-    updated_date: z.union([z.string().datetime().readonly(), z.null()]).readonly().optional(),
-    updated_by: z.union([z.string().readonly(), z.null()]).readonly().optional(),
-  })
-  .describe('Represents an instructor or organisation request to deliver a training program');
-
-export const zApiResponseProgramTrainingApplication = z.object({
-  success: z.boolean().optional(),
-  data: zProgramTrainingApplication.optional(),
-  message: z.string().optional(),
-  error: z.unknown().optional(),
-});
 
 /**
  * Payload for approving or rejecting a training program application
@@ -5729,7 +5813,7 @@ export const zPriorityEnum = z.enum(['LOW', 'NORMAL', 'HIGH', 'CRITICAL']);
 
 export const zPresentationEnum = z.enum(['POPUP', 'INBOX']);
 
-export const zStatusEnum8 = z.enum(['UNREAD', 'READ', 'ARCHIVED']);
+export const zStatusEnum9 = z.enum(['UNREAD', 'READ', 'ARCHIVED']);
 
 export const zNotificationDto = z.object({
   uuid: z.string().uuid().optional(),
@@ -5739,7 +5823,7 @@ export const zNotificationDto = z.object({
   category: zCategoryEnum.optional(),
   priority: zPriorityEnum.optional(),
   presentation: zPresentationEnum.optional(),
-  status: zStatusEnum8.optional(),
+  status: zStatusEnum9.optional(),
   title: z.string().optional(),
   body: z.string().optional(),
   action_url: z.string().optional(),
@@ -5834,7 +5918,7 @@ export const zRelationshipTypeEnum = z.enum(['PARENT', 'GUARDIAN', 'SPONSOR']);
 
 export const zShareScopeEnum = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']);
 
-export const zStatusEnum9 = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
+export const zStatusEnum10 = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
 
 /**
  * Represents a guardian's access rights to a learner profile.
@@ -5848,7 +5932,7 @@ export const zGuardianStudentLink = z
     guardianDisplayName: z.string().optional(),
     relationshipType: zRelationshipTypeEnum.optional(),
     shareScope: zShareScopeEnum.optional(),
-    status: zStatusEnum9.optional(),
+    status: zStatusEnum10.optional(),
     primaryGuardian: z.boolean().optional(),
     linkedDate: z.string().datetime().optional(),
     revokedDate: z.string().datetime().optional(),
@@ -5893,7 +5977,7 @@ export const zEnrollmentRequest = z
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const zStatusEnum10 = z
+export const zStatusEnum11 = z
   .enum(['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
   .describe('**[OPTIONAL]** Current enrollment and attendance status.');
 
@@ -5920,7 +6004,7 @@ export const zEnrollment = z
       .string()
       .uuid()
       .describe('**[REQUIRED]** Reference to the student UUID who is enrolling.'),
-    status: zStatusEnum10.optional(),
+    status: zStatusEnum11.optional(),
     attendance_marked_at: z.union([z.string().datetime(), z.null()]).optional(),
     created_date: z
       .string()
@@ -5953,6 +6037,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .readonly()
+      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -5966,11 +6055,6 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -6004,66 +6088,6 @@ export const zCourseTrainingApplicationRequest = z
     application_notes: z.union([z.string().min(0).max(2000), z.null()]).optional(),
   })
   .describe('Payload for instructors or organisations applying to deliver a course');
-
-/**
- * **[READ-ONLY]** Current status of the application.
- */
-export const zStatusEnum11 = z
-  .enum(['pending', 'approved', 'rejected'])
-  .describe('**[READ-ONLY]** Current status of the application.');
-
-/**
- * Represents an instructor or organisation request to deliver a course
- */
-export const zCourseTrainingApplication = z
-  .object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** Unique identifier for this application.')
-      .readonly()
-      .optional(),
-    status: zStatusEnum11.optional(),
-    application_notes: z.union([z.string(), z.null()]).optional(),
-    review_notes: z.union([z.string(), z.null()]).optional(),
-    reviewed_by: z.union([z.string(), z.null()]).optional(),
-    reviewed_at: z.union([z.string().datetime(), z.null()]).optional(),
-    course_uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** The course this application targets.')
-      .readonly()
-      .optional(),
-    applicant_type: zApplicantTypeEnum.optional(),
-    applicant_uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** UUID of the applicant (Instructor or Organisation).')
-      .readonly()
-      .optional(),
-    rate_card: zCourseTrainingRateCard.optional(),
-    created_date: z
-      .string()
-      .datetime()
-      .describe('**[READ-ONLY]** When the application was submitted.')
-      .readonly()
-      .optional(),
-    created_by: z
-      .string()
-      .describe('**[READ-ONLY]** Audit user who submitted the application.')
-      .readonly()
-      .optional(),
-    updated_date: z.union([z.string().datetime().readonly(), z.null()]).readonly().optional(),
-    updated_by: z.union([z.string().readonly(), z.null()]).readonly().optional(),
-  })
-  .describe('Represents an instructor or organisation request to deliver a course');
-
-export const zApiResponseCourseTrainingApplication = z.object({
-  success: z.boolean().optional(),
-  data: zCourseTrainingApplication.optional(),
-  message: z.string().optional(),
-  error: z.unknown().optional(),
-});
 
 /**
  * Payload for approving or rejecting a course training application
@@ -7740,8 +7764,8 @@ export const zApiResponsePagedDtoBookingResponse = z.object({
 
 export const zSortObject = z.object({
   empty: z.boolean().optional(),
-  sorted: z.boolean().optional(),
   unsorted: z.boolean().optional(),
+  sorted: z.boolean().optional(),
 });
 
 export const zPageableObject = z.object({
@@ -8197,11 +8221,6 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -8215,6 +8234,11 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -8442,16 +8466,6 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
-    progress_display: z
-      .string()
-      .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
-      .readonly()
-      .optional(),
     enrollment_duration: z
       .string()
       .describe(
@@ -8464,6 +8478,16 @@ export const zProgramEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
+    progress_display: z
+      .string()
+      .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
       .readonly()
       .optional(),
   })
@@ -8735,7 +8759,7 @@ export const zInstructorCalendarEntry = z
         'Flag indicating availability; false represents blocked time or scheduled instances occupying the slot'
       )
       .optional(),
-    status: zStatusEnum6.optional(),
+    status: zStatusEnum8.optional(),
     title: z.string().describe('Optional title (for scheduled instances)').optional(),
     class_definition_uuid: z
       .string()
@@ -8802,7 +8826,7 @@ export const zGuardianStudentDashboardDto = z.object({
   studentUuid: z.string().uuid().optional(),
   studentName: z.string().optional(),
   shareScope: zShareScopeEnum.optional(),
-  status: zStatusEnum9.optional(),
+  status: zStatusEnum10.optional(),
   courseProgress: z.array(zLearnerCourseProgressView).optional(),
   programProgress: z.array(zLearnerProgramProgressView).optional(),
 });
@@ -8813,7 +8837,7 @@ export const zGuardianStudentSummaryDto = z.object({
   studentName: z.string().optional(),
   relationshipType: zRelationshipTypeEnum.optional(),
   shareScope: zShareScopeEnum.optional(),
-  status: zStatusEnum9.optional(),
+  status: zStatusEnum10.optional(),
   primaryGuardian: z.boolean().optional(),
 });
 
@@ -8856,7 +8880,7 @@ export const zStudentClassEnrollmentSummary = z
       .uuid()
       .describe('Most recent scheduled-instance enrollment identifier for this class')
       .optional(),
-    latest_enrollment_status: zStatusEnum10.optional(),
+    latest_enrollment_status: zStatusEnum11.optional(),
     scheduled_instance_count: z
       .number()
       .int()
@@ -9321,16 +9345,6 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
-    progress_display: z
-      .string()
-      .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
-      .readonly()
-      .optional(),
     enrollment_duration: z
       .string()
       .describe(
@@ -9343,6 +9357,16 @@ export const zCourseEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
+    progress_display: z
+      .string()
+      .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
       .readonly()
       .optional(),
   })
@@ -10587,16 +10611,9 @@ export const zSubmissionTypesEnumWritable = z
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export const zStatusEnum6Writable = z
+export const zStatusEnum8Writable = z
   .enum(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'])
   .describe('**[OPTIONAL]** Current status of the scheduled instance.');
-
-/**
- * **[REQUIRED]** Applicant type initiating the request.
- */
-export const zApplicantTypeEnumWritable = z
-  .enum(['instructor', 'organisation'])
-  .describe('**[REQUIRED]** Applicant type initiating the request.');
 
 export const zTypeEnumWritable = z.enum([
   'COURSE_ENROLLMENT_WELCOME',
@@ -10656,18 +10673,18 @@ export const zPriorityEnumWritable = z.enum(['LOW', 'NORMAL', 'HIGH', 'CRITICAL'
 
 export const zPresentationEnumWritable = z.enum(['POPUP', 'INBOX']);
 
-export const zStatusEnum8Writable = z.enum(['UNREAD', 'READ', 'ARCHIVED']);
+export const zStatusEnum9Writable = z.enum(['UNREAD', 'READ', 'ARCHIVED']);
 
 export const zRelationshipTypeEnumWritable = z.enum(['PARENT', 'GUARDIAN', 'SPONSOR']);
 
 export const zShareScopeEnumWritable = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']);
 
-export const zStatusEnum9Writable = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
+export const zStatusEnum10Writable = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
 
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const zStatusEnum10Writable = z
+export const zStatusEnum11Writable = z
   .enum(['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
   .describe('**[OPTIONAL]** Current enrollment and attendance status.');
 
@@ -11178,6 +11195,59 @@ export const zUpdateTrainingProgramData = z.object({
  */
 export const zUpdateTrainingProgramResponse = zApiResponseTrainingProgram;
 
+export const zWithdrawProgramTrainingApplicationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    programUuid: z.string().uuid(),
+    applicationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zGetProgramTrainingApplicationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    programUuid: z.string().uuid(),
+    applicationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetProgramTrainingApplicationResponse = zApiResponseProgramTrainingApplication;
+
+export const zDecideOnProgramTrainingApplicationData = z.object({
+  body: zProgramTrainingApplicationDecisionRequest.optional(),
+  path: z.object({
+    programUuid: z.string().uuid(),
+    applicationUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    action: z.string(),
+  }),
+});
+
+/**
+ * OK
+ */
+export const zDecideOnProgramTrainingApplicationResponse = zApiResponseProgramTrainingApplication;
+
+export const zUpdateProgramTrainingApplicationData = z.object({
+  body: zProgramTrainingApplicationUpdateRequest,
+  path: z.object({
+    programUuid: z.string().uuid(),
+    applicationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateProgramTrainingApplicationResponse = zApiResponseProgramTrainingApplication;
+
 export const zDeleteProgramRequirementData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -11591,6 +11661,59 @@ export const zUpdateCourseTrainingRequirementData = z.object({
  * OK
  */
 export const zUpdateCourseTrainingRequirementResponse = zApiResponseCourseTrainingRequirement;
+
+export const zWithdrawTrainingApplicationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    applicationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zGetTrainingApplicationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    applicationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetTrainingApplicationResponse = zApiResponseCourseTrainingApplication;
+
+export const zDecideOnTrainingApplicationData = z.object({
+  body: zCourseTrainingApplicationDecisionRequest.optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    applicationUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    action: z.string(),
+  }),
+});
+
+/**
+ * OK
+ */
+export const zDecideOnTrainingApplicationResponse = zApiResponseCourseTrainingApplication;
+
+export const zUpdateTrainingApplicationData = z.object({
+  body: zCourseTrainingApplicationUpdateRequest,
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    applicationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateTrainingApplicationResponse = zApiResponseCourseTrainingApplication;
 
 export const zSetPrimaryRubricData = z.object({
   body: z.never().optional(),
@@ -12829,36 +12952,6 @@ export const zSubmitProgramTrainingApplicationData = z.object({
  */
 export const zSubmitProgramTrainingApplicationResponse = zApiResponseProgramTrainingApplication;
 
-export const zGetProgramTrainingApplicationData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    programUuid: z.string().uuid(),
-    applicationUuid: z.string().uuid(),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * OK
- */
-export const zGetProgramTrainingApplicationResponse = zApiResponseProgramTrainingApplication;
-
-export const zDecideOnProgramTrainingApplicationData = z.object({
-  body: zProgramTrainingApplicationDecisionRequest.optional(),
-  path: z.object({
-    programUuid: z.string().uuid(),
-    applicationUuid: z.string().uuid(),
-  }),
-  query: z.object({
-    action: z.string(),
-  }),
-});
-
-/**
- * OK
- */
-export const zDecideOnProgramTrainingApplicationResponse = zApiResponseProgramTrainingApplication;
-
 export const zGetProgramReviewsData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -13600,36 +13693,6 @@ export const zSubmitTrainingApplicationData = z.object({
  * OK
  */
 export const zSubmitTrainingApplicationResponse = zApiResponseCourseTrainingApplication;
-
-export const zGetTrainingApplicationData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    courseUuid: z.string().uuid(),
-    applicationUuid: z.string().uuid(),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * OK
- */
-export const zGetTrainingApplicationResponse = zApiResponseCourseTrainingApplication;
-
-export const zDecideOnTrainingApplicationData = z.object({
-  body: zCourseTrainingApplicationDecisionRequest.optional(),
-  path: z.object({
-    courseUuid: z.string().uuid(),
-    applicationUuid: z.string().uuid(),
-  }),
-  query: z.object({
-    action: z.string(),
-  }),
-});
-
-/**
- * OK
- */
-export const zDecideOnTrainingApplicationResponse = zApiResponseCourseTrainingApplication;
 
 export const zGetCourseRubricsData = z.object({
   body: z.never().optional(),

@@ -35,6 +35,10 @@ import {
   deleteTrainingProgram,
   getTrainingProgramByUuid,
   updateTrainingProgram,
+  withdrawProgramTrainingApplication,
+  getProgramTrainingApplication,
+  decideOnProgramTrainingApplication,
+  updateProgramTrainingApplication,
   deleteProgramRequirement,
   updateProgramRequirement,
   removeProgramCourse,
@@ -65,6 +69,10 @@ import {
   updateCourse,
   deleteCourseTrainingRequirement,
   updateCourseTrainingRequirement,
+  withdrawTrainingApplication,
+  getTrainingApplication,
+  decideOnTrainingApplication,
+  updateTrainingApplication,
   setPrimaryRubric,
   updateAssociation,
   deleteCourseRequirement,
@@ -161,8 +169,6 @@ import {
   publishProgram,
   listProgramTrainingApplications,
   submitProgramTrainingApplication,
-  getProgramTrainingApplication,
-  decideOnProgramTrainingApplication,
   getProgramReviews,
   submitProgramReview,
   getProgramRequirements,
@@ -211,8 +217,6 @@ import {
   addCourseTrainingRequirement,
   listTrainingApplications,
   submitTrainingApplication,
-  getTrainingApplication,
-  decideOnTrainingApplication,
   getCourseRubrics,
   associateRubric,
   getCourseReviews,
@@ -609,6 +613,15 @@ import type {
   UpdateTrainingProgramData,
   UpdateTrainingProgramError,
   UpdateTrainingProgramResponse,
+  WithdrawProgramTrainingApplicationData,
+  WithdrawProgramTrainingApplicationError,
+  GetProgramTrainingApplicationData,
+  DecideOnProgramTrainingApplicationData,
+  DecideOnProgramTrainingApplicationError,
+  DecideOnProgramTrainingApplicationResponse,
+  UpdateProgramTrainingApplicationData,
+  UpdateProgramTrainingApplicationError,
+  UpdateProgramTrainingApplicationResponse,
   DeleteProgramRequirementData,
   DeleteProgramRequirementError,
   UpdateProgramRequirementData,
@@ -683,6 +696,15 @@ import type {
   UpdateCourseTrainingRequirementData,
   UpdateCourseTrainingRequirementError,
   UpdateCourseTrainingRequirementResponse,
+  WithdrawTrainingApplicationData,
+  WithdrawTrainingApplicationError,
+  GetTrainingApplicationData,
+  DecideOnTrainingApplicationData,
+  DecideOnTrainingApplicationError,
+  DecideOnTrainingApplicationResponse,
+  UpdateTrainingApplicationData,
+  UpdateTrainingApplicationError,
+  UpdateTrainingApplicationResponse,
   SetPrimaryRubricData,
   SetPrimaryRubricError,
   SetPrimaryRubricResponse,
@@ -937,10 +959,6 @@ import type {
   SubmitProgramTrainingApplicationData,
   SubmitProgramTrainingApplicationError,
   SubmitProgramTrainingApplicationResponse,
-  GetProgramTrainingApplicationData,
-  DecideOnProgramTrainingApplicationData,
-  DecideOnProgramTrainingApplicationError,
-  DecideOnProgramTrainingApplicationResponse,
   GetProgramReviewsData,
   GetProgramReviewsError,
   GetProgramReviewsResponse,
@@ -1075,10 +1093,6 @@ import type {
   SubmitTrainingApplicationData,
   SubmitTrainingApplicationError,
   SubmitTrainingApplicationResponse,
-  GetTrainingApplicationData,
-  DecideOnTrainingApplicationData,
-  DecideOnTrainingApplicationError,
-  DecideOnTrainingApplicationResponse,
   GetCourseRubricsData,
   GetCourseRubricsError,
   GetCourseRubricsResponse,
@@ -2649,6 +2663,149 @@ export const updateTrainingProgramMutation = (
 };
 
 /**
+ * Withdraw program training application
+ * Allows the applicant (instructor or organisation) to withdraw their own program training
+ * application while it is still PENDING. Only pending applications owned by the caller can be withdrawn.
+ *
+ */
+export const withdrawProgramTrainingApplicationMutation = (
+  options?: Partial<Options<WithdrawProgramTrainingApplicationData>>
+): UseMutationOptions<
+  unknown,
+  WithdrawProgramTrainingApplicationError,
+  Options<WithdrawProgramTrainingApplicationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    WithdrawProgramTrainingApplicationError,
+    Options<WithdrawProgramTrainingApplicationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await withdrawProgramTrainingApplication({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getProgramTrainingApplicationQueryKey = (
+  options: Options<GetProgramTrainingApplicationData>
+) => createQueryKey('getProgramTrainingApplication', options);
+
+/**
+ * Get program training application
+ * Retrieves a specific training application for a program.
+ */
+export const getProgramTrainingApplicationOptions = (
+  options: Options<GetProgramTrainingApplicationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getProgramTrainingApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getProgramTrainingApplicationQueryKey(options),
+  });
+};
+
+export const decideOnProgramTrainingApplicationQueryKey = (
+  options: Options<DecideOnProgramTrainingApplicationData>
+) => createQueryKey('decideOnProgramTrainingApplication', options);
+
+/**
+ * Decide on program training application
+ * Applies a decision to an instructor or organisation application to deliver the training program.
+ * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ *
+ */
+export const decideOnProgramTrainingApplicationOptions = (
+  options: Options<DecideOnProgramTrainingApplicationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await decideOnProgramTrainingApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: decideOnProgramTrainingApplicationQueryKey(options),
+  });
+};
+
+/**
+ * Decide on program training application
+ * Applies a decision to an instructor or organisation application to deliver the training program.
+ * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ *
+ */
+export const decideOnProgramTrainingApplicationMutation = (
+  options?: Partial<Options<DecideOnProgramTrainingApplicationData>>
+): UseMutationOptions<
+  DecideOnProgramTrainingApplicationResponse,
+  DecideOnProgramTrainingApplicationError,
+  Options<DecideOnProgramTrainingApplicationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DecideOnProgramTrainingApplicationResponse,
+    DecideOnProgramTrainingApplicationError,
+    Options<DecideOnProgramTrainingApplicationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await decideOnProgramTrainingApplication({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update program training application
+ * Allows the applicant (instructor or organisation) to edit the rate card and notes on their own
+ * program training application while it is still PENDING. Requests for applications that are not
+ * pending, or that are not owned by the caller, are rejected.
+ *
+ */
+export const updateProgramTrainingApplicationMutation = (
+  options?: Partial<Options<UpdateProgramTrainingApplicationData>>
+): UseMutationOptions<
+  UpdateProgramTrainingApplicationResponse,
+  UpdateProgramTrainingApplicationError,
+  Options<UpdateProgramTrainingApplicationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateProgramTrainingApplicationResponse,
+    UpdateProgramTrainingApplicationError,
+    Options<UpdateProgramTrainingApplicationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateProgramTrainingApplication({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete program requirement
  * Removes a requirement from a program.
  */
@@ -3449,6 +3606,146 @@ export const updateCourseTrainingRequirementMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCourseTrainingRequirement({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Withdraw training application
+ * Allows the applicant (instructor or organisation) to withdraw their own training application while
+ * it is still PENDING. Only pending applications owned by the caller can be withdrawn.
+ *
+ */
+export const withdrawTrainingApplicationMutation = (
+  options?: Partial<Options<WithdrawTrainingApplicationData>>
+): UseMutationOptions<
+  unknown,
+  WithdrawTrainingApplicationError,
+  Options<WithdrawTrainingApplicationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    WithdrawTrainingApplicationError,
+    Options<WithdrawTrainingApplicationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await withdrawTrainingApplication({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getTrainingApplicationQueryKey = (options: Options<GetTrainingApplicationData>) =>
+  createQueryKey('getTrainingApplication', options);
+
+/**
+ * Get training application
+ * Retrieves a specific training application for a course.
+ */
+export const getTrainingApplicationOptions = (options: Options<GetTrainingApplicationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getTrainingApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getTrainingApplicationQueryKey(options),
+  });
+};
+
+export const decideOnTrainingApplicationQueryKey = (
+  options: Options<DecideOnTrainingApplicationData>
+) => createQueryKey('decideOnTrainingApplication', options);
+
+/**
+ * Decide on training application
+ * Applies a decision to an instructor or organisation application to deliver the course.
+ * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ *
+ */
+export const decideOnTrainingApplicationOptions = (
+  options: Options<DecideOnTrainingApplicationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await decideOnTrainingApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: decideOnTrainingApplicationQueryKey(options),
+  });
+};
+
+/**
+ * Decide on training application
+ * Applies a decision to an instructor or organisation application to deliver the course.
+ * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ *
+ */
+export const decideOnTrainingApplicationMutation = (
+  options?: Partial<Options<DecideOnTrainingApplicationData>>
+): UseMutationOptions<
+  DecideOnTrainingApplicationResponse,
+  DecideOnTrainingApplicationError,
+  Options<DecideOnTrainingApplicationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DecideOnTrainingApplicationResponse,
+    DecideOnTrainingApplicationError,
+    Options<DecideOnTrainingApplicationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await decideOnTrainingApplication({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update training application
+ * Allows the applicant (instructor or organisation) to edit the rate card and notes on their own
+ * training application while it is still PENDING. Requests for applications that are not pending, or
+ * that are not owned by the caller, are rejected.
+ *
+ */
+export const updateTrainingApplicationMutation = (
+  options?: Partial<Options<UpdateTrainingApplicationData>>
+): UseMutationOptions<
+  UpdateTrainingApplicationResponse,
+  UpdateTrainingApplicationError,
+  Options<UpdateTrainingApplicationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateTrainingApplicationResponse,
+    UpdateTrainingApplicationError,
+    Options<UpdateTrainingApplicationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateTrainingApplication({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -7086,88 +7383,6 @@ export const submitProgramTrainingApplicationMutation = (
   return mutationOptions;
 };
 
-export const getProgramTrainingApplicationQueryKey = (
-  options: Options<GetProgramTrainingApplicationData>
-) => createQueryKey('getProgramTrainingApplication', options);
-
-/**
- * Get program training application
- * Retrieves a specific training application for a program.
- */
-export const getProgramTrainingApplicationOptions = (
-  options: Options<GetProgramTrainingApplicationData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getProgramTrainingApplication({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getProgramTrainingApplicationQueryKey(options),
-  });
-};
-
-export const decideOnProgramTrainingApplicationQueryKey = (
-  options: Options<DecideOnProgramTrainingApplicationData>
-) => createQueryKey('decideOnProgramTrainingApplication', options);
-
-/**
- * Decide on program training application
- * Applies a decision to an instructor or organisation application to deliver the training program.
- * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
- *
- */
-export const decideOnProgramTrainingApplicationOptions = (
-  options: Options<DecideOnProgramTrainingApplicationData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await decideOnProgramTrainingApplication({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: decideOnProgramTrainingApplicationQueryKey(options),
-  });
-};
-
-/**
- * Decide on program training application
- * Applies a decision to an instructor or organisation application to deliver the training program.
- * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
- *
- */
-export const decideOnProgramTrainingApplicationMutation = (
-  options?: Partial<Options<DecideOnProgramTrainingApplicationData>>
-): UseMutationOptions<
-  DecideOnProgramTrainingApplicationResponse,
-  DecideOnProgramTrainingApplicationError,
-  Options<DecideOnProgramTrainingApplicationData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DecideOnProgramTrainingApplicationResponse,
-    DecideOnProgramTrainingApplicationError,
-    Options<DecideOnProgramTrainingApplicationData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await decideOnProgramTrainingApplication({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 export const getProgramReviewsQueryKey = (options: Options<GetProgramReviewsData>) =>
   createQueryKey('getProgramReviews', options);
 
@@ -9827,85 +10042,6 @@ export const submitTrainingApplicationMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await submitTrainingApplication({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const getTrainingApplicationQueryKey = (options: Options<GetTrainingApplicationData>) =>
-  createQueryKey('getTrainingApplication', options);
-
-/**
- * Get training application
- * Retrieves a specific training application for a course.
- */
-export const getTrainingApplicationOptions = (options: Options<GetTrainingApplicationData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getTrainingApplication({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getTrainingApplicationQueryKey(options),
-  });
-};
-
-export const decideOnTrainingApplicationQueryKey = (
-  options: Options<DecideOnTrainingApplicationData>
-) => createQueryKey('decideOnTrainingApplication', options);
-
-/**
- * Decide on training application
- * Applies a decision to an instructor or organisation application to deliver the course.
- * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
- *
- */
-export const decideOnTrainingApplicationOptions = (
-  options: Options<DecideOnTrainingApplicationData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await decideOnTrainingApplication({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: decideOnTrainingApplicationQueryKey(options),
-  });
-};
-
-/**
- * Decide on training application
- * Applies a decision to an instructor or organisation application to deliver the course.
- * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
- *
- */
-export const decideOnTrainingApplicationMutation = (
-  options?: Partial<Options<DecideOnTrainingApplicationData>>
-): UseMutationOptions<
-  DecideOnTrainingApplicationResponse,
-  DecideOnTrainingApplicationError,
-  Options<DecideOnTrainingApplicationData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DecideOnTrainingApplicationResponse,
-    DecideOnTrainingApplicationError,
-    Options<DecideOnTrainingApplicationData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await decideOnTrainingApplication({
         ...options,
         ...localOptions,
         throwOnError: true,

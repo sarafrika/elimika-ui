@@ -575,7 +575,7 @@ export default {
       icon: BarChart3,
     },
     {
-      title: 'Approvals',
+      title: 'Training requests',
       url: '/dashboard/verification',
       icon: ShieldCheck,
     },

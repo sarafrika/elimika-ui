@@ -606,13 +606,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -820,21 +820,21 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable category of the question type.
-   */
-  readonly question_category?: string;
-  /**
    * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
    */
   readonly requires_options?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
+   * **[READ-ONLY]** Human-readable category of the question type.
    */
-  readonly points_display?: string;
+  readonly question_category?: string;
   /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1005,6 +1005,106 @@ export type ApiResponseTrainingProgram = {
   data?: TrainingProgram;
   message?: string;
   error?: unknown;
+};
+
+export type CourseTrainingRateCard = {
+  /**
+   * **[OPTIONAL]** ISO currency applied to every rate entry in the card. Defaults to the platform currency when omitted.
+   */
+  currency?: string | null;
+  /**
+   * 1:1 private session rate when delivered online, per learner per hour.
+   */
+  private_online_rate: number;
+  /**
+   * 1:1 private session rate when delivered in person, per learner per hour.
+   */
+  private_inperson_rate: number;
+  /**
+   * Group session rate when delivered online, per learner per hour.
+   */
+  group_online_rate: number;
+  /**
+   * Group session rate when delivered in person, per learner per hour.
+   */
+  group_inperson_rate: number;
+};
+
+/**
+ * Payload for an applicant editing the rate card or notes on a pending program training application
+ */
+export type ProgramTrainingApplicationUpdateRequest = {
+  /**
+   * **[REQUIRED]** Updated rate card across session format and delivery modality combinations.
+   */
+  rate_card: CourseTrainingRateCard;
+  /**
+   * Optional notes to help the program creator evaluate the request.
+   */
+  application_notes?: string | null;
+};
+
+export type ApiResponseProgramTrainingApplication = {
+  success?: boolean;
+  data?: ProgramTrainingApplication;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Represents an instructor or organisation request to deliver a training program
+ */
+export type ProgramTrainingApplication = {
+  /**
+   * **[READ-ONLY]** Unique identifier for this application.
+   */
+  readonly uuid?: string;
+  status?: StatusEnum2;
+  /**
+   * Submission notes provided by the applicant.
+   */
+  application_notes?: string | null;
+  /**
+   * Decision notes provided by the program creator.
+   */
+  review_notes?: string | null;
+  /**
+   * Reviewer identifier captured when the request is approved or rejected.
+   */
+  reviewed_by?: string | null;
+  /**
+   * Timestamp of the review decision.
+   */
+  reviewed_at?: Date | null;
+  /**
+   * **[READ-ONLY]** The training program this application targets.
+   */
+  readonly program_uuid?: string;
+  applicant_type?: ApplicantTypeEnum;
+  /**
+   * **[READ-ONLY]** UUID of the applicant (Instructor or Organisation).
+   */
+  readonly applicant_uuid?: string;
+  /**
+   * **[READ-ONLY]** Approved rate card for this application.
+   */
+  rate_card?: CourseTrainingRateCard;
+  /**
+   * **[READ-ONLY]** When the application was submitted.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** Audit user who submitted the application.
+   */
+  readonly created_by?: string;
+  /**
+   * **[READ-ONLY]** When the application was last updated.
+   */
+  readonly updated_date?: Date | null;
+  /**
+   * **[READ-ONLY]** Audit user who last modified the application.
+   */
+  readonly updated_by?: string | null;
 };
 
 /**
@@ -1658,7 +1758,7 @@ export type InstructorDocument = {
    * **[OPTIONAL]** Detailed description of the document content and its relevance to instructor qualifications.
    */
   description?: string | null;
-  status?: StatusEnum2;
+  status?: StatusEnum3;
   /**
    * **[OPTIONAL]** Expiry date of the document if applicable. Used for certificates and time-limited credentials.
    */
@@ -2078,6 +2178,83 @@ export type ApiResponseCourseTrainingRequirement = {
   data?: CourseTrainingRequirement;
   message?: string;
   error?: unknown;
+};
+
+/**
+ * Payload for an applicant editing the rate card or notes on a pending course training application
+ */
+export type CourseTrainingApplicationUpdateRequest = {
+  /**
+   * **[REQUIRED]** Updated rate card across session format and delivery modality combinations.
+   */
+  rate_card: CourseTrainingRateCard;
+  /**
+   * Optional notes to help the course creator evaluate the request.
+   */
+  application_notes?: string | null;
+};
+
+export type ApiResponseCourseTrainingApplication = {
+  success?: boolean;
+  data?: CourseTrainingApplication;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Represents an instructor or organisation request to deliver a course
+ */
+export type CourseTrainingApplication = {
+  /**
+   * **[READ-ONLY]** Unique identifier for this application.
+   */
+  readonly uuid?: string;
+  status?: StatusEnum4;
+  /**
+   * Submission notes provided by the applicant.
+   */
+  application_notes?: string | null;
+  /**
+   * Decision notes provided by the course creator.
+   */
+  review_notes?: string | null;
+  /**
+   * Reviewer identifier captured when the request is approved or rejected.
+   */
+  reviewed_by?: string | null;
+  /**
+   * Timestamp of the review decision.
+   */
+  reviewed_at?: Date | null;
+  /**
+   * **[READ-ONLY]** The course this application targets.
+   */
+  readonly course_uuid?: string;
+  applicant_type?: ApplicantTypeEnum;
+  /**
+   * **[READ-ONLY]** UUID of the applicant (Instructor or Organisation).
+   */
+  readonly applicant_uuid?: string;
+  /**
+   * **[READ-ONLY]** Approved rate card for this application.
+   */
+  rate_card?: CourseTrainingRateCard;
+  /**
+   * **[READ-ONLY]** When the application was submitted.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** Audit user who submitted the application.
+   */
+  readonly created_by?: string;
+  /**
+   * **[READ-ONLY]** When the application was last updated.
+   */
+  readonly updated_date?: Date | null;
+  /**
+   * **[READ-ONLY]** Audit user who last modified the application.
+   */
+  readonly updated_by?: string | null;
 };
 
 export type ApiResponseCourseRubricAssociation = {
@@ -2554,7 +2731,7 @@ export type CourseAssessmentLineItemRubricEvaluation = {
   readonly uuid?: string;
   line_item_uuid?: string;
   enrollment_uuid?: string;
-  status?: StatusEnum3;
+  status?: StatusEnum5;
   readonly score?: number;
   readonly percentage?: number;
   comments?: string;
@@ -2752,7 +2929,7 @@ export type CourseCreatorDocumentDto = {
   original_filename: string;
   title?: string;
   description?: string;
-  status?: StatusEnum4;
+  status?: StatusEnum6;
   expiry_date?: Date;
   readonly stored_filename?: string;
   readonly file_path?: string;
@@ -3591,7 +3768,7 @@ export type ClassMarketplaceJob = {
   readonly uuid?: string;
   readonly title?: string;
   readonly description?: string;
-  status?: StatusEnum5;
+  status?: StatusEnum7;
   readonly organisation_uuid?: string;
   readonly course_uuid?: string;
   readonly program_uuid?: string;
@@ -3698,14 +3875,6 @@ export type Certificate = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Type of certificate based on completion achievement.
-   */
-  readonly certificate_type?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
-   */
-  readonly is_downloadable?: boolean;
-  /**
    * **[READ-ONLY]** Letter grade representation of the final grade.
    */
   readonly grade_letter?: string;
@@ -3713,6 +3882,14 @@ export type Certificate = {
    * **[READ-ONLY]** Current validity status of the certificate.
    */
   readonly validity_status?: string;
+  /**
+   * **[READ-ONLY]** Type of certificate based on completion achievement.
+   */
+  readonly certificate_type?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
+   */
+  readonly is_downloadable?: boolean;
 };
 
 export type ApiResponseCertificate = {
@@ -4142,7 +4319,7 @@ export type ScheduledInstance = {
    * **[OPTIONAL]** Maximum number of participants for this session (cached from class definition).
    */
   max_participants?: number;
-  status?: StatusEnum6;
+  status?: StatusEnum8;
   /**
    * **[OPTIONAL]** Reason for cancellation if status is CANCELLED.
    */
@@ -4257,29 +4434,6 @@ export type ApiResponseString = {
   error?: unknown;
 };
 
-export type CourseTrainingRateCard = {
-  /**
-   * **[OPTIONAL]** ISO currency applied to every rate entry in the card. Defaults to the platform currency when omitted.
-   */
-  currency?: string | null;
-  /**
-   * 1:1 private session rate when delivered online, per learner per hour.
-   */
-  private_online_rate: number;
-  /**
-   * 1:1 private session rate when delivered in person, per learner per hour.
-   */
-  private_inperson_rate: number;
-  /**
-   * Group session rate when delivered online, per learner per hour.
-   */
-  group_online_rate: number;
-  /**
-   * Group session rate when delivered in person, per learner per hour.
-   */
-  group_inperson_rate: number;
-};
-
 /**
  * Payload for instructors or organisations applying to deliver a training program
  */
@@ -4297,69 +4451,6 @@ export type ProgramTrainingApplicationRequest = {
    * Optional notes to help the program creator evaluate the request.
    */
   application_notes?: string | null;
-};
-
-export type ApiResponseProgramTrainingApplication = {
-  success?: boolean;
-  data?: ProgramTrainingApplication;
-  message?: string;
-  error?: unknown;
-};
-
-/**
- * Represents an instructor or organisation request to deliver a training program
- */
-export type ProgramTrainingApplication = {
-  /**
-   * **[READ-ONLY]** Unique identifier for this application.
-   */
-  readonly uuid?: string;
-  status?: StatusEnum7;
-  /**
-   * Submission notes provided by the applicant.
-   */
-  application_notes?: string | null;
-  /**
-   * Decision notes provided by the program creator.
-   */
-  review_notes?: string | null;
-  /**
-   * Reviewer identifier captured when the request is approved or rejected.
-   */
-  reviewed_by?: string | null;
-  /**
-   * Timestamp of the review decision.
-   */
-  reviewed_at?: Date | null;
-  /**
-   * **[READ-ONLY]** The training program this application targets.
-   */
-  readonly program_uuid?: string;
-  applicant_type?: ApplicantTypeEnum;
-  /**
-   * **[READ-ONLY]** UUID of the applicant (Instructor or Organisation).
-   */
-  readonly applicant_uuid?: string;
-  /**
-   * **[READ-ONLY]** Approved rate card for this application.
-   */
-  rate_card?: CourseTrainingRateCard;
-  /**
-   * **[READ-ONLY]** When the application was submitted.
-   */
-  readonly created_date?: Date;
-  /**
-   * **[READ-ONLY]** Audit user who submitted the application.
-   */
-  readonly created_by?: string;
-  /**
-   * **[READ-ONLY]** When the application was last updated.
-   */
-  readonly updated_date?: Date | null;
-  /**
-   * **[READ-ONLY]** Audit user who last modified the application.
-   */
-  readonly updated_by?: string | null;
 };
 
 /**
@@ -4489,7 +4580,7 @@ export type NotificationDto = {
   category?: CategoryEnum;
   priority?: PriorityEnum;
   presentation?: PresentationEnum;
-  status?: StatusEnum8;
+  status?: StatusEnum9;
   title?: string;
   body?: string;
   action_url?: string;
@@ -4594,7 +4685,7 @@ export type GuardianStudentLink = {
   guardianDisplayName?: string;
   relationshipType?: RelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum9;
+  status?: StatusEnum10;
   primaryGuardian?: boolean;
   linkedDate?: Date;
   revokedDate?: Date;
@@ -4662,7 +4753,7 @@ export type Enrollment = {
    * **[REQUIRED]** Reference to the student UUID who is enrolling.
    */
   student_uuid: string;
-  status?: StatusEnum10;
+  status?: StatusEnum11;
   /**
    * **[OPTIONAL]** Timestamp when attendance was marked for this enrollment.
    */
@@ -4688,6 +4779,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -4699,10 +4794,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -4729,69 +4820,6 @@ export type CourseTrainingApplicationRequest = {
    * Optional notes to help the course creator evaluate the request.
    */
   application_notes?: string | null;
-};
-
-export type ApiResponseCourseTrainingApplication = {
-  success?: boolean;
-  data?: CourseTrainingApplication;
-  message?: string;
-  error?: unknown;
-};
-
-/**
- * Represents an instructor or organisation request to deliver a course
- */
-export type CourseTrainingApplication = {
-  /**
-   * **[READ-ONLY]** Unique identifier for this application.
-   */
-  readonly uuid?: string;
-  status?: StatusEnum11;
-  /**
-   * Submission notes provided by the applicant.
-   */
-  application_notes?: string | null;
-  /**
-   * Decision notes provided by the course creator.
-   */
-  review_notes?: string | null;
-  /**
-   * Reviewer identifier captured when the request is approved or rejected.
-   */
-  reviewed_by?: string | null;
-  /**
-   * Timestamp of the review decision.
-   */
-  reviewed_at?: Date | null;
-  /**
-   * **[READ-ONLY]** The course this application targets.
-   */
-  readonly course_uuid?: string;
-  applicant_type?: ApplicantTypeEnum;
-  /**
-   * **[READ-ONLY]** UUID of the applicant (Instructor or Organisation).
-   */
-  readonly applicant_uuid?: string;
-  /**
-   * **[READ-ONLY]** Approved rate card for this application.
-   */
-  rate_card?: CourseTrainingRateCard;
-  /**
-   * **[READ-ONLY]** When the application was submitted.
-   */
-  readonly created_date?: Date;
-  /**
-   * **[READ-ONLY]** Audit user who submitted the application.
-   */
-  readonly created_by?: string;
-  /**
-   * **[READ-ONLY]** When the application was last updated.
-   */
-  readonly updated_date?: Date | null;
-  /**
-   * **[READ-ONLY]** Audit user who last modified the application.
-   */
-  readonly updated_by?: string | null;
 };
 
 /**
@@ -6416,8 +6444,8 @@ export type PageableObject = {
 
 export type SortObject = {
   empty?: boolean;
-  sorted?: boolean;
   unsorted?: boolean;
+  sorted?: boolean;
 };
 
 export type ApiResponsePagedDtoAssessmentRubric = {
@@ -6816,10 +6844,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -6831,6 +6855,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 export type ApiResponseStudentQuizReview = {
@@ -7027,14 +7055,6 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the program.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
   readonly enrollment_duration?: string;
@@ -7042,6 +7062,14 @@ export type ProgramEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the program.
+   */
+  readonly progress_display?: string;
 };
 
 export type ApiResponseListCourse = {
@@ -7304,7 +7332,7 @@ export type InstructorCalendarEntry = {
    * Flag indicating availability; false represents blocked time or scheduled instances occupying the slot
    */
   is_available?: boolean;
-  status?: StatusEnum6;
+  status?: StatusEnum8;
   /**
    * Optional title (for scheduled instances)
    */
@@ -7353,7 +7381,7 @@ export type GuardianStudentDashboardDto = {
   studentUuid?: string;
   studentName?: string;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum9;
+  status?: StatusEnum10;
   courseProgress?: Array<LearnerCourseProgressView>;
   programProgress?: Array<LearnerProgramProgressView>;
 };
@@ -7389,7 +7417,7 @@ export type GuardianStudentSummaryDto = {
   studentName?: string;
   relationshipType?: RelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum9;
+  status?: StatusEnum10;
   primaryGuardian?: boolean;
 };
 
@@ -7448,7 +7476,7 @@ export type StudentClassEnrollmentSummary = {
    * Most recent scheduled-instance enrollment identifier for this class
    */
   latest_enrollment_uuid?: string;
-  latest_enrollment_status?: StatusEnum10;
+  latest_enrollment_status?: StatusEnum11;
   /**
    * Number of scheduled-instance enrollments aggregated under this class
    */
@@ -7864,14 +7892,6 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the course.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
   readonly enrollment_duration?: string;
@@ -7879,6 +7899,14 @@ export type CourseEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the course.
+   */
+  readonly progress_display?: string;
 };
 
 export type PagedDtoCourseEnrollment = {
@@ -9022,6 +9050,34 @@ export const QuestionTypeEnum = {
 export type QuestionTypeEnum = (typeof QuestionTypeEnum)[keyof typeof QuestionTypeEnum];
 
 /**
+ * **[READ-ONLY]** Current status of the application.
+ */
+export const StatusEnum2 = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  REVOKED: 'revoked',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the application.
+ */
+export type StatusEnum2 = (typeof StatusEnum2)[keyof typeof StatusEnum2];
+
+/**
+ * **[READ-ONLY]** Applicant type making the request.
+ */
+export const ApplicantTypeEnum = {
+  INSTRUCTOR: 'instructor',
+  ORGANISATION: 'organisation',
+} as const;
+
+/**
+ * **[READ-ONLY]** Applicant type making the request.
+ */
+export type ApplicantTypeEnum = (typeof ApplicantTypeEnum)[keyof typeof ApplicantTypeEnum];
+
+/**
  * **[REQUIRED]** Type of requirement classification for this program element.
  */
 export const RequirementTypeEnum = {
@@ -9119,7 +9175,7 @@ export type EducationLevelEnum = (typeof EducationLevelEnum)[keyof typeof Educat
 /**
  * **[READ-ONLY]** Current status of the document in the verification workflow.
  */
-export const StatusEnum2 = {
+export const StatusEnum3 = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
@@ -9130,7 +9186,7 @@ export const StatusEnum2 = {
 /**
  * **[READ-ONLY]** Current status of the document in the verification workflow.
  */
-export type StatusEnum2 = (typeof StatusEnum2)[keyof typeof StatusEnum2];
+export type StatusEnum3 = (typeof StatusEnum3)[keyof typeof StatusEnum3];
 
 /**
  * **[READ-ONLY]** Human-readable verification status of the document.
@@ -9194,6 +9250,20 @@ export const ProvidedByEnum = {
 export type ProvidedByEnum = (typeof ProvidedByEnum)[keyof typeof ProvidedByEnum];
 
 /**
+ * **[READ-ONLY]** Current status of the application.
+ */
+export const StatusEnum4 = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the application.
+ */
+export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
+
+/**
  * **[OPTIONAL]** Practice activity format.
  */
 export const ActivityTypeEnum = {
@@ -9254,12 +9324,12 @@ export const ItemTypeEnum = {
 
 export type ItemTypeEnum = (typeof ItemTypeEnum)[keyof typeof ItemTypeEnum];
 
-export const StatusEnum3 = {
+export const StatusEnum5 = {
   PENDING: 'pending',
   COMPLETED: 'completed',
 } as const;
 
-export type StatusEnum3 = (typeof StatusEnum3)[keyof typeof StatusEnum3];
+export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
 
 export const AttendanceStatusEnum = {
   ATTENDED: 'attended',
@@ -9278,14 +9348,14 @@ export const ProficiencyLevelEnum2 = {
 export type ProficiencyLevelEnum2 =
   (typeof ProficiencyLevelEnum2)[keyof typeof ProficiencyLevelEnum2];
 
-export const StatusEnum4 = {
+export const StatusEnum6 = {
   PENDING_REVIEW: 'Pending Review',
   APPROVED: 'Approved',
   REJECTED: 'Rejected',
   EXPIRED: 'Expired',
 } as const;
 
-export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
+export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
 
 /**
  * **[REQUIRED]** Class visibility.
@@ -9356,13 +9426,13 @@ export const ConflictResolutionEnum = {
 export type ConflictResolutionEnum =
   (typeof ConflictResolutionEnum)[keyof typeof ConflictResolutionEnum];
 
-export const StatusEnum5 = {
+export const StatusEnum7 = {
   OPEN: 'open',
   FILLED: 'filled',
   CANCELLED: 'cancelled',
 } as const;
 
-export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
+export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
 
 /**
  * **[REQUIRED]** Type of certificate this template is designed for.
@@ -9399,7 +9469,7 @@ export type SubmissionTypesEnum = (typeof SubmissionTypesEnum)[keyof typeof Subm
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export const StatusEnum6 = {
+export const StatusEnum8 = {
   SCHEDULED: 'SCHEDULED',
   ONGOING: 'ONGOING',
   COMPLETED: 'COMPLETED',
@@ -9410,35 +9480,7 @@ export const StatusEnum6 = {
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
-
-/**
- * **[REQUIRED]** Applicant type initiating the request.
- */
-export const ApplicantTypeEnum = {
-  INSTRUCTOR: 'instructor',
-  ORGANISATION: 'organisation',
-} as const;
-
-/**
- * **[REQUIRED]** Applicant type initiating the request.
- */
-export type ApplicantTypeEnum = (typeof ApplicantTypeEnum)[keyof typeof ApplicantTypeEnum];
-
-/**
- * **[READ-ONLY]** Current status of the application.
- */
-export const StatusEnum7 = {
-  PENDING: 'pending',
-  APPROVED: 'approved',
-  REJECTED: 'rejected',
-  REVOKED: 'revoked',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the application.
- */
-export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
+export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
 
 export const TypeEnum = {
   COURSE_ENROLLMENT_WELCOME: 'COURSE_ENROLLMENT_WELCOME',
@@ -9514,13 +9556,13 @@ export const PresentationEnum = {
 
 export type PresentationEnum = (typeof PresentationEnum)[keyof typeof PresentationEnum];
 
-export const StatusEnum8 = {
+export const StatusEnum9 = {
   UNREAD: 'UNREAD',
   READ: 'READ',
   ARCHIVED: 'ARCHIVED',
 } as const;
 
-export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
+export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
 
 export const RelationshipTypeEnum = {
   PARENT: 'PARENT',
@@ -9538,18 +9580,18 @@ export const ShareScopeEnum = {
 
 export type ShareScopeEnum = (typeof ShareScopeEnum)[keyof typeof ShareScopeEnum];
 
-export const StatusEnum9 = {
+export const StatusEnum10 = {
   PENDING: 'PENDING',
   ACTIVE: 'ACTIVE',
   REVOKED: 'REVOKED',
 } as const;
 
-export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
+export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
 
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum10 = {
+export const StatusEnum11 = {
   ENROLLED: 'ENROLLED',
   WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
@@ -9559,20 +9601,6 @@ export const StatusEnum10 = {
 
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
- */
-export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
-
-/**
- * **[READ-ONLY]** Current status of the application.
- */
-export const StatusEnum11 = {
-  PENDING: 'pending',
-  APPROVED: 'approved',
-  REJECTED: 'rejected',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the application.
  */
 export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
 
@@ -10290,7 +10318,7 @@ export type SubmissionTypesEnumWritable =
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export const StatusEnum6Writable = {
+export const StatusEnum8Writable = {
   SCHEDULED: 'SCHEDULED',
   ONGOING: 'ONGOING',
   COMPLETED: 'COMPLETED',
@@ -10301,21 +10329,7 @@ export const StatusEnum6Writable = {
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export type StatusEnum6Writable = (typeof StatusEnum6Writable)[keyof typeof StatusEnum6Writable];
-
-/**
- * **[REQUIRED]** Applicant type initiating the request.
- */
-export const ApplicantTypeEnumWritable = {
-  INSTRUCTOR: 'instructor',
-  ORGANISATION: 'organisation',
-} as const;
-
-/**
- * **[REQUIRED]** Applicant type initiating the request.
- */
-export type ApplicantTypeEnumWritable =
-  (typeof ApplicantTypeEnumWritable)[keyof typeof ApplicantTypeEnumWritable];
+export type StatusEnum8Writable = (typeof StatusEnum8Writable)[keyof typeof StatusEnum8Writable];
 
 export const TypeEnumWritable = {
   COURSE_ENROLLMENT_WELCOME: 'COURSE_ENROLLMENT_WELCOME',
@@ -10392,13 +10406,13 @@ export const PresentationEnumWritable = {
 export type PresentationEnumWritable =
   (typeof PresentationEnumWritable)[keyof typeof PresentationEnumWritable];
 
-export const StatusEnum8Writable = {
+export const StatusEnum9Writable = {
   UNREAD: 'UNREAD',
   READ: 'READ',
   ARCHIVED: 'ARCHIVED',
 } as const;
 
-export type StatusEnum8Writable = (typeof StatusEnum8Writable)[keyof typeof StatusEnum8Writable];
+export type StatusEnum9Writable = (typeof StatusEnum9Writable)[keyof typeof StatusEnum9Writable];
 
 export const RelationshipTypeEnumWritable = {
   PARENT: 'PARENT',
@@ -10418,18 +10432,18 @@ export const ShareScopeEnumWritable = {
 export type ShareScopeEnumWritable =
   (typeof ShareScopeEnumWritable)[keyof typeof ShareScopeEnumWritable];
 
-export const StatusEnum9Writable = {
+export const StatusEnum10Writable = {
   PENDING: 'PENDING',
   ACTIVE: 'ACTIVE',
   REVOKED: 'REVOKED',
 } as const;
 
-export type StatusEnum9Writable = (typeof StatusEnum9Writable)[keyof typeof StatusEnum9Writable];
+export type StatusEnum10Writable = (typeof StatusEnum10Writable)[keyof typeof StatusEnum10Writable];
 
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum10Writable = {
+export const StatusEnum11Writable = {
   ENROLLED: 'ENROLLED',
   WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
@@ -10440,7 +10454,7 @@ export const StatusEnum10Writable = {
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export type StatusEnum10Writable = (typeof StatusEnum10Writable)[keyof typeof StatusEnum10Writable];
+export type StatusEnum11Writable = (typeof StatusEnum11Writable)[keyof typeof StatusEnum11Writable];
 
 /**
  * How the platform fee was configured
@@ -11674,6 +11688,141 @@ export type UpdateTrainingProgramResponses = {
 export type UpdateTrainingProgramResponse =
   UpdateTrainingProgramResponses[keyof UpdateTrainingProgramResponses];
 
+export type WithdrawProgramTrainingApplicationData = {
+  body?: never;
+  path: {
+    programUuid: string;
+    applicationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}';
+};
+
+export type WithdrawProgramTrainingApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type WithdrawProgramTrainingApplicationError =
+  WithdrawProgramTrainingApplicationErrors[keyof WithdrawProgramTrainingApplicationErrors];
+
+export type WithdrawProgramTrainingApplicationResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type GetProgramTrainingApplicationData = {
+  body?: never;
+  path: {
+    programUuid: string;
+    applicationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}';
+};
+
+export type GetProgramTrainingApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetProgramTrainingApplicationError =
+  GetProgramTrainingApplicationErrors[keyof GetProgramTrainingApplicationErrors];
+
+export type GetProgramTrainingApplicationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseProgramTrainingApplication;
+};
+
+export type GetProgramTrainingApplicationResponse =
+  GetProgramTrainingApplicationResponses[keyof GetProgramTrainingApplicationResponses];
+
+export type DecideOnProgramTrainingApplicationData = {
+  body?: ProgramTrainingApplicationDecisionRequest;
+  path: {
+    programUuid: string;
+    applicationUuid: string;
+  };
+  query: {
+    action: string;
+  };
+  url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}';
+};
+
+export type DecideOnProgramTrainingApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DecideOnProgramTrainingApplicationError =
+  DecideOnProgramTrainingApplicationErrors[keyof DecideOnProgramTrainingApplicationErrors];
+
+export type DecideOnProgramTrainingApplicationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseProgramTrainingApplication;
+};
+
+export type DecideOnProgramTrainingApplicationResponse =
+  DecideOnProgramTrainingApplicationResponses[keyof DecideOnProgramTrainingApplicationResponses];
+
+export type UpdateProgramTrainingApplicationData = {
+  body: ProgramTrainingApplicationUpdateRequest;
+  path: {
+    programUuid: string;
+    applicationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}';
+};
+
+export type UpdateProgramTrainingApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateProgramTrainingApplicationError =
+  UpdateProgramTrainingApplicationErrors[keyof UpdateProgramTrainingApplicationErrors];
+
+export type UpdateProgramTrainingApplicationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseProgramTrainingApplication;
+};
+
+export type UpdateProgramTrainingApplicationResponse =
+  UpdateProgramTrainingApplicationResponses[keyof UpdateProgramTrainingApplicationResponses];
+
 export type DeleteProgramRequirementData = {
   body?: never;
   path: {
@@ -12700,6 +12849,141 @@ export type UpdateCourseTrainingRequirementResponses = {
 
 export type UpdateCourseTrainingRequirementResponse =
   UpdateCourseTrainingRequirementResponses[keyof UpdateCourseTrainingRequirementResponses];
+
+export type WithdrawTrainingApplicationData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+    applicationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}';
+};
+
+export type WithdrawTrainingApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type WithdrawTrainingApplicationError =
+  WithdrawTrainingApplicationErrors[keyof WithdrawTrainingApplicationErrors];
+
+export type WithdrawTrainingApplicationResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type GetTrainingApplicationData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+    applicationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}';
+};
+
+export type GetTrainingApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetTrainingApplicationError =
+  GetTrainingApplicationErrors[keyof GetTrainingApplicationErrors];
+
+export type GetTrainingApplicationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseTrainingApplication;
+};
+
+export type GetTrainingApplicationResponse =
+  GetTrainingApplicationResponses[keyof GetTrainingApplicationResponses];
+
+export type DecideOnTrainingApplicationData = {
+  body?: CourseTrainingApplicationDecisionRequest;
+  path: {
+    courseUuid: string;
+    applicationUuid: string;
+  };
+  query: {
+    action: string;
+  };
+  url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}';
+};
+
+export type DecideOnTrainingApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DecideOnTrainingApplicationError =
+  DecideOnTrainingApplicationErrors[keyof DecideOnTrainingApplicationErrors];
+
+export type DecideOnTrainingApplicationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseTrainingApplication;
+};
+
+export type DecideOnTrainingApplicationResponse =
+  DecideOnTrainingApplicationResponses[keyof DecideOnTrainingApplicationResponses];
+
+export type UpdateTrainingApplicationData = {
+  body: CourseTrainingApplicationUpdateRequest;
+  path: {
+    courseUuid: string;
+    applicationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}';
+};
+
+export type UpdateTrainingApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateTrainingApplicationError =
+  UpdateTrainingApplicationErrors[keyof UpdateTrainingApplicationErrors];
+
+export type UpdateTrainingApplicationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseTrainingApplication;
+};
+
+export type UpdateTrainingApplicationResponse =
+  UpdateTrainingApplicationResponses[keyof UpdateTrainingApplicationResponses];
 
 export type SetPrimaryRubricData = {
   body?: never;
@@ -15943,76 +16227,6 @@ export type SubmitProgramTrainingApplicationResponses = {
 export type SubmitProgramTrainingApplicationResponse =
   SubmitProgramTrainingApplicationResponses[keyof SubmitProgramTrainingApplicationResponses];
 
-export type GetProgramTrainingApplicationData = {
-  body?: never;
-  path: {
-    programUuid: string;
-    applicationUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}';
-};
-
-export type GetProgramTrainingApplicationErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetProgramTrainingApplicationError =
-  GetProgramTrainingApplicationErrors[keyof GetProgramTrainingApplicationErrors];
-
-export type GetProgramTrainingApplicationResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseProgramTrainingApplication;
-};
-
-export type GetProgramTrainingApplicationResponse =
-  GetProgramTrainingApplicationResponses[keyof GetProgramTrainingApplicationResponses];
-
-export type DecideOnProgramTrainingApplicationData = {
-  body?: ProgramTrainingApplicationDecisionRequest;
-  path: {
-    programUuid: string;
-    applicationUuid: string;
-  };
-  query: {
-    action: string;
-  };
-  url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}';
-};
-
-export type DecideOnProgramTrainingApplicationErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type DecideOnProgramTrainingApplicationError =
-  DecideOnProgramTrainingApplicationErrors[keyof DecideOnProgramTrainingApplicationErrors];
-
-export type DecideOnProgramTrainingApplicationResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseProgramTrainingApplication;
-};
-
-export type DecideOnProgramTrainingApplicationResponse =
-  DecideOnProgramTrainingApplicationResponses[keyof DecideOnProgramTrainingApplicationResponses];
-
 export type GetProgramReviewsData = {
   body?: never;
   path: {
@@ -17712,76 +17926,6 @@ export type SubmitTrainingApplicationResponses = {
 
 export type SubmitTrainingApplicationResponse =
   SubmitTrainingApplicationResponses[keyof SubmitTrainingApplicationResponses];
-
-export type GetTrainingApplicationData = {
-  body?: never;
-  path: {
-    courseUuid: string;
-    applicationUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}';
-};
-
-export type GetTrainingApplicationErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetTrainingApplicationError =
-  GetTrainingApplicationErrors[keyof GetTrainingApplicationErrors];
-
-export type GetTrainingApplicationResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseCourseTrainingApplication;
-};
-
-export type GetTrainingApplicationResponse =
-  GetTrainingApplicationResponses[keyof GetTrainingApplicationResponses];
-
-export type DecideOnTrainingApplicationData = {
-  body?: CourseTrainingApplicationDecisionRequest;
-  path: {
-    courseUuid: string;
-    applicationUuid: string;
-  };
-  query: {
-    action: string;
-  };
-  url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}';
-};
-
-export type DecideOnTrainingApplicationErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type DecideOnTrainingApplicationError =
-  DecideOnTrainingApplicationErrors[keyof DecideOnTrainingApplicationErrors];
-
-export type DecideOnTrainingApplicationResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseCourseTrainingApplication;
-};
-
-export type DecideOnTrainingApplicationResponse =
-  DecideOnTrainingApplicationResponses[keyof DecideOnTrainingApplicationResponses];
 
 export type GetCourseRubricsData = {
   body?: never;
