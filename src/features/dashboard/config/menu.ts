@@ -555,6 +555,11 @@ export default {
       icon: Briefcase,
     },
     {
+      title: 'Opportunities',
+      url: '/dashboard/opportunities',
+      icon: Handshake,
+    },
+    {
       title: 'Venues',
       url: '/dashboard/branches',
       icon: Building,
