@@ -1,7 +1,11 @@
 'use client';
 
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import useAmdinClassesWithDetails from '@/hooks/use-admin-classes';
+import { useInstructorsByIds, useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import {
   getClassDefinitionOptions,
@@ -15,22 +19,10 @@ import {
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, Course, Student, User } from '@/services/client/types.gen';
-import { useStudentsByIds, useUsersByIds, useInstructorsByIds } from '@/hooks/use-batched-lookups';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import type { ClassWithScheduleInput, InstructorSummary, SchedulerCalendarData, StudentSummary } from './calendar-utils';
 import { mapClassDefinitionDetails, mapClassSchedule, mapStudentSchedule, toClassLookup } from './calendar-utils';
 import { SchedulerCalendarView } from './new-scheduler-calendar-view';
 import type { SchedulerProfile } from './types';
-
-function useUserOrganisationUuid() {
-  const profile = useUserProfile();
-  return (
-    profile?.organizations?.[0]?.uuid ||
-    profile?.organisation_affiliations?.[0]?.organisation_uuid ||
-    undefined
-  );
-}
 
 function useClassStudentSummaries(
   classUuids: Array<string | null | undefined>
@@ -652,7 +644,8 @@ function StudentCalendarPage() {
 }
 
 function OrganizationCalendarPage() {
-  const organizationUuid = useUserOrganisationUuid();
+  const organisation = useOrganisation();
+  const organizationUuid = organisation?.uuid;
 
   const organizationClassesQuery = useQuery({
     ...getClassDefinitionsForOrganisationOptions({

@@ -565,6 +565,11 @@ export default {
       icon: LineChart,
     },
     {
+      title: 'Schedule',
+      url: '/dashboard/calendar',
+      icon: CalendarClock,
+    },
+    {
       title: 'Reports',
       url: '/dashboard/audit',
       icon: BarChart3,
