@@ -540,19 +540,9 @@ export default {
       icon: BookOpen,
     },
     {
-      title: 'Catalogue',
-      url: '/dashboard/catalogue',
-      icon: ShoppingBag,
-    },
-    {
       title: 'Course Management',
       url: '/dashboard/course-management',
       icon: LibraryIcon,
-    },
-    {
-      title: 'Skills Wallet',
-      url: '/dashboard/people',
-      icon: Wallet,
     },
     {
       title: 'Skills Fund',
@@ -603,6 +593,11 @@ export default {
       title: 'Training requests',
       url: '/dashboard/verification',
       icon: ShieldCheck,
+    },
+    {
+      title: 'Organisation',
+      url: '/dashboard/account/training-center',
+      icon: LucideLandmark,
     },
     {
       title: 'Credentials',
