@@ -1,3 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
+import { Calendar, Clock, MapPin, Users } from 'lucide-react';
+import type { DashboardClass } from '@/app/dashboard/_components/types';
+import { AsyncSection, SectionEmpty } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,9 +10,6 @@ import {
   getCourseByUuidOptions,
   getCourseLessonsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
-import { Calendar, Clock, MapPin, Users } from 'lucide-react';
-import type { DashboardClass } from '@/app/dashboard/_components/types';
 
 type Props = {
   courseUuid: string;
@@ -19,7 +20,8 @@ export default function ClassCourseDisplay({ courseUuid, classInfo }: Props) {
   const {
     data: courseDetail,
     isLoading,
-    isError,
+    error,
+    refetch,
   } = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseUuid } }),
     enabled: !!courseUuid,
@@ -38,26 +40,22 @@ export default function ClassCourseDisplay({ courseUuid, classInfo }: Props) {
     instructorUuid: classInfo?.default_instructor_uuid as string,
   });
 
-  if (isLoading) {
-    return (
-      <div className='space-y-2'>
-        <Skeleton className='h-4 w-2/3' />
-        <Skeleton className='h-4 w-1/2' />
-        <Skeleton className='h-4 w-1/4' />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return <div className='text-destructive text-sm'>Failed to load course details.</div>;
-  }
-
-  if (!course) {
-    return <div className='text-muted-foreground text-sm'>Course not found.</div>;
-  }
-
   return (
-    <>
+    <AsyncSection
+      loading={isLoading && !course}
+      error={error}
+      empty={!course}
+      onRetry={refetch}
+      errorTitle='Failed to load course details'
+      skeleton={
+        <div className='space-y-2'>
+          <Skeleton className='h-4 w-2/3' />
+          <Skeleton className='h-4 w-1/2' />
+          <Skeleton className='h-4 w-1/4' />
+        </div>
+      }
+      emptyState={<SectionEmpty title='Course not found' />}
+    >
       <div className='pb-3'>
         <div className='flex items-start justify-between'>
           <div className='flex-1'>
@@ -78,7 +76,9 @@ export default function ClassCourseDisplay({ courseUuid, classInfo }: Props) {
 
       <div className='space-y-3'>
         <Badge variant={course?.status === 'published' ? 'default' : 'secondary'}>
-          {`${course?.status?.charAt(0).toUpperCase() + course?.status?.slice(1)} Course`}
+          {course?.status
+            ? `${course.status.charAt(0).toUpperCase()}${course.status.slice(1)} Course`
+            : 'Course'}
         </Badge>
 
         <div className='text-muted-foreground flex items-center gap-2 text-sm'>
@@ -151,6 +151,6 @@ export default function ClassCourseDisplay({ courseUuid, classInfo }: Props) {
                     ))} */}
         </div>
       </div>
-    </>
+    </AsyncSection>
   );
 }

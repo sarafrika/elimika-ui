@@ -13,6 +13,7 @@ import {
 import Link from 'next/link';
 import { useMemo } from 'react';
 
+import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -137,30 +138,36 @@ function SectionSkeleton() {
 function ClassesSection({
   classes,
   isLoading,
+  error,
+  onRetry,
   courseMap,
   programMap,
 }: {
   classes: ClassDefinition[];
   isLoading: boolean;
+  error?: unknown;
+  onRetry?: () => void;
   courseMap: ReturnType<typeof useCoursesByIds>['courseMap'];
   programMap: ReturnType<typeof useProgramsByIds>['programMap'];
 }) {
-  if (isLoading) return <SectionSkeleton />;
-
-  if (!classes.length) {
-    return (
-      <EmptyState
-        icon={GraduationCap}
-        title='No classes yet'
-        description='Assigned marketplace jobs will appear here once an instructor is selected.'
-        variant='compact'
-      />
-    );
-  }
-
   return (
-    <div className='grid gap-3 lg:grid-cols-2'>
-      {classes.map(classDefinition => (
+    <AsyncSection
+      loading={isLoading}
+      error={error}
+      empty={!classes.length}
+      onRetry={onRetry}
+      skeleton={<SectionSkeleton />}
+      emptyState={
+        <EmptyState
+          icon={GraduationCap}
+          title='No classes yet'
+          description='Assigned marketplace jobs will appear here once an instructor is selected.'
+          variant='compact'
+        />
+      }
+    >
+      <div className='grid gap-3 lg:grid-cols-2'>
+        {classes.map(classDefinition => (
         <Card
           key={classDefinition.uuid}
           className='rounded-[14px] border border-border bg-card p-4'
@@ -212,43 +219,50 @@ function ClassesSection({
             </div>
           ) : null}
         </Card>
-      ))}
-    </div>
+        ))}
+      </div>
+    </AsyncSection>
   );
 }
 
 function JobsSection({
   jobs,
   isLoading,
+  error,
+  onRetry,
   courseMap,
   programMap,
 }: {
   jobs: ClassMarketplaceJobWithProgram[];
   isLoading: boolean;
+  error?: unknown;
+  onRetry?: () => void;
   courseMap: ReturnType<typeof useCoursesByIds>['courseMap'];
   programMap: ReturnType<typeof useProgramsByIds>['programMap'];
 }) {
-  if (isLoading) return <SectionSkeleton />;
-
-  if (!jobs.length) {
-    return (
-      <EmptyState
-        icon={BriefcaseBusiness}
-        title='No open classes'
-        description='Create a class for an approved course; instructors can then apply and you assign one.'
-        action={
-          <Button asChild variant='outline'>
-            <Link href='/dashboard/classes/new'>Create class</Link>
-          </Button>
-        }
-        variant='compact'
-      />
-    );
-  }
-
   return (
-    <div className='grid gap-3 lg:grid-cols-2'>
-      {jobs.map(job => (
+    <AsyncSection
+      loading={isLoading}
+      error={error}
+      empty={!jobs.length}
+      onRetry={onRetry}
+      skeleton={<SectionSkeleton />}
+      emptyState={
+        <EmptyState
+          icon={BriefcaseBusiness}
+          title='No open classes'
+          description='Create a class for an approved course; instructors can then apply and you assign one.'
+          action={
+            <Button asChild variant='outline'>
+              <Link href='/dashboard/classes/new'>Create class</Link>
+            </Button>
+          }
+          variant='compact'
+        />
+      }
+    >
+      <div className='grid gap-3 lg:grid-cols-2'>
+        {jobs.map(job => (
         <Card key={job.uuid} className='rounded-[14px] border border-border bg-card p-4'>
           <div className='flex flex-wrap items-start justify-between gap-3'>
             <div className='min-w-0'>
@@ -291,8 +305,9 @@ function JobsSection({
             </Button>
           </div>
         </Card>
-      ))}
-    </div>
+        ))}
+      </div>
+    </AsyncSection>
   );
 }
 
@@ -400,6 +415,8 @@ export default function ClassroomList() {
         <ClassesSection
           classes={classes}
           isLoading={classesQuery.isLoading && !classesQuery.data}
+          error={classesQuery.isError ? classesQuery.error : undefined}
+          onRetry={classesQuery.refetch}
           courseMap={courseMap}
           programMap={programMap}
         />
@@ -415,6 +432,8 @@ export default function ClassroomList() {
         <JobsSection
           jobs={jobs}
           isLoading={jobsQuery.isLoading && !jobsQuery.data}
+          error={jobsQuery.isError ? jobsQuery.error : undefined}
+          onRetry={jobsQuery.refetch}
           courseMap={courseMap}
           programMap={programMap}
         />

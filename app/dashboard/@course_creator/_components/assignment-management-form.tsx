@@ -1,5 +1,23 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  BookOpen,
+  BookOpenCheck,
+  Calendar,
+  ClipboardCheck,
+  Grip,
+  MoreVertical,
+  PlusCircle,
+  Trash,
+  XIcon,
+} from 'lucide-react';
+import { useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import z from 'zod';
+import { AsyncSection } from '@/components/data/async-section';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,6 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { useUserProfile } from '@/context/profile-context';
 import {
@@ -37,23 +56,6 @@ import {
   getCourseLessonsOptions,
   updateAssignmentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  BookOpen,
-  BookOpenCheck,
-  Calendar,
-  ClipboardCheck,
-  Grip,
-  MoreVertical,
-  PlusCircle,
-  Trash,
-  XIcon,
-} from 'lucide-react';
-import { useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
-import { toast } from 'sonner';
-import z from 'zod';
 import DeleteModal from '../../../../components/custom-modals/delete-modal';
 import RichTextRenderer from '../../../../components/editors/richTextRenders';
 import {
@@ -63,7 +65,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../../../components/ui/dropdown-menu';
-import { CustomLoadingState } from './loading-state';
 
 const SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'] as const;
 
@@ -517,10 +518,6 @@ function AssignmentList({
     );
   };
 
-  if (loading) {
-    return <CustomLoadingState subHeading='Fetching course assignments...' />;
-  }
-
   return (
     <div className='border-border bg-card space-y-8 rounded-[32px] border p-6 shadow-xl transition lg:p-10'>
       <div className='flex flex-row items-center justify-between'>
@@ -537,17 +534,39 @@ function AssignmentList({
         </Button>
       </div>
 
-      {loading ? (
-        <CustomLoadingState subHeading='Fetching course assignments' />
-      ) : assignments?.length === 0 ? (
-        <div className='text-muted-foreground rounded-lg border border-dashed p-12 text-center'>
-          <BookOpenCheck className='text-muted-foreground mx-auto h-12 w-12' />
-          <h3 className='mt-4 text-lg font-medium'>No assignments found for this course.</h3>
-          <p className='text-muted-foreground mt-2'>
-            You can create new assignments for this course.
-          </p>
-        </div>
-      ) : (
+      <AsyncSection
+        loading={loading && assignments.length === 0}
+        empty={assignments?.length === 0}
+        skeleton={
+          <div className='space-y-3'>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className='border-border bg-card/90 rounded-[20px] border p-4 shadow-xl lg:p-8'
+              >
+                <div className='flex items-start justify-between gap-4'>
+                  <Skeleton className='h-6 w-1/3' />
+                  <Skeleton className='h-6 w-24 rounded-full' />
+                </div>
+                <Skeleton className='mt-3 h-4 w-3/4' />
+                <div className='mt-4 grid grid-cols-2 gap-4'>
+                  <Skeleton className='h-4 w-2/3' />
+                  <Skeleton className='h-4 w-1/2' />
+                </div>
+              </div>
+            ))}
+          </div>
+        }
+        emptyState={
+          <div className='text-muted-foreground rounded-lg border border-dashed p-12 text-center'>
+            <BookOpenCheck className='text-muted-foreground mx-auto h-12 w-12' />
+            <h3 className='mt-4 text-lg font-medium'>No assignments found for this course.</h3>
+            <p className='text-muted-foreground mt-2'>
+              You can create new assignments for this course.
+            </p>
+          </div>
+        }
+      >
         <div className='space-y-3'>
           {assignments.map((assignment, index) => (
             <div
@@ -639,7 +658,7 @@ function AssignmentList({
             </div>
           ))}
         </div>
-      )}
+      </AsyncSection>
 
       <Dialog
         open={openAssignmentModal}

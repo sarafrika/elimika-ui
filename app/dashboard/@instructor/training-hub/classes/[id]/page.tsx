@@ -2,8 +2,8 @@
 
 import { AlertTriangle } from 'lucide-react';
 import React from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useClassDetails } from '../../../../../../hooks/use-class-details';
-import { EnrollmentLoadingState } from '../../../../../../src/features/dashboard/courses/components/EnrollmentLoadingState';
 import ClassCourseDetailsPage from '../../../../workspace/[domain]/courses/_components/ClassCourseDetailsPage';
 import ClassProgramDetailsPage from '../../../../workspace/[domain]/courses/_components/ClassProgramDetaisPage';
 
@@ -53,12 +53,17 @@ export default function TrainingHubClassCoursePage({ params }: Props) {
 
     const { data: classData, isLoading, isError } = useClassDetails(classId);
 
-    if (isLoading) {
+    if (isLoading && !classData) {
         return (
-            <EnrollmentLoadingState
-                title="Loading your course details"
-                description="We are gathering lessons, tasks, quizzes, and course information so the full learning overview is ready when the page opens."
-            />
+            <div className="space-y-4 px-4 py-6 sm:px-6">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-4 w-96 max-w-full" />
+                <Skeleton className="h-64 rounded-xl" />
+                <div className="grid gap-4 md:grid-cols-2">
+                    <Skeleton className="h-40 rounded-xl" />
+                    <Skeleton className="h-40 rounded-xl" />
+                </div>
+            </div>
         );
     }
 

@@ -2,8 +2,8 @@
 
 import { AlertTriangle } from 'lucide-react';
 import React from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
-import { EnrollmentLoadingState } from '../../../../../src/features/dashboard/courses/components/EnrollmentLoadingState';
 import ClassCourseDetailsPage from '../../../workspace/[domain]/courses/_components/ClassCourseDetailsPage';
 import ClassProgramDetailsPage from '../../../workspace/[domain]/courses/_components/ClassProgramDetaisPage';
 
@@ -48,6 +48,26 @@ function PageNotFound() {
     </div>
 }
 
+function ClassDetailsSkeleton() {
+    return (
+        <div className="space-y-6 p-4 sm:p-6">
+            <Skeleton className="h-40 w-full rounded-xl" />
+            <div className="grid gap-6 lg:grid-cols-3">
+                <div className="space-y-4 lg:col-span-2">
+                    <Skeleton className="h-8 w-2/3" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6" />
+                    <Skeleton className="h-64 w-full rounded-xl" />
+                </div>
+                <div className="space-y-4">
+                    <Skeleton className="h-48 w-full rounded-xl" />
+                    <Skeleton className="h-32 w-full rounded-xl" />
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function StudentClassCoursePage({ params }: Props) {
     const resolvedParams = React.use(params);
     const { id: classId } = resolvedParams;
@@ -56,12 +76,7 @@ export default function StudentClassCoursePage({ params }: Props) {
 
 
     if (isLoading) {
-        return (
-            <EnrollmentLoadingState
-                title="Loading your course details"
-                description="We are gathering lessons, tasks, quizzes, and course information so the full learning overview is ready when the page opens."
-            />
-        );
+        return <ClassDetailsSkeleton />;
     }
 
     if (isError || !classData) {

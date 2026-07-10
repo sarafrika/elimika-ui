@@ -1,13 +1,14 @@
 'use client';
 
+import { format, isAfter } from 'date-fns';
+import { CalendarDays, DoorOpen, ExternalLink, MapPin, Navigation, Video } from 'lucide-react';
+import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cx, getCardClasses, getEmptyStateClasses, getStatCardClasses } from '@/lib/design-system';
-import { format, isAfter } from 'date-fns';
-import { CalendarDays, DoorOpen, ExternalLink, MapPin, Navigation, Video } from 'lucide-react';
-import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
 import {
   formatClassroomLabel,
   getClassData,
@@ -27,11 +28,26 @@ function openMeetingLink(url?: string) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
-export default function ClassroomPage({ classDefinitions, loading, scheduleInstances }: Props) {
-  if (loading) {
-    return <CustomLoadingState subHeading='Preparing classrooms...' />;
-  }
+function ClassroomCardsSkeleton() {
+  return (
+    <section className='grid gap-6 xl:grid-cols-2'>
+      {Array.from({ length: 2 }).map((_, index) => (
+        <Card key={index} className={cx(getCardClasses(), 'p-5 sm:p-6')}>
+          <CardContent className='space-y-5 p-0'>
+            <Skeleton className='h-6 w-1/2' />
+            <div className='grid gap-3 md:grid-cols-2'>
+              <Skeleton className='h-20 w-full rounded-2xl' />
+              <Skeleton className='h-20 w-full rounded-2xl' />
+            </div>
+            <Skeleton className='h-[200px] w-full rounded-2xl' />
+          </CardContent>
+        </Card>
+      ))}
+    </section>
+  );
+}
 
+export default function ClassroomPage({ classDefinitions, loading, scheduleInstances }: Props) {
   const classroomRecords = classDefinitions.map(classRecord => {
     const classData = getClassData(classRecord);
     const nextSession = scheduleInstances.find(
@@ -82,18 +98,7 @@ export default function ClassroomPage({ classDefinitions, loading, scheduleInsta
       record.nextSession?.meetingUrl || record.schedules.some(schedule => schedule.meetingUrl)
   ).length;
 
-  if (!roomsWithLocation.length) {
-    return (
-      <section className={getEmptyStateClasses()}>
-        <DoorOpen className='text-primary/70 mb-2 h-12 w-12' />
-        <h3 className='text-foreground text-lg font-semibold'>No classroom details yet</h3>
-        <p className='text-muted-foreground max-w-md text-sm'>
-          As rooms, venues, or meeting links are added to your classes and schedule instances, they
-          will appear here automatically.
-        </p>
-      </section>
-    );
-  }
+  const initialLoading = Boolean(loading) && classDefinitions.length === 0;
 
   return (
     <div className='space-y-6'>
@@ -183,8 +188,23 @@ export default function ClassroomPage({ classDefinitions, loading, scheduleInsta
         </Card>
       </section>
 
-      <section className='grid gap-6 xl:grid-cols-2'>
-        {roomsWithLocation.map(record => (
+      <AsyncSection
+        loading={initialLoading}
+        empty={roomsWithLocation.length === 0}
+        skeleton={<ClassroomCardsSkeleton />}
+        emptyState={
+          <section className={getEmptyStateClasses()}>
+            <DoorOpen className='text-primary/70 mb-2 h-12 w-12' />
+            <h3 className='text-foreground text-lg font-semibold'>No classroom details yet</h3>
+            <p className='text-muted-foreground max-w-md text-sm'>
+              As rooms, venues, or meeting links are added to your classes and schedule instances,
+              they will appear here automatically.
+            </p>
+          </section>
+        }
+      >
+        <section className='grid gap-6 xl:grid-cols-2'>
+          {roomsWithLocation.map(record => (
           <Card key={record.uuid} className={cx(getCardClasses(), 'p-5 sm:p-6')}>
             <CardContent className='space-y-5 p-0'>
               <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
@@ -278,7 +298,8 @@ export default function ClassroomPage({ classDefinitions, loading, scheduleInsta
             </CardContent>
           </Card>
         ))}
-      </section>
+        </section>
+      </AsyncSection>
     </div>
   );
 }

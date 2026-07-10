@@ -1,6 +1,21 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  BookOpen,
+  CheckCircle,
+  Clock,
+  ListOrdered,
+  MoreVertical,
+  PenLine,
+  PlusCircle,
+  Trash,
+} from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import DeleteModal from '@/components/custom-modals/delete-modal';
+import { AsyncSection } from '@/components/data/async-section';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
@@ -42,21 +58,10 @@ import {
   searchAssignmentsOptions,
   searchQuizzesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  BookOpen,
-  CheckCircle,
-  Clock,
-  ListOrdered,
-  MoreVertical,
-  PenLine,
-  PlusCircle,
-  Trash,
-} from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import { PracticeActivityManager } from '../../_components/practice-activity-management';
+  type ContentType as ApiContentType,
+  type Quiz,
+} from '@/services/client/types.gen';
 import type { TLesson, TLessonContentItem } from '../../_components/instructor-type';
 import {
   type ContentFormValues,
@@ -64,17 +69,13 @@ import {
   getContentTypeIcon,
   LessonContentDialog,
 } from '../../_components/lesson-management-form';
-import { CustomLoadingState } from '../../_components/loading-state';
+import { PracticeActivityManager } from '../../_components/practice-activity-management';
 import {
   QuestionDialog,
   QuizDialog,
   type QuizFormValues,
 } from '../../_components/quiz-management-form';
 import QuizQuestions from './quizQuestions';
-import {
-  type ContentType as ApiContentType,
-  type Quiz,
-} from '@/services/client/types.gen';
 
 type LessonRecord = TLesson & { duration_display?: string };
 type LessonContentRecord = TLessonContentItem & { uuid?: string; lesson_uuid: string };
@@ -276,12 +277,6 @@ const LessonDetailsPage = () => {
     );
   };
 
-  const loading = isLoading || contentIsLoading;
-
-  if (loading) {
-    return <CustomLoadingState subHeading='Loading skills and resources' />;
-  }
-
   const pageShellClasses =
     'max-w-6xl space-y-8 rounded-[32px] border border-border bg-card p-6 shadow-xl transition lg:p-10 dark:border-border/80 dark:bg-gradient-to-br dark:from-primary/10 dark:via-background/60 dark:to-background';
   const contentGroupClasses =
@@ -292,21 +287,32 @@ const LessonDetailsPage = () => {
   return (
     <div className={pageShellClasses}>
       <div className='mb-6 flex items-end justify-between'>
-        <div className='flex flex-col gap-2'>
-          <h1 className='text-2xl font-semibold'>{lesson?.title}</h1>
-          <div className='text-muted-foreground mt-1 text-[15px]'>
-            <RichTextRenderer htmlString={lesson?.description ?? ''} />
+        {isLoading && !lesson ? (
+          <div className='flex w-full flex-col gap-2'>
+            <Skeleton className='h-8 w-64' />
+            <Skeleton className='h-4 w-96 max-w-full' />
+            <div className='flex flex-row gap-6'>
+              <Skeleton className='h-4 w-32' />
+              <Skeleton className='h-4 w-16' />
+            </div>
           </div>
-          <div className='text-muted-foreground flex flex-row gap-6 text-sm font-normal'>
-            <p className='flex items-center gap-2'>
-              <Clock size={14} /> Duration: {lesson?.duration_display}
-            </p>
-            <p className='flex items-center gap-2'>
-              <ListOrdered size={14} />
-              {lesson?.lesson_sequence}
-            </p>
+        ) : (
+          <div className='flex flex-col gap-2'>
+            <h1 className='text-2xl font-semibold'>{lesson?.title}</h1>
+            <div className='text-muted-foreground mt-1 text-[15px]'>
+              <RichTextRenderer htmlString={lesson?.description ?? ''} />
+            </div>
+            <div className='text-muted-foreground flex flex-row gap-6 text-sm font-normal'>
+              <p className='flex items-center gap-2'>
+                <Clock size={14} /> Duration: {lesson?.duration_display}
+              </p>
+              <p className='flex items-center gap-2'>
+                <ListOrdered size={14} />
+                {lesson?.lesson_sequence}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <Card>
@@ -330,8 +336,39 @@ const LessonDetailsPage = () => {
         </CardHeader>
 
         <div className='mx-3 space-y-6'>
-          {contentItems.length > 0 ? (
-            contentItems.map(item => {
+          <AsyncSection
+            loading={contentIsLoading && !lessonContent}
+            empty={contentItems.length === 0}
+            skeleton={
+              <div className='space-y-6'>
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className={contentGroupClasses}>
+                    <div className='flex w-full flex-col gap-2'>
+                      <Skeleton className='h-5 w-40' />
+                      <Skeleton className='h-4 w-3/4' />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            }
+            emptyState={
+              <div className='flex items-center gap-4 px-2 py-2'>
+                <p className='text-muted-foreground text-sm'>No content items yet.</p>
+
+                <Button
+                  onClick={openAddLessonContent}
+                  variant='secondary'
+                  size='sm'
+                  className='flex items-center gap-1'
+                >
+                  <PlusCircle className='h-4 w-4' />
+                  Add Content
+                </Button>
+              </div>
+            }
+          >
+            <div className='space-y-6'>
+              {contentItems.map(item => {
               const type = contentTypeData.find(
                 (ct: ApiContentType) => ct.uuid === item.content_type_uuid
               );
@@ -401,22 +438,9 @@ const LessonDetailsPage = () => {
                   </div>
                 </div>
               );
-            })
-          ) : (
-            <div className='flex items-center gap-4 px-2 py-2'>
-              <p className='text-muted-foreground text-sm'>No content items yet.</p>
-
-              <Button
-                onClick={openAddLessonContent}
-                variant='secondary'
-                size='sm'
-                className='flex items-center gap-1'
-              >
-                <PlusCircle className='h-4 w-4' />
-                Add Content
-              </Button>
+              })}
             </div>
-          )}
+          </AsyncSection>
         </div>
       </Card>
 
@@ -447,7 +471,22 @@ const LessonDetailsPage = () => {
         </CardHeader>
 
         {quizIsFetching ? (
-          <>Loading...</>
+          <CardContent>
+            <div className='space-y-3'>
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className={quizCardClasses}>
+                  <div className='flex items-start gap-3'>
+                    <Skeleton className='h-8 w-8 rounded-full' />
+                    <div className='flex w-full flex-col gap-2'>
+                      <Skeleton className='h-5 w-48' />
+                      <Skeleton className='h-4 w-3/4' />
+                      <Skeleton className='h-8 w-32' />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
         ) : (
           <CardContent>
             <div className='mt-1 flex w-full flex-col gap-2 space-y-2'>
@@ -592,7 +631,21 @@ const LessonDetailsPage = () => {
         </CardHeader>
 
         {assignmentIsFetching ? (
-          <>Loading...</>
+          <CardContent>
+            <div className='space-y-3'>
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className={quizCardClasses}>
+                  <div className='flex items-start gap-3'>
+                    <Skeleton className='h-8 w-8 rounded-full' />
+                    <div className='flex w-full flex-col gap-2'>
+                      <Skeleton className='h-5 w-48' />
+                      <Skeleton className='h-4 w-3/4' />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
         ) : (
           <CardContent>
             <div className='mt-1 flex w-full flex-col gap-2 space-y-2'>

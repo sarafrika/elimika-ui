@@ -1,17 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cx, getCardClasses, getEmptyStateClasses, getStatCardClasses } from '@/lib/design-system';
 import {
   addDays,
   endOfMonth,
@@ -37,12 +25,40 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
+import { AsyncSection } from '@/components/data/async-section';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cx, getCardClasses, getEmptyStateClasses, getStatCardClasses } from '@/lib/design-system';
 import {
   humanizeEnum,
   type StudentClassRecord,
   type StudentScheduleInstance,
 } from './schedule-data';
+
+function TimetableSkeleton() {
+  return (
+    <section className={cx(getCardClasses(), 'p-4 sm:p-6')}>
+      <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
+        <Skeleton className='h-8 w-48' />
+        <Skeleton className='h-9 w-60' />
+      </div>
+      <div className='mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]'>
+        <Skeleton className='h-[420px] w-full rounded-3xl' />
+        <Skeleton className='h-[420px] w-full rounded-3xl' />
+      </div>
+    </section>
+  );
+}
 
 type Props = {
   classDefinitions: StudentClassRecord[];
@@ -97,22 +113,7 @@ export default function TimetableManager({ classDefinitions, loading, scheduleIn
     classRecord => (classRecord.schedules?.length ?? 0) > 0
   ).length;
 
-  if (loading) {
-    return <CustomLoadingState subHeading='Loading your timetable...' />;
-  }
-
-  if (!scheduleInstances.length) {
-    return (
-      <section className={getEmptyStateClasses()}>
-        <Calendar className='text-primary/70 mb-2 h-12 w-12' />
-        <h3 className='text-foreground text-lg font-semibold'>No timetable entries yet</h3>
-        <p className='text-muted-foreground max-w-md text-sm'>
-          Your class schedule instances will appear here once sessions are created for the classes
-          you are enrolled in.
-        </p>
-      </section>
-    );
-  }
+  const initialLoading = Boolean(loading) && scheduleInstances.length === 0;
 
   return (
     <div className='space-y-6'>
@@ -159,36 +160,67 @@ export default function TimetableManager({ classDefinitions, loading, scheduleIn
             <p className='text-muted-foreground text-sm'>
               Quick access to the next class meetings in your current timetable range.
             </p>
-            <div className='space-y-3'>
-              {upcomingSchedules.map(schedule => (
-                <button
-                  key={schedule.uuid}
-                  type='button'
-                  onClick={() => {
-                    setSelectedDate(new Date(schedule.startTime));
-                    setSelectedSchedule(schedule);
-                  }}
-                  className='border-border/60 bg-muted/30 hover:border-primary/30 hover:bg-primary/5 w-full rounded-2xl border p-4 text-left transition'
-                >
-                  <div className='flex items-start justify-between gap-3'>
-                    <div className='min-w-0'>
-                      <p className='text-foreground truncate font-medium'>{schedule.classTitle}</p>
-                      <p className='text-muted-foreground mt-1 text-sm'>
-                        {format(new Date(schedule.startTime), 'EEE, MMM d')} · {schedule.timeRange}
-                      </p>
-                      <p className='text-muted-foreground mt-1 text-sm'>{schedule.locationLabel}</p>
+            <AsyncSection
+              loading={initialLoading}
+              empty={upcomingSchedules.length === 0}
+              emptyTitle='No upcoming sessions'
+              emptyDescription='Sessions will appear here once they are scheduled.'
+              skeleton={
+                <div className='space-y-3'>
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <Skeleton key={index} className='h-24 w-full rounded-2xl' />
+                  ))}
+                </div>
+              }
+            >
+              <div className='space-y-3'>
+                {upcomingSchedules.map(schedule => (
+                  <button
+                    key={schedule.uuid}
+                    type='button'
+                    onClick={() => {
+                      setSelectedDate(new Date(schedule.startTime));
+                      setSelectedSchedule(schedule);
+                    }}
+                    className='border-border/60 bg-muted/30 hover:border-primary/30 hover:bg-primary/5 w-full rounded-2xl border p-4 text-left transition'
+                  >
+                    <div className='flex items-start justify-between gap-3'>
+                      <div className='min-w-0'>
+                        <p className='text-foreground truncate font-medium'>{schedule.classTitle}</p>
+                        <p className='text-muted-foreground mt-1 text-sm'>
+                          {format(new Date(schedule.startTime), 'EEE, MMM d')} · {schedule.timeRange}
+                        </p>
+                        <p className='text-muted-foreground mt-1 text-sm'>
+                          {schedule.locationLabel}
+                        </p>
+                      </div>
+                      <Badge variant='outline'>
+                        {schedule.meetingUrl ? 'Launch ready' : 'Details'}
+                      </Badge>
                     </div>
-                    <Badge variant='outline'>
-                      {schedule.meetingUrl ? 'Launch ready' : 'Details'}
-                    </Badge>
-                  </div>
-                </button>
-              ))}
-            </div>
+                  </button>
+                ))}
+              </div>
+            </AsyncSection>
           </div>
         </div>
       </section>
 
+      <AsyncSection
+        loading={initialLoading}
+        empty={scheduleInstances.length === 0}
+        skeleton={<TimetableSkeleton />}
+        emptyState={
+          <section className={getEmptyStateClasses()}>
+            <Calendar className='text-primary/70 mb-2 h-12 w-12' />
+            <h3 className='text-foreground text-lg font-semibold'>No timetable entries yet</h3>
+            <p className='text-muted-foreground max-w-md text-sm'>
+              Your class schedule instances will appear here once sessions are created for the
+              classes you are enrolled in.
+            </p>
+          </section>
+        }
+      >
       <section className={cx(getCardClasses(), 'p-4 sm:p-6')}>
         <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
           <div className='flex items-center gap-3'>
@@ -395,6 +427,7 @@ export default function TimetableManager({ classDefinitions, loading, scheduleIn
           </div>
         )}
       </section>
+      </AsyncSection>
 
       <Dialog open={!!selectedSchedule} onOpenChange={open => !open && setSelectedSchedule(null)}>
         <DialogContent className='max-w-[96vw] sm:max-w-2xl'>

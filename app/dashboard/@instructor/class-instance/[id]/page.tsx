@@ -1,11 +1,11 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { useInstructor } from '@/context/instructor-context';
-import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
-import { Loader2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useMemo } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useInstructor } from '@/context/instructor-context';
+import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import ClassTrainingPage from '../../classes/class-training/[id]/_components/ClassTrainingPage';
 
 export default function ClassInstanceDetailsRoute() {
@@ -24,15 +24,20 @@ export default function ClassInstanceDetailsRoute() {
 
   const requestedScheduleId = useMemo(() => instanceId ?? '', [instanceId]);
 
-  if (isLoading) {
+  if (isLoading && !selectedClass) {
     return (
-      <div className='flex min-h-[60vh] items-center justify-center px-4 py-10'>
-        <Card className='w-full max-w-xl'>
-          <CardContent className='flex items-center gap-3 px-6 py-8 text-muted-foreground'>
-            <Loader2 className='size-5 animate-spin text-primary' />
-            Loading class instance details...
-          </CardContent>
-        </Card>
+      <div className='space-y-4 px-4 py-6'>
+        <div className='flex items-center justify-between gap-4'>
+          <div className='space-y-2'>
+            <Skeleton className='h-6 w-56' />
+            <Skeleton className='h-4 w-40' />
+          </div>
+          <Skeleton className='h-9 w-28' />
+        </div>
+        <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]'>
+          <Skeleton className='h-[520px] rounded-xl' />
+          <Skeleton className='h-[520px] rounded-xl' />
+        </div>
       </div>
     );
   }

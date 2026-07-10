@@ -5,6 +5,8 @@ import { AlertTriangle, Info, Pencil, Plus, Save, Trash2, X } from 'lucide-react
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { AsyncSection } from '@/components/data/async-section';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
@@ -140,7 +142,7 @@ function AssessmentLineItems({
   }
 
   if (isLoading) {
-    return <Spinner className='h-3 w-3' />;
+    return <Skeleton className='h-5 w-24 rounded-full' />;
   }
 
   if (lineItems.length === 0) return null;
@@ -680,7 +682,13 @@ export const CourseAssessmentStructure = ({
   const qc = useQueryClient();
   const creator = useCourseCreator();
 
-  const { data: assessmentsData, isLoading } = useQuery({
+  const {
+    data: assessmentsData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     ...getCourseAssessmentsOptions({ path: { courseUuid }, query: { pageable: {} } }),
     enabled: !!courseUuid,
   });
@@ -741,26 +749,43 @@ export const CourseAssessmentStructure = ({
           </Button>
         </div>
 
-        {/* Table */}
-        {isLoading ? (
-          <div className='flex items-center justify-center py-16'>
-            <Spinner className='h-6 w-6' />
-          </div>
-        ) : assessments.length === 0 ? (
-          <div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
-            <div className='bg-muted rounded-full p-4'>
-              <Plus size={24} className='text-muted-foreground' />
+        {/* Table — degrades independently (skeleton / error / empty are local) */}
+        <AsyncSection
+          loading={isLoading && !assessmentsData}
+          error={isError ? error : undefined}
+          empty={assessments.length === 0}
+          onRetry={refetch}
+          className='m-6'
+          skeleton={
+            <div className='divide-y'>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className='flex items-center justify-between gap-4 px-6 py-4'>
+                  <div className='flex-1 space-y-2'>
+                    <Skeleton className='h-4 w-1/3' />
+                    <Skeleton className='h-3 w-1/2' />
+                  </div>
+                  <Skeleton className='h-4 w-20' />
+                  <Skeleton className='h-8 w-16' />
+                </div>
+              ))}
             </div>
-            <p className='text-foreground font-medium'>No assessments yet</p>
-            <p className='text-muted-foreground max-w-xs text-sm'>
-              Add assessment components to define the grading structure for this course.
-            </p>
-            <Button onClick={openAdd} size='sm' variant='outline' className='mt-1 gap-2'>
-              <Plus size={14} />
-              Add First Assessment
-            </Button>
-          </div>
-        ) : (
+          }
+          emptyState={
+            <div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
+              <div className='bg-muted rounded-full p-4'>
+                <Plus size={24} className='text-muted-foreground' />
+              </div>
+              <p className='text-foreground font-medium'>No assessments yet</p>
+              <p className='text-muted-foreground max-w-xs text-sm'>
+                Add assessment components to define the grading structure for this course.
+              </p>
+              <Button onClick={openAdd} size='sm' variant='outline' className='mt-1 gap-2'>
+                <Plus size={14} />
+                Add First Assessment
+              </Button>
+            </div>
+          }
+        >
           <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
               <thead>
@@ -887,7 +912,7 @@ export const CourseAssessmentStructure = ({
               </tfoot>
             </table>
           </div>
-        )}
+        </AsyncSection>
 
         {!isLoading && assessments.length > 0 && totalWeight !== 100 && (
           <div

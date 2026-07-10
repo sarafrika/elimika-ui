@@ -1,6 +1,23 @@
 'use client';
 
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  ClipboardCheck,
+  Eye,
+  Loader2,
+  MessageSquareText,
+  PanelRight,
+  Search
+} from 'lucide-react';
+import Link from 'next/link';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { PracticeActivityList } from '@/app/dashboard/@course_creator/_components/practice-activity-management';
+import { AsyncSection } from '@/components/data/async-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,15 +38,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
-import { useClassDetails, type ClassDetailsScheduleItem } from '@/hooks/use-class-details';
+import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
-import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
+import { type RosterEntry, useClassRoster } from '@/hooks/use-class-roster';
 import {
   type CourseLessonContent,
   type CourseLessonWithContent,
 } from '@/hooks/use-courselessonwithcontent';
+import { dayjs } from '@/lib/date';
 import {
   createAssignmentScheduleMutation,
   createQuizScheduleMutation,
@@ -59,23 +78,6 @@ import type {
   Quiz,
   RubricMatrix,
 } from '@/services/client/types.gen';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  AlertCircle,
-  ArrowLeft,
-  BookOpen,
-  ClipboardCheck,
-  Eye,
-  Loader2,
-  MessageSquareText,
-  PanelRight,
-  Search
-} from 'lucide-react';
-import { dayjs } from '@/lib/date';
-import Link from 'next/link';
-import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { AssignmentContentPreview } from '../../../../../../../../components/content-preview/AssignmentContentPreview';
 import { LessonContentPreview } from '../../../../../../../../components/content-preview/LessonContentPreview';
 import { QuizContentPreview } from '../../../../../../../../components/content-preview/QuizContentPreview';
@@ -670,6 +672,27 @@ function ConsoleSkeleton() {
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function LessonContentSkeleton() {
+  return (
+    <div className='mx-auto space-y-4 p-2 md:p-2'>
+      <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+        <div className='border-b p-4'>
+          <Skeleton className='h-4 w-40' />
+        </div>
+        <div className='border-border/70 border-b p-4 space-y-2'>
+          <Skeleton className='h-3 w-24' />
+          <Skeleton className='h-6 w-2/3' />
+        </div>
+        <div className='space-y-3 p-4'>
+          <Skeleton className='h-4 w-full' />
+          <Skeleton className='h-4 w-5/6' />
+          <Skeleton className='h-64 w-full rounded-md' />
+        </div>
+      </article>
     </div>
   );
 }
@@ -1619,28 +1642,7 @@ export default function StudentClassTrainingPage({
     toast.success('Note shared for this session view.');
   };
 
-  // if (isLoading || rosterLoading || lessonsLoading) {
-  //   return <ConsoleSkeleton />;
-  // }
-
-  if (isError) {
-    return (
-      <div className='fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_oklch,var(--el-brand-50)_80%,var(--background))] p-6'>
-        <div className='border-destructive/30 bg-card flex min-h-[280px] w-full max-w-xl flex-col items-center justify-center gap-4 rounded-lg border p-8 text-center shadow-sm'>
-          <AlertCircle className='text-destructive h-10 w-10' />
-          <div className='space-y-1'>
-            <h2 className='text-lg font-semibold'>Unable to load this class training room</h2>
-            <p className='text-muted-foreground text-sm'>
-              The class details could not be fetched right now. Please try again shortly.
-            </p>
-          </div>
-          <Button asChild variant='outline'>
-            <Link href='/dashboard/learning-hub/classes'>Back to classes</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const contentInitialLoading = (isLoading || lessonsLoading) && lessonModules.length === 0;
 
   return (
     <main className='text-foreground fixed inset-0 z-50 flex flex-col overflow-hidden bg-[color-mix(in_oklch,var(--el-brand-50)_80%,var(--background))]'>
@@ -1813,6 +1815,14 @@ export default function StudentClassTrainingPage({
           </div>
 
           <ScrollArea className='h-[calc(100vh-8.5rem)]'>
+            <AsyncSection
+              loading={contentInitialLoading}
+              error={isError || undefined}
+              errorTitle='Unable to load this class training room'
+              onRetry={() => window.location.reload()}
+              className='m-4'
+              skeleton={<LessonContentSkeleton />}
+            >
             {activeTab === 'content' && (
               <div className='mx-auto space-y-4 p-2 md:p-2'>
                 <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
@@ -1952,6 +1962,7 @@ export default function StudentClassTrainingPage({
                 </article>
               </div>
             )}
+            </AsyncSection>
           </ScrollArea>
         </section>
 

@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { BookOpen, CheckCircle2, Layers, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import type { ContentItem } from '@/services/admin/credential-review';
 import {
@@ -19,7 +21,7 @@ import {
   moderateProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { adminTheme } from '../../_components/ui/admin-theme';
-import { SectionCard, SectionCardSkeleton } from '../../_components/ui/SectionCard';
+import { SectionCard } from '../../_components/ui/SectionCard';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
 
 function ContentRow({
@@ -120,8 +122,6 @@ export function ContentApprovalsTab({
   isLoading: boolean;
   onModerated: () => void;
 }) {
-  if (isLoading) return <SectionCardSkeleton rows={5} />;
-
   // Pending items first, then by title.
   const sorted = [...items].sort(
     (a, b) => Number(b.pending) - Number(a.pending) || a.title.localeCompare(b.title)
@@ -136,15 +136,26 @@ export function ContentApprovalsTab({
           : 'Courses and programs authored or taught'
       }
     >
-      {sorted.length ? (
+      <AsyncSection
+        loading={isLoading && sorted.length === 0}
+        empty={sorted.length === 0}
+        skeleton={
+          <div className='space-y-3'>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className='h-16 w-full rounded-md' />
+            ))}
+          </div>
+        }
+        emptyState={
+          <p className={`${adminTheme.sectionLabel} normal-case`}>No courses or programs yet.</p>
+        }
+      >
         <div className='space-y-3'>
           {sorted.map(item => (
             <ContentRow key={`${item.type}-${item.uuid}`} item={item} onModerated={onModerated} />
           ))}
         </div>
-      ) : (
-        <p className={`${adminTheme.sectionLabel} normal-case`}>No courses or programs yet.</p>
-      )}
+      </AsyncSection>
     </SectionCard>
   );
 }

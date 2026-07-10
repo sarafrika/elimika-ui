@@ -1,5 +1,31 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  CalendarCheck2,
+  CheckCircle2,
+  ChevronRight,
+  ClipboardCheck,
+  Clock3,
+  ExternalLink,
+  FileAudio,
+  FileImage,
+  FileText,
+  ListChecks,
+  MapPin,
+  PlayCircle,
+  Radio,
+  Search,
+  Users,
+  Video
+} from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import {
   ClassScheduleManager,
@@ -19,15 +45,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import {
-  useClassDetails,
   type ClassDetailsScheduleItem,
+  useClassDetails,
 } from '@/hooks/use-class-details';
-import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
+import { type RosterEntry, useClassRoster } from '@/hooks/use-class-roster';
 import {
-  useCourseLessonsWithContent,
   type CourseLesson,
   type CourseLessonContent,
   type CourseLessonWithContent,
+  useCourseLessonsWithContent,
 } from '@/hooks/use-courselessonwithcontent';
 import { dayjs } from '@/lib/date';
 import {
@@ -58,32 +84,6 @@ import type {
   CreateQuizScheduleData,
   Quiz,
 } from '@/services/client/types.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  AlertCircle,
-  ArrowLeft,
-  BookOpen,
-  CalendarCheck2,
-  CheckCircle2,
-  ChevronRight,
-  ClipboardCheck,
-  Clock3,
-  ExternalLink,
-  FileAudio,
-  FileImage,
-  FileText,
-  ListChecks,
-  MapPin,
-  PlayCircle,
-  Radio,
-  Search,
-  Users,
-  Video
-} from 'lucide-react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
 type LessonItem = CourseLesson;
@@ -783,9 +783,14 @@ export default function InstructorTrainingConsole() {
     }));
   }, [activeInstanceStudents, activeLesson?.title]);
 
-  if (isLoading || rosterLoading || lessonsLoading) {
+  // Gate only on the primary class-details query — the console shell/header renders
+  // as soon as it resolves. Roster and lesson content degrade in their own regions.
+  if (isLoading) {
     return <ConsoleSkeleton />;
   }
+
+  const rosterPending = rosterLoading && rosterAllEnrollments.length === 0;
+  const lessonsPending = lessonsLoading && lessonModules.length === 0;
 
   if (isError) {
     return (
@@ -974,6 +979,19 @@ export default function InstructorTrainingConsole() {
             </div>
           </CardHeader>
           <ScrollArea className='h-[700px]'>
+            {rosterPending && filteredRoster.length === 0 ? (
+              <div className='space-y-2 p-3'>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className='flex items-start gap-3 rounded-2xl border border-border/60 p-3'>
+                    <Skeleton className='size-10 rounded-full' />
+                    <div className='flex-1 space-y-2'>
+                      <Skeleton className='h-3.5 w-3/4' />
+                      <Skeleton className='h-3 w-1/2' />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
             <div className='space-y-2 p-3'>
               {filteredRoster.map((entry: RosterEntry) => {
                 const isActive = selectedStudent?.user?.uuid === entry.user?.uuid;
@@ -1029,6 +1047,7 @@ export default function InstructorTrainingConsole() {
                 </div>
               )}
             </div>
+            )}
           </ScrollArea>
         </Card>
 
@@ -1167,7 +1186,11 @@ export default function InstructorTrainingConsole() {
                     <div className='space-y-3'>
                       <p className='text-sm font-semibold'>Course lesson outline</p>
                       <div className='space-y-2'>
-                        {lessonModules.length > 0 ? (
+                        {lessonsPending ? (
+                          Array.from({ length: 4 }).map((_, i) => (
+                            <Skeleton key={i} className='h-[86px] w-full rounded-2xl' />
+                          ))
+                        ) : lessonModules.length > 0 ? (
                           lessonModules.map((module, index) => {
                             const isSelected = activeLesson?.uuid === module.lesson.uuid;
                             const contentCount = module.content?.data?.length ?? 0;

@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import type { ComponentType } from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -78,17 +79,29 @@ function MetricTile({
 }
 
 function BranchesTab({ uuid, active }: { uuid: string; active: boolean }) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['org-branches', uuid],
     queryFn: () => fetchOrganisationBranches(uuid),
     enabled: active,
     staleTime: STALE_TIMES.entity,
   });
-  if (isLoading) return <SectionCardSkeleton rows={4} />;
   const branches = data ?? [];
   return (
     <SectionCard title='Branches' description='Training branches operated by this organisation.'>
-      {branches.length ? (
+      <AsyncSection
+        loading={isLoading && !data}
+        error={isError ? error : undefined}
+        empty={branches.length === 0}
+        onRetry={refetch}
+        skeleton={
+          <div className='space-y-3'>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className='h-20 w-full rounded-md' />
+            ))}
+          </div>
+        }
+        emptyState={<p className='text-sm text-muted-foreground'>No branches registered.</p>}
+      >
         <div className='space-y-3'>
           {branches.map(branch => (
             <div key={branch.uuid} className='rounded-md border border-border/60 bg-muted/20 p-3'>
@@ -110,26 +123,36 @@ function BranchesTab({ uuid, active }: { uuid: string; active: boolean }) {
             </div>
           ))}
         </div>
-      ) : (
-        <p className='text-sm text-muted-foreground'>No branches registered.</p>
-      )}
+      </AsyncSection>
     </SectionCard>
   );
 }
 
 function MembersTab({ uuid, active }: { uuid: string; active: boolean }) {
   const router = useRouter();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['org-members', uuid],
     queryFn: () => fetchOrganisationMembers(uuid),
     enabled: active,
     staleTime: STALE_TIMES.entity,
   });
-  if (isLoading) return <SectionCardSkeleton rows={4} />;
   const members = data ?? [];
   return (
     <SectionCard title='Members' description='People affiliated with this organisation.'>
-      {members.length ? (
+      <AsyncSection
+        loading={isLoading && !data}
+        error={isError ? error : undefined}
+        empty={members.length === 0}
+        onRetry={refetch}
+        skeleton={
+          <div className='space-y-2'>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className='h-16 w-full rounded-md' />
+            ))}
+          </div>
+        }
+        emptyState={<p className='text-sm text-muted-foreground'>No members affiliated.</p>}
+      >
         <div className='space-y-2'>
           {members.map(member => (
             <button
@@ -150,25 +173,35 @@ function MembersTab({ uuid, active }: { uuid: string; active: boolean }) {
             </button>
           ))}
         </div>
-      ) : (
-        <p className='text-sm text-muted-foreground'>No members affiliated.</p>
-      )}
+      </AsyncSection>
     </SectionCard>
   );
 }
 
 function ClassesTab({ uuid, active }: { uuid: string; active: boolean }) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['org-classes', uuid],
     queryFn: () => fetchOrganisationClasses(uuid),
     enabled: active,
     staleTime: STALE_TIMES.entity,
   });
-  if (isLoading) return <SectionCardSkeleton rows={4} />;
   const classes = data ?? [];
   return (
     <SectionCard title='Classes' description='Classes offered under this organisation.'>
-      {classes.length ? (
+      <AsyncSection
+        loading={isLoading && !data}
+        error={isError ? error : undefined}
+        empty={classes.length === 0}
+        onRetry={refetch}
+        skeleton={
+          <div className='space-y-3'>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className='h-20 w-full rounded-md' />
+            ))}
+          </div>
+        }
+        emptyState={<p className='text-sm text-muted-foreground'>No classes offered.</p>}
+      >
         <div className='space-y-3'>
           {classes.map(klass => (
             <div key={klass.uuid} className='rounded-md border border-border/60 bg-muted/20 p-3'>
@@ -190,9 +223,7 @@ function ClassesTab({ uuid, active }: { uuid: string; active: boolean }) {
             </div>
           ))}
         </div>
-      ) : (
-        <p className='text-sm text-muted-foreground'>No classes offered.</p>
-      )}
+      </AsyncSection>
     </SectionCard>
   );
 }

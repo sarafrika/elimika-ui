@@ -1,5 +1,32 @@
 'use client';
 
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  CalendarClock,
+  CheckCircle,
+  ClipboardCheck,
+  ClipboardList,
+  Eye,
+  ListChecks,
+  Loader2,
+  PanelLeft,
+  PanelRight,
+  Pencil,
+  Plus,
+  Search,
+  Send,
+  ShieldCheck,
+  SquarePen,
+  Trash2,
+  Video
+} from 'lucide-react';
+import Link from 'next/link';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { PracticeActivityList } from '@/app/dashboard/@course_creator/_components/practice-activity-management';
 import { getPreferredScheduleInstance } from '@/app/dashboard/@instructor/classes/_components/new-class-page.utils';
 import ConfirmModal from '@/components/custom-modals/confirm-modal';
@@ -24,12 +51,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
-import { useClassDetails, type ClassDetailsScheduleItem } from '@/hooks/use-class-details';
+import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
-import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
+import { type RosterEntry, useClassRoster } from '@/hooks/use-class-roster';
 import {
   type CourseLessonContent,
   type CourseLessonWithContent,
@@ -72,33 +100,6 @@ import type {
   Quiz,
   RubricMatrix,
 } from '@/services/client/types.gen';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  AlertCircle,
-  ArrowLeft,
-  BookOpen,
-  CalendarClock,
-  CheckCircle,
-  ClipboardCheck,
-  ClipboardList,
-  Eye,
-  ListChecks,
-  Loader2,
-  PanelLeft,
-  PanelRight,
-  Pencil,
-  Plus,
-  Search,
-  Send,
-  ShieldCheck,
-  SquarePen,
-  Trash2,
-  Video
-} from 'lucide-react';
-import Link from 'next/link';
-import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { AttachmentResourceList } from '../../../../../../../components/assessment/AttachmentResourceList';
 import { AssignmentContentPreview } from '../../../../../../../components/content-preview/AssignmentContentPreview';
 import { LessonContentPreview } from '../../../../../../../components/content-preview/LessonContentPreview';
@@ -1428,24 +1429,74 @@ function AssignedTaskRow({
   );
 }
 
+// Shape-matching skeleton for the whole console shell (header + roster rail + main),
+// shown only while the primary class-details query is in flight.
 function ConsoleSkeleton() {
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm'>
-      <div className='flex flex-col items-center gap-4 text-center'>
-        <div className='flex items-center justify-center rounded-full bg-primary/10 p-4'>
-          <Loader2 className='text-primary h-8 w-8 animate-spin' />
+    <main className='text-foreground fixed inset-0 z-50 flex flex-col overflow-hidden bg-background'>
+      <header className='border-border/70 bg-card/95 flex h-16 shrink-0 items-center justify-between gap-3 border-b px-3 shadow-sm sm:px-4'>
+        <div className='flex items-center gap-3'>
+          <Skeleton className='size-8 rounded-full' />
+          <div className='space-y-1.5'>
+            <Skeleton className='h-4 w-40' />
+            <Skeleton className='h-3 w-24' />
+          </div>
         </div>
+        <Skeleton className='hidden h-8 w-full max-w-xl rounded-full md:block' />
+        <Skeleton className='size-8 rounded-full' />
+      </header>
+      <section className='grid min-h-0 flex-1 gap-0 overflow-hidden xl:grid-cols-[420px_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]'>
+        <aside className='border-border/70 hidden space-y-3 border-r p-3 xl:block'>
+          <Skeleton className='h-9 w-full rounded-lg' />
+          <Skeleton className='h-9 w-full rounded-md' />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className='h-12 w-full rounded-md' />
+          ))}
+        </aside>
+        <div className='space-y-4 p-4'>
+          <Skeleton className='h-12 w-full rounded-lg' />
+          <Skeleton className='h-[60vh] w-full rounded-lg' />
+        </div>
+      </section>
+    </main>
+  );
+}
 
-        {/* Text */}
-        <div className='space-y-1'>
-          <p className='text-foreground text-base font-semibold'>
-            Loading class session
-          </p>
-          <p className='text-muted-foreground text-sm'>
-            Please wait while we retrieve session details...
-          </p>
+function LessonContentSkeleton() {
+  return (
+    <div className='mx-auto mb-40 space-y-4 p-2 md:p-2'>
+      <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+        <div className='mt-2 flex flex-wrap items-center gap-2 border-b p-4'>
+          <Skeleton className='h-5 w-20 rounded-full' />
+          <Skeleton className='h-4 w-16' />
+          <Skeleton className='h-4 w-24' />
         </div>
-      </div>
+        <div className='border-border/70 space-y-2 border-b p-4'>
+          <Skeleton className='h-3 w-32' />
+          <Skeleton className='h-6 w-2/3' />
+        </div>
+        <div className='space-y-3 p-4'>
+          <Skeleton className='h-4 w-full' />
+          <Skeleton className='h-4 w-5/6' />
+          <Skeleton className='h-64 w-full rounded-md' />
+        </div>
+      </article>
+    </div>
+  );
+}
+
+function RosterListSkeleton() {
+  return (
+    <div className='space-y-1.5 p-2'>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className='flex items-center gap-2.5 rounded-md border border-transparent p-2.5'>
+          <Skeleton className='size-8 rounded-full' />
+          <div className='flex-1 space-y-1.5'>
+            <Skeleton className='h-3.5 w-3/4' />
+            <Skeleton className='h-3 w-1/3' />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1463,7 +1514,8 @@ function RosterPanel({
   isMarkingAllAttendance,
   markingStudentId,
   onMarkAttendance,
-  isMarkingAttendance
+  isMarkingAttendance,
+  isLoadingRoster
 
 }: {
   activeInstanceStudentsCount: number;
@@ -1479,6 +1531,7 @@ function RosterPanel({
   markingStudentId: string;
   onMarkAttendance: (entry: RosterEntry, attended: boolean) => void;
   isMarkingAttendance: boolean;
+  isLoadingRoster?: boolean;
 }) {
 
   const isSessionExpired = useMemo(() => {
@@ -1566,6 +1619,9 @@ function RosterPanel({
 
       {/* ROSTER LIST */}
       <ScrollArea className="min-h-0 flex-1 bg-background">
+        {isLoadingRoster && filteredRoster.length === 0 ? (
+          <RosterListSkeleton />
+        ) : (
         <div className="space-y-1.5 p-2">
           {filteredRoster.map((entry: RosterEntry) => {
             const attendanceState = getStudentAttendanceState(entry);
@@ -1643,6 +1699,7 @@ function RosterPanel({
             </div>
           )}
         </div>
+        )}
       </ScrollArea>
 
       {/* FOOTER STATS */}
@@ -3198,9 +3255,14 @@ export default function ClassTrainingPage({
     toast.success('Note shared for this session view.');
   };
 
-  if (isLoading || rosterLoading || lessonsLoading) {
+  // Gate only on the primary class-details query — the shell needs it to render.
+  // Roster and lesson content degrade locally (skeletons in their own regions).
+  if (isLoading) {
     return <ConsoleSkeleton />;
   }
+
+  const rosterPending = rosterLoading && rosterAllEnrollments.length === 0;
+  const lessonsPending = lessonsLoading && lessonModules.length === 0;
 
   if (isError) {
     return (
@@ -3343,6 +3405,7 @@ export default function ClassTrainingPage({
                   onMarkAttendance={handleMarkAttendance}
                   isMarkingAttendance={markAttendanceMut.isPending}
                   markingStudentId={markingStudentId as string}
+                  isLoadingRoster={rosterPending}
                 />
               </div>
             </SheetContent>
@@ -3452,6 +3515,7 @@ export default function ClassTrainingPage({
                   onMarkAttendance={handleMarkAttendance}
                   isMarkingAttendance={markAttendanceMut.isPending}
                   markingStudentId={markingStudentId as string}
+                  isLoadingRoster={rosterPending}
                 />
               </aside>
             ) : null}
@@ -3589,7 +3653,8 @@ export default function ClassTrainingPage({
                 </div>
 
                 <ScrollArea className='h-[calc(100vh-8.5rem)]'>
-                  {activeTab === 'content' && (
+                  {activeTab === 'content' && lessonsPending && <LessonContentSkeleton />}
+                  {activeTab === 'content' && !lessonsPending && (
                     <div className='mx-auto mb-40 space-y-4 p-2 md:p-2'>
                       <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
                         <div className='mt-2 flex flex-wrap items-center gap-2 border-b p-4 text-xs text-muted-foreground'>
@@ -3842,7 +3907,8 @@ export default function ClassTrainingPage({
 
             {/* on mobile, this part should always be visible, except when i select evaluation on the activelefttab */}
             <ScrollArea className='flex h-[calc(100vh-8.5rem)]'>
-              {activeTab === 'content' && (
+              {activeTab === 'content' && lessonsPending && <LessonContentSkeleton />}
+              {activeTab === 'content' && !lessonsPending && (
                 <div className='mx-auto space-y-4 p-2 md:p-2 mb-40'>
                   <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
                     <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>

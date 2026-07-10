@@ -1,14 +1,3 @@
-import HTMLTextPreview from '@/components/editors/html-text-preview';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { RosterEntry } from '@/hooks/use-class-roster';
-import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
-import { cn } from '@/lib/utils';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import {
   Award,
   BarChart3,
@@ -28,7 +17,19 @@ import {
   Video
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState, type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
+import { AsyncSection, SectionEmpty } from '@/components/data/async-section';
+import HTMLTextPreview from '@/components/editors/html-text-preview';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { RosterEntry } from '@/hooks/use-class-roster';
+import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
+import { cn } from '@/lib/utils';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import {
   Tooltip,
   TooltipContent,
@@ -767,7 +768,7 @@ export function ClassLessonTab({
   selectedLessonActionLabel: string;
   onAddClasses: () => void;
 }) {
-  if (isLoadingClasses || !selectedClass || isLoadingLessons) {
+  if (isLoadingClasses || !selectedClass) {
     return (
       <div className='space-y-3'>
         <Skeleton className='h-56 rounded-lg' />
@@ -782,15 +783,28 @@ export function ClassLessonTab({
   return (
     <div className='space-y-3'>
       <div className='grid gap-3 2xl:grid-cols-[minmax(0,1fr)_320px]'>
-        <CourseProgram
-          lessonModules={lessonModules}
-          selectedLesson={selectedLesson}
-          contentTypeMap={contentTypeMap}
-          setSelectedLessonUuid={setSelectedLessonUuid}
-          getStartLessonHref={getStartLessonHref}
-          onStartLesson={onStartLesson}
-          selectedLessonActionLabel={selectedLessonActionLabel}
-        />
+        {/* Lesson program degrades on its own — the roster panel stays visible while lessons load. */}
+        <AsyncSection
+          loading={isLoadingLessons && lessonModules.length === 0}
+          empty={lessonModules.length === 0}
+          skeleton={<Skeleton className='h-80 rounded-lg' />}
+          emptyState={
+            <SectionEmpty
+              title='No lessons yet'
+              description='Lessons for this class will appear here once they are added.'
+            />
+          }
+        >
+          <CourseProgram
+            lessonModules={lessonModules}
+            selectedLesson={selectedLesson}
+            contentTypeMap={contentTypeMap}
+            setSelectedLessonUuid={setSelectedLessonUuid}
+            getStartLessonHref={getStartLessonHref}
+            onStartLesson={onStartLesson}
+            selectedLessonActionLabel={selectedLessonActionLabel}
+          />
+        </AsyncSection>
         <UpcomingClassesPanel
           selectedClass={selectedClass}
           contentTypeMap={contentTypeMap}
@@ -836,10 +850,12 @@ function OverviewMetaCard({
   label,
   value,
   icon,
+  loading = false,
 }: {
   label: string;
   value: string;
   icon: ReactNode;
+  loading?: boolean;
 }) {
   return (
     <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
@@ -847,7 +863,11 @@ function OverviewMetaCard({
         {icon}
         {label}
       </p>
-      <p className='text-foreground mt-2 text-sm font-semibold sm:text-base'>{value}</p>
+      {loading ? (
+        <Skeleton className='mt-2 h-5 w-16' />
+      ) : (
+        <p className='text-foreground mt-2 text-sm font-semibold sm:text-base'>{value}</p>
+      )}
     </div>
   );
 }
@@ -872,9 +892,11 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
   const { difficultyMap: fallbackDifficultyMap } = useDifficultyLevels();
   const mergedDifficultyMap = { ...fallbackDifficultyMap, ...difficultyMap };
 
-  if (isLoadingClasses || !selectedClass || isLoadingLessons) {
+  if (isLoadingClasses || !selectedClass) {
     return <OverviewSkeleton />;
   }
+
+  const lessonsPending = isLoadingLessons && lessonModules.length === 0;
 
   const difficultyLabel = selectedClass.course?.difficulty_uuid
     ? mergedDifficultyMap[selectedClass.course.difficulty_uuid] ?? 'General'
@@ -995,12 +1017,14 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
                       label='Modules'
                       value={`${moduleCount}`}
                       icon={<BookOpen className='h-4 w-4' />}
+                      loading={lessonsPending}
                     />
 
                     <OverviewMetaCard
                       label='Lessons'
                       value={`${lessonCount}`}
                       icon={<Check className='h-4 w-4' />}
+                      loading={lessonsPending}
                     />
 
                     <OverviewMetaCard

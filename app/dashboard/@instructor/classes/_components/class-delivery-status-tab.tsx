@@ -1,5 +1,8 @@
 'use client';
 
+import { useQueries } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { AsyncSection } from '@/components/data/async-section';
 import { CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
@@ -9,8 +12,6 @@ import {
   getQuizSchedulesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassAssignmentSchedule, ClassQuizSchedule } from '@/services/client/types.gen';
-import { useQueries } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import { ClassSessionLedgerSection } from './class-session-ledger-section';
 import {
   buildClassSessionLedgerRows,
@@ -60,7 +61,7 @@ export function ClassDeliveryStatusTab(props: ClassDeliveryStatusTabProps) {
   const showFinancialColumns = roleLabel !== 'Student view';
   const classUuid = selectedClass?.uuid;
 
-  const [{ data: assignmentScheduleResp }, { data: quizScheduleResp }] = useQueries({
+  const [assignmentScheduleQuery, quizScheduleQuery] = useQueries({
     queries: [
       {
         ...getAssignmentSchedulesOptions({ path: { classUuid: classUuid ?? '' } }),
@@ -72,6 +73,17 @@ export function ClassDeliveryStatusTab(props: ClassDeliveryStatusTabProps) {
       },
     ],
   });
+
+  const { data: assignmentScheduleResp } = assignmentScheduleQuery;
+  const { data: quizScheduleResp } = quizScheduleQuery;
+  const schedulesLoading =
+    (assignmentScheduleQuery.isLoading && !assignmentScheduleQuery.data) ||
+    (quizScheduleQuery.isLoading && !quizScheduleQuery.data);
+  const schedulesError = assignmentScheduleQuery.error ?? quizScheduleQuery.error;
+  const refetchSchedules = () => {
+    assignmentScheduleQuery.refetch();
+    quizScheduleQuery.refetch();
+  };
 
   const assignmentSchedules: ClassAssignmentSchedule[] = assignmentScheduleResp?.data ?? [];
   const quizSchedules: ClassQuizSchedule[] = quizScheduleResp?.data ?? [];
@@ -181,21 +193,30 @@ export function ClassDeliveryStatusTab(props: ClassDeliveryStatusTabProps) {
         </div> */}
 
         <CardContent className=''>
-          <ClassSessionLedgerSection
-            selectedClass={selectedClass}
-            roleLabel={roleLabel}
-            difficultyLabel={difficultyLabel}
-            rows={rows}
-            sessionProgress={completionRate}
-            remainingSessions={Math.max(
-              totalInstances - Math.round((completionRate / 100) * totalInstances),
-              0
-            )}
-            rosterCount={studentCount}
-            showFinancialColumns={showFinancialColumns}
-            tableTitle='Delivery table'
-            tableDescription='This table mirrors the session-level delivery overview used by the class workspace.'
-          />
+          {/* Ledger depends on the assignment/quiz schedule queries — degrade it locally
+              so the tab shell stays put and stale rows persist during refetch. */}
+          <AsyncSection
+            loading={schedulesLoading}
+            error={schedulesError}
+            onRetry={refetchSchedules}
+            skeleton={<Skeleton className='h-[620px] rounded-[14px]' />}
+          >
+            <ClassSessionLedgerSection
+              selectedClass={selectedClass}
+              roleLabel={roleLabel}
+              difficultyLabel={difficultyLabel}
+              rows={rows}
+              sessionProgress={completionRate}
+              remainingSessions={Math.max(
+                totalInstances - Math.round((completionRate / 100) * totalInstances),
+                0
+              )}
+              rosterCount={studentCount}
+              showFinancialColumns={showFinancialColumns}
+              tableTitle='Delivery table'
+              tableDescription='This table mirrors the session-level delivery overview used by the class workspace.'
+            />
+          </AsyncSection>
         </CardContent>
       </section>
     </div>

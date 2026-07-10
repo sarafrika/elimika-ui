@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import {
-  AlertTriangle,
   Award,
   BriefcaseBusiness,
   CalendarClock,
@@ -14,8 +13,10 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useState } from 'react';
+import { AsyncSection, SectionError } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
 import {
@@ -34,13 +35,13 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { adminTheme } from '../../_components/ui/admin-theme';
-import { DetailGrid } from '../../_components/ui/DetailPanel';
-import { SectionCard, SectionCardSkeleton } from '../../_components/ui/SectionCard';
-import { StatusBadge } from '../../_components/ui/StatusBadge';
 import {
   CredentialDocumentCard,
   CredentialReviewDialog,
 } from '../../_components/ui/credential-review';
+import { DetailGrid } from '../../_components/ui/DetailPanel';
+import { SectionCard, SectionCardSkeleton } from '../../_components/ui/SectionCard';
+import { StatusBadge } from '../../_components/ui/StatusBadge';
 import { ContentApprovalsTab } from './ContentApprovalsTab';
 import { DomainVerificationSection } from './DomainVerificationSection';
 import { ReviewsRatingsTab } from './ReviewsRatingsTab';
@@ -83,15 +84,6 @@ function money(amount?: number, currency = 'KES'): string {
   }).format(amount);
 }
 
-function InlineError({ message }: { message: string }) {
-  return (
-    <div className='border-destructive/30 bg-destructive/10 text-destructive flex items-center gap-2 rounded-md border px-3 py-2 text-sm'>
-      <AlertTriangle className='size-4 shrink-0' />
-      {message}
-    </div>
-  );
-}
-
 export function CredentialsAsyncTab({
   active,
   userUuid,
@@ -108,36 +100,41 @@ export function CredentialsAsyncTab({
     staleTime: STALE_TIMES.entity,
   });
 
-  if (verificationQuery.isLoading) return <SectionCardSkeleton rows={6} />;
-  if (verificationQuery.isError)
-    return <InlineError message='Unable to load credential records.' />;
-
   const domains = verificationQuery.data ?? [];
 
-  if (!domains.length) {
-    return (
-      <SectionCard title='Credentials' description='Verification records and supporting documents.'>
-        <EmptyState
-          icon={ShieldCheck}
-          title='No verifiable credentials'
-          description='This user has no instructor or course creator profile credentials yet.'
-          variant='compact'
-        />
-      </SectionCard>
-    );
-  }
-
   return (
-    <div className='flex flex-col gap-4'>
-      {domains.map(domain => (
-        <DomainVerificationSection
-          key={domain.role}
-          domain={domain}
-          verifierIdentity={verifierIdentity}
-          onChanged={() => verificationQuery.refetch()}
-        />
-      ))}
-    </div>
+    <AsyncSection
+      loading={verificationQuery.isLoading && !verificationQuery.data}
+      error={verificationQuery.isError ? verificationQuery.error : undefined}
+      empty={!domains.length}
+      onRetry={verificationQuery.refetch}
+      errorTitle='Unable to load credential records.'
+      skeleton={<SectionCardSkeleton rows={6} />}
+      emptyState={
+        <SectionCard
+          title='Credentials'
+          description='Verification records and supporting documents.'
+        >
+          <EmptyState
+            icon={ShieldCheck}
+            title='No verifiable credentials'
+            description='This user has no instructor or course creator profile credentials yet.'
+            variant='compact'
+          />
+        </SectionCard>
+      }
+    >
+      <div className='flex flex-col gap-4'>
+        {domains.map(domain => (
+          <DomainVerificationSection
+            key={domain.role}
+            domain={domain}
+            verifierIdentity={verifierIdentity}
+            onChanged={() => verificationQuery.refetch()}
+          />
+        ))}
+      </div>
+    </AsyncSection>
   );
 }
 
@@ -329,45 +326,47 @@ export function ProfessionalProfileAsyncTab({
     staleTime: STALE_TIMES.entity,
   });
 
-  if (verificationQuery.isLoading) return <SectionCardSkeleton rows={6} />;
-  if (verificationQuery.isError)
-    return <InlineError message='Unable to load professional profile.' />;
-
   const domains = verificationQuery.data ?? [];
 
-  if (!domains.length) {
-    return (
-      <SectionCard
-        title='Professional profile'
-        description='Instructor and course creator profile details.'
-      >
-        <EmptyState
-          icon={Award}
-          title='No professional profile'
-          description='Education, certificates, training experience, and skills appear when the user has an instructor or course creator profile.'
-          variant='compact'
-        />
-      </SectionCard>
-    );
-  }
-
   return (
-    <div className='space-y-5'>
-      {domains.map(domain => (
-        <ProfessionalDomainProfile
-          key={domain.role}
-          domain={domain}
-          onReviewDocument={setActiveDocument}
-        />
-      ))}
+    <AsyncSection
+      loading={verificationQuery.isLoading && !verificationQuery.data}
+      error={verificationQuery.isError ? verificationQuery.error : undefined}
+      empty={!domains.length}
+      onRetry={verificationQuery.refetch}
+      errorTitle='Unable to load professional profile.'
+      skeleton={<SectionCardSkeleton rows={6} />}
+      emptyState={
+        <SectionCard
+          title='Professional profile'
+          description='Instructor and course creator profile details.'
+        >
+          <EmptyState
+            icon={Award}
+            title='No professional profile'
+            description='Education, certificates, training experience, and skills appear when the user has an instructor or course creator profile.'
+            variant='compact'
+          />
+        </SectionCard>
+      }
+    >
+      <div className='space-y-5'>
+        {domains.map(domain => (
+          <ProfessionalDomainProfile
+            key={domain.role}
+            domain={domain}
+            onReviewDocument={setActiveDocument}
+          />
+        ))}
 
-      <CredentialReviewDialog
-        document={activeDocument}
-        verifierIdentity={verifierIdentity}
-        onClose={() => setActiveDocument(null)}
-        onVerified={() => verificationQuery.refetch()}
-      />
-    </div>
+        <CredentialReviewDialog
+          document={activeDocument}
+          verifierIdentity={verifierIdentity}
+          onClose={() => setActiveDocument(null)}
+          onVerified={() => verificationQuery.refetch()}
+        />
+      </div>
+    </AsyncSection>
   );
 }
 
@@ -409,8 +408,16 @@ export function ReviewsAsyncTab({
     staleTime: STALE_TIMES.entity,
   });
 
-  if (verificationQuery.isLoading) return <SectionCardSkeleton rows={5} />;
-  if (verificationQuery.isError) return <InlineError message='Unable to load review context.' />;
+  if (verificationQuery.isLoading && !verificationQuery.data)
+    return <SectionCardSkeleton rows={5} />;
+  if (verificationQuery.isError)
+    return (
+      <SectionError
+        title='Unable to load review context.'
+        error={verificationQuery.error}
+        onRetry={verificationQuery.refetch}
+      />
+    );
 
   const domains = verificationQuery.data ?? [];
   const instructorDomain = domains.find(domain => domain.role === 'instructor');
@@ -513,18 +520,54 @@ function TrainingApplications({
   const programApplications = programApplicationsQuery.data?.data?.content ?? [];
   const marketplaceApplications = marketplaceApplicationsQuery.data?.data?.content ?? [];
   const isLoading =
-    courseApplicationsQuery.isLoading ||
-    programApplicationsQuery.isLoading ||
-    marketplaceApplicationsQuery.isLoading;
-
-  if (isLoading) return <SectionCardSkeleton rows={5} />;
+    (courseApplicationsQuery.isLoading && !courseApplicationsQuery.data) ||
+    (programApplicationsQuery.isLoading && !programApplicationsQuery.data) ||
+    (marketplaceApplicationsQuery.isLoading && !marketplaceApplicationsQuery.data);
+  const isError =
+    courseApplicationsQuery.isError ||
+    programApplicationsQuery.isError ||
+    marketplaceApplicationsQuery.isError;
+  const totalApplications =
+    courseApplications.length + programApplications.length + marketplaceApplications.length;
+  const refetchAll = () => {
+    courseApplicationsQuery.refetch();
+    programApplicationsQuery.refetch();
+    marketplaceApplicationsQuery.refetch();
+  };
 
   return (
     <SectionCard
       title='Training approvals'
       description='Course, program, and class marketplace applications tied to this instructor.'
     >
-      <div className='space-y-3'>
+      <AsyncSection
+        loading={isLoading}
+        error={
+          isError
+            ? (courseApplicationsQuery.error ??
+              programApplicationsQuery.error ??
+              marketplaceApplicationsQuery.error)
+            : undefined
+        }
+        empty={totalApplications === 0}
+        onRetry={refetchAll}
+        skeleton={
+          <div className='space-y-3'>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className='h-24 w-full rounded-md' />
+            ))}
+          </div>
+        }
+        emptyState={
+          <EmptyState
+            icon={ListChecks}
+            title='No training applications'
+            description='No course, program, or marketplace class applications were found for this instructor.'
+            variant='compact'
+          />
+        }
+      >
+        <div className='space-y-3'>
         {courseApplications.map(application => (
           <ApplicationRow
             key={application.uuid}
@@ -564,16 +607,8 @@ function TrainingApplications({
             reviewedAt={application.reviewed_at}
           />
         ))}
-        {courseApplications.length + programApplications.length + marketplaceApplications.length ===
-        0 ? (
-          <EmptyState
-            icon={ListChecks}
-            title='No training applications'
-            description='No course, program, or marketplace class applications were found for this instructor.'
-            variant='compact'
-          />
-        ) : null}
-      </div>
+        </div>
+      </AsyncSection>
     </SectionCard>
   );
 }
@@ -625,13 +660,31 @@ function InstructorBookings({
     staleTime: STALE_TIMES.live,
   });
 
-  if (bookingsQuery.isLoading) return <SectionCardSkeleton rows={5} />;
-
   const bookings = bookingsQuery.data?.data?.content ?? [];
 
   return (
     <SectionCard title='Bookings' description='Instructor bookings and payment state.'>
-      {bookings.length ? (
+      <AsyncSection
+        loading={bookingsQuery.isLoading && !bookingsQuery.data}
+        error={bookingsQuery.isError ? bookingsQuery.error : undefined}
+        empty={bookings.length === 0}
+        onRetry={bookingsQuery.refetch}
+        skeleton={
+          <div className='space-y-3'>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className='h-24 w-full rounded-md' />
+            ))}
+          </div>
+        }
+        emptyState={
+          <EmptyState
+            icon={CalendarClock}
+            title='No bookings'
+            description='No instructor bookings were found for this user.'
+            variant='compact'
+          />
+        }
+      >
         <div className='space-y-3'>
           {bookings.map(booking => (
             <div key={booking.uuid} className='border-border/60 bg-muted/20 rounded-md border p-3'>
@@ -656,14 +709,7 @@ function InstructorBookings({
             </div>
           ))}
         </div>
-      ) : (
-        <EmptyState
-          icon={CalendarClock}
-          title='No bookings'
-          description='No instructor bookings were found for this user.'
-          variant='compact'
-        />
-      )}
+      </AsyncSection>
     </SectionCard>
   );
 }
@@ -689,31 +735,50 @@ export function CommerceAsyncTab({ active, userUuid }: { active: boolean; userUu
   return (
     <div className='grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]'>
       <SectionCard title='Wallet' description='User wallet balance and currency.'>
-        {walletQuery.isLoading ? (
-          <SectionCardSkeleton rows={3} withHeader={false} />
-        ) : wallet ? (
-          <DetailGrid
-            columns={1}
-            items={[
-              { label: 'Balance', value: money(wallet.balance_amount, wallet.currency_code) },
-              { label: 'Currency', value: wallet.currency_code ?? '-' },
-              { label: 'Updated', value: formatDateTime(wallet.updated_date) },
-            ]}
-          />
-        ) : (
-          <EmptyState
-            icon={Landmark}
-            title='No wallet'
-            description='No wallet record was returned for this user.'
-            variant='compact'
-          />
-        )}
+        <AsyncSection
+          loading={walletQuery.isLoading && !walletQuery.data}
+          error={walletQuery.isError ? walletQuery.error : undefined}
+          empty={!wallet}
+          onRetry={walletQuery.refetch}
+          skeleton={<SectionCardSkeleton rows={3} withHeader={false} />}
+          emptyState={
+            <EmptyState
+              icon={Landmark}
+              title='No wallet'
+              description='No wallet record was returned for this user.'
+              variant='compact'
+            />
+          }
+        >
+          {wallet ? (
+            <DetailGrid
+              columns={1}
+              items={[
+                { label: 'Balance', value: money(wallet.balance_amount, wallet.currency_code) },
+                { label: 'Currency', value: wallet.currency_code ?? '-' },
+                { label: 'Updated', value: formatDateTime(wallet.updated_date) },
+              ]}
+            />
+          ) : null}
+        </AsyncSection>
       </SectionCard>
 
       <SectionCard title='Transactions' description='Recent wallet transactions.'>
-        {transactionsQuery.isLoading ? (
-          <SectionCardSkeleton rows={5} withHeader={false} />
-        ) : transactions.length ? (
+        <AsyncSection
+          loading={transactionsQuery.isLoading && !transactionsQuery.data}
+          error={transactionsQuery.isError ? transactionsQuery.error : undefined}
+          empty={transactions.length === 0}
+          onRetry={transactionsQuery.refetch}
+          skeleton={<SectionCardSkeleton rows={5} withHeader={false} />}
+          emptyState={
+            <EmptyState
+              icon={ReceiptText}
+              title='No transactions'
+              description='No wallet transactions were returned for this user.'
+              variant='compact'
+            />
+          }
+        >
           <div className='space-y-3'>
             {transactions.map(transaction => (
               <div
@@ -739,14 +804,7 @@ export function CommerceAsyncTab({ active, userUuid }: { active: boolean; userUu
               </div>
             ))}
           </div>
-        ) : (
-          <EmptyState
-            icon={ReceiptText}
-            title='No transactions'
-            description='No wallet transactions were returned for this user.'
-            variant='compact'
-          />
-        )}
+        </AsyncSection>
       </SectionCard>
     </div>
   );
@@ -774,9 +832,6 @@ export function AuditTrailAsyncTab({
     staleTime: STALE_TIMES.live,
   });
 
-  if (activityQuery.isLoading) return <SectionCardSkeleton rows={7} />;
-  if (activityQuery.isError) return <InlineError message='Unable to load audit trail.' />;
-
   const events = activityQuery.data?.data?.content ?? [];
 
   return (
@@ -784,7 +839,28 @@ export function AuditTrailAsyncTab({
       title='Audit trail'
       description='Actions performed by this user and admin/system requests targeting this dossier.'
     >
-      {events.length ? (
+      <AsyncSection
+        loading={activityQuery.isLoading && !activityQuery.data}
+        error={activityQuery.isError ? activityQuery.error : undefined}
+        empty={events.length === 0}
+        onRetry={activityQuery.refetch}
+        errorTitle='Unable to load audit trail.'
+        skeleton={
+          <div className='space-y-3'>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className='h-20 w-full rounded-md' />
+            ))}
+          </div>
+        }
+        emptyState={
+          <EmptyState
+            icon={History}
+            title='No audit events'
+            description='No matching actor or target request audit events were found for this user.'
+            variant='compact'
+          />
+        }
+      >
         <div className='space-y-3'>
           {events.map(event => (
             <div
@@ -822,14 +898,7 @@ export function AuditTrailAsyncTab({
             </div>
           ))}
         </div>
-      ) : (
-        <EmptyState
-          icon={History}
-          title='No audit events'
-          description='No matching actor or target request audit events were found for this user.'
-          variant='compact'
-        />
-      )}
+      </AsyncSection>
     </SectionCard>
   );
 }
@@ -849,8 +918,6 @@ export function PendingApprovalsAsyncTab({
     queryKey: ['user-verification', userUuid],
     staleTime: STALE_TIMES.entity,
   });
-
-  if (verificationQuery.isLoading) return <SectionCardSkeleton rows={6} />;
 
   const domains = verificationQuery.data ?? [];
   const pendingDocuments = domains.flatMap(domain =>
@@ -893,7 +960,27 @@ export function PendingApprovalsAsyncTab({
         ) : null
       }
     >
-      {rows.length ? (
+      <AsyncSection
+        loading={verificationQuery.isLoading && !verificationQuery.data}
+        error={verificationQuery.isError ? verificationQuery.error : undefined}
+        empty={rows.length === 0}
+        onRetry={verificationQuery.refetch}
+        skeleton={
+          <div className='space-y-3'>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className='h-14 w-full rounded-md' />
+            ))}
+          </div>
+        }
+        emptyState={
+          <EmptyState
+            icon={FileClock}
+            title='No pending approvals'
+            description='All visible dossier approval queues are currently clear.'
+            variant='compact'
+          />
+        }
+      >
         <div className='space-y-3'>
           {rows.map(row => (
             <div
@@ -908,14 +995,7 @@ export function PendingApprovalsAsyncTab({
             </div>
           ))}
         </div>
-      ) : (
-        <EmptyState
-          icon={FileClock}
-          title='No pending approvals'
-          description='All visible dossier approval queues are currently clear.'
-          variant='compact'
-        />
-      )}
+      </AsyncSection>
     </SectionCard>
   );
 }

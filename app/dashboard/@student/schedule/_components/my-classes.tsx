@@ -1,18 +1,39 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { cx, getCardClasses, getEmptyStateClasses, getStatCardClasses } from '@/lib/design-system';
 import { isAfter, isBefore } from 'date-fns';
 import { BookOpen, CalendarDays, Filter, GraduationCap, Search, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
+import { AsyncSection } from '@/components/data/async-section';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { cx, getCardClasses, getEmptyStateClasses, getStatCardClasses } from '@/lib/design-system';
 import EnrolledClassCard from './enrolled-class-card';
 import { getClassData, type StudentClassRecord } from './schedule-data';
+
+function ClassCardsSkeleton() {
+  return (
+    <section className='grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3'>
+      {Array.from({ length: 6 }).map((_, index) => (
+        <Card key={index} className={cx(getCardClasses(), 'p-5')}>
+          <CardContent className='space-y-4 p-0'>
+            <Skeleton className='h-32 w-full rounded-2xl' />
+            <Skeleton className='h-5 w-3/4' />
+            <Skeleton className='h-4 w-1/2' />
+            <div className='flex gap-2'>
+              <Skeleton className='h-8 w-24' />
+              <Skeleton className='h-8 w-24' />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </section>
+  );
+}
 
 type Props = {
   classDefinitions: StudentClassRecord[];
@@ -91,19 +112,7 @@ export default function MyClassesPage({ classDefinitions, isError, loading }: Pr
     });
   }, [classDefinitions, searchQuery, selectedFilter]);
 
-  if (loading) {
-    return <CustomLoadingState subHeading='Fetching your classes...' />;
-  }
-
-  if (isError) {
-    return (
-      <div className='flex min-h-[320px] items-center justify-center'>
-        <Card className={cx(getCardClasses(), 'p-8 text-center')}>
-          <p className='text-destructive'>Failed to load classes. Please try again.</p>
-        </Card>
-      </div>
-    );
-  }
+  const initialLoading = Boolean(loading) && classDefinitions.length === 0;
 
   return (
     <div className='space-y-6'>
@@ -243,43 +252,50 @@ export default function MyClassesPage({ classDefinitions, isError, loading }: Pr
         </Card>
       </section>
 
-      {filteredClasses.length > 0 ? (
-        <section className='grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3'>
-          {filteredClasses.map(item => (
-            <EnrolledClassCard
-              key={item.uuid}
-              classRecord={item}
-              href={`/dashboard/schedule/classes/${item.uuid}`}
-            />
-          ))}
-        </section>
-      ) : (
-        <section className={getEmptyStateClasses()}>
-          <BookOpen className='text-primary/70 mb-2 h-12 w-12' />
-          <h3 className='text-foreground text-lg font-semibold'>
-            {searchQuery ? 'No classes found' : 'No classes yet'}
-          </h3>
-          <p className='text-muted-foreground max-w-md text-sm'>
-            {searchQuery
-              ? 'Try a different course name or clear the active filter.'
-              : 'Start your learning journey by enrolling in a class.'}
-          </p>
-          <div className='flex flex-col gap-3 sm:flex-row'>
-            {searchQuery && (
-              <Button
-                variant='outline'
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedFilter('all');
-                }}
-              >
-                Clear filters
-              </Button>
-            )}
-            <Button onClick={() => router.push('/dashboard/courses')}>Browse classes</Button>
-          </div>
-        </section>
-      )}
+      <AsyncSection
+        loading={initialLoading}
+        error={isError || undefined}
+        errorTitle='Failed to load classes'
+        skeleton={<ClassCardsSkeleton />}
+      >
+        {filteredClasses.length > 0 ? (
+          <section className='grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3'>
+            {filteredClasses.map(item => (
+              <EnrolledClassCard
+                key={item.uuid}
+                classRecord={item}
+                href={`/dashboard/schedule/classes/${item.uuid}`}
+              />
+            ))}
+          </section>
+        ) : (
+          <section className={getEmptyStateClasses()}>
+            <BookOpen className='text-primary/70 mb-2 h-12 w-12' />
+            <h3 className='text-foreground text-lg font-semibold'>
+              {searchQuery ? 'No classes found' : 'No classes yet'}
+            </h3>
+            <p className='text-muted-foreground max-w-md text-sm'>
+              {searchQuery
+                ? 'Try a different course name or clear the active filter.'
+                : 'Start your learning journey by enrolling in a class.'}
+            </p>
+            <div className='flex flex-col gap-3 sm:flex-row'>
+              {searchQuery && (
+                <Button
+                  variant='outline'
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedFilter('all');
+                  }}
+                >
+                  Clear filters
+                </Button>
+              )}
+              <Button onClick={() => router.push('/dashboard/courses')}>Browse classes</Button>
+            </div>
+          </section>
+        )}
+      </AsyncSection>
     </div>
   );
 }

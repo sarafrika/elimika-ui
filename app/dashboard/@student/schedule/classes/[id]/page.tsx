@@ -1,14 +1,16 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { format, isAfter } from 'date-fns';
 import { BookOpen, Calendar } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { AsyncSection } from '@/components/data/async-section';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 // Import hooks
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
@@ -26,7 +28,6 @@ import {
   submitInstructorReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { LessonContentViewerDialog } from '../../../../../../components/content-preview/LessonContentPreview';
-import { CustomLoadingState } from '../../../../@course_creator/_components/loading-state';
 import { FeedbackDialog } from '../../../../_components/review-instructor-modal';
 import { ClassPageHeader } from './ClassPageHeader';
 import { CourseProgramSection, type LessonContent, type LessonModule } from './CourseProgram';
@@ -131,7 +132,7 @@ export default function ClassDetailsPage() {
   const [isReading, setIsReading] = useState(false);
 
   // API Queries
-  const { data: classData, isLoading: classLoading } = useQuery({
+  const { data: classData, isLoading: classLoading, isError: classError } = useQuery({
     ...getClassDefinitionOptions({ path: { uuid: classId } }),
     enabled: !!classId,
   });
@@ -378,10 +379,7 @@ export default function ClassDetailsPage() {
 
   // Loading State
   const loading = classLoading || instructorLoading || courseLoading || isAllLessonsDataLoading;
-
-  if (loading) {
-    return <CustomLoadingState subHeading='Fetching class information...' />;
-  }
+  const contentInitialLoading = loading && courseProgramLessons.length === 0;
 
   const contentTypeName = selectedLesson ? contentTypeMap[selectedLesson.content_type_uuid] : null;
 
@@ -451,50 +449,70 @@ export default function ClassDetailsPage() {
           </Button>
         </div>
 
-        {/* Content Grid */}
-        <div className='mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3'>
-          {/* Course Program */}
-          {showCourseProgram && (
-            <div className='lg:col-span-2'>
-              <CourseProgramSection
-                isVisible={showCourseProgram}
-                onToggleVisibility={() => setShowCourseProgram(false)}
-                lessons={courseProgramLessons}
-                expandedModuleId={expandedModuleId}
-                onToggleModule={handleToggleModule}
-                selectedLesson={selectedLesson}
-                onLessonSelect={handleLessonSelect}
-                onViewContent={handleViewContent}
+        {/* Content — degrades independently of the page shell */}
+        <AsyncSection
+          loading={contentInitialLoading}
+          error={classError || undefined}
+          errorTitle='Unable to load class information'
+          skeleton={
+            <div className='mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3'>
+              <div className='space-y-4 lg:col-span-2'>
+                <Skeleton className='h-8 w-1/2' />
+                <Skeleton className='h-64 w-full rounded-xl' />
+                <Skeleton className='h-40 w-full rounded-xl' />
+              </div>
+              <div className='space-y-4'>
+                <Skeleton className='h-48 w-full rounded-xl' />
+                <Skeleton className='h-24 w-full rounded-xl' />
+              </div>
+            </div>
+          }
+        >
+          {/* Content Grid */}
+          <div className='mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3'>
+            {/* Course Program */}
+            {showCourseProgram && (
+              <div className='lg:col-span-2'>
+                <CourseProgramSection
+                  isVisible={showCourseProgram}
+                  onToggleVisibility={() => setShowCourseProgram(false)}
+                  lessons={courseProgramLessons}
+                  expandedModuleId={expandedModuleId}
+                  onToggleModule={handleToggleModule}
+                  selectedLesson={selectedLesson}
+                  onLessonSelect={handleLessonSelect}
+                  onViewContent={handleViewContent}
+                  contentTypeMap={contentTypeMap}
+                />
+              </div>
+            )}
+
+            {/* Lesson Details Sidebar */}
+            <div className={showCourseProgram ? '' : 'lg:col-span-3'}>
+              <LessonDetailsSidebar
+                lesson={selectedLesson}
+                onStartLesson={handleStartLesson}
+                onMarkComplete={handleMarkComplete}
+                totalLessons={progress.totalLessons}
+                completedLessons={progress.completedLessons}
+                overallProgress={Math.round(progress.percentage)}
+                timeSpent='0'
                 contentTypeMap={contentTypeMap}
               />
             </div>
-          )}
-
-          {/* Lesson Details Sidebar */}
-          <div className={showCourseProgram ? '' : 'lg:col-span-3'}>
-            <LessonDetailsSidebar
-              lesson={selectedLesson}
-              onStartLesson={handleStartLesson}
-              onMarkComplete={handleMarkComplete}
-              totalLessons={progress.totalLessons}
-              completedLessons={progress.completedLessons}
-              overallProgress={Math.round(progress.percentage)}
-              timeSpent='0'
-              contentTypeMap={contentTypeMap}
-            />
           </div>
-        </div>
 
-        {/* Weekly Schedule */}
-        <WeeklyScheduleList
-          schedules={normalizedSchedules}
-          onScheduleClick={schedule => {
-            const selected = normalizedSchedules.find(item => item.uuid === schedule.uuid);
-            if (selected) {
-              setSelectedSchedule(toScheduleDetailsItem(selected));
-            }
-          }}
-        />
+          {/* Weekly Schedule */}
+          <WeeklyScheduleList
+            schedules={normalizedSchedules}
+            onScheduleClick={schedule => {
+              const selected = normalizedSchedules.find(item => item.uuid === schedule.uuid);
+              if (selected) {
+                setSelectedSchedule(toScheduleDetailsItem(selected));
+              }
+            }}
+          />
+        </AsyncSection>
       </div>
 
       {/* Dialogs and Modals */}
