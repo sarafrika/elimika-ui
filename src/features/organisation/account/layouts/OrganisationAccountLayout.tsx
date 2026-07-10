@@ -6,6 +6,7 @@ import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-dom
 import { ProfileSectionNav } from '@/src/features/profile/components/profile-section-nav';
 
 const sections = [
+  { label: 'Overview', href: '/dashboard/account', exact: true },
   { label: 'Training centre', href: '/dashboard/account/training-center', exact: true },
   { label: 'Fees & scheduling', href: '/dashboard/account/fees-scheduling' },
   { label: 'Admin', href: '/dashboard/account/admin' },

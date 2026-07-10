@@ -1,3 +1,3 @@
-import OrganisationAccountRedirectPage from '@/src/features/organisation/account/pages/OrganisationAccountRedirectPage';
+import OrganisationOverviewPage from '@/src/features/organisation/account/pages/OrganisationOverviewPage';
 
-export default OrganisationAccountRedirectPage;
+export default OrganisationOverviewPage;

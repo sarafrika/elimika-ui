@@ -545,7 +545,7 @@ export default {
       icon: LibraryIcon,
     },
     {
-      title: 'Skills Fund',
+      title: 'Revenue',
       url: '/dashboard/revenue',
       icon: DollarSign,
     },
@@ -596,7 +596,7 @@ export default {
     },
     {
       title: 'Organisation',
-      url: '/dashboard/account/training-center',
+      url: '/dashboard/account',
       icon: LucideLandmark,
     },
     {
