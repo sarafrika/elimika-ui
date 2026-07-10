@@ -540,6 +540,16 @@ export default {
       icon: BookOpen,
     },
     {
+      title: 'Catalogue',
+      url: '/dashboard/catalogue',
+      icon: ShoppingBag,
+    },
+    {
+      title: 'Course Management',
+      url: '/dashboard/course-management',
+      icon: LibraryIcon,
+    },
+    {
       title: 'Skills Wallet',
       url: '/dashboard/people',
       icon: Wallet,
@@ -558,6 +568,11 @@ export default {
       title: 'Opportunities',
       url: '/dashboard/opportunities',
       icon: Handshake,
+    },
+    {
+      title: 'Applications',
+      url: '/dashboard/training-applications',
+      icon: ClipboardList,
     },
     {
       title: 'Venues',
