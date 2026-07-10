@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { AsyncSection } from '@/components/data/async-section';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useOrganisation } from '@/context/organisation-context';
@@ -46,7 +48,7 @@ import {
   decideOnTrainingApplicationMutation,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { AdminPageHeader, StatCard } from '../_components/ui';
+import { AdminPageHeader, StatCard, StatCardSkeleton } from '../_components/ui';
 
 type TrainingApplicationRow = CourseTrainingApplication & {
   course_name?: string;
@@ -85,7 +87,7 @@ export default function TrainingApplicationsPage() {
   const [reviewNotes, setReviewNotes] = useState('');
 
   // Fetch applications for this course creator's courses
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     ...searchTrainingApplicationsOptions({
       body: {
         searchCriteria: [
@@ -208,13 +210,7 @@ export default function TrainingApplicationsPage() {
     }
   };
 
-  if (isLoading && !data) {
-    return (
-      <div className='flex min-h-[400px] items-center justify-center'>
-        <Loader2 className='text-muted-foreground h-8 w-8 animate-spin' />
-      </div>
-    );
-  }
+  const initialLoading = isLoading && !data;
 
   return (
     <div className='space-y-6 p-6'>
@@ -223,12 +219,18 @@ export default function TrainingApplicationsPage() {
         description='Review and manage applications to train your courses'
       />
 
-      {/* Stats Cards */}
+      {/* Stats Cards — degrade independently */}
       <div className='grid gap-4 sm:grid-cols-4'>
-        <StatCard label='Total Applications' value={stats.total} icon={FileText} tone='info' />
-        <StatCard label='Pending Review' value={stats.pending} icon={Clock} tone='warning' />
-        <StatCard label='Approved' value={stats.approved} icon={CheckCircle2} tone='success' />
-        <StatCard label='Unique Trainers' value={stats.instructors} icon={User} tone='neutral' />
+        {initialLoading ? (
+          Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+        ) : (
+          <>
+            <StatCard label='Total Applications' value={stats.total} icon={FileText} tone='info' />
+            <StatCard label='Pending Review' value={stats.pending} icon={Clock} tone='warning' />
+            <StatCard label='Approved' value={stats.approved} icon={CheckCircle2} tone='success' />
+            <StatCard label='Unique Trainers' value={stats.instructors} icon={User} tone='neutral' />
+          </>
+        )}
       </div>
 
       {/* Filters */}
@@ -272,20 +274,43 @@ export default function TrainingApplicationsPage() {
         </CardContent>
       </Card>
 
-      {/* Applications Grid */}
-      {filteredApplications.length === 0 ? (
-        <Card>
-          <CardContent className='flex min-h-[300px] flex-col items-center justify-center py-12'>
-            <FileText className='text-muted-foreground mb-4 h-12 w-12' />
-            <h3 className='mb-2 text-lg font-semibold'>No Applications Found</h3>
-            <p className='text-muted-foreground text-center text-sm'>
-              {statusFilter || searchQuery || applicantTypeFilter
-                ? 'Try adjusting your filters or search query'
-                : 'No training applications have been submitted yet'}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
+      {/* Applications — degrade independently (skeleton / error / empty are local) */}
+      <AsyncSection
+        loading={initialLoading}
+        error={isError ? error : undefined}
+        empty={filteredApplications.length === 0}
+        onRetry={refetch}
+        skeleton={
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className='flex flex-col'>
+                <CardHeader className='space-y-2 pb-3'>
+                  <Skeleton className='h-4 w-3/4' />
+                  <Skeleton className='h-3 w-1/2' />
+                </CardHeader>
+                <CardContent className='space-y-2'>
+                  <Skeleton className='h-3 w-full' />
+                  <Skeleton className='h-3 w-5/6' />
+                  <Skeleton className='mt-3 h-9 w-full' />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        }
+        emptyState={
+          <Card>
+            <CardContent className='flex min-h-[300px] flex-col items-center justify-center py-12'>
+              <FileText className='text-muted-foreground mb-4 h-12 w-12' />
+              <h3 className='mb-2 text-lg font-semibold'>No Applications Found</h3>
+              <p className='text-muted-foreground text-center text-sm'>
+                {statusFilter || searchQuery || applicantTypeFilter
+                  ? 'Try adjusting your filters or search query'
+                  : 'No training applications have been submitted yet'}
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
         <>
           <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
             {filteredApplications.map(application => {
@@ -483,7 +508,7 @@ export default function TrainingApplicationsPage() {
             </Card>
           )}
         </>
-      )}
+      </AsyncSection>
 
       {/* Review Dialog */}
       <Dialog
