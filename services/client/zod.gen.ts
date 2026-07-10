@@ -540,6 +540,11 @@ export const zAssessmentRubric = z
       .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
       .readonly()
       .optional(),
+    rubric_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the rubric based on its type.')
+      .readonly()
+      .optional(),
     assessment_scope: z
       .string()
       .describe(
@@ -550,11 +555,6 @@ export const zAssessmentRubric = z
     usage_status: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive status indicating usage and accessibility.')
-      .readonly()
-      .optional(),
-    rubric_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the rubric based on its type.')
       .readonly()
       .optional(),
   })
@@ -3396,6 +3396,16 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
+      .readonly()
+      .optional(),
+    is_major_assessment: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
+      .readonly()
+      .optional(),
     contribution_level: z
       .string()
       .describe('**[READ-ONLY]** Level of contribution to final grade based on weight.')
@@ -3411,16 +3421,6 @@ export const zCourseAssessment = z
     assessment_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
-      .readonly()
-      .optional(),
-    is_major_assessment: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
       .readonly()
       .optional(),
   })
@@ -5953,11 +5953,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
-      .readonly()
-      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -5971,6 +5966,11 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -6138,6 +6138,28 @@ export const zApiResponseCourseCreator = z.object({
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
+
+/**
+ * Result of initiating an M-Pesa STK Push
+ */
+export const zMpesaCheckoutResponse = z
+  .object({
+    checkout_request_id: z
+      .string()
+      .describe('Checkout request id used to poll payment status')
+      .optional(),
+    status: z.string().describe('Initial payment status').optional(),
+  })
+  .describe('Result of initiating an M-Pesa STK Push');
+
+/**
+ * Phone number to prompt for an M-Pesa STK Push payment
+ */
+export const zMpesaPaymentRequest = z
+  .object({
+    phone_number: z.string().min(1).describe('Customer phone number in 254XXXXXXXXX format'),
+  })
+  .describe('Phone number to prompt for an M-Pesa STK Push payment');
 
 /**
  * A single line item attached to a cart
@@ -9611,6 +9633,15 @@ export const zApiResponseListCategory = z.object({
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
+
+/**
+ * Current payment status of an order
+ */
+export const zPaymentStatusResponse = z
+  .object({
+    status: z.string().describe('Payment status').optional(),
+  })
+  .describe('Current payment status of an order');
 
 export const zApiResponseListCommerceCatalogueItem = z.object({
   success: z.boolean().optional(),
@@ -14248,6 +14279,19 @@ export const zCreateCategoryData = z.object({
  */
 export const zCreateCategoryResponse = zApiResponseCategory;
 
+export const zPayWithMpesaData = z.object({
+  body: zMpesaPaymentRequest,
+  path: z.object({
+    orderId: z.string().describe('Order identifier'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * STK Push initiated
+ */
+export const zPayWithMpesaResponse = zMpesaCheckoutResponse;
+
 export const zCompleteCheckoutData = z.object({
   body: zCheckoutRequest,
   path: z.never().optional(),
@@ -17187,6 +17231,19 @@ export const zGetOrderData = z.object({
  * Order retrieved
  */
 export const zGetOrderResponse = zOrderResponse;
+
+export const zGetPaymentStatusData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    orderId: z.string().describe('Order identifier'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Payment status retrieved
+ */
+export const zGetPaymentStatusResponse = zPaymentStatusResponse;
 
 export const zSearchCatalogueData = z.object({
   body: z.never().optional(),

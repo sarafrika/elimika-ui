@@ -259,6 +259,7 @@ import {
   createContentType,
   getAllCategories,
   createCategory,
+  payWithMpesa,
   completeCheckout,
   listCatalogItems,
   createCatalogItem,
@@ -463,6 +464,7 @@ import {
   searchCategories,
   getRootCategories,
   getOrder,
+  getPaymentStatus,
   searchCatalogue,
   resolveByCourseOrClass,
   getClassSchedulingConflicts,
@@ -1205,6 +1207,9 @@ import type {
   CreateCategoryData,
   CreateCategoryError,
   CreateCategoryResponse,
+  PayWithMpesaData,
+  PayWithMpesaError,
+  PayWithMpesaResponse,
   CompleteCheckoutData,
   CompleteCheckoutError,
   CompleteCheckoutResponse,
@@ -1689,6 +1694,7 @@ import type {
   SearchCategoriesResponse,
   GetRootCategoriesData,
   GetOrderData,
+  GetPaymentStatusData,
   SearchCatalogueData,
   SearchCatalogueError,
   SearchCatalogueResponse,
@@ -12395,6 +12401,52 @@ export const createCategoryMutation = (
   return mutationOptions;
 };
 
+export const payWithMpesaQueryKey = (options: Options<PayWithMpesaData>) =>
+  createQueryKey('payWithMpesa', options);
+
+/**
+ * Pay an order via M-Pesa
+ * Initiates an M-Pesa STK Push for an order that is awaiting payment
+ */
+export const payWithMpesaOptions = (options: Options<PayWithMpesaData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await payWithMpesa({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: payWithMpesaQueryKey(options),
+  });
+};
+
+/**
+ * Pay an order via M-Pesa
+ * Initiates an M-Pesa STK Push for an order that is awaiting payment
+ */
+export const payWithMpesaMutation = (
+  options?: Partial<Options<PayWithMpesaData>>
+): UseMutationOptions<PayWithMpesaResponse, PayWithMpesaError, Options<PayWithMpesaData>> => {
+  const mutationOptions: UseMutationOptions<
+    PayWithMpesaResponse,
+    PayWithMpesaError,
+    Options<PayWithMpesaData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await payWithMpesa({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const completeCheckoutQueryKey = (options: Options<CompleteCheckoutData>) =>
   createQueryKey('completeCheckout', options);
 
@@ -22448,6 +22500,28 @@ export const getOrderOptions = (options: Options<GetOrderData>) => {
       return data;
     },
     queryKey: getOrderQueryKey(options),
+  });
+};
+
+export const getPaymentStatusQueryKey = (options: Options<GetPaymentStatusData>) =>
+  createQueryKey('getPaymentStatus', options);
+
+/**
+ * Get order payment status
+ * Polls the M-Pesa gateway and captures the order on confirmed payment
+ */
+export const getPaymentStatusOptions = (options: Options<GetPaymentStatusData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPaymentStatus({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPaymentStatusQueryKey(options),
   });
 };
 

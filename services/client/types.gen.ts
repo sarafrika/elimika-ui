@@ -361,6 +361,10 @@ export type AssessmentRubric = {
    */
   readonly is_published?: boolean;
   /**
+   * **[READ-ONLY]** Formatted category of the rubric based on its type.
+   */
+  readonly rubric_category?: string;
+  /**
    * **[READ-ONLY]** Scope of the rubric usage. All rubrics are general-use and can be associated with multiple courses.
    */
   readonly assessment_scope?: string;
@@ -368,10 +372,6 @@ export type AssessmentRubric = {
    * **[READ-ONLY]** Comprehensive status indicating usage and accessibility.
    */
   readonly usage_status?: string;
-  /**
-   * **[READ-ONLY]** Formatted category of the rubric based on its type.
-   */
-  readonly rubric_category?: string;
 };
 
 export type ApiResponseAssessmentRubric = {
@@ -2460,6 +2460,14 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is a major assessment component.
+   */
+  readonly is_major_assessment?: boolean;
+  /**
    * **[READ-ONLY]** Level of contribution to final grade based on weight.
    */
   readonly contribution_level?: string;
@@ -2471,14 +2479,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Category classification of the assessment type.
    */
   readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this is a major assessment component.
-   */
-  readonly is_major_assessment?: boolean;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -4688,10 +4688,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -4703,6 +4699,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -4866,6 +4866,30 @@ export type ApiResponseCourseCreator = {
   data?: CourseCreator;
   message?: string;
   error?: unknown;
+};
+
+/**
+ * Result of initiating an M-Pesa STK Push
+ */
+export type MpesaCheckoutResponse = {
+  /**
+   * Checkout request id used to poll payment status
+   */
+  checkout_request_id?: string;
+  /**
+   * Initial payment status
+   */
+  status?: string;
+};
+
+/**
+ * Phone number to prompt for an M-Pesa STK Push payment
+ */
+export type MpesaPaymentRequest = {
+  /**
+   * Customer phone number in 254XXXXXXXXX format
+   */
+  phone_number: string;
 };
 
 /**
@@ -8120,6 +8144,16 @@ export type ApiResponseListCategory = {
   data?: Array<Category>;
   message?: string;
   error?: unknown;
+};
+
+/**
+ * Current payment status of an order
+ */
+export type PaymentStatusResponse = {
+  /**
+   * Payment status
+   */
+  status?: string;
 };
 
 export type ApiResponseListCommerceCatalogueItem = {
@@ -19312,6 +19346,40 @@ export type CreateCategoryResponses = {
 
 export type CreateCategoryResponse = CreateCategoryResponses[keyof CreateCategoryResponses];
 
+export type PayWithMpesaData = {
+  body: MpesaPaymentRequest;
+  path: {
+    /**
+     * Order identifier
+     */
+    orderId: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/orders/{orderId}/pay/mpesa';
+};
+
+export type PayWithMpesaErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type PayWithMpesaError = PayWithMpesaErrors[keyof PayWithMpesaErrors];
+
+export type PayWithMpesaResponses = {
+  /**
+   * STK Push initiated
+   */
+  200: MpesaCheckoutResponse;
+};
+
+export type PayWithMpesaResponse = PayWithMpesaResponses[keyof PayWithMpesaResponses];
+
 export type CompleteCheckoutData = {
   body: CheckoutRequest;
   path?: never;
@@ -26591,6 +26659,40 @@ export type GetOrderResponses = {
 };
 
 export type GetOrderResponse = GetOrderResponses[keyof GetOrderResponses];
+
+export type GetPaymentStatusData = {
+  body?: never;
+  path: {
+    /**
+     * Order identifier
+     */
+    orderId: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/orders/{orderId}/payment-status';
+};
+
+export type GetPaymentStatusErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetPaymentStatusError = GetPaymentStatusErrors[keyof GetPaymentStatusErrors];
+
+export type GetPaymentStatusResponses = {
+  /**
+   * Payment status retrieved
+   */
+  200: PaymentStatusResponse;
+};
+
+export type GetPaymentStatusResponse = GetPaymentStatusResponses[keyof GetPaymentStatusResponses];
 
 export type SearchCatalogueData = {
   body?: never;

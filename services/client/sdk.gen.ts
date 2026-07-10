@@ -775,6 +775,9 @@ import type {
   CreateCategoryData,
   CreateCategoryResponses,
   CreateCategoryErrors,
+  PayWithMpesaData,
+  PayWithMpesaResponses,
+  PayWithMpesaErrors,
   CompleteCheckoutData,
   CompleteCheckoutResponses,
   CompleteCheckoutErrors,
@@ -1387,6 +1390,9 @@ import type {
   GetOrderData,
   GetOrderResponses,
   GetOrderErrors,
+  GetPaymentStatusData,
+  GetPaymentStatusResponses,
+  GetPaymentStatusErrors,
   SearchCatalogueData,
   SearchCatalogueResponses,
   SearchCatalogueErrors,
@@ -9731,6 +9737,37 @@ export const createCategory = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Pay an order via M-Pesa
+ * Initiates an M-Pesa STK Push for an order that is awaiting payment
+ */
+export const payWithMpesa = <ThrowOnError extends boolean = false>(
+  options: Options<PayWithMpesaData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    PayWithMpesaResponses,
+    PayWithMpesaErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/orders/{orderId}/pay/mpesa',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Complete checkout
  * Performs the full checkout flow including customer association and payment selection
  */
@@ -15742,6 +15779,33 @@ export const getOrder = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/commerce/orders/{orderId}',
+    ...options,
+  });
+};
+
+/**
+ * Get order payment status
+ * Polls the M-Pesa gateway and captures the order on confirmed payment
+ */
+export const getPaymentStatus = <ThrowOnError extends boolean = false>(
+  options: Options<GetPaymentStatusData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetPaymentStatusResponses,
+    GetPaymentStatusErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/orders/{orderId}/payment-status',
     ...options,
   });
 };

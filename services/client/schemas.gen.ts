@@ -800,6 +800,12 @@ export const AssessmentRubricSchema = {
       example: true,
       readOnly: true,
     },
+    rubric_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the rubric based on its type.',
+      example: 'Performance Assessment',
+      readOnly: true,
+    },
     assessment_scope: {
       type: 'string',
       description:
@@ -811,12 +817,6 @@ export const AssessmentRubricSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive status indicating usage and accessibility.',
       example: 'Active Public Rubric',
-      readOnly: true,
-    },
-    rubric_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the rubric based on its type.',
-      example: 'Performance Assessment',
       readOnly: true,
     },
   },
@@ -5105,6 +5105,18 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
+    is_major_assessment: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
+      example: false,
+      readOnly: true,
+    },
     contribution_level: {
       type: 'string',
       description: '**[READ-ONLY]** Level of contribution to final grade based on weight.',
@@ -5122,18 +5134,6 @@ export const CourseAssessmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Category classification of the assessment type.',
       example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
-    is_major_assessment: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
-      example: false,
       readOnly: true,
     },
   },
@@ -9791,12 +9791,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -9813,6 +9807,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -10124,6 +10124,37 @@ export const ApiResponseCourseCreatorSchema = {
     },
     error: {},
   },
+} as const;
+
+export const MpesaCheckoutResponseSchema = {
+  type: 'object',
+  description: 'Result of initiating an M-Pesa STK Push',
+  properties: {
+    checkout_request_id: {
+      type: 'string',
+      description: 'Checkout request id used to poll payment status',
+      example: 'ws_CO_04112017184930742',
+    },
+    status: {
+      type: 'string',
+      description: 'Initial payment status',
+      example: 'PENDING',
+    },
+  },
+} as const;
+
+export const MpesaPaymentRequestSchema = {
+  type: 'object',
+  description: 'Phone number to prompt for an M-Pesa STK Push payment',
+  properties: {
+    phone_number: {
+      type: 'string',
+      description: 'Customer phone number in 254XXXXXXXXX format',
+      example: '254708374149',
+      minLength: 1,
+    },
+  },
+  required: ['phone_number'],
 } as const;
 
 export const CartItemResponseSchema = {
@@ -16850,6 +16881,18 @@ export const ApiResponseListCategorySchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const PaymentStatusResponseSchema = {
+  type: 'object',
+  description: 'Current payment status of an order',
+  properties: {
+    status: {
+      type: 'string',
+      description: 'Payment status',
+      example: 'CAPTURED',
+    },
   },
 } as const;
 
