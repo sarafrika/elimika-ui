@@ -1,19 +1,5 @@
 'use client';
 
-import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
-import { PublicTopNav } from '@/components/PublicTopNav';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Skeleton } from '@/components/ui/skeleton';
-import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
   addDays,
   endOfMonth,
@@ -36,6 +22,20 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Suspense, useEffect, useMemo, useState } from 'react';
+import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
+import { PublicTopNav } from '@/components/PublicTopNav';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useClassDetails } from '../../hooks/use-class-details';
 import { useDifficultyLevels } from '../../hooks/use-difficultyLevels';
 import { useUserDomains } from '../../hooks/use-user-query';
@@ -149,7 +149,7 @@ function ClassInviteContent() {
   return (
     <div className='mx-auto w-full max-w-6xl px-6 py-12 lg:py-16'>
       {isLoading ? (
-        <Skeleton className='h-[420px] w-full rounded-[28px]' />
+        <ClassInviteSkeleton />
       ) : (
         <>
           {!isAuthenticated ? (
@@ -440,14 +440,52 @@ export default function PublicClassInvitePage() {
       <PublicTopNav />
       <Suspense
         fallback={
-          <div className='mx-auto w-full max-w-5xl px-6 py-12 lg:py-16'>
-            <Skeleton className='h-[420px] w-full rounded-[28px]' />
+          <div className='mx-auto w-full max-w-6xl px-6 py-12 lg:py-16'>
+            <ClassInviteSkeleton />
           </div>
         }
       >
         <ClassInviteContent />
       </Suspense>
     </div>
+  );
+}
+
+// Shape-matching skeleton for the invite card, so the page frame + nav stay visible while
+// class details load instead of gating the whole page on a spinner.
+function ClassInviteSkeleton() {
+  return (
+    <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
+      <CardHeader className='space-y-4'>
+        <div className='flex items-center justify-between gap-4'>
+          <div className='flex flex-wrap gap-2'>
+            <Skeleton className='h-6 w-24 rounded-full' />
+            <Skeleton className='h-6 w-20 rounded-full' />
+            <Skeleton className='h-6 w-28 rounded-full' />
+          </div>
+          <Skeleton className='h-6 w-20 rounded-full' />
+        </div>
+        <Skeleton className='h-9 w-2/3' />
+        <div className='space-y-2'>
+          <Skeleton className='h-4 w-full' />
+          <Skeleton className='h-4 w-5/6' />
+        </div>
+      </CardHeader>
+      <CardContent className='space-y-6'>
+        <div className='grid gap-4 sm:grid-cols-2'>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className='flex items-start gap-3'>
+              <Skeleton className='mt-0.5 h-4 w-4 shrink-0 rounded' />
+              <div className='flex-1 space-y-1'>
+                <Skeleton className='h-3 w-24' />
+                <Skeleton className='h-4 w-40' />
+              </div>
+            </div>
+          ))}
+        </div>
+        <Skeleton className='h-64 w-full rounded-md' />
+      </CardContent>
+    </Card>
   );
 }
 

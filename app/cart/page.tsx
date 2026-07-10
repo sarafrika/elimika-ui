@@ -1,17 +1,5 @@
 'use client';
 
-import { PublicTopNav } from '@/components/PublicTopNav';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { CartItemResponse } from '@/services/client';
-import {
-  getCartOptions,
-  getCartQueryKey,
-  removeItemMutation,
-} from '@/services/client/@tanstack/react-query.gen';
-import { useCartStore } from '@/store/cart-store';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -25,6 +13,19 @@ import {
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
+import { AsyncSection } from '@/components/data/async-section';
+import { PublicTopNav } from '@/components/PublicTopNav';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { CartItemResponse } from '@/services/client';
+import {
+  getCartOptions,
+  getCartQueryKey,
+  removeItemMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useCartStore } from '@/store/cart-store';
 
 const DEFAULT_CURRENCY = 'KES';
 
@@ -75,26 +76,8 @@ export default function CartPage() {
 
   const currency = cart?.currency_code ?? DEFAULT_CURRENCY;
 
-  // Loading state
-  if (cartQuery.isLoading && cartId) {
-    return (
-      <div className='bg-background text-foreground min-h-screen'>
-        <PublicTopNav />
-        <div className='mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:py-16'>
-          <div className='space-y-4'>
-            <Skeleton className='h-10 w-48' />
-            <Skeleton className='h-6 w-64' />
-          </div>
-          <div className='grid gap-6 lg:grid-cols-3'>
-            <div className='space-y-4 lg:col-span-2'>
-              <Skeleton className='h-[400px] w-full rounded-[28px]' />
-            </div>
-            <Skeleton className='h-[500px] w-full rounded-[28px]' />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Only true during the first cart load; keeps stale data visible on refetch.
+  const initialLoading = cartQuery.isLoading && !cart;
 
   return (
     <div className='bg-background text-foreground min-h-screen'>
@@ -105,9 +88,11 @@ export default function CartPage() {
           <div className='space-y-2'>
             <h1 className='text-foreground text-3xl font-semibold sm:text-4xl'>Shopping Cart</h1>
             <p className='text-muted-foreground text-sm'>
-              {isEmpty
-                ? 'Your cart is empty'
-                : `${cartItems.length} ${cartItems.length === 1 ? 'item' : 'items'} in your cart`}
+              {initialLoading
+                ? 'Loading your cart…'
+                : isEmpty
+                  ? 'Your cart is empty'
+                  : `${cartItems.length} ${cartItems.length === 1 ? 'item' : 'items'} in your cart`}
             </p>
           </div>
           <Link
@@ -119,31 +104,78 @@ export default function CartPage() {
           </Link>
         </div>
 
-        {isEmpty ? (
-          /* Empty Cart State */
-          <Card className='border-border bg-card/80'>
-            <CardHeader className='space-y-4 text-center'>
-              <div className='bg-primary/10 mx-auto flex h-20 w-20 items-center justify-center rounded-full'>
-                <ShoppingCart className='text-primary h-10 w-10' />
+        {/* Line items + summary degrade independently — the frame/header above always render. */}
+        <AsyncSection
+          loading={initialLoading}
+          error={cartQuery.error}
+          empty={isEmpty}
+          onRetry={cartQuery.refetch}
+          skeleton={
+            <div className='grid gap-6 lg:grid-cols-3'>
+              <div className='space-y-4 lg:col-span-2'>
+                <Card className='border-border bg-card rounded-[28px] border shadow-lg'>
+                  <CardHeader>
+                    <Skeleton className='h-6 w-40' />
+                  </CardHeader>
+                  <CardContent className='space-y-6'>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className='flex gap-4'>
+                        <Skeleton className='h-24 w-32 shrink-0 rounded-2xl' />
+                        <div className='flex-1 space-y-3'>
+                          <Skeleton className='h-5 w-3/4' />
+                          <div className='flex items-center justify-between'>
+                            <Skeleton className='h-4 w-16' />
+                            <Skeleton className='h-6 w-24' />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
               </div>
-              <CardTitle className='text-foreground text-2xl'>Your cart is empty</CardTitle>
-              <CardDescription className='text-muted-foreground text-base'>
-                Looks like you haven't added any courses yet. Start exploring our catalogue to find
-                courses that match your goals.
-              </CardDescription>
-              <Link href='/courses' className='inline-block pt-4'>
-                <Button
-                  size='lg'
-                  className='bg-primary hover:bg-primary/90 rounded-full px-8 shadow-lg transition'
-                >
-                  Browse Courses
-                  <ArrowRight className='ml-2 h-4 w-4' />
-                </Button>
-              </Link>
-            </CardHeader>
-          </Card>
-        ) : (
-          /* Cart with Items */
+              <div className='lg:col-span-1'>
+                <Card className='border-border bg-card sticky top-24 rounded-[28px] border shadow-xl'>
+                  <CardHeader>
+                    <Skeleton className='h-6 w-36' />
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
+                    <Skeleton className='h-4 w-full' />
+                    <Skeleton className='h-4 w-2/3' />
+                    <Separator className='bg-border' />
+                    <Skeleton className='h-8 w-full' />
+                    <Skeleton className='h-11 w-full rounded-full' />
+                    <Skeleton className='h-11 w-full rounded-full' />
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          }
+          emptyState={
+            /* Empty Cart State */
+            <Card className='border-border bg-card/80'>
+              <CardHeader className='space-y-4 text-center'>
+                <div className='bg-primary/10 mx-auto flex h-20 w-20 items-center justify-center rounded-full'>
+                  <ShoppingCart className='text-primary h-10 w-10' />
+                </div>
+                <CardTitle className='text-foreground text-2xl'>Your cart is empty</CardTitle>
+                <CardDescription className='text-muted-foreground text-base'>
+                  Looks like you haven't added any courses yet. Start exploring our catalogue to find
+                  courses that match your goals.
+                </CardDescription>
+                <Link href='/courses' className='inline-block pt-4'>
+                  <Button
+                    size='lg'
+                    className='bg-primary hover:bg-primary/90 rounded-full px-8 shadow-lg transition'
+                  >
+                    Browse Courses
+                    <ArrowRight className='ml-2 h-4 w-4' />
+                  </Button>
+                </Link>
+              </CardHeader>
+            </Card>
+          }
+        >
+          {/* Cart with Items */}
           <div className='grid gap-6 lg:grid-cols-3'>
             {/* Cart Items - Left Column */}
             <div className='space-y-4 lg:col-span-2'>
@@ -265,7 +297,7 @@ export default function CartPage() {
               </Card>
             </div>
           </div>
-        )}
+        </AsyncSection>
       </div>
     </div>
   );

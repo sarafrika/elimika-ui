@@ -469,18 +469,70 @@ export default function CheckoutPage() {
     );
   }
 
-  // Loading state
+  // Loading state — render the full checkout shell (header + two-column layout) with
+  // shape-matching skeletons for the form and order summary while the cart resolves.
   if (cartQuery.isLoading || !cart) {
     return (
       <div className='bg-background min-h-screen'>
         <PublicTopNav />
         <div className='mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12'>
-          <Skeleton className='mb-8 h-10 w-48' />
-          <div className='grid gap-8 lg:grid-cols-3'>
-            <div className='space-y-6 lg:col-span-2'>
-              <Skeleton className='h-[400px] w-full' />
+          {/* Header */}
+          <div className='mb-8 flex items-center justify-between'>
+            <div>
+              <h1 className='text-2xl font-bold md:text-3xl'>Checkout</h1>
+              <p className='text-muted-foreground mt-1 text-sm'>Complete your purchase</p>
             </div>
-            <Skeleton className='h-[500px] w-full' />
+            <Link
+              href='/cart'
+              className='text-primary inline-flex items-center gap-2 text-sm hover:underline'
+            >
+              <ArrowLeft className='h-4 w-4' />
+              Back to cart
+            </Link>
+          </div>
+
+          <div className='grid gap-8 lg:grid-cols-3'>
+            {/* Left column — form sections */}
+            <div className='space-y-6 lg:col-span-2'>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i}>
+                  <CardHeader className='space-y-2'>
+                    <Skeleton className='h-5 w-48' />
+                    <Skeleton className='h-4 w-64' />
+                  </CardHeader>
+                  <CardContent className='space-y-3'>
+                    <Skeleton className='h-10 w-full' />
+                    <Skeleton className='h-10 w-full' />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Right column — order summary */}
+            <div className='lg:col-span-1'>
+              <Card className='sticky top-24'>
+                <CardHeader>
+                  <Skeleton className='h-6 w-40' />
+                </CardHeader>
+                <CardContent className='space-y-4'>
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <div key={i} className='flex gap-3'>
+                      <Skeleton className='h-16 w-20 shrink-0 rounded-lg' />
+                      <div className='flex-1 space-y-2'>
+                        <Skeleton className='h-4 w-3/4' />
+                        <Skeleton className='h-4 w-1/3' />
+                      </div>
+                    </div>
+                  ))}
+                  <Separator />
+                  <Skeleton className='h-4 w-full' />
+                  <Skeleton className='h-4 w-2/3' />
+                  <Separator />
+                  <Skeleton className='h-8 w-full' />
+                  <Skeleton className='h-11 w-full' />
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

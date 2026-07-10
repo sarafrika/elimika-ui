@@ -1,5 +1,8 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
+import { useParams, useSearchParams } from 'next/navigation';
+import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import type {
   CourseCreator,
@@ -8,9 +11,6 @@ import type {
   Student,
   User,
 } from '@/services/client/types.gen';
-import { useQuery } from '@tanstack/react-query';
-import { useParams, useSearchParams } from 'next/navigation';
-import { useMemo } from 'react';
 import {
   getUserByUuidOptions,
   searchCourseCreatorsOptions,
@@ -313,6 +313,8 @@ export default function PublicUserProfilePage() {
     );
   }
 
+  // Don't gate the page on a centered spinner: ProfilePage's `isLoading` renders the profile
+  // shell (skeleton avatar / name / tab bar) so the frame shows immediately while data loads.
   if (isLoading || !profile) {
     return (
       <ProfilePage tabs={tabs} profile={{ uuid: '', user_uuid: '', full_name: '' }} isLoading />
