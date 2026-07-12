@@ -457,36 +457,47 @@ export function LiveClassCard({
 
 
           {/* BOTTOM SECTION */}
-          {completed ? <div className="flex flex-col gap-4 bg-success/5 p-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success">
-                <CheckCircle2 className="h-7 w-7" />
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center gap-2">
-                  <h3 className="font-semibold text-foreground">
-                    Training Completed
-                  </h3>
-
-                  <span className="rounded-full bg-success/15 px-2.5 py-1 text-xs font-medium text-success">
-                    Completed
-                  </span>
+          {completed ?
+            <div className="flex flex-col gap-4 bg-success/5 p-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success">
+                  <CheckCircle2 className="h-7 w-7" />
                 </div>
 
-                <p className="text-sm text-muted-foreground">
-                  You've successfully delivered all scheduled sessions for this class.
-                </p>
+                <div>
+                  <div className="mb-2 flex items-center gap-2">
+                    <h3 className="font-semibold text-foreground">
+                      Training Completed
+                    </h3>
+
+                    <span className="rounded-full bg-success/15 px-2.5 py-1 text-xs font-medium text-success">
+                      Completed
+                    </span>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    You've successfully delivered all scheduled sessions for this class.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex w-full max-w-md flex-col md:flex-row gap-3 lg:w-auto">
+                <Link
+                  href={`/dashboard/classes/class-training/${liveClass.classUuid}`}
+                  className="inline-flex h-10 w-full items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
+                >
+                  View Class
+                </Link>
+
+                <Link
+                  href={`/dashboard/classes/class-training/${liveClass.classUuid}/award-certificates`}
+                  className="inline-flex h-10 w-full text-center items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
+                >
+                  Award Certificates
+                </Link>
               </div>
             </div>
-
-            <Link
-              href={`/dashboard/classes/class-training/${liveClass.classUuid}`}
-              className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
-            >
-              View Class
-            </Link>
-          </div> :
+            :
             <div className='border-t border-border/60 bg-muted/20 px-4 py-4'>
               <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
                 {/* PROGRESS */}

@@ -1,6 +1,5 @@
 'use client';
 
-import { useStudent } from '@/context/student-context';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import {
   getAssignmentAttachmentsOptions,
@@ -16,6 +15,7 @@ import type {
 } from '@/services/client/types.gen';
 import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useUserProfile } from '../../profile/context/profile-context';
 
 type StudentClassDefinitionRow = ReturnType<
   typeof useStudentClassDefinitions
@@ -189,7 +189,8 @@ export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
 }
 
 export function useStudentAssignmentData() {
-  const student = useStudent();
+  const profile = useUserProfile()
+  const student = profile?.student
 
   const {
     classDefinitions,
@@ -240,7 +241,7 @@ export function useStudentAssignmentData() {
                 classDefinition.course?.name as string ||
                 classDetails?.course_name as string,
               studentUuid,
-              courseUuid: classDefinition?.course?.uuid,
+              courseUuid: classDefinition?.course?.uuid as string,
               enrollmentUuid,
               courseEnrollmentUuid
             };

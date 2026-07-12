@@ -22,7 +22,6 @@ import { cx, getCardClasses, getEmptyStateClasses, getStatCardClasses } from '@/
 import {
   getAssignmentSubmissionsQueryKey,
   getSubmissionAttachmentsOptions,
-  searchSubmissionsOptions,
   submitAssignmentQueryMutation,
   uploadSubmissionAttachmentMutation
 } from '@/services/client/@tanstack/react-query.gen';
@@ -131,102 +130,26 @@ export function StudentAssignmentWorkspace() {
   const [queuedFiles, setQueuedFiles] = useState<File[]>([]);
   const { assignmentRows, isLoading } = useStudentAssignmentData();
 
-  const currentEnrollment = useMemo(
-    () =>
-      assignmentRows.find(
-        row =>
-          row.classMeta.courseEnrollmentUuid ||
-          row.classMeta.enrollmentUuid
-      )?.classMeta,
-    [assignmentRows]
-  );
+  // Show all scheduled assignment rows across the student's enrolled classes.
+  // Each `assignmentRows` entry represents a schedule for a class, so the
+  // same assignment template assigned to multiple classes will appear once
+  // per class (separate schedule rows).
+  const studentAssignmentRows = assignmentRows;
 
-  const enrollmentUuid =
-    currentEnrollment?.courseEnrollmentUuid ??
-    currentEnrollment?.enrollmentUuid;
-
-  const studentAssignmentRows = useMemo(
-    () =>
-      assignmentRows.filter(row => {
-        const rowEnrollment =
-          row.classMeta.courseEnrollmentUuid ??
-          row.classMeta.enrollmentUuid;
-
-        return rowEnrollment === enrollmentUuid;
-      }),
-    [assignmentRows, enrollmentUuid]
-  );
-
-  const { data: submissionsResp } = useQuery({
-    ...searchSubmissionsOptions({
-      query: {
-        pageable: {
-          page: 0,
-          size: 1000,
-        },
-        searchParams: {
-          enrollment_uuid_eq: enrollmentUuid,
-        },
-      },
-    }),
-    enabled: !!enrollmentUuid,
-  });
+  // Use the submission data already attached to each schedule row from the
+  // `useStudentAssignmentData` hook. Treat each schedule as a distinct entity.
+  const assignmentRowsWithSubmissionState = useMemo(() => {
+    return studentAssignmentRows.map(row => ({
+      ...row,
+      submissions: row.submissions ?? [],
+      latestSubmission: row.latestSubmission ?? null,
+      hasSubmission: Boolean(row.latestSubmission),
+    }));
+  }, [studentAssignmentRows]);
 
   const activeEnrollmentUuid =
-    selectedAssignment?.classMeta
-      .courseEnrollmentUuid ??
-    selectedAssignment?.classMeta
-      .enrollmentUuid;
-
-
-
-  const submissionsByAssignment = useMemo(() => {
-    const submissions = submissionsResp?.data?.content ?? [];
-
-    return submissions.reduce(
-      (acc, submission) => {
-        if (submission.assignment_uuid) {
-          acc[submission.assignment_uuid] = submission;
-        }
-
-        return acc;
-      },
-      {} as Record<string, (typeof submissions)[number]>
-    );
-  }, [submissionsResp]);
-
-
-  const submittedAssignmentIds = useMemo(() => {
-    const submissions = submissionsResp?.data?.content ?? [];
-
-    return new Set(
-      submissions
-        .map(submission => submission.assignment_uuid)
-        .filter(Boolean)
-    );
-  }, [submissionsResp]);
-
-  const assignmentRowsWithSubmissionState = useMemo(() => {
-    return studentAssignmentRows.map(row => {
-      const assignmentUuid = row.assignment?.uuid ?? '';
-
-      const submission =
-        submissionsByAssignment[assignmentUuid];
-
-      return {
-        ...row,
-
-        submissions: submission ? [submission] : [],
-
-        latestSubmission: submission ?? null,
-
-        hasSubmission: !!submission,
-      };
-    });
-  }, [
-    studentAssignmentRows,
-    submissionsByAssignment,
-  ]);
+    selectedAssignment?.classMeta.courseEnrollmentUuid ??
+    selectedAssignment?.classMeta.enrollmentUuid;
 
   const processedRows = useMemo(() => {
     return assignmentRowsWithSubmissionState
@@ -274,26 +197,19 @@ export function StudentAssignmentWorkspace() {
   const stats = useMemo(() => {
     const total = studentAssignmentRows.length;
 
-    const submitted = studentAssignmentRows.filter(row =>
-      submittedAssignmentIds.has(row.assignment?.uuid ?? '')
-    ).length;
+    const submitted = studentAssignmentRows.filter(row => row.latestSubmission != null).length;
 
     const pending = total - submitted;
 
     const graded = studentAssignmentRows.filter(
-      row =>
-        row.latestSubmission &&
-        row.latestSubmission.percentage != null
+      row => row.latestSubmission && row.latestSubmission.percentage != null
     ).length;
 
     const returned = studentAssignmentRows.filter(
-      row =>
-        String(row.latestSubmission?.status).toUpperCase() ===
-        'RETURNED'
+      row => String(row.latestSubmission?.status).toUpperCase() === 'RETURNED'
     ).length;
 
-    const gradedSubmissions = studentAssignmentRows
-      .map(row => row.latestSubmission?.percentage)
+    const gradedSubmissions = studentAssignmentRows.map(row => row.latestSubmission?.percentage)
       .filter(
         (value): value is number =>
           typeof value === 'number'
@@ -324,7 +240,7 @@ export function StudentAssignmentWorkspace() {
       averageScore,
       progress,
     };
-  }, [studentAssignmentRows, submittedAssignmentIds]);
+  }, [studentAssignmentRows]);
 
   const selectedSubmissionAttachmentsQuery = useQuery({
     ...getSubmissionAttachmentsOptions({

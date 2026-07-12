@@ -1,32 +1,5 @@
 'use client';
 
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  AlertCircle,
-  ArrowLeft,
-  BookOpen,
-  CalendarClock,
-  CheckCircle,
-  ClipboardCheck,
-  ClipboardList,
-  Eye,
-  ListChecks,
-  Loader2,
-  PanelLeft,
-  PanelRight,
-  Pencil,
-  Plus,
-  Search,
-  Send,
-  ShieldCheck,
-  SquarePen,
-  Trash2,
-  Video
-} from 'lucide-react';
-import Link from 'next/link';
-import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { PracticeActivityList } from '@/app/dashboard/@course_creator/_components/practice-activity-management';
 import { getPreferredScheduleInstance } from '@/app/dashboard/@instructor/classes/_components/new-class-page.utils';
 import ConfirmModal from '@/components/custom-modals/confirm-modal';
@@ -85,7 +58,9 @@ import {
   getRubricMatrixOptions,
   getSubmissionAttachmentsOptions,
   markAttendanceMutation,
-  startScheduledInstanceMutation
+  startScheduledInstanceMutation,
+  updateAssignmentScheduleMutation,
+  updateQuizScheduleMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
@@ -100,6 +75,33 @@ import type {
   Quiz,
   RubricMatrix,
 } from '@/services/client/types.gen';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  CalendarClock,
+  CheckCircle,
+  ClipboardCheck,
+  ClipboardList,
+  Eye,
+  ListChecks,
+  Loader2,
+  PanelLeft,
+  PanelRight,
+  Pencil,
+  Plus,
+  Search,
+  Send,
+  ShieldCheck,
+  SquarePen,
+  Trash2,
+  Video
+} from 'lucide-react';
+import Link from 'next/link';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { AttachmentResourceList } from '../../../../../../../components/assessment/AttachmentResourceList';
 import { AssignmentContentPreview } from '../../../../../../../components/content-preview/AssignmentContentPreview';
 import { LessonContentPreview } from '../../../../../../../components/content-preview/LessonContentPreview';
@@ -111,7 +113,7 @@ import { RubricGradingMatrix, useRubricGradeSelections } from './RubricGradingMa
 
 
 
-type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
+export type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
 type LessonContentItem = CourseLessonContent;
 type LessonModule = CourseLessonWithContent & {
   course?: {
@@ -232,7 +234,7 @@ function formatEnum(value?: string | null) {
     .join(' ');
 }
 
-function toSortableNumber(value: unknown) {
+export function toSortableNumber(value: unknown) {
   const numericValue = Number(value);
   return Number.isFinite(numericValue) ? numericValue : 0;
 }
@@ -911,6 +913,8 @@ function AssessmentTasksSection({
                   type='assignment'
                   title={item.assignment?.title || 'Assignment'}
                   dueAt={item.due_at}
+                  assignmentVisibleAt={assignmentVisibleAt}
+                  onAssignmentVisibleAtChange={onAssignmentVisibleAtChange}
                   gradingDueAt={item.grading_due_at}
                   assignment={item.assignment}
                   activeSchedule={item}
@@ -926,9 +930,11 @@ function AssessmentTasksSection({
                   title={item.quiz?.title || 'Quiz'}
                   dueAt={item.due_at}
                   gradingDueAt={item.grading_due_at}
-
+                  assignmentVisibleAt={assignmentVisibleAt}
+                  onAssignmentVisibleAtChange={onAssignmentVisibleAtChange}
                   activeSchedule={item}
                   quiz={item.quiz}
+
 
                   onViewQuiz={quiz => openQuizSheet(quiz)}
                 />
@@ -1196,18 +1202,22 @@ function AssessmentTasksSection({
 function AssignedTaskRow({
   type,
   title,
+  assignmentVisibleAt,
   dueAt,
   gradingDueAt,
   assignment,
   activeSchedule,
   quiz,
   onViewAssignment,
+  onAssignmentVisibleAtChange,
   onViewQuiz,
 }: {
   type: 'assignment' | 'quiz';
   title: string;
   dueAt?: string | Date | null;
   gradingDueAt?: string | Date | null;
+  assignmentVisibleAt: string;
+  onAssignmentVisibleAtChange: (value: string) => void;
 
   activeSchedule: AssignmentScheduleItem | QuizScheduleItem;
   assignment?: Assignment | null;
@@ -1219,6 +1229,10 @@ function AssignedTaskRow({
 
   const qc = useQueryClient()
   const [expanded, setExpanded] = React.useState(false);
+
+  const [visibleAt, setEditVisibleAt] = React.useState(
+    formatDateTimeInput(assignmentVisibleAt)
+  );
 
   const [editDueAt, setEditDueAt] = React.useState(
     formatDateTimeInput(dueAt)
@@ -1234,6 +1248,14 @@ function AssignedTaskRow({
 
   const deleteQuizSchedMut = useMutation(
     deleteQuizScheduleMutation()
+  );
+
+  const updateAssignmentSchedMut = useMutation(
+    updateAssignmentScheduleMutation()
+  );
+
+  const updateQuizSchedMut = useMutation(
+    updateQuizScheduleMutation()
   );
 
   const isDeleting =
@@ -1378,6 +1400,16 @@ function AssignedTaskRow({
 
           <div className='grid gap-3 sm:grid-cols-2'>
             <div className='space-y-1.5'>
+              <Label className='text-xs'>Task visible date</Label>
+
+              <Input
+                type='datetime-local'
+                value={visibleAt}
+                onChange={e => setEditVisibleAt(e.target.value)}
+              />
+            </div>
+
+            <div className='space-y-1.5'>
               <Label className='text-xs'>Student due date</Label>
 
               <Input
@@ -1416,8 +1448,93 @@ function AssignedTaskRow({
               size='sm'
               className='h-7 text-xs'
               onClick={() => {
-                // TODO: wire update mutation
-                setExpanded(false);
+                const visibleAtDate = visibleAt ? new Date(visibleAt) : undefined;
+                const dueAtDate = editDueAt ? new Date(editDueAt) : undefined;
+                const gradingDueAtDate = editGradingDueAt ? new Date(editGradingDueAt) : undefined;
+
+                if (type === 'assignment') {
+                  updateAssignmentSchedMut.mutate(
+                    {
+                      path: {
+                        classUuid: activeSchedule?.class_definition_uuid as string,
+                        scheduleUuid: activeSchedule?.uuid as string,
+                      },
+                      body: {
+                        class_definition_uuid: activeSchedule?.class_definition_uuid,
+                        lesson_uuid: activeSchedule?.lesson_uuid,
+                        assignment_uuid: activeSchedule?.assignment_uuid,
+                        visible_at: visibleAtDate,
+                        due_at: dueAtDate,
+                        grading_due_at: gradingDueAtDate,
+                        timezone: activeSchedule?.timezone ?? 'Africa/Nairobi',
+                        release_strategy: activeSchedule?.release_strategy,
+                        max_attempts: activeSchedule?.max_attempts,
+                        instructor_uuid: activeSchedule?.instructor_uuid,
+                        notes: activeSchedule?.notes,
+                      },
+                    },
+                    {
+                      onSuccess: () => {
+                        qc.invalidateQueries({
+                          queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: activeSchedule?.class_definition_uuid as string } }),
+                        });
+                        toast.success('Assignment schedule updated.');
+                        setExpanded(false);
+                      },
+                      onError: error => {
+                        toast({
+                          title: 'Failed to update schedule',
+                          description: getApiToastMessage(error, 'Could not update assignment schedule.'),
+                          variant: 'destructive',
+                        });
+                      },
+                    }
+                  );
+
+                  return;
+                }
+
+                if (type === 'quiz') {
+                  updateQuizSchedMut.mutate(
+                    {
+                      path: {
+                        classUuid: activeSchedule?.class_definition_uuid as string,
+                        scheduleUuid: activeSchedule?.uuid as string,
+                      },
+                      body: {
+                        class_definition_uuid: activeSchedule?.class_definition_uuid,
+                        lesson_uuid: activeSchedule?.lesson_uuid,
+                        quiz_uuid: activeSchedule?.quiz_uuid,
+                        visible_at: visibleAtDate,
+                        due_at: dueAtDate,
+                        grading_due_at: gradingDueAtDate,
+                        timezone: activeSchedule?.timezone ?? 'Africa/Nairobi',
+                        release_strategy: activeSchedule?.release_strategy,
+                        instructor_uuid: activeSchedule?.instructor_uuid,
+                        notes: activeSchedule?.notes,
+                        time_limit_override: activeSchedule?.time_limit_override,
+                        attempt_limit_override: activeSchedule?.attempt_limit_override,
+                        passing_score_override: activeSchedule?.passing_score_override,
+                      },
+                    },
+                    {
+                      onSuccess: () => {
+                        qc.invalidateQueries({
+                          queryKey: getQuizSchedulesQueryKey({ path: { classUuid: activeSchedule?.class_definition_uuid as string } }),
+                        });
+                        toast.success('Quiz schedule updated.');
+                        setExpanded(false);
+                      },
+                      onError: error => {
+                        toast({
+                          title: 'Failed to update schedule',
+                          description: getApiToastMessage(error, 'Could not update quiz schedule.'),
+                          variant: 'destructive',
+                        });
+                      },
+                    }
+                  );
+                }
               }}
             >
               Save changes
@@ -1501,7 +1618,7 @@ function RosterListSkeleton() {
   );
 }
 
-function RosterPanel({
+export function RosterPanel({
   activeInstanceStudentsCount,
   filteredRoster,
   activeInstanceStudents,
@@ -1622,83 +1739,83 @@ function RosterPanel({
         {isLoadingRoster && filteredRoster.length === 0 ? (
           <RosterListSkeleton />
         ) : (
-        <div className="space-y-1.5 p-2">
-          {filteredRoster.map((entry: RosterEntry) => {
-            const attendanceState = getStudentAttendanceState(entry);
-            const isSelected =
-              selectedStudentId === (entry.enrollment?.uuid ?? '');
+          <div className="space-y-1.5 p-2">
+            {filteredRoster.map((entry: RosterEntry) => {
+              const attendanceState = getStudentAttendanceState(entry);
+              const isSelected =
+                selectedStudentId === (entry.enrollment?.uuid ?? '');
 
-            const enrollmentId = entry.enrollment?.uuid ?? '';
-            const isLoading = markingStudentId === enrollmentId;
+              const enrollmentId = entry.enrollment?.uuid ?? '';
+              const isLoading = markingStudentId === enrollmentId;
 
-            const isPresent =
-              attendanceState === 'present' ||
-              entry.enrollment?.is_attendance_marked;
+              const isPresent =
+                attendanceState === 'present' ||
+                entry.enrollment?.is_attendance_marked;
 
-            return (
-              <button
-                type="button"
-                key={
-                  entry.enrollment?.uuid ??
-                  entry.user?.uuid ??
-                  entry.student?.uuid
-                }
-                onClick={() => onSelectStudent(entry)}
-                className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected
-                  ? 'border-primary/30 bg-primary/8'
-                  : 'hover:bg-primary/5 border-transparent'
-                  }`}
-              >
-                <div className="flex items-start gap-2.5">
-                  <Avatar className="border-border/60 size-8 border">
-                    <AvatarImage
-                      src={entry.user?.profile_image_url ?? undefined}
-                      alt={entry.user?.full_name || 'Student'}
-                    />
-                    <AvatarFallback>
-                      {getInitials(entry.user?.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
+              return (
+                <button
+                  type="button"
+                  key={
+                    entry.enrollment?.uuid ??
+                    entry.user?.uuid ??
+                    entry.student?.uuid
+                  }
+                  onClick={() => onSelectStudent(entry)}
+                  className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected
+                    ? 'border-primary/30 bg-primary/8'
+                    : 'hover:bg-primary/5 border-transparent'
+                    }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <Avatar className="border-border/60 size-8 border">
+                      <AvatarImage
+                        src={entry.user?.profile_image_url ?? undefined}
+                        alt={entry.user?.full_name || 'Student'}
+                      />
+                      <AvatarFallback>
+                        {getInitials(entry.user?.full_name)}
+                      </AvatarFallback>
+                    </Avatar>
 
-                  <div className="min-w-0 flex-1 flex-row flex-wrap items-center justify-between">
-                    <p className="truncate text-sm font-semibold">
-                      {entry.user?.full_name || 'Unknown student'}
-                    </p>
+                    <div className="min-w-0 flex-1 flex-row flex-wrap items-center justify-between">
+                      <p className="truncate text-sm font-semibold">
+                        {entry.user?.full_name || 'Unknown student'}
+                      </p>
 
-                    <div>
-                      {isPresent ? (
-                        <span className="text-success text-[11px] font-medium">
-                          Present
-                        </span>
-                      ) : (
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onMarkAttendance(entry, true);
-                          }}
-                          disabled={isLoading}
-                          size="sm"
-                          className="rounded h-6 text-[11px]"
-                        >
-                          {isLoading ? <Spinner /> : 'Admit'}
-                        </Button>
-                      )}
+                      <div>
+                        {isPresent ? (
+                          <span className="text-success text-[11px] font-medium">
+                            Present
+                          </span>
+                        ) : (
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onMarkAttendance(entry, true);
+                            }}
+                            disabled={isLoading}
+                            size="sm"
+                            className="rounded h-6 text-[11px]"
+                          >
+                            {isLoading ? <Spinner /> : 'Admit'}
+                          </Button>
+                        )}
+                      </div>
+
                     </div>
-
                   </div>
-                </div>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
 
-          {filteredRoster.length === 0 && (
-            <div className="text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm">
-              {activeSchedule
-                ? 'No learners are attached to this class instance yet.'
-                : 'No class instance was selected.'}
-            </div>
-          )}
-        </div>
+            {filteredRoster.length === 0 && (
+              <div className="text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm">
+                {activeSchedule
+                  ? 'No learners are attached to this class instance yet.'
+                  : 'No class instance was selected.'}
+              </div>
+            )}
+          </div>
         )}
       </ScrollArea>
 
