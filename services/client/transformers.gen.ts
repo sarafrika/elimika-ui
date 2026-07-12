@@ -29,6 +29,7 @@ import type {
   UpdateProgramCourseResponse,
   GetOrganisationByUuidResponse,
   UpdateOrganisationResponse,
+  SetOrganisationUserDomainResponse,
   GetTrainingBranchByUuid1Response,
   UpdateTrainingBranch1Response,
   GetInstructorByUuidResponse,
@@ -902,6 +903,13 @@ export const updateOrganisationResponseTransformer = async (
   data: any
 ): Promise<UpdateOrganisationResponse> => {
   data = apiResponseOrganisationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const setOrganisationUserDomainResponseTransformer = async (
+  data: any
+): Promise<SetOrganisationUserDomainResponse> => {
+  data = apiResponseUserSchemaResponseTransformer(data);
   return data;
 };
 

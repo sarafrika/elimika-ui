@@ -1,4 +1,3 @@
-import type { Course } from '@/services/client';
 import {
   Award,
   BadgeCheck,
@@ -12,6 +11,8 @@ import {
   User,
   Users,
 } from 'lucide-react';
+import type { Course } from '@/services/client';
+import { ImageWithFallback } from '../../../../../../components/data/image-with-fallback';
 import HTMLTextPreview from '../../../../../../components/editors/html-text-preview';
 import { ClassDetailsScheduleItem, CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
 import { toAuthenticatedMediaUrl } from '../../../../../../src/lib/media-url';
@@ -116,14 +117,16 @@ export default function CourseDetailsHero({
           />
         ) : (
           <>
-            {/* Show thumbnail as background if available */}
-            {imageUrl && (
-              <img
-                src={imageUrl as string}
-                alt={title ?? "Preview"}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            )}
+            {/* Show thumbnail as background if available; degrade silently to the
+                icon/title overlay below when the media is missing (404). */}
+            <ImageWithFallback
+              src={imageUrl as string | undefined}
+              alt={title ?? "Preview"}
+              fill
+              unoptimized
+              className="absolute inset-0 h-full w-full object-cover"
+              fallback={null}
+            />
 
             {/* Optional dark overlay */}
             <div className="absolute inset-0 bg-black/40" />

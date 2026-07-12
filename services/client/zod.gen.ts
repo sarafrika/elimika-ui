@@ -842,17 +842,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -1160,6 +1160,11 @@ export const zQuizQuestion = z
       )
       .readonly()
       .optional(),
+    question_category: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable category of the question type.')
+      .readonly()
+      .optional(),
     requires_options: z
       .boolean()
       .describe(
@@ -1167,19 +1172,14 @@ export const zQuizQuestion = z
       )
       .readonly()
       .optional(),
-    question_category: z
+    points_display: z
       .string()
-      .describe('**[READ-ONLY]** Human-readable category of the question type.')
+      .describe('**[READ-ONLY]** Human-readable format of the points value.')
       .readonly()
       .optional(),
     question_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the points value.')
       .readonly()
       .optional(),
   })
@@ -1817,6 +1817,25 @@ export const zApiResponseOrganisation = z.object({
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
+
+/**
+ * **[REQUIRED]** Org-scoped domain to assign to the member. Valid values: 'organisation_user', 'admin', 'instructor', 'student'.
+ */
+export const zDomainNameEnum = z
+  .enum(['organisation_user', 'admin', 'instructor', 'student'])
+  .describe(
+    "**[REQUIRED]** Org-scoped domain to assign to the member. Valid values: 'organisation_user', 'admin', 'instructor', 'student'."
+  );
+
+/**
+ * Sets/replaces an organisation member's org-scoped domain (role).
+ */
+export const zSetOrganisationUserDomainRequest = z
+  .object({
+    domain_name: zDomainNameEnum,
+    branch_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+  })
+  .describe("Sets/replaces an organisation member's org-scoped domain (role).");
 
 /**
  * Instructor profile including location data for educational service delivery
@@ -4980,16 +4999,6 @@ export const zCertificate = z
       )
       .readonly()
       .optional(),
-    grade_letter: z
-      .string()
-      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
-      .readonly()
-      .optional(),
-    validity_status: z
-      .string()
-      .describe('**[READ-ONLY]** Current validity status of the certificate.')
-      .readonly()
-      .optional(),
     certificate_type: z
       .string()
       .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
@@ -4998,6 +5007,16 @@ export const zCertificate = z
     is_downloadable: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
+      .readonly()
+      .optional(),
+    grade_letter: z
+      .string()
+      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
+      .readonly()
+      .optional(),
+    validity_status: z
+      .string()
+      .describe('**[READ-ONLY]** Current validity status of the certificate.')
       .readonly()
       .optional(),
   })
@@ -6037,11 +6056,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
-      .readonly()
-      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -6055,6 +6069,11 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -7379,7 +7398,7 @@ export const zAdminCreateUserRequestDto = z.object({
 /**
  * Domain/role to assign within the organisation
  */
-export const zDomainNameEnum = z
+export const zDomainNameEnum2 = z
   .enum(['student', 'instructor', 'admin', 'organisation_user', 'course_creator'])
   .describe('Domain/role to assign within the organisation');
 
@@ -7389,7 +7408,7 @@ export const zOrganisationUserCreateRequestDto = z.object({
   last_name: z.string().min(0).max(100).describe('Last name of the user'),
   email: z.string().email().min(0).max(150).describe('Email address of the user'),
   phone_number: z.string().min(0).max(50).describe('Optional phone number').optional(),
-  domain_name: zDomainNameEnum,
+  domain_name: zDomainNameEnum2,
   branch_uuid: z
     .string()
     .uuid()
@@ -7764,8 +7783,8 @@ export const zApiResponsePagedDtoBookingResponse = z.object({
 
 export const zSortObject = z.object({
   empty: z.boolean().optional(),
-  unsorted: z.boolean().optional(),
   sorted: z.boolean().optional(),
+  unsorted: z.boolean().optional(),
 });
 
 export const zPageableObject = z.object({
@@ -8221,6 +8240,11 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -8234,11 +8258,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -8466,6 +8485,16 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
+    progress_display: z
+      .string()
+      .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
+      .readonly()
+      .optional(),
     enrollment_duration: z
       .string()
       .describe(
@@ -8478,16 +8507,6 @@ export const zProgramEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
-      .readonly()
-      .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
-    progress_display: z
-      .string()
-      .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
       .readonly()
       .optional(),
   })
@@ -9345,6 +9364,16 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
+    progress_display: z
+      .string()
+      .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
+      .readonly()
+      .optional(),
     enrollment_duration: z
       .string()
       .describe(
@@ -9357,16 +9386,6 @@ export const zCourseEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
-      .readonly()
-      .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
-    progress_display: z
-      .string()
-      .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
       .readonly()
       .optional(),
   })
@@ -10487,6 +10506,15 @@ export const zRequirementTypeEnumWritable = z
   .describe('**[REQUIRED]** Type of requirement classification for this program element.');
 
 /**
+ * **[REQUIRED]** Org-scoped domain to assign to the member. Valid values: 'organisation_user', 'admin', 'instructor', 'student'.
+ */
+export const zDomainNameEnumWritable = z
+  .enum(['organisation_user', 'admin', 'instructor', 'student'])
+  .describe(
+    "**[REQUIRED]** Org-scoped domain to assign to the member. Valid values: 'organisation_user', 'admin', 'instructor', 'student'."
+  );
+
+/**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
  */
 export const zProficiencyLevelEnumWritable = z
@@ -10744,7 +10772,7 @@ export const zAssignmentTypeEnumWritable = z
 /**
  * Domain/role to assign within the organisation
  */
-export const zDomainNameEnumWritable = z
+export const zDomainNameEnum2Writable = z
   .enum(['student', 'instructor', 'admin', 'organisation_user', 'course_creator'])
   .describe('Domain/role to assign within the organisation');
 
@@ -11345,6 +11373,30 @@ export const zUpdateOrganisationData = z.object({
  * Organisation updated successfully
  */
 export const zUpdateOrganisationResponse = zApiResponseOrganisation;
+
+export const zSetOrganisationUserDomainData = z.object({
+  body: zSetOrganisationUserDomainRequest,
+  path: z.object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe(
+        'UUID of the organisation the member belongs to. Must be an existing organisation.'
+      ),
+    userUuid: z
+      .string()
+      .uuid()
+      .describe(
+        'UUID of the member whose org-scoped domain is being set. Must be an existing user.'
+      ),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Member domain updated successfully
+ */
+export const zSetOrganisationUserDomainResponse = zApiResponseUser;
 
 export const zDeleteTrainingBranch1Data = z.object({
   body: z.never().optional(),
