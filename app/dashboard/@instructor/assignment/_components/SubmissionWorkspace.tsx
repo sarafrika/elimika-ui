@@ -451,7 +451,7 @@ export function SubmissionWorkspace({
                     size="sm"
                     className="h-9 rounded-md px-4"
                     onClick={onGradeSubmission}
-                    disabled={isSavingGrade || studentGradedScore !== null}
+                    disabled={isSavingGrade}
                   >
                     {isSavingGrade ? (
                       <>

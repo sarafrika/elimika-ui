@@ -12,7 +12,7 @@ import {
     getAssignmentSubmissionsQueryKey,
     getSubmissionAttachmentsOptions,
     submitAssignmentQueryMutation,
-    uploadSubmissionAttachmentMutation,
+    uploadSubmissionAttachmentMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AssignmentSubmissionAttachment } from '@/services/client/types.gen';
 import { getErrorMessage } from '@/src/features/dashboard/courses/types';
@@ -86,7 +86,23 @@ export default function StudentAssignmentSubmissionPage() {
     const [submissionText, setSubmissionText] = useState("");
     const [queuedFiles, setQueuedFiles] = useState<File[]>([]);
 
-    // ── Derived values (mirrors workspace) ──────────────────────────────────
+    // const student = useStudent()
+    // const studentClassEnrollmentResp = useQuery({
+    //     ...getClassEnrollmentsForStudentOptions({
+    //         path: { studentUuid: student?.uuid as string },
+    //         query: { pageable: {} }
+    //     })
+    // })
+
+    // const currentEnrollment =
+    //     studentClassEnrollmentResp.data?.data?.content?.find(
+    //         (enrollment) =>
+    //             enrollment?.class_definition_uuid ===
+    //             selectedAssignment?.classMeta?.classUuid
+    //     );
+    // const activeEnrollmentUuid = currentEnrollment?.latest_enrollment_uuid
+
+
     const activeEnrollmentUuid =
         selectedAssignment?.classMeta.courseEnrollmentUuid ??
         selectedAssignment?.classMeta.enrollmentUuid;
@@ -175,14 +191,14 @@ export default function StudentAssignmentSubmissionPage() {
                     enrollment_uuid: activeEnrollmentUuid,
                     student_uuid: selectedAssignment.classMeta.studentUuid,
                     submission_text: submissionContent,
-                    file_urls: ["/assignment.pdf"],
+                    file_urls: canUploadFiles ? ["/assignment.pdf"] : [],
                 },
                 query: {
                     enrollmentUuid: activeEnrollmentUuid,
                     content: submissionContent,
                     enrollment_uuid: activeEnrollmentUuid,
-                    file_urls: ["/assignment.pdf"],
-                    fileUrls: ["/assignment.pdf"],
+                    file_urls: canUploadFiles ? ["/assignment.pdf"] : [],
+                    fileUrls: canUploadFiles ? ["/assignment.pdf"] : [],
                     student_uuid: selectedAssignment.classMeta.studentUuid,
                     studentUuid: selectedAssignment.classMeta.studentUuid,
                     submission_text: submissionContent,
