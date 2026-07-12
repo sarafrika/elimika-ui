@@ -555,6 +555,11 @@ export default {
       icon: Briefcase,
     },
     {
+      title: 'Users',
+      url: '/dashboard/users',
+      icon: UserIcon,
+    },
+    {
       title: 'Opportunities',
       url: '/dashboard/opportunities',
       icon: Handshake,
