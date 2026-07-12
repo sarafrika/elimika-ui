@@ -1,9 +1,9 @@
+import { Award, BookOpen, Calendar, Search } from 'lucide-react';
+import Link from 'next/link';
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { Award, BookOpen, Calendar, Search } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '../../../../../../components/ui/avatar';
 import { Skeleton } from '../../../../../../components/ui/skeleton';
 import type { CoursesCatalogCardData } from './courses-data';
@@ -74,29 +74,26 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
             </button> */}
           </div>
 
-          {imageUrl ? (
-            <>
-              <Image
-                src={imageUrl}
-                alt={card.title}
-                sizes=''
-                fill
-                loading='eager'
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-                unoptimized={isAuthenticatedMediaUrl(imageUrl)}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-overlay/20 via-transparent to-transparent" />
-            </>
-          ) : (
-            <>
-              <div className="absolute inset-x-4 top-4 h-4 rounded-full bg-background/70" />
-              <div className="absolute bottom-4 left-4 h-5 w-12 rounded-full bg-background/70" />
+          <ImageWithFallback
+            src={imageUrl}
+            alt={card.title}
+            sizes=''
+            fill
+            loading='eager'
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            unoptimized={isAuthenticatedMediaUrl(imageUrl)}
+            fallback={
+              <>
+                <div className="absolute inset-x-4 top-4 h-4 rounded-full bg-background/70" />
+                <div className="absolute bottom-4 left-4 h-5 w-12 rounded-full bg-background/70" />
 
-              <span className="inline-flex size-14 items-center justify-center rounded-full bg-background/90 shadow-sm">
-                <card.icon className="text-foreground size-7" />
-              </span>
-            </>
-          )}
+                <span className="inline-flex size-14 items-center justify-center rounded-full bg-background/90 shadow-sm">
+                  <card.icon className="text-foreground size-7" />
+                </span>
+              </>
+            }
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-overlay/20 via-transparent to-transparent" />
         </div>
       </Link>
 
