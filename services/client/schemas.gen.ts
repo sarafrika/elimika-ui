@@ -1280,19 +1280,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -1724,6 +1724,12 @@ export const QuizQuestionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    question_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable category of the question type.',
+      example: 'Multiple Choice Question',
+      readOnly: true,
+    },
     requires_options: {
       type: 'boolean',
       description:
@@ -1731,22 +1737,16 @@ export const QuizQuestionSchema = {
       example: true,
       readOnly: true,
     },
-    question_category: {
+    points_display: {
       type: 'string',
-      description: '**[READ-ONLY]** Human-readable category of the question type.',
-      example: 'Multiple Choice Question',
+      description: '**[READ-ONLY]** Human-readable format of the points value.',
+      example: '2.0 points',
       readOnly: true,
     },
     question_number: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
       example: 'Question 1',
-      readOnly: true,
-    },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the points value.',
-      example: '2.0 points',
       readOnly: true,
     },
   },
@@ -2708,6 +2708,28 @@ export const ApiResponseOrganisationSchema = {
     },
     error: {},
   },
+} as const;
+
+export const SetOrganisationUserDomainRequestSchema = {
+  type: 'object',
+  description: "Sets/replaces an organisation member's org-scoped domain (role).",
+  example: {
+    domain_name: 'admin',
+    branch_uuid: null,
+  },
+  properties: {
+    domain_name: {
+      $ref: '#/components/schemas/DomainNameEnum',
+    },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Training branch to scope the assignment to. Must belong to the organisation when provided; null for an organisation-wide role.',
+      example: '550e8400-e29b-41d4-a716-446655440002',
+    },
+  },
+  required: ['domain_name'],
 } as const;
 
 export const InstructorSchema = {
@@ -8248,18 +8270,6 @@ export const CertificateSchema = {
       example: 'system',
       readOnly: true,
     },
-    grade_letter: {
-      type: 'string',
-      description: '**[READ-ONLY]** Letter grade representation of the final grade.',
-      example: 'B+',
-      readOnly: true,
-    },
-    validity_status: {
-      type: 'string',
-      description: '**[READ-ONLY]** Current validity status of the certificate.',
-      example: 'Valid Certificate',
-      readOnly: true,
-    },
     certificate_type: {
       type: 'string',
       description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
@@ -8270,6 +8280,18 @@ export const CertificateSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
       example: true,
+      readOnly: true,
+    },
+    grade_letter: {
+      type: 'string',
+      description: '**[READ-ONLY]** Letter grade representation of the final grade.',
+      example: 'B+',
+      readOnly: true,
+    },
+    validity_status: {
+      type: 'string',
+      description: '**[READ-ONLY]** Current validity status of the certificate.',
+      example: 'Valid Certificate',
       readOnly: true,
     },
   },
@@ -9964,12 +9986,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -9986,6 +10002,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -12187,7 +12209,7 @@ export const OrganisationUserCreateRequestDTOSchema = {
       minLength: 0,
     },
     domain_name: {
-      $ref: '#/components/schemas/DomainNameEnum',
+      $ref: '#/components/schemas/DomainNameEnum2',
     },
     branch_uuid: {
       type: 'string',
@@ -12911,10 +12933,10 @@ export const SortObjectSchema = {
     empty: {
       type: 'boolean',
     },
-    unsorted: {
+    sorted: {
       type: 'boolean',
     },
-    sorted: {
+    unsorted: {
       type: 'boolean',
     },
   },
@@ -13954,6 +13976,12 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
+      readOnly: true,
+    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -13970,12 +13998,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
   },
@@ -14456,6 +14478,18 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Program Enrollment',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
+      example: '100.00% Complete',
+      readOnly: true,
+    },
     enrollment_duration: {
       type: 'string',
       description:
@@ -14468,18 +14502,6 @@ export const ProgramEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed program with final grade of 87.25',
-      readOnly: true,
-    },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Program Enrollment',
-      readOnly: true,
-    },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
-      example: '100.00% Complete',
       readOnly: true,
     },
   },
@@ -16296,6 +16318,18 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Enrollment',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
+      example: '100.00% Complete',
+      readOnly: true,
+    },
     enrollment_duration: {
       type: 'string',
       description:
@@ -16308,18 +16342,6 @@ export const CourseEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed with final grade of 85.50',
-      readOnly: true,
-    },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Enrollment',
-      readOnly: true,
-    },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
-      example: '100.00% Complete',
       readOnly: true,
     },
   },
@@ -18433,6 +18455,15 @@ export const RequirementTypeEnumSchema = {
   example: 'STUDENT',
 } as const;
 
+export const DomainNameEnumSchema = {
+  type: 'string',
+  description:
+    "**[REQUIRED]** Org-scoped domain to assign to the member. Valid values: 'organisation_user', 'admin', 'instructor', 'student'.",
+  enum: ['organisation_user', 'admin', 'instructor', 'student'],
+  example: 'admin',
+  minLength: 1,
+} as const;
+
 export const ProficiencyLevelEnumSchema = {
   type: 'string',
   description:
@@ -18804,7 +18835,7 @@ export const AssignmentTypeEnumSchema = {
   minLength: 1,
 } as const;
 
-export const DomainNameEnumSchema = {
+export const DomainNameEnum2Schema = {
   type: 'string',
   description: 'Domain/role to assign within the organisation',
   enum: ['student', 'instructor', 'admin', 'organisation_user', 'course_creator'],
@@ -19053,6 +19084,15 @@ export const RequirementTypeEnumWritableSchema = {
   description: '**[REQUIRED]** Type of requirement classification for this program element.',
   enum: ['STUDENT', 'TRAINING_CENTER', 'INSTRUCTOR'],
   example: 'STUDENT',
+} as const;
+
+export const DomainNameEnumWritableSchema = {
+  type: 'string',
+  description:
+    "**[REQUIRED]** Org-scoped domain to assign to the member. Valid values: 'organisation_user', 'admin', 'instructor', 'student'.",
+  enum: ['organisation_user', 'admin', 'instructor', 'student'],
+  example: 'admin',
+  minLength: 1,
 } as const;
 
 export const ProficiencyLevelEnumWritableSchema = {
@@ -19333,7 +19373,7 @@ export const AssignmentTypeEnumWritableSchema = {
   minLength: 1,
 } as const;
 
-export const DomainNameEnumWritableSchema = {
+export const DomainNameEnum2WritableSchema = {
   type: 'string',
   description: 'Domain/role to assign within the organisation',
   enum: ['student', 'instructor', 'admin', 'organisation_user', 'course_creator'],

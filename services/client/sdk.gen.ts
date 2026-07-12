@@ -136,6 +136,9 @@ import type {
   UpdateOrganisationData,
   UpdateOrganisationResponses,
   UpdateOrganisationErrors,
+  SetOrganisationUserDomainData,
+  SetOrganisationUserDomainResponses,
+  SetOrganisationUserDomainErrors,
   DeleteTrainingBranch1Data,
   DeleteTrainingBranch1Responses,
   DeleteTrainingBranch1Errors,
@@ -1619,6 +1622,7 @@ import {
   updateProgramCourseResponseTransformer,
   getOrganisationByUuidResponseTransformer,
   updateOrganisationResponseTransformer,
+  setOrganisationUserDomainResponseTransformer,
   getTrainingBranchByUuid1ResponseTransformer,
   updateTrainingBranch1ResponseTransformer,
   getInstructorByUuidResponseTransformer,
@@ -3253,6 +3257,38 @@ export const updateOrganisation = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Set/replace an organisation member's org-scoped domain (role)
+ * Upserts the member's org-scoped domain mapping for this organisation. If the user already has an active mapping in the organisation, their role/branch is updated; otherwise a new mapping is created. Valid domains: 'organisation_user', 'admin', 'instructor', 'student'.
+ */
+export const setOrganisationUserDomain = <ThrowOnError extends boolean = false>(
+  options: Options<SetOrganisationUserDomainData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    SetOrganisationUserDomainResponses,
+    SetOrganisationUserDomainErrors,
+    ThrowOnError
+  >({
+    responseTransformer: setOrganisationUserDomainResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{uuid}/users/{userUuid}/domain',
     ...options,
     headers: {
       'Content-Type': 'application/json',

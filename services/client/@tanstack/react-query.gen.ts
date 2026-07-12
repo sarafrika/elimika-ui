@@ -46,6 +46,7 @@ import {
   deleteOrganisation,
   getOrganisationByUuid,
   updateOrganisation,
+  setOrganisationUserDomain,
   deleteTrainingBranch1,
   getTrainingBranchByUuid1,
   updateTrainingBranch1,
@@ -639,6 +640,9 @@ import type {
   UpdateOrganisationData,
   UpdateOrganisationError,
   UpdateOrganisationResponse,
+  SetOrganisationUserDomainData,
+  SetOrganisationUserDomainError,
+  SetOrganisationUserDomainResponse,
   DeleteTrainingBranch1Data,
   DeleteTrainingBranch1Error,
   DeleteTrainingBranch1Response,
@@ -2978,6 +2982,34 @@ export const updateOrganisationMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateOrganisation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Set/replace an organisation member's org-scoped domain (role)
+ * Upserts the member's org-scoped domain mapping for this organisation. If the user already has an active mapping in the organisation, their role/branch is updated; otherwise a new mapping is created. Valid domains: 'organisation_user', 'admin', 'instructor', 'student'.
+ */
+export const setOrganisationUserDomainMutation = (
+  options?: Partial<Options<SetOrganisationUserDomainData>>
+): UseMutationOptions<
+  SetOrganisationUserDomainResponse,
+  SetOrganisationUserDomainError,
+  Options<SetOrganisationUserDomainData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SetOrganisationUserDomainResponse,
+    SetOrganisationUserDomainError,
+    Options<SetOrganisationUserDomainData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await setOrganisationUserDomain({
         ...options,
         ...localOptions,
         throwOnError: true,

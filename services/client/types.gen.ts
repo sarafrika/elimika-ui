@@ -606,13 +606,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -820,21 +820,21 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
-   */
-  readonly requires_options?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable category of the question type.
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
    */
-  readonly question_number?: string;
+  readonly requires_options?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1309,6 +1309,17 @@ export type ApiResponseOrganisation = {
   data?: Organisation;
   message?: string;
   error?: unknown;
+};
+
+/**
+ * Sets/replaces an organisation member's org-scoped domain (role).
+ */
+export type SetOrganisationUserDomainRequest = {
+  domain_name: DomainNameEnum;
+  /**
+   * **[OPTIONAL]** Training branch to scope the assignment to. Must belong to the organisation when provided; null for an organisation-wide role.
+   */
+  branch_uuid?: string | null;
 };
 
 /**
@@ -3875,14 +3886,6 @@ export type Certificate = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Letter grade representation of the final grade.
-   */
-  readonly grade_letter?: string;
-  /**
-   * **[READ-ONLY]** Current validity status of the certificate.
-   */
-  readonly validity_status?: string;
-  /**
    * **[READ-ONLY]** Type of certificate based on completion achievement.
    */
   readonly certificate_type?: string;
@@ -3890,6 +3893,14 @@ export type Certificate = {
    * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
    */
   readonly is_downloadable?: boolean;
+  /**
+   * **[READ-ONLY]** Letter grade representation of the final grade.
+   */
+  readonly grade_letter?: string;
+  /**
+   * **[READ-ONLY]** Current validity status of the certificate.
+   */
+  readonly validity_status?: string;
 };
 
 export type ApiResponseCertificate = {
@@ -4779,10 +4790,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -4794,6 +4801,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -6101,7 +6112,7 @@ export type OrganisationUserCreateRequestDto = {
    * Optional phone number
    */
   phone_number?: string;
-  domain_name: DomainNameEnum;
+  domain_name: DomainNameEnum2;
   /**
    * Optional training branch UUID for branch-specific assignment
    */
@@ -6444,8 +6455,8 @@ export type PageableObject = {
 
 export type SortObject = {
   empty?: boolean;
-  unsorted?: boolean;
   sorted?: boolean;
+  unsorted?: boolean;
 };
 
 export type ApiResponsePagedDtoAssessmentRubric = {
@@ -6844,6 +6855,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -6855,10 +6870,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 export type ApiResponseStudentQuizReview = {
@@ -7055,14 +7066,6 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
-   */
-  readonly enrollment_duration?: string;
-  /**
-   * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
-   */
-  readonly status_summary?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
@@ -7070,6 +7073,14 @@ export type ProgramEnrollment = {
    * **[READ-ONLY]** Formatted display of the student's progress in the program.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
+   */
+  readonly enrollment_duration?: string;
+  /**
+   * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
+   */
+  readonly status_summary?: string;
 };
 
 export type ApiResponseListCourse = {
@@ -7892,14 +7903,6 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
-   */
-  readonly enrollment_duration?: string;
-  /**
-   * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
-   */
-  readonly status_summary?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
@@ -7907,6 +7910,14 @@ export type CourseEnrollment = {
    * **[READ-ONLY]** Formatted display of the student's progress in the course.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
+   */
+  readonly enrollment_duration?: string;
+  /**
+   * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
+   */
+  readonly status_summary?: string;
 };
 
 export type PagedDtoCourseEnrollment = {
@@ -9092,6 +9103,21 @@ export const RequirementTypeEnum = {
 export type RequirementTypeEnum = (typeof RequirementTypeEnum)[keyof typeof RequirementTypeEnum];
 
 /**
+ * **[REQUIRED]** Org-scoped domain to assign to the member. Valid values: 'organisation_user', 'admin', 'instructor', 'student'.
+ */
+export const DomainNameEnum = {
+  ORGANISATION_USER: 'organisation_user',
+  ADMIN: 'admin',
+  INSTRUCTOR: 'instructor',
+  STUDENT: 'student',
+} as const;
+
+/**
+ * **[REQUIRED]** Org-scoped domain to assign to the member. Valid values: 'organisation_user', 'admin', 'instructor', 'student'.
+ */
+export type DomainNameEnum = (typeof DomainNameEnum)[keyof typeof DomainNameEnum];
+
+/**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
  */
 export const ProficiencyLevelEnum = {
@@ -9705,7 +9731,7 @@ export type AssignmentTypeEnum = (typeof AssignmentTypeEnum)[keyof typeof Assign
 /**
  * Domain/role to assign within the organisation
  */
-export const DomainNameEnum = {
+export const DomainNameEnum2 = {
   STUDENT: 'student',
   INSTRUCTOR: 'instructor',
   ADMIN: 'admin',
@@ -9716,7 +9742,7 @@ export const DomainNameEnum = {
 /**
  * Domain/role to assign within the organisation
  */
-export type DomainNameEnum = (typeof DomainNameEnum)[keyof typeof DomainNameEnum];
+export type DomainNameEnum2 = (typeof DomainNameEnum2)[keyof typeof DomainNameEnum2];
 
 /**
  * **[READ-ONLY]** Transaction category for this wallet entry.
@@ -10071,6 +10097,22 @@ export const RequirementTypeEnumWritable = {
  */
 export type RequirementTypeEnumWritable =
   (typeof RequirementTypeEnumWritable)[keyof typeof RequirementTypeEnumWritable];
+
+/**
+ * **[REQUIRED]** Org-scoped domain to assign to the member. Valid values: 'organisation_user', 'admin', 'instructor', 'student'.
+ */
+export const DomainNameEnumWritable = {
+  ORGANISATION_USER: 'organisation_user',
+  ADMIN: 'admin',
+  INSTRUCTOR: 'instructor',
+  STUDENT: 'student',
+} as const;
+
+/**
+ * **[REQUIRED]** Org-scoped domain to assign to the member. Valid values: 'organisation_user', 'admin', 'instructor', 'student'.
+ */
+export type DomainNameEnumWritable =
+  (typeof DomainNameEnumWritable)[keyof typeof DomainNameEnumWritable];
 
 /**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
@@ -10550,7 +10592,7 @@ export type AssignmentTypeEnumWritable =
 /**
  * Domain/role to assign within the organisation
  */
-export const DomainNameEnumWritable = {
+export const DomainNameEnum2Writable = {
   STUDENT: 'student',
   INSTRUCTOR: 'instructor',
   ADMIN: 'admin',
@@ -10561,8 +10603,8 @@ export const DomainNameEnumWritable = {
 /**
  * Domain/role to assign within the organisation
  */
-export type DomainNameEnumWritable =
-  (typeof DomainNameEnumWritable)[keyof typeof DomainNameEnumWritable];
+export type DomainNameEnum2Writable =
+  (typeof DomainNameEnum2Writable)[keyof typeof DomainNameEnum2Writable];
 
 export const QuestionTypeEnum2Writable = {
   MULTIPLE_CHOICE: 'multiple_choice',
@@ -12060,6 +12102,50 @@ export type UpdateOrganisationResponses = {
 
 export type UpdateOrganisationResponse =
   UpdateOrganisationResponses[keyof UpdateOrganisationResponses];
+
+export type SetOrganisationUserDomainData = {
+  body: SetOrganisationUserDomainRequest;
+  path: {
+    /**
+     * UUID of the organisation the member belongs to. Must be an existing organisation.
+     */
+    uuid: string;
+    /**
+     * UUID of the member whose org-scoped domain is being set. Must be an existing user.
+     */
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{uuid}/users/{userUuid}/domain';
+};
+
+export type SetOrganisationUserDomainErrors = {
+  /**
+   * Invalid domain name
+   */
+  400: ApiResponseUser;
+  /**
+   * Organisation or user not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SetOrganisationUserDomainError =
+  SetOrganisationUserDomainErrors[keyof SetOrganisationUserDomainErrors];
+
+export type SetOrganisationUserDomainResponses = {
+  /**
+   * Member domain updated successfully
+   */
+  200: ApiResponseUser;
+};
+
+export type SetOrganisationUserDomainResponse =
+  SetOrganisationUserDomainResponses[keyof SetOrganisationUserDomainResponses];
 
 export type DeleteTrainingBranch1Data = {
   body?: never;
