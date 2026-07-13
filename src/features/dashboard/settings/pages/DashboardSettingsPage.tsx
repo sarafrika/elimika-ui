@@ -1,5 +1,14 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
+import Link from 'next/link';
+import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,28 +33,19 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
-import Link from 'next/link';
-import type React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
 import ManageProfileActions from '../../../profile/add-profile/components/ManageProfileActions';
 import { SettingsField } from '../_components/settings-field';
 import { SettingsPageHeader } from '../_components/settings-page-header';
 import { SettingsToggleRow } from '../_components/settings-toggle-row';
 import {
+  type DashboardSettingsVariant,
   formatDate,
   getProfileDisplayName,
   getProfileInitials,
   getSettingsVariantConfig,
   getVariantSpecificSummary,
   normalizeUserDomainValue,
-  type DashboardSettingsVariant,
 } from '../settings-config';
 import InstructorRateCard from './instructor-rate-page';
 
@@ -286,11 +286,6 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
       label: 'Phone number',
       value: profile?.phone_number ?? 'Not set',
       helperText: 'Shown for contact and recovery purposes.',
-    },
-    {
-      label: 'Username',
-      value: profile?.username ?? 'Not set',
-      helperText: 'Your unique login handle.',
     },
   ];
 
@@ -586,11 +581,13 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                         )}
                       </div>
 
-                      <SettingsField
-                        label='Username'
-                        value={profile?.username ?? 'Not set'}
-                        helperText='Your unique login handle.'
-                      />
+                      {variant !== 'organisation' ? (
+                        <SettingsField
+                          label='Username'
+                          value={profile?.username ?? 'Not set'}
+                          helperText='Your unique login handle.'
+                        />
+                      ) : null}
 
                       <div className='grid gap-4 sm:grid-cols-2'>
                         {roleFields[variant].map(field => (
