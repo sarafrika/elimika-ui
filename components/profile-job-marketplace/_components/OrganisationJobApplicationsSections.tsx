@@ -1,6 +1,16 @@
 'use client';
 
-import { BriefcaseBusiness, CheckCircle2, Clock, MapPin, Search, Users, XCircle } from 'lucide-react';
+import {
+  BriefcaseBusiness,
+  CheckCircle2,
+  Clock,
+  MapPin,
+  Search,
+  TriangleAlert,
+  UserRound,
+  Users,
+  XCircle,
+} from 'lucide-react';
 import Link from 'next/link';
 
 import {
@@ -17,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
+import { formatCurrency } from '@/lib/format-currency';
 import type {
   ClassMarketplaceJob,
   ClassMarketplaceJobApplication,
@@ -144,18 +155,22 @@ export function ApplicationsListSection({
   isInstructorsLoading,
   isReviewPending,
   isAssignPending,
+  jobTrainingFee,
   onApprove,
   onReject,
   onAssign,
+  onViewProfile,
 }: {
   applications: ClassMarketplaceJobApplication[];
   instructorMap: Record<string, Instructor>;
   isInstructorsLoading: boolean;
   isReviewPending: boolean;
   isAssignPending: boolean;
+  jobTrainingFee?: number | null;
   onApprove: (application: ClassMarketplaceJobApplication) => void;
   onReject: (application: ClassMarketplaceJobApplication) => void;
   onAssign: (application: ClassMarketplaceJobApplication) => void;
+  onViewProfile: (application: ClassMarketplaceJobApplication) => void;
 }) {
   return (
     <div className='space-y-3'>
@@ -173,6 +188,10 @@ export function ApplicationsListSection({
             .slice(0, 2)
             .toUpperCase() || '?';
         const reviewDisabled = application.status !== 'pending';
+        const isVerified = application.instructor_admin_verified ?? instructor?.admin_verified;
+        const trainingApproved = application.training_approved;
+        const approvedRate = application.approved_rate;
+        const notApprovedToTrain = trainingApproved === false;
 
         return (
           <div key={application.uuid} className='rounded-md border border-border/70 bg-card p-5 shadow-sm'>
@@ -182,7 +201,14 @@ export function ApplicationsListSection({
                   {initials}
                 </div>
                 <div className='space-y-1'>
-                  <h3 className='text-base font-semibold tracking-tight'>{displayName}</h3>
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <h3 className='text-base font-semibold tracking-tight'>{displayName}</h3>
+                    {isVerified ? (
+                      <StatusBadge status='verified' label='Verified' />
+                    ) : isVerified === false ? (
+                      <StatusBadge status='pending' label='Unverified' />
+                    ) : null}
+                  </div>
                   <div className='flex flex-col gap-1 text-sm text-muted-foreground'>
                     {instructor?.professional_headline ? (
                       <span>{instructor.professional_headline}</span>
@@ -206,6 +232,40 @@ export function ApplicationsListSection({
               <StatusBadge status={application.status} label={formatLabel(application.status)} />
             </div>
 
+            {notApprovedToTrain ? (
+              <div className='mt-3 flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-500/10 p-3 text-sm text-foreground'>
+                <TriangleAlert className='size-4 shrink-0 text-amber-600' />
+                <span>
+                  This instructor is not approved to train this course or program yet, so they
+                  cannot be approved or assigned.
+                </span>
+              </div>
+            ) : null}
+
+            {typeof approvedRate === 'number' || typeof jobTrainingFee === 'number' ? (
+              <div className='mt-3 flex flex-wrap items-center gap-2 text-sm'>
+                <Badge variant='outline' className='rounded-md'>
+                  Approved rate:{' '}
+                  {typeof approvedRate === 'number'
+                    ? `${formatCurrency(approvedRate)} / session`
+                    : 'Not on rate card'}
+                </Badge>
+                <Badge variant='outline' className='rounded-md'>
+                  Job fee:{' '}
+                  {typeof jobTrainingFee === 'number'
+                    ? `${formatCurrency(jobTrainingFee)} / session`
+                    : 'Not specified'}
+                </Badge>
+                {typeof approvedRate === 'number' &&
+                typeof jobTrainingFee === 'number' &&
+                approvedRate !== jobTrainingFee ? (
+                  <Badge className='rounded-md border-amber-500/60 bg-amber-500/10 text-amber-700'>
+                    Rate differs from job fee
+                  </Badge>
+                ) : null}
+              </div>
+            ) : null}
+
             <div className='mt-3 grid gap-3 sm:grid-cols-2'>
               <ApplicationNote label='Application note' value={application.application_note} />
               <ApplicationNote label='Review notes' value={application.review_notes} />
@@ -224,11 +284,15 @@ export function ApplicationsListSection({
               </div>
 
               <div className='ml-auto flex flex-wrap gap-2'>
+                <Button variant='ghost' size='sm' onClick={() => onViewProfile(application)}>
+                  <UserRound className='mr-2 size-4' />
+                  View profile
+                </Button>
                 <Button
                   variant='outline'
                   size='sm'
                   onClick={() => onApprove(application)}
-                  disabled={isReviewPending || reviewDisabled}
+                  disabled={isReviewPending || reviewDisabled || notApprovedToTrain}
                 >
                   <CheckCircle2 className='mr-2 size-4' />
                   Approve
@@ -245,7 +309,9 @@ export function ApplicationsListSection({
                 <Button
                   size='sm'
                   onClick={() => onAssign(application)}
-                  disabled={isAssignPending || application.status !== 'approved'}
+                  disabled={
+                    isAssignPending || application.status !== 'approved' || notApprovedToTrain
+                  }
                 >
                   {isAssignPending ? <Spinner className='mr-2 size-4' /> : null}
                   Assign
@@ -310,6 +376,13 @@ export function JobOverviewPanel({
         columns={1}
         items={[
           { label: 'Job title', value: job?.title ?? 'Not found' },
+          {
+            label: 'Pay per session',
+            value:
+              typeof job?.training_fee === 'number'
+                ? formatCurrency(job.training_fee)
+                : 'Not specified',
+          },
           { label: 'Course / program', value: contentLabel ?? 'Not available' },
           { label: 'Organisation', value: job?.organisation_uuid ?? organisationUuid ?? 'Not available' },
           {

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { StatusBadge } from '@/app/dashboard/@admin/_components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/lib/format-currency';
 import type { ClassMarketplaceJob, Course, TrainingProgram } from '@/services/client/types.gen';
 
 type ClassMarketplaceJobWithProgram = ClassMarketplaceJob & {
@@ -87,6 +88,13 @@ function JobBadgeRow({
 }) {
   return (
     <div className='flex flex-wrap items-center gap-2'>
+      {typeof job.training_fee === 'number' ? (
+        <Badge className='rounded-md border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary'>
+          {formatCurrency(job.training_fee)} / session
+        </Badge>
+      ) : (
+        <MetaBadge>Fee not specified</MetaBadge>
+      )}
       <MetaBadge>{formatEnumLabel(job.class_visibility)}</MetaBadge>
       <MetaBadge>{formatEnumLabel(job.session_format)}</MetaBadge>
       <MetaBadge>{formatEnumLabel(job.location_type)}</MetaBadge>

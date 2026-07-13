@@ -59,6 +59,7 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { formatCurrency } from '@/lib/format-currency';
 import { cn } from '@/lib/utils';
 import {
   applyToJobMutation,
@@ -67,6 +68,7 @@ import {
   getAllCoursesOptions,
   getAllOrganisationsOptions,
   getAllTrainingProgramsOptions,
+  getJobEligibilityOptions,
   listJobApplicationsQueryKey,
   listJobsOptions,
   listJobsQueryKey,
@@ -132,14 +134,35 @@ type JobFormState = {
   meeting_link: string;
   max_participants: string;
   allow_waitlist: boolean;
-  session_template_start_time: string;
-  session_template_end_time: string;
+  training_fee: string;
+  session_days_of_week: string[];
+  session_start_time: string;
+  session_end_time: string;
 };
 
 const JOB_PAGE_SIZE = 50;
 const LOOKUP_PAGE_SIZE = 100;
 const DEFAULT_LOCATION_LATITUDE = -1.286389;
 const DEFAULT_LOCATION_LONGITUDE = 36.817223;
+
+const weekdayOptions: Array<{ value: string; label: string }> = [
+  { value: 'MONDAY', label: 'Mon' },
+  { value: 'TUESDAY', label: 'Tue' },
+  { value: 'WEDNESDAY', label: 'Wed' },
+  { value: 'THURSDAY', label: 'Thu' },
+  { value: 'FRIDAY', label: 'Fri' },
+  { value: 'SATURDAY', label: 'Sat' },
+  { value: 'SUNDAY', label: 'Sun' },
+];
+const weekdayValueByJsDay = [
+  'SUNDAY',
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+];
 
 const locationTypeOptions: LocationTypeEnum[] = ['ONLINE', 'IN_PERSON', 'HYBRID'];
 const classVisibilityOptions: ClassVisibilityEnum[] = ['PUBLIC', 'PRIVATE'];
@@ -228,6 +251,40 @@ function formatDateTimeInputValue(value?: Date | string | null) {
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }
 
+function formatTimeInputValue(value?: Date | string | null) {
+  if (!value) return '';
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function combineDateAndTime(dateValue: string, timeValue: string) {
+  if (!dateValue.trim() || !timeValue.trim()) return undefined;
+
+  const combined = new Date(`${dateValue}T${timeValue}`);
+  return Number.isNaN(combined.getTime()) ? undefined : combined;
+}
+
+function firstSessionDateOnOrAfter(trainingStartDate: string, daysOfWeek: string[]) {
+  const start = new Date(`${trainingStartDate}T00:00`);
+  if (Number.isNaN(start.getTime()) || daysOfWeek.length === 0) return undefined;
+
+  for (let offset = 0; offset < 7; offset += 1) {
+    const candidate = new Date(start);
+    candidate.setDate(start.getDate() + offset);
+    if (daysOfWeek.includes(weekdayValueByJsDay[candidate.getDay()] ?? '')) {
+      return [
+        candidate.getFullYear(),
+        String(candidate.getMonth() + 1).padStart(2, '0'),
+        String(candidate.getDate()).padStart(2, '0'),
+      ].join('-');
+    }
+  }
+  return undefined;
+}
+
 function formatEnumLabel(value?: string | null) {
   if (!value) return 'Not provided';
 
@@ -298,17 +355,22 @@ function getInitialFormState(
   const defaultEnd = job?.default_end_time
     ? new Date(job.default_end_time)
     : new Date(defaultStart.getTime() + 60 * 60 * 1000);
+  const sessionTemplate = job?.session_templates?.[0];
+  const templateRecurrence = sessionTemplate?.recurrence;
+  const weeklyDays =
+    templateRecurrence?.recurrence_type === 'WEEKLY' && templateRecurrence.days_of_week
+      ? templateRecurrence.days_of_week
+          .split(',')
+          .map(day => day.trim().toUpperCase())
+          .filter(Boolean)
+      : [];
+  const sessionStart = sessionTemplate?.start_time ? new Date(sessionTemplate.start_time) : defaultStart;
+  const sessionEnd = sessionTemplate?.end_time ? new Date(sessionTemplate.end_time) : defaultEnd;
+  const trainingEnd = templateRecurrence?.end_date ? new Date(templateRecurrence.end_date) : defaultEnd;
   const jobProgramUuid = job ? getJobProgramUuid(job) : null;
   const contentType = job
     ? getJobContentType(job)
     : (initialContent?.type ?? 'course');
-
-  const sessionTemplateStart = job?.session_templates?.[0]?.start_time
-    ? new Date(job.session_templates[0].start_time)
-    : defaultStart;
-  const sessionTemplateEnd = job?.session_templates?.[0]?.end_time
-    ? new Date(job.session_templates[0].end_time)
-    : defaultEnd;
 
   return {
     organisation_uuid: job?.organisation_uuid ?? organisationUuid,
@@ -321,8 +383,8 @@ function getInitialFormState(
     description: job?.description ?? '',
     class_visibility: job?.class_visibility ?? 'PUBLIC',
     session_format: job?.session_format ?? 'GROUP',
-    default_start_time: formatDateTimeInputValue(job?.default_start_time ?? defaultStart),
-    default_end_time: formatDateTimeInputValue(job?.default_end_time ?? defaultEnd),
+    default_start_time: formatDateValue(job?.default_start_time ?? defaultStart),
+    default_end_time: formatDateValue(trainingEnd),
     academic_period_start_date: formatDateValue(job?.academic_period_start_date ?? ''),
     academic_period_end_date: formatDateValue(job?.academic_period_end_date ?? ''),
     registration_period_start_date: formatDateValue(job?.registration_period_start_date ?? ''),
@@ -337,8 +399,10 @@ function getInitialFormState(
     meeting_link: job?.meeting_link ?? '',
     max_participants: typeof job?.max_participants === 'number' ? String(job.max_participants) : '',
     allow_waitlist: Boolean(job?.allow_waitlist ?? true),
-    session_template_start_time: formatDateTimeInputValue(sessionTemplateStart),
-    session_template_end_time: formatDateTimeInputValue(sessionTemplateEnd),
+    training_fee: typeof job?.training_fee === 'number' ? String(job.training_fee) : '',
+    session_days_of_week: weeklyDays,
+    session_start_time: formatTimeInputValue(sessionStart),
+    session_end_time: formatTimeInputValue(sessionEnd),
   };
 }
 
@@ -358,23 +422,26 @@ function parseDate(value: string) {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 }
 
-function parseDateTime(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return undefined;
-
-  const parsed = new Date(trimmed);
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-}
-
 function buildJobPayload(form: JobFormState): ClassMarketplaceJobRequestWithProgram {
+  const hasWeeklyRecurrence = form.session_days_of_week.length > 0;
+  const firstSessionDate = hasWeeklyRecurrence
+    ? (firstSessionDateOnOrAfter(form.default_start_time, form.session_days_of_week) ??
+      form.default_start_time)
+    : form.default_start_time;
+  const sessionStart = combineDateAndTime(firstSessionDate, form.session_start_time);
+  const firstSessionEnd = combineDateAndTime(firstSessionDate, form.session_end_time);
+  const trainingEndDate = combineDateAndTime(form.default_end_time, '00:00');
+  const trainingEndAtSessionEnd = combineDateAndTime(form.default_end_time, form.session_end_time);
+
   const payload: ClassMarketplaceJobRequestWithProgram = {
     organisation_uuid: form.organisation_uuid,
     title: form.title.trim(),
     description: form.description.trim() || undefined,
     class_visibility: form.class_visibility,
     session_format: form.session_format,
-    default_start_time: parseDateTime(form.default_start_time) ?? new Date(),
-    default_end_time: parseDateTime(form.default_end_time) ?? new Date(),
+    default_start_time: sessionStart ?? new Date(),
+    default_end_time: trainingEndAtSessionEnd ?? new Date(),
+    training_fee: parseNumber(form.training_fee),
     academic_period_start_date: parseDate(form.academic_period_start_date),
     academic_period_end_date: parseDate(form.academic_period_end_date),
     registration_period_start_date: parseDate(form.registration_period_start_date),
@@ -388,11 +455,23 @@ function buildJobPayload(form: JobFormState): ClassMarketplaceJobRequestWithProg
     max_participants: parseNumber(form.max_participants),
     allow_waitlist: form.allow_waitlist,
     session_templates: [
-      {
-        start_time: parseDateTime(form.session_template_start_time) ?? new Date(),
-        end_time: parseDateTime(form.session_template_end_time) ?? new Date(),
-        conflict_resolution: 'FAIL',
-      },
+      hasWeeklyRecurrence
+        ? {
+            start_time: sessionStart ?? new Date(),
+            end_time: firstSessionEnd ?? new Date(),
+            recurrence: {
+              recurrence_type: 'WEEKLY',
+              interval_value: 1,
+              days_of_week: form.session_days_of_week.join(','),
+              end_date: trainingEndDate,
+            },
+            conflict_resolution: 'FAIL',
+          }
+        : {
+            start_time: sessionStart ?? new Date(),
+            end_time: trainingEndAtSessionEnd ?? new Date(),
+            conflict_resolution: 'FAIL',
+          },
     ],
   };
 
@@ -410,9 +489,19 @@ function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
     <DetailGrid
       columns={3}
       items={[
+        {
+          label: 'Pay per session',
+          value: (
+            <span className='text-base font-bold text-primary'>
+              {typeof job.training_fee === 'number'
+                ? formatCurrency(job.training_fee)
+                : 'Not specified'}
+            </span>
+          ),
+        },
         { label: 'Published', value: formatDateTime(job.created_date) },
         {
-          label: 'Start / End',
+          label: 'Training start / end',
           value: (
             <div className='space-y-0.5'>
               <div className='text-sm font-medium text-foreground'>
@@ -474,6 +563,14 @@ function JobDetailsSheet({
   const [showAllSessions, setShowAllSessions] = useState(false);
   const alreadyApplied = Boolean(application);
   const jobUuid = job?.uuid;
+
+  const eligibilityQuery = useQuery({
+    ...getJobEligibilityOptions({ path: { jobUuid: jobUuid ?? '' } }),
+    enabled:
+      open && Boolean(jobUuid) && !isManagementView && !alreadyApplied && job?.status === 'open',
+  });
+  const eligibility = eligibilityQuery.data?.data;
+  const isIneligible = Boolean(eligibility && !eligibility.eligible);
 
 
   const applyMutation = useMutation({
@@ -576,21 +673,42 @@ function JobDetailsSheet({
                   const hours =
                     (end.getTime() - start.getTime()) / (1000 * 60 * 60);
 
+                  const recurrence = session.recurrence;
+                  const recurrenceLabel =
+                    recurrence?.recurrence_type === 'WEEKLY'
+                      ? `Repeats weekly on ${(recurrence.days_of_week ?? '')
+                          .split(',')
+                          .map(day => formatEnumLabel(day.trim()))
+                          .filter(Boolean)
+                          .join(', ')}${
+                          recurrence.end_date
+                            ? ` until ${new Date(recurrence.end_date).toLocaleDateString()}`
+                            : ''
+                        }`
+                      : recurrence?.recurrence_type
+                        ? `Repeats ${formatEnumLabel(recurrence.recurrence_type).toLowerCase()}`
+                        : null;
+
                   return (
                     <div
                       key={idx}
                       className='flex flex-wrap items-center justify-between gap-2 text-sm'
                     >
-                      <div className='flex flex-row gap-2'>
-                        <p className='font-medium'>
-                          {start.toLocaleDateString()}
-                        </p>
-                        <p className='text-muted-foreground'>
-                          (
-                          {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{' '}
-                          -{' '}
-                          {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
-                        </p>
+                      <div className='flex flex-col'>
+                        <div className='flex flex-row gap-2'>
+                          <p className='font-medium'>
+                            {start.toLocaleDateString()}
+                          </p>
+                          <p className='text-muted-foreground'>
+                            (
+                            {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{' '}
+                            -{' '}
+                            {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                          </p>
+                        </div>
+                        {recurrenceLabel ? (
+                          <p className='text-xs text-muted-foreground'>{recurrenceLabel}</p>
+                        ) : null}
                       </div>
 
                       <Badge
@@ -662,6 +780,36 @@ function JobDetailsSheet({
             </div>
           ) : (
             <div className={cn('space-y-3', adminTheme.cardPadded)}>
+              <p className='rounded-md border border-primary/30 bg-primary/10 p-3 text-sm text-foreground'>
+                {typeof job.training_fee === 'number' ? (
+                  <>
+                    You will be paid{' '}
+                    <span className='font-bold text-primary'>
+                      {formatCurrency(job.training_fee)} per session
+                    </span>{' '}
+                    for this engagement.
+                  </>
+                ) : (
+                  'The organisation has not specified a fee for this posting.'
+                )}
+              </p>
+
+              {isIneligible ? (
+                <div className='space-y-2 rounded-md border border-dashed border-amber-500/60 bg-amber-500/10 p-3 text-sm text-foreground'>
+                  <p>
+                    {eligibility?.reason ??
+                      'You are not currently eligible to apply for this posting.'}
+                  </p>
+                  {eligibility && !eligibility.training_approved && job.course_uuid ? (
+                    <Button asChild variant='outline' size='sm'>
+                      <Link href={`/dashboard/apply-to-train/${job.course_uuid}`}>
+                        Apply to train this course
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
+
               <Label htmlFor='application-note' className='text-sm font-semibold'>
                 Application note
               </Label>
@@ -687,7 +835,7 @@ function JobDetailsSheet({
               <div className='flex flex-wrap gap-2'>
                 <Button
                   onClick={handleApply}
-                  disabled={applyMutation.isPending || alreadyApplied}
+                  disabled={applyMutation.isPending || alreadyApplied || isIneligible}
                 >
                   {applyMutation.isPending ? 'Submitting...' : 'Apply for job'}
                 </Button>
@@ -790,6 +938,15 @@ function JobFormSheet({
     setForm(previous => ({ ...previous, [key]: value }));
   };
 
+  const toggleSessionDay = (day: string) => {
+    setForm(previous => ({
+      ...previous,
+      session_days_of_week: previous.session_days_of_week.includes(day)
+        ? previous.session_days_of_week.filter(value => value !== day)
+        : [...previous.session_days_of_week, day],
+    }));
+  };
+
   const handleContentTypeChange = (value: MarketplaceContentType) => {
     setForm(previous => ({
       ...previous,
@@ -829,15 +986,41 @@ function JobFormSheet({
       return;
     }
 
+    const trainingFee = parseNumber(form.training_fee);
+    if (trainingFee === undefined || trainingFee < 0) {
+      toast.error('Please enter the training fee paid per session.');
+      return;
+    }
+
+    if (!form.default_start_time || !form.default_end_time) {
+      toast.error('Please choose valid training start and end dates.');
+      return;
+    }
+
+    if (form.default_end_time < form.default_start_time) {
+      toast.error('Training end date must be on or after the training start date.');
+      return;
+    }
+
+    if (!form.session_start_time || !form.session_end_time) {
+      toast.error('Please choose session start and end times.');
+      return;
+    }
+
+    if (form.session_end_time <= form.session_start_time) {
+      toast.error('Session end time must be after the session start time.');
+      return;
+    }
+
+    if (form.session_days_of_week.length === 0) {
+      toast.error('Please select at least one weekday for the session schedule.');
+      return;
+    }
+
     const payload = buildJobPayload({
       ...form,
       organisation_uuid: organisationUuid,
     });
-
-    if (!payload.default_start_time || !payload.default_end_time) {
-      toast.error('Please choose valid start and end times.');
-      return;
-    }
 
     if (isEditMode && job?.uuid) {
       updateMutation.mutate({
@@ -978,25 +1161,75 @@ function JobFormSheet({
                   />
                 </Field>
               </div>
+
+              <Field label='Training fee (per session) *'>
+                <Input
+                  type='number'
+                  min={0}
+                  value={form.training_fee}
+                  onChange={event => updateField('training_fee', event.target.value)}
+                  placeholder='e.g. 2400'
+                />
+                <p className='mt-1 text-xs text-muted-foreground'>
+                  Amount the instructor is paid per session; carried onto the class when an
+                  instructor is assigned.
+                </p>
+              </Field>
             </SectionShell>
 
             <SectionShell title='Schedule'>
               <div className='grid gap-4 md:grid-cols-2'>
-                <Field label='Default start *'>
+                <Field label='Training start date *'>
                   <Input
-                    type='datetime-local'
+                    type='date'
                     value={form.default_start_time}
                     onChange={event => updateField('default_start_time', event.target.value)}
                   />
                 </Field>
-                <Field label='Default end *'>
+                <Field label='Training end date *'>
                   <Input
-                    type='datetime-local'
+                    type='date'
                     value={form.default_end_time}
                     onChange={event => updateField('default_end_time', event.target.value)}
                   />
                 </Field>
+                <Field label='Session start time *'>
+                  <Input
+                    type='time'
+                    value={form.session_start_time}
+                    onChange={event => updateField('session_start_time', event.target.value)}
+                  />
+                </Field>
+                <Field label='Session end time *'>
+                  <Input
+                    type='time'
+                    value={form.session_end_time}
+                    onChange={event => updateField('session_end_time', event.target.value)}
+                  />
+                </Field>
               </div>
+
+              <Field label='Session days *'>
+                <div className='flex flex-wrap gap-2'>
+                  {weekdayOptions.map(day => {
+                    const active = form.session_days_of_week.includes(day.value);
+                    return (
+                      <Button
+                        key={day.value}
+                        type='button'
+                        size='sm'
+                        variant={active ? 'default' : 'outline'}
+                        onClick={() => toggleSessionDay(day.value)}
+                      >
+                        {day.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <p className='mt-1 text-xs text-muted-foreground'>
+                  Sessions repeat weekly on the selected days between the training dates.
+                </p>
+              </Field>
 
               <div className='grid gap-4 md:grid-cols-2'>
                 <Field label='Academic period start'>
@@ -1029,22 +1262,6 @@ function JobFormSheet({
                 </Field>
               </div>
 
-              <div className='grid gap-4 md:grid-cols-2'>
-                <Field label='Session template start *'>
-                  <Input
-                    type='datetime-local'
-                    value={form.session_template_start_time}
-                    onChange={event => updateField('session_template_start_time', event.target.value)}
-                  />
-                </Field>
-                <Field label='Session template end *'>
-                  <Input
-                    type='datetime-local'
-                    value={form.session_template_end_time}
-                    onChange={event => updateField('session_template_end_time', event.target.value)}
-                  />
-                </Field>
-              </div>
             </SectionShell>
 
             <SectionShell title='Location & capacity'>
