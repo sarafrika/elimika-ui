@@ -1280,19 +1280,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -2391,13 +2391,6 @@ export const ProgramRequirementSchema = {
       example: false,
       readOnly: true,
     },
-    requirement_category: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.',
-      example: 'Mandatory Student Requirement',
-      readOnly: true,
-    },
     requirement_priority: {
       type: 'string',
       description:
@@ -2417,6 +2410,13 @@ export const ProgramRequirementSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.',
       example: 'Student requirement with mandatory compliance',
+      readOnly: true,
+    },
+    requirement_category: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.',
+      example: 'Mandatory Student Requirement',
       readOnly: true,
     },
   },
@@ -2530,6 +2530,13 @@ export const ProgramCourseSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    sequence_display: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Formatted display of the course position within the program sequence.',
+      example: 'Course 3 of Program',
+      readOnly: true,
+    },
     association_category: {
       type: 'string',
       description:
@@ -2543,24 +2550,17 @@ export const ProgramCourseSchema = {
       example: true,
       readOnly: true,
     },
-    sequence_display: {
+    curriculum_summary: {
       type: 'string',
       description:
-        '**[READ-ONLY]** Formatted display of the course position within the program sequence.',
-      example: 'Course 3 of Program',
+        "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.",
+      example: 'Required course with prerequisites in sequence position 3',
       readOnly: true,
     },
     requirement_status: {
       type: 'string',
       description: '**[READ-ONLY]** Requirement status of the course within the program.',
       example: 'Mandatory Course',
-      readOnly: true,
-    },
-    curriculum_summary: {
-      type: 'string',
-      description:
-        "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.",
-      example: 'Required course with prerequisites in sequence position 3',
       readOnly: true,
     },
   },
@@ -2861,18 +2861,18 @@ export const InstructorSchema = {
       example: true,
       readOnly: true,
     },
-    formatted_location: {
-      type: ['string', 'null'],
-      description:
-        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
-      example: '-1.292100, 36.821900',
-      readOnly: true,
-    },
     has_location_coordinates: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
       example: true,
+      readOnly: true,
+    },
+    formatted_location: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
+      example: '-1.292100, 36.821900',
       readOnly: true,
     },
   },
@@ -3333,6 +3333,14 @@ export const InstructorExperienceSchema = {
       example: true,
       readOnly: true,
     },
+    duration_in_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
+      example: 66,
+      readOnly: true,
+    },
     formatted_duration: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
@@ -3372,14 +3380,6 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
-      readOnly: true,
-    },
-    duration_in_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
-      example: 66,
       readOnly: true,
     },
   },
@@ -3511,6 +3511,13 @@ export const InstructorEducationSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
+    full_description: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Complete description combining qualification, school, and year.',
+      example: 'Master of Science in Computer Science from University of Nairobi (2020)',
+      readOnly: true,
+    },
     is_complete: {
       type: 'boolean',
       description:
@@ -3546,13 +3553,6 @@ export const InstructorEducationSchema = {
       description:
         '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
       example: true,
-      readOnly: true,
-    },
-    full_description: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Complete description combining qualification, school, and year.',
-      example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
   },
@@ -5457,6 +5457,12 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
     weight_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
@@ -5480,12 +5486,6 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
-      readOnly: true,
-    },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
       readOnly: true,
     },
   },
@@ -17749,6 +17749,103 @@ export const PagedDTOAdminUserActivityEventSchema = {
   },
 } as const;
 
+export const ApiResponsePagedDTOContentModerationHistorySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOContentModerationHistory',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ContentModerationHistorySchema = {
+  type: 'object',
+  description: 'Audit record of an admin moderation decision on a course or training program.',
+  example: {
+    uuid: 'mod-1234-5678-90ab-cdef12345678',
+    content_type: 'course',
+    content_uuid: 'course-1234-5678-90ab-cdef12345678',
+    action: 'rejected',
+    reason: 'Lesson 3 video is missing captions.',
+    moderator_uuid: 'user-1234-5678-90ab-cdef12345678',
+    created_date: '2026-07-13T09:00:00',
+    created_by: 'admin@example.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for the moderation record.',
+      example: 'mod-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    action: {
+      $ref: '#/components/schemas/ActionEnum',
+    },
+    reason: {
+      type: 'string',
+      description: '**[READ-ONLY]** Reason provided by the moderator.',
+      example: 'Lesson 3 video is missing captions.',
+      readOnly: true,
+    },
+    content_type: {
+      $ref: '#/components/schemas/ContentTypeEnum',
+    },
+    content_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** UUID of the moderated course or training program.',
+      example: 'course-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    moderator_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Internal user UUID of the admin who made the decision.',
+      example: 'user-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the decision was recorded.',
+      example: '2026-07-13T09:00:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Created by identifier (typically the admin email or system).',
+      example: 'admin@example.com',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const PagedDTOContentModerationHistorySchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ContentModerationHistory',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
 export const ApiResponseListDomainDTOSchema = {
   type: 'object',
   properties: {
@@ -18963,6 +19060,22 @@ export const EntryTypeEnumSchema = {
   description: 'Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE',
   enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'],
   example: 'SCHEDULED_INSTANCE',
+} as const;
+
+export const ActionEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Moderation decision taken.',
+  enum: ['approved', 'rejected', 'revoked'],
+  example: 'rejected',
+  readOnly: true,
+} as const;
+
+export const ContentTypeEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Type of the moderated content.',
+  enum: ['course', 'training_program'],
+  example: 'course',
+  readOnly: true,
 } as const;
 
 export const JsonNodeWritableSchema = {} as const;

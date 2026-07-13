@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
+  BookOpen,
   Building2,
   CheckCircle2,
   ExternalLink,
@@ -18,15 +19,17 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { CourseCreator, Instructor, Organisation } from '@/services/client';
+import type { Course, CourseCreator, Instructor, Organisation } from '@/services/client';
 import {
   getPendingOrganisationsOptions,
+  listPendingCoursesOptions,
   moderateOrganisationMutation,
   searchCourseCreatorsOptions,
   searchInstructorsOptions,
   verifyCourseCreatorMutation,
   verifyInstructorMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { DetailGrid } from '../../_components/ui/DetailPanel';
 import { SectionCard, SectionCardSkeleton } from '../../_components/ui/SectionCard';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
@@ -217,6 +220,45 @@ function CreatorCard({
   );
 }
 
+function PendingCourseCard({ course }: { course: Course }) {
+  const thumb = course.thumbnail_url ?? course.banner_url;
+  const thumbSrc = thumb ? toAuthenticatedMediaUrl(thumb) || thumb : undefined;
+  return (
+    <div className='border-border/60 bg-muted/20 rounded-md border p-4'>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+        <div className='flex min-w-0 items-start gap-3'>
+          <div className='border-border/60 bg-muted/40 flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md border'>
+            {thumbSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={thumbSrc} alt='' className='h-full w-full object-cover' loading='lazy' />
+            ) : (
+              <BookOpen className='text-muted-foreground size-5' />
+            )}
+          </div>
+          <div className='min-w-0'>
+            <div className='mb-1.5 flex flex-wrap items-center gap-2'>
+              <StatusBadge status='pending' label='Course pending' />
+              <StatusBadge status={course.status} />
+            </div>
+            <p className='text-foreground truncate text-sm font-semibold'>{course.name}</p>
+            <p className='text-muted-foreground text-xs'>
+              Submitted {formatDate(course.created_date)}
+            </p>
+          </div>
+        </div>
+        <div className='flex shrink-0 flex-wrap gap-2'>
+          <Button size='sm' asChild>
+            <Link href={`/dashboard/manage-courses/${course.uuid}`}>
+              <ExternalLink className='size-4' />
+              Review course
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OrganisationCard({
   organisation,
   isPending,
@@ -290,6 +332,10 @@ export function PendingApprovalsClient() {
     ...getPendingOrganisationsOptions({ query: { pageable: PAGEABLE } }),
     staleTime: 30_000,
   });
+  const coursesQuery = useQuery({
+    ...listPendingCoursesOptions({ query: { pageable: PAGEABLE } }),
+    staleTime: 30_000,
+  });
 
   const verifyInstructor = useMutation(verifyInstructorMutation());
   const verifyCreator = useMutation(verifyCourseCreatorMutation());
@@ -331,6 +377,13 @@ export function PendingApprovalsClient() {
         )
       ),
     [organisationsQuery.data?.data?.content, term]
+  );
+  const pendingCourses = useMemo(
+    () =>
+      (coursesQuery.data?.data?.content ?? []).filter(course =>
+        includesTerm([course.name, course.description], term)
+      ),
+    [coursesQuery.data?.data?.content, term]
   );
 
   const approveInstructor = async (instructor: Instructor) => {
@@ -384,17 +437,22 @@ export function PendingApprovalsClient() {
     }
   };
 
-  const totalPending = instructors.length + creators.length + organisations.length;
+  const totalPending =
+    instructors.length + creators.length + organisations.length + pendingCourses.length;
   const isLoading =
-    instructorsQuery.isLoading || creatorsQuery.isLoading || organisationsQuery.isLoading;
+    instructorsQuery.isLoading ||
+    creatorsQuery.isLoading ||
+    organisationsQuery.isLoading ||
+    coursesQuery.isLoading;
 
   return (
     <div className='space-y-4'>
-      <div className='grid gap-3 md:grid-cols-4'>
+      <div className='grid gap-3 md:grid-cols-5'>
         <MetricCard label='Total pending' value={totalPending} icon={CheckCircle2} />
         <MetricCard label='Instructors' value={instructors.length} icon={GraduationCap} />
         <MetricCard label='Creators' value={creators.length} icon={Sparkles} />
         <MetricCard label='Organisations' value={organisations.length} icon={Building2} />
+        <MetricCard label='Courses' value={pendingCourses.length} icon={BookOpen} />
       </div>
 
       <SectionCard
@@ -418,6 +476,7 @@ export function PendingApprovalsClient() {
             <TabsTrigger value='instructors'>Instructors · {instructors.length}</TabsTrigger>
             <TabsTrigger value='creators'>Creators · {creators.length}</TabsTrigger>
             <TabsTrigger value='organisations'>Organisations · {organisations.length}</TabsTrigger>
+            <TabsTrigger value='courses'>Courses · {pendingCourses.length}</TabsTrigger>
           </TabsList>
 
           {isLoading ? <SectionCardSkeleton rows={6} withHeader={false} /> : null}
@@ -431,6 +490,7 @@ export function PendingApprovalsClient() {
           {organisationsQuery.isError ? (
             <InlineError message='Unable to load pending organisations.' />
           ) : null}
+          {coursesQuery.isError ? <InlineError message='Unable to load pending courses.' /> : null}
 
           <TabsContent value='all' className='mt-0 space-y-3'>
             {totalPending ? (
@@ -459,12 +519,15 @@ export function PendingApprovalsClient() {
                     onApprove={approveOrganisation}
                   />
                 ))}
+                {pendingCourses.map(course => (
+                  <PendingCourseCard key={course.uuid} course={course} />
+                ))}
               </>
             ) : (
               <EmptyState
                 icon={CheckCircle2}
                 title='No pending approvals'
-                description='Instructor, course creator, and organisation approval queues are clear.'
+                description='Instructor, course creator, organisation, and course approval queues are clear.'
                 variant='compact'
               />
             )}
@@ -512,6 +575,14 @@ export function PendingApprovalsClient() {
               ))
             ) : (
               <EmptyState icon={Building2} title='No pending organisations' variant='compact' />
+            )}
+          </TabsContent>
+
+          <TabsContent value='courses' className='mt-0 space-y-3'>
+            {pendingCourses.length ? (
+              pendingCourses.map(course => <PendingCourseCard key={course.uuid} course={course} />)
+            ) : (
+              <EmptyState icon={BookOpen} title='No pending courses' variant='compact' />
             )}
           </TabsContent>
         </Tabs>

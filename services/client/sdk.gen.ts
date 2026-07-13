@@ -1537,6 +1537,9 @@ import type {
   GetAdminEligibleUsersData,
   GetAdminEligibleUsersResponses,
   GetAdminEligibleUsersErrors,
+  GetProgramModerationHistoryData,
+  GetProgramModerationHistoryResponses,
+  GetProgramModerationHistoryErrors,
   GetProgramApprovalStatusData,
   GetProgramApprovalStatusResponses,
   GetProgramApprovalStatusErrors,
@@ -1561,6 +1564,9 @@ import type {
   GetDashboardActivityData,
   GetDashboardActivityResponses,
   GetDashboardActivityErrors,
+  GetCourseModerationHistoryData,
+  GetCourseModerationHistoryResponses,
+  GetCourseModerationHistoryErrors,
   GetCourseApprovalStatusData,
   GetCourseApprovalStatusResponses,
   GetCourseApprovalStatusErrors,
@@ -1994,10 +2000,12 @@ import {
   getSystemAdminUsersResponseTransformer,
   getOrganizationAdminUsersResponseTransformer,
   getAdminEligibleUsersResponseTransformer,
+  getProgramModerationHistoryResponseTransformer,
   listPendingProgramsResponseTransformer,
   getPendingOrganisationsResponseTransformer,
   getDashboardStatisticsResponseTransformer,
   getDashboardActivityResponseTransformer,
+  getCourseModerationHistoryResponseTransformer,
   listPendingCoursesResponseTransformer,
   removeItemResponseTransformer,
   removeAdminDomainResponseTransformer,
@@ -17222,6 +17230,33 @@ export const getAdminEligibleUsers = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get training program moderation history
+ */
+export const getProgramModerationHistory = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgramModerationHistoryData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetProgramModerationHistoryResponses,
+    GetProgramModerationHistoryErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getProgramModerationHistoryResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/programs/{uuid}/moderation-history',
+    ...options,
+  });
+};
+
+/**
  * Get training program approval status
  */
 export const getProgramApprovalStatus = <ThrowOnError extends boolean = false>(
@@ -17435,6 +17470,33 @@ export const getDashboardActivity = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/dashboard/activity-feed',
+    ...options,
+  });
+};
+
+/**
+ * Get course moderation history
+ */
+export const getCourseModerationHistory = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseModerationHistoryData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseModerationHistoryResponses,
+    GetCourseModerationHistoryErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseModerationHistoryResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/courses/{uuid}/moderation-history',
     ...options,
   });
 };

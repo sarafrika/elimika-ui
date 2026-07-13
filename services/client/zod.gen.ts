@@ -842,17 +842,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -1604,13 +1604,6 @@ export const zProgramRequirement = z
       .describe('**[READ-ONLY]** Indicates if the requirement is optional (not mandatory).')
       .readonly()
       .optional(),
-    requirement_category: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.'
-      )
-      .readonly()
-      .optional(),
     requirement_priority: z
       .string()
       .describe(
@@ -1629,6 +1622,13 @@ export const zProgramRequirement = z
       .string()
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.'
+      )
+      .readonly()
+      .optional(),
+    requirement_category: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.'
       )
       .readonly()
       .optional(),
@@ -1704,6 +1704,13 @@ export const zProgramCourse = z
       )
       .readonly()
       .optional(),
+    sequence_display: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Formatted display of the course position within the program sequence.'
+      )
+      .readonly()
+      .optional(),
     association_category: z
       .string()
       .describe(
@@ -1716,23 +1723,16 @@ export const zProgramCourse = z
       .describe('**[READ-ONLY]** Indicates if this course has prerequisite requirements.')
       .readonly()
       .optional(),
-    sequence_display: z
+    curriculum_summary: z
       .string()
       .describe(
-        '**[READ-ONLY]** Formatted display of the course position within the program sequence.'
+        "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum."
       )
       .readonly()
       .optional(),
     requirement_status: z
       .string()
       .describe('**[READ-ONLY]** Requirement status of the course within the program.')
-      .readonly()
-      .optional(),
-    curriculum_summary: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum."
-      )
       .readonly()
       .optional(),
   })
@@ -1906,7 +1906,6 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     has_location_coordinates: z
       .boolean()
       .describe(
@@ -1914,6 +1913,7 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
+    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe('Instructor profile including location data for educational service delivery');
 
@@ -2221,6 +2221,7 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
       .readonly()
       .optional(),
+    duration_in_months: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
     formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     employment_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_term_position: z
@@ -2240,7 +2241,6 @@ export const zInstructorExperience = z
       .readonly()
       .optional(),
     calculated_years: z.union([z.number().readonly(), z.null()]).readonly().optional(),
-    duration_in_months: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
   })
   .describe(
     'Professional work experience record for instructors including positions, organizations, responsibilities, and employment duration'
@@ -2324,6 +2324,11 @@ export const zInstructorEducation = z
       )
       .readonly()
       .optional(),
+    full_description: z
+      .string()
+      .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
+      .readonly()
+      .optional(),
     is_complete: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
@@ -2348,11 +2353,6 @@ export const zInstructorEducation = z
       .describe(
         '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
       )
-      .readonly()
-      .optional(),
-    full_description: z
-      .string()
-      .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
   })
@@ -3594,6 +3594,11 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    assessment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
     weight_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
@@ -3614,11 +3619,6 @@ export const zCourseAssessment = z
       .describe(
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
       )
-      .readonly()
-      .optional(),
-    assessment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment type.')
       .readonly()
       .optional(),
   })
@@ -10015,6 +10015,77 @@ export const zPagedDtoAdminUserActivityEvent = z.object({
 export const zApiResponsePagedDtoAdminUserActivityEvent = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoAdminUserActivityEvent.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * **[READ-ONLY]** Moderation decision taken.
+ */
+export const zActionEnum = z
+  .enum(['approved', 'rejected', 'revoked'])
+  .describe('**[READ-ONLY]** Moderation decision taken.');
+
+/**
+ * **[READ-ONLY]** Type of the moderated content.
+ */
+export const zContentTypeEnum = z
+  .enum(['course', 'training_program'])
+  .describe('**[READ-ONLY]** Type of the moderated content.');
+
+/**
+ * Audit record of an admin moderation decision on a course or training program.
+ */
+export const zContentModerationHistory = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier for the moderation record.')
+      .readonly()
+      .optional(),
+    action: zActionEnum.optional(),
+    reason: z
+      .string()
+      .describe('**[READ-ONLY]** Reason provided by the moderator.')
+      .readonly()
+      .optional(),
+    content_type: zContentTypeEnum.optional(),
+    content_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** UUID of the moderated course or training program.')
+      .readonly()
+      .optional(),
+    moderator_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Internal user UUID of the admin who made the decision.')
+      .readonly()
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the decision was recorded.')
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe('**[READ-ONLY]** Created by identifier (typically the admin email or system).')
+      .readonly()
+      .optional(),
+  })
+  .describe('Audit record of an admin moderation decision on a course or training program.');
+
+export const zPagedDtoContentModerationHistory = z.object({
+  content: z.array(zContentModerationHistory).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoContentModerationHistory = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoContentModerationHistory.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -17997,6 +18068,21 @@ export const zGetAdminEligibleUsersData = z.object({
  */
 export const zGetAdminEligibleUsersResponse = zApiResponsePagedDtoUser;
 
+export const zGetProgramModerationHistoryData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetProgramModerationHistoryResponse = zApiResponsePagedDtoContentModerationHistory;
+
 export const zGetProgramApprovalStatusData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -18096,6 +18182,21 @@ export const zGetDashboardActivityData = z.object({
  * Dashboard activity retrieved successfully
  */
 export const zGetDashboardActivityResponse = zApiResponsePagedDtoAdminActivityEvent;
+
+export const zGetCourseModerationHistoryData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseModerationHistoryResponse = zApiResponsePagedDtoContentModerationHistory;
 
 export const zGetCourseApprovalStatusData = z.object({
   body: z.never().optional(),

@@ -513,6 +513,7 @@ import {
   getSystemAdminUsers,
   getOrganizationAdminUsers,
   getAdminEligibleUsers,
+  getProgramModerationHistory,
   getProgramApprovalStatus,
   listPendingPrograms,
   isOrganisationVerified,
@@ -521,6 +522,7 @@ import {
   getOrganisationSupportedDomains,
   getDashboardStatistics,
   getDashboardActivity,
+  getCourseModerationHistory,
   getCourseApprovalStatus,
   listPendingCourses,
   clearInstructorAvailability,
@@ -1783,6 +1785,9 @@ import type {
   GetAdminEligibleUsersData,
   GetAdminEligibleUsersError,
   GetAdminEligibleUsersResponse,
+  GetProgramModerationHistoryData,
+  GetProgramModerationHistoryError,
+  GetProgramModerationHistoryResponse,
   GetProgramApprovalStatusData,
   ListPendingProgramsData,
   ListPendingProgramsError,
@@ -1797,6 +1802,9 @@ import type {
   GetDashboardActivityData,
   GetDashboardActivityError,
   GetDashboardActivityResponse,
+  GetCourseModerationHistoryData,
+  GetCourseModerationHistoryError,
+  GetCourseModerationHistoryResponse,
   GetCourseApprovalStatusData,
   ListPendingCoursesData,
   ListPendingCoursesError,
@@ -24356,6 +24364,79 @@ export const getAdminEligibleUsersInfiniteOptions = (
   );
 };
 
+export const getProgramModerationHistoryQueryKey = (
+  options: Options<GetProgramModerationHistoryData>
+) => createQueryKey('getProgramModerationHistory', options);
+
+/**
+ * Get training program moderation history
+ */
+export const getProgramModerationHistoryOptions = (
+  options: Options<GetProgramModerationHistoryData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getProgramModerationHistory({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getProgramModerationHistoryQueryKey(options),
+  });
+};
+
+export const getProgramModerationHistoryInfiniteQueryKey = (
+  options: Options<GetProgramModerationHistoryData>
+): QueryKey<Options<GetProgramModerationHistoryData>> =>
+  createQueryKey('getProgramModerationHistory', options, true);
+
+/**
+ * Get training program moderation history
+ */
+export const getProgramModerationHistoryInfiniteOptions = (
+  options: Options<GetProgramModerationHistoryData>
+) => {
+  return infiniteQueryOptions<
+    GetProgramModerationHistoryResponse,
+    GetProgramModerationHistoryError,
+    InfiniteData<GetProgramModerationHistoryResponse>,
+    QueryKey<Options<GetProgramModerationHistoryData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetProgramModerationHistoryData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetProgramModerationHistoryData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getProgramModerationHistory({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getProgramModerationHistoryInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const getProgramApprovalStatusQueryKey = (options: Options<GetProgramApprovalStatusData>) =>
   createQueryKey('getProgramApprovalStatus', options);
 
@@ -24665,6 +24746,79 @@ export const getDashboardActivityInfiniteOptions = (options: Options<GetDashboar
         return data;
       },
       queryKey: getDashboardActivityInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getCourseModerationHistoryQueryKey = (
+  options: Options<GetCourseModerationHistoryData>
+) => createQueryKey('getCourseModerationHistory', options);
+
+/**
+ * Get course moderation history
+ */
+export const getCourseModerationHistoryOptions = (
+  options: Options<GetCourseModerationHistoryData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseModerationHistory({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseModerationHistoryQueryKey(options),
+  });
+};
+
+export const getCourseModerationHistoryInfiniteQueryKey = (
+  options: Options<GetCourseModerationHistoryData>
+): QueryKey<Options<GetCourseModerationHistoryData>> =>
+  createQueryKey('getCourseModerationHistory', options, true);
+
+/**
+ * Get course moderation history
+ */
+export const getCourseModerationHistoryInfiniteOptions = (
+  options: Options<GetCourseModerationHistoryData>
+) => {
+  return infiniteQueryOptions<
+    GetCourseModerationHistoryResponse,
+    GetCourseModerationHistoryError,
+    InfiniteData<GetCourseModerationHistoryResponse>,
+    QueryKey<Options<GetCourseModerationHistoryData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetCourseModerationHistoryData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseModerationHistoryData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseModerationHistory({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseModerationHistoryInfiniteQueryKey(options),
     }
   );
 };
