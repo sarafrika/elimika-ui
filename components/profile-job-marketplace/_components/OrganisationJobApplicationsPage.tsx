@@ -10,16 +10,15 @@ import { toast } from 'sonner';
 import { AdminPageHeader, adminTheme, SectionCard } from '@/app/dashboard/@admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Label } from '@/components/ui/label';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useCoursesByIds, useInstructorsByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
@@ -295,9 +294,15 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                 isInstructorsLoading={isInstructorsLoading}
                 isReviewPending={reviewMutation.isPending}
                 isAssignPending={assignMutation.isPending}
+                jobTrainingFee={job?.training_fee}
                 onApprove={application => openReviewDialog(application, 'APPROVE')}
                 onReject={application => openReviewDialog(application, 'REJECT')}
                 onAssign={handleAssign}
+                onViewProfile={application => {
+                  if (application.uuid) {
+                    router.push(`/dashboard/opportunities/${jobUuid}/applications/${application.uuid}`);
+                  }
+                }}
               />
             </AsyncSection>
           </SectionCard>
@@ -310,7 +315,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
           />
         </div>
 
-      <Dialog
+      <Sheet
         open={reviewDialogOpen}
         onOpenChange={open => {
           setReviewDialogOpen(open);
@@ -320,61 +325,66 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
           }
         }}
       >
-        <DialogContent className='max-w-lg'>
-          <DialogHeader>
-            <DialogTitle>
-              {pendingReview?.action === 'APPROVE' ? 'Approve application' : 'Reject application'}
-            </DialogTitle>
-            <DialogDescription>
-              Add review notes before confirming this decision. The applicant will receive the
-              submitted notes with the review outcome.
-            </DialogDescription>
-          </DialogHeader>
+        <SheetContent
+          side='right'
+          className='flex w-[min(98vw,480px)] max-w-none flex-col overflow-y-auto sm:max-w-none'
+        >
+          <div className='space-y-6 p-3 sm:p-6'>
+            <SheetHeader className='space-y-3 pr-10 text-left'>
+              <SheetTitle>
+                {pendingReview?.action === 'APPROVE' ? 'Approve application' : 'Reject application'}
+              </SheetTitle>
+              <SheetDescription>
+                Add review notes before confirming this decision. The applicant will receive the
+                submitted notes with the review outcome.
+              </SheetDescription>
+            </SheetHeader>
 
-          <div className='space-y-2'>
-            <Label htmlFor='review-notes' className='text-sm font-medium'>
-              Review notes
-            </Label>
-            <Textarea
-              id='review-notes'
-              value={reviewNotes}
-              onChange={event => setReviewNotes(event.target.value)}
-              placeholder='Add optional notes for this review...'
-              className='min-h-32'
-            />
+            <div className='space-y-2'>
+              <Label htmlFor='review-notes' className='text-sm font-medium'>
+                Review notes
+              </Label>
+              <Textarea
+                id='review-notes'
+                value={reviewNotes}
+                onChange={event => setReviewNotes(event.target.value)}
+                placeholder='Add optional notes for this review...'
+                className='min-h-32'
+              />
+            </div>
+
+            <div className='flex flex-wrap justify-end gap-2'>
+              <Button
+                variant='outline'
+                onClick={() => {
+                  setReviewDialogOpen(false);
+                  setPendingReview(null);
+                  setReviewNotes('');
+                }}
+                disabled={reviewMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant={pendingReview?.action === 'REJECT' ? 'destructive' : 'default'}
+                onClick={handleReviewConfirm}
+                disabled={reviewMutation.isPending || !pendingReview?.application.uuid}
+              >
+                {reviewMutation.isPending ? (
+                  <>
+                    <Spinner className='mr-2 size-4' />
+                    Submitting...
+                  </>
+                ) : pendingReview?.action === 'APPROVE' ? (
+                  'Confirm approval'
+                ) : (
+                  'Confirm rejection'
+                )}
+              </Button>
+            </div>
           </div>
-
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => {
-                setReviewDialogOpen(false);
-                setPendingReview(null);
-                setReviewNotes('');
-              }}
-              disabled={reviewMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant={pendingReview?.action === 'REJECT' ? 'destructive' : 'default'}
-              onClick={handleReviewConfirm}
-              disabled={reviewMutation.isPending || !pendingReview?.application.uuid}
-            >
-              {reviewMutation.isPending ? (
-                <>
-                  <Spinner className='mr-2 size-4' />
-                  Submitting...
-                </>
-              ) : pendingReview?.action === 'APPROVE' ? (
-                'Confirm approval'
-              ) : (
-                'Confirm rejection'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-        </Dialog>
+        </SheetContent>
+      </Sheet>
       </div>
     </div>
   );

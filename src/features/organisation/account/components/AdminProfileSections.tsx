@@ -211,19 +211,6 @@ export function AdminCredentialsCard({ form }: AdminProfileSectionsProps) {
         <CardDescription>Manage your administrator login details</CardDescription>
       </CardHeader>
       <CardContent className='space-y-6'>
-        <FormField
-          control={form.control}
-          name='username'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Username</FormLabel>
-              <FormControl>
-                <Input placeholder='admin_username' {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <div className='space-y-2'>
           <FormLabel>Password</FormLabel>
           <div className='flex items-center space-x-2'>
