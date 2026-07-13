@@ -36,7 +36,6 @@ import {
   reviewApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
-import { ApplicantProfileSheet } from './ApplicantProfileSheet';
 import {
   ApplicationListSkeleton,
   ApplicationStatsCards,
@@ -80,8 +79,6 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
     application: ClassMarketplaceJobApplication;
     action: 'APPROVE' | 'REJECT';
   } | null>(null);
-  const [profileApplication, setProfileApplication] =
-    useState<ClassMarketplaceJobApplication | null>(null);
   const jobsListOptions = {
     query: {
       organisation_uuid: organisationUuid,
@@ -301,7 +298,11 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                 onApprove={application => openReviewDialog(application, 'APPROVE')}
                 onReject={application => openReviewDialog(application, 'REJECT')}
                 onAssign={handleAssign}
-                onViewProfile={setProfileApplication}
+                onViewProfile={application => {
+                  if (application.uuid) {
+                    router.push(`/dashboard/opportunities/${jobUuid}/applications/${application.uuid}`);
+                  }
+                }}
               />
             </AsyncSection>
           </SectionCard>
@@ -313,21 +314,6 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
             isLoading={isJobsLoading && !jobsResponse}
           />
         </div>
-
-      <ApplicantProfileSheet
-        instructorUuid={profileApplication?.instructor_uuid ?? null}
-        instructor={
-          profileApplication?.instructor_uuid
-            ? instructorMap[profileApplication.instructor_uuid]
-            : null
-        }
-        open={Boolean(profileApplication)}
-        onOpenChange={open => {
-          if (!open) setProfileApplication(null);
-        }}
-        approvedRate={profileApplication?.approved_rate}
-        jobFee={job?.training_fee}
-      />
 
       <Sheet
         open={reviewDialogOpen}
