@@ -6,7 +6,6 @@ export const adminProfileSchema = z.object({
   last_name: z.string().min(1, 'Last name is required'),
   email: z.string().email(),
   phone_number: z.string().optional(),
-  username: z.string().min(1, 'Username is required'),
   date_of_birth: z.date().optional(),
   gender: z.enum(['MALE', 'FEMALE']).optional(),
 });
