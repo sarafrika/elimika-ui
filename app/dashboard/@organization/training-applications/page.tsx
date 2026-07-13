@@ -22,14 +22,6 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -39,6 +31,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
@@ -89,26 +88,12 @@ export default function TrainingApplicationsPage() {
   // Fetch applications for this course creator's courses
   const { data, isLoading, isError, error, refetch } = useQuery({
     ...searchTrainingApplicationsOptions({
-      body: {
-        searchCriteria: [
-          {
-            key: 'course_creator_uuid',
-            operation: 'eq',
-            value: courseCreator?.profile?.uuid || organisation?.uuid,
-          },
-          ...(statusFilter !== 'ALL'
-            ? [{ key: 'status', operation: 'eq' as const, value: statusFilter }]
-            : []),
-          ...(applicantTypeFilter !== 'ALL'
-            ? [
-                {
-                  key: 'applicant_type',
-                  operation: 'eq' as const,
-                  value: applicantTypeFilter,
-                },
-              ]
-            : []),
-        ],
+      query: {
+        searchParams: {
+          course_creator_uuid: courseCreator?.profile?.uuid || organisation?.uuid || '',
+          ...(statusFilter !== 'ALL' ? { status_eq: statusFilter } : {}),
+          ...(applicantTypeFilter !== 'ALL' ? { applicant_type_eq: applicantTypeFilter } : {}),
+        },
         pageable: {
           page,
           size: pageSize,
@@ -121,7 +106,7 @@ export default function TrainingApplicationsPage() {
   const decideMutation = useMutation(decideOnTrainingApplicationMutation());
 
   const applications: TrainingApplicationRow[] = data?.data?.content ?? [];
-  const totalApplications = data?.data?.totalElements || 0;
+  const totalApplications = Number(data?.data?.metadata?.totalElements ?? 0);
   const totalPages = Math.ceil(totalApplications / pageSize);
 
   // Filter by search query (client-side)
@@ -138,8 +123,8 @@ export default function TrainingApplicationsPage() {
   // Stats
   const stats = {
     total: totalApplications,
-    pending: applications.filter(app => app.status === 'PENDING').length,
-    approved: applications.filter(app => app.status === 'APPROVED').length,
+    pending: applications.filter(app => app.status === 'pending').length,
+    approved: applications.filter(app => app.status === 'approved').length,
     instructors: new Set(
       applications
         .filter(app => app.applicant_type === 'instructor')
@@ -155,6 +140,10 @@ export default function TrainingApplicationsPage() {
 
   const handleSubmitReview = async () => {
     if (!reviewDialog.application || !reviewDialog.action) return;
+    if (!reviewDialog.application.course_uuid || !reviewDialog.application.uuid) {
+      toast.error('This application is missing its course or identifier and cannot be reviewed.');
+      return;
+    }
 
     try {
       await decideMutation.mutateAsync({
@@ -162,8 +151,10 @@ export default function TrainingApplicationsPage() {
           courseUuid: reviewDialog.application.course_uuid,
           applicationUuid: reviewDialog.application.uuid,
         },
+        query: {
+          action: reviewDialog.action,
+        },
         body: {
-          decision: reviewDialog.action,
           review_notes: reviewNotes,
         },
       });
@@ -177,23 +168,23 @@ export default function TrainingApplicationsPage() {
     }
   };
 
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case 'PENDING':
+  const getStatusConfig = (status?: string | null) => {
+    switch (status?.toLowerCase()) {
+      case 'pending':
         return {
           label: 'Pending Review',
           variant: 'secondary' as const,
           icon: Clock,
           color: 'text-warning',
         };
-      case 'APPROVED':
+      case 'approved':
         return {
           label: 'Approved',
           variant: 'default' as const,
           icon: CheckCircle2,
           color: 'text-success',
         };
-      case 'REJECTED':
+      case 'rejected':
         return {
           label: 'Rejected',
           variant: 'destructive' as const,
@@ -202,7 +193,7 @@ export default function TrainingApplicationsPage() {
         };
       default:
         return {
-          label: status,
+          label: status ?? 'Unknown',
           variant: 'outline' as const,
           icon: FileText,
           color: 'text-muted-foreground',
@@ -425,7 +416,7 @@ export default function TrainingApplicationsPage() {
 
                     {/* Actions */}
                     <div className='mt-auto flex gap-2 pt-2'>
-                      {application.status === 'PENDING' && (
+                      {application.status === 'pending' && (
                         <>
                           <Button
                             size='sm'
@@ -446,7 +437,7 @@ export default function TrainingApplicationsPage() {
                           </Button>
                         </>
                       )}
-                      {application.status === 'APPROVED' && (
+                      {application.status === 'approved' && (
                         <Button
                           size='sm'
                           variant='outline'
@@ -457,7 +448,7 @@ export default function TrainingApplicationsPage() {
                           Revoke Approval
                         </Button>
                       )}
-                      {application.status === 'REJECTED' && (
+                      {application.status === 'rejected' && (
                         <Button
                           size='sm'
                           variant='outline'
@@ -510,95 +501,100 @@ export default function TrainingApplicationsPage() {
         </>
       </AsyncSection>
 
-      {/* Review Dialog */}
-      <Dialog
+      {/* Review Sheet */}
+      <Sheet
         open={reviewDialog.open}
         onOpenChange={open =>
           !open && setReviewDialog({ open: false, application: null, action: null })
         }
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {reviewDialog.action === 'APPROVE' && 'Approve Application'}
-              {reviewDialog.action === 'REJECT' && 'Reject Application'}
-              {reviewDialog.action === 'REVOKE' && 'Revoke Approval'}
-            </DialogTitle>
-            <DialogDescription>
-              {reviewDialog.action === 'APPROVE' &&
-                'Approve this training application to allow the applicant to train this course.'}
-              {reviewDialog.action === 'REJECT' &&
-                'Reject this training application with optional feedback.'}
-              {reviewDialog.action === 'REVOKE' &&
-                'Revoke the approval for this training application.'}
-            </DialogDescription>
-          </DialogHeader>
+        <SheetContent
+          side='right'
+          className='flex w-[min(98vw,480px)] max-w-none flex-col overflow-y-auto sm:max-w-none'
+        >
+          <div className='space-y-6 p-3 sm:p-6'>
+            <SheetHeader className='space-y-3 pr-10 text-left'>
+              <SheetTitle>
+                {reviewDialog.action === 'APPROVE' && 'Approve Application'}
+                {reviewDialog.action === 'REJECT' && 'Reject Application'}
+                {reviewDialog.action === 'REVOKE' && 'Revoke Approval'}
+              </SheetTitle>
+              <SheetDescription>
+                {reviewDialog.action === 'APPROVE' &&
+                  'Approve this training application to allow the applicant to train this course.'}
+                {reviewDialog.action === 'REJECT' &&
+                  'Reject this training application with optional feedback.'}
+                {reviewDialog.action === 'REVOKE' &&
+                  'Revoke the approval for this training application.'}
+              </SheetDescription>
+            </SheetHeader>
 
-          <div className='space-y-4'>
-            <div className='bg-muted/20 rounded-lg border p-4'>
-              <div className='space-y-2 text-sm'>
-                <div>
-                  <span className='text-muted-foreground'>Course:</span>
-                  <p className='font-medium'>{reviewDialog.application?.course_name}</p>
+            <div className='space-y-4'>
+              <div className='bg-muted/20 rounded-lg border p-4'>
+                <div className='space-y-2 text-sm'>
+                  <div>
+                    <span className='text-muted-foreground'>Course:</span>
+                    <p className='font-medium'>{reviewDialog.application?.course_name}</p>
+                  </div>
+                  <div>
+                    <span className='text-muted-foreground'>Applicant:</span>
+                    <p className='font-medium'>{reviewDialog.application?.applicant_name}</p>
+                  </div>
                 </div>
-                <div>
-                  <span className='text-muted-foreground'>Applicant:</span>
-                  <p className='font-medium'>{reviewDialog.application?.applicant_name}</p>
-                </div>
+              </div>
+
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>
+                  Review Notes {reviewDialog.action === 'REJECT' && '(recommended)'}
+                </label>
+                <Textarea
+                  value={reviewNotes}
+                  onChange={e => setReviewNotes(e.target.value)}
+                  placeholder={
+                    reviewDialog.action === 'APPROVE'
+                      ? 'Add any notes or instructions for the approved trainer...'
+                      : reviewDialog.action === 'REJECT'
+                        ? 'Provide feedback on why this application was rejected...'
+                        : 'Explain why the approval is being revoked...'
+                  }
+                  rows={4}
+                />
               </div>
             </div>
 
-            <div className='space-y-2'>
-              <label className='text-sm font-medium'>
-                Review Notes {reviewDialog.action === 'REJECT' && '(recommended)'}
-              </label>
-              <Textarea
-                value={reviewNotes}
-                onChange={e => setReviewNotes(e.target.value)}
-                placeholder={
-                  reviewDialog.action === 'APPROVE'
-                    ? 'Add any notes or instructions for the approved trainer...'
-                    : reviewDialog.action === 'REJECT'
-                      ? 'Provide feedback on why this application was rejected...'
-                      : 'Explain why the approval is being revoked...'
+            <div className='flex flex-wrap justify-end gap-2'>
+              <Button
+                variant='outline'
+                onClick={() => setReviewDialog({ open: false, application: null, action: null })}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmitReview}
+                variant={
+                  reviewDialog.action === 'REJECT' || reviewDialog.action === 'REVOKE'
+                    ? 'destructive'
+                    : 'default'
                 }
-                rows={4}
-              />
+                disabled={decideMutation.isPending}
+              >
+                {decideMutation.isPending ? (
+                  <>
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    {reviewDialog.action === 'APPROVE' && 'Approve Application'}
+                    {reviewDialog.action === 'REJECT' && 'Reject Application'}
+                    {reviewDialog.action === 'REVOKE' && 'Revoke Approval'}
+                  </>
+                )}
+              </Button>
             </div>
           </div>
-
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => setReviewDialog({ open: false, application: null, action: null })}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmitReview}
-              variant={
-                reviewDialog.action === 'REJECT' || reviewDialog.action === 'REVOKE'
-                  ? 'destructive'
-                  : 'default'
-              }
-              disabled={decideMutation.isPending}
-            >
-              {decideMutation.isPending ? (
-                <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  {reviewDialog.action === 'APPROVE' && 'Approve Application'}
-                  {reviewDialog.action === 'REJECT' && 'Reject Application'}
-                  {reviewDialog.action === 'REVOKE' && 'Revoke Approval'}
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
