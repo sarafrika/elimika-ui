@@ -575,16 +575,6 @@ export default {
       icon: Building,
     },
     {
-      title: 'Training Hub',
-      url: '/dashboard/training-hub',
-      icon: Layers2,
-    },
-    {
-      title: 'Learning Progress',
-      url: '/dashboard/learning-progress',
-      icon: LineChart,
-    },
-    {
       title: 'Schedule',
       url: '/dashboard/calendar',
       icon: CalendarClock,
