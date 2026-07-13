@@ -795,7 +795,7 @@ function JobDetailsSheet({
               </p>
 
               {isIneligible ? (
-                <div className='space-y-2 rounded-md border border-dashed border-amber-500/60 bg-amber-500/10 p-3 text-sm text-foreground'>
+                <div className='space-y-2 rounded-md border border-dashed border-warning/60 bg-warning/10 p-3 text-sm text-foreground'>
                   <p>
                     {eligibility?.reason ??
                       'You are not currently eligible to apply for this posting.'}

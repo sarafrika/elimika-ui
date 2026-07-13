@@ -157,7 +157,7 @@ export function ApplicantProfileSheet({
             <div className='flex flex-wrap items-center gap-2'>
               {typeof rating?.average_rating === 'number' ? (
                 <Badge variant='outline' className='rounded-md'>
-                  <Star className='mr-1 size-3.5 fill-amber-400 text-amber-400' />
+                  <Star className='mr-1 size-3.5 fill-warning text-warning' />
                   {rating.average_rating.toFixed(1)} ({String(rating.review_count ?? 0)} reviews)
                 </Badge>
               ) : null}
@@ -269,7 +269,7 @@ export function ApplicantProfileSheet({
             {reviews.slice(0, 5).map(review => (
               <div key={review.uuid} className='rounded-md border border-border/60 bg-muted/20 p-3 text-sm'>
                 <div className='flex items-center gap-2'>
-                  <Star className='size-3.5 fill-amber-400 text-amber-400' />
+                  <Star className='size-3.5 fill-warning text-warning' />
                   <span className='font-medium'>{review.rating}/5</span>
                   {review.headline ? <span className='text-foreground'>{review.headline}</span> : null}
                 </div>

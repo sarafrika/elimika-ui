@@ -233,8 +233,8 @@ export function ApplicationsListSection({
             </div>
 
             {notApprovedToTrain ? (
-              <div className='mt-3 flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-500/10 p-3 text-sm text-foreground'>
-                <TriangleAlert className='size-4 shrink-0 text-amber-600' />
+              <div className='mt-3 flex items-center gap-2 rounded-md border border-warning/60 bg-warning/10 p-3 text-sm text-foreground'>
+                <TriangleAlert className='size-4 shrink-0 text-warning' />
                 <span>
                   This instructor is not approved to train this course or program yet, so they
                   cannot be approved or assigned.
@@ -259,7 +259,7 @@ export function ApplicationsListSection({
                 {typeof approvedRate === 'number' &&
                 typeof jobTrainingFee === 'number' &&
                 approvedRate !== jobTrainingFee ? (
-                  <Badge className='rounded-md border-amber-500/60 bg-amber-500/10 text-amber-700'>
+                  <Badge className='rounded-md border-warning/60 bg-warning/10 text-warning'>
                     Rate differs from job fee
                   </Badge>
                 ) : null}
