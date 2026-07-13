@@ -1,9 +1,9 @@
-import { Clock3, Sparkles, Star } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { Clock3, Sparkles, Star } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 import type { CoursesRecommendationCardData } from './courses-data';
 
 const imageToneClasses = {
@@ -14,9 +14,10 @@ const imageToneClasses = {
 
 type CoursesRecommendationCardProps = {
   card: CoursesRecommendationCardData;
+  onApplyToTrain?: (card: CoursesRecommendationCardData) => void;
 };
 
-export function CoursesRecommendationCard({ card }: CoursesRecommendationCardProps) {
+export function CoursesRecommendationCard({ card, onApplyToTrain }: CoursesRecommendationCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
   const isApplyToTrain = card.ctaKind === 'apply-to-train';
 
@@ -89,8 +90,9 @@ export function CoursesRecommendationCard({ card }: CoursesRecommendationCardPro
             asChild
             variant={isApplyToTrain ? 'default' : 'outline'}
             className='h-8 rounded-xl px-4 text-sm shadow-none'
+            onClick={() => onApplyToTrain?.(card)}
           >
-            <Link href={card.ctaHref}>{card.ctaLabel}</Link>
+            <p>{card.ctaLabel}</p>
           </Button>
         </div>
       </div>

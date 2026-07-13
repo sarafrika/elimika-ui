@@ -89,7 +89,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
 
   const quizQuery = useQuery({
     ...getQuizByUuidOptions({ path: { uuid: parsedTask?.uuid as string } }),
-    enabled: parsedTask?.taskType === 'quiz' && !!parsedTask?.uuid,
+    enabled: true,
   });
 
   const assignmentSubmissionsQuery = useQuery({
@@ -106,6 +106,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
   });
 
   const task = assignmentQuery.data?.data ?? quizQuery.data?.data ?? null;
+
   const course = classDetails.course;
   const lessonTitle =
     classDetails.lessons.find(lesson => lesson.uuid === task?.lesson_uuid)?.title || 'Lesson';

@@ -1,21 +1,5 @@
 'use client';
 
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowRight,
-  GraduationCap,
-  Layers,
-  type LucideIcon,
-  Search,
-  SlidersHorizontal,
-  SquareDashedMousePointer,
-  Users,
-  X,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +42,22 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Category, CourseReview } from '@/services/client/types.gen';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowRight,
+  GraduationCap,
+  Layers,
+  type LucideIcon,
+  Search,
+  SlidersHorizontal,
+  SquareDashedMousePointer,
+  Users,
+  X,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { useOrganisation } from '../../../../../../context/organisation-context';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { useCourseEnrollmentsMap } from '../../../../../../hooks/use-enrollment-map';
@@ -277,7 +277,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const [filters, setFilters] = useState<FilterValues>(defaultFilterValues);
   const [currentCatalogPage, setCurrentCatalogPage] = useState(1);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
-  const [selectedApplicationCard, setSelectedApplicationCard] = useState<CoursesCatalogCardData | null>(null);
+  const [selectedApplicationCard, setSelectedApplicationCard] = useState<CoursesCatalogCardData | CoursesRecommendationCardData | null>(null);
 
   const { data: coursesResponse, isLoading: coursesLoading } = useQuery({
     ...getPublishedCoursesOptions({
@@ -1022,6 +1022,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     setApplyModalOpen(true);
   };
 
+  const handleRecommendedApply = (card: CoursesRecommendationCardData) => {
+    setSelectedApplicationCard(card);
+    setApplyModalOpen(true);
+  }
+
   const handleApplyToTrain = (data: {
     notes: string;
     private_online_rate: number;
@@ -1413,7 +1418,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           ) : recommendationCards.length > 0 ? (
             <div className='scrollbar-hidden flex gap-4 overflow-x-auto pb-2'>
               {recommendationCards.map(card => (
-                <CoursesRecommendationCard key={card.id} card={card} />
+                <CoursesRecommendationCard
+                  onApplyToTrain={handleRecommendedApply}
+                  key={card.id} card={card} />
               ))}
             </div>
           ) : null}

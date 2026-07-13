@@ -153,7 +153,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       upload(file, {
         onSuccess: (data: UploadResponse) => {
           const urlKey = `${key}_url` as const;
-          const uploadedUrl = getUploadedUrl(data, urlKey);
+          // @ts-ignore
+          const uploadedUrl = getUploadedUrl(data?.data, urlKey);
 
           if (!uploadedUrl) {
             toast.error('Upload succeeded, but no URL returned.');
@@ -193,7 +194,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
         };
 
         updateCourse.mutate(
-          { body: editBody as UpdateCourseVariables['body'], path: { uuid: editingCourseId } },
+          { body: editBody as UpdateCourseVariables['body'], path: { uuid: editingCourseId as string } },
           {
             onSuccess(data: UpdateCourseResponse) {
               const respObj = data?.data;
@@ -345,7 +346,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                           <div className='flex items-center justify-between'>
                             <span className='text-sm font-medium'>Current promotional video</span>
 
-                            <Button
+                            {/* <Button
                               type='button'
                               variant='outline'
                               size='sm'
@@ -354,7 +355,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               }
                             >
                               Replace
-                            </Button>
+                            </Button> */}
                           </div>
 
                           <video controls className='w-full max-w-md rounded shadow'>
@@ -380,9 +381,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               courseIntroVideoMutation.mutate(
                                 {
                                   body: { intro_video: file.name },
-                                  params: {
-                                    path: { uuid: editingCourseId as string },
-                                  },
+                                  path: { uuid: editingCourseId as string }
                                 },
                                 callbacks
                               ),
@@ -450,7 +449,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                           <div className='flex items-center justify-between'>
                             <span className='text-sm font-medium'>Current banner</span>
 
-                            <Button
+                            {/* <Button
                               type='button'
                               variant='outline'
                               size='sm'
@@ -459,7 +458,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               }
                             >
                               Replace
-                            </Button>
+                            </Button> */}
                           </div>
 
                           <div className='h-24 w-full max-w-3xl overflow-hidden rounded border'>
@@ -490,9 +489,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               courseBannerMutation.mutate(
                                 {
                                   body: { banner: file.name },
-                                  params: {
-                                    path: { uuid: editingCourseId as string },
-                                  },
+                                  path: { uuid: editingCourseId as string }
                                 },
                                 callbacks
                               ),
@@ -553,7 +550,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                           <div className='flex items-center justify-between'>
                             <span className='text-sm font-medium'>Current thumbnail</span>
 
-                            <Button
+                            {/* <Button
                               type='button'
                               variant='outline'
                               size='sm'
@@ -562,7 +559,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               }
                             >
                               Replace
-                            </Button>
+                            </Button> */}
                           </div>
 
                           <div className='h-32 w-48 overflow-hidden rounded border'>
@@ -599,9 +596,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               courseThumbnailMutation.mutate(
                                 {
                                   body: { thumbnail: file.name },
-                                  params: {
-                                    path: { uuid: editingCourseId as string },
-                                  },
+                                  path: { uuid: editingCourseId as string }
+
                                 },
                                 callbacks
                               ),

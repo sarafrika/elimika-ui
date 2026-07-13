@@ -1,3 +1,4 @@
+import type { UserDomain } from '@/lib/types';
 import {
   Award,
   BadgeCheck,
@@ -33,7 +34,6 @@ import {
   Wallet,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
-import type { UserDomain } from '@/lib/types';
 
 export type MenuItem = {
   title: string;
@@ -560,7 +560,7 @@ export default {
       icon: UserIcon,
     },
     {
-      title: 'Opportunities',
+      title: 'Job posts',
       url: '/dashboard/opportunities',
       icon: Handshake,
     },

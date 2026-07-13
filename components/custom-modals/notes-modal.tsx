@@ -135,9 +135,9 @@ export default function NotesModal({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='KES'>KES</SelectItem>
-                    <SelectItem value='USD'>USD</SelectItem>
+                    {/* <SelectItem value='USD'>USD</SelectItem>
                     <SelectItem value='EUR'>EUR</SelectItem>
-                    <SelectItem value='GBP'>GBP</SelectItem>
+                    <SelectItem value='GBP'>GBP</SelectItem> */}
                   </SelectContent>
                 </Select>
               </div>
