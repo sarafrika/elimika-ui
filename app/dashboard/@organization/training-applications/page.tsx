@@ -2,26 +2,25 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
-  BookOpen,
   Building2,
   CheckCircle2,
   Clock,
-  DollarSign,
   FileText,
   Loader2,
   Search,
   ThumbsDown,
   ThumbsUp,
   User,
+  UserRound,
   XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AsyncSection } from '@/components/data/async-section';
-import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -30,7 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
   SheetContent,
@@ -42,18 +40,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useOrganisation } from '@/context/organisation-context';
+import { useCoursesByIds, useInstructorsByIds } from '@/hooks/use-batched-lookups';
+import { formatCurrency } from '@/lib/format-currency';
 import type { CourseTrainingApplication } from '@/services/client';
 import {
   decideOnTrainingApplicationMutation,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { AdminPageHeader, StatCard, StatCardSkeleton } from '../_components/ui';
+import { AdminPageHeader, StatCard, StatCardSkeleton, StatusBadge } from '../_components/ui';
 
-type TrainingApplicationRow = CourseTrainingApplication & {
-  course_name?: string;
-  course_description?: string;
-  applicant_name?: string;
-};
+type ReviewAction = 'APPROVE' | 'REJECT' | 'REVOKE';
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (typeof error === 'object' && error !== null) {
@@ -66,7 +62,30 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+function formatLabel(value?: string | null) {
+  if (!value) return 'Not provided';
+  return value
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/(^|\s)\S/g, letter => letter.toUpperCase());
+}
+
+function formatDate(value?: string | Date | null) {
+  if (!value) return 'Not provided';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Not provided';
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(
+    date
+  );
+}
+
+function shortId(value?: string | null) {
+  if (!value) return 'Unknown';
+  return value.slice(0, 8);
+}
+
 export default function TrainingApplicationsPage() {
+  const router = useRouter();
   const courseCreator = useOptionalCourseCreator();
   const organisation = useOrganisation();
   const [page, setPage] = useState(0);
@@ -76,8 +95,8 @@ export default function TrainingApplicationsPage() {
   const [applicantTypeFilter, setApplicantTypeFilter] = useState<string>('ALL');
   const [reviewDialog, setReviewDialog] = useState<{
     open: boolean;
-    application: TrainingApplicationRow | null;
-    action: 'APPROVE' | 'REJECT' | 'REVOKE' | null;
+    application: CourseTrainingApplication | null;
+    action: ReviewAction | null;
   }>({
     open: false,
     application: null,
@@ -85,7 +104,6 @@ export default function TrainingApplicationsPage() {
   });
   const [reviewNotes, setReviewNotes] = useState('');
 
-  // Fetch applications for this course creator's courses
   const { data, isLoading, isError, error, refetch } = useQuery({
     ...searchTrainingApplicationsOptions({
       query: {
@@ -105,17 +123,47 @@ export default function TrainingApplicationsPage() {
 
   const decideMutation = useMutation(decideOnTrainingApplicationMutation());
 
-  const applications: TrainingApplicationRow[] = data?.data?.content ?? [];
+  const applications: CourseTrainingApplication[] = data?.data?.content ?? [];
   const totalApplications = Number(data?.data?.metadata?.totalElements ?? 0);
   const totalPages = Math.ceil(totalApplications / pageSize);
+
+  const courseIds = useMemo(
+    () => [...new Set(applications.map(app => app.course_uuid ?? '').filter(Boolean))],
+    [applications]
+  );
+  const instructorIds = useMemo(
+    () =>
+      applications
+        .filter(app => app.applicant_type === 'instructor')
+        .map(app => app.applicant_uuid ?? '')
+        .filter(Boolean),
+    [applications]
+  );
+  const { courseMap } = useCoursesByIds(courseIds);
+  const { instructorMap, isLoading: isInstructorsLoading } = useInstructorsByIds(instructorIds);
+
+  const getCourseName = (application: CourseTrainingApplication) =>
+    (application.course_uuid ? courseMap[application.course_uuid]?.name : undefined) ??
+    `Course ${shortId(application.course_uuid)}`;
+
+  const getApplicantName = (application: CourseTrainingApplication) => {
+    if (application.applicant_type === 'instructor') {
+      return (
+        (application.applicant_uuid
+          ? instructorMap[application.applicant_uuid]?.full_name
+          : undefined) ?? `Instructor ${shortId(application.applicant_uuid)}`
+      );
+    }
+    return `Organisation ${shortId(application.applicant_uuid)}`;
+  };
 
   // Filter by search query (client-side)
   const filteredApplications = applications.filter(app => {
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
     return (
-      app.course_name?.toLowerCase().includes(searchLower) ||
-      app.applicant_name?.toLowerCase().includes(searchLower) ||
+      getCourseName(app).toLowerCase().includes(searchLower) ||
+      getApplicantName(app).toLowerCase().includes(searchLower) ||
       app.application_notes?.toLowerCase().includes(searchLower)
     );
   });
@@ -133,7 +181,7 @@ export default function TrainingApplicationsPage() {
     ).size,
   };
 
-  const handleReview = (application: TrainingApplicationRow, action: 'APPROVE' | 'REJECT' | 'REVOKE') => {
+  const handleReview = (application: CourseTrainingApplication, action: ReviewAction) => {
     setReviewDialog({ open: true, application, action });
     setReviewNotes('');
   };
@@ -165,39 +213,6 @@ export default function TrainingApplicationsPage() {
       refetch();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Failed to process application'));
-    }
-  };
-
-  const getStatusConfig = (status?: string | null) => {
-    switch (status?.toLowerCase()) {
-      case 'pending':
-        return {
-          label: 'Pending Review',
-          variant: 'secondary' as const,
-          icon: Clock,
-          color: 'text-warning',
-        };
-      case 'approved':
-        return {
-          label: 'Approved',
-          variant: 'default' as const,
-          icon: CheckCircle2,
-          color: 'text-success',
-        };
-      case 'rejected':
-        return {
-          label: 'Rejected',
-          variant: 'destructive' as const,
-          icon: XCircle,
-          color: 'text-destructive',
-        };
-      default:
-        return {
-          label: status ?? 'Unknown',
-          variant: 'outline' as const,
-          icon: FileText,
-          color: 'text-muted-foreground',
-        };
     }
   };
 
@@ -272,19 +287,9 @@ export default function TrainingApplicationsPage() {
         empty={filteredApplications.length === 0}
         onRetry={refetch}
         skeleton={
-          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i} className='flex flex-col'>
-                <CardHeader className='space-y-2 pb-3'>
-                  <Skeleton className='h-4 w-3/4' />
-                  <Skeleton className='h-3 w-1/2' />
-                </CardHeader>
-                <CardContent className='space-y-2'>
-                  <Skeleton className='h-3 w-full' />
-                  <Skeleton className='h-3 w-5/6' />
-                  <Skeleton className='mt-3 h-9 w-full' />
-                </CardContent>
-              </Card>
+          <div className='space-y-3'>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className='h-52 rounded-md' />
             ))}
           </div>
         }
@@ -294,7 +299,7 @@ export default function TrainingApplicationsPage() {
               <FileText className='text-muted-foreground mb-4 h-12 w-12' />
               <h3 className='mb-2 text-lg font-semibold'>No Applications Found</h3>
               <p className='text-muted-foreground text-center text-sm'>
-                {statusFilter || searchQuery || applicantTypeFilter
+                {statusFilter !== 'ALL' || searchQuery || applicantTypeFilter !== 'ALL'
                   ? 'Try adjusting your filters or search query'
                   : 'No training applications have been submitted yet'}
               </p>
@@ -303,165 +308,174 @@ export default function TrainingApplicationsPage() {
         }
       >
         <>
-          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+          <div className='space-y-3'>
             {filteredApplications.map(application => {
-              const statusConfig = getStatusConfig(application.status);
-              const StatusIcon = statusConfig.icon;
               const isInstructor = application.applicant_type === 'instructor';
+              const instructor =
+                isInstructor && application.applicant_uuid
+                  ? instructorMap[application.applicant_uuid]
+                  : null;
+              const applicantName = getApplicantName(application);
+              const courseName = getCourseName(application);
+              const initials =
+                applicantName
+                  .split(/\s+/)
+                  .map(part => part[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase() || '?';
+              const isVerified = instructor?.admin_verified;
+              const rateCard = application.rate_card;
 
               return (
-                <Card key={application.uuid} className='flex flex-col'>
-                  <CardHeader className='pb-3'>
-                    <div className='flex items-start justify-between gap-2'>
-                      <div className='flex-1 space-y-1'>
-                        <CardTitle className='line-clamp-1 text-base'>
-                          {application.course_name || 'Unknown Course'}
-                        </CardTitle>
-                        <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-                          {isInstructor ? (
-                            <User className='h-3 w-3' />
-                          ) : (
-                            <Building2 className='h-3 w-3' />
-                          )}
-                          <span className='truncate'>
-                            {application.applicant_name || 'Unknown Applicant'}
-                          </span>
+                <div
+                  key={application.uuid}
+                  className='rounded-md border border-border/70 bg-card p-5 shadow-sm'
+                >
+                  <div className='flex flex-wrap items-start justify-between gap-3'>
+                    <div className='flex items-start gap-3'>
+                      <div className='flex size-11 items-center justify-center rounded-md border border-primary/30 bg-primary/10 font-semibold text-primary'>
+                        {isInstructor ? initials : <Building2 className='size-5' />}
+                      </div>
+                      <div className='space-y-1'>
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <h3 className='text-base font-semibold tracking-tight'>
+                            {applicantName}
+                          </h3>
+                          {isInstructor && isVerified ? (
+                            <StatusBadge status='verified' label='Verified' />
+                          ) : isInstructor && isVerified === false ? (
+                            <StatusBadge status='pending' label='Unverified' />
+                          ) : null}
+                          <Badge variant='outline' className='rounded-md'>
+                            {isInstructor ? 'Instructor' : 'Organisation'}
+                          </Badge>
+                        </div>
+                        <div className='flex flex-col gap-1 text-sm text-muted-foreground'>
+                          <span>Applying to train: {courseName}</span>
+                          {isInstructor && instructor?.professional_headline ? (
+                            <span>{instructor.professional_headline}</span>
+                          ) : null}
+                          {isInstructor && !instructor && isInstructorsLoading ? (
+                            <span>Loading instructor profile...</span>
+                          ) : null}
                         </div>
                       </div>
-                      <Badge variant={statusConfig.variant} className='shrink-0'>
-                        <StatusIcon className='mr-1 h-3 w-3' />
-                        {statusConfig.label}
+                    </div>
+                    <StatusBadge
+                      status={application.status}
+                      label={formatLabel(application.status)}
+                    />
+                  </div>
+
+                  {rateCard ? (
+                    <div className='mt-3 flex flex-wrap items-center gap-2 text-sm'>
+                      <Badge variant='outline' className='rounded-md'>
+                        Private online: {formatCurrency(rateCard.private_online_rate, rateCard.currency || 'KES')}
+                      </Badge>
+                      <Badge variant='outline' className='rounded-md'>
+                        Private in-person: {formatCurrency(rateCard.private_inperson_rate, rateCard.currency || 'KES')}
+                      </Badge>
+                      <Badge variant='outline' className='rounded-md'>
+                        Group online: {formatCurrency(rateCard.group_online_rate, rateCard.currency || 'KES')}
+                      </Badge>
+                      <Badge variant='outline' className='rounded-md'>
+                        Group in-person: {formatCurrency(rateCard.group_inperson_rate, rateCard.currency || 'KES')}
                       </Badge>
                     </div>
-                  </CardHeader>
-                  <CardContent className='flex flex-1 flex-col gap-4'>
-                    {/* Course Description */}
-                    {application.course_description && (
-                      <div className='text-muted-foreground text-sm'>
-                        <RichTextRenderer
-                          htmlString={application.course_description}
-                          maxChars={80}
-                        />
-                      </div>
-                    )}
+                  ) : null}
 
-                    <Separator />
+                  <div className='mt-3 grid gap-3 sm:grid-cols-2'>
+                    <div className='rounded-md border border-border/60 bg-muted/20 p-3'>
+                      <div className='text-xs uppercase tracking-wide text-muted-foreground'>
+                        Application note
+                      </div>
+                      <p className='mt-1 text-sm leading-6 text-foreground'>
+                        {application.application_notes || 'No application note provided.'}
+                      </p>
+                    </div>
+                    <div className='rounded-md border border-border/60 bg-muted/20 p-3'>
+                      <div className='text-xs uppercase tracking-wide text-muted-foreground'>
+                        Review notes
+                      </div>
+                      <p className='mt-1 text-sm leading-6 text-foreground'>
+                        {application.review_notes || 'No review notes yet.'}
+                      </p>
+                    </div>
+                  </div>
 
-                    {/* Rate Card */}
-                    <div className='space-y-2'>
-                      <div className='flex items-center gap-2 text-sm font-semibold'>
-                        <DollarSign className='text-muted-foreground h-4 w-4' />
-                        <span>Rate Card</span>
-                      </div>
-                      <div className='grid grid-cols-2 gap-2 text-xs'>
-                        <div className='bg-muted/20 rounded-lg border p-2'>
-                          <div className='text-muted-foreground'>Private Online</div>
-                          <div className='font-semibold'>
-                            {application.rate_card?.currency || 'USD'}{' '}
-                            {application.rate_card?.private_online_rate || 0}
-                          </div>
-                        </div>
-                        <div className='bg-muted/20 rounded-lg border p-2'>
-                          <div className='text-muted-foreground'>Private In-Person</div>
-                          <div className='font-semibold'>
-                            {application.rate_card?.currency || 'USD'}{' '}
-                            {application.rate_card?.private_inperson_rate || 0}
-                          </div>
-                        </div>
-                        <div className='bg-muted/20 rounded-lg border p-2'>
-                          <div className='text-muted-foreground'>Group Online</div>
-                          <div className='font-semibold'>
-                            {application.rate_card?.currency || 'USD'}{' '}
-                            {application.rate_card?.group_online_rate || 0}
-                          </div>
-                        </div>
-                        <div className='bg-muted/20 rounded-lg border p-2'>
-                          <div className='text-muted-foreground'>Group In-Person</div>
-                          <div className='font-semibold'>
-                            {application.rate_card?.currency || 'USD'}{' '}
-                            {application.rate_card?.group_inperson_rate || 0}
-                          </div>
-                        </div>
-                      </div>
+                  <div className='mt-4 flex flex-wrap items-center gap-2'>
+                    <div className='flex flex-wrap gap-2'>
+                      <Badge variant='outline' className='rounded-md'>
+                        Applied {formatDate(application.created_date)}
+                      </Badge>
+                      {application.reviewed_at ? (
+                        <Badge variant='outline' className='rounded-md'>
+                          Reviewed {formatDate(application.reviewed_at)}
+                        </Badge>
+                      ) : null}
                     </div>
 
-                    {/* Application Notes */}
-                    {application.application_notes && (
-                      <>
-                        <Separator />
-                        <div className='space-y-1'>
-                          <div className='flex items-center gap-2 text-sm font-semibold'>
-                            <BookOpen className='text-muted-foreground h-4 w-4' />
-                            <span>Application Notes</span>
-                          </div>
-                          <p className='text-muted-foreground line-clamp-3 text-sm'>
-                            {application.application_notes}
-                          </p>
-                        </div>
-                      </>
-                    )}
-
-                    {/* Review Notes (if reviewed) */}
-                    {application.review_notes && (
-                      <>
-                        <Separator />
-                        <div className='bg-primary/5 rounded-lg border p-3'>
-                          <div className='text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase'>
-                            Review Notes
-                          </div>
-                          <p className='text-sm'>{application.review_notes}</p>
-                        </div>
-                      </>
-                    )}
-
-                    {/* Actions */}
-                    <div className='mt-auto flex gap-2 pt-2'>
-                      {application.status === 'pending' && (
+                    <div className='ml-auto flex flex-wrap gap-2'>
+                      {isInstructor && application.uuid ? (
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={() =>
+                            router.push(`/dashboard/training-applications/${application.uuid}`)
+                          }
+                        >
+                          <UserRound className='mr-2 size-4' />
+                          View profile
+                        </Button>
+                      ) : null}
+                      {application.status === 'pending' ? (
                         <>
                           <Button
+                            variant='outline'
                             size='sm'
-                            className='flex-1'
                             onClick={() => handleReview(application, 'APPROVE')}
+                            disabled={decideMutation.isPending}
                           >
-                            <ThumbsUp className='mr-1 h-3 w-3' />
+                            <ThumbsUp className='mr-2 size-4' />
                             Approve
                           </Button>
                           <Button
-                            size='sm'
                             variant='destructive'
-                            className='flex-1'
+                            size='sm'
                             onClick={() => handleReview(application, 'REJECT')}
+                            disabled={decideMutation.isPending}
                           >
-                            <ThumbsDown className='mr-1 h-3 w-3' />
+                            <ThumbsDown className='mr-2 size-4' />
                             Reject
                           </Button>
                         </>
-                      )}
-                      {application.status === 'approved' && (
+                      ) : null}
+                      {application.status === 'approved' ? (
                         <Button
-                          size='sm'
                           variant='outline'
-                          className='flex-1'
+                          size='sm'
                           onClick={() => handleReview(application, 'REVOKE')}
+                          disabled={decideMutation.isPending}
                         >
-                          <XCircle className='mr-1 h-3 w-3' />
-                          Revoke Approval
+                          <XCircle className='mr-2 size-4' />
+                          Revoke approval
                         </Button>
-                      )}
-                      {application.status === 'rejected' && (
+                      ) : null}
+                      {application.status === 'rejected' ? (
                         <Button
-                          size='sm'
                           variant='outline'
-                          className='flex-1'
+                          size='sm'
                           onClick={() => handleReview(application, 'APPROVE')}
+                          disabled={decideMutation.isPending}
                         >
-                          <CheckCircle2 className='mr-1 h-3 w-3' />
+                          <CheckCircle2 className='mr-2 size-4' />
                           Reconsider
                         </Button>
-                      )}
+                      ) : null}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -534,11 +548,15 @@ export default function TrainingApplicationsPage() {
                 <div className='space-y-2 text-sm'>
                   <div>
                     <span className='text-muted-foreground'>Course:</span>
-                    <p className='font-medium'>{reviewDialog.application?.course_name}</p>
+                    <p className='font-medium'>
+                      {reviewDialog.application ? getCourseName(reviewDialog.application) : ''}
+                    </p>
                   </div>
                   <div>
                     <span className='text-muted-foreground'>Applicant:</span>
-                    <p className='font-medium'>{reviewDialog.application?.applicant_name}</p>
+                    <p className='font-medium'>
+                      {reviewDialog.application ? getApplicantName(reviewDialog.application) : ''}
+                    </p>
                   </div>
                 </div>
               </div>
