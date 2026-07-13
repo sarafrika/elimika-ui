@@ -479,6 +479,7 @@ import {
   getClassDefinitionsForOrganisation,
   getInstructorPayablesForOrganisation,
   getClassMedia,
+  getJobEligibility,
   listMyApplications,
   listInstructorApplications,
   getClassDefinitionsForInstructor,
@@ -1728,6 +1729,7 @@ import type {
   GetClassDefinitionsForOrganisationData,
   GetInstructorPayablesForOrganisationData,
   GetClassMediaData,
+  GetJobEligibilityData,
   ListMyApplicationsData,
   ListMyApplicationsError,
   ListMyApplicationsResponse,
@@ -23045,6 +23047,27 @@ export const getClassMediaOptions = (options: Options<GetClassMediaData>) => {
       return data;
     },
     queryKey: getClassMediaQueryKey(options),
+  });
+};
+
+export const getJobEligibilityQueryKey = (options: Options<GetJobEligibilityData>) =>
+  createQueryKey('getJobEligibility', options);
+
+/**
+ * Check current instructor's eligibility for a marketplace class job
+ */
+export const getJobEligibilityOptions = (options: Options<GetJobEligibilityData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getJobEligibility({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getJobEligibilityQueryKey(options),
   });
 };
 

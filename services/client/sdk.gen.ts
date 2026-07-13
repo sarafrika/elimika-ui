@@ -1435,6 +1435,9 @@ import type {
   GetClassMediaData,
   GetClassMediaResponses,
   GetClassMediaErrors,
+  GetJobEligibilityData,
+  GetJobEligibilityResponses,
+  GetJobEligibilityErrors,
   ListMyApplicationsData,
   ListMyApplicationsResponses,
   ListMyApplicationsErrors,
@@ -16239,6 +16242,32 @@ export const getClassMedia = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/media/{filePath}',
+    ...options,
+  });
+};
+
+/**
+ * Check current instructor's eligibility for a marketplace class job
+ */
+export const getJobEligibility = <ThrowOnError extends boolean = false>(
+  options: Options<GetJobEligibilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetJobEligibilityResponses,
+    GetJobEligibilityErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/eligibility',
     ...options,
   });
 };
