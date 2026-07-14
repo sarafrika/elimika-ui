@@ -539,11 +539,11 @@ export default {
       url: '/dashboard/courses',
       icon: BookOpen,
     },
-    {
-      title: 'Course Management',
-      url: '/dashboard/course-management',
-      icon: LibraryIcon,
-    },
+    // {
+    //   title: 'Course Management',
+    //   url: '/dashboard/course-management',
+    //   icon: LibraryIcon,
+    // },
     {
       title: 'Revenue',
       url: '/dashboard/revenue',
