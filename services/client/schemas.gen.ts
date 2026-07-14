@@ -947,17 +947,17 @@ export const RubricScoringLevelSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    css_color_class: {
-      type: 'string',
-      description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
-      example: 'level-green',
-      readOnly: true,
-    },
     performance_indicator: {
       type: 'string',
       description:
         '**[READ-ONLY]** Performance classification based on level order and passing status.',
       example: 'Exceeds Expectations',
+      readOnly: true,
+    },
+    css_color_class: {
+      type: 'string',
+      description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
+      example: 'level-green',
       readOnly: true,
     },
     is_highest_level: {
@@ -2391,6 +2391,13 @@ export const ProgramRequirementSchema = {
       example: false,
       readOnly: true,
     },
+    requirement_category: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.',
+      example: 'Mandatory Student Requirement',
+      readOnly: true,
+    },
     requirement_priority: {
       type: 'string',
       description:
@@ -2410,13 +2417,6 @@ export const ProgramRequirementSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.',
       example: 'Student requirement with mandatory compliance',
-      readOnly: true,
-    },
-    requirement_category: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.',
-      example: 'Mandatory Student Requirement',
       readOnly: true,
     },
   },
@@ -2530,13 +2530,6 @@ export const ProgramCourseSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    sequence_display: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Formatted display of the course position within the program sequence.',
-      example: 'Course 3 of Program',
-      readOnly: true,
-    },
     association_category: {
       type: 'string',
       description:
@@ -2550,17 +2543,24 @@ export const ProgramCourseSchema = {
       example: true,
       readOnly: true,
     },
-    curriculum_summary: {
+    sequence_display: {
       type: 'string',
       description:
-        "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.",
-      example: 'Required course with prerequisites in sequence position 3',
+        '**[READ-ONLY]** Formatted display of the course position within the program sequence.',
+      example: 'Course 3 of Program',
       readOnly: true,
     },
     requirement_status: {
       type: 'string',
       description: '**[READ-ONLY]** Requirement status of the course within the program.',
       example: 'Mandatory Course',
+      readOnly: true,
+    },
+    curriculum_summary: {
+      type: 'string',
+      description:
+        "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.",
+      example: 'Required course with prerequisites in sequence position 3',
       readOnly: true,
     },
   },
@@ -2730,6 +2730,182 @@ export const SetOrganisationUserDomainRequestSchema = {
     },
   },
   required: ['domain_name'],
+} as const;
+
+export const OrganisationResourceSchema = {
+  type: 'object',
+  description:
+    'Bookable resource registered by an organisation: a venue (classroom, lab) or an equipment pool',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier of the resource',
+      readOnly: true,
+    },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Training branch the resource belongs to',
+    },
+    resource_type: {
+      $ref: '#/components/schemas/ResourceTypeEnum',
+    },
+    name: {
+      type: 'string',
+      description: 'Resource name, unique per organisation',
+      example: 'Physics Lab B',
+      minLength: 1,
+    },
+    description: {
+      type: ['string', 'null'],
+      description: 'Free-form description',
+    },
+    seat_capacity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Seat capacity (VENUE only)',
+      example: 30,
+    },
+    total_quantity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Total available units (EQUIPMENT_POOL only)',
+      example: 25,
+    },
+    location_name: {
+      type: ['string', 'null'],
+      description: 'Human readable location',
+    },
+    location_latitude: {
+      type: ['number', 'null'],
+      description: 'Latitude of the resource location',
+    },
+    location_longitude: {
+      type: ['number', 'null'],
+      description: 'Longitude of the resource location',
+    },
+    is_active: {
+      type: 'boolean',
+      description: 'Whether the resource can currently be booked',
+      example: true,
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Organisation owning the resource (taken from the request path)',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Creation timestamp',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Last update timestamp',
+      readOnly: true,
+    },
+  },
+  required: ['name', 'resource_type'],
+} as const;
+
+export const ApiResponseOrganisationResourceSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/OrganisationResource',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ResourceAvailabilityRuleSchema = {
+  type: 'object',
+  description: `Calendar rule for a resource. Recurring rules use start_time/end_time (with optional
+days_of_week and effective dates); one-off BLACKOUT rules use specific_start/specific_end.
+A resource with no OPEN_HOURS rules is open at all times.`,
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier of the rule',
+      readOnly: true,
+    },
+    rule_type: {
+      $ref: '#/components/schemas/RuleTypeEnum',
+    },
+    days_of_week: {
+      type: ['string', 'null'],
+      description: 'Comma separated day names the recurring rule applies to; empty = every day',
+      example: 'MONDAY,WEDNESDAY,FRIDAY',
+    },
+    start_time: {
+      type: ['string', 'null'],
+      description: 'Daily window start (recurring rules)',
+      example: '08:00:00',
+    },
+    end_time: {
+      type: ['string', 'null'],
+      description: 'Daily window end (recurring rules)',
+      example: '18:00:00',
+    },
+    specific_start: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'One-off window start (BLACKOUT only)',
+    },
+    specific_end: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'One-off window end (BLACKOUT only)',
+    },
+    effective_start_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: 'First date the recurring rule applies; null = unbounded',
+    },
+    effective_end_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: 'Last date the recurring rule applies (inclusive); null = unbounded',
+    },
+    notes: {
+      type: ['string', 'null'],
+      description: "Free-form notes (e.g. 'Public holiday')",
+    },
+    resource_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Resource the rule belongs to (taken from the request path)',
+      readOnly: true,
+    },
+  },
+  required: ['rule_type'],
+} as const;
+
+export const ApiResponseResourceAvailabilityRuleSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ResourceAvailabilityRule',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
 export const InstructorSchema = {
@@ -5457,18 +5633,6 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -5486,6 +5650,18 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
+      readOnly: true,
+    },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -7581,6 +7757,12 @@ export const ClassDefinitionSchema = {
         '**[OPTIONAL]** Whether this class definition is currently active and available for scheduling.',
       example: true,
     },
+    venue_resource_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Organisation venue resource the class sessions are booked into. Null for classes without a managed venue.',
+    },
     session_templates: {
       type: 'array',
       description: `**[READ-ONLY]** Persisted session templates originally used to generate scheduled class instances.
@@ -7645,6 +7827,13 @@ conflict_resolution per template:
       description:
         '**[READ-ONLY]** Email or username of the user who last modified this class definition.',
       example: 'admin@sarafrika.com',
+      readOnly: true,
+    },
+    marketplace_job_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** Marketplace job this class was created from at instructor assignment. Null for directly created classes.',
       readOnly: true,
     },
     duration_minutes: {
@@ -7930,6 +8119,14 @@ export const ClassMarketplaceJobRequestSchema = {
       maxItems: 2147483647,
       minItems: 1,
     },
+    resources: {
+      type: ['array', 'null'],
+      description:
+        '**[OPTIONAL]** Organisation resources (venue, equipment pools) to reserve for every session while recruitment runs. At most one venue; posting fails with a per-occurrence conflict report if any resource is unavailable.',
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobResource',
+      },
+    },
   },
   required: [
     'class_visibility',
@@ -7941,6 +8138,27 @@ export const ClassMarketplaceJobRequestSchema = {
     'session_templates',
     'title',
   ],
+} as const;
+
+export const ClassMarketplaceJobResourceSchema = {
+  type: 'object',
+  description:
+    'Organisation resource a marketplace job reserves for its sessions while recruitment runs (venue booked exclusively, equipment pools by quantity)',
+  properties: {
+    resource_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Organisation resource to reserve.',
+    },
+    quantity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Units to reserve per session (must be 1 for venues; defaults to 1).',
+      example: 1,
+      minimum: 1,
+    },
+  },
+  required: ['resource_uuid'],
 } as const;
 
 export const ApiResponseClassMarketplaceJobSchema = {
@@ -7979,6 +8197,13 @@ export const ClassMarketplaceJobSchema = {
     },
     status: {
       $ref: '#/components/schemas/StatusEnum7',
+    },
+    resources: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobResource',
+      },
+      readOnly: true,
     },
     organisation_uuid: {
       type: 'string',
@@ -14741,6 +14966,231 @@ export const OrganisationDashboardStatsSchema = {
   },
 } as const;
 
+export const ApiResponsePagedDTOOrganisationResourceSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOOrganisationResource',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOOrganisationResourceSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OrganisationResource',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListResourceCalendarEntrySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ResourceCalendarEntry',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ResourceCalendarEntrySchema = {
+  type: 'object',
+  description:
+    "One entry in a resource's merged calendar view: an expanded open-hours window, a blackout, a recruitment hold or a confirmed booking",
+  properties: {
+    entry_type: {
+      $ref: '#/components/schemas/EntryTypeEnum',
+    },
+    start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Entry window start (UTC)',
+    },
+    end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Entry window end (UTC)',
+    },
+    rule_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Availability rule the entry was expanded from, when applicable',
+    },
+    booking_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Booking behind the entry, when applicable',
+    },
+    job_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Marketplace job holding the slot, when applicable',
+    },
+    class_definition_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Class definition occupying the slot, when applicable',
+    },
+    quantity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Units reserved, for equipment pool bookings',
+    },
+    notes: {
+      type: ['string', 'null'],
+      description: 'Rule notes or booking release reason, when applicable',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOResourceBookingSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOResourceBooking',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOResourceBookingSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ResourceBooking',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ResourceBookingSchema = {
+  type: 'object',
+  description: 'Time-slot reservation of an organisation resource',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier of the booking',
+      readOnly: true,
+    },
+    resource_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Resource booked',
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Organisation owning the resource',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum18',
+    },
+    quantity: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Units reserved (1 for venues)',
+      example: 1,
+    },
+    start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Reservation window start (UTC)',
+    },
+    end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Reservation window end (UTC)',
+    },
+    source_type: {
+      $ref: '#/components/schemas/SourceTypeEnum',
+    },
+    job_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Marketplace job holding the reservation, when applicable',
+    },
+    class_definition_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Class definition backing the reservation, when applicable',
+    },
+    scheduled_instance_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Scheduled instance backing the reservation, when applicable',
+    },
+    released_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'When the booking was released, when applicable',
+    },
+    release_reason: {
+      type: ['string', 'null'],
+      description: 'Why the booking was released, when applicable',
+    },
+  },
+} as const;
+
+export const ApiResponseListResourceAvailabilityRuleSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ResourceAvailabilityRule',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponsePagedDTONotificationDTOSchema = {
   type: 'object',
   properties: {
@@ -15094,7 +15544,7 @@ export const InstructorCalendarEntrySchema = {
         'Unique identifier for the entry (slot UUID or scheduled instance UUID where applicable)',
     },
     entry_type: {
-      $ref: '#/components/schemas/EntryTypeEnum',
+      $ref: '#/components/schemas/EntryTypeEnum2',
     },
     start_time: {
       type: 'string',
@@ -17414,6 +17864,21 @@ export const ClassMarketplaceJobEligibilitySchema = {
       description: 'Whether the instructor already has an application for this job',
       readOnly: true,
     },
+    schedule_clear: {
+      type: 'boolean',
+      description:
+        "Whether the instructor's existing schedule is free for every session of this job",
+      readOnly: true,
+    },
+    schedule_conflicts: {
+      type: ['array', 'null'],
+      description:
+        "Job session occurrences that clash with the instructor's existing schedule, with reasons",
+      items: {
+        $ref: '#/components/schemas/ClassSchedulingConflict',
+      },
+      readOnly: true,
+    },
   },
 } as const;
 
@@ -18628,6 +19093,20 @@ export const DomainNameEnumSchema = {
   minLength: 1,
 } as const;
 
+export const ResourceTypeEnumSchema = {
+  type: 'string',
+  description: 'Resource kind',
+  enum: ['VENUE', 'EQUIPMENT_POOL'],
+  example: 'VENUE',
+} as const;
+
+export const RuleTypeEnumSchema = {
+  type: 'string',
+  description: 'Rule kind',
+  enum: ['OPEN_HOURS', 'BLACKOUT'],
+  example: 'OPEN_HOURS',
+} as const;
+
 export const ProficiencyLevelEnumSchema = {
   type: 'string',
   description:
@@ -18815,7 +19294,7 @@ export const ConflictResolutionEnumSchema = {
 
 export const StatusEnum7Schema = {
   type: 'string',
-  enum: ['open', 'filled', 'cancelled'],
+  enum: ['open', 'filled', 'cancelled', 'expired'],
   readOnly: true,
 } as const;
 
@@ -18873,6 +19352,7 @@ export const TypeEnumSchema = {
     'PROGRAM_TRAINING_APPLICATION_REVOKED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
+    'CLASS_MARKETPLACE_JOB_EXPIRED',
     'CLASS_ENROLLMENT_CONFIRMED',
     'COURSE_ENROLLMENT_MILESTONE',
     'COURSE_ENROLLMENT_NOTICE',
@@ -19056,6 +19536,27 @@ export const StatusEnum17Schema = {
 } as const;
 
 export const EntryTypeEnumSchema = {
+  type: 'string',
+  description: 'Entry kind',
+  enum: ['OPEN_HOURS', 'BLACKOUT', 'HOLD', 'CONFIRMED'],
+  example: 'HOLD',
+} as const;
+
+export const StatusEnum18Schema = {
+  type: 'string',
+  description: 'Booking lifecycle state',
+  enum: ['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'],
+  example: 'HOLD',
+} as const;
+
+export const SourceTypeEnumSchema = {
+  type: 'string',
+  description: 'What created the booking',
+  enum: ['MARKETPLACE_JOB', 'CLASS_DEFINITION', 'MANUAL'],
+  example: 'MARKETPLACE_JOB',
+} as const;
+
+export const EntryTypeEnum2Schema = {
   type: 'string',
   description: 'Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE',
   enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'],
@@ -19275,6 +19776,20 @@ export const DomainNameEnumWritableSchema = {
   minLength: 1,
 } as const;
 
+export const ResourceTypeEnumWritableSchema = {
+  type: 'string',
+  description: 'Resource kind',
+  enum: ['VENUE', 'EQUIPMENT_POOL'],
+  example: 'VENUE',
+} as const;
+
+export const RuleTypeEnumWritableSchema = {
+  type: 'string',
+  description: 'Rule kind',
+  enum: ['OPEN_HOURS', 'BLACKOUT'],
+  example: 'OPEN_HOURS',
+} as const;
+
 export const ProficiencyLevelEnumWritableSchema = {
   type: 'string',
   description:
@@ -19433,6 +19948,7 @@ export const TypeEnumWritableSchema = {
     'PROGRAM_TRAINING_APPLICATION_REVOKED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
+    'CLASS_MARKETPLACE_JOB_EXPIRED',
     'CLASS_ENROLLMENT_CONFIRMED',
     'COURSE_ENROLLMENT_MILESTONE',
     'COURSE_ENROLLMENT_NOTICE',
@@ -19586,6 +20102,27 @@ export const StatusEnum17WritableSchema = {
 } as const;
 
 export const EntryTypeEnumWritableSchema = {
+  type: 'string',
+  description: 'Entry kind',
+  enum: ['OPEN_HOURS', 'BLACKOUT', 'HOLD', 'CONFIRMED'],
+  example: 'HOLD',
+} as const;
+
+export const StatusEnum18WritableSchema = {
+  type: 'string',
+  description: 'Booking lifecycle state',
+  enum: ['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'],
+  example: 'HOLD',
+} as const;
+
+export const SourceTypeEnumWritableSchema = {
+  type: 'string',
+  description: 'What created the booking',
+  enum: ['MARKETPLACE_JOB', 'CLASS_DEFINITION', 'MANUAL'],
+  example: 'MARKETPLACE_JOB',
+} as const;
+
+export const EntryTypeEnum2WritableSchema = {
   type: 'string',
   description: 'Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE',
   enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'],

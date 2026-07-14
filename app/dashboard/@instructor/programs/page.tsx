@@ -152,6 +152,8 @@ export default function ClassesPage() {
     description: selectedProgram?.description || '',
     categories: selectedProgram?.category_uuid || '',
     ...selectedProgram,
+    class_limit: selectedProgram?.class_limit ?? undefined,
+    price: selectedProgram?.price ?? undefined,
   };
 
   return (

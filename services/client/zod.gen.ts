@@ -645,16 +645,16 @@ export const zRubricScoringLevel = z
       )
       .readonly()
       .optional(),
-    css_color_class: z
-      .string()
-      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
-      .readonly()
-      .optional(),
     performance_indicator: z
       .string()
       .describe(
         '**[READ-ONLY]** Performance classification based on level order and passing status.'
       )
+      .readonly()
+      .optional(),
+    css_color_class: z
+      .string()
+      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
       .readonly()
       .optional(),
     is_highest_level: z
@@ -1604,6 +1604,13 @@ export const zProgramRequirement = z
       .describe('**[READ-ONLY]** Indicates if the requirement is optional (not mandatory).')
       .readonly()
       .optional(),
+    requirement_category: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.'
+      )
+      .readonly()
+      .optional(),
     requirement_priority: z
       .string()
       .describe(
@@ -1622,13 +1629,6 @@ export const zProgramRequirement = z
       .string()
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.'
-      )
-      .readonly()
-      .optional(),
-    requirement_category: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.'
       )
       .readonly()
       .optional(),
@@ -1704,13 +1704,6 @@ export const zProgramCourse = z
       )
       .readonly()
       .optional(),
-    sequence_display: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Formatted display of the course position within the program sequence.'
-      )
-      .readonly()
-      .optional(),
     association_category: z
       .string()
       .describe(
@@ -1723,16 +1716,23 @@ export const zProgramCourse = z
       .describe('**[READ-ONLY]** Indicates if this course has prerequisite requirements.')
       .readonly()
       .optional(),
-    curriculum_summary: z
+    sequence_display: z
       .string()
       .describe(
-        "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum."
+        '**[READ-ONLY]** Formatted display of the course position within the program sequence.'
       )
       .readonly()
       .optional(),
     requirement_status: z
       .string()
       .describe('**[READ-ONLY]** Requirement status of the course within the program.')
+      .readonly()
+      .optional(),
+    curriculum_summary: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum."
+      )
       .readonly()
       .optional(),
   })
@@ -1836,6 +1836,107 @@ export const zSetOrganisationUserDomainRequest = z
     branch_uuid: z.union([z.string().uuid(), z.null()]).optional(),
   })
   .describe("Sets/replaces an organisation member's org-scoped domain (role).");
+
+/**
+ * Resource kind
+ */
+export const zResourceTypeEnum = z.enum(['VENUE', 'EQUIPMENT_POOL']).describe('Resource kind');
+
+/**
+ * Bookable resource registered by an organisation: a venue (classroom, lab) or an equipment pool
+ */
+export const zOrganisationResource = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier of the resource')
+      .readonly()
+      .optional(),
+    branch_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    resource_type: zResourceTypeEnum,
+    name: z.string().min(1).describe('Resource name, unique per organisation'),
+    description: z.union([z.string(), z.null()]).optional(),
+    seat_capacity: z.union([z.number().int(), z.null()]).optional(),
+    total_quantity: z.union([z.number().int(), z.null()]).optional(),
+    location_name: z.union([z.string(), z.null()]).optional(),
+    location_latitude: z.union([z.number(), z.null()]).optional(),
+    location_longitude: z.union([z.number(), z.null()]).optional(),
+    is_active: z.boolean().describe('Whether the resource can currently be booked').optional(),
+    organisation_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Organisation owning the resource (taken from the request path)')
+      .readonly()
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Creation timestamp')
+      .readonly()
+      .optional(),
+    updated_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Last update timestamp')
+      .readonly()
+      .optional(),
+  })
+  .describe(
+    'Bookable resource registered by an organisation: a venue (classroom, lab) or an equipment pool'
+  );
+
+export const zApiResponseOrganisationResource = z.object({
+  success: z.boolean().optional(),
+  data: zOrganisationResource.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Rule kind
+ */
+export const zRuleTypeEnum = z.enum(['OPEN_HOURS', 'BLACKOUT']).describe('Rule kind');
+
+/**
+ * Calendar rule for a resource. Recurring rules use start_time/end_time (with optional
+ * days_of_week and effective dates); one-off BLACKOUT rules use specific_start/specific_end.
+ * A resource with no OPEN_HOURS rules is open at all times.
+ */
+export const zResourceAvailabilityRule = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier of the rule')
+      .readonly()
+      .optional(),
+    rule_type: zRuleTypeEnum,
+    days_of_week: z.union([z.string(), z.null()]).optional(),
+    start_time: z.union([z.string(), z.null()]).optional(),
+    end_time: z.union([z.string(), z.null()]).optional(),
+    specific_start: z.union([z.string().datetime(), z.null()]).optional(),
+    specific_end: z.union([z.string().datetime(), z.null()]).optional(),
+    effective_start_date: z.union([z.string().date(), z.null()]).optional(),
+    effective_end_date: z.union([z.string().date(), z.null()]).optional(),
+    notes: z.union([z.string(), z.null()]).optional(),
+    resource_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Resource the rule belongs to (taken from the request path)')
+      .readonly()
+      .optional(),
+  })
+  .describe(
+    'Calendar rule for a resource. Recurring rules use start_time/end_time (with optional\ndays_of_week and effective dates); one-off BLACKOUT rules use specific_start/specific_end.\nA resource with no OPEN_HOURS rules is open at all times.'
+  );
+
+export const zApiResponseResourceAvailabilityRule = z.object({
+  success: z.boolean().optional(),
+  data: zResourceAvailabilityRule.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
 
 /**
  * Instructor profile including location data for educational service delivery
@@ -3594,16 +3695,6 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
-    assessment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
-      .readonly()
-      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -3619,6 +3710,16 @@ export const zCourseAssessment = z
       .describe(
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
       )
+      .readonly()
+      .optional(),
+    assessment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -4712,6 +4813,7 @@ export const zClassDefinition = z
         '**[OPTIONAL]** Whether this class definition is currently active and available for scheduling.'
       )
       .optional(),
+    venue_resource_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     session_templates: z
       .array(zClassSessionTemplate)
       .describe(
@@ -4766,6 +4868,7 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
+    marketplace_job_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe(
@@ -4812,6 +4915,18 @@ export const zApiResponseClassDefinitionResponse = z.object({
 });
 
 /**
+ * Organisation resource a marketplace job reserves for its sessions while recruitment runs (venue booked exclusively, equipment pools by quantity)
+ */
+export const zClassMarketplaceJobResource = z
+  .object({
+    resource_uuid: z.string().uuid().describe('**[REQUIRED]** Organisation resource to reserve.'),
+    quantity: z.union([z.number().int().gte(1), z.null()]).optional(),
+  })
+  .describe(
+    'Organisation resource a marketplace job reserves for its sessions while recruitment runs (venue booked exclusively, equipment pools by quantity)'
+  );
+
+/**
  * Draft class advert posted by an organisation before a final instructor is assigned
  */
 export const zClassMarketplaceJobRequest = z
@@ -4855,10 +4970,11 @@ export const zClassMarketplaceJobRequest = z
       .describe(
         '**[REQUIRED]** Session templates that will be used when the class is assigned and created.'
       ),
+    resources: z.union([z.array(zClassMarketplaceJobResource), z.null()]).optional(),
   })
   .describe('Draft class advert posted by an organisation before a final instructor is assigned');
 
-export const zStatusEnum7 = z.enum(['open', 'filled', 'cancelled']);
+export const zStatusEnum7 = z.enum(['open', 'filled', 'cancelled', 'expired']);
 
 /**
  * Marketplace job advert for an organisation-owned class awaiting instructor assignment
@@ -4869,6 +4985,7 @@ export const zClassMarketplaceJob = z
     title: z.string().readonly().optional(),
     description: z.string().readonly().optional(),
     status: zStatusEnum7.optional(),
+    resources: z.array(zClassMarketplaceJobResource).readonly().optional(),
     organisation_uuid: z.string().uuid().readonly().optional(),
     course_uuid: z.string().uuid().readonly().optional(),
     program_uuid: z.string().uuid().readonly().optional(),
@@ -5802,6 +5919,7 @@ export const zTypeEnum = z.enum([
   'PROGRAM_TRAINING_APPLICATION_REVOKED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
+  'CLASS_MARKETPLACE_JOB_EXPIRED',
   'CLASS_ENROLLMENT_CONFIRMED',
   'COURSE_ENROLLMENT_MILESTONE',
   'COURSE_ENROLLMENT_NOTICE',
@@ -8626,6 +8744,112 @@ export const zApiResponseOrganisationDashboardStats = z.object({
   error: z.unknown().optional(),
 });
 
+export const zPagedDtoOrganisationResource = z.object({
+  content: z.array(zOrganisationResource).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoOrganisationResource = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoOrganisationResource.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Entry kind
+ */
+export const zEntryTypeEnum = z
+  .enum(['OPEN_HOURS', 'BLACKOUT', 'HOLD', 'CONFIRMED'])
+  .describe('Entry kind');
+
+/**
+ * One entry in a resource's merged calendar view: an expanded open-hours window, a blackout, a recruitment hold or a confirmed booking
+ */
+export const zResourceCalendarEntry = z
+  .object({
+    entry_type: zEntryTypeEnum.optional(),
+    start_time: z.string().datetime().describe('Entry window start (UTC)').optional(),
+    end_time: z.string().datetime().describe('Entry window end (UTC)').optional(),
+    rule_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    booking_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    job_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    class_definition_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    quantity: z.union([z.number().int(), z.null()]).optional(),
+    notes: z.union([z.string(), z.null()]).optional(),
+  })
+  .describe(
+    "One entry in a resource's merged calendar view: an expanded open-hours window, a blackout, a recruitment hold or a confirmed booking"
+  );
+
+export const zApiResponseListResourceCalendarEntry = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zResourceCalendarEntry).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Booking lifecycle state
+ */
+export const zStatusEnum18 = z
+  .enum(['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'])
+  .describe('Booking lifecycle state');
+
+/**
+ * What created the booking
+ */
+export const zSourceTypeEnum = z
+  .enum(['MARKETPLACE_JOB', 'CLASS_DEFINITION', 'MANUAL'])
+  .describe('What created the booking');
+
+/**
+ * Time-slot reservation of an organisation resource
+ */
+export const zResourceBooking = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier of the booking')
+      .readonly()
+      .optional(),
+    resource_uuid: z.string().uuid().describe('Resource booked').optional(),
+    organisation_uuid: z.string().uuid().describe('Organisation owning the resource').optional(),
+    status: zStatusEnum18.optional(),
+    quantity: z.number().int().describe('Units reserved (1 for venues)').optional(),
+    start_time: z.string().datetime().describe('Reservation window start (UTC)').optional(),
+    end_time: z.string().datetime().describe('Reservation window end (UTC)').optional(),
+    source_type: zSourceTypeEnum.optional(),
+    job_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    class_definition_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    scheduled_instance_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    released_at: z.union([z.string().datetime(), z.null()]).optional(),
+    release_reason: z.union([z.string(), z.null()]).optional(),
+  })
+  .describe('Time-slot reservation of an organisation resource');
+
+export const zPagedDtoResourceBooking = z.object({
+  content: z.array(zResourceBooking).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoResourceBooking = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoResourceBooking.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListResourceAvailabilityRule = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zResourceAvailabilityRule).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zPagedDtoNotificationDto = z.object({
   content: z.array(zNotificationDto).optional(),
   metadata: zPageMetadata.optional(),
@@ -8755,7 +8979,7 @@ export const zApiResponseListAvailabilitySlot = z.object({
 /**
  * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
  */
-export const zEntryTypeEnum = z
+export const zEntryTypeEnum2 = z
   .enum(['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'])
   .describe('Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE');
 
@@ -8771,7 +8995,7 @@ export const zInstructorCalendarEntry = z
         'Unique identifier for the entry (slot UUID or scheduled instance UUID where applicable)'
       )
       .optional(),
-    entry_type: zEntryTypeEnum.optional(),
+    entry_type: zEntryTypeEnum2.optional(),
     start_time: z.string().datetime().describe('Start date-time for the entry').optional(),
     end_time: z.string().datetime().describe('End date-time for the entry').optional(),
     availability_type: zAvailabilityTypeEnum.optional(),
@@ -9869,6 +10093,15 @@ export const zClassMarketplaceJobEligibility = z
       .describe('Whether the instructor already has an application for this job')
       .readonly()
       .optional(),
+    schedule_clear: z
+      .boolean()
+      .describe("Whether the instructor's existing schedule is free for every session of this job")
+      .readonly()
+      .optional(),
+    schedule_conflicts: z
+      .union([z.array(zClassSchedulingConflict).readonly(), z.null()])
+      .readonly()
+      .optional(),
   })
   .describe("Current instructor's eligibility to apply for a marketplace class job");
 
@@ -10627,6 +10860,18 @@ export const zDomainNameEnumWritable = z
   );
 
 /**
+ * Resource kind
+ */
+export const zResourceTypeEnumWritable = z
+  .enum(['VENUE', 'EQUIPMENT_POOL'])
+  .describe('Resource kind');
+
+/**
+ * Rule kind
+ */
+export const zRuleTypeEnumWritable = z.enum(['OPEN_HOURS', 'BLACKOUT']).describe('Rule kind');
+
+/**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
  */
 export const zProficiencyLevelEnumWritable = z
@@ -10783,6 +11028,7 @@ export const zTypeEnumWritable = z.enum([
   'PROGRAM_TRAINING_APPLICATION_REVOKED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
+  'CLASS_MARKETPLACE_JOB_EXPIRED',
   'CLASS_ENROLLMENT_CONFIRMED',
   'COURSE_ENROLLMENT_MILESTONE',
   'COURSE_ENROLLMENT_NOTICE',
@@ -10912,9 +11158,30 @@ export const zStatusEnum17Writable = z
   .describe("**[REQUIRED]** Current status of the student's enrollment in the program.");
 
 /**
- * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
+ * Entry kind
  */
 export const zEntryTypeEnumWritable = z
+  .enum(['OPEN_HOURS', 'BLACKOUT', 'HOLD', 'CONFIRMED'])
+  .describe('Entry kind');
+
+/**
+ * Booking lifecycle state
+ */
+export const zStatusEnum18Writable = z
+  .enum(['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'])
+  .describe('Booking lifecycle state');
+
+/**
+ * What created the booking
+ */
+export const zSourceTypeEnumWritable = z
+  .enum(['MARKETPLACE_JOB', 'CLASS_DEFINITION', 'MANUAL'])
+  .describe('What created the booking');
+
+/**
+ * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
+ */
+export const zEntryTypeEnum2Writable = z
   .enum(['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'])
   .describe('Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE');
 
@@ -11581,6 +11848,78 @@ export const zUpdateTrainingBranch1Data = z.object({
  * Training branch updated successfully
  */
 export const zUpdateTrainingBranch1Response = zApiResponseTrainingBranch;
+
+export const zDeactivateResourceData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+    resourceUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zDeactivateResourceResponse = zApiResponseVoid;
+
+export const zGetResourceData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+    resourceUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetResourceResponse = zApiResponseOrganisationResource;
+
+export const zUpdateResourceData = z.object({
+  body: zOrganisationResource,
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+    resourceUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateResourceResponse = zApiResponseOrganisationResource;
+
+export const zDeleteAvailabilityRuleData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+    resourceUuid: z.string().uuid(),
+    ruleUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zDeleteAvailabilityRuleResponse = zApiResponseVoid;
+
+export const zUpdateAvailabilityRuleData = z.object({
+  body: zResourceAvailabilityRule,
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+    resourceUuid: z.string().uuid(),
+    ruleUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateAvailabilityRuleResponse = zApiResponseResourceAvailabilityRule;
 
 export const zDeleteInstructorData = z.object({
   body: z.never().optional(),
@@ -13323,6 +13662,65 @@ export const zAssignUserToBranchData = z.object({
  * User assigned to branch successfully
  */
 export const zAssignUserToBranchResponse = zApiResponseVoid;
+
+export const zListResourcesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    resource_type: z.string().optional(),
+    branch_uuid: z.string().uuid().optional(),
+    active: z.boolean().optional(),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zListResourcesResponse = zApiResponsePagedDtoOrganisationResource;
+
+export const zCreateResourceData = z.object({
+  body: zOrganisationResource,
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreateResourceResponse = zApiResponseOrganisationResource;
+
+export const zListAvailabilityRulesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+    resourceUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListAvailabilityRulesResponse = zApiResponseListResourceAvailabilityRule;
+
+export const zAddAvailabilityRuleData = z.object({
+  body: zResourceAvailabilityRule,
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+    resourceUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddAvailabilityRuleResponse = zApiResponseResourceAvailabilityRule;
 
 export const zListNotificationsData = z.object({
   body: z.never().optional(),
@@ -16565,6 +16963,42 @@ export const zGetOrganisationStatisticsData = z.object({
  * Organisation statistics retrieved successfully
  */
 export const zGetOrganisationStatisticsResponse = zApiResponseOrganisationDashboardStats;
+
+export const zGetCalendarData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+    resourceUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    start_date: z.string().date(),
+    end_date: z.string().date(),
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetCalendarResponse = zApiResponseListResourceCalendarEntry;
+
+export const zListBookingsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+    resourceUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    status: z.string().optional(),
+    start_date: z.string().date().optional(),
+    end_date: z.string().date().optional(),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zListBookingsResponse = zApiResponsePagedDtoResourceBooking;
 
 export const zSearch2Data = z.object({
   body: z.never().optional(),

@@ -19,14 +19,21 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useOrganisation } from '@/context/organisation-context';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
+import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
+import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
+import { extractPage } from '@/lib/api-helpers';
 import type {
   ClassMarketplaceJobRequest,
+  ClassMarketplaceJobResource,
   ClassVisibilityEnum,
   LocationTypeEnum,
+  OrganisationResource,
   SessionFormatEnum,
 } from '@/services/client';
+import { ResourceTypeEnum } from '@/services/client';
 import {
   createJobMutation,
+  listResourcesOptions,
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -55,6 +62,8 @@ type FormState = {
   repeat: Repeat;
   daysOfWeek: string[];
   occurrenceCount: string;
+  venueResourceUuid: string;
+  equipment: Array<{ resource_uuid: string; quantity: string }>;
 };
 
 const initialState: FormState = {
@@ -76,6 +85,8 @@ const initialState: FormState = {
   repeat: 'NONE',
   daysOfWeek: [],
   occurrenceCount: '1',
+  venueResourceUuid: '',
+  equipment: [],
 };
 
 const num = (value: string): number | undefined => {
@@ -159,6 +170,28 @@ export default function OrganisationCreateClassPage() {
 
   const approvedLoading = approvedCoursesQuery.isLoading || approvedProgramsQuery.isLoading;
 
+  const [resourceConflicts, setResourceConflicts] = useState<ConflictItem[]>([]);
+  const orgResourcesQuery = useQuery({
+    ...listResourcesOptions({
+      path: { organisationUuid },
+      query: { pageable: { page: 0, size: 100 }, active: true },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+  const orgResources = useMemo(
+    () => extractPage<OrganisationResource>(orgResourcesQuery.data).items,
+    [orgResourcesQuery.data]
+  );
+  const venueResources = useMemo(
+    () => orgResources.filter(resource => resource.resource_type === ResourceTypeEnum.VENUE),
+    [orgResources]
+  );
+  const equipmentResources = useMemo(
+    () =>
+      orgResources.filter(resource => resource.resource_type === ResourceTypeEnum.EQUIPMENT_POOL),
+    [orgResources]
+  );
+
   const occurrences = form.repeat === 'WEEKLY' ? Math.max(1, num(form.occurrenceCount) ?? 1) : 1;
   const feePerSession = num(form.trainingFee);
   const totalFee = feePerSession !== undefined ? feePerSession * occurrences : undefined;
@@ -170,6 +203,12 @@ export default function OrganisationCreateClassPage() {
       router.push('/dashboard/classes');
     },
     onError: error => {
+      const report = parseConflictError(error);
+      if (report) {
+        setResourceConflicts(report.conflicts);
+        toast.error(report.message);
+        return;
+      }
       toast.error(error instanceof Error ? error.message : 'Unable to create the class.');
     },
   });
@@ -205,9 +244,17 @@ export default function OrganisationCreateClassPage() {
       return;
     }
 
+    setResourceConflicts([]);
     const start = new Date(form.startTime);
     const end = new Date(form.endTime);
     const [offeringKind, offeringUuid] = form.offering.split(':');
+
+    const resources: ClassMarketplaceJobResource[] = [
+      ...(form.venueResourceUuid ? [{ resource_uuid: form.venueResourceUuid, quantity: 1 }] : []),
+      ...form.equipment
+        .filter(entry => entry.resource_uuid)
+        .map(entry => ({ resource_uuid: entry.resource_uuid, quantity: num(entry.quantity) ?? 1 })),
+    ];
 
     const payload: ClassMarketplaceJobRequest = {
       organisation_uuid: organisationUuid,
@@ -245,6 +292,7 @@ export default function OrganisationCreateClassPage() {
             : {}),
         },
       ],
+      ...(resources.length > 0 ? { resources } : {}),
     };
 
     createClass.mutate({ body: payload });
@@ -542,6 +590,113 @@ export default function OrganisationCreateClassPage() {
             </div>
           </div>
         </SectionCard>
+
+        <SectionCard
+          title='Venue & equipment'
+          description='Reserve your registered resources for every session. They stay blocked for other postings while you recruit; posting fails with a conflict report if a slot is taken.'
+        >
+          <div className='grid max-w-2xl gap-4'>
+            <div className='space-y-2'>
+              <Label>Venue</Label>
+              <Select
+                value={form.venueResourceUuid || 'none'}
+                onValueChange={value =>
+                  update({ venueResourceUuid: value === 'none' ? '' : value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='No venue' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='none'>No venue</SelectItem>
+                  {venueResources.map(venue => (
+                    <SelectItem key={venue.uuid} value={venue.uuid ?? ''}>
+                      {venue.name}
+                      {venue.seat_capacity != null ? ` · ${venue.seat_capacity} seats` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className='space-y-2'>
+              <Label>Equipment</Label>
+              {form.equipment.map((entry, index) => (
+                <div key={`${entry.resource_uuid}-${index}`} className='flex items-center gap-2'>
+                  <Select
+                    value={entry.resource_uuid || undefined}
+                    onValueChange={value => {
+                      update({
+                        equipment: form.equipment.map((item, i) =>
+                          i === index ? { ...item, resource_uuid: value } : item
+                        ),
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='Choose equipment' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {equipmentResources.map(pool => (
+                        <SelectItem key={pool.uuid} value={pool.uuid ?? ''}>
+                          {pool.name}
+                          {pool.total_quantity != null ? ` · ${pool.total_quantity} units` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type='number'
+                    min={1}
+                    className='w-24'
+                    value={entry.quantity}
+                    onChange={event => {
+                      update({
+                        equipment: form.equipment.map((item, i) =>
+                          i === index ? { ...item, quantity: event.target.value } : item
+                        ),
+                      });
+                    }}
+                  />
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={() =>
+                      update({ equipment: form.equipment.filter((_, i) => i !== index) })
+                    }
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                disabled={equipmentResources.length === 0}
+                onClick={() =>
+                  update({
+                    equipment: [...form.equipment, { resource_uuid: '', quantity: '1' }],
+                  })
+                }
+              >
+                Add equipment
+              </Button>
+              {venueResources.length === 0 && equipmentResources.length === 0 ? (
+                <p className='text-muted-foreground text-xs'>
+                  No bookable resources registered yet. Add venues and equipment under Resources in
+                  the sidebar.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </SectionCard>
+
+        <ResourceConflictAlert
+          title='These sessions conflict with existing reservations'
+          conflicts={resourceConflicts}
+        />
       </form>
     </div>
   );

@@ -931,7 +931,7 @@ interface ProgramRequirementDialogProps {
   programId?: string;
   requirementId?: string;
   onSuccess?: () => void;
-  initialValues: ProgramRequirementDialogValues;
+  initialValues: ProgramRequirementDialogValues | undefined;
 }
 
 function ProgramRequirementDialog({

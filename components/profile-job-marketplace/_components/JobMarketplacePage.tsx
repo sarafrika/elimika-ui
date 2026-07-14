@@ -74,19 +74,25 @@ import {
   listJobsQueryKey,
   listMyApplicationsOptions,
   listMyApplicationsQueryKey,
+  listResourcesOptions,
   updateJobMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   ClassMarketplaceJob,
   ClassMarketplaceJobRequest,
+  ClassMarketplaceJobResource,
   ClassVisibilityEnum,
   Course,
   LocationTypeEnum,
   Organisation,
+  OrganisationResource,
   SessionFormatEnum,
-  StatusEnum5,
+  StatusEnum7,
   TrainingProgram,
 } from '@/services/client/types.gen';
+import { ResourceTypeEnum } from '@/services/client/types.gen';
+import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
+import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
@@ -98,7 +104,7 @@ import { JobListSkeleton, MarketplaceSidebarSkeleton, SelectSkeleton } from './J
 import { MarketplaceSidebar } from './MarketplaceSidebar';
 import { MarketplaceTabs } from './MarketplaceTabs';
 
-type JobFilter = 'all' | StatusEnum5;
+type JobFilter = 'all' | StatusEnum7;
 type MarketplaceTabId = 'all' | 'full-time' | 'freelance' | 'internship' | 'remote';
 type JobSortDirection = 'newest' | 'oldest';
 type MarketplaceContentType = 'course' | 'program';
@@ -138,6 +144,7 @@ type JobFormState = {
   session_days_of_week: string[];
   session_start_time: string;
   session_end_time: string;
+  job_resources: Array<{ resource_uuid: string; quantity: string }>;
 };
 
 const JOB_PAGE_SIZE = 50;
@@ -172,6 +179,7 @@ const statusOptions: Array<{ label: string; value: JobFilter }> = [
   { label: 'Open', value: 'open' },
   { label: 'Filled', value: 'filled' },
   { label: 'Cancelled', value: 'cancelled' },
+  { label: 'Expired', value: 'expired' },
 ];
 const marketplaceTabs: Array<{
   id: MarketplaceTabId;
@@ -403,6 +411,10 @@ function getInitialFormState(
     session_days_of_week: weeklyDays,
     session_start_time: formatTimeInputValue(sessionStart),
     session_end_time: formatTimeInputValue(sessionEnd),
+    job_resources: (job?.resources ?? []).map(resource => ({
+      resource_uuid: resource.resource_uuid ?? '',
+      quantity: resource.quantity != null ? String(resource.quantity) : '1',
+    })),
   };
 }
 
@@ -474,6 +486,16 @@ function buildJobPayload(form: JobFormState): ClassMarketplaceJobRequestWithProg
           },
     ],
   };
+
+  const resources: ClassMarketplaceJobResource[] = form.job_resources
+    .filter(entry => entry.resource_uuid)
+    .map(entry => ({
+      resource_uuid: entry.resource_uuid,
+      quantity: parseNumber(entry.quantity) ?? 1,
+    }));
+  if (resources.length > 0) {
+    payload.resources = resources;
+  }
 
   if (form.content_type === 'program') {
     payload.program_uuid = form.program_uuid;
@@ -564,6 +586,7 @@ function JobDetailsSheet({
   const alreadyApplied = Boolean(application);
   const jobUuid = job?.uuid;
 
+  const [applyConflicts, setApplyConflicts] = useState<ConflictItem[]>([]);
   const eligibilityQuery = useQuery({
     ...getJobEligibilityOptions({ path: { jobUuid: jobUuid ?? '' } }),
     enabled:
@@ -571,6 +594,16 @@ function JobDetailsSheet({
   });
   const eligibility = eligibilityQuery.data?.data;
   const isIneligible = Boolean(eligibility && !eligibility.eligible);
+  const eligibilityScheduleConflicts = useMemo<ConflictItem[]>(() => {
+    if (!eligibility || eligibility.schedule_clear !== false) return [];
+    return (eligibility.schedule_conflicts ?? []).map(conflict => ({
+      start: conflict.requested_start
+        ? new Date(conflict.requested_start).toLocaleString()
+        : undefined,
+      end: conflict.requested_end ? new Date(conflict.requested_end).toLocaleString() : undefined,
+      reasons: (conflict.reasons ?? []).filter((reason): reason is string => typeof reason === 'string'),
+    }));
+  }, [eligibility]);
 
 
   const applyMutation = useMutation({
@@ -593,6 +626,12 @@ function JobDetailsSheet({
       }
     },
     onError: error => {
+      const report = parseConflictError(error);
+      if (report) {
+        setApplyConflicts(report.conflicts);
+        toast.error('Your schedule conflicts with sessions of this job.');
+        return;
+      }
       toast.error(error instanceof Error ? error.message : 'Unable to apply for this posting.');
     },
   });
@@ -810,6 +849,13 @@ function JobDetailsSheet({
                 </div>
               ) : null}
 
+              <ResourceConflictAlert
+                title='Sessions that clash with your existing schedule'
+                conflicts={
+                  applyConflicts.length > 0 ? applyConflicts : eligibilityScheduleConflicts
+                }
+              />
+
               <Label htmlFor='application-note' className='text-sm font-semibold'>
                 Application note
               </Label>
@@ -889,6 +935,45 @@ function JobFormSheet({
       ),
     [programs]
   );
+  const [resourceConflicts, setResourceConflicts] = useState<ConflictItem[]>([]);
+
+  const orgResourcesQuery = useQuery({
+    ...listResourcesOptions({
+      path: { organisationUuid },
+      query: { pageable: { page: 0, size: 100 }, active: true },
+    }),
+    enabled: open && Boolean(organisationUuid),
+  });
+  const orgResources = useMemo(
+    () => extractPage<OrganisationResource>(orgResourcesQuery.data).items,
+    [orgResourcesQuery.data]
+  );
+  const venueResources = useMemo(
+    () => orgResources.filter(resource => resource.resource_type === ResourceTypeEnum.VENUE),
+    [orgResources]
+  );
+  const equipmentResources = useMemo(
+    () =>
+      orgResources.filter(resource => resource.resource_type === ResourceTypeEnum.EQUIPMENT_POOL),
+    [orgResources]
+  );
+  const venueUuids = useMemo(
+    () => new Set(venueResources.map(resource => resource.uuid)),
+    [venueResources]
+  );
+  const selectedVenueUuid =
+    form.job_resources.find(entry => venueUuids.has(entry.resource_uuid))?.resource_uuid ?? '';
+  const equipmentEntries = form.job_resources.filter(entry => !venueUuids.has(entry.resource_uuid));
+
+  const setJobResources = (venueUuid: string, equipment: Array<{ resource_uuid: string; quantity: string }>) => {
+    setForm(previous => ({
+      ...previous,
+      job_resources: [
+        ...(venueUuid ? [{ resource_uuid: venueUuid, quantity: '1' }] : []),
+        ...equipment,
+      ],
+    }));
+  };
 
   const createMutation = useMutation({
     ...createJobMutation(),
@@ -906,6 +991,12 @@ function JobFormSheet({
       });
     },
     onError: error => {
+      const report = parseConflictError(error);
+      if (report) {
+        setResourceConflicts(report.conflicts);
+        toast.error(report.message);
+        return;
+      }
       toast.error(error instanceof Error ? error.message : 'Unable to create the job posting.');
     },
   });
@@ -925,6 +1016,12 @@ function JobFormSheet({
       });
     },
     onError: error => {
+      const report = parseConflictError(error);
+      if (report) {
+        setResourceConflicts(report.conflicts);
+        toast.error(report.message);
+        return;
+      }
       toast.error(error instanceof Error ? error.message : 'Unable to update the job posting.');
     },
   });
@@ -932,6 +1029,7 @@ function JobFormSheet({
   useEffect(() => {
     if (!open) return;
     setForm(getInitialFormState(organisationUuid, job, initialContent));
+    setResourceConflicts([]);
   }, [initialContent, job, open, organisationUuid]);
 
   const updateField = <K extends keyof JobFormState>(key: K, value: JobFormState[K]) => {
@@ -1017,6 +1115,7 @@ function JobFormSheet({
       return;
     }
 
+    setResourceConflicts([]);
     const payload = buildJobPayload({
       ...form,
       organisation_uuid: organisationUuid,
@@ -1331,7 +1430,122 @@ function JobFormSheet({
                 <span>Allow waitlist</span>
               </label>
             </SectionShell>
+
+            <SectionShell title='Venue & equipment'>
+              <p className='text-muted-foreground text-sm'>
+                Attached resources are reserved for every session while you recruit, so no other
+                posting or class can double-book them. Posting fails with a conflict report if a
+                resource is unavailable.
+              </p>
+              <div className='mt-3 grid gap-4'>
+                <Field label='Venue'>
+                  <Select
+                    value={selectedVenueUuid || 'none'}
+                    onValueChange={value =>
+                      setJobResources(value === 'none' ? '' : value, equipmentEntries)
+                    }
+                  >
+                    <SelectTrigger className='w-full min-w-0'>
+                      <SelectValue placeholder='No venue' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='none'>No venue</SelectItem>
+                      {venueResources.map(venue => (
+                        <SelectItem key={venue.uuid} value={venue.uuid ?? ''}>
+                          {venue.name}
+                          {venue.seat_capacity != null ? ` · ${venue.seat_capacity} seats` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <div className='space-y-2'>
+                  <Label className='text-sm'>Equipment</Label>
+                  {equipmentEntries.map((entry, index) => (
+                    <div key={`${entry.resource_uuid}-${index}`} className='flex items-center gap-2'>
+                      <Select
+                        value={entry.resource_uuid || undefined}
+                        onValueChange={value => {
+                          setJobResources(
+                            selectedVenueUuid,
+                            equipmentEntries.map((item, i) =>
+                              i === index ? { ...item, resource_uuid: value } : item
+                            )
+                          );
+                        }}
+                      >
+                        <SelectTrigger className='w-full min-w-0'>
+                          <SelectValue placeholder='Choose equipment' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {equipmentResources.map(pool => (
+                            <SelectItem key={pool.uuid} value={pool.uuid ?? ''}>
+                              {pool.name}
+                              {pool.total_quantity != null ? ` · ${pool.total_quantity} units` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type='number'
+                        min={1}
+                        className='w-24'
+                        value={entry.quantity}
+                        onChange={event => {
+                          setJobResources(
+                            selectedVenueUuid,
+                            equipmentEntries.map((item, i) =>
+                              i === index ? { ...item, quantity: event.target.value } : item
+                            )
+                          );
+                        }}
+                      />
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='icon'
+                        className='h-9 w-9 shrink-0'
+                        onClick={() =>
+                          setJobResources(
+                            selectedVenueUuid,
+                            equipmentEntries.filter((_, i) => i !== index)
+                          )
+                        }
+                      >
+                        <Trash2 className='h-4 w-4' />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    disabled={equipmentResources.length === 0}
+                    onClick={() =>
+                      setJobResources(selectedVenueUuid, [
+                        ...equipmentEntries,
+                        { resource_uuid: '', quantity: '1' },
+                      ])
+                    }
+                  >
+                    Add equipment
+                  </Button>
+                  {equipmentResources.length === 0 && venueResources.length === 0 ? (
+                    <p className='text-muted-foreground text-xs'>
+                      No bookable resources registered yet. Add them under Resources in the
+                      sidebar.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </SectionShell>
           </div>
+
+          <ResourceConflictAlert
+            title='These sessions conflict with existing reservations'
+            conflicts={resourceConflicts}
+          />
 
           <div className='flex flex-wrap gap-2 border-t border-border/60 pt-4'>
             <Button

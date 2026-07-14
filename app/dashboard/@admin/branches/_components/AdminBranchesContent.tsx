@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAdminOrganisations, type AdminOrganisation } from '@/services/admin/organizations';
 import { useAdminBranches, useBranchUsers } from '@/services/admin/branches';
-import type { TrainingBranch } from '@/services/client/types.gen';
+import type { AdminBranchListItem } from '@/services/admin/branches';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,7 @@ export function AdminBranchesContent() {
   const [orgSearch, setOrgSearch] = useState('');
   const [branchSearch, setBranchSearch] = useState('');
   const [selectedOrg, setSelectedOrg] = useState<AdminOrganisation | null>(null);
-  const [selectedBranch, setSelectedBranch] = useState<TrainingBranch | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<AdminBranchListItem | null>(null);
   const [branchUserPage, setBranchUserPage] = useState(0);
 
   const {
@@ -321,7 +321,12 @@ export function AdminBranchesContent() {
                         </p>
                         <p className='text-muted-foreground text-xs'>{user.email ?? 'No email'}</p>
                         <div className='mt-2 flex flex-wrap gap-2'>
-                          {(user.user_domain ?? []).map(domain => (
+                          {(Array.isArray(user.user_domain)
+                            ? user.user_domain
+                            : user.user_domain
+                              ? [user.user_domain]
+                              : []
+                          ).map((domain: string) => (
                             <Badge key={domain} variant='outline'>
                               {domain}
                             </Badge>

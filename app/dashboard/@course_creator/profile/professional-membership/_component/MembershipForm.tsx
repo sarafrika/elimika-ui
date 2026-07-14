@@ -53,6 +53,8 @@ const CourseCreatorMembershipSchema = zCourseCreatorProfessionalMembership
     z.object({
       start_date: z.date(),
       end_date: z.date(),
+      // Removed from the API DTO; kept as a UI-only field so existing form bindings stay typed.
+      summary: z.string().optional(),
     })
   );
 
@@ -81,7 +83,7 @@ export default function ProfessionalBodySettings() {
   const courseCreatorMembership = data?.data?.content || [];
 
   const defaultMemebership: CourseCreatorMembershipType = {
-    organization_name: 'Tech Experts Inc.',
+    organisation_name: 'Tech Experts Inc.',
     membership_number: 'MEM-12345',
     start_date: new Date('2020-01-15'),
     end_date: new Date(),
@@ -285,7 +287,7 @@ export default function ProfessionalBodySettings() {
                 {courseCreatorMembership?.map(mem => (
                   <ProfileViewListItem
                     key={mem.uuid}
-                    title={mem.organization_name || 'Organization name not specified'}
+                    title={mem.organisation_name || 'Organization name not specified'}
                     subtitle={`Membership No: ${mem.membership_number}`}
                     description={mem.summary}
                     badge={mem.status_label === 'Inactive' ? 'Inctive' : 'Active'}
@@ -320,7 +322,7 @@ export default function ProfessionalBodySettings() {
                       <div>
                         <div className='flex items-center gap-2'>
                           <h3 className='text-base font-medium'>
-                            {professionalBodies?.[index]?.organization_name || 'New membership'}
+                            {professionalBodies?.[index]?.organisation_name || 'New membership'}
                           </h3>
                           {professionalBodies?.[index]?.is_active && (<Badge className='border-success/30 bg-success/15 text-xs text-success'>
                             Active
@@ -344,7 +346,7 @@ export default function ProfessionalBodySettings() {
                   <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
                     <FormField
                       control={form.control}
-                      name={`professional_bodies.${index}.organization_name`}
+                      name={`professional_bodies.${index}.organisation_name`}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Institution *</FormLabel>

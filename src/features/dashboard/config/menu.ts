@@ -32,6 +32,7 @@ import {
   Users,
   UsersIcon,
   Wallet,
+  Warehouse,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -573,6 +574,11 @@ export default {
       title: 'Venues',
       url: '/dashboard/branches',
       icon: Building,
+    },
+    {
+      title: 'Resources',
+      url: '/dashboard/resources',
+      icon: Warehouse,
     },
     {
       title: 'Schedule',

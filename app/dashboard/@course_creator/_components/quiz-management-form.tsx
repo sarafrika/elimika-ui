@@ -952,7 +952,11 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
             {selectedQuiz && (
               <QuizForm
                 onCancel={handleCancel}
-                initialValues={selectedQuiz}
+                initialValues={{
+                  ...selectedQuiz,
+                  rubric_uuid: selectedQuiz.rubric_uuid ?? undefined,
+                  time_limit_minutes: selectedQuiz.time_limit_minutes ?? undefined,
+                }}
                 className='px-6 pb-6'
                 quizId={selectedQuiz?.uuid}
                 lessonId={''}

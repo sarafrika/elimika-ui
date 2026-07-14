@@ -1,7 +1,6 @@
 import type {
-  EntryTypeEnum,
+  EntryTypeEnum2 as EntryTypeEnum,
   ScheduledInstance,
-  StatusEnum4,
   StatusEnum13,
 } from '@/services/client/types.gen';
 
@@ -20,7 +19,7 @@ export type CalendarEvent = {
   attendees?: number;
   isRecurring?: boolean;
   recurringDays?: string[];
-  status: StatusEnum4 | StatusEnum13;
+  status: NonNullable<ScheduledInstance['status']> | StatusEnum13;
   color?: string;
   reminders?: number[];
   notes?: string;
