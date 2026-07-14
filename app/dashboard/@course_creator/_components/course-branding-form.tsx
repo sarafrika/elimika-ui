@@ -134,6 +134,10 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       file: File,
       { key, setPreview, upload, onChange }: UploadOptions
     ) => {
+      if (!editingCourseId) {
+        toast.error('Save the course before uploading media.');
+        return;
+      }
       if (key === 'intro_video' && file.size > MAX_VIDEO_SIZE_BYTES) {
         toast.error(`Video too large. Max size: ${MAX_VIDEO_SIZE_MB}MB.`);
         return;
@@ -379,10 +383,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             upload: (file, callbacks) =>
                               courseIntroVideoMutation.mutate(
                                 {
-                                  body: { intro_video: file.name },
-                                  params: {
-                                    path: { uuid: editingCourseId as string },
-                                  },
+                                  body: { intro_video: file },
+                                  path: { uuid: editingCourseId as string },
                                 },
                                 callbacks
                               ),
@@ -489,10 +491,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             upload: (file, callbacks) =>
                               courseBannerMutation.mutate(
                                 {
-                                  body: { banner: file.name },
-                                  params: {
-                                    path: { uuid: editingCourseId as string },
-                                  },
+                                  body: { banner: file },
+                                  path: { uuid: editingCourseId as string },
                                 },
                                 callbacks
                               ),
@@ -598,10 +598,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             upload: (file, callbacks) =>
                               courseThumbnailMutation.mutate(
                                 {
-                                  body: { thumbnail: file.name },
-                                  params: {
-                                    path: { uuid: editingCourseId as string },
-                                  },
+                                  body: { thumbnail: file },
+                                  path: { uuid: editingCourseId as string },
                                 },
                                 callbacks
                               ),
