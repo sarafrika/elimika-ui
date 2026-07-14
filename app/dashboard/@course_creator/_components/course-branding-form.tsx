@@ -157,7 +157,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       upload(file, {
         onSuccess: (data: UploadResponse) => {
           const urlKey = `${key}_url` as const;
-          const uploadedUrl = getUploadedUrl(data, urlKey);
+          // @ts-ignore
+          const uploadedUrl = getUploadedUrl(data?.data, urlKey);
 
           if (!uploadedUrl) {
             toast.error('Upload succeeded, but no URL returned.');
@@ -197,7 +198,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
         };
 
         updateCourse.mutate(
-          { body: editBody as UpdateCourseVariables['body'], path: { uuid: editingCourseId } },
+          { body: editBody as UpdateCourseVariables['body'], path: { uuid: editingCourseId as string } },
           {
             onSuccess(data: UpdateCourseResponse) {
               const respObj = data?.data;

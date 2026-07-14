@@ -484,16 +484,16 @@ export function LiveClassCard({
               <div className="flex w-full max-w-md flex-col md:flex-row gap-3 lg:w-auto">
                 <Link
                   href={`/dashboard/classes/class-training/${liveClass.classUuid}`}
-                  className="inline-flex h-10 w-full items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
+                  className="inline-flex h-10 w-full items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2 min-w-fit"
                 >
                   View Class
                 </Link>
 
                 <Link
                   href={`/dashboard/classes/class-training/${liveClass.classUuid}/award-certificates`}
-                  className="inline-flex h-10 w-full text-center items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
+                  className="inline-flex h-10 w-full text-center items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2 min-w-fit"
                 >
-                  Award Certificates
+                  Certificates
                 </Link>
               </div>
             </div>

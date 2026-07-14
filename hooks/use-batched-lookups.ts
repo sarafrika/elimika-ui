@@ -1,16 +1,27 @@
 'use client';
 
-import { useQueries } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import { STALE_TIMES } from '@/lib/query-client';
-import type { Course, Instructor, SearchResponse, Student, TrainingProgram, User } from '@/services/client';
+import type {
+  Assignment,
+  Course,
+  Instructor,
+  Quiz,
+  SearchResponse,
+  Student,
+  TrainingProgram,
+  User,
+} from '@/services/client';
 import {
+  searchAssignmentsOptions,
   searchCoursesOptions,
   searchInstructorsOptions,
   searchOptions,
+  searchQuizzesOptions,
   searchStudentsOptions,
   searchTrainingProgramsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useQueries } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 /**
  * Batched entity lookups: one search request per ~100 ids (`uuid_in=` filter)
@@ -92,6 +103,16 @@ export function useUsersByIds(ids: string[]) {
 export function useCoursesByIds(ids: string[]) {
   const { map, isLoading } = useSearchByIds<Course>(ids, searchCoursesOptions, STALE_TIMES.reference);
   return { courseMap: map, isLoading };
+}
+
+export function useAssignmentsByIds(ids: string[]) {
+  const { map, isLoading } = useSearchByIds<Assignment>(ids, searchAssignmentsOptions);
+  return { assignmentMap: map, isLoading };
+}
+
+export function useQuizzesByIds(ids: string[]) {
+  const { map, isLoading } = useSearchByIds<Quiz>(ids, searchQuizzesOptions);
+  return { quizMap: map, isLoading };
 }
 
 export function useProgramsByIds(ids: string[]) {

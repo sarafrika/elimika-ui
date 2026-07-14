@@ -39,7 +39,7 @@ function SkillsProgressCard({ summary }: { summary: OverviewCourseSummary }) {
       </div>
 
       <div className='mt-4 flex gap-2 sm:flex-row items-center'>
-        <ActionButton label={summary.primaryActionLabel} tone='muted' href={'/dashboard/classes'} />
+        <ActionButton label={summary.primaryActionLabel} tone='muted' href={'/dashboard/training-hub'} />
         <ActionButton label={summary.secondaryActionLabel} tone='muted' href={'/dashboard/assignment'} />
       </div>
     </div>

@@ -1,17 +1,17 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
+import { useAssignmentsByIds, useQuizzesByIds } from '@/hooks/use-batched-lookups';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
 import {
-  getAssignmentByUuidOptions,
   getAssignmentSchedulesOptions,
   getAssignmentSubmissionsOptions,
   getCourseLessonsOptions,
   getPendingGradingOptions,
   getQuizAttemptsOptions,
-  getQuizByUuidOptions,
   getQuizSchedulesOptions,
-  getSubmissionAnalyticsOptions
+  getSubmissionAnalyticsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
@@ -171,51 +171,19 @@ export function AssignmentPageClient() {
     [quizSchedules]
   );
 
-  const assignmentQueries = useQueries({
-    queries: uniqueAssignmentUuids.map(uuid => ({
-      ...getAssignmentByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-      staleTime: QUERY_STALE_TIME,
-      gcTime: QUERY_GC_TIME,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-    })),
-  });
+  const { assignmentMap, isLoading: assignmentsLoading } = useAssignmentsByIds(
+    uniqueAssignmentUuids
+  );
+  const { quizMap, isLoading: quizzesLoading } = useQuizzesByIds(uniqueQuizUuids);
 
-  const quizQueries = useQueries({
-    queries: uniqueQuizUuids.map(uuid => ({
-      ...getQuizByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-      staleTime: QUERY_STALE_TIME,
-      gcTime: QUERY_GC_TIME,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-    })),
-  });
-
-  const assignmentMap = useMemo(() => {
-    const map = new Map<string, Assignment>();
-    uniqueAssignmentUuids.forEach((uuid, index) => {
-      const data = assignmentQueries[index]?.data?.data;
-      if (data && uuid) {
-        map.set(uuid, data);
-      }
-    });
-    return map;
-  }, [assignmentQueries, uniqueAssignmentUuids]);
-
-  const quizMap = useMemo(() => {
-    const map = new Map<string, Quiz>();
-    uniqueQuizUuids.forEach((uuid, index) => {
-      const data = quizQueries[index]?.data?.data;
-      if (data && uuid) {
-        map.set(uuid, data);
-      }
-    });
-    return map;
-  }, [quizQueries, uniqueQuizUuids]);
+  const assignmentMapMemo = useMemo(
+    () => new Map<string, Assignment>(Object.entries(assignmentMap ?? {})),
+    [assignmentMap]
+  );
+  const quizMapMemo = useMemo(
+    () => new Map<string, Quiz>(Object.entries(quizMap ?? {})),
+    [quizMap]
+  );
 
   // const { assignmentMap } = useAssignmentsMap();
   // const { quizMap } = useQuizMap();
@@ -287,10 +255,13 @@ export function AssignmentPageClient() {
   const taskCards = useMemo<AssignmentCardData[]>(() => {
     const assignmentCards = assignmentSchedules
       .map(schedule => {
-        const assignment = schedule.assignment_uuid ? assignmentMap.get(schedule.assignment_uuid) : null;
-        if (!assignment?.uuid || !schedule.lesson_uuid) return null;
+        if (!schedule.lesson_uuid) return null;
 
-        const submissions = assignmentSubmissionMap.get(assignment.uuid) ?? [];
+        const assignment = schedule.assignment_uuid
+          ? assignmentMapMemo.get(schedule.assignment_uuid)
+          : null;
+
+        const submissions = assignmentSubmissionMap.get(schedule.assignment_uuid ?? '') ?? [];
         const submissionCount = submissions.length;
 
         const gradedCount = submissions.filter(item => item.is_graded || item.graded_at).length;
@@ -298,7 +269,7 @@ export function AssignmentPageClient() {
         const classInfo = classMap.get(schedule.classUuid);
 
         const uniqueCount = new Set(
-          classInfo?.enrollment?.map((e) => e.student_uuid)
+          classInfo?.enrollment?.map((e) => e.student_uuid) ?? []
         ).size;
 
         const totalLearners = classEnrollmentsMap.get(schedule.classUuid)?.length ?? 0;
@@ -321,18 +292,21 @@ export function AssignmentPageClient() {
           courseTitle: lessonInfo?.courseTitle || classInfo?.course?.name || '',
           courseId: classInfo?.course_uuid as string,
           uniqueEnrollmentCount: uniqueCount,
-          availableCount: (totalLearners - uniqueCount),
-          dueLabel: formatDueLabel(schedule.due_at || assignment.due_date),
+          availableCount: totalLearners - uniqueCount,
+          dueLabel: formatDueLabel(schedule.due_at || assignment?.due_date),
           iconTone: status === 'overdue' ? 'amber' : 'blue',
-          id: `assignment_${assignment.uuid}`,
+          id: `assignment_${assignment?.uuid ?? schedule.uuid ?? ''}`,
           instructor: instructorName,
           lesson: lessonInfo?.lessonTitle || 'Lesson',
           lessonUuid: schedule.lesson_uuid,
-          metricValue: `${submissionCount}/${uniqueCount || submissionCount} submitted`,
+          metricValue:
+            submissionCount > 0
+              ? `${submissionCount}/${uniqueCount || submissionCount} submitted`
+              : `${uniqueCount ?? 0} enrolled`,
           status,
           statusLabel: status.charAt(0).toUpperCase() + status.slice(1),
           studentSummary: classInfo?.title || classInfo?.course?.name || 'Class',
-          subtitle: assignment.title || 'Assignment',
+          subtitle: assignment?.title || 'Assignment',
           submissionCount,
           taskType: 'assignment',
         };
@@ -343,7 +317,7 @@ export function AssignmentPageClient() {
         if (metricLabel) {
           assignmentCard.metricLabel = metricLabel;
         }
-        if (assignment.rubric_uuid) {
+        if (assignment?.rubric_uuid) {
           assignmentCard.rubricUuid = assignment.rubric_uuid;
         }
 
@@ -353,10 +327,10 @@ export function AssignmentPageClient() {
 
     const quizCards = quizSchedules
       .map(schedule => {
-        const quiz = schedule.quiz_uuid ? quizMap.get(schedule.quiz_uuid) : null;
-        if (!quiz?.uuid || !schedule.lesson_uuid) return null;
+        if (!schedule.lesson_uuid) return null;
 
-        const attempts = quizAttemptMap.get(quiz.uuid) ?? [];
+        const quiz = schedule.quiz_uuid ? quizMapMemo.get(schedule.quiz_uuid) : null;
+        const attempts = quizAttemptMap.get(schedule.quiz_uuid ?? '') ?? [];
         const submissionCount = attempts.length;
 
         const completedCount = attempts.filter(item => item.is_completed || item.submitted_at).length;
@@ -384,18 +358,21 @@ export function AssignmentPageClient() {
           courseTitle: lessonInfo?.courseTitle || classInfo?.course?.name || 'Course',
           courseId: classInfo?.course_uuid as string,
           uniqueEnrollmentCount: uniqueCount,
-          availableCount: (totalLearners - uniqueCount),
+          availableCount: totalLearners - uniqueCount,
           dueLabel: formatDueLabel(schedule.due_at),
           iconTone: status === 'overdue' ? 'amber' : 'blue',
-          id: `quiz_${quiz.uuid}`,
+          id: `quiz_${quiz?.uuid ?? schedule.uuid ?? ''}`,
           instructor: instructorName,
           lesson: lessonInfo?.lessonTitle || 'Lesson',
           lessonUuid: schedule.lesson_uuid,
-          metricValue: `${submissionCount}/${uniqueCount || submissionCount} attempts`,
+          metricValue:
+            submissionCount > 0
+              ? `${submissionCount}/${uniqueCount || submissionCount} attempts`
+              : `${uniqueCount ?? 0} enrolled`,
           status,
           statusLabel: status.charAt(0).toUpperCase() + status.slice(1),
           studentSummary: classInfo?.title || classInfo?.course?.name || 'Class',
-          subtitle: quiz.title || 'Quiz',
+          subtitle: quiz?.title || 'Quiz',
           submissionCount,
           taskType: 'quiz',
         };
@@ -406,7 +383,7 @@ export function AssignmentPageClient() {
         if (metricLabel) {
           quizCard.metricLabel = metricLabel;
         }
-        if (quiz.rubric_uuid) {
+        if (quiz?.rubric_uuid) {
           quizCard.rubricUuid = quiz.rubric_uuid;
         }
 
@@ -416,7 +393,7 @@ export function AssignmentPageClient() {
 
     return [...assignmentCards, ...quizCards].sort((left, right) => left.lesson.localeCompare(right.lesson));
   }, [
-    assignmentMap,
+    assignmentMapMemo,
     assignmentSchedules,
     assignmentSubmissionMap,
     classMap,
@@ -424,7 +401,7 @@ export function AssignmentPageClient() {
     instructorName,
     lessonMap,
     quizAttemptMap,
-    quizMap,
+    quizMapMemo,
     quizSchedules,
   ]);
 
@@ -444,6 +421,12 @@ export function AssignmentPageClient() {
       return matchesFilter && matchesSearch;
     });
   }, [activeFilter, search, taskCards]);
+
+  const scheduleLoading = assignmentScheduleQueries.some(query => query.isPending) ||
+    quizScheduleQueries.some(query => query.isPending);
+
+  const hasScheduleData = assignmentSchedules.length + quizSchedules.length > 0;
+  const isInitialLoading = loading || (!hasScheduleData && scheduleLoading);
 
   const { data: pendingGradingData } = useQuery({
     ...getPendingGradingOptions({ path: { instructorUuid: instructorUuid as string } }),
@@ -502,22 +485,24 @@ export function AssignmentPageClient() {
 
         <div className='grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]'>
           <section className='min-w-0 space-y-5'>
-            {loading ? (
-              <div className="border-border/60 bg-card rounded-xl border p-5 shadow-sm sm:p-6">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="relative items-center text-center size-10 shrink-0">
-                    <div className="absolute inset-0 rounded-full border-2 border-muted" />
-                    <div className="absolute inset-0 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            {isInitialLoading ? (
+              <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-1'>
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className='rounded-2xl border border-border/70 bg-card p-4 shadow-sm'>
+                    <div className='flex items-center justify-between gap-3'>
+                      <Skeleton className='h-5 w-32 rounded-full' />
+                      <Skeleton className='h-8 w-20 rounded-full' />
+                    </div>
+                    <div className='mt-4 space-y-3'>
+                      <Skeleton className='h-5 w-3/4 rounded-full' />
+                      <Skeleton className='h-4 w-1/2 rounded-full' />
+                      <div className='flex gap-2'>
+                        <Skeleton className='h-10 w-10 rounded-xl' />
+                        <Skeleton className='h-10 flex-1 rounded-xl' />
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex text-center flex-col gap-1 text-sm">
-                    <p className="font-semibold text-foreground">
-                      Loading lesson data...
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Fetching classes, assignments, and submissions
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
             ) : filteredAssignments.length > 0 ? (
               <div className="flex flex-row flex-wrap gap-4">
