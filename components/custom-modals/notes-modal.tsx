@@ -22,6 +22,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { CoursesCatalogCardData, CoursesRecommendationCardData } from '../../app/dashboard/workspace/[domain]/courses/_components/courses-data';
 import { useUserDomain } from '../../context/user-domain-context';
+import { CourseTrainingRequirement } from '../../services/client';
 import { getCourseTrainingRequirementsOptions, getProgramRequirementsOptions } from '../../services/client/@tanstack/react-query.gen';
 import { Checkbox } from '../ui/checkbox';
 
@@ -75,7 +76,7 @@ export default function NotesModal({
   const [currency, setCurrency] = useState('KES');
 
   const { activeDomain } = useUserDomain()
-  const [requirements, setRequirements] = useState<unknown[]>([]);
+  const [requirements, setRequirements] = useState<CourseTrainingRequirement[]>([]);
 
   const resetForm = () => {
     setNotes('');
@@ -119,21 +120,29 @@ export default function NotesModal({
     enabled: selectedApplicationCard?.contentKind === "program"
   })
 
-
+  const normalizeProvider = (provider?: string | undefined | null) => {
+    switch (provider) {
+      case "organisation":
+      case "organisation_user":
+        return "organisation_user";
+      default:
+        return provider;
+    }
+  };
 
   const providerLabels = {
     student: "Student",
     instructor: "Instructor",
-    organisation: "Organisation",
+    organisation_user: "Organisation",
   };
 
   const checkableProviders = useMemo(() => {
-    switch (activeDomain) {
+    switch (normalizeProvider(activeDomain)) {
       case "instructor":
-        return ["organisation", "instructor"];
+        return ["organisation_user", "instructor"];
 
-      case "organisation":
-        return ["organisation", "instructor"];
+      case "organisation_user":
+        return ["organisation_user", "instructor"];
 
       default:
         return [];
@@ -142,11 +151,13 @@ export default function NotesModal({
 
   const groupedRequirements = useMemo(() => {
     return requirements.reduce((acc, req) => {
-      if (!acc[req.provided_by]) {
-        acc[req.provided_by] = [];
+      const provider = normalizeProvider(req?.provided_by as string);
+
+      if (!acc[provider]) {
+        acc[provider] = [];
       }
 
-      acc[req.provided_by].push(req);
+      acc[provider].push(req);
 
       return acc;
     }, {} as Record<string, typeof requirements>);
@@ -157,7 +168,7 @@ export default function NotesModal({
       .filter(
         req =>
           req.is_mandatory &&
-          checkableProviders.includes(req.provided_by)
+          checkableProviders.includes(normalizeProvider(req.provided_by))
       )
       .some(req => !req.checked);
   }, [requirements, checkableProviders]);
@@ -314,7 +325,6 @@ export default function NotesModal({
               </div>
             </>
           )}
-
           <div className="space-y-4">
             <div>
               <h3 className="text-sm font-medium">
@@ -324,80 +334,94 @@ export default function NotesModal({
                 Select the requirements that are currently available.
               </p>
             </div>
-
-            {Object.entries(groupedRequirements).map(([provider, items]) => (
-              <div
-                key={provider}
-                className="rounded-md border p-3"
-              >
-                <div className="mb-2 flex items-center justify-between">
-                  <h4 className="text-sm font-semibold">
-                    {providerLabels[provider as keyof typeof providerLabels]}
-                  </h4>
-                </div>
-
-                <div className="space-y-2">
-                  {items?.map(item => {
-                    const canCheck = checkableProviders.includes(item.provided_by);
-
-                    return (
-                      <div
-                        key={item.uuid}
-                        className="flex items-start gap-3 rounded-md border p-2.5"
-                      >
-                        {canCheck ? (
-                          <Checkbox
-                            className="mt-0.5"
-                            checked={item.checked}
-                            onCheckedChange={(checked) => {
-                              setRequirements(prev =>
-                                prev.map(req =>
-                                  req.uuid === item.uuid
-                                    ? { ...req, checked: checked === true }
-                                    : req
-                                )
-                              );
-                            }}
-                          />
-                        ) : (
-                          <div className="h-4 w-4 mt-0.5" />
-                        )}
-
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium">
-                              {item.name}
-                            </p>
-
-                            {item.is_mandatory && (
-                              <span className="text-destructive text-xs">
-                                Required
-                              </span>
-                            )}
-
-                            <p className="text-muted-foreground text-xs">
-                              ({item.quantity} {item.unit})
-                            </p>
-                          </div>
-
-                          {item.description && (
-                            <p className="text-muted-foreground mt-1 text-xs">
-                              {item.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {hasUncheckedMandatoryRequirements && (
-                  <p className="text-destructive text-xs">
-                    Please confirm all required training requirements before submitting.
-                  </p>
-                )}
+            {Object.keys(groupedRequirements).length === 0 ? (
+              <div className="text-muted-foreground rounded-md border border-dashed p-6 text-center">
+                <p className="text-sm font-medium">
+                  No training requirements have been set.
+                </p>
+                <p className="mt-1 text-xs">
+                  The course creator has not configured any training requirements for this course.
+                </p>
               </div>
-            ))}
+            ) : (
+              Object.entries(groupedRequirements).map(([provider, items]) => (
+                <div
+                  key={provider}
+                  className="rounded-md border p-3"
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="text-sm font-semibold">
+                      {providerLabels[
+                        normalizeProvider(provider) as keyof typeof providerLabels
+                      ]}
+                    </h4>
+                  </div>
+
+                  <div className="space-y-2">
+                    {items?.map(item => {
+                      const canCheck = checkableProviders.includes(
+                        normalizeProvider(item.provided_by)
+                      );
+
+                      return (
+                        <div
+                          key={item.uuid}
+                          className="flex items-start gap-3 rounded-md border p-2.5"
+                        >
+                          {canCheck ? (
+                            <Checkbox
+                              className="mt-0.5"
+                              checked={item.checked}
+                              onCheckedChange={(checked) => {
+                                setRequirements(prev =>
+                                  prev.map(req =>
+                                    req.uuid === item.uuid
+                                      ? { ...req, checked: checked === true }
+                                      : req
+                                  )
+                                );
+                              }}
+                            />
+                          ) : (
+                            <div className="mt-0.5 h-4 w-4" />
+                          )}
+
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium">
+                                {item.name}
+                              </p>
+
+                              {item.is_mandatory && (
+                                <span className="text-destructive text-xs">
+                                  Required
+                                </span>
+                              )}
+
+                              <p className="text-muted-foreground text-xs">
+                                ({item.quantity} {item.unit})
+                              </p>
+                            </div>
+
+                            {item.description && (
+                              <p className="text-muted-foreground mt-1 text-xs">
+                                {item.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {hasUncheckedMandatoryRequirements && (
+                    <p className="text-destructive text-xs">
+                      Please confirm all required training requirements before submitting.
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
 

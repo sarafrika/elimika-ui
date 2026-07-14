@@ -1,10 +1,5 @@
 'use client';
 
-import type { ColumnDef } from '@tanstack/react-table';
-import { useQuery } from '@tanstack/react-query';
-import { BookOpen } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Course } from '@/services/client';
 import {
@@ -12,6 +7,13 @@ import {
   listPendingCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { useQuery } from '@tanstack/react-query';
+import type { ColumnDef } from '@tanstack/react-table';
+import { BookOpen } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
+import HTMLTextPreview from '../../../../../components/editors/html-text-preview';
+import { Button } from '../../../../../components/ui/button';
 import { AdminTable } from '../../_components/ui/AdminTable';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
 
@@ -44,9 +46,7 @@ function CoursesTableView({ courses, isLoading }: { courses: Course[]; isLoading
             <div className='min-w-0 max-w-md'>
               <p className='truncate font-medium text-foreground'>{row.original.name}</p>
               {row.original.description ? (
-                <p className='mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground'>
-                  {row.original.description}
-                </p>
+                <HTMLTextPreview className='mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground' htmlContent={row.original.description} />
               ) : null}
             </div>
           </div>
@@ -75,15 +75,32 @@ function CoursesTableView({ courses, isLoading }: { courses: Course[]; isLoading
           />
         ),
       },
+      // {
+      //   id: 'price',
+      //   accessorFn: row => Number(row.price ?? 0),
+      //   header: 'Price',
+      //   meta: { label: 'Price' },
+      //   cell: ({ row }) => (
+      //     <span className='whitespace-nowrap text-sm text-muted-foreground'>
+      //       {row.original.price != null ? Number(row.original.price).toLocaleString() : '—'}
+      //     </span>
+      //   ),
+      // },
       {
-        id: 'price',
+        id: 'details',
         accessorFn: row => Number(row.price ?? 0),
-        header: 'Price',
-        meta: { label: 'Price' },
+        header: 'Details',
+        meta: { label: 'Details' },
         cell: ({ row }) => (
-          <span className='whitespace-nowrap text-sm text-muted-foreground'>
-            {row.original.price != null ? Number(row.original.price).toLocaleString() : '—'}
-          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              router.push(`/dashboard/manage-courses/${row.original.uuid}`)
+            }
+          >
+            View
+          </Button>
         ),
       },
     ],

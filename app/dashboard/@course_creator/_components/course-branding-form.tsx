@@ -363,7 +363,9 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                           </div>
 
                           <video controls className='w-full max-w-md rounded shadow'>
-                            <source src={videoPreview} type='video/mp4' />
+                            <source
+                              src={toAuthenticatedMediaUrl(videoPreview) || videoPreview}
+                              type='video/mp4' />
                             Your browser does not support the video tag.
                           </video>
                         </div>
@@ -467,11 +469,14 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                           <div className='h-24 w-full max-w-3xl overflow-hidden rounded border'>
                             <Image
-                              src={bannerPreview}
+                              src={toAuthenticatedMediaUrl(bannerPreview) || bannerPreview}
                               alt='Banner Preview'
                               width={1200}
                               height={300}
                               className='h-full w-full object-contain'
+                              unoptimized={isAuthenticatedMediaUrl(
+                                toAuthenticatedMediaUrl(bannerPreview)
+                              )}
                             />
                           </div>
                         </div>
