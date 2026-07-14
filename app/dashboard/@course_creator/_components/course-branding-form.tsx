@@ -134,6 +134,10 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       file: File,
       { key, setPreview, upload, onChange }: UploadOptions
     ) => {
+      if (!editingCourseId) {
+        toast.error('Save the course before uploading media.');
+        return;
+      }
       if (key === 'intro_video' && file.size > MAX_VIDEO_SIZE_BYTES) {
         toast.error(`Video too large. Max size: ${MAX_VIDEO_SIZE_MB}MB.`);
         return;
@@ -346,7 +350,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                           <div className='flex items-center justify-between'>
                             <span className='text-sm font-medium'>Current promotional video</span>
 
-                            {/* <Button
+                            <Button
                               type='button'
                               variant='outline'
                               size='sm'
@@ -355,7 +359,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               }
                             >
                               Replace
-                            </Button> */}
+                            </Button>
                           </div>
 
                           <video controls className='w-full max-w-md rounded shadow'>
@@ -380,8 +384,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             upload: (file, callbacks) =>
                               courseIntroVideoMutation.mutate(
                                 {
-                                  body: { intro_video: file.name },
-                                  path: { uuid: editingCourseId as string }
+                                  body: { intro_video: file },
+                                  path: { uuid: editingCourseId as string },
                                 },
                                 callbacks
                               ),
@@ -449,7 +453,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                           <div className='flex items-center justify-between'>
                             <span className='text-sm font-medium'>Current banner</span>
 
-                            {/* <Button
+                            <Button
                               type='button'
                               variant='outline'
                               size='sm'
@@ -458,7 +462,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               }
                             >
                               Replace
-                            </Button> */}
+                            </Button>
                           </div>
 
                           <div className='h-24 w-full max-w-3xl overflow-hidden rounded border'>
@@ -488,8 +492,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             upload: (file, callbacks) =>
                               courseBannerMutation.mutate(
                                 {
-                                  body: { banner: file.name },
-                                  path: { uuid: editingCourseId as string }
+                                  body: { banner: file },
+                                  path: { uuid: editingCourseId as string },
                                 },
                                 callbacks
                               ),
@@ -550,7 +554,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                           <div className='flex items-center justify-between'>
                             <span className='text-sm font-medium'>Current thumbnail</span>
 
-                            {/* <Button
+                            <Button
                               type='button'
                               variant='outline'
                               size='sm'
@@ -559,7 +563,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               }
                             >
                               Replace
-                            </Button> */}
+                            </Button>
                           </div>
 
                           <div className='h-32 w-48 overflow-hidden rounded border'>
@@ -595,9 +599,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             upload: (file, callbacks) =>
                               courseThumbnailMutation.mutate(
                                 {
-                                  body: { thumbnail: file.name },
-                                  path: { uuid: editingCourseId as string }
-
+                                  body: { thumbnail: file },
+                                  path: { uuid: editingCourseId as string },
                                 },
                                 callbacks
                               ),

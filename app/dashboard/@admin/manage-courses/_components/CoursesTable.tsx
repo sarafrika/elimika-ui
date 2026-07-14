@@ -3,9 +3,14 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Course } from '@/services/client';
-import { getAllCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getAllCoursesOptions,
+  listPendingCoursesOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { AdminTable } from '../../_components/ui/AdminTable';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
@@ -25,6 +30,7 @@ function Thumb({ url, alt }: { url?: string | null; alt: string }) {
 }
 
 function CoursesTableView({ courses, isLoading }: { courses: Course[]; isLoading: boolean }) {
+  const router = useRouter();
   const columns = useMemo<ColumnDef<Course>[]>(
     () => [
       {
@@ -56,6 +62,20 @@ function CoursesTableView({ courses, isLoading }: { courses: Course[]; isLoading
         cell: ({ row }) => <StatusBadge status={row.original.status} />,
       },
       {
+        id: 'approval',
+        accessorFn: row => (row.admin_approved ? 'approved' : 'awaiting'),
+        header: 'Approval',
+        meta: { label: 'Approval' },
+        filterFn: (row, id, value: string[]) =>
+          !value?.length || value.includes(row.getValue(id) as string),
+        cell: ({ row }) => (
+          <StatusBadge
+            tone={row.original.admin_approved ? 'success' : 'warning'}
+            label={row.original.admin_approved ? 'Approved' : 'Awaiting review'}
+          />
+        ),
+      },
+      {
         id: 'price',
         accessorFn: row => Number(row.price ?? 0),
         header: 'Price',
@@ -77,6 +97,9 @@ function CoursesTableView({ courses, isLoading }: { courses: Course[]; isLoading
       isLoading={isLoading}
       searchPlaceholder='Search courses…'
       getRowId={(course, index) => course.uuid ?? String(index)}
+      onRowClick={course => {
+        if (course.uuid) router.push(`/dashboard/manage-courses/${course.uuid}`);
+      }}
       facetedFilters={[
         {
           columnId: 'status',
@@ -88,6 +111,14 @@ function CoursesTableView({ courses, isLoading }: { courses: Course[]; isLoading
             { label: 'Archived', value: 'ARCHIVED' },
           ],
         },
+        {
+          columnId: 'approval',
+          title: 'Approval',
+          options: [
+            { label: 'Approved', value: 'approved' },
+            { label: 'Awaiting review', value: 'awaiting' },
+          ],
+        },
       ]}
       pageSize={12}
       emptyTitle='No courses found'
@@ -97,9 +128,26 @@ function CoursesTableView({ courses, isLoading }: { courses: Course[]; isLoading
 }
 
 export function CoursesTable() {
-  const { data, isLoading } = useQuery(
-    getAllCoursesOptions({ query: { pageable: { page: 0, size: 100 } } })
+  const allQuery = useQuery(getAllCoursesOptions({ query: { pageable: { page: 0, size: 100 } } }));
+  const pendingQuery = useQuery(
+    listPendingCoursesOptions({ query: { pageable: { page: 0, size: 100 } } })
   );
-  const courses = (data?.data?.content ?? []) as Course[];
-  return <CoursesTableView courses={courses} isLoading={isLoading} />;
+
+  const allCourses = (allQuery.data?.data?.content ?? []) as Course[];
+  const pendingCourses = (pendingQuery.data?.data?.content ?? []) as Course[];
+
+  return (
+    <Tabs defaultValue='all' className='space-y-3'>
+      <TabsList>
+        <TabsTrigger value='all'>All courses · {allCourses.length}</TabsTrigger>
+        <TabsTrigger value='pending'>Pending review · {pendingCourses.length}</TabsTrigger>
+      </TabsList>
+      <TabsContent value='all' className='mt-0'>
+        <CoursesTableView courses={allCourses} isLoading={allQuery.isLoading} />
+      </TabsContent>
+      <TabsContent value='pending' className='mt-0'>
+        <CoursesTableView courses={pendingCourses} isLoading={pendingQuery.isLoading} />
+      </TabsContent>
+    </Tabs>
+  );
 }

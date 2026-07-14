@@ -8,7 +8,7 @@ export default function ManageCoursesPage() {
       <div className={adminTheme.pageStack}>
         <AdminPageHeader
           title='Manage courses'
-          description='Browse all courses on the platform and review their publication status.'
+          description='Browse all courses on the platform, open one to review its full content and approve or reject it.'
         />
         <CoursesTable />
       </div>

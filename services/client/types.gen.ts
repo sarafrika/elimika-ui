@@ -606,13 +606,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1149,10 +1149,6 @@ export type ProgramRequirement = {
    */
   readonly is_optional?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.
-   */
-  readonly requirement_category?: string;
-  /**
    * **[READ-ONLY]** Priority level of the requirement based on type and mandatory status.
    */
   readonly requirement_priority?: string;
@@ -1164,6 +1160,10 @@ export type ProgramRequirement = {
    * **[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.
    */
   readonly requirement_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.
+   */
+  readonly requirement_category?: string;
 };
 
 export type ApiResponseProgramRequirement = {
@@ -1218,6 +1218,10 @@ export type ProgramCourse = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted display of the course position within the program sequence.
+   */
+  readonly sequence_display?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the course association based on requirement status.
    */
   readonly association_category?: string;
@@ -1226,17 +1230,13 @@ export type ProgramCourse = {
    */
   readonly has_prerequisites?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the course position within the program sequence.
+   * **[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.
    */
-  readonly sequence_display?: string;
+  readonly curriculum_summary?: string;
   /**
    * **[READ-ONLY]** Requirement status of the course within the program.
    */
   readonly requirement_status?: string;
-  /**
-   * **[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.
-   */
-  readonly curriculum_summary?: string;
 };
 
 export type ApiResponseProgramCourse = {
@@ -1383,13 +1383,13 @@ export type Instructor = {
    */
   readonly is_profile_complete?: boolean;
   /**
-   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
-   */
-  readonly formatted_location?: string | null;
-  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
+   */
+  readonly formatted_location?: string | null;
 };
 
 /**
@@ -1610,6 +1610,10 @@ export type InstructorExperience = {
    */
   readonly is_complete?: boolean;
   /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   */
+  readonly duration_in_months?: number | null;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration of employment.
    */
   readonly formatted_duration?: string | null;
@@ -1634,10 +1638,6 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number | null;
-  /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
-   */
-  readonly duration_in_months?: number | null;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1696,6 +1696,10 @@ export type InstructorEducation = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Complete description combining qualification, school, and year.
+   */
+  readonly full_description?: string;
+  /**
    * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
   readonly is_complete?: boolean;
@@ -1716,10 +1720,6 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
    */
   readonly has_certificate_number?: boolean;
-  /**
-   * **[READ-ONLY]** Complete description combining qualification, school, and year.
-   */
-  readonly full_description?: string;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -2648,6 +2648,10 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
    * **[READ-ONLY]** Human-readable format of the weight percentage.
    */
   readonly weight_display?: string;
@@ -2663,10 +2667,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
-  /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -8571,6 +8571,51 @@ export type PagedDtoAdminUserActivityEvent = {
   links?: PageLinks;
 };
 
+export type ApiResponsePagedDtoContentModerationHistory = {
+  success?: boolean;
+  data?: PagedDtoContentModerationHistory;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Audit record of an admin moderation decision on a course or training program.
+ */
+export type ContentModerationHistory = {
+  /**
+   * **[READ-ONLY]** Unique identifier for the moderation record.
+   */
+  readonly uuid?: string;
+  action?: ActionEnum;
+  /**
+   * **[READ-ONLY]** Reason provided by the moderator.
+   */
+  readonly reason?: string;
+  content_type?: ContentTypeEnum;
+  /**
+   * **[READ-ONLY]** UUID of the moderated course or training program.
+   */
+  readonly content_uuid?: string;
+  /**
+   * **[READ-ONLY]** Internal user UUID of the admin who made the decision.
+   */
+  readonly moderator_uuid?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the decision was recorded.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** Created by identifier (typically the admin email or system).
+   */
+  readonly created_by?: string;
+};
+
+export type PagedDtoContentModerationHistory = {
+  content?: Array<ContentModerationHistory>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
 export type ApiResponseListDomainDto = {
   success?: boolean;
   data?: Array<DomainDto>;
@@ -9893,6 +9938,33 @@ export const EntryTypeEnum = {
  * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
  */
 export type EntryTypeEnum = (typeof EntryTypeEnum)[keyof typeof EntryTypeEnum];
+
+/**
+ * **[READ-ONLY]** Moderation decision taken.
+ */
+export const ActionEnum = {
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  REVOKED: 'revoked',
+} as const;
+
+/**
+ * **[READ-ONLY]** Moderation decision taken.
+ */
+export type ActionEnum = (typeof ActionEnum)[keyof typeof ActionEnum];
+
+/**
+ * **[READ-ONLY]** Type of the moderated content.
+ */
+export const ContentTypeEnum = {
+  COURSE: 'course',
+  TRAINING_PROGRAM: 'training_program',
+} as const;
+
+/**
+ * **[READ-ONLY]** Type of the moderated content.
+ */
+export type ContentTypeEnum = (typeof ContentTypeEnum)[keyof typeof ContentTypeEnum];
 
 export type JsonNodeWritable = unknown;
 
@@ -28474,6 +28546,41 @@ export type GetAdminEligibleUsersResponses = {
 export type GetAdminEligibleUsersResponse =
   GetAdminEligibleUsersResponses[keyof GetAdminEligibleUsersResponses];
 
+export type GetProgramModerationHistoryData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/admin/programs/{uuid}/moderation-history';
+};
+
+export type GetProgramModerationHistoryErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetProgramModerationHistoryError =
+  GetProgramModerationHistoryErrors[keyof GetProgramModerationHistoryErrors];
+
+export type GetProgramModerationHistoryResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoContentModerationHistory;
+};
+
+export type GetProgramModerationHistoryResponse =
+  GetProgramModerationHistoryResponses[keyof GetProgramModerationHistoryResponses];
+
 export type GetProgramApprovalStatusData = {
   body?: never;
   path: {
@@ -28742,6 +28849,41 @@ export type GetDashboardActivityResponses = {
 
 export type GetDashboardActivityResponse =
   GetDashboardActivityResponses[keyof GetDashboardActivityResponses];
+
+export type GetCourseModerationHistoryData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/admin/courses/{uuid}/moderation-history';
+};
+
+export type GetCourseModerationHistoryErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseModerationHistoryError =
+  GetCourseModerationHistoryErrors[keyof GetCourseModerationHistoryErrors];
+
+export type GetCourseModerationHistoryResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoContentModerationHistory;
+};
+
+export type GetCourseModerationHistoryResponse =
+  GetCourseModerationHistoryResponses[keyof GetCourseModerationHistoryResponses];
 
 export type GetCourseApprovalStatusData = {
   body?: never;

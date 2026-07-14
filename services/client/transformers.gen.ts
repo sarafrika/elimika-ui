@@ -398,10 +398,12 @@ import type {
   GetSystemAdminUsersResponse,
   GetOrganizationAdminUsersResponse,
   GetAdminEligibleUsersResponse,
+  GetProgramModerationHistoryResponse,
   ListPendingProgramsResponse,
   GetPendingOrganisationsResponse,
   GetDashboardStatisticsResponse,
   GetDashboardActivityResponse,
+  GetCourseModerationHistoryResponse,
   ListPendingCoursesResponse,
   RemoveItemResponse,
   RemoveAdminDomainResponse,
@@ -6535,6 +6537,39 @@ export const getAdminEligibleUsersResponseTransformer = async (
   return data;
 };
 
+const contentModerationHistorySchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const pagedDtoContentModerationHistorySchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return contentModerationHistorySchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoContentModerationHistorySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoContentModerationHistorySchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getProgramModerationHistoryResponseTransformer = async (
+  data: any
+): Promise<GetProgramModerationHistoryResponse> => {
+  data = apiResponsePagedDtoContentModerationHistorySchemaResponseTransformer(data);
+  return data;
+};
+
 export const listPendingProgramsResponseTransformer = async (
   data: any
 ): Promise<ListPendingProgramsResponse> => {
@@ -6859,6 +6894,13 @@ export const getDashboardActivityResponseTransformer = async (
   data: any
 ): Promise<GetDashboardActivityResponse> => {
   data = apiResponsePagedDtoAdminActivityEventSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getCourseModerationHistoryResponseTransformer = async (
+  data: any
+): Promise<GetCourseModerationHistoryResponse> => {
+  data = apiResponsePagedDtoContentModerationHistorySchemaResponseTransformer(data);
   return data;
 };
 
