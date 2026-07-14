@@ -18,7 +18,12 @@ import {
 } from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { CoursesCatalogCardData, CoursesRecommendationCardData } from '../../app/dashboard/workspace/[domain]/courses/_components/courses-data';
+import { useUserDomain } from '../../context/user-domain-context';
+import { getCourseTrainingRequirementsOptions, getProgramRequirementsOptions } from '../../services/client/@tanstack/react-query.gen';
+import { Checkbox } from '../ui/checkbox';
 
 interface NotesModalProps {
   open: boolean;
@@ -42,6 +47,7 @@ interface NotesModalProps {
   cancelButtonProps?: React.ComponentProps<typeof Button>;
   userType?: 'course_creator' | 'instructor';
   minimum_rate: number | string;
+  selectedApplicationCard: CoursesCatalogCardData | CoursesRecommendationCardData
 }
 
 export default function NotesModal({
@@ -59,6 +65,7 @@ export default function NotesModal({
   cancelButtonProps,
   userType = 'instructor',
   minimum_rate,
+  selectedApplicationCard
 }: NotesModalProps) {
   const [notes, setNotes] = useState('');
   const [privateOnlineRate, setPrivateOnlineRate] = useState<number | ''>(0);
@@ -66,6 +73,9 @@ export default function NotesModal({
   const [groupOnlineRate, setGroupOnlineRate] = useState<number | ''>(0);
   const [groupInpersonRate, setGroupInpersonRate] = useState<number | ''>(0);
   const [currency, setCurrency] = useState('KES');
+
+  const { activeDomain } = useUserDomain()
+  const [requirements, setRequirements] = useState<unknown[]>([]);
 
   const resetForm = () => {
     setNotes('');
@@ -92,6 +102,87 @@ export default function NotesModal({
     setOpen(false);
     resetForm();
   };
+
+
+  const { data: courseTrainingReqResp } = useQuery({
+    ...getCourseTrainingRequirementsOptions({
+      path: { courseUuid: selectedApplicationCard?.id }, query: { pageable: {} }
+    }),
+    enabled: selectedApplicationCard?.contentKind === "course"
+  })
+  // const { data: courseRequirementResp } = useQuery({
+  //   ...getCourseRequirementsOptions({ path: { courseUuid: selectedApplicationCard?.id }, query: { pageable: {} } }),
+  //   enabled: selectedApplicationCard?.contentKind === "course"
+  // })
+  const { data: programRequirementResp } = useQuery({
+    ...getProgramRequirementsOptions({ path: { programUuid: selectedApplicationCard?.id }, query: { pageable: {} } }),
+    enabled: selectedApplicationCard?.contentKind === "program"
+  })
+
+
+
+  const providerLabels = {
+    student: "Student",
+    instructor: "Instructor",
+    organisation: "Organisation",
+  };
+
+  const checkableProviders = useMemo(() => {
+    switch (activeDomain) {
+      case "instructor":
+        return ["organisation", "instructor"];
+
+      case "organisation":
+        return ["organisation", "instructor"];
+
+      default:
+        return [];
+    }
+  }, [activeDomain]);
+
+  const groupedRequirements = useMemo(() => {
+    return requirements.reduce((acc, req) => {
+      if (!acc[req.provided_by]) {
+        acc[req.provided_by] = [];
+      }
+
+      acc[req.provided_by].push(req);
+
+      return acc;
+    }, {} as Record<string, typeof requirements>);
+  }, [requirements]);
+
+  const hasUncheckedMandatoryRequirements = useMemo(() => {
+    return requirements
+      .filter(
+        req =>
+          req.is_mandatory &&
+          checkableProviders.includes(req.provided_by)
+      )
+      .some(req => !req.checked);
+  }, [requirements, checkableProviders]);
+
+
+  useEffect(() => {
+    const data =
+      selectedApplicationCard?.contentKind === "course"
+        ? courseTrainingReqResp?.data?.content
+        : programRequirementResp?.data?.content;
+
+    if (!data) return;
+
+    setRequirements(
+      data.map(req => ({
+        ...req,
+        checked: false,
+      }))
+    );
+  }, [
+    courseTrainingReqResp?.data?.content,
+    programRequirementResp?.data?.content,
+    selectedApplicationCard?.contentKind,
+  ]);
+
 
   return (
     <Sheet
@@ -223,6 +314,91 @@ export default function NotesModal({
               </div>
             </>
           )}
+
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium">
+                Course Training Requirements
+              </h3>
+              <p className="text-muted-foreground text-xs">
+                Select the requirements that are currently available.
+              </p>
+            </div>
+
+            {Object.entries(groupedRequirements).map(([provider, items]) => (
+              <div
+                key={provider}
+                className="rounded-md border p-3"
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <h4 className="text-sm font-semibold">
+                    {providerLabels[provider as keyof typeof providerLabels]}
+                  </h4>
+                </div>
+
+                <div className="space-y-2">
+                  {items?.map(item => {
+                    const canCheck = checkableProviders.includes(item.provided_by);
+
+                    return (
+                      <div
+                        key={item.uuid}
+                        className="flex items-start gap-3 rounded-md border p-2.5"
+                      >
+                        {canCheck ? (
+                          <Checkbox
+                            className="mt-0.5"
+                            checked={item.checked}
+                            onCheckedChange={(checked) => {
+                              setRequirements(prev =>
+                                prev.map(req =>
+                                  req.uuid === item.uuid
+                                    ? { ...req, checked: checked === true }
+                                    : req
+                                )
+                              );
+                            }}
+                          />
+                        ) : (
+                          <div className="h-4 w-4 mt-0.5" />
+                        )}
+
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium">
+                              {item.name}
+                            </p>
+
+                            {item.is_mandatory && (
+                              <span className="text-destructive text-xs">
+                                Required
+                              </span>
+                            )}
+
+                            <p className="text-muted-foreground text-xs">
+                              ({item.quantity} {item.unit})
+                            </p>
+                          </div>
+
+                          {item.description && (
+                            <p className="text-muted-foreground mt-1 text-xs">
+                              {item.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {hasUncheckedMandatoryRequirements && (
+                  <p className="text-destructive text-xs">
+                    Please confirm all required training requirements before submitting.
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Sticky footer */}
@@ -237,8 +413,12 @@ export default function NotesModal({
           </Button>
           <Button
             onClick={handleSave}
-            className='min-w-[100px]'
-            disabled={isLoading || !notes.trim()}
+            className="min-w-[100px]"
+            disabled={
+              isLoading ||
+              !notes.trim() ||
+              hasUncheckedMandatoryRequirements
+            }
             {...saveButtonProps}
           >
             {isLoading ? <Spinner /> : saveText}

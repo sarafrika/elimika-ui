@@ -1492,6 +1492,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           placeholder='Enter your application notes here...'
           isLoading={applyToTrainCourseMut.isPending || applyToTrainProgramMut.isPending}
           minimum_rate={selectedApplicationCard.minimumRate ?? 0}
+          selectedApplicationCard={selectedApplicationCard}
         />
       ) : null}
     </div>
