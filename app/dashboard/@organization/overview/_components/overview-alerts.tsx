@@ -1,58 +1,29 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle2, ClipboardCheck, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
-import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
-import {
-  getPendingOrganisationsOptions,
-  searchTrainingApplicationsOptions,
-} from '@/services/client/@tanstack/react-query.gen';
+import { getPendingOrganisationsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { SectionCard } from '../../_components/ui';
 
-/** Actionable alerts for the control centre — pending applications and (for admins) verifications. */
+/** Actionable alerts for the control centre — (for admins) organisation verifications. */
 export function OverviewAlerts() {
-  const organisation = useOrganisation();
   const profile = useUserProfile();
-  const organisationUuid = organisation?.uuid ?? '';
   const isSystemAdmin = Boolean(profile?.user_domain?.includes('admin'));
-
-  const pendingApplicationsQuery = useQuery({
-    ...searchTrainingApplicationsOptions({
-      query: {
-        searchParams: {
-          course_creator_uuid_eq: organisationUuid,
-          status_eq: 'PENDING',
-        },
-        pageable: { page: 0, size: 1 },
-      },
-    }),
-    enabled: Boolean(organisationUuid),
-  });
 
   const pendingVerificationQuery = useQuery({
     ...getPendingOrganisationsOptions({ query: { pageable: { page: 0, size: 1 } } }),
     enabled: isSystemAdmin,
   });
 
-  const pendingApplications = getTotalFromMetadata(
-    extractPage(pendingApplicationsQuery.data).metadata
-  );
   const pendingVerifications = getTotalFromMetadata(
     extractPage(pendingVerificationQuery.data).metadata
   );
 
   const alerts = [
-    {
-      show: true,
-      count: pendingApplications,
-      label: 'Training applications awaiting review',
-      href: '/dashboard/training-applications',
-      icon: ClipboardCheck,
-    },
     {
       show: isSystemAdmin,
       count: pendingVerifications,

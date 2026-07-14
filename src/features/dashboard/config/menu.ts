@@ -540,6 +540,11 @@ export default {
       url: '/dashboard/courses',
       icon: BookOpen,
     },
+    {
+      title: 'Classes',
+      url: '/dashboard/classes',
+      icon: School,
+    },
     // {
     //   title: 'Course Management',
     //   url: '/dashboard/course-management',
@@ -564,11 +569,6 @@ export default {
       title: 'Job posts',
       url: '/dashboard/opportunities',
       icon: Handshake,
-    },
-    {
-      title: 'Applications',
-      url: '/dashboard/training-applications',
-      icon: ClipboardList,
     },
     {
       title: 'Venues',

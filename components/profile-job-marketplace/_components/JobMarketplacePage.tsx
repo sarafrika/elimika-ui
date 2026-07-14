@@ -75,6 +75,7 @@ import {
   listMyApplicationsOptions,
   listMyApplicationsQueryKey,
   listResourcesOptions,
+  searchTrainingApplicationsOptions,
   updateJobMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
@@ -93,6 +94,7 @@ import type {
 import { ResourceTypeEnum } from '@/services/client/types.gen';
 import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
 import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
+import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
@@ -902,7 +904,7 @@ function JobFormSheet({
   onOpenChange,
   job,
   organisationUuid,
-  courses,
+  approvedCourses,
   programs,
   initialContent,
   onSaved,
@@ -911,7 +913,7 @@ function JobFormSheet({
   onOpenChange: (open: boolean) => void;
   job: ClassMarketplaceJobWithProgram | null;
   organisationUuid: string;
-  courses: Course[];
+  approvedCourses: Course[];
   programs: TrainingProgram[];
   initialContent: JobContentPrefill | null;
   onSaved: () => void;
@@ -921,9 +923,10 @@ function JobFormSheet({
   const [form, setForm] = useState<JobFormState>(() =>
     getInitialFormState(organisationUuid, job, initialContent)
   );
+  // The organisation may only post jobs for courses it has been approved to deliver.
   const availableCourses = useMemo(
-    () => courses.filter(course => course.active === true && course.admin_approved === true),
-    [courses]
+    () => approvedCourses.filter(course => course.active !== false),
+    [approvedCourses]
   );
   const availablePrograms = useMemo(
     () =>
@@ -1711,6 +1714,42 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
 
   const courses = coursesResponse?.data?.content ?? [];
   const programs = programsResponse?.data?.content ?? [];
+
+  // Courses the organisation is APPROVED to deliver (affiliation), resolved from approved
+  // training applications — mirrors the org "create class" form so both pickers show the same set.
+  const approvedTrainingQuery = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: {
+        searchParams: {
+          applicant_uuid_eq: organisationUuid,
+          applicant_type_eq: 'organisation',
+          status_eq: 'approved',
+        },
+        pageable: { page: 0, size: LOOKUP_PAGE_SIZE },
+      },
+    }),
+    enabled: isOrganizationView && Boolean(organisationUuid),
+  });
+  const approvedCourseUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (approvedTrainingQuery.data?.data?.content ?? [])
+            .map(row => row.course_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
+        )
+      ),
+    [approvedTrainingQuery.data]
+  );
+  const { courseMap: approvedCourseMap } = useCoursesByIds(approvedCourseUuids);
+  const approvedCourses = useMemo(
+    () =>
+      approvedCourseUuids
+        .map(uuid => approvedCourseMap[uuid])
+        .filter((course): course is Course => Boolean(course)),
+    [approvedCourseUuids, approvedCourseMap]
+  );
+
   const organisations = extractPage<Organisation>(organisationsResponse).items;
   const myApplications = myApplicationsQuery.data?.data?.content ?? [];
   const organisationOptions = useMemo(() => {
@@ -2272,7 +2311,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
             }}
             job={editingJob}
             organisationUuid={organisationUuid}
-            courses={courses}
+            approvedCourses={approvedCourses}
             programs={programs}
             initialContent={initialContent}
             onSaved={() => {
