@@ -571,7 +571,7 @@ export default {
       icon: Handshake,
     },
     {
-      title: 'Venues',
+      title: 'Training Branches',
       url: '/dashboard/branches',
       icon: Building,
     },

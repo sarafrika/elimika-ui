@@ -11,18 +11,55 @@ import {
   CardTitle,
 } from '../../../../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../../components/ui/tabs';
-import { type TrainingBranch } from '../../../../../services/client';
-import Classroms from './classrooms';
+import { ResourceTypeEnum, type TrainingBranch } from '../../../../../services/client';
+import BranchResources from './branch-resources';
 import Courses from './courses';
 
 export default function TabSection({ branch }: { branch: TrainingBranch }) {
   const [courseViewType, setCourseViewType] = useState<'list' | 'grid'>('list');
+  const organisationUuid = branch.organisation_uuid ?? '';
+  const branchUuid = branch.uuid ?? '';
+
   return (
-    <Tabs defaultValue='courses' className='mb-20'>
+    <Tabs defaultValue='venues' className='mb-20'>
       <TabsList>
+        <TabsTrigger value='venues'>Venues (Classrooms)</TabsTrigger>
+        <TabsTrigger value='resources'>Resources</TabsTrigger>
         <TabsTrigger value='courses'>Courses</TabsTrigger>
-        <TabsTrigger value='classrooms'>Classrooms</TabsTrigger>
       </TabsList>
+
+      <TabsContent value='venues'>
+        <Card>
+          <CardHeader>
+            <CardTitle>Venues (Classrooms)</CardTitle>
+            <CardDescription>Classrooms and labs available at this branch</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BranchResources
+              organisationUuid={organisationUuid}
+              branchUuid={branchUuid}
+              resourceType={ResourceTypeEnum.VENUE}
+            />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value='resources'>
+        <Card>
+          <CardHeader>
+            <CardTitle>Resources</CardTitle>
+            <CardDescription>Shared equipment available at this branch</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BranchResources
+              organisationUuid={organisationUuid}
+              branchUuid={branchUuid}
+              resourceType={ResourceTypeEnum.EQUIPMENT_POOL}
+            />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
       <TabsContent value='courses'>
         <Card>
           <CardHeader>
@@ -42,17 +79,6 @@ export default function TabSection({ branch }: { branch: TrainingBranch }) {
           </CardHeader>
           <CardContent>
             <Courses viewType={courseViewType} user_uuid={branch.organisation_uuid} />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value='classrooms'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Classrooms</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Classroms />
           </CardContent>
         </Card>
       </TabsContent>

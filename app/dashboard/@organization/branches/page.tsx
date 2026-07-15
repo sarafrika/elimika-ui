@@ -53,6 +53,7 @@ import {
   Trash2,
   Users,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -85,12 +86,18 @@ function createBranchColumns(
       accessorKey: 'branch_name',
       header: 'Branch',
       cell: ({ row }) => (
-        <div className='flex items-center gap-3'>
+        <Link
+          href={`/dashboard/branches/${row.original.uuid}`}
+          onClick={e => e.stopPropagation()}
+          className='group flex items-center gap-3'
+        >
           <div className='bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
             <Building2 className='text-primary h-5 w-5' />
           </div>
-          <div className='text-foreground font-semibold'>{row.original.branch_name}</div>
-        </div>
+          <div className='text-foreground font-semibold group-hover:underline'>
+            {row.original.branch_name}
+          </div>
+        </Link>
       ),
     },
     {
