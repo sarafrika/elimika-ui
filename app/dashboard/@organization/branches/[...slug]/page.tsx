@@ -1,16 +1,11 @@
-import { ArrowLeft, Book, LineChart, MapPin, UserIcon, UsersIcon } from 'lucide-react';
+import { ArrowLeft, MapPin, UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '../../../../../components/ui/badge';
 import { Calendar } from '../../../../../components/ui/calendar';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../../../../../components/ui/card';
+import { Card, CardContent } from '../../../../../components/ui/card';
 import { Separator } from '../../../../../components/ui/separator';
 import { getTrainingBranchByUuid, type TrainingBranch } from '../../../../../services/client';
+import BranchOverviewStats from '../_components/branch-overview-stats';
 import TabSection from '../_components/tabsection';
 import type { Action } from './utils';
 
@@ -80,30 +75,10 @@ export default async function ViewBranch({
               </CardContent>
             </Card>
 
-            <Card className='flex-grow'>
-              <CardHeader>
-                <CardTitle>Total Students</CardTitle>
-                <CardDescription>Number of students enrolled</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <h1 className='flex gap-3 text-3xl'>
-                  <UsersIcon size={32} /> 150k
-                  <LineChart className='text-muted-foreground ms-auto' />
-                </h1>
-              </CardContent>
-            </Card>
-
-            <Card className='flex-grow'>
-              <CardHeader>
-                <CardTitle>Total Courses</CardTitle>
-                <CardDescription>Number of courses offered</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <h1 className='flex gap-3 text-3xl'>
-                  <Book size={32} /> 100+
-                </h1>
-              </CardContent>
-            </Card>
+            <BranchOverviewStats
+              organisationUuid={branch.organisation_uuid ?? ''}
+              branchUuid={branch.uuid ?? ''}
+            />
           </div>
 
           <TabSection {...{ branch }} />
