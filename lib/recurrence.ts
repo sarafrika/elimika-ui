@@ -41,9 +41,93 @@ export interface RecurrenceValue {
   interval: number;
   /** Selected weekdays (WEEKLY only). */
   daysOfWeek: RecurrenceDay[];
+  /** WEEKLY only: when true, each selected weekday carries its own start/end time. */
+  perDayTimes?: boolean;
+  /** WEEKLY per-day mode: HH:mm times keyed by weekday. */
+  dayTimes?: Partial<Record<RecurrenceDay, { start: string; end: string }>>;
   /** Day of month to repeat on (MONTHLY only), 1-31. */
   dayOfMonth?: number;
   end: { mode: RecurrenceEndMode; date?: string; count?: number };
+}
+
+/** One resolved weekly session slot when each weekday has its own time. */
+export interface WeeklyDaySpec {
+  day: RecurrenceDay;
+  /** yyyy-MM-dd of the first occurrence, aligned to `day` on/after the base date. */
+  date: string;
+  /** HH:mm */
+  startTime: string;
+  /** HH:mm */
+  endTime: string;
+  /** Single-weekday WEEKLY recurrence rule for this slot. */
+  recurrence: ClassRecurrence;
+}
+
+const DAY_TO_JS_INDEX: Record<RecurrenceDay, number> = {
+  SUNDAY: 0,
+  MONDAY: 1,
+  TUESDAY: 2,
+  WEDNESDAY: 3,
+  THURSDAY: 4,
+  FRIDAY: 5,
+  SATURDAY: 6,
+};
+
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function applyEndCondition(recurrence: ClassRecurrence, value: RecurrenceValue): ClassRecurrence {
+  if (value.end.mode === 'on' && value.end.date) {
+    return { ...recurrence, end_date: new Date(value.end.date) };
+  }
+  if (value.end.mode === 'after' && value.end.count) {
+    return { ...recurrence, occurrence_count: Math.max(1, Math.trunc(value.end.count)) };
+  }
+  return recurrence;
+}
+
+/**
+ * Expand a WEEKLY value with per-day times into one slot per selected weekday. Each slot's date is
+ * the first occurrence of that weekday on/after `baseDateISO`; its time falls back to the supplied
+ * defaults when the weekday has no override. Returns [] for non-weekly or non-per-day values.
+ */
+export function buildWeeklyDaySpecs(
+  value: RecurrenceValue,
+  baseDateISO: string,
+  defaultStart: string,
+  defaultEnd: string
+): WeeklyDaySpec[] {
+  if (value.frequency !== 'WEEKLY' || !value.perDayTimes) return [];
+  const base = new Date(baseDateISO);
+  if (Number.isNaN(base.getTime())) return [];
+
+  const ordered = RECURRENCE_WEEK_DAYS.filter(day => value.daysOfWeek.includes(day));
+  return ordered.map(day => {
+    const cursor = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+    while (cursor.getDay() !== DAY_TO_JS_INDEX[day]) {
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    const override = value.dayTimes?.[day];
+    const recurrence = applyEndCondition(
+      {
+        recurrence_type: RecurrenceTypeEnum.WEEKLY,
+        interval_value: Math.max(1, Math.trunc(value.interval) || 1),
+        days_of_week: day,
+      },
+      value
+    );
+    return {
+      day,
+      date: formatLocalDate(cursor),
+      startTime: override?.start || defaultStart,
+      endTime: override?.end || defaultEnd,
+      recurrence,
+    };
+  });
 }
 
 const UNIT_LABEL: Record<Exclude<RecurrenceFrequency, 'NONE'>, string> = {
@@ -72,6 +156,8 @@ export function defaultRecurrenceValue(startISO?: string): RecurrenceValue {
     frequency: 'NONE',
     interval: 1,
     daysOfWeek: [],
+    perDayTimes: false,
+    dayTimes: {},
     dayOfMonth,
     end: { mode: 'never' },
   };

@@ -23,12 +23,15 @@ import { type ConflictItem, parseConflictError } from '@/components/resourcing/c
 import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
 import { extractPage } from '@/lib/api-helpers';
 import {
+  buildWeeklyDaySpecs,
   defaultRecurrenceValue,
   estimateOccurrences,
   type RecurrenceValue,
   toClassRecurrence,
 } from '@/lib/recurrence';
 import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
+import { formDataBodySerializer } from '@/services/client/client';
+import { client } from '@/services/client/client.gen';
 import type {
   ClassMarketplaceJobRequest,
   ClassMarketplaceJobResource,
@@ -88,6 +91,17 @@ const initialState: FormState = {
   equipment: [],
 };
 
+/** Upload a thumbnail to a freshly-created class job. Mirrors the generated multipart SDK calls. */
+async function uploadJobThumbnail(jobUuid: string, file: File): Promise<void> {
+  await client.post({
+    url: '/api/v1/classes/jobs/{uuid}/thumbnail',
+    path: { uuid: jobUuid },
+    body: { thumbnail: file },
+    ...formDataBodySerializer,
+    headers: { 'Content-Type': null },
+  });
+}
+
 const num = (value: string): number | undefined => {
   const trimmed = value.trim();
   if (!trimmed) return undefined;
@@ -101,6 +115,7 @@ export default function OrganisationCreateClassPage() {
   const organisationUuid = organisation?.uuid ?? '';
 
   const [form, setForm] = useState<FormState>(initialState);
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
   const update = (patch: Partial<FormState>) => setForm(current => ({ ...current, ...patch }));
 
   // Offerings the organisation has been APPROVED to train (backend also enforces this on submit).
@@ -197,7 +212,17 @@ export default function OrganisationCreateClassPage() {
 
   const createClass = useMutation({
     ...createJobMutation(),
-    onSuccess: () => {
+    onSuccess: async response => {
+      const jobUuid = (response as { data?: { uuid?: string } })?.data?.uuid;
+      if (thumbnail && jobUuid) {
+        try {
+          await uploadJobThumbnail(jobUuid, thumbnail);
+        } catch {
+          toast.warning('Class posted, but the thumbnail failed to upload. You can add it later.');
+          router.push('/dashboard/classes');
+          return;
+        }
+      }
       toast.success('Class posted. Instructors can now apply.');
       router.push('/dashboard/classes');
     },
@@ -247,6 +272,29 @@ export default function OrganisationCreateClassPage() {
     const start = new Date(form.startTime);
     const end = new Date(form.endTime);
     const recurrence = toClassRecurrence(form.recurrence);
+    // Weekly with per-day times → one session template per weekday (each with its own hours).
+    const perDaySpecs = buildWeeklyDaySpecs(
+      form.recurrence,
+      form.startTime.slice(0, 10),
+      form.startTime.slice(11, 16),
+      form.endTime.slice(11, 16)
+    );
+    const sessionTemplates =
+      perDaySpecs.length > 0
+        ? perDaySpecs.map(spec => ({
+            start_time: new Date(`${spec.date}T${spec.startTime}`),
+            end_time: new Date(`${spec.date}T${spec.endTime}`),
+            recurrence: spec.recurrence,
+            conflict_resolution: 'FAIL' as const,
+          }))
+        : [
+            {
+              start_time: start,
+              end_time: end,
+              conflict_resolution: 'FAIL' as const,
+              ...(recurrence ? { recurrence } : {}),
+            },
+          ];
     const [offeringKind, offeringUuid] = form.offering.split(':');
 
     const resources: ClassMarketplaceJobResource[] = [
@@ -275,14 +323,7 @@ export default function OrganisationCreateClassPage() {
       max_participants: num(form.maxParticipants),
       allow_waitlist: form.allowWaitlist,
       training_fee: feePerSession,
-      session_templates: [
-        {
-          start_time: start,
-          end_time: end,
-          conflict_resolution: 'FAIL',
-          ...(recurrence ? { recurrence } : {}),
-        },
-      ],
+      session_templates: sessionTemplates,
       ...(resources.length > 0 ? { resources } : {}),
     };
 
@@ -361,6 +402,19 @@ export default function OrganisationCreateClassPage() {
                 onChange={event => update({ description: event.target.value })}
                 placeholder='What instructors and students should know about this class'
               />
+            </div>
+            <div className='space-y-2 sm:col-span-2'>
+              <Label>Thumbnail</Label>
+              <Input
+                type='file'
+                accept='image/*'
+                onChange={event => setThumbnail(event.target.files?.[0] ?? null)}
+              />
+              <p className='text-xs text-muted-foreground'>
+                {thumbnail
+                  ? `Selected: ${thumbnail.name}`
+                  : 'Optional cover image shown on the class listing (JPG, PNG, GIF, WebP — max 5MB).'}
+              </p>
             </div>
             <div className='space-y-2'>
               <Label>Visibility</Label>
@@ -508,6 +562,9 @@ export default function OrganisationCreateClassPage() {
                 value={form.recurrence}
                 onChange={recurrence => update({ recurrence })}
                 startDate={form.startTime}
+                allowPerDayTimes
+                defaultStartTime={form.startTime.slice(11, 16)}
+                defaultEndTime={form.endTime.slice(11, 16)}
               />
             </div>
             <div className='space-y-2'>

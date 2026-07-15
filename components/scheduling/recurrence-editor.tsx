@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -42,6 +43,13 @@ export interface RecurrenceEditorProps {
   startDate?: string;
   /** When false, hides the "Does not repeat" option (e.g. for a recurrence-pattern editor). */
   allowNone?: boolean;
+  /** When false, hides the "Ends" section (e.g. when a separate end date already bounds the series). */
+  showEnd?: boolean;
+  /** When true, offers a "different time per day" option in Weekly mode. */
+  allowPerDayTimes?: boolean;
+  /** HH:mm defaults used to prefill per-day time inputs. */
+  defaultStartTime?: string;
+  defaultEndTime?: string;
   className?: string;
   /** Unique prefix so multiple editors on one page keep distinct input ids. */
   idPrefix?: string;
@@ -56,9 +64,23 @@ export function RecurrenceEditor({
   onChange,
   startDate,
   allowNone = true,
+  showEnd = true,
+  allowPerDayTimes = false,
+  defaultStartTime = '',
+  defaultEndTime = '',
   className,
   idPrefix = 'recurrence',
 }: RecurrenceEditorProps) {
+  const setDayTime = (day: RecurrenceDay, patch: { start?: string; end?: string }) => {
+    const existing = value.dayTimes?.[day] ?? {
+      start: defaultStartTime,
+      end: defaultEndTime,
+    };
+    onChange({
+      ...value,
+      dayTimes: { ...value.dayTimes, [day]: { ...existing, ...patch } },
+    });
+  };
   const frequencyOptions = allowNone
     ? FREQUENCY_OPTIONS
     : FREQUENCY_OPTIONS.filter(option => option.value !== 'NONE');
@@ -141,6 +163,48 @@ export function RecurrenceEditor({
                   );
                 })}
               </div>
+
+              {allowPerDayTimes ? (
+                <div className='space-y-2 pt-1'>
+                  <label className='flex cursor-pointer items-center gap-2 text-sm'>
+                    <Checkbox
+                      checked={Boolean(value.perDayTimes)}
+                      onCheckedChange={checked =>
+                        onChange({ ...value, perDayTimes: checked === true })
+                      }
+                    />
+                    Different time for each day
+                  </label>
+
+                  {value.perDayTimes && value.daysOfWeek.length > 0 ? (
+                    <div className='space-y-2'>
+                      {RECURRENCE_WEEK_DAYS.filter(day => value.daysOfWeek.includes(day)).map(day => {
+                        const times = value.dayTimes?.[day];
+                        return (
+                          <div key={day} className='flex items-center gap-2'>
+                            <span className='w-10 shrink-0 text-sm text-muted-foreground'>
+                              {RECURRENCE_DAY_SHORT[day]}
+                            </span>
+                            <Input
+                              type='time'
+                              className='w-32'
+                              value={times?.start ?? defaultStartTime}
+                              onChange={event => setDayTime(day, { start: event.target.value })}
+                            />
+                            <span className='text-sm text-muted-foreground'>to</span>
+                            <Input
+                              type='time'
+                              className='w-32'
+                              value={times?.end ?? defaultEndTime}
+                              onChange={event => setDayTime(day, { end: event.target.value })}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -169,6 +233,7 @@ export function RecurrenceEditor({
             </div>
           ) : null}
 
+          {showEnd ? (
           <div className='space-y-2'>
             <Label>Ends</Label>
             <RadioGroup
@@ -216,6 +281,7 @@ export function RecurrenceEditor({
               </div>
             </RadioGroup>
           </div>
+          ) : null}
         </div>
       ) : null}
 
