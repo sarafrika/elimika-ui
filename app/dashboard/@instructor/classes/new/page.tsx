@@ -37,6 +37,7 @@ import { Button } from '../../../../../components/ui/button';
 import { Calendar } from '../../../../../components/ui/calendar';
 import { Checkbox } from '../../../../../components/ui/checkbox';
 import { useUserProfile } from '../../../../../context/profile-context';
+import { useCoursesByIds, useProgramsByIds } from '../../../../../hooks/use-batched-lookups';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
   normalizeLocationType,
@@ -46,15 +47,13 @@ import {
 import {
   createClassDefinitionMultipartMutation,
   getAllClassDefinitionsQueryKey,
-  getAllCoursesOptions,
-  getAllTrainingProgramsOptions,
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
   updateClassDefinitionMutation,
   uploadClassPromotionalVideoMutation,
-  uploadClassThumbnailMutation,
+  uploadClassThumbnailMutation
 } from '../../../../../services/client/@tanstack/react-query.gen';
 import type { CreateClassDefinitionMultipartData } from '../../../../../services/client/types.gen';
 import {
@@ -113,7 +112,7 @@ type CatalogRateCard = {
 
 type CatalogItem = {
   classLimit: number;
-  label: string;
+  label: string | undefined;
   rateCard?: CatalogRateCard;
   source: CatalogSource;
   uuid: string;
@@ -530,59 +529,87 @@ const ClassCreationPage = () => {
     }));
   };
 
-  const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
   const { data: appliedCourses } = useQuery({
     ...searchTrainingApplicationsOptions({
-      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
+      query: {
+        pageable: {},
+        searchParams: { applicant_uuid_eq: instructor?.uuid as string },
+      },
     }),
     enabled: !!instructor?.uuid,
   });
-  const approvedCourses = useMemo(() => {
-    if (!courses?.data?.content || !appliedCourses?.data?.content) return [];
-    const approvedApplicationMap = new Map(
-      appliedCourses.data.content
-        .filter(app => app.status === 'approved')
-        .map(app => [app.course_uuid, app])
-    );
-    return courses.data.content
-      .filter(course => approvedApplicationMap.has(course.uuid) && course.admin_approved)
-      .map(course => ({ ...course, application: approvedApplicationMap.get(course.uuid) }));
-  }, [courses, appliedCourses]);
 
-  const { data: programs } = useQuery(getAllTrainingProgramsOptions({ query: { pageable: {} } }));
+  const courseIds =
+    appliedCourses?.data?.content?.map(app => app.course_uuid) ?? [];
+  const { courseMap } = useCoursesByIds(courseIds as string[]);
+
+  const approvedCourses = useMemo(() => {
+    if (!appliedCourses?.data?.content || !courseMap) return [];
+
+    return appliedCourses.data.content
+      .filter(app => app.status === "approved")
+      .map(app => {
+        const course = courseMap[app?.course_uuid as string];
+
+        if (!course || !course.admin_approved) return null;
+
+        return {
+          ...course,
+          application: app,
+        };
+      })
+      .filter(Boolean);
+  }, [appliedCourses, courseMap]);
+
   const { data: appliedPrograms } = useQuery({
     ...searchProgramTrainingApplicationsOptions({
-      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
+      query: {
+        pageable: {},
+        searchParams: { applicant_uuid_eq: instructor?.uuid as string },
+      },
     }),
     enabled: !!instructor?.uuid,
   });
+
+  const programIds =
+    appliedPrograms?.data?.content?.map(app => app.program_uuid) ?? [];
+
+  const { programMap } = useProgramsByIds(programIds as string[]);
+
   const approvedPrograms = useMemo(() => {
-    if (!programs?.data?.content || !appliedPrograms?.data?.content) return [];
-    const approvedApplicationMap = new Map(
-      appliedPrograms.data.content
-        .filter(app => app.status === 'approved')
-        .map(app => [app.program_uuid, app])
-    );
-    return programs.data.content
-      .filter(program => approvedApplicationMap.has(program.uuid) && program.admin_approved)
-      .map(program => ({ ...program, application: approvedApplicationMap.get(program.uuid) }));
-  }, [programs, appliedPrograms]);
+    if (!appliedPrograms?.data?.content || !programMap) return [];
+
+    return appliedPrograms.data.content
+      .filter(app => app.status === "approved")
+      .map(app => {
+        const program = programMap[app.program_uuid as string]; // or programMap.get(app.program_uuid)
+
+        if (!program || !program.admin_approved) return null;
+
+        return {
+          ...program,
+          application: app,
+        };
+      })
+      .filter(Boolean);
+  }, [appliedPrograms, programMap]);
 
   const catalogItems = useMemo<CatalogItem[]>(() => {
-    const courseItems: CatalogItem[] = approvedCourses.map(course => ({
-      label: course.name,
+    const courseItems: CatalogItem[] = approvedCourses.map((course) => ({
+      label: course?.name,
       source: 'course',
-      uuid: String(course.uuid),
-      classLimit: course.class_limit ?? 0,
+      uuid: String(course?.uuid),
+      classLimit: course?.class_limit ?? 0,
       thumbnailUrl: course?.thumbnail_url || 'NF',
-      rateCard: course.application?.rate_card as CatalogRateCard | undefined,
+      rateCard: course?.application?.rate_card as CatalogRateCard | undefined,
     }));
     const programItems: CatalogItem[] = approvedPrograms.map(program => ({
-      label: program.title,
+      label: program?.title,
       source: 'program',
-      uuid: String(program.uuid),
-      classLimit: program.class_limit ?? 0,
-      rateCard: program.application?.rate_card as CatalogRateCard | undefined,
+      uuid: String(program?.uuid),
+      classLimit: program?.class_limit ?? 0,
+      rateCard: program?.application?.rate_card as CatalogRateCard | undefined,
+      thumbnailUrl: ''
     }));
     return [...courseItems, ...programItems];
   }, [approvedCourses, approvedPrograms]);

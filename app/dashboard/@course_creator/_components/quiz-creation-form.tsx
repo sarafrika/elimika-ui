@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Check, Plus, PlusCircle, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Check, FileText, Plus, PlusCircle, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -96,6 +96,8 @@ export type QuizCreationFormProps = {
   deleteQuizForLesson: (quizUuid: string) => Promise<void>;
   addQuizQuestion: (payload: unknown) => Promise<unknown>;
   addQuestionOption: (payload: unknown) => Promise<unknown>;
+
+  openBulkUploadSheet: () => void;
 
   isPending: boolean;
 };
@@ -386,6 +388,7 @@ export const QuizCreationForm = ({
   updateQuizForLesson,
   deleteQuizForLesson,
   isPending,
+  openBulkUploadSheet
 }: QuizCreationFormProps) => {
   const creator = useCourseCreator();
 
@@ -808,17 +811,28 @@ export const QuizCreationForm = ({
             <div className='mt-8 border-t pt-6'>
               <div className='mb-6'>
                 <h4 className='text-foreground mb-3 text-lg font-semibold'>Questions</h4>
-                <div className='flex flex-wrap gap-2'>
-                  {QUESTION_TYPES.map(type => (
-                    <Button
-                      key={type.value}
-                      size='sm'
-                      variant='outline'
-                      onClick={() => addQuestion(type.value)}
-                    >
-                      + {type.label}
-                    </Button>
-                  ))}
+
+                <div className='flex flex-wrap flex-row w-full items-center justify-between' >
+                  <div className='flex flex-wrap gap-2'>
+                    {QUESTION_TYPES.map(type => (
+                      <Button
+                        key={type.value}
+                        size='sm'
+                        variant='outline'
+                        onClick={() => addQuestion(type.value)}
+                      >
+                        + {type.label}
+                      </Button>
+                    ))}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    onClick={openBulkUploadSheet}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Paste Bulk Questions
+                  </Button>
                 </div>
               </div>
 

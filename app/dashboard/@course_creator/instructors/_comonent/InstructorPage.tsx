@@ -43,9 +43,7 @@ import {
   getOrganisationByUuidOptions,
   getTrainingProgramByUuidOptions,
   getUserByUuidOptions,
-  searchProgramTrainingApplicationsOptions,
   searchProgramTrainingApplicationsQueryKey,
-  searchTrainingApplicationsOptions,
   searchTrainingApplicationsQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -88,6 +86,7 @@ import {
   DialogTitle,
 } from '../../../../../components/ui/dialog';
 import { Textarea } from '../../../../../components/ui/textarea';
+import { useProgramTrainingApplicationsByCourseCreatorIds, useTrainingApplicationsByCourseCreatorIds } from '../../../../../hooks/use-batched-lookups';
 
 type TrainingApplication = CourseTrainingApplication | ProgramTrainingApplication;
 type ApplicantType = 'instructor' | 'organisation';
@@ -1015,7 +1014,7 @@ const InstructorsApplicationPage = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [applicantTypeFilter, setApplicantTypeFilter] = useState('');
   const [page, setPage] = useState(0);
-  const pageSize = 12;
+  const pageSize = 20;
   const [searchValue, setSearchValue] = useState('');
 
   // Selected applicant
@@ -1027,24 +1026,13 @@ const InstructorsApplicationPage = () => {
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revoke'>('approve');
 
   // ── Data fetching ──────────────────────────────────────────────────────────
-
-  const applicationsQuery = useQuery({
-    ...searchTrainingApplicationsOptions({
-      query: {
-        searchParams: { course_creator_uuid: courseCreator?.uuid as string },
-        pageable: { page, size: pageSize },
-      },
-    }),
-  });
-  const applicationsPage = extractPage<CourseTrainingApplication>(applicationsQuery.data);
+  const { items: applicationsQuery } = useTrainingApplicationsByCourseCreatorIds([courseCreator?.uuid] as string[]);
+  const applicationsPage = extractPage<CourseTrainingApplication>(applicationsQuery);
   const allApplications = applicationsPage.items;
 
-  const programApplicationsQuery = useQuery({
-    ...searchProgramTrainingApplicationsOptions({
-      query: { searchParams: {}, pageable: { page, size: pageSize } },
-    }),
-  });
-  const programApplicationsPage = extractPage<ProgramTrainingApplication>(programApplicationsQuery.data);
+
+  const { items: programApplicationsQuery } = useProgramTrainingApplicationsByCourseCreatorIds([]);
+  const programApplicationsPage = extractPage<ProgramTrainingApplication>(programApplicationsQuery);
   const allProgramApplications = programApplicationsPage.items;
 
   const instructorUuids = useMemo(() => {
@@ -1281,6 +1269,7 @@ const InstructorsApplicationPage = () => {
     return items;
   }, [allApplications, selectedApplicantUuid, statusFilter, applicantTypeFilter, searchValue, applicantNameMap]);
 
+
   const filteredProgramApplications = useMemo(() => {
     let items = allProgramApplications;
     if (selectedApplicantUuid) items = items.filter(app => app.applicant_uuid === selectedApplicantUuid);
@@ -1347,7 +1336,7 @@ const InstructorsApplicationPage = () => {
       {
         onSuccess: () => {
           toast.success(`Application ${reviewAction}d successfully`);
-          qc.invalidateQueries({ queryKey: searchTrainingApplicationsQueryKey({ query: { searchParams: { course_creator_uuid: courseCreator?.uuid as string }, pageable: { page, size: pageSize } } }) });
+          qc.invalidateQueries({ queryKey: searchTrainingApplicationsQueryKey({ query: { searchParams: { course_creator_uuid: courseCreator?.uuid as string }, pageable: {} } }) });
           setReviewDialogOpen(false);
           setSelectedApplication(null);
         },
@@ -1371,7 +1360,7 @@ const InstructorsApplicationPage = () => {
       {
         onSuccess: () => {
           toast.success(`Application ${reviewAction}d successfully`);
-          qc.invalidateQueries({ queryKey: searchProgramTrainingApplicationsQueryKey({ query: { searchParams: {}, pageable: { page, size: pageSize } } }) });
+          qc.invalidateQueries({ queryKey: searchProgramTrainingApplicationsQueryKey({ query: { searchParams: {}, pageable: {} } }) });
           setReviewDialogOpen(false);
           setSelectedApplication(null);
         },
@@ -1450,7 +1439,7 @@ const InstructorsApplicationPage = () => {
 
   function normalizeApplicant(applicant: ApplicantRecord): NormalizedApplicant {
     if (applicant.type === 'instructor') {
-      const data = applicant.data?.data as InstructorProfile | undefined;
+      const data = applicant?.data?.data as InstructorProfile | undefined;
 
       return {
         uuid: applicant.uuid,

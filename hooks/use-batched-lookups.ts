@@ -1,23 +1,27 @@
 'use client';
 
 import { STALE_TIMES } from '@/lib/query-client';
-import type {
-  Assignment,
-  Course,
-  Instructor,
-  Quiz,
-  SearchResponse,
-  Student,
-  TrainingProgram,
-  User,
+import {
+  CourseTrainingApplication,
+  ProgramTrainingApplication,
+  type Assignment,
+  type Course,
+  type Instructor,
+  type Quiz,
+  type SearchResponse,
+  type Student,
+  type TrainingProgram,
+  type User
 } from '@/services/client';
 import {
   searchAssignmentsOptions,
   searchCoursesOptions,
   searchInstructorsOptions,
   searchOptions,
+  searchProgramTrainingApplicationsOptions,
   searchQuizzesOptions,
   searchStudentsOptions,
+  searchTrainingApplicationsOptions,
   searchTrainingProgramsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries } from '@tanstack/react-query';
@@ -90,6 +94,47 @@ function useSearchByIds<T extends { uuid?: string }>(
   });
 }
 
+function useSearchByField<T>(
+  values: string[],
+  buildSearchParams: (chunk: string[]) => Record<string, string>,
+  optionsFactory: SearchOptionsFactory,
+  staleTime = STALE_TIMES.entity,
+  pageSize = CHUNK_SIZE
+) {
+  const uniqueValues = useMemo(
+    () => Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [values]
+  );
+
+  const valueChunks = useMemo(
+    () => (uniqueValues.length ? chunk(uniqueValues, CHUNK_SIZE) : [[]]),
+    [uniqueValues]
+  );
+
+  return useQueries({
+    queries: valueChunks.map(valueChunk => ({
+      ...optionsFactory({
+        query: {
+          searchParams: buildSearchParams(valueChunk),
+          pageable: {
+            page: 0,
+            size: pageSize,
+          },
+        },
+      }),
+      staleTime,
+    })),
+    combine: results => ({
+      items: results.flatMap(
+        result =>
+        (((result.data as SearchResponse | undefined)?.data?.content ??
+          []) as T[])
+      ),
+      isLoading: results.some(result => result.isLoading),
+    }),
+  });
+}
+
 export function useStudentsByIds(ids: string[]) {
   const { map, isLoading } = useSearchByIds<Student>(ids, searchStudentsOptions);
   return { studentMap: map, isLoading };
@@ -128,3 +173,26 @@ export function useInstructorsByIds(ids: string[]) {
   const { map, isLoading } = useSearchByIds<Instructor>(ids, searchInstructorsOptions);
   return { instructorMap: map, isLoading };
 }
+
+export function useTrainingApplicationsByCourseCreatorIds(courseCreatorIds: string[]) {
+  return useSearchByField<CourseTrainingApplication>(
+    courseCreatorIds,
+    chunk => ({
+      course_creator_uuid: chunk[0],
+    }),
+    searchTrainingApplicationsOptions,
+    STALE_TIMES.entity,
+    100
+  );
+}
+
+export function useProgramTrainingApplicationsByCourseCreatorIds() {
+  return useSearchByField<ProgramTrainingApplication>(
+    [],
+    () => ({}),
+    searchProgramTrainingApplicationsOptions,
+    STALE_TIMES.entity,
+    100
+  );
+}
+

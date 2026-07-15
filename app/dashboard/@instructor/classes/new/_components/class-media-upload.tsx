@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { FileVideo, Image, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Button } from '../../../../../../components/ui/button';
+import { toAuthenticatedMediaUrl } from '../../../../../../src/lib/media-url';
 
 export interface MediaFile {
     type: 'thumbnail' | 'video';
@@ -95,13 +96,13 @@ export function ClassMediaUpload({
                             <div className='relative overflow-hidden rounded-lg border border-border bg-muted'>
                                 {thumbnailPreview ? (
                                     <img
-                                        src={thumbnailPreview}
+                                        src={toAuthenticatedMediaUrl(thumbnailPreview) as string}
                                         alt='Thumbnail preview'
                                         className='aspect-video w-full object-cover'
                                     />
                                 ) : existingThumbnailUrl && !selectedThumbnail ? (
                                     <img
-                                        src={existingThumbnailUrl}
+                                        src={toAuthenticatedMediaUrl(existingThumbnailUrl) as string}
                                         alt='Existing thumbnail'
                                         className='aspect-video w-full object-cover'
                                     />

@@ -1,10 +1,5 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarClock, Heart, Share2 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { useInstructor } from '@/context/instructor-context';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import type {
@@ -26,6 +21,7 @@ import {
     getClassReviewsOptions,
     getCourseCreatorByUuidOptions,
     getCourseReviewsOptions,
+    getCourseTrainingRequirementsOptions,
     getPublishedCoursesOptions,
     searchTrainingApplicationsOptions,
     searchTrainingApplicationsQueryKey,
@@ -35,6 +31,11 @@ import { useUserDomain } from '@/src/features/dashboard/context/user-domain-cont
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CalendarClock, Heart, Share2 } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { QuizContentPreview } from '../../../../../../components/content-preview/QuizContentPreview';
 import NotesModal from '../../../../../../components/custom-modals/notes-modal';
 import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
@@ -50,8 +51,8 @@ import CourseFaq from './CourseFaq';
 import CourseOverview, { ClassCourseCurriculum } from './CourseOverview';
 import CourseRating, { ClassRating } from './CourseRating';
 import CourseReviews from './CourseReviews';
-import ClassCourseTabNav from './CourseTabNav';
 import { formatDurationFromParts, getContentHref, getEnrollHref, stripHtml } from './courses-data';
+import ClassCourseTabNav from './CourseTabNav';
 import EnrollSidebar from './EnrollSidebar';
 import ShareClassCourse, { ShareClass } from './ShareClassCourse';
 import { UnifiedContentItem } from './SharedCoursesPage';
@@ -157,8 +158,8 @@ export default function ClassCourseDetailsPage({
                     categoryLabels: [],
                     creatorUuid: program.course_creator_uuid,
                     creatorName: '',
-                    price: program.price,
-                    minimumRate: program.price,
+                    price: program.price as string | number | undefined,
+                    minimumRate: program.price as number,
                     imageUrl: undefined,
                     href: getContentHref("course_creator", 'program', program.uuid ?? ''),
                     enrolledClasses: 1,
@@ -189,9 +190,9 @@ export default function ClassCourseDetailsPage({
                 creatorUuid: course.course_creator_uuid,
                 creatorName: '',
                 levelLabel: '',
-                price: course.price,
-                minimumRate: course.minimum_training_fee ?? course.price,
-                imageUrl: course.banner_url ?? course.thumbnail_url,
+                price: course.price as string | number | undefined,
+                minimumRate: course.minimum_training_fee as number ?? course.price as number,
+                imageUrl: course.banner_url as string ?? course.thumbnail_url as string,
                 href: getContentHref("course_creator", 'course', course.uuid ?? ''),
                 enrolledClasses: 1,
                 secondaryMeta:
@@ -207,6 +208,15 @@ export default function ClassCourseDetailsPage({
 
         return courses.find(c => c.uuid === resolvedCourseId);
     }, [courses, resolvedCourseId]);
+
+    const { data: cReqData } = useQuery({
+        ...getCourseTrainingRequirementsOptions(({
+            path: { courseUuid: resolvedCourseId as string },
+            query: { pageable: {} }
+        })),
+        enabled: !!resolvedCourseId
+    })
+    const requirementCount = Number(cReqData?.data?.content?.length) ?? 0
 
     const courseShareLink =
         typeof window !== 'undefined'
@@ -276,14 +286,14 @@ export default function ClassCourseDetailsPage({
         ...getAllQuizzesOptions({
             query: {
                 pageable: {
-                    page: 0,
-                    size: 1000,
+
                 },
             },
         }),
     });
 
     const quizzes: Quiz[] = quizzesResponse?.data?.content ?? [];
+    console.log(quizzesResponse, "QUIZ RESP")
 
     const {
         isLoading: lessonsLoading,
@@ -353,6 +363,9 @@ export default function ClassCourseDetailsPage({
             ),
         [lessonUuids, quizzes]
     );
+
+    console.log(filteredQuizzes, "FCCC")
+    console.log(quizzes, "QUIZZ")
 
     const difficultyName = useMemo(
         () =>
@@ -536,8 +549,7 @@ export default function ClassCourseDetailsPage({
         'Overview',
         `Lessons (${lessons.length})`,
         `Assessment (${filteredAssignments?.length + filteredQuizzes?.length})`,
-        `Requirements (${course?.training_requirements
-            ?.length ?? 0})`,
+        `Requirements (${requirementCount})`,
         'Schedule',
         `Reviews (${reviewCount})`,
         'FAQs',
@@ -641,10 +653,9 @@ export default function ClassCourseDetailsPage({
                                     />
                                 )}
 
-                                {activeTab === `Requirements (${course?.training_requirements
-                                    ?.length ?? 0})` &&
+                                {activeTab === `Requirements (${requirementCount})` &&
                                     <CourseTrainingRequirements
-                                        requirements={course?.training_requirements}
+                                        requirements={cReqData?.data?.content}
                                         title='Course Training Requirements'
                                         description='Review what you need to prepare before registering for this class.'
                                         className='border-none shadow-none'
