@@ -1,7 +1,6 @@
 'use client';
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -39,15 +38,12 @@ import {
   updateClassDefinitionMutation,
   updateScheduledInstanceStatusMutation
 } from '@/services/client/@tanstack/react-query.gen';
-import {
-  LocationTypeEnum,
-  RecurrenceTypeEnum,
-  type StatusEnum3,
-} from '@/services/client/types.gen';
+import { LocationTypeEnum, type StatusEnum3 } from '@/services/client/types.gen';
+import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
+import type { RecurrenceValue } from '@/lib/recurrence';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { XIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
@@ -484,11 +480,27 @@ function RecurrencForm({
     defaultValues: normalizeInitialValues(initialValues) || {},
   });
 
-  const days_of_week =
-    useWatch({
-      control: form.control,
-      name: 'days_of_week',
-    }) ?? [];
+  const watchedRecurrence = useWatch({ control: form.control });
+  const recurrenceValue: RecurrenceValue = {
+    frequency: (watchedRecurrence.recurrence_type as RecurrenceValue['frequency']) || 'WEEKLY',
+    interval: watchedRecurrence.interval_value ?? 1,
+    daysOfWeek: (watchedRecurrence.days_of_week ?? []) as RecurrenceValue['daysOfWeek'],
+    dayOfMonth: watchedRecurrence.day_of_month,
+    end: watchedRecurrence.end_date
+      ? { mode: 'on', date: watchedRecurrence.end_date }
+      : watchedRecurrence.occurrence_count
+        ? { mode: 'after', count: watchedRecurrence.occurrence_count }
+        : { mode: 'never' },
+  };
+
+  // Seed a default recurrence type on mount so the required-field validation passes without the
+  // user having to re-pick the frequency the editor already shows.
+  useEffect(() => {
+    if (!form.getValues('recurrence_type')) {
+      form.setValue('recurrence_type', 'WEEKLY');
+      if (!form.getValues('interval_value')) form.setValue('interval_value', 1);
+    }
+  }, [form]);
 
   const qc = useQueryClient();
   const _user = useUserProfile();
@@ -544,167 +556,26 @@ function RecurrencForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8 ${className}`}>
-        <FormField
-          control={form.control}
-          name='recurrence_type'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Recurrence Type</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Select recurrence type' />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(RecurrenceTypeEnum).map(([key, value]) => (
-                    <SelectItem key={key} value={value}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='interval_value'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Interval Value</FormLabel>
-              <FormControl>
-                <FormControl>
-                  <Input
-                    type='number'
-                    placeholder='e.g 2 to mean every 2 Days or 2 Weeks or 2 Months'
-                    {...field}
-                  />
-                </FormControl>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className='flex flex-col items-start gap-6 sm:flex-row'>
-          <FormField
-            control={form.control}
-            name='days_of_week'
-            render={() => (
-              <FormItem className='w-full'>
-                <FormLabel>Days of Week</FormLabel>
-
-                <div className='mb-1 flex items-center gap-2'>
-                  <Select
-                    onValueChange={day => {
-                      const current = (days_of_week || []) as DayOfWeek[];
-                      const selectedDay = day as DayOfWeek;
-                      if (selectedDay && !current.includes(selectedDay)) {
-                        form.setValue('days_of_week', [...current, selectedDay]);
-                      }
-                    }}
-                  >
-                    <FormControl className='w-full'>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Select a day' />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {WEEK_DAYS.filter(day => {
-                        const current = (days_of_week || []) as DayOfWeek[];
-                        return !current.includes(day);
-                      }).map(day => (
-                        <SelectItem key={day} value={day}>
-                          {day}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Show selected days as removable badges */}
-                <div className='flex flex-wrap gap-2'>
-                  {days_of_week.map((day, index: number) => (
-                    <Badge key={day} variant='secondary' className='flex items-center gap-1'>
-                      {day}
-                      <button
-                        type='button'
-                        className='ml-2'
-                        onClick={() => {
-                          const current = days_of_week || [];
-                          const updated = current.filter(
-                            (_, currentIndex) => currentIndex !== index
-                          );
-                          form.setValue('days_of_week', updated);
-                        }}
-                        aria-label={`Remove day ${day}`}
-                      >
-                        <XIcon className='h-3 w-3' />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name='day_of_month'
-          render={({ field }) => (
-            <FormItem className='w-full flex-1'>
-              <FormItem>
-                <FormLabel>Day of month</FormLabel>
-                <FormControl>
-                  <FormControl>
-                    <Input type='number' placeholder='...' />
-                    {/* <Input type='number' placeholder="e.g. 1, 2" {...field} /> */}
-                  </FormControl>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='end_date'
-          render={({ field }) => (
-            <FormItem className='w-full'>
-              <FormLabel>End date</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder='e.g. 2025-12-12'
-                  {...field}
-                  onChange={e => field.onChange(e.target.value)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='occurrence_count'
-          render={({ field }) => (
-            <FormItem className='w-full'>
-              <FormLabel>Occurence Count</FormLabel>
-              <FormControl>
-                <Input
-                  type='number'
-                  placeholder='e.g. 25'
-                  {...field}
-                  onChange={e => field.onChange(Number(e.target.value))}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+        <RecurrenceEditor
+          allowNone={false}
+          value={recurrenceValue}
+          onChange={next => {
+            form.setValue('recurrence_type', next.frequency, { shouldValidate: true });
+            form.setValue('interval_value', next.interval);
+            form.setValue(
+              'days_of_week',
+              next.frequency === 'WEEKLY' ? (next.daysOfWeek as DayOfWeek[]) : []
+            );
+            form.setValue(
+              'day_of_month',
+              next.frequency === 'MONTHLY' ? next.dayOfMonth : undefined
+            );
+            form.setValue('end_date', next.end.mode === 'on' ? (next.end.date ?? '') : '');
+            form.setValue(
+              'occurrence_count',
+              next.end.mode === 'after' ? next.end.count : undefined
+            );
+          }}
         />
 
         <div className='flex justify-end gap-2 pt-6'>

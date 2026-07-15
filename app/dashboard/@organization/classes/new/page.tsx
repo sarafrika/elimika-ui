@@ -22,6 +22,13 @@ import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
 import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
 import { extractPage } from '@/lib/api-helpers';
+import {
+  defaultRecurrenceValue,
+  estimateOccurrences,
+  type RecurrenceValue,
+  toClassRecurrence,
+} from '@/lib/recurrence';
+import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
 import type {
   ClassMarketplaceJobRequest,
   ClassMarketplaceJobResource,
@@ -39,10 +46,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { AdminPageHeader, adminTheme, SectionCard } from '../../_components/ui';
 
-const WEEK_DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-
-type Repeat = 'NONE' | 'WEEKLY';
-
 type FormState = {
   offering: string;
   title: string;
@@ -59,9 +62,7 @@ type FormState = {
   trainingFee: string;
   startTime: string;
   endTime: string;
-  repeat: Repeat;
-  daysOfWeek: string[];
-  occurrenceCount: string;
+  recurrence: RecurrenceValue;
   venueResourceUuid: string;
   equipment: Array<{ resource_uuid: string; quantity: string }>;
 };
@@ -82,9 +83,7 @@ const initialState: FormState = {
   trainingFee: '',
   startTime: '',
   endTime: '',
-  repeat: 'NONE',
-  daysOfWeek: [],
-  occurrenceCount: '1',
+  recurrence: defaultRecurrenceValue(),
   venueResourceUuid: '',
   equipment: [],
 };
@@ -192,7 +191,7 @@ export default function OrganisationCreateClassPage() {
     [orgResources]
   );
 
-  const occurrences = form.repeat === 'WEEKLY' ? Math.max(1, num(form.occurrenceCount) ?? 1) : 1;
+  const occurrences = estimateOccurrences(form.recurrence);
   const feePerSession = num(form.trainingFee);
   const totalFee = feePerSession !== undefined ? feePerSession * occurrences : undefined;
 
@@ -239,7 +238,7 @@ export default function OrganisationCreateClassPage() {
       toast.error('Add a location name for in-person or hybrid classes.');
       return;
     }
-    if (form.repeat === 'WEEKLY' && form.daysOfWeek.length === 0) {
+    if (form.recurrence.frequency === 'WEEKLY' && form.recurrence.daysOfWeek.length === 0) {
       toast.error('Pick at least one day for a weekly class.');
       return;
     }
@@ -247,6 +246,7 @@ export default function OrganisationCreateClassPage() {
     setResourceConflicts([]);
     const start = new Date(form.startTime);
     const end = new Date(form.endTime);
+    const recurrence = toClassRecurrence(form.recurrence);
     const [offeringKind, offeringUuid] = form.offering.split(':');
 
     const resources: ClassMarketplaceJobResource[] = [
@@ -280,16 +280,7 @@ export default function OrganisationCreateClassPage() {
           start_time: start,
           end_time: end,
           conflict_resolution: 'FAIL',
-          ...(form.repeat === 'WEEKLY'
-            ? {
-                recurrence: {
-                  recurrence_type: 'WEEKLY',
-                  interval_value: 1,
-                  days_of_week: form.daysOfWeek.join(','),
-                  occurrence_count: occurrences,
-                },
-              }
-            : {}),
+          ...(recurrence ? { recurrence } : {}),
         },
       ],
       ...(resources.length > 0 ? { resources } : {}),
@@ -512,59 +503,13 @@ export default function OrganisationCreateClassPage() {
                 onChange={event => update({ endTime: event.target.value })}
               />
             </div>
-            <div className='space-y-2'>
-              <Label>Repeat</Label>
-              <Select
-                value={form.repeat}
-                onValueChange={value => update({ repeat: value as Repeat })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='NONE'>Single session</SelectItem>
-                  <SelectItem value='WEEKLY'>Weekly</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className='space-y-2 sm:col-span-2'>
+              <RecurrenceEditor
+                value={form.recurrence}
+                onChange={recurrence => update({ recurrence })}
+                startDate={form.startTime}
+              />
             </div>
-            {form.repeat === 'WEEKLY' ? (
-              <div className='space-y-2'>
-                <Label>Number of sessions</Label>
-                <Input
-                  type='number'
-                  min={1}
-                  value={form.occurrenceCount}
-                  onChange={event => update({ occurrenceCount: event.target.value })}
-                />
-              </div>
-            ) : null}
-            {form.repeat === 'WEEKLY' ? (
-              <div className='space-y-2 sm:col-span-2'>
-                <Label>Days of week</Label>
-                <div className='flex flex-wrap gap-2'>
-                  {WEEK_DAYS.map(day => {
-                    const active = form.daysOfWeek.includes(day);
-                    return (
-                      <Button
-                        key={day}
-                        type='button'
-                        size='sm'
-                        variant={active ? 'default' : 'outline'}
-                        onClick={() =>
-                          update({
-                            daysOfWeek: active
-                              ? form.daysOfWeek.filter(d => d !== day)
-                              : [...form.daysOfWeek, day],
-                          })
-                        }
-                      >
-                        {day.slice(0, 3)}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
             <div className='space-y-2'>
               <Label className='flex items-center gap-1.5'>
                 <Coins className='size-3.5' /> Fee per session
