@@ -19,22 +19,35 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useOrganisation } from '@/context/organisation-context';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
+import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
+import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
+import { extractPage } from '@/lib/api-helpers';
+import {
+  buildWeeklyDaySpecs,
+  defaultRecurrenceValue,
+  estimateOccurrences,
+  type RecurrenceValue,
+  toClassRecurrence,
+} from '@/lib/recurrence';
+import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
+import { formDataBodySerializer } from '@/services/client/client';
+import { client } from '@/services/client/client.gen';
 import type {
   ClassMarketplaceJobRequest,
+  ClassMarketplaceJobResource,
   ClassVisibilityEnum,
   LocationTypeEnum,
+  OrganisationResource,
   SessionFormatEnum,
 } from '@/services/client';
+import { ResourceTypeEnum } from '@/services/client';
 import {
   createJobMutation,
+  listResourcesOptions,
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { AdminPageHeader, adminTheme, SectionCard } from '../../_components/ui';
-
-const WEEK_DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-
-type Repeat = 'NONE' | 'WEEKLY';
 
 type FormState = {
   offering: string;
@@ -52,9 +65,9 @@ type FormState = {
   trainingFee: string;
   startTime: string;
   endTime: string;
-  repeat: Repeat;
-  daysOfWeek: string[];
-  occurrenceCount: string;
+  recurrence: RecurrenceValue;
+  venueResourceUuid: string;
+  equipment: Array<{ resource_uuid: string; quantity: string }>;
 };
 
 const initialState: FormState = {
@@ -73,10 +86,21 @@ const initialState: FormState = {
   trainingFee: '',
   startTime: '',
   endTime: '',
-  repeat: 'NONE',
-  daysOfWeek: [],
-  occurrenceCount: '1',
+  recurrence: defaultRecurrenceValue(),
+  venueResourceUuid: '',
+  equipment: [],
 };
+
+/** Upload a thumbnail to a freshly-created class job. Mirrors the generated multipart SDK calls. */
+async function uploadJobThumbnail(jobUuid: string, file: File): Promise<void> {
+  await client.post({
+    url: '/api/v1/classes/jobs/{uuid}/thumbnail',
+    path: { uuid: jobUuid },
+    body: { thumbnail: file },
+    ...formDataBodySerializer,
+    headers: { 'Content-Type': null },
+  });
+}
 
 const num = (value: string): number | undefined => {
   const trimmed = value.trim();
@@ -91,6 +115,7 @@ export default function OrganisationCreateClassPage() {
   const organisationUuid = organisation?.uuid ?? '';
 
   const [form, setForm] = useState<FormState>(initialState);
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
   const update = (patch: Partial<FormState>) => setForm(current => ({ ...current, ...patch }));
 
   // Offerings the organisation has been APPROVED to train (backend also enforces this on submit).
@@ -159,17 +184,55 @@ export default function OrganisationCreateClassPage() {
 
   const approvedLoading = approvedCoursesQuery.isLoading || approvedProgramsQuery.isLoading;
 
-  const occurrences = form.repeat === 'WEEKLY' ? Math.max(1, num(form.occurrenceCount) ?? 1) : 1;
+  const [resourceConflicts, setResourceConflicts] = useState<ConflictItem[]>([]);
+  const orgResourcesQuery = useQuery({
+    ...listResourcesOptions({
+      path: { organisationUuid },
+      query: { pageable: { page: 0, size: 100 }, active: true },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+  const orgResources = useMemo(
+    () => extractPage<OrganisationResource>(orgResourcesQuery.data).items,
+    [orgResourcesQuery.data]
+  );
+  const venueResources = useMemo(
+    () => orgResources.filter(resource => resource.resource_type === ResourceTypeEnum.VENUE),
+    [orgResources]
+  );
+  const equipmentResources = useMemo(
+    () =>
+      orgResources.filter(resource => resource.resource_type === ResourceTypeEnum.EQUIPMENT_POOL),
+    [orgResources]
+  );
+
+  const occurrences = estimateOccurrences(form.recurrence);
   const feePerSession = num(form.trainingFee);
   const totalFee = feePerSession !== undefined ? feePerSession * occurrences : undefined;
 
   const createClass = useMutation({
     ...createJobMutation(),
-    onSuccess: () => {
+    onSuccess: async response => {
+      const jobUuid = (response as { data?: { uuid?: string } })?.data?.uuid;
+      if (thumbnail && jobUuid) {
+        try {
+          await uploadJobThumbnail(jobUuid, thumbnail);
+        } catch {
+          toast.warning('Class posted, but the thumbnail failed to upload. You can add it later.');
+          router.push('/dashboard/classes');
+          return;
+        }
+      }
       toast.success('Class posted. Instructors can now apply.');
       router.push('/dashboard/classes');
     },
     onError: error => {
+      const report = parseConflictError(error);
+      if (report) {
+        setResourceConflicts(report.conflicts);
+        toast.error(report.message);
+        return;
+      }
       toast.error(error instanceof Error ? error.message : 'Unable to create the class.');
     },
   });
@@ -200,14 +263,46 @@ export default function OrganisationCreateClassPage() {
       toast.error('Add a location name for in-person or hybrid classes.');
       return;
     }
-    if (form.repeat === 'WEEKLY' && form.daysOfWeek.length === 0) {
+    if (form.recurrence.frequency === 'WEEKLY' && form.recurrence.daysOfWeek.length === 0) {
       toast.error('Pick at least one day for a weekly class.');
       return;
     }
 
+    setResourceConflicts([]);
     const start = new Date(form.startTime);
     const end = new Date(form.endTime);
+    const recurrence = toClassRecurrence(form.recurrence);
+    // Weekly with per-day times → one session template per weekday (each with its own hours).
+    const perDaySpecs = buildWeeklyDaySpecs(
+      form.recurrence,
+      form.startTime.slice(0, 10),
+      form.startTime.slice(11, 16),
+      form.endTime.slice(11, 16)
+    );
+    const sessionTemplates =
+      perDaySpecs.length > 0
+        ? perDaySpecs.map(spec => ({
+            start_time: new Date(`${spec.date}T${spec.startTime}`),
+            end_time: new Date(`${spec.date}T${spec.endTime}`),
+            recurrence: spec.recurrence,
+            conflict_resolution: 'FAIL' as const,
+          }))
+        : [
+            {
+              start_time: start,
+              end_time: end,
+              conflict_resolution: 'FAIL' as const,
+              ...(recurrence ? { recurrence } : {}),
+            },
+          ];
     const [offeringKind, offeringUuid] = form.offering.split(':');
+
+    const resources: ClassMarketplaceJobResource[] = [
+      ...(form.venueResourceUuid ? [{ resource_uuid: form.venueResourceUuid, quantity: 1 }] : []),
+      ...form.equipment
+        .filter(entry => entry.resource_uuid)
+        .map(entry => ({ resource_uuid: entry.resource_uuid, quantity: num(entry.quantity) ?? 1 })),
+    ];
 
     const payload: ClassMarketplaceJobRequest = {
       organisation_uuid: organisationUuid,
@@ -228,23 +323,8 @@ export default function OrganisationCreateClassPage() {
       max_participants: num(form.maxParticipants),
       allow_waitlist: form.allowWaitlist,
       training_fee: feePerSession,
-      session_templates: [
-        {
-          start_time: start,
-          end_time: end,
-          conflict_resolution: 'FAIL',
-          ...(form.repeat === 'WEEKLY'
-            ? {
-                recurrence: {
-                  recurrence_type: 'WEEKLY',
-                  interval_value: 1,
-                  days_of_week: form.daysOfWeek.join(','),
-                  occurrence_count: occurrences,
-                },
-              }
-            : {}),
-        },
-      ],
+      session_templates: sessionTemplates,
+      ...(resources.length > 0 ? { resources } : {}),
     };
 
     createClass.mutate({ body: payload });
@@ -322,6 +402,19 @@ export default function OrganisationCreateClassPage() {
                 onChange={event => update({ description: event.target.value })}
                 placeholder='What instructors and students should know about this class'
               />
+            </div>
+            <div className='space-y-2 sm:col-span-2'>
+              <Label>Thumbnail</Label>
+              <Input
+                type='file'
+                accept='image/*'
+                onChange={event => setThumbnail(event.target.files?.[0] ?? null)}
+              />
+              <p className='text-xs text-muted-foreground'>
+                {thumbnail
+                  ? `Selected: ${thumbnail.name}`
+                  : 'Optional cover image shown on the class listing (JPG, PNG, GIF, WebP — max 5MB).'}
+              </p>
             </div>
             <div className='space-y-2'>
               <Label>Visibility</Label>
@@ -464,59 +557,16 @@ export default function OrganisationCreateClassPage() {
                 onChange={event => update({ endTime: event.target.value })}
               />
             </div>
-            <div className='space-y-2'>
-              <Label>Repeat</Label>
-              <Select
-                value={form.repeat}
-                onValueChange={value => update({ repeat: value as Repeat })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='NONE'>Single session</SelectItem>
-                  <SelectItem value='WEEKLY'>Weekly</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className='space-y-2 sm:col-span-2'>
+              <RecurrenceEditor
+                value={form.recurrence}
+                onChange={recurrence => update({ recurrence })}
+                startDate={form.startTime}
+                allowPerDayTimes
+                defaultStartTime={form.startTime.slice(11, 16)}
+                defaultEndTime={form.endTime.slice(11, 16)}
+              />
             </div>
-            {form.repeat === 'WEEKLY' ? (
-              <div className='space-y-2'>
-                <Label>Number of sessions</Label>
-                <Input
-                  type='number'
-                  min={1}
-                  value={form.occurrenceCount}
-                  onChange={event => update({ occurrenceCount: event.target.value })}
-                />
-              </div>
-            ) : null}
-            {form.repeat === 'WEEKLY' ? (
-              <div className='space-y-2 sm:col-span-2'>
-                <Label>Days of week</Label>
-                <div className='flex flex-wrap gap-2'>
-                  {WEEK_DAYS.map(day => {
-                    const active = form.daysOfWeek.includes(day);
-                    return (
-                      <Button
-                        key={day}
-                        type='button'
-                        size='sm'
-                        variant={active ? 'default' : 'outline'}
-                        onClick={() =>
-                          update({
-                            daysOfWeek: active
-                              ? form.daysOfWeek.filter(d => d !== day)
-                              : [...form.daysOfWeek, day],
-                          })
-                        }
-                      >
-                        {day.slice(0, 3)}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
             <div className='space-y-2'>
               <Label className='flex items-center gap-1.5'>
                 <Coins className='size-3.5' /> Fee per session
@@ -542,6 +592,113 @@ export default function OrganisationCreateClassPage() {
             </div>
           </div>
         </SectionCard>
+
+        <SectionCard
+          title='Venue & equipment'
+          description='Reserve your registered resources for every session. They stay blocked for other postings while you recruit; posting fails with a conflict report if a slot is taken.'
+        >
+          <div className='grid max-w-2xl gap-4'>
+            <div className='space-y-2'>
+              <Label>Venue</Label>
+              <Select
+                value={form.venueResourceUuid || 'none'}
+                onValueChange={value =>
+                  update({ venueResourceUuid: value === 'none' ? '' : value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='No venue' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='none'>No venue</SelectItem>
+                  {venueResources.map(venue => (
+                    <SelectItem key={venue.uuid} value={venue.uuid ?? ''}>
+                      {venue.name}
+                      {venue.seat_capacity != null ? ` · ${venue.seat_capacity} seats` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className='space-y-2'>
+              <Label>Equipment</Label>
+              {form.equipment.map((entry, index) => (
+                <div key={`${entry.resource_uuid}-${index}`} className='flex items-center gap-2'>
+                  <Select
+                    value={entry.resource_uuid || undefined}
+                    onValueChange={value => {
+                      update({
+                        equipment: form.equipment.map((item, i) =>
+                          i === index ? { ...item, resource_uuid: value } : item
+                        ),
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='Choose equipment' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {equipmentResources.map(pool => (
+                        <SelectItem key={pool.uuid} value={pool.uuid ?? ''}>
+                          {pool.name}
+                          {pool.total_quantity != null ? ` · ${pool.total_quantity} units` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type='number'
+                    min={1}
+                    className='w-24'
+                    value={entry.quantity}
+                    onChange={event => {
+                      update({
+                        equipment: form.equipment.map((item, i) =>
+                          i === index ? { ...item, quantity: event.target.value } : item
+                        ),
+                      });
+                    }}
+                  />
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={() =>
+                      update({ equipment: form.equipment.filter((_, i) => i !== index) })
+                    }
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                disabled={equipmentResources.length === 0}
+                onClick={() =>
+                  update({
+                    equipment: [...form.equipment, { resource_uuid: '', quantity: '1' }],
+                  })
+                }
+              >
+                Add equipment
+              </Button>
+              {venueResources.length === 0 && equipmentResources.length === 0 ? (
+                <p className='text-muted-foreground text-xs'>
+                  No bookable resources registered yet. Add venues and equipment under Resources in
+                  the sidebar.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </SectionCard>
+
+        <ResourceConflictAlert
+          title='These sessions conflict with existing reservations'
+          conflicts={resourceConflicts}
+        />
       </form>
     </div>
   );

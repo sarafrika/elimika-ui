@@ -32,6 +32,7 @@ import {
   Users,
   UsersIcon,
   Wallet,
+  Warehouse,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -539,6 +540,11 @@ export default {
       url: '/dashboard/courses',
       icon: BookOpen,
     },
+    {
+      title: 'Classes',
+      url: '/dashboard/classes',
+      icon: School,
+    },
     // {
     //   title: 'Course Management',
     //   url: '/dashboard/course-management',
@@ -565,14 +571,14 @@ export default {
       icon: Handshake,
     },
     {
-      title: 'Applications',
-      url: '/dashboard/training-applications',
-      icon: ClipboardList,
-    },
-    {
-      title: 'Venues',
+      title: 'Training Branches',
       url: '/dashboard/branches',
       icon: Building,
+    },
+    {
+      title: 'Resources',
+      url: '/dashboard/resources',
+      icon: Warehouse,
     },
     {
       title: 'Schedule',

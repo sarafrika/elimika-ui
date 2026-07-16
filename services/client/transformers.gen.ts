@@ -32,6 +32,9 @@ import type {
   SetOrganisationUserDomainResponse,
   GetTrainingBranchByUuid1Response,
   UpdateTrainingBranch1Response,
+  GetResourceResponse,
+  UpdateResourceResponse,
+  UpdateAvailabilityRuleResponse,
   GetInstructorByUuidResponse,
   UpdateInstructorResponse,
   UpdateInstructorSkillResponse,
@@ -126,6 +129,10 @@ import type {
   CreateOrganisationResponse,
   GetTrainingBranchesByOrganisationResponse,
   CreateTrainingBranch1Response,
+  ListResourcesResponse,
+  CreateResourceResponse,
+  ListAvailabilityRulesResponse,
+  AddAvailabilityRuleResponse,
   ListNotificationsResponse,
   ApplyActionResponse,
   GetAllInstructorsResponse,
@@ -318,6 +325,8 @@ import type {
   GetBranchUsersResponse,
   GetBranchUsersByDomainResponse,
   GetOrganisationStatisticsResponse,
+  GetCalendarResponse,
+  ListBookingsResponse,
   Search2Response,
   GetCountsResponse,
   GetInstructorRatingSummaryResponse,
@@ -373,6 +382,7 @@ import type {
   GetEnrollmentsForClassResponse,
   GetClassDefinitionsForOrganisationResponse,
   GetInstructorPayablesForOrganisationResponse,
+  GetJobEligibilityResponse,
   ListMyApplicationsResponse,
   ListInstructorApplicationsResponse,
   GetClassDefinitionsForInstructorResponse,
@@ -926,6 +936,65 @@ export const updateTrainingBranch1ResponseTransformer = async (
   data: any
 ): Promise<UpdateTrainingBranch1Response> => {
   data = apiResponseTrainingBranchSchemaResponseTransformer(data);
+  return data;
+};
+
+const organisationResourceSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseOrganisationResourceSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = organisationResourceSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getResourceResponseTransformer = async (data: any): Promise<GetResourceResponse> => {
+  data = apiResponseOrganisationResourceSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateResourceResponseTransformer = async (
+  data: any
+): Promise<UpdateResourceResponse> => {
+  data = apiResponseOrganisationResourceSchemaResponseTransformer(data);
+  return data;
+};
+
+const resourceAvailabilityRuleSchemaResponseTransformer = (data: any) => {
+  if (data.specific_start) {
+    data.specific_start = new Date(data.specific_start);
+  }
+  if (data.specific_end) {
+    data.specific_end = new Date(data.specific_end);
+  }
+  if (data.effective_start_date) {
+    data.effective_start_date = new Date(data.effective_start_date);
+  }
+  if (data.effective_end_date) {
+    data.effective_end_date = new Date(data.effective_end_date);
+  }
+  return data;
+};
+
+const apiResponseResourceAvailabilityRuleSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = resourceAvailabilityRuleSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateAvailabilityRuleResponseTransformer = async (
+  data: any
+): Promise<UpdateAvailabilityRuleResponse> => {
+  data = apiResponseResourceAvailabilityRuleSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2699,6 +2768,62 @@ export const createTrainingBranch1ResponseTransformer = async (
   data: any
 ): Promise<CreateTrainingBranch1Response> => {
   data = apiResponseTrainingBranchSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoOrganisationResourceSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return organisationResourceSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoOrganisationResourceSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoOrganisationResourceSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listResourcesResponseTransformer = async (
+  data: any
+): Promise<ListResourcesResponse> => {
+  data = apiResponsePagedDtoOrganisationResourceSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createResourceResponseTransformer = async (
+  data: any
+): Promise<CreateResourceResponse> => {
+  data = apiResponseOrganisationResourceSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseListResourceAvailabilityRuleSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return resourceAvailabilityRuleSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listAvailabilityRulesResponseTransformer = async (
+  data: any
+): Promise<ListAvailabilityRulesResponse> => {
+  data = apiResponseListResourceAvailabilityRuleSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addAvailabilityRuleResponseTransformer = async (
+  data: any
+): Promise<AddAvailabilityRuleResponse> => {
+  data = apiResponseResourceAvailabilityRuleSchemaResponseTransformer(data);
   return data;
 };
 
@@ -5448,6 +5573,67 @@ export const getOrganisationStatisticsResponseTransformer = async (
   return data;
 };
 
+const resourceCalendarEntrySchemaResponseTransformer = (data: any) => {
+  if (data.start_time) {
+    data.start_time = new Date(data.start_time);
+  }
+  if (data.end_time) {
+    data.end_time = new Date(data.end_time);
+  }
+  return data;
+};
+
+const apiResponseListResourceCalendarEntrySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return resourceCalendarEntrySchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getCalendarResponseTransformer = async (data: any): Promise<GetCalendarResponse> => {
+  data = apiResponseListResourceCalendarEntrySchemaResponseTransformer(data);
+  return data;
+};
+
+const resourceBookingSchemaResponseTransformer = (data: any) => {
+  if (data.start_time) {
+    data.start_time = new Date(data.start_time);
+  }
+  if (data.end_time) {
+    data.end_time = new Date(data.end_time);
+  }
+  if (data.released_at) {
+    data.released_at = new Date(data.released_at);
+  }
+  return data;
+};
+
+const pagedDtoResourceBookingSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return resourceBookingSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoResourceBookingSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoResourceBookingSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listBookingsResponseTransformer = async (data: any): Promise<ListBookingsResponse> => {
+  data = apiResponsePagedDtoResourceBookingSchemaResponseTransformer(data);
+  return data;
+};
+
 export const search2ResponseTransformer = async (data: any): Promise<Search2Response> => {
   data = apiResponsePagedDtoOrganisationSchemaResponseTransformer(data);
   return data;
@@ -6277,6 +6463,29 @@ export const getInstructorPayablesForOrganisationResponseTransformer = async (
   data: any
 ): Promise<GetInstructorPayablesForOrganisationResponse> => {
   data = apiResponseListOrganisationInstructorPayableSchemaResponseTransformer(data);
+  return data;
+};
+
+const classMarketplaceJobEligibilitySchemaResponseTransformer = (data: any) => {
+  if (data.schedule_conflicts) {
+    data.schedule_conflicts = data.schedule_conflicts.map((item: any) => {
+      return classSchedulingConflictSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseClassMarketplaceJobEligibilitySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = classMarketplaceJobEligibilitySchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getJobEligibilityResponseTransformer = async (
+  data: any
+): Promise<GetJobEligibilityResponse> => {
+  data = apiResponseClassMarketplaceJobEligibilitySchemaResponseTransformer(data);
   return data;
 };
 

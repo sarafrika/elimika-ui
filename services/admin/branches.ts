@@ -6,13 +6,18 @@ import {
   zApiResponsePagedDtoUser,
   type zUser,
 } from '@/services/client/zod.gen';
-import type { TrainingBranch } from '@/services/client/types.gen';
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import type { z } from 'zod';
 
 const branchListResponseSchema = zApiResponsePagedDtoTrainingBranch.extend({
   data: zApiResponsePagedDtoTrainingBranch.shape.data.default({ content: [] }),
 });
+
+// Item shape as validated by the zod schema (dates arrive as ISO strings here,
+// unlike the transformed TrainingBranch type from the typed SDK).
+export type AdminBranchListItem = NonNullable<
+  z.infer<typeof branchListResponseSchema>['data']['content']
+>[number];
 
 export interface AdminBranchListParams {
   organizationUuid: string;
@@ -23,7 +28,7 @@ export interface AdminBranchListParams {
 }
 
 export interface AdminBranchListResult {
-  items: TrainingBranch[];
+  items: AdminBranchListItem[];
   page: number;
   size: number;
   totalItems: number;

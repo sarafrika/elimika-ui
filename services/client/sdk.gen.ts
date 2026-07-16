@@ -148,6 +148,21 @@ import type {
   UpdateTrainingBranch1Data,
   UpdateTrainingBranch1Responses,
   UpdateTrainingBranch1Errors,
+  DeactivateResourceData,
+  DeactivateResourceResponses,
+  DeactivateResourceErrors,
+  GetResourceData,
+  GetResourceResponses,
+  GetResourceErrors,
+  UpdateResourceData,
+  UpdateResourceResponses,
+  UpdateResourceErrors,
+  DeleteAvailabilityRuleData,
+  DeleteAvailabilityRuleResponses,
+  DeleteAvailabilityRuleErrors,
+  UpdateAvailabilityRuleData,
+  UpdateAvailabilityRuleResponses,
+  UpdateAvailabilityRuleErrors,
   DeleteInstructorData,
   DeleteInstructorResponses,
   DeleteInstructorErrors,
@@ -544,6 +559,18 @@ import type {
   AssignUserToBranchData,
   AssignUserToBranchResponses,
   AssignUserToBranchErrors,
+  ListResourcesData,
+  ListResourcesResponses,
+  ListResourcesErrors,
+  CreateResourceData,
+  CreateResourceResponses,
+  CreateResourceErrors,
+  ListAvailabilityRulesData,
+  ListAvailabilityRulesResponses,
+  ListAvailabilityRulesErrors,
+  AddAvailabilityRuleData,
+  AddAvailabilityRuleResponses,
+  AddAvailabilityRuleErrors,
   ListNotificationsData,
   ListNotificationsResponses,
   ListNotificationsErrors,
@@ -1213,6 +1240,12 @@ import type {
   GetOrganisationStatisticsData,
   GetOrganisationStatisticsResponses,
   GetOrganisationStatisticsErrors,
+  GetCalendarData,
+  GetCalendarResponses,
+  GetCalendarErrors,
+  ListBookingsData,
+  ListBookingsResponses,
+  ListBookingsErrors,
   Search2Data,
   Search2Responses,
   Search2Errors,
@@ -1634,6 +1667,9 @@ import {
   setOrganisationUserDomainResponseTransformer,
   getTrainingBranchByUuid1ResponseTransformer,
   updateTrainingBranch1ResponseTransformer,
+  getResourceResponseTransformer,
+  updateResourceResponseTransformer,
+  updateAvailabilityRuleResponseTransformer,
   getInstructorByUuidResponseTransformer,
   updateInstructorResponseTransformer,
   updateInstructorSkillResponseTransformer,
@@ -1728,6 +1764,10 @@ import {
   createOrganisationResponseTransformer,
   getTrainingBranchesByOrganisationResponseTransformer,
   createTrainingBranch1ResponseTransformer,
+  listResourcesResponseTransformer,
+  createResourceResponseTransformer,
+  listAvailabilityRulesResponseTransformer,
+  addAvailabilityRuleResponseTransformer,
   listNotificationsResponseTransformer,
   applyActionResponseTransformer,
   getAllInstructorsResponseTransformer,
@@ -1920,6 +1960,8 @@ import {
   getBranchUsersResponseTransformer,
   getBranchUsersByDomainResponseTransformer,
   getOrganisationStatisticsResponseTransformer,
+  getCalendarResponseTransformer,
+  listBookingsResponseTransformer,
   search2ResponseTransformer,
   getCountsResponseTransformer,
   getInstructorRatingSummaryResponseTransformer,
@@ -1975,6 +2017,7 @@ import {
   getEnrollmentsForClassResponseTransformer,
   getClassDefinitionsForOrganisationResponseTransformer,
   getInstructorPayablesForOrganisationResponseTransformer,
+  getJobEligibilityResponseTransformer,
   listMyApplicationsResponseTransformer,
   listInstructorApplicationsResponseTransformer,
   getClassDefinitionsForInstructorResponseTransformer,
@@ -3384,6 +3427,148 @@ export const updateTrainingBranch1 = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/{uuid}/training-branches/{branchUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Deactivate a resource
+ * Rejected while the resource still has future holds or confirmed bookings
+ */
+export const deactivateResource = <ThrowOnError extends boolean = false>(
+  options: Options<DeactivateResourceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeactivateResourceResponses,
+    DeactivateResourceErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get one resource
+ */
+export const getResource = <ThrowOnError extends boolean = false>(
+  options: Options<GetResourceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetResourceResponses,
+    GetResourceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getResourceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a resource
+ */
+export const updateResource = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateResourceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateResourceResponses,
+    UpdateResourceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateResourceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete an availability rule
+ */
+export const deleteAvailabilityRule = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteAvailabilityRuleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteAvailabilityRuleResponses,
+    DeleteAvailabilityRuleErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/availability-rules/{ruleUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update an availability rule
+ */
+export const updateAvailabilityRule = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateAvailabilityRuleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateAvailabilityRuleResponses,
+    UpdateAvailabilityRuleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateAvailabilityRuleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/availability-rules/{ruleUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -5552,6 +5737,7 @@ export const getJob = <ThrowOnError extends boolean = false>(
 
 /**
  * Update a marketplace class job
+ * Existing resource holds are released and re-placed against the updated schedule; conflicts return 409 with a per-occurrence report and roll the update back
  */
 export const updateJob = <ThrowOnError extends boolean = false>(
   options: Options<UpdateJobData, ThrowOnError>
@@ -7320,6 +7506,122 @@ export const assignUserToBranch = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/users/{userUuid}',
     ...options,
+  });
+};
+
+/**
+ * List the organisation's resources
+ */
+export const listResources = <ThrowOnError extends boolean = false>(
+  options: Options<ListResourcesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListResourcesResponses,
+    ListResourcesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listResourcesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources',
+    ...options,
+  });
+};
+
+/**
+ * Register a bookable resource (venue or equipment pool)
+ */
+export const createResource = <ThrowOnError extends boolean = false>(
+  options: Options<CreateResourceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateResourceResponses,
+    CreateResourceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createResourceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * List a resource's availability rules
+ */
+export const listAvailabilityRules = <ThrowOnError extends boolean = false>(
+  options: Options<ListAvailabilityRulesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListAvailabilityRulesResponses,
+    ListAvailabilityRulesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listAvailabilityRulesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/availability-rules',
+    ...options,
+  });
+};
+
+/**
+ * Add an availability rule (open hours or blackout)
+ */
+export const addAvailabilityRule = <ThrowOnError extends boolean = false>(
+  options: Options<AddAvailabilityRuleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddAvailabilityRuleResponses,
+    AddAvailabilityRuleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addAvailabilityRuleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/availability-rules',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -10605,6 +10907,7 @@ export const listJobs = <ThrowOnError extends boolean = false>(
 
 /**
  * Create a marketplace class job
+ * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report
  */
 export const createJob = <ThrowOnError extends boolean = false>(
   options: Options<CreateJobData, ThrowOnError>
@@ -10713,6 +11016,7 @@ export const listJobApplications = <ThrowOnError extends boolean = false>(
 
 /**
  * Apply to a marketplace class job
+ * Applications are hard-blocked (409 with conflict details) when the instructor's existing schedule overlaps any of the job's planned session occurrences
  */
 export const applyToJob = <ThrowOnError extends boolean = false>(
   options: Options<ApplyToJobData, ThrowOnError>
@@ -13986,6 +14290,61 @@ export const getOrganisationStatistics = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Merged calendar view of a resource
+ * Expanded open-hours and blackout windows plus recruitment holds and confirmed bookings for the date range
+ */
+export const getCalendar = <ThrowOnError extends boolean = false>(
+  options: Options<GetCalendarData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCalendarResponses,
+    GetCalendarErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCalendarResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/calendar',
+    ...options,
+  });
+};
+
+/**
+ * List a resource's bookings
+ */
+export const listBookings = <ThrowOnError extends boolean = false>(
+  options: Options<ListBookingsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListBookingsResponses,
+    ListBookingsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listBookingsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/bookings',
+    ...options,
+  });
+};
+
+/**
  * Search organisations
  * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting. Available filters include:
  * - `name` - Filter by organisation name (partial match)
@@ -16265,6 +16624,7 @@ export const getJobEligibility = <ThrowOnError extends boolean = false>(
     GetJobEligibilityErrors,
     ThrowOnError
   >({
+    responseTransformer: getJobEligibilityResponseTransformer,
     security: [
       {
         scheme: 'bearer',

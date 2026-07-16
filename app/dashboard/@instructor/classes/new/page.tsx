@@ -63,6 +63,12 @@ import {
   SessionFormatEnum,
 } from '../../../../../services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
+import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
+import {
+  defaultRecurrenceValue,
+  type RecurrenceValue,
+  toClassRecurrence,
+} from '@/lib/recurrence';
 import { CLASS_COLOR_OPTIONS } from '../../../_components/class-colors';
 import {
   ClassDetails,
@@ -484,6 +490,31 @@ const ClassCreationPage = () => {
   >([]);
 
   const [perDayOccurrences, setPerDayOccurrences] = useState<Record<number, PerDayOccurrence>>({});
+
+  // Google Calendar–style recurrence for the "Standard Schedule" preset. Source of truth for the
+  // submitted payload; also mirrored into scheduleSettings.repeat so the live session preview and
+  // conflict detection (which read scheduleSettings) keep reflecting the selection.
+  const [recurrence, setRecurrence] = useState<RecurrenceValue>(() => defaultRecurrenceValue());
+  const applyRecurrence = (value: RecurrenceValue) => {
+    setRecurrence(value);
+    setScheduleSettings(prev => ({
+      ...prev,
+      repeat: {
+        interval: value.interval,
+        unit:
+          value.frequency === 'DAILY'
+            ? 'day'
+            : value.frequency === 'MONTHLY'
+              ? 'month'
+              : 'week',
+        days:
+          value.frequency === 'WEEKLY'
+            ? value.daysOfWeek.map(day => DAY_NAMES.indexOf(day)).filter(index => index >= 0)
+            : [],
+      },
+      endRepeat: value.end.mode === 'on' && value.end.date ? value.end.date : prev.endRepeat,
+    }));
+  };
 
   const classDetailsCardRef = useRef<HTMLDivElement | null>(null);
 
@@ -1159,15 +1190,27 @@ const ClassCreationPage = () => {
             conflict_resolution: ConflictResolutionEnum.FAIL,
           };
         });
+    } else if (schedulePreset === 'standard') {
+      // Standard preset uses the Google-style recurrence editor: a single session template whose
+      // recurrence rule carries the frequency, interval, weekdays and end condition.
+      const startTimeIso = buildUtcIsoDateTime(referenceDate, defaultStart);
+      const endTimeIso = buildUtcIsoDateTime(referenceDate, defaultEnd);
+      const recurrenceRule = toClassRecurrence(recurrence);
+      session_templates = [
+        {
+          start_time: new Date(startTimeIso),
+          end_time: new Date(endTimeIso),
+          ...(recurrenceRule ? { recurrence: recurrenceRule } : {}),
+          conflict_resolution: ConflictResolutionEnum.FAIL,
+        },
+      ];
     } else {
       const recurrenceType =
         scheduleSettings.repeat.unit === 'day'
           ? RecurrenceTypeEnum.DAILY
           : scheduleSettings.repeat.unit === 'week'
             ? RecurrenceTypeEnum.WEEKLY
-            : scheduleSettings.repeat.unit === 'month'
-              ? RecurrenceTypeEnum.MONTHLY
-              : RecurrenceTypeEnum.YEARLY;
+            : RecurrenceTypeEnum.MONTHLY;
 
       if (scheduleSettings.repeat.unit === 'week') {
         const seriesEndDate = scheduleSettings.endRepeat || referenceDate;
@@ -1575,46 +1618,47 @@ const ClassCreationPage = () => {
   // ── Right-column fields ────────────────────────────────────────────────────
   const buildRightColumnFields = (preset: 'standard' | 'academic-period') => (
     <div className='space-y-4'>
-      <div className='space-y-2'>
-        <span className='text-foreground text-sm font-semibold'>Repeat Every</span>
-        <div className='flex gap-2'>
-          <Input
-            type='number'
-            min={1}
-            value={scheduleSettings.repeat.interval}
-            onChange={e =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                repeat: { ...prev.repeat, interval: parseInt(e.target.value, 10) || 1 },
-              }))
-            }
-            className='w-20'
-          />
-          <Select
-            value={scheduleSettings.repeat.unit}
-            onValueChange={value =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                repeat: {
-                  ...prev.repeat,
-                  unit: value as 'day' | 'week' | 'month' | 'year',
-                  days: value !== 'week' ? [] : prev.repeat.days,
-                },
-              }))
-            }
-          >
-            <SelectTrigger className='flex-1'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='day'>Day</SelectItem>
-              <SelectItem value='week'>Week</SelectItem>
-              <SelectItem value='month'>Month</SelectItem>
-              <SelectItem value='year'>Year</SelectItem>
-            </SelectContent>
-          </Select>
+      {preset === 'academic-period' ? (
+        <div className='space-y-2'>
+          <span className='text-foreground text-sm font-semibold'>Repeat Every</span>
+          <div className='flex gap-2'>
+            <Input
+              type='number'
+              min={1}
+              value={scheduleSettings.repeat.interval}
+              onChange={e =>
+                setScheduleSettings(prev => ({
+                  ...prev,
+                  repeat: { ...prev.repeat, interval: parseInt(e.target.value, 10) || 1 },
+                }))
+              }
+              className='w-20'
+            />
+            <Select
+              value={scheduleSettings.repeat.unit}
+              onValueChange={value =>
+                setScheduleSettings(prev => ({
+                  ...prev,
+                  repeat: {
+                    ...prev.repeat,
+                    unit: value as 'day' | 'week' | 'month' | 'year',
+                    days: value !== 'week' ? [] : prev.repeat.days,
+                  },
+                }))
+              }
+            >
+              <SelectTrigger className='flex-1'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='day'>Day</SelectItem>
+                <SelectItem value='week'>Week</SelectItem>
+                <SelectItem value='month'>Month</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {preset === 'standard' ? (
         <FieldGroup label='Start Date *'>
@@ -1646,14 +1690,37 @@ const ClassCreationPage = () => {
       )}
 
       {preset === 'standard' ? (
-        <FieldGroup label='End Repeat *'>
-          <Input
-            type='date'
-            value={scheduleSettings.endRepeat}
-            onChange={e => setScheduleSettings(prev => ({ ...prev, endRepeat: e.target.value }))}
-          />
-        </FieldGroup>
-      ) : (
+        <div className='grid grid-cols-2 gap-2'>
+          <FieldGroup label='Start Time'>
+            <Input
+              type='time'
+              disabled={scheduleSettings.allDay}
+              value={scheduleSettings.startClass.startTime || ''}
+              onChange={e =>
+                setScheduleSettings(prev => ({
+                  ...prev,
+                  startClass: { ...prev.startClass, startTime: e.target.value },
+                }))
+              }
+            />
+          </FieldGroup>
+          <FieldGroup label='End Time'>
+            <Input
+              type='time'
+              disabled={scheduleSettings.allDay}
+              value={scheduleSettings.startClass.endTime || ''}
+              onChange={e =>
+                setScheduleSettings(prev => ({
+                  ...prev,
+                  startClass: { ...prev.startClass, endTime: e.target.value },
+                }))
+              }
+            />
+          </FieldGroup>
+        </div>
+      ) : null}
+
+      {preset === 'academic-period' ? (
         <FieldGroup label='Period End *'>
           <Input
             type='date'
@@ -1666,7 +1733,7 @@ const ClassCreationPage = () => {
             }
           />
         </FieldGroup>
-      )}
+      ) : null}
 
       <FieldGroup label='Registration Start'>
         <Input
@@ -1946,11 +2013,17 @@ const ClassCreationPage = () => {
                     <div className='mb-4'>
                       <p className='text-foreground text-sm font-semibold'>Standard Schedule</p>
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        Toggle days and set times. Configure recurrence and dates on the right.
+                        Set how sessions repeat and when they start. Times apply to every session.
                       </p>
                     </div>
                     <div className='flex flex-wrap gap-6'>
-                      <div className='min-w-[320px] flex-1'>{DayTimeGrid}</div>
+                      <div className='min-w-[320px] flex-1'>
+                        <RecurrenceEditor
+                          value={recurrence}
+                          onChange={applyRecurrence}
+                          startDate={scheduleSettings.startClass.date}
+                        />
+                      </div>
                       <div className='w-full min-w-[260px] flex-1 xl:max-w-[280px] xl:flex-none'>
                         {buildRightColumnFields('standard')}
                       </div>

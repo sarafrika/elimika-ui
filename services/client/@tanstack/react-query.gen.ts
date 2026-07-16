@@ -50,6 +50,11 @@ import {
   deleteTrainingBranch1,
   getTrainingBranchByUuid1,
   updateTrainingBranch1,
+  deactivateResource,
+  getResource,
+  updateResource,
+  deleteAvailabilityRule,
+  updateAvailabilityRule,
   deleteInstructor,
   getInstructorByUuid,
   updateInstructor,
@@ -182,6 +187,10 @@ import {
   createTrainingBranch1,
   removeUserFromBranch,
   assignUserToBranch,
+  listResources,
+  createResource,
+  listAvailabilityRules,
+  addAvailabilityRule,
   listNotifications,
   applyBulkAction,
   applyAction,
@@ -405,6 +414,8 @@ import {
   getBranchUsers,
   getBranchUsersByDomain,
   getOrganisationStatistics,
+  getCalendar,
+  listBookings,
   search2,
   getCounts,
   getInstructorRatingSummary,
@@ -653,6 +664,19 @@ import type {
   UpdateTrainingBranch1Data,
   UpdateTrainingBranch1Error,
   UpdateTrainingBranch1Response,
+  DeactivateResourceData,
+  DeactivateResourceError,
+  DeactivateResourceResponse,
+  GetResourceData,
+  UpdateResourceData,
+  UpdateResourceError,
+  UpdateResourceResponse,
+  DeleteAvailabilityRuleData,
+  DeleteAvailabilityRuleError,
+  DeleteAvailabilityRuleResponse,
+  UpdateAvailabilityRuleData,
+  UpdateAvailabilityRuleError,
+  UpdateAvailabilityRuleResponse,
   DeleteInstructorData,
   DeleteInstructorError,
   DeleteInstructorResponse,
@@ -1000,6 +1024,16 @@ import type {
   AssignUserToBranchData,
   AssignUserToBranchError,
   AssignUserToBranchResponse,
+  ListResourcesData,
+  ListResourcesError,
+  ListResourcesResponse,
+  CreateResourceData,
+  CreateResourceError,
+  CreateResourceResponse,
+  ListAvailabilityRulesData,
+  AddAvailabilityRuleData,
+  AddAvailabilityRuleError,
+  AddAvailabilityRuleResponse,
   ListNotificationsData,
   ListNotificationsError,
   ListNotificationsResponse,
@@ -1581,6 +1615,10 @@ import type {
   GetBranchUsersData,
   GetBranchUsersByDomainData,
   GetOrganisationStatisticsData,
+  GetCalendarData,
+  ListBookingsData,
+  ListBookingsError,
+  ListBookingsResponse,
   Search2Data,
   Search2Error,
   Search2Response,
@@ -3095,6 +3133,132 @@ export const updateTrainingBranch1Mutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateTrainingBranch1({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Deactivate a resource
+ * Rejected while the resource still has future holds or confirmed bookings
+ */
+export const deactivateResourceMutation = (
+  options?: Partial<Options<DeactivateResourceData>>
+): UseMutationOptions<
+  DeactivateResourceResponse,
+  DeactivateResourceError,
+  Options<DeactivateResourceData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeactivateResourceResponse,
+    DeactivateResourceError,
+    Options<DeactivateResourceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deactivateResource({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getResourceQueryKey = (options: Options<GetResourceData>) =>
+  createQueryKey('getResource', options);
+
+/**
+ * Get one resource
+ */
+export const getResourceOptions = (options: Options<GetResourceData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getResource({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getResourceQueryKey(options),
+  });
+};
+
+/**
+ * Update a resource
+ */
+export const updateResourceMutation = (
+  options?: Partial<Options<UpdateResourceData>>
+): UseMutationOptions<UpdateResourceResponse, UpdateResourceError, Options<UpdateResourceData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateResourceResponse,
+    UpdateResourceError,
+    Options<UpdateResourceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateResource({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete an availability rule
+ */
+export const deleteAvailabilityRuleMutation = (
+  options?: Partial<Options<DeleteAvailabilityRuleData>>
+): UseMutationOptions<
+  DeleteAvailabilityRuleResponse,
+  DeleteAvailabilityRuleError,
+  Options<DeleteAvailabilityRuleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteAvailabilityRuleResponse,
+    DeleteAvailabilityRuleError,
+    Options<DeleteAvailabilityRuleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteAvailabilityRule({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update an availability rule
+ */
+export const updateAvailabilityRuleMutation = (
+  options?: Partial<Options<UpdateAvailabilityRuleData>>
+): UseMutationOptions<
+  UpdateAvailabilityRuleResponse,
+  UpdateAvailabilityRuleError,
+  Options<UpdateAvailabilityRuleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateAvailabilityRuleResponse,
+    UpdateAvailabilityRuleError,
+    Options<UpdateAvailabilityRuleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateAvailabilityRule({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -5094,6 +5258,7 @@ export const getJobOptions = (options: Options<GetJobData>) => {
 
 /**
  * Update a marketplace class job
+ * Existing resource holds are released and re-placed against the updated schedule; conflicts return 409 with a per-occurrence report and roll the update back
  */
 export const updateJobMutation = (
   options?: Partial<Options<UpdateJobData>>
@@ -8038,6 +8203,182 @@ export const assignUserToBranchMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await assignUserToBranch({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listResourcesQueryKey = (options: Options<ListResourcesData>) =>
+  createQueryKey('listResources', options);
+
+/**
+ * List the organisation's resources
+ */
+export const listResourcesOptions = (options: Options<ListResourcesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listResources({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listResourcesQueryKey(options),
+  });
+};
+
+export const listResourcesInfiniteQueryKey = (
+  options: Options<ListResourcesData>
+): QueryKey<Options<ListResourcesData>> => createQueryKey('listResources', options, true);
+
+/**
+ * List the organisation's resources
+ */
+export const listResourcesInfiniteOptions = (options: Options<ListResourcesData>) => {
+  return infiniteQueryOptions<
+    ListResourcesResponse,
+    ListResourcesError,
+    InfiniteData<ListResourcesResponse>,
+    QueryKey<Options<ListResourcesData>>,
+    number | Pick<QueryKey<Options<ListResourcesData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListResourcesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listResources({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listResourcesInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const createResourceQueryKey = (options: Options<CreateResourceData>) =>
+  createQueryKey('createResource', options);
+
+/**
+ * Register a bookable resource (venue or equipment pool)
+ */
+export const createResourceOptions = (options: Options<CreateResourceData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createResource({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createResourceQueryKey(options),
+  });
+};
+
+/**
+ * Register a bookable resource (venue or equipment pool)
+ */
+export const createResourceMutation = (
+  options?: Partial<Options<CreateResourceData>>
+): UseMutationOptions<CreateResourceResponse, CreateResourceError, Options<CreateResourceData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateResourceResponse,
+    CreateResourceError,
+    Options<CreateResourceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createResource({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listAvailabilityRulesQueryKey = (options: Options<ListAvailabilityRulesData>) =>
+  createQueryKey('listAvailabilityRules', options);
+
+/**
+ * List a resource's availability rules
+ */
+export const listAvailabilityRulesOptions = (options: Options<ListAvailabilityRulesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listAvailabilityRules({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listAvailabilityRulesQueryKey(options),
+  });
+};
+
+export const addAvailabilityRuleQueryKey = (options: Options<AddAvailabilityRuleData>) =>
+  createQueryKey('addAvailabilityRule', options);
+
+/**
+ * Add an availability rule (open hours or blackout)
+ */
+export const addAvailabilityRuleOptions = (options: Options<AddAvailabilityRuleData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addAvailabilityRule({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addAvailabilityRuleQueryKey(options),
+  });
+};
+
+/**
+ * Add an availability rule (open hours or blackout)
+ */
+export const addAvailabilityRuleMutation = (
+  options?: Partial<Options<AddAvailabilityRuleData>>
+): UseMutationOptions<
+  AddAvailabilityRuleResponse,
+  AddAvailabilityRuleError,
+  Options<AddAvailabilityRuleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddAvailabilityRuleResponse,
+    AddAvailabilityRuleError,
+    Options<AddAvailabilityRuleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addAvailabilityRule({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -13638,6 +13979,7 @@ export const createJobQueryKey = (options: Options<CreateJobData>) =>
 
 /**
  * Create a marketplace class job
+ * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report
  */
 export const createJobOptions = (options: Options<CreateJobData>) => {
   return queryOptions({
@@ -13656,6 +13998,7 @@ export const createJobOptions = (options: Options<CreateJobData>) => {
 
 /**
  * Create a marketplace class job
+ * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report
  */
 export const createJobMutation = (
   options?: Partial<Options<CreateJobData>>
@@ -13839,6 +14182,7 @@ export const applyToJobQueryKey = (options: Options<ApplyToJobData>) =>
 
 /**
  * Apply to a marketplace class job
+ * Applications are hard-blocked (409 with conflict details) when the instructor's existing schedule overlaps any of the job's planned session occurrences
  */
 export const applyToJobOptions = (options: Options<ApplyToJobData>) => {
   return queryOptions({
@@ -13857,6 +14201,7 @@ export const applyToJobOptions = (options: Options<ApplyToJobData>) => {
 
 /**
  * Apply to a marketplace class job
+ * Applications are hard-blocked (409 with conflict details) when the instructor's existing schedule overlaps any of the job's planned session occurrences
  */
 export const applyToJobMutation = (
   options?: Partial<Options<ApplyToJobData>>
@@ -19260,6 +19605,91 @@ export const getOrganisationStatisticsOptions = (
     },
     queryKey: getOrganisationStatisticsQueryKey(options),
   });
+};
+
+export const getCalendarQueryKey = (options: Options<GetCalendarData>) =>
+  createQueryKey('getCalendar', options);
+
+/**
+ * Merged calendar view of a resource
+ * Expanded open-hours and blackout windows plus recruitment holds and confirmed bookings for the date range
+ */
+export const getCalendarOptions = (options: Options<GetCalendarData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCalendar({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCalendarQueryKey(options),
+  });
+};
+
+export const listBookingsQueryKey = (options: Options<ListBookingsData>) =>
+  createQueryKey('listBookings', options);
+
+/**
+ * List a resource's bookings
+ */
+export const listBookingsOptions = (options: Options<ListBookingsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listBookings({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listBookingsQueryKey(options),
+  });
+};
+
+export const listBookingsInfiniteQueryKey = (
+  options: Options<ListBookingsData>
+): QueryKey<Options<ListBookingsData>> => createQueryKey('listBookings', options, true);
+
+/**
+ * List a resource's bookings
+ */
+export const listBookingsInfiniteOptions = (options: Options<ListBookingsData>) => {
+  return infiniteQueryOptions<
+    ListBookingsResponse,
+    ListBookingsError,
+    InfiniteData<ListBookingsResponse>,
+    QueryKey<Options<ListBookingsData>>,
+    number | Pick<QueryKey<Options<ListBookingsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListBookingsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listBookings({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listBookingsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const search2QueryKey = (options: Options<Search2Data>) =>

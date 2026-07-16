@@ -434,13 +434,13 @@ export type RubricScoringLevel = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** CSS-safe color class name derived from the color code.
-   */
-  readonly css_color_class?: string;
-  /**
    * **[READ-ONLY]** Performance classification based on level order and passing status.
    */
   readonly performance_indicator?: string;
+  /**
+   * **[READ-ONLY]** CSS-safe color class name derived from the color code.
+   */
+  readonly css_color_class?: string;
   /**
    * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
    */
@@ -1149,6 +1149,10 @@ export type ProgramRequirement = {
    */
   readonly is_optional?: boolean;
   /**
+   * **[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.
+   */
+  readonly requirement_category?: string;
+  /**
    * **[READ-ONLY]** Priority level of the requirement based on type and mandatory status.
    */
   readonly requirement_priority?: string;
@@ -1160,10 +1164,6 @@ export type ProgramRequirement = {
    * **[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.
    */
   readonly requirement_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.
-   */
-  readonly requirement_category?: string;
 };
 
 export type ApiResponseProgramRequirement = {
@@ -1218,10 +1218,6 @@ export type ProgramCourse = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the course position within the program sequence.
-   */
-  readonly sequence_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the course association based on requirement status.
    */
   readonly association_category?: string;
@@ -1230,13 +1226,17 @@ export type ProgramCourse = {
    */
   readonly has_prerequisites?: boolean;
   /**
-   * **[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.
+   * **[READ-ONLY]** Formatted display of the course position within the program sequence.
    */
-  readonly curriculum_summary?: string;
+  readonly sequence_display?: string;
   /**
    * **[READ-ONLY]** Requirement status of the course within the program.
    */
   readonly requirement_status?: string;
+  /**
+   * **[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.
+   */
+  readonly curriculum_summary?: string;
 };
 
 export type ApiResponseProgramCourse = {
@@ -1320,6 +1320,128 @@ export type SetOrganisationUserDomainRequest = {
    * **[OPTIONAL]** Training branch to scope the assignment to. Must belong to the organisation when provided; null for an organisation-wide role.
    */
   branch_uuid?: string | null;
+};
+
+/**
+ * Bookable resource registered by an organisation: a venue (classroom, lab) or an equipment pool
+ */
+export type OrganisationResource = {
+  /**
+   * **[READ-ONLY]** Unique identifier of the resource
+   */
+  readonly uuid?: string;
+  /**
+   * Training branch the resource belongs to
+   */
+  branch_uuid?: string | null;
+  resource_type: ResourceTypeEnum;
+  /**
+   * Resource name, unique per organisation
+   */
+  name: string;
+  /**
+   * Free-form description
+   */
+  description?: string | null;
+  /**
+   * Seat capacity (VENUE only)
+   */
+  seat_capacity?: number | null;
+  /**
+   * Total available units (EQUIPMENT_POOL only)
+   */
+  total_quantity?: number | null;
+  /**
+   * Human readable location
+   */
+  location_name?: string | null;
+  /**
+   * Latitude of the resource location
+   */
+  location_latitude?: number | null;
+  /**
+   * Longitude of the resource location
+   */
+  location_longitude?: number | null;
+  /**
+   * Whether the resource can currently be booked
+   */
+  is_active?: boolean;
+  /**
+   * **[READ-ONLY]** Organisation owning the resource (taken from the request path)
+   */
+  readonly organisation_uuid?: string;
+  /**
+   * **[READ-ONLY]** Creation timestamp
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** Last update timestamp
+   */
+  readonly updated_date?: Date;
+};
+
+export type ApiResponseOrganisationResource = {
+  success?: boolean;
+  data?: OrganisationResource;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Calendar rule for a resource. Recurring rules use start_time/end_time (with optional
+ * days_of_week and effective dates); one-off BLACKOUT rules use specific_start/specific_end.
+ * A resource with no OPEN_HOURS rules is open at all times.
+ */
+export type ResourceAvailabilityRule = {
+  /**
+   * **[READ-ONLY]** Unique identifier of the rule
+   */
+  readonly uuid?: string;
+  rule_type: RuleTypeEnum;
+  /**
+   * Comma separated day names the recurring rule applies to; empty = every day
+   */
+  days_of_week?: string | null;
+  /**
+   * Daily window start (recurring rules)
+   */
+  start_time?: string | null;
+  /**
+   * Daily window end (recurring rules)
+   */
+  end_time?: string | null;
+  /**
+   * One-off window start (BLACKOUT only)
+   */
+  specific_start?: Date | null;
+  /**
+   * One-off window end (BLACKOUT only)
+   */
+  specific_end?: Date | null;
+  /**
+   * First date the recurring rule applies; null = unbounded
+   */
+  effective_start_date?: Date | null;
+  /**
+   * Last date the recurring rule applies (inclusive); null = unbounded
+   */
+  effective_end_date?: Date | null;
+  /**
+   * Free-form notes (e.g. 'Public holiday')
+   */
+  notes?: string | null;
+  /**
+   * **[READ-ONLY]** Resource the rule belongs to (taken from the request path)
+   */
+  readonly resource_uuid?: string;
+};
+
+export type ApiResponseResourceAvailabilityRule = {
+  success?: boolean;
+  data?: ResourceAvailabilityRule;
+  message?: string;
+  error?: unknown;
 };
 
 /**
@@ -2648,14 +2770,6 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
-  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -2667,6 +2781,14 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
+  /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -3557,6 +3679,10 @@ export type ClassDefinition = {
    */
   is_active?: boolean;
   /**
+   * **[OPTIONAL]** Organisation venue resource the class sessions are booked into. Null for classes without a managed venue.
+   */
+  venue_resource_uuid?: string | null;
+  /**
    * **[READ-ONLY]** Persisted session templates originally used to generate scheduled class instances.
    * Legacy classes created before template persistence may return an empty list.
    * conflict_resolution per template:
@@ -3594,6 +3720,10 @@ export type ClassDefinition = {
    * **[READ-ONLY]** Email or username of the user who last modified this class definition.
    */
   readonly updated_by?: string;
+  /**
+   * **[READ-ONLY]** Marketplace job this class was created from at instructor assignment. Null for directly created classes.
+   */
+  readonly marketplace_job_uuid?: string | null;
   /**
    * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
@@ -3763,6 +3893,24 @@ export type ClassMarketplaceJobRequest = {
    * **[REQUIRED]** Session templates that will be used when the class is assigned and created.
    */
   session_templates: Array<ClassSessionTemplate>;
+  /**
+   * **[OPTIONAL]** Organisation resources (venue, equipment pools) to reserve for every session while recruitment runs. At most one venue; posting fails with a per-occurrence conflict report if any resource is unavailable.
+   */
+  resources?: Array<ClassMarketplaceJobResource> | null;
+};
+
+/**
+ * Organisation resource a marketplace job reserves for its sessions while recruitment runs (venue booked exclusively, equipment pools by quantity)
+ */
+export type ClassMarketplaceJobResource = {
+  /**
+   * **[REQUIRED]** Organisation resource to reserve.
+   */
+  resource_uuid: string;
+  /**
+   * Units to reserve per session (must be 1 for venues; defaults to 1).
+   */
+  quantity?: number | null;
 };
 
 export type ApiResponseClassMarketplaceJob = {
@@ -3780,6 +3928,7 @@ export type ClassMarketplaceJob = {
   readonly title?: string;
   readonly description?: string;
   status?: StatusEnum7;
+  readonly resources?: Array<ClassMarketplaceJobResource>;
   readonly organisation_uuid?: string;
   readonly course_uuid?: string;
   readonly program_uuid?: string;
@@ -7196,6 +7345,137 @@ export type OrganisationDashboardStats = {
   total_branches?: bigint;
 };
 
+export type ApiResponsePagedDtoOrganisationResource = {
+  success?: boolean;
+  data?: PagedDtoOrganisationResource;
+  message?: string;
+  error?: unknown;
+};
+
+export type PagedDtoOrganisationResource = {
+  content?: Array<OrganisationResource>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponseListResourceCalendarEntry = {
+  success?: boolean;
+  data?: Array<ResourceCalendarEntry>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * One entry in a resource's merged calendar view: an expanded open-hours window, a blackout, a recruitment hold or a confirmed booking
+ */
+export type ResourceCalendarEntry = {
+  entry_type?: EntryTypeEnum;
+  /**
+   * Entry window start (UTC)
+   */
+  start_time?: Date;
+  /**
+   * Entry window end (UTC)
+   */
+  end_time?: Date;
+  /**
+   * Availability rule the entry was expanded from, when applicable
+   */
+  rule_uuid?: string | null;
+  /**
+   * Booking behind the entry, when applicable
+   */
+  booking_uuid?: string | null;
+  /**
+   * Marketplace job holding the slot, when applicable
+   */
+  job_uuid?: string | null;
+  /**
+   * Class definition occupying the slot, when applicable
+   */
+  class_definition_uuid?: string | null;
+  /**
+   * Units reserved, for equipment pool bookings
+   */
+  quantity?: number | null;
+  /**
+   * Rule notes or booking release reason, when applicable
+   */
+  notes?: string | null;
+};
+
+export type ApiResponsePagedDtoResourceBooking = {
+  success?: boolean;
+  data?: PagedDtoResourceBooking;
+  message?: string;
+  error?: unknown;
+};
+
+export type PagedDtoResourceBooking = {
+  content?: Array<ResourceBooking>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+/**
+ * Time-slot reservation of an organisation resource
+ */
+export type ResourceBooking = {
+  /**
+   * **[READ-ONLY]** Unique identifier of the booking
+   */
+  readonly uuid?: string;
+  /**
+   * Resource booked
+   */
+  resource_uuid?: string;
+  /**
+   * Organisation owning the resource
+   */
+  organisation_uuid?: string;
+  status?: StatusEnum18;
+  /**
+   * Units reserved (1 for venues)
+   */
+  quantity?: number;
+  /**
+   * Reservation window start (UTC)
+   */
+  start_time?: Date;
+  /**
+   * Reservation window end (UTC)
+   */
+  end_time?: Date;
+  source_type?: SourceTypeEnum;
+  /**
+   * Marketplace job holding the reservation, when applicable
+   */
+  job_uuid?: string | null;
+  /**
+   * Class definition backing the reservation, when applicable
+   */
+  class_definition_uuid?: string | null;
+  /**
+   * Scheduled instance backing the reservation, when applicable
+   */
+  scheduled_instance_uuid?: string | null;
+  /**
+   * When the booking was released, when applicable
+   */
+  released_at?: Date | null;
+  /**
+   * Why the booking was released, when applicable
+   */
+  release_reason?: string | null;
+};
+
+export type ApiResponseListResourceAvailabilityRule = {
+  success?: boolean;
+  data?: Array<ResourceAvailabilityRule>;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponsePagedDtoNotificationDto = {
   success?: boolean;
   data?: PagedDtoNotificationDto;
@@ -7341,7 +7621,7 @@ export type InstructorCalendarEntry = {
    * Unique identifier for the entry (slot UUID or scheduled instance UUID where applicable)
    */
   uuid?: string;
-  entry_type?: EntryTypeEnum;
+  entry_type?: EntryTypeEnum2;
   /**
    * Start date-time for the entry
    */
@@ -8398,6 +8678,14 @@ export type ClassMarketplaceJobEligibility = {
    * Whether the instructor already has an application for this job
    */
   readonly already_applied?: boolean;
+  /**
+   * Whether the instructor's existing schedule is free for every session of this job
+   */
+  readonly schedule_clear?: boolean;
+  /**
+   * Job session occurrences that clash with the instructor's existing schedule, with reasons
+   */
+  readonly schedule_conflicts?: Array<ClassSchedulingConflict> | null;
 };
 
 export type ApiResponsePagedDtoClassMarketplaceJobApplication = {
@@ -9208,6 +9496,32 @@ export const DomainNameEnum = {
 export type DomainNameEnum = (typeof DomainNameEnum)[keyof typeof DomainNameEnum];
 
 /**
+ * Resource kind
+ */
+export const ResourceTypeEnum = {
+  VENUE: 'VENUE',
+  EQUIPMENT_POOL: 'EQUIPMENT_POOL',
+} as const;
+
+/**
+ * Resource kind
+ */
+export type ResourceTypeEnum = (typeof ResourceTypeEnum)[keyof typeof ResourceTypeEnum];
+
+/**
+ * Rule kind
+ */
+export const RuleTypeEnum = {
+  OPEN_HOURS: 'OPEN_HOURS',
+  BLACKOUT: 'BLACKOUT',
+} as const;
+
+/**
+ * Rule kind
+ */
+export type RuleTypeEnum = (typeof RuleTypeEnum)[keyof typeof RuleTypeEnum];
+
+/**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
  */
 export const ProficiencyLevelEnum = {
@@ -9546,6 +9860,7 @@ export const StatusEnum7 = {
   OPEN: 'open',
   FILLED: 'filled',
   CANCELLED: 'cancelled',
+  EXPIRED: 'expired',
 } as const;
 
 export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
@@ -9626,6 +9941,7 @@ export const TypeEnum = {
   PROGRAM_TRAINING_APPLICATION_REVOKED: 'PROGRAM_TRAINING_APPLICATION_REVOKED',
   CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
   CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
+  CLASS_MARKETPLACE_JOB_EXPIRED: 'CLASS_MARKETPLACE_JOB_EXPIRED',
   CLASS_ENROLLMENT_CONFIRMED: 'CLASS_ENROLLMENT_CONFIRMED',
   COURSE_ENROLLMENT_MILESTONE: 'COURSE_ENROLLMENT_MILESTONE',
   COURSE_ENROLLMENT_NOTICE: 'COURSE_ENROLLMENT_NOTICE',
@@ -9926,9 +10242,53 @@ export const StatusEnum17 = {
 export type StatusEnum17 = (typeof StatusEnum17)[keyof typeof StatusEnum17];
 
 /**
- * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
+ * Entry kind
  */
 export const EntryTypeEnum = {
+  OPEN_HOURS: 'OPEN_HOURS',
+  BLACKOUT: 'BLACKOUT',
+  HOLD: 'HOLD',
+  CONFIRMED: 'CONFIRMED',
+} as const;
+
+/**
+ * Entry kind
+ */
+export type EntryTypeEnum = (typeof EntryTypeEnum)[keyof typeof EntryTypeEnum];
+
+/**
+ * Booking lifecycle state
+ */
+export const StatusEnum18 = {
+  HOLD: 'HOLD',
+  CONFIRMED: 'CONFIRMED',
+  RELEASED: 'RELEASED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * Booking lifecycle state
+ */
+export type StatusEnum18 = (typeof StatusEnum18)[keyof typeof StatusEnum18];
+
+/**
+ * What created the booking
+ */
+export const SourceTypeEnum = {
+  MARKETPLACE_JOB: 'MARKETPLACE_JOB',
+  CLASS_DEFINITION: 'CLASS_DEFINITION',
+  MANUAL: 'MANUAL',
+} as const;
+
+/**
+ * What created the booking
+ */
+export type SourceTypeEnum = (typeof SourceTypeEnum)[keyof typeof SourceTypeEnum];
+
+/**
+ * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
+ */
+export const EntryTypeEnum2 = {
   AVAILABILITY: 'AVAILABILITY',
   BLOCKED: 'BLOCKED',
   SCHEDULED_INSTANCE: 'SCHEDULED_INSTANCE',
@@ -9937,7 +10297,7 @@ export const EntryTypeEnum = {
 /**
  * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
  */
-export type EntryTypeEnum = (typeof EntryTypeEnum)[keyof typeof EntryTypeEnum];
+export type EntryTypeEnum2 = (typeof EntryTypeEnum2)[keyof typeof EntryTypeEnum2];
 
 /**
  * **[READ-ONLY]** Moderation decision taken.
@@ -10232,6 +10592,33 @@ export type DomainNameEnumWritable =
   (typeof DomainNameEnumWritable)[keyof typeof DomainNameEnumWritable];
 
 /**
+ * Resource kind
+ */
+export const ResourceTypeEnumWritable = {
+  VENUE: 'VENUE',
+  EQUIPMENT_POOL: 'EQUIPMENT_POOL',
+} as const;
+
+/**
+ * Resource kind
+ */
+export type ResourceTypeEnumWritable =
+  (typeof ResourceTypeEnumWritable)[keyof typeof ResourceTypeEnumWritable];
+
+/**
+ * Rule kind
+ */
+export const RuleTypeEnumWritable = {
+  OPEN_HOURS: 'OPEN_HOURS',
+  BLACKOUT: 'BLACKOUT',
+} as const;
+
+/**
+ * Rule kind
+ */
+export type RuleTypeEnumWritable = (typeof RuleTypeEnumWritable)[keyof typeof RuleTypeEnumWritable];
+
+/**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
  */
 export const ProficiencyLevelEnumWritable = {
@@ -10518,6 +10905,7 @@ export const TypeEnumWritable = {
   PROGRAM_TRAINING_APPLICATION_REVOKED: 'PROGRAM_TRAINING_APPLICATION_REVOKED',
   CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
   CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
+  CLASS_MARKETPLACE_JOB_EXPIRED: 'CLASS_MARKETPLACE_JOB_EXPIRED',
   CLASS_ENROLLMENT_CONFIRMED: 'CLASS_ENROLLMENT_CONFIRMED',
   COURSE_ENROLLMENT_MILESTONE: 'COURSE_ENROLLMENT_MILESTONE',
   COURSE_ENROLLMENT_NOTICE: 'COURSE_ENROLLMENT_NOTICE',
@@ -10771,9 +11159,55 @@ export const StatusEnum17Writable = {
 export type StatusEnum17Writable = (typeof StatusEnum17Writable)[keyof typeof StatusEnum17Writable];
 
 /**
- * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
+ * Entry kind
  */
 export const EntryTypeEnumWritable = {
+  OPEN_HOURS: 'OPEN_HOURS',
+  BLACKOUT: 'BLACKOUT',
+  HOLD: 'HOLD',
+  CONFIRMED: 'CONFIRMED',
+} as const;
+
+/**
+ * Entry kind
+ */
+export type EntryTypeEnumWritable =
+  (typeof EntryTypeEnumWritable)[keyof typeof EntryTypeEnumWritable];
+
+/**
+ * Booking lifecycle state
+ */
+export const StatusEnum18Writable = {
+  HOLD: 'HOLD',
+  CONFIRMED: 'CONFIRMED',
+  RELEASED: 'RELEASED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * Booking lifecycle state
+ */
+export type StatusEnum18Writable = (typeof StatusEnum18Writable)[keyof typeof StatusEnum18Writable];
+
+/**
+ * What created the booking
+ */
+export const SourceTypeEnumWritable = {
+  MARKETPLACE_JOB: 'MARKETPLACE_JOB',
+  CLASS_DEFINITION: 'CLASS_DEFINITION',
+  MANUAL: 'MANUAL',
+} as const;
+
+/**
+ * What created the booking
+ */
+export type SourceTypeEnumWritable =
+  (typeof SourceTypeEnumWritable)[keyof typeof SourceTypeEnumWritable];
+
+/**
+ * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
+ */
+export const EntryTypeEnum2Writable = {
   AVAILABILITY: 'AVAILABILITY',
   BLOCKED: 'BLOCKED',
   SCHEDULED_INSTANCE: 'SCHEDULED_INSTANCE',
@@ -10782,8 +11216,8 @@ export const EntryTypeEnumWritable = {
 /**
  * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
  */
-export type EntryTypeEnumWritable =
-  (typeof EntryTypeEnumWritable)[keyof typeof EntryTypeEnumWritable];
+export type EntryTypeEnum2Writable =
+  (typeof EntryTypeEnum2Writable)[keyof typeof EntryTypeEnum2Writable];
 
 export type DeleteUserData = {
   body?: never;
@@ -12387,6 +12821,173 @@ export type UpdateTrainingBranch1Responses = {
 
 export type UpdateTrainingBranch1Response =
   UpdateTrainingBranch1Responses[keyof UpdateTrainingBranch1Responses];
+
+export type DeactivateResourceData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+    resourceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}';
+};
+
+export type DeactivateResourceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeactivateResourceError = DeactivateResourceErrors[keyof DeactivateResourceErrors];
+
+export type DeactivateResourceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeactivateResourceResponse =
+  DeactivateResourceResponses[keyof DeactivateResourceResponses];
+
+export type GetResourceData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+    resourceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}';
+};
+
+export type GetResourceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetResourceError = GetResourceErrors[keyof GetResourceErrors];
+
+export type GetResourceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseOrganisationResource;
+};
+
+export type GetResourceResponse = GetResourceResponses[keyof GetResourceResponses];
+
+export type UpdateResourceData = {
+  body: OrganisationResource;
+  path: {
+    organisationUuid: string;
+    resourceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}';
+};
+
+export type UpdateResourceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateResourceError = UpdateResourceErrors[keyof UpdateResourceErrors];
+
+export type UpdateResourceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseOrganisationResource;
+};
+
+export type UpdateResourceResponse = UpdateResourceResponses[keyof UpdateResourceResponses];
+
+export type DeleteAvailabilityRuleData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+    resourceUuid: string;
+    ruleUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/availability-rules/{ruleUuid}';
+};
+
+export type DeleteAvailabilityRuleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteAvailabilityRuleError =
+  DeleteAvailabilityRuleErrors[keyof DeleteAvailabilityRuleErrors];
+
+export type DeleteAvailabilityRuleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeleteAvailabilityRuleResponse =
+  DeleteAvailabilityRuleResponses[keyof DeleteAvailabilityRuleResponses];
+
+export type UpdateAvailabilityRuleData = {
+  body: ResourceAvailabilityRule;
+  path: {
+    organisationUuid: string;
+    resourceUuid: string;
+    ruleUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/availability-rules/{ruleUuid}';
+};
+
+export type UpdateAvailabilityRuleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateAvailabilityRuleError =
+  UpdateAvailabilityRuleErrors[keyof UpdateAvailabilityRuleErrors];
+
+export type UpdateAvailabilityRuleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseResourceAvailabilityRule;
+};
+
+export type UpdateAvailabilityRuleResponse =
+  UpdateAvailabilityRuleResponses[keyof UpdateAvailabilityRuleResponses];
 
 export type DeleteInstructorData = {
   body?: never;
@@ -16874,6 +17475,140 @@ export type AssignUserToBranchResponses = {
 
 export type AssignUserToBranchResponse =
   AssignUserToBranchResponses[keyof AssignUserToBranchResponses];
+
+export type ListResourcesData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query: {
+    resource_type?: string;
+    branch_uuid?: string;
+    active?: boolean;
+    pageable: Pageable;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/resources';
+};
+
+export type ListResourcesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListResourcesError = ListResourcesErrors[keyof ListResourcesErrors];
+
+export type ListResourcesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoOrganisationResource;
+};
+
+export type ListResourcesResponse = ListResourcesResponses[keyof ListResourcesResponses];
+
+export type CreateResourceData = {
+  body: OrganisationResource;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/resources';
+};
+
+export type CreateResourceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateResourceError = CreateResourceErrors[keyof CreateResourceErrors];
+
+export type CreateResourceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseOrganisationResource;
+};
+
+export type CreateResourceResponse = CreateResourceResponses[keyof CreateResourceResponses];
+
+export type ListAvailabilityRulesData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+    resourceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/availability-rules';
+};
+
+export type ListAvailabilityRulesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListAvailabilityRulesError =
+  ListAvailabilityRulesErrors[keyof ListAvailabilityRulesErrors];
+
+export type ListAvailabilityRulesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListResourceAvailabilityRule;
+};
+
+export type ListAvailabilityRulesResponse =
+  ListAvailabilityRulesResponses[keyof ListAvailabilityRulesResponses];
+
+export type AddAvailabilityRuleData = {
+  body: ResourceAvailabilityRule;
+  path: {
+    organisationUuid: string;
+    resourceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/availability-rules';
+};
+
+export type AddAvailabilityRuleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddAvailabilityRuleError = AddAvailabilityRuleErrors[keyof AddAvailabilityRuleErrors];
+
+export type AddAvailabilityRuleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseResourceAvailabilityRule;
+};
+
+export type AddAvailabilityRuleResponse =
+  AddAvailabilityRuleResponses[keyof AddAvailabilityRuleResponses];
 
 export type ListNotificationsData = {
   body?: never;
@@ -22010,6 +22745,10 @@ export type RescheduleScheduledInstanceErrors = {
    */
   404: ResponseDtoVoid;
   /**
+   * Linked venue or equipment is not available at the new time
+   */
+  409: ApiResponseScheduledInstance;
+  /**
    * Internal Server Error
    */
   500: ResponseDtoVoid;
@@ -24746,6 +25485,78 @@ export type GetOrganisationStatisticsResponses = {
 
 export type GetOrganisationStatisticsResponse =
   GetOrganisationStatisticsResponses[keyof GetOrganisationStatisticsResponses];
+
+export type GetCalendarData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+    resourceUuid: string;
+  };
+  query: {
+    start_date: Date;
+    end_date: Date;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/calendar';
+};
+
+export type GetCalendarErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCalendarError = GetCalendarErrors[keyof GetCalendarErrors];
+
+export type GetCalendarResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListResourceCalendarEntry;
+};
+
+export type GetCalendarResponse = GetCalendarResponses[keyof GetCalendarResponses];
+
+export type ListBookingsData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+    resourceUuid: string;
+  };
+  query: {
+    status?: string;
+    start_date?: Date;
+    end_date?: Date;
+    pageable: Pageable;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/bookings';
+};
+
+export type ListBookingsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListBookingsError = ListBookingsErrors[keyof ListBookingsErrors];
+
+export type ListBookingsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoResourceBooking;
+};
+
+export type ListBookingsResponse = ListBookingsResponses[keyof ListBookingsResponses];
 
 export type Search2Data = {
   body?: never;
