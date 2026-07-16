@@ -552,7 +552,7 @@ const AssessmentCreationForm = ({
 
   interface ParsedQuestion {
     uuid: "";
-    question: string;
+    text: string;
     type: QuestionType;
     points: number;
     explanation?: string;
@@ -566,7 +566,7 @@ const AssessmentCreationForm = ({
       .filter(Boolean);
 
     let type: QuestionType = "MULTIPLE_CHOICE";
-    let question = "";
+    let questionText = "";
     let points = 1;
     let explanation = "";
 
@@ -579,7 +579,7 @@ const AssessmentCreationForm = ({
       }
 
       if (line.startsWith("QUESTION:")) {
-        question = line.replace("QUESTION:", "").trim();
+        questionText = line.replace("QUESTION:", "").trim();
         continue;
       }
 
@@ -623,7 +623,7 @@ const AssessmentCreationForm = ({
     return {
       uuid: "",
       type,
-      question,
+      text: questionText,
       points,
       explanation,
       options,

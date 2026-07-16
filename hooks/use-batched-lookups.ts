@@ -2,6 +2,7 @@
 
 import { STALE_TIMES } from '@/lib/query-client';
 import {
+  CourseAssessment,
   CourseTrainingApplication,
   ProgramTrainingApplication,
   type Assignment,
@@ -14,6 +15,7 @@ import {
   type User
 } from '@/services/client';
 import {
+  getCourseAssessmentsOptions,
   searchAssignmentsOptions,
   searchCoursesOptions,
   searchInstructorsOptions,
@@ -194,5 +196,95 @@ export function useProgramTrainingApplicationsByCourseCreatorIds() {
     STALE_TIMES.entity,
     100
   );
+}
+
+export function useQuizzesByLessonIds(lessonUuids: string[]) {
+  const uniqueLessonUuids = [...new Set(lessonUuids)];
+
+  return useQueries({
+    queries: uniqueLessonUuids.map(uuid => ({
+      ...searchQuizzesOptions({
+        query: {
+          searchParams: {
+            lessonUuid: uuid,
+          },
+          pageable: {
+            page: 0,
+            size: 100,
+          },
+        },
+      }),
+    })),
+    combine: results => ({
+      items: results.flatMap(
+        result =>
+          ((result.data as SearchResponse | undefined)?.data?.content ?? []) as Quiz[]
+      ),
+      isLoading: results.some(r => r.isLoading),
+    }),
+  });
+}
+
+export function useAssignmentsByLessonIds(lessonUuids: string[]) {
+  const uniqueLessonUuids = [...new Set(lessonUuids)];
+
+  return useQueries({
+    queries: uniqueLessonUuids.map(uuid => ({
+      ...searchAssignmentsOptions({
+        query: {
+          searchParams: {
+            lessonUuid: uuid,
+          },
+          pageable: {
+            page: 0,
+            size: 100,
+          },
+        },
+      }),
+    })),
+    combine: results => ({
+      items: results.flatMap(
+        result =>
+          ((result.data as SearchResponse | undefined)?.data?.content ?? []) as Quiz[]
+      ),
+      isLoading: results.some(r => r.isLoading),
+    }),
+  });
+}
+
+
+export function useCourseAssessmentsByCourseUuids(courseUuids: string[]) {
+  const uniqueCourseUuids = useMemo(
+    () => [...new Set(courseUuids.filter(Boolean))].sort(),
+    [courseUuids]
+  );
+
+  return useQueries({
+    queries: uniqueCourseUuids.map(courseUuid => ({
+      ...getCourseAssessmentsOptions({
+        path: { courseUuid },
+        query: { pageable: {} },
+      }),
+      enabled: !!courseUuid,
+      staleTime: STALE_TIMES.entity,
+    })),
+
+    combine: results => {
+      const assessmentMap: Record<string, CourseAssessment[]> = {};
+
+      results.forEach((result, index) => {
+        const courseUuid = uniqueCourseUuids[index];
+
+        assessmentMap[courseUuid] =
+          result.data?.data?.content ?? [];
+      });
+
+      return {
+        assessmentMap,
+        items: Object.values(assessmentMap).flat(),
+        isLoading: results.some(r => r.isLoading),
+      };
+    },
+  });
 }
 

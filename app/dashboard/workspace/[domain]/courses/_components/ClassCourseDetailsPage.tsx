@@ -6,19 +6,19 @@ import type {
     Assignment,
     ClassReview,
     Course,
+    CourseAssessment,
     CourseReview,
     DifficultyLevel,
     Lesson,
-    Quiz,
+    Quiz
 } from '@/services/client';
 import { ApplicantTypeEnum } from '@/services/client';
 import {
-    getAllAssignmentsOptions,
     getAllCoursesOptions,
     getAllDifficultyLevelsOptions,
-    getAllQuizzesOptions,
     getAllTrainingProgramsOptions,
     getClassReviewsOptions,
+    getCourseAssessmentsOptions,
     getCourseCreatorByUuidOptions,
     getCourseReviewsOptions,
     getCourseTrainingRequirementsOptions,
@@ -36,12 +36,12 @@ import { CalendarClock, Heart, Share2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { QuizContentPreview } from '../../../../../../components/content-preview/QuizContentPreview';
 import NotesModal from '../../../../../../components/custom-modals/notes-modal';
 import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
 import { Button } from '../../../../../../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../../components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../../../components/ui/table';
+import { useAssignmentsByLessonIds, useQuizzesByLessonIds } from '../../../../../../hooks/use-batched-lookups';
 import { ClassDetailsScheduleItem, CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../../lib/share';
 import { socialShareActions } from '../../../../@instructor/classes/overview/[id]/page';
@@ -218,6 +218,13 @@ export default function ClassCourseDetailsPage({
     })
     const requirementCount = Number(cReqData?.data?.content?.length) ?? 0
 
+    const { data: cAssessmentsResp } = useQuery({
+        ...getCourseAssessmentsOptions({
+            path: { courseUuid: resolvedCourseId as string },
+            query: { pageable: {} }
+        })
+    })
+
     const courseShareLink =
         typeof window !== 'undefined'
             ? `${window.location.origin}${buildWorkspaceAliasPath(
@@ -267,34 +274,6 @@ export default function ClassCourseDetailsPage({
     const difficultyLevels: DifficultyLevel[] =
         difficultyResponse?.data ?? [];
 
-    const { data: assignmentsResponse, isLoading: assignmentLoading } =
-        useQuery({
-            ...getAllAssignmentsOptions({
-                query: {
-                    pageable: {
-                        page: 0,
-                        size: 1000,
-                    },
-                },
-            }),
-        });
-
-    const assignments: Assignment[] =
-        assignmentsResponse?.data?.content ?? [];
-
-    const { data: quizzesResponse, isLoading: quizzesLoading } = useQuery({
-        ...getAllQuizzesOptions({
-            query: {
-                pageable: {
-
-                },
-            },
-        }),
-    });
-
-    const quizzes: Quiz[] = quizzesResponse?.data?.content ?? [];
-    console.log(quizzesResponse, "QUIZ RESP")
-
     const {
         isLoading: lessonsLoading,
         isFetching: lessonsFetching,
@@ -302,6 +281,25 @@ export default function ClassCourseDetailsPage({
     } = useCourseLessonsWithContent({
         courseUuid: resolvedCourseId,
     });
+
+    const lessons: Lesson[] = useMemo(
+        () =>
+            lessonsWithContent
+                ?.map(item => item.lesson)
+                .filter(Boolean) ?? [],
+        [lessonsWithContent]
+    );
+
+    const lessonUuids = useMemo(
+        () =>
+            lessons
+                .map(lesson => lesson.uuid)
+                .filter((uuid): uuid is string => !!uuid),
+        [lessons]
+    );
+
+    const { items: quizzes, isLoading: quizzesLoading } = useQuizzesByLessonIds(lessonUuids)
+    const { items: assignments, isLoading: assignmentLoading } = useAssignmentsByLessonIds(lessonUuids)
 
     const {
         data: relatedCoursesResponse,
@@ -332,22 +330,6 @@ export default function ClassCourseDetailsPage({
         refetchOnWindowFocus: false,
     });
 
-    const lessons: Lesson[] = useMemo(
-        () =>
-            lessonsWithContent
-                ?.map(item => item.lesson)
-                .filter(Boolean) ?? [],
-        [lessonsWithContent]
-    );
-
-    const lessonUuids = useMemo(
-        () =>
-            lessons
-                .map(lesson => lesson.uuid)
-                .filter((uuid): uuid is string => !!uuid),
-        [lessons]
-    );
-
     const filteredAssignments = useMemo(
         () =>
             assignments.filter(assignment =>
@@ -363,9 +345,6 @@ export default function ClassCourseDetailsPage({
             ),
         [lessonUuids, quizzes]
     );
-
-    console.log(filteredQuizzes, "FCCC")
-    console.log(quizzes, "QUIZZ")
 
     const difficultyName = useMemo(
         () =>
@@ -650,6 +629,7 @@ export default function ClassCourseDetailsPage({
                                     <CourseAssessments
                                         assignments={filteredAssignments}
                                         quizzes={filteredQuizzes}
+                                        assessmentScheme={cAssessmentsResp?.data?.content}
                                     />
                                 )}
 
@@ -1032,11 +1012,96 @@ function CourseScheduleInfo({ type, classData, schedule }: { type: "course" | "c
 function CourseAssessments({
     assignments = [],
     quizzes = [],
-}: { assignments: Assignment[], quizzes: Quiz[] }) {
+    assessmentScheme = [],
+}: {
+    assignments: Assignment[], quizzes: Quiz[],
+    assessmentScheme: CourseAssessment[];
+}) {
     return (
         <div className="space-y-8">
+            {/* Course Grading Breakdown */}
+            <section className="rounded-lg border bg-card">
+                <div className="border-b px-4 py-3">
+                    <h2 className="text-lg font-semibold">Course Grading Breakdown</h2>
+                    <p className="text-sm text-muted-foreground">
+                        Your final grade is calculated using the following assessment
+                        components.
+                    </p>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead className="bg-muted/50">
+                            <tr>
+                                <th className="px-4 py-3 text-left font-medium">Component</th>
+                                {/* <th className="px-4 py-3 text-left font-medium">Type</th> */}
+                                <th className="px-4 py-3 text-left font-medium">Category</th>
+                                <th className="px-4 py-3 text-right font-medium">Weight</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {assessmentScheme.map((item) => (
+                                <tr key={item.uuid} className="border-t">
+                                    <td className="px-4 py-3">
+                                        <div className="font-medium">{item.title}</div>
+                                        {!item.is_required && (
+                                            <span className="text-xs text-muted-foreground">
+                                                Optional
+                                            </span>
+                                        )}
+                                    </td>
+
+                                    {/* <td className="px-4 py-3">{item.assessment_type}</td> */}
+
+                                    <td className="px-4 py-3">
+                                        {item.assessment_category}
+                                    </td>
+
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {item.weight_display}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div className="mb-4">
+                <h2 className="text-lg font-semibold">
+                    Assignments ({assignments.length})
+                </h2>
+
+                <ul className="mt-2 list-disc space-y-1 pl-8 text-sm text-muted-foreground">
+                    <li>
+                        {assignments.length}{" "}
+                        {assignments.length === 1 ? "assignment" : "assignments"} available
+                    </li>
+                    <li>Graded coursework that contributes to your final grade.</li>
+                </ul>
+            </div>
+
+            <div className="border-t" />
+
+            <div className="mb-4 pt-4">
+                <h2 className="text-lg font-semibold">
+                    Quizzes ({quizzes.length})
+                </h2>
+
+                <ul className="mt-2 list-disc space-y-1 pl-8 text-sm text-muted-foreground">
+                    <li>
+                        {quizzes.length}{" "}
+                        {quizzes.length === 1 ? "quiz" : "quizzes"} available
+                    </li>
+                    <li>
+                        Complete these quizzes to assess your understanding of the course material.
+                    </li>
+                </ul>
+            </div>
+
             {/* Assignments */}
-            <section>
+            {/* <section>
                 <div className="mb-4 flex items-center gap-2">
                     <h2 className="text-lg font-semibold">Assignments</h2>
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -1081,12 +1146,11 @@ function CourseAssessments({
                         ))}
                     </div>
                 )}
-            </section>
+            </section> */}
 
-            <div className="border-t" />
 
             {/* Quizzes */}
-            <section>
+            {/* <section>
                 <div className="mb-4 flex items-center gap-2">
                     <h2 className="text-lg font-semibold">Quizzes</h2>
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -1111,7 +1175,7 @@ function CourseAssessments({
                         ))}
                     </div>
                 )}
-            </section>
+            </section> */}
         </div>
     );
 }
