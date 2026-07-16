@@ -15,7 +15,9 @@ import {
     getCertificateTemplatesOptions,
     getCourseEnrollmentsOptions,
     getEnrollmentGradeBookOptions,
+    getEnrollmentGradeBookQueryKey,
     getStudentCertificatesOptions,
+    getStudentCertificatesQueryKey,
     revokeCertificateMutation,
     searchSubmissionsOptions
 } from '@/services/client/@tanstack/react-query.gen';
@@ -26,6 +28,7 @@ import { Award, CheckCircle2, FileText, GraduationCap, Loader2, ShieldCheck } fr
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useUserProfile } from '../../../../../../../context/profile-context';
 import { toAuthenticatedMediaUrl } from '../../../../../../../src/lib/media-url';
 import { buildTemplatePayload } from '../../../../../_components/certificate/AwardCertificatePage';
 import CertificatePage from '../../../../../_components/certificate/CertificatePage';
@@ -45,6 +48,8 @@ const AwardCertificatesPage = () => {
     const params = useParams();
     const queryClient = useQueryClient();
     const classId = params?.id as string;
+    const userProfile = useUserProfile()
+    const student = userProfile?.student
 
     const { data, isLoading, isError } = useClassDetails(classId);
     const { rosterAllEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
@@ -334,8 +339,16 @@ const AwardCertificatesPage = () => {
                 } as Certificate,
             });
 
-            await queryClient.invalidateQueries({ queryKey: ['getStudentCertificates'] });
-            await queryClient.invalidateQueries({ queryKey: ['getEnrollmentGradeBook'] });
+            await queryClient.invalidateQueries({
+                queryKey: getStudentCertificatesQueryKey({ path: { studentUuid } }),
+            });
+            await queryClient.invalidateQueries({
+                queryKey:
+                    getEnrollmentGradeBookQueryKey({
+                        path: { courseUuid, enrollmentUuid },
+                    })
+            });
+
 
             if (createdCertificate?.certificate_number) {
                 toast.success(`Certificate issued to ${selectedStudent?.user?.full_name ?? 'the learner'}.`);
@@ -358,7 +371,10 @@ const AwardCertificatesPage = () => {
                 path: { uuid: activeCertificate.uuid },
                 query: { reason: 'Revoked by instructor' },
             });
-            await queryClient.invalidateQueries({ queryKey: ['getStudentCertificates'] });
+
+            await queryClient.invalidateQueries({
+                queryKey: getStudentCertificatesQueryKey({ path: { studentUuid } }),
+            });
             toast.success('Certificate revoked.');
         } catch (error) {
             toast.error('Unable to revoke this certificate.');

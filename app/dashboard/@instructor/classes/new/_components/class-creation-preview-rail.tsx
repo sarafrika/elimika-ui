@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { toAuthenticatedMediaUrl } from '../../../../../../src/lib/media-url';
 
 export type PreviewSummaryItem = {
   icon: LucideIcon;
@@ -123,69 +124,14 @@ export function ClassCreationPreviewRail({
       <Card className='border border-border pt-0 shadow-sm rounded-md'>
         <div className='bg-background flex flex-col gap-2 px-4 pt-4 sm:flex-row sm:items-center sm:justify-between'>
           <h3 className='text-foreground text-sm font-semibold sm:text-base'>Class Preview</h3>
-
-          {/* <div className='flex flex-wrap items-center gap-2'>
-            <input
-              ref={thumbnailInputRef}
-              type='file'
-              accept='image/*'
-              className='hidden'
-              onChange={handleThumbnailPick}
-            />
-            <input
-              ref={videoInputRef}
-              type='file'
-              accept='video/*'
-              className='hidden'
-              onChange={handleVideoPick}
-            />
-
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              className='h-8 rounded-md text-xs'
-              disabled={!classCreated || isUploadingThumbnail}
-              onClick={() => thumbnailInputRef.current?.click()}
-            >
-              {isUploadingThumbnail ? (
-                <Loader2 className='mr-1.5 h-3.5 w-3.5 animate-spin' />
-              ) : (
-                <ImagePlus className='mr-1.5 h-3.5 w-3.5' />
-              )}
-              Add Class Thumbnail
-            </Button>
-
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              className='h-8 rounded-md text-xs'
-              disabled={!classCreated || isUploadingIntroVideo}
-              onClick={() => videoInputRef.current?.click()}
-            >
-              {isUploadingIntroVideo ? (
-                <Loader2 className='mr-1.5 h-3.5 w-3.5 animate-spin' />
-              ) : (
-                <VideoIcon className='mr-1.5 h-3.5 w-3.5' />
-              )}
-              Add Class Intro Video
-            </Button>
-          </div> */}
         </div>
-
-        {/* {!classCreated && (
-          <p className='text-muted-foreground px-4 pt-2 text-[11px]'>
-            Save or publish the class first to enable thumbnail and video uploads.
-          </p>
-        )} */}
 
         <div className='overflow-hidden rounded-md border border-primary/20 bg-background mt-3'>
           {/* HERO IMAGE */}
           <div className='relative h-[220px] w-full overflow-hidden'>
             {data?.thumbnailUrl ? (
               <img
-                src={data.thumbnailUrl}
+                src={toAuthenticatedMediaUrl(data.thumbnailUrl) as string}
                 alt={data.classTitle || 'Class thumbnail'}
                 className='h-full w-full object-cover'
               />

@@ -1,27 +1,5 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
-import {
-  BookOpen,
-  Building2,
-  Calendar,
-  Filter,
-  GraduationCap,
-  Loader2,
-  Mail,
-  MoreVertical,
-  Plus,
-  UserCog,
-  Users,
-  Wallet as WalletIcon,
-  X,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
@@ -61,6 +39,26 @@ import {
   getUsersByOrganisationOptions,
   getWalletOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ColumnDef } from '@tanstack/react-table';
+import { format } from 'date-fns';
+import {
+  BookOpen,
+  Building2,
+  Calendar,
+  GraduationCap,
+  Loader2,
+  Mail,
+  MoreVertical,
+  Plus,
+  UserCog,
+  Users,
+  Wallet as WalletIcon
+} from 'lucide-react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { AdminPageHeader, StatCard } from '../_components/ui';
 
 const domainOptions: Array<{ value: DomainNameEnum | ''; label: string }> = [
@@ -272,12 +270,12 @@ export default function OrganisationPeoplePage() {
   const usersQuery = useQuery({
     ...(domainFilter
       ? getUsersByOrganisationAndDomainOptions({
-          path: { uuid: organisationUuid, domainName: domainFilter },
-        })
+        path: { uuid: organisationUuid, domainName: domainFilter },
+      })
       : getUsersByOrganisationOptions({
-          path: { uuid: organisationUuid },
-          query: { pageable: { page: 0, size: 100 } },
-        })),
+        path: { uuid: organisationUuid },
+        query: { pageable: { page: 0, size: 100 } },
+      })),
     enabled: Boolean(organisationUuid),
   });
 
@@ -405,7 +403,7 @@ export default function OrganisationPeoplePage() {
       </div>
 
       {/* Filters */}
-      <section className='mb-6'>
+      {/* <section className='mb-6'>
         <div className='flex items-center gap-3'>
           <Filter className='text-muted-foreground h-4 w-4' />
           <select
@@ -425,7 +423,7 @@ export default function OrganisationPeoplePage() {
             </Button>
           )}
         </div>
-      </section>
+      </section> */}
 
       {/* People DataTable */}
       <section className={elimikaDesignSystem.spacing.content}>

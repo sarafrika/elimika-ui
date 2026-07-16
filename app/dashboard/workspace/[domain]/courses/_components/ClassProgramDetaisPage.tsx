@@ -4,14 +4,13 @@ import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent
 import type {
     Assignment,
     Course,
+    CourseAssessment,
     ProgramReview,
     Quiz,
     TrainingProgram
 } from '@/services/client';
 import {
-    getAllAssignmentsOptions,
     getAllDifficultyLevelsOptions,
-    getAllQuizzesOptions,
     getClassDefinitionsForInstructorOptions,
     getInstructorRatingSummaryOptions,
     getProgramCoursesOptions,
@@ -19,7 +18,7 @@ import {
     getProgramReviewsQueryKey,
     getTrainingProgramByUuidOptions,
     submitInstructorReviewMutation,
-    submitProgramReviewMutation,
+    submitProgramReviewMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
@@ -53,7 +52,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { QuizContentPreview } from '../../../../../../components/content-preview/QuizContentPreview';
 import HTMLTextPreview from '../../../../../../components/editors/html-text-preview';
 import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
 import { Button } from '../../../../../../components/ui/button';
@@ -65,6 +63,7 @@ import {
     DialogTitle,
 } from '../../../../../../components/ui/dialog';
 import { useUserProfile } from '../../../../../../context/profile-context';
+import { useAssignmentsByLessonIds, useCourseAssessmentsByCourseUuids, useCoursesByIds, useQuizzesByLessonIds } from '../../../../../../hooks/use-batched-lookups';
 import { CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
 import { useCourseEnrollmentsMap } from '../../../../../../hooks/use-enrollment-map';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../../lib/share';
@@ -995,13 +994,126 @@ function ProgramBundledCourses({
 function ProgramAssessments({
     assignments = [],
     quizzes = [],
+    assessmentScheme = {},
+    courseMap = {},
+
 }: {
     assignments: Assignment[];
     quizzes: Quiz[];
+    assessmentScheme: Record<string, CourseAssessment[]>;
+    courseMap: Record<string, Course>;
+
+
 }) {
     return (
         <div className="space-y-8">
-            <section>
+            {/* Assessment Breakdown */}
+            <div className="space-y-6">
+                {Object.entries(assessmentScheme).map(([courseUuid, assessments]) => {
+                    const course = courseMap[courseUuid];
+
+                    return (
+                        <section
+                            key={courseUuid}
+                            className="rounded-lg border bg-card"
+                        >
+                            <div className="border-b px-4 py-3">
+                                <h2 className="text-lg font-semibold">
+                                    {course?.name}
+                                </h2>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    Your final grade is calculated using the following
+                                    assessment components.
+                                </p>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-muted/50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left font-medium">
+                                                Component
+                                            </th>
+
+                                            <th className="px-4 py-3 text-left font-medium">
+                                                Category
+                                            </th>
+
+                                            <th className="px-4 py-3 text-right font-medium">
+                                                Weight
+                                            </th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {assessments.map((item) => (
+                                            <tr
+                                                key={item.uuid}
+                                                className="border-t"
+                                            >
+                                                <td className="px-4 py-3">
+                                                    <div className="font-medium">
+                                                        {item.title}
+                                                    </div>
+
+                                                    {!item.is_required && (
+                                                        <span className="text-xs text-muted-foreground">
+                                                            Optional
+                                                        </span>
+                                                    )}
+                                                </td>
+
+                                                <td className="px-4 py-3">
+                                                    {item.assessment_category}
+                                                </td>
+
+                                                <td className="px-4 py-3 text-right font-medium">
+                                                    {item.weight_display}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    );
+                })}
+            </div>
+
+            <div className="mb-4">
+                <h2 className="text-lg font-semibold">
+                    Assignments ({assignments.length})
+                </h2>
+
+                <ul className="mt-2 list-disc space-y-1 pl-8 text-sm text-muted-foreground">
+                    <li>
+                        {assignments.length}{" "}
+                        {assignments.length === 1 ? "assignment" : "assignments"} available
+                    </li>
+                    <li>Graded coursework that contributes to your final grade.</li>
+                </ul>
+            </div>
+
+            <div className="border-t" />
+
+            <div className="mb-4 pt-4">
+                <h2 className="text-lg font-semibold">
+                    Quizzes ({quizzes.length})
+                </h2>
+
+                <ul className="mt-2 list-disc space-y-1 pl-8 text-sm text-muted-foreground">
+                    <li>
+                        {quizzes.length}{" "}
+                        {quizzes.length === 1 ? "quiz" : "quizzes"} available
+                    </li>
+                    <li>
+                        Complete these quizzes to assess your understanding of the course material.
+                    </li>
+                </ul>
+            </div>
+
+
+            {/* <section>
                 <div className="mb-4 flex items-center gap-2">
                     <h2 className="text-lg font-semibold">Assignments</h2>
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -1041,11 +1153,9 @@ function ProgramAssessments({
                         ))}
                     </div>
                 )}
-            </section>
+            </section> */}
 
-            <div className="border-t" />
-
-            <section>
+            {/* <section>
                 <div className="mb-4 flex items-center gap-2">
                     <h2 className="text-lg font-semibold">Quizzes</h2>
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -1070,7 +1180,7 @@ function ProgramAssessments({
                         ))}
                     </div>
                 )}
-            </section>
+            </section> */}
         </div>
     );
 }
@@ -1462,6 +1572,13 @@ export default function ClassProgramDetailsPage({ programId, classData, type }: 
         [programCourses]
     );
 
+    const {
+        assessmentMap,
+        items: allAssessments,
+        isLoading,
+    } = useCourseAssessmentsByCourseUuids(courseUuids);
+    const { courseMap } = useCoursesByIds(courseUuids as string[]);
+
     // ── Reviews (program-level) ─────────────────────────────────────
     const { data: reviewsResponse, isLoading: reviewsLoading } = useQuery({
         ...getProgramReviewsOptions({
@@ -1517,17 +1634,6 @@ export default function ClassProgramDetailsPage({ programId, classData, type }: 
     // ── Difficulty levels (kept for parity; bundled courses may use these) ──
     const { isLoading: difficultyLoading } = useQuery(getAllDifficultyLevelsOptions());
 
-    // ── Assignments & quizzes (global lists, filtered to program's lessons) ──
-    const { data: assignmentsResponse, isLoading: assignmentLoading } = useQuery({
-        ...getAllAssignmentsOptions({ query: { pageable: { page: 0, size: 1000 } } }),
-    });
-    const assignments: Assignment[] = assignmentsResponse?.data?.content ?? [];
-
-    const { data: quizzesResponse, isLoading: quizzesLoading } = useQuery({
-        ...getAllQuizzesOptions({ query: { pageable: { page: 0, size: 1000 } } }),
-    });
-    const quizzes: Quiz[] = quizzesResponse?.data?.content ?? [];
-
     const aggregatedRequirements = useMemo(
         () => programCourses.flatMap(c => c.training_requirements ?? []),
         [programCourses]
@@ -1573,10 +1679,17 @@ export default function ClassProgramDetailsPage({ programId, classData, type }: 
                     .map(item => item.lesson?.uuid)
                     .filter((uuid): uuid is string => !!uuid);
 
-                const filteredAssignments = assignments.filter(a =>
-                    lessonUuids.includes(a.lesson_uuid)
-                );
-                const filteredQuizzes = quizzes.filter(q => lessonUuids.includes(q.lesson_uuid));
+                const {
+                    items: filteredAssignments,
+                    isLoading: assignmentLoading,
+                } = useAssignmentsByLessonIds(lessonUuids);
+
+                const {
+                    items: filteredQuizzes,
+                    isLoading: quizzesLoading,
+                } = useQuizzesByLessonIds(lessonUuids);
+
+
                 const totalLessons = allLessonsWithContent.length;
 
                 const isEverythingReady = !(
@@ -1696,6 +1809,8 @@ export default function ClassProgramDetailsPage({ programId, classData, type }: 
                                                     <ProgramAssessments
                                                         assignments={filteredAssignments}
                                                         quizzes={filteredQuizzes}
+                                                        assessmentScheme={assessmentMap}
+                                                        courseMap={courseMap}
                                                     />
                                                 )}
 
