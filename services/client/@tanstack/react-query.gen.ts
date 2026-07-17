@@ -32,6 +32,7 @@ import {
   updateQuizQuestion,
   deleteQuestionOption,
   updateQuestionOption,
+  saveQuizResponses,
   deleteTrainingProgram,
   getTrainingProgramByUuid,
   updateTrainingProgram,
@@ -170,6 +171,10 @@ import {
   getQuestionOptions,
   addQuestionOption,
   reorderQuizQuestions,
+  getQuizAttempts,
+  startQuizAttempt,
+  submitQuizAttempt,
+  gradeQuizTextResponse,
   getAllTrainingPrograms,
   createTrainingProgram,
   publishProgram,
@@ -391,7 +396,6 @@ import {
   getQuizTotalPoints,
   getStudentQuizView,
   getQuestionDistribution,
-  getQuizAttempts,
   getStudentQuizReview,
   searchQuizzes,
   searchQuestions,
@@ -630,6 +634,9 @@ import type {
   UpdateQuestionOptionData,
   UpdateQuestionOptionError,
   UpdateQuestionOptionResponse,
+  SaveQuizResponsesData,
+  SaveQuizResponsesError,
+  SaveQuizResponsesResponse,
   DeleteTrainingProgramData,
   DeleteTrainingProgramError,
   DeleteTrainingProgramResponse,
@@ -984,6 +991,18 @@ import type {
   ReorderQuizQuestionsData,
   ReorderQuizQuestionsError,
   ReorderQuizQuestionsResponse,
+  GetQuizAttemptsData,
+  GetQuizAttemptsError,
+  GetQuizAttemptsResponse,
+  StartQuizAttemptData,
+  StartQuizAttemptError,
+  StartQuizAttemptResponse,
+  SubmitQuizAttemptData,
+  SubmitQuizAttemptError,
+  SubmitQuizAttemptResponse,
+  GradeQuizTextResponseData,
+  GradeQuizTextResponseError,
+  GradeQuizTextResponseResponse,
   GetAllTrainingProgramsData,
   GetAllTrainingProgramsError,
   GetAllTrainingProgramsResponse,
@@ -1573,9 +1592,6 @@ import type {
   GetQuizTotalPointsData,
   GetStudentQuizViewData,
   GetQuestionDistributionData,
-  GetQuizAttemptsData,
-  GetQuizAttemptsError,
-  GetQuizAttemptsResponse,
   GetStudentQuizReviewData,
   SearchQuizzesData,
   SearchQuizzesError,
@@ -2656,6 +2672,34 @@ export const updateQuestionOptionMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateQuestionOption({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Save quiz answers
+ * Upserts the student's answers onto an in-progress attempt. Can be called repeatedly to autosave progress before submitting.
+ */
+export const saveQuizResponsesMutation = (
+  options?: Partial<Options<SaveQuizResponsesData>>
+): UseMutationOptions<
+  SaveQuizResponsesResponse,
+  SaveQuizResponsesError,
+  Options<SaveQuizResponsesData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SaveQuizResponsesResponse,
+    SaveQuizResponsesError,
+    Options<SaveQuizResponsesData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await saveQuizResponses({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -7303,6 +7347,221 @@ export const reorderQuizQuestionsMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await reorderQuizQuestions({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getQuizAttemptsQueryKey = (options: Options<GetQuizAttemptsData>) =>
+  createQueryKey('getQuizAttempts', options);
+
+/**
+ * Get quiz attempts
+ * Retrieves all attempts for a specific quiz with scoring data.
+ */
+export const getQuizAttemptsOptions = (options: Options<GetQuizAttemptsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getQuizAttempts({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getQuizAttemptsQueryKey(options),
+  });
+};
+
+export const getQuizAttemptsInfiniteQueryKey = (
+  options: Options<GetQuizAttemptsData>
+): QueryKey<Options<GetQuizAttemptsData>> => createQueryKey('getQuizAttempts', options, true);
+
+/**
+ * Get quiz attempts
+ * Retrieves all attempts for a specific quiz with scoring data.
+ */
+export const getQuizAttemptsInfiniteOptions = (options: Options<GetQuizAttemptsData>) => {
+  return infiniteQueryOptions<
+    GetQuizAttemptsResponse,
+    GetQuizAttemptsError,
+    InfiniteData<GetQuizAttemptsResponse>,
+    QueryKey<Options<GetQuizAttemptsData>>,
+    number | Pick<QueryKey<Options<GetQuizAttemptsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetQuizAttemptsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getQuizAttempts({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getQuizAttemptsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const startQuizAttemptQueryKey = (options: Options<StartQuizAttemptData>) =>
+  createQueryKey('startQuizAttempt', options);
+
+/**
+ * Start a quiz attempt
+ * Starts a new quiz attempt for the student's enrollment, or resumes an in-progress attempt. Enforces the quiz's attempts-allowed limit.
+ */
+export const startQuizAttemptOptions = (options: Options<StartQuizAttemptData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await startQuizAttempt({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: startQuizAttemptQueryKey(options),
+  });
+};
+
+/**
+ * Start a quiz attempt
+ * Starts a new quiz attempt for the student's enrollment, or resumes an in-progress attempt. Enforces the quiz's attempts-allowed limit.
+ */
+export const startQuizAttemptMutation = (
+  options?: Partial<Options<StartQuizAttemptData>>
+): UseMutationOptions<
+  StartQuizAttemptResponse,
+  StartQuizAttemptError,
+  Options<StartQuizAttemptData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StartQuizAttemptResponse,
+    StartQuizAttemptError,
+    Options<StartQuizAttemptData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await startQuizAttempt({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const submitQuizAttemptQueryKey = (options: Options<SubmitQuizAttemptData>) =>
+  createQueryKey('submitQuizAttempt', options);
+
+/**
+ * Submit a quiz attempt
+ * Submits the attempt and grades it. Objective questions are auto-graded immediately; attempts containing text questions remain pending instructor grading.
+ */
+export const submitQuizAttemptOptions = (options: Options<SubmitQuizAttemptData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await submitQuizAttempt({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: submitQuizAttemptQueryKey(options),
+  });
+};
+
+/**
+ * Submit a quiz attempt
+ * Submits the attempt and grades it. Objective questions are auto-graded immediately; attempts containing text questions remain pending instructor grading.
+ */
+export const submitQuizAttemptMutation = (
+  options?: Partial<Options<SubmitQuizAttemptData>>
+): UseMutationOptions<
+  SubmitQuizAttemptResponse,
+  SubmitQuizAttemptError,
+  Options<SubmitQuizAttemptData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubmitQuizAttemptResponse,
+    SubmitQuizAttemptError,
+    Options<SubmitQuizAttemptData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await submitQuizAttempt({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const gradeQuizTextResponseQueryKey = (options: Options<GradeQuizTextResponseData>) =>
+  createQueryKey('gradeQuizTextResponse', options);
+
+/**
+ * Grade a quiz text response
+ * Records an instructor grade for a short-answer or essay response on a submitted attempt. When every answered text question is graded, the attempt is finalised and its grade synced to the gradebook.
+ */
+export const gradeQuizTextResponseOptions = (options: Options<GradeQuizTextResponseData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await gradeQuizTextResponse({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: gradeQuizTextResponseQueryKey(options),
+  });
+};
+
+/**
+ * Grade a quiz text response
+ * Records an instructor grade for a short-answer or essay response on a submitted attempt. When every answered text question is graded, the attempt is finalised and its grade synced to the gradebook.
+ */
+export const gradeQuizTextResponseMutation = (
+  options?: Partial<Options<GradeQuizTextResponseData>>
+): UseMutationOptions<
+  GradeQuizTextResponseResponse,
+  GradeQuizTextResponseError,
+  Options<GradeQuizTextResponseData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    GradeQuizTextResponseResponse,
+    GradeQuizTextResponseError,
+    Options<GradeQuizTextResponseData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await gradeQuizTextResponse({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -18289,71 +18548,6 @@ export const getQuestionDistributionOptions = (options: Options<GetQuestionDistr
     },
     queryKey: getQuestionDistributionQueryKey(options),
   });
-};
-
-export const getQuizAttemptsQueryKey = (options: Options<GetQuizAttemptsData>) =>
-  createQueryKey('getQuizAttempts', options);
-
-/**
- * Get quiz attempts
- * Retrieves all attempts for a specific quiz with scoring data.
- */
-export const getQuizAttemptsOptions = (options: Options<GetQuizAttemptsData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getQuizAttempts({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getQuizAttemptsQueryKey(options),
-  });
-};
-
-export const getQuizAttemptsInfiniteQueryKey = (
-  options: Options<GetQuizAttemptsData>
-): QueryKey<Options<GetQuizAttemptsData>> => createQueryKey('getQuizAttempts', options, true);
-
-/**
- * Get quiz attempts
- * Retrieves all attempts for a specific quiz with scoring data.
- */
-export const getQuizAttemptsInfiniteOptions = (options: Options<GetQuizAttemptsData>) => {
-  return infiniteQueryOptions<
-    GetQuizAttemptsResponse,
-    GetQuizAttemptsError,
-    InfiniteData<GetQuizAttemptsResponse>,
-    QueryKey<Options<GetQuizAttemptsData>>,
-    number | Pick<QueryKey<Options<GetQuizAttemptsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        const page: Pick<
-          QueryKey<Options<GetQuizAttemptsData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  pageable: { page: pageParam },
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await getQuizAttempts({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: getQuizAttemptsInfiniteQueryKey(options),
-    }
-  );
 };
 
 export const getStudentQuizReviewQueryKey = (options: Options<GetStudentQuizReviewData>) =>

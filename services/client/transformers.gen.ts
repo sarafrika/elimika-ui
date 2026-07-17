@@ -20,6 +20,7 @@ import type {
   UpdateQuizResponse,
   UpdateQuizQuestionResponse,
   UpdateQuestionOptionResponse,
+  SaveQuizResponsesResponse,
   GetTrainingProgramByUuidResponse,
   UpdateTrainingProgramResponse,
   GetProgramTrainingApplicationResponse,
@@ -114,6 +115,10 @@ import type {
   AddQuizQuestionResponse,
   GetQuestionOptionsResponse,
   AddQuestionOptionResponse,
+  GetQuizAttemptsResponse,
+  StartQuizAttemptResponse,
+  SubmitQuizAttemptResponse,
+  GradeQuizTextResponseResponse,
   GetAllTrainingProgramsResponse,
   CreateTrainingProgramResponse,
   PublishProgramResponse,
@@ -302,7 +307,6 @@ import type {
   ListSalesResponse,
   ListPaymentsResponse,
   GetRevenueDashboard1Response,
-  GetQuizAttemptsResponse,
   SearchQuizzesResponse,
   SearchQuestionsResponse,
   SearchAttemptsResponse,
@@ -769,6 +773,39 @@ export const updateQuestionOptionResponseTransformer = async (
   data: any
 ): Promise<UpdateQuestionOptionResponse> => {
   data = apiResponseQuizQuestionOptionSchemaResponseTransformer(data);
+  return data;
+};
+
+const quizAttemptSchemaResponseTransformer = (data: any) => {
+  if (data.started_at) {
+    data.started_at = new Date(data.started_at);
+  }
+  if (data.submitted_at) {
+    data.submitted_at = new Date(data.submitted_at);
+  }
+  if (data.graded_at) {
+    data.graded_at = new Date(data.graded_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseQuizAttemptSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = quizAttemptSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const saveQuizResponsesResponseTransformer = async (
+  data: any
+): Promise<SaveQuizResponsesResponse> => {
+  data = apiResponseQuizAttemptSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2566,6 +2603,53 @@ export const addQuestionOptionResponseTransformer = async (
   data: any
 ): Promise<AddQuestionOptionResponse> => {
   data = apiResponseQuizQuestionOptionSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoQuizAttemptSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return quizAttemptSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoQuizAttemptSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoQuizAttemptSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getQuizAttemptsResponseTransformer = async (
+  data: any
+): Promise<GetQuizAttemptsResponse> => {
+  data = apiResponsePagedDtoQuizAttemptSchemaResponseTransformer(data);
+  return data;
+};
+
+export const startQuizAttemptResponseTransformer = async (
+  data: any
+): Promise<StartQuizAttemptResponse> => {
+  data = apiResponseQuizAttemptSchemaResponseTransformer(data);
+  return data;
+};
+
+export const submitQuizAttemptResponseTransformer = async (
+  data: any
+): Promise<SubmitQuizAttemptResponse> => {
+  data = apiResponseQuizAttemptSchemaResponseTransformer(data);
+  return data;
+};
+
+export const gradeQuizTextResponseResponseTransformer = async (
+  data: any
+): Promise<GradeQuizTextResponseResponse> => {
+  data = apiResponseQuizAttemptSchemaResponseTransformer(data);
   return data;
 };
 
@@ -5261,48 +5345,6 @@ export const getRevenueDashboard1ResponseTransformer = async (
   data: any
 ): Promise<GetRevenueDashboard1Response> => {
   data = apiResponseRevenueDashboardDtoSchemaResponseTransformer(data);
-  return data;
-};
-
-const quizAttemptSchemaResponseTransformer = (data: any) => {
-  if (data.started_at) {
-    data.started_at = new Date(data.started_at);
-  }
-  if (data.submitted_at) {
-    data.submitted_at = new Date(data.submitted_at);
-  }
-  if (data.created_date) {
-    data.created_date = new Date(data.created_date);
-  }
-  if (data.updated_date) {
-    data.updated_date = new Date(data.updated_date);
-  }
-  return data;
-};
-
-const pagedDtoQuizAttemptSchemaResponseTransformer = (data: any) => {
-  if (data.content) {
-    data.content = data.content.map((item: any) => {
-      return quizAttemptSchemaResponseTransformer(item);
-    });
-  }
-  if (data.metadata) {
-    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
-  }
-  return data;
-};
-
-const apiResponsePagedDtoQuizAttemptSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = pagedDtoQuizAttemptSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
-export const getQuizAttemptsResponseTransformer = async (
-  data: any
-): Promise<GetQuizAttemptsResponse> => {
-  data = apiResponsePagedDtoQuizAttemptSchemaResponseTransformer(data);
   return data;
 };
 

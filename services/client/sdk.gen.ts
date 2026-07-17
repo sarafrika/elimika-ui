@@ -94,6 +94,9 @@ import type {
   UpdateQuestionOptionData,
   UpdateQuestionOptionResponses,
   UpdateQuestionOptionErrors,
+  SaveQuizResponsesData,
+  SaveQuizResponsesResponses,
+  SaveQuizResponsesErrors,
   DeleteTrainingProgramData,
   DeleteTrainingProgramResponses,
   DeleteTrainingProgramErrors,
@@ -508,6 +511,18 @@ import type {
   ReorderQuizQuestionsData,
   ReorderQuizQuestionsResponses,
   ReorderQuizQuestionsErrors,
+  GetQuizAttemptsData,
+  GetQuizAttemptsResponses,
+  GetQuizAttemptsErrors,
+  StartQuizAttemptData,
+  StartQuizAttemptResponses,
+  StartQuizAttemptErrors,
+  SubmitQuizAttemptData,
+  SubmitQuizAttemptResponses,
+  SubmitQuizAttemptErrors,
+  GradeQuizTextResponseData,
+  GradeQuizTextResponseResponses,
+  GradeQuizTextResponseErrors,
   GetAllTrainingProgramsData,
   GetAllTrainingProgramsResponses,
   GetAllTrainingProgramsErrors,
@@ -1171,9 +1186,6 @@ import type {
   GetQuestionDistributionData,
   GetQuestionDistributionResponses,
   GetQuestionDistributionErrors,
-  GetQuizAttemptsData,
-  GetQuizAttemptsResponses,
-  GetQuizAttemptsErrors,
   GetStudentQuizReviewData,
   GetStudentQuizReviewResponses,
   GetStudentQuizReviewErrors,
@@ -1682,6 +1694,7 @@ import {
   updateQuizResponseTransformer,
   updateQuizQuestionResponseTransformer,
   updateQuestionOptionResponseTransformer,
+  saveQuizResponsesResponseTransformer,
   getTrainingProgramByUuidResponseTransformer,
   updateTrainingProgramResponseTransformer,
   getProgramTrainingApplicationResponseTransformer,
@@ -1776,6 +1789,10 @@ import {
   addQuizQuestionResponseTransformer,
   getQuestionOptionsResponseTransformer,
   addQuestionOptionResponseTransformer,
+  getQuizAttemptsResponseTransformer,
+  startQuizAttemptResponseTransformer,
+  submitQuizAttemptResponseTransformer,
+  gradeQuizTextResponseResponseTransformer,
   getAllTrainingProgramsResponseTransformer,
   createTrainingProgramResponseTransformer,
   publishProgramResponseTransformer,
@@ -1964,7 +1981,6 @@ import {
   listSalesResponseTransformer,
   listPaymentsResponseTransformer,
   getRevenueDashboard1ResponseTransformer,
-  getQuizAttemptsResponseTransformer,
   searchQuizzesResponseTransformer,
   searchQuestionsResponseTransformer,
   searchAttemptsResponseTransformer,
@@ -2928,6 +2944,38 @@ export const updateQuestionOption = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/quizzes/{quizUuid}/questions/{questionUuid}/options/{optionUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Save quiz answers
+ * Upserts the student's answers onto an in-progress attempt. Can be called repeatedly to autosave progress before submitting.
+ */
+export const saveQuizResponses = <ThrowOnError extends boolean = false>(
+  options: Options<SaveQuizResponsesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    SaveQuizResponsesResponses,
+    SaveQuizResponsesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: saveQuizResponsesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/quizzes/{quizUuid}/attempts/{attemptUuid}/responses',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -7026,6 +7074,126 @@ export const reorderQuizQuestions = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/quizzes/{quizUuid}/questions/reorder',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get quiz attempts
+ * Retrieves all attempts for a specific quiz with scoring data.
+ */
+export const getQuizAttempts = <ThrowOnError extends boolean = false>(
+  options: Options<GetQuizAttemptsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetQuizAttemptsResponses,
+    GetQuizAttemptsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getQuizAttemptsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/quizzes/{quizUuid}/attempts',
+    ...options,
+  });
+};
+
+/**
+ * Start a quiz attempt
+ * Starts a new quiz attempt for the student's enrollment, or resumes an in-progress attempt. Enforces the quiz's attempts-allowed limit.
+ */
+export const startQuizAttempt = <ThrowOnError extends boolean = false>(
+  options: Options<StartQuizAttemptData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    StartQuizAttemptResponses,
+    StartQuizAttemptErrors,
+    ThrowOnError
+  >({
+    responseTransformer: startQuizAttemptResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/quizzes/{quizUuid}/attempts',
+    ...options,
+  });
+};
+
+/**
+ * Submit a quiz attempt
+ * Submits the attempt and grades it. Objective questions are auto-graded immediately; attempts containing text questions remain pending instructor grading.
+ */
+export const submitQuizAttempt = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitQuizAttemptData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SubmitQuizAttemptResponses,
+    SubmitQuizAttemptErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitQuizAttemptResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/quizzes/{quizUuid}/attempts/{attemptUuid}/submit',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Grade a quiz text response
+ * Records an instructor grade for a short-answer or essay response on a submitted attempt. When every answered text question is graded, the attempt is finalised and its grade synced to the gradebook.
+ */
+export const gradeQuizTextResponse = <ThrowOnError extends boolean = false>(
+  options: Options<GradeQuizTextResponseData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    GradeQuizTextResponseResponses,
+    GradeQuizTextResponseErrors,
+    ThrowOnError
+  >({
+    responseTransformer: gradeQuizTextResponseResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/quizzes/{quizUuid}/attempts/{attemptUuid}/questions/{questionUuid}/grade',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -13624,34 +13792,6 @@ export const getQuestionDistribution = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/quizzes/{quizUuid}/question-distribution',
-    ...options,
-  });
-};
-
-/**
- * Get quiz attempts
- * Retrieves all attempts for a specific quiz with scoring data.
- */
-export const getQuizAttempts = <ThrowOnError extends boolean = false>(
-  options: Options<GetQuizAttemptsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetQuizAttemptsResponses,
-    GetQuizAttemptsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getQuizAttemptsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/quizzes/{quizUuid}/attempts',
     ...options,
   });
 };
