@@ -14,6 +14,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { useEnrollmentsByIds, useStudentsByIds } from '@/hooks/use-batched-lookups';
 import { cx, getEmptyStateClasses } from '@/lib/design-system';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
@@ -27,7 +28,7 @@ import type { QuizAttempt } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CheckCircle2, ClipboardCheck, Clock, FileQuestion } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 function formatDate(value?: string | Date | null) {
@@ -75,6 +76,27 @@ export default function InstructorQuizGradingPage() {
   const attempts = attemptsQuery.data?.data?.content ?? [];
   const pending = attempts.filter(a => statusOf(a) === 'submitted');
   const graded = attempts.filter(a => statusOf(a) === 'graded');
+
+  // Resolve student names in two batched requests: attempt → enrollment → student.
+  const enrollmentIds = useMemo(
+    () => attempts.map(a => a.enrollment_uuid).filter((id): id is string => Boolean(id)),
+    [attempts]
+  );
+  const { enrollmentMap } = useEnrollmentsByIds(enrollmentIds);
+  const studentIds = useMemo(
+    () =>
+      Object.values(enrollmentMap)
+        .map(enrollment => enrollment.student_uuid)
+        .filter((id): id is string => Boolean(id)),
+    [enrollmentMap]
+  );
+  const { studentMap } = useStudentsByIds(studentIds);
+
+  const studentNameForAttempt = (attempt: QuizAttempt): string | undefined => {
+    const enrollment = attempt.enrollment_uuid ? enrollmentMap[attempt.enrollment_uuid] : undefined;
+    const student = enrollment?.student_uuid ? studentMap[enrollment.student_uuid] : undefined;
+    return student?.full_name;
+  };
 
   const enrollmentUuid = selectedAttempt?.enrollment_uuid;
   const attemptUuid = selectedAttempt?.uuid;
@@ -197,12 +219,14 @@ export default function InstructorQuizGradingPage() {
                     <CardContent className='space-y-3 p-4'>
                       <div className='flex items-center justify-between gap-2'>
                         <p className='text-foreground text-sm font-medium'>
-                          Attempt #{attempt.attempt_number ?? '—'}
+                          {studentNameForAttempt(attempt) ??
+                            `Attempt #${attempt.attempt_number ?? '—'}`}
                         </p>
                         <Badge variant='warning'>Pending</Badge>
                       </div>
                       <p className='text-muted-foreground text-xs'>
-                        Submitted {formatDate(attempt.submitted_at)}
+                        Attempt #{attempt.attempt_number ?? '—'} · Submitted{' '}
+                        {formatDate(attempt.submitted_at)}
                       </p>
                       <p className='text-muted-foreground text-xs'>
                         Auto-graded so far: {attempt.score ?? 0}/{attempt.max_score ?? 0}
@@ -234,11 +258,12 @@ export default function InstructorQuizGradingPage() {
                     <CardContent className='flex items-center justify-between gap-2 p-4'>
                       <div>
                         <p className='text-foreground text-sm font-medium'>
-                          Attempt #{attempt.attempt_number ?? '—'}
+                          {studentNameForAttempt(attempt) ??
+                            `Attempt #${attempt.attempt_number ?? '—'}`}
                         </p>
                         <p className='text-muted-foreground text-xs'>
-                          {attempt.score ?? 0}/{attempt.max_score ?? 0} ·{' '}
-                          {Math.round(Number(attempt.percentage ?? 0))}%
+                          Attempt #{attempt.attempt_number ?? '—'} · {attempt.score ?? 0}/
+                          {attempt.max_score ?? 0} · {Math.round(Number(attempt.percentage ?? 0))}%
                         </p>
                       </div>
                       <Badge
@@ -262,7 +287,12 @@ export default function InstructorQuizGradingPage() {
       <Sheet open={!!selectedAttempt} onOpenChange={open => !open && closeSheet()}>
         <SheetContent side='right' className='w-full overflow-y-auto p-0 sm:max-w-2xl'>
           <SheetHeader className='border-b px-6 py-4'>
-            <SheetTitle>Grade attempt #{selectedAttempt?.attempt_number ?? '—'}</SheetTitle>
+            <SheetTitle>
+              {selectedAttempt
+                ? (studentNameForAttempt(selectedAttempt) ??
+                  `Attempt #${selectedAttempt.attempt_number ?? '—'}`)
+                : 'Grade attempt'}
+            </SheetTitle>
             <SheetDescription>
               Mark each written answer. Objective answers are shown for reference.
             </SheetDescription>
