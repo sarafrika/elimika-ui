@@ -11,10 +11,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  useQuizDetails,
-  type QuizQuestionWithOptions,
-} from '@/hooks/use-quiz-details'; // adjust path as needed
+import { useQuizDetails, type QuizQuestionWithOptions } from '@/hooks/use-quiz-details'; // adjust path as needed
 import {
   AlertCircle,
   Award,
@@ -22,12 +19,14 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  ClipboardCheck,
   ClipboardList,
   Clock,
   Hash,
   Trash2,
   XCircle,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 const QUESTION_TYPE_STYLES: Record<string, string> = {
@@ -110,14 +109,14 @@ function QuestionCard({ question, index }: { question: QuizQuestionWithOptions; 
                   {/* Correct / incorrect indicator */}
                   <div className='mt-0.5 shrink-0'>
                     {option.is_correct ? (
-                      <CheckCircle className='h-4 w-4 text-success' />
+                      <CheckCircle className='text-success h-4 w-4' />
                     ) : (
                       <XCircle className='text-muted-foreground/50 h-4 w-4' />
                     )}
                   </div>
 
                   <span
-                    className={`flex-1 leading-snug ${option.is_correct ? 'font-medium text-success dark:text-success' : 'text-foreground'}`}
+                    className={`flex-1 leading-snug ${option.is_correct ? 'text-success dark:text-success font-medium' : 'text-foreground'}`}
                   >
                     {option.option_text}
                   </span>
@@ -178,6 +177,17 @@ export function QuizDetailPanel({
 
   return (
     <div className='space-y-5'>
+      <div className='flex justify-end'>
+        <Button variant='outline' size='sm'>
+          <Link
+            href={`/dashboard/assessment/quiz/${quizUuid}/grade`}
+            className='flex items-center gap-2'
+          >
+            <ClipboardCheck className='h-4 w-4' />
+            Grade submissions
+          </Link>
+        </Button>
+      </div>
       <div>
         <div className='mb-3 flex items-center justify-between'>
           <h4 className='text-foreground flex items-center gap-2 text-sm font-semibold'>
