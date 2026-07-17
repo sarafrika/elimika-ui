@@ -2110,13 +2110,6 @@ export const zApiResponseInstructorSkill = z.object({
 });
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const zMembershipStatusEnum = z
-  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
-  .describe('**[READ-ONLY]** Current status of the membership.');
-
-/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const zOrganisationTypeEnum = z
@@ -2129,6 +2122,13 @@ export const zOrganisationTypeEnum = z
     'OTHER',
   ])
   .describe('**[READ-ONLY]** Classification of organisation type based on name keywords.');
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const zMembershipStatusEnum = z
+  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
+  .describe('**[READ-ONLY]** Current status of the membership.');
 
 /**
  * Professional membership record for instructors including associations, industry bodies, and certification organizations
@@ -2199,11 +2199,6 @@ export const zInstructorProfessionalMembership = z
       .readonly()
       .optional(),
     formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
-    membership_duration_months: z
-      .union([z.number().int().readonly(), z.null()])
-      .readonly()
-      .optional(),
-    membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
       .boolean()
@@ -2222,6 +2217,11 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
       .readonly()
       .optional(),
+    membership_duration_months: z
+      .union([z.number().int().readonly(), z.null()])
+      .readonly()
+      .optional(),
+    membership_status: zMembershipStatusEnum.optional(),
     is_valid: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the membership is currently valid and active.')
@@ -5000,6 +5000,11 @@ export const zClassMarketplaceJob = z
     registration_period_end_date: z.string().date().readonly().optional(),
     class_reminder_minutes: z.number().int().readonly().optional(),
     class_color: z.string().readonly().optional(),
+    thumbnail_url: z
+      .string()
+      .describe('Public URL to the class advert thumbnail image, if uploaded.')
+      .readonly()
+      .optional(),
     location_type: zLocationTypeEnum.optional(),
     location_name: z.string().readonly().optional(),
     location_latitude: z.number().readonly().optional(),
@@ -6094,6 +6099,44 @@ export const zGuardianStudentLinkRequest = z
     notes: z.string().describe('Optional note shown in audits or invitation emails').optional(),
   })
   .describe('Request payload to link a guardian/parent to a learner profile.');
+
+export const zSweepReport = z.object({
+  diskFiles: z.number().int().optional(),
+  referencedKeys: z.number().int().optional(),
+  orphanKeys: z.array(z.string()).optional(),
+  orphansDeleted: z.number().int().optional(),
+});
+
+export const zApiResponseSweepReport = z.object({
+  success: z.boolean().optional(),
+  data: zSweepReport.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zDeadReference = z.object({
+  table: z.string().optional(),
+  column: z.string().optional(),
+  rowUuid: z.string().uuid().optional(),
+  value: z.string().optional(),
+  nullable: z.boolean().optional(),
+});
+
+export const zReconcileReport = z.object({
+  registryRowsChecked: z.number().int().optional(),
+  registryMarkedMissing: z.number().int().optional(),
+  registryMetadataFilled: z.number().int().optional(),
+  deadReferences: z.array(zDeadReference).optional(),
+  deadReferencesPruned: z.number().int().optional(),
+  orphanRowsDeleted: z.number().int().optional(),
+});
+
+export const zApiResponseReconcileReport = z.object({
+  success: z.boolean().optional(),
+  data: zReconcileReport.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
 
 /**
  * Request to enroll a student in a scheduled class instance
@@ -7517,6 +7560,30 @@ export const zAdminCreateUserRequestDto = z.object({
 });
 
 /**
+ * The decision to apply.
+ */
+export const zActionEnum = z
+  .enum(['approved', 'rejected', 'revoked'])
+  .describe('The decision to apply.');
+
+/**
+ * Payload for a moderation decision on a course or training program.
+ *
+ * When the content has a pending edit awaiting review, `approved` promotes that
+ * edit onto the live content and `rejected` discards it, leaving the live content
+ * untouched. Otherwise the decision applies to the content's own approval state.
+ *
+ */
+export const zContentModerationDecisionRequest = z
+  .object({
+    action: zActionEnum,
+    reason: z.union([z.string().min(0).max(2000), z.null()]).optional(),
+  })
+  .describe(
+    "Payload for a moderation decision on a course or training program.\n\nWhen the content has a pending edit awaiting review, `approved` promotes that\nedit onto the live content and `rejected` discards it, leaving the live content\nuntouched. Otherwise the decision applies to the content's own approval state.\n"
+  );
+
+/**
  * Domain/role to assign within the organisation
  */
 export const zDomainNameEnum2 = z
@@ -7903,8 +7970,8 @@ export const zApiResponsePagedDtoBookingResponse = z.object({
 });
 
 export const zSortObject = z.object({
-  sorted: z.boolean().optional(),
   unsorted: z.boolean().optional(),
+  sorted: z.boolean().optional(),
   empty: z.boolean().optional(),
 });
 
@@ -9271,9 +9338,150 @@ export const zApiResponsePagedDtoCourse = z.object({
   error: z.unknown().optional(),
 });
 
+/**
+ * An approved version of a course's content. One is written each time an edit is
+ * promoted onto the live course, giving a durable record of what the course
+ * looked like at each approved version.
+ *
+ */
+export const zCourseVersionSnapshot = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier for the snapshot.')
+      .readonly()
+      .optional(),
+    snapshot: zJsonNode.optional(),
+    course_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** The course this version belongs to.')
+      .readonly()
+      .optional(),
+    version_number: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Monotonic version number, starting at 1.')
+      .readonly()
+      .optional(),
+    pending_edit_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** The edit whose promotion produced this version, if any.')
+      .readonly()
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** When this version became live.')
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe('**[READ-ONLY]** Who promoted this version.')
+      .readonly()
+      .optional(),
+  })
+  .describe(
+    "An approved version of a course's content. One is written each time an edit is\npromoted onto the live course, giving a durable record of what the course\nlooked like at each approved version.\n"
+  );
+
+export const zPagedDtoCourseVersionSnapshot = z.object({
+  content: z.array(zCourseVersionSnapshot).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoCourseVersionSnapshot = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoCourseVersionSnapshot.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zApiResponseListContentStatus = z.object({
   success: z.boolean().optional(),
   data: z.array(zSchemaEnum4).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * **[READ-ONLY]** Review state of the edit.
+ */
+export const zStatusEnum19 = z
+  .enum(['pending', 'approved', 'rejected', 'withdrawn'])
+  .describe('**[READ-ONLY]** Review state of the edit.');
+
+/**
+ * An edit to a published course that is awaiting admin review.
+ *
+ * The live course is unaffected while the edit is pending: it stays published,
+ * keeps accepting enrollments, and continues to serve its last-approved content.
+ * The proposed content lives on the draft course referenced by `draft_course_uuid`.
+ *
+ */
+export const zCoursePendingEdit = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier for the pending edit.')
+      .readonly()
+      .optional(),
+    status: zStatusEnum19.optional(),
+    course_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** The live course this edit applies to.')
+      .readonly()
+      .optional(),
+    draft_course_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[READ-ONLY]** Draft course holding the proposed content. Null once the edit is resolved.'
+      )
+      .readonly()
+      .optional(),
+    submitted_by_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Internal user UUID of the course creator who submitted the edit.')
+      .readonly()
+      .optional(),
+    submitted_at: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** When the edit was submitted for review.')
+      .readonly()
+      .optional(),
+    reviewed_by_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Internal user UUID of the admin who reviewed the edit.')
+      .readonly()
+      .optional(),
+    reviewed_at: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** When the edit was reviewed.')
+      .readonly()
+      .optional(),
+    review_reason: z
+      .string()
+      .describe('**[READ-ONLY]** Reason the admin gave for their decision.')
+      .readonly()
+      .optional(),
+  })
+  .describe(
+    'An edit to a published course that is awaiting admin review.\n\nThe live course is unaffected while the edit is pending: it stays published,\nkeeps accepting enrollments, and continues to serve its last-approved content.\nThe proposed content lives on the draft course referenced by `draft_course_uuid`.\n'
+  );
+
+export const zApiResponseCoursePendingEdit = z.object({
+  success: z.boolean().optional(),
+  data: zCoursePendingEdit.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -10253,13 +10461,6 @@ export const zApiResponsePagedDtoAdminUserActivityEvent = z.object({
 });
 
 /**
- * **[READ-ONLY]** Moderation decision taken.
- */
-export const zActionEnum = z
-  .enum(['approved', 'rejected', 'revoked'])
-  .describe('**[READ-ONLY]** Moderation decision taken.');
-
-/**
  * **[READ-ONLY]** Type of the moderated content.
  */
 export const zContentTypeEnum = z
@@ -10579,6 +10780,96 @@ export const zApiResponsePagedDtoAdminActivityEvent = z.object({
 export const zApiResponseListCurrency = z.object({
   success: z.boolean().optional(),
   data: z.array(zCurrency).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * A single course field the edit would change.
+ */
+export const zCourseEditFieldChange = z
+  .object({
+    field: z
+      .string()
+      .describe('**[READ-ONLY]** Field name, in snake_case as it appears on the course payload.')
+      .readonly()
+      .optional(),
+    live_value: z
+      .string()
+      .describe('**[READ-ONLY]** Current value on the live course, rendered as text.')
+      .readonly()
+      .optional(),
+    draft_value: z
+      .string()
+      .describe('**[READ-ONLY]** Proposed value on the draft, rendered as text.')
+      .readonly()
+      .optional(),
+  })
+  .describe('A single course field the edit would change.');
+
+/**
+ * What a pending edit would change if approved, so an admin can review the
+ * decision without comparing two full course payloads by eye.
+ *
+ */
+export const zCourseEditDiff = z
+  .object({
+    course_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** The live course under review.')
+      .readonly()
+      .optional(),
+    draft_course_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Draft course holding the proposed content.')
+      .readonly()
+      .optional(),
+    field_changes: z
+      .array(zCourseEditFieldChange)
+      .describe('**[READ-ONLY]** Course fields that differ between the live course and the draft.')
+      .readonly()
+      .optional(),
+    lessons_added: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Lessons the edit adds.')
+      .readonly()
+      .optional(),
+    lessons_removed: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Lessons the edit removes.')
+      .readonly()
+      .optional(),
+    lessons_modified: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Lessons the edit changes in place.')
+      .readonly()
+      .optional(),
+  })
+  .describe(
+    'What a pending edit would change if approved, so an admin can review the\ndecision without comparing two full course payloads by eye.\n'
+  );
+
+export const zApiResponseCourseEditDiff = z.object({
+  success: z.boolean().optional(),
+  data: zCourseEditDiff.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zPagedDtoCoursePendingEdit = z.object({
+  content: z.array(zCoursePendingEdit).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoCoursePendingEdit = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoCoursePendingEdit.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -11126,6 +11417,13 @@ export const zStatusEnum14Writable = z
 export const zAssignmentTypeEnumWritable = z
   .enum(['global', 'organization'])
   .describe('Type of assignment - global or organization-specific');
+
+/**
+ * The decision to apply.
+ */
+export const zActionEnumWritable = z
+  .enum(['approved', 'rejected', 'revoked'])
+  .describe('The decision to apply.');
 
 /**
  * Domain/role to assign within the organisation
@@ -14038,6 +14336,44 @@ export const zCreateLinkData = z.object({
  */
 export const zCreateLinkResponse = zGuardianStudentLink;
 
+export const zSweepData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z
+    .object({
+      deleteOrphans: z
+        .boolean()
+        .describe('Delete the orphaned files instead of only reporting them')
+        .optional()
+        .default(false),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zSweepResponse = zApiResponseSweepReport;
+
+export const zReconcileData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z
+    .object({
+      prune: z
+        .boolean()
+        .describe('Clear domain references whose files no longer exist on disk')
+        .optional()
+        .default(false),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zReconcileResponse = zApiResponseReconcileReport;
+
 export const zEnrollStudentData = z.object({
   body: zEnrollmentRequest,
   path: z.never().optional(),
@@ -15241,6 +15577,23 @@ export const zCreateJobData = z.object({
  */
 export const zCreateJobResponse = zApiResponseClassMarketplaceJob;
 
+export const zUploadJobThumbnailData = z.object({
+  body: z
+    .object({
+      thumbnail: z.string(),
+    })
+    .optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUploadJobThumbnailResponse = zApiResponseClassMarketplaceJob;
+
 export const zCancelJobData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -15670,14 +16023,11 @@ export const zCreateAdminUserData = z.object({
 export const zCreateAdminUserResponse = zApiResponseUser;
 
 export const zModerateProgramData = z.object({
-  body: z.never().optional(),
+  body: zContentModerationDecisionRequest,
   path: z.object({
-    uuid: z.string().uuid(),
+    uuid: z.string().uuid().describe('UUID of the training program'),
   }),
-  query: z.object({
-    action: z.string(),
-    reason: z.string().optional(),
-  }),
+  query: z.never().optional(),
 });
 
 /**
@@ -15823,18 +16173,15 @@ export const zActivateData = z.object({
 export const zActivateResponse = zApiResponseCurrency;
 
 export const zModerateCourseData = z.object({
-  body: z.never().optional(),
+  body: zContentModerationDecisionRequest,
   path: z.object({
-    uuid: z.string().uuid(),
+    uuid: z.string().uuid().describe('UUID of the course'),
   }),
-  query: z.object({
-    action: z.string(),
-    reason: z.string().optional(),
-  }),
+  query: z.never().optional(),
 });
 
 /**
- * OK
+ * Decision applied successfully
  */
 export const zModerateCourseResponse = zApiResponseCourse;
 
@@ -17215,6 +17562,19 @@ export const zGetMyStudentsData = z.object({
  */
 export const zGetMyStudentsResponse = zApiResponseListGuardianStudentSummaryDto;
 
+export const zGetFileData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    key: z.string().describe('Canonical storage key, e.g. course_thumbnails/uuid.jpg'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * File retrieved successfully
+ */
+export const zGetFileResponse = z.string().describe('File retrieved successfully');
+
 export const zCancelEnrollmentData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -17393,6 +17753,21 @@ export const zGetDefaultCurrencyData = z.object({
  */
 export const zGetDefaultCurrencyResponse = zApiResponseCurrency;
 
+export const zGetCourseVersionsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the course'),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Version history retrieved
+ */
+export const zGetCourseVersionsResponse = zApiResponsePagedDtoCourseVersionSnapshot;
+
 export const zGetStatusTransitionsData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -17405,6 +17780,32 @@ export const zGetStatusTransitionsData = z.object({
  * Available transitions retrieved successfully
  */
 export const zGetStatusTransitionsResponse = zApiResponseListContentStatus;
+
+export const zWithdrawPendingEditData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the course'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Pending edit withdrawn
+ */
+export const zWithdrawPendingEditResponse = zApiResponseCoursePendingEdit;
+
+export const zGetPendingEditData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the course'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Pending edit retrieved
+ */
+export const zGetPendingEditResponse = zApiResponseCoursePendingEdit;
 
 export const zCheckRubricAssociationData = z.object({
   body: z.never().optional(),
@@ -18617,6 +19018,19 @@ export const zGetDashboardActivityData = z.object({
  */
 export const zGetDashboardActivityResponse = zApiResponsePagedDtoAdminActivityEvent;
 
+export const zGetCourseEditDiffData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the live course'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Diff retrieved
+ */
+export const zGetCourseEditDiffResponse = zApiResponseCourseEditDiff;
+
 export const zGetCourseModerationHistoryData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -18657,6 +19071,19 @@ export const zListPendingCoursesData = z.object({
  * OK
  */
 export const zListPendingCoursesResponse = zApiResponsePagedDtoCourse;
+
+export const zListPendingCourseEditsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Pending edits retrieved successfully
+ */
+export const zListPendingCourseEditsResponse = zApiResponsePagedDtoCoursePendingEdit;
 
 export const zClearInstructorAvailabilityData = z.object({
   body: z.never().optional(),

@@ -637,6 +637,12 @@ import type {
   CreateLinkData,
   CreateLinkResponses,
   CreateLinkErrors,
+  SweepData,
+  SweepResponses,
+  SweepErrors,
+  ReconcileData,
+  ReconcileResponses,
+  ReconcileErrors,
   EnrollStudentData,
   EnrollStudentResponses,
   EnrollStudentErrors,
@@ -889,6 +895,9 @@ import type {
   CreateJobData,
   CreateJobResponses,
   CreateJobErrors,
+  UploadJobThumbnailData,
+  UploadJobThumbnailResponses,
+  UploadJobThumbnailErrors,
   CancelJobData,
   CancelJobResponses,
   CancelJobErrors,
@@ -1291,6 +1300,9 @@ import type {
   GetMyStudentsData,
   GetMyStudentsResponses,
   GetMyStudentsErrors,
+  GetFileData,
+  GetFileResponses,
+  GetFileErrors,
   CancelEnrollmentData,
   CancelEnrollmentResponses,
   CancelEnrollmentErrors,
@@ -1330,9 +1342,18 @@ import type {
   GetDefaultCurrencyData,
   GetDefaultCurrencyResponses,
   GetDefaultCurrencyErrors,
+  GetCourseVersionsData,
+  GetCourseVersionsResponses,
+  GetCourseVersionsErrors,
   GetStatusTransitionsData,
   GetStatusTransitionsResponses,
   GetStatusTransitionsErrors,
+  WithdrawPendingEditData,
+  WithdrawPendingEditResponses,
+  WithdrawPendingEditErrors,
+  GetPendingEditData,
+  GetPendingEditResponses,
+  GetPendingEditErrors,
   CheckRubricAssociationData,
   CheckRubricAssociationResponses,
   CheckRubricAssociationErrors,
@@ -1597,6 +1618,9 @@ import type {
   GetDashboardActivityData,
   GetDashboardActivityResponses,
   GetDashboardActivityErrors,
+  GetCourseEditDiffData,
+  GetCourseEditDiffResponses,
+  GetCourseEditDiffErrors,
   GetCourseModerationHistoryData,
   GetCourseModerationHistoryResponses,
   GetCourseModerationHistoryErrors,
@@ -1606,6 +1630,9 @@ import type {
   ListPendingCoursesData,
   ListPendingCoursesResponses,
   ListPendingCoursesErrors,
+  ListPendingCourseEditsData,
+  ListPendingCourseEditsResponses,
+  ListPendingCourseEditsErrors,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityResponses,
   ClearInstructorAvailabilityErrors,
@@ -1868,6 +1895,7 @@ import {
   createClassDefinitionForProgramMultipartResponseTransformer,
   listJobsResponseTransformer,
   createJobResponseTransformer,
+  uploadJobThumbnailResponseTransformer,
   cancelJobResponseTransformer,
   assignInstructorResponseTransformer,
   listJobApplicationsResponseTransformer,
@@ -1983,6 +2011,9 @@ import {
   getEnrollmentsForInstanceResponseTransformer,
   getEnrollmentCountResponseTransformer,
   listCurrenciesResponseTransformer,
+  getCourseVersionsResponseTransformer,
+  withdrawPendingEditResponseTransformer,
+  getPendingEditResponseTransformer,
   getPrimaryRubricResponseTransformer,
   getRubricsByContextResponseTransformer,
   getEnrollmentGradeBookResponseTransformer,
@@ -2050,6 +2081,7 @@ import {
   getDashboardActivityResponseTransformer,
   getCourseModerationHistoryResponseTransformer,
   listPendingCoursesResponseTransformer,
+  listPendingCourseEditsResponseTransformer,
   removeItemResponseTransformer,
   removeAdminDomainResponseTransformer,
 } from './transformers.gen';
@@ -8293,6 +8325,58 @@ export const createLink = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Sweep for orphaned files
+ * Reports files on disk that no database reference or registry entry points to. With deleteOrphans=true, the orphaned files are removed from disk.
+ */
+export const sweep = <ThrowOnError extends boolean = false>(
+  options?: Options<SweepData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).post<SweepResponses, SweepErrors, ThrowOnError>({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/files/admin/sweep',
+    ...options,
+  });
+};
+
+/**
+ * Reconcile stored files with database references
+ * Cross-checks disk, the media_files registry and every domain file-reference column.
+ * Fills missing registry metadata and flags registry rows whose file is gone.
+ * With prune=true, domain references to lost files are cleared so API responses stop
+ * returning URLs that would 404 (users can then re-upload).
+ *
+ */
+export const reconcile = <ThrowOnError extends boolean = false>(
+  options?: Options<ReconcileData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).post<ReconcileResponses, ReconcileErrors, ThrowOnError>(
+    {
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+      ],
+      url: '/api/v1/files/admin/reconcile',
+      ...options,
+    }
+  );
+};
+
+/**
  * Enroll a student into a class across all scheduled instances
  */
 export const enrollStudent = <ThrowOnError extends boolean = false>(
@@ -10934,6 +11018,39 @@ export const createJob = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Upload a marketplace class job thumbnail
+ * Attaches a thumbnail image to an organisation's class advert. Returns the updated job with a resolved thumbnail_url.
+ */
+export const uploadJobThumbnail = <ThrowOnError extends boolean = false>(
+  options: Options<UploadJobThumbnailData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadJobThumbnailResponses,
+    UploadJobThumbnailErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadJobThumbnailResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{uuid}/thumbnail',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Cancel a marketplace class job
  */
 export const cancelJob = <ThrowOnError extends boolean = false>(
@@ -11858,6 +11975,10 @@ export const moderateProgram = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/admin/programs/{uuid}/moderate',
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -12104,7 +12225,19 @@ export const activate = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Moderate course approval
+ * Moderate a course or its pending edit
+ * Applies a moderation decision to a course.
+ *
+ * **When the course has an edit awaiting review**, the decision applies to that
+ * edit: `approved` promotes the draft onto the live course and records a new
+ * version; `rejected` discards the draft and leaves the live course untouched,
+ * including its approval — the published content was never at fault.
+ *
+ * **Otherwise** the decision applies to the course's own approval state, as
+ * before: `approved` makes it available, `rejected`/`revoked` withdraw it.
+ *
+ * Every decision is recorded in the course's moderation history with its reason.
+ *
  */
 export const moderateCourse = <ThrowOnError extends boolean = false>(
   options: Options<ModerateCourseData, ThrowOnError>
@@ -12127,6 +12260,10 @@ export const moderateCourse = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/admin/courses/{uuid}/moderate',
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -14888,6 +15025,29 @@ export const getMyStudents = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get a stored file by its storage key
+ * Serves any stored file (images, videos, documents, certificates) by its canonical storage key.
+ */
+export const getFile = <ThrowOnError extends boolean = false>(
+  options: Options<GetFileData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<GetFileResponses, GetFileErrors, ThrowOnError>({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/files/{key}',
+    ...options,
+  });
+};
+
+/**
  * Cancel a student enrollment
  */
 export const cancelEnrollment = <ThrowOnError extends boolean = false>(
@@ -15237,6 +15397,39 @@ export const getDefaultCurrency = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get this course's approved version history
+ * Returns each approved version of the course's content, newest first. A version
+ * is recorded every time an admin approves an edit and it is promoted onto the
+ * live course.
+ *
+ * **Authorization:** Only the course owner.
+ *
+ */
+export const getCourseVersions = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseVersionsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseVersionsResponses,
+    GetCourseVersionsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseVersionsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{uuid}/versions',
+    ...options,
+  });
+};
+
+/**
  * Get available status transitions
  * Returns the list of valid status transitions for a course based on its current state and business rules.
  *
@@ -15266,6 +15459,73 @@ export const getStatusTransitions = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{uuid}/status-transitions',
+    ...options,
+  });
+};
+
+/**
+ * Withdraw this course's pending edit
+ * Abandons the edit awaiting review and discards the draft. The live course is
+ * not affected — it was never modified while the edit was pending.
+ *
+ * **Authorization:** Only the course owner.
+ *
+ */
+export const withdrawPendingEdit = <ThrowOnError extends boolean = false>(
+  options: Options<WithdrawPendingEditData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    WithdrawPendingEditResponses,
+    WithdrawPendingEditErrors,
+    ThrowOnError
+  >({
+    responseTransformer: withdrawPendingEditResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{uuid}/pending-edit',
+    ...options,
+  });
+};
+
+/**
+ * Get this course's pending edit
+ * Returns the edit awaiting admin review for this course, if there is one.
+ *
+ * While an edit is pending the course stays published and keeps serving its
+ * last-approved content to learners. The proposed content lives on the draft
+ * course referenced by `draft_course_uuid`, which only the course owner can see.
+ *
+ * **Authorization:** Only the course owner.
+ *
+ */
+export const getPendingEdit = <ThrowOnError extends boolean = false>(
+  options: Options<GetPendingEditData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetPendingEditResponses,
+    GetPendingEditErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getPendingEditResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{uuid}/pending-edit',
     ...options,
   });
 };
@@ -17835,6 +18095,35 @@ export const getDashboardActivity = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Show what a pending edit would change
+ * The difference between the live course and the edit awaiting review: which
+ * course fields change and how many lessons the edit adds, removes or modifies.
+ *
+ */
+export const getCourseEditDiff = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseEditDiffData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseEditDiffResponses,
+    GetCourseEditDiffErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/courses/{uuid}/pending-edit/diff',
+    ...options,
+  });
+};
+
+/**
  * Get course moderation history
  */
 export const getCourseModerationHistory = <ThrowOnError extends boolean = false>(
@@ -17888,7 +18177,13 @@ export const getCourseApprovalStatus = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * List courses pending approval
+ * List courses pending first approval
+ * Courses that have never been approved and are waiting on an initial decision.
+ *
+ * This does **not** include already-published courses with a pending edit: those
+ * keep `admin_approved = true` while their edit is reviewed, so they never match
+ * this query. Use `GET /api/v1/admin/courses/pending-edits` for those.
+ *
  */
 export const listPendingCourses = <ThrowOnError extends boolean = false>(
   options: Options<ListPendingCoursesData, ThrowOnError>
@@ -17910,6 +18205,40 @@ export const listPendingCourses = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/courses/pending',
+    ...options,
+  });
+};
+
+/**
+ * List edits to published courses awaiting review
+ * Edits submitted against already-published courses, newest first.
+ *
+ * Each of these courses is still live and serving its last-approved content —
+ * the proposed change is held on a draft and is invisible to learners until
+ * approved. Approving promotes the draft onto the live course; rejecting
+ * discards it and leaves the live course exactly as it was.
+ *
+ */
+export const listPendingCourseEdits = <ThrowOnError extends boolean = false>(
+  options: Options<ListPendingCourseEditsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListPendingCourseEditsResponses,
+    ListPendingCourseEditsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listPendingCourseEditsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/courses/pending-edits',
     ...options,
   });
 };

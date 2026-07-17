@@ -106,6 +106,9 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
   });
 
   const task = assignmentQuery.data?.data ?? quizQuery.data?.data ?? null;
+  // Narrowed view: assignment-only fields (due_date, max_points) live on the assignment
+  // query's payload, which is only populated for assignment tasks.
+  const assignmentTask = assignmentQuery.data?.data ?? null;
 
   const course = classDetails.course;
   const lessonTitle =
@@ -256,7 +259,9 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
     return {
       ctaLabel: parsedTask.taskType === 'assignment' ? 'Grade Submission' : 'View Attempt',
       dueLabel: formatDateLabel(
-        parsedTask.taskType === 'assignment' ? task.due_date : selectedAttempt?.submitted_at
+        (parsedTask.taskType === 'assignment'
+          ? assignmentTask?.due_date
+          : selectedAttempt?.submitted_at) ?? undefined
       ),
       iconTone: 'blue',
       id: taskId,
@@ -270,7 +275,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
       studentSummary: course?.name,
       subtitle: task.title,
       taskType: parsedTask.taskType,
-      max_point: task?.max_points
+      max_point: assignmentTask?.max_points
     };
   }, [classDetails.class?.title, course?.name, lessonTitle, parsedTask, rubricUuid, selectedAttempt?.submitted_at, task, taskId]);
 
@@ -281,7 +286,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
   const handleGradeSubmission = () => {
     if (!parsedTask || parsedTask.taskType !== 'assignment' || !selectedSubmission?.uuid) return;
 
-    const maxScore = selectedSubmission.max_score ?? task?.max_points ?? 100;
+    const maxScore = selectedSubmission.max_score ?? assignmentTask?.max_points ?? 100;
     const numericScore = Number(score || selectedSubmission.score || 0);
 
     if (!Number.isFinite(numericScore)) {

@@ -17,6 +17,7 @@ import {
   unpublishCourseMutation,
   unpublishCourseQueryKey,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
+import { PendingEditBanner } from '../../../_components/pending-edit-banner';
 import CourseBuilderPage from './CourseBuilderPage';
 import CoursePreviewPage from './CoursePreviewPage';
 
@@ -164,6 +165,8 @@ const CourseCreationPage = () => {
           )}
         </div>
       </div>
+
+      {courseId && <PendingEditBanner courseUuid={courseId} />}
 
       <div className=''>
         {activeTab === 'builder' && <CourseBuilderPage />}

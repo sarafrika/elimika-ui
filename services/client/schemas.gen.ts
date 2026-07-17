@@ -3297,17 +3297,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: '4 years, 3 months',
       readOnly: true,
     },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
-      readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
-    },
     membership_period: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Formatted membership period showing start and end dates.',
@@ -3344,6 +3333,17 @@ export const InstructorProfessionalMembershipSchema = {
         '**[READ-ONLY]** Indicates if this membership was started within the last 3 years.',
       example: true,
       readOnly: true,
+    },
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
+      readOnly: true,
+    },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
     },
     is_valid: {
       type: 'boolean',
@@ -8269,6 +8269,11 @@ export const ClassMarketplaceJobSchema = {
       type: 'string',
       readOnly: true,
     },
+    thumbnail_url: {
+      type: 'string',
+      description: 'Public URL to the class advert thumbnail image, if uploaded.',
+      readOnly: true,
+    },
     location_type: {
       $ref: '#/components/schemas/LocationTypeEnum',
     },
@@ -10086,6 +10091,116 @@ export const GuardianStudentLinkRequestSchema = {
     },
   },
   required: ['guardianUserUuid', 'relationshipType', 'shareScope', 'studentUuid'],
+} as const;
+
+export const ApiResponseSweepReportSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SweepReport',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const SweepReportSchema = {
+  type: 'object',
+  properties: {
+    diskFiles: {
+      type: 'integer',
+      format: 'int32',
+    },
+    referencedKeys: {
+      type: 'integer',
+      format: 'int32',
+    },
+    orphanKeys: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
+    orphansDeleted: {
+      type: 'integer',
+      format: 'int32',
+    },
+  },
+} as const;
+
+export const ApiResponseReconcileReportSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ReconcileReport',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const DeadReferenceSchema = {
+  type: 'object',
+  properties: {
+    table: {
+      type: 'string',
+    },
+    column: {
+      type: 'string',
+    },
+    rowUuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    value: {
+      type: 'string',
+    },
+    nullable: {
+      type: 'boolean',
+    },
+  },
+} as const;
+
+export const ReconcileReportSchema = {
+  type: 'object',
+  properties: {
+    registryRowsChecked: {
+      type: 'integer',
+      format: 'int32',
+    },
+    registryMarkedMissing: {
+      type: 'integer',
+      format: 'int32',
+    },
+    registryMetadataFilled: {
+      type: 'integer',
+      format: 'int32',
+    },
+    deadReferences: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/DeadReference',
+      },
+    },
+    deadReferencesPruned: {
+      type: 'integer',
+      format: 'int32',
+    },
+    orphanRowsDeleted: {
+      type: 'integer',
+      format: 'int32',
+    },
+  },
 } as const;
 
 export const EnrollmentRequestSchema = {
@@ -12412,6 +12527,33 @@ export const AdminCreateUserRequestDTOSchema = {
   required: ['email', 'first_name', 'last_name'],
 } as const;
 
+export const ContentModerationDecisionRequestSchema = {
+  type: 'object',
+  description: `Payload for a moderation decision on a course or training program.
+
+When the content has a pending edit awaiting review, \`approved\` promotes that
+edit onto the live content and \`rejected\` discards it, leaving the live content
+untouched. Otherwise the decision applies to the content's own approval state.
+`,
+  example: {
+    action: 'rejected',
+    reason: 'Lesson 3 video is missing captions.',
+  },
+  properties: {
+    action: {
+      $ref: '#/components/schemas/ActionEnum',
+    },
+    reason: {
+      type: ['string', 'null'],
+      description:
+        'Reason for the decision. Shown to the course creator and retained in the moderation history.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+  },
+  required: ['action'],
+} as const;
+
 export const OrganisationUserCreateRequestDTOSchema = {
   type: 'object',
   properties: {
@@ -13173,10 +13315,10 @@ export const PageableObjectSchema = {
 export const SortObjectSchema = {
   type: 'object',
   properties: {
-    sorted: {
+    unsorted: {
       type: 'boolean',
     },
-    unsorted: {
+    sorted: {
       type: 'boolean',
     },
     empty: {
@@ -16168,6 +16310,101 @@ export const PagedDTOCourseSchema = {
   },
 } as const;
 
+export const ApiResponsePagedDTOCourseVersionSnapshotSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseVersionSnapshot',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseVersionSnapshotSchema = {
+  type: 'object',
+  description: `An approved version of a course's content. One is written each time an edit is
+promoted onto the live course, giving a durable record of what the course
+looked like at each approved version.
+`,
+  example: {
+    uuid: 'snap-1234-5678-90ab-cdef12345678',
+    course_uuid: 'course-1234-5678-90ab-cdef12345678',
+    version_number: 3,
+    pending_edit_uuid: 'edit-1234-5678-90ab-cdef12345678',
+    created_date: '2026-07-17T11:30:00',
+    created_by: 'admin@example.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for the snapshot.',
+      readOnly: true,
+    },
+    snapshot: {
+      $ref: '#/components/schemas/JsonNode',
+      description:
+        '**[READ-ONLY]** Full course tree at this version: course fields, category uuids, lessons and their content.',
+      readOnly: true,
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The course this version belongs to.',
+      readOnly: true,
+    },
+    version_number: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Monotonic version number, starting at 1.',
+      example: 3,
+      readOnly: true,
+    },
+    pending_edit_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The edit whose promotion produced this version, if any.',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When this version became live.',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Who promoted this version.',
+      example: 'admin@example.com',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const PagedDTOCourseVersionSnapshotSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseVersionSnapshot',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
 export const ApiResponseListContentStatusSchema = {
   type: 'object',
   properties: {
@@ -16184,6 +16421,105 @@ export const ApiResponseListContentStatusSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const ApiResponseCoursePendingEditSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CoursePendingEdit',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CoursePendingEditSchema = {
+  type: 'object',
+  description: `An edit to a published course that is awaiting admin review.
+
+The live course is unaffected while the edit is pending: it stays published,
+keeps accepting enrollments, and continues to serve its last-approved content.
+The proposed content lives on the draft course referenced by \`draft_course_uuid\`.
+`,
+  example: {
+    uuid: 'edit-1234-5678-90ab-cdef12345678',
+    course_uuid: 'course-1234-5678-90ab-cdef12345678',
+    draft_course_uuid: 'draft-1234-5678-90ab-cdef12345678',
+    status: 'pending',
+    submitted_by_uuid: 'user-1234-5678-90ab-cdef12345678',
+    submitted_at: '2026-07-17T09:00:00',
+    reviewed_by_uuid: null,
+    reviewed_at: null,
+    review_reason: null,
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for the pending edit.',
+      example: 'edit-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum19',
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The live course this edit applies to.',
+      example: 'course-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    draft_course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** Draft course holding the proposed content. Null once the edit is resolved.',
+      example: 'draft-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    submitted_by_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** Internal user UUID of the course creator who submitted the edit.',
+      example: 'user-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    submitted_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When the edit was submitted for review.',
+      example: '2026-07-17T09:00:00',
+      readOnly: true,
+    },
+    reviewed_by_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Internal user UUID of the admin who reviewed the edit.',
+      example: 'user-9999-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    reviewed_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When the edit was reviewed.',
+      example: '2026-07-17T11:30:00',
+      readOnly: true,
+    },
+    review_reason: {
+      type: 'string',
+      description: '**[READ-ONLY]** Reason the admin gave for their decision.',
+      example: 'Pricing change is not justified.',
+      readOnly: true,
+    },
   },
 } as const;
 
@@ -18872,6 +19208,151 @@ export const ApiResponseListCurrencySchema = {
   },
 } as const;
 
+export const ApiResponseCourseEditDiffSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseEditDiff',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseEditDiffSchema = {
+  type: 'object',
+  description: `What a pending edit would change if approved, so an admin can review the
+decision without comparing two full course payloads by eye.
+`,
+  example: {
+    course_uuid: 'course-1234-5678-90ab-cdef12345678',
+    draft_course_uuid: 'draft-1234-5678-90ab-cdef12345678',
+    field_changes: [
+      {
+        field: 'name',
+        live_value: 'Intro to Piano',
+        draft_value: 'Introduction to Piano',
+      },
+      {
+        field: 'price',
+        live_value: '1500.00',
+        draft_value: '1800.00',
+      },
+    ],
+    lessons_added: 1,
+    lessons_removed: 0,
+    lessons_modified: 2,
+  },
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The live course under review.',
+      readOnly: true,
+    },
+    draft_course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Draft course holding the proposed content.',
+      readOnly: true,
+    },
+    field_changes: {
+      type: 'array',
+      description:
+        '**[READ-ONLY]** Course fields that differ between the live course and the draft.',
+      items: {
+        $ref: '#/components/schemas/CourseEditFieldChange',
+      },
+      readOnly: true,
+    },
+    lessons_added: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Lessons the edit adds.',
+      example: 1,
+      readOnly: true,
+    },
+    lessons_removed: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Lessons the edit removes.',
+      example: 0,
+      readOnly: true,
+    },
+    lessons_modified: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Lessons the edit changes in place.',
+      example: 2,
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const CourseEditFieldChangeSchema = {
+  type: 'object',
+  description: 'A single course field the edit would change.',
+  properties: {
+    field: {
+      type: 'string',
+      description: '**[READ-ONLY]** Field name, in snake_case as it appears on the course payload.',
+      example: 'price',
+      readOnly: true,
+    },
+    live_value: {
+      type: 'string',
+      description: '**[READ-ONLY]** Current value on the live course, rendered as text.',
+      example: '1500.00',
+      readOnly: true,
+    },
+    draft_value: {
+      type: 'string',
+      description: '**[READ-ONLY]** Proposed value on the draft, rendered as text.',
+      example: '1800.00',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOCoursePendingEditSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCoursePendingEdit',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCoursePendingEditSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CoursePendingEdit',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
 export const AfricanPhoneNumberSchema = {
   format: 'phone',
   description: 'Valid African phone number in international or local format',
@@ -19115,14 +19596,6 @@ export const ProficiencyLevelEnumSchema = {
   example: 'EXPERT',
 } as const;
 
-export const MembershipStatusEnumSchema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Current status of the membership.',
-  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
-  example: 'ACTIVE',
-  readOnly: true,
-} as const;
-
 export const OrganisationTypeEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Classification of organisation type based on name keywords.',
@@ -19135,6 +19608,14 @@ export const OrganisationTypeEnumSchema = {
     'OTHER',
   ],
   example: 'PROFESSIONAL_INSTITUTE',
+  readOnly: true,
+} as const;
+
+export const MembershipStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the membership.',
+  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
+  example: 'ACTIVE',
   readOnly: true,
 } as const;
 
@@ -19479,6 +19960,12 @@ export const AssignmentTypeEnumSchema = {
   minLength: 1,
 } as const;
 
+export const ActionEnumSchema = {
+  type: 'string',
+  description: 'The decision to apply.',
+  enum: ['approved', 'rejected', 'revoked'],
+} as const;
+
 export const DomainNameEnum2Schema = {
   type: 'string',
   description: 'Domain/role to assign within the organisation',
@@ -19563,11 +20050,11 @@ export const EntryTypeEnum2Schema = {
   example: 'SCHEDULED_INSTANCE',
 } as const;
 
-export const ActionEnumSchema = {
+export const StatusEnum19Schema = {
   type: 'string',
-  description: '**[READ-ONLY]** Moderation decision taken.',
-  enum: ['approved', 'rejected', 'revoked'],
-  example: 'rejected',
+  description: '**[READ-ONLY]** Review state of the edit.',
+  enum: ['pending', 'approved', 'rejected', 'withdrawn'],
+  example: 'pending',
   readOnly: true,
 } as const;
 
@@ -20067,6 +20554,12 @@ export const AssignmentTypeEnumWritableSchema = {
   enum: ['global', 'organization'],
   example: 'global',
   minLength: 1,
+} as const;
+
+export const ActionEnumWritableSchema = {
+  type: 'string',
+  description: 'The decision to apply.',
+  enum: ['approved', 'rejected', 'revoked'],
 } as const;
 
 export const DomainNameEnum2WritableSchema = {

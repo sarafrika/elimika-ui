@@ -44,9 +44,10 @@ type UploadResponse = unknown;
 type UploadError = unknown;
 type UpdateCourseVariables = MutationVariables<ReturnType<typeof updateCourseMutation>>;
 type UpdateCourseResponse = MutationResponse<ReturnType<typeof updateCourseMutation>>;
+// No `status` here on purpose: an update never sets lifecycle. Requiring it was what made
+// every branding save demote a published course to draft.
 type CourseUpdatePayload = Partial<CourseCreationFormValues> & {
   course_creator_uuid: string;
-  status: string;
 };
 
 const isString = (value: unknown): value is string => typeof value === 'string';
@@ -191,7 +192,9 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       if (editingCourseId) {
         const editBody: CourseUpdatePayload = {
           course_creator_uuid: authorUuid,
-          status: 'draft',
+          // No status here: branding is cosmetic and must never change whether the course
+          // is published. This previously demoted a live course to draft just for a theme
+          // colour change.
           ...initialValues,
           welcome_message: data?.welcome_message,
           theme_color: data?.theme_color,

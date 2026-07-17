@@ -1,9 +1,11 @@
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Course } from '@/services/client';
+import type { Course, CoursePendingEdit } from '@/services/client';
 import {
   getAllCoursesOptions,
+  getCourseByUuidOptions,
+  listPendingCourseEditsOptions,
   listPendingCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
@@ -144,26 +146,130 @@ function CoursesTableView({ courses, isLoading }: { courses: Course[]; isLoading
   );
 }
 
+/**
+ * Edits awaiting review on courses that are already live.
+ *
+ * Deliberately a separate view from the course queues: the course itself is fine and
+ * published, and only the proposed change needs a decision.
+ */
+function PendingEditsTableView({
+  edits,
+  isLoading,
+}: {
+  edits: CoursePendingEdit[];
+  isLoading: boolean;
+}) {
+  const router = useRouter();
+
+  const columns = useMemo<ColumnDef<CoursePendingEdit>[]>(
+    () => [
+      {
+        id: 'course',
+        header: 'Course',
+        accessorFn: row => row.course_uuid ?? '',
+        cell: ({ row }) => <PendingEditCourseCell courseUuid={row.original.course_uuid} />,
+      },
+      {
+        id: 'submitted',
+        header: 'Submitted',
+        accessorFn: row => row.submitted_at ?? '',
+        cell: ({ row }) => (
+          <span className='text-sm text-muted-foreground'>
+            {row.original.submitted_at
+              ? new Date(row.original.submitted_at).toLocaleString()
+              : '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={e => {
+              e.stopPropagation();
+              if (row.original.course_uuid) {
+                router.push(`/dashboard/manage-courses/${row.original.course_uuid}`);
+              }
+            }}
+          >
+            Review
+          </Button>
+        ),
+      },
+    ],
+    [router]
+  );
+
+  return (
+    <AdminTable
+      columns={columns}
+      data={edits}
+      isLoading={isLoading}
+      searchPlaceholder='Search pending edits…'
+      getRowId={(edit, index) => edit.uuid ?? String(index)}
+      onRowClick={edit => {
+        if (edit.course_uuid) router.push(`/dashboard/manage-courses/${edit.course_uuid}`);
+      }}
+      pageSize={12}
+      emptyTitle='No edits awaiting review'
+      emptyDescription='Published courses with proposed changes will appear here.'
+    />
+  );
+}
+
+/** Resolves the course name for a pending edit row, which only carries uuids. */
+function PendingEditCourseCell({ courseUuid }: { courseUuid?: string }) {
+  const { data } = useQuery({
+    ...getCourseByUuidOptions({ path: { uuid: courseUuid as string } }),
+    enabled: !!courseUuid,
+  });
+  const course = data?.data as Course | undefined;
+
+  return (
+    <div className='flex items-center gap-3'>
+      <Thumb url={course?.thumbnail_url} alt={course?.name ?? 'Course'} />
+      <div className='min-w-0'>
+        <p className='truncate text-sm font-medium'>{course?.name ?? 'Loading…'}</p>
+        <p className='truncate text-xs text-muted-foreground'>Still live · showing approved version</p>
+      </div>
+    </div>
+  );
+}
+
 export function CoursesTable() {
   const allQuery = useQuery(getAllCoursesOptions({ query: { pageable: { page: 0, size: 100 } } }));
   const pendingQuery = useQuery(
     listPendingCoursesOptions({ query: { pageable: { page: 0, size: 100 } } })
   );
+  // Edits to already-published courses. These never appear in the queue above: the live
+  // course keeps admin_approved = true while its edit is reviewed.
+  const pendingEditsQuery = useQuery(
+    listPendingCourseEditsOptions({ query: { pageable: { page: 0, size: 100 } } })
+  );
 
   const allCourses = (allQuery.data?.data?.content ?? []) as Course[];
   const pendingCourses = (pendingQuery.data?.data?.content ?? []) as Course[];
+  const pendingEdits = (pendingEditsQuery.data?.data?.content ?? []) as CoursePendingEdit[];
 
   return (
     <Tabs defaultValue='all' className='space-y-3'>
       <TabsList>
         <TabsTrigger value='all'>All courses · {allCourses.length}</TabsTrigger>
         <TabsTrigger value='pending'>Pending review · {pendingCourses.length}</TabsTrigger>
+        <TabsTrigger value='pending-edits'>Pending edits · {pendingEdits.length}</TabsTrigger>
       </TabsList>
       <TabsContent value='all' className='mt-0'>
         <CoursesTableView courses={allCourses} isLoading={allQuery.isLoading} />
       </TabsContent>
       <TabsContent value='pending' className='mt-0'>
         <CoursesTableView courses={pendingCourses} isLoading={pendingQuery.isLoading} />
+      </TabsContent>
+      <TabsContent value='pending-edits' className='mt-0'>
+        <PendingEditsTableView edits={pendingEdits} isLoading={pendingEditsQuery.isLoading} />
       </TabsContent>
     </Tabs>
   );

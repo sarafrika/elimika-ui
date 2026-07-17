@@ -1629,11 +1629,6 @@ export type InstructorProfessionalMembership = {
    */
   readonly formatted_duration?: string | null;
   /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
-   */
-  readonly membership_duration_months?: number | null;
-  membership_status?: MembershipStatusEnum;
-  /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
   readonly membership_period?: string | null;
@@ -1654,6 +1649,11 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number | null;
+  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Indicates if the membership is currently valid and active.
    */
@@ -3943,6 +3943,10 @@ export type ClassMarketplaceJob = {
   readonly registration_period_end_date?: Date;
   readonly class_reminder_minutes?: number;
   readonly class_color?: string;
+  /**
+   * Public URL to the class advert thumbnail image, if uploaded.
+   */
+  readonly thumbnail_url?: string;
   location_type?: LocationTypeEnum;
   readonly location_name?: string;
   readonly location_latitude?: number;
@@ -4874,6 +4878,44 @@ export type GuardianStudentLinkRequest = {
    * Optional note shown in audits or invitation emails
    */
   notes?: string;
+};
+
+export type ApiResponseSweepReport = {
+  success?: boolean;
+  data?: SweepReport;
+  message?: string;
+  error?: unknown;
+};
+
+export type SweepReport = {
+  diskFiles?: number;
+  referencedKeys?: number;
+  orphanKeys?: Array<string>;
+  orphansDeleted?: number;
+};
+
+export type ApiResponseReconcileReport = {
+  success?: boolean;
+  data?: ReconcileReport;
+  message?: string;
+  error?: unknown;
+};
+
+export type DeadReference = {
+  table?: string;
+  column?: string;
+  rowUuid?: string;
+  value?: string;
+  nullable?: boolean;
+};
+
+export type ReconcileReport = {
+  registryRowsChecked?: number;
+  registryMarkedMissing?: number;
+  registryMetadataFilled?: number;
+  deadReferences?: Array<DeadReference>;
+  deadReferencesPruned?: number;
+  orphanRowsDeleted?: number;
 };
 
 /**
@@ -6252,6 +6294,22 @@ export type AdminCreateUserRequestDto = {
   phone_number?: string;
 };
 
+/**
+ * Payload for a moderation decision on a course or training program.
+ *
+ * When the content has a pending edit awaiting review, `approved` promotes that
+ * edit onto the live content and `rejected` discards it, leaving the live content
+ * untouched. Otherwise the decision applies to the content's own approval state.
+ *
+ */
+export type ContentModerationDecisionRequest = {
+  action: ActionEnum;
+  /**
+   * Reason for the decision. Shown to the course creator and retained in the moderation history.
+   */
+  reason?: string | null;
+};
+
 export type OrganisationUserCreateRequestDto = {
   /**
    * First name of the user
@@ -6615,8 +6673,8 @@ export type PageableObject = {
 };
 
 export type SortObject = {
-  sorted?: boolean;
   unsorted?: boolean;
+  sorted?: boolean;
   empty?: boolean;
 };
 
@@ -7926,11 +7984,112 @@ export type PagedDtoCourse = {
   links?: PageLinks;
 };
 
+export type ApiResponsePagedDtoCourseVersionSnapshot = {
+  success?: boolean;
+  data?: PagedDtoCourseVersionSnapshot;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * An approved version of a course's content. One is written each time an edit is
+ * promoted onto the live course, giving a durable record of what the course
+ * looked like at each approved version.
+ *
+ */
+export type CourseVersionSnapshot = {
+  /**
+   * **[READ-ONLY]** Unique identifier for the snapshot.
+   */
+  readonly uuid?: string;
+  /**
+   * **[READ-ONLY]** Full course tree at this version: course fields, category uuids, lessons and their content.
+   */
+  snapshot?: JsonNode;
+  /**
+   * **[READ-ONLY]** The course this version belongs to.
+   */
+  readonly course_uuid?: string;
+  /**
+   * **[READ-ONLY]** Monotonic version number, starting at 1.
+   */
+  readonly version_number?: number;
+  /**
+   * **[READ-ONLY]** The edit whose promotion produced this version, if any.
+   */
+  readonly pending_edit_uuid?: string;
+  /**
+   * **[READ-ONLY]** When this version became live.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** Who promoted this version.
+   */
+  readonly created_by?: string;
+};
+
+export type PagedDtoCourseVersionSnapshot = {
+  content?: Array<CourseVersionSnapshot>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
 export type ApiResponseListContentStatus = {
   success?: boolean;
   data?: Array<SchemaEnum4>;
   message?: string;
   error?: unknown;
+};
+
+export type ApiResponseCoursePendingEdit = {
+  success?: boolean;
+  data?: CoursePendingEdit;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * An edit to a published course that is awaiting admin review.
+ *
+ * The live course is unaffected while the edit is pending: it stays published,
+ * keeps accepting enrollments, and continues to serve its last-approved content.
+ * The proposed content lives on the draft course referenced by `draft_course_uuid`.
+ *
+ */
+export type CoursePendingEdit = {
+  /**
+   * **[READ-ONLY]** Unique identifier for the pending edit.
+   */
+  readonly uuid?: string;
+  status?: StatusEnum19;
+  /**
+   * **[READ-ONLY]** The live course this edit applies to.
+   */
+  readonly course_uuid?: string;
+  /**
+   * **[READ-ONLY]** Draft course holding the proposed content. Null once the edit is resolved.
+   */
+  readonly draft_course_uuid?: string;
+  /**
+   * **[READ-ONLY]** Internal user UUID of the course creator who submitted the edit.
+   */
+  readonly submitted_by_uuid?: string;
+  /**
+   * **[READ-ONLY]** When the edit was submitted for review.
+   */
+  readonly submitted_at?: Date;
+  /**
+   * **[READ-ONLY]** Internal user UUID of the admin who reviewed the edit.
+   */
+  readonly reviewed_by_uuid?: string;
+  /**
+   * **[READ-ONLY]** When the edit was reviewed.
+   */
+  readonly reviewed_at?: Date;
+  /**
+   * **[READ-ONLY]** Reason the admin gave for their decision.
+   */
+  readonly review_reason?: string;
 };
 
 export type ApiResponsePagedDtoCourseTrainingRequirement = {
@@ -9193,6 +9352,76 @@ export type ApiResponseListCurrency = {
   error?: unknown;
 };
 
+export type ApiResponseCourseEditDiff = {
+  success?: boolean;
+  data?: CourseEditDiff;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * What a pending edit would change if approved, so an admin can review the
+ * decision without comparing two full course payloads by eye.
+ *
+ */
+export type CourseEditDiff = {
+  /**
+   * **[READ-ONLY]** The live course under review.
+   */
+  readonly course_uuid?: string;
+  /**
+   * **[READ-ONLY]** Draft course holding the proposed content.
+   */
+  readonly draft_course_uuid?: string;
+  /**
+   * **[READ-ONLY]** Course fields that differ between the live course and the draft.
+   */
+  readonly field_changes?: Array<CourseEditFieldChange>;
+  /**
+   * **[READ-ONLY]** Lessons the edit adds.
+   */
+  readonly lessons_added?: number;
+  /**
+   * **[READ-ONLY]** Lessons the edit removes.
+   */
+  readonly lessons_removed?: number;
+  /**
+   * **[READ-ONLY]** Lessons the edit changes in place.
+   */
+  readonly lessons_modified?: number;
+};
+
+/**
+ * A single course field the edit would change.
+ */
+export type CourseEditFieldChange = {
+  /**
+   * **[READ-ONLY]** Field name, in snake_case as it appears on the course payload.
+   */
+  readonly field?: string;
+  /**
+   * **[READ-ONLY]** Current value on the live course, rendered as text.
+   */
+  readonly live_value?: string;
+  /**
+   * **[READ-ONLY]** Proposed value on the draft, rendered as text.
+   */
+  readonly draft_value?: string;
+};
+
+export type ApiResponsePagedDtoCoursePendingEdit = {
+  success?: boolean;
+  data?: PagedDtoCoursePendingEdit;
+  message?: string;
+  error?: unknown;
+};
+
+export type PagedDtoCoursePendingEdit = {
+  content?: Array<CoursePendingEdit>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
 /**
  * Valid African phone number in international or local format
  */
@@ -9537,21 +9766,6 @@ export const ProficiencyLevelEnum = {
 export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
-
-/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const OrganisationTypeEnum = {
@@ -9567,6 +9781,21 @@ export const OrganisationTypeEnum = {
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export type OrganisationTypeEnum = (typeof OrganisationTypeEnum)[keyof typeof OrganisationTypeEnum];
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.
@@ -10135,6 +10364,20 @@ export const AssignmentTypeEnum = {
 export type AssignmentTypeEnum = (typeof AssignmentTypeEnum)[keyof typeof AssignmentTypeEnum];
 
 /**
+ * The decision to apply.
+ */
+export const ActionEnum = {
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  REVOKED: 'revoked',
+} as const;
+
+/**
+ * The decision to apply.
+ */
+export type ActionEnum = (typeof ActionEnum)[keyof typeof ActionEnum];
+
+/**
  * Domain/role to assign within the organisation
  */
 export const DomainNameEnum2 = {
@@ -10300,18 +10543,19 @@ export const EntryTypeEnum2 = {
 export type EntryTypeEnum2 = (typeof EntryTypeEnum2)[keyof typeof EntryTypeEnum2];
 
 /**
- * **[READ-ONLY]** Moderation decision taken.
+ * **[READ-ONLY]** Review state of the edit.
  */
-export const ActionEnum = {
+export const StatusEnum19 = {
+  PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
-  REVOKED: 'revoked',
+  WITHDRAWN: 'withdrawn',
 } as const;
 
 /**
- * **[READ-ONLY]** Moderation decision taken.
+ * **[READ-ONLY]** Review state of the edit.
  */
-export type ActionEnum = (typeof ActionEnum)[keyof typeof ActionEnum];
+export type StatusEnum19 = (typeof StatusEnum19)[keyof typeof StatusEnum19];
 
 /**
  * **[READ-ONLY]** Type of the moderated content.
@@ -11093,6 +11337,20 @@ export const AssignmentTypeEnumWritable = {
  */
 export type AssignmentTypeEnumWritable =
   (typeof AssignmentTypeEnumWritable)[keyof typeof AssignmentTypeEnumWritable];
+
+/**
+ * The decision to apply.
+ */
+export const ActionEnumWritable = {
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  REVOKED: 'revoked',
+} as const;
+
+/**
+ * The decision to apply.
+ */
+export type ActionEnumWritable = (typeof ActionEnumWritable)[keyof typeof ActionEnumWritable];
 
 /**
  * Domain/role to assign within the organisation
@@ -18359,6 +18617,74 @@ export type CreateLinkResponses = {
 
 export type CreateLinkResponse = CreateLinkResponses[keyof CreateLinkResponses];
 
+export type SweepData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Delete the orphaned files instead of only reporting them
+     */
+    deleteOrphans?: boolean;
+  };
+  url: '/api/v1/files/admin/sweep';
+};
+
+export type SweepErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SweepError = SweepErrors[keyof SweepErrors];
+
+export type SweepResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSweepReport;
+};
+
+export type SweepResponse = SweepResponses[keyof SweepResponses];
+
+export type ReconcileData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Clear domain references whose files no longer exist on disk
+     */
+    prune?: boolean;
+  };
+  url: '/api/v1/files/admin/reconcile';
+};
+
+export type ReconcileErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ReconcileError = ReconcileErrors[keyof ReconcileErrors];
+
+export type ReconcileResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseReconcileReport;
+};
+
+export type ReconcileResponse = ReconcileResponses[keyof ReconcileResponses];
+
 export type EnrollStudentData = {
   body: EnrollmentRequest;
   path?: never;
@@ -21285,6 +21611,40 @@ export type CreateJobResponses = {
 
 export type CreateJobResponse = CreateJobResponses[keyof CreateJobResponses];
 
+export type UploadJobThumbnailData = {
+  body?: {
+    thumbnail: Blob | File;
+  };
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/jobs/{uuid}/thumbnail';
+};
+
+export type UploadJobThumbnailErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadJobThumbnailError = UploadJobThumbnailErrors[keyof UploadJobThumbnailErrors];
+
+export type UploadJobThumbnailResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassMarketplaceJob;
+};
+
+export type UploadJobThumbnailResponse =
+  UploadJobThumbnailResponses[keyof UploadJobThumbnailResponses];
+
 export type CancelJobData = {
   body?: never;
   path: {
@@ -22325,14 +22685,14 @@ export type CreateAdminUserResponses = {
 export type CreateAdminUserResponse = CreateAdminUserResponses[keyof CreateAdminUserResponses];
 
 export type ModerateProgramData = {
-  body?: never;
+  body: ContentModerationDecisionRequest;
   path: {
+    /**
+     * UUID of the training program
+     */
     uuid: string;
   };
-  query: {
-    action: string;
-    reason?: string;
-  };
+  query?: never;
   url: '/api/v1/admin/programs/{uuid}/moderate';
 };
 
@@ -22690,22 +23050,26 @@ export type ActivateResponses = {
 export type ActivateResponse = ActivateResponses[keyof ActivateResponses];
 
 export type ModerateCourseData = {
-  body?: never;
+  body: ContentModerationDecisionRequest;
   path: {
+    /**
+     * UUID of the course
+     */
     uuid: string;
   };
-  query: {
-    action: string;
-    reason?: string;
-  };
+  query?: never;
   url: '/api/v1/admin/courses/{uuid}/moderate';
 };
 
 export type ModerateCourseErrors = {
   /**
-   * Not Found
+   * Unsupported action
    */
-  404: ResponseDtoVoid;
+  400: ApiResponseCourse;
+  /**
+   * Course not found
+   */
+  404: unknown;
   /**
    * Internal Server Error
    */
@@ -22716,7 +23080,7 @@ export type ModerateCourseError = ModerateCourseErrors[keyof ModerateCourseError
 
 export type ModerateCourseResponses = {
   /**
-   * OK
+   * Decision applied successfully
    */
   200: ApiResponseCourse;
 };
@@ -26109,6 +26473,40 @@ export type GetMyStudentsResponses = {
 
 export type GetMyStudentsResponse = GetMyStudentsResponses[keyof GetMyStudentsResponses];
 
+export type GetFileData = {
+  body?: never;
+  path: {
+    /**
+     * Canonical storage key, e.g. course_thumbnails/uuid.jpg
+     */
+    key: string;
+  };
+  query?: never;
+  url: '/api/v1/files/{key}';
+};
+
+export type GetFileErrors = {
+  /**
+   * File not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetFileError = GetFileErrors[keyof GetFileErrors];
+
+export type GetFileResponses = {
+  /**
+   * File retrieved successfully
+   */
+  200: Blob | File;
+};
+
+export type GetFileResponse = GetFileResponses[keyof GetFileResponses];
+
 export type CancelEnrollmentData = {
   body?: never;
   path: {
@@ -26571,6 +26969,47 @@ export type GetDefaultCurrencyResponses = {
 export type GetDefaultCurrencyResponse =
   GetDefaultCurrencyResponses[keyof GetDefaultCurrencyResponses];
 
+export type GetCourseVersionsData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the course
+     */
+    uuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/courses/{uuid}/versions';
+};
+
+export type GetCourseVersionsErrors = {
+  /**
+   * Not the course owner
+   */
+  403: ApiResponsePagedDtoCourseVersionSnapshot;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseVersionsError = GetCourseVersionsErrors[keyof GetCourseVersionsErrors];
+
+export type GetCourseVersionsResponses = {
+  /**
+   * Version history retrieved
+   */
+  200: ApiResponsePagedDtoCourseVersionSnapshot;
+};
+
+export type GetCourseVersionsResponse =
+  GetCourseVersionsResponses[keyof GetCourseVersionsResponses];
+
 export type GetStatusTransitionsData = {
   body?: never;
   path: {
@@ -26603,6 +27042,87 @@ export type GetStatusTransitionsResponses = {
 
 export type GetStatusTransitionsResponse =
   GetStatusTransitionsResponses[keyof GetStatusTransitionsResponses];
+
+export type WithdrawPendingEditData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the course
+     */
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{uuid}/pending-edit';
+};
+
+export type WithdrawPendingEditErrors = {
+  /**
+   * Not the course owner
+   */
+  403: ApiResponseCoursePendingEdit;
+  /**
+   * No edit awaiting review
+   */
+  404: unknown;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type WithdrawPendingEditError = WithdrawPendingEditErrors[keyof WithdrawPendingEditErrors];
+
+export type WithdrawPendingEditResponses = {
+  /**
+   * Pending edit withdrawn
+   */
+  200: ApiResponseCoursePendingEdit;
+};
+
+export type WithdrawPendingEditResponse =
+  WithdrawPendingEditResponses[keyof WithdrawPendingEditResponses];
+
+export type GetPendingEditData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the course
+     */
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{uuid}/pending-edit';
+};
+
+export type GetPendingEditErrors = {
+  /**
+   * Not the course owner
+   */
+  403: ApiResponseCoursePendingEdit;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetPendingEditError = GetPendingEditErrors[keyof GetPendingEditErrors];
+
+export type GetPendingEditResponses = {
+  /**
+   * Pending edit retrieved
+   */
+  200: ApiResponseCoursePendingEdit;
+  /**
+   * No edit awaiting review
+   */
+  204: ApiResponseCoursePendingEdit;
+};
+
+export type GetPendingEditResponse = GetPendingEditResponses[keyof GetPendingEditResponses];
 
 export type CheckRubricAssociationData = {
   body?: never;
@@ -29661,6 +30181,41 @@ export type GetDashboardActivityResponses = {
 export type GetDashboardActivityResponse =
   GetDashboardActivityResponses[keyof GetDashboardActivityResponses];
 
+export type GetCourseEditDiffData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the live course
+     */
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/courses/{uuid}/pending-edit/diff';
+};
+
+export type GetCourseEditDiffErrors = {
+  /**
+   * No edit awaiting review for this course
+   */
+  404: unknown;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseEditDiffError = GetCourseEditDiffErrors[keyof GetCourseEditDiffErrors];
+
+export type GetCourseEditDiffResponses = {
+  /**
+   * Diff retrieved
+   */
+  200: ApiResponseCourseEditDiff;
+};
+
+export type GetCourseEditDiffResponse =
+  GetCourseEditDiffResponses[keyof GetCourseEditDiffResponses];
+
 export type GetCourseModerationHistoryData = {
   body?: never;
   path: {
@@ -29760,6 +30315,39 @@ export type ListPendingCoursesResponses = {
 
 export type ListPendingCoursesResponse =
   ListPendingCoursesResponses[keyof ListPendingCoursesResponses];
+
+export type ListPendingCourseEditsData = {
+  body?: never;
+  path?: never;
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/admin/courses/pending-edits';
+};
+
+export type ListPendingCourseEditsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListPendingCourseEditsError =
+  ListPendingCourseEditsErrors[keyof ListPendingCourseEditsErrors];
+
+export type ListPendingCourseEditsResponses = {
+  /**
+   * Pending edits retrieved successfully
+   */
+  200: ApiResponsePagedDtoCoursePendingEdit;
+};
+
+export type ListPendingCourseEditsResponse =
+  ListPendingCourseEditsResponses[keyof ListPendingCourseEditsResponses];
 
 export type ClearInstructorAvailabilityData = {
   body?: never;
