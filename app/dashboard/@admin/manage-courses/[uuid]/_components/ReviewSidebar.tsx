@@ -25,12 +25,15 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 export function ReviewSidebar({
   course,
   isPending,
+  hasPendingEdit = false,
   onApprove,
   onReject,
   onRevoke,
 }: {
   course: Course;
   isPending: boolean;
+  /** The course is live and approved, but its creator has an edit awaiting a decision. */
+  hasPendingEdit?: boolean;
   onApprove: () => void;
   onReject: () => void;
   onRevoke: () => void;
@@ -44,9 +47,28 @@ export function ReviewSidebar({
     <aside className='space-y-4'>
       {/* Decision panel */}
       <div className={adminTheme.cardPadded}>
-        <p className={adminTheme.sectionLabel}>Moderation decision</p>
+        <p className={adminTheme.sectionLabel}>
+          {hasPendingEdit ? 'Review proposed changes' : 'Moderation decision'}
+        </p>
         <div className='mt-3 flex flex-col gap-2'>
-          {approved ? (
+          {hasPendingEdit ? (
+            // The course is approved and live, but the decision here is about the creator's
+            // proposed edit, not about the published course.
+            <>
+              <p className='text-sm text-muted-foreground'>
+                This course stays published either way. Approving replaces the live content;
+                rejecting discards the changes.
+              </p>
+              <Button onClick={onApprove} disabled={isPending}>
+                <CheckCircle2 className='size-4' />
+                Approve changes
+              </Button>
+              <Button variant='outline' onClick={onReject} disabled={isPending}>
+                <XCircle className='size-4' />
+                Reject with feedback
+              </Button>
+            </>
+          ) : approved ? (
             <>
               <p className='text-sm text-muted-foreground'>
                 This course is approved and can accept enrollments.

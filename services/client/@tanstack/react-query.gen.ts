@@ -213,6 +213,8 @@ import {
   getAvailabilitySlots,
   createAvailabilitySlot,
   createLink,
+  sweep,
+  reconcile,
   enrollStudent,
   joinWaitlist,
   getAllCourses,
@@ -297,6 +299,7 @@ import {
   createClassDefinitionForProgramMultipart,
   listJobs,
   createJob,
+  uploadJobThumbnail,
   cancelJob,
   assignInstructor,
   listJobApplications,
@@ -431,6 +434,7 @@ import {
   searchDocuments,
   getStudentDashboard,
   getMyStudents,
+  getFile,
   cancelEnrollment,
   getEnrollment,
   getScheduledInstanceEnrollmentsForStudent,
@@ -444,7 +448,10 @@ import {
   listDocumentTypes,
   listCurrencies,
   getDefaultCurrency,
+  getCourseVersions,
   getStatusTransitions,
+  withdrawPendingEdit,
+  getPendingEdit,
   checkRubricAssociation,
   getPrimaryRubric,
   getRubricsByContext,
@@ -533,9 +540,11 @@ import {
   getOrganisationSupportedDomains,
   getDashboardStatistics,
   getDashboardActivity,
+  getCourseEditDiff,
   getCourseModerationHistory,
   getCourseApprovalStatus,
   listPendingCourses,
+  listPendingCourseEdits,
   clearInstructorAvailability,
   revokeLink,
   dissociateRubric,
@@ -1092,6 +1101,12 @@ import type {
   CreateLinkData,
   CreateLinkError,
   CreateLinkResponse,
+  SweepData,
+  SweepError,
+  SweepResponse,
+  ReconcileData,
+  ReconcileError,
+  ReconcileResponse,
   EnrollStudentData,
   EnrollStudentError,
   EnrollStudentResponse,
@@ -1326,6 +1341,9 @@ import type {
   CreateJobData,
   CreateJobError,
   CreateJobResponse,
+  UploadJobThumbnailData,
+  UploadJobThumbnailError,
+  UploadJobThumbnailResponse,
   CancelJobData,
   CancelJobError,
   CancelJobResponse,
@@ -1652,6 +1670,7 @@ import type {
   SearchDocumentsResponse,
   GetStudentDashboardData,
   GetMyStudentsData,
+  GetFileData,
   CancelEnrollmentData,
   CancelEnrollmentError,
   CancelEnrollmentResponse,
@@ -1679,7 +1698,14 @@ import type {
   ListCurrenciesError,
   ListCurrenciesResponse,
   GetDefaultCurrencyData,
+  GetCourseVersionsData,
+  GetCourseVersionsError,
+  GetCourseVersionsResponse,
   GetStatusTransitionsData,
+  WithdrawPendingEditData,
+  WithdrawPendingEditError,
+  WithdrawPendingEditResponse,
+  GetPendingEditData,
   CheckRubricAssociationData,
   GetPrimaryRubricData,
   GetRubricsByContextData,
@@ -1840,6 +1866,7 @@ import type {
   GetDashboardActivityData,
   GetDashboardActivityError,
   GetDashboardActivityResponse,
+  GetCourseEditDiffData,
   GetCourseModerationHistoryData,
   GetCourseModerationHistoryError,
   GetCourseModerationHistoryResponse,
@@ -1847,6 +1874,9 @@ import type {
   ListPendingCoursesData,
   ListPendingCoursesError,
   ListPendingCoursesResponse,
+  ListPendingCourseEditsData,
+  ListPendingCourseEditsError,
+  ListPendingCourseEditsResponse,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityError,
   ClearInstructorAvailabilityResponse,
@@ -9477,6 +9507,101 @@ export const createLinkMutation = (
   return mutationOptions;
 };
 
+export const sweepQueryKey = (options?: Options<SweepData>) => createQueryKey('sweep', options);
+
+/**
+ * Sweep for orphaned files
+ * Reports files on disk that no database reference or registry entry points to. With deleteOrphans=true, the orphaned files are removed from disk.
+ */
+export const sweepOptions = (options?: Options<SweepData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await sweep({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: sweepQueryKey(options),
+  });
+};
+
+/**
+ * Sweep for orphaned files
+ * Reports files on disk that no database reference or registry entry points to. With deleteOrphans=true, the orphaned files are removed from disk.
+ */
+export const sweepMutation = (
+  options?: Partial<Options<SweepData>>
+): UseMutationOptions<SweepResponse, SweepError, Options<SweepData>> => {
+  const mutationOptions: UseMutationOptions<SweepResponse, SweepError, Options<SweepData>> = {
+    mutationFn: async localOptions => {
+      const { data } = await sweep({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const reconcileQueryKey = (options?: Options<ReconcileData>) =>
+  createQueryKey('reconcile', options);
+
+/**
+ * Reconcile stored files with database references
+ * Cross-checks disk, the media_files registry and every domain file-reference column.
+ * Fills missing registry metadata and flags registry rows whose file is gone.
+ * With prune=true, domain references to lost files are cleared so API responses stop
+ * returning URLs that would 404 (users can then re-upload).
+ *
+ */
+export const reconcileOptions = (options?: Options<ReconcileData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await reconcile({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: reconcileQueryKey(options),
+  });
+};
+
+/**
+ * Reconcile stored files with database references
+ * Cross-checks disk, the media_files registry and every domain file-reference column.
+ * Fills missing registry metadata and flags registry rows whose file is gone.
+ * With prune=true, domain references to lost files are cleared so API responses stop
+ * returning URLs that would 404 (users can then re-upload).
+ *
+ */
+export const reconcileMutation = (
+  options?: Partial<Options<ReconcileData>>
+): UseMutationOptions<ReconcileResponse, ReconcileError, Options<ReconcileData>> => {
+  const mutationOptions: UseMutationOptions<
+    ReconcileResponse,
+    ReconcileError,
+    Options<ReconcileData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await reconcile({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const enrollStudentQueryKey = (options: Options<EnrollStudentData>) =>
   createQueryKey('enrollStudent', options);
 
@@ -14020,6 +14145,56 @@ export const createJobMutation = (
   return mutationOptions;
 };
 
+export const uploadJobThumbnailQueryKey = (options: Options<UploadJobThumbnailData>) =>
+  createQueryKey('uploadJobThumbnail', options);
+
+/**
+ * Upload a marketplace class job thumbnail
+ * Attaches a thumbnail image to an organisation's class advert. Returns the updated job with a resolved thumbnail_url.
+ */
+export const uploadJobThumbnailOptions = (options: Options<UploadJobThumbnailData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadJobThumbnail({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadJobThumbnailQueryKey(options),
+  });
+};
+
+/**
+ * Upload a marketplace class job thumbnail
+ * Attaches a thumbnail image to an organisation's class advert. Returns the updated job with a resolved thumbnail_url.
+ */
+export const uploadJobThumbnailMutation = (
+  options?: Partial<Options<UploadJobThumbnailData>>
+): UseMutationOptions<
+  UploadJobThumbnailResponse,
+  UploadJobThumbnailError,
+  Options<UploadJobThumbnailData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadJobThumbnailResponse,
+    UploadJobThumbnailError,
+    Options<UploadJobThumbnailData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadJobThumbnail({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const cancelJobQueryKey = (options: Options<CancelJobData>) =>
   createQueryKey('cancelJob', options);
 
@@ -16045,7 +16220,19 @@ export const moderateCourseQueryKey = (options: Options<ModerateCourseData>) =>
   createQueryKey('moderateCourse', options);
 
 /**
- * Moderate course approval
+ * Moderate a course or its pending edit
+ * Applies a moderation decision to a course.
+ *
+ * **When the course has an edit awaiting review**, the decision applies to that
+ * edit: `approved` promotes the draft onto the live course and records a new
+ * version; `rejected` discards the draft and leaves the live course untouched,
+ * including its approval — the published content was never at fault.
+ *
+ * **Otherwise** the decision applies to the course's own approval state, as
+ * before: `approved` makes it available, `rejected`/`revoked` withdraw it.
+ *
+ * Every decision is recorded in the course's moderation history with its reason.
+ *
  */
 export const moderateCourseOptions = (options: Options<ModerateCourseData>) => {
   return queryOptions({
@@ -16063,7 +16250,19 @@ export const moderateCourseOptions = (options: Options<ModerateCourseData>) => {
 };
 
 /**
- * Moderate course approval
+ * Moderate a course or its pending edit
+ * Applies a moderation decision to a course.
+ *
+ * **When the course has an edit awaiting review**, the decision applies to that
+ * edit: `approved` promotes the draft onto the live course and records a new
+ * version; `rejected` discards the draft and leaves the live course untouched,
+ * including its approval — the published content was never at fault.
+ *
+ * **Otherwise** the decision applies to the course's own approval state, as
+ * before: `approved` makes it available, `rejected`/`revoked` withdraw it.
+ *
+ * Every decision is recorded in the course's moderation history with its reason.
+ *
  */
 export const moderateCourseMutation = (
   options?: Partial<Options<ModerateCourseData>>
@@ -20689,6 +20888,28 @@ export const getMyStudentsOptions = (options?: Options<GetMyStudentsData>) => {
   });
 };
 
+export const getFileQueryKey = (options: Options<GetFileData>) =>
+  createQueryKey('getFile', options);
+
+/**
+ * Get a stored file by its storage key
+ * Serves any stored file (images, videos, documents, certificates) by its canonical storage key.
+ */
+export const getFileOptions = (options: Options<GetFileData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getFile({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getFileQueryKey(options),
+  });
+};
+
 /**
  * Cancel a student enrollment
  */
@@ -21268,6 +21489,82 @@ export const getDefaultCurrencyOptions = (options?: Options<GetDefaultCurrencyDa
   });
 };
 
+export const getCourseVersionsQueryKey = (options: Options<GetCourseVersionsData>) =>
+  createQueryKey('getCourseVersions', options);
+
+/**
+ * Get this course's approved version history
+ * Returns each approved version of the course's content, newest first. A version
+ * is recorded every time an admin approves an edit and it is promoted onto the
+ * live course.
+ *
+ * **Authorization:** Only the course owner.
+ *
+ */
+export const getCourseVersionsOptions = (options: Options<GetCourseVersionsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseVersions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseVersionsQueryKey(options),
+  });
+};
+
+export const getCourseVersionsInfiniteQueryKey = (
+  options: Options<GetCourseVersionsData>
+): QueryKey<Options<GetCourseVersionsData>> => createQueryKey('getCourseVersions', options, true);
+
+/**
+ * Get this course's approved version history
+ * Returns each approved version of the course's content, newest first. A version
+ * is recorded every time an admin approves an edit and it is promoted onto the
+ * live course.
+ *
+ * **Authorization:** Only the course owner.
+ *
+ */
+export const getCourseVersionsInfiniteOptions = (options: Options<GetCourseVersionsData>) => {
+  return infiniteQueryOptions<
+    GetCourseVersionsResponse,
+    GetCourseVersionsError,
+    InfiniteData<GetCourseVersionsResponse>,
+    QueryKey<Options<GetCourseVersionsData>>,
+    | number
+    | Pick<QueryKey<Options<GetCourseVersionsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseVersionsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseVersions({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseVersionsInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const getStatusTransitionsQueryKey = (options: Options<GetStatusTransitionsData>) =>
   createQueryKey('getStatusTransitions', options);
 
@@ -21294,6 +21591,67 @@ export const getStatusTransitionsOptions = (options: Options<GetStatusTransition
       return data;
     },
     queryKey: getStatusTransitionsQueryKey(options),
+  });
+};
+
+/**
+ * Withdraw this course's pending edit
+ * Abandons the edit awaiting review and discards the draft. The live course is
+ * not affected — it was never modified while the edit was pending.
+ *
+ * **Authorization:** Only the course owner.
+ *
+ */
+export const withdrawPendingEditMutation = (
+  options?: Partial<Options<WithdrawPendingEditData>>
+): UseMutationOptions<
+  WithdrawPendingEditResponse,
+  WithdrawPendingEditError,
+  Options<WithdrawPendingEditData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    WithdrawPendingEditResponse,
+    WithdrawPendingEditError,
+    Options<WithdrawPendingEditData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await withdrawPendingEdit({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getPendingEditQueryKey = (options: Options<GetPendingEditData>) =>
+  createQueryKey('getPendingEdit', options);
+
+/**
+ * Get this course's pending edit
+ * Returns the edit awaiting admin review for this course, if there is one.
+ *
+ * While an edit is pending the course stays published and keeps serving its
+ * last-approved content to learners. The proposed content lives on the draft
+ * course referenced by `draft_course_uuid`, which only the course owner can see.
+ *
+ * **Authorization:** Only the course owner.
+ *
+ */
+export const getPendingEditOptions = (options: Options<GetPendingEditData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPendingEdit({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPendingEditQueryKey(options),
   });
 };
 
@@ -25180,6 +25538,30 @@ export const getDashboardActivityInfiniteOptions = (options: Options<GetDashboar
   );
 };
 
+export const getCourseEditDiffQueryKey = (options: Options<GetCourseEditDiffData>) =>
+  createQueryKey('getCourseEditDiff', options);
+
+/**
+ * Show what a pending edit would change
+ * The difference between the live course and the edit awaiting review: which
+ * course fields change and how many lessons the edit adds, removes or modifies.
+ *
+ */
+export const getCourseEditDiffOptions = (options: Options<GetCourseEditDiffData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseEditDiff({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseEditDiffQueryKey(options),
+  });
+};
+
 export const getCourseModerationHistoryQueryKey = (
   options: Options<GetCourseModerationHistoryData>
 ) => createQueryKey('getCourseModerationHistory', options);
@@ -25278,7 +25660,13 @@ export const listPendingCoursesQueryKey = (options: Options<ListPendingCoursesDa
   createQueryKey('listPendingCourses', options);
 
 /**
- * List courses pending approval
+ * List courses pending first approval
+ * Courses that have never been approved and are waiting on an initial decision.
+ *
+ * This does **not** include already-published courses with a pending edit: those
+ * keep `admin_approved = true` while their edit is reviewed, so they never match
+ * this query. Use `GET /api/v1/admin/courses/pending-edits` for those.
+ *
  */
 export const listPendingCoursesOptions = (options: Options<ListPendingCoursesData>) => {
   return queryOptions({
@@ -25300,7 +25688,13 @@ export const listPendingCoursesInfiniteQueryKey = (
 ): QueryKey<Options<ListPendingCoursesData>> => createQueryKey('listPendingCourses', options, true);
 
 /**
- * List courses pending approval
+ * List courses pending first approval
+ * Courses that have never been approved and are waiting on an initial decision.
+ *
+ * This does **not** include already-published courses with a pending edit: those
+ * keep `admin_approved = true` while their edit is reviewed, so they never match
+ * this query. Use `GET /api/v1/admin/courses/pending-edits` for those.
+ *
  */
 export const listPendingCoursesInfiniteOptions = (options: Options<ListPendingCoursesData>) => {
   return infiniteQueryOptions<
@@ -25334,6 +25728,87 @@ export const listPendingCoursesInfiniteOptions = (options: Options<ListPendingCo
         return data;
       },
       queryKey: listPendingCoursesInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const listPendingCourseEditsQueryKey = (options: Options<ListPendingCourseEditsData>) =>
+  createQueryKey('listPendingCourseEdits', options);
+
+/**
+ * List edits to published courses awaiting review
+ * Edits submitted against already-published courses, newest first.
+ *
+ * Each of these courses is still live and serving its last-approved content —
+ * the proposed change is held on a draft and is invisible to learners until
+ * approved. Approving promotes the draft onto the live course; rejecting
+ * discards it and leaves the live course exactly as it was.
+ *
+ */
+export const listPendingCourseEditsOptions = (options: Options<ListPendingCourseEditsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listPendingCourseEdits({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listPendingCourseEditsQueryKey(options),
+  });
+};
+
+export const listPendingCourseEditsInfiniteQueryKey = (
+  options: Options<ListPendingCourseEditsData>
+): QueryKey<Options<ListPendingCourseEditsData>> =>
+  createQueryKey('listPendingCourseEdits', options, true);
+
+/**
+ * List edits to published courses awaiting review
+ * Edits submitted against already-published courses, newest first.
+ *
+ * Each of these courses is still live and serving its last-approved content —
+ * the proposed change is held on a draft and is invisible to learners until
+ * approved. Approving promotes the draft onto the live course; rejecting
+ * discards it and leaves the live course exactly as it was.
+ *
+ */
+export const listPendingCourseEditsInfiniteOptions = (
+  options: Options<ListPendingCourseEditsData>
+) => {
+  return infiniteQueryOptions<
+    ListPendingCourseEditsResponse,
+    ListPendingCourseEditsError,
+    InfiniteData<ListPendingCourseEditsResponse>,
+    QueryKey<Options<ListPendingCourseEditsData>>,
+    | number
+    | Pick<QueryKey<Options<ListPendingCourseEditsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListPendingCourseEditsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listPendingCourseEdits({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listPendingCourseEditsInfiniteQueryKey(options),
     }
   );
 };

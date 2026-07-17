@@ -8,10 +8,11 @@ import { toast } from 'sonner';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Course } from '@/services/client';
+import type { Course, CoursePendingEdit } from '@/services/client';
 import {
   getCourseByUuidOptions,
   getCourseCreatorByUuidOptions,
+  getPendingEditOptions,
   moderateCourseMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { adminTheme } from '../../../_components/ui/admin-theme';
@@ -20,6 +21,7 @@ import { AssessmentsSection } from './AssessmentsSection';
 import { CurriculumSection } from './CurriculumSection';
 import { ModerationHistorySection } from './ModerationHistorySection';
 import { ModerationSheet, type ModerationSheetAction } from './ModerationSheet';
+import { PendingEditSection } from './PendingEditSection';
 import { RequirementsSection } from './RequirementsSection';
 import { ReviewHero } from './ReviewHero';
 import { ReviewSidebar } from './ReviewSidebar';
@@ -30,10 +32,19 @@ const MODERATION_QUERY_IDS = new Set([
   'getCourseByUuid',
   'getAllCourses',
   'listPendingCourses',
+  'listPendingCourseEdits',
+  'getCourseEditDiff',
   'getCourseModerationHistory',
   'getCourseApprovalStatus',
   'searchCourses',
 ]);
+
+/** The API takes `approved` / `rejected` / `revoked`; the UI speaks in verbs. */
+const MODERATION_ACTIONS = {
+  approve: 'approved',
+  reject: 'rejected',
+  revoke: 'revoked',
+} as const;
 
 export function CourseReviewPage({ uuid }: { uuid: string }) {
   const queryClient = useQueryClient();
@@ -46,18 +57,34 @@ export function CourseReviewPage({ uuid }: { uuid: string }) {
   });
   const creatorName = creatorData?.full_name;
 
+  // A published course can have an edit awaiting review. When it does, a decision applies to
+  // that edit rather than to the course's own approval, so the wording has to change with it.
+  const { data: pendingEditData } = useQuery({
+    ...getPendingEditOptions({ path: { uuid } }),
+    enabled: !!course,
+  });
+  const pendingEdit = pendingEditData?.data as CoursePendingEdit | undefined;
+  const hasPendingEdit = !!pendingEdit;
+
   const moderate = useMutation(moderateCourseMutation());
   const [sheetAction, setSheetAction] = useState<ModerationSheetAction>('reject');
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const runModerate = async (action: 'approve' | 'reject' | 'revoke', reason?: string) => {
     try {
-      await moderate.mutateAsync({ path: { uuid }, query: { action, reason } });
+      await moderate.mutateAsync({
+        path: { uuid },
+        body: { action: MODERATION_ACTIONS[action], reason },
+      });
       toast.success(
         action === 'approve'
-          ? 'Course approved'
+          ? hasPendingEdit
+            ? 'Edit approved and published'
+            : 'Course approved'
           : action === 'reject'
-            ? 'Course rejected'
+            ? hasPendingEdit
+              ? 'Edit rejected. The live course is unchanged.'
+              : 'Course rejected'
             : 'Approval revoked'
       );
       setSheetOpen(false);
@@ -123,6 +150,8 @@ export function CourseReviewPage({ uuid }: { uuid: string }) {
         <div className='grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]'>
           {/* Main review column */}
           <div className='min-w-0 space-y-4'>
+            {pendingEdit && <PendingEditSection courseUuid={uuid} pendingEdit={pendingEdit} />}
+
             <SectionCard title='About this course' description='What the course promises learners.'>
               <div className='space-y-5'>
                 <div>
@@ -158,6 +187,7 @@ export function CourseReviewPage({ uuid }: { uuid: string }) {
             <ReviewSidebar
               course={course}
               isPending={moderate.isPending}
+              hasPendingEdit={hasPendingEdit}
               onApprove={() => runModerate('approve')}
               onReject={() => openSheet('reject')}
               onRevoke={() => openSheet('revoke')}
@@ -172,6 +202,7 @@ export function CourseReviewPage({ uuid }: { uuid: string }) {
         onOpenChange={setSheetOpen}
         onConfirm={reason => runModerate(sheetAction, reason)}
         isPending={moderate.isPending}
+        isEditReview={hasPendingEdit}
       />
     </main>
   );

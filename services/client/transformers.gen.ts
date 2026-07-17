@@ -233,6 +233,7 @@ import type {
   CreateClassDefinitionForProgramMultipartResponse,
   ListJobsResponse,
   CreateJobResponse,
+  UploadJobThumbnailResponse,
   CancelJobResponse,
   AssignInstructorResponse,
   ListJobApplicationsResponse,
@@ -348,6 +349,9 @@ import type {
   GetEnrollmentsForInstanceResponse,
   GetEnrollmentCountResponse,
   ListCurrenciesResponse,
+  GetCourseVersionsResponse,
+  WithdrawPendingEditResponse,
+  GetPendingEditResponse,
   GetPrimaryRubricResponse,
   GetRubricsByContextResponse,
   GetEnrollmentGradeBookResponse,
@@ -415,6 +419,7 @@ import type {
   GetDashboardActivityResponse,
   GetCourseModerationHistoryResponse,
   ListPendingCoursesResponse,
+  ListPendingCourseEditsResponse,
   RemoveItemResponse,
   RemoveAdminDomainResponse,
 } from './types.gen';
@@ -4322,6 +4327,13 @@ export const createJobResponseTransformer = async (data: any): Promise<CreateJob
   return data;
 };
 
+export const uploadJobThumbnailResponseTransformer = async (
+  data: any
+): Promise<UploadJobThumbnailResponse> => {
+  data = apiResponseClassMarketplaceJobSchemaResponseTransformer(data);
+  return data;
+};
+
 export const cancelJobResponseTransformer = async (data: any): Promise<CancelJobResponse> => {
   data = apiResponseClassMarketplaceJobSchemaResponseTransformer(data);
   return data;
@@ -6014,6 +6026,70 @@ export const listCurrenciesResponseTransformer = async (
   return data;
 };
 
+const courseVersionSnapshotSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const pagedDtoCourseVersionSnapshotSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return courseVersionSnapshotSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCourseVersionSnapshotSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCourseVersionSnapshotSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getCourseVersionsResponseTransformer = async (
+  data: any
+): Promise<GetCourseVersionsResponse> => {
+  data = apiResponsePagedDtoCourseVersionSnapshotSchemaResponseTransformer(data);
+  return data;
+};
+
+const coursePendingEditSchemaResponseTransformer = (data: any) => {
+  if (data.submitted_at) {
+    data.submitted_at = new Date(data.submitted_at);
+  }
+  if (data.reviewed_at) {
+    data.reviewed_at = new Date(data.reviewed_at);
+  }
+  return data;
+};
+
+const apiResponseCoursePendingEditSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = coursePendingEditSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const withdrawPendingEditResponseTransformer = async (
+  data: any
+): Promise<WithdrawPendingEditResponse> => {
+  data = apiResponseCoursePendingEditSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getPendingEditResponseTransformer = async (
+  data: any
+): Promise<GetPendingEditResponse> => {
+  data = apiResponseCoursePendingEditSchemaResponseTransformer(data);
+  return data;
+};
+
 export const getPrimaryRubricResponseTransformer = async (
   data: any
 ): Promise<GetPrimaryRubricResponse> => {
@@ -7117,6 +7193,32 @@ export const listPendingCoursesResponseTransformer = async (
   data: any
 ): Promise<ListPendingCoursesResponse> => {
   data = apiResponsePagedDtoCourseSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoCoursePendingEditSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return coursePendingEditSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCoursePendingEditSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCoursePendingEditSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listPendingCourseEditsResponseTransformer = async (
+  data: any
+): Promise<ListPendingCourseEditsResponse> => {
+  data = apiResponsePagedDtoCoursePendingEditSchemaResponseTransformer(data);
   return data;
 };
 

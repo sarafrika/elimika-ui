@@ -149,10 +149,10 @@ export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
       label: dueSummary.label === 'Overdue' ? 'Overdue' : 'Pending',
       variant:
         dueSummary.tone === 'danger'
-          ? 'destructive'
+          ? ('destructive' as const)
           : dueSummary.tone === 'warning'
-            ? 'warning'
-            : 'secondary',
+            ? ('warning' as const)
+            : ('secondary' as const),
       helper:
         dueSummary.label === 'Overdue'
           ? 'Past due date'
@@ -164,7 +164,7 @@ export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
     return {
       key: "returned" as const,
       label: "Returned",
-      variant: "warning",
+      variant: "warning" as const,
       helper: "Requires revision and resubmission",
     };
   }
@@ -173,7 +173,7 @@ export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
     return {
       key: "graded" as const,
       label: "Graded",
-      variant: "success",
+      variant: "success" as const,
       helper:
         row.latestSubmission?.grade_display ??
         "Instructor feedback available",
@@ -183,7 +183,7 @@ export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
   return {
     key: 'submitted' as const,
     label: status === 'IN_REVIEW' ? 'In review' : 'Submitted',
-    variant: 'secondary',
+    variant: 'secondary' as const,
     helper: 'Submitted and awaiting grading',
   };
 }
