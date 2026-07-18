@@ -6,7 +6,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '../../../../../components/ui/badge';
-import type { ClassData } from '../../trainings/create-new/academic-period-form';
 import { EventModal } from './event-modal';
 import type { AvailabilityData, CalendarEvent } from './types';
 import { mapEventTypeToStatus } from './weekly-availability-grid';
@@ -15,7 +14,7 @@ interface DailyAvailabilityGridProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
   isEditing: boolean;
-  classes: ClassData[];
+  classes: unknown[];
 }
 
 type AvailabilitySlot = CalendarEvent & {

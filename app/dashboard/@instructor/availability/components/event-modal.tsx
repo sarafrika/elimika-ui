@@ -850,443 +850,447 @@ export function EventModal({
         </SheetHeader>
 
         <div className='flex-1 overflow-y-auto px-6 py-6'>
-          <div className='grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_320px]'>
-            <div className='space-y-6'>
-              {!isStudentBookingFlow && (
-                <Card className='gap-0 py-0'>
-                  <CardHeader className='border-b px-6 py-5'>
-                    <CardTitle className='text-base'>Entry type</CardTitle>
-                    <CardDescription>Choose what this calendar action represents.</CardDescription>
-                  </CardHeader>
-                  <CardContent className='px-6 py-5'>
-                    <Select
-                      value={formData.entry_type}
-                      onValueChange={value =>
-                        setFormData(previous => ({
-                          ...previous,
-                          entry_type: value as EventType,
-                        }))
-                      }
-                    >
-                      <SelectTrigger className='w-full'>
-                        <SelectValue placeholder='Select event type' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {visibleEventTypes.map(type => (
-                          <SelectItem key={type.value} value={type.value}>
-                            <div className='flex items-center gap-2'>
-                              <type.icon className='h-4 w-4' />
-                              <span>{type.label}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </CardContent>
-                </Card>
-              )}
+          <div className='space-y-6'>
+            {!isStudentBookingFlow && (
+              <Card className='gap-0 py-0'>
+                <CardHeader className='border-b px-6 py-5'>
+                  <CardTitle className='text-base'>Entry type</CardTitle>
+                  <CardDescription>Choose what this calendar action represents.</CardDescription>
+                </CardHeader>
+                <CardContent className='px-6 py-5'>
+                  <Select
+                    value={formData.entry_type}
+                    onValueChange={value =>
+                      setFormData(previous => ({
+                        ...previous,
+                        entry_type: value as EventType,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className='w-full'>
+                      <SelectValue placeholder='Select event type' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {visibleEventTypes.map(type => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div className='flex items-center gap-2'>
+                            <type.icon className='h-4 w-4' />
+                            <span>{type.label}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </CardContent>
+              </Card>
+            )}
 
-              {selectedEventType.value === 'BLOCKED' && (
-                <Card className='gap-0 py-0'>
-                  <CardHeader className='border-b px-6 py-5'>
-                    <CardTitle className='text-base'>Blocked periods</CardTitle>
-                    <CardDescription>
-                      Pick one or more dates, then define the start and end time for each blocked
-                      period.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className='space-y-5 px-6 py-5'>
-                    <div className='space-y-2'>
-                      <Label>Select dates</Label>
-                      <div className='max-w-sm'>
-                        <DatePicker
-                          multiple
-                          value={blockDates.map(item => item.date)}
-                          onChange={handleDatesChange}
-                          format='YYYY-MM-DD'
-                          placeholder='Pick one or more dates'
-                          style={{
-                            borderRadius: '1rem',
-                            padding: '16px',
-                            fontSize: '14px',
-                            width: '100%',
-                          }}
-                        />
-                      </div>
-                      {errors.blockDates && (
-                        <p className='text-destructive flex items-center gap-1 text-sm'>
-                          <AlertCircle className='h-3 w-3' />
-                          {errors.blockDates}
-                        </p>
-                      )}
+            {selectedEventType.value === 'BLOCKED' && (
+              <Card className='gap-0 py-0'>
+                <CardHeader className='border-b px-6 py-5'>
+                  <CardTitle className='text-base'>Blocked periods</CardTitle>
+                  <CardDescription>
+                    Pick one or more dates, then define the start and end time for each blocked
+                    period.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className='space-y-5 px-6 py-5'>
+                  <div className='space-y-2'>
+                    <Label>Select dates</Label>
+                    <div className='max-w-sm'>
+                      <DatePicker
+                        multiple
+                        value={blockDates.map(item => item.date)}
+                        onChange={handleDatesChange}
+                        format='YYYY-MM-DD'
+                        placeholder='Pick one or more dates'
+                        style={{
+                          borderRadius: '1rem',
+                          padding: '16px',
+                          fontSize: '14px',
+                          width: '100%',
+                        }}
+                      />
                     </div>
-
-                    {blockDates.length > 0 && (
-                      <div className='space-y-3'>
-                        {blockDates.map((item, index) => (
-                          <div
-                            key={`${item.date}-${index}`}
-                            className='bg-card grid gap-4 rounded-2xl border p-4 md:grid-cols-[minmax(0,1fr)_140px_140px_auto]'
-                          >
-                            <div>
-                              <div className='font-medium'>
-                                {new Date(`${item.date}T00:00:00`).toLocaleDateString('en-US', {
-                                  weekday: 'long',
-                                  month: 'short',
-                                  day: 'numeric',
-                                })}
-                              </div>
-                              <p className='text-muted-foreground text-sm'>{item.date}</p>
-                            </div>
-                            <div className='space-y-2'>
-                              <Label className='text-xs'>Start</Label>
-                              <Input
-                                type='time'
-                                value={item.startTime}
-                                onChange={event =>
-                                  updateTime(index, 'startTime', event.target.value)
-                                }
-                              />
-                            </div>
-                            <div className='space-y-2'>
-                              <Label className='text-xs'>End</Label>
-                              <Input
-                                type='time'
-                                value={item.endTime}
-                                onChange={event => updateTime(index, 'endTime', event.target.value)}
-                              />
-                            </div>
-                            <div className='flex items-end justify-end'>
-                              <Button
-                                variant='ghost'
-                                size='icon'
-                                onClick={() =>
-                                  setBlockDates(previous =>
-                                    previous.filter((_, currentIndex) => currentIndex !== index)
-                                  )
-                                }
-                              >
-                                <Trash2 className='text-destructive h-4 w-4' />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-
-                        <Button variant='outline' onClick={() => setBlockDates([])}>
-                          Clear selected dates
-                        </Button>
-                      </div>
+                    {errors.blockDates && (
+                      <p className='text-destructive flex items-center gap-1 text-sm'>
+                        <AlertCircle className='h-3 w-3' />
+                        {errors.blockDates}
+                      </p>
                     )}
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
 
-              {selectedEventType.value === 'BOOKING' && (
-                <Card className='gap-0 py-0'>
-                  <CardHeader className='border-b px-6 py-5'>
-                    <CardTitle className='text-base'>Booking details</CardTitle>
-                    <CardDescription>
-                      Choose the first session, then optionally repeat that same time every week on
-                      one or more weekdays.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className='space-y-5 px-6 py-5'>
-                    {readOnlyStudentEvent ? (
-                      <Alert>
-                        <Info className='h-4 w-4' />
-                        <AlertTitle>This slot is not open for booking</AlertTitle>
-                        <AlertDescription>
-                          You can only request bookings from available slots. Review the timing here
-                          and choose another opening from the timetable.
-                        </AlertDescription>
-                      </Alert>
-                    ) : (
-                      <>
-                        <div className='grid gap-4 md:grid-cols-2'>
-                          <div className='space-y-2'>
-                            <Label>First session starts</Label>
-                            <Input
-                              type='datetime-local'
-                              value={bookingStart}
-                              onChange={event => {
-                                const nextValue = event.target.value;
-                                setBookingStart(nextValue);
-                                if (!repeatUntil && nextValue) {
-                                  setRepeatUntil(nextValue.slice(0, 10));
-                                }
-                              }}
-                            />
-                            {errors.bookingStart && (
-                              <p className='text-destructive flex items-center gap-1 text-sm'>
-                                <AlertCircle className='h-3 w-3' />
-                                {errors.bookingStart}
-                              </p>
-                            )}
+                  {blockDates.length > 0 && (
+                    <div className="space-y-2">
+                      {blockDates.map((item, index) => (
+                        <div
+                          key={`${item.date}-${index}`}
+                          className="bg-card flex items-center gap-3 rounded-xl border px-3 py-2"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-medium">
+                              {new Date(`${item.date}T00:00:00`).toLocaleDateString("en-US", {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </p>
                           </div>
 
-                          <div className='space-y-2'>
-                            <Label>First session ends</Label>
-                            <Input
-                              type='datetime-local'
-                              value={bookingEnd}
-                              onChange={event => setBookingEnd(event.target.value)}
-                            />
-                            {errors.bookingEnd && (
-                              <p className='text-destructive flex items-center gap-1 text-sm'>
-                                <AlertCircle className='h-3 w-3' />
-                                {errors.bookingEnd}
-                              </p>
-                            )}
-                          </div>
-                        </div>
+                          <Input
+                            type="time"
+                            className="w-28"
+                            value={item.startTime}
+                            onChange={(e) =>
+                              updateTime(index, "startTime", e.target.value)
+                            }
+                          />
 
-                        <div className='space-y-2'>
-                          <Label>Session type</Label>
-                          <Select
-                            value={rateKey}
-                            onValueChange={value => setRateKey(value as RateKey)}
+                          <span className="text-muted-foreground text-sm">–</span>
+
+                          <Input
+                            type="time"
+                            className="w-28"
+                            value={item.endTime}
+                            onChange={(e) =>
+                              updateTime(index, "endTime", e.target.value)
+                            }
+                          />
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() =>
+                              setBlockDates(prev =>
+                                prev.filter((_, i) => i !== index)
+                              )
+                            }
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder='Select a rate option' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableRateOptions.map(option => (
-                                <SelectItem key={option.key} value={option.key}>
-                                  {option.label} ({rates?.currency ?? 'KES'} {rates?.[option.key]}
-                                  /hr)
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {errors.rateKey && (
+                            <Trash2 className="text-destructive h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBlockDates([])}
+                      >
+                        Clear selected dates
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {selectedEventType.value === 'BOOKING' && (
+              <Card className='gap-0 py-0'>
+                <CardHeader className='border-b px-6 py-5'>
+                  <CardTitle className='text-base'>Booking details</CardTitle>
+                  <CardDescription>
+                    Choose the first session, then optionally repeat that same time every week on
+                    one or more weekdays.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className='space-y-5 px-6 py-5'>
+                  {readOnlyStudentEvent ? (
+                    <Alert>
+                      <Info className='h-4 w-4' />
+                      <AlertTitle>This slot is not open for booking</AlertTitle>
+                      <AlertDescription>
+                        You can only request bookings from available slots. Review the timing here
+                        and choose another opening from the timetable.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <>
+                      <div className='grid gap-4 md:grid-cols-2'>
+                        <div className='space-y-2'>
+                          <Label>First session starts</Label>
+                          <Input
+                            type='datetime-local'
+                            value={bookingStart}
+                            onChange={event => {
+                              const nextValue = event.target.value;
+                              setBookingStart(nextValue);
+                              if (!repeatUntil && nextValue) {
+                                setRepeatUntil(nextValue.slice(0, 10));
+                              }
+                            }}
+                          />
+                          {errors.bookingStart && (
                             <p className='text-destructive flex items-center gap-1 text-sm'>
                               <AlertCircle className='h-3 w-3' />
-                              {errors.rateKey}
+                              {errors.bookingStart}
                             </p>
                           )}
                         </div>
 
                         <div className='space-y-2'>
-                          <Label>Purpose</Label>
-                          <Textarea
-                            value={purpose}
-                            onChange={event => setPurpose(event.target.value)}
-                            placeholder='Tell the instructor what you want this booking to focus on'
-                            rows={4}
+                          <Label>First session ends</Label>
+                          <Input
+                            type='datetime-local'
+                            value={bookingEnd}
+                            onChange={event => setBookingEnd(event.target.value)}
+                          />
+                          {errors.bookingEnd && (
+                            <p className='text-destructive flex items-center gap-1 text-sm'>
+                              <AlertCircle className='h-3 w-3' />
+                              {errors.bookingEnd}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className='space-y-2'>
+                        <Label>Session type</Label>
+                        <Select
+                          value={rateKey}
+                          onValueChange={value => setRateKey(value as RateKey)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select a rate option' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableRateOptions.map(option => (
+                              <SelectItem key={option.key} value={option.key}>
+                                {option.label} ({rates?.currency ?? 'KES'} {rates?.[option.key]}
+                                /hr)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errors.rateKey && (
+                          <p className='text-destructive flex items-center gap-1 text-sm'>
+                            <AlertCircle className='h-3 w-3' />
+                            {errors.rateKey}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className='space-y-2'>
+                        <Label>Purpose</Label>
+                        <Textarea
+                          value={purpose}
+                          onChange={event => setPurpose(event.target.value)}
+                          placeholder='Tell the instructor what you want this booking to focus on'
+                          rows={4}
+                        />
+                      </div>
+
+                      <Separator />
+
+                      <div className='space-y-4'>
+                        <div className='bg-muted/20 flex items-start justify-between gap-4 rounded-2xl border p-4'>
+                          <div className='space-y-1'>
+                            <div className='flex items-center gap-2 font-medium'>
+                              <Repeat className='h-4 w-4' />
+                              Repeat weekly
+                            </div>
+                            <p className='text-muted-foreground text-sm'>
+                              Use this when you want the same session time every week, such as
+                              Mondays and Fridays.
+                            </p>
+                          </div>
+                          <Checkbox
+                            checked={repeatWeekly}
+                            onCheckedChange={checked => setRepeatWeekly(Boolean(checked))}
                           />
                         </div>
 
-                        <Separator />
-
-                        <div className='space-y-4'>
-                          <div className='bg-muted/20 flex items-start justify-between gap-4 rounded-2xl border p-4'>
-                            <div className='space-y-1'>
-                              <div className='flex items-center gap-2 font-medium'>
-                                <Repeat className='h-4 w-4' />
-                                Repeat weekly
+                        {repeatWeekly && (
+                          <div className='space-y-4 rounded-2xl border p-4'>
+                            <div className='space-y-2'>
+                              <Label>Repeat on</Label>
+                              <div className='flex flex-wrap gap-2'>
+                                {weekdayOptions.map(option => {
+                                  const checked = selectedWeekdays.includes(option.value);
+                                  return (
+                                    <label
+                                      key={option.value}
+                                      className='border-border hover:bg-muted/60 flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm'
+                                    >
+                                      <Checkbox
+                                        checked={checked}
+                                        onCheckedChange={nextChecked =>
+                                          toggleWeekday(option.value, Boolean(nextChecked))
+                                        }
+                                      />
+                                      <span>{option.label}</span>
+                                    </label>
+                                  );
+                                })}
                               </div>
-                              <p className='text-muted-foreground text-sm'>
-                                Use this when you want the same session time every week, such as
-                                Mondays and Fridays.
-                              </p>
+                              {errors.selectedWeekdays && (
+                                <p className='text-destructive flex items-center gap-1 text-sm'>
+                                  <AlertCircle className='h-3 w-3' />
+                                  {errors.selectedWeekdays}
+                                </p>
+                              )}
                             </div>
-                            <Checkbox
-                              checked={repeatWeekly}
-                              onCheckedChange={checked => setRepeatWeekly(Boolean(checked))}
-                            />
+
+                            <div className='space-y-2 md:max-w-[220px]'>
+                              <Label>Repeat until</Label>
+                              <Input
+                                type='date'
+                                value={repeatUntil}
+                                onChange={event => setRepeatUntil(event.target.value)}
+                              />
+                              {errors.repeatUntil && (
+                                <p className='text-destructive flex items-center gap-1 text-sm'>
+                                  <AlertCircle className='h-3 w-3' />
+                                  {errors.repeatUntil}
+                                </p>
+                              )}
+                            </div>
                           </div>
+                        )}
 
-                          {repeatWeekly && (
-                            <div className='space-y-4 rounded-2xl border p-4'>
-                              <div className='space-y-2'>
-                                <Label>Repeat on</Label>
-                                <div className='flex flex-wrap gap-2'>
-                                  {weekdayOptions.map(option => {
-                                    const checked = selectedWeekdays.includes(option.value);
-                                    return (
-                                      <label
-                                        key={option.value}
-                                        className='border-border hover:bg-muted/60 flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm'
-                                      >
-                                        <Checkbox
-                                          checked={checked}
-                                          onCheckedChange={nextChecked =>
-                                            toggleWeekday(option.value, Boolean(nextChecked))
-                                          }
-                                        />
-                                        <span>{option.label}</span>
-                                      </label>
-                                    );
-                                  })}
-                                </div>
-                                {errors.selectedWeekdays && (
-                                  <p className='text-destructive flex items-center gap-1 text-sm'>
-                                    <AlertCircle className='h-3 w-3' />
-                                    {errors.selectedWeekdays}
-                                  </p>
-                                )}
-                              </div>
+                        {errors.bookingOccurrences && (
+                          <p className='text-destructive flex items-center gap-1 text-sm'>
+                            <AlertCircle className='h-3 w-3' />
+                            {errors.bookingOccurrences}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
-                              <div className='space-y-2 md:max-w-[220px]'>
-                                <Label>Repeat until</Label>
-                                <Input
-                                  type='date'
-                                  value={repeatUntil}
-                                  onChange={event => setRepeatUntil(event.target.value)}
-                                />
-                                {errors.repeatUntil && (
-                                  <p className='text-destructive flex items-center gap-1 text-sm'>
-                                    <AlertCircle className='h-3 w-3' />
-                                    {errors.repeatUntil}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {errors.bookingOccurrences && (
-                            <p className='text-destructive flex items-center gap-1 text-sm'>
-                              <AlertCircle className='h-3 w-3' />
-                              {errors.bookingOccurrences}
-                            </p>
-                          )}
-                        </div>
-                      </>
+            {selectedEventType.value !== 'BLOCKED' && selectedEventType.value !== 'BOOKING' && (
+              <Card className='gap-0 py-0'>
+                <CardHeader className='border-b px-6 py-5'>
+                  <CardTitle className='text-base'>Event details</CardTitle>
+                  <CardDescription>
+                    Capture the core information for this calendar item.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className='space-y-5 px-6 py-5'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='title'>Title</Label>
+                    <Input
+                      id='title'
+                      value={formData.title || ''}
+                      onChange={event =>
+                        setFormData(previous => ({ ...previous, title: event.target.value }))
+                      }
+                      placeholder='Enter an event title'
+                    />
+                    {errors.title && (
+                      <p className='text-destructive flex items-center gap-1 text-sm'>
+                        <AlertCircle className='h-3 w-3' />
+                        {errors.title}
+                      </p>
                     )}
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
 
-              {selectedEventType.value !== 'BLOCKED' && selectedEventType.value !== 'BOOKING' && (
-                <Card className='gap-0 py-0'>
-                  <CardHeader className='border-b px-6 py-5'>
-                    <CardTitle className='text-base'>Event details</CardTitle>
-                    <CardDescription>
-                      Capture the core information for this calendar item.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className='space-y-5 px-6 py-5'>
+                  <div className='space-y-2'>
+                    <Label>Description</Label>
+                    <Textarea
+                      value={formData.description || ''}
+                      onChange={event =>
+                        setFormData(previous => ({
+                          ...previous,
+                          description: event.target.value,
+                        }))
+                      }
+                      placeholder='Add context for this event'
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className='grid gap-4 md:grid-cols-2'>
                     <div className='space-y-2'>
-                      <Label htmlFor='title'>Title</Label>
+                      <Label>Start date and time</Label>
                       <Input
-                        id='title'
-                        value={formData.title || ''}
+                        type='datetime-local'
+                        value={formData.startDateTime || ''}
                         onChange={event =>
-                          setFormData(previous => ({ ...previous, title: event.target.value }))
+                          setFormData(previous => ({
+                            ...previous,
+                            startDateTime: event.target.value,
+                          }))
                         }
-                        placeholder='Enter an event title'
                       />
-                      {errors.title && (
+                      {errors.startDateTime && (
                         <p className='text-destructive flex items-center gap-1 text-sm'>
                           <AlertCircle className='h-3 w-3' />
-                          {errors.title}
+                          {errors.startDateTime}
                         </p>
                       )}
                     </div>
 
                     <div className='space-y-2'>
-                      <Label>Description</Label>
-                      <Textarea
-                        value={formData.description || ''}
+                      <Label>End date and time</Label>
+                      <Input
+                        type='datetime-local'
+                        value={formData.endDateTime || ''}
                         onChange={event =>
                           setFormData(previous => ({
                             ...previous,
-                            description: event.target.value,
+                            endDateTime: event.target.value,
                           }))
                         }
-                        placeholder='Add context for this event'
-                        rows={4}
                       />
+                      {errors.endDateTime && (
+                        <p className='text-destructive flex items-center gap-1 text-sm'>
+                          <AlertCircle className='h-3 w-3' />
+                          {errors.endDateTime}
+                        </p>
+                      )}
                     </div>
+                  </div>
 
-                    <div className='grid gap-4 md:grid-cols-2'>
-                      <div className='space-y-2'>
-                        <Label>Start date and time</Label>
-                        <Input
-                          type='datetime-local'
-                          value={formData.startDateTime || ''}
-                          onChange={event =>
-                            setFormData(previous => ({
-                              ...previous,
-                              startDateTime: event.target.value,
-                            }))
-                          }
-                        />
-                        {errors.startDateTime && (
-                          <p className='text-destructive flex items-center gap-1 text-sm'>
-                            <AlertCircle className='h-3 w-3' />
-                            {errors.startDateTime}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className='space-y-2'>
-                        <Label>End date and time</Label>
-                        <Input
-                          type='datetime-local'
-                          value={formData.endDateTime || ''}
-                          onChange={event =>
-                            setFormData(previous => ({
-                              ...previous,
-                              endDateTime: event.target.value,
-                            }))
-                          }
-                        />
-                        {errors.endDateTime && (
-                          <p className='text-destructive flex items-center gap-1 text-sm'>
-                            <AlertCircle className='h-3 w-3' />
-                            {errors.endDateTime}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className='grid gap-4 md:grid-cols-2'>
-                      <div className='space-y-2'>
-                        <Label>Location</Label>
-                        <Input
-                          value={formData.location || ''}
-                          onChange={event =>
-                            setFormData(previous => ({
-                              ...previous,
-                              location: event.target.value,
-                            }))
-                          }
-                          placeholder='Online, classroom, studio, or address'
-                        />
-                      </div>
-
-                      <div className='space-y-2'>
-                        <Label>Expected attendees</Label>
-                        <Input
-                          type='number'
-                          min={1}
-                          value={formData.attendees || 1}
-                          onChange={event =>
-                            setFormData(previous => ({
-                              ...previous,
-                              attendees: Number(event.target.value) || 1,
-                            }))
-                          }
-                        />
-                      </div>
+                  <div className='grid gap-4 md:grid-cols-2'>
+                    <div className='space-y-2'>
+                      <Label>Location</Label>
+                      <Input
+                        value={formData.location || ''}
+                        onChange={event =>
+                          setFormData(previous => ({
+                            ...previous,
+                            location: event.target.value,
+                          }))
+                        }
+                        placeholder='Online, classroom, studio, or address'
+                      />
                     </div>
 
                     <div className='space-y-2'>
-                      <Label>Internal notes</Label>
-                      <Textarea
-                        value={formData.notes || ''}
+                      <Label>Expected attendees</Label>
+                      <Input
+                        type='number'
+                        min={1}
+                        value={formData.attendees || 1}
                         onChange={event =>
-                          setFormData(previous => ({ ...previous, notes: event.target.value }))
+                          setFormData(previous => ({
+                            ...previous,
+                            attendees: Number(event.target.value) || 1,
+                          }))
                         }
-                        placeholder='Optional notes for this calendar item'
-                        rows={3}
                       />
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label>Internal notes</Label>
+                    <Textarea
+                      value={formData.notes || ''}
+                      onChange={event =>
+                        setFormData(previous => ({ ...previous, notes: event.target.value }))
+                      }
+                      placeholder='Optional notes for this calendar item'
+                      rows={3}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
 
             <div className='space-y-6'>
               <Card className='gap-0 py-0'>
@@ -1410,6 +1414,7 @@ export function EventModal({
               </Card>
             </div>
           </div>
+
         </div>
 
         <SheetFooter className='border-t px-6 py-4 sm:flex-row sm:items-center sm:justify-between'>
