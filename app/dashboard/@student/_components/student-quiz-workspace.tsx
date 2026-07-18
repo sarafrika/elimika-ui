@@ -206,26 +206,29 @@ export function StudentQuizWorkspace() {
     return map;
   }, [quizAttemptQueries, quizUuids]);
 
-  const quizRows = useMemo<QuizRow[]>(
+  const quizRows = useMemo(
     () =>
-      scheduleRows
-        .map(({ classMeta, schedule }) => {
-          const quizUuid = schedule.quiz_uuid as string | undefined;
-          if (!quizUuid) return null;
-          const quiz = quizMap.get(quizUuid);
-          if (!quiz) return null;
-          const attempts = (attemptMap.get(quizUuid) ?? []).filter(
-            (attempt: QuizAttempt) =>
-              !classMeta.enrollmentUuid || attempt.enrollment_uuid === classMeta.enrollmentUuid
-          );
-          return { classMeta, attempts, quiz, schedule };
-        })
-        .filter((row): row is QuizRow => Boolean(row))
-        .sort((l, r) => {
-          const lt = new Date(l.schedule?.due_at || l.schedule?.visible_at || 0).getTime();
-          const rt = new Date(r.schedule?.due_at || r.schedule?.visible_at || 0).getTime();
-          return lt - rt;
-        }),
+      scheduleRows.map(({ classMeta, schedule }) => {
+        const quizUuid = schedule.quiz_uuid as string | undefined;
+        const quiz = quizUuid ? quizMap.get(quizUuid) : undefined;
+
+        const attempts =
+          quizUuid && classMeta.enrollmentUuid
+            ? (attemptMap.get(quizUuid) ?? []).filter(
+              (attempt: QuizAttempt) =>
+                attempt.enrollment_uuid === classMeta.enrollmentUuid
+            )
+            : quizUuid
+              ? (attemptMap.get(quizUuid) ?? [])
+              : [];
+
+        return {
+          classMeta,
+          attempts,
+          quiz,
+          schedule,
+        };
+      }),
     [attemptMap, quizMap, scheduleRows]
   );
 
@@ -343,9 +346,9 @@ export function StudentQuizWorkspace() {
                       </Badge>
                     </div>
                     <div className='space-y-1'>
-                      <h2 className='text-foreground text-lg font-semibold'>{row.quiz.title}</h2>
+                      <h2 className='text-foreground text-lg font-semibold'>{row?.quiz?.title}</h2>
                       <p className='text-muted-foreground text-sm'>
-                        {row.quiz.description ||
+                        {row?.quiz?.description ||
                           'Open this quiz to review the prompt and answer the questions.'}
                       </p>
                     </div>
@@ -384,7 +387,7 @@ export function StudentQuizWorkspace() {
                       <Button>
                         <Link
                           className='flex flex-row items-center gap-2'
-                          href={`/dashboard/assignment/quiz/${row?.quiz?.uuid}`}
+                          href={`/dashboard/assignment/quiz/${row?.schedule.quiz_uuid}`}
                         >
                           <FileQuestion className='h-4 w-4' />
                           Attempt quiz
