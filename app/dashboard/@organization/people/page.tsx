@@ -259,6 +259,7 @@ export default function OrganisationPeoplePage() {
 
   const searchParams = useSearchParams();
   const domainParam = searchParams.get('domain') ?? '';
+
   const [domainFilter, setDomainFilter] = useState(domainParam);
   // Keep the role filter in sync when navigating between Students/Instructors nav links.
   useEffect(() => {
@@ -379,11 +380,16 @@ export default function OrganisationPeoplePage() {
     };
   }, [users, totalItems, organisationUuid]);
 
+  const pageTitle =
+    domainParam === "student" ? "Student" :
+      domainParam === "instructor" ? "Instructor" :
+        "People"
+
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
       {/* Header */}
       <AdminPageHeader
-        title='People'
+        title={pageTitle}
         description='Manage members and team roles'
         className='mb-6'
         actions={

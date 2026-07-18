@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { CalendarDays, ChevronLeft, ChevronRight, Filter, Info, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import type { SchedulerCalendarData } from './calendar-utils';
 import {
   DEFAULT_PREFERENCES,
@@ -391,6 +392,16 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             variant='outline'
             className='h-10 shrink-0 rounded-md px-4 text-xs sm:text-sm'
             onClick={() => {
+              toast.message("Open availability")
+            }}
+          >
+            Availability
+          </Button>
+
+          <Button
+            variant='outline'
+            className='h-10 shrink-0 rounded-md px-4 text-xs sm:text-sm'
+            onClick={() => {
               setCurrentDate(new Date());
               setView('day');
             }}
@@ -552,6 +563,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             <SheetTitle>Schedule Details</SheetTitle>
             <SheetDescription>Today&apos;s sessions, students, location, notes, and sharing.</SheetDescription>
           </SheetHeader>
+
           <SchedulerRightRail
             currentDate={currentDate}
             events={visibleEvents}

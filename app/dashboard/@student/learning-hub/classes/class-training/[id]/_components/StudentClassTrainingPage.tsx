@@ -1,21 +1,5 @@
 'use client';
 
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  AlertCircle,
-  ArrowLeft,
-  BookOpen,
-  ClipboardCheck,
-  Eye,
-  Loader2,
-  MessageSquareText,
-  PanelRight,
-  Search
-} from 'lucide-react';
-import Link from 'next/link';
-import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { PracticeActivityList } from '@/app/dashboard/@course_creator/_components/practice-activity-management';
 import { AsyncSection } from '@/components/data/async-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -78,6 +62,21 @@ import type {
   Quiz,
   RubricMatrix,
 } from '@/services/client/types.gen';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowLeft,
+  BookOpen,
+  ClipboardCheck,
+  Eye,
+  Loader2,
+  MessageSquareText,
+  PanelRight,
+  Search
+} from 'lucide-react';
+import Link from 'next/link';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { AssignmentContentPreview } from '../../../../../../../../components/content-preview/AssignmentContentPreview';
 import { LessonContentPreview } from '../../../../../../../../components/content-preview/LessonContentPreview';
 import { QuizContentPreview } from '../../../../../../../../components/content-preview/QuizContentPreview';
@@ -1823,37 +1822,37 @@ export default function StudentClassTrainingPage({
               className='m-4'
               skeleton={<LessonContentSkeleton />}
             >
-            {activeTab === 'content' && (
-              <div className='mx-auto space-y-4 p-2 md:p-2'>
-                <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                  <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
-                    <Badge variant='outline' className='capitalize'>
-                      {selectedContentType}
-                    </Badge>
-                    <span>Beginner</span>
-                    <span>{activeInstanceStudents.length} students</span>
-                    <span>{selectedContentDuration || 'Open during class'}</span>
-                  </div>
+              {activeTab === 'content' && (
+                <div className='mx-auto space-y-4 p-2 md:p-2'>
+                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                    <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
+                      <Badge variant='outline' className='capitalize'>
+                        {selectedContentType}
+                      </Badge>
+                      <span>Beginner</span>
+                      <span>{activeInstanceStudents.length} students</span>
+                      <span>{selectedContentDuration || 'Open during class'}</span>
+                    </div>
 
-                  <div className='border-border/70 border-b p-4'>
-                    <p className='text-muted-foreground text-xs'>
-                      {activeLessonCourse?.name || course?.name}
-                    </p>
-                    <h3 className='mt-1 text-xl font-semibold'>{activeLesson?.title}</h3>
-                  </div>
-                  <div className='p-4'>
-                    {selectedContent?.title ? (
-                      <div className='border-border/60 bg-background mb-4 rounded-md border p-4'>
-                        <p className='text-muted-foreground text-sm leading-7'>
-                          {selectedContent.title}
-                        </p>
-                      </div>
-                    ) : null}
-                    {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
-                  </div>
-                </article>
+                    <div className='border-border/70 border-b p-4'>
+                      <p className='text-muted-foreground text-xs'>
+                        {activeLessonCourse?.name || course?.name}
+                      </p>
+                      <h3 className='mt-1 text-xl font-semibold'>{activeLesson?.title}</h3>
+                    </div>
+                    <div className='p-4'>
+                      {selectedContent?.title ? (
+                        <div className='border-border/60 bg-background mb-4 rounded-md border p-4'>
+                          <p className='text-muted-foreground text-sm leading-7'>
+                            {selectedContent.title}
+                          </p>
+                        </div>
+                      ) : null}
+                      {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
+                    </div>
+                  </article>
 
-                {/* <section className='border-border/70 bg-card rounded-lg border p-4 shadow-sm'>
+                  {/* <section className='border-border/70 bg-card rounded-lg border p-4 shadow-sm'>
                 <div className='mb-3 flex items-center justify-between gap-3'>
                   <h3 className='font-semibold'>Class discussion</h3>
                   <Button variant='outline' size='sm'>
@@ -1892,76 +1891,76 @@ export default function StudentClassTrainingPage({
                   </Button>
                 </div>
               </section> */}
-              </div>
-            )}
+                </div>
+              )}
 
-            {activeTab === 'practice' && (
-              <div className='mx-auto space-y-4 p-2 md:p-2'>
-                <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                  <div className='border-border/70 border-b p-4'>
-                    <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
-                      Practice Activities
-                    </p>
-                    <h3 className='mt-1 text-xl font-semibold'>
-                      {activeLesson?.title || 'Practice activities'}
-                    </h3>
-                    <p className='text-muted-foreground mt-2 text-sm'>
-                      Try these in-class activities to put this skill into practice.
-                    </p>
-                  </div>
-                  <div className='p-4'>
-                    <PracticeActivityList
-                      courseUuid={activeLessonCourseUuid || undefined}
-                      lessonUuid={activeLesson?.uuid}
-                      variant='student'
-                    />
-                  </div>
-                </article>
-              </div>
-            )}
+              {activeTab === 'practice' && (
+                <div className='mx-auto space-y-4 p-2 md:p-2'>
+                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                    <div className='border-border/70 border-b p-4'>
+                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                        Practice Activities
+                      </p>
+                      <h3 className='mt-1 text-xl font-semibold'>
+                        {activeLesson?.title || 'Practice activities'}
+                      </h3>
+                      <p className='text-muted-foreground mt-2 text-sm'>
+                        Try these in-class activities to put this skill into practice.
+                      </p>
+                    </div>
+                    <div className='p-4'>
+                      <PracticeActivityList
+                        courseUuid={activeLessonCourseUuid || undefined}
+                        lessonUuid={activeLesson?.uuid}
+                        variant='student'
+                      />
+                    </div>
+                  </article>
+                </div>
+              )}
 
-            {activeTab === 'assessment' && (
-              <div className='mx-auto space-y-4 p-2 md:p-2'>
-                <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                  <div className='border-border/70 border-b p-4'>
-                    <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
-                      Assessment Tasks
-                    </p>
-                    <h3 className='mt-1 text-xl font-semibold'>
-                      {activeLesson?.title || 'Assessment tasks'}
-                    </h3>
-                    <p className='text-muted-foreground mt-2 text-sm'>
-                      Manage lesson assignments and quizzes from this tab.
-                    </p>
-                  </div>
-                  <div className='p-4'>
-                    <AssessmentTasksSection
-                      activeSchedule={activeSchedule}
-                      lessonAssignments={lessonAssignments}
-                      lessonQuizzes={lessonQuizzes}
-                      activeScheduleAssignments={activeScheduleAssignments}
-                      activeScheduleQuizzes={activeScheduleQuizzes}
-                      selectedAssignmentUuid={selectedAssignmentUuid}
-                      selectedQuizUuid={selectedQuizUuid}
-                      assignmentDueAt={assignmentDueAt}
-                      assignmentGradingDueAt={assignmentGradingDueAt}
-                      quizDueAt={quizDueAt}
-                      quizGradingDueAt={quizGradingDueAt}
-                      onAssignmentSelect={setSelectedAssignmentUuid}
-                      onQuizSelect={setSelectedQuizUuid}
-                      onAssignmentDueAtChange={setAssignmentDueAt}
-                      onAssignmentGradingDueAtChange={setAssignmentGradingDueAt}
-                      onQuizDueAtChange={setQuizDueAt}
-                      onQuizGradingDueAtChange={setQuizGradingDueAt}
-                      onAssignAssignment={handleAssignAssignment}
-                      onAssignQuiz={handleAssignQuiz}
-                      isAssigningAssignment={addAssignmentScheduleMut.isPending}
-                      isAssigningQuiz={addQuizScheduleMut.isPending}
-                    />
-                  </div>
-                </article>
-              </div>
-            )}
+              {activeTab === 'assessment' && (
+                <div className='mx-auto space-y-4 p-2 md:p-2'>
+                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                    <div className='border-border/70 border-b p-4'>
+                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                        Assessment Tasks
+                      </p>
+                      <h3 className='mt-1 text-xl font-semibold'>
+                        {activeLesson?.title || 'Assessment tasks'}
+                      </h3>
+                      <p className='text-muted-foreground mt-2 text-sm'>
+                        Manage lesson assignments and quizzes from this tab.
+                      </p>
+                    </div>
+                    <div className='p-4'>
+                      <AssessmentTasksSection
+                        activeSchedule={activeSchedule}
+                        lessonAssignments={lessonAssignments}
+                        lessonQuizzes={lessonQuizzes}
+                        activeScheduleAssignments={activeScheduleAssignments}
+                        activeScheduleQuizzes={activeScheduleQuizzes}
+                        selectedAssignmentUuid={selectedAssignmentUuid}
+                        selectedQuizUuid={selectedQuizUuid}
+                        assignmentDueAt={assignmentDueAt}
+                        assignmentGradingDueAt={assignmentGradingDueAt}
+                        quizDueAt={quizDueAt}
+                        quizGradingDueAt={quizGradingDueAt}
+                        onAssignmentSelect={setSelectedAssignmentUuid}
+                        onQuizSelect={setSelectedQuizUuid}
+                        onAssignmentDueAtChange={setAssignmentDueAt}
+                        onAssignmentGradingDueAtChange={setAssignmentGradingDueAt}
+                        onQuizDueAtChange={setQuizDueAt}
+                        onQuizGradingDueAtChange={setQuizGradingDueAt}
+                        onAssignAssignment={handleAssignAssignment}
+                        onAssignQuiz={handleAssignQuiz}
+                        isAssigningAssignment={addAssignmentScheduleMut.isPending}
+                        isAssigningQuiz={addQuizScheduleMut.isPending}
+                      />
+                    </div>
+                  </article>
+                </div>
+              )}
             </AsyncSection>
           </ScrollArea>
         </section>
