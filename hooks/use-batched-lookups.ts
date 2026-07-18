@@ -7,17 +7,19 @@ import {
   ProgramTrainingApplication,
   type Assignment,
   type Course,
+  type Enrollment,
   type Instructor,
   type Quiz,
   type SearchResponse,
   type Student,
   type TrainingProgram,
-  type User
+  type User,
 } from '@/services/client';
 import {
   getCourseAssessmentsOptions,
   searchAssignmentsOptions,
   searchCoursesOptions,
+  searchEnrollmentsOptions,
   searchInstructorsOptions,
   searchOptions,
   searchProgramTrainingApplicationsOptions,
@@ -128,9 +130,7 @@ function useSearchByField<T>(
     })),
     combine: results => ({
       items: results.flatMap(
-        result =>
-        (((result.data as SearchResponse | undefined)?.data?.content ??
-          []) as T[])
+        result => ((result.data as SearchResponse | undefined)?.data?.content ?? []) as T[]
       ),
       isLoading: results.some(result => result.isLoading),
     }),
@@ -142,13 +142,22 @@ export function useStudentsByIds(ids: string[]) {
   return { studentMap: map, isLoading };
 }
 
+export function useEnrollmentsByIds(ids: string[]) {
+  const { map, isLoading } = useSearchByIds<Enrollment>(ids, searchEnrollmentsOptions);
+  return { enrollmentMap: map, isLoading };
+}
+
 export function useUsersByIds(ids: string[]) {
   const { map, isLoading } = useSearchByIds<User>(ids, searchOptions);
   return { userMap: map, isLoading };
 }
 
 export function useCoursesByIds(ids: string[]) {
-  const { map, isLoading } = useSearchByIds<Course>(ids, searchCoursesOptions, STALE_TIMES.reference);
+  const { map, isLoading } = useSearchByIds<Course>(
+    ids,
+    searchCoursesOptions,
+    STALE_TIMES.reference
+  );
   return { courseMap: map, isLoading };
 }
 
@@ -217,8 +226,7 @@ export function useQuizzesByLessonIds(lessonUuids: string[]) {
     })),
     combine: results => ({
       items: results.flatMap(
-        result =>
-          ((result.data as SearchResponse | undefined)?.data?.content ?? []) as Quiz[]
+        result => ((result.data as SearchResponse | undefined)?.data?.content ?? []) as Quiz[]
       ),
       isLoading: results.some(r => r.isLoading),
     }),
@@ -244,14 +252,12 @@ export function useAssignmentsByLessonIds(lessonUuids: string[]) {
     })),
     combine: results => ({
       items: results.flatMap(
-        result =>
-          ((result.data as SearchResponse | undefined)?.data?.content ?? []) as Quiz[]
+        result => ((result.data as SearchResponse | undefined)?.data?.content ?? []) as Quiz[]
       ),
       isLoading: results.some(r => r.isLoading),
     }),
   });
 }
-
 
 export function useCourseAssessmentsByCourseUuids(courseUuids: string[]) {
   const uniqueCourseUuids = useMemo(
@@ -275,8 +281,7 @@ export function useCourseAssessmentsByCourseUuids(courseUuids: string[]) {
       results.forEach((result, index) => {
         const courseUuid = uniqueCourseUuids[index];
 
-        assessmentMap[courseUuid] =
-          result.data?.data?.content ?? [];
+        assessmentMap[courseUuid] = result.data?.data?.content ?? [];
       });
 
       return {
@@ -287,4 +292,3 @@ export function useCourseAssessmentsByCourseUuids(courseUuids: string[]) {
     },
   });
 }
-

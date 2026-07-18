@@ -30,8 +30,7 @@ import {
   toClassRecurrence,
 } from '@/lib/recurrence';
 import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
-import { formDataBodySerializer } from '@/services/client/client';
-import { client } from '@/services/client/client.gen';
+import { uploadJobThumbnail } from '@/services/client';
 import type {
   ClassMarketplaceJobRequest,
   ClassMarketplaceJobResource,
@@ -90,17 +89,6 @@ const initialState: FormState = {
   venueResourceUuid: '',
   equipment: [],
 };
-
-/** Upload a thumbnail to a freshly-created class job. Mirrors the generated multipart SDK calls. */
-async function uploadJobThumbnail(jobUuid: string, file: File): Promise<void> {
-  await client.post({
-    url: '/api/v1/classes/jobs/{uuid}/thumbnail',
-    path: { uuid: jobUuid },
-    body: { thumbnail: file },
-    ...formDataBodySerializer,
-    headers: { 'Content-Type': null },
-  });
-}
 
 const num = (value: string): number | undefined => {
   const trimmed = value.trim();
@@ -216,7 +204,11 @@ export default function OrganisationCreateClassPage() {
       const jobUuid = (response as { data?: { uuid?: string } })?.data?.uuid;
       if (thumbnail && jobUuid) {
         try {
-          await uploadJobThumbnail(jobUuid, thumbnail);
+          await uploadJobThumbnail({
+            path: { uuid: jobUuid },
+            body: { thumbnail },
+            throwOnError: true,
+          });
         } catch {
           toast.warning('Class posted, but the thumbnail failed to upload. You can add it later.');
           router.push('/dashboard/classes');

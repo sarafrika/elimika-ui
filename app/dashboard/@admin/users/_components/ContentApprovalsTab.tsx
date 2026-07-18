@@ -39,9 +39,15 @@ function ContentRow({
 
   const run = async (action: 'approve' | 'reject', actionReason?: string) => {
     if (!item.uuid) return;
-    const mutation = item.type === 'course' ? moderateCourse : moderateProgram;
+    // The API takes the decision in the body as `approved` / `rejected` / `revoked`.
+    const body = {
+      action: action === 'approve' ? ('approved' as const) : ('rejected' as const),
+      reason: actionReason,
+    };
     try {
-      await mutation.mutateAsync({ path: { uuid: item.uuid }, query: { action, reason: actionReason } });
+      await (item.type === 'course'
+        ? moderateCourse.mutateAsync({ path: { uuid: item.uuid }, body })
+        : moderateProgram.mutateAsync({ path: { uuid: item.uuid }, body }));
       toast.success(action === 'approve' ? `${item.title} approved` : `${item.title} rejected`);
       setRejecting(false);
       setReason('');

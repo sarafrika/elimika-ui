@@ -264,6 +264,13 @@ function JobsSection({
       <div className='grid gap-3 lg:grid-cols-2'>
         {jobs.map(job => (
         <Card key={job.uuid} className='rounded-[14px] border border-border bg-card p-4'>
+          {job.thumbnail_url ? (
+            <img
+              src={job.thumbnail_url}
+              alt={job.title ?? 'Class thumbnail'}
+              className='mb-3 h-32 w-full rounded-[10px] object-cover'
+            />
+          ) : null}
           <div className='flex flex-wrap items-start justify-between gap-3'>
             <div className='min-w-0'>
               <h3 className='truncate text-base font-semibold text-foreground'>

@@ -20,6 +20,7 @@ import type {
   UpdateQuizResponse,
   UpdateQuizQuestionResponse,
   UpdateQuestionOptionResponse,
+  SaveQuizResponsesResponse,
   GetTrainingProgramByUuidResponse,
   UpdateTrainingProgramResponse,
   GetProgramTrainingApplicationResponse,
@@ -114,6 +115,10 @@ import type {
   AddQuizQuestionResponse,
   GetQuestionOptionsResponse,
   AddQuestionOptionResponse,
+  GetQuizAttemptsResponse,
+  StartQuizAttemptResponse,
+  SubmitQuizAttemptResponse,
+  GradeQuizTextResponseResponse,
   GetAllTrainingProgramsResponse,
   CreateTrainingProgramResponse,
   PublishProgramResponse,
@@ -233,6 +238,7 @@ import type {
   CreateClassDefinitionForProgramMultipartResponse,
   ListJobsResponse,
   CreateJobResponse,
+  UploadJobThumbnailResponse,
   CancelJobResponse,
   AssignInstructorResponse,
   ListJobApplicationsResponse,
@@ -301,7 +307,6 @@ import type {
   ListSalesResponse,
   ListPaymentsResponse,
   GetRevenueDashboard1Response,
-  GetQuizAttemptsResponse,
   SearchQuizzesResponse,
   SearchQuestionsResponse,
   SearchAttemptsResponse,
@@ -348,6 +353,9 @@ import type {
   GetEnrollmentsForInstanceResponse,
   GetEnrollmentCountResponse,
   ListCurrenciesResponse,
+  GetCourseVersionsResponse,
+  WithdrawPendingEditResponse,
+  GetPendingEditResponse,
   GetPrimaryRubricResponse,
   GetRubricsByContextResponse,
   GetEnrollmentGradeBookResponse,
@@ -415,6 +423,7 @@ import type {
   GetDashboardActivityResponse,
   GetCourseModerationHistoryResponse,
   ListPendingCoursesResponse,
+  ListPendingCourseEditsResponse,
   RemoveItemResponse,
   RemoveAdminDomainResponse,
 } from './types.gen';
@@ -764,6 +773,39 @@ export const updateQuestionOptionResponseTransformer = async (
   data: any
 ): Promise<UpdateQuestionOptionResponse> => {
   data = apiResponseQuizQuestionOptionSchemaResponseTransformer(data);
+  return data;
+};
+
+const quizAttemptSchemaResponseTransformer = (data: any) => {
+  if (data.started_at) {
+    data.started_at = new Date(data.started_at);
+  }
+  if (data.submitted_at) {
+    data.submitted_at = new Date(data.submitted_at);
+  }
+  if (data.graded_at) {
+    data.graded_at = new Date(data.graded_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseQuizAttemptSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = quizAttemptSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const saveQuizResponsesResponseTransformer = async (
+  data: any
+): Promise<SaveQuizResponsesResponse> => {
+  data = apiResponseQuizAttemptSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2564,6 +2606,53 @@ export const addQuestionOptionResponseTransformer = async (
   return data;
 };
 
+const pagedDtoQuizAttemptSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return quizAttemptSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoQuizAttemptSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoQuizAttemptSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getQuizAttemptsResponseTransformer = async (
+  data: any
+): Promise<GetQuizAttemptsResponse> => {
+  data = apiResponsePagedDtoQuizAttemptSchemaResponseTransformer(data);
+  return data;
+};
+
+export const startQuizAttemptResponseTransformer = async (
+  data: any
+): Promise<StartQuizAttemptResponse> => {
+  data = apiResponseQuizAttemptSchemaResponseTransformer(data);
+  return data;
+};
+
+export const submitQuizAttemptResponseTransformer = async (
+  data: any
+): Promise<SubmitQuizAttemptResponse> => {
+  data = apiResponseQuizAttemptSchemaResponseTransformer(data);
+  return data;
+};
+
+export const gradeQuizTextResponseResponseTransformer = async (
+  data: any
+): Promise<GradeQuizTextResponseResponse> => {
+  data = apiResponseQuizAttemptSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoTrainingProgramSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -4322,6 +4411,13 @@ export const createJobResponseTransformer = async (data: any): Promise<CreateJob
   return data;
 };
 
+export const uploadJobThumbnailResponseTransformer = async (
+  data: any
+): Promise<UploadJobThumbnailResponse> => {
+  data = apiResponseClassMarketplaceJobSchemaResponseTransformer(data);
+  return data;
+};
+
 export const cancelJobResponseTransformer = async (data: any): Promise<CancelJobResponse> => {
   data = apiResponseClassMarketplaceJobSchemaResponseTransformer(data);
   return data;
@@ -5252,48 +5348,6 @@ export const getRevenueDashboard1ResponseTransformer = async (
   return data;
 };
 
-const quizAttemptSchemaResponseTransformer = (data: any) => {
-  if (data.started_at) {
-    data.started_at = new Date(data.started_at);
-  }
-  if (data.submitted_at) {
-    data.submitted_at = new Date(data.submitted_at);
-  }
-  if (data.created_date) {
-    data.created_date = new Date(data.created_date);
-  }
-  if (data.updated_date) {
-    data.updated_date = new Date(data.updated_date);
-  }
-  return data;
-};
-
-const pagedDtoQuizAttemptSchemaResponseTransformer = (data: any) => {
-  if (data.content) {
-    data.content = data.content.map((item: any) => {
-      return quizAttemptSchemaResponseTransformer(item);
-    });
-  }
-  if (data.metadata) {
-    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
-  }
-  return data;
-};
-
-const apiResponsePagedDtoQuizAttemptSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = pagedDtoQuizAttemptSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
-export const getQuizAttemptsResponseTransformer = async (
-  data: any
-): Promise<GetQuizAttemptsResponse> => {
-  data = apiResponsePagedDtoQuizAttemptSchemaResponseTransformer(data);
-  return data;
-};
-
 export const searchQuizzesResponseTransformer = async (
   data: any
 ): Promise<SearchQuizzesResponse> => {
@@ -6011,6 +6065,70 @@ export const listCurrenciesResponseTransformer = async (
   data: any
 ): Promise<ListCurrenciesResponse> => {
   data = apiResponsePagedDtoCurrencySchemaResponseTransformer(data);
+  return data;
+};
+
+const courseVersionSnapshotSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const pagedDtoCourseVersionSnapshotSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return courseVersionSnapshotSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCourseVersionSnapshotSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCourseVersionSnapshotSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getCourseVersionsResponseTransformer = async (
+  data: any
+): Promise<GetCourseVersionsResponse> => {
+  data = apiResponsePagedDtoCourseVersionSnapshotSchemaResponseTransformer(data);
+  return data;
+};
+
+const coursePendingEditSchemaResponseTransformer = (data: any) => {
+  if (data.submitted_at) {
+    data.submitted_at = new Date(data.submitted_at);
+  }
+  if (data.reviewed_at) {
+    data.reviewed_at = new Date(data.reviewed_at);
+  }
+  return data;
+};
+
+const apiResponseCoursePendingEditSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = coursePendingEditSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const withdrawPendingEditResponseTransformer = async (
+  data: any
+): Promise<WithdrawPendingEditResponse> => {
+  data = apiResponseCoursePendingEditSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getPendingEditResponseTransformer = async (
+  data: any
+): Promise<GetPendingEditResponse> => {
+  data = apiResponseCoursePendingEditSchemaResponseTransformer(data);
   return data;
 };
 
@@ -7117,6 +7235,32 @@ export const listPendingCoursesResponseTransformer = async (
   data: any
 ): Promise<ListPendingCoursesResponse> => {
   data = apiResponsePagedDtoCourseSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoCoursePendingEditSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return coursePendingEditSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCoursePendingEditSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCoursePendingEditSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listPendingCourseEditsResponseTransformer = async (
+  data: any
+): Promise<ListPendingCourseEditsResponse> => {
+  data = apiResponsePagedDtoCoursePendingEditSchemaResponseTransformer(data);
   return data;
 };
 

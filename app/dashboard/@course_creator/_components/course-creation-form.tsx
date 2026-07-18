@@ -408,11 +408,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           creator_share_percentage: data?.creator_share_percentage,
           instructor_share_percentage: data?.instructor_share_percentage,
           revenue_share_notes: data?.revenue_share_notes,
-          status: 'draft',
-          active: false,
+          // Lifecycle is never set from an edit. Sending status/active here demoted a
+          // published course to draft on every save, which is what took live courses off
+          // the catalogue when their creator edited them. Publishing and unpublishing go
+          // through their own endpoints; the API now ignores these fields on update.
           is_free: data?.is_free,
-          is_published: false,
-          is_draft: true,
           age_lower_limit: data?.age_lower_limit,
           age_upper_limit: data?.age_upper_limit,
         };

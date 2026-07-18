@@ -14,10 +14,9 @@ import { Textarea } from '@/components/ui/textarea';
 
 export type ModerationSheetAction = 'reject' | 'revoke';
 
-const COPY: Record<
-  ModerationSheetAction,
-  { title: string; description: string; confirm: string; placeholder: string }
-> = {
+type Copy = { title: string; description: string; confirm: string; placeholder: string };
+
+const COPY: Record<ModerationSheetAction, Copy> = {
   reject: {
     title: 'Reject course',
     description:
@@ -34,21 +33,33 @@ const COPY: Record<
   },
 };
 
+/** Rejecting a proposed edit is not rejecting the course: the published course survives it. */
+const REJECT_EDIT_COPY: Copy = {
+  title: 'Reject proposed changes',
+  description:
+    'The changes are discarded and the published course carries on unchanged, still approved and still accepting enrollments. The creator is notified with your reason.',
+  confirm: 'Reject changes',
+  placeholder: 'Explain what needs to change before these edits can go live…',
+};
+
 export function ModerationSheet({
   action,
   open,
   onOpenChange,
   onConfirm,
   isPending,
+  isEditReview = false,
 }: {
   action: ModerationSheetAction;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (reason?: string) => void;
   isPending: boolean;
+  /** The decision applies to a pending edit rather than to the course itself. */
+  isEditReview?: boolean;
 }) {
   const [reason, setReason] = useState('');
-  const copy = COPY[action];
+  const copy = isEditReview && action === 'reject' ? REJECT_EDIT_COPY : COPY[action];
 
   return (
     <Sheet
