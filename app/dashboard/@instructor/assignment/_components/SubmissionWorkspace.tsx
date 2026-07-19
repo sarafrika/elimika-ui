@@ -2,12 +2,12 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { AssignmentSubmission, AssignmentSubmissionAttachment, QuizAttempt, RubricMatrix } from '@/services/client/types.gen';
 import { useMutation } from '@tanstack/react-query';
 import { ArrowLeft, Files, Loader2, RotateCcw, Save, UserRound, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Label } from 'recharts';
 import { AttachmentResourceList } from '../../../../../components/assessment/AttachmentResourceList';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../../../../components/ui/dialog';
 import { cn } from '../../../../../lib/utils';
