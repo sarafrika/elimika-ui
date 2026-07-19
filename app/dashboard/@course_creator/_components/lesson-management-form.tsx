@@ -2240,7 +2240,11 @@ function AssessmentList({
               <AssessmentCreationForm
                 courseId={selectedAssessment.course_uuid}
                 assessmentId={selectedAssessment.uuid}
-                initialValues={selectedAssessment}
+                initialValues={
+                  selectedAssessment as unknown as React.ComponentProps<
+                    typeof AssessmentCreationForm
+                  >['initialValues']
+                }
                 className='px-6 pb-6'
                 onCancel={handleCancel}
               />

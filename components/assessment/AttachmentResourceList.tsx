@@ -81,12 +81,12 @@ export function AttachmentResourceList({
   }
 
   const previewContent: PreviewableAttachment | null = previewAttachment
-    ? {
+    ? ({
       ...previewAttachment,
       title: previewAttachment.original_filename ?? 'Attachment',
       content_text: null,
       value: previewAttachment.file_url || null,
-    }
+    } as unknown as PreviewableAttachment)
     : null;
 
   return (

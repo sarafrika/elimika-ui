@@ -71,7 +71,7 @@ export const AddCategoryFormItem: React.FC<AddCategoryFormItemProps> = ({ field 
           <SelectContent>
             <div className='max-h-[250px] overflow-auto'>
               {categoryOptions.map(cat => (
-                <SelectItem key={cat.uuid} value={cat.uuid}>
+                <SelectItem key={cat.uuid} value={cat.uuid ?? ''}>
                   {cat.name}
                 </SelectItem>
               ))}

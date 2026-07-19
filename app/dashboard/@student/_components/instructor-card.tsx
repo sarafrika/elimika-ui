@@ -67,7 +67,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
       <div className='flex h-full flex-col space-y-4 p-4'>
         <div className='flex items-start gap-4'>
           <Avatar className='h-14 w-14'>
-            <AvatarImage src={user?.profile_image_url} alt={instructor.full_name} />
+            <AvatarImage src={user?.profile_image_url ?? undefined} alt={instructor.full_name} />
             <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
           </Avatar>
 

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ComponentProps } from 'react';
 import type { DashboardClass } from '@/app/dashboard/_components/types';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { Button } from '@/components/ui/button';
@@ -129,7 +130,7 @@ export default function TrainingsPage({
         setOpen={setTimetableModal}
         editingClassId={editingClassId as string}
         onCancel={() => setTimetableModal(false)}
-        status={'SCHEDULED'}
+        status={'SCHEDULED' as unknown as ComponentProps<typeof TimetableScheduleDialog>['status']}
       />
 
       <DeleteModal

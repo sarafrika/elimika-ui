@@ -102,6 +102,9 @@ function normaliseProfile(
 ): SharedUserProfile | null {
   const rawUser = user as Partial<RawProfileUser> | null;
 
+  // API source fields are typed `| null` while SharedUserProfile uses `| undefined`.
+  // Build the shape untyped and cast once, rather than per-field null coalescing.
+  const built: unknown = (() => {
   switch (domain) {
     case 'instructor': {
       const p = rawUser?.instructor;
@@ -231,6 +234,9 @@ function normaliseProfile(
       };
     }
   }
+  })();
+
+  return built as SharedUserProfile | null;
 }
 
 function DomainBadge({

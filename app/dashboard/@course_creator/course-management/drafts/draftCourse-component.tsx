@@ -263,7 +263,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
                       </TableHeader>
 
                       <TableBody className='pb-12'>
-                        {draftCourses?.map((course: DraftCourseItem) => (
+                        {(draftCourses as unknown as DraftCourseItem[])?.map((course: DraftCourseItem) => (
                           <TableRow key={course.uuid}>
                             {/* <TableHead>
                     <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />

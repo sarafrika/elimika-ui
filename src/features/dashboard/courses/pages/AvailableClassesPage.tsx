@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useUserProfile } from '../../../profile/context/profile-context';
 
-export default function AvailableClassesPage({ courseId, instructorView }: { courseId: string, instructorView: boolean }) {
+export default function AvailableClassesPage({ courseId, instructorView = false }: { courseId: string; instructorView?: boolean }) {
   const { activeDomain } = useUserDomain();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const user = useUserProfile()

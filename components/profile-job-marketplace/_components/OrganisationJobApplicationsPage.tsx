@@ -176,7 +176,8 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
         .toLowerCase();
 
       const matchesSearch = !query || searchable.includes(query);
-      const matchesStatus = statusFilter === 'ALL' || application.status === statusFilter;
+      const matchesStatus =
+        statusFilter === 'ALL' || (application.status as string) === (statusFilter as string);
       return matchesSearch && matchesStatus;
     });
   }, [applications, contentLabel, instructorMap, job?.title, searchQuery, statusFilter]);

@@ -127,7 +127,9 @@ const AwardCertificatesPage = () => {
 
     const enrollmentUuid =
         courseEnrollmentsResp?.data?.content?.find(
-            (enrollment) => enrollment.student_uuid === selectedStudent?.student?.data?.uuid
+            (enrollment) =>
+                enrollment.student_uuid ===
+                (selectedStudent?.student as { data?: { uuid?: string } } | undefined)?.data?.uuid
         )?.uuid ?? "";
 
     const studentUuid =

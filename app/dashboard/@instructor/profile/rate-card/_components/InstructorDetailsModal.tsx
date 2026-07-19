@@ -66,7 +66,7 @@ export default function InstructorDetailsModal({
 
           <div>
             <p className='text-muted-foreground text-sm font-medium'>Submitted</p>
-            <p className='text-sm'>{new Date(instructor.created_date).toLocaleString()}</p>
+            <p className='text-sm'>{new Date(instructor.created_date ?? '').toLocaleString()}</p>
           </div>
         </div>
       </DialogContent>

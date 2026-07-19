@@ -1,5 +1,6 @@
 'use client';
 
+import type { ComponentProps } from 'react';
 import { getAllStudentsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -17,7 +18,11 @@ export default function StudentsPage() {
 
   return (
     <div>
-      <StudentsListPage studentsData={studentsData} />
+      <StudentsListPage
+        studentsData={
+          studentsData as unknown as ComponentProps<typeof StudentsListPage>['studentsData']
+        }
+      />
     </div>
   );
 }

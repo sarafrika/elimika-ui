@@ -129,7 +129,7 @@ export function SchedulerFilters({
 
                     {/* COURSE */}
                     <p className='mt-0.5 truncate text-[11px] text-muted-foreground'>
-                      {item.course}
+                      {(item as { course?: string }).course}
                     </p>
                   </div>
 
