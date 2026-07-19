@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { formatDateOnly } from '@/lib/date';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
@@ -87,16 +88,9 @@ const toMonthInputValue = (value?: Date | string) => {
   return date.toISOString().slice(0, 7);
 };
 
-const formatDisplayDate = (value?: Date | string) => {
-  if (!value) return 'N/A';
-
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return typeof value === 'string' ? value : 'N/A';
-  }
-
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-};
+// Experience dates are calendar dates (no time-of-day) — render in UTC so they
+// are never shifted a day by the viewer's zone.
+const formatDisplayDate = (value?: Date | string) => formatDateOnly(value, 'N/A');
 
 export default function ProfessionalExperienceSettings() {
   const qc = useQueryClient();

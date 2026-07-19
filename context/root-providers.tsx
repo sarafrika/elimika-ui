@@ -5,6 +5,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { SessionProvider } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import { type ReactNode, useState } from 'react';
+import { TimeZoneProvider } from '@/context/timezone-context';
 import {
   CLIENT_QUERY_CACHE_BUSTER,
   CLIENT_QUERY_CACHE_MAX_AGE_MS,
@@ -40,7 +41,9 @@ export function RootProviders({ children }: { children: ReactNode }) {
         persister,
       }}
     >
-      <SessionProvider>{children}</SessionProvider>
+      <SessionProvider>
+        <TimeZoneProvider>{children}</TimeZoneProvider>
+      </SessionProvider>
       {ReactQueryDevtools ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </PersistQueryClientProvider>
   );

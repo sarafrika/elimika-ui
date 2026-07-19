@@ -36,6 +36,7 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
 import ManageProfileActions from '../../../profile/add-profile/components/ManageProfileActions';
 import { SettingsField } from '../_components/settings-field';
+import { TimezoneSetting } from '../_components/timezone-setting';
 import { SettingsPageHeader } from '../_components/settings-page-header';
 import { SettingsToggleRow } from '../_components/settings-toggle-row';
 import {
@@ -881,11 +882,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                   </CardHeader>
                   <CardContent className='space-y-4 px-4 py-5 sm:px-5'>
                     <div className='grid gap-4 sm:grid-cols-2'>
-                      <SettingsField
-                        label='Default timezone'
-                        value='Africa/Nairobi'
-                        helperText='Used for scheduled actions and time-based notifications.'
-                      />
+                      <TimezoneSetting />
                       <SettingsField
                         label='Language'
                         value='English'

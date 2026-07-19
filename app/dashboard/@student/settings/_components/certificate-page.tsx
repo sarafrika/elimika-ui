@@ -32,15 +32,13 @@ import {
   Verified,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { formatDateOnly } from '@/lib/date';
 import { CertificateErrorModal } from './certificate-error-modal';
 import { CertificateSuccessModal } from './certificate-success-modal';
 import { CertificateUploadModal } from './certificate-upload-modal';
 
-const formatDate = (value?: Date | string | null) => {
-  if (!value) return '—';
-  const dateValue = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(dateValue.getTime()) ? '—' : dateValue.toLocaleDateString();
-};
+// Certificate issue/expiry are calendar dates — render in UTC (no zone shift).
+const formatDate = (value?: Date | string | null) => formatDateOnly(value, '—');
 
 const getStatusBadge = (certificate: Certificate) => {
   if (certificate.validity_status === 'pending') {

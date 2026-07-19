@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { dayjs } from '@/lib/date';
 import { CheckCircle2, Clock, Eye, Loader2, Pencil, RefreshCw, Trash2, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -92,7 +93,7 @@ const num = (value: string): number => {
 };
 
 const formatDate = (value?: string | Date | null): string =>
-  value ? format(new Date(value), 'dd MMM yyyy') : '—';
+  value ? dayjs.utc(value).format('DD MMM YYYY') : '—';
 
 const formatRate = (rateCard?: CourseTrainingRateCard): string => {
   if (!rateCard) return '—';

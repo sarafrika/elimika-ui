@@ -8,8 +8,10 @@
     "openapi-ts": "openapi-ts && node post-generation-fix.mjs",
     "emails:export": "tsx emails/export.tsx",
     "start": "next start",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "biome lint . && node scripts/check-brand-colors.mjs",
     "lint:palette": "node scripts/check-brand-colors.mjs",
+    "check:dates": "node scripts/check-datetime.mjs",
     "format": "prettier --write \"./**/*.{ts,tsx,js,jsx,json,css,yaml,yml}\"",
     "format:file": "prettier --write"
   },
