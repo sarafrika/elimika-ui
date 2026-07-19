@@ -259,6 +259,7 @@ export const mapScheduledInstance = (
   return {
     id: instance.uuid || `${instance.class_definition_uuid}-${instance.start_time}`,
     instanceUuid: instance.uuid || undefined,
+    classCode: '',
     classDefinitionUuid: instance.class_definition_uuid || undefined,
     title,
     course: courseName,
@@ -291,6 +292,7 @@ export const mapStudentSchedule = (
   return {
     id: item.scheduled_instance_uuid || item.enrollment_uuid || `${title}-${item.start_time}`,
     instanceUuid: item.scheduled_instance_uuid || undefined,
+    classCode: '',
     classDefinitionUuid: item.class_definition_uuid || undefined,
     title,
     course: courseName,

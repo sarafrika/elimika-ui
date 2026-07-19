@@ -163,8 +163,8 @@ const getInitialValues = (rule?: SystemRule | null): RuleFormValues => {
     valueType: (rule?.valueType as RuleFormValues['valueType']) ?? 'JSON',
     valuePayload,
     conditions,
-    effectiveFrom: formatForInput(rule?.effectiveFrom),
-    effectiveTo: formatForInput(rule?.effectiveTo),
+    effectiveFrom: formatForInput(rule?.effectiveFrom as unknown as string | undefined),
+    effectiveTo: formatForInput(rule?.effectiveTo as unknown as string | undefined),
   };
 };
 

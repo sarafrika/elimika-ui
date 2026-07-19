@@ -241,12 +241,12 @@ const LessonDetailsPage = () => {
       title: quiz.title,
       description: quiz.description,
       instructions: quiz.instructions,
-      time_limit_minutes: quiz.time_limit_minutes,
+      time_limit_minutes: quiz.time_limit_minutes ?? undefined,
       attempts_allowed: quiz.attempts_allowed,
       passing_score: quiz.passing_score,
       status: quiz.status,
       active: quiz.active ?? false,
-      rubric_uuid: quiz.rubric_uuid,
+      rubric_uuid: quiz.rubric_uuid ?? undefined,
     });
     setEditingLessonId(quiz.lesson_uuid);
     setEditingQuizId(quiz.uuid ?? null);

@@ -72,7 +72,7 @@ export default function OrganizationUserDetailsPanel({
                     <Badge variant={user.active ? 'success' : 'secondary'}>
                       {user.active ? 'Active' : 'Inactive'}
                     </Badge>
-                    {user.user_domain?.map(domain => (
+                    {(user.user_domain as unknown as string[] | undefined)?.map(domain => (
                       <Badge key={domain} variant='outline'>
                         {domain}
                       </Badge>
