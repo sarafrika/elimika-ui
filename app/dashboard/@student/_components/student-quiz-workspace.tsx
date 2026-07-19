@@ -2,12 +2,12 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useStudent } from '@/context/student-context';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
-import { cx, getCardClasses, getEmptyStateClasses, getStatCardClasses } from '@/lib/design-system';
+import { cn } from '@/lib/utils';
 import {
   getEnrollmentsForClassOptions,
   getQuizAttemptsOptions,
@@ -16,7 +16,18 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassQuizSchedule, Enrollment, Quiz, QuizAttempt } from '@/services/client/types.gen';
 import { useQueries } from '@tanstack/react-query';
-import { ClipboardList, FileQuestion, Search } from 'lucide-react';
+import {
+  ArrowRight,
+  CalendarDays,
+  ClipboardList,
+  FileQuestion,
+  Repeat2,
+  Search,
+  Target,
+  Timer,
+  Trophy,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Student } from '../../../../services/api/schema';
@@ -28,13 +39,6 @@ type ClassMeta = {
   classTitle: string;
   courseTitle: string;
   enrollmentUuid?: string;
-};
-
-type QuizRow = {
-  classMeta: ClassMeta;
-  attempts: QuizAttempt[];
-  quiz: Quiz;
-  schedule: ClassQuizSchedule;
 };
 
 type StudentClassDefinitionRow = ReturnType<
@@ -64,10 +68,7 @@ function formatDate(value?: string | Date | null) {
   if (!value) return 'No deadline';
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return 'No deadline';
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date);
 }
 
 function formatEnum(value?: string | null) {
@@ -79,17 +80,190 @@ function formatEnum(value?: string | null) {
     .join(' ');
 }
 
-function getAttemptBadgeVariant(status?: string) {
-  const normalized = String(status || '').toLowerCase();
-  if (normalized.includes('graded') || normalized.includes('submitted')) return 'success' as const;
-  if (normalized.includes('in_progress') || normalized.includes('started'))
-    return 'warning' as const;
-  return 'secondary' as const;
+/** Lifecycle → label, badge variant, and accent-bar/icon-chip tone for a quiz. */
+function getQuizStatus(attempt?: QuizAttempt | null) {
+  if (!attempt) {
+    return {
+      label: 'Not started',
+      variant: 'secondary' as const,
+      accent: 'bg-primary',
+      chip: 'bg-primary/10 text-primary',
+    };
+  }
+  const status = String(attempt.status || '').toLowerCase();
+  if (attempt.is_completed || status.includes('graded') || status.includes('submitted')) {
+    return {
+      label: formatEnum(attempt.status) || 'Completed',
+      variant: 'success' as const,
+      accent: 'bg-success',
+      chip: 'bg-success/10 text-success',
+    };
+  }
+  if (status.includes('progress') || status.includes('started')) {
+    return {
+      label: 'In progress',
+      variant: 'warning' as const,
+      accent: 'bg-warning',
+      chip: 'bg-warning/10 text-warning',
+    };
+  }
+  return {
+    label: formatEnum(attempt.status),
+    variant: 'secondary' as const,
+    accent: 'bg-primary',
+    chip: 'bg-primary/10 text-primary',
+  };
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Stat tile ────────────────────────────────────────────────────────────────
 
-export function StudentQuizWorkspace() {
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+  tone = 'primary',
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string | number;
+  tone?: 'primary' | 'success' | 'warning';
+}) {
+  const chip =
+    tone === 'success'
+      ? 'bg-success/10 text-success'
+      : tone === 'warning'
+        ? 'bg-warning/10 text-warning'
+        : 'bg-primary/10 text-primary';
+
+  return (
+    <div className='rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md'>
+      <div className='flex items-center gap-4'>
+        <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', chip)}>
+          <Icon className='h-5 w-5' />
+        </div>
+        <div className='min-w-0'>
+          <p className='text-sm text-muted-foreground'>{label}</p>
+          <p className='text-2xl font-bold tracking-tight text-foreground'>{value}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Quiz card ────────────────────────────────────────────────────────────────
+
+function StudentQuizCard({
+  classMeta,
+  quiz,
+  schedule,
+  attempts,
+}: {
+  classMeta: ClassMeta;
+  quiz?: Quiz;
+  schedule: ClassQuizSchedule;
+  attempts: QuizAttempt[];
+}) {
+  const latestAttempt = attempts[0] ?? null;
+  const status = getQuizStatus(latestAttempt);
+
+  const cell = (icon: React.ComponentType<{ className?: string }>, label: string, value: React.ReactNode) => {
+    const Icon = icon;
+    return (
+      <div className='flex flex-col gap-1 px-3 py-2'>
+        <span className='flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
+          <Icon className='h-3 w-3' />
+          {label}
+        </span>
+        <span className='text-sm font-semibold text-foreground'>{value}</span>
+      </div>
+    );
+  };
+
+  return (
+    <article className='group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-md'>
+      <div className={cn('absolute inset-x-0 top-0 h-1', status.accent)} />
+
+      <div className='flex h-full flex-col gap-5 p-5 sm:p-6'>
+        <div className='flex items-start justify-between gap-3'>
+          <div className='flex min-w-0 items-start gap-3'>
+            <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', status.chip)}>
+              <ClipboardList className='h-5 w-5' />
+            </div>
+            <div className='min-w-0 space-y-1'>
+              <p className='truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                {classMeta.courseTitle}
+              </p>
+              <h3 className='text-base font-semibold leading-snug text-foreground sm:text-lg'>
+                <span className='line-clamp-2'>{quiz?.title || 'Untitled quiz'}</span>
+              </h3>
+              <p className='truncate text-xs text-muted-foreground'>{classMeta.classTitle}</p>
+            </div>
+          </div>
+
+          <Badge variant={status.variant} className='shrink-0'>
+            {status.label}
+          </Badge>
+        </div>
+
+        {quiz?.description ? (
+          <p className='line-clamp-2 text-sm leading-relaxed text-muted-foreground'>
+            {quiz.description}
+          </p>
+        ) : (
+          <p className='text-sm leading-relaxed text-muted-foreground'>
+            Open this quiz to review the prompt and answer the questions.
+          </p>
+        )}
+
+        <div className='grid grid-cols-3 divide-x divide-border/60 rounded-xl border border-border/60 bg-background/60'>
+          {cell(CalendarDays, 'Due', formatDate(schedule?.due_at))}
+          {cell(
+            Timer,
+            'Time',
+            schedule?.time_limit_override ??
+              quiz?.time_limit_display ??
+              (quiz?.time_limit_minutes ? `${quiz.time_limit_minutes} min` : 'Untimed')
+          )}
+          {cell(
+            Repeat2,
+            'Attempts',
+            `${attempts.length}/${schedule?.attempt_limit_override ?? quiz?.attempts_allowed ?? '∞'}`
+          )}
+        </div>
+
+        <div className='mt-auto flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between'>
+          {latestAttempt ? (
+            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+              <Trophy className='h-4 w-4 text-warning' />
+              <span className='font-medium text-foreground'>
+                {latestAttempt.grade_display ||
+                  `${latestAttempt.score ?? 0}/${latestAttempt.max_score ?? 0}`}
+              </span>
+              latest score
+            </div>
+          ) : (
+            <span className='text-sm text-muted-foreground'>Not attempted yet</span>
+          )}
+
+          <Button asChild size='sm' className='shrink-0'>
+            <Link
+              href={`/dashboard/assignment/quiz/${schedule.quiz_uuid}`}
+              className='flex items-center gap-2'
+            >
+              <FileQuestion className='h-4 w-4' />
+              {latestAttempt ? 'Open quiz' : 'Attempt quiz'}
+              <ArrowRight className='h-4 w-4' />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+// ─── Workspace ─────────────────────────────────────────────────────────────────
+
+export function StudentQuizWorkspace({ embedded = false }: { embedded?: boolean } = {}) {
   const student = useStudent();
 
   const [searchValue, setSearchValue] = useState('');
@@ -215,19 +389,13 @@ export function StudentQuizWorkspace() {
         const attempts =
           quizUuid && classMeta.enrollmentUuid
             ? (attemptMap.get(quizUuid) ?? []).filter(
-              (attempt: QuizAttempt) =>
-                attempt.enrollment_uuid === classMeta.enrollmentUuid
-            )
+                (attempt: QuizAttempt) => attempt.enrollment_uuid === classMeta.enrollmentUuid
+              )
             : quizUuid
               ? (attemptMap.get(quizUuid) ?? [])
               : [];
 
-        return {
-          classMeta,
-          attempts,
-          quiz,
-          schedule,
-        };
+        return { classMeta, attempts, quiz, schedule };
       }),
     [attemptMap, quizMap, scheduleRows]
   );
@@ -263,152 +431,91 @@ export function StudentQuizWorkspace() {
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
-  return (
-    <div className='space-y-6'>
-      {/* ── Page header & stats ── */}
-      <section className='space-y-4'>
-        <div className='space-y-2'>
-          <Badge variant='outline' className='border-primary/30 bg-primary/5 text-primary w-fit'>
-            Quiz workspace
-          </Badge>
-          <h1 className='text-foreground text-2xl font-semibold sm:text-3xl'>
-            Review and attempt scheduled quizzes
-          </h1>
-          <p className='text-muted-foreground max-w-3xl text-sm'>
-            Open each scheduled quiz to answer its questions. Your attempt is graded on the server
-            when you submit.
-          </p>
-        </div>
+  const header = !embedded && (
+    <header className='space-y-1.5'>
+      <h1 className='text-2xl font-bold tracking-tight text-foreground sm:text-3xl'>Quizzes</h1>
+      <p className='max-w-2xl text-sm text-muted-foreground'>
+        Open each scheduled quiz to answer its questions. Your attempt is graded on the server when
+        you submit.
+      </p>
+    </header>
+  );
 
+  if (isLoading) {
+    return (
+      <div className='space-y-6'>
+        {header}
         <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-          {[
-            { label: 'Total quizzes', value: stats.total },
-            { label: 'Attempted', value: stats.attempted },
-            { label: 'Completed attempts', value: stats.completed },
-            { label: 'Scheduled deadlines', value: stats.scheduled },
-          ].map(stat => (
-            <Card key={stat.label} className={getStatCardClasses()}>
-              <CardContent className='p-0'>
-                <p className='text-muted-foreground text-sm'>{stat.label}</p>
-                <p className='text-foreground mt-2 text-2xl font-semibold'>{stat.value}</p>
-              </CardContent>
-            </Card>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className='h-28 rounded-2xl' />
           ))}
         </div>
-      </section>
-
-      {/* ── Quiz list ── */}
-      <section className='space-y-4'>
-        <div className='border-border/60 bg-card/90 flex flex-col gap-4 rounded-[28px] border p-5 sm:p-6'>
-          <div className='relative'>
-            <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-            <Input
-              value={searchValue}
-              onChange={e => setSearchValue(e.target.value)}
-              placeholder='Search quizzes by title, class, or course'
-              className='pl-9'
-            />
-          </div>
+        <div className='grid gap-4 xl:grid-cols-2'>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className='h-56 rounded-2xl' />
+          ))}
         </div>
+      </div>
+    );
+  }
 
-        {isLoading ? (
-          <div className='grid gap-4 xl:grid-cols-2'>
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className='h-52 rounded-[28px]' />
-            ))}
-          </div>
-        ) : filteredRows.length === 0 ? (
-          <div className={cx(getEmptyStateClasses(), 'min-h-[280px]')}>
-            <ClipboardList className='text-primary/70 h-10 w-10' />
-            <div className='space-y-1 text-center'>
-              <h3 className='text-lg font-semibold'>No quizzes found</h3>
-              <p className='text-muted-foreground max-w-lg text-sm'>
-                Scheduled quizzes will appear here once your classes publish them.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className='grid gap-4 xl:grid-cols-2'>
-            {filteredRows.map(row => {
-              const latestAttempt = row.attempts[0] ?? null;
+  const statTiles = [
+    { icon: ClipboardList, label: 'Total quizzes', value: stats.total, tone: 'primary' as const },
+    { icon: Target, label: 'Attempted', value: stats.attempted, tone: 'primary' as const },
+    { icon: Trophy, label: 'Completed', value: stats.completed, tone: 'success' as const },
+    { icon: CalendarDays, label: 'Scheduled', value: stats.scheduled, tone: 'warning' as const },
+  ];
 
-              return (
-                <Card
-                  key={row.schedule.uuid}
-                  className={cx(getCardClasses(), 'p-0 hover:translate-y-0')}
-                >
-                  <CardHeader className='space-y-3 p-5 pb-3 sm:p-6'>
-                    <div className='flex flex-wrap gap-2'>
-                      <Badge variant='secondary'>{row.classMeta.courseTitle}</Badge>
-                      <Badge variant='outline'>{row.classMeta.classTitle}</Badge>
-                      <Badge variant={getAttemptBadgeVariant(latestAttempt?.status)}>
-                        {latestAttempt ? formatEnum(latestAttempt.status) : 'Not started'}
-                      </Badge>
-                    </div>
-                    <div className='space-y-1'>
-                      <h2 className='text-foreground text-lg font-semibold'>{row?.quiz?.title}</h2>
-                      <p className='text-muted-foreground text-sm'>
-                        {row?.quiz?.description ||
-                          'Open this quiz to review the prompt and answer the questions.'}
-                      </p>
-                    </div>
-                  </CardHeader>
+  return (
+    <div className='space-y-6'>
+      {header}
 
-                  <CardContent className='space-y-4 p-5 pt-0 sm:p-6 sm:pt-0'>
-                    <div className='grid gap-3 sm:grid-cols-3'>
-                      {[
-                        { label: 'Due', value: formatDate(row.schedule?.due_at) },
-                        {
-                          label: 'Time limit',
-                          value:
-                            row.schedule?.time_limit_override ??
-                            row.quiz?.time_limit_display ??
-                            row.quiz?.time_limit_minutes ??
-                            'Not timed',
-                        },
-                        {
-                          label: 'Attempts',
-                          value: `${row.attempts.length} / ${row.schedule?.attempt_limit_override ?? row.quiz?.attempts_allowed ?? 'N/A'}`,
-                        },
-                      ].map(cell => (
-                        <div
-                          key={cell.label}
-                          className='border-border/60 bg-background/70 rounded-2xl border p-3'
-                        >
-                          <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
-                            {cell.label}
-                          </p>
-                          <p className='text-foreground mt-1 text-sm font-medium'>{cell.value}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className='flex flex-wrap items-center gap-3'>
-                      <Button>
-                        <Link
-                          className='flex flex-row items-center gap-2'
-                          href={`/dashboard/assignment/quiz/${row?.schedule.quiz_uuid}`}
-                        >
-                          <FileQuestion className='h-4 w-4' />
-                          Attempt quiz
-                        </Link>
-                      </Button>
-
-                      {latestAttempt ? (
-                        <Badge variant='outline' className='px-3 py-2'>
-                          Latest score:{' '}
-                          {latestAttempt.grade_display ||
-                            `${latestAttempt.score ?? 0}/${latestAttempt.max_score ?? 0}`}
-                        </Badge>
-                      ) : null}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+      <section className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
+        {statTiles.map(tile => (
+          <StatTile key={tile.label} {...tile} />
+        ))}
       </section>
+
+      <div className='relative max-w-md'>
+        <Search className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+        <Input
+          value={searchValue}
+          onChange={e => setSearchValue(e.target.value)}
+          placeholder='Search quizzes by title, class, or course'
+          className='pl-9'
+        />
+        {searchValue ? (
+          <button
+            aria-label='Clear search'
+            className='absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground'
+            onClick={() => setSearchValue('')}
+            type='button'
+          >
+            <X className='h-4 w-4' />
+          </button>
+        ) : null}
+      </div>
+
+      {filteredRows.length === 0 ? (
+        <EmptyState
+          variant='card'
+          icon={ClipboardList}
+          title='No quizzes found'
+          description='Scheduled quizzes will appear here once your classes publish them.'
+        />
+      ) : (
+        <div className='grid gap-4 xl:grid-cols-2'>
+          {filteredRows.map(row => (
+            <StudentQuizCard
+              key={row.schedule.uuid}
+              classMeta={row.classMeta}
+              quiz={row.quiz}
+              schedule={row.schedule}
+              attempts={row.attempts}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -432,7 +432,7 @@ export default function StudentQuizSubmissionPage() {
   ];
 
   return (
-    <div className='mx-auto w-full max-w-4xl space-y-6 p-5 sm:p-6'>
+    <div className='mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8'>
       {/* Header */}
       <div className='border-border/60 space-y-3 border-b pb-5'>
         <Button
@@ -448,7 +448,9 @@ export default function StudentQuizSubmissionPage() {
           <Badge variant='secondary'>{matchingScheduleRow.classMeta.courseTitle}</Badge>
           <Badge variant='outline'>{matchingScheduleRow.classMeta.classTitle}</Badge>
         </div>
-        <h1 className='text-foreground text-2xl font-semibold'>{studentQuiz.title || 'Quiz'}</h1>
+        <h1 className='text-foreground text-2xl font-bold tracking-tight sm:text-3xl'>
+          {studentQuiz.title || 'Quiz'}
+        </h1>
         {studentQuiz.description ? (
           <p className='text-muted-foreground text-sm'>{studentQuiz.description}</p>
         ) : null}
