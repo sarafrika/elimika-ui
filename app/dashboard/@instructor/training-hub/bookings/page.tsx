@@ -48,7 +48,7 @@ import {
   TrendingUp,
   XCircle,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { type ComponentProps, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { BookingDetailsModal } from '../../../_components/booking-details-modal';
 import { getStatusColor } from '../../../_components/manage-bookings';
@@ -59,7 +59,7 @@ const PAGE_SIZE = 15;
 const ALL_STATUS = 'all';
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-const STATUS_OPTIONS: Array<{ value: typeof ALL_STATUS | StatusEnum9; label: string }> = [
+const STATUS_OPTIONS = [
   { value: ALL_STATUS, label: 'All statuses' },
   { value: 'payment_required', label: 'Payment required' },
   { value: 'accepted', label: 'Accepted' },
@@ -69,9 +69,9 @@ const STATUS_OPTIONS: Array<{ value: typeof ALL_STATUS | StatusEnum9; label: str
   { value: 'expired', label: 'Expired' },
   { value: 'declined', label: 'Declined' },
   { value: 'cancelled', label: 'Cancelled' },
-];
+] as unknown as Array<{ value: typeof ALL_STATUS | StatusEnum9; label: string }>;
 
-const TERMINAL_STATUSES: StatusEnum9[] = [
+const TERMINAL_STATUSES: string[] = [
   'confirmed',
   'accepted_confirmed',
   'cancelled',
@@ -79,7 +79,7 @@ const TERMINAL_STATUSES: StatusEnum9[] = [
   'expired',
 ];
 
-const REQUEST_STATUSES: StatusEnum9[] = ['payment_required', 'accepted', 'payment_failed'];
+const REQUEST_STATUSES: string[] = ['payment_required', 'accepted', 'payment_failed'];
 
 const isSameDay = (left: Date, right: Date) =>
   left.getFullYear() === right.getFullYear() &&
@@ -148,12 +148,12 @@ const getScheduleCategory = (booking: BookingResponse, now: Date) => {
   };
 };
 
-const canAcceptBooking = (status: StatusEnum9) =>
+const canAcceptBooking = (status: string) =>
   !['accepted', 'confirmed', 'accepted_confirmed', 'cancelled', 'declined', 'expired'].includes(
     status
   );
 
-const canDeclineBooking = (status: StatusEnum9) =>
+const canDeclineBooking = (status: string) =>
   !['confirmed', 'accepted_confirmed', 'cancelled', 'declined', 'expired'].includes(status);
 
 function BookingsPage() {
@@ -247,7 +247,7 @@ function BookingsPage() {
         booking.course_uuid,
         booking.purpose,
         student?.full_name,
-        student?.email,
+        (student as { email?: string } | undefined)?.email,
       ]
         .filter(Boolean)
         .some(value => String(value).toLowerCase().includes(normalizedQuery));
@@ -291,7 +291,7 @@ function BookingsPage() {
     const selectedStillVisible =
       selected && visibleBookings.some(booking => booking.uuid === selected.uuid);
     if (!selectedStillVisible) {
-      setSelected(visibleBookings[0]);
+      setSelected(visibleBookings[0] ?? null);
     }
   }, [selected, visibleBookings]);
 
@@ -346,7 +346,8 @@ function BookingsPage() {
   const weekdaySpread = useMemo(() => {
     const counts = Array.from({ length: 7 }, () => 0);
     upcoming.forEach(booking => {
-      counts[booking.start_time.getDay()] += 1;
+      const day = booking.start_time.getDay();
+      counts[day] = (counts[day] ?? 0) + 1;
     });
     return counts;
   }, [upcoming]);
@@ -973,7 +974,8 @@ function BookingsPage() {
                           selected.student_uuid.slice(0, 8)}
                       </div>
                       <div className='text-muted-foreground text-sm'>
-                        {studentsById[selected.student_uuid]?.email ?? 'No contact info available'}
+                        {(studentsById[selected.student_uuid] as { email?: string } | undefined)
+                          ?.email ?? 'No contact info available'}
                       </div>
                     </div>
                   </div>
@@ -1105,7 +1107,9 @@ function BookingsPage() {
           booking={selectedBooking}
           open={!!selectedBooking}
           onClose={() => setSelectedBooking(null)}
-          instructors={[instructor]}
+          instructors={
+            [instructor] as unknown as ComponentProps<typeof BookingDetailsModal>['instructors']
+          }
         />
       )}
 

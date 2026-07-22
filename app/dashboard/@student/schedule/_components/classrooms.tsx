@@ -278,7 +278,7 @@ export default function ClassroomPage({ classDefinitions, loading, scheduleInsta
                               <Button
                                 size='sm'
                                 variant='outline'
-                                onClick={() => openMeetingLink(schedule.meetingUrl)}
+                                onClick={() => openMeetingLink(schedule.meetingUrl ?? undefined)}
                               >
                                 Open link
                                 <ExternalLink className='ml-2 h-3.5 w-3.5' />

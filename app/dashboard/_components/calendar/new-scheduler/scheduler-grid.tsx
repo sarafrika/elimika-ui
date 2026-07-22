@@ -819,7 +819,7 @@ function YearGrid({
 
                         // Single event → open immediately
                         if (dayEvents.length === 1) {
-                          onEventClick?.(dayEvents[0]);
+                          onEventClick?.(dayEvents[0]!);
                           return;
                         }
 

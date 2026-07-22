@@ -257,7 +257,11 @@ export const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
           <ManageBookings
             bookings={bookings}
             instructors={filteredInstructors}
-            onBookingUpdate={handleBookingUpdate}
+            onBookingUpdate={
+              handleBookingUpdate as unknown as React.ComponentProps<
+                typeof ManageBookings
+              >['onBookingUpdate']
+            }
             refetchBookings={() => refetch()}
           />
         </TabsContent>

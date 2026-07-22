@@ -44,3 +44,6 @@ yarn-error.log*
 next-env.d.ts
 /.idea/**
 .perf/
+
+# playwright mcp output (console logs, screenshots)
+.playwright-mcp/

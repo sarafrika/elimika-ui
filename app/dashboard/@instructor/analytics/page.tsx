@@ -96,7 +96,7 @@ function AnalyticsDashboardBody({
           availableLocations={analytics.availableLocations}
         />
 
-        <TabNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+        <TabNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab as unknown as (tab: string) => void} />
 
         {activeTab === 'Overview' && (
           <div className='space-y-4 sm:space-y-5'>

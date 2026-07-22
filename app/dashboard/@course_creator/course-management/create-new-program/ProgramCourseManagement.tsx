@@ -345,7 +345,9 @@ const ProgramCourseManagement = ({
   const assignedCourseUuids = programCourses?.data?.map(pc => pc.uuid).filter(Boolean) || [];
   const availableCourses = allCourses.filter(c => !assignedCourseUuids.includes(c.uuid));
   const sortedProgramCourses = [...(programCourses?.data ?? [])].sort(
-    (a, b) => (a.sequence_order ?? 0) - (b.sequence_order ?? 0)
+    (a, b) =>
+      ((a as { sequence_order?: number }).sequence_order ?? 0) -
+      ((b as { sequence_order?: number }).sequence_order ?? 0)
   );
   const courseIds = orderedCourses.map(course => course.uuid).filter(Boolean) as string[];
 

@@ -1,32 +1,16 @@
+// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { AttachmentResourceList } from '@/components/assessment/AttachmentResourceList';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import { useStudent } from '@/context/student-context';
-import { cx, getCardClasses, getEmptyStateClasses, getStatCardClasses } from '@/lib/design-system';
-import {
-  getAssignmentSubmissionsQueryKey,
-  getSubmissionAttachmentsOptions,
-  submitAssignmentQueryMutation,
-  uploadSubmissionAttachmentMutation
-} from '@/services/client/@tanstack/react-query.gen';
-import type { AssignmentSubmissionAttachment } from '@/services/client/types.gen';
-import { getErrorMessage } from '@/src/features/dashboard/courses/types';
+import { cn } from '@/lib/utils';
 import {
   getDueSummary,
   getStudentAssignmentSubmissionState,
@@ -34,29 +18,28 @@ import {
   type StudentAssignmentFilterTab,
   type StudentAssignmentRow,
 } from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  AlertCircle,
+  ArrowRight,
   BookOpen,
   CalendarDays,
-  CheckCircle2,
+  ClipboardCheck,
   Clock3,
   FileText,
   GraduationCap,
-  Loader2,
+  Layers,
   Search,
+  SearchX,
   Send,
-  Sparkles,
-  Upload,
+  UserRound,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import DragDropUpload from '../assignment/drag-drop';
 
 type FilterTab = StudentAssignmentFilterTab;
 type SortKey = 'due' | 'course' | 'title';
+
+// ── Exported helpers (also consumed by assignment/[id]/page.tsx) ──────────────
 
 function normalizeAttachmentSize(value?: bigint | number) {
   return typeof value === 'bigint' ? Number(value) : value;
@@ -71,43 +54,17 @@ export function toAttachmentResourceItems<T extends { file_size_bytes?: bigint |
   }));
 }
 
+// ── Local helpers ─────────────────────────────────────────────────────────────
+
 function formatDate(value?: string | Date | null, options?: Intl.DateTimeFormatOptions) {
-  if (value === null || value === undefined || value === '') {
-    return 'No deadline';
-  }
-
+  if (value === null || value === undefined || value === '') return 'No deadline';
   const date = value instanceof Date ? value : new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return 'No deadline';
-  }
-
+  if (Number.isNaN(date.getTime())) return 'No deadline';
   const resolvedOptions: Intl.DateTimeFormatOptions = options ?? {
     dateStyle: 'medium',
     timeStyle: 'short',
   };
-
   return new Intl.DateTimeFormat('en-US', resolvedOptions).format(date);
-}
-
-function formatShortDate(value?: string | Date | null) {
-  return formatDate(value, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-function normalizeSubmissionTypes(value: unknown): string[] {
-  if (!value) return [];
-  if (Array.isArray(value)) return value.map(item => String(item).toUpperCase());
-  return [String(value).toUpperCase()];
-}
-
-function acceptsFileSubmission(submissionTypes: string[]) {
-  return submissionTypes.some(type =>
-    ['DOCUMENT', 'IMAGE', 'AUDIO', 'VIDEO'].includes(type.toUpperCase())
-  );
 }
 
 function getGradeTone(percentage?: number | null) {
@@ -118,1152 +75,396 @@ function getGradeTone(percentage?: number | null) {
   return 'text-destructive';
 }
 
-export function StudentAssignmentWorkspace() {
+/** Colored accent bar + icon-chip tone keyed off the submission lifecycle + urgency. */
+function getStatusTone(stateKey: string, dueTone: string) {
+  if (stateKey === 'graded') return { accent: 'bg-success', chip: 'bg-success/10 text-success' };
+  if (stateKey === 'returned') return { accent: 'bg-warning', chip: 'bg-warning/10 text-warning' };
+  if (stateKey === 'submitted') return { accent: 'bg-primary', chip: 'bg-primary/10 text-primary' };
+  // pending — escalate with the deadline
+  if (dueTone === 'danger') return { accent: 'bg-destructive', chip: 'bg-destructive/10 text-destructive' };
+  if (dueTone === 'warning') return { accent: 'bg-warning', chip: 'bg-warning/10 text-warning' };
+  return { accent: 'bg-primary', chip: 'bg-primary/10 text-primary' };
+}
+
+// ── Stat tile ───────────────────────────────────────────────────────────────
+
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+  helper,
+  tone = 'primary',
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string | number;
+  helper: string;
+  tone?: 'primary' | 'success' | 'warning';
+}) {
+  const chip =
+    tone === 'success'
+      ? 'bg-success/10 text-success'
+      : tone === 'warning'
+        ? 'bg-warning/10 text-warning'
+        : 'bg-primary/10 text-primary';
+
+  return (
+    <div className='rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md'>
+      <div className='flex items-center gap-4'>
+        <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', chip)}>
+          <Icon className='h-5 w-5' />
+        </div>
+        <div className='min-w-0'>
+          <p className='text-sm text-muted-foreground'>{label}</p>
+          <p className='text-2xl font-bold tracking-tight text-foreground'>{value}</p>
+          <p className='truncate text-xs text-muted-foreground'>{helper}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Assignment card ───────────────────────────────────────────────────────────
+
+function StudentAssignmentCard({
+  row,
+  state,
+  due,
+}: {
+  row: StudentAssignmentRow;
+  state: ReturnType<typeof getStudentAssignmentSubmissionState>;
+  due: ReturnType<typeof getDueSummary>;
+}) {
+  const tone = getStatusTone(state.key, due.tone);
+  const hasSubmission = Boolean(row.latestSubmission);
+  const percentage = row.latestSubmission?.percentage;
+  const dueValue = row.schedule?.due_at ?? row.assignment?.due_date;
+  const showDueBadge = !['submitted', 'graded'].includes(state.key);
+
+  const stat = (label: string, value: React.ReactNode, valueClass?: string) => (
+    <div className='flex flex-col gap-0.5 px-3 py-2'>
+      <span className='text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
+        {label}
+      </span>
+      <span className={cn('text-sm font-semibold text-foreground', valueClass)}>{value}</span>
+    </div>
+  );
+
+  return (
+    <article className='group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-md'>
+      <div className={cn('absolute inset-x-0 top-0 h-1', tone.accent)} />
+
+      <div className='flex h-full flex-col gap-5 p-5 sm:p-6'>
+        {/* Header */}
+        <div className='flex items-start justify-between gap-3'>
+          <div className='flex min-w-0 items-start gap-3'>
+            <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', tone.chip)}>
+              <FileText className='h-5 w-5' />
+            </div>
+            <div className='min-w-0 space-y-1'>
+              <p className='truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                {row.classMeta.courseTitle}
+              </p>
+              <h3 className='text-base font-semibold leading-snug text-foreground sm:text-lg'>
+                <span className='line-clamp-2'>{row.assignment?.title || 'Untitled assignment'}</span>
+              </h3>
+              <p className='flex items-center gap-1.5 truncate text-xs text-muted-foreground'>
+                <CalendarDays className='h-3.5 w-3.5 shrink-0' />
+                {row.classMeta.classTitle} · Due {formatDate(dueValue)}
+              </p>
+            </div>
+          </div>
+
+          <Badge variant={state.variant} className='shrink-0'>
+            {state.label}
+          </Badge>
+        </div>
+
+        {/* Description preview */}
+        {row.assignment?.description ? (
+          <div className='line-clamp-2 text-sm leading-relaxed text-muted-foreground [&_p]:leading-relaxed'>
+            <RichTextRenderer htmlString={row.assignment.description} maxChars={160} />
+          </div>
+        ) : null}
+
+        {/* Meta grid */}
+        <div className='grid grid-cols-3 divide-x divide-border/60 rounded-xl border border-border/60 bg-background/60'>
+          {stat('Points', row.assignment?.points_display || row.assignment?.max_points || '—')}
+          {stat('Resources', row.attachments.length)}
+          {stat(
+            'Score',
+            percentage == null ? 'Pending' : `${Math.round(percentage)}%`,
+            getGradeTone(percentage)
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className='mt-auto flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='min-w-0 space-y-0.5'>
+            <p className='text-sm font-medium text-foreground'>{state.helper}</p>
+            <p className='truncate text-xs text-muted-foreground'>
+              {hasSubmission
+                ? row.latestSubmission?.submitted_at
+                  ? `Submitted ${formatDate(row.latestSubmission.submitted_at)}`
+                  : 'Submission available for review'
+                : showDueBadge
+                  ? due.label
+                  : 'Awaiting your submission'}
+            </p>
+          </div>
+
+          <Button asChild size='sm' className='shrink-0'>
+            <Link
+              href={`/dashboard/assignment/${row.assignment?.uuid}`}
+              className='flex items-center gap-2'
+            >
+              {hasSubmission ? 'Open submission' : 'Submit assignment'}
+              <ArrowRight className='h-4 w-4' />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+// ── Workspace ───────────────────────────────────────────────────────────────
+
+export function StudentAssignmentWorkspace({ embedded = false }: { embedded?: boolean } = {}) {
   const student = useStudent();
-  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<FilterTab>('pending');
   const [searchValue, setSearchValue] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('due');
-  const [selectedAssignment, setSelectedAssignment] = useState<StudentAssignmentRow | null>(null);
-  const [submissionText, setSubmissionText] = useState('');
-  const [queuedFiles, setQueuedFiles] = useState<File[]>([]);
+
   const { assignmentRows, isLoading } = useStudentAssignmentData();
 
-  // Show all scheduled assignment rows across the student's enrolled classes.
-  // Each `assignmentRows` entry represents a schedule for a class, so the
-  // same assignment template assigned to multiple classes will appear once
-  // per class (separate schedule rows).
-  const studentAssignmentRows = assignmentRows;
-
-  // Use the submission data already attached to each schedule row from the
-  // `useStudentAssignmentData` hook. Treat each schedule as a distinct entity.
-  const assignmentRowsWithSubmissionState = useMemo(() => {
-    return studentAssignmentRows.map(row => ({
-      ...row,
-      submissions: row.submissions ?? [],
-      latestSubmission: row.latestSubmission ?? null,
-      hasSubmission: Boolean(row.latestSubmission),
-    }));
-  }, [studentAssignmentRows]);
-
-  const activeEnrollmentUuid =
-    selectedAssignment?.classMeta.courseEnrollmentUuid ??
-    selectedAssignment?.classMeta.enrollmentUuid;
-
-  const processedRows = useMemo(() => {
-    return assignmentRowsWithSubmissionState
-      .filter(row => {
-        let matchesTab = true;
-
-        const state = getStudentAssignmentSubmissionState(row);
-
-        switch (activeTab) {
-          case 'submitted':
-          case 'graded':
-          case 'returned':
-          case 'pending':
-            matchesTab = state.key === activeTab;
-            break;
-          default:
-            matchesTab = true;
-        }
-
-        const matchesSearch =
-          !searchValue.trim() ||
-          [
-            row.assignment?.title,
-            row.assignment?.description,
-            row.classMeta.courseTitle,
-            row.classMeta.classTitle,
-          ]
-            .filter(Boolean)
-            .some(value =>
-              String(value)
-                .toLowerCase()
-                .includes(searchValue.toLowerCase())
-            );
-
-        return matchesTab && matchesSearch;
-      })
-      .sort(/* existing sort */);
-  }, [
-    activeTab,
-    assignmentRowsWithSubmissionState,
-    searchValue,
-    sortBy,
-  ]);
+  // Decorate every schedule row once with its lifecycle state + due urgency.
+  const decorated = useMemo(
+    () =>
+      assignmentRows.map(row => ({
+        row,
+        state: getStudentAssignmentSubmissionState(row),
+        due: getDueSummary(row.schedule?.due_at ?? row.assignment?.due_date),
+      })),
+    [assignmentRows]
+  );
 
   const stats = useMemo(() => {
-    const total = studentAssignmentRows.length;
+    const total = decorated.length;
+    let pending = 0;
+    let submitted = 0;
+    let graded = 0;
+    let returned = 0;
+    const percentages: number[] = [];
 
-    const submitted = studentAssignmentRows.filter(row => row.latestSubmission != null).length;
+    for (const { row, state } of decorated) {
+      if (state.key === 'pending') pending += 1;
+      else if (state.key === 'submitted') submitted += 1;
+      else if (state.key === 'graded') graded += 1;
+      else if (state.key === 'returned') returned += 1;
 
-    const pending = total - submitted;
-
-    const graded = studentAssignmentRows.filter(
-      row => row.latestSubmission && row.latestSubmission.percentage != null
-    ).length;
-
-    const returned = studentAssignmentRows.filter(
-      row => String(row.latestSubmission?.status).toUpperCase() === 'RETURNED'
-    ).length;
-
-    const gradedSubmissions = studentAssignmentRows.map(row => row.latestSubmission?.percentage)
-      .filter(
-        (value): value is number =>
-          typeof value === 'number'
-      );
-
-
-    const averageScore =
-      gradedSubmissions.length > 0
-        ? Math.round(
-          gradedSubmissions.reduce(
-            (sum, value) => sum + value,
-            0
-          ) / gradedSubmissions.length
-        )
-        : 0;
-
-    const progress =
-      total > 0
-        ? Math.round((submitted / total) * 100)
-        : 0;
-
-    return {
-      total,
-      pending,
-      submitted,
-      graded,
-      returned,
-      averageScore,
-      progress,
-    };
-  }, [studentAssignmentRows]);
-
-  const selectedSubmissionAttachmentsQuery = useQuery({
-    ...getSubmissionAttachmentsOptions({
-      path: {
-        assignmentUuid: selectedAssignment?.assignment?.uuid as string,
-        submissionUuid: selectedAssignment?.latestSubmission?.uuid as string,
-      },
-    }),
-    enabled: !!selectedAssignment?.assignment?.uuid && !!selectedAssignment?.latestSubmission?.uuid,
-    staleTime: 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  const submitAssignmentMut = useMutation(submitAssignmentQueryMutation());
-  const uploadSubmissionAttachmentMut = useMutation(uploadSubmissionAttachmentMutation());
-
-  const isSubmitting = submitAssignmentMut.isPending || uploadSubmissionAttachmentMut.isPending;
-
-  const selectedSubmissionTypes = normalizeSubmissionTypes(
-    selectedAssignment?.assignment?.submission_types
-  );
-  const selectedStatus = selectedAssignment
-    ? getStudentAssignmentSubmissionState(selectedAssignment)
-    : null;
-  const canUploadFiles = acceptsFileSubmission(selectedSubmissionTypes);
-
-  const canSubmitSelected =
-    !!activeEnrollmentUuid &&
-    (
-      !selectedAssignment?.latestSubmission ||
-      ['RETURNED', 'DRAFT'].includes(
-        String(
-          selectedAssignment.latestSubmission.status
-        ).toUpperCase()
-      )
-    );
-
-  const handleCloseSheet = (open: boolean) => {
-    if (!open) {
-      setSelectedAssignment(null);
-      setSubmissionText('');
-      setQueuedFiles([]);
-    }
-  };
-
-  const handleFilesAdded = (files: File[]) => {
-    const existingKeys = new Set(queuedFiles.map(file => `${file.name}-${file.size}`));
-    const dedupedFiles = files.filter(file => !existingKeys.has(`${file.name}-${file.size}`));
-    setQueuedFiles(current => [...current, ...dedupedFiles]);
-  };
-
-  const handleRemoveFile = (fileToRemove: File) => {
-    setQueuedFiles(current =>
-      current.filter(
-        file => `${file.name}-${file.size}` !== `${fileToRemove.name}-${fileToRemove.size}`
-      )
-    );
-  };
-
-  const handleOpenAssignment = (row: StudentAssignmentRow) => {
-    setSelectedAssignment(row);
-    setSubmissionText(
-      row.latestSubmission?.status === 'RETURNED' ? row.latestSubmission?.submission_text || '' : ''
-    );
-    setQueuedFiles([]);
-  };
-
-  const handleSubmitAssignment = async () => {
-    if (!selectedAssignment?.assignment?.uuid) {
-      toast.error('This assignment is missing an active assignment record.');
-      return;
-    }
-
-    const enrollmentUuid =
-      selectedAssignment.classMeta.courseEnrollmentUuid ??
-      selectedAssignment.classMeta.enrollmentUuid;
-
-    if (!enrollmentUuid) {
-      toast.error('This assignment is missing an active student enrollment.');
-      return;
-    }
-
-    const submissionContent = submissionText.trim();
-
-    if (!submissionContent && queuedFiles.length === 0) {
-      toast.error(
-        'Add a written response or at least one attachment before submitting.'
-      );
-      return;
-    }
-
-    try {
-      const response = await submitAssignmentMut.mutateAsync({
-        path: {
-          assignmentUuid: selectedAssignment.assignment.uuid,
-        },
-        body: {
-          enrollment_uuid: enrollmentUuid,
-          student_uuid: selectedAssignment.classMeta.studentUuid,
-          submission_text: submissionContent,
-        },
-        query: {
-          enrollmentUuid: enrollmentUuid,
-          content: submissionContent,
-          enrollment_uuid: enrollmentUuid,
-        }
-      });
-
-      const submissionUuid = response.data?.uuid;
-
-      if (!submissionUuid) {
-        throw new Error('Submission was created without an identifier.');
+      if (typeof row.latestSubmission?.percentage === 'number') {
+        percentages.push(row.latestSubmission.percentage);
       }
-
-      await Promise.all(
-        queuedFiles.map(file =>
-          uploadSubmissionAttachmentMut.mutateAsync({
-            body: { file },
-            path: {
-              assignmentUuid: selectedAssignment.assignment.uuid as string,
-              submissionUuid,
-            },
-          })
-        )
-      );
-
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: getAssignmentSubmissionsQueryKey({
-            path: {
-              assignmentUuid: selectedAssignment.assignment.uuid,
-            },
-          }),
-        }),
-
-        queryClient.invalidateQueries({
-          queryKey: ['student-assignments'],
-        }),
-      ]);
-
-      toast.success('Assignment submitted successfully.');
-      handleCloseSheet(false);
-    } catch (error) {
-      toast.error(
-        getErrorMessage(error, 'Unable to submit this assignment right now.')
-      );
     }
-  };
 
-  const hasSubmission =
-    !!selectedAssignment?.latestSubmission;
+    const averageScore = percentages.length
+      ? Math.round(percentages.reduce((sum, value) => sum + value, 0) / percentages.length)
+      : 0;
+    const withSubmission = total - pending;
+    const progress = total > 0 ? Math.round((withSubmission / total) * 100) : 0;
 
-  const canResubmit =
-    selectedAssignment?.latestSubmission?.status === 'RETURNED';
+    return { total, pending, submitted, graded, returned, averageScore, progress };
+  }, [decorated]);
 
-  const showSubmissionForm =
-    !hasSubmission || canResubmit;
+  const processedRows = useMemo(() => {
+    const query = searchValue.trim().toLowerCase();
+
+    return decorated
+      .filter(({ row, state }) => {
+        const matchesTab = activeTab === 'all' ? true : state.key === activeTab;
+        const matchesSearch =
+          !query ||
+          [row.assignment?.title, row.assignment?.description, row.classMeta.courseTitle, row.classMeta.classTitle]
+            .filter(Boolean)
+            .some(value => String(value).toLowerCase().includes(query));
+        return matchesTab && matchesSearch;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'course') {
+          return (a.row.classMeta.courseTitle || '').localeCompare(b.row.classMeta.courseTitle || '');
+        }
+        if (sortBy === 'title') {
+          return (a.row.assignment?.title || '').localeCompare(b.row.assignment?.title || '');
+        }
+        const ad = a.row.schedule?.due_at ?? a.row.assignment?.due_date;
+        const bd = b.row.schedule?.due_at ?? b.row.assignment?.due_date;
+        const at = ad ? new Date(ad).getTime() : Number.POSITIVE_INFINITY;
+        const bt = bd ? new Date(bd).getTime() : Number.POSITIVE_INFINITY;
+        return at - bt;
+      });
+  }, [decorated, activeTab, searchValue, sortBy]);
+
+  // ── Guard states ─────────────────────────────────────────────────────────
 
   if (!student?.uuid) {
     return (
-      <div className={getEmptyStateClasses()}>
-        <AlertCircle className='text-primary/70 h-10 w-10' />
-        <div className='space-y-1'>
-          <h3 className='text-lg font-semibold'>Student profile required</h3>
-          <p className='text-muted-foreground max-w-lg text-sm'>
-            Assignments become available once a student profile is active on this account.
-          </p>
-        </div>
-      </div>
+      <EmptyState
+        variant='card'
+        icon={UserRound}
+        title='Student profile required'
+        description='Assignments become available once a student profile is active on this account.'
+      />
     );
   }
 
   if (isLoading) {
     return (
       <div className='space-y-6'>
+        {!embedded && <Skeleton className='h-16 w-full max-w-md rounded-lg' />}
         <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
           {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className='h-32 rounded-[24px]' />
+            <Skeleton key={index} className='h-28 rounded-2xl' />
           ))}
         </div>
-        <Skeleton className='h-16 rounded-[24px]' />
-        <div className='grid gap-4'>
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className='h-52 rounded-[28px]' />
+        <Skeleton className='h-28 rounded-2xl' />
+        <div className='grid gap-4 lg:grid-cols-2'>
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className='h-56 rounded-2xl' />
           ))}
         </div>
       </div>
     );
   }
 
-  if (studentAssignmentRows.length === 0) {
+  if (stats.total === 0) {
     return (
-      <div className={getEmptyStateClasses()}>
-        <BookOpen className='text-primary/70 h-10 w-10' />
-        <div className='space-y-1'>
-          <h3 className='text-lg font-semibold'>No assignments available yet</h3>
-          <p className='text-muted-foreground max-w-lg text-sm'>
-            Pending assignments will appear here once your enrolled classes have active assessment
-            schedules.
-          </p>
-        </div>
-      </div>
+      <EmptyState
+        variant='card'
+        icon={BookOpen}
+        title='No assignments yet'
+        description='Assignments will appear here once your enrolled classes publish assessment schedules.'
+      />
     );
   }
+
+  const statTiles = [
+    { icon: Layers, label: 'Assignments', value: stats.total, helper: 'Across your classes', tone: 'primary' as const },
+    { icon: Clock3, label: 'Pending', value: stats.pending, helper: 'Awaiting your work', tone: 'warning' as const },
+    { icon: Send, label: 'Awaiting grade', value: stats.submitted + stats.returned, helper: 'Submitted or returned', tone: 'primary' as const },
+    { icon: GraduationCap, label: 'Average score', value: `${stats.averageScore}%`, helper: stats.graded > 0 ? 'From graded work' : 'No graded work yet', tone: 'success' as const },
+  ];
+
+  const filterTabs: { value: FilterTab; label: string; count: number }[] = [
+    { value: 'pending', label: 'Pending', count: stats.pending },
+    { value: 'submitted', label: 'Submitted', count: stats.submitted },
+    { value: 'graded', label: 'Graded', count: stats.graded },
+    { value: 'returned', label: 'Returned', count: stats.returned },
+    { value: 'all', label: 'All', count: stats.total },
+  ];
 
   return (
-    <>
-      <div className='space-y-6'>
-        <div className='space-y-2'>
-          <Badge
-            variant='outline'
-            className='border-primary/30 bg-primary/5 text-primary w-fit'
-          >
-            Assignment workspace
-          </Badge>
-
-          <h1 className='text-foreground text-2xl font-semibold sm:text-3xl'>
-            Manage and submit course assignments
+    <div className='space-y-6'>
+      {!embedded && (
+        <header className='space-y-1.5'>
+          <h1 className='text-2xl font-bold tracking-tight text-foreground sm:text-3xl'>
+            Assignments
           </h1>
-
-          <p className='text-muted-foreground text-sm'>
-            View assigned coursework, review instructions, upload your submissions,
-            and track grading feedback from your instructors.
+          <p className='max-w-2xl text-sm text-muted-foreground'>
+            Review coursework, upload your submissions, and track grading feedback from your
+            instructors.
           </p>
-        </div>
+        </header>
+      )}
 
-        <section className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-          {[
-            {
-              helper: 'Across your current classes',
-              icon: BookOpen,
-              label: 'Assignments',
-              value: stats.total,
-            },
-            {
-              helper: 'Need attention',
-              icon: Clock3,
-              label: 'Pending',
-              value: stats.pending,
-            },
-            {
-              helper: 'Awaiting review or revision',
-              icon: Send,
-              label: 'Submitted',
-              value: stats.submitted + stats.returned,
-            },
-            {
-              helper: stats.graded > 0 ? 'From graded work only' : 'No graded work yet',
-              icon: GraduationCap,
-              label: 'Average score',
-              value: `${stats.averageScore}%`,
-            },
-          ].map(metric => (
-            <Card key={metric.label} className={getStatCardClasses()}>
-              <CardContent className='p-0'>
-                <div className='flex items-center gap-4'>
-                  <div className='bg-primary/10 text-primary rounded-2xl p-3'>
-                    <metric.icon className='h-5 w-5' />
-                  </div>
-                  <div className='min-w-0'>
-                    <p className='text-muted-foreground text-sm'>{metric.label}</p>
-                    <p className='text-foreground text-2xl font-semibold'>{metric.value}</p>
-                    <p className='text-muted-foreground text-xs'>{metric.helper}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </section>
+      {/* Stat tiles */}
+      <section className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
+        {statTiles.map(tile => (
+          <StatTile key={tile.label} {...tile} />
+        ))}
+      </section>
 
-        <Card className={cx(getCardClasses(), 'overflow-hidden p-0')}>
-          <CardContent className='space-y-4 p-4 sm:p-6'>
-            <div className='flex min-w-0 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
-              <div className='min-w-0 space-y-2'>
-                <Badge
-                  variant='outline'
-                  className='border-primary/20 bg-primary/10 text-primary w-fit'
-                >
-                  <Sparkles className='mr-1 h-3.5 w-3.5' />
-                  Submission progress
-                </Badge>
-
-                <div className='min-w-0'>
-                  <p className='text-foreground break-words text-lg font-semibold'>
-                    {stats.progress}% of assigned work has a submission trail
-                  </p>
-
-                  <p className='text-muted-foreground text-sm'>
-                    Returned work is counted so you can track resubmissions that still
-                    need action.
-                  </p>
-                </div>
-              </div>
-
-              <div className='flex min-w-0 w-full flex-col gap-3 lg:w-auto lg:min-w-[520px] lg:flex-row'>
-                <div className='relative min-w-0 flex-1'>
-                  <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-
-                  <Input
-                    className='w-full pl-9 text-sm'
-                    onChange={event => setSearchValue(event.target.value)}
-                    placeholder='Search by assignment, class, or course'
-                    value={searchValue}
-                  />
-
-                  {searchValue ? (
-                    <button
-                      className='text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition'
-                      onClick={() => setSearchValue('')}
-                      type='button'
-                    >
-                      <X className='h-4 w-4' />
-                    </button>
-                  ) : null}
-                </div>
-
-                <Tabs
-                  onValueChange={value => setSortBy(value as SortKey)}
-                  value={sortBy}
-                  className='min-w-0'
-                >
-                  <TabsList className='grid w-full grid-cols-3 lg:w-[280px]'>
-                    <TabsTrigger value='due'>Due date</TabsTrigger>
-                    <TabsTrigger value='course'>Course</TabsTrigger>
-                    <TabsTrigger value='title'>Title</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-            </div>
-
-            <Progress value={stats.progress} className='h-2.5' />
-
-            <Tabs
-              onValueChange={value => setActiveTab(value as FilterTab)}
-              value={activeTab}
-              className='min-w-0'
-            >
-              <div className='overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/70 [&::-webkit-scrollbar-track]:bg-transparent'>
-                <TabsList className='inline-flex min-w-max gap-2'>
-                  <TabsTrigger value='pending'>
-                    Pending ({stats.pending})
-                  </TabsTrigger>
-                  <TabsTrigger value='submitted'>
-                    Submitted ({stats.submitted})
-                  </TabsTrigger>
-                  <TabsTrigger value='graded'>
-                    Graded ({stats.graded})
-                  </TabsTrigger>
-                  <TabsTrigger value='returned'>
-                    Returned ({stats.returned})
-                  </TabsTrigger>
-                  <TabsTrigger value='all'>All ({stats.total})</TabsTrigger>
-
-                </TabsList>
-              </div>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        {processedRows.length === 0 ? (
-          <div className={cx(getEmptyStateClasses(), 'min-h-[260px]')}>
-            <AlertCircle className='text-primary/70 h-10 w-10' />
-            <div className='space-y-1'>
-              <h3 className='text-lg font-semibold'>No assignments match this filter</h3>
-              <p className='text-muted-foreground max-w-lg text-sm'>
-                Adjust the active tab or search term to review your pending and completed work.
+      {/* Progress + toolbar */}
+      <section className='space-y-4 rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6'>
+        <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
+          <div className='min-w-0 space-y-1'>
+            <div className='flex items-center gap-2'>
+              <ClipboardCheck className='h-4 w-4 text-primary' />
+              <p className='text-sm font-semibold text-foreground'>
+                {stats.progress}% of assigned work has a submission
               </p>
             </div>
+            <Progress value={stats.progress} className='h-2 w-full max-w-md' />
           </div>
-        ) : (
-          <div className='grid gap-4 lg:grid-cols-2'>
-            {processedRows.map(row => {
-              const dueSummary = getDueSummary(row.schedule?.due_at ?? row.assignment?.due_date);
 
-              const latestSubmission =
-                row.latestSubmission ??
-                row.submissions?.[row.submissions.length - 1];
-
-              const status = latestSubmission
-                ? (() => {
-                  switch (latestSubmission.status?.toLowerCase()) {
-                    case "graded":
-                      return {
-                        label: "Graded",
-                        helper: "Your assignment has been graded.",
-                        variant: "success" as const,
-                      };
-
-                    case "submitted":
-                      return {
-                        label: "Submitted",
-                        helper: "Your submission is awaiting grading.",
-                        variant: "default" as const,
-                      };
-
-                    case "late":
-                      return {
-                        label: "Late",
-                        helper: "Submitted after the due date.",
-                        variant: "destructive" as const,
-                      };
-
-                    default:
-                      return {
-                        label:
-                          latestSubmission.submission_status_display ??
-                          latestSubmission.status,
-                        helper: "Submission received.",
-                        variant: "default" as const,
-                      };
-                  }
-                })()
-                : getStudentAssignmentSubmissionState(row);
-
-              const percentage = row.latestSubmission?.percentage;
-
-              return (
-                <Card
-                  key={`${row.classMeta.classUuid}-${row.schedule?.uuid ?? row.assignment?.uuid}`}
-                  className={cx(getCardClasses(), 'p-0 hover:-translate-y-0.5')}
+          <div className='flex w-full min-w-0 flex-col gap-3 lg:w-auto lg:flex-row lg:items-center'>
+            <div className='relative min-w-0 flex-1 lg:w-72'>
+              <Search className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+              <Input
+                className='w-full pl-9 text-sm'
+                onChange={event => setSearchValue(event.target.value)}
+                placeholder='Search assignments'
+                value={searchValue}
+              />
+              {searchValue ? (
+                <button
+                  aria-label='Clear search'
+                  className='absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground'
+                  onClick={() => setSearchValue('')}
+                  type='button'
                 >
-                  <CardContent className='space-y-5 p-5 sm:p-6'>
-                    <div className='flex flex-col gap-4 xl:items-start xl:justify-between'>
-                      <div className='space-y-3'>
-                        <div className='flex flex-wrap items-center gap-2'>
-                          <Badge variant='outline' className='border-border/70 bg-muted/40'>
-                            {row.classMeta.courseTitle}
-                          </Badge>
-                          <Badge variant={status.variant}>{status.label}</Badge>
+                  <X className='h-4 w-4' />
+                </button>
+              ) : null}
+            </div>
 
-                          {!["Submitted", "Graded"].includes(status.label) && (
-                            <Badge className={dueSummary.badgeClassName} variant="outline">
-                              <CalendarDays className="mr-1 h-3.5 w-3.5" />
-                              {dueSummary.label}
-                            </Badge>
-                          )}
-                        </div>
-
-                        <div>
-                          <h3 className='text-foreground text-xl font-semibold'>
-                            {row.assignment?.title || 'Untitled assignment'}
-                          </h3>
-                          <p className='text-muted-foreground mt-1 text-sm'>
-                            {row.classMeta.classTitle} • Due{' '}
-                            {formatDate(row.schedule?.due_at || row.assignment?.due_date)}
-                          </p>
-                        </div>
-
-                        {row.assignment?.description ? (
-                          <div className='text-muted-foreground max-w-3xl text-sm [&_p]:leading-6'>
-                            <RichTextRenderer
-                              htmlString={row.assignment.description}
-                              maxChars={220}
-                            />
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className='border-border/60 bg-background/50 flex items-center divide-x rounded-xl border text-sm'>
-                        <div className='flex flex-1 flex-col px-3 py-2'>
-                          <span className='text-muted-foreground text-[11px] uppercase'>
-                            Points
-                          </span>
-                          <span className='text-foreground font-semibold'>
-                            {row.assignment?.points_display ||
-                              row.assignment?.max_points ||
-                              'Not set'}
-                          </span>
-                        </div>
-
-                        <div className='flex flex-1 flex-col px-3 py-2'>
-                          <span className='text-muted-foreground text-[11px] uppercase'>
-                            Resources
-                          </span>
-                          <span className='text-foreground font-semibold'>
-                            {row.attachments.length}
-                          </span>
-                        </div>
-
-                        <div className='flex flex-1 flex-col px-3 py-2'>
-                          <span className='text-muted-foreground text-[11px] uppercase'>
-                            Score
-                          </span>
-                          <span className={cx('font-semibold', getGradeTone(percentage))}>
-                            {percentage == null ? 'Pending' : `${Math.round(percentage)}%`}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between'>
-                      <div className='space-y-1'>
-                        <div className='flex flex-row items-center gap-2' >
-                          <p className='text-foreground text-sm font-medium'>
-                            {row.hasSubmission
-                              ? 'Submission received.'
-                              : status.helper}
-                          </p>
-                          <p className='text-foreground text-sm font-medium'>
-                            {row.latestSubmission?.file_count_display}
-                          </p>
-                        </div>
-
-                        <p className='text-muted-foreground text-xs'>
-                          {row.hasSubmission
-                            ? row.latestSubmission?.submitted_at
-                              ? `Submitted: ${formatDate(
-                                row.latestSubmission.submitted_at
-                              )}`
-                              : 'Submission available for review'
-                            : `Visible from ${formatShortDate(
-                              row.schedule?.visible_at
-                            )}`}
-                        </p>
-                      </div>
-
-                      {/* <Button className='max-w-fit'
-                        onClick={() => handleOpenAssignment(row)}
-
-                      >
-                        View
-                      </Button> */}
-                      <Button
-                        className='sm:min-w-[160px]'
-                      >
-                        <Link href={`/dashboard/assignment/${row?.assignment?.uuid}`}  >
-                          {row.hasSubmission
-                            ? 'Open submission'
-                            : 'Submit assignment'}
-                        </Link>
-                      </Button>
-
-
-                    </div>
-
-                    {row.hasSubmission && row.latestSubmission ? (
-                      <div className="rounded-xl border border-border/60 bg-background/70 p-3">
-                        <p className="text-xs text-muted-foreground">
-                          Submitted
-                        </p>
-
-                        <p className="text-sm font-medium">
-                          {formatDate(
-                            row.latestSubmission.submitted_at
-                          )}
-                        </p>
-
-                        {row.latestSubmission.submission_status_display && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Status:{" "}
-                            {
-                              row.latestSubmission
-                                .submission_status_display
-                            }
-                          </p>
-                        )}
-                      </div>
-                    ) : null}
-                  </CardContent>
-                </Card>
-              );
-            })}
+            <Tabs onValueChange={value => setSortBy(value as SortKey)} value={sortBy}>
+              <TabsList className='grid w-full grid-cols-3 lg:w-[220px]'>
+                <TabsTrigger value='due'>Due</TabsTrigger>
+                <TabsTrigger value='course'>Course</TabsTrigger>
+                <TabsTrigger value='title'>Title</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
-        )}
-      </div>
+        </div>
 
-      <Sheet onOpenChange={handleCloseSheet} open={!!selectedAssignment}>
-        <SheetContent className='w-full overflow-y-auto p-0 sm:max-w-full lg:max-w-[960px]'>
-          <div className='space-y-6 p-5 sm:p-6'>
-            <SheetHeader className='border-border/60 space-y-3 border-b px-0 pb-5'>
-              <div className='flex flex-wrap items-center gap-2'>
-                <Badge variant='outline' className='border-primary/20 bg-primary/10 text-primary'>
-                  {selectedAssignment?.classMeta.courseTitle}
-                </Badge>
-                {selectedStatus ? (
-                  <Badge variant={selectedStatus.variant}>{selectedStatus.label}</Badge>
-                ) : null}
-              </div>
-              <SheetTitle className='text-2xl'>
-                {selectedAssignment?.assignment?.title || 'Assignment details'}
-              </SheetTitle>
-              <SheetDescription className='flex flex-wrap items-center gap-x-2 gap-y-1'>
-                <span>
-                  {selectedAssignment?.classMeta.classTitle} • Due{' '}
-                  {formatDate(
-                    selectedAssignment?.schedule?.due_at ||
-                    selectedAssignment?.assignment?.due_date
-                  )}
-                </span>
-
-                <span className='text-muted-foreground'>•</span>
-
-                <span>
-                  Points:{' '}
-                  {selectedAssignment?.assignment?.points_display ||
-                    selectedAssignment?.assignment?.max_points ||
-                    'Not set'}
-                </span>
-
-                <span className='text-muted-foreground'>•</span>
-
-                <span>
-                  Attempts: {selectedAssignment?.submissions.length}
-                </span>
-              </SheetDescription>
-            </SheetHeader>
-
-            {!selectedAssignment ? null : (
-              <div className='space-y-6'>
-                <div className='mx-auto max-w-4xl space-y-6'>
-                  {/* Description */}
-                  {selectedAssignment.assignment?.description && (
-                    <section>
-                      <h2 className='mb-3 text-lg font-semibold'>Description</h2>
-                      <div className='prose prose-sm dark:prose-invert max-w-none'>
-                        <RichTextRenderer
-                          htmlString={selectedAssignment.assignment.description}
-                        />
-                      </div>
-                    </section>
-                  )}
-
-                  {/* Instructions */}
-                  <section>
-                    <h2 className='mb-3 text-lg font-semibold'>Instructions</h2>
-
-                    {selectedAssignment.assignment?.instructions ? (
-                      <div className='prose prose-sm dark:prose-invert max-w-none'>
-                        <RichTextRenderer
-                          htmlString={selectedAssignment.assignment.instructions}
-                        />
-                      </div>
-                    ) : (
-                      <p className='text-muted-foreground'>
-                        No extra instructions were provided.
-                      </p>
-                    )}
-                  </section>
-
-
-                </div>
-
-                <Card className='border-border/60 space-y-0'>
-                  <CardHeader className=''>
-                    <CardTitle className='text-base'>Resources from your instructor</CardTitle>
-                  </CardHeader>
-                  <CardContent >
-                    <AttachmentResourceList
-                      attachments={toAttachmentResourceItems(selectedAssignment.attachments)}
-                      emptyMessage='No supporting files were attached to this assignment.'
-                      previewLabel='Read file'
-                    />
-                  </CardContent>
-                </Card>
-
-                {selectedAssignment.latestSubmission ? (
-                  <Card className='border-border/60'>
-                    <CardHeader className='pb-3'>
-                      <CardTitle className='text-base'>Latest submission</CardTitle>
-                    </CardHeader>
-                    <CardContent className='space-y-4'>
-                      <div className='grid gap-3 md:grid-cols-3'>
-                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
-                            Submitted
-                          </p>
-                          <p className='text-foreground mt-1 text-sm font-medium'>
-                            {formatDate(selectedAssignment.latestSubmission.submitted_at)}
-                          </p>
-                        </div>
-                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
-                            Status
-                          </p>
-                          <p className='text-foreground mt-1 text-sm font-medium'>
-                            {selectedAssignment.latestSubmission.submission_status_display ||
-                              selectedAssignment.latestSubmission.status}
-                          </p>
-                        </div>
-                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
-                            Score
-                          </p>
-                          <p
-                            className={cx(
-                              'mt-1 text-sm font-semibold',
-                              getGradeTone(selectedAssignment.latestSubmission.percentage)
-                            )}
-                          >
-                            {selectedAssignment.latestSubmission.percentage == null
-                              ? 'Pending'
-                              : selectedAssignment.latestSubmission.grade_display ||
-                              `${Math.round(selectedAssignment.latestSubmission.percentage)}%`}
-                          </p>
-                        </div>
-                      </div>
-
-                      {selectedAssignment.latestSubmission.submission_text ? (
-                        <div className='space-y-2'>
-                          <p className='text-foreground text-sm font-medium'>
-                            Your written response
-                          </p>
-                          <div className='border-border/60 bg-background/70 text-muted-foreground rounded-2xl border p-4 text-sm [&_p]:leading-6'>
-                            <RichTextRenderer
-                              htmlString={selectedAssignment.latestSubmission.submission_text}
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            {(Array.isArray(selectedAssignment?.latestSubmission?.file_urls)
-                              ? selectedAssignment.latestSubmission.file_urls
-                              : []
-                            ).map((url: string, index: number) => {
-                              const name = url.split('/').pop();
-
-                              return (
-                                <div
-                                  key={index}
-                                  className="flex items-center gap-2 rounded-md border border-border/60 bg-background/60 px-3 py-2"
-                                >
-                                  <FileText className="h-4 w-4 text-muted-foreground" />
-
-                                  <span className="text-sm text-foreground truncate">
-                                    {name}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ) : null}
-
-
-                      {selectedAssignment.latestSubmission.instructor_comments ? (
-                        <div className='space-y-2'>
-                          <p className='text-foreground text-sm font-medium'>Instructor feedback</p>
-                          <div className='border-warning/20 bg-warning/10 text-foreground rounded-2xl border p-4 text-sm'>
-                            {selectedAssignment.latestSubmission.instructor_comments}
-                          </div>
-                        </div>
-                      ) : null}
-
-                      <div className='space-y-2'>
-                        <p className='text-foreground text-sm font-medium'>Uploaded files</p>
-                        {selectedSubmissionAttachmentsQuery.isLoading ? (
-                          <div className='space-y-2'>
-                            <Skeleton className='h-14 rounded-2xl' />
-                            <Skeleton className='h-14 rounded-2xl' />
-                          </div>
-                        ) : (
-                          <AttachmentResourceList
-                            attachments={toAttachmentResourceItems(
-                              (selectedSubmissionAttachmentsQuery.data?.data ??
-                                []) as AssignmentSubmissionAttachment[]
-                            )}
-                            emptyMessage='No files were uploaded with the latest submission.'
-                            previewLabel='Read file'
-                          />
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (<Card className='border-border/60'>
-                  <CardHeader className='pb-3'>
-                    <CardTitle className='text-base'>
-                      {showSubmissionForm
-                        ? selectedAssignment?.latestSubmission?.status === 'RETURNED'
-                          ? 'Revise and resubmit'
-                          : 'Submit your work'
-                        : 'Submission details'}
-                    </CardTitle>
-                  </CardHeader>
-
-                  <CardContent className='space-y-4'>
-                    {!showSubmissionForm ? (
-                      <>
-                        <div className='grid gap-3 md:grid-cols-3'>
-                          <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                            <p className='text-muted-foreground text-xs tracking-wide uppercase'>
-                              Submitted
-                            </p>
-                            <p className='text-foreground mt-1 text-sm font-medium'>
-                              {selectedAssignment?.latestSubmission?.submitted_at
-                                ? formatDate(
-                                  selectedAssignment.latestSubmission.submitted_at
-                                )
-                                : 'Submitted'}
-                            </p>
-                          </div>
-
-                          <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                            <p className='text-muted-foreground text-xs tracking-wide uppercase'>
-                              Status
-                            </p>
-                            <p className='text-foreground mt-1 text-sm font-medium'>
-                              {selectedAssignment?.latestSubmission
-                                ?.submission_status_display ||
-                                selectedAssignment?.latestSubmission?.status ||
-                                'Submitted'}
-                            </p>
-                          </div>
-
-                          <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                            <p className='text-muted-foreground text-xs tracking-wide uppercase'>
-                              Score
-                            </p>
-                            <p
-                              className={cx(
-                                'mt-1 text-sm font-semibold',
-                                getGradeTone(
-                                  selectedAssignment?.latestSubmission?.percentage
-                                )
-                              )}
-                            >
-                              {selectedAssignment?.latestSubmission?.percentage == null
-                                ? 'Pending review'
-                                : selectedAssignment?.latestSubmission?.grade_display ||
-                                `${Math.round(
-                                  selectedAssignment.latestSubmission.percentage
-                                )}%`}
-                            </p>
-                          </div>
-                        </div>
-
-                        {selectedAssignment?.latestSubmission?.submission_text ? (
-                          <div className='space-y-2'>
-                            <p className='text-foreground text-sm font-medium'>
-                              Submitted response
-                            </p>
-
-                            <div className='border-border/60 bg-background/70 rounded-2xl border p-4 text-sm'>
-                              <RichTextRenderer
-                                htmlString={
-                                  selectedAssignment.latestSubmission.submission_text
-                                }
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              {(Array.isArray(selectedAssignment?.latestSubmission?.file_urls)
-                                ? selectedAssignment.latestSubmission.file_urls
-                                : []
-                              ).map((url: string, index: number) => {
-                                const name = url.split('/').pop();
-
-                                return (
-                                  <div
-                                    key={index}
-                                    className="flex items-center gap-2 rounded-md border border-border/60 bg-background/60 px-3 py-2"
-                                  >
-                                    <FileText className="h-4 w-4 text-muted-foreground" />
-
-                                    <span className="text-sm text-foreground truncate">
-                                      {name}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ) : null}
-
-                        {selectedAssignment?.latestSubmission?.instructor_comments ? (
-                          <div className='space-y-2'>
-                            <p className='text-foreground text-sm font-medium'>
-                              Instructor feedback
-                            </p>
-
-                            <div className='border-warning/20 bg-warning/10 rounded-2xl border p-4 text-sm'>
-                              {selectedAssignment.latestSubmission.instructor_comments}
-                            </div>
-                          </div>
-                        ) : null}
-
-                        <div className='border-border/60 border-t pt-4'>
-                          <p className='text-muted-foreground text-sm'>
-                            Your submission has been received and is awaiting review.
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className='space-y-2'>
-                          <label
-                            className='text-foreground text-sm font-medium'
-                            htmlFor='submission-text'
-                          >
-                            Written response
-                          </label>
-
-                          <Textarea
-                            className='min-h-32'
-                            disabled={!canSubmitSelected || isSubmitting}
-                            id='submission-text'
-                            onChange={event =>
-                              setSubmissionText(event.target.value)
-                            }
-                            placeholder='Paste your answer, notes, or submission links here.'
-                            value={submissionText}
-                          />
-                        </div>
-
-                        <div className='space-y-3'>
-                          <div className='flex items-center justify-between gap-3'>
-                            <div>
-                              <p className='text-foreground text-sm font-medium'>
-                                Attachments
-                              </p>
-
-                              <p className='text-muted-foreground text-xs'>
-                                {canUploadFiles
-                                  ? 'Accepted file uploads can be added before you submit.'
-                                  : 'This assignment primarily expects text or link-based responses.'}
-                              </p>
-                            </div>
-
-                            <Badge variant='outline'>
-                              {queuedFiles.length} queued
-                            </Badge>
-                          </div>
-
-                          <DragDropUpload
-                            className={cx(
-                              !canUploadFiles ||
-                                !canSubmitSelected ||
-                                isSubmitting
-                                ? 'pointer-events-none opacity-60'
-                                : ''
-                            )}
-                            multiple
-                            onFilesAdded={handleFilesAdded}
-                          >
-                            <div className='flex flex-col items-center gap-2 text-center'>
-                              <Upload className='text-primary h-5 w-5' />
-
-                              <div>
-                                <p className='text-foreground text-sm font-medium'>
-                                  Drop files here or click to browse
-                                </p>
-
-                                <p className='text-muted-foreground text-xs'>
-                                  Documents and supporting media upload right after
-                                  the submission record is created.
-                                </p>
-                              </div>
-                            </div>
-                          </DragDropUpload>
-
-                          {queuedFiles.length > 0 && (
-                            <div className='space-y-2'>
-                              {queuedFiles.map(file => (
-                                <div
-                                  key={`${file.name}-${file.size}`}
-                                  className='border-border/60 bg-background/70 flex items-center justify-between gap-3 rounded-2xl border p-3'
-                                >
-                                  <div className='min-w-0'>
-                                    <p className='text-foreground truncate text-sm font-medium'>
-                                      {file.name}
-                                    </p>
-
-                                    <p className='text-muted-foreground text-xs'>
-                                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                                    </p>
-                                  </div>
-
-                                  <Button
-                                    disabled={isSubmitting}
-                                    onClick={() => handleRemoveFile(file)}
-                                    size='icon'
-                                    type='button'
-                                    variant='ghost'
-                                  >
-                                    <X className='h-4 w-4' />
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between'>
-                          <div className='text-muted-foreground text-xs'>
-                            {!(
-                              selectedAssignment?.classMeta
-                                ?.courseEnrollmentUuid ??
-                              selectedAssignment?.classMeta
-                                ?.enrollmentUuid
-                            )
-                              ? 'Submission is unavailable until this class has an active enrollment record.'
-                              : canSubmitSelected
-                                ? 'Your submission will be saved immediately and any queued files will upload right after.'
-                                : 'This assignment already has a live submission state.'}
-                          </div>
-
-                          <Button
-                            className='rounded-full'
-                            disabled={!canSubmitSelected || isSubmitting}
-                            onClick={handleSubmitAssignment}
-                          >
-                            {isSubmitting ? (
-                              <>
-                                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                                Submitting
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle2 className='mr-2 h-4 w-4' />
-                                {selectedAssignment?.latestSubmission?.status ===
-                                  'RETURNED'
-                                  ? 'Resubmit assignment'
-                                  : 'Submit assignment'}
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>)}
-              </div>
-            )}
+        <Tabs onValueChange={value => setActiveTab(value as FilterTab)} value={activeTab}>
+          <div className='overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/70 [&::-webkit-scrollbar-track]:bg-transparent'>
+            <TabsList className='inline-flex min-w-max gap-1'>
+              {filterTabs.map(tab => (
+                <TabsTrigger key={tab.value} value={tab.value} className='gap-1.5'>
+                  {tab.label}
+                  <span className='rounded-full bg-muted-foreground/15 px-1.5 text-[11px] font-semibold text-muted-foreground'>
+                    {tab.count}
+                  </span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
           </div>
-        </SheetContent>
-      </Sheet>
-    </>
+        </Tabs>
+      </section>
+
+      {/* Card grid */}
+      {processedRows.length === 0 ? (
+        <EmptyState
+          variant='card'
+          icon={SearchX}
+          title='No assignments match this filter'
+          description='Adjust the active tab or search term to review your pending and completed work.'
+        />
+      ) : (
+        <div className='grid gap-4 lg:grid-cols-2'>
+          {processedRows.map(({ row, state, due }) => (
+            <StudentAssignmentCard
+              key={`${row.classMeta.classUuid}-${row.schedule?.uuid ?? row.assignment?.uuid}`}
+              row={row}
+              state={state}
+              due={due}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

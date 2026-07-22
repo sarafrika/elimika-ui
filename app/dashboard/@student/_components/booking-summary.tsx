@@ -1,5 +1,6 @@
 'use client';
 
+import type { ComponentProps } from 'react';
 import { AlertCircle, Calendar, Clock, DollarSign, MapPin, Video } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
@@ -95,7 +96,9 @@ export const BookingSummary: React.FC<Props> = ({
     return (
       <BookingConfirmation
         booking={completedBooking}
-        instructor={instructor}
+        instructor={
+          instructor as unknown as ComponentProps<typeof BookingConfirmation>['instructor']
+        }
         onClose={handleConfirmationClose}
       />
     );

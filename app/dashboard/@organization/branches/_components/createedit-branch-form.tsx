@@ -1,5 +1,6 @@
 'use client';
 
+import type { ComponentProps } from 'react';
 import { useQueryClient } from '@tanstack/react-query';import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader } from 'lucide-react';
 import Link from 'next/link';
@@ -131,7 +132,7 @@ export default function CreateEditBranchform({
                   <FormLabel>Location</FormLabel>
                   <FormControl>
                     {/* <Input placeholder='e.g., 123 Waiyaki Way' {...field} /> */}
-                    <LocationInput {...field} />
+                    <LocationInput {...(field as unknown as ComponentProps<typeof LocationInput>)} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

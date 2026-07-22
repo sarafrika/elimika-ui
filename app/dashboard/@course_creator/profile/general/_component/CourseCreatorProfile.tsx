@@ -405,7 +405,7 @@ export default function CourseCreatorProfile() {
                     <FormItem>
                       <FormLabel>Phone number</FormLabel>
                       <FormControl>
-                        <Input type='tel' placeholder='+254712345678' {...field} />
+                        <Input type='tel' placeholder='+254712345678' {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

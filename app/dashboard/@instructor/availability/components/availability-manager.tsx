@@ -192,7 +192,7 @@ export default function AvailabilityManager({
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-4'>
               <Avatar className='h-12 w-12'>
-                <AvatarImage src={user?.profile_image_url} />
+                <AvatarImage src={user?.profile_image_url ?? undefined} />
                 <AvatarFallback>
                   {user?.instructor?.full_name
                     ?.split(' ')

@@ -418,7 +418,7 @@ const EnrollmentsPage = () => {
                         className='group hover:bg-muted/50 flex items-center gap-4 p-4 transition-colors'
                       >
                         <Avatar className='border-background h-12 w-12 border-2 shadow-sm'>
-                          <AvatarImage src={enrollment.profile_image_url} />
+                          <AvatarImage src={enrollment.profile_image_url ?? undefined} />
                           <AvatarFallback className='bg-primary/10 text-primary font-semibold'>
                             {(
                               enrollment.full_name ??

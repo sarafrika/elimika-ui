@@ -34,7 +34,7 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarClock, Heart, Share2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { type ComponentProps, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import NotesModal from '../../../../../../components/custom-modals/notes-modal';
 import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
@@ -238,7 +238,7 @@ export default function ClassCourseDetailsPage({
         ...getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string }, }),
         enabled: !!course?.course_creator_uuid,
     });
-    const creator = creatorResponse?.data;
+    const creator = (creatorResponse as unknown as { data?: typeof creatorResponse })?.data;
 
     const myCourseItems = useMemo<UnifiedContentItem[]>(() => {
         const courseCreatorUuid = course?.course_creator_uuid;
@@ -395,7 +395,7 @@ export default function ClassCourseDetailsPage({
             ? 'Approved'
             : currentTrainingApplicationStatus === 'pending'
                 ? 'Pending'
-                : currentTrainingApplicationStatus === 'revoked' ||
+                : (currentTrainingApplicationStatus as string) === 'revoked' ||
                     currentTrainingApplicationStatus === 'rejected'
                     ? 'Reapply to Train'
                     : 'Apply to Train';
@@ -576,8 +576,8 @@ export default function ClassCourseDetailsPage({
                     <div className="flex min-w-0 w-full flex-1 flex-col gap-5 sm:gap-6">
                         <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 lg:p-6">
                             <CourseDetailsHero
-                                course={course}
-                                classData={classData}
+                                course={course!}
+                                classData={classData!}
                                 type={type}
                                 creatorName={creatorName}
                                 creatorHeadline={creatorHeadline}
@@ -603,9 +603,9 @@ export default function ClassCourseDetailsPage({
                             <div className="px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
                                 {activeTab === "Overview" && (
                                     <CourseOverview
-                                        course={course}
-                                        classData={classData}
-                                        type={type}
+                                        course={course!}
+                                        classData={classData!}
+                                        type={type as 'course' | 'class' | undefined}
                                         creatorName={creatorName}
                                         creatorHeadline={creatorHeadline}
                                         creatorBio={creatorBio}
@@ -629,7 +629,7 @@ export default function ClassCourseDetailsPage({
                                     <CourseAssessments
                                         assignments={filteredAssignments}
                                         quizzes={filteredQuizzes}
-                                        assessmentScheme={cAssessmentsResp?.data?.content}
+                                        assessmentScheme={cAssessmentsResp?.data?.content ?? []}
                                     />
                                 )}
 
@@ -639,22 +639,30 @@ export default function ClassCourseDetailsPage({
                                         title='Course Training Requirements'
                                         description='Review what you need to prepare before registering for this class.'
                                         className='border-none shadow-none'
-                                        viewerRole={activeDomain as string}
+                                        viewerRole={
+                                          activeDomain as unknown as ComponentProps<
+                                            typeof CourseTrainingRequirements
+                                          >['viewerRole']
+                                        }
                                     />
                                 }
 
                                 {activeTab === 'Schedule' && (
                                     <CourseScheduleInfo
-                                        type={type}
-                                        schedule={classData?.schedule}
-                                        classData={classData}
+                                        type={type as 'course' | 'class' | undefined}
+                                        schedule={
+                                          classData?.schedule as unknown as ComponentProps<
+                                            typeof CourseScheduleInfo
+                                          >['schedule']
+                                        }
+                                        classData={classData!}
                                     />)}
 
                                 {activeTab === `Reviews (${reviewCount})` && (
                                     type === "course" ? (
                                         <CourseReviews reviews={courseReviews} />
                                     ) : (
-                                        <CourseReviews reviews={classReviews} />
+                                        <CourseReviews reviews={classReviews as unknown as ComponentProps<typeof CourseReviews>['reviews']} />
                                     )
                                 )}
 
@@ -666,7 +674,7 @@ export default function ClassCourseDetailsPage({
                         <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 lg:p-6">
                             <StudentsAlsoBought
                                 courses={relatedCourses}
-                                activeDomain={activeDomain}
+                                activeDomain={activeDomain ?? ''}
                                 creatorName={creatorName}
                             />
                         </div>
@@ -674,12 +682,12 @@ export default function ClassCourseDetailsPage({
 
                     <div className="flex w-full shrink-0 flex-col gap-4 sm:gap-5 lg:sticky lg:top-20 lg:w-80 xl:w-96">
                         <EnrollSidebar
-                            course={course}
-                            classData={classData}
+                            course={course!}
+                            classData={classData!}
                             creatorName={creatorName}
                             activeDomain={activeDomain}
                             difficultyName={difficultyName}
-                            type={type}
+                            type={type as 'course' | 'class' | undefined}
                             lessonCount={lessons.length}
                             assessmentCount={
                                 filteredAssignments.length +
@@ -705,7 +713,7 @@ export default function ClassCourseDetailsPage({
                                     buildWorkspaceAliasPath(
                                         activeDomain,
                                         getEnrollHref(
-                                            activeDomain,
+                                            activeDomain!,
                                             'course',
                                             course?.uuid as string
                                         )
@@ -736,7 +744,7 @@ export default function ClassCourseDetailsPage({
                             <ClassRating
                                 reviewCount={classReviewCount}
                                 averageRating={classAvgRating}
-                                reviews={classReviews}
+                                reviews={classReviews as unknown as ComponentProps<typeof ClassRating>['reviews']}
                                 courseId={resolvedCourseId}
                                 classId={classId}
                             />}

@@ -41,7 +41,7 @@ export const ResourceDetailsModal: React.FC<ResourceDetailsModalProps> = ({
   if (!resource) return null;
 
   const typeName =
-    contentTypeMap[resource.content_type_uuid] || resource.content_category || 'Resource';
+    contentTypeMap[resource.content_type_uuid ?? ''] || resource.content_category || 'Resource';
   const createdDate = resource.created_date
     ? format(new Date(resource.created_date), 'PPP p')
     : null;

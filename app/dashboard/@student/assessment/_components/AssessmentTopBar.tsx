@@ -50,7 +50,7 @@ export function AssessmentTopBar({
             onClick={() => onTabChange(tab.key)}
             type='button'
           >
-            {tab.label} ({countByTab[tab.key]})
+            {tab.label} ({(countByTab as Record<string, number>)[tab.key]})
           </button>
         ))}
         <button

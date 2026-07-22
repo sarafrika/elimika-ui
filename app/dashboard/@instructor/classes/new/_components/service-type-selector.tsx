@@ -113,7 +113,7 @@ export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSe
               <p className='text-sm font-semibold text-foreground'>{option.label}</p>
               <p className='text-xs text-muted-foreground'>{option.description}</p>
             </div>
-            {option?.price > 0 && (
+            {(option?.price ?? 0) > 0 && (
               <div className='text-xs font-medium text-primary'>
                 KES {option?.price?.toLocaleString()}/hour
               </div>

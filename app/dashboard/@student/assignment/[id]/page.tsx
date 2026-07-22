@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { cx } from '@/lib/design-system';
+import { cn } from '@/lib/utils';
 import {
     getAssignmentSubmissionsQueryKey,
     getSubmissionAttachmentsOptions,
@@ -26,9 +26,14 @@ import {
     ArrowLeft,
     CalendarDays,
     CheckCircle2,
+    ClipboardList,
     FileQuestion,
     FileText,
     Loader2,
+    MessageSquareText,
+    Paperclip,
+    RotateCcw,
+    Send,
     Upload,
     X,
 } from 'lucide-react';
@@ -38,7 +43,7 @@ import { toast } from 'sonner';
 import { toAttachmentResourceItems } from '../../_components/student-assignment-workspace';
 import DragDropUpload from '../drag-drop';
 
-// ── Helpers (same as workspace) ──────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(value?: string | Date | null, options?: Intl.DateTimeFormatOptions) {
     if (value === null || value === undefined || value === '') return 'No deadline';
@@ -67,6 +72,15 @@ function acceptsFileSubmission(submissionTypes: string[]) {
     );
 }
 
+function MetaTile({ label, value, valueClass }: { label: string; value: React.ReactNode; valueClass?: string }) {
+    return (
+        <div className='rounded-xl border border-border/60 bg-background/60 p-3'>
+            <p className='text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>{label}</p>
+            <p className={cn('mt-1 text-sm font-semibold text-foreground', valueClass)}>{value}</p>
+        </div>
+    );
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StudentAssignmentSubmissionPage() {
@@ -77,31 +91,13 @@ export default function StudentAssignmentSubmissionPage() {
 
     const { assignmentRows, isLoading } = useStudentAssignmentData();
 
-    // Find the matching row — same shape that the workspace uses as selectedAssignment
     const selectedAssignment = useMemo(
         () => assignmentRows.find(r => r.assignment?.uuid === assignmentId) ?? null,
         [assignmentRows, assignmentId]
     );
 
-    const [submissionText, setSubmissionText] = useState("");
+    const [submissionText, setSubmissionText] = useState('');
     const [queuedFiles, setQueuedFiles] = useState<File[]>([]);
-
-    // const student = useStudent()
-    // const studentClassEnrollmentResp = useQuery({
-    //     ...getClassEnrollmentsForStudentOptions({
-    //         path: { studentUuid: student?.uuid as string },
-    //         query: { pageable: {} }
-    //     })
-    // })
-
-    // const currentEnrollment =
-    //     studentClassEnrollmentResp.data?.data?.content?.find(
-    //         (enrollment) =>
-    //             enrollment?.class_definition_uuid ===
-    //             selectedAssignment?.classMeta?.classUuid
-    //     );
-    // const activeEnrollmentUuid = currentEnrollment?.latest_enrollment_uuid
-
 
     const activeEnrollmentUuid =
         selectedAssignment?.classMeta.courseEnrollmentUuid ??
@@ -115,30 +111,21 @@ export default function StudentAssignmentSubmissionPage() {
         : null;
     const canUploadFiles = acceptsFileSubmission(selectedSubmissionTypes);
 
-    const submissionStatus = String(
-        selectedAssignment?.latestSubmission?.status ?? ""
-    ).toUpperCase();
-
+    const submissionStatus = String(selectedAssignment?.latestSubmission?.status ?? '').toUpperCase();
     const hasSubmission = !!selectedAssignment?.latestSubmission;
-
-    const canResubmit = submissionStatus === "RETURNED";
+    const canResubmit = submissionStatus === 'RETURNED';
 
     useEffect(() => {
         if (canResubmit) {
-            setSubmissionText(
-                selectedAssignment?.latestSubmission?.submission_text ?? ""
-            );
+            setSubmissionText(selectedAssignment?.latestSubmission?.submission_text ?? '');
         }
     }, [canResubmit, selectedAssignment]);
 
-    const showSubmissionForm = !hasSubmission || canResubmit;
-
     const canSubmitSelected =
         !!activeEnrollmentUuid &&
-        (!selectedAssignment?.latestSubmission ||
-            ["RETURNED", "DRAFT"].includes(submissionStatus));
+        (!selectedAssignment?.latestSubmission || ['RETURNED', 'DRAFT'].includes(submissionStatus));
 
-    // ── Submission attachments query (same as workspace) ────────────────────
+    // ── Submission attachments query ────────────────────────────────────────
     const selectedSubmissionAttachmentsQuery = useQuery({
         ...getSubmissionAttachmentsOptions({
             path: {
@@ -151,12 +138,12 @@ export default function StudentAssignmentSubmissionPage() {
         refetchOnWindowFocus: false,
     });
 
-    // ── Mutations (same as workspace) ───────────────────────────────────────
+    // ── Mutations ───────────────────────────────────────────────────────────
     const submitAssignmentMut = useMutation(submitAssignmentQueryMutation());
     const uploadSubmissionAttachmentMut = useMutation(uploadSubmissionAttachmentMutation());
     const isSubmitting = submitAssignmentMut.isPending || uploadSubmissionAttachmentMut.isPending;
 
-    // ── File helpers (same as workspace) ────────────────────────────────────
+    // ── File helpers ────────────────────────────────────────────────────────
     const handleFilesAdded = (files: File[]) => {
         const existingKeys = new Set(queuedFiles.map(f => `${f.name}-${f.size}`));
         setQueuedFiles(prev => [...prev, ...files.filter(f => !existingKeys.has(`${f.name}-${f.size}`))]);
@@ -168,7 +155,7 @@ export default function StudentAssignmentSubmissionPage() {
         );
     };
 
-    // ── Submit handler (mirrors workspace handleSubmitAssignment) ────────────
+    // ── Submit handler ────────────────────────────────────────────────────────
     const handleSubmitAssignment = async () => {
         if (!selectedAssignment?.assignment?.uuid) {
             toast.error('This assignment is missing an active assignment record.');
@@ -191,14 +178,14 @@ export default function StudentAssignmentSubmissionPage() {
                     enrollment_uuid: activeEnrollmentUuid,
                     student_uuid: selectedAssignment.classMeta.studentUuid,
                     submission_text: submissionContent,
-                    file_urls: canUploadFiles ? ["/assignment.pdf"] : [],
+                    file_urls: canUploadFiles ? ['/assignment.pdf'] : [],
                 },
                 query: {
                     enrollmentUuid: activeEnrollmentUuid,
                     content: submissionContent,
                     enrollment_uuid: activeEnrollmentUuid,
-                    file_urls: canUploadFiles ? ["/assignment.pdf"] : [],
-                    fileUrls: canUploadFiles ? ["/assignment.pdf"] : [],
+                    file_urls: canUploadFiles ? ['/assignment.pdf'] : [],
+                    fileUrls: canUploadFiles ? ['/assignment.pdf'] : [],
                     student_uuid: selectedAssignment.classMeta.studentUuid,
                     studentUuid: selectedAssignment.classMeta.studentUuid,
                     submission_text: submissionContent,
@@ -236,145 +223,161 @@ export default function StudentAssignmentSubmissionPage() {
         }
     };
 
+    // ── Loading ────────────────────────────────────────────────────────────
     if (isLoading) {
         return (
-            <div className='mx-auto w-full max-w-7xl space-y-6 p-5 sm:p-6'>
-                <Skeleton className='h-10 w-40 rounded-full' />
-                <Skeleton className='h-32 rounded-2xl' />
+            <div className='mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-6 lg:p-8'>
+                <Skeleton className='h-9 w-40 rounded-full' />
+                <Skeleton className='h-40 rounded-2xl' />
                 <Skeleton className='h-48 rounded-2xl' />
                 <Skeleton className='h-64 rounded-2xl' />
             </div>
         );
     }
 
+    // ── Not found ────────────────────────────────────────────────────────────
     if (!selectedAssignment) {
         return (
-            <div className="flex min-h-[70vh] items-center justify-center px-6">
-                <div className="max-w-md rounded-2xl border bg-background p-8 text-center shadow-sm">
-                    <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                        <FileQuestion className="h-8 w-8 text-muted-foreground" />
+            <div className='flex min-h-[70vh] items-center justify-center px-6'>
+                <div className='max-w-md rounded-2xl border border-border/70 bg-card p-8 text-center shadow-sm'>
+                    <div className='mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-muted'>
+                        <FileQuestion className='h-8 w-8 text-muted-foreground' />
                     </div>
-
-                    <h2 className="text-xl font-semibold tracking-tight">
-                        Assignment Not Found
+                    <h2 className='text-xl font-semibold tracking-tight text-foreground'>
+                        Assignment not found
                     </h2>
-
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                        The assignment you're looking for may have been deleted,
-                        moved, or you may not have permission to access it.
+                    <p className='mt-3 text-sm leading-6 text-muted-foreground'>
+                        The assignment you&apos;re looking for may have been deleted, moved, or you may not
+                        have permission to access it.
                     </p>
-
-                    <Button
-                        className="mt-8"
-                        onClick={() => router.push("/dashboard/assignment")}
-                    >
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Assignments
+                    <Button className='mt-8' onClick={() => router.push('/dashboard/assignment')}>
+                        <ArrowLeft className='mr-2 h-4 w-4' />
+                        Back to assignments
                     </Button>
                 </div>
             </div>
         );
     }
 
-    const dueSummary = getDueSummary(
-        selectedAssignment.schedule?.due_at ?? selectedAssignment.assignment?.due_date
-    );
+    const dueValue = selectedAssignment.schedule?.due_at ?? selectedAssignment.assignment?.due_date;
+    const dueSummary = getDueSummary(dueValue);
+    const submission = selectedAssignment.latestSubmission;
+    const requirements =
+        selectedSubmissionTypes.length > 0
+            ? selectedSubmissionTypes.join(', ')
+            : 'Text or instructor-defined format';
 
     // ── Render ───────────────────────────────────────────────────────────────
-    // Mirrors the Sheet content from StudentAssignmentWorkspace 1-to-1
     return (
-        <div className='mx-auto w-full max-w-8xl space-y-6 p-5 sm:p-6'>
+        <div className='mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-6 lg:p-8'>
+            <Button
+                variant='ghost'
+                size='sm'
+                className='-ml-2 w-fit rounded-full text-muted-foreground'
+                onClick={() => router.push('/dashboard/assignment')}
+            >
+                <ArrowLeft className='mr-2 h-4 w-4' />
+                All assignments
+            </Button>
 
-            {/* ── Page header (replaces SheetHeader) ─────────────────────────── */}
-            <div className='border-border/60 space-y-3 border-b pb-5'>
-                <Button
-                    variant='ghost'
-                    size='sm'
-                    className='mb-2 -ml-2 rounded-full'
-                    onClick={() => router.push('/dashboard/assignment')}
-                >
-                    <ArrowLeft className='mr-2 h-4 w-4' />
-                    All assignments
-                </Button>
-
-                <div className='flex flex-wrap items-start gap-2'>
-                    <Badge variant='outline' className='border-primary/20 bg-primary/10 text-primary'>
-                        {selectedAssignment.classMeta.courseTitle}
-                    </Badge>
-                    {selectedStatus && (
-                        <Badge variant={selectedStatus.variant}>{selectedStatus.label}</Badge>
-                    )}
-
-                    {!selectedAssignment?.latestSubmission && <Badge className={dueSummary.badgeClassName} variant='outline'>
-                        <CalendarDays className='mr-1 h-3.5 w-3.5' />
-                        {dueSummary.label}
-                    </Badge>}
-
-                </div>
-
-                <h1 className='text-foreground text-2xl font-semibold'>
-                    {selectedAssignment.assignment?.title || 'Assignment details'}
-                </h1>
-
-                <p className='text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm'>
-                    <span>
-                        {selectedAssignment.classMeta.classTitle} • Due{' '}
-                        {formatDate(
-                            selectedAssignment.schedule?.due_at || selectedAssignment.assignment?.due_date
+            {/* ── Header card ────────────────────────────────────────────────── */}
+            <section className='relative overflow-hidden rounded-2xl border border-border/70 bg-card p-6 shadow-sm sm:p-7'>
+                <div className='absolute inset-x-0 top-0 h-1 bg-primary' />
+                <div className='flex flex-col gap-4'>
+                    <div className='flex flex-wrap items-center gap-2'>
+                        <Badge variant='outline' className='border-primary/20 bg-primary/10 text-primary'>
+                            {selectedAssignment.classMeta.courseTitle}
+                        </Badge>
+                        {selectedStatus && <Badge variant={selectedStatus.variant}>{selectedStatus.label}</Badge>}
+                        {!submission && (
+                            <Badge className={dueSummary.badgeClassName} variant='outline'>
+                                <CalendarDays className='mr-1 h-3.5 w-3.5' />
+                                {dueSummary.label}
+                            </Badge>
                         )}
-                    </span>
-                    <span className='text-muted-foreground'>•</span>
-                    <span>
-                        Points:{' '}
-                        {selectedAssignment.assignment?.points_display ||
-                            selectedAssignment.assignment?.max_points ||
-                            'Not set'}
-                    </span>
-                    <span className='text-muted-foreground'>•</span>
-                    <span>Attempts: {selectedAssignment.submissions?.length ?? 0}</span>
-                </p>
-            </div>
+                    </div>
 
-            {/* ── Body (exact mirror of Sheet body) ──────────────────────────── */}
-            <div className='space-y-6'>
-
-                {/* Description */}
-                {selectedAssignment.assignment?.description && (
-                    <section>
-                        <h2 className='mb-3 text-lg font-semibold'>Description</h2>
-                        <div className='prose prose-sm dark:prose-invert max-w-none'>
-                            <RichTextRenderer htmlString={selectedAssignment.assignment.description} />
+                    <div className='flex items-start gap-4'>
+                        <div className='hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:flex'>
+                            <FileText className='h-6 w-6' />
                         </div>
-                    </section>
-                )}
-
-                {/* Instructions */}
-                <section>
-                    <h2 className='mb-3 text-lg font-semibold'>Instructions</h2>
-                    {selectedAssignment.assignment?.instructions ? (
-                        <div className='prose prose-sm dark:prose-invert max-w-none'>
-                            <RichTextRenderer htmlString={selectedAssignment.assignment.instructions} />
+                        <div className='min-w-0 space-y-1'>
+                            <h1 className='text-2xl font-bold tracking-tight text-foreground'>
+                                {selectedAssignment.assignment?.title || 'Assignment details'}
+                            </h1>
+                            <p className='text-sm text-muted-foreground'>
+                                {selectedAssignment.classMeta.classTitle}
+                            </p>
                         </div>
-                    ) : (
-                        <p className='text-muted-foreground'>No extra instructions were provided.</p>
+                    </div>
+
+                    <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+                        <MetaTile label='Due' value={formatDate(dueValue, { dateStyle: 'medium' })} />
+                        <MetaTile
+                            label='Points'
+                            value={
+                                selectedAssignment.assignment?.points_display ||
+                                selectedAssignment.assignment?.max_points ||
+                                'Not set'
+                            }
+                        />
+                        <MetaTile label='Attempts' value={selectedAssignment.submissions?.length ?? 0} />
+                        <MetaTile
+                            label='Score'
+                            value={
+                                submission?.percentage == null
+                                    ? 'Pending'
+                                    : submission.grade_display || `${Math.round(submission.percentage)}%`
+                            }
+                            valueClass={getGradeTone(submission?.percentage)}
+                        />
+                    </div>
+                </div>
+            </section>
+
+            {/* ── Brief ──────────────────────────────────────────────────────── */}
+            <Card className='border-border/70 shadow-sm'>
+                <CardContent className='space-y-6 p-6'>
+                    {selectedAssignment.assignment?.description && (
+                        <section>
+                            <h2 className='mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
+                                Description
+                            </h2>
+                            <div className='prose prose-sm max-w-none dark:prose-invert'>
+                                <RichTextRenderer htmlString={selectedAssignment.assignment.description} />
+                            </div>
+                        </section>
                     )}
-                </section>
 
-                {/* Submission requirements */}
-                <section className='border-t pt-4'>
-                    <h3 className='mb-2 text-sm font-medium'>Submission requirements</h3>
-                    <p className='text-muted-foreground text-sm'>
-                        {selectedSubmissionTypes.length > 0
-                            ? selectedSubmissionTypes.join(', ')
-                            : 'Text or instructor-defined format'}
-                    </p>
-                </section>
-            </div>
+                    <section>
+                        <h2 className='mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
+                            Instructions
+                        </h2>
+                        {selectedAssignment.assignment?.instructions ? (
+                            <div className='prose prose-sm max-w-none dark:prose-invert'>
+                                <RichTextRenderer htmlString={selectedAssignment.assignment.instructions} />
+                            </div>
+                        ) : (
+                            <p className='text-sm text-muted-foreground'>No extra instructions were provided.</p>
+                        )}
+                    </section>
 
-            {/* Resources */}
-            <Card className='border-border/60 space-y-0'>
+                    <section className='rounded-xl border border-border/60 bg-muted/40 p-4'>
+                        <h3 className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                            Submission requirements
+                        </h3>
+                        <p className='mt-1 text-sm font-medium text-foreground'>{requirements}</p>
+                    </section>
+                </CardContent>
+            </Card>
+
+            {/* ── Instructor resources ───────────────────────────────────────── */}
+            <Card className='border-border/70 shadow-sm'>
                 <CardHeader>
-                    <CardTitle className='text-base'>Resources from your instructor</CardTitle>
+                    <CardTitle className='flex items-center gap-2 text-base'>
+                        <Paperclip className='h-4 w-4 text-primary' />
+                        Resources from your instructor
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <AttachmentResourceList
@@ -385,81 +388,63 @@ export default function StudentAssignmentSubmissionPage() {
                 </CardContent>
             </Card>
 
-            {/* ── Latest submission card ──────────────────────────────────────── */}
-            {selectedAssignment.latestSubmission ? (
-                <Card className='border-border/60'>
+            {/* ── Submission zone ────────────────────────────────────────────── */}
+            {submission ? (
+                <Card className='border-border/70 shadow-sm'>
                     <CardHeader className='pb-3'>
-                        <CardTitle className='text-base'>Latest submission</CardTitle>
+                        <CardTitle className='flex items-center gap-2 text-base'>
+                            <Send className='h-4 w-4 text-primary' />
+                            Your latest submission
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className='space-y-4'>
-                        {/* Meta grid */}
-                        <div className='grid gap-3 md:grid-cols-3'>
-                            <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                                <p className='text-muted-foreground text-xs tracking-wide uppercase'>Submitted</p>
-                                <p className='text-foreground mt-1 text-sm font-medium'>
-                                    {formatDate(selectedAssignment.latestSubmission.submitted_at)}
-                                </p>
-                            </div>
-                            <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                                <p className='text-muted-foreground text-xs tracking-wide uppercase'>Status</p>
-                                <p className='text-foreground mt-1 text-sm font-medium'>
-                                    {selectedAssignment.latestSubmission.submission_status_display ||
-                                        selectedAssignment.latestSubmission.status}
-                                </p>
-                            </div>
-                            <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
-                                <p className='text-muted-foreground text-xs tracking-wide uppercase'>Score</p>
-                                <p className={cx('mt-1 text-sm font-semibold', getGradeTone(selectedAssignment.latestSubmission.percentage))}>
-                                    {selectedAssignment.latestSubmission.percentage == null
+                    <CardContent className='space-y-5'>
+                        <div className='grid gap-3 sm:grid-cols-3'>
+                            <MetaTile label='Submitted' value={formatDate(submission.submitted_at)} />
+                            <MetaTile
+                                label='Status'
+                                value={submission.submission_status_display || submission.status}
+                            />
+                            <MetaTile
+                                label='Score'
+                                value={
+                                    submission.percentage == null
                                         ? 'Pending'
-                                        : selectedAssignment.latestSubmission.grade_display ||
-                                        `${Math.round(selectedAssignment.latestSubmission.percentage)}%`}
-                                </p>
-                            </div>
+                                        : submission.grade_display || `${Math.round(submission.percentage)}%`
+                                }
+                                valueClass={getGradeTone(submission.percentage)}
+                            />
                         </div>
 
-                        {/* Written response */}
-                        {selectedAssignment.latestSubmission.submission_text ? (
+                        {submission.submission_text ? (
                             <div className='space-y-2'>
-                                <p className='text-foreground text-sm font-medium'>Your written response</p>
-                                <div className='border-border/60 bg-background/70 text-muted-foreground rounded-2xl border p-4 text-sm [&_p]:leading-6'>
-                                    <RichTextRenderer htmlString={selectedAssignment.latestSubmission.submission_text} />
-                                </div>
-
-                                <div className='space-y-2'>
-                                    {(Array.isArray(selectedAssignment.latestSubmission.file_urls)
-                                        ? selectedAssignment.latestSubmission.file_urls
-                                        : []
-                                    ).map((url: string, index: number) => (
-                                        <div
-                                            key={index}
-                                            className='border-border/60 bg-background/60 flex items-center gap-2 rounded-md border px-3 py-2'
-                                        >
-                                            <FileText className='text-muted-foreground h-4 w-4' />
-                                            <span className='text-foreground truncate text-sm'>{url.split('/').pop()}</span>
-                                        </div>
-                                    ))}
+                                <p className='text-sm font-medium text-foreground'>Your written response</p>
+                                <div className='rounded-xl border border-border/60 bg-background/60 p-4 text-sm text-muted-foreground [&_p]:leading-relaxed'>
+                                    <RichTextRenderer htmlString={submission.submission_text} />
                                 </div>
                             </div>
                         ) : null}
 
-                        {/* Instructor feedback */}
-                        {selectedAssignment.latestSubmission.instructor_comments ? (
+                        {submission.instructor_comments ? (
                             <div className='space-y-2'>
-                                <p className='text-foreground text-sm font-medium'>Instructor feedback</p>
-                                <div className='border-warning/20 bg-warning/10 text-foreground rounded-2xl border p-4 text-sm'>
-                                    {selectedAssignment.latestSubmission.instructor_comments}
+                                <p className='flex items-center gap-2 text-sm font-medium text-foreground'>
+                                    <MessageSquareText className='h-4 w-4 text-warning' />
+                                    Instructor feedback
+                                </p>
+                                <div className='rounded-xl border border-warning/20 bg-warning/10 p-4 text-sm text-foreground'>
+                                    {submission.instructor_comments}
                                 </div>
                             </div>
                         ) : null}
 
-                        {/* Uploaded files */}
                         <div className='space-y-2'>
-                            <p className='text-foreground text-sm font-medium'>Uploaded files</p>
+                            <p className='flex items-center gap-2 text-sm font-medium text-foreground'>
+                                <Paperclip className='h-4 w-4 text-muted-foreground' />
+                                Uploaded files
+                            </p>
                             {selectedSubmissionAttachmentsQuery.isLoading ? (
                                 <div className='space-y-2'>
-                                    <Skeleton className='h-14 rounded-2xl' />
-                                    <Skeleton className='h-14 rounded-2xl' />
+                                    <Skeleton className='h-14 rounded-xl' />
+                                    <Skeleton className='h-14 rounded-xl' />
                                 </div>
                             ) : (
                                 <AttachmentResourceList
@@ -472,30 +457,20 @@ export default function StudentAssignmentSubmissionPage() {
                             )}
                         </div>
 
-                        {/* If returned — show the resubmit form below the latest submission */}
                         {canResubmit && (
-                            <div className='border-border/60 border-t pt-4'>
-                                <div className="mb-5 rounded-xl border border-warning bg-warning/10 p-4">
-                                    <h3 className="text-sm font-semibold text-warning-foreground">
-                                        Submission Returned
-                                    </h3>
-
-                                    <p className="mt-1 text-sm text-warning-foreground/90">
-                                        Your instructor has returned this submission for revision. Review the
-                                        feedback above, make the requested changes, and submit an updated
-                                        version.
-                                    </p>
+                            <div className='space-y-4 border-t border-border/60 pt-5'>
+                                <div className='flex items-start gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4'>
+                                    <RotateCcw className='mt-0.5 h-5 w-5 shrink-0 text-warning' />
+                                    <div>
+                                        <h3 className='text-sm font-semibold text-foreground'>
+                                            Submission returned for revision
+                                        </h3>
+                                        <p className='mt-1 text-sm text-muted-foreground'>
+                                            Your instructor returned this submission. Review the feedback above, make
+                                            the requested changes, and submit an updated version.
+                                        </p>
+                                    </div>
                                 </div>
-
-                                {/* Submission requirements */}
-                                <section className='border-t pt-4'>
-                                    <h3 className='mb-2 text-sm font-medium'>Submission requirements</h3>
-                                    <p className='text-muted-foreground text-sm'>
-                                        {selectedSubmissionTypes.length > 0
-                                            ? selectedSubmissionTypes.join(', ')
-                                            : 'Text or instructor-defined format'}
-                                    </p>
-                                </section>
 
                                 <SubmissionForm
                                     submissionText={submissionText}
@@ -515,22 +490,13 @@ export default function StudentAssignmentSubmissionPage() {
                     </CardContent>
                 </Card>
             ) : (
-                /* ── No submission yet — show the submit form ─────────────────── */
-                <Card className='border-border/60'>
+                <Card className='border-border/70 shadow-sm'>
                     <CardHeader className='pb-3'>
-                        <CardTitle className='text-base'>Submit your work</CardTitle>
+                        <CardTitle className='flex items-center gap-2 text-base'>
+                            <ClipboardList className='h-4 w-4 text-primary' />
+                            Submit your work
+                        </CardTitle>
                     </CardHeader>
-
-                    {/* Submission requirements */}
-                    <section className='pl-6 border-t pt-4'>
-                        <h3 className='mb-2 text-sm font-medium'>Submission requirements</h3>
-                        <p className='text-muted-foreground text-sm'>
-                            {selectedSubmissionTypes.length > 0
-                                ? selectedSubmissionTypes.join(', ')
-                                : 'Text or instructor-defined format'}
-                        </p>
-                    </section>
-
                     <CardContent>
                         <SubmissionForm
                             submissionText={submissionText}
@@ -551,6 +517,8 @@ export default function StudentAssignmentSubmissionPage() {
         </div>
     );
 }
+
+// ── Submission form ─────────────────────────────────────────────────────────
 
 function SubmissionForm({
     submissionText,
@@ -579,9 +547,8 @@ function SubmissionForm({
 }) {
     return (
         <div className='space-y-4'>
-            {/* Written response */}
             <div className='space-y-2'>
-                <label className='text-foreground text-sm font-medium' htmlFor='submission-text'>
+                <label className='text-sm font-medium text-foreground' htmlFor='submission-text'>
                     Written response
                 </label>
                 <Textarea
@@ -594,12 +561,11 @@ function SubmissionForm({
                 />
             </div>
 
-            {/* Attachments */}
             <div className='space-y-3'>
                 <div className='flex items-center justify-between gap-3'>
                     <div>
-                        <p className='text-foreground text-sm font-medium'>Attachments</p>
-                        <p className='text-muted-foreground text-xs'>
+                        <p className='text-sm font-medium text-foreground'>Attachments</p>
+                        <p className='text-xs text-muted-foreground'>
                             {canUploadFiles
                                 ? 'Accepted file uploads can be added before you submit.'
                                 : 'This assignment primarily expects text or link-based responses.'}
@@ -609,20 +575,21 @@ function SubmissionForm({
                 </div>
 
                 <DragDropUpload
-                    className={cx(
-                        !canUploadFiles || !canSubmit || isSubmitting
-                            ? 'pointer-events-none opacity-60'
-                            : ''
+                    className={cn(
+                        'rounded-xl border-2 border-dashed border-border/70 bg-background/60 p-6 transition hover:border-primary/40',
+                        !canUploadFiles || !canSubmit || isSubmitting ? 'pointer-events-none opacity-60' : ''
                     )}
                     multiple
                     onFilesAdded={onFilesAdded}
                 >
                     <div className='flex flex-col items-center gap-2 text-center'>
-                        <Upload className='text-primary h-5 w-5' />
+                        <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary'>
+                            <Upload className='h-5 w-5' />
+                        </div>
                         <div>
-                            <p className='text-foreground text-sm font-medium'>Drop files here or click to browse</p>
-                            <p className='text-muted-foreground text-xs'>
-                                Documents and supporting media upload right after the submission record is created.
+                            <p className='text-sm font-medium text-foreground'>Drop files here or click to browse</p>
+                            <p className='text-xs text-muted-foreground'>
+                                Documents and supporting media upload right after the submission is created.
                             </p>
                         </div>
                     </div>
@@ -633,11 +600,16 @@ function SubmissionForm({
                         {queuedFiles.map(file => (
                             <div
                                 key={`${file.name}-${file.size}`}
-                                className='border-border/60 bg-background/70 flex items-center justify-between gap-3 rounded-2xl border p-3'
+                                className='flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-background/60 p-3'
                             >
-                                <div className='min-w-0'>
-                                    <p className='text-foreground truncate text-sm font-medium'>{file.name}</p>
-                                    <p className='text-muted-foreground text-xs'>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                <div className='flex min-w-0 items-center gap-3'>
+                                    <FileText className='h-4 w-4 shrink-0 text-muted-foreground' />
+                                    <div className='min-w-0'>
+                                        <p className='truncate text-sm font-medium text-foreground'>{file.name}</p>
+                                        <p className='text-xs text-muted-foreground'>
+                                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                                        </p>
+                                    </div>
                                 </div>
                                 <Button disabled={isSubmitting} onClick={() => onRemoveFile(file)} size='icon' type='button' variant='ghost'>
                                     <X className='h-4 w-4' />
@@ -648,17 +620,16 @@ function SubmissionForm({
                 )}
             </div>
 
-            {/* Footer */}
-            <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between'>
-                <p className='text-muted-foreground text-xs'>
+            <div className='flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between'>
+                <p className='text-xs text-muted-foreground'>
                     {!activeEnrollmentUuid
                         ? 'Submission is unavailable until this class has an active enrollment record.'
                         : canSubmit
-                            ? 'Your submission will be saved immediately and any queued files will upload right after.'
+                            ? 'Your submission saves immediately and any queued files upload right after.'
                             : 'This assignment already has a live submission state.'}
                 </p>
 
-                <Button className='rounded-full' disabled={!canSubmit || isSubmitting} onClick={onSubmit}>
+                <Button disabled={!canSubmit || isSubmitting} onClick={onSubmit}>
                     {isSubmitting ? (
                         <>
                             <Loader2 className='mr-2 h-4 w-4 animate-spin' />
@@ -666,7 +637,7 @@ function SubmissionForm({
                         </>
                     ) : (
                         <>
-                            <CheckCircle2 className='mr-2 h-4 w-4' />
+                            {isResubmit ? <RotateCcw className='mr-2 h-4 w-4' /> : <CheckCircle2 className='mr-2 h-4 w-4' />}
                             {isResubmit ? 'Resubmit assignment' : 'Submit assignment'}
                         </>
                     )}

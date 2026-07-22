@@ -241,7 +241,7 @@ export default function PublishedCoursesComponent({
                       </TableHeader>
 
                       <TableBody>
-                        {publishedCourses?.map((course: PublishedCourseItem) => (
+                        {(publishedCourses as unknown as PublishedCourseItem[])?.map((course: PublishedCourseItem) => (
                           <TableRow key={course.uuid}>
                             {/* <TableHead>
                     <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />

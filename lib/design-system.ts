@@ -3,16 +3,18 @@ import { elimikaPalette, elimikaThemeRoles, getChartColors } from '@/lib/theme/c
 /**
  * Elimika Design System
  *
- * This file contains unified design tokens inspired by the Elimika brand identity.
- * The Elimika logo features three horizontal layered lines in blue (#0061ED),
- * representing structured, confident, and purposeful learning experiences.
+ * Unified, token-based design primitives for the Elimika dashboard.
+ *
+ * Everything here resolves to the semantic design tokens defined in `app/globals.css`
+ * (`bg-card`, `bg-primary`, `text-foreground`, `text-muted-foreground`, `border-border`,
+ * `success` / `warning` / `destructive`, …) so components theme cleanly in light and dark and
+ * stay within the brand-color guard (`scripts/check-brand-colors.mjs`).
  *
  * Key principles:
- * - Primary color: Elimika blue (#0061ED) from the logo
- * - Layered gradients and confident geometry
- * - Clean whitespace and modern typography
- * - Consistent shadows and rounded corners
- * - Accessible chart colors optimized for both light and dark modes
+ * - Semantic tokens only — never hardcoded palette classes or raw hex.
+ * - Refined depth: rounded-2xl surfaces, hairline borders, soft shadows, subtle hover lift.
+ * - Consistent radii and spacing across every consumer.
+ * - Accessible chart colors optimized for both light and dark modes.
  */
 
 export const elimikaDesignSystem = {
@@ -34,12 +36,12 @@ export const elimikaDesignSystem = {
     inline: 'gap-4',
   },
 
-  // Border radius variants (inspired by logo's rounded lines)
+  // Border radius variants
   radius: {
-    card: 'rounded-[28px]',
-    cardLarge: 'rounded-[32px]',
-    section: 'rounded-3xl',
-    header: 'rounded-[36px]',
+    card: 'rounded-2xl',
+    cardLarge: 'rounded-3xl',
+    section: 'rounded-2xl',
+    header: 'rounded-2xl',
     button: 'rounded-full',
     badge: 'rounded-full',
   },
@@ -47,104 +49,102 @@ export const elimikaDesignSystem = {
   // Component variants
   components: {
     // Main page container
-    pageContainer: 'space-y-8 p-2 sm:p-6 lg:p-10',
+    pageContainer: 'space-y-8 p-2 sm:p-6 lg:p-8',
 
     // Header section (for page titles)
     header: {
-      base: 'rounded-[36px] border border-blue-200/40 bg-white/80 p-8 shadow-xl shadow-blue-200/30 backdrop-blur dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20 lg:p-12',
-      title: 'text-3xl font-semibold text-slate-900 dark:text-blue-50 sm:text-4xl',
-      subtitle: 'mt-3 max-w-3xl text-base text-slate-600 dark:text-slate-200 sm:text-lg',
+      base: 'rounded-2xl border border-border/70 bg-card p-6 shadow-sm lg:p-8',
+      title: 'text-3xl font-bold tracking-tight text-foreground sm:text-4xl',
+      subtitle: 'mt-3 max-w-3xl text-base text-muted-foreground sm:text-lg',
       badge:
-        'inline-flex items-center gap-2 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-blue-600 dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100',
+        'inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-primary',
     },
 
     // Form container
     form: {
       wrapper:
-        'space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20 lg:p-10',
+        'space-y-8 rounded-2xl border border-border/70 bg-card p-6 shadow-sm transition lg:p-8',
     },
 
     // Form section (with sidebar title)
     formSection: {
-      wrapper:
-        'rounded-3xl border border-blue-200/40 bg-white/90 p-6 shadow-lg shadow-blue-200/40 transition dark:border-blue-500/25 dark:bg-blue-950/30 lg:p-8',
+      wrapper: 'rounded-2xl border border-border/70 bg-card p-6 shadow-sm transition lg:p-8',
       container: 'flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10',
       sidebar: 'lg:w-1/3',
-      sidebarBadge:
-        'text-xs font-semibold uppercase tracking-[0.4em] text-blue-500/80 dark:text-blue-200',
-      sidebarTitle: 'mt-2 text-lg font-semibold text-slate-900 dark:text-blue-50',
-      sidebarDescription: 'mt-2 text-sm text-slate-600 dark:text-slate-200',
+      sidebarBadge: 'text-[11px] font-semibold uppercase tracking-wide text-primary',
+      sidebarTitle: 'mt-2 text-lg font-semibold text-foreground',
+      sidebarDescription: 'mt-2 text-sm text-muted-foreground',
       content: 'lg:flex-1',
     },
 
     // Card (for content blocks)
     card: {
-      base: 'rounded-[28px] border border-blue-200/60 bg-white/90 p-6 shadow-lg shadow-blue-200/30 transition hover:-translate-y-1 hover:border-blue-400/70 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20',
+      base: 'group rounded-2xl border border-border/70 bg-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-md',
       header:
-        'mb-5 inline-flex items-center justify-center rounded-full bg-blue-500/15 p-3 text-blue-700 dark:text-blue-300',
-      title: 'mb-3 text-lg font-semibold text-slate-900 dark:text-blue-50',
-      description: 'text-sm leading-6 text-slate-600 dark:text-slate-200',
+        'mb-5 inline-flex items-center justify-center rounded-xl bg-primary/10 p-3 text-primary',
+      title: 'mb-2 text-lg font-semibold text-foreground',
+      description: 'text-sm leading-6 text-muted-foreground',
     },
 
     // List item card
     listCard: {
-      base: 'group rounded-[24px] border border-blue-200/40 bg-white/80 p-5 shadow-md shadow-blue-200/20 transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:shadow-lg hover:shadow-blue-200/30 dark:border-blue-500/20 dark:bg-blue-950/30 dark:shadow-blue-900/10',
+      base: 'group rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md',
     },
 
     // Loading/Empty state
     emptyState: {
       container:
-        'flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-[28px] border border-blue-200/40 bg-card px-6 py-12 text-center shadow-lg shadow-blue-200/40 backdrop-blur dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:text-slate-200 dark:shadow-blue-900/20',
-      icon: 'mb-2 h-12 w-12 text-blue-400 dark:text-blue-300',
-      title: 'text-lg font-semibold text-slate-900 dark:text-blue-50',
-      description: 'max-w-md text-sm text-slate-600 dark:text-slate-300',
+        'flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border/70 bg-card px-6 py-12 text-center shadow-sm',
+      icon: 'mb-2 h-12 w-12 text-primary',
+      title: 'text-lg font-semibold text-foreground',
+      description: 'max-w-md text-sm text-muted-foreground',
     },
 
     // Stats/Metric card
     statCard: {
-      base: 'rounded-[24px] border border-blue-200/40 bg-card p-6 shadow-lg shadow-blue-200/30 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/40 dark:to-slate-950/60',
-      label: 'text-sm font-medium text-slate-600 dark:text-slate-300',
-      value: 'mt-2 text-3xl font-bold text-slate-900 dark:text-blue-50',
-      change: 'mt-1 text-xs text-blue-600 dark:text-blue-300',
+      base: 'rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md',
+      label: 'text-sm font-medium text-muted-foreground',
+      value: 'mt-2 text-3xl font-bold text-foreground',
+      change: 'mt-1 text-xs text-primary',
     },
 
     // Badge variants
     badge: {
       primary:
-        'rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100',
+        'rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary',
       secondary:
-        'rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200',
+        'rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground',
     },
 
     // Button variants (extends default shadcn)
     button: {
       primary:
-        'rounded-full bg-blue-600 px-7 py-3 text-sm font-medium text-white shadow hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600',
+        'rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90',
       secondary:
-        'rounded-full border border-blue-200 bg-white px-7 py-3 text-sm font-medium text-blue-700 shadow hover:border-blue-400 hover:text-blue-900 dark:border-blue-500/40 dark:bg-blue-950/40 dark:text-blue-100 dark:hover:border-blue-400',
+        'rounded-full border border-border bg-card px-6 py-2.5 text-sm font-medium text-foreground shadow-sm transition hover:border-primary/40 hover:text-primary',
     },
 
     // Input field styling
     input: {
-      base: 'rounded-lg border border-blue-200/60 bg-white px-4 py-2.5 text-sm shadow-sm transition focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:border-blue-500/30 dark:bg-blue-950/20 dark:text-blue-50 dark:focus:border-blue-400 dark:focus:ring-blue-900/40',
+      base: 'rounded-lg border border-border bg-background px-4 py-2.5 text-sm shadow-sm transition focus:border-primary focus:ring-2 focus:ring-ring/30',
     },
 
     // Divider/Separator
-    divider: 'border-t border-blue-200/40 dark:border-blue-500/25',
+    divider: 'border-t border-border/70',
   },
 
   // Background gradients
   gradients: {
     page: 'bg-background',
     card: 'bg-card',
-    cardDark: 'dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80',
+    cardDark: 'bg-card',
   },
 
   // Shadow effects
   shadows: {
-    card: 'shadow-lg shadow-blue-200/40 dark:shadow-blue-900/20',
-    cardHover: 'shadow-xl shadow-blue-200/50 dark:shadow-blue-900/30',
-    header: 'shadow-xl shadow-blue-200/30 dark:shadow-blue-900/20',
+    card: 'shadow-sm',
+    cardHover: 'shadow-md',
+    header: 'shadow-sm',
   },
 } as const;
 

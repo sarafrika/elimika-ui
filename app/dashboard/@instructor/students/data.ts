@@ -308,7 +308,7 @@ export function useInstructorStudentsData() {
         label: course.name,
         thumbnail_url: course.thumbnail_url,
       })),
-    ];
+    ] as unknown as CourseTab[];
   }, [uniqueCourses]);
 
   const filterOptions = useMemo<{

@@ -42,7 +42,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { type ComponentProps, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { LessonContentViewerDialog } from '../../../../../../components/content-preview/LessonContentPreview';
 import { useCourseLessonsWithContent } from '../../../../../../hooks/use-courselessonwithcontent';
 import { getResourceIcon } from '../../../../../../lib/resources-icon';
@@ -573,7 +573,13 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
             {reviews?.length ? (
               reviews
                 ?.slice(0, 5)
-                ?.map(review => <ReviewCard key={review.uuid} review={review} type='others' />)
+                ?.map(review => (
+                  <ReviewCard
+                    key={review.uuid}
+                    review={review as unknown as ComponentProps<typeof ReviewCard>['review']}
+                    type='others'
+                  />
+                ))
             ) : (
               <div className='border-border/60 text-muted-foreground border-t text-center text-sm'>
                 No reviews yet for this course.

@@ -48,7 +48,7 @@ interface NotesModalProps {
   cancelButtonProps?: React.ComponentProps<typeof Button>;
   userType?: 'course_creator' | 'instructor';
   minimum_rate: number | string;
-  selectedApplicationCard: CoursesCatalogCardData | CoursesRecommendationCardData
+  selectedApplicationCard?: CoursesCatalogCardData | CoursesRecommendationCardData
 }
 
 export default function NotesModal({
@@ -107,17 +107,17 @@ export default function NotesModal({
 
   const { data: courseTrainingReqResp } = useQuery({
     ...getCourseTrainingRequirementsOptions({
-      path: { courseUuid: selectedApplicationCard?.id }, query: { pageable: {} }
+      path: { courseUuid: selectedApplicationCard?.id ?? '' }, query: { pageable: {} }
     }),
-    enabled: selectedApplicationCard?.contentKind === "course"
+    enabled: (selectedApplicationCard as { contentKind?: string } | undefined)?.contentKind === "course"
   })
   // const { data: courseRequirementResp } = useQuery({
   //   ...getCourseRequirementsOptions({ path: { courseUuid: selectedApplicationCard?.id }, query: { pageable: {} } }),
-  //   enabled: selectedApplicationCard?.contentKind === "course"
+  //   enabled: (selectedApplicationCard as { contentKind?: string } | undefined)?.contentKind === "course"
   // })
   const { data: programRequirementResp } = useQuery({
-    ...getProgramRequirementsOptions({ path: { programUuid: selectedApplicationCard?.id }, query: { pageable: {} } }),
-    enabled: selectedApplicationCard?.contentKind === "program"
+    ...getProgramRequirementsOptions({ path: { programUuid: selectedApplicationCard?.id ?? '' }, query: { pageable: {} } }),
+    enabled: (selectedApplicationCard as { contentKind?: string } | undefined)?.contentKind === "program"
   })
 
   const normalizeProvider = (provider?: string | undefined | null) => {
@@ -151,7 +151,7 @@ export default function NotesModal({
 
   const groupedRequirements = useMemo(() => {
     return requirements.reduce((acc, req) => {
-      const provider = normalizeProvider(req?.provided_by as string);
+      const provider = normalizeProvider(req?.provided_by as string) ?? '';
 
       if (!acc[provider]) {
         acc[provider] = [];
@@ -168,15 +168,15 @@ export default function NotesModal({
       .filter(
         req =>
           req.is_mandatory &&
-          checkableProviders.includes(normalizeProvider(req.provided_by))
+          checkableProviders.includes(normalizeProvider(req.provided_by) ?? '')
       )
-      .some(req => !req.checked);
+      .some(req => !(req as { checked?: boolean }).checked);
   }, [requirements, checkableProviders]);
 
 
   useEffect(() => {
     const data =
-      selectedApplicationCard?.contentKind === "course"
+      (selectedApplicationCard as { contentKind?: string } | undefined)?.contentKind === "course"
         ? courseTrainingReqResp?.data?.content
         : programRequirementResp?.data?.content;
 
@@ -186,12 +186,12 @@ export default function NotesModal({
       data.map(req => ({
         ...req,
         checked: false,
-      }))
+      })) as unknown as CourseTrainingRequirement[]
     );
   }, [
     courseTrainingReqResp?.data?.content,
     programRequirementResp?.data?.content,
-    selectedApplicationCard?.contentKind,
+    (selectedApplicationCard as { contentKind?: string } | undefined)?.contentKind,
   ]);
 
 
@@ -360,7 +360,7 @@ export default function NotesModal({
                   <div className="space-y-2">
                     {items?.map(item => {
                       const canCheck = checkableProviders.includes(
-                        normalizeProvider(item.provided_by)
+                        normalizeProvider(item.provided_by) ?? ''
                       );
 
                       return (
@@ -371,7 +371,7 @@ export default function NotesModal({
                           {canCheck ? (
                             <Checkbox
                               className="mt-0.5"
-                              checked={item.checked}
+                              checked={(item as { checked?: boolean }).checked}
                               onCheckedChange={(checked) => {
                                 setRequirements(prev =>
                                   prev.map(req =>

@@ -201,7 +201,7 @@ export function ClassSidebar({
 
                         {
                           new Set(
-                            (classItem.enrollments ?? [])
+                            ((classItem.enrollments ?? []) as Array<{ student_uuid?: string }>)
                               .map(enrollment => enrollment.student_uuid)
                               .filter(Boolean)
                           ).size

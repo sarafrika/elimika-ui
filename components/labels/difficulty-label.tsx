@@ -16,7 +16,6 @@ export function DifficultyLabel({ difficultyUuid, fallback = 'Unknown' }: Diffic
     'get',
     '/api/v1/config/difficulty-levels',
     {
-      // @ts-expect-error
       params: {},
     }
   );

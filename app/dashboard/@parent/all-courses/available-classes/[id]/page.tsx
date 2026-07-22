@@ -7,7 +7,7 @@ const Page = () => {
   const params = useParams();
   const courseId = params?.id as string;
 
-  return <CourseEnrollmentsPage courseId={courseId as string} />;
+  return <CourseEnrollmentsPage courseId={courseId as string} instructorView={false} />;
 };
 
 export default Page;
