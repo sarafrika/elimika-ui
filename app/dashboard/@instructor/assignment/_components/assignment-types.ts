@@ -1,4 +1,4 @@
-export type AssignmentStatus = 'all' | 'ongoing' | 'graded' | 'overdue';
+export type AssignmentStatus = 'all' | 'ongoing' | 'graded' | 'overdue' | 'pending';
 
 export type AssignmentCardData = {
   badge?: string;
