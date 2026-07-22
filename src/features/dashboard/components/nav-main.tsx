@@ -1,6 +1,13 @@
 'use client';
 
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
 import type { UserDomain } from '@/lib/types';
 import { type MenuItem, markActiveMenuItem } from '@/src/features/dashboard/config/menu';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -20,21 +27,52 @@ export function NavMain({
 }) {
   const markedItems = markActiveMenuItem(items, pathname);
 
+  const visibleItems = markedItems.filter(
+    item => (item.requiresAdmin ? isAdmin : true) && (!item.domain || item.domain === activeDomain)
+  );
+
   return (
-    <SidebarMenu>
-      {markedItems
-        .filter(item => (item.requiresAdmin ? isAdmin : true))
-        .map((item, index) =>
-          item.domain && item.domain !== activeDomain ? null : (
-            <MenuItemWithAccordion
-              key={index}
-              item={item}
-              isAdmin={isAdmin}
-              activeDomain={activeDomain}
-            />
-          )
-        )}
-    </SidebarMenu>
+    <>
+      {visibleItems.map((item, index) => {
+        const isCategoryGroup = Boolean(item.items && item.items.length > 0) && !item.url;
+
+        if (isCategoryGroup) {
+          const children = (item.items ?? []).filter(child =>
+            child.requiresAdmin ? isAdmin : true
+          );
+
+          if (children.length === 0) return null;
+
+          return (
+            <SidebarGroup className='-space-y-2' key={`${item.title}-${index}`}>
+              <SidebarGroupLabel className='text-sidebar-foreground/50 text-xs font-medium tracking-wide -mt-3 mb-[1px]'>
+                {item.title}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {children.map((child, childIndex) => (
+                    <MenuItemWithAccordion
+                      key={childIndex}
+                      item={child}
+                      isAdmin={isAdmin}
+                      activeDomain={activeDomain}
+                    />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        }
+
+        // Fallback: an ungrouped top-level item (e.g. a real accordion submenu like "Course Management",
+        // or a plain link) — keeps the original behavior untouched.
+        return (
+          <SidebarMenu key={`${item.title}-${index}`}>
+            <MenuItemWithAccordion item={item} isAdmin={isAdmin} activeDomain={activeDomain} />
+          </SidebarMenu>
+        );
+      })}
+    </>
   );
 }
 

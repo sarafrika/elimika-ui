@@ -1,9 +1,4 @@
 'use client';
-import { Menu } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import type * as React from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +12,11 @@ import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-dom
 import { SettingsSupportWidget } from '@/src/features/dashboard/settings/_components/settings-support-widget';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { Menu } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import type * as React from 'react';
 import { NavMain } from './nav-main';
 import { NavSecondary } from './nav-secondary';
 
@@ -90,14 +90,26 @@ export function AppSidebar({
             </div>
 
             <div className='grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden'>
-              <span className='truncate font-medium capitalize'>
+              <span className='truncate font-bold capitalize text-[15px]'>
                 {organisation?.name || 'Elimika'}
               </span>
             </div>
           </Link>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+
+      <SidebarContent
+        className="
+      overflow-y-auto
+      [scrollbar-width:thin]
+      [scrollbar-color:hsl(var(--border))_transparent]
+      [&::-webkit-scrollbar]:w-2
+      [&::-webkit-scrollbar-track]:bg-transparent
+      [&::-webkit-scrollbar-thumb]:rounded-full
+      [&::-webkit-scrollbar-thumb]:bg-border
+      [&::-webkit-scrollbar-thumb:hover]:bg-muted-foreground
+    "
+      >
         <NavMain
           items={getMenuItems(activeDomain)}
           activeDomain={activeDomain}
@@ -107,6 +119,7 @@ export function AppSidebar({
 
         <NavSecondary items={menu?.secondary ?? []} className='mt-auto' />
       </SidebarContent>
+
       <SidebarFooter className='w-full gap-3 px-0'>
         {/* <NavUser items={menu?.user ?? []} /> */}
         <SettingsSupportWidget href={'/help'} />

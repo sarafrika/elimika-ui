@@ -119,6 +119,7 @@ export function InstructorTrainingHubPage() {
     upcomingBookings,
     waitingList,
     isLoading,
+    classes
   } = useInstructorTrainingHubData();
 
   const normalizedSearch = searchTerm.trim().toLowerCase();

@@ -74,11 +74,15 @@ function getTaskStatus(
     return 'overdue';
   }
 
+  if (submissionCount === 0) {
+    return 'pending';
+  }
+
   return 'ongoing';
 }
 
 export function AssignmentPageClient() {
-  const [activeFilter, setActiveFilter] = useState<AssignmentStatus>('all');
+  const [activeFilter, setActiveFilter] = useState<AssignmentStatus>('pending');
   const [search, setSearch] = useState('');
   const profile = useUserProfile();
   const instructorUuid = profile?.instructor?.uuid;

@@ -62,15 +62,11 @@ import { useOrganisation } from '../../../../../../context/organisation-context'
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { useCourseEnrollmentsMap } from '../../../../../../hooks/use-enrollment-map';
 import { averageRating, useCourseReviewsMap } from '../../../../../../hooks/use-reviews-map';
-import { CoursesCatalogCard } from './CoursesCatalogCard';
-import { CoursesCategoryFilters } from './CoursesCategoryFilters';
-import { CoursesRecommendationCard } from './CoursesRecommendationCard';
 import {
   type CoursesCatalogCardData,
   type CoursesCatalogTab,
   type CoursesFilterSection,
   type CoursesRecommendationCardData,
-  catalogTabs,
   formatDurationFromParts,
   getApplyToTrainHref,
   getCardPresentation,
@@ -81,6 +77,10 @@ import {
   getInstructorHref,
   stripHtml
 } from './courses-data';
+import { CoursesCatalogCard } from './CoursesCatalogCard';
+import { CoursesCategoryFilters } from './CoursesCategoryFilters';
+import { CoursesCategoryTabs } from './CoursesCategoryTabs';
+import { CoursesRecommendationCard } from './CoursesRecommendationCard';
 
 type SharedCoursesPageProps = {
   domain: UserDomain;
@@ -110,6 +110,9 @@ export type UnifiedContentItem = {
   enrollmentCount?: number | undefined;
   imageTone?: string;
   icon?: LucideIcon | undefined;
+  category: string,
+  subject: string,
+  programType: string
 };
 
 type FilterValues = Record<CoursesFilterSection['key'], string>;
@@ -213,7 +216,10 @@ const createCatalogCards = (
       rating: item.rating,
       reviewCount: item.reviewCount,
       enrollmentCount: item.enrollmentCount,
-      certificateHref: ''
+      certificateHref: '',
+      category: '',
+      subject: '',
+      programType: ''
     };
   });
 
@@ -263,6 +269,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const isInstructorDomain = domain === 'instructor';
   const isStudentDomain = domain === 'student';
   const isOrganisationDomain = domain === 'organisation_user' || domain === 'organisation';
+
   const canApplyToTrain = isInstructorDomain || isOrganisationDomain;
   const organisationUuid = organisation?.uuid;
   const canOrganisationApply = !isOrganisationDomain || organisation?.admin_verified === true;
@@ -417,6 +424,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           reviewCount: 0,
           rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
           enrollmentCount: enrollments?.count,
+          category: '',
+          subject: '',
+          programType: ''
         };
       }),
     [categoryMap, courseEnrollmentMap, domain, programs, reviewMap]
@@ -458,6 +468,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           reviewCount: Number(reviews?.count) ?? 0,
           rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
           enrollmentCount: enrollments?.count,
+          category: '',
+          subject: '',
+          programType: ''
         };
       }),
     [courseEnrollmentMap, courses, difficultyMap, domain, reviewMap]
@@ -559,6 +572,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           reviewCount: Number(reviews?.count) ?? 0,
           rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
           enrollmentCount: enrollments?.count,
+          category: '',
+          subject: '',
+          programType: ''
         });
       });
 
@@ -610,8 +626,20 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     [categories]
   );
 
+
+
   const filterSections = useMemo<CoursesFilterSection[]>(
     () => [
+      {
+        key: 'contentType',
+        title: 'Program Type',
+        options: [
+          { label: 'All Courses', value: 'all-courses' },
+          { label: 'Program', value: 'programs' },
+          { label: 'Short Course', value: 'short-courses' },
+          { label: 'My Courses', value: 'my-courses' },
+        ],
+      },
       {
         key: 'category',
         title: 'Categories',
@@ -621,15 +649,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             label: category.name,
             value: category.uuid ?? category.name,
           })),
-        ],
-      },
-      {
-        key: 'contentType',
-        title: 'Program Type',
-        options: [
-          { label: 'All Courses', value: 'all-courses' },
-          { label: 'Program', value: 'programs' },
-          { label: 'Short Course', value: 'short-courses' },
         ],
       },
       {
@@ -665,6 +684,17 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     ],
     [categories, difficultiesResponse]
   );
+
+  const [selectedValues, setSelectedValues] = useState({
+    category: '',
+    level: '',
+    duration: '',
+    price: '',
+  });
+
+  const [activeFilter, setActiveFilter] = useState<
+    CoursesFilterSection['key'] | null
+  >(filterSections[0]?.key ?? null);
 
   const allCoursesFeed = useMemo(
     () => [...mappedPrograms, ...mappedCourses].sort((left, right) => right.createdAt - left.createdAt),
@@ -974,14 +1004,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     });
   };
 
-  const handleTabChange = (tab: CoursesCatalogTab) => {
-    setActiveTab(tab);
-    setFilters(current => ({
-      ...current,
-      contentType: tab === 'my-courses' ? 'all-courses' : tab,
-    }));
-  };
-
   const handleCategoryTileClick = (category: Category) => {
     setFilters(current => ({
       ...current,
@@ -1182,22 +1204,17 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           </div>
         </header>
 
-        <div className='flex flex-wrap gap-1.5'>
-          {catalogTabs.map(tab => (
-            <button
-              key={tab.value}
-              type='button'
-              onClick={() => handleTabChange(tab.value)}
-              className={
-                activeTab === tab.value
-                  ? 'bg-primary/10 text-primary border-border border rounded-sm px-3 py-1.5 text-sm font-semibold'
-                  : 'text-muted-foreground hover:text-foreground rounded-sm px-3 py-1.5 text-sm font-semibold transition-colors border-border border'
-              }
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <CoursesCategoryTabs
+          activeFilter={activeFilter}
+          onActiveChange={setActiveFilter}
+          sections={filterSections}
+          selectedValues={filters}
+          onSelect={(key, value) => {
+            setFilterValue(key, value);
+            setOpen(false);
+          }}
+          onClear={clearFilters}
+        />
 
         <section className='space-y-2'>
           <div className=''>
