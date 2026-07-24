@@ -340,6 +340,19 @@ export const TrainingBranchSchema = {
         '**[REQUIRED]** Indicates whether the training branch is active and operational.',
       example: true,
     },
+    capacity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[OPTIONAL]** Seating/attendee capacity of the venue.',
+      example: 30,
+    },
+    venue_type: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Free-form venue/room type (e.g. Lab, Workshop, Auditorium).',
+      example: 'Lab',
+      maxLength: 50,
+      minLength: 0,
+    },
     created_date: {
       type: 'string',
       format: 'date-time',
@@ -1280,19 +1293,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -1737,16 +1750,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the points value.',
-      example: '2.0 points',
-      readOnly: true,
-    },
     question_number: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
       example: 'Question 1',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the points value.',
+      example: '2.0 points',
       readOnly: true,
     },
   },
@@ -2105,12 +2118,6 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
-      readOnly: true,
-    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -2127,6 +2134,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
   },
@@ -2298,16 +2311,16 @@ export const TrainingProgramSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    program_type: {
-      type: 'string',
-      description: '**[READ-ONLY]** Classification of program type based on duration and content.',
-      example: 'Comprehensive Masterclass',
-      readOnly: true,
-    },
     total_duration_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of total program duration.',
       example: '120 hours 30 minutes',
+      readOnly: true,
+    },
+    program_type: {
+      type: 'string',
+      description: '**[READ-ONLY]** Classification of program type based on duration and content.',
+      example: 'Comprehensive Masterclass',
       readOnly: true,
     },
   },
@@ -4743,6 +4756,32 @@ export const CourseSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    total_duration_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of total course duration.',
+      example: '40 hours 30 minutes',
+      readOnly: true,
+    },
+    has_multiple_categories: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
+      example: true,
+      readOnly: true,
+    },
+    category_count: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of categories this course belongs to.',
+      example: 2,
+      readOnly: true,
+    },
+    lifecycle_stage: {
+      type: 'string',
+      description:
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
+      example: 'Published and Active',
+      readOnly: true,
+    },
     accepts_new_enrollments: {
       type: 'boolean',
       description:
@@ -4772,32 +4811,6 @@ export const CourseSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is currently under review.',
       example: false,
-      readOnly: true,
-    },
-    total_duration_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of total course duration.',
-      example: '40 hours 30 minutes',
-      readOnly: true,
-    },
-    has_multiple_categories: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
-      example: true,
-      readOnly: true,
-    },
-    category_count: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of categories this course belongs to.',
-      example: 2,
-      readOnly: true,
-    },
-    lifecycle_stage: {
-      type: 'string',
-      description:
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
-      example: 'Published and Active',
       readOnly: true,
     },
   },
@@ -5703,16 +5716,16 @@ export const LessonContentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    file_size_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of file size.',
-      example: '150 MB',
-      readOnly: true,
-    },
     content_category: {
       type: 'string',
       description: '**[READ-ONLY]** Category of content based on its type and format.',
       example: 'Video Content',
+      readOnly: true,
+    },
+    file_size_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of file size.',
+      example: '150 MB',
       readOnly: true,
     },
   },
@@ -5855,18 +5868,6 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -5884,6 +5885,18 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
+      readOnly: true,
+    },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -8722,18 +8735,6 @@ export const CertificateSchema = {
       example: 'system',
       readOnly: true,
     },
-    certificate_type: {
-      type: 'string',
-      description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
-      example: 'Course Completion',
-      readOnly: true,
-    },
-    is_downloadable: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
-      example: true,
-      readOnly: true,
-    },
     grade_letter: {
       type: 'string',
       description: '**[READ-ONLY]** Letter grade representation of the final grade.',
@@ -8744,6 +8745,18 @@ export const CertificateSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Current validity status of the certificate.',
       example: 'Valid Certificate',
+      readOnly: true,
+    },
+    certificate_type: {
+      type: 'string',
+      description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
+      example: 'Course Completion',
+      readOnly: true,
+    },
+    is_downloadable: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
+      example: true,
       readOnly: true,
     },
   },
@@ -10603,16 +10616,16 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     status_description: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -12437,6 +12450,12 @@ export const AssignmentSubmissionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    is_graded: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the submission has been graded by an instructor.',
+      example: true,
+      readOnly: true,
+    },
     submission_category: {
       type: 'string',
       description:
@@ -12461,12 +12480,6 @@ export const AssignmentSubmissionSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Summary of files attached to this submission.',
       example: '2 files attached',
-      readOnly: true,
-    },
-    is_graded: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the submission has been graded by an instructor.',
-      example: true,
       readOnly: true,
     },
   },
@@ -16299,6 +16312,49 @@ export const TodayGrowthPointDTOSchema = {
   },
 } as const;
 
+export const ApiResponseListStudentEnrolmentSummaryDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/StudentEnrolmentSummaryDTO',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const StudentEnrolmentSummaryDTOSchema = {
+  type: 'object',
+  description: "A student's enrolment/attendance summary within an organisation",
+  properties: {
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Student UUID',
+    },
+    total: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Active enrolments (excludes cancelled/waitlisted)',
+      example: 4,
+    },
+    completed: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Enrolments attended',
+      example: 3,
+    },
+  },
+} as const;
+
 export const ApiResponseListEnrolmentTrendPointDTOSchema = {
   type: 'object',
   properties: {
@@ -16332,6 +16388,43 @@ export const EnrolmentTrendPointDTOSchema = {
       format: 'int64',
       description: 'Number of enrolments recorded in the month',
       example: 42,
+    },
+  },
+} as const;
+
+export const ApiResponseListClassEnrolmentCountDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassEnrolmentCountDTO',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassEnrolmentCountDTOSchema = {
+  type: 'object',
+  description: 'Active enrolment count for one class definition',
+  properties: {
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Class definition UUID',
+    },
+    enrolled: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Distinct actively-enrolled students',
+      example: 18,
     },
   },
 } as const;
@@ -17088,17 +17181,17 @@ export const CourseAssessmentScoreSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '87.50 / 100.00 (87.50%)',
-      readOnly: true,
-    },
     is_passing: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).',
       example: true,
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '87.50 / 100.00 (87.50%)',
       readOnly: true,
     },
     score_category: {

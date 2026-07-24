@@ -150,6 +150,14 @@ export type TrainingBranch = {
    */
   active: boolean;
   /**
+   * **[OPTIONAL]** Seating/attendee capacity of the venue.
+   */
+  capacity?: number | null;
+  /**
+   * **[OPTIONAL]** Free-form venue/room type (e.g. Lab, Workshop, Auditorium).
+   */
+  venue_type?: string | null;
+  /**
    * **[READ-ONLY]** Timestamp when the training branch was first created. Automatically set by the system and cannot be modified.
    */
   readonly created_date?: Date;
@@ -606,13 +614,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -828,13 +836,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1016,10 +1024,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -1031,6 +1035,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 /**
@@ -1111,13 +1119,13 @@ export type TrainingProgram = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Classification of program type based on duration and content.
-   */
-  readonly program_type?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of total program duration.
    */
   readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Classification of program type based on duration and content.
+   */
+  readonly program_type?: string;
 };
 
 export type ApiResponseTrainingProgram = {
@@ -2330,6 +2338,22 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Human-readable format of total course duration.
+   */
+  readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
+   */
+  readonly has_multiple_categories?: boolean;
+  /**
+   * **[READ-ONLY]** Number of categories this course belongs to.
+   */
+  readonly category_count?: number;
+  /**
+   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
+   */
+  readonly lifecycle_stage?: string;
+  /**
    * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
    */
   readonly accepts_new_enrollments?: boolean;
@@ -2349,22 +2373,6 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
-   */
-  readonly total_duration_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
-   */
-  readonly has_multiple_categories?: boolean;
-  /**
-   * **[READ-ONLY]** Number of categories this course belongs to.
-   */
-  readonly category_count?: number;
-  /**
-   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
-   */
-  readonly lifecycle_stage?: string;
 };
 
 /**
@@ -2816,13 +2824,13 @@ export type LessonContent = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of file size.
-   */
-  readonly file_size_display?: string;
-  /**
    * **[READ-ONLY]** Category of content based on its type and format.
    */
   readonly content_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of file size.
+   */
+  readonly file_size_display?: string;
 };
 
 export type ApiResponseLessonContent = {
@@ -2890,14 +2898,6 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
-  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -2909,6 +2909,14 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
+  /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -4159,14 +4167,6 @@ export type Certificate = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Type of certificate based on completion achievement.
-   */
-  readonly certificate_type?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
-   */
-  readonly is_downloadable?: boolean;
-  /**
    * **[READ-ONLY]** Letter grade representation of the final grade.
    */
   readonly grade_letter?: string;
@@ -4174,6 +4174,14 @@ export type Certificate = {
    * **[READ-ONLY]** Current validity status of the certificate.
    */
   readonly validity_status?: string;
+  /**
+   * **[READ-ONLY]** Type of certificate based on completion achievement.
+   */
+  readonly certificate_type?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
+   */
+  readonly is_downloadable?: boolean;
 };
 
 export type ApiResponseCertificate = {
@@ -5141,13 +5149,13 @@ export type Enrollment = {
    */
   readonly did_attend?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -6250,6 +6258,10 @@ export type AssignmentSubmission = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
+   */
+  readonly is_graded?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the submission based on its content type.
    */
   readonly submission_category?: string;
@@ -6265,10 +6277,6 @@ export type AssignmentSubmission = {
    * **[READ-ONLY]** Summary of files attached to this submission.
    */
   readonly file_count_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
-   */
-  readonly is_graded?: boolean;
 };
 
 /**
@@ -8000,6 +8008,31 @@ export type TodayGrowthPointDto = {
   enrolments?: bigint;
 };
 
+export type ApiResponseListStudentEnrolmentSummaryDto = {
+  success?: boolean;
+  data?: Array<StudentEnrolmentSummaryDto>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A student's enrolment/attendance summary within an organisation
+ */
+export type StudentEnrolmentSummaryDto = {
+  /**
+   * Student UUID
+   */
+  student_uuid?: string;
+  /**
+   * Active enrolments (excludes cancelled/waitlisted)
+   */
+  total?: bigint;
+  /**
+   * Enrolments attended
+   */
+  completed?: bigint;
+};
+
 export type ApiResponseListEnrolmentTrendPointDto = {
   success?: boolean;
   data?: Array<EnrolmentTrendPointDto>;
@@ -8019,6 +8052,27 @@ export type EnrolmentTrendPointDto = {
    * Number of enrolments recorded in the month
    */
   total?: bigint;
+};
+
+export type ApiResponseListClassEnrolmentCountDto = {
+  success?: boolean;
+  data?: Array<ClassEnrolmentCountDto>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Active enrolment count for one class definition
+ */
+export type ClassEnrolmentCountDto = {
+  /**
+   * Class definition UUID
+   */
+  class_definition_uuid?: string;
+  /**
+   * Distinct actively-enrolled students
+   */
+  enrolled?: bigint;
 };
 
 export type ApiResponseLong = {
@@ -8362,13 +8416,13 @@ export type CourseAssessmentScore = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).
    */
   readonly is_passing?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
   /**
    * **[READ-ONLY]** Formatted category of the score based on performance level.
    */
@@ -27058,6 +27112,41 @@ export type GetTodayGrowthResponses = {
 
 export type GetTodayGrowthResponse = GetTodayGrowthResponses[keyof GetTodayGrowthResponses];
 
+export type GetStudentSummariesData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation to scope to
+     */
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/enrollment/organisations/{organisationUuid}/student-summaries';
+};
+
+export type GetStudentSummariesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetStudentSummariesError = GetStudentSummariesErrors[keyof GetStudentSummariesErrors];
+
+export type GetStudentSummariesResponses = {
+  /**
+   * Student enrolment summaries retrieved successfully
+   */
+  200: ApiResponseListStudentEnrolmentSummaryDto;
+};
+
+export type GetStudentSummariesResponse =
+  GetStudentSummariesResponses[keyof GetStudentSummariesResponses];
+
 export type GetEnrolmentTrendsData = {
   body?: never;
   path: {
@@ -27097,6 +27186,42 @@ export type GetEnrolmentTrendsResponses = {
 
 export type GetEnrolmentTrendsResponse =
   GetEnrolmentTrendsResponses[keyof GetEnrolmentTrendsResponses];
+
+export type GetClassEnrolmentCountsData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation to scope to
+     */
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/enrollment/organisations/{organisationUuid}/class-enrolment-counts';
+};
+
+export type GetClassEnrolmentCountsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetClassEnrolmentCountsError =
+  GetClassEnrolmentCountsErrors[keyof GetClassEnrolmentCountsErrors];
+
+export type GetClassEnrolmentCountsResponses = {
+  /**
+   * Class enrolment counts retrieved successfully
+   */
+  200: ApiResponseListClassEnrolmentCountDto;
+};
+
+export type GetClassEnrolmentCountsResponse =
+  GetClassEnrolmentCountsResponses[keyof GetClassEnrolmentCountsResponses];
 
 export type GetEnrollmentsForInstanceData = {
   body?: never;

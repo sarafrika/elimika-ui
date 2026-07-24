@@ -351,7 +351,9 @@ import type {
   GetClassEnrollmentsForStudentResponse,
   SearchEnrollmentsResponse,
   GetTodayGrowthResponse,
+  GetStudentSummariesResponse,
   GetEnrolmentTrendsResponse,
+  GetClassEnrolmentCountsResponse,
   GetEnrollmentsForInstanceResponse,
   GetEnrollmentCountResponse,
   ListCurrenciesResponse,
@@ -6051,6 +6053,32 @@ export const getTodayGrowthResponseTransformer = async (
   return data;
 };
 
+const studentEnrolmentSummaryDtoSchemaResponseTransformer = (data: any) => {
+  if (data.total) {
+    data.total = BigInt(data.total.toString());
+  }
+  if (data.completed) {
+    data.completed = BigInt(data.completed.toString());
+  }
+  return data;
+};
+
+const apiResponseListStudentEnrolmentSummaryDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return studentEnrolmentSummaryDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getStudentSummariesResponseTransformer = async (
+  data: any
+): Promise<GetStudentSummariesResponse> => {
+  data = apiResponseListStudentEnrolmentSummaryDtoSchemaResponseTransformer(data);
+  return data;
+};
+
 const enrolmentTrendPointDtoSchemaResponseTransformer = (data: any) => {
   if (data.total) {
     data.total = BigInt(data.total.toString());
@@ -6071,6 +6099,29 @@ export const getEnrolmentTrendsResponseTransformer = async (
   data: any
 ): Promise<GetEnrolmentTrendsResponse> => {
   data = apiResponseListEnrolmentTrendPointDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const classEnrolmentCountDtoSchemaResponseTransformer = (data: any) => {
+  if (data.enrolled) {
+    data.enrolled = BigInt(data.enrolled.toString());
+  }
+  return data;
+};
+
+const apiResponseListClassEnrolmentCountDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return classEnrolmentCountDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getClassEnrolmentCountsResponseTransformer = async (
+  data: any
+): Promise<GetClassEnrolmentCountsResponse> => {
+  data = apiResponseListClassEnrolmentCountDtoSchemaResponseTransformer(data);
   return data;
 };
 
