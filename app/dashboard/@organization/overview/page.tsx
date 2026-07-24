@@ -1,6 +1,5 @@
 import {
   ActivityFeed,
-  EnrollmentTrendsChart,
   FundUtilizationChart,
   TodayGrowthChart,
 } from '@/components/dashboard';
@@ -8,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrgPage, orgStack } from '../_components/org-page';
 import { OverviewAlerts } from './_components/overview-alerts';
 import { OverviewCourseRail } from './_components/overview-course-rail';
+import { OverviewEnrolmentTrends } from './_components/overview-enrolment-trends';
 import { OverviewGettingStarted } from './_components/overview-getting-started';
 import { OverviewKpis } from './_components/overview-kpis';
 import { OverviewWelcome } from './_components/overview-welcome';
@@ -43,7 +43,7 @@ export default function OrganizationOverviewPage() {
               <CardTitle className='text-base font-semibold'>Enrolment Trends</CardTitle>
             </CardHeader>
             <CardContent>
-              <EnrollmentTrendsChart data={[]} />
+              <OverviewEnrolmentTrends />
             </CardContent>
           </Card>
 
