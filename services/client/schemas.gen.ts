@@ -156,7 +156,7 @@ export const UserSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the user account was first created. Automatically set by the system and cannot be modified.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     updated_date: {
@@ -164,7 +164,7 @@ export const UserSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the user account was last modified. Automatically updated by the system on any changes and cannot be directly modified.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     created_by: {
@@ -340,12 +340,25 @@ export const TrainingBranchSchema = {
         '**[REQUIRED]** Indicates whether the training branch is active and operational.',
       example: true,
     },
+    capacity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[OPTIONAL]** Seating/attendee capacity of the venue.',
+      example: 30,
+    },
+    venue_type: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Free-form venue/room type (e.g. Lab, Workshop, Auditorium).',
+      example: 'Lab',
+      maxLength: 50,
+      minLength: 0,
+    },
     created_date: {
       type: 'string',
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the training branch was first created. Automatically set by the system and cannot be modified.',
-      example: '2024-01-01T09:00:00',
+      example: '2024-01-01T09:00:00Z',
       readOnly: true,
     },
     updated_date: {
@@ -353,7 +366,7 @@ export const TrainingBranchSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the training branch was last updated. Automatically updated by the system on any changes and cannot be directly modified.',
-      example: '2024-04-15T14:30:00',
+      example: '2024-04-15T14:30:00Z',
       readOnly: true,
     },
   },
@@ -626,7 +639,7 @@ export const StudentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the student profile was first created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -641,7 +654,7 @@ export const StudentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the student profile was last modified. Automatically updated by the system on any changes.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -769,7 +782,7 @@ export const AssessmentRubricSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the rubric was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -784,7 +797,7 @@ export const AssessmentRubricSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the rubric was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -922,7 +935,7 @@ export const RubricScoringLevelSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the scoring level was created. Automatically set by the system.',
-      example: '2024-08-13T12:00:00',
+      example: '2024-08-13T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -937,7 +950,7 @@ export const RubricScoringLevelSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the scoring level was last modified. Automatically updated by the system.',
-      example: '2024-08-13T15:30:00',
+      example: '2024-08-13T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -1148,7 +1161,7 @@ export const RubricCriteriaSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the criteria was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -1163,7 +1176,7 @@ export const RubricCriteriaSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the criteria was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -1171,6 +1184,12 @@ export const RubricCriteriaSchema = {
       description:
         '**[READ-ONLY]** Email or username of the user who last modified this criteria. Used for audit trails.',
       example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+    is_primary_criteria: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
+      example: true,
       readOnly: true,
     },
     criteria_category: {
@@ -1189,12 +1208,6 @@ export const RubricCriteriaSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted criteria number for display in assessment interface.',
       example: 'Criteria 1',
-      readOnly: true,
-    },
-    is_primary_criteria: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
-      example: true,
       readOnly: true,
     },
   },
@@ -1368,7 +1381,7 @@ export const RubricScoringSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the scoring was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -1383,7 +1396,7 @@ export const RubricScoringSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the scoring was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -1565,7 +1578,7 @@ export const QuizSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the quiz was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -1580,7 +1593,7 @@ export const QuizSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the quiz was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -1699,7 +1712,7 @@ export const QuizQuestionSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the question was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -1714,7 +1727,7 @@ export const QuizQuestionSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the question was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -1832,7 +1845,7 @@ export const QuizQuestionOptionSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the option was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -1847,7 +1860,7 @@ export const QuizQuestionOptionSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the option was last modified. Automatically updated by the system.',
-      example: '2024-04-03T10:15:00',
+      example: '2024-04-03T10:15:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -2012,13 +2025,13 @@ export const QuizAttemptSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[OPTIONAL]** Timestamp when the student started the quiz attempt.',
-      example: '2024-04-10T14:15:00',
+      example: '2024-04-10T14:15:00Z',
     },
     submitted_at: {
       type: ['string', 'null'],
       format: 'date-time',
       description: '**[OPTIONAL]** Timestamp when the student submitted the quiz attempt.',
-      example: '2024-04-10T15:30:00',
+      example: '2024-04-10T15:30:00Z',
     },
     time_taken_minutes: {
       type: 'integer',
@@ -2073,7 +2086,7 @@ export const QuizAttemptSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the attempt was created. Automatically set by the system.',
-      example: '2024-04-10T14:15:00',
+      example: '2024-04-10T14:15:00Z',
       readOnly: true,
     },
     created_by: {
@@ -2088,7 +2101,7 @@ export const QuizAttemptSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the attempt was last modified. Automatically updated by the system.',
-      example: '2024-04-10T15:30:00',
+      example: '2024-04-10T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -2103,6 +2116,12 @@ export const QuizAttemptSchema = {
       description:
         '**[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).',
       example: true,
+      readOnly: true,
+    },
+    time_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
+      example: '1 hour 15 minutes',
       readOnly: true,
     },
     attempt_category: {
@@ -2121,12 +2140,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the grade information.',
       example: '85.00 / 100.00 (85%)',
-      readOnly: true,
-    },
-    time_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: '1 hour 15 minutes',
       readOnly: true,
     },
   },
@@ -2273,7 +2286,7 @@ export const TrainingProgramSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the program was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -2288,7 +2301,7 @@ export const TrainingProgramSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the program was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -2298,16 +2311,16 @@ export const TrainingProgramSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    program_type: {
-      type: 'string',
-      description: '**[READ-ONLY]** Classification of program type based on duration and content.',
-      example: 'Comprehensive Masterclass',
-      readOnly: true,
-    },
     total_duration_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of total program duration.',
       example: '120 hours 30 minutes',
+      readOnly: true,
+    },
+    program_type: {
+      type: 'string',
+      description: '**[READ-ONLY]** Classification of program type based on duration and content.',
+      example: 'Comprehensive Masterclass',
       readOnly: true,
     },
   },
@@ -2582,7 +2595,7 @@ export const ProgramRequirementSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the requirement was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -2597,7 +2610,7 @@ export const ProgramRequirementSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the requirement was last modified. Automatically updated by the system.',
-      example: '2024-04-05T14:30:00',
+      example: '2024-04-05T14:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -2727,7 +2740,7 @@ export const ProgramCourseSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the program-course association was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -2742,7 +2755,7 @@ export const ProgramCourseSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the association was last modified. Automatically updated by the system.',
-      example: '2024-04-02T09:30:00',
+      example: '2024-04-02T09:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -2901,7 +2914,7 @@ export const OrganisationSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the organisation was first created. Automatically set by the system and cannot be modified.',
-      example: '2024-01-01T09:00:00',
+      example: '2024-01-01T09:00:00Z',
       readOnly: true,
     },
     updated_date: {
@@ -2909,7 +2922,7 @@ export const OrganisationSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the organisation was last updated. Automatically updated by the system on any changes and cannot be directly modified.',
-      example: '2024-04-15T14:30:00',
+      example: '2024-04-15T14:30:00Z',
       readOnly: true,
     },
   },
@@ -3227,7 +3240,7 @@ export const InstructorSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the instructor profile was first created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -3242,7 +3255,7 @@ export const InstructorSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the instructor profile was last modified. Automatically updated by the system on any changes.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -3331,7 +3344,7 @@ export const InstructorSkillSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the skill record was first created. Automatically set by the system.',
-      example: '2024-06-15T14:30:22',
+      example: '2024-06-15T14:30:22Z',
       readOnly: true,
     },
     created_by: {
@@ -3345,7 +3358,7 @@ export const InstructorSkillSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the skill record was last modified. Automatically updated by the system.',
-      example: '2024-06-16T09:15:00',
+      example: '2024-06-16T09:15:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -3361,16 +3374,16 @@ export const InstructorSkillSchema = {
       example: 'Java Programming (Expert)',
       readOnly: true,
     },
-    proficiency_description: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable description of the proficiency level.',
-      example: 'Expert level with 7+ years of experience',
-      readOnly: true,
-    },
     summary: {
       type: 'string',
       description: '**[READ-ONLY]** Brief summary of the skill for display in skill lists.',
       example: 'Java Programming - Expert level, High market demand, Teaching qualified',
+      readOnly: true,
+    },
+    proficiency_description: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable description of the proficiency level.',
+      example: 'Expert level with 7+ years of experience',
       readOnly: true,
     },
   },
@@ -3475,7 +3488,7 @@ export const InstructorProfessionalMembershipSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the membership record was first created. Automatically set by the system.',
-      example: '2024-06-15T14:30:22',
+      example: '2024-06-15T14:30:22Z',
       readOnly: true,
     },
     created_by: {
@@ -3490,7 +3503,7 @@ export const InstructorProfessionalMembershipSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the membership record was last modified. Automatically updated by the system.',
-      example: '2024-06-16T09:15:00',
+      example: '2024-06-16T09:15:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -3506,18 +3519,23 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
+    summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
+      example: 'IEEE Member (4 years, 3 months) - Active',
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     formatted_duration: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
       example: '4 years, 3 months',
-      readOnly: true,
-    },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
       readOnly: true,
     },
     membership_status: {
@@ -3560,17 +3578,12 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
-      example: 'IEEE Member (4 years, 3 months) - Active',
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
       description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
   },
@@ -3693,7 +3706,7 @@ export const InstructorExperienceSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the experience record was first created. Automatically set by the system.',
-      example: '2024-06-15T14:30:22',
+      example: '2024-06-15T14:30:22Z',
       readOnly: true,
     },
     created_by: {
@@ -3708,7 +3721,7 @@ export const InstructorExperienceSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the experience record was last modified. Automatically updated by the system.',
-      example: '2024-06-16T09:15:00',
+      example: '2024-06-16T09:15:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -3716,6 +3729,19 @@ export const InstructorExperienceSchema = {
       description:
         '**[READ-ONLY]** Email or username of the user who last modified this experience record.',
       example: 'instructor@example.com',
+      readOnly: true,
+    },
+    summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
+      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
       readOnly: true,
     },
     duration_in_months: {
@@ -3765,19 +3791,6 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
-      readOnly: true,
-    },
-    summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
-      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
       readOnly: true,
     },
   },
@@ -3884,7 +3897,7 @@ export const InstructorEducationSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the education record was first created. Automatically set by the system.',
-      example: '2024-06-15T14:30:22',
+      example: '2024-06-15T14:30:22Z',
       readOnly: true,
     },
     created_by: {
@@ -3899,7 +3912,7 @@ export const InstructorEducationSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the education record was last modified. Automatically updated by the system.',
-      example: '2024-06-16T09:15:00',
+      example: '2024-06-16T09:15:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -3914,6 +3927,13 @@ export const InstructorEducationSchema = {
       description:
         '**[READ-ONLY]** Complete description combining qualification, school, and year.',
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+      example: true,
       readOnly: true,
     },
     is_recent_qualification: {
@@ -3943,13 +3963,6 @@ export const InstructorEducationSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
-      example: true,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
       example: true,
       readOnly: true,
     },
@@ -4130,7 +4143,7 @@ export const InstructorDocumentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the document was uploaded. Automatically set by the system.',
-      example: '2024-06-15T14:30:22',
+      example: '2024-06-15T14:30:22Z',
       readOnly: true,
     },
     is_verified: {
@@ -4152,7 +4165,7 @@ export const InstructorDocumentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the document was verified. Set automatically when verification is completed.',
-      example: '2024-06-16T09:15:00',
+      example: '2024-06-16T09:15:00Z',
       readOnly: true,
     },
     verification_notes: {
@@ -4168,7 +4181,7 @@ export const InstructorDocumentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the document record was first created. Automatically set by the system.',
-      example: '2024-06-15T14:30:22',
+      example: '2024-06-15T14:30:22Z',
       readOnly: true,
     },
     created_by: {
@@ -4183,7 +4196,7 @@ export const InstructorDocumentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the document record was last modified. Automatically updated by the system.',
-      example: '2024-06-16T09:15:00',
+      example: '2024-06-16T09:15:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -4198,6 +4211,14 @@ export const InstructorDocumentSchema = {
       description:
         '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
       example: false,
+      readOnly: true,
+    },
+    file_url: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
+      example:
+        '/api/v1/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/documents/files/profile_documents/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
       readOnly: true,
     },
     file_size_formatted: {
@@ -4228,14 +4249,6 @@ export const InstructorDocumentSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum',
-    },
-    file_url: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
-      example:
-        '/api/v1/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/documents/files/profile_documents/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
-      readOnly: true,
     },
   },
   required: ['document_type_uuid', 'instructor_uuid', 'original_filename', 'title'],
@@ -4381,7 +4394,7 @@ export const AvailabilitySlotSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the availability slot was first created. Automatically set by the system.',
-      example: '2024-09-05T10:00:00',
+      example: '2024-09-05T10:00:00Z',
       readOnly: true,
     },
     updated_date: {
@@ -4389,7 +4402,7 @@ export const AvailabilitySlotSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the availability slot was last modified. Automatically updated by the system.',
-      example: '2024-09-05T15:30:00',
+      example: '2024-09-05T15:30:00Z',
       readOnly: true,
     },
     created_by: {
@@ -4718,7 +4731,7 @@ export const CourseSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the course was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -4733,7 +4746,7 @@ export const CourseSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the course was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -4741,6 +4754,32 @@ export const CourseSchema = {
       description:
         '**[READ-ONLY]** Email or username of the user who last modified this course. Used for audit trails.',
       example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+    total_duration_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of total course duration.',
+      example: '40 hours 30 minutes',
+      readOnly: true,
+    },
+    has_multiple_categories: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
+      example: true,
+      readOnly: true,
+    },
+    category_count: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of categories this course belongs to.',
+      example: 2,
+      readOnly: true,
+    },
+    lifecycle_stage: {
+      type: 'string',
+      description:
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
+      example: 'Published and Active',
       readOnly: true,
     },
     accepts_new_enrollments: {
@@ -4772,32 +4811,6 @@ export const CourseSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is currently under review.',
       example: false,
-      readOnly: true,
-    },
-    total_duration_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of total course duration.',
-      example: '40 hours 30 minutes',
-      readOnly: true,
-    },
-    has_multiple_categories: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
-      example: true,
-      readOnly: true,
-    },
-    category_count: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of categories this course belongs to.',
-      example: 2,
-      readOnly: true,
-    },
-    lifecycle_stage: {
-      type: 'string',
-      description:
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
-      example: 'Published and Active',
       readOnly: true,
     },
   },
@@ -5154,14 +5167,14 @@ export const CourseRubricAssociationSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when this association was created',
-      example: '2024-08-13T10:30:00',
+      example: '2024-08-13T10:30:00Z',
       readOnly: true,
     },
     created_date: {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the association was created',
-      example: '2024-08-13T10:30:00',
+      example: '2024-08-13T10:30:00Z',
       readOnly: true,
     },
     created_by: {
@@ -5174,7 +5187,7 @@ export const CourseRubricAssociationSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the association was last updated',
-      example: '2024-08-13T10:30:00',
+      example: '2024-08-13T10:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -5232,7 +5245,7 @@ export const CourseRequirementSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the requirement was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -5247,7 +5260,7 @@ export const CourseRequirementSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the requirement was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -5361,7 +5374,7 @@ export const LessonSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the lesson was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -5376,7 +5389,7 @@ export const LessonSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the lesson was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -5678,7 +5691,7 @@ export const LessonContentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the content was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -5693,7 +5706,7 @@ export const LessonContentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the content was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -5830,7 +5843,7 @@ export const CourseAssessmentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the assessment was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -5845,7 +5858,7 @@ export const CourseAssessmentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the assessment was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -6318,7 +6331,7 @@ export const CourseCreatorSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the course creator profile was first created. Automatically set by the system.',
-      example: '2024-09-30T10:00:00',
+      example: '2024-09-30T10:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -6333,7 +6346,7 @@ export const CourseCreatorSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the course creator profile was last modified. Automatically updated by the system on any changes.',
-      example: '2024-09-30T15:30:00',
+      example: '2024-09-30T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -6825,6 +6838,14 @@ export const CourseCreatorDocumentDTOSchema = {
       example: false,
       readOnly: true,
     },
+    file_url: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
+      example:
+        '/api/v1/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/documents/files/profile_documents/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
+      readOnly: true,
+    },
     file_size_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted file size.',
@@ -6853,14 +6874,6 @@ export const CourseCreatorDocumentDTOSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum',
-    },
-    file_url: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
-      example:
-        '/api/v1/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/documents/files/profile_documents/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
-      readOnly: true,
     },
   },
   required: ['course_creator_uuid', 'document_type_uuid', 'original_filename'],
@@ -7041,7 +7054,7 @@ export const GradingLevelSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the grading level was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -7056,7 +7069,7 @@ export const GradingLevelSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the grading level was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -7147,7 +7160,7 @@ export const DifficultyLevelSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the difficulty level was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -7162,7 +7175,7 @@ export const DifficultyLevelSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the difficulty level was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -7262,7 +7275,7 @@ export const ContentTypeSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the content type was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -7277,7 +7290,7 @@ export const ContentTypeSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the content type was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -7285,18 +7298,6 @@ export const ContentTypeSchema = {
       description:
         '**[READ-ONLY]** Email or username of the user who last modified this content type. Used for audit trails.',
       example: 'admin@sarafrika.com',
-      readOnly: true,
-    },
-    supported_formats: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable list of supported file formats.',
-      example: 'MP4, WebM, MPEG',
-      readOnly: true,
-    },
-    size_limit_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of maximum file size.',
-      example: '500 MB',
       readOnly: true,
     },
     upload_category: {
@@ -7309,6 +7310,18 @@ export const ContentTypeSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this content type is for media files.',
       example: true,
+      readOnly: true,
+    },
+    supported_formats: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable list of supported file formats.',
+      example: 'MP4, WebM, MPEG',
+      readOnly: true,
+    },
+    size_limit_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of maximum file size.',
+      example: '500 MB',
       readOnly: true,
     },
   },
@@ -7389,7 +7402,7 @@ export const CategorySchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the category was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -7404,7 +7417,7 @@ export const CategorySchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the category was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -8026,7 +8039,7 @@ conflict_resolution per template:
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the class definition was first created. Automatically set by the system.',
-      example: '2024-09-05T10:00:00',
+      example: '2024-09-05T10:00:00Z',
       readOnly: true,
     },
     updated_date: {
@@ -8034,7 +8047,7 @@ conflict_resolution per template:
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the class definition was last modified. Automatically updated by the system.',
-      example: '2024-09-05T15:30:00',
+      example: '2024-09-05T15:30:00Z',
       readOnly: true,
     },
     created_by: {
@@ -8164,13 +8177,13 @@ export const ClassSessionTemplateSchema = {
       type: 'string',
       format: 'date-time',
       description: 'Start time for the first occurrence (UTC)',
-      example: '2025-01-15T14:00:00',
+      example: '2025-01-15T14:00:00Z',
     },
     end_time: {
       type: 'string',
       format: 'date-time',
       description: 'End time for the first occurrence (UTC)',
-      example: '2025-01-15T15:30:00',
+      example: '2025-01-15T15:30:00Z',
     },
     recurrence: {
       type: 'null',
@@ -8643,7 +8656,7 @@ export const CertificateSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[REQUIRED]** Date when the course or program was completed by the student.',
-      example: '2024-05-15T15:45:00',
+      example: '2024-05-15T15:45:00Z',
     },
     final_grade: {
       type: ['number', 'null'],
@@ -8669,7 +8682,7 @@ export const CertificateSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the certificate was issued. Automatically set by the system.',
-      example: '2024-05-15T16:30:00',
+      example: '2024-05-15T16:30:00Z',
       readOnly: true,
     },
     certificate_url: {
@@ -8697,7 +8710,7 @@ export const CertificateSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the certificate record was created. Automatically set by the system.',
-      example: '2024-05-15T16:30:00',
+      example: '2024-05-15T16:30:00Z',
       readOnly: true,
     },
     created_by: {
@@ -8712,7 +8725,7 @@ export const CertificateSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the certificate was last modified. Automatically updated by the system.',
-      example: '2024-05-15T16:30:00',
+      example: '2024-05-15T16:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -8720,18 +8733,6 @@ export const CertificateSchema = {
       description:
         '**[READ-ONLY]** Email or username of the user who last modified this certificate. Used for audit trails.',
       example: 'system',
-      readOnly: true,
-    },
-    certificate_type: {
-      type: 'string',
-      description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
-      example: 'Course Completion',
-      readOnly: true,
-    },
-    is_downloadable: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
-      example: true,
       readOnly: true,
     },
     grade_letter: {
@@ -8744,6 +8745,18 @@ export const CertificateSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Current validity status of the certificate.',
       example: 'Valid Certificate',
+      readOnly: true,
+    },
+    certificate_type: {
+      type: 'string',
+      description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
+      example: 'Course Completion',
+      readOnly: true,
+    },
+    is_downloadable: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
+      example: true,
       readOnly: true,
     },
   },
@@ -8844,7 +8857,7 @@ export const CertificateTemplateSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the template was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -8859,7 +8872,7 @@ export const CertificateTemplateSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the template was last modified. Automatically updated by the system.',
-      example: '2024-04-05T14:20:00',
+      example: '2024-04-05T14:20:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -8976,7 +8989,7 @@ export const AssignmentSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[OPTIONAL]** Due date and time for assignment submission.',
-      example: '2024-04-15T23:59:59',
+      example: '2024-04-15T23:59:59Z',
     },
     max_points: {
       type: 'number',
@@ -9012,7 +9025,7 @@ export const AssignmentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the assignment was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -9027,7 +9040,7 @@ export const AssignmentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the assignment was last modified. Automatically updated by the system.',
-      example: '2024-04-05T10:30:00',
+      example: '2024-04-05T10:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -9384,13 +9397,13 @@ export const ScheduleRequestSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[REQUIRED]** Start date and time for the scheduled session.',
-      example: '2024-09-15T09:00:00',
+      example: '2024-09-15T09:00:00Z',
     },
     end_time: {
       type: 'string',
       format: 'date-time',
       description: '**[REQUIRED]** End date and time for the scheduled session.',
-      example: '2024-09-15T10:30:00',
+      example: '2024-09-15T10:30:00Z',
     },
     timezone: {
       type: 'string',
@@ -9485,13 +9498,13 @@ export const ScheduledInstanceSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[REQUIRED]** Start date and time of the scheduled class session.',
-      example: '2024-09-15T09:00:00',
+      example: '2024-09-15T09:00:00Z',
     },
     end_time: {
       type: 'string',
       format: 'date-time',
       description: '**[REQUIRED]** End date and time of the scheduled class session.',
-      example: '2024-09-15T10:30:00',
+      example: '2024-09-15T10:30:00Z',
     },
     timezone: {
       type: 'string',
@@ -9544,7 +9557,7 @@ export const ScheduledInstanceSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Actual UTC timestamp when the instructor explicitly started the class session.',
-      example: '2024-09-15T09:03:00',
+      example: '2024-09-15T09:03:00Z',
       readOnly: true,
     },
     concluded_at: {
@@ -9552,7 +9565,7 @@ export const ScheduledInstanceSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Actual UTC timestamp when the instructor explicitly concluded the class session.',
-      example: '2024-09-15T10:31:00',
+      example: '2024-09-15T10:31:00Z',
       readOnly: true,
     },
     created_date: {
@@ -9560,7 +9573,7 @@ export const ScheduledInstanceSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the scheduled instance was first created. Automatically set by the system.',
-      example: '2024-09-05T10:00:00',
+      example: '2024-09-05T10:00:00Z',
       readOnly: true,
     },
     updated_date: {
@@ -9568,7 +9581,7 @@ export const ScheduledInstanceSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the scheduled instance was last modified. Automatically updated by the system.',
-      example: '2024-09-05T15:30:00',
+      example: '2024-09-05T15:30:00Z',
       readOnly: true,
     },
     created_by: {
@@ -9660,13 +9673,13 @@ export const PeriodSchema = {
       type: 'string',
       format: 'date-time',
       description: 'Start time (UTC) for the block',
-      example: '2025-01-20T09:00:00',
+      example: '2025-01-20T09:00:00Z',
     },
     end_time: {
       type: 'string',
       format: 'date-time',
       description: 'End time (UTC) for the block',
-      example: '2025-01-20T11:00:00',
+      example: '2025-01-20T11:00:00Z',
     },
     reason: {
       type: 'string',
@@ -9908,7 +9921,7 @@ export const ProgramReviewSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the review was created.',
-      example: '2026-06-11T12:33:00',
+      example: '2026-06-11T12:33:00Z',
       readOnly: true,
     },
     created_by: {
@@ -9921,7 +9934,7 @@ export const ProgramReviewSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the review was last updated.',
-      example: '2026-06-11T12:33:00',
+      example: '2026-06-11T12:33:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -10235,7 +10248,7 @@ export const InstructorReviewSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the review was created.',
-      example: '2025-11-18T09:00:00',
+      example: '2025-11-18T09:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -10248,7 +10261,7 @@ export const InstructorReviewSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the review was last updated.',
-      example: '2025-11-18T09:00:00',
+      example: '2025-11-18T09:00:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -10554,14 +10567,14 @@ export const EnrollmentSchema = {
       type: ['string', 'null'],
       format: 'date-time',
       description: '**[OPTIONAL]** Timestamp when attendance was marked for this enrollment.',
-      example: '2024-09-15T09:15:00',
+      example: '2024-09-15T09:15:00Z',
     },
     created_date: {
       type: 'string',
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the enrollment was first created. Automatically set by the system.',
-      example: '2024-09-05T10:00:00',
+      example: '2024-09-05T10:00:00Z',
       readOnly: true,
     },
     updated_date: {
@@ -10569,7 +10582,7 @@ export const EnrollmentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the enrollment was last modified. Automatically updated by the system.',
-      example: '2024-09-05T15:30:00',
+      example: '2024-09-05T15:30:00Z',
       readOnly: true,
     },
     created_by: {
@@ -10591,12 +10604,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -10613,6 +10620,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -10755,7 +10768,7 @@ export const CourseReviewSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the review was created.',
-      example: '2026-01-30T09:00:00',
+      example: '2026-01-30T09:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -10768,7 +10781,7 @@ export const CourseReviewSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the review was last updated.',
-      example: '2026-01-30T09:00:00',
+      example: '2026-01-30T09:00:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -11377,13 +11390,13 @@ export const ClassSchedulingConflictSchema = {
       type: 'string',
       format: 'date-time',
       description: 'Requested start date-time that conflicted',
-      example: '2025-01-15T14:00:00',
+      example: '2025-01-15T14:00:00Z',
     },
     requested_end: {
       type: 'string',
       format: 'date-time',
       description: 'Requested end date-time that conflicted',
-      example: '2025-01-15T15:30:00',
+      example: '2025-01-15T15:30:00Z',
     },
     reasons: {
       type: 'array',
@@ -11557,7 +11570,7 @@ export const ClassReviewSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the review was created.',
-      example: '2026-06-22T17:00:00',
+      example: '2026-06-22T17:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -11570,7 +11583,7 @@ export const ClassReviewSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the review was last updated.',
-      example: '2026-06-22T17:00:00',
+      example: '2026-06-22T17:00:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -11634,13 +11647,13 @@ export const ClassQuizScheduleSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[OPTIONAL]** When the quiz is visible to students (UTC).',
-      example: '2024-05-09T07:00:00',
+      example: '2024-05-09T07:00:00Z',
     },
     due_at: {
       type: 'string',
       format: 'date-time',
       description: '**[OPTIONAL]** Deadline for completing the quiz (UTC).',
-      example: '2024-05-09T23:59:00',
+      example: '2024-05-09T23:59:00Z',
     },
     timezone: {
       type: 'string',
@@ -11682,7 +11695,7 @@ export const ClassQuizScheduleSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the schedule was created.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -11695,7 +11708,7 @@ export const ClassQuizScheduleSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the schedule was last updated.',
-      example: '2024-04-03T10:00:00',
+      example: '2024-04-03T10:00:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -11774,19 +11787,19 @@ export const ClassAssignmentScheduleSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[OPTIONAL]** When the assignment becomes visible to students (UTC).',
-      example: '2024-05-08T07:00:00',
+      example: '2024-05-08T07:00:00Z',
     },
     due_at: {
       type: 'string',
       format: 'date-time',
       description: '**[OPTIONAL]** Submission deadline for the class (UTC).',
-      example: '2024-05-12T23:59:00',
+      example: '2024-05-12T23:59:00Z',
     },
     grading_due_at: {
       type: 'string',
       format: 'date-time',
       description: '**[OPTIONAL]** Deadline for trainers to complete grading (UTC).',
-      example: '2024-05-15T17:00:00',
+      example: '2024-05-15T17:00:00Z',
     },
     timezone: {
       type: 'string',
@@ -11818,7 +11831,7 @@ export const ClassAssignmentScheduleSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the schedule was created.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -11831,7 +11844,7 @@ export const ClassAssignmentScheduleSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the schedule was last updated.',
-      example: '2024-04-03T09:15:00',
+      example: '2024-04-03T09:15:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -12363,7 +12376,7 @@ export const AssignmentSubmissionSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[OPTIONAL]** Timestamp when the submission was made by the student.',
-      example: '2024-04-10T14:30:00',
+      example: '2024-04-10T14:30:00Z',
     },
     status: {
       $ref: '#/components/schemas/StatusEnum15',
@@ -12399,7 +12412,7 @@ export const AssignmentSubmissionSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[OPTIONAL]** Timestamp when the submission was graded by the instructor.',
-      example: '2024-04-12T16:45:00',
+      example: '2024-04-12T16:45:00Z',
     },
     graded_by_uuid: {
       type: ['string', 'null'],
@@ -12412,7 +12425,7 @@ export const AssignmentSubmissionSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the submission was created. Automatically set by the system.',
-      example: '2024-04-10T14:30:00',
+      example: '2024-04-10T14:30:00Z',
       readOnly: true,
     },
     created_by: {
@@ -12427,7 +12440,7 @@ export const AssignmentSubmissionSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the submission was last modified. Automatically updated by the system.',
-      example: '2024-04-12T16:45:00',
+      example: '2024-04-12T16:45:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -12589,7 +12602,7 @@ export const AssignmentSubmissionAttachmentSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the attachment was created.',
-      example: '2024-11-15T10:00:00',
+      example: '2024-11-15T10:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -12602,7 +12615,7 @@ export const AssignmentSubmissionAttachmentSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the attachment was last updated.',
-      example: '2024-11-15T10:00:00',
+      example: '2024-11-15T10:00:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -12696,7 +12709,7 @@ export const AssignmentAttachmentSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the attachment was created.',
-      example: '2024-11-15T09:30:00',
+      example: '2024-11-15T09:30:00Z',
       readOnly: true,
     },
     created_by: {
@@ -12709,7 +12722,7 @@ export const AssignmentAttachmentSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the attachment was last updated.',
-      example: '2024-11-15T09:30:00',
+      example: '2024-11-15T09:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -13312,14 +13325,14 @@ export const StudentScheduleSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Start date and time of the scheduled class.',
-      example: '2024-09-15T09:00:00',
+      example: '2024-09-15T09:00:00Z',
       readOnly: true,
     },
     end_time: {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** End date and time of the scheduled class.',
-      example: '2024-09-15T10:30:00',
+      example: '2024-09-15T10:30:00Z',
       readOnly: true,
     },
     timezone: {
@@ -13359,7 +13372,7 @@ export const StudentScheduleSchema = {
       type: ['string', 'null'],
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when attendance was marked (if applicable).',
-      example: '2024-09-15T09:15:00',
+      example: '2024-09-15T09:15:00Z',
       readOnly: true,
     },
     duration_minutes: {
@@ -14898,14 +14911,14 @@ export const ProgramEnrollmentSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[OPTIONAL]** Timestamp when the student enrolled in the program.',
-      example: '2024-04-01T09:00:00',
+      example: '2024-04-01T09:00:00Z',
     },
     completion_date: {
       type: ['string', 'null'],
       format: 'date-time',
       description:
         '**[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.',
-      example: '2024-06-30T16:45:00',
+      example: '2024-06-30T16:45:00Z',
     },
     status: {
       $ref: '#/components/schemas/StatusEnum17',
@@ -14929,7 +14942,7 @@ export const ProgramEnrollmentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the enrollment was created. Automatically set by the system.',
-      example: '2024-04-01T09:00:00',
+      example: '2024-04-01T09:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -14944,7 +14957,7 @@ export const ProgramEnrollmentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the enrollment was last modified. Automatically updated by the system.',
-      example: '2024-06-30T16:45:00',
+      example: '2024-06-30T16:45:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -15789,13 +15802,13 @@ export const InstructorCalendarEntrySchema = {
       type: 'string',
       format: 'date-time',
       description: 'Start date-time for the entry',
-      example: '2024-09-15T09:00:00',
+      example: '2024-09-15T09:00:00Z',
     },
     end_time: {
       type: 'string',
       format: 'date-time',
       description: 'End date-time for the entry',
-      example: '2024-09-15T10:30:00',
+      example: '2024-09-15T10:30:00Z',
     },
     availability_type: {
       $ref: '#/components/schemas/AvailabilityTypeEnum',
@@ -16262,6 +16275,160 @@ export const ApiResponsePagedDTOStudentClassEnrollmentSummarySchema = {
   },
 } as const;
 
+export const ApiResponseListTodayGrowthPointDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TodayGrowthPointDTO',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const TodayGrowthPointDTOSchema = {
+  type: 'object',
+  description: "An hourly bucket of today's enrolment activity for an organisation",
+  properties: {
+    hour: {
+      type: 'string',
+      description: 'Hour bucket in HH:00 (24h) form',
+      example: '14:00',
+    },
+    enrolments: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Enrolments recorded during the hour',
+      example: 5,
+    },
+  },
+} as const;
+
+export const ApiResponseListStudentEnrolmentSummaryDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/StudentEnrolmentSummaryDTO',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const StudentEnrolmentSummaryDTOSchema = {
+  type: 'object',
+  description: "A student's enrolment/attendance summary within an organisation",
+  properties: {
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Student UUID',
+    },
+    total: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Active enrolments (excludes cancelled/waitlisted)',
+      example: 4,
+    },
+    completed: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Enrolments attended',
+      example: 3,
+    },
+  },
+} as const;
+
+export const ApiResponseListEnrolmentTrendPointDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/EnrolmentTrendPointDTO',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const EnrolmentTrendPointDTOSchema = {
+  type: 'object',
+  description: "A single month in an organisation's enrolment trend series",
+  properties: {
+    month: {
+      type: 'string',
+      description: 'Calendar month in YYYY-MM form',
+      example: '2026-07',
+    },
+    total: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Number of enrolments recorded in the month',
+      example: 42,
+    },
+  },
+} as const;
+
+export const ApiResponseListClassEnrolmentCountDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassEnrolmentCountDTO',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassEnrolmentCountDTOSchema = {
+  type: 'object',
+  description: 'Active enrolment count for one class definition',
+  properties: {
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Class definition UUID',
+    },
+    enrolled: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Distinct actively-enrolled students',
+      example: 18,
+    },
+  },
+} as const;
+
 export const ApiResponseLongSchema = {
   type: 'object',
   properties: {
@@ -16594,7 +16761,7 @@ The proposed content lives on the draft course referenced by \`draft_course_uuid
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** When the edit was submitted for review.',
-      example: '2026-07-17T09:00:00',
+      example: '2026-07-17T09:00:00Z',
       readOnly: true,
     },
     reviewed_by_uuid: {
@@ -16608,7 +16775,7 @@ The proposed content lives on the draft course referenced by \`draft_course_uuid
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** When the edit was reviewed.',
-      example: '2026-07-17T11:30:00',
+      example: '2026-07-17T11:30:00Z',
       readOnly: true,
     },
     review_reason: {
@@ -16967,7 +17134,7 @@ export const CourseAssessmentScoreSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[OPTIONAL]** Timestamp when the assessment was graded by the instructor.',
-      example: '2024-04-15T14:30:00',
+      example: '2024-04-15T14:30:00Z',
     },
     graded_by_uuid: {
       type: ['string', 'null'],
@@ -16989,7 +17156,7 @@ export const CourseAssessmentScoreSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the score record was created. Automatically set by the system.',
-      example: '2024-04-15T14:30:00',
+      example: '2024-04-15T14:30:00Z',
       readOnly: true,
     },
     created_by: {
@@ -17004,7 +17171,7 @@ export const CourseAssessmentScoreSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the score record was last modified. Automatically updated by the system.',
-      example: '2024-04-15T14:30:00',
+      example: '2024-04-15T14:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -17012,6 +17179,19 @@ export const CourseAssessmentScoreSchema = {
       description:
         '**[READ-ONLY]** Email or username of the user who last modified this score record. Used for audit trails.',
       example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+    is_passing: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).',
+      example: true,
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '87.50 / 100.00 (87.50%)',
       readOnly: true,
     },
     score_category: {
@@ -17032,19 +17212,6 @@ export const CourseAssessmentScoreSchema = {
       description:
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.',
       example: 'Detailed instructor feedback provided',
-      readOnly: true,
-    },
-    is_passing: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).',
-      example: true,
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '87.50 / 100.00 (87.50%)',
       readOnly: true,
     },
   },
@@ -17157,14 +17324,14 @@ export const CourseEnrollmentSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[OPTIONAL]** Timestamp when the student enrolled in the course.',
-      example: '2024-04-01T09:00:00',
+      example: '2024-04-01T09:00:00Z',
     },
     completion_date: {
       type: ['string', 'null'],
       format: 'date-time',
       description:
         '**[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.',
-      example: '2024-04-30T16:45:00',
+      example: '2024-04-30T16:45:00Z',
     },
     status: {
       $ref: '#/components/schemas/StatusEnum17',
@@ -17188,7 +17355,7 @@ export const CourseEnrollmentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the enrollment was created. Automatically set by the system.',
-      example: '2024-04-01T09:00:00',
+      example: '2024-04-01T09:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -17203,7 +17370,7 @@ export const CourseEnrollmentSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the enrollment was last modified. Automatically updated by the system.',
-      example: '2024-04-30T16:45:00',
+      example: '2024-04-30T16:45:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -17338,7 +17505,7 @@ export const CourseCategoryMappingSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the mapping was created. Automatically set by the system.',
-      example: '2024-04-01T12:00:00',
+      example: '2024-04-01T12:00:00Z',
       readOnly: true,
     },
     created_by: {
@@ -17353,7 +17520,7 @@ export const CourseCategoryMappingSchema = {
       format: 'date-time',
       description:
         '**[READ-ONLY]** Timestamp when the mapping was last modified. Automatically updated by the system.',
-      example: '2024-04-15T15:30:00',
+      example: '2024-04-15T15:30:00Z',
       readOnly: true,
     },
     updated_by: {
@@ -18714,7 +18881,7 @@ export const ContentModerationHistorySchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the decision was recorded.',
-      example: '2026-07-13T09:00:00',
+      example: '2026-07-13T09:00:00Z',
       readOnly: true,
     },
     created_by: {

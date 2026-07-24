@@ -1,83 +1,67 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle2, ShieldCheck } from 'lucide-react';
-import Link from 'next/link';
-import { useUserProfile } from '@/context/profile-context';
-import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
-import { cn } from '@/lib/utils';
-import { getPendingOrganisationsOptions } from '@/services/client/@tanstack/react-query.gen';
-import { SectionCard } from '../../_components/ui';
+import { ClipboardCheck, ShieldAlert } from 'lucide-react';
 
-/** Actionable alerts for the control centre — (for admins) organisation verifications. */
+import { AlertPanel, type AlertItem } from '@/components/dashboard';
+import { useOrganisation } from '@/context/organisation-context';
+import { searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
+
+type TrainingApplicationLike = { status?: string | null };
+
+const isPending = (status?: string | null) => (status ?? '').toLowerCase() === 'pending';
+
+/**
+ * Org-scoped alerts. Container that surfaces real signals (verification status,
+ * pending training applications the org submitted) into the presentational
+ * AlertPanel. Renders a graceful "all caught up" state when nothing is pending.
+ */
 export function OverviewAlerts() {
-  const profile = useUserProfile();
-  const isSystemAdmin = Boolean(profile?.user_domain?.includes('admin'));
+  const organisation = useOrganisation();
+  const organisationUuid = organisation?.uuid ?? '';
+  const isUnverified = Boolean(organisationUuid) && organisation?.admin_verified !== true;
 
-  const pendingVerificationQuery = useQuery({
-    ...getPendingOrganisationsOptions({ query: { pageable: { page: 0, size: 1 } } }),
-    enabled: isSystemAdmin,
+  const applicationsQuery = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: {
+        searchParams: {
+          applicant_uuid_eq: organisationUuid,
+          applicant_type_eq: 'organisation',
+        },
+        pageable: { page: 0, size: 100 },
+      },
+    }),
+    enabled: Boolean(organisationUuid),
   });
 
-  const pendingVerifications = getTotalFromMetadata(
-    extractPage(pendingVerificationQuery.data).metadata
-  );
+  const applications = (applicationsQuery.data?.data?.content ?? []) as TrainingApplicationLike[];
+  const pendingApplications = applications.filter(application => isPending(application.status)).length;
 
-  const alerts = [
-    {
-      show: isSystemAdmin,
-      count: pendingVerifications,
-      label: 'Organisations pending verification',
+  const alerts: AlertItem[] = [];
+
+  if (isUnverified) {
+    alerts.push({
+      id: 'verification',
+      severity: 'high',
+      title: 'Organisation pending verification',
+      description: 'Complete your profile and submit for admin verification to unlock all features.',
+      icon: ShieldAlert,
+      actionLabel: 'Review',
+      href: '/dashboard/account',
+    });
+  }
+
+  if (pendingApplications > 0) {
+    alerts.push({
+      id: 'approvals',
+      severity: 'medium',
+      title: `${pendingApplications} training ${pendingApplications === 1 ? 'request' : 'requests'} pending`,
+      description: 'Your training applications are awaiting admin review.',
+      icon: ClipboardCheck,
+      actionLabel: 'View',
       href: '/dashboard/verification',
-      icon: ShieldCheck,
-    },
-  ].filter(alert => alert.show);
+    });
+  }
 
-  const hasAlerts = alerts.some(alert => alert.count > 0);
-
-  return (
-    <SectionCard title='Alerts' description='Items that need your attention'>
-      {hasAlerts ? (
-        <ul className='flex flex-col gap-3'>
-          {alerts.map(alert => {
-            const Icon = alert.icon;
-            const active = alert.count > 0;
-            return (
-              <li key={alert.href}>
-                <Link
-                  href={alert.href}
-                  className={cn(
-                    'flex items-center justify-between gap-3 rounded-md border p-4 transition-colors',
-                    active
-                      ? 'border-warning/30 bg-warning/10 hover:bg-warning/15'
-                      : 'border-border/60 bg-muted/30 hover:bg-muted/50'
-                  )}
-                >
-                  <span className='flex items-center gap-3'>
-                    <Icon
-                      className={cn('size-5', active ? 'text-warning' : 'text-muted-foreground')}
-                    />
-                    <span className='text-sm text-foreground'>{alert.label}</span>
-                  </span>
-                  <span
-                    className={cn(
-                      'text-lg font-semibold tabular-nums',
-                      active ? 'text-warning' : 'text-muted-foreground'
-                    )}
-                  >
-                    {alert.count}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <div className='flex items-center gap-3 rounded-md border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground'>
-          <CheckCircle2 className='size-5 text-success' />
-          You&apos;re all caught up — no pending actions.
-        </div>
-      )}
-    </SectionCard>
-  );
+  return <AlertPanel alerts={alerts} />;
 }

@@ -446,6 +446,10 @@ import {
   getCourseEnrollmentsForStudent,
   getClassEnrollmentsForStudent,
   searchEnrollments,
+  getTodayGrowth,
+  getStudentSummaries,
+  getEnrolmentTrends,
+  getClassEnrolmentCounts,
   getEnrollmentsForInstance,
   getEnrollmentCount,
   hasCapacityForEnrollment,
@@ -1706,6 +1710,10 @@ import type {
   SearchEnrollmentsData,
   SearchEnrollmentsError,
   SearchEnrollmentsResponse,
+  GetTodayGrowthData,
+  GetStudentSummariesData,
+  GetEnrolmentTrendsData,
+  GetClassEnrolmentCountsData,
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
   HasCapacityForEnrollmentData,
@@ -21510,6 +21518,94 @@ export const searchEnrollmentsInfiniteOptions = (options: Options<SearchEnrollme
       queryKey: searchEnrollmentsInfiniteQueryKey(options),
     }
   );
+};
+
+export const getTodayGrowthQueryKey = (options: Options<GetTodayGrowthData>) =>
+  createQueryKey('getTodayGrowth', options);
+
+/**
+ * Get organisation today's-growth
+ * Hourly enrolment counts for the current day across all classes owned by the organisation.
+ */
+export const getTodayGrowthOptions = (options: Options<GetTodayGrowthData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getTodayGrowth({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getTodayGrowthQueryKey(options),
+  });
+};
+
+export const getStudentSummariesQueryKey = (options: Options<GetStudentSummariesData>) =>
+  createQueryKey('getStudentSummaries', options);
+
+/**
+ * Get per-student enrolment summaries for an organisation
+ * Per-student total and attended (completed) enrolment counts across the organisation's classes.
+ */
+export const getStudentSummariesOptions = (options: Options<GetStudentSummariesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStudentSummaries({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStudentSummariesQueryKey(options),
+  });
+};
+
+export const getEnrolmentTrendsQueryKey = (options: Options<GetEnrolmentTrendsData>) =>
+  createQueryKey('getEnrolmentTrends', options);
+
+/**
+ * Get organisation enrolment trends
+ * Monthly enrolment counts across all classes owned by the organisation, oldest month first.
+ */
+export const getEnrolmentTrendsOptions = (options: Options<GetEnrolmentTrendsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEnrolmentTrends({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEnrolmentTrendsQueryKey(options),
+  });
+};
+
+export const getClassEnrolmentCountsQueryKey = (options: Options<GetClassEnrolmentCountsData>) =>
+  createQueryKey('getClassEnrolmentCounts', options);
+
+/**
+ * Get per-class enrolment counts for an organisation
+ * Distinct active-enrolment counts for each class definition the organisation owns.
+ */
+export const getClassEnrolmentCountsOptions = (options: Options<GetClassEnrolmentCountsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassEnrolmentCounts({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassEnrolmentCountsQueryKey(options),
+  });
 };
 
 export const getEnrollmentsForInstanceQueryKey = (

@@ -10,14 +10,9 @@ import {
   getOrganisationStatisticsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import {
-  AdminPageHeader,
-  adminTheme,
-  DetailGrid,
-  SectionCard,
-  StatCard,
-  StatCardSkeleton,
-} from '../_components/ui';
+import { KpiCard, KpiCardSkeleton } from '@/components/dashboard';
+import { AdminPageHeader, adminTheme, DetailGrid, SectionCard } from '../_components/ui';
+import { toneToKpiVariant } from '../_components/org-page';
 
 const num = (value?: bigint | number | null): string =>
   value === undefined || value === null ? '—' : Number(value).toLocaleString();
@@ -103,11 +98,17 @@ export default function OrganisationReportsPage() {
           description='Insights for your organisation — your members, classes and applications.'
         />
 
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5'>
           {kpiLoading
-            ? kpis.map(k => <StatCardSkeleton key={k.label} />)
+            ? kpis.map(k => <KpiCardSkeleton key={k.label} />)
             : kpis.map(k => (
-                <StatCard key={k.label} label={k.label} value={k.value} icon={k.icon} tone={k.tone} />
+                <KpiCard
+                  key={k.label}
+                  title={k.label}
+                  value={k.value}
+                  icon={<k.icon className='h-5 w-5' />}
+                  variant={toneToKpiVariant[k.tone]}
+                />
               ))}
         </div>
 

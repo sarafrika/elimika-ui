@@ -1,53 +1,64 @@
-import { Building, Users } from 'lucide-react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { AdminPageHeader, adminTheme, SectionCard } from '../_components/ui';
-import { OrganizationProfile } from './_components/organization-profile';
+import { ActivityFeed, FundUtilizationChart } from '@/components/dashboard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { OrgPage, orgStack } from '../_components/org-page';
 import { OverviewAlerts } from './_components/overview-alerts';
+import { OverviewCourseRail } from './_components/overview-course-rail';
+import { OverviewEnrolmentTrends } from './_components/overview-enrolment-trends';
+import { OverviewTodayGrowth } from './_components/overview-today-growth';
+import { OverviewGettingStarted } from './_components/overview-getting-started';
 import { OverviewKpis } from './_components/overview-kpis';
-import { QuickActions } from './_components/quick-actions';
-import { RecentActivity } from './_components/recent-activity';
+import { OverviewWelcome } from './_components/overview-welcome';
 
 export default function OrganizationOverviewPage() {
   return (
-    <div className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
-        <AdminPageHeader
-          title='Organisation dashboard'
-          description='Oversight of your people, courses and operations at a glance.'
-          actions={
-            <>
-              <Button asChild size='sm' variant='outline'>
-                <Link href='/dashboard/people'>
-                  <Users className='mr-2 size-4' />
-                  Manage people
-                </Link>
-              </Button>
-              <Button asChild size='sm' variant='outline'>
-                <Link href='/dashboard/branches'>
-                  <Building className='mr-2 size-4' />
-                  Branches
-                </Link>
-              </Button>
-            </>
-          }
-        />
+    <OrgPage>
+      <div className={orgStack}>
+        <OverviewWelcome />
 
         <OverviewKpis />
 
-        <div className='grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]'>
-          <div className='flex flex-col gap-4'>
-            <OverviewAlerts />
-            <OrganizationProfile />
-          </div>
-          <div className='flex flex-col gap-4'>
-            <SectionCard title='Quick actions'>
-              <QuickActions />
-            </SectionCard>
-            <RecentActivity />
+        <OverviewCourseRail />
+
+        <div className='grid gap-5 lg:grid-cols-3'>
+          <Card className='lg:col-span-2'>
+            <CardHeader className='pb-2'>
+              <CardTitle className='text-base font-semibold'>Fund Utilisation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FundUtilizationChart data={[]} currencyPrefix='KSh ' />
+            </CardContent>
+          </Card>
+
+          <div className='lg:col-span-1'>
+            <OverviewGettingStarted />
           </div>
         </div>
+
+        <div className='grid gap-5 lg:grid-cols-3'>
+          <Card className='lg:col-span-1'>
+            <CardHeader className='pb-2'>
+              <CardTitle className='text-base font-semibold'>Enrolment Trends</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <OverviewEnrolmentTrends />
+            </CardContent>
+          </Card>
+
+          <Card className='lg:col-span-2'>
+            <CardHeader className='pb-2'>
+              <CardTitle className='text-base font-semibold'>Today&apos;s Growth</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <OverviewTodayGrowth />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className='grid gap-5 lg:grid-cols-2'>
+          <OverviewAlerts />
+          <ActivityFeed items={[]} />
+        </div>
       </div>
-    </div>
+    </OrgPage>
   );
 }

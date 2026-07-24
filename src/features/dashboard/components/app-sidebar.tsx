@@ -3,11 +3,18 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   useSidebar
 } from '@/components/ui/sidebar';
 import type { UserDomain } from '@/lib/types';
-import menu, { type MenuItem } from '@/src/features/dashboard/config/menu';
+import menu, {
+  isMenuGroups,
+  type MenuGroup,
+  type MenuItem,
+} from '@/src/features/dashboard/config/menu';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { SettingsSupportWidget } from '@/src/features/dashboard/settings/_components/settings-support-widget';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
@@ -21,9 +28,9 @@ import { NavMain } from './nav-main';
 import { NavSecondary } from './nav-secondary';
 
 const UNVERIFIED_ORGANISATION_MENU_PREFIXES = [
-  '/dashboard/account/training-center',
+  '/dashboard/overview',
+  '/dashboard/account',
   '/dashboard/profile',
-  '/dashboard/credentials',
 ];
 
 function isUnverifiedOrganisationMenuItem(item: MenuItem) {
@@ -45,19 +52,27 @@ export function AppSidebar({
   const isUnverifiedOrganisation =
     isOrganisationDomain && organisation?.admin_verified !== true;
 
-  // Helper to get menu items for a domain
-  const getMenuItems = (domain: UserDomain): MenuItem[] => {
+  // Helper to get menu items for a domain. Org nav is a MenuGroup[]; other
+  // domains stay a flat MenuItem[].
+  const getMenuItems = (domain: UserDomain): MenuItem[] | MenuGroup[] => {
     // Map 'organisation' domain to 'organisation_user' menu items
     const menuKey: Exclude<keyof typeof menu, 'main' | 'secondary' | 'user'> =
       domain === 'organisation' ? 'organisation_user' : domain;
 
     const domainItems = menu[menuKey] ?? [];
 
-    if (isUnverifiedOrganisation) {
-      return domainItems.filter(isUnverifiedOrganisationMenuItem);
+    if (!isUnverifiedOrganisation) return domainItems;
+
+    if (isMenuGroups(domainItems)) {
+      return domainItems
+        .map(group => ({
+          ...group,
+          items: group.items.filter(isUnverifiedOrganisationMenuItem),
+        }))
+        .filter(group => group.items.length > 0);
     }
 
-    return domainItems;
+    return domainItems.filter(isUnverifiedOrganisationMenuItem);
   };
 
 
@@ -93,11 +108,15 @@ export function AppSidebar({
               <span className='truncate font-bold capitalize text-[15px]'>
                 {organisation?.name || 'Elimika'}
               </span>
+              {isOrganisationDomain && (
+                <span className='text-muted-foreground truncate text-xs'>
+                  Organisation dashboard
+                </span>
+              )}
             </div>
           </Link>
         </div>
       </SidebarHeader>
-
       <SidebarContent
         className="
       overflow-y-auto
@@ -110,12 +129,32 @@ export function AppSidebar({
       [&::-webkit-scrollbar-thumb:hover]:bg-muted-foreground
     "
       >
-        <NavMain
-          items={getMenuItems(activeDomain)}
-          activeDomain={activeDomain}
-          pathname={pathname}
-          isAdmin={Boolean(isAdmin)}
-        />
+        {(() => {
+          const navItems = getMenuItems(activeDomain);
+          if (isMenuGroups(navItems)) {
+            return navItems.map(group => (
+              <SidebarGroup key={group.label}>
+                <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <NavMain
+                    items={group.items}
+                    activeDomain={activeDomain}
+                    pathname={pathname}
+                    isAdmin={Boolean(isAdmin)}
+                  />
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ));
+          }
+          return (
+            <NavMain
+              items={navItems}
+              activeDomain={activeDomain}
+              pathname={pathname}
+              isAdmin={Boolean(isAdmin)}
+            />
+          );
+        })()}
 
         <NavSecondary items={menu?.secondary ?? []} className='mt-auto' />
       </SidebarContent>

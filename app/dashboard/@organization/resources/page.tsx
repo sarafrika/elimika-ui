@@ -34,6 +34,8 @@ import { useOrganisation } from '@/context/organisation-context';
 import { extractPage } from '@/lib/api-helpers';
 import type { OrganisationResource, TrainingBranch } from '@/services/client';
 import { ResourceTypeEnum } from '@/services/client';
+import { KpiCard, PageHeader } from '@/components/dashboard';
+import { OrgPage, orgStack } from '../_components/org-page';
 import {
   createResourceMutation,
   deactivateResourceMutation,
@@ -46,6 +48,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Boxes,
+  Layers,
   CalendarDays,
   DoorOpen,
   Loader2,
@@ -393,20 +396,34 @@ export default function OrganisationResourcesPage() {
   const isSaving = createMutation.isPending || updateMutation.isPending;
   const isVenueForm = form.resource_type === ResourceTypeEnum.VENUE;
 
+  const equipmentCount = resources.filter(
+    r => r.resource_type === ResourceTypeEnum.EQUIPMENT_POOL
+  ).length;
+  const venueCount = resources.filter(r => r.resource_type === ResourceTypeEnum.VENUE).length;
+  const totalUnits = resources.reduce(
+    (sum, r) => sum + (Number((r as { total_quantity?: number }).total_quantity) || 0),
+    0
+  );
+
   return (
-    <main className='mx-auto w-full max-w-[1520px] space-y-6 px-4 py-6 sm:px-6'>
-      <div className='flex flex-wrap items-start justify-between gap-4'>
-        <div>
-          <h1 className='text-foreground text-2xl font-bold tracking-tight'>Resources</h1>
-          <p className='text-muted-foreground mt-1 text-sm'>
-            Register venues and equipment pools, manage their availability calendars, and keep job
-            postings from double-booking them.
-          </p>
-        </div>
-        <Button onClick={openCreateSheet}>
-          <Plus className='mr-2 h-4 w-4' />
-          New resource
-        </Button>
+    <OrgPage>
+      <div className={orgStack}>
+      <PageHeader
+        title='Equipment'
+        description='Register venues and equipment pools, manage availability, and keep job postings from double-booking them.'
+        actions={
+          <Button onClick={openCreateSheet}>
+            <Plus className='mr-2 h-4 w-4' />
+            New resource
+          </Button>
+        }
+      />
+
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4 2xl:gap-5'>
+        <KpiCard title='Total items' value={resources.length} icon={<Warehouse className='h-5 w-5' />} variant='primary' />
+        <KpiCard title='Equipment pools' value={equipmentCount} icon={<Boxes className='h-5 w-5' />} variant='indigo' />
+        <KpiCard title='Venues' value={venueCount} icon={<DoorOpen className='h-5 w-5' />} variant='amber' />
+        <KpiCard title='Total units' value={totalUnits} icon={<Layers className='h-5 w-5' />} variant='green' />
       </div>
 
       <div className='flex items-center gap-2'>
@@ -590,6 +607,7 @@ export default function OrganisationResourcesPage() {
           </div>
         </SheetContent>
       </Sheet>
-    </main>
+      </div>
+    </OrgPage>
   );
 }

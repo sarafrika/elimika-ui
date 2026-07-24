@@ -1336,6 +1336,18 @@ import type {
   SearchEnrollmentsData,
   SearchEnrollmentsResponses,
   SearchEnrollmentsErrors,
+  GetTodayGrowthData,
+  GetTodayGrowthResponses,
+  GetTodayGrowthErrors,
+  GetStudentSummariesData,
+  GetStudentSummariesResponses,
+  GetStudentSummariesErrors,
+  GetEnrolmentTrendsData,
+  GetEnrolmentTrendsResponses,
+  GetEnrolmentTrendsErrors,
+  GetClassEnrolmentCountsData,
+  GetClassEnrolmentCountsResponses,
+  GetClassEnrolmentCountsErrors,
   GetEnrollmentsForInstanceData,
   GetEnrollmentsForInstanceResponses,
   GetEnrollmentsForInstanceErrors,
@@ -2024,6 +2036,10 @@ import {
   getCourseEnrollmentsForStudentResponseTransformer,
   getClassEnrollmentsForStudentResponseTransformer,
   searchEnrollmentsResponseTransformer,
+  getTodayGrowthResponseTransformer,
+  getStudentSummariesResponseTransformer,
+  getEnrolmentTrendsResponseTransformer,
+  getClassEnrolmentCountsResponseTransformer,
   getEnrollmentsForInstanceResponseTransformer,
   getEnrollmentCountResponseTransformer,
   listCurrenciesResponseTransformer,
@@ -15373,6 +15389,118 @@ export const searchEnrollments = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/enrollment/search',
+    ...options,
+  });
+};
+
+/**
+ * Get organisation today's-growth
+ * Hourly enrolment counts for the current day across all classes owned by the organisation.
+ */
+export const getTodayGrowth = <ThrowOnError extends boolean = false>(
+  options: Options<GetTodayGrowthData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetTodayGrowthResponses,
+    GetTodayGrowthErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getTodayGrowthResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/organisations/{organisationUuid}/today-growth',
+    ...options,
+  });
+};
+
+/**
+ * Get per-student enrolment summaries for an organisation
+ * Per-student total and attended (completed) enrolment counts across the organisation's classes.
+ */
+export const getStudentSummaries = <ThrowOnError extends boolean = false>(
+  options: Options<GetStudentSummariesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetStudentSummariesResponses,
+    GetStudentSummariesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getStudentSummariesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/organisations/{organisationUuid}/student-summaries',
+    ...options,
+  });
+};
+
+/**
+ * Get organisation enrolment trends
+ * Monthly enrolment counts across all classes owned by the organisation, oldest month first.
+ */
+export const getEnrolmentTrends = <ThrowOnError extends boolean = false>(
+  options: Options<GetEnrolmentTrendsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetEnrolmentTrendsResponses,
+    GetEnrolmentTrendsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getEnrolmentTrendsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/organisations/{organisationUuid}/enrolment-trends',
+    ...options,
+  });
+};
+
+/**
+ * Get per-class enrolment counts for an organisation
+ * Distinct active-enrolment counts for each class definition the organisation owns.
+ */
+export const getClassEnrolmentCounts = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassEnrolmentCountsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassEnrolmentCountsResponses,
+    GetClassEnrolmentCountsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassEnrolmentCountsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/organisations/{organisationUuid}/class-enrolment-counts',
     ...options,
   });
 };

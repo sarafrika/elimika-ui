@@ -1,5 +1,6 @@
 'use client';
 
+import { KpiCard, KpiCardSkeleton, type KpiCardVariant } from '@/components/dashboard';
 import { extractPage } from '@/lib/api-helpers';
 import type { Enrollment, OrganisationResource } from '@/services/client';
 import { ResourceTypeEnum } from '@/services/client';
@@ -10,45 +11,32 @@ import {
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Boxes, DoorOpen, GraduationCap, School } from 'lucide-react';
 import type { ComponentType } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../../../../../components/ui/card';
-import { Skeleton } from '../../../../../components/ui/skeleton';
 import { useBranchClasses } from './use-branch-classes';
 
-function StatCard({
+function StatTile({
   icon: Icon,
   title,
   description,
   value,
   loading,
+  variant,
 }: {
-  icon: ComponentType<{ size?: number; className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   title: string;
   description: string;
   value: number;
   loading: boolean;
+  variant: KpiCardVariant;
 }) {
+  if (loading) return <KpiCardSkeleton />;
   return (
-    <Card className='flex-grow'>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <Skeleton className='h-9 w-20' />
-        ) : (
-          <h1 className='flex items-center gap-3 text-3xl'>
-            <Icon size={32} /> {value}
-          </h1>
-        )}
-      </CardContent>
-    </Card>
+    <KpiCard
+      title={title}
+      value={value}
+      hint={description}
+      icon={<Icon className='h-5 w-5' />}
+      variant={variant}
+    />
   );
 }
 
@@ -101,33 +89,37 @@ export default function BranchOverviewStats({
 
   return (
     <>
-      <StatCard
+      <StatTile
         icon={DoorOpen}
         title='Venues'
         description='Classrooms at this branch'
         value={venueUuids.size}
         loading={joinLoading}
+        variant='primary'
       />
-      <StatCard
+      <StatTile
         icon={Boxes}
         title='Equipment'
         description='Resource pools at this branch'
         value={equipmentCount}
         loading={equipmentQuery.isLoading}
+        variant='indigo'
       />
-      <StatCard
+      <StatTile
         icon={School}
         title='Classes'
         description='Classes scheduled here'
         value={branchClasses.length}
         loading={joinLoading}
+        variant='amber'
       />
-      <StatCard
+      <StatTile
         icon={GraduationCap}
         title='Students'
         description='Enrolled across branch classes'
         value={studentUuids.size}
         loading={studentsLoading}
+        variant='green'
       />
     </>
   );

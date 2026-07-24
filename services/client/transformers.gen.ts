@@ -350,6 +350,10 @@ import type {
   GetCourseEnrollmentsForStudentResponse,
   GetClassEnrollmentsForStudentResponse,
   SearchEnrollmentsResponse,
+  GetTodayGrowthResponse,
+  GetStudentSummariesResponse,
+  GetEnrolmentTrendsResponse,
+  GetClassEnrolmentCountsResponse,
   GetEnrollmentsForInstanceResponse,
   GetEnrollmentCountResponse,
   ListCurrenciesResponse,
@@ -6023,6 +6027,101 @@ export const searchEnrollmentsResponseTransformer = async (
   data: any
 ): Promise<SearchEnrollmentsResponse> => {
   data = apiResponsePagedDtoEnrollmentSchemaResponseTransformer(data);
+  return data;
+};
+
+const todayGrowthPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.enrolments) {
+    data.enrolments = BigInt(data.enrolments.toString());
+  }
+  return data;
+};
+
+const apiResponseListTodayGrowthPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return todayGrowthPointDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getTodayGrowthResponseTransformer = async (
+  data: any
+): Promise<GetTodayGrowthResponse> => {
+  data = apiResponseListTodayGrowthPointDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const studentEnrolmentSummaryDtoSchemaResponseTransformer = (data: any) => {
+  if (data.total) {
+    data.total = BigInt(data.total.toString());
+  }
+  if (data.completed) {
+    data.completed = BigInt(data.completed.toString());
+  }
+  return data;
+};
+
+const apiResponseListStudentEnrolmentSummaryDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return studentEnrolmentSummaryDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getStudentSummariesResponseTransformer = async (
+  data: any
+): Promise<GetStudentSummariesResponse> => {
+  data = apiResponseListStudentEnrolmentSummaryDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const enrolmentTrendPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.total) {
+    data.total = BigInt(data.total.toString());
+  }
+  return data;
+};
+
+const apiResponseListEnrolmentTrendPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return enrolmentTrendPointDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getEnrolmentTrendsResponseTransformer = async (
+  data: any
+): Promise<GetEnrolmentTrendsResponse> => {
+  data = apiResponseListEnrolmentTrendPointDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const classEnrolmentCountDtoSchemaResponseTransformer = (data: any) => {
+  if (data.enrolled) {
+    data.enrolled = BigInt(data.enrolled.toString());
+  }
+  return data;
+};
+
+const apiResponseListClassEnrolmentCountDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return classEnrolmentCountDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getClassEnrolmentCountsResponseTransformer = async (
+  data: any
+): Promise<GetClassEnrolmentCountsResponse> => {
+  data = apiResponseListClassEnrolmentCountDtoSchemaResponseTransformer(data);
   return data;
 };
 

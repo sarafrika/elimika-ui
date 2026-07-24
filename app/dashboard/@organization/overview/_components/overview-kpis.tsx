@@ -2,7 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Building, GraduationCap, Presentation, Users } from 'lucide-react';
-import Link from 'next/link';
+
+import { KpiCard, KpiCardSkeleton, type KpiCardVariant } from '@/components/dashboard';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import {
@@ -10,9 +11,11 @@ import {
   getUsersByOrganisationAndDomainOptions,
   getUsersByOrganisationOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { StatCard, StatCardSkeleton } from '../../_components/ui';
 
-/** Real-data KPI row for the organisation control centre. */
+/**
+ * Real-data KPI row for the organisation control centre. Container component:
+ * fetches org-scoped counts and hands them to the presentational {@link KpiCard}.
+ */
 export function OverviewKpis() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
@@ -51,13 +54,21 @@ export function OverviewKpis() {
   const studentsPage = extractPage(studentsQuery.data);
   const instructorsPage = extractPage(instructorsQuery.data);
 
-  const tiles = [
+  const tiles: Array<{
+    label: string;
+    value: number;
+    hint: string;
+    icon: typeof Users;
+    variant: KpiCardVariant;
+    href: string;
+    loading: boolean;
+  }> = [
     {
       label: 'Total Members',
       value: getTotalFromMetadata(extractPage(membersQuery.data).metadata),
-      hint: 'Everyone affiliated with your organisation',
+      hint: 'Everyone in your organisation',
       icon: Users,
-      tone: 'info' as const,
+      variant: 'primary',
       href: '/dashboard/people',
       loading: membersQuery.isLoading,
     },
@@ -66,8 +77,8 @@ export function OverviewKpis() {
       value: getTotalFromMetadata(studentsPage.metadata) || studentsPage.items.length,
       hint: 'Enrolled learners',
       icon: GraduationCap,
-      tone: 'success' as const,
-      href: '/dashboard/people',
+      variant: 'green',
+      href: '/dashboard/students',
       loading: studentsQuery.isLoading,
     },
     {
@@ -75,37 +86,36 @@ export function OverviewKpis() {
       value: getTotalFromMetadata(instructorsPage.metadata) || instructorsPage.items.length,
       hint: 'Teaching staff',
       icon: Presentation,
-      tone: 'neutral' as const,
-      href: '/dashboard/people',
+      variant: 'indigo',
+      href: '/dashboard/instructors',
       loading: instructorsQuery.isLoading,
     },
     {
-      label: 'Training Branches',
+      label: 'Venues',
       value: getTotalFromMetadata(extractPage(branchesQuery.data).metadata),
-      hint: 'Locations and facilities',
+      hint: 'Training branches & facilities',
       icon: Building,
-      tone: 'warning' as const,
+      variant: 'coral',
       href: '/dashboard/branches',
       loading: branchesQuery.isLoading,
     },
   ];
 
   return (
-    <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+    <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5'>
       {tiles.map(tile =>
         tile.loading ? (
-          <StatCardSkeleton key={tile.label} />
+          <KpiCardSkeleton key={tile.label} />
         ) : (
-          <Link key={tile.label} href={tile.href} className='block'>
-            <StatCard
-              label={tile.label}
-              value={tile.value}
-              hint={tile.hint}
-              icon={tile.icon}
-              tone={tile.tone}
-              className='h-full transition-colors hover:border-border'
-            />
-          </Link>
+          <KpiCard
+            key={tile.label}
+            title={tile.label}
+            value={tile.value.toLocaleString()}
+            hint={tile.hint}
+            icon={<tile.icon className='h-5 w-5' />}
+            variant={tile.variant}
+            href={tile.href}
+          />
         )
       )}
     </div>
