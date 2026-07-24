@@ -73,7 +73,7 @@ export default function BranchCourses({
       {courses.map(course => (
         <Link
           key={course.uuid}
-          href={`/dashboard/course-management/preview/${course.uuid}`}
+          href={`/dashboard/courses/overview/${course.uuid}`}
           className='group'
         >
           <Card className='hover:border-primary/50 h-full gap-0 overflow-hidden py-0 transition-colors'>

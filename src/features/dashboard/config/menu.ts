@@ -570,7 +570,6 @@ export default {
       items: [
         { title: 'Students', url: '/dashboard/students', icon: GraduationCap },
         { title: 'Instructors', url: '/dashboard/instructors', icon: UserCheck },
-        { title: 'Users', url: '/dashboard/users', icon: UserIcon },
       ],
     },
     {
@@ -578,8 +577,6 @@ export default {
       items: [
         { title: 'Courses', url: '/dashboard/courses', icon: BookOpen },
         { title: 'Classes', url: '/dashboard/classes', icon: School },
-        { title: 'Course Management', url: '/dashboard/course-management', icon: LibraryIcon },
-        { title: 'Credentials', url: '/dashboard/credentials', icon: Award },
       ],
     },
     {
@@ -587,7 +584,6 @@ export default {
       items: [
         { title: 'Venues', url: '/dashboard/branches', icon: MapPin },
         { title: 'Equipment', url: '/dashboard/resources', icon: Wrench },
-        { title: 'Availability', url: '/dashboard/availability', icon: Calendar },
       ],
     },
     {

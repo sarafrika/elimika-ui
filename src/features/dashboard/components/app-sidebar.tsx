@@ -28,9 +28,9 @@ import { NavMain } from './nav-main';
 import { NavSecondary } from './nav-secondary';
 
 const UNVERIFIED_ORGANISATION_MENU_PREFIXES = [
-  '/dashboard/account/training-center',
+  '/dashboard/overview',
+  '/dashboard/account',
   '/dashboard/profile',
-  '/dashboard/credentials',
 ];
 
 function isUnverifiedOrganisationMenuItem(item: MenuItem) {
