@@ -133,8 +133,8 @@ export function AppSidebar({
           const navItems = getMenuItems(activeDomain);
           if (isMenuGroups(navItems)) {
             return navItems.map(group => (
-              <SidebarGroup key={group.label}>
-                <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroup key={group.label} className='px-2 py-0.5'>
+                <SidebarGroupLabel className='h-6'>{group.label}</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <NavMain
                     items={group.items}

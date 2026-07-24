@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
  * (no fabricated data) when there is nothing to show.
  */
 
-const chartHeight = 'h-[240px] w-full sm:h-[280px] 2xl:h-[340px]';
+const chartHeight = 'h-[200px] w-full sm:h-[240px] 2xl:h-[280px]';
 
 const tooltipContentStyle = {
   background: 'var(--color-card)',
@@ -152,7 +152,7 @@ export function TodayGrowthChart({
 }) {
   if (!data.length) return <ChartEmpty label='No activity recorded today' />;
   return (
-    <div className={cn(chartHeight, 'sm:h-[240px] 2xl:h-[300px]')}>
+    <div className={cn(chartHeight, 'sm:h-[210px] 2xl:h-[250px]')}>
       <ResponsiveContainer width='100%' height='100%'>
         <BarChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: -8 }}>
           <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='var(--color-border)' />

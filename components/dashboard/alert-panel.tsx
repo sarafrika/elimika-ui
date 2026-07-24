@@ -53,7 +53,7 @@ export function AlertPanel({
 }) {
   return (
     <Card className={cn('h-full', className)}>
-      <CardHeader className='pb-3'>
+      <CardHeader className='pb-2'>
         <div className='flex items-center justify-between'>
           <CardTitle className='text-base font-semibold'>{title}</CardTitle>
           {alerts.length > 0 && (
@@ -63,7 +63,7 @@ export function AlertPanel({
           )}
         </div>
       </CardHeader>
-      <CardContent className='space-y-3'>
+      <CardContent className='space-y-2'>
         {alerts.length === 0 ? (
           <div className='flex flex-col items-center justify-center gap-2 py-10 text-center'>
             <div className='flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground'>
@@ -77,7 +77,7 @@ export function AlertPanel({
             return (
               <div
                 key={alert.id}
-                className='group relative flex items-start gap-3 overflow-hidden rounded-lg border bg-card p-3 pl-4 transition-colors hover:bg-muted/40'
+                className='group relative flex items-start gap-3 overflow-hidden rounded-lg border bg-card p-2.5 pl-3.5 transition-colors hover:bg-muted/40'
               >
                 <span className={cn('absolute inset-y-0 left-0 w-1', s.bar)} aria-hidden />
                 <div
