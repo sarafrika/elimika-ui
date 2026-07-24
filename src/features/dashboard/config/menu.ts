@@ -713,7 +713,7 @@ export default {
         { title: 'Apply to Train', url: '/dashboard/courses/catalog', icon: Rocket },
         { title: 'My Courses', url: '/dashboard/courses', icon: BookOpen },
         { title: 'My Application', url: '/dashboard/my-applications', icon: FileText },
-        { title: 'Job Matches', url: '/dashboard/opportunities', icon: Sparkles },
+        { title: 'Job Matches', url: '/dashboard/job-matches', icon: Sparkles },
       ],
     },
     {
