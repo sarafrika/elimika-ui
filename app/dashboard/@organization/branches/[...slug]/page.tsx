@@ -1,10 +1,11 @@
 import { ArrowLeft, MapPin, UserIcon } from 'lucide-react';
 import Link from 'next/link';
+import { PageHeader } from '@/components/dashboard';
 import { Badge } from '../../../../../components/ui/badge';
 import { Calendar } from '../../../../../components/ui/calendar';
 import { Card, CardContent } from '../../../../../components/ui/card';
-import { Separator } from '../../../../../components/ui/separator';
 import { getTrainingBranchByUuid, type TrainingBranch } from '../../../../../services/client';
+import { OrgPage } from '../../_components/org-page';
 import BranchOverviewStats from '../_components/branch-overview-stats';
 import TabSection from '../_components/tabsection';
 import type { Action } from './utils';
@@ -31,17 +32,20 @@ export default async function ViewBranch({
   const branch = branchResp.data.data as TrainingBranch;
 
   return (
-    <>
-      <div className='flex items-start gap-5'>
-        <Link href={'/dashboard/branches'}>
-          <ArrowLeft />
+    <OrgPage className='space-y-6'>
+      <div className='space-y-4'>
+        <Link
+          href='/dashboard/branches'
+          className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm'
+        >
+          <ArrowLeft className='h-4 w-4' />
+          All venues
         </Link>
-        <div>
-          <h3 className='text-2xl font-bold'>{branch.branch_name} Branch</h3>
-          <p>Information about {branch.branch_name} branch</p>
-        </div>
+        <PageHeader
+          title={branch.branch_name ?? 'Venue'}
+          description={`Venue details for ${branch.branch_name ?? 'this branch'}.`}
+        />
       </div>
-      <Separator />
 
       <div className='grid grid-cols-1 gap-5 lg:grid-cols-4'>
         <div className='col-span-3 flex flex-col gap-5'>
@@ -91,6 +95,6 @@ export default async function ViewBranch({
           </Card>
         </div>
       </div>
-    </>
+    </OrgPage>
   );
 }

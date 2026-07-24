@@ -72,6 +72,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { OrgPage } from '../../_components/org-page';
 
 const weekdayOptions: Array<{ value: string; label: string }> = [
   { value: 'MONDAY', label: 'Mon' },
@@ -380,7 +381,7 @@ export default function ResourceDetailPage() {
   const ResourceIcon = isVenue ? DoorOpen : Boxes;
 
   return (
-    <main className='mx-auto w-full max-w-[1520px] space-y-6 px-4 py-6 sm:px-6'>
+    <OrgPage className='space-y-6'>
       <div className='space-y-4'>
         <Link
           href='/dashboard/resources'
@@ -896,6 +897,6 @@ export default function ResourceDetailPage() {
           </div>
         </SheetContent>
       </Sheet>
-    </main>
+    </OrgPage>
   );
 }
