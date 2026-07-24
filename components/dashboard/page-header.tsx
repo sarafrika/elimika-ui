@@ -25,7 +25,7 @@ export function PageHeader({ title, description, eyebrow, actions, className }: 
     >
       <span
         aria-hidden
-        className='absolute -left-4 top-0 hidden h-8 w-1 rounded-full bg-gradient-to-b from-teal-600 to-cyan-400 sm:block'
+        className='absolute -left-4 top-0 hidden h-8 w-1 rounded-full bg-gradient-to-b from-teal-600 to-primary sm:block'
       />
       <div className='min-w-0 space-y-1'>
         {eyebrow && (

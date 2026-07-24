@@ -22,21 +22,21 @@ export interface AlertItem {
 
 const severityStyles: Record<AlertSeverity, { chip: string; icon: string; bar: string; label: string }> = {
   high: {
-    chip: 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900',
-    icon: 'bg-rose-500/15 text-rose-600',
-    bar: 'bg-rose-500',
+    chip: 'bg-destructive/10 text-destructive border-destructive/20',
+    icon: 'bg-destructive/15 text-destructive',
+    bar: 'bg-destructive',
     label: 'High',
   },
   medium: {
-    chip: 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900',
-    icon: 'bg-amber-500/15 text-amber-600',
-    bar: 'bg-amber-500',
+    chip: 'bg-warning/10 text-warning border-warning/20',
+    icon: 'bg-warning/15 text-warning',
+    bar: 'bg-warning',
     label: 'Medium',
   },
   low: {
-    chip: 'bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900',
-    icon: 'bg-sky-500/15 text-sky-600',
-    bar: 'bg-sky-500',
+    chip: 'bg-primary/10 text-primary border-primary/20',
+    icon: 'bg-primary/15 text-primary',
+    bar: 'bg-primary',
     label: 'Low',
   },
 };
@@ -57,7 +57,7 @@ export function AlertPanel({
         <div className='flex items-center justify-between'>
           <CardTitle className='text-base font-semibold'>{title}</CardTitle>
           {alerts.length > 0 && (
-            <span className='rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700 dark:bg-rose-950/50 dark:text-rose-300'>
+            <span className='rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-semibold text-destructive'>
               {alerts.length} new
             </span>
           )}
