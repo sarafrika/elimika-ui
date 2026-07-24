@@ -21,11 +21,13 @@ import {
   Handshake,
   Layers2,
   LayoutDashboard,
+  LayoutList,
   LibraryIcon,
   LineChart,
   LucideLandmark,
   MapPin,
   School,
+  Tag,
   UserCheck,
   Wrench,
   Settings,
@@ -694,48 +696,39 @@ export default {
       ],
     },
   ],
-  // Lovable-style grouped navigation. Analogue features adopt the Lovable label
-  // (Venues/Equipment/Earnings/Approvals/Reports/Job Matches) while keeping our
-  // existing route segments and backend wiring.
+  // Exact Lovable navGroups (labels/order/icons). Items are added to each group as
+  // their 1:1 page port lands; groups/items not yet ported are omitted (no stubs).
   organisation_user: [
     {
       label: 'Overview',
       items: [
         { title: 'Dashboard', url: '/dashboard/overview', icon: LayoutDashboard },
-        { title: 'Calendar', url: '/dashboard/calendar', icon: CalendarClock },
+        { title: 'Calendar', url: '/dashboard/calendar', icon: Calendar },
       ],
     },
     {
-      label: 'People',
+      label: 'Onboarding',
       items: [
-        { title: 'Students', url: '/dashboard/students', icon: GraduationCap },
-        { title: 'Instructors', url: '/dashboard/instructors', icon: UserCheck },
-      ],
-    },
-    {
-      label: 'Learning',
-      items: [
-        { title: 'Courses', url: '/dashboard/courses', icon: BookOpen },
-        { title: 'Classes', url: '/dashboard/classes', icon: School },
+        { title: 'My Courses', url: '/dashboard/courses', icon: BookOpen },
+        { title: 'Job Matches', url: '/dashboard/opportunities', icon: Sparkles },
       ],
     },
     {
       label: 'Operations',
       items: [
-        { title: 'Venues', url: '/dashboard/branches', icon: MapPin },
+        { title: 'Students', url: '/dashboard/students', icon: Users },
+        { title: 'Instructors', url: '/dashboard/instructors', icon: UserCheck },
+        { title: 'Classes', url: '/dashboard/classes', icon: LayoutList },
+        { title: 'Venues', url: '/dashboard/venues', icon: MapPin },
         { title: 'Equipment', url: '/dashboard/resources', icon: Wrench },
       ],
     },
     {
-      label: 'Opportunities',
+      label: 'Finance',
       items: [
-        { title: 'Job Matches', url: '/dashboard/opportunities', icon: Handshake },
+        { title: 'Earnings', url: '/dashboard/revenue', icon: Tag },
         { title: 'Approvals', url: '/dashboard/verification', icon: ClipboardCheck },
       ],
-    },
-    {
-      label: 'Finance',
-      items: [{ title: 'Earnings', url: '/dashboard/revenue', icon: DollarSign }],
     },
     {
       label: 'Insights',
@@ -743,10 +736,7 @@ export default {
     },
     {
       label: 'System',
-      items: [
-        { title: 'Organisation', url: '/dashboard/account', icon: LucideLandmark },
-        { title: 'Settings', url: '/dashboard/settings', icon: Settings },
-      ],
+      items: [{ title: 'Settings', url: '/dashboard/settings', icon: Settings }],
     },
   ],
 
