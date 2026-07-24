@@ -27,5 +27,5 @@ export {
 export type {
   FundUtilizationPoint,
   EnrollmentTrendSeries,
-  TodayGrowthPoint,
+  TodayGrowthSeries,
 } from './charts';

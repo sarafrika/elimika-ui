@@ -1,13 +1,10 @@
-import {
-  ActivityFeed,
-  FundUtilizationChart,
-  TodayGrowthChart,
-} from '@/components/dashboard';
+import { ActivityFeed, FundUtilizationChart } from '@/components/dashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrgPage, orgStack } from '../_components/org-page';
 import { OverviewAlerts } from './_components/overview-alerts';
 import { OverviewCourseRail } from './_components/overview-course-rail';
 import { OverviewEnrolmentTrends } from './_components/overview-enrolment-trends';
+import { OverviewTodayGrowth } from './_components/overview-today-growth';
 import { OverviewGettingStarted } from './_components/overview-getting-started';
 import { OverviewKpis } from './_components/overview-kpis';
 import { OverviewWelcome } from './_components/overview-welcome';
@@ -52,7 +49,7 @@ export default function OrganizationOverviewPage() {
               <CardTitle className='text-base font-semibold'>Today&apos;s Growth</CardTitle>
             </CardHeader>
             <CardContent>
-              <TodayGrowthChart data={[]} />
+              <OverviewTodayGrowth />
             </CardContent>
           </Card>
         </div>

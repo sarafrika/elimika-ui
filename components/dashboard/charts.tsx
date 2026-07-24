@@ -133,13 +133,23 @@ export function EnrollmentTrendsChart({
   );
 }
 
-export interface TodayGrowthPoint {
-  hour: string;
-  enrollments: number;
-  disbursements: number;
+export interface TodayGrowthSeries {
+  key: string;
+  name: string;
+  color: string;
 }
 
-export function TodayGrowthChart({ data }: { data: TodayGrowthPoint[] }) {
+const defaultTodayGrowthSeries: TodayGrowthSeries[] = [
+  { key: 'enrolments', name: 'Enrolments', color: 'var(--color-chart-1)' },
+];
+
+export function TodayGrowthChart({
+  data,
+  series = defaultTodayGrowthSeries,
+}: {
+  data: Array<Record<string, string | number>>;
+  series?: TodayGrowthSeries[];
+}) {
   if (!data.length) return <ChartEmpty label='No activity recorded today' />;
   return (
     <div className={cn(chartHeight, 'sm:h-[240px] 2xl:h-[300px]')}>
@@ -150,13 +160,9 @@ export function TodayGrowthChart({ data }: { data: TodayGrowthPoint[] }) {
           <YAxis axisLine={false} tickLine={false} tick={axisTick} />
           <Tooltip contentStyle={tooltipContentStyle} cursor={{ fill: 'var(--color-muted)' }} />
           <Legend iconType='circle' wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-          <Bar dataKey='enrollments' fill='var(--color-chart-1)' radius={[4, 4, 0, 0]} name='Enrolments' />
-          <Bar
-            dataKey='disbursements'
-            fill='var(--color-chart-2)'
-            radius={[4, 4, 0, 0]}
-            name='Disbursements'
-          />
+          {series.map(s => (
+            <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[4, 4, 0, 0]} name={s.name} />
+          ))}
         </BarChart>
       </ResponsiveContainer>
     </div>
