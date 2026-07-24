@@ -728,7 +728,7 @@ export default {
       label: 'Finance',
       items: [
         { title: 'Earnings', url: '/dashboard/revenue', icon: Tag },
-        { title: 'Approvals', url: '/dashboard/verification', icon: ClipboardCheck },
+        { title: 'Approvals', url: '/dashboard/approvals', icon: ClipboardCheck },
       ],
     },
     {
