@@ -729,7 +729,10 @@ export default {
     },
     {
       label: 'Assessment',
-      items: [{ title: 'Assignments', url: '/dashboard/assignments', icon: FileText }],
+      items: [
+        { title: 'Assignments', url: '/dashboard/assignments', icon: FileText },
+        { title: 'Exams', url: '/dashboard/exams', icon: GraduationCap },
+      ],
     },
     {
       label: 'Finance',
