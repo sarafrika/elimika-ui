@@ -64,15 +64,22 @@ export function KpiCard({
 }: KpiCardProps) {
   const v = variant ?? 'primary';
   const card = (
-    <Card className={cn(kpiCardVariants({ variant }), href && 'cursor-pointer', className)}>
-      <CardHeader className='relative flex flex-row items-start justify-between pb-2'>
-        <span className='text-sm font-medium text-muted-foreground'>{title}</span>
-        <div className={cn('rounded-lg p-2', iconVariants[v])}>{icon}</div>
+    <Card
+      className={cn(
+        kpiCardVariants({ variant }),
+        'gap-1 py-4',
+        href && 'cursor-pointer',
+        className
+      )}
+    >
+      <CardHeader className='relative flex flex-row items-center justify-between pb-0'>
+        <span className='text-[13px] font-medium text-muted-foreground'>{title}</span>
+        <div className={cn('rounded-md p-1.5', iconVariants[v])}>{icon}</div>
       </CardHeader>
       <CardContent className='relative'>
-        <div className='text-2xl font-bold tracking-tight text-foreground sm:text-3xl'>{value}</div>
+        <div className='text-2xl font-bold tracking-tight text-foreground'>{value}</div>
         {(change || hint) && (
-          <div className='mt-1.5 flex flex-wrap items-center gap-1.5'>
+          <div className='mt-1 flex flex-wrap items-center gap-1.5'>
             {change && (
               <span
                 className={cn(
@@ -109,14 +116,14 @@ export function KpiCard({
 
 export function KpiCardSkeleton({ className }: { className?: string }) {
   return (
-    <Card className={cn('relative overflow-hidden border-l-4 border-l-muted', className)}>
-      <CardHeader className='flex flex-row items-start justify-between pb-2'>
-        <Skeleton className='h-4 w-24' />
-        <Skeleton className='h-9 w-9 rounded-lg' />
+    <Card className={cn('relative gap-1 overflow-hidden border-l-4 border-l-muted py-4', className)}>
+      <CardHeader className='flex flex-row items-center justify-between pb-0'>
+        <Skeleton className='h-3.5 w-24' />
+        <Skeleton className='h-8 w-8 rounded-md' />
       </CardHeader>
       <CardContent>
-        <Skeleton className='h-8 w-20' />
-        <Skeleton className='mt-2 h-3 w-28' />
+        <Skeleton className='h-7 w-20' />
+        <Skeleton className='mt-1.5 h-3 w-28' />
       </CardContent>
     </Card>
   );

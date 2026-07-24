@@ -43,7 +43,7 @@ export function GettingStarted({
         className
       )}
     >
-      <CardHeader className='pb-3'>
+      <CardHeader className='pb-2'>
         <div className='flex items-center justify-between gap-2'>
           <div>
             <CardTitle className='text-base text-white'>{title}</CardTitle>

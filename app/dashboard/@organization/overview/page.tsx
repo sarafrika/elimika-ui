@@ -19,7 +19,7 @@ export default function OrganizationOverviewPage() {
 
         <OverviewCourseRail />
 
-        <div className='grid gap-5 lg:grid-cols-3'>
+        <div className='grid gap-4 lg:grid-cols-3'>
           <Card className='lg:col-span-2'>
             <CardHeader className='pb-2'>
               <CardTitle className='text-base font-semibold'>Fund Utilisation</CardTitle>
@@ -34,7 +34,7 @@ export default function OrganizationOverviewPage() {
           </div>
         </div>
 
-        <div className='grid gap-5 lg:grid-cols-3'>
+        <div className='grid gap-4 lg:grid-cols-3'>
           <Card className='lg:col-span-1'>
             <CardHeader className='pb-2'>
               <CardTitle className='text-base font-semibold'>Enrolment Trends</CardTitle>
@@ -54,7 +54,7 @@ export default function OrganizationOverviewPage() {
           </Card>
         </div>
 
-        <div className='grid gap-5 lg:grid-cols-2'>
+        <div className='grid gap-4 lg:grid-cols-2'>
           <OverviewAlerts />
           <ActivityFeed items={[]} />
         </div>

@@ -19,7 +19,7 @@ export function PageHeader({ title, description, eyebrow, actions, className }: 
   return (
     <div
       className={cn(
-        'relative flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between',
+        'relative flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between',
         className
       )}
     >

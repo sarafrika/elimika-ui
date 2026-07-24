@@ -50,7 +50,7 @@ export function CourseRail({
         </div>
       ) : (
         <div className='-mx-1 overflow-x-auto px-1 pb-2'>
-          <div className='flex snap-x gap-4'>
+          <div className='flex snap-x gap-3'>
             {items.map(course => (
               <CourseRailCard key={course.id} course={course} />
             ))}
@@ -63,7 +63,7 @@ export function CourseRail({
 
 function CourseRailCard({ course }: { course: CourseRailItem }) {
   const inner = (
-    <div className='w-64 shrink-0 snap-start rounded-xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md 2xl:w-72'>
+    <div className='w-60 shrink-0 snap-start rounded-xl border bg-card p-3 shadow-sm transition-shadow hover:shadow-md 2xl:w-72'>
       <div className='flex items-start justify-between gap-2'>
         <div className='flex min-w-0 items-center gap-3'>
           <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-50 font-semibold text-teal-600 dark:bg-teal-950/50 dark:text-teal-300'>

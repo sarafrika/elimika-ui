@@ -26,7 +26,7 @@ export function ActivityFeed({
 }) {
   return (
     <Card className={cn('h-full', className)}>
-      <CardHeader className='pb-3'>
+      <CardHeader className='pb-2'>
         <CardTitle className='text-base font-semibold'>{title}</CardTitle>
       </CardHeader>
       <CardContent>
@@ -38,7 +38,7 @@ export function ActivityFeed({
             <p className='text-sm text-muted-foreground'>No recent activity yet.</p>
           </div>
         ) : (
-          <ul className='space-y-4'>
+          <ul className='space-y-3'>
             {items.map(item => (
               <li key={item.id} className='flex items-start gap-3'>
                 <div
@@ -65,11 +65,11 @@ export function ActivityFeed({
 export function ActivityFeedSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <Card className='h-full'>
-      <CardHeader className='pb-3'>
+      <CardHeader className='pb-2'>
         <Skeleton className='h-5 w-32' />
       </CardHeader>
       <CardContent>
-        <ul className='space-y-4'>
+        <ul className='space-y-3'>
           {Array.from({ length: rows }).map((_, i) => (
             <li key={i} className='flex items-start gap-3'>
               <Skeleton className='h-8 w-8 shrink-0 rounded-full' />
