@@ -373,9 +373,9 @@ export const zStudent = z
       ])
       .optional(),
     bio: z.union([z.string().min(0).max(2000), z.null()]).optional(),
-    primaryGuardianContact: z.string().optional(),
     secondaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
+    primaryGuardianContact: z.string().optional(),
     full_name: z
       .string()
       .describe(
@@ -770,6 +770,11 @@ export const zRubricCriteria = z
       )
       .readonly()
       .optional(),
+    is_primary_criteria: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is a primary assessment criteria.')
+      .readonly()
+      .optional(),
     criteria_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment criteria.')
@@ -783,11 +788,6 @@ export const zRubricCriteria = z
     criteria_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted criteria number for display in assessment interface.')
-      .readonly()
-      .optional(),
-    is_primary_criteria: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is a primary assessment criteria.')
       .readonly()
       .optional(),
   })
@@ -1059,11 +1059,6 @@ export const zQuiz = z
       )
       .readonly()
       .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the quiz is published and accessible to students.')
-      .readonly()
-      .optional(),
     time_limit_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of quiz time limit.')
@@ -1077,6 +1072,11 @@ export const zQuiz = z
     has_multiple_attempts: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if students can take the quiz multiple times.')
+      .readonly()
+      .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the quiz is published and accessible to students.')
       .readonly()
       .optional(),
   })
@@ -1441,14 +1441,14 @@ export const zQuizAttempt = z
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -2173,6 +2173,7 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
+    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     has_location_coordinates: z
       .boolean()
       .describe(
@@ -2180,7 +2181,6 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe('Instructor profile including location data for educational service delivery');
 
@@ -2253,14 +2253,14 @@ export const zInstructorSkill = z
       .describe('**[READ-ONLY]** Formatted skill name for display in UI components.')
       .readonly()
       .optional(),
-    proficiency_description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the proficiency level.')
-      .readonly()
-      .optional(),
     summary: z
       .string()
       .describe('**[READ-ONLY]** Brief summary of the skill for display in skill lists.')
+      .readonly()
+      .optional(),
+    proficiency_description: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable description of the proficiency level.')
       .readonly()
       .optional(),
   })
@@ -2359,11 +2359,12 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if the membership is currently valid and active.')
       .readonly()
       .optional(),
-    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
-    membership_duration_months: z
-      .union([z.number().int().readonly(), z.null()])
+    summary: z
+      .string()
+      .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
+    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
@@ -2383,9 +2384,8 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
       .readonly()
       .optional(),
-    summary: z
-      .string()
-      .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
+    membership_duration_months: z
+      .union([z.number().int().readonly(), z.null()])
       .readonly()
       .optional(),
     is_complete: z
@@ -2478,6 +2478,11 @@ export const zInstructorExperience = z
       )
       .readonly()
       .optional(),
+    summary: z
+      .string()
+      .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
+      .readonly()
+      .optional(),
     duration_in_months: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
     formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     employment_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
@@ -2498,11 +2503,6 @@ export const zInstructorExperience = z
       .readonly()
       .optional(),
     calculated_years: z.union([z.number().readonly(), z.null()]).readonly().optional(),
-    summary: z
-      .string()
-      .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
-      .readonly()
-      .optional(),
     is_complete: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
@@ -2788,6 +2788,13 @@ export const zInstructorDocument = z
       .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
       .readonly()
       .optional(),
+    file_url: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
+      )
+      .readonly()
+      .optional(),
     file_size_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted file size.')
@@ -2805,13 +2812,6 @@ export const zInstructorDocument = z
       .readonly()
       .optional(),
     verification_status: zVerificationStatusEnum.optional(),
-    file_url: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
-      )
-      .readonly()
-      .optional(),
   })
   .describe(
     'Document record for instructor credential verification including educational certificates, experience documents, and professional memberships'
@@ -4246,6 +4246,13 @@ export const zCourseCreatorDocumentDto = z.object({
     .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
     .readonly()
     .optional(),
+  file_url: z
+    .string()
+    .describe(
+      '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
+    )
+    .readonly()
+    .optional(),
   file_size_formatted: z
     .string()
     .describe('**[READ-ONLY]** Human-readable formatted file size.')
@@ -4263,13 +4270,6 @@ export const zCourseCreatorDocumentDto = z.object({
     .readonly()
     .optional(),
   verification_status: zVerificationStatusEnum.optional(),
-  file_url: z
-    .string()
-    .describe(
-      '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
-    )
-    .readonly()
-    .optional(),
 });
 
 export const zApiResponseCourseCreatorDocumentDto = z.object({
@@ -4532,16 +4532,6 @@ export const zContentType = z
       )
       .readonly()
       .optional(),
-    supported_formats: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable list of supported file formats.')
-      .readonly()
-      .optional(),
-    size_limit_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of maximum file size.')
-      .readonly()
-      .optional(),
     upload_category: z
       .string()
       .describe('**[READ-ONLY]** Category for organizing uploads in the user interface.')
@@ -4550,6 +4540,16 @@ export const zContentType = z
     is_media_type: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this content type is for media files.')
+      .readonly()
+      .optional(),
+    supported_formats: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable list of supported file formats.')
+      .readonly()
+      .optional(),
+    size_limit_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of maximum file size.')
       .readonly()
       .optional(),
   })
@@ -8182,12 +8182,12 @@ export const zPageableObject = z.object({
 export const zPage = z.object({
   totalElements: z.coerce.bigint().optional(),
   totalPages: z.number().int().optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   size: z.number().int().optional(),
   content: z.array(z.unknown()).optional(),
   number: z.number().int().optional(),
   sort: zSortObject.optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   numberOfElements: z.number().int().optional(),
   pageable: zPageableObject.optional(),
   empty: z.boolean().optional(),
@@ -9338,6 +9338,23 @@ export const zApiResponsePagedDtoStudentClassEnrollmentSummary = z.object({
   error: z.unknown().optional(),
 });
 
+/**
+ * A single month in an organisation's enrolment trend series
+ */
+export const zEnrolmentTrendPointDto = z
+  .object({
+    month: z.string().describe('Calendar month in YYYY-MM form').optional(),
+    total: z.coerce.bigint().describe('Number of enrolments recorded in the month').optional(),
+  })
+  .describe("A single month in an organisation's enrolment trend series");
+
+export const zApiResponseListEnrolmentTrendPointDto = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zEnrolmentTrendPointDto).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zApiResponseLong = z.object({
   success: z.boolean().optional(),
   data: z.coerce.bigint().optional(),
@@ -9721,6 +9738,11 @@ export const zCourseAssessmentScore = z
       )
       .readonly()
       .optional(),
+    is_passing: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).')
+      .readonly()
+      .optional(),
     score_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the score based on performance level.')
@@ -9738,11 +9760,6 @@ export const zCourseAssessmentScore = z
       .describe(
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.'
       )
-      .readonly()
-      .optional(),
-    is_passing: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).')
       .readonly()
       .optional(),
     grade_display: z
@@ -17804,6 +17821,28 @@ export const zSearchEnrollmentsData = z.object({
  * Enrollment search completed successfully
  */
 export const zSearchEnrollmentsResponse = zApiResponsePagedDtoEnrollment;
+
+export const zGetEnrolmentTrendsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid().describe('UUID of the organisation to scope the trend to'),
+  }),
+  query: z
+    .object({
+      months: z
+        .number()
+        .int()
+        .describe('Number of months to include (inclusive of the current month)')
+        .optional()
+        .default(6),
+    })
+    .optional(),
+});
+
+/**
+ * Enrolment trends retrieved successfully
+ */
+export const zGetEnrolmentTrendsResponse = zApiResponseListEnrolmentTrendPointDto;
 
 export const zGetEnrollmentsForInstanceData = z.object({
   body: z.never().optional(),

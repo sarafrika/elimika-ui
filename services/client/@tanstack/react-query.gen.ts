@@ -446,6 +446,7 @@ import {
   getCourseEnrollmentsForStudent,
   getClassEnrollmentsForStudent,
   searchEnrollments,
+  getEnrolmentTrends,
   getEnrollmentsForInstance,
   getEnrollmentCount,
   hasCapacityForEnrollment,
@@ -1706,6 +1707,7 @@ import type {
   SearchEnrollmentsData,
   SearchEnrollmentsError,
   SearchEnrollmentsResponse,
+  GetEnrolmentTrendsData,
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
   HasCapacityForEnrollmentData,
@@ -21510,6 +21512,28 @@ export const searchEnrollmentsInfiniteOptions = (options: Options<SearchEnrollme
       queryKey: searchEnrollmentsInfiniteQueryKey(options),
     }
   );
+};
+
+export const getEnrolmentTrendsQueryKey = (options: Options<GetEnrolmentTrendsData>) =>
+  createQueryKey('getEnrolmentTrends', options);
+
+/**
+ * Get organisation enrolment trends
+ * Monthly enrolment counts across all classes owned by the organisation, oldest month first.
+ */
+export const getEnrolmentTrendsOptions = (options: Options<GetEnrolmentTrendsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEnrolmentTrends({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEnrolmentTrendsQueryKey(options),
+  });
 };
 
 export const getEnrollmentsForInstanceQueryKey = (

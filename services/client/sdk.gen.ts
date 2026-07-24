@@ -1336,6 +1336,9 @@ import type {
   SearchEnrollmentsData,
   SearchEnrollmentsResponses,
   SearchEnrollmentsErrors,
+  GetEnrolmentTrendsData,
+  GetEnrolmentTrendsResponses,
+  GetEnrolmentTrendsErrors,
   GetEnrollmentsForInstanceData,
   GetEnrollmentsForInstanceResponses,
   GetEnrollmentsForInstanceErrors,
@@ -2024,6 +2027,7 @@ import {
   getCourseEnrollmentsForStudentResponseTransformer,
   getClassEnrollmentsForStudentResponseTransformer,
   searchEnrollmentsResponseTransformer,
+  getEnrolmentTrendsResponseTransformer,
   getEnrollmentsForInstanceResponseTransformer,
   getEnrollmentCountResponseTransformer,
   listCurrenciesResponseTransformer,
@@ -15373,6 +15377,34 @@ export const searchEnrollments = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/enrollment/search',
+    ...options,
+  });
+};
+
+/**
+ * Get organisation enrolment trends
+ * Monthly enrolment counts across all classes owned by the organisation, oldest month first.
+ */
+export const getEnrolmentTrends = <ThrowOnError extends boolean = false>(
+  options: Options<GetEnrolmentTrendsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetEnrolmentTrendsResponses,
+    GetEnrolmentTrendsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getEnrolmentTrendsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/organisations/{organisationUuid}/enrolment-trends',
     ...options,
   });
 };

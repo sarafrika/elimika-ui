@@ -350,6 +350,7 @@ import type {
   GetCourseEnrollmentsForStudentResponse,
   GetClassEnrollmentsForStudentResponse,
   SearchEnrollmentsResponse,
+  GetEnrolmentTrendsResponse,
   GetEnrollmentsForInstanceResponse,
   GetEnrollmentCountResponse,
   ListCurrenciesResponse,
@@ -6023,6 +6024,29 @@ export const searchEnrollmentsResponseTransformer = async (
   data: any
 ): Promise<SearchEnrollmentsResponse> => {
   data = apiResponsePagedDtoEnrollmentSchemaResponseTransformer(data);
+  return data;
+};
+
+const enrolmentTrendPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.total) {
+    data.total = BigInt(data.total.toString());
+  }
+  return data;
+};
+
+const apiResponseListEnrolmentTrendPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return enrolmentTrendPointDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getEnrolmentTrendsResponseTransformer = async (
+  data: any
+): Promise<GetEnrolmentTrendsResponse> => {
+  data = apiResponseListEnrolmentTrendPointDtoSchemaResponseTransformer(data);
   return data;
 };
 
