@@ -9,10 +9,9 @@ import {
   adminTheme,
   DetailGrid,
   SectionCard,
-  StatCard,
-  StatCardSkeleton,
   StatusBadge,
 } from '@/app/dashboard/@organization/_components/ui';
+import { KpiCard, KpiCardSkeleton } from '@/components/dashboard';
 import { Button } from '@/components/ui/button';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
@@ -107,15 +106,15 @@ export default function OrganisationOverviewPage() {
           }
         />
 
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5'>
           {kpiLoading ? (
-            Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+            Array.from({ length: 4 }).map((_, i) => <KpiCardSkeleton key={i} />)
           ) : (
             <>
-              <StatCard label='Students' value={num(stats?.total_students)} icon={GraduationCap} tone='success' />
-              <StatCard label='Instructors' value={num(stats?.total_instructors)} icon={Briefcase} tone='info' />
-              <StatCard label='Administrators' value={num(stats?.total_admins)} icon={Users} tone='neutral' />
-              <StatCard label='Branches' value={num(stats?.total_branches)} icon={Building} tone='warning' />
+              <KpiCard title='Students' value={num(stats?.total_students)} icon={<GraduationCap className='h-5 w-5' />} variant='green' />
+              <KpiCard title='Instructors' value={num(stats?.total_instructors)} icon={<Briefcase className='h-5 w-5' />} variant='primary' />
+              <KpiCard title='Administrators' value={num(stats?.total_admins)} icon={<Users className='h-5 w-5' />} variant='indigo' />
+              <KpiCard title='Branches' value={num(stats?.total_branches)} icon={<Building className='h-5 w-5' />} variant='amber' />
             </>
           )}
         </div>
