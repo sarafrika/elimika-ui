@@ -727,6 +727,7 @@ export default {
     {
       label: 'Finance',
       items: [
+        { title: 'Skills Wallet', url: '/dashboard/skills-wallet', icon: Wallet },
         { title: 'Earnings', url: '/dashboard/revenue', icon: Tag },
         { title: 'Approvals', url: '/dashboard/approvals', icon: ClipboardCheck },
       ],
