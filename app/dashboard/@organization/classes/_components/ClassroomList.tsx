@@ -17,6 +17,7 @@ import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { KpiCard, PageHeader } from '@/components/dashboard';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
@@ -94,33 +95,12 @@ function ClassBoardStats({
   openJobs: number;
   upcomingClasses: number;
 }) {
-  const stats = [
-    { label: 'Classes', value: totalClasses, icon: GraduationCap },
-    { label: 'Active', value: activeClasses, icon: CheckCircle2 },
-    { label: 'Open Jobs', value: openJobs, icon: BriefcaseBusiness },
-    { label: 'Upcoming', value: upcomingClasses, icon: CalendarDays },
-  ];
-
   return (
-    <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
-      {stats.map(stat => {
-        const Icon = stat.icon;
-        return (
-          <Card key={stat.label} className='rounded-[14px] border border-border bg-card p-4'>
-            <div className='flex items-center justify-between gap-3'>
-              <div>
-                <p className='text-xs font-medium uppercase tracking-wide text-muted-foreground'>
-                  {stat.label}
-                </p>
-                <p className='mt-2 text-2xl font-semibold text-foreground'>{stat.value}</p>
-              </div>
-              <span className='flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary'>
-                <Icon className='size-5' />
-              </span>
-            </div>
-          </Card>
-        );
-      })}
+    <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5'>
+      <KpiCard title='Classes' value={totalClasses} icon={<GraduationCap className='h-5 w-5' />} variant='primary' />
+      <KpiCard title='Active' value={activeClasses} icon={<CheckCircle2 className='h-5 w-5' />} variant='green' />
+      <KpiCard title='Open Jobs' value={openJobs} icon={<BriefcaseBusiness className='h-5 w-5' />} variant='amber' />
+      <KpiCard title='Upcoming' value={upcomingClasses} icon={<CalendarDays className='h-5 w-5' />} variant='indigo' />
     </div>
   );
 }
@@ -390,20 +370,18 @@ export default function ClassroomList() {
 
   return (
     <main className='mx-auto w-full max-w-[1560px] space-y-6 px-3 py-4 sm:px-5 lg:px-7'>
-      <div className='flex flex-wrap items-start justify-between gap-4'>
-        <div>
-          <h1 className='text-2xl font-semibold tracking-tight text-foreground'>Classes</h1>
-          <p className='mt-1 text-sm text-muted-foreground'>
-            Track assigned classes and the class jobs waiting for instructor applications.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href='/dashboard/classes/new'>
-            <Plus className='mr-2 size-4' />
-            Create class
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title='Classes'
+        description='Track assigned classes and the class jobs waiting for instructor applications.'
+        actions={
+          <Button asChild>
+            <Link href='/dashboard/classes/new'>
+              <Plus className='mr-2 size-4' />
+              Create class
+            </Link>
+          </Button>
+        }
+      />
 
       <ClassBoardStats
         totalClasses={classes.length}
