@@ -333,7 +333,7 @@ export default function BranchesPage() {
                   onClick={() => setSelectedBranchId(branch.uuid ?? null)}
                   className={`cursor-pointer overflow-hidden transition-shadow hover:shadow-md ${isSelected ? 'ring-2 ring-primary' : ''}`}
                 >
-                  <div className='relative flex h-28 items-center justify-center bg-gradient-to-br from-teal-600 via-teal-600 to-cyan-600'>
+                  <div className='relative flex h-28 items-center justify-center bg-gradient-to-br from-teal-600 via-teal-600 to-primary'>
                     <Building2 className='h-10 w-10 text-white/90' />
                     <Badge
                       variant={branch.active ? 'default' : 'secondary'}

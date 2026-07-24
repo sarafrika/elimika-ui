@@ -39,7 +39,7 @@ export function GettingStarted({
   return (
     <Card
       className={cn(
-        'overflow-hidden border-0 bg-gradient-to-br from-teal-700 via-teal-700 to-cyan-700 text-white shadow-sm',
+        'overflow-hidden border-0 bg-gradient-to-br from-teal-700 via-teal-700 to-primary text-white shadow-sm',
         className
       )}
     >
@@ -53,7 +53,7 @@ export function GettingStarted({
             {doneCount}/{steps.length}
           </span>
         </div>
-        <Progress value={pct} className='mt-3 h-2 bg-white/20 [&>div]:bg-cyan-300' />
+        <Progress value={pct} className='mt-3 h-2 bg-white/20 [&>div]:bg-primary' />
       </CardHeader>
       <CardContent className='space-y-1'>
         {steps.map(step => (
@@ -69,7 +69,7 @@ export function GettingStarted({
                 className={cn(
                   'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors',
                   step.done
-                    ? 'border-cyan-300 bg-cyan-300 text-teal-900'
+                    ? 'border-primary bg-primary text-teal-900'
                     : 'border-white/50 text-transparent hover:border-white'
                 )}
               >
@@ -81,7 +81,7 @@ export function GettingStarted({
                 className={cn(
                   'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border',
                   step.done
-                    ? 'border-cyan-300 bg-cyan-300 text-teal-900'
+                    ? 'border-primary bg-primary text-teal-900'
                     : 'border-white/50 text-transparent'
                 )}
               >

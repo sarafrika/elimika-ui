@@ -18,10 +18,10 @@ const kpiCardVariants = cva(
     variants: {
       variant: {
         primary: 'border-l-4 border-l-primary',
-        green: 'border-l-4 border-l-emerald-600',
+        green: 'border-l-4 border-l-success',
         coral: 'border-l-4 border-l-orange-500',
-        amber: 'border-l-4 border-l-amber-500',
-        indigo: 'border-l-4 border-l-indigo-500',
+        amber: 'border-l-4 border-l-warning',
+        indigo: 'border-l-4 border-l-primary',
       },
     },
     defaultVariants: { variant: 'primary' },
@@ -30,10 +30,10 @@ const kpiCardVariants = cva(
 
 const iconVariants: Record<string, string> = {
   primary: 'bg-primary/10 text-primary',
-  green: 'bg-emerald-500/10 text-emerald-600',
+  green: 'bg-success/10 text-success',
   coral: 'bg-orange-500/10 text-orange-600',
-  amber: 'bg-amber-500/10 text-amber-600',
-  indigo: 'bg-indigo-500/10 text-indigo-600',
+  amber: 'bg-warning/10 text-warning',
+  indigo: 'bg-primary/10 text-primary',
 };
 
 export type KpiCardVariant = NonNullable<VariantProps<typeof kpiCardVariants>['variant']>;
@@ -78,8 +78,8 @@ export function KpiCard({
                 className={cn(
                   'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold',
                   changeType === 'up'
-                    ? 'bg-emerald-500/10 text-emerald-600'
-                    : 'bg-rose-500/10 text-rose-600'
+                    ? 'bg-success/10 text-success'
+                    : 'bg-destructive/10 text-destructive'
                 )}
               >
                 {changeType === 'up' ? (
