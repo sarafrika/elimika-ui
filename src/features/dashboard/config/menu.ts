@@ -730,6 +730,7 @@ export default {
     {
       label: 'Assessment',
       items: [
+        { title: 'Attendance', url: '/dashboard/attendance', icon: ClipboardCheck },
         { title: 'Assignments', url: '/dashboard/assignments', icon: FileText },
         { title: 'Exams', url: '/dashboard/exams', icon: GraduationCap },
       ],
