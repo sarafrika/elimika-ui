@@ -602,6 +602,9 @@ export const StudentSchema = {
       maxLength: 2000,
       minLength: 0,
     },
+    primaryGuardianContact: {
+      type: 'string',
+    },
     secondaryGuardianContact: {
       type: 'string',
     },
@@ -610,9 +613,6 @@ export const StudentSchema = {
       items: {
         type: 'string',
       },
-    },
-    primaryGuardianContact: {
-      type: 'string',
     },
     full_name: {
       type: 'string',
@@ -1280,19 +1280,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
-      readOnly: true,
-    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1590,6 +1590,12 @@ export const QuizSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    is_published: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the quiz is published and accessible to students.',
+      example: true,
+      readOnly: true,
+    },
     time_limit_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of quiz time limit.',
@@ -1605,12 +1611,6 @@ export const QuizSchema = {
     has_multiple_attempts: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if students can take the quiz multiple times.',
-      example: true,
-      readOnly: true,
-    },
-    is_published: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the quiz is published and accessible to students.',
       example: true,
       readOnly: true,
     },
@@ -1737,16 +1737,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: '2.0 points',
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -2105,6 +2105,18 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
+      readOnly: true,
+    },
+    time_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
+      example: '1 hour 15 minutes',
+      readOnly: true,
+    },
     attempt_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
@@ -2115,18 +2127,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    time_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: '1 hour 15 minutes',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
   },
@@ -3259,18 +3259,18 @@ export const InstructorSchema = {
       example: true,
       readOnly: true,
     },
-    formatted_location: {
-      type: ['string', 'null'],
-      description:
-        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
-      example: '-1.292100, 36.821900',
-      readOnly: true,
-    },
     has_location_coordinates: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
       example: true,
+      readOnly: true,
+    },
+    formatted_location: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
+      example: '-1.292100, 36.821900',
       readOnly: true,
     },
   },
@@ -3512,6 +3512,13 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     formatted_duration: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
@@ -3564,13 +3571,6 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
       readOnly: true,
     },
   },
@@ -3724,6 +3724,13 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     duration_in_months: {
       type: ['integer', 'null'],
       format: 'int32',
@@ -3771,13 +3778,6 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
       readOnly: true,
     },
   },
@@ -3916,6 +3916,13 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     is_recent_qualification: {
       type: 'boolean',
       description:
@@ -3943,13 +3950,6 @@ export const InstructorEducationSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
-      example: true,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
       example: true,
       readOnly: true,
     },
@@ -5703,16 +5703,16 @@ export const LessonContentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    content_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category of content based on its type and format.',
-      example: 'Video Content',
-      readOnly: true,
-    },
     file_size_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of file size.',
       example: '150 MB',
+      readOnly: true,
+    },
+    content_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category of content based on its type and format.',
+      example: 'Video Content',
       readOnly: true,
     },
   },
@@ -5855,6 +5855,18 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -5872,18 +5884,6 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
-      readOnly: true,
-    },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -10591,12 +10591,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -10607,6 +10601,12 @@ export const EnrollmentSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
       example: false,
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
     status_description: {
@@ -12437,12 +12437,6 @@ export const AssignmentSubmissionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    is_graded: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the submission has been graded by an instructor.',
-      example: true,
-      readOnly: true,
-    },
     submission_category: {
       type: 'string',
       description:
@@ -12467,6 +12461,12 @@ export const AssignmentSubmissionSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Summary of files attached to this submission.',
       example: '2 files attached',
+      readOnly: true,
+    },
+    is_graded: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the submission has been graded by an instructor.',
+      example: true,
       readOnly: true,
     },
   },
@@ -13516,6 +13516,12 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
+    },
     size: {
       type: 'integer',
       format: 'int32',
@@ -13530,12 +13536,6 @@ export const PageSchema = {
     },
     sort: {
       $ref: '#/components/schemas/SortObject',
-    },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
     },
     numberOfElements: {
       type: 'integer',
@@ -16262,6 +16262,43 @@ export const ApiResponsePagedDTOStudentClassEnrollmentSummarySchema = {
   },
 } as const;
 
+export const ApiResponseListTodayGrowthPointDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TodayGrowthPointDTO',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const TodayGrowthPointDTOSchema = {
+  type: 'object',
+  description: "An hourly bucket of today's enrolment activity for an organisation",
+  properties: {
+    hour: {
+      type: 'string',
+      description: 'Hour bucket in HH:00 (24h) form',
+      example: '14:00',
+    },
+    enrolments: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Enrolments recorded during the hour',
+      example: 5,
+    },
+  },
+} as const;
+
 export const ApiResponseListEnrolmentTrendPointDTOSchema = {
   type: 'object',
   properties: {
@@ -17051,6 +17088,12 @@ export const CourseAssessmentScoreSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '87.50 / 100.00 (87.50%)',
+      readOnly: true,
+    },
     is_passing: {
       type: 'boolean',
       description:
@@ -17076,12 +17119,6 @@ export const CourseAssessmentScoreSchema = {
       description:
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.',
       example: 'Detailed instructor feedback provided',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '87.50 / 100.00 (87.50%)',
       readOnly: true,
     },
   },

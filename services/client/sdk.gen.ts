@@ -1336,6 +1336,9 @@ import type {
   SearchEnrollmentsData,
   SearchEnrollmentsResponses,
   SearchEnrollmentsErrors,
+  GetTodayGrowthData,
+  GetTodayGrowthResponses,
+  GetTodayGrowthErrors,
   GetEnrolmentTrendsData,
   GetEnrolmentTrendsResponses,
   GetEnrolmentTrendsErrors,
@@ -2027,6 +2030,7 @@ import {
   getCourseEnrollmentsForStudentResponseTransformer,
   getClassEnrollmentsForStudentResponseTransformer,
   searchEnrollmentsResponseTransformer,
+  getTodayGrowthResponseTransformer,
   getEnrolmentTrendsResponseTransformer,
   getEnrollmentsForInstanceResponseTransformer,
   getEnrollmentCountResponseTransformer,
@@ -15377,6 +15381,34 @@ export const searchEnrollments = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/enrollment/search',
+    ...options,
+  });
+};
+
+/**
+ * Get organisation today's-growth
+ * Hourly enrolment counts for the current day across all classes owned by the organisation.
+ */
+export const getTodayGrowth = <ThrowOnError extends boolean = false>(
+  options: Options<GetTodayGrowthData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetTodayGrowthResponses,
+    GetTodayGrowthErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getTodayGrowthResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/organisations/{organisationUuid}/today-growth',
     ...options,
   });
 };

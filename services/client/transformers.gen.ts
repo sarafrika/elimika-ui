@@ -350,6 +350,7 @@ import type {
   GetCourseEnrollmentsForStudentResponse,
   GetClassEnrollmentsForStudentResponse,
   SearchEnrollmentsResponse,
+  GetTodayGrowthResponse,
   GetEnrolmentTrendsResponse,
   GetEnrollmentsForInstanceResponse,
   GetEnrollmentCountResponse,
@@ -6024,6 +6025,29 @@ export const searchEnrollmentsResponseTransformer = async (
   data: any
 ): Promise<SearchEnrollmentsResponse> => {
   data = apiResponsePagedDtoEnrollmentSchemaResponseTransformer(data);
+  return data;
+};
+
+const todayGrowthPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.enrolments) {
+    data.enrolments = BigInt(data.enrolments.toString());
+  }
+  return data;
+};
+
+const apiResponseListTodayGrowthPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return todayGrowthPointDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getTodayGrowthResponseTransformer = async (
+  data: any
+): Promise<GetTodayGrowthResponse> => {
+  data = apiResponseListTodayGrowthPointDtoSchemaResponseTransformer(data);
   return data;
 };
 

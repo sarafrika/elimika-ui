@@ -446,6 +446,7 @@ import {
   getCourseEnrollmentsForStudent,
   getClassEnrollmentsForStudent,
   searchEnrollments,
+  getTodayGrowth,
   getEnrolmentTrends,
   getEnrollmentsForInstance,
   getEnrollmentCount,
@@ -1707,6 +1708,7 @@ import type {
   SearchEnrollmentsData,
   SearchEnrollmentsError,
   SearchEnrollmentsResponse,
+  GetTodayGrowthData,
   GetEnrolmentTrendsData,
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
@@ -21512,6 +21514,28 @@ export const searchEnrollmentsInfiniteOptions = (options: Options<SearchEnrollme
       queryKey: searchEnrollmentsInfiniteQueryKey(options),
     }
   );
+};
+
+export const getTodayGrowthQueryKey = (options: Options<GetTodayGrowthData>) =>
+  createQueryKey('getTodayGrowth', options);
+
+/**
+ * Get organisation today's-growth
+ * Hourly enrolment counts for the current day across all classes owned by the organisation.
+ */
+export const getTodayGrowthOptions = (options: Options<GetTodayGrowthData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getTodayGrowth({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getTodayGrowthQueryKey(options),
+  });
 };
 
 export const getEnrolmentTrendsQueryKey = (options: Options<GetEnrolmentTrendsData>) =>
