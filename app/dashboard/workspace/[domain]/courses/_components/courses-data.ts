@@ -1,3 +1,4 @@
+import type { UserDomain } from '@/lib/types';
 import type { LucideIcon } from 'lucide-react';
 import {
   BadgeCheck,
@@ -15,7 +16,6 @@ import {
   Trophy,
   Users,
 } from 'lucide-react';
-import type { UserDomain } from '@/lib/types';
 
 export type CoursesHeroAction = {
   title: string;
@@ -115,7 +115,6 @@ export const catalogTabs: Array<{ value: CoursesCatalogTab; label: string }> = [
   { value: 'programs', label: 'Programs' },
   { value: 'short-courses', label: 'Short Courses' },
   { value: 'my-courses', label: 'My Courses' },
-
 ];
 
 const tileIcons = [

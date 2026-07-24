@@ -14,40 +14,30 @@ export function SettingsSupportWidget({
   className,
 }: SettingsSupportWidgetProps) {
   return (
-    <div
+    <Link
+      href={href}
+      prefetch={false}
       className={cn(
-        'group-data-[collapsible=icon]:hidden overflow-hidden rounded-[12px] border border-sidebar-border/70 bg-muted/60 shadow-sm',
+        'group-data-[collapsible=icon]:hidden block rounded-md transition-colors hover:bg-sidebar-accent',
         className
       )}
     >
-      {/* Clickable Support Section */}
-      <Link
-        href={href}
-        prefetch={false}
-        className='block p-3 transition-colors hover:bg-muted'
-      >
-        <div className='flex items-start gap-3'>
-          <div className='flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-background'>
-            <Headset className='size-5' />
-          </div>
-
-          <div className='min-w-0 flex-1'>
-            <p className='text-sm font-semibold leading-tight'>
-              Need Help?
-            </p>
-
-            <p className='mt-0.5 text-xs leading-5 text-primary underline'>
-              Visit our help center.
-            </p>
-          </div>
+      <div className="flex items-center gap-3 border-t border-sidebar-border p-4">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-primary/20">
+          <span className="text-xs font-semibold text-sidebar-primary-foreground">
+            <Headset />
+          </span>
         </div>
-      </Link>
 
-      {/* Non-clickable Footer */}
-      <div className='flex items-center justify-between border-t border-border/70 bg-background/70 px-3 py-2 text-[11px] text-muted-foreground'>
-        <p>© 2026 Elimika</p>
-        <p>v1.0.0</p>
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate text-[13px] font-medium text-sidebar-foreground">
+            Need Help?
+          </span>
+          <span className="truncate text-[11px] text-sidebar-foreground/70">
+            Contact Support
+          </span>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }

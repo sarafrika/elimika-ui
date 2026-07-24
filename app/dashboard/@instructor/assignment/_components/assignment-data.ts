@@ -7,10 +7,12 @@ import type {
 } from './assignment-types';
 
 export const assignmentFilters: Array<{ label: string; value: AssignmentStatus }> = [
-  { label: 'All', value: 'all' },
-  { label: 'Ongoing', value: 'ongoing' },
-  { label: 'Graded', value: 'graded' },
+  { label: 'Pending', value: 'pending' },
+  // { label: 'Ongoing', value: 'ongoing' },
   { label: 'Overdue', value: 'overdue' },
+  { label: 'Graded', value: 'graded' },
+  { label: 'All', value: 'all' },
+
 ];
 
 export const assignments: AssignmentCardData[] = [

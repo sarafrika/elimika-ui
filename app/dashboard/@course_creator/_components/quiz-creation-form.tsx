@@ -807,7 +807,7 @@ export const QuizCreationForm = ({
           </div>
 
           {/* Questions section */}
-          {quizUuid && quizUuid !== '' && (
+          {quizUuid !== '' && (
             <div className='mt-8 border-t pt-6'>
               <div className='mb-6'>
                 <h4 className='text-foreground mb-3 text-lg font-semibold'>Questions</h4>

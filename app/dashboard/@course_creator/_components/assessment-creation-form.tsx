@@ -1303,20 +1303,6 @@ const AssessmentCreationForm = ({
               addPair={addPair}
               deleteQuestion={handleDeleteQuestion}
               deleteOption={handleDeleteOption}
-              // createQuizForLesson={async (lessonId, payload) => {
-              //   // const res = await createQuiz.mutateAsync({
-              //   //     body: {
-              //   //         ...payload,
-              //   //         lesson_uuid: lessonId,
-              //   //     },
-              //   // });
-              //   // qc.invalidateQueries({
-              //   //     queryKey: searchQuizzesQueryKey({
-              //   //         query: { pageable: {}, searchParams: { lesson_uuid_eq: selectedLessonId as string } },
-              //   //     }),
-              //   // });
-              //   // return res?.data?.quiz_uuid || res?.quiz_uuid;
-              // }}
               createQuizForLesson={async (lessonId, payload) => {
                 return new Promise<string>((resolve, reject) => {
                   createQuiz.mutate(
@@ -1356,6 +1342,20 @@ const AssessmentCreationForm = ({
               addQuestionOption={async payload => { }}
               isPending={createQuiz.isPending || updateQuiz.isPending}
               openBulkUploadSheet={() => setBulkSheetOpen(true)}
+            // createQuizForLesson={async (lessonId, payload) => {
+            //   // const res = await createQuiz.mutateAsync({
+            //   //     body: {
+            //   //         ...payload,
+            //   //         lesson_uuid: lessonId,
+            //   //     },
+            //   // });
+            //   // qc.invalidateQueries({
+            //   //     queryKey: searchQuizzesQueryKey({
+            //   //         query: { pageable: {}, searchParams: { lesson_uuid_eq: selectedLessonId as string } },
+            //   //     }),
+            //   // });
+            //   // return res?.data?.quiz_uuid || res?.quiz_uuid;
+            // }}
             />
 
             <div className='mt-4 flex justify-end self-end'>
@@ -1380,7 +1380,6 @@ const AssessmentCreationForm = ({
                   : 'Save Questions'}
               </Button>
             </div>
-
 
             <Sheet
               open={bulkSheetOpen}
