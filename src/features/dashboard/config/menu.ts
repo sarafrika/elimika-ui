@@ -705,6 +705,7 @@ export default {
       items: [
         { title: 'Dashboard', url: '/dashboard/overview', icon: LayoutDashboard },
         { title: 'Calendar', url: '/dashboard/calendar', icon: Calendar },
+        { title: 'Notifications', url: '/dashboard/notifications', icon: Bell },
       ],
     },
     {
