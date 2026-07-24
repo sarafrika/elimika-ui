@@ -568,8 +568,8 @@ export default {
     {
       label: 'People',
       items: [
-        { title: 'Students', url: '/dashboard/people?domain=student', icon: GraduationCap },
-        { title: 'Instructors', url: '/dashboard/people?domain=instructor', icon: UserCheck },
+        { title: 'Students', url: '/dashboard/students', icon: GraduationCap },
+        { title: 'Instructors', url: '/dashboard/instructors', icon: UserCheck },
         { title: 'Users', url: '/dashboard/users', icon: UserIcon },
       ],
     },

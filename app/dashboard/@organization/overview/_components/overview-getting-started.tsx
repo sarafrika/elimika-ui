@@ -71,14 +71,14 @@ export function OverviewGettingStarted() {
     {
       key: 'instructors',
       label: 'Onboard instructors',
-      href: '/dashboard/people?domain=instructor',
+      href: '/dashboard/instructors',
       done: instructorCount > 0,
     },
     { key: 'classes', label: 'Create classes', href: '/dashboard/classes', done: classCount > 0 },
     {
       key: 'students',
       label: 'Invite students',
-      href: '/dashboard/people?domain=student',
+      href: '/dashboard/students',
       done: studentCount > 0,
     },
   ];

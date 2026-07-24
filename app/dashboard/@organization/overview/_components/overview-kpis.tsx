@@ -78,7 +78,7 @@ export function OverviewKpis() {
       hint: 'Enrolled learners',
       icon: GraduationCap,
       variant: 'green',
-      href: '/dashboard/people?domain=student',
+      href: '/dashboard/students',
       loading: studentsQuery.isLoading,
     },
     {
@@ -87,7 +87,7 @@ export function OverviewKpis() {
       hint: 'Teaching staff',
       icon: Presentation,
       variant: 'indigo',
-      href: '/dashboard/people?domain=instructor',
+      href: '/dashboard/instructors',
       loading: instructorsQuery.isLoading,
     },
     {
