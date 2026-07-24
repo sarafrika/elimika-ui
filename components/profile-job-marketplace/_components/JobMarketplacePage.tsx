@@ -27,7 +27,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  AdminPageHeader,
   adminTheme,
   DetailGrid,
   SectionCard,
@@ -35,6 +34,7 @@ import {
   StatCardSkeleton,
   StatusBadge,
 } from '@/app/dashboard/@admin/_components/ui';
+import { PageHeader as AdminPageHeader } from '@/components/dashboard';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
