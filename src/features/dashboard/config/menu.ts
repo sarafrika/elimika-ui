@@ -728,6 +728,10 @@ export default {
       ],
     },
     {
+      label: 'Assessment',
+      items: [{ title: 'Assignments', url: '/dashboard/assignments', icon: FileText }],
+    },
+    {
       label: 'Finance',
       items: [
         { title: 'Skills Wallet', url: '/dashboard/skills-wallet', icon: Wallet },
