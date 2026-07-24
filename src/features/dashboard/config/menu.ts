@@ -13,6 +13,7 @@ import {
   Calendar,
   CalendarClock,
   ChartNoAxesCombined,
+  ClipboardCheck,
   ClipboardList,
   DollarSign,
   FileText,
@@ -23,7 +24,10 @@ import {
   LibraryIcon,
   LineChart,
   LucideLandmark,
+  MapPin,
   School,
+  UserCheck,
+  Wrench,
   Settings,
   ShieldCheck,
   ShoppingBag,
@@ -52,6 +56,32 @@ export type MenuItem = {
   organisation_user?: MenuItem[];
   course_creator?: MenuItem[];
 };
+
+/**
+ * A labelled group of nav items (Lovable-style sidebar sections). A domain's nav
+ * may be either a flat `MenuItem[]` or a grouped `MenuGroup[]`; consumers use
+ * {@link isMenuGroups} to tell them apart.
+ */
+export type MenuGroup = {
+  label: string;
+  items: MenuItem[];
+};
+
+export function isMenuGroups(items: MenuItem[] | MenuGroup[]): items is MenuGroup[] {
+  const first = items[0] as MenuGroup | MenuItem | undefined;
+  return (
+    !!first &&
+    'label' in first &&
+    Array.isArray((first as MenuGroup).items) &&
+    !('url' in first) &&
+    !('icon' in first)
+  );
+}
+
+/** Flatten a possibly-grouped nav into a flat list of leaf items. */
+export function flattenMenuItems(items: MenuItem[] | MenuGroup[]): MenuItem[] {
+  return isMenuGroups(items) ? items.flatMap(group => group.items) : items;
+}
 
 export function markActiveMenuItem(items: MenuItem[], currentPath: string): MenuItem[] {
   return items.map(item => {
@@ -86,7 +116,7 @@ type Menu = {
   admin?: MenuItem[];
   student?: MenuItem[];
   instructor?: MenuItem[];
-  organisation_user?: MenuItem[];
+  organisation_user?: MenuItem[] | MenuGroup[];
   course_creator?: MenuItem[];
   parent?: MenuItem[];
 };
@@ -524,91 +554,63 @@ export default {
       icon: Settings,
     },
   ],
+  // Lovable-style grouped navigation. Analogue features adopt the Lovable label
+  // (Venues/Equipment/Earnings/Approvals/Reports/Job Matches) while keeping our
+  // existing route segments and backend wiring.
   organisation_user: [
     {
-      title: 'Dashboard',
-      url: '/dashboard/overview',
-      icon: LayoutDashboard,
+      label: 'Overview',
+      items: [
+        { title: 'Dashboard', url: '/dashboard/overview', icon: LayoutDashboard },
+        { title: 'Calendar', url: '/dashboard/calendar', icon: CalendarClock },
+      ],
     },
     {
-      title: 'Students',
-      url: '/dashboard/people?domain=student',
-      icon: GraduationCap,
+      label: 'People',
+      items: [
+        { title: 'Students', url: '/dashboard/people?domain=student', icon: GraduationCap },
+        { title: 'Instructors', url: '/dashboard/people?domain=instructor', icon: UserCheck },
+        { title: 'Users', url: '/dashboard/users', icon: UserIcon },
+      ],
     },
     {
-      title: 'Courses',
-      url: '/dashboard/courses',
-      icon: BookOpen,
+      label: 'Learning',
+      items: [
+        { title: 'Courses', url: '/dashboard/courses', icon: BookOpen },
+        { title: 'Classes', url: '/dashboard/classes', icon: School },
+        { title: 'Course Management', url: '/dashboard/course-management', icon: LibraryIcon },
+        { title: 'Credentials', url: '/dashboard/credentials', icon: Award },
+      ],
     },
     {
-      title: 'Classes',
-      url: '/dashboard/classes',
-      icon: School,
-    },
-    // {
-    //   title: 'Course Management',
-    //   url: '/dashboard/course-management',
-    //   icon: LibraryIcon,
-    // },
-    {
-      title: 'Revenue',
-      url: '/dashboard/revenue',
-      icon: DollarSign,
+      label: 'Operations',
+      items: [
+        { title: 'Venues', url: '/dashboard/branches', icon: MapPin },
+        { title: 'Equipment', url: '/dashboard/resources', icon: Wrench },
+        { title: 'Availability', url: '/dashboard/availability', icon: Calendar },
+      ],
     },
     {
-      title: 'Instructors',
-      url: '/dashboard/people?domain=instructor',
-      icon: Briefcase,
+      label: 'Opportunities',
+      items: [
+        { title: 'Job Matches', url: '/dashboard/opportunities', icon: Handshake },
+        { title: 'Approvals', url: '/dashboard/verification', icon: ClipboardCheck },
+      ],
     },
     {
-      title: 'Users',
-      url: '/dashboard/users',
-      icon: UserIcon,
+      label: 'Finance',
+      items: [{ title: 'Earnings', url: '/dashboard/revenue', icon: DollarSign }],
     },
     {
-      title: 'Job posts',
-      url: '/dashboard/opportunities',
-      icon: Handshake,
+      label: 'Insights',
+      items: [{ title: 'Reports', url: '/dashboard/audit', icon: BarChart3 }],
     },
     {
-      title: 'Training Branches',
-      url: '/dashboard/branches',
-      icon: Building,
-    },
-    {
-      title: 'Resources',
-      url: '/dashboard/resources',
-      icon: Warehouse,
-    },
-    {
-      title: 'Schedule',
-      url: '/dashboard/calendar',
-      icon: CalendarClock,
-    },
-    {
-      title: 'Reports',
-      url: '/dashboard/audit',
-      icon: BarChart3,
-    },
-    {
-      title: 'Training requests',
-      url: '/dashboard/verification',
-      icon: ShieldCheck,
-    },
-    {
-      title: 'Organisation',
-      url: '/dashboard/account',
-      icon: LucideLandmark,
-    },
-    {
-      title: 'Credentials',
-      url: '/dashboard/credentials',
-      icon: Award,
-    },
-    {
-      title: 'Settings',
-      url: '/dashboard/settings',
-      icon: Settings,
+      label: 'System',
+      items: [
+        { title: 'Organisation', url: '/dashboard/account', icon: LucideLandmark },
+        { title: 'Settings', url: '/dashboard/settings', icon: Settings },
+      ],
     },
   ],
   parent: [

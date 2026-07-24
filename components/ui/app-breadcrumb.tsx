@@ -1,7 +1,7 @@
 'use client';
 
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import menu, { type MenuItem } from '@/lib/menu';
+import menu, { flattenMenuItems, type MenuGroup, type MenuItem } from '@/lib/menu';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import {
   buildWorkspaceAliasPath,
@@ -44,11 +44,11 @@ const findMenuPathByUrl = (
 };
 
 const findMenuPathByUrlInSources = (
-  sources: Record<string, MenuItem[]>,
+  sources: Record<string, MenuItem[] | MenuGroup[]>,
   url: string
 ): MenuItem[] | null => {
   for (const key in sources) {
-    const result = findMenuPathByUrl(sources[key] || [], url);
+    const result = findMenuPathByUrl(flattenMenuItems(sources[key] ?? []), url);
     if (result) return result;
   }
 
