@@ -16,14 +16,9 @@ import {
   getPlatformFeeSummaryOptions,
   getRevenueDashboardOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import {
-  AdminPageHeader,
-  adminTheme,
-  DetailGrid,
-  SectionCard,
-  StatCard,
-  StatCardSkeleton,
-} from '../_components/ui';
+import { KpiCard, KpiCardSkeleton } from '@/components/dashboard';
+import { AdminPageHeader, adminTheme, DetailGrid, SectionCard } from '../_components/ui';
+import { toneToKpiVariant } from '../_components/org-page';
 
 /** Format the first (primary-currency) amount from a revenue amount list. */
 const money = (amounts?: RevenueAmountDto[]): string => {
@@ -118,16 +113,16 @@ export default function OrganisationRevenuePage() {
           description='Sales, earnings and platform fees for your organisation.'
         />
 
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5'>
           {isLoading
-            ? kpis.map(kpi => <StatCardSkeleton key={kpi.label} />)
+            ? kpis.map(kpi => <KpiCardSkeleton key={kpi.label} />)
             : kpis.map(kpi => (
-                <StatCard
+                <KpiCard
                   key={kpi.label}
-                  label={kpi.label}
+                  title={kpi.label}
                   value={kpi.value}
-                  icon={kpi.icon}
-                  tone={kpi.tone}
+                  icon={<kpi.icon className='h-5 w-5' />}
+                  variant={toneToKpiVariant[kpi.tone]}
                 />
               ))}
         </div>
@@ -181,11 +176,11 @@ export default function OrganisationRevenuePage() {
           description='What your organisation owes instructors for delivered class sessions'
         >
           <div className='mb-4'>
-            <StatCard
-              label='Total owed to instructors'
+            <KpiCard
+              title='Total owed to instructors'
               value={amount(totalOwed)}
-              icon={HandCoins}
-              tone='warning'
+              icon={<HandCoins className='h-5 w-5' />}
+              variant='amber'
             />
           </div>
           {payablesQuery.isLoading ? (

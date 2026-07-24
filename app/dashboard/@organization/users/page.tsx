@@ -20,13 +20,8 @@ import {
   getUsersByOrganisationAndDomainQueryKey,
   setOrganisationUserDomainMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import {
-  AdminPageHeader,
-  adminTheme,
-  SectionCard,
-  StatCard,
-  StatCardSkeleton,
-} from '../_components/ui';
+import { KpiCard, KpiCardSkeleton } from '@/components/dashboard';
+import { AdminPageHeader, adminTheme, SectionCard } from '../_components/ui';
 
 /** The org-scoped roles an organisation can assign to its members. */
 const ROLES: Array<{ value: string; label: string; hint: string }> = [
@@ -116,15 +111,15 @@ export default function OrganisationUsersPage() {
           description='Define who does what in your organisation — control users, admins, instructors and students.'
         />
 
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5'>
           {isLoading ? (
-            ROLES.map(r => <StatCardSkeleton key={r.value} />)
+            ROLES.map(r => <KpiCardSkeleton key={r.value} />)
           ) : (
             <>
-              <StatCard label='Control users' value={counts.organisation_user ?? 0} icon={UserCog} tone='info' />
-              <StatCard label='Admins' value={counts.admin ?? 0} icon={ShieldCheck} tone='neutral' />
-              <StatCard label='Instructors' value={counts.instructor ?? 0} icon={Briefcase} tone='success' />
-              <StatCard label='Students' value={counts.student ?? 0} icon={GraduationCap} tone='warning' />
+              <KpiCard title='Control users' value={counts.organisation_user ?? 0} icon={<UserCog className='h-5 w-5' />} variant='primary' />
+              <KpiCard title='Admins' value={counts.admin ?? 0} icon={<ShieldCheck className='h-5 w-5' />} variant='indigo' />
+              <KpiCard title='Instructors' value={counts.instructor ?? 0} icon={<Briefcase className='h-5 w-5' />} variant='green' />
+              <KpiCard title='Students' value={counts.student ?? 0} icon={<GraduationCap className='h-5 w-5' />} variant='amber' />
             </>
           )}
         </div>

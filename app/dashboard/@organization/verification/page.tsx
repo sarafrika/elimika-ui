@@ -52,14 +52,8 @@ import {
   withdrawProgramTrainingApplicationMutation,
   withdrawTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import {
-  AdminPageHeader,
-  adminTheme,
-  DetailGrid,
-  SectionCard,
-  StatCard,
-  StatusBadge,
-} from '../_components/ui';
+import { KpiCard } from '@/components/dashboard';
+import { AdminPageHeader, adminTheme, DetailGrid, SectionCard, StatusBadge } from '../_components/ui';
 
 type OfferingKind = 'course' | 'program';
 
@@ -333,11 +327,11 @@ export default function OrganisationTrainingRequestsPage() {
           description='Track your organisation’s applications to train courses and programmes, and manage them while they await review.'
         />
 
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-          <StatCard label='Pending' value={counts.pending} icon={Clock} tone='warning' />
-          <StatCard label='Approved' value={counts.approved} icon={CheckCircle2} tone='success' />
-          <StatCard label='Rejected' value={counts.rejected} icon={XCircle} tone='destructive' />
-          <StatCard label='Revoked' value={counts.revoked} icon={RefreshCw} tone='neutral' />
+        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5'>
+          <KpiCard title='Pending' value={counts.pending} icon={<Clock className='h-5 w-5' />} variant='amber' />
+          <KpiCard title='Approved' value={counts.approved} icon={<CheckCircle2 className='h-5 w-5' />} variant='green' />
+          <KpiCard title='Rejected' value={counts.rejected} icon={<XCircle className='h-5 w-5' />} variant='coral' />
+          <KpiCard title='Revoked' value={counts.revoked} icon={<RefreshCw className='h-5 w-5' />} variant='indigo' />
         </div>
 
         <SectionCard
