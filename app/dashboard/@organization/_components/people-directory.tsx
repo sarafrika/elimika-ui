@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ import type { DomainDto, DomainNameEnum, TrainingBranch, User, Wallet } from '@/
 import {
   createOrganisationUserMutation,
   getOrganisationSupportedDomainsOptions,
+  getStudentSummariesOptions,
   getTrainingBranchesByOrganisationOptions,
   getUsersByOrganisationAndDomainOptions,
   getUsersByOrganisationOptions,
@@ -147,7 +149,30 @@ function WalletBalanceCell({ userUuid }: { userUuid?: string }) {
   );
 }
 
-function createPeopleColumns(organisationUuid: string): ColumnDef<User>[] {
+function createPeopleColumns(
+  organisationUuid: string,
+  summaryByStudent?: Map<string, { total: number; completed: number }>
+): ColumnDef<User>[] {
+  const completionColumn: ColumnDef<User> = {
+    id: 'completion',
+    header: 'Course completion',
+    cell: ({ row }) => {
+      const summary = row.original.uuid ? summaryByStudent?.get(row.original.uuid) : undefined;
+      if (!summary || summary.total === 0) {
+        return <span className='text-muted-foreground text-sm'>—</span>;
+      }
+      const pct = Math.round((summary.completed / summary.total) * 100);
+      return (
+        <div className='flex w-36 items-center gap-3'>
+          <Progress value={pct} className='h-2 flex-1' />
+          <span className='text-muted-foreground w-14 text-right text-xs'>
+            {summary.completed}/{summary.total}
+          </span>
+        </div>
+      );
+    },
+  };
+
   return [
     {
       accessorKey: 'first_name',
@@ -204,6 +229,7 @@ function createPeopleColumns(organisationUuid: string): ColumnDef<User>[] {
       header: 'Skills Wallet',
       cell: ({ row }) => <WalletBalanceCell userUuid={row.original.uuid} />,
     },
+    ...(summaryByStudent ? [completionColumn] : []),
     {
       id: 'actions',
       header: () => <div className='text-right'>Actions</div>,
@@ -304,7 +330,27 @@ export function PeopleDirectory({ domain, title, description, addLabel = 'Add me
     () => buildRoleOptions((supportedDomainsQuery.data?.data ?? []) as DomainDto[]),
     [supportedDomainsQuery.data?.data]
   );
-  const peopleColumns = useMemo(() => createPeopleColumns(organisationUuid), [organisationUuid]);
+  const summariesQuery = useQuery({
+    ...getStudentSummariesOptions({ path: { organisationUuid } }),
+    enabled: Boolean(organisationUuid) && domain === 'student',
+  });
+  const summaryByStudent = useMemo(() => {
+    const map = new Map<string, { total: number; completed: number }>();
+    for (const summary of summariesQuery.data?.data ?? []) {
+      if (summary.student_uuid) {
+        map.set(summary.student_uuid, {
+          total: Number(summary.total ?? 0),
+          completed: Number(summary.completed ?? 0),
+        });
+      }
+    }
+    return map;
+  }, [summariesQuery.data]);
+
+  const peopleColumns = useMemo(
+    () => createPeopleColumns(organisationUuid, domain === 'student' ? summaryByStudent : undefined),
+    [organisationUuid, domain, summaryByStudent]
+  );
 
   const resetMemberForm = () => setMemberForm(initialMemberFormState(defaultRole));
 

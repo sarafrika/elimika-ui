@@ -70,6 +70,8 @@ const branchSchema = z.object({
   poc_name: z.string().min(1, 'POC name is required'),
   poc_email: z.string().email('Valid email required'),
   poc_telephone: z.string().min(1, 'POC telephone is required'),
+  capacity: z.coerce.number().int().positive().optional(),
+  venue_type: z.string().max(50).optional(),
   active: z.boolean().default(true),
 });
 
@@ -380,9 +382,15 @@ export default function BranchesPage() {
                         <Users className='h-3.5 w-3.5' />
                         {branch.poc_name || '—'}
                       </span>
-                      <span className='flex items-center gap-1' title='Capacity (pending backend support)'>
-                        <Wrench className='h-3.5 w-3.5' />—
+                      <span className='flex items-center gap-1' title='Capacity'>
+                        <Wrench className='h-3.5 w-3.5' />
+                        {branch.capacity != null ? `${branch.capacity} seats` : '—'}
                       </span>
+                      {branch.venue_type ? (
+                        <Badge variant='outline' className='text-[10px]'>
+                          {branch.venue_type}
+                        </Badge>
+                      ) : null}
                     </div>
 
                     <div className='flex gap-2 pt-1'>
@@ -521,6 +529,8 @@ function BranchDrawer({
       poc_name: defaultValues?.poc_name ?? '',
       poc_email: defaultValues?.poc_email ?? '',
       poc_telephone: defaultValues?.poc_telephone ?? '',
+      capacity: defaultValues?.capacity ?? undefined,
+      venue_type: defaultValues?.venue_type ?? '',
       active: defaultValues?.active ?? true,
     },
   });
@@ -538,6 +548,8 @@ function BranchDrawer({
         poc_name: defaultValues.poc_name,
         poc_email: defaultValues.poc_email,
         poc_telephone: defaultValues.poc_telephone,
+        capacity: defaultValues.capacity ?? undefined,
+        venue_type: defaultValues.venue_type ?? '',
         active: defaultValues.active,
       });
     } else {
@@ -547,6 +559,8 @@ function BranchDrawer({
         poc_name: '',
         poc_email: '',
         poc_telephone: '',
+        capacity: undefined,
+        venue_type: '',
         active: true,
       });
     }
@@ -640,6 +654,35 @@ function BranchDrawer({
                     required
                     placeholder='+1 (555) 123-4567'
                     icon={<Phone className='h-4 w-4' />}
+                  />
+                </div>
+              </div>
+
+              <Separator className='my-8' />
+
+              {/* Venue Details Section */}
+              <div className='space-y-5'>
+                <div className='flex items-center gap-2.5'>
+                  <Wrench className='text-muted-foreground h-5 w-5' />
+                  <h3 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
+                    Venue Details
+                  </h3>
+                </div>
+                <div className='grid gap-5 pl-7 sm:grid-cols-2'>
+                  <FormField
+                    label='Capacity'
+                    name='capacity'
+                    form={form}
+                    type='number'
+                    placeholder='30'
+                    icon={<Users className='h-4 w-4' />}
+                  />
+                  <FormField
+                    label='Venue type'
+                    name='venue_type'
+                    form={form}
+                    placeholder='Lab, Workshop, Auditorium…'
+                    icon={<MapPin className='h-4 w-4' />}
                   />
                 </div>
               </div>

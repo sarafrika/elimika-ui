@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import {
   getClassDefinitionsForOrganisationOptions,
+  getClassEnrolmentCountsOptions,
   listJobsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, ClassMarketplaceJob } from '@/services/client/types.gen';
@@ -122,6 +123,7 @@ function ClassesSection({
   onRetry,
   courseMap,
   programMap,
+  enrolledByClass,
 }: {
   classes: ClassDefinition[];
   isLoading: boolean;
@@ -129,6 +131,7 @@ function ClassesSection({
   onRetry?: () => void;
   courseMap: ReturnType<typeof useCoursesByIds>['courseMap'];
   programMap: ReturnType<typeof useProgramsByIds>['programMap'];
+  enrolledByClass?: Map<string, number>;
 }) {
   return (
     <AsyncSection
@@ -182,10 +185,22 @@ function ClassesSection({
             </span>
             <span className='inline-flex items-center gap-2'>
               <Users className='size-4 text-primary' />
-              {classDefinition.capacity_info ??
-                (typeof classDefinition.max_participants === 'number'
-                  ? `${classDefinition.max_participants} participants`
-                  : 'Capacity not set')}
+              {(() => {
+                const enrolled = classDefinition.uuid
+                  ? enrolledByClass?.get(classDefinition.uuid)
+                  : undefined;
+                const cap =
+                  typeof classDefinition.max_participants === 'number'
+                    ? classDefinition.max_participants
+                    : undefined;
+                if (enrolled != null) {
+                  return cap != null ? `${enrolled}/${cap} enrolled` : `${enrolled} enrolled`;
+                }
+                return (
+                  classDefinition.capacity_info ??
+                  (cap != null ? `${cap} participants` : 'Capacity not set')
+                );
+              })()}
             </span>
             <span>{formatLabel(classDefinition.session_format)}</span>
           </div>
@@ -309,6 +324,20 @@ export default function ClassroomList() {
     enabled: Boolean(organisationUuid),
   });
 
+  const enrolCountsQuery = useQuery({
+    ...getClassEnrolmentCountsOptions({ path: { organisationUuid } }),
+    enabled: Boolean(organisationUuid),
+  });
+  const enrolledByClass = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const entry of enrolCountsQuery.data?.data ?? []) {
+      if (entry.class_definition_uuid) {
+        map.set(entry.class_definition_uuid, Number(entry.enrolled ?? 0));
+      }
+    }
+    return map;
+  }, [enrolCountsQuery.data]);
+
   const jobsQuery = useQuery({
     ...listJobsOptions({
       query: {
@@ -404,6 +433,7 @@ export default function ClassroomList() {
           onRetry={classesQuery.refetch}
           courseMap={courseMap}
           programMap={programMap}
+          enrolledByClass={enrolledByClass}
         />
       </section>
 
