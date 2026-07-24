@@ -166,17 +166,17 @@ export default function DashboardTopBar() {
           </div> */}
 
           <div className='hidden min-w-0 flex-1 xl:block'>
-            <Label className='relative block max-w-2xl'>
+            <Label className='relative block max-w-2xl 2xl:max-w-3xl'>
               <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
 
               <Input
                 type='search'
                 placeholder='Search courses, students, and more...'
-                className='h-10 rounded-md border border-border/50 bg-background pl-11 pr-16 text-xs shadow-none'
+                className='h-10 rounded-full border border-input bg-background pl-11 pr-16 text-xs shadow-sm transition-colors hover:border-primary/40'
               />
-              {/* <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
-                Ctrl K
-              </span> */}
+              <kbd className='pointer-events-none absolute top-1/2 right-4 hidden -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground 2xl:inline-block'>
+                ⌘K
+              </kbd>
             </Label>
           </div>
 
@@ -302,10 +302,6 @@ export default function DashboardTopBar() {
             )}
           </div>
         </div>
-
-        {/* <div className='hidden px-3 py-3 sm:px-5 lg:px-6 xl:block'>
-          <AppBreadcrumb className='text-muted-foreground text-sm border-none' />
-        </div> */}
       </div>
     </header>
   );
