@@ -3,7 +3,6 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DataTable } from '@/components/ui/data-table';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,10 +38,10 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
 import {
   AlertCircle,
   Building2,
+  Calendar,
   GitBranch,
   Loader2,
   Mail,
@@ -53,8 +52,13 @@ import {
   Plus,
   Trash2,
   Users,
+  Wrench,
 } from 'lucide-react';
 import Link from 'next/link';
+import { KpiCard } from '@/components/dashboard';
+import { PageHeader } from '@/components/dashboard';
+import { Card, CardContent } from '@/components/ui/card';
+import { OrgPage, orgStack } from '../_components/org-page';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -76,111 +80,6 @@ const domainOptions = [
   { value: 'instructor', label: 'Instructor' },
   { value: 'student', label: 'Student' },
 ];
-
-function createBranchColumns(
-  onEdit: (branch: TrainingBranch) => void,
-  onDelete: (branchId: string, branchName: string) => void,
-  isDeleting: boolean
-): ColumnDef<TrainingBranch>[] {
-  return [
-    {
-      accessorKey: 'branch_name',
-      header: 'Branch',
-      cell: ({ row }) => (
-        <Link
-          href={`/dashboard/branches/${row.original.uuid}`}
-          onClick={e => e.stopPropagation()}
-          className='group flex items-center gap-3'
-        >
-          <div className='bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
-            <Building2 className='text-primary h-5 w-5' />
-          </div>
-          <div className='text-foreground font-semibold group-hover:underline'>
-            {row.original.branch_name}
-          </div>
-        </Link>
-      ),
-    },
-    {
-      accessorKey: 'address',
-      header: 'Location',
-      cell: ({ row }) => (
-        <div className='text-muted-foreground flex items-center gap-1.5 text-sm'>
-          <MapPin className='h-3.5 w-3.5' />
-          <span>{row.original.address || 'No address'}</span>
-        </div>
-      ),
-    },
-    {
-      id: 'contact',
-      header: 'Point of Contact',
-      cell: ({ row }) => (
-        <div className='space-y-1'>
-          <div className='text-foreground flex items-center gap-1.5 text-sm'>
-            <Users className='text-muted-foreground h-3.5 w-3.5' />
-            <span>{row.original.poc_name}</span>
-          </div>
-          <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-            <Mail className='h-3 w-3' />
-            <span>{row.original.poc_email}</span>
-          </div>
-          <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-            <Phone className='h-3 w-3' />
-            <span>{row.original.poc_telephone}</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'active',
-      header: 'Status',
-      cell: ({ row }) => (
-        <Badge variant={row.original.active ? 'secondary' : 'outline'}>
-          {row.original.active ? 'Active' : 'Inactive'}
-        </Badge>
-      ),
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end'>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size='sm' variant='ghost' onClick={e => e.stopPropagation()}>
-                <MoreVertical className='h-4 w-4' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end'>
-              <DropdownMenuItem
-                onClick={e => {
-                  e.stopPropagation();
-                  onEdit(row.original);
-                }}
-              >
-                <Pencil className='h-4 w-4' />
-                Edit Branch
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                variant='destructive'
-                onClick={e => {
-                  e.stopPropagation();
-                  if (confirm(`Delete branch "${row.original.branch_name}"?`)) {
-                    onDelete(row.original.uuid!, row.original.branch_name ?? '');
-                  }
-                }}
-                disabled={isDeleting}
-              >
-                <Trash2 className='h-4 w-4' />
-                Delete Branch
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
-    },
-  ];
-}
 
 export default function BranchesPage() {
   const organisation = useOrganisation();
@@ -317,11 +216,6 @@ export default function BranchesPage() {
     setIsSheetOpen(true);
   };
 
-  const columns = useMemo(
-    () => createBranchColumns(handleEditBranch, handleDeleteBranch, deleteBranch.isPending),
-    [deleteBranch.isPending]
-  );
-
   const handleAssignUser = (userUuid: string, domain: string) => {
     if (!selectedBranchId || !organisationUuid) return;
     const branchUsersKey = branchUserDomain
@@ -376,94 +270,45 @@ export default function BranchesPage() {
   };
 
   return (
-    <div className={elimikaDesignSystem.components.pageContainer}>
-      {/* Compact Header */}
-      <section className='mb-6'>
-        <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-          <div>
-            <h1 className='text-foreground text-2xl font-bold'>Training Branches</h1>
-            <p className='text-muted-foreground text-sm'>
-              Manage locations and assign team members
-            </p>
-          </div>
-          <Button
-            size='sm'
-            onClick={() => {
-              setEditingBranch(null);
-              setIsSheetOpen(true);
-            }}
-          >
-            <Plus className='mr-2 h-4 w-4' />
-            New Branch
-          </Button>
+    <OrgPage>
+      <div className={orgStack}>
+        <PageHeader
+          title='Venues'
+          description='Training branches and locations — manage details and assign team members.'
+          actions={
+            <Button
+              size='sm'
+              onClick={() => {
+                setEditingBranch(null);
+                setIsSheetOpen(true);
+              }}
+            >
+              <Plus className='mr-2 h-4 w-4' />
+              New Venue
+            </Button>
+          }
+        />
+
+        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4 2xl:gap-5'>
+          <KpiCard title='Total Venues' value={totalBranches} icon={<Building2 className='h-5 w-5' />} variant='primary' />
+          <KpiCard title='Active' value={branches.filter(b => b.active).length} icon={<GitBranch className='h-5 w-5' />} variant='green' />
+          <KpiCard title='Inactive' value={branches.filter(b => !b.active).length} icon={<MapPin className='h-5 w-5' />} variant='amber' />
+          <KpiCard title='Members' value={organisationUsers.length} icon={<Users className='h-5 w-5' />} variant='indigo' />
         </div>
 
-        {/* Stats */}
-        <div className='grid gap-3 sm:grid-cols-3'>
-          <div className='border-border bg-card rounded-lg border p-3'>
-            <div className='flex items-center gap-3'>
-              <div className='bg-muted rounded-lg p-2'>
-                <Building2 className='text-primary h-4 w-4' />
-              </div>
-              <div>
-                <p className='text-muted-foreground text-xs'>Total Branches</p>
-                <p className='text-foreground text-lg font-bold'>{totalBranches}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className='border-border bg-card rounded-lg border p-3'>
-            <div className='flex items-center gap-3'>
-              <div className='bg-muted rounded-lg p-2'>
-                <Users className='text-primary h-4 w-4' />
-              </div>
-              <div>
-                <p className='text-muted-foreground text-xs'>Team Members</p>
-                <p className='text-foreground text-lg font-bold'>{branchUsers.length}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className='border-border bg-card rounded-lg border p-3'>
-            <div className='flex items-center gap-3'>
-              <div className='bg-muted rounded-lg p-2'>
-                <GitBranch className='text-primary h-4 w-4' />
-              </div>
-              <div>
-                <p className='text-muted-foreground text-xs'>Active Branches</p>
-                <p className='text-foreground text-lg font-bold'>
-                  {branches.filter(b => b.active).length}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Branches DataTable */}
-      <section className={elimikaDesignSystem.spacing.content}>
-        <div className='mb-4 flex items-center justify-between'>
-          <div>
-            <h2 className='text-foreground text-2xl font-semibold'>All Branches</h2>
-            <p className='text-muted-foreground text-sm'>
-              Select a branch to view details and manage team members
-            </p>
-          </div>
-        </div>
-
+        {/* Venue card grid */}
         {branchesQuery.isLoading ? (
-          <div className='space-y-2'>
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className='h-16 w-full' />
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className='h-56 w-full rounded-xl' />
             ))}
           </div>
         ) : branches.length === 0 ? (
           <div className={elimikaDesignSystem.components.emptyState.container}>
             <GitBranch className={elimikaDesignSystem.components.emptyState.icon} />
-            <h3 className={elimikaDesignSystem.components.emptyState.title}>No branches yet</h3>
+            <h3 className={elimikaDesignSystem.components.emptyState.title}>No venues yet</h3>
             <p className={elimikaDesignSystem.components.emptyState.description}>
-              Create your first training branch to get started with managing your organization's
-              locations.
+              Create your first training venue to start managing your organisation&apos;s locations.
             </p>
             <Button
               className='mt-4'
@@ -473,20 +318,88 @@ export default function BranchesPage() {
               }}
             >
               <Plus className='mr-2 h-4 w-4' />
-              Create Branch
+              Create Venue
             </Button>
           </div>
         ) : (
-          <DataTable
-            columns={columns}
-            data={branches}
-            searchKey='branch_name'
-            searchPlaceholder='Search branches...'
-            pageSize={10}
-            onRowClick={branch => setSelectedBranchId(branch.uuid ?? null)}
-          />
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+            {branches.map(branch => {
+              const isSelected = branch.uuid === selectedBranchId;
+              return (
+                <Card
+                  key={branch.uuid}
+                  onClick={() => setSelectedBranchId(branch.uuid ?? null)}
+                  className={`cursor-pointer overflow-hidden transition-shadow hover:shadow-md ${isSelected ? 'ring-2 ring-primary' : ''}`}
+                >
+                  <div className='relative flex h-28 items-center justify-center bg-gradient-to-br from-teal-600 via-teal-600 to-cyan-600'>
+                    <Building2 className='h-10 w-10 text-white/90' />
+                    <Badge
+                      variant={branch.active ? 'default' : 'secondary'}
+                      className='absolute right-2 top-2'
+                    >
+                      {branch.active ? 'Available' : 'Inactive'}
+                    </Badge>
+                  </div>
+                  <CardContent className='space-y-3 p-4'>
+                    <div className='flex items-start justify-between gap-2'>
+                      <div className='min-w-0'>
+                        <h3 className='truncate font-semibold'>{branch.branch_name}</h3>
+                        <p className='flex items-center gap-1 truncate text-xs text-muted-foreground'>
+                          <MapPin className='h-3.5 w-3.5 shrink-0' />
+                          {branch.address || 'No address'}
+                        </p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size='icon' variant='ghost' className='h-8 w-8 shrink-0' onClick={e => e.stopPropagation()}>
+                            <MoreVertical className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem onClick={e => { e.stopPropagation(); handleEditBranch(branch); }}>
+                            <Pencil className='h-4 w-4' /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant='destructive'
+                            disabled={deleteBranch.isPending}
+                            onClick={e => {
+                              e.stopPropagation();
+                              if (confirm(`Delete venue "${branch.branch_name}"?`)) {
+                                handleDeleteBranch(branch.uuid!, branch.branch_name ?? '');
+                              }
+                            }}
+                          >
+                            <Trash2 className='h-4 w-4' /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <div className='flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground'>
+                      <span className='flex items-center gap-1' title='Point of contact'>
+                        <Users className='h-3.5 w-3.5' />
+                        {branch.poc_name || '—'}
+                      </span>
+                      <span className='flex items-center gap-1' title='Capacity (pending backend support)'>
+                        <Wrench className='h-3.5 w-3.5' />—
+                      </span>
+                    </div>
+
+                    <div className='flex gap-2 pt-1'>
+                      <Button asChild variant='outline' size='sm' className='flex-1' onClick={e => e.stopPropagation()}>
+                        <Link href={`/dashboard/branches/${branch.uuid}`}>Manage</Link>
+                      </Button>
+                      <Button size='sm' className='flex-1' disabled onClick={e => e.stopPropagation()}>
+                        <Calendar className='mr-1 h-3.5 w-3.5' />
+                        Book
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         )}
-      </section>
 
       {/* Branch Users Section */}
       {selectedBranch && (
@@ -575,14 +488,15 @@ export default function BranchesPage() {
       )}
 
       {/* Branch Form Drawer */}
-      <BranchDrawer
-        open={isSheetOpen}
-        onOpenChange={setIsSheetOpen}
-        onSubmit={handleSaveBranch}
-        defaultValues={editingBranch ?? undefined}
-        isSubmitting={createBranch.isPending || updateBranch.isPending}
-      />
-    </div>
+        <BranchDrawer
+          open={isSheetOpen}
+          onOpenChange={setIsSheetOpen}
+          onSubmit={handleSaveBranch}
+          defaultValues={editingBranch ?? undefined}
+          isSubmitting={createBranch.isPending || updateBranch.isPending}
+        />
+      </div>
+    </OrgPage>
   );
 }
 
