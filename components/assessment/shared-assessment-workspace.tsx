@@ -1180,9 +1180,6 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
     instructor?.uuid
   );
 
-  console.log(instructor, "INS")
-  console.log(student, "STUD")
-
   const classes = useMemo(() => {
     const seen = new Set<string>();
     return rawClasses.filter(classItem => {
@@ -1346,8 +1343,6 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
       getFilteredAssessments(instructorAssessments, activeTab, search, skill, statusFilter, sort),
     [activeTab, instructorAssessments, search, skill, sort, statusFilter]
   );
-
-  console.log(assignmentSchedules, "FASSS")
 
   const filteredCompetencies = useMemo(
     () => getFilteredCompetencies(competencies, search, skill, statusFilter, sort),
