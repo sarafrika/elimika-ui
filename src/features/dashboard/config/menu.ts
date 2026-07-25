@@ -36,6 +36,7 @@ import {
   ShoppingBag,
   Sparkles,
   UserIcon,
+  UserPlus,
   Users,
   UsersIcon,
   Wallet,
@@ -721,6 +722,7 @@ export default {
       label: 'Operations',
       items: [
         { title: 'Students', url: '/dashboard/students', icon: Users },
+        { title: 'Invite Students', url: '/dashboard/invite-students', icon: UserPlus },
         { title: 'Instructors', url: '/dashboard/instructors', icon: UserCheck },
         { title: 'Classes', url: '/dashboard/classes', icon: LayoutList },
         { title: 'Venues', url: '/dashboard/venues', icon: MapPin },
