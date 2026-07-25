@@ -1,11 +1,18 @@
 'use client';
 
-import { Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Check, ChevronDown, LayoutGrid, Search } from 'lucide-react';
+import { useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '../../../../../components/ui/tabs';
+import { cn } from '@/lib/utils';
+import { DOT_COLORS } from '../../class-colors';
 import type { SchedulerFilterSection } from './types';
 
 type SchedulerFiltersProps = {
@@ -23,19 +30,12 @@ export function SchedulerFilters({
   searchQuery,
   sections,
 }: SchedulerFiltersProps) {
-  const initialTab = sections[0]?.key ?? '';
-
-  const [activeTab, setActiveTab] = useState(initialTab);
-
-  const activeSection = useMemo(
-    () => sections.find(section => section.key === activeTab) ?? sections[0],
-    [activeTab, sections]
-  );
+  const isAllActive = activeFilterCount === 0 && !searchQuery;
 
   return (
-    <aside className='bg-card w-full min-w-[220px] max-w-[20rem] rounded-md border p-3 shadow-sm xl:w-full'>
+    <div className='w-full'>
       {/* Header */}
-      <div className='mb-4 flex w-full items-center justify-between gap-2'>
+      <div className='mb-2 flex w-full items-center justify-between gap-2'>
         <h2 className='text-foreground text-sm font-semibold sm:text-base'>Filters</h2>
 
         <Button
@@ -49,108 +49,188 @@ export function SchedulerFilters({
         </Button>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className='mb-4 w-full'>
-        <TabsList className='grid h-auto w-full grid-cols-2 gap-1 bg-transparent p-0 sm:grid-cols-3'>
-          {sections.map(section => (
-            <TabsTrigger
-              key={section.key}
-              value={section.key}
-              className='h-8 rounded-md border px-2 text-[11px] font-medium sm:text-xs data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground min-w-fit'
-            >
-              <span className='truncate'>
-                {section.label}
-                <span className='ml-1 opacity-70'>
-                  ({section.count})
-                </span>
-              </span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      {/* Pills */}
+      <div className='-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+        <button
+          type='button'
+          onClick={onClearFilters}
+          aria-pressed={isAllActive}
+          aria-label={isAllActive ? 'All filter, active' : 'Clear all filters'}
+          className={cn(
+            'inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+            isAllActive
+              ? 'border-primary bg-primary/10 font-semibold text-primary shadow-sm'
+              : 'border-border bg-card font-medium text-foreground hover:bg-muted',
+          )}
+        >
+          <LayoutGrid className='h-4 w-4 shrink-0' aria-hidden='true' />
+          <span>All</span>
+          {isAllActive && <Check className='h-4 w-4 shrink-0 opacity-70' aria-hidden='true' />}
+        </button>
 
-      {/* Search */}
-      <div className='border-border border-b pb-3'>
-        <div className='relative'>
-          <Search className='text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2' />
-
-          <Input
-            type='text'
-            placeholder={`Search ${activeSection?.label.toLowerCase()}...`}
-            value={searchQuery}
-            onChange={event => onSearchChange(event.target.value)}
-            className='pl-9'
+        {sections.map((section, index) => (
+          <SchedulerFilterPill
+            key={section.key}
+            section={section}
+            dotColor={DOT_COLORS[index % DOT_COLORS.length] as string}
+            searchQuery={searchQuery}
+            onSearchChange={onSearchChange}
           />
-        </div>
+        ))}
       </div>
 
-      {/* Active Filters */}
       {activeFilterCount > 0 && (
-        <div className='border-border border-b py-2'>
-          <div className='flex items-center justify-between gap-3'>
-            <span className='text-muted-foreground text-xs font-medium md:text-sm'>
-              {activeFilterCount} {activeFilterCount === 1 ? 'filter' : 'filters'} applied
-            </span>
-          </div>
-        </div>
+        <p className='text-muted-foreground mt-2 text-xs font-medium md:text-sm'>
+          {activeFilterCount} {activeFilterCount === 1 ? 'filter' : 'filters'} applied
+        </p>
       )}
+    </div>
+  );
+}
 
-      {/* Items */}
-      <div className='scrollbar-hide max-h-[500px] overflow-y-auto py-3'>
-        {activeSection?.items.length ? (
-          <div className='space-y-1.5'>
-            {activeSection.items.map(item => {
-              const isSelected =
-                activeSection.selectedId === item.id;
+function SchedulerFilterPill({
+  section,
+  dotColor,
+  searchQuery,
+  onSearchChange,
+}: {
+  section: SchedulerFilterSection;
+  dotColor: string;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+}) {
+  const selectedItem = section.items.find(item => item.id === section.selectedId) ?? null;
+  const active = Boolean(selectedItem);
+
+  const visibleItems = useMemo(() => {
+    if (!searchQuery) return section.items;
+    const query = searchQuery.toLowerCase();
+    return section.items.filter(item => item.name.toLowerCase().includes(query));
+  }, [searchQuery, section.items]);
+
+  return (
+    <div
+      className={cn(
+        'inline-flex h-9 shrink-0 items-center gap-2 rounded-full border text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        active
+          ? 'border-primary bg-primary/10 font-semibold text-primary shadow-sm'
+          : 'border-border bg-card font-medium text-foreground hover:bg-muted',
+      )}
+    >
+      {/* Label — click resets just this filter, mirrors FilterPillWithDropdown from the calendar page */}
+      <button
+        type='button'
+        onClick={() => selectedItem && section.onItemClick(selectedItem.id)}
+        aria-pressed={active}
+        aria-label={
+          active
+            ? `${section.label} filter set to ${selectedItem?.name}. Activate to clear.`
+            : `Filter by ${section.label.toLowerCase()}`
+        }
+        className='flex min-w-0 flex-1 items-center gap-2 px-3.5 text-sm focus-visible:outline-none'
+      >
+        <span
+          className="h-2 w-2 shrink-0 rounded-full"
+          style={{ backgroundColor: dotColor }}
+          aria-hidden="true"
+        />
+        <span className='max-w-[9rem] flex-1 truncate text-left'>
+          {section.label}
+          {active ? (
+            <span className='ml-1 text-xs font-normal opacity-80'>: {selectedItem?.name}</span>
+          ) : (
+            <span className='ml-1 opacity-60'>({section.count})</span>
+          )}
+        </span>
+      </button>
+
+      {/* Chevron — opens the item list for this category */}
+      <DropdownMenu
+        onOpenChange={open => {
+          if (!open) onSearchChange('');
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <button
+            type='button'
+            aria-label={`Choose ${section.label.toLowerCase()} to filter by${active ? `, currently ${selectedItem?.name}` : ''}`}
+            aria-haspopup='menu'
+            className={cn(
+              'flex w-8 shrink-0 items-center justify-center border-l focus-visible:outline-none',
+              active ? 'border-primary/30 hover:bg-primary/15' : 'border-border hover:bg-muted',
+            )}
+          >
+            <ChevronDown className='h-4 w-4' aria-hidden='true' />
+          </button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="start" side="bottom" collisionPadding={8} className="w-64 p-0">
+          <div className="border-b p-2">
+            <div className="relative">
+              <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+              <Input
+                type="text"
+                placeholder={`Search ${section.label.toLowerCase()}...`}
+                value={searchQuery}
+                onChange={event => onSearchChange(event.target.value)}
+                onKeyDown={event => event.stopPropagation()}
+                className="h-8 pl-8 text-xs"
+              />
+            </div>
+          </div>
+
+          <div
+            className="
+    max-h-64 overflow-y-auto p-1
+    [scrollbar-width:thin]
+    [&::-webkit-scrollbar]:w-px
+    [&::-webkit-scrollbar-track]:bg-transparent
+    [&::-webkit-scrollbar-thumb]:bg-border
+    [&::-webkit-scrollbar-thumb]:rounded-full
+  "
+          >
+            {visibleItems.length === 0 && (
+              <div className="px-2 py-6 text-center text-xs text-muted-foreground">
+                No matches found.
+              </div>
+            )}
+
+            {visibleItems.map(item => {
+              const isSelected = section.selectedId === item.id;
+              const course = (item as { course?: string }).course;
 
               return (
-                <button
+                <DropdownMenuItem
                   key={item.id}
-                  type='button'
-                  onClick={() =>
-                    activeSection.onItemClick(item.id)
-                  }
-                  className={`group flex w-full items-center gap-2.5 rounded-md border px-3 py-2.5 text-left transition-all ${isSelected
-                    ? 'border-primary/20 bg-primary/10'
-                    : 'border-border/50 hover:border-primary/10 hover:bg-muted/40'
-                    }`}
+                  onSelect={event => {
+                    event.preventDefault();
+                    section.onItemClick(item.id);
+                  }}
+                  className="flex items-start gap-2"
                 >
-                  {/* CONTENT */}
-                  <div className='min-w-0 flex-1'>
-                    {/* CLASS NAME */}
+                  <div className="min-w-0 flex-1">
                     <p
-                      className={`truncate text-[13px] font-medium leading-tight ${isSelected
-                        ? 'text-primary'
-                        : 'text-foreground'
-                        }`}
+                      className={cn(
+                        'truncate text-[13px] font-medium leading-tight',
+                        isSelected ? 'text-primary' : 'text-foreground',
+                      )}
                     >
                       {item.name}
                     </p>
-
-                    {/* COURSE */}
-                    <p className='mt-0.5 truncate text-[11px] text-muted-foreground'>
-                      {(item as { course?: string }).course}
-                    </p>
+                    {course ? (
+                      <p className="truncate text-[11px] text-muted-foreground">{course}</p>
+                    ) : null}
                   </div>
 
-                  {/* ACTIVE BADGE */}
-                  {isSelected ? (
-                    <div className='rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary'>
-                      Active
-                    </div>
-                  ) : null}
-                </button>
+                  {isSelected && (
+                    <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                  )}
+                </DropdownMenuItem>
               );
             })}
           </div>
-        ) : (
-          <div className='py-6 text-center'>
-            <p className='text-muted-foreground text-xs md:text-sm'>
-              No matches found.
-            </p>
-          </div>
-        )}
-      </div>
-    </aside>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

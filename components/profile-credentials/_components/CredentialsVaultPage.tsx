@@ -51,6 +51,7 @@ import { CredentialsUploadSheet } from './CredentialsUploadSheet';
 import { GrowthTimelineSection } from './GrowthTimelineSection';
 import { ProfileOverviewCard } from './ProfileOverviewCard';
 import { VaultHighlights } from './VaultHighlights';
+import { useCoursesByIds, useProgramsByIds } from '../../../hooks/use-batched-lookups';
 
 type CredentialsVaultPageProps = {
   role: CredentialsRole;
@@ -249,10 +250,33 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
 
   const documentTypes = extractList<DocumentTypeOption>(documentTypesQuery.data);
 
+
+  const courseIds: string[] = [
+    ...new Set(
+      (certificates ?? [])
+        .map(cert => cert.course_uuid)
+        .filter((id): id is string => id != null)
+    ),
+  ];
+
+  const programIds: string[] = [
+    ...new Set(
+      (certificates ?? [])
+        .map(cert => cert.program_uuid)
+        .filter((id): id is string => id != null)
+    ),
+  ];
+
+  const { courseMap } = useCoursesByIds(courseIds);
+  const { programMap } = useProgramsByIds(programIds)
+
+
   const content = buildCredentialsContent({
     role,
     profile: profileData,
     documents,
+    courseMap,
+    programMap,
     certificates,
     educationRecords:
       role === 'instructor' ? instructorEducations : courseCreatorEducations,

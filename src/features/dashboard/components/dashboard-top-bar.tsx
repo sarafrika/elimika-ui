@@ -185,7 +185,7 @@ export default function DashboardTopBar() {
               <Button
                 asChild
                 size='sm'
-                className='h-10 rounded-md px-4 font-semibold md:inline-flex'
+                className='h-9 rounded-md px-4 font-semibold md:inline-flex'
               >
                 <Link href={createCourseHref}>
                   <Sparkles className='h-4 w-4' />
@@ -199,9 +199,11 @@ export default function DashboardTopBar() {
               <Button
                 asChild
                 size='sm'
-                className='h-10 rounded-md px-4 font-semibold md:inline-flex'
+                className='h-9 rounded-md px-4 font-semibold md:inline-flex'
               >
-                <Link href={createClassHref}>
+                <Link href={createClassHref}
+                  className='flex flex-row items-center'
+                >
                   <Sparkles className='h-4 w-4' />
                   Create Class
                   <ChevronDown className='h-4 w-4' />
@@ -213,12 +215,14 @@ export default function DashboardTopBar() {
               <Button
                 asChild
                 size='sm'
-                className='h-10 rounded-md px-4 font-semibold md:inline-flex'
+                className='h-9 rounded-md px-4 text-sm font-semibold md:inline-flex'
               >
-                <Link href="/dashboard/workspace/student/courses">
-                  <Sparkles className='h-4 w-4' />
+                <Link className='flex flex-row items-center'
+                  href="/dashboard/workspace/student/courses"
+                >
+                  <Sparkles className='h-3 w-3' />
                   Enroll Course
-                  <ChevronDown className='h-4 w-4' />
+                  <ChevronDown className='h-3 w-3' />
                 </Link>
               </Button>
             )}

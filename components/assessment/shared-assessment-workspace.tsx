@@ -14,7 +14,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useInstructor } from '@/context/instructor-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
 import { cn } from '@/lib/utils';
 import {
@@ -53,6 +52,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { useUserProfile } from '../../context/profile-context';
 
 export type AssessmentWorkspaceRole = 'student' | 'instructor';
 type AssessmentTab = 'active' | 'completed' | 'competencies';
@@ -1167,7 +1167,10 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
 }
 
 export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceRole }) {
-  const instructor = useInstructor();
+  const userProfile = useUserProfile();
+  const instructor = userProfile?.instructor
+  const student = userProfile?.student
+
   const [activeTab, setActiveTab] = useState<AssessmentTab>('active');
   const [search, setSearch] = useState('');
   const [skill, setSkill] = useState('all');
@@ -1345,6 +1348,7 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
     () => getFilteredCompetencies(competencies, search, skill, statusFilter, sort),
     [search, skill, sort, statusFilter]
   );
+
   const activeCount = instructorAssessments.filter(
     assessment => getAssessmentStatus(assessment) !== 'completed'
   ).length;

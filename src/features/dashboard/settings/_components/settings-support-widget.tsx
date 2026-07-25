@@ -18,11 +18,11 @@ export function SettingsSupportWidget({
       href={href}
       prefetch={false}
       className={cn(
-        'group-data-[collapsible=icon]:hidden block rounded-md transition-colors hover:bg-sidebar-accent',
+        'group-data-[collapsible=icon]:hidden block transition-colors hover:bg-sidebar-accent',
         className
       )}
     >
-      <div className="flex items-center gap-3 border-t border-sidebar-border p-4">
+      <div className="flex items-center gap-3 border-t border-sidebar-border px-3 py-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-primary/20">
           <span className="text-xs font-semibold text-sidebar-primary-foreground">
             <Headset />

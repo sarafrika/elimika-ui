@@ -1,5 +1,21 @@
 'use client';
 
+import type { UserProfileType } from '@/lib/types';
+import type {
+  Certificate,
+  Course,
+  CourseCreatorDocumentDto,
+  CourseCreatorEducation,
+  CourseCreatorExperience,
+  CourseCreatorProfessionalMembership,
+  DocumentTypeOption,
+  InstructorDocument,
+  InstructorEducation,
+  InstructorExperience,
+  InstructorProfessionalMembership,
+  TrainingProgram,
+} from '@/services/client/types.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import {
   Award,
   BriefcaseBusiness,
@@ -13,20 +29,6 @@ import {
   Star,
   WalletCards,
 } from 'lucide-react';
-import type { UserProfileType } from '@/lib/types';
-import type {
-  Certificate,
-  CourseCreatorDocumentDto,
-  CourseCreatorEducation,
-  CourseCreatorExperience,
-  CourseCreatorProfessionalMembership,
-  DocumentTypeOption,
-  InstructorDocument,
-  InstructorEducation,
-  InstructorExperience,
-  InstructorProfessionalMembership,
-} from '@/services/client/types.gen';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type {
   CredentialItem,
   CredentialsContent,
@@ -120,8 +122,8 @@ function buildEducationDetails(education?: InstructorEducation | CourseCreatorEd
       label: 'Completed',
       value: String(
         record.formatted_completion ||
-          formatYearValue(record.year_completed as number | string | Date | null) ||
-          'Not specified'
+        formatYearValue(record.year_completed as number | string | Date | null) ||
+        'Not specified'
       ),
     },
     {
@@ -361,8 +363,11 @@ function getCertificateStatus(certificate: StudentCertificate) {
   };
 }
 
-function getCertificateTimestamp(certificate: StudentCertificate) {
-  return certificate.issued_date ?? certificate.completion_date ?? certificate.created_date;
+function getCertificateCompletionTimestamp(certificate: StudentCertificate) {
+  return certificate.completion_date
+}
+function getCertificateIssueTimestamp(certificate: StudentCertificate) {
+  return certificate.issued_date ?? certificate.created_date;
 }
 
 function getCertificateLabel(certificate: StudentCertificate) {
@@ -381,7 +386,12 @@ function getCertificateIssuer(certificate: StudentCertificate) {
 }
 
 function mapCertificateItems(
-  certificates: StudentCertificate[],
+  certificates: Array<
+    StudentCertificate & {
+      course?: Course;
+      program?: TrainingProgram;
+    }
+  >,
   searchValue = '',
   statusFilter: CredentialsStatusFilter = 'all'
 ) {
@@ -390,8 +400,9 @@ function mapCertificateItems(
   return certificates
     .slice()
     .sort((left, right) => {
-      const leftDate = new Date(getCertificateTimestamp(left) ?? 0).getTime();
-      const rightDate = new Date(getCertificateTimestamp(right) ?? 0).getTime();
+      const leftDate = new Date(getCertificateIssueTimestamp(left) ?? 0).getTime();
+      const rightDate = new Date(getCertificateIssueTimestamp(right) ?? 0).getTime();
+
       return rightDate - leftDate;
     })
     .filter(certificate => {
@@ -402,6 +413,8 @@ function mapCertificateItems(
       return [
         getCertificateLabel(certificate).toLowerCase(),
         getCertificateIssuer(certificate).toLowerCase(),
+        certificate.course?.name?.toLowerCase() ?? '',
+        certificate.program?.title?.toLowerCase() ?? '',
         certificate.certificate_number?.toLowerCase() ?? '',
         status.label.toLowerCase(),
       ].some(value => value.includes(filter));
@@ -419,25 +432,76 @@ function mapCertificateItems(
     })
     .map((certificate, index) => {
       const status = getCertificateStatus(certificate);
-      const timestamp = getCertificateTimestamp(certificate);
+      const completedTimeStamp = getCertificateCompletionTimestamp(certificate);
+      const issueTimeStamp = getCertificateIssueTimestamp(certificate);
+
+      const credentialName =
+        certificate.course?.name ??
+        certificate.program?.title ??
+        getCertificateLabel(certificate);
+
+      const issuer =
+        certificate.course?.course_creator_uuid
+          ? 'Course Creator'
+          : certificate.program?.title
+            ? 'Training Program'
+            : getCertificateIssuer(certificate);
+
 
       return {
-        id: certificate.uuid ?? `${certificate.template_uuid}-${index}`,
-        title: getCertificateLabel(certificate),
-        issuer: getCertificateIssuer(certificate),
-        issuerIconText: getInitials(getCertificateIssuer(certificate)).slice(0, 1) || 'C',
-        stage: `Completed ${formatLongDate(timestamp)}`,
+        id: certificate.uuid as string,
+        certificateNumber: certificate.certificate_number,
+        title: credentialName,
+        // Updated issuer
+        issuer,
+        issuerIconText:
+          getInitials(issuer).slice(0, 1) || 'C',
+
+        completionLabel: `Completed ${formatLongDate(completedTimeStamp)}`,
+        issueLabel: `Issued ${formatLongDate(issueTimeStamp)}`,
+
+
         level: status.stage,
+
         status: status.label,
+
         statusIcon: status.icon,
-        actionLabel: certificate.certificate_url ? 'View' : 'Details',
-        documentLabel: certificate.certificate_number ?? certificate.template_uuid,
-        documentUrl: getFirstValue(certificate.certificate_url, undefined),
-        metadata: certificate.final_grade ? `${certificate.final_grade}%` : undefined,
-        timestamp: timestamp ? new Date(timestamp).getTime() : undefined,
+
+        actionLabel: certificate.certificate_url
+          ? 'View'
+          : 'Details',
+
+
+        documentLabel:
+          certificate.certificate_number ??
+          credentialName ??
+          certificate.template_uuid,
+
+        documentUrl: getFirstValue(
+          certificate.certificate_url,
+          undefined
+        ),
+
+        metadata: certificate.final_grade
+          ? `${certificate.final_grade}%`
+          : undefined,
+
+        timestamp: issueTimeStamp
+          ? new Date(issueTimeStamp).getTime()
+          : undefined,
+
+        completedDate: completedTimeStamp
+          ? new Date(completedTimeStamp).getTime()
+          : undefined,
+
+        // optional: expose original learning object
+        course: certificate.course,
+        program: certificate.program,
       } satisfies CredentialItem & {
         documentUrl?: string;
         metadata?: string;
+        course?: Course;
+        program?: TrainingProgram;
       };
     });
 }
@@ -753,8 +817,8 @@ function filterFallbackContentWithStatus(
           const matchesSearch = !hasSearchFilter
             ? true
             : [item.title, item.issuer, item.status, item.documentLabel].some(value =>
-                value.toLowerCase().includes(filter)
-              );
+              value.toLowerCase().includes(filter)
+            );
 
           if (!matchesSearch) return false;
 
@@ -777,6 +841,8 @@ export function buildCredentialsContent({
   profile,
   documents,
   certificates,
+  courseMap,
+  programMap,
   educationRecords,
   membershipRecords,
   experienceRecords,
@@ -787,6 +853,8 @@ export function buildCredentialsContent({
   role: CredentialsRole;
   profile?: UserProfileType;
   documents?: CredentialsDocument[];
+  courseMap?: Record<string, Course>,
+  programMap?: Record<string, TrainingProgram>,
   certificates?: StudentCertificate[];
   educationRecords?: Array<InstructorEducation | CourseCreatorEducation>;
   membershipRecords?: Array<InstructorProfessionalMembership | CourseCreatorProfessionalMembership>;
@@ -798,6 +866,16 @@ export function buildCredentialsContent({
   const fallback = getFallbackCredentialsContent(role);
   const liveDocuments = (documents ?? []).filter(Boolean);
   const liveCertificates = (certificates ?? []).filter(Boolean);
+  const certificatesWithContent = liveCertificates.map(certificate => ({
+    ...certificate,
+    course: certificate.course_uuid
+      ? courseMap?.[certificate.course_uuid]
+      : undefined,
+    program: certificate.program_uuid
+      ? programMap?.[certificate.program_uuid]
+      : undefined,
+  }));
+
   const educationMap = new Map(
     (educationRecords ?? [])
       .filter(item => typeof item.uuid === 'string')
@@ -819,14 +897,14 @@ export function buildCredentialsContent({
     role === 'student'
       ? mapCredentialItems(liveDocuments, types, searchValue, statusFilter)
       : mapLinkedCredentialItems({
-          documents: linkedDocuments,
-          documentTypes: types,
-          educationMap,
-          membershipMap,
-          experienceMap,
-          searchValue,
-          statusFilter,
-        });
+        documents: linkedDocuments,
+        documentTypes: types,
+        educationMap,
+        membershipMap,
+        experienceMap,
+        searchValue,
+        statusFilter,
+      });
   const verifiedItems = liveItems.filter(item => item.status.includes('Verified'));
   const groupedByTab = fallback.tabs.reduce<Record<CredentialsTabId, CredentialItem[]>>(
     (acc, tab) => {
@@ -866,7 +944,12 @@ export function buildCredentialsContent({
   }
 
   if (role === 'student') {
-    const certificateItems = mapCertificateItems(liveCertificates, searchValue, statusFilter);
+    const certificateItems = mapCertificateItems(
+      certificatesWithContent,
+      searchValue,
+      statusFilter
+    );
+
     const verifiedCertificates = certificateItems.filter(item => item.status.includes('Verified'));
     const groupedByTab = fallback.tabs.reduce<Record<CredentialsTabId, CredentialItem[]>>(
       (acc, tab) => {

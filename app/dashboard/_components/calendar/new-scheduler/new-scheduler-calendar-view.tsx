@@ -12,10 +12,10 @@ import {
 } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
-import { CalendarDays, ChevronLeft, ChevronRight, Filter, Info, Settings } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Info, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { useUserDomain } from '../../../../../context/user-domain-context';
 import type { SchedulerCalendarData } from './calendar-utils';
 import {
   DEFAULT_PREFERENCES,
@@ -63,6 +63,8 @@ const isClassroomLocation = (value?: string | null) => {
 
 export function SchedulerCalendarView({ profile, data }: Props) {
   const router = useRouter();
+  const { activeDomain } = useUserDomain()
+
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -170,17 +172,18 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     return items.filter(item => !searchTerm || item.name.toLowerCase().includes(searchTerm));
   }, [allEvents, searchTerm]);
 
-  // const activeDayEntries = useMemo(
-  //   () => filteredEvents.filter(entry => isSameCalendarDay(entry.startTime, currentDate)),
-  //   [currentDate, filteredEvents]
-  // );
-
-  // const activeDayEvents = useMemo(() => activeDayEntries, [activeDayEntries]);
-
-  // const filteredVisibleInstructors = useMemo(
-  //   () => Array.from(new Set(activeDayEvents.map(event => event.instructor).filter(Boolean))).sort(),
-  //   [activeDayEvents]
-  // );
+  // Month view clicks should land on that day's Day view; Year view clicks
+  // should land on the week containing that day. We key off whichever view
+  // was active at click time — using the functional form of setView avoids
+  // any stale-closure issues if this fires after other state updates.
+  function handleSelectDate(day: Date) {
+    setView(prevView => {
+      if (prevView === 'month') return 'day';
+      if (prevView === 'year') return 'week';
+      return prevView;
+    });
+    setCurrentDate(day);
+  }
 
   const hasActiveFilters = selectedFilter.kind !== 'all';
 
@@ -260,6 +263,10 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     router.push(`/dashboard/classes/new${params.toString() ? `?${params.toString()}` : ''}`);
   };
 
+  // Note: SchedulerGrid only calls this when `canCreateClass` is false for the
+  // active profile (e.g. students never reach the branch below, and it stays
+  // a no-op for them). For instructor/organisation profiles the grid opens
+  // its own CreateClassDialog directly and skips this callback entirely.
   const handleEmptySlotClick = (slot: { date: Date; startTime: Date; endTime: Date }) => {
     if (profile === 'student') return;
     handleCreateSession(slot);
@@ -386,18 +393,8 @@ export function SchedulerCalendarView({ profile, data }: Props) {
 
   return (
     <main className='bg-background space-y-4 pt-4 pb-8 px-4'>
-      <header className='flex justify-end self-end'>
-        <div className='flex w-full gap-2 overflow-x-auto pb-1 xl:w-auto xl:flex-nowrap xl:overflow-visible'>
-          <Button
-            variant='outline'
-            className='h-10 shrink-0 rounded-md px-4 text-xs sm:text-sm'
-            onClick={() => {
-              toast.message("Open availability")
-            }}
-          >
-            Availability
-          </Button>
-
+      <header className='w-full flex flex-wrap gap-4 justify-between'>
+        <div className='flex gap-2 overflow-x-auto xl:w-auto xl:flex-nowrap xl:overflow-visible'>
           <Button
             variant='outline'
             className='h-10 shrink-0 rounded-md px-4 text-xs sm:text-sm'
@@ -419,10 +416,6 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             <ChevronLeft className='h-4 w-4' />
           </Button>
 
-          <div className='bg-card text-foreground flex h-10 shrink-0 items-center justify-center rounded-md border px-4 text-sm font-semibold whitespace-nowrap shadow-sm'>
-            {formatDateRange(currentDate, view)}
-          </div>
-
           <Button
             variant='outline'
             size='icon'
@@ -433,6 +426,12 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             <ChevronRight className='h-4 w-4' />
           </Button>
 
+          <div className='bg-card text-foreground flex h-10 shrink-0 items-center justify-center rounded-md border px-4 text-sm font-semibold whitespace-nowrap shadow-sm'>
+            {formatDateRange(currentDate, view)}
+          </div>
+        </div>
+
+        <div className='flex gap-2 overflow-x-auto pb-1 xl:w-auto xl:flex-nowrap xl:overflow-visible'>
           <div className='bg-card flex h-10 shrink-0 overflow-hidden rounded-md border shadow-sm'>
             {(['day', 'week', 'month', 'year'] as SchedulerView[]).map(item => (
               <Button
@@ -475,15 +474,6 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             <Button
               variant='outline'
               className='h-10 rounded-md px-3 text-xs sm:text-sm'
-              onClick={() => setFiltersOpen(true)}
-            >
-              <Filter className='h-4 w-4' />
-              Filters
-            </Button>
-
-            <Button
-              variant='outline'
-              className='h-10 rounded-md px-3 text-xs sm:text-sm'
               onClick={() => setDetailsOpen(true)}
             >
               <Info className='h-4 w-4' />
@@ -491,20 +481,20 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             </Button>
           </div>
 
-          <div className='flex min-w-0 flex-col gap-4 min-[1300px]:flex-row min-[1300px]:items-start'>
-            <div className='hidden min-[1300px]:block'>
-              <SchedulerFilters
-                activeFilterCount={Number(selectedFilter.kind !== 'all')}
-                onClearFilters={() => {
-                  setSelectedFilter({ id: 'all', kind: 'all' });
-                  setSearchQuery('');
-                }}
-                onSearchChange={setSearchQuery}
-                searchQuery={searchQuery}
-                sections={filterSections}
-              />
-            </div>
+          <div className=''>
+            <SchedulerFilters
+              activeFilterCount={Number(selectedFilter.kind !== 'all')}
+              onClearFilters={() => {
+                setSelectedFilter({ id: 'all', kind: 'all' });
+                setSearchQuery('');
+              }}
+              onSearchChange={setSearchQuery}
+              searchQuery={searchQuery}
+              sections={filterSections}
+            />
+          </div>
 
+          <div className='flex min-w-0 flex-col gap-4 min-[1300px]:flex-row min-[1300px]:items-start'>
             {isLoading ? (
               <div className='bg-card flex min-h-[420px] w-full items-center justify-center rounded-md border p-6 shadow-sm'>
                 <div className='flex flex-col items-center text-center'>
@@ -519,12 +509,15 @@ export function SchedulerCalendarView({ profile, data }: Props) {
                 view={view}
                 onEventClick={handleEventClick}
                 onEmptySlotClick={handleEmptySlotClick}
+                canCreateClass={activeDomain === 'instructor' || activeDomain === 'organisation_user'}
+                onClassCreated={() => { }}
+                onSelectDate={handleSelectDate}
               />
             )}
           </div>
         </div>
 
-        <div className='hidden min-[1600px]:block'>
+        <div className='hidden min-[1400px]:block'>
           <SchedulerRightRail
             currentDate={currentDate}
             profile={profile}
@@ -536,26 +529,6 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           />
         </div>
       </div>
-
-      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <SheetContent side='left' className='h-full w-screen max-w-none overflow-y-auto p-3'>
-          <SheetHeader>
-            <SheetTitle>Filters</SheetTitle>
-            <SheetDescription>Filter classes without reducing calendar space.</SheetDescription>
-          </SheetHeader>
-
-          <SchedulerFilters
-            activeFilterCount={Number(selectedFilter.kind !== 'all')}
-            onClearFilters={() => {
-              setSelectedFilter({ id: 'all', kind: 'all' });
-              setSearchQuery('');
-            }}
-            onSearchChange={setSearchQuery}
-            searchQuery={searchQuery}
-            sections={filterSections}
-          />
-        </SheetContent>
-      </Sheet>
 
       <Sheet open={detailsOpen} onOpenChange={setDetailsOpen}>
         <SheetContent side='right' className='w-[94vw] max-w-md overflow-y-auto p-3'>
