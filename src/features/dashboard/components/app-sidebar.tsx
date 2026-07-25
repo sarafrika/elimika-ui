@@ -63,7 +63,7 @@ export function AppSidebar({
 
 
   return (
-    <Sidebar variant='inset' collapsible='icon' {...props} className='px-1'>
+    <Sidebar variant='inset' collapsible='icon' {...props} className='p-0'>
       <SidebarHeader className='pt-2'>
         <div className='flex items-center gap-2 -ml-[6px]'>
           <div
@@ -120,7 +120,7 @@ export function AppSidebar({
         <NavSecondary items={menu?.secondary ?? []} className='mt-auto' />
       </SidebarContent>
 
-      <SidebarFooter className='w-full gap-3 px-0'>
+      <SidebarFooter className='w-full p-0'>
         {/* <NavUser items={menu?.user ?? []} /> */}
         <SettingsSupportWidget href={'/help'} />
       </SidebarFooter>

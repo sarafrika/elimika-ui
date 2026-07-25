@@ -166,30 +166,63 @@ export function GeneralPdfPreview({
 function CertificatePreview({
   ownerName,
   issuer,
-  documentLabel,
+  certificateNumber,
+  item
 }: {
   ownerName: string;
   issuer: string;
-  documentLabel: string;
+  certificateNumber: string | undefined
+  item: CredentialItem
 }) {
+
   return (
     <div className="relative overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-4">
-      <div className="rounded-[12px] border border-border/40 bg-card/95 p-4 shadow-[0_18px_40px_-28px_rgba(26,56,126,0.55)]">
-        <div className="flex items-start justify-between gap-4 border-b pb-3">
-          <div>
-            <p className="text-foreground text-xl font-semibold">{documentLabel}</p>
-            <p className="text-muted-foreground text-xs">{issuer} credential authority</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-foreground text-xl font-semibold">
+            {certificateNumber}
+          </p>
+          <div className="flex flex-wrap items-center gap-2 mt-2 text-sm">
+            <p className="text-muted-foreground text-xs">
+              {'Elimika'}
+            </p>
+            <span className="text-muted-foreground">|</span>
+            <span className="text-muted-foreground text-[12px]">{item.issueLabel}</span>
           </div>
-          <div className="h-14 w-11 rounded-sm border-2 border-primary/20 bg-[linear-gradient(180deg,hsl(var(--background)),color-mix(in_srgb,var(--el-accent-azure)_18%,hsl(var(--background))))]" />
-        </div>
-        <div className="space-y-3 pt-4">
-          <div className="h-2.5 w-28 rounded-full bg-primary/10" />
-          <div className="text-foreground text-2xl font-semibold">{ownerName}</div>
-          <div className="h-2 w-40 rounded-full bg-muted" />
-          <div className="h-2 w-32 rounded-full bg-muted/75" />
         </div>
       </div>
-      <div className="absolute right-5 bottom-5 h-14 w-14 rounded-full border border-primary/15 bg-background/85 shadow-sm" />
+
+      <div className="space-y-3 pt-2">
+        <span className="font-semibold text-primary/80">
+          {item.title}
+        </span>
+      </div>
+
+      {/* User avatar inside same card */}
+      <div className="mt-3 flex items-center gap-3 border-t pt-2">
+        <div className="h-12 w-12 overflow-hidden rounded-full border border-primary/15 bg-background/85 shadow-sm">
+          {item?.profile_image ? (
+            <img
+              src={item.profile_image}
+              alt={ownerName}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-primary">
+              {ownerName?.charAt(0)?.toUpperCase()}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="text-foreground text-sm font-semibold">
+            {ownerName}
+          </div>
+          <div className="text-muted-foreground text-xs">
+            Certificate Holder
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -212,7 +245,8 @@ export function CredentialCertificateCard({
         <CertificatePreview
           ownerName={ownerName}
           issuer={item.issuer}
-          documentLabel={item.documentLabel}
+          certificateNumber={item.certificateNumber}
+          item={item}
         />
       )}
 
@@ -225,9 +259,9 @@ export function CredentialCertificateCard({
           ) : null}
 
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="font-semibold text-primary/80">{item.title}</span>
-            <span className="text-muted-foreground">|</span>
-            <span className="text-muted-foreground text-[13px]">{item.stage}</span>
+            {/* <span className="font-semibold text-primary/80">{item.title}</span>
+            <span className="text-muted-foreground">|</span> */}
+            <span className="text-muted-foreground text-[13px]">{item.completionLabel}</span>
 
             <Badge
               variant="secondary"
