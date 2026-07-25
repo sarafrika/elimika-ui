@@ -100,6 +100,8 @@ import type {
   CreateRuleResponse,
   GetAllStudentsResponse,
   CreateStudentResponse,
+  ListMembersResponse,
+  AddMembersResponse,
   GetAllAssessmentRubricsResponse,
   CreateAssessmentRubricResponse,
   GetScoringLevelsByRubricResponse,
@@ -134,6 +136,8 @@ import type {
   CreateOrganisationResponse,
   GetTrainingBranchesByOrganisationResponse,
   CreateTrainingBranch1Response,
+  ListGroupsResponse,
+  CreateGroupResponse,
   ListResourcesResponse,
   CreateResourceResponse,
   ListAvailabilityRulesResponse,
@@ -2376,6 +2380,32 @@ export const createStudentResponseTransformer = async (
   return data;
 };
 
+const studentGroupMemberSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseListStudentGroupMemberSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return studentGroupMemberSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listMembersResponseTransformer = async (data: any): Promise<ListMembersResponse> => {
+  data = apiResponseListStudentGroupMemberSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addMembersResponseTransformer = async (data: any): Promise<AddMembersResponse> => {
+  data = apiResponseListStudentGroupMemberSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoAssessmentRubricSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -2862,6 +2892,42 @@ export const createTrainingBranch1ResponseTransformer = async (
   data: any
 ): Promise<CreateTrainingBranch1Response> => {
   data = apiResponseTrainingBranchSchemaResponseTransformer(data);
+  return data;
+};
+
+const studentGroupSchemaResponseTransformer = (data: any) => {
+  if (data.member_count) {
+    data.member_count = BigInt(data.member_count.toString());
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseListStudentGroupSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return studentGroupSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listGroupsResponseTransformer = async (data: any): Promise<ListGroupsResponse> => {
+  data = apiResponseListStudentGroupSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseStudentGroupSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = studentGroupSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const createGroupResponseTransformer = async (data: any): Promise<CreateGroupResponse> => {
+  data = apiResponseStudentGroupSchemaResponseTransformer(data);
   return data;
 };
 

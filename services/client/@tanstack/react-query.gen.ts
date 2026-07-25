@@ -154,6 +154,8 @@ import {
   createRule,
   getAllStudents,
   createStudent,
+  listMembers,
+  addMembers,
   getAllAssessmentRubrics,
   createAssessmentRubric,
   getScoringLevelsByRubric,
@@ -192,6 +194,8 @@ import {
   createTrainingBranch1,
   removeUserFromBranch,
   assignUserToBranch,
+  listGroups,
+  createGroup,
   listResources,
   createResource,
   listAvailabilityRules,
@@ -554,6 +558,8 @@ import {
   getCourseApprovalStatus,
   listPendingCourses,
   listPendingCourseEdits,
+  deleteGroup,
+  removeMember,
   clearInstructorAvailability,
   revokeLink,
   dissociateRubric,
@@ -947,6 +953,10 @@ import type {
   CreateStudentData,
   CreateStudentError,
   CreateStudentResponse,
+  ListMembersData,
+  AddMembersData,
+  AddMembersError,
+  AddMembersResponse,
   GetAllAssessmentRubricsData,
   GetAllAssessmentRubricsError,
   GetAllAssessmentRubricsResponse,
@@ -1057,6 +1067,10 @@ import type {
   AssignUserToBranchData,
   AssignUserToBranchError,
   AssignUserToBranchResponse,
+  ListGroupsData,
+  CreateGroupData,
+  CreateGroupError,
+  CreateGroupResponse,
   ListResourcesData,
   ListResourcesError,
   ListResourcesResponse,
@@ -1903,6 +1917,12 @@ import type {
   ListPendingCourseEditsData,
   ListPendingCourseEditsError,
   ListPendingCourseEditsResponse,
+  DeleteGroupData,
+  DeleteGroupError,
+  DeleteGroupResponse,
+  RemoveMemberData,
+  RemoveMemberError,
+  RemoveMemberResponse,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityError,
   ClearInstructorAvailabilityResponse,
@@ -6443,6 +6463,74 @@ export const createStudentMutation = (
   return mutationOptions;
 };
 
+export const listMembersQueryKey = (options: Options<ListMembersData>) =>
+  createQueryKey('listMembers', options);
+
+/**
+ * List group members
+ * Returns the student membership rows for a group.
+ */
+export const listMembersOptions = (options: Options<ListMembersData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listMembers({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listMembersQueryKey(options),
+  });
+};
+
+export const addMembersQueryKey = (options: Options<AddMembersData>) =>
+  createQueryKey('addMembers', options);
+
+/**
+ * Add students to a group
+ * Adds one or more students to the group (idempotent per student).
+ */
+export const addMembersOptions = (options: Options<AddMembersData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addMembers({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addMembersQueryKey(options),
+  });
+};
+
+/**
+ * Add students to a group
+ * Adds one or more students to the group (idempotent per student).
+ */
+export const addMembersMutation = (
+  options?: Partial<Options<AddMembersData>>
+): UseMutationOptions<AddMembersResponse, AddMembersError, Options<AddMembersData>> => {
+  const mutationOptions: UseMutationOptions<
+    AddMembersResponse,
+    AddMembersError,
+    Options<AddMembersData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addMembers({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getAllAssessmentRubricsQueryKey = (options: Options<GetAllAssessmentRubricsData>) =>
   createQueryKey('getAllAssessmentRubrics', options);
 
@@ -8502,6 +8590,74 @@ export const assignUserToBranchMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await assignUserToBranch({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listGroupsQueryKey = (options: Options<ListGroupsData>) =>
+  createQueryKey('listGroups', options);
+
+/**
+ * List student groups for an organisation
+ * Returns all student groups for the organisation with member counts.
+ */
+export const listGroupsOptions = (options: Options<ListGroupsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listGroups({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listGroupsQueryKey(options),
+  });
+};
+
+export const createGroupQueryKey = (options: Options<CreateGroupData>) =>
+  createQueryKey('createGroup', options);
+
+/**
+ * Create a student group
+ * Creates a new student group within the organisation.
+ */
+export const createGroupOptions = (options: Options<CreateGroupData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createGroup({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createGroupQueryKey(options),
+  });
+};
+
+/**
+ * Create a student group
+ * Creates a new student group within the organisation.
+ */
+export const createGroupMutation = (
+  options?: Partial<Options<CreateGroupData>>
+): UseMutationOptions<CreateGroupResponse, CreateGroupError, Options<CreateGroupData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateGroupResponse,
+    CreateGroupError,
+    Options<CreateGroupData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createGroup({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -26128,6 +26284,53 @@ export const listPendingCourseEditsInfiniteOptions = (
       queryKey: listPendingCourseEditsInfiniteQueryKey(options),
     }
   );
+};
+
+/**
+ * Delete a student group
+ * Deletes a student group and its membership rows.
+ */
+export const deleteGroupMutation = (
+  options?: Partial<Options<DeleteGroupData>>
+): UseMutationOptions<DeleteGroupResponse, DeleteGroupError, Options<DeleteGroupData>> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteGroupResponse,
+    DeleteGroupError,
+    Options<DeleteGroupData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteGroup({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Remove a student from a group
+ */
+export const removeMemberMutation = (
+  options?: Partial<Options<RemoveMemberData>>
+): UseMutationOptions<RemoveMemberResponse, RemoveMemberError, Options<RemoveMemberData>> => {
+  const mutationOptions: UseMutationOptions<
+    RemoveMemberResponse,
+    RemoveMemberError,
+    Options<RemoveMemberData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await removeMember({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
 };
 
 /**

@@ -273,9 +273,9 @@ export type Student = {
    * **[OPTIONAL]** Short biography or notes about the student. Used in student profiles.
    */
   bio?: string | null;
-  primaryGuardianContact?: string;
-  secondaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
+  secondaryGuardianContact?: string;
+  primaryGuardianContact?: string;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
    */
@@ -365,6 +365,10 @@ export type AssessmentRubric = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
+   */
+  readonly is_published?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the rubric based on its type.
    */
   readonly rubric_category?: string;
@@ -376,10 +380,6 @@ export type AssessmentRubric = {
    * **[READ-ONLY]** Comprehensive status indicating usage and accessibility.
    */
   readonly usage_status?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
-   */
-  readonly is_published?: boolean;
 };
 
 export type ApiResponseAssessmentRubric = {
@@ -667,14 +667,6 @@ export type RubricScoring = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Classification of performance expectation level.
-   */
-  readonly performance_expectation?: string;
-  /**
-   * **[READ-ONLY]** Expected score range for this performance level.
-   */
-  readonly score_range?: string;
-  /**
    * **[READ-ONLY]** Indicates if this scoring level represents passing performance.
    */
   readonly is_passing_level?: boolean;
@@ -682,6 +674,14 @@ export type RubricScoring = {
    * **[READ-ONLY]** Feedback category for constructive assessment guidance.
    */
   readonly feedback_category?: string;
+  /**
+   * **[READ-ONLY]** Classification of performance expectation level.
+   */
+  readonly performance_expectation?: string;
+  /**
+   * **[READ-ONLY]** Expected score range for this performance level.
+   */
+  readonly score_range?: string;
 };
 
 export type ApiResponseRubricScoring = {
@@ -836,13 +836,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1028,6 +1028,10 @@ export type QuizAttempt = {
    */
   readonly grade_display?: string;
   /**
+   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
+   */
+  readonly time_display?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
@@ -1035,10 +1039,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
-   */
-  readonly time_display?: string;
 };
 
 /**
@@ -1749,13 +1749,17 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_valid?: boolean;
   /**
-   * **[READ-ONLY]** Brief summary of the membership for display in listings.
-   */
-  readonly summary?: string;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
+  /**
+   * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
+   */
+  readonly is_recent_membership?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number | null;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -1775,13 +1779,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly years_of_membership?: number | null;
   /**
-   * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
+   * **[READ-ONLY]** Brief summary of the membership for display in listings.
    */
-  readonly is_recent_membership?: boolean;
-  /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
-   */
-  readonly membership_duration_months?: number | null;
+  readonly summary?: string;
   /**
    * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
@@ -1852,10 +1852,6 @@ export type InstructorExperience = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Brief summary of the experience for display in listings.
-   */
-  readonly summary?: string;
-  /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number | null;
@@ -1884,6 +1880,10 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number | null;
+  /**
+   * **[READ-ONLY]** Brief summary of the experience for display in listings.
+   */
+  readonly summary?: string;
   /**
    * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
@@ -2338,6 +2338,18 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
+   */
+  readonly has_multiple_categories?: boolean;
+  /**
+   * **[READ-ONLY]** Number of categories this course belongs to.
+   */
+  readonly category_count?: number;
+  /**
+   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
+   */
+  readonly lifecycle_stage?: string;
+  /**
    * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
    */
   readonly accepts_new_enrollments?: boolean;
@@ -2361,18 +2373,6 @@ export type Course = {
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
   readonly total_duration_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
-   */
-  readonly has_multiple_categories?: boolean;
-  /**
-   * **[READ-ONLY]** Number of categories this course belongs to.
-   */
-  readonly category_count?: number;
-  /**
-   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
-   */
-  readonly lifecycle_stage?: string;
 };
 
 /**
@@ -2667,13 +2667,13 @@ export type Lesson = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the lesson is published and accessible to students.
-   */
-  readonly is_published?: boolean;
-  /**
    * **[READ-ONLY]** Formatted lesson sequence for display purposes.
    */
   readonly lesson_sequence?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the lesson is published and accessible to students.
+   */
+  readonly is_published?: boolean;
 };
 
 export type ApiResponseLesson = {
@@ -2824,13 +2824,13 @@ export type LessonContent = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category of content based on its type and format.
-   */
-  readonly content_category?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of file size.
    */
   readonly file_size_display?: string;
+  /**
+   * **[READ-ONLY]** Category of content based on its type and format.
+   */
+  readonly content_category?: string;
 };
 
 export type ApiResponseLessonContent = {
@@ -3857,13 +3857,13 @@ export type ClassDefinition = {
    */
   readonly is_standalone?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
-   */
-  readonly capacity_info?: string;
-  /**
    * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
   readonly duration_minutes?: bigint;
+  /**
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   */
+  readonly capacity_info?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
@@ -4167,14 +4167,6 @@ export type Certificate = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Letter grade representation of the final grade.
-   */
-  readonly grade_letter?: string;
-  /**
-   * **[READ-ONLY]** Current validity status of the certificate.
-   */
-  readonly validity_status?: string;
-  /**
    * **[READ-ONLY]** Type of certificate based on completion achievement.
    */
   readonly certificate_type?: string;
@@ -4182,6 +4174,14 @@ export type Certificate = {
    * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
    */
   readonly is_downloadable?: boolean;
+  /**
+   * **[READ-ONLY]** Letter grade representation of the final grade.
+   */
+  readonly grade_letter?: string;
+  /**
+   * **[READ-ONLY]** Current validity status of the certificate.
+   */
+  readonly validity_status?: string;
 };
 
 export type ApiResponseCertificate = {
@@ -4641,18 +4641,6 @@ export type ScheduledInstance = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
-   */
-  readonly can_be_started?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
-   */
-  readonly can_be_ended?: boolean;
-  /**
    * **[READ-ONLY]** Duration of the scheduled instance in minutes.
    */
   readonly duration_minutes?: bigint;
@@ -4668,6 +4656,18 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
+   */
+  readonly can_be_started?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
+   */
+  readonly can_be_ended?: boolean;
 };
 
 /**
@@ -4703,6 +4703,45 @@ export type ApiResponseStudent = {
   data?: Student;
   message?: string;
   error?: unknown;
+};
+
+/**
+ * Payload to add one or more students to a group.
+ */
+export type AddGroupMembersRequest = {
+  /**
+   * Student user UUIDs to add.
+   */
+  student_uuids: Array<string>;
+};
+
+export type ApiResponseListStudentGroupMember = {
+  success?: boolean;
+  data?: Array<StudentGroupMember>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A student's membership within a group.
+ */
+export type StudentGroupMember = {
+  /**
+   * Unique identifier.
+   */
+  readonly uuid?: string;
+  /**
+   * Group UUID.
+   */
+  group_uuid?: string;
+  /**
+   * Student user UUID.
+   */
+  student_uuid?: string;
+  /**
+   * When the student was added.
+   */
+  readonly created_date?: Date;
 };
 
 export type ApiResponseListRubricScoringLevel = {
@@ -4875,6 +4914,65 @@ export type ApiResponseVoid = {
   data?: unknown;
   message?: string;
   error?: unknown;
+};
+
+/**
+ * Payload to create an organisation student group.
+ */
+export type CreateStudentGroupRequest = {
+  /**
+   * Group name.
+   */
+  name: string;
+  /**
+   * Optional description.
+   */
+  description?: string | null;
+  /**
+   * Optional free-form group type / stream label.
+   */
+  group_type?: string | null;
+};
+
+export type ApiResponseStudentGroup = {
+  success?: boolean;
+  data?: StudentGroup;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * An organisation-scoped named collection of students.
+ */
+export type StudentGroup = {
+  /**
+   * Unique identifier.
+   */
+  readonly uuid?: string;
+  /**
+   * Owning organisation UUID.
+   */
+  organisation_uuid?: string;
+  /**
+   * Group name.
+   */
+  name?: string;
+  /**
+   * Optional description.
+   */
+  description?: string | null;
+  /**
+   * Optional free-form group type / stream label.
+   */
+  group_type?: string | null;
+  /**
+   * Number of students in the group.
+   */
+  readonly member_count?: bigint;
+  /**
+   * When the group was created.
+   */
+  readonly created_date?: Date;
 };
 
 export type ApiResponseNotificationActionResultDto = {
@@ -5141,14 +5239,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable description of the enrollment status.
-   */
-  readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -5156,6 +5246,14 @@ export type Enrollment = {
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable description of the enrollment status.
+   */
+  readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -6258,10 +6356,6 @@ export type AssignmentSubmission = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
-   */
-  readonly is_graded?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the submission based on its content type.
    */
   readonly submission_category?: string;
@@ -6277,6 +6371,10 @@ export type AssignmentSubmission = {
    * **[READ-ONLY]** Summary of files attached to this submission.
    */
   readonly file_count_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
+   */
+  readonly is_graded?: boolean;
 };
 
 /**
@@ -6750,17 +6848,17 @@ export type StudentSchedule = {
    */
   readonly attendance_marked_at?: Date | null;
   /**
-   * **[READ-ONLY]** Indicates if this class is upcoming.
+   * **[READ-ONLY]** Duration of the scheduled class in minutes.
    */
-  readonly is_upcoming?: boolean;
+  readonly duration_minutes?: bigint;
   /**
    * **[READ-ONLY]** Indicates if the student attended this class.
    */
   readonly did_attend?: boolean;
   /**
-   * **[READ-ONLY]** Duration of the scheduled class in minutes.
+   * **[READ-ONLY]** Indicates if this class is upcoming.
    */
-  readonly duration_minutes?: bigint;
+  readonly is_upcoming?: boolean;
 };
 
 export type ApiResponseListScheduledInstance = {
@@ -6812,12 +6910,12 @@ export type PagedDtoBookingResponse = {
 export type Page = {
   totalElements?: bigint;
   totalPages?: number;
-  first?: boolean;
-  last?: boolean;
   size?: number;
   content?: Array<unknown>;
   number?: number;
   sort?: SortObject;
+  first?: boolean;
+  last?: boolean;
   numberOfElements?: number;
   pageable?: PageableObject;
   empty?: boolean;
@@ -7474,6 +7572,13 @@ export type OrganisationDashboardStats = {
    * Total active training branches
    */
   total_branches?: bigint;
+};
+
+export type ApiResponseListStudentGroup = {
+  success?: boolean;
+  data?: Array<StudentGroup>;
+  message?: string;
+  error?: unknown;
 };
 
 export type ApiResponsePagedDtoOrganisationResource = {
@@ -8469,6 +8574,10 @@ export type CourseAssessmentScore = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).
    */
   readonly is_passing?: boolean;
@@ -8484,10 +8593,6 @@ export type CourseAssessmentScore = {
    * **[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.
    */
   readonly feedback_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 /**
@@ -16798,6 +16903,68 @@ export type CreateStudentResponses = {
 
 export type CreateStudentResponse = CreateStudentResponses[keyof CreateStudentResponses];
 
+export type ListMembersData = {
+  body?: never;
+  path: {
+    groupUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/student-groups/{groupUuid}/members';
+};
+
+export type ListMembersErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListMembersError = ListMembersErrors[keyof ListMembersErrors];
+
+export type ListMembersResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListStudentGroupMember;
+};
+
+export type ListMembersResponse = ListMembersResponses[keyof ListMembersResponses];
+
+export type AddMembersData = {
+  body: AddGroupMembersRequest;
+  path: {
+    groupUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/student-groups/{groupUuid}/members';
+};
+
+export type AddMembersErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddMembersError = AddMembersErrors[keyof AddMembersErrors];
+
+export type AddMembersResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListStudentGroupMember;
+};
+
+export type AddMembersResponse = AddMembersResponses[keyof AddMembersResponses];
+
 export type GetAllAssessmentRubricsData = {
   body?: never;
   path?: never;
@@ -18126,6 +18293,68 @@ export type AssignUserToBranchResponses = {
 
 export type AssignUserToBranchResponse =
   AssignUserToBranchResponses[keyof AssignUserToBranchResponses];
+
+export type ListGroupsData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/student-groups';
+};
+
+export type ListGroupsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListGroupsError = ListGroupsErrors[keyof ListGroupsErrors];
+
+export type ListGroupsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListStudentGroup;
+};
+
+export type ListGroupsResponse = ListGroupsResponses[keyof ListGroupsResponses];
+
+export type CreateGroupData = {
+  body: CreateStudentGroupRequest;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/student-groups';
+};
+
+export type CreateGroupErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateGroupError = CreateGroupErrors[keyof CreateGroupErrors];
+
+export type CreateGroupResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseStudentGroup;
+};
+
+export type CreateGroupResponse = CreateGroupResponses[keyof CreateGroupResponses];
 
 export type ListResourcesData = {
   body?: never;
@@ -30886,6 +31115,69 @@ export type ListPendingCourseEditsResponses = {
 
 export type ListPendingCourseEditsResponse =
   ListPendingCourseEditsResponses[keyof ListPendingCourseEditsResponses];
+
+export type DeleteGroupData = {
+  body?: never;
+  path: {
+    groupUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/student-groups/{groupUuid}';
+};
+
+export type DeleteGroupErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteGroupError = DeleteGroupErrors[keyof DeleteGroupErrors];
+
+export type DeleteGroupResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeleteGroupResponse = DeleteGroupResponses[keyof DeleteGroupResponses];
+
+export type RemoveMemberData = {
+  body?: never;
+  path: {
+    groupUuid: string;
+    studentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/student-groups/{groupUuid}/members/{studentUuid}';
+};
+
+export type RemoveMemberErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RemoveMemberError = RemoveMemberErrors[keyof RemoveMemberErrors];
+
+export type RemoveMemberResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type RemoveMemberResponse = RemoveMemberResponses[keyof RemoveMemberResponses];
 
 export type ClearInstructorAvailabilityData = {
   body?: never;

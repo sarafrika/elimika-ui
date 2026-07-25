@@ -460,6 +460,12 @@ import type {
   CreateStudentData,
   CreateStudentResponses,
   CreateStudentErrors,
+  ListMembersData,
+  ListMembersResponses,
+  ListMembersErrors,
+  AddMembersData,
+  AddMembersResponses,
+  AddMembersErrors,
   GetAllAssessmentRubricsData,
   GetAllAssessmentRubricsResponses,
   GetAllAssessmentRubricsErrors,
@@ -574,6 +580,12 @@ import type {
   AssignUserToBranchData,
   AssignUserToBranchResponses,
   AssignUserToBranchErrors,
+  ListGroupsData,
+  ListGroupsResponses,
+  ListGroupsErrors,
+  CreateGroupData,
+  CreateGroupResponses,
+  CreateGroupErrors,
   ListResourcesData,
   ListResourcesResponses,
   ListResourcesErrors,
@@ -1660,6 +1672,12 @@ import type {
   ListPendingCourseEditsData,
   ListPendingCourseEditsResponses,
   ListPendingCourseEditsErrors,
+  DeleteGroupData,
+  DeleteGroupResponses,
+  DeleteGroupErrors,
+  RemoveMemberData,
+  RemoveMemberResponses,
+  RemoveMemberErrors,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityResponses,
   ClearInstructorAvailabilityErrors,
@@ -1789,6 +1807,8 @@ import {
   createRuleResponseTransformer,
   getAllStudentsResponseTransformer,
   createStudentResponseTransformer,
+  listMembersResponseTransformer,
+  addMembersResponseTransformer,
   getAllAssessmentRubricsResponseTransformer,
   createAssessmentRubricResponseTransformer,
   getScoringLevelsByRubricResponseTransformer,
@@ -1823,6 +1843,8 @@ import {
   createOrganisationResponseTransformer,
   getTrainingBranchesByOrganisationResponseTransformer,
   createTrainingBranch1ResponseTransformer,
+  listGroupsResponseTransformer,
+  createGroupResponseTransformer,
   listResourcesResponseTransformer,
   createResourceResponseTransformer,
   listAvailabilityRulesResponseTransformer,
@@ -6593,6 +6615,66 @@ export const createStudent = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List group members
+ * Returns the student membership rows for a group.
+ */
+export const listMembers = <ThrowOnError extends boolean = false>(
+  options: Options<ListMembersData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListMembersResponses,
+    ListMembersErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listMembersResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/student-groups/{groupUuid}/members',
+    ...options,
+  });
+};
+
+/**
+ * Add students to a group
+ * Adds one or more students to the group (idempotent per student).
+ */
+export const addMembers = <ThrowOnError extends boolean = false>(
+  options: Options<AddMembersData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddMembersResponses,
+    AddMembersErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addMembersResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/student-groups/{groupUuid}/members',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get all assessment rubrics
  * Retrieves a paginated list of all assessment rubrics.
  */
@@ -7726,6 +7808,64 @@ export const assignUserToBranch = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/users/{userUuid}',
     ...options,
+  });
+};
+
+/**
+ * List student groups for an organisation
+ * Returns all student groups for the organisation with member counts.
+ */
+export const listGroups = <ThrowOnError extends boolean = false>(
+  options: Options<ListGroupsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<ListGroupsResponses, ListGroupsErrors, ThrowOnError>(
+    {
+      responseTransformer: listGroupsResponseTransformer,
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+      ],
+      url: '/api/v1/organisations/{organisationUuid}/student-groups',
+      ...options,
+    }
+  );
+};
+
+/**
+ * Create a student group
+ * Creates a new student group within the organisation.
+ */
+export const createGroup = <ThrowOnError extends boolean = false>(
+  options: Options<CreateGroupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateGroupResponses,
+    CreateGroupErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createGroupResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/student-groups',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -18539,6 +18679,59 @@ export const listPendingCourseEdits = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/courses/pending-edits',
+    ...options,
+  });
+};
+
+/**
+ * Delete a student group
+ * Deletes a student group and its membership rows.
+ */
+export const deleteGroup = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteGroupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteGroupResponses,
+    DeleteGroupErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/student-groups/{groupUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Remove a student from a group
+ */
+export const removeMember = <ThrowOnError extends boolean = false>(
+  options: Options<RemoveMemberData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    RemoveMemberResponses,
+    RemoveMemberErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/student-groups/{groupUuid}/members/{studentUuid}',
     ...options,
   });
 };
