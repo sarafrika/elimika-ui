@@ -339,6 +339,7 @@ import type {
   GetInstructorCalendarResponse,
   SearchSkillsResponse,
   SearchInstructorsResponse,
+  GetOrganisationInstructorSummariesResponse,
   SearchMembershipsResponse,
   SearchExperienceResponse,
   SearchEducationResponse,
@@ -5782,6 +5783,32 @@ export const searchInstructorsResponseTransformer = async (
   data: any
 ): Promise<SearchInstructorsResponse> => {
   data = pageSchemaResponseTransformer(data);
+  return data;
+};
+
+const orgInstructorSummarySchemaResponseTransformer = (data: any) => {
+  if (data.review_count) {
+    data.review_count = BigInt(data.review_count.toString());
+  }
+  if (data.class_count) {
+    data.class_count = BigInt(data.class_count.toString());
+  }
+  return data;
+};
+
+const apiResponseListOrgInstructorSummarySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return orgInstructorSummarySchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getOrganisationInstructorSummariesResponseTransformer = async (
+  data: any
+): Promise<GetOrganisationInstructorSummariesResponse> => {
+  data = apiResponseListOrgInstructorSummarySchemaResponseTransformer(data);
   return data;
 };
 

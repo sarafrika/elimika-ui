@@ -537,11 +537,6 @@ export const zAssessmentRubric = z
       )
       .readonly()
       .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
-      .readonly()
-      .optional(),
     rubric_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the rubric based on its type.')
@@ -557,6 +552,11 @@ export const zAssessmentRubric = z
     usage_status: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive status indicating usage and accessibility.')
+      .readonly()
+      .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
       .readonly()
       .optional(),
   })
@@ -844,17 +844,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
-      .readonly()
-      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -1174,14 +1174,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -1433,9 +1433,9 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    time_display: z
+    grade_display: z
       .string()
-      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
     attempt_category: z
@@ -1448,9 +1448,9 @@ export const zQuizAttempt = z
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
       .readonly()
       .optional(),
-    grade_display: z
+    time_display: z
       .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
       .readonly()
       .optional(),
   })
@@ -1574,14 +1574,14 @@ export const zTrainingProgram = z
       )
       .readonly()
       .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total program duration.')
-      .readonly()
-      .optional(),
     program_type: z
       .string()
       .describe('**[READ-ONLY]** Classification of program type based on duration and content.')
+      .readonly()
+      .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total program duration.')
       .readonly()
       .optional(),
   })
@@ -2168,13 +2168,6 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    is_profile_complete: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
-      )
-      .readonly()
-      .optional(),
     has_location_coordinates: z
       .boolean()
       .describe(
@@ -2183,6 +2176,13 @@ export const zInstructor = z
       .readonly()
       .optional(),
     formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    is_profile_complete: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
+      )
+      .readonly()
+      .optional(),
   })
   .describe('Instructor profile including location data for educational service delivery');
 
@@ -2366,11 +2366,6 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
-      .readonly()
-      .optional(),
     formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
@@ -2393,6 +2388,11 @@ export const zInstructorProfessionalMembership = z
       .optional(),
     membership_duration_months: z
       .union([z.number().int().readonly(), z.null()])
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -2485,11 +2485,6 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
-      .readonly()
-      .optional(),
     duration_in_months: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
     formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     employment_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
@@ -2510,6 +2505,11 @@ export const zInstructorExperience = z
       .readonly()
       .optional(),
     calculated_years: z.union([z.number().readonly(), z.null()]).readonly().optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
+      .readonly()
+      .optional(),
   })
   .describe(
     'Professional work experience record for instructors including positions, organizations, responsibilities, and employment duration'
@@ -2598,9 +2598,13 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
-    is_complete: z
+    years_since_completion: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
+    education_level: zEducationLevelEnum.optional(),
+    has_certificate_number: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
+      .describe(
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
+      )
       .readonly()
       .optional(),
     is_recent_qualification: z
@@ -2615,13 +2619,9 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
       .readonly()
       .optional(),
-    years_since_completion: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
-    education_level: zEducationLevelEnum.optional(),
-    has_certificate_number: z
+    is_complete: z
       .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
-      )
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -3161,29 +3161,6 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
-      .readonly()
-      .optional(),
-    has_multiple_categories: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
-      .readonly()
-      .optional(),
-    category_count: z
-      .number()
-      .int()
-      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
-      .readonly()
-      .optional(),
-    lifecycle_stage: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
-      )
-      .readonly()
-      .optional(),
     accepts_new_enrollments: z
       .boolean()
       .describe(
@@ -3209,6 +3186,29 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
+      .readonly()
+      .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
+      .readonly()
+      .optional(),
+    has_multiple_categories: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
+      .readonly()
+      .optional(),
+    category_count: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
+      .readonly()
+      .optional(),
+    lifecycle_stage: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
+      )
       .readonly()
       .optional(),
   })
@@ -5044,6 +5044,13 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
+    capacity_info: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
+      )
+      .readonly()
+      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe(
@@ -5054,13 +5061,6 @@ export const zClassDefinition = z
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
-    capacity_info: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
-      )
       .readonly()
       .optional(),
   })
@@ -5836,6 +5836,21 @@ export const zScheduledInstance = z
       )
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
+      .readonly()
+      .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
+      .readonly()
+      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
@@ -5856,21 +5871,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-    can_be_started: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
-      .readonly()
-      .optional(),
-    can_be_ended: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -6414,16 +6414,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
-      .readonly()
-      .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
@@ -6432,6 +6422,16 @@ export const zEnrollment = z
     can_be_cancelled: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .readonly()
+      .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
   })
@@ -8095,9 +8095,9 @@ export const zStudentSchedule = z
       .union([z.string().datetime().readonly(), z.null()])
       .readonly()
       .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
+    is_upcoming: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
       .readonly()
       .optional(),
     did_attend: z
@@ -8105,9 +8105,9 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Indicates if the student attended this class.')
       .readonly()
       .optional(),
-    is_upcoming: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
   })
@@ -9157,6 +9157,34 @@ export const zApiResponseListInstructorCalendarEntry = z.object({
   error: z.unknown().optional(),
 });
 
+/**
+ * Aggregated directory row for one instructor scoped to an organisation.
+ */
+export const zOrgInstructorSummary = z
+  .object({
+    user_uuid: z.string().uuid().describe('UUID of the underlying user account.').optional(),
+    instructor_uuid: z.string().uuid().describe('UUID of the instructor profile.').optional(),
+    full_name: z.string().describe("Instructor's full name.").optional(),
+    email: z.union([z.string(), z.null()]).optional(),
+    highest_qualification: z.union([z.string(), z.null()]).optional(),
+    field_of_study: z.union([z.string(), z.null()]).optional(),
+    top_skill: z.union([z.string(), z.null()]).optional(),
+    average_rating: z.union([z.number(), z.null()]).optional(),
+    review_count: z.coerce.bigint().describe('Total number of reviews.').optional(),
+    class_count: z.coerce
+      .bigint()
+      .describe('Number of class definitions this instructor is the default instructor for.')
+      .optional(),
+  })
+  .describe('Aggregated directory row for one instructor scoped to an organisation.');
+
+export const zApiResponseListOrgInstructorSummary = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zOrgInstructorSummary).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zPagedDtoInstructorEducation = z.object({
   content: z.array(zInstructorEducation).optional(),
   metadata: zPageMetadata.optional(),
@@ -9800,11 +9828,6 @@ export const zCourseAssessmentScore = z
       .describe('**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).')
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     score_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the score based on performance level.')
@@ -9822,6 +9845,11 @@ export const zCourseAssessmentScore = z
       .describe(
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.'
       )
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -17681,6 +17709,19 @@ export const zSearchInstructorsData = z.object({
  * Search results returned successfully
  */
 export const zSearchInstructorsResponse = zPage;
+
+export const zGetOrganisationInstructorSummariesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Instructor summaries retrieved successfully
+ */
+export const zGetOrganisationInstructorSummariesResponse = zApiResponseListOrgInstructorSummary;
 
 export const zSearchMembershipsData = z.object({
   body: z.never().optional(),

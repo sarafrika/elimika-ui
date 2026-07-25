@@ -1294,6 +1294,9 @@ import type {
   SearchInstructorsData,
   SearchInstructorsResponses,
   SearchInstructorsErrors,
+  GetOrganisationInstructorSummariesData,
+  GetOrganisationInstructorSummariesResponses,
+  GetOrganisationInstructorSummariesErrors,
   SearchMembershipsData,
   SearchMembershipsResponses,
   SearchMembershipsErrors,
@@ -2025,6 +2028,7 @@ import {
   getInstructorCalendarResponseTransformer,
   searchSkillsResponseTransformer,
   searchInstructorsResponseTransformer,
+  getOrganisationInstructorSummariesResponseTransformer,
   searchMembershipsResponseTransformer,
   searchExperienceResponseTransformer,
   searchEducationResponseTransformer,
@@ -14949,6 +14953,34 @@ export const searchInstructors = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/instructors/search',
+    ...options,
+  });
+};
+
+/**
+ * Get organisation instructor directory summaries
+ * Returns one aggregated row per active instructor in the organisation — identity, highest qualification, a representative skill, average rating, review count, and the number of class definitions they lead. Scoped strictly to the given organisation.
+ */
+export const getOrganisationInstructorSummaries = <ThrowOnError extends boolean = false>(
+  options: Options<GetOrganisationInstructorSummariesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetOrganisationInstructorSummariesResponses,
+    GetOrganisationInstructorSummariesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getOrganisationInstructorSummariesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/organisations/{organisationUuid}/summaries',
     ...options,
   });
 };

@@ -432,6 +432,7 @@ import {
   getInstructorCalendar,
   searchSkills,
   searchInstructors,
+  getOrganisationInstructorSummaries,
   searchMemberships,
   searchExperience,
   searchEducation,
@@ -1676,6 +1677,7 @@ import type {
   SearchInstructorsData,
   SearchInstructorsError,
   SearchInstructorsResponse,
+  GetOrganisationInstructorSummariesData,
   SearchMembershipsData,
   SearchMembershipsError,
   SearchMembershipsResponse,
@@ -20661,6 +20663,31 @@ export const searchInstructorsInfiniteOptions = (options: Options<SearchInstruct
       queryKey: searchInstructorsInfiniteQueryKey(options),
     }
   );
+};
+
+export const getOrganisationInstructorSummariesQueryKey = (
+  options: Options<GetOrganisationInstructorSummariesData>
+) => createQueryKey('getOrganisationInstructorSummaries', options);
+
+/**
+ * Get organisation instructor directory summaries
+ * Returns one aggregated row per active instructor in the organisation — identity, highest qualification, a representative skill, average rating, review count, and the number of class definitions they lead. Scoped strictly to the given organisation.
+ */
+export const getOrganisationInstructorSummariesOptions = (
+  options: Options<GetOrganisationInstructorSummariesData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrganisationInstructorSummaries({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getOrganisationInstructorSummariesQueryKey(options),
+  });
 };
 
 export const searchMembershipsQueryKey = (options: Options<SearchMembershipsData>) =>
