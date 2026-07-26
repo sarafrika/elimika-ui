@@ -42,6 +42,7 @@ import {
   Users,
   UsersRound,
   UsersIcon,
+  PiggyBank,
   Wallet,
   Warehouse,
 } from 'lucide-react';
@@ -747,6 +748,7 @@ export default {
       label: 'Finance',
       items: [
         { title: 'Skills Wallet', url: '/dashboard/skills-wallet', icon: Wallet },
+        { title: 'Skills Fund', url: '/dashboard/skills-fund', icon: PiggyBank },
         { title: 'Earnings', url: '/dashboard/revenue', icon: Tag },
         { title: 'Approvals', url: '/dashboard/approvals', icon: ClipboardCheck },
       ],
