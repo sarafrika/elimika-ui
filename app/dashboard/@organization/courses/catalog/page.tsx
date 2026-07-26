@@ -123,6 +123,16 @@ function CourseStats({ courseUuid }: { courseUuid: string }) {
 
 const PAGE_SIZES = ['8', '12', '24', '48'];
 
+const PROGRAM_TYPES = [
+  'Short courses',
+  'Boot camps',
+  'Professional Certificate',
+  'TVET',
+  'Diploma programs',
+  'Postgraduate programs',
+  'Degree programs',
+];
+
 export default function CatalogPage() {
   const router = useRouter();
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
@@ -131,6 +141,7 @@ export default function CatalogPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
+  const [activeProgramType, setActiveProgramType] = useState<string | null>(null);
 
   const coursesQuery = useQuery({
     ...getPublishedCoursesOptions({ query: { pageable: { page, size: Number(pageSize) } } }),
@@ -167,7 +178,7 @@ export default function CatalogPage() {
         description: course.description ?? '',
         image: course.banner_url ?? course.thumbnail_url ?? null,
         category: course.category_names?.[0] ?? 'General',
-        subject: null as string | null,
+        subject: course.category_names?.[1] ?? null,
         programType: null as string | null,
         level: (course.difficulty_uuid && difficultyByUuid.get(course.difficulty_uuid)) || 'All Levels',
         instructor: creatorsByUuid.get(course.course_creator_uuid ?? '')?.full_name ?? 'Course creator',
@@ -178,19 +189,19 @@ export default function CatalogPage() {
   const courseById = useMemo(() => Object.fromEntries(catalogCourses.map(c => [c.id, c])), [catalogCourses]);
 
   const filteredCourses = useMemo(
-    () => filterByCategoryTabs(catalogCourses, activeCategory, subjectByCategory, null),
-    [catalogCourses, activeCategory, subjectByCategory]
+    () => filterByCategoryTabs(catalogCourses, activeCategory, subjectByCategory, activeProgramType),
+    [catalogCourses, activeCategory, subjectByCategory, activeProgramType]
   );
 
-  const selectionSubject = selectedIds.length ? (courseById[selectedIds[0]]?.category ?? null) : null;
+  const selectionSubject = selectedIds.length ? (courseById[selectedIds[0]]?.subject ?? null) : null;
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       if (prev.includes(id)) return prev.filter(x => x !== id);
       const course = courseById[id];
       if (!course) return prev;
-      if (selectionSubject && course.category !== selectionSubject) {
-        toast.error('Selection limited to one category', {
+      if (selectionSubject && course.subject !== selectionSubject) {
+        toast.error('Selection limited to one subject', {
           description: `You can only combine courses in ${selectionSubject}. Clear your selection to start over.`,
         });
         return prev;
@@ -230,6 +241,9 @@ export default function CatalogPage() {
         onCategoryChange={setActiveCategory}
         subjectByCategory={subjectByCategory}
         onSubjectChange={setSubjectByCategory}
+        allProgramTypes={PROGRAM_TYPES}
+        activeProgramType={activeProgramType}
+        onProgramTypeChange={setActiveProgramType}
       />
 
       {/* Grid */}
@@ -244,7 +258,7 @@ export default function CatalogPage() {
           {filteredCourses.map(course => {
             const isFav = !!favorites[course.id];
             const isSelected = selectedIds.includes(course.id);
-            const isDisabled = !isSelected && selectionSubject !== null && course.category !== selectionSubject;
+            const isDisabled = !isSelected && selectionSubject !== null && course.subject !== selectionSubject;
             return (
               <article
                 key={course.id}
@@ -386,7 +400,7 @@ export default function CatalogPage() {
           <GraduationCap className="h-5 w-5 shrink-0" />
           <div className="flex min-w-0 flex-col pr-1 leading-tight sm:pr-2">
             <span className="truncate text-sm font-semibold">Apply to Train ({selectedIds.length})</span>
-            {selectionSubject && <span className="truncate text-[11px] text-white/80">Category: {selectionSubject}</span>}
+            {selectionSubject && <span className="truncate text-[11px] text-white/80">Subject: {selectionSubject}</span>}
           </div>
           <Button onClick={applySelected} size="sm" className="shrink-0 rounded-full bg-white text-teal-700 hover:bg-white/90">
             Continue

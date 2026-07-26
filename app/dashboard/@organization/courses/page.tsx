@@ -1,12 +1,12 @@
 // @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { Archive, BookOpen, Briefcase, Eye, MoreHorizontal, Pencil, PlusSquare } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
+import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
 import { EmptyState } from '@/components/empty-state';
 import { PageHeader } from '@/components/page-header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -22,12 +22,23 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
-import { extractPage } from '@/lib/api-helpers';
-import type { ClassDefinition, User } from '@/services/client';
+import { extractEntity, extractPage } from '@/lib/api-helpers';
+import type { ClassDefinition, Course, User } from '@/services/client';
 import {
   getClassDefinitionsForOrganisationOptions,
+  getCourseByUuidOptions,
   getUsersByOrganisationAndDomainOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+
+const PROGRAM_TYPES = [
+  'Short courses',
+  'Boot camps',
+  'Professional Certificate',
+  'TVET',
+  'Diploma programs',
+  'Postgraduate programs',
+  'Degree programs',
+];
 
 const currency = new Intl.NumberFormat('en-KE', {
   style: 'currency',
@@ -99,8 +110,6 @@ function CourseActions({ status, onArchive }: { status: string; onArchive: () =>
   );
 }
 
-const ALL_CATEGORIES = 'All';
-
 export default function CoursesPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
@@ -142,15 +151,41 @@ export default function CoursesPage() {
     return counts;
   }, [classDefinitions]);
 
+  // Resolve each linked course once for its real subject-area category + subject.
+  const distinctCourseUuids = useMemo(
+    () => Array.from(new Set(classDefinitions.map(cd => cd.course_uuid).filter(Boolean) as string[])),
+    [classDefinitions]
+  );
+  const courseQueries = useQueries({
+    queries: distinctCourseUuids.map(uuid => ({
+      ...getCourseByUuidOptions({ path: { uuid } }),
+      enabled: Boolean(uuid),
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+  const courseByUuid = useMemo(() => {
+    const map = new Map<string, Course>();
+    courseQueries.forEach((q, i) => {
+      const course = extractEntity<Course>(q.data);
+      if (course) map.set(distinctCourseUuids[i], course);
+    });
+    return map;
+  }, [courseQueries, distinctCourseUuids]);
+
   const [archived, setArchived] = useState<Record<string, true>>({});
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
+  const [activeProgramType, setActiveProgramType] = useState<string | null>(null);
 
   const courses = useMemo(
     () =>
       classDefinitions.map(cd => {
         const method = methodLabel(cd);
         const siblings = cd.course_uuid ? (courseUuidCounts.get(cd.course_uuid) ?? 1) : 1;
+        const course = cd.course_uuid ? courseByUuid.get(cd.course_uuid) : undefined;
+        const cats = course?.category_names ?? [];
+        const category = cats[0] ?? 'General';
+        const subject = cats[1] ?? cats[0] ?? null;
         const status = archived[cd.uuid as string]
           ? 'Archived'
           : cd.is_active === false
@@ -158,25 +193,25 @@ export default function CoursesPage() {
             : 'Active';
         return {
           rowKey: cd.uuid as string,
-          category: categoryLabel(cd),
-          subject: null as string | null,
+          category,
+          subject,
           programType: null as string | null,
           displayName: siblings > 1 ? `${cd.title} — ${method}` : cd.title,
-          subjectLabel: '—',
+          subjectLabel: subject ?? '—',
           method,
           amount: cd.training_fee ?? 0,
           lessons: Number(cd.scheduled_session_count ?? 0),
           instructor: instructorsByUuid.get(cd.default_instructor_uuid ?? ''),
-          image: cd.thumbnail_url ?? null,
+          image: cd.thumbnail_url ?? course?.banner_url ?? course?.thumbnail_url ?? null,
           status,
         };
       }),
-    [classDefinitions, courseUuidCounts, instructorsByUuid, archived]
+    [classDefinitions, courseUuidCounts, courseByUuid, instructorsByUuid, archived]
   );
 
   const rows = useMemo(
-    () => filterByCategoryTabs(courses, activeCategory, subjectByCategory, null),
-    [courses, activeCategory, subjectByCategory]
+    () => filterByCategoryTabs(courses, activeCategory, subjectByCategory, activeProgramType),
+    [courses, activeCategory, subjectByCategory, activeProgramType]
   );
 
   const handleArchive = (rowKey: string, name: string) => {
@@ -210,6 +245,9 @@ export default function CoursesPage() {
             onCategoryChange={setActiveCategory}
             subjectByCategory={subjectByCategory}
             onSubjectChange={setSubjectByCategory}
+            allProgramTypes={PROGRAM_TYPES}
+            activeProgramType={activeProgramType}
+            onProgramTypeChange={setActiveProgramType}
           />
 
           <div className="space-y-4">
