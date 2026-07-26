@@ -22,13 +22,20 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
-import { extractEntity, extractPage } from '@/lib/api-helpers';
-import type { ClassDefinition, Course, User } from '@/services/client';
+import { extractEntity } from '@/lib/api-helpers';
+import type { ClassDefinition, Course, CourseTrainingApplication, User } from '@/services/client';
 import {
   getClassDefinitionsForOrganisationOptions,
   getCourseByUuidOptions,
   getUsersByOrganisationAndDomainOptions,
+  searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+
+const currency = new Intl.NumberFormat('en-KE', {
+  style: 'currency',
+  currency: 'KES',
+  maximumFractionDigits: 0,
+});
 
 const PROGRAM_TYPES = [
   'Short courses',
@@ -40,23 +47,21 @@ const PROGRAM_TYPES = [
   'Degree programs',
 ];
 
-const currency = new Intl.NumberFormat('en-KE', {
-  style: 'currency',
-  currency: 'KES',
-  maximumFractionDigits: 0,
-});
+/** Rate-card cells → Lovable's pricing-tier vocabulary (session format + location). */
+const RATE_TIERS: { method: string; fmt: string; loc: string; key: keyof NonNullable<CourseTrainingApplication['rate_card']> }[] = [
+  { method: 'Group In-Person', fmt: 'GROUP', loc: 'IN_PERSON', key: 'group_inperson_rate' },
+  { method: 'Group Virtual', fmt: 'GROUP', loc: 'ONLINE', key: 'group_online_rate' },
+  { method: 'Private In-Person', fmt: 'INDIVIDUAL', loc: 'IN_PERSON', key: 'private_inperson_rate' },
+  { method: 'Private Virtual', fmt: 'INDIVIDUAL', loc: 'ONLINE', key: 'private_online_rate' },
+];
 
-/** Real delivery method label in Lovable's vocabulary, derived from session_format + location_type. */
-const methodLabel = (cd: ClassDefinition) => {
-  const fmt = cd.session_format === 'INDIVIDUAL' ? 'Private' : 'Group';
-  if (cd.location_type === 'HYBRID') return `${fmt} Hybrid`;
-  const loc = cd.location_type === 'ONLINE' ? 'Virtual' : 'In-Person';
-  return `${fmt} ${loc}`;
+const normStatus = (s?: string): string => {
+  const v = (s ?? '').toLowerCase();
+  if (v === 'approved' || v === 'accepted') return 'Active';
+  if (v === 'rejected' || v === 'revoked' || v === 'withdrawn') return 'Rejected';
+  if (v === 'completed') return 'Completed';
+  return 'Pending';
 };
-
-/** Delivery mode used as the category dimension for the tabs. */
-const categoryLabel = (cd: ClassDefinition) =>
-  cd.location_type === 'ONLINE' ? 'Virtual' : cd.location_type === 'HYBRID' ? 'Hybrid' : 'In-Person';
 
 const instructorInitials = (u?: User) =>
   u ? `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase() || (u.email?.[0] ?? '?').toUpperCase() : '?';
@@ -84,26 +89,21 @@ function CourseActions({ status, onArchive }: { status: string; onArchive: () =>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => toast.info('Course details', { description: 'Opening course details.' })}>
-          <Eye className="mr-2 h-4 w-4" />
-          View details
+          <Eye className="mr-2 h-4 w-4" /> View details
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => toast.info('Edit course', { description: 'Opening the course editor.' })}>
-          <Pencil className="mr-2 h-4 w-4" />
-          Edit
+          <Pencil className="mr-2 h-4 w-4" /> Edit
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => toast.info('Post a job', { description: 'Drafting an instructor job for this course.' })}>
-          <Briefcase className="mr-2 h-4 w-4" />
-          Post a job
+          <Briefcase className="mr-2 h-4 w-4" /> Post a job
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => toast.info('Create class', { description: 'Starting a new class from this course.' })}>
-          <PlusSquare className="mr-2 h-4 w-4" />
-          Create class
+          <PlusSquare className="mr-2 h-4 w-4" /> Create class
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onArchive} disabled={status === 'Archived'}>
-          <Archive className="mr-2 h-4 w-4" />
-          Archive
+          <Archive className="mr-2 h-4 w-4" /> Archive
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -114,47 +114,46 @@ export default function CoursesPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
 
+  // Approved/engaged courses the org is running come from its training applications (which carry the rate card).
+  const applicationsQuery = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: {
+        searchParams: { applicant_uuid_eq: organisationUuid, applicant_type_eq: 'organisation' },
+        pageable: { page: 0, size: 100 },
+      },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+  const applications: CourseTrainingApplication[] = applicationsQuery.data?.data?.content ?? [];
+
+  // Class definitions give the real instructor + lesson count per delivery method.
   const classesQuery = useQuery({
     ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
     enabled: Boolean(organisationUuid),
   });
+  const classDefByKey = useMemo(() => {
+    const map = new Map<string, ClassDefinition>();
+    for (const c of classesQuery.data?.data ?? []) {
+      const cd = c.class_definition as ClassDefinition | undefined;
+      if (cd?.course_uuid) map.set(`${cd.course_uuid}|${cd.session_format}|${cd.location_type}`, cd);
+    }
+    return map;
+  }, [classesQuery.data]);
 
   const instructorsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({
-      path: { uuid: organisationUuid, domainName: 'instructor' },
-    }),
+    ...getUsersByOrganisationAndDomainOptions({ path: { uuid: organisationUuid, domainName: 'instructor' } }),
     enabled: Boolean(organisationUuid),
   });
-
   const instructorsByUuid = useMemo(() => {
     const map = new Map<string, User>();
-    for (const u of extractPage<User>(instructorsQuery.data).items) {
-      if (u.uuid) map.set(u.uuid, u);
-    }
+    for (const u of (instructorsQuery.data?.data ?? []) as User[]) if (u.uuid) map.set(u.uuid, u);
     return map;
   }, [instructorsQuery.data]);
 
-  const classDefinitions: ClassDefinition[] = useMemo(
-    () =>
-      (classesQuery.data?.data ?? [])
-        .map(c => c.class_definition)
-        .filter((c): c is ClassDefinition => Boolean(c?.uuid)),
-    [classesQuery.data]
-  );
-
-  // Course-uuid grouping so a course running in multiple modes shows "Course — Method".
-  const courseUuidCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const cd of classDefinitions) {
-      if (cd.course_uuid) counts.set(cd.course_uuid, (counts.get(cd.course_uuid) ?? 0) + 1);
-    }
-    return counts;
-  }, [classDefinitions]);
-
-  // Resolve each linked course once for its real subject-area category + subject.
+  // Resolve each linked course once for name / subject-area / image.
   const distinctCourseUuids = useMemo(
-    () => Array.from(new Set(classDefinitions.map(cd => cd.course_uuid).filter(Boolean) as string[])),
-    [classDefinitions]
+    () => Array.from(new Set(applications.map(a => a.course_uuid).filter(Boolean) as string[])),
+    [applications]
   );
   const courseQueries = useQueries({
     queries: distinctCourseUuids.map(uuid => ({
@@ -177,49 +176,54 @@ export default function CoursesPage() {
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
   const [activeProgramType, setActiveProgramType] = useState<string | null>(null);
 
-  const courses = useMemo(
+  // One entry per (application × rate-card tier) — a course appears once per delivery method it's priced for.
+  const rows = useMemo(
     () =>
-      classDefinitions.map(cd => {
-        const method = methodLabel(cd);
-        const siblings = cd.course_uuid ? (courseUuidCounts.get(cd.course_uuid) ?? 1) : 1;
-        const course = cd.course_uuid ? courseByUuid.get(cd.course_uuid) : undefined;
+      applications.flatMap(app => {
+        const courseUuid = app.course_uuid ?? '';
+        const course = courseByUuid.get(courseUuid);
         const cats = course?.category_names ?? [];
         const category = cats[0] ?? 'General';
         const subject = cats[1] ?? cats[0] ?? null;
-        const status = archived[cd.uuid as string]
-          ? 'Archived'
-          : cd.is_active === false
-            ? 'Inactive'
-            : 'Active';
-        return {
-          rowKey: cd.uuid as string,
-          category,
-          subject,
-          programType: null as string | null,
-          displayName: siblings > 1 ? `${cd.title} — ${method}` : cd.title,
-          subjectLabel: subject ?? '—',
-          method,
-          amount: cd.training_fee ?? 0,
-          lessons: Number(cd.scheduled_session_count ?? 0),
-          instructor: instructorsByUuid.get(cd.default_instructor_uuid ?? ''),
-          image: cd.thumbnail_url ?? course?.banner_url ?? course?.thumbnail_url ?? null,
-          status,
-        };
+        const name = course?.name ?? app.course_uuid ?? 'Course';
+        const image = course?.banner_url ?? course?.thumbnail_url ?? null;
+        const baseStatus = archived[app.uuid as string] ? 'Archived' : normStatus(app.status);
+
+        const tiers = RATE_TIERS.filter(t => Number(app.rate_card?.[t.key] ?? 0) > 0);
+        const effectiveTiers = tiers.length ? tiers : [{ method: '—', fmt: '', loc: '', key: '' }];
+
+        return effectiveTiers.map((tier, idx) => {
+          const cd = tier.fmt ? classDefByKey.get(`${courseUuid}|${tier.fmt}|${tier.loc}`) : undefined;
+          return {
+            rowKey: `${app.uuid}-${idx}`,
+            category,
+            subject,
+            programType: null,
+            displayName: effectiveTiers.length > 1 ? `${name} — ${tier.method}` : name,
+            subjectLabel: subject ?? '—',
+            method: tier.method,
+            amount: tier.key ? Number(app.rate_card?.[tier.key] ?? 0) : (cd?.training_fee ?? 0),
+            lessons: cd ? Number(cd.scheduled_session_count ?? 0) : 0,
+            instructor: instructorsByUuid.get(cd?.default_instructor_uuid ?? ''),
+            image,
+            status: baseStatus,
+          };
+        });
       }),
-    [classDefinitions, courseUuidCounts, courseByUuid, instructorsByUuid, archived]
+    [applications, courseByUuid, classDefByKey, instructorsByUuid, archived]
   );
 
-  const rows = useMemo(
-    () => filterByCategoryTabs(courses, activeCategory, subjectByCategory, activeProgramType),
-    [courses, activeCategory, subjectByCategory, activeProgramType]
+  const filteredRows = useMemo(
+    () => filterByCategoryTabs(rows, activeCategory, subjectByCategory, activeProgramType),
+    [rows, activeCategory, subjectByCategory, activeProgramType]
   );
 
-  const handleArchive = (rowKey: string, name: string) => {
-    setArchived(prev => ({ ...prev, [rowKey]: true }));
+  const handleArchive = (appUuid: string, name: string) => {
+    setArchived(prev => ({ ...prev, [appUuid]: true }));
     toast.success('Course archived', { description: `${name} has been archived.` });
   };
 
-  const loading = classesQuery.isLoading;
+  const loading = applicationsQuery.isLoading;
 
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]">
@@ -231,16 +235,16 @@ export default function CoursesPage() {
             <Skeleton key={i} className="h-14 w-full" />
           ))}
         </div>
-      ) : courses.length === 0 ? (
+      ) : rows.length === 0 ? (
         <EmptyState
           icon={BookOpen}
           title="No courses yet"
-          description="Courses your organisation is approved to run will appear here once you create classes."
+          description="Courses your organisation is approved to run will appear here once you apply to train."
         />
       ) : (
         <>
           <CategoryTabs
-            items={courses}
+            items={rows}
             activeCategory={activeCategory}
             onCategoryChange={setActiveCategory}
             subjectByCategory={subjectByCategory}
@@ -254,11 +258,11 @@ export default function CoursesPage() {
             <div className="space-y-3">
               {/* Mobile card list */}
               <div className="sm:hidden">
-                {rows.length === 0 ? (
+                {filteredRows.length === 0 ? (
                   <div className="py-12 text-center text-muted-foreground">No courses available.</div>
                 ) : (
                   <div className="divide-y divide-border">
-                    {rows.map(row => (
+                    {filteredRows.map(row => (
                       <div key={row.rowKey} className="flex items-start gap-3 p-3">
                         <CourseImage src={row.image} alt={row.displayName} />
                         <div className="min-w-0 flex-1 space-y-1.5">
@@ -270,15 +274,11 @@ export default function CoursesPage() {
                           </div>
                           <p className="text-xs text-muted-foreground">{row.subjectLabel}</p>
                           <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              {row.method}
-                            </Badge>
+                            <Badge variant="outline" className="text-xs">{row.method}</Badge>
                             <Badge variant="outline" className="text-xs">
                               {row.amount > 0 ? currency.format(row.amount) : '—'}
                             </Badge>
-                            <Badge variant="outline" className="text-xs">
-                              {row.lessons} Lessons
-                            </Badge>
+                            <Badge variant="outline" className="text-xs">{row.lessons} Lessons</Badge>
                           </div>
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex min-w-0 items-center gap-2">
@@ -287,11 +287,9 @@ export default function CoursesPage() {
                                   {instructorInitials(row.instructor)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="truncate text-sm text-muted-foreground">
-                                {instructorName(row.instructor)}
-                              </span>
+                              <span className="truncate text-sm text-muted-foreground">{instructorName(row.instructor)}</span>
                             </div>
-                            <CourseActions status={row.status} onArchive={() => handleArchive(row.rowKey, row.displayName)} />
+                            <CourseActions status={row.status} onArchive={() => handleArchive(row.rowKey.split('-')[0], row.displayName)} />
                           </div>
                         </div>
                       </div>
@@ -317,26 +315,22 @@ export default function CoursesPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {rows.length === 0 ? (
+                    {filteredRows.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                           No courses available.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      rows.map(row => (
+                      filteredRows.map(row => (
                         <TableRow key={row.rowKey}>
                           <TableCell className="whitespace-nowrap">
                             <CourseImage src={row.image} alt={row.displayName} />
                           </TableCell>
                           <TableCell className="whitespace-nowrap font-medium">{row.displayName}</TableCell>
-                          <TableCell className="min-w-[120px] whitespace-nowrap text-muted-foreground">
-                            {row.subjectLabel}
-                          </TableCell>
+                          <TableCell className="min-w-[120px] whitespace-nowrap">{row.subjectLabel}</TableCell>
                           <TableCell className="whitespace-nowrap">
-                            <Badge variant="outline" className="text-xs">
-                              {row.method}
-                            </Badge>
+                            <Badge variant="outline" className="text-xs">{row.method}</Badge>
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-right font-mono">
                             {row.amount > 0 ? currency.format(row.amount) : '—'}
@@ -356,7 +350,7 @@ export default function CoursesPage() {
                             <Badge variant={row.status === 'Active' ? 'default' : 'secondary'}>{row.status}</Badge>
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-right">
-                            <CourseActions status={row.status} onArchive={() => handleArchive(row.rowKey, row.displayName)} />
+                            <CourseActions status={row.status} onArchive={() => handleArchive(row.rowKey.split('-')[0], row.displayName)} />
                           </TableCell>
                         </TableRow>
                       ))
