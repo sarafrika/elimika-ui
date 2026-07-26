@@ -1174,14 +1174,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -1433,6 +1433,11 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -1446,11 +1451,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -1772,6 +1772,13 @@ export const zProgramRequirement = z
       .describe('**[READ-ONLY]** Indicates if the requirement is optional (not mandatory).')
       .readonly()
       .optional(),
+    requirement_summary: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.'
+      )
+      .readonly()
+      .optional(),
     requirement_category: z
       .string()
       .describe(
@@ -1790,13 +1797,6 @@ export const zProgramRequirement = z
       .string()
       .describe(
         '**[READ-ONLY]** Compliance level indicating how strictly the requirement must be followed.'
-      )
-      .readonly()
-      .optional(),
-    requirement_summary: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.'
       )
       .readonly()
       .optional(),
@@ -2168,18 +2168,18 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    has_location_coordinates: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.'
-      )
-      .readonly()
-      .optional(),
-    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_profile_complete: z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
+      )
+      .readonly()
+      .optional(),
+    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    has_location_coordinates: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.'
       )
       .readonly()
       .optional(),
@@ -2278,13 +2278,6 @@ export const zApiResponseInstructorSkill = z.object({
 });
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const zMembershipStatusEnum = z
-  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
-  .describe('**[READ-ONLY]** Current status of the membership.');
-
-/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const zOrganisationTypeEnum = z
@@ -2297,6 +2290,13 @@ export const zOrganisationTypeEnum = z
     'OTHER',
   ])
   .describe('**[READ-ONLY]** Classification of organisation type based on name keywords.');
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const zMembershipStatusEnum = z
+  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
+  .describe('**[READ-ONLY]** Current status of the membership.');
 
 /**
  * Professional membership record for instructors including associations, industry bodies, and certification organizations
@@ -2366,8 +2366,6 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
-    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
-    membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
       .boolean()
@@ -2386,10 +2384,12 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
       .readonly()
       .optional(),
+    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     membership_duration_months: z
       .union([z.number().int().readonly(), z.null()])
       .readonly()
       .optional(),
+    membership_status: zMembershipStatusEnum.optional(),
     is_complete: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
@@ -2485,8 +2485,6 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
-    duration_in_months: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
-    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     employment_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_term_position: z
       .boolean()
@@ -2505,6 +2503,8 @@ export const zInstructorExperience = z
       .readonly()
       .optional(),
     calculated_years: z.union([z.number().readonly(), z.null()]).readonly().optional(),
+    duration_in_months: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
+    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_complete: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
@@ -2598,15 +2598,6 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
-    years_since_completion: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
-    education_level: zEducationLevelEnum.optional(),
-    has_certificate_number: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
-      )
-      .readonly()
-      .optional(),
     is_recent_qualification: z
       .boolean()
       .describe(
@@ -2617,6 +2608,15 @@ export const zInstructorEducation = z
     formatted_completion: z
       .string()
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
+      .readonly()
+      .optional(),
+    years_since_completion: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
+    education_level: zEducationLevelEnum.optional(),
+    has_certificate_number: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
+      )
       .readonly()
       .optional(),
     is_complete: z
@@ -3863,6 +3863,16 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    assessment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
+      .readonly()
+      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -3878,16 +3888,6 @@ export const zCourseAssessment = z
       .describe(
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
       )
-      .readonly()
-      .optional(),
-    assessment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -5836,21 +5836,6 @@ export const zScheduledInstance = z
       )
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-    can_be_started: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
-      .readonly()
-      .optional(),
-    can_be_ended: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
-      .readonly()
-      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
@@ -5871,6 +5856,21 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
+      .readonly()
+      .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -6152,6 +6152,79 @@ export const zStudentGroup = z
 export const zApiResponseStudentGroup = z.object({
   success: z.boolean().optional(),
   data: zStudentGroup.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Payload to record a skills fund movement.
+ */
+export const zCreateSkillsFundTransactionRequest = z
+  .object({
+    description: z.string().optional(),
+    target_name: z.string().optional(),
+    amount: z.number().optional(),
+    transaction_type: z
+      .string()
+      .describe('Type: Allocation, Disbursement, Adjustment. Defaults to Allocation.')
+      .optional(),
+    status: z.string().describe('Status. Defaults to Pending.').optional(),
+    transaction_date: z.string().datetime().optional(),
+  })
+  .describe('Payload to record a skills fund movement.');
+
+/**
+ * A movement within an organisation's skills fund.
+ */
+export const zSkillsFundTransaction = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    organisation_uuid: z.string().uuid().optional(),
+    description: z.union([z.string(), z.null()]).optional(),
+    target_name: z.union([z.string(), z.null()]).optional(),
+    amount: z.number().describe('Amount.').optional(),
+    transaction_type: z.string().describe('Type: Allocation, Disbursement, Adjustment.').optional(),
+    status: z.string().describe('Status: Pending, Allocated, Approved, Completed.').optional(),
+    transaction_date: z.union([z.string().datetime(), z.null()]).optional(),
+    created_date: z.string().datetime().readonly().optional(),
+  })
+  .describe("A movement within an organisation's skills fund.");
+
+export const zApiResponseSkillsFundTransaction = z.object({
+  success: z.boolean().optional(),
+  data: zSkillsFundTransaction.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Payload to add a funding source.
+ */
+export const zCreateSkillsFundSourceRequest = z
+  .object({
+    name: z.string().min(1),
+    source_type: z.string().optional(),
+    amount: z.number().optional(),
+  })
+  .describe('Payload to add a funding source.');
+
+/**
+ * A funding source for an organisation's skills fund.
+ */
+export const zSkillsFundSource = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    organisation_uuid: z.string().uuid().optional(),
+    name: z.string().describe('Source name.').optional(),
+    source_type: z.union([z.string(), z.null()]).optional(),
+    amount: z.number().describe('Amount contributed.').optional(),
+    created_date: z.string().datetime().readonly().optional(),
+  })
+  .describe("A funding source for an organisation's skills fund.");
+
+export const zApiResponseSkillsFundSource = z.object({
+  success: z.boolean().optional(),
+  data: zSkillsFundSource.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -6538,11 +6611,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
-      .readonly()
-      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -6556,6 +6624,11 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -8238,14 +8311,14 @@ export const zStudentSchedule = z
       .union([z.string().datetime().readonly(), z.null()])
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
-      .readonly()
-      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
       .readonly()
       .optional(),
     is_upcoming: z
@@ -9023,6 +9096,43 @@ export const zApiResponseOrganisationDashboardStats = z.object({
 export const zApiResponseListStudentGroup = z.object({
   success: z.boolean().optional(),
   data: z.array(zStudentGroup).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListSkillsFundTransaction = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zSkillsFundTransaction).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Computed KPI roll-up for an organisation's skills fund.
+ */
+export const zSkillsFundSummary = z
+  .object({
+    total_balance: z.number().describe('Total contributed across all funding sources.').optional(),
+    allocated: z
+      .number()
+      .describe('Amount allocated (approved/allocated transactions).')
+      .optional(),
+    disbursed: z.number().describe('Amount disbursed (completed transactions).').optional(),
+    pending: z.number().describe('Amount in pending requests.').optional(),
+    remaining: z.number().describe('Remaining = total balance − disbursed.').optional(),
+  })
+  .describe("Computed KPI roll-up for an organisation's skills fund.");
+
+export const zApiResponseSkillsFundSummary = z.object({
+  success: z.boolean().optional(),
+  data: zSkillsFundSummary.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListSkillsFundSource = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zSkillsFundSource).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -14420,6 +14530,58 @@ export const zCreateGroupData = z.object({
  */
 export const zCreateGroupResponse = zApiResponseStudentGroup;
 
+export const zListTransactionsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListTransactionsResponse = zApiResponseListSkillsFundTransaction;
+
+export const zAddTransactionData = z.object({
+  body: zCreateSkillsFundTransactionRequest,
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddTransactionResponse = zApiResponseSkillsFundTransaction;
+
+export const zListSourcesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListSourcesResponse = zApiResponseListSkillsFundSource;
+
+export const zAddSourceData = z.object({
+  body: zCreateSkillsFundSourceRequest,
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddSourceResponse = zApiResponseSkillsFundSource;
+
 export const zListResourcesData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -16841,7 +17003,7 @@ export const zGetWalletData = z.object({
  */
 export const zGetWalletResponse = zApiResponseWallet;
 
-export const zListTransactionsData = z.object({
+export const zListTransactions1Data = z.object({
   body: z.never().optional(),
   path: z.object({
     userUuid: z.string().uuid(),
@@ -16855,7 +17017,7 @@ export const zListTransactionsData = z.object({
 /**
  * OK
  */
-export const zListTransactionsResponse = zApiResponsePagedDtoWalletTransaction;
+export const zListTransactions1Response = zApiResponsePagedDtoWalletTransaction;
 
 export const zGetAllUsersData = z.object({
   body: z.never().optional(),
@@ -17806,6 +17968,19 @@ export const zGetOrganisationStatisticsData = z.object({
  * Organisation statistics retrieved successfully
  */
 export const zGetOrganisationStatisticsResponse = zApiResponseOrganisationDashboardStats;
+
+export const zGetSummaryData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetSummaryResponse = zApiResponseSkillsFundSummary;
 
 export const zGetCalendarData = z.object({
   body: z.never().optional(),
@@ -19681,6 +19856,32 @@ export const zRemoveMemberData = z.object({
  * OK
  */
 export const zRemoveMemberResponse = zApiResponseVoid;
+
+export const zDeleteTransactionData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    transactionUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zDeleteTransactionResponse = zApiResponseVoid;
+
+export const zDeleteSourceData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    sourceUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zDeleteSourceResponse = zApiResponseVoid;
 
 export const zClearInstructorAvailabilityData = z.object({
   body: z.never().optional(),

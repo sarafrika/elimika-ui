@@ -1750,16 +1750,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: '2.0 points',
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -2118,6 +2118,12 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
+      readOnly: true,
+    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -2134,12 +2140,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
   },
@@ -2626,6 +2626,13 @@ export const ProgramRequirementSchema = {
       example: false,
       readOnly: true,
     },
+    requirement_summary: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.',
+      example: 'Student requirement with mandatory compliance',
+      readOnly: true,
+    },
     requirement_category: {
       type: 'string',
       description:
@@ -2645,13 +2652,6 @@ export const ProgramRequirementSchema = {
       description:
         '**[READ-ONLY]** Compliance level indicating how strictly the requirement must be followed.',
       example: 'Mandatory Compliance',
-      readOnly: true,
-    },
-    requirement_summary: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.',
-      example: 'Student requirement with mandatory compliance',
       readOnly: true,
     },
   },
@@ -3265,10 +3265,10 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    has_location_coordinates: {
+    is_profile_complete: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
       example: true,
       readOnly: true,
     },
@@ -3279,10 +3279,10 @@ export const InstructorSchema = {
       example: '-1.292100, 36.821900',
       readOnly: true,
     },
-    is_profile_complete: {
+    has_location_coordinates: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
+        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
       example: true,
       readOnly: true,
     },
@@ -3525,15 +3525,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
-      example: '4 years, 3 months',
-      readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
-    },
     membership_period: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Formatted membership period showing start and end dates.',
@@ -3571,6 +3562,12 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
+      example: '4 years, 3 months',
+      readOnly: true,
+    },
     membership_duration_months: {
       type: ['integer', 'null'],
       format: 'int32',
@@ -3578,6 +3575,9 @@ export const InstructorProfessionalMembershipSchema = {
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
       readOnly: true,
+    },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
     },
     is_complete: {
       type: 'boolean',
@@ -3737,20 +3737,6 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
-    duration_in_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
-      example: 66,
-      readOnly: true,
-    },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
-      example: '5 years, 5 months',
-      readOnly: true,
-    },
     employment_period: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Formatted employment period showing start and end dates.',
@@ -3784,6 +3770,20 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
+      readOnly: true,
+    },
+    duration_in_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
+      example: 66,
+      readOnly: true,
+    },
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
+      example: '5 years, 5 months',
       readOnly: true,
     },
     is_complete: {
@@ -3929,6 +3929,19 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
+    is_recent_qualification: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.',
+      example: true,
+      readOnly: true,
+    },
+    formatted_completion: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
+      example: '2020 - University of Nairobi',
+      readOnly: true,
+    },
     years_since_completion: {
       type: ['integer', 'null'],
       format: 'int32',
@@ -3944,19 +3957,6 @@ export const InstructorEducationSchema = {
       description:
         '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
       example: true,
-      readOnly: true,
-    },
-    is_recent_qualification: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.',
-      example: true,
-      readOnly: true,
-    },
-    formatted_completion: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
-      example: '2020 - University of Nairobi',
       readOnly: true,
     },
     is_complete: {
@@ -5868,6 +5868,18 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -5885,18 +5897,6 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
-      readOnly: true,
-    },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -9598,25 +9598,6 @@ export const ScheduledInstanceSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_started: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_ended: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
-      example: false,
-      readOnly: true,
-    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
@@ -9640,6 +9621,25 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
+      example: false,
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_started: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_ended: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
       example: false,
       readOnly: true,
     },
@@ -10163,6 +10163,162 @@ export const StudentGroupSchema = {
       type: 'string',
       format: 'date-time',
       description: 'When the group was created.',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const CreateSkillsFundTransactionRequestSchema = {
+  type: 'object',
+  description: 'Payload to record a skills fund movement.',
+  properties: {
+    description: {
+      type: 'string',
+    },
+    target_name: {
+      type: 'string',
+    },
+    amount: {
+      type: 'number',
+    },
+    transaction_type: {
+      type: 'string',
+      description: 'Type: Allocation, Disbursement, Adjustment. Defaults to Allocation.',
+    },
+    status: {
+      type: 'string',
+      description: 'Status. Defaults to Pending.',
+    },
+    transaction_date: {
+      type: 'string',
+      format: 'date-time',
+    },
+  },
+} as const;
+
+export const ApiResponseSkillsFundTransactionSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SkillsFundTransaction',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const SkillsFundTransactionSchema = {
+  type: 'object',
+  description: "A movement within an organisation's skills fund.",
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    description: {
+      type: ['string', 'null'],
+      description: 'Human-readable description.',
+    },
+    target_name: {
+      type: ['string', 'null'],
+      description: 'Recipient / target of the movement.',
+    },
+    amount: {
+      type: 'number',
+      description: 'Amount.',
+    },
+    transaction_type: {
+      type: 'string',
+      description: 'Type: Allocation, Disbursement, Adjustment.',
+    },
+    status: {
+      type: 'string',
+      description: 'Status: Pending, Allocated, Approved, Completed.',
+    },
+    transaction_date: {
+      type: ['string', 'null'],
+      format: 'date-time',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const CreateSkillsFundSourceRequestSchema = {
+  type: 'object',
+  description: 'Payload to add a funding source.',
+  properties: {
+    name: {
+      type: 'string',
+      minLength: 1,
+    },
+    source_type: {
+      type: 'string',
+    },
+    amount: {
+      type: 'number',
+    },
+  },
+  required: ['name'],
+} as const;
+
+export const ApiResponseSkillsFundSourceSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SkillsFundSource',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const SkillsFundSourceSchema = {
+  type: 'object',
+  description: "A funding source for an organisation's skills fund.",
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    name: {
+      type: 'string',
+      description: 'Source name.',
+    },
+    source_type: {
+      type: ['string', 'null'],
+      description: 'Source type (e.g. Government Grant, Sponsor/Donor).',
+    },
+    amount: {
+      type: 'number',
+      description: 'Amount contributed.',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
       readOnly: true,
     },
   },
@@ -10863,12 +11019,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -10885,6 +11035,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -13681,17 +13837,17 @@ export const StudentScheduleSchema = {
       example: '2024-09-15T09:15:00Z',
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
-      readOnly: true,
-    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
       description: '**[READ-ONLY]** Duration of the scheduled class in minutes.',
       example: 90,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
       readOnly: true,
     },
     is_upcoming: {
@@ -15534,6 +15690,87 @@ export const ApiResponseListStudentGroupSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/StudentGroup',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListSkillsFundTransactionSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/SkillsFundTransaction',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseSkillsFundSummarySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SkillsFundSummary',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const SkillsFundSummarySchema = {
+  type: 'object',
+  description: "Computed KPI roll-up for an organisation's skills fund.",
+  properties: {
+    total_balance: {
+      type: 'number',
+      description: 'Total contributed across all funding sources.',
+    },
+    allocated: {
+      type: 'number',
+      description: 'Amount allocated (approved/allocated transactions).',
+    },
+    disbursed: {
+      type: 'number',
+      description: 'Amount disbursed (completed transactions).',
+    },
+    pending: {
+      type: 'number',
+      description: 'Amount in pending requests.',
+    },
+    remaining: {
+      type: 'number',
+      description: 'Remaining = total balance − disbursed.',
+    },
+  },
+} as const;
+
+export const ApiResponseListSkillsFundSourceSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/SkillsFundSource',
       },
     },
     message: {
@@ -20313,14 +20550,6 @@ export const ProficiencyLevelEnumSchema = {
   example: 'EXPERT',
 } as const;
 
-export const MembershipStatusEnumSchema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Current status of the membership.',
-  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
-  example: 'ACTIVE',
-  readOnly: true,
-} as const;
-
 export const OrganisationTypeEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Classification of organisation type based on name keywords.',
@@ -20333,6 +20562,14 @@ export const OrganisationTypeEnumSchema = {
     'OTHER',
   ],
   example: 'PROFESSIONAL_INSTITUTE',
+  readOnly: true,
+} as const;
+
+export const MembershipStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the membership.',
+  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
+  example: 'ACTIVE',
   readOnly: true,
 } as const;
 

@@ -586,6 +586,18 @@ import type {
   CreateGroupData,
   CreateGroupResponses,
   CreateGroupErrors,
+  ListTransactionsData,
+  ListTransactionsResponses,
+  ListTransactionsErrors,
+  AddTransactionData,
+  AddTransactionResponses,
+  AddTransactionErrors,
+  ListSourcesData,
+  ListSourcesResponses,
+  ListSourcesErrors,
+  AddSourceData,
+  AddSourceResponses,
+  AddSourceErrors,
   ListResourcesData,
   ListResourcesResponses,
   ListResourcesErrors,
@@ -1093,9 +1105,9 @@ import type {
   GetWalletData,
   GetWalletResponses,
   GetWalletErrors,
-  ListTransactionsData,
-  ListTransactionsResponses,
-  ListTransactionsErrors,
+  ListTransactions1Data,
+  ListTransactions1Responses,
+  ListTransactions1Errors,
   GetAllUsersData,
   GetAllUsersResponses,
   GetAllUsersErrors,
@@ -1285,6 +1297,9 @@ import type {
   GetOrganisationStatisticsData,
   GetOrganisationStatisticsResponses,
   GetOrganisationStatisticsErrors,
+  GetSummaryData,
+  GetSummaryResponses,
+  GetSummaryErrors,
   GetCalendarData,
   GetCalendarResponses,
   GetCalendarErrors,
@@ -1690,6 +1705,12 @@ import type {
   RemoveMemberData,
   RemoveMemberResponses,
   RemoveMemberErrors,
+  DeleteTransactionData,
+  DeleteTransactionResponses,
+  DeleteTransactionErrors,
+  DeleteSourceData,
+  DeleteSourceResponses,
+  DeleteSourceErrors,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityResponses,
   ClearInstructorAvailabilityErrors,
@@ -1863,6 +1884,10 @@ import {
   createTrainingBranch1ResponseTransformer,
   listGroupsResponseTransformer,
   createGroupResponseTransformer,
+  listTransactionsResponseTransformer,
+  addTransactionResponseTransformer,
+  listSourcesResponseTransformer,
+  addSourceResponseTransformer,
   listResourcesResponseTransformer,
   createResourceResponseTransformer,
   listAvailabilityRulesResponseTransformer,
@@ -2013,7 +2038,7 @@ import {
   updateQuizScheduleResponseTransformer,
   updateAssignmentScheduleResponseTransformer,
   getWalletResponseTransformer,
-  listTransactionsResponseTransformer,
+  listTransactions1ResponseTransformer,
   getAllUsersResponseTransformer,
   searchResponseTransformer,
   search1ResponseTransformer,
@@ -7892,6 +7917,118 @@ export const createGroup = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List fund transactions
+ */
+export const listTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<ListTransactionsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListTransactionsResponses,
+    ListTransactionsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listTransactionsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/skills-fund/transactions',
+    ...options,
+  });
+};
+
+/**
+ * Record a fund transaction
+ */
+export const addTransaction = <ThrowOnError extends boolean = false>(
+  options: Options<AddTransactionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddTransactionResponses,
+    AddTransactionErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addTransactionResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/skills-fund/transactions',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * List funding sources
+ */
+export const listSources = <ThrowOnError extends boolean = false>(
+  options: Options<ListSourcesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListSourcesResponses,
+    ListSourcesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listSourcesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/skills-fund/sources',
+    ...options,
+  });
+};
+
+/**
+ * Add a funding source
+ */
+export const addSource = <ThrowOnError extends boolean = false>(
+  options: Options<AddSourceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<AddSourceResponses, AddSourceErrors, ThrowOnError>({
+    responseTransformer: addSourceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/skills-fund/sources',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * List the organisation's resources
  */
 export const listResources = <ThrowOnError extends boolean = false>(
@@ -13036,15 +13173,15 @@ export const getWallet = <ThrowOnError extends boolean = false>(
 /**
  * List wallet transactions
  */
-export const listTransactions = <ThrowOnError extends boolean = false>(
-  options: Options<ListTransactionsData, ThrowOnError>
+export const listTransactions1 = <ThrowOnError extends boolean = false>(
+  options: Options<ListTransactions1Data, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).get<
-    ListTransactionsResponses,
-    ListTransactionsErrors,
+    ListTransactions1Responses,
+    ListTransactions1Errors,
     ThrowOnError
   >({
-    responseTransformer: listTransactionsResponseTransformer,
+    responseTransformer: listTransactions1ResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -14855,6 +14992,30 @@ export const getOrganisationStatistics = <ThrowOnError extends boolean = false>(
     url: '/api/v1/organisations/{uuid}/statistics',
     ...options,
   });
+};
+
+/**
+ * Get skills fund summary (KPIs)
+ */
+export const getSummary = <ThrowOnError extends boolean = false>(
+  options: Options<GetSummaryData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<GetSummaryResponses, GetSummaryErrors, ThrowOnError>(
+    {
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+      ],
+      url: '/api/v1/organisations/{organisationUuid}/skills-fund/summary',
+      ...options,
+    }
+  );
 };
 
 /**
@@ -18863,6 +19024,58 @@ export const removeMember = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/student-groups/{groupUuid}/members/{studentUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Delete a fund transaction
+ */
+export const deleteTransaction = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteTransactionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteTransactionResponses,
+    DeleteTransactionErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/skills-fund/transactions/{transactionUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Delete a funding source
+ */
+export const deleteSource = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteSourceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteSourceResponses,
+    DeleteSourceErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/skills-fund/sources/{sourceUuid}',
     ...options,
   });
 };

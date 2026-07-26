@@ -836,13 +836,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1024,6 +1024,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -1035,10 +1039,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 /**
@@ -1277,6 +1277,10 @@ export type ProgramRequirement = {
    */
   readonly is_optional?: boolean;
   /**
+   * **[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.
+   */
+  readonly requirement_summary?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.
    */
   readonly requirement_category?: string;
@@ -1288,10 +1292,6 @@ export type ProgramRequirement = {
    * **[READ-ONLY]** Compliance level indicating how strictly the requirement must be followed.
    */
   readonly compliance_level?: string;
-  /**
-   * **[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.
-   */
-  readonly requirement_summary?: string;
 };
 
 export type ApiResponseProgramRequirement = {
@@ -1629,17 +1629,17 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
+   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
    */
-  readonly has_location_coordinates?: boolean;
+  readonly is_profile_complete?: boolean;
   /**
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string | null;
   /**
-   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
+   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
-  readonly is_profile_complete?: boolean;
+  readonly has_location_coordinates?: boolean;
 };
 
 /**
@@ -1753,11 +1753,6 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
-   */
-  readonly formatted_duration?: string | null;
-  membership_status?: MembershipStatusEnum;
-  /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
   readonly membership_period?: string | null;
@@ -1779,9 +1774,14 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   */
+  readonly formatted_duration?: string | null;
+  /**
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number | null;
+  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
@@ -1856,14 +1856,6 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
-   */
-  readonly duration_in_months?: number | null;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of employment.
-   */
-  readonly formatted_duration?: string | null;
-  /**
    * **[READ-ONLY]** Formatted employment period showing start and end dates.
    */
   readonly employment_period?: string | null;
@@ -1884,6 +1876,14 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number | null;
+  /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   */
+  readonly duration_in_months?: number | null;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of employment.
+   */
+  readonly formatted_duration?: string | null;
   /**
    * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
@@ -1950,6 +1950,14 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
+   * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
+   */
+  readonly is_recent_qualification?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted string showing year of completion and school name.
+   */
+  readonly formatted_completion?: string;
+  /**
    * **[READ-ONLY]** Number of years since the qualification was completed.
    */
   readonly years_since_completion?: number | null;
@@ -1958,14 +1966,6 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
    */
   readonly has_certificate_number?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
-   */
-  readonly is_recent_qualification?: boolean;
-  /**
-   * **[READ-ONLY]** Formatted string showing year of completion and school name.
-   */
-  readonly formatted_completion?: string;
   /**
    * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
@@ -2898,6 +2898,14 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -2909,14 +2917,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
-  /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -4641,18 +4641,6 @@ export type ScheduledInstance = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
-   */
-  readonly can_be_started?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
-   */
-  readonly can_be_ended?: boolean;
-  /**
    * **[READ-ONLY]** Duration of the scheduled instance in minutes.
    */
   readonly duration_minutes?: bigint;
@@ -4668,6 +4656,18 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
+   */
+  readonly can_be_started?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
+   */
+  readonly can_be_ended?: boolean;
 };
 
 /**
@@ -4972,6 +4972,98 @@ export type StudentGroup = {
   /**
    * When the group was created.
    */
+  readonly created_date?: Date;
+};
+
+/**
+ * Payload to record a skills fund movement.
+ */
+export type CreateSkillsFundTransactionRequest = {
+  description?: string;
+  target_name?: string;
+  amount?: number;
+  /**
+   * Type: Allocation, Disbursement, Adjustment. Defaults to Allocation.
+   */
+  transaction_type?: string;
+  /**
+   * Status. Defaults to Pending.
+   */
+  status?: string;
+  transaction_date?: Date;
+};
+
+export type ApiResponseSkillsFundTransaction = {
+  success?: boolean;
+  data?: SkillsFundTransaction;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A movement within an organisation's skills fund.
+ */
+export type SkillsFundTransaction = {
+  readonly uuid?: string;
+  organisation_uuid?: string;
+  /**
+   * Human-readable description.
+   */
+  description?: string | null;
+  /**
+   * Recipient / target of the movement.
+   */
+  target_name?: string | null;
+  /**
+   * Amount.
+   */
+  amount?: number;
+  /**
+   * Type: Allocation, Disbursement, Adjustment.
+   */
+  transaction_type?: string;
+  /**
+   * Status: Pending, Allocated, Approved, Completed.
+   */
+  status?: string;
+  transaction_date?: Date | null;
+  readonly created_date?: Date;
+};
+
+/**
+ * Payload to add a funding source.
+ */
+export type CreateSkillsFundSourceRequest = {
+  name: string;
+  source_type?: string;
+  amount?: number;
+};
+
+export type ApiResponseSkillsFundSource = {
+  success?: boolean;
+  data?: SkillsFundSource;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A funding source for an organisation's skills fund.
+ */
+export type SkillsFundSource = {
+  readonly uuid?: string;
+  organisation_uuid?: string;
+  /**
+   * Source name.
+   */
+  name?: string;
+  /**
+   * Source type (e.g. Government Grant, Sponsor/Donor).
+   */
+  source_type?: string | null;
+  /**
+   * Amount contributed.
+   */
+  amount?: number;
   readonly created_date?: Date;
 };
 
@@ -5330,10 +5422,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -5345,6 +5433,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -6968,13 +7060,13 @@ export type StudentSchedule = {
    */
   readonly attendance_marked_at?: Date | null;
   /**
-   * **[READ-ONLY]** Indicates if the student attended this class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Duration of the scheduled class in minutes.
    */
   readonly duration_minutes?: bigint;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended this class.
+   */
+  readonly did_attend?: boolean;
   /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
@@ -7697,6 +7789,53 @@ export type OrganisationDashboardStats = {
 export type ApiResponseListStudentGroup = {
   success?: boolean;
   data?: Array<StudentGroup>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListSkillsFundTransaction = {
+  success?: boolean;
+  data?: Array<SkillsFundTransaction>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseSkillsFundSummary = {
+  success?: boolean;
+  data?: SkillsFundSummary;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Computed KPI roll-up for an organisation's skills fund.
+ */
+export type SkillsFundSummary = {
+  /**
+   * Total contributed across all funding sources.
+   */
+  total_balance?: number;
+  /**
+   * Amount allocated (approved/allocated transactions).
+   */
+  allocated?: number;
+  /**
+   * Amount disbursed (completed transactions).
+   */
+  disbursed?: number;
+  /**
+   * Amount in pending requests.
+   */
+  pending?: number;
+  /**
+   * Remaining = total balance − disbursed.
+   */
+  remaining?: number;
+};
+
+export type ApiResponseListSkillsFundSource = {
+  success?: boolean;
+  data?: Array<SkillsFundSource>;
   message?: string;
   error?: unknown;
 };
@@ -10233,21 +10372,6 @@ export const ProficiencyLevelEnum = {
 export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
-
-/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const OrganisationTypeEnum = {
@@ -10263,6 +10387,21 @@ export const OrganisationTypeEnum = {
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export type OrganisationTypeEnum = (typeof OrganisationTypeEnum)[keyof typeof OrganisationTypeEnum];
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.
@@ -18490,6 +18629,130 @@ export type CreateGroupResponses = {
 
 export type CreateGroupResponse = CreateGroupResponses[keyof CreateGroupResponses];
 
+export type ListTransactionsData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/skills-fund/transactions';
+};
+
+export type ListTransactionsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListTransactionsError = ListTransactionsErrors[keyof ListTransactionsErrors];
+
+export type ListTransactionsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListSkillsFundTransaction;
+};
+
+export type ListTransactionsResponse = ListTransactionsResponses[keyof ListTransactionsResponses];
+
+export type AddTransactionData = {
+  body: CreateSkillsFundTransactionRequest;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/skills-fund/transactions';
+};
+
+export type AddTransactionErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddTransactionError = AddTransactionErrors[keyof AddTransactionErrors];
+
+export type AddTransactionResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSkillsFundTransaction;
+};
+
+export type AddTransactionResponse = AddTransactionResponses[keyof AddTransactionResponses];
+
+export type ListSourcesData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/skills-fund/sources';
+};
+
+export type ListSourcesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListSourcesError = ListSourcesErrors[keyof ListSourcesErrors];
+
+export type ListSourcesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListSkillsFundSource;
+};
+
+export type ListSourcesResponse = ListSourcesResponses[keyof ListSourcesResponses];
+
+export type AddSourceData = {
+  body: CreateSkillsFundSourceRequest;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/skills-fund/sources';
+};
+
+export type AddSourceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddSourceError = AddSourceErrors[keyof AddSourceErrors];
+
+export type AddSourceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSkillsFundSource;
+};
+
+export type AddSourceResponse = AddSourceResponses[keyof AddSourceResponses];
+
 export type ListResourcesData = {
   body?: never;
   path: {
@@ -24391,7 +24654,7 @@ export type GetWalletResponses = {
 
 export type GetWalletResponse = GetWalletResponses[keyof GetWalletResponses];
 
-export type ListTransactionsData = {
+export type ListTransactions1Data = {
   body?: never;
   path: {
     userUuid: string;
@@ -24403,7 +24666,7 @@ export type ListTransactionsData = {
   url: '/api/v1/wallets/{userUuid}/transactions';
 };
 
-export type ListTransactionsErrors = {
+export type ListTransactions1Errors = {
   /**
    * Not Found
    */
@@ -24414,16 +24677,17 @@ export type ListTransactionsErrors = {
   500: ResponseDtoVoid;
 };
 
-export type ListTransactionsError = ListTransactionsErrors[keyof ListTransactionsErrors];
+export type ListTransactions1Error = ListTransactions1Errors[keyof ListTransactions1Errors];
 
-export type ListTransactionsResponses = {
+export type ListTransactions1Responses = {
   /**
    * OK
    */
   200: ApiResponsePagedDtoWalletTransaction;
 };
 
-export type ListTransactionsResponse = ListTransactionsResponses[keyof ListTransactionsResponses];
+export type ListTransactions1Response =
+  ListTransactions1Responses[keyof ListTransactions1Responses];
 
 export type GetAllUsersData = {
   body?: never;
@@ -26697,6 +26961,37 @@ export type GetOrganisationStatisticsResponses = {
 
 export type GetOrganisationStatisticsResponse =
   GetOrganisationStatisticsResponses[keyof GetOrganisationStatisticsResponses];
+
+export type GetSummaryData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/skills-fund/summary';
+};
+
+export type GetSummaryErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetSummaryError = GetSummaryErrors[keyof GetSummaryErrors];
+
+export type GetSummaryResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSkillsFundSummary;
+};
+
+export type GetSummaryResponse = GetSummaryResponses[keyof GetSummaryResponses];
 
 export type GetCalendarData = {
   body?: never;
@@ -31437,6 +31732,69 @@ export type RemoveMemberResponses = {
 };
 
 export type RemoveMemberResponse = RemoveMemberResponses[keyof RemoveMemberResponses];
+
+export type DeleteTransactionData = {
+  body?: never;
+  path: {
+    transactionUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/skills-fund/transactions/{transactionUuid}';
+};
+
+export type DeleteTransactionErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteTransactionError = DeleteTransactionErrors[keyof DeleteTransactionErrors];
+
+export type DeleteTransactionResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeleteTransactionResponse =
+  DeleteTransactionResponses[keyof DeleteTransactionResponses];
+
+export type DeleteSourceData = {
+  body?: never;
+  path: {
+    sourceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/skills-fund/sources/{sourceUuid}';
+};
+
+export type DeleteSourceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteSourceError = DeleteSourceErrors[keyof DeleteSourceErrors];
+
+export type DeleteSourceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeleteSourceResponse = DeleteSourceResponses[keyof DeleteSourceResponses];
 
 export type ClearInstructorAvailabilityData = {
   body?: never;

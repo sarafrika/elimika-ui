@@ -138,6 +138,10 @@ import type {
   CreateTrainingBranch1Response,
   ListGroupsResponse,
   CreateGroupResponse,
+  ListTransactionsResponse,
+  AddTransactionResponse,
+  ListSourcesResponse,
+  AddSourceResponse,
   ListResourcesResponse,
   CreateResourceResponse,
   ListAvailabilityRulesResponse,
@@ -288,7 +292,7 @@ import type {
   UpdateQuizScheduleResponse,
   UpdateAssignmentScheduleResponse,
   GetWalletResponse,
-  ListTransactionsResponse,
+  ListTransactions1Response,
   GetAllUsersResponse,
   SearchResponse,
   Search1Response,
@@ -2935,6 +2939,79 @@ export const createGroupResponseTransformer = async (data: any): Promise<CreateG
   return data;
 };
 
+const skillsFundTransactionSchemaResponseTransformer = (data: any) => {
+  if (data.transaction_date) {
+    data.transaction_date = new Date(data.transaction_date);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseListSkillsFundTransactionSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return skillsFundTransactionSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listTransactionsResponseTransformer = async (
+  data: any
+): Promise<ListTransactionsResponse> => {
+  data = apiResponseListSkillsFundTransactionSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseSkillsFundTransactionSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = skillsFundTransactionSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const addTransactionResponseTransformer = async (
+  data: any
+): Promise<AddTransactionResponse> => {
+  data = apiResponseSkillsFundTransactionSchemaResponseTransformer(data);
+  return data;
+};
+
+const skillsFundSourceSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseListSkillsFundSourceSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return skillsFundSourceSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listSourcesResponseTransformer = async (data: any): Promise<ListSourcesResponse> => {
+  data = apiResponseListSkillsFundSourceSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseSkillsFundSourceSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = skillsFundSourceSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const addSourceResponseTransformer = async (data: any): Promise<AddSourceResponse> => {
+  data = apiResponseSkillsFundSourceSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoOrganisationResourceSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -5110,9 +5187,9 @@ const apiResponsePagedDtoWalletTransactionSchemaResponseTransformer = (data: any
   return data;
 };
 
-export const listTransactionsResponseTransformer = async (
+export const listTransactions1ResponseTransformer = async (
   data: any
-): Promise<ListTransactionsResponse> => {
+): Promise<ListTransactions1Response> => {
   data = apiResponsePagedDtoWalletTransactionSchemaResponseTransformer(data);
   return data;
 };

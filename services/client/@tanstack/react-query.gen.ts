@@ -196,6 +196,10 @@ import {
   assignUserToBranch,
   listGroups,
   createGroup,
+  listTransactions,
+  addTransaction,
+  listSources,
+  addSource,
   listResources,
   createResource,
   listAvailabilityRules,
@@ -365,7 +369,7 @@ import {
   deleteAssignmentSchedule,
   updateAssignmentSchedule,
   getWallet,
-  listTransactions,
+  listTransactions1,
   getAllUsers,
   search,
   getProfileImage,
@@ -429,6 +433,7 @@ import {
   getBranchUsers,
   getBranchUsersByDomain,
   getOrganisationStatistics,
+  getSummary,
   getCalendar,
   listBookings,
   search2,
@@ -564,6 +569,8 @@ import {
   listPendingCourseEdits,
   deleteGroup,
   removeMember,
+  deleteTransaction,
+  deleteSource,
   clearInstructorAvailability,
   revokeLink,
   dissociateRubric,
@@ -1077,6 +1084,14 @@ import type {
   CreateGroupData,
   CreateGroupError,
   CreateGroupResponse,
+  ListTransactionsData,
+  AddTransactionData,
+  AddTransactionError,
+  AddTransactionResponse,
+  ListSourcesData,
+  AddSourceData,
+  AddSourceError,
+  AddSourceResponse,
   ListResourcesData,
   ListResourcesError,
   ListResourcesResponse,
@@ -1544,9 +1559,9 @@ import type {
   UpdateAssignmentScheduleError,
   UpdateAssignmentScheduleResponse,
   GetWalletData,
-  ListTransactionsData,
-  ListTransactionsError,
-  ListTransactionsResponse,
+  ListTransactions1Data,
+  ListTransactions1Error,
+  ListTransactions1Response,
   GetAllUsersData,
   GetAllUsersError,
   GetAllUsersResponse,
@@ -1682,6 +1697,7 @@ import type {
   GetBranchUsersData,
   GetBranchUsersByDomainData,
   GetOrganisationStatisticsData,
+  GetSummaryData,
   GetCalendarData,
   ListBookingsData,
   ListBookingsError,
@@ -1937,6 +1953,12 @@ import type {
   RemoveMemberData,
   RemoveMemberError,
   RemoveMemberResponse,
+  DeleteTransactionData,
+  DeleteTransactionError,
+  DeleteTransactionResponse,
+  DeleteSourceData,
+  DeleteSourceError,
+  DeleteSourceResponse,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityError,
   ClearInstructorAvailabilityResponse,
@@ -8678,6 +8700,136 @@ export const createGroupMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await createGroup({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listTransactionsQueryKey = (options: Options<ListTransactionsData>) =>
+  createQueryKey('listTransactions', options);
+
+/**
+ * List fund transactions
+ */
+export const listTransactionsOptions = (options: Options<ListTransactionsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTransactions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTransactionsQueryKey(options),
+  });
+};
+
+export const addTransactionQueryKey = (options: Options<AddTransactionData>) =>
+  createQueryKey('addTransaction', options);
+
+/**
+ * Record a fund transaction
+ */
+export const addTransactionOptions = (options: Options<AddTransactionData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addTransaction({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addTransactionQueryKey(options),
+  });
+};
+
+/**
+ * Record a fund transaction
+ */
+export const addTransactionMutation = (
+  options?: Partial<Options<AddTransactionData>>
+): UseMutationOptions<AddTransactionResponse, AddTransactionError, Options<AddTransactionData>> => {
+  const mutationOptions: UseMutationOptions<
+    AddTransactionResponse,
+    AddTransactionError,
+    Options<AddTransactionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addTransaction({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listSourcesQueryKey = (options: Options<ListSourcesData>) =>
+  createQueryKey('listSources', options);
+
+/**
+ * List funding sources
+ */
+export const listSourcesOptions = (options: Options<ListSourcesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listSources({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listSourcesQueryKey(options),
+  });
+};
+
+export const addSourceQueryKey = (options: Options<AddSourceData>) =>
+  createQueryKey('addSource', options);
+
+/**
+ * Add a funding source
+ */
+export const addSourceOptions = (options: Options<AddSourceData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addSource({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addSourceQueryKey(options),
+  });
+};
+
+/**
+ * Add a funding source
+ */
+export const addSourceMutation = (
+  options?: Partial<Options<AddSourceData>>
+): UseMutationOptions<AddSourceResponse, AddSourceError, Options<AddSourceData>> => {
+  const mutationOptions: UseMutationOptions<
+    AddSourceResponse,
+    AddSourceError,
+    Options<AddSourceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addSource({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -17136,16 +17288,16 @@ export const getWalletOptions = (options: Options<GetWalletData>) => {
   });
 };
 
-export const listTransactionsQueryKey = (options: Options<ListTransactionsData>) =>
-  createQueryKey('listTransactions', options);
+export const listTransactions1QueryKey = (options: Options<ListTransactions1Data>) =>
+  createQueryKey('listTransactions1', options);
 
 /**
  * List wallet transactions
  */
-export const listTransactionsOptions = (options: Options<ListTransactionsData>) => {
+export const listTransactions1Options = (options: Options<ListTransactions1Data>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listTransactions({
+      const { data } = await listTransactions1({
         ...options,
         ...queryKey[0],
         signal,
@@ -17153,29 +17305,30 @@ export const listTransactionsOptions = (options: Options<ListTransactionsData>) 
       });
       return data;
     },
-    queryKey: listTransactionsQueryKey(options),
+    queryKey: listTransactions1QueryKey(options),
   });
 };
 
-export const listTransactionsInfiniteQueryKey = (
-  options: Options<ListTransactionsData>
-): QueryKey<Options<ListTransactionsData>> => createQueryKey('listTransactions', options, true);
+export const listTransactions1InfiniteQueryKey = (
+  options: Options<ListTransactions1Data>
+): QueryKey<Options<ListTransactions1Data>> => createQueryKey('listTransactions1', options, true);
 
 /**
  * List wallet transactions
  */
-export const listTransactionsInfiniteOptions = (options: Options<ListTransactionsData>) => {
+export const listTransactions1InfiniteOptions = (options: Options<ListTransactions1Data>) => {
   return infiniteQueryOptions<
-    ListTransactionsResponse,
-    ListTransactionsError,
-    InfiniteData<ListTransactionsResponse>,
-    QueryKey<Options<ListTransactionsData>>,
-    number | Pick<QueryKey<Options<ListTransactionsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+    ListTransactions1Response,
+    ListTransactions1Error,
+    InfiniteData<ListTransactions1Response>,
+    QueryKey<Options<ListTransactions1Data>>,
+    | number
+    | Pick<QueryKey<Options<ListTransactions1Data>>[0], 'body' | 'headers' | 'path' | 'query'>
   >(
     {
       queryFn: async ({ pageParam, queryKey, signal }) => {
         const page: Pick<
-          QueryKey<Options<ListTransactionsData>>[0],
+          QueryKey<Options<ListTransactions1Data>>[0],
           'body' | 'headers' | 'path' | 'query'
         > =
           typeof pageParam === 'object'
@@ -17186,7 +17339,7 @@ export const listTransactionsInfiniteOptions = (options: Options<ListTransaction
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await listTransactions({
+        const { data } = await listTransactions1({
           ...options,
           ...params,
           signal,
@@ -17194,7 +17347,7 @@ export const listTransactionsInfiniteOptions = (options: Options<ListTransaction
         });
         return data;
       },
-      queryKey: listTransactionsInfiniteQueryKey(options),
+      queryKey: listTransactions1InfiniteQueryKey(options),
     }
   );
 };
@@ -20314,6 +20467,27 @@ export const getOrganisationStatisticsOptions = (
       return data;
     },
     queryKey: getOrganisationStatisticsQueryKey(options),
+  });
+};
+
+export const getSummaryQueryKey = (options: Options<GetSummaryData>) =>
+  createQueryKey('getSummary', options);
+
+/**
+ * Get skills fund summary (KPIs)
+ */
+export const getSummaryOptions = (options: Options<GetSummaryData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getSummary({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getSummaryQueryKey(options),
   });
 };
 
@@ -26474,6 +26648,56 @@ export const removeMemberMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await removeMember({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete a fund transaction
+ */
+export const deleteTransactionMutation = (
+  options?: Partial<Options<DeleteTransactionData>>
+): UseMutationOptions<
+  DeleteTransactionResponse,
+  DeleteTransactionError,
+  Options<DeleteTransactionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteTransactionResponse,
+    DeleteTransactionError,
+    Options<DeleteTransactionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteTransaction({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete a funding source
+ */
+export const deleteSourceMutation = (
+  options?: Partial<Options<DeleteSourceData>>
+): UseMutationOptions<DeleteSourceResponse, DeleteSourceError, Options<DeleteSourceData>> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteSourceResponse,
+    DeleteSourceError,
+    Options<DeleteSourceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteSource({
         ...options,
         ...localOptions,
         throwOnError: true,
