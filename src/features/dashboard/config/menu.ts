@@ -29,6 +29,7 @@ import {
   MapPin,
   School,
   Tag,
+  Trophy,
   UserCheck,
   Wrench,
   Rocket,
@@ -738,6 +739,7 @@ export default {
       items: [
         { title: 'Attendance', url: '/dashboard/attendance', icon: ClipboardCheck },
         { title: 'Assignments', url: '/dashboard/assignments', icon: FileText },
+        { title: 'Competition', url: '/dashboard/competition', icon: Trophy },
         { title: 'Exams', url: '/dashboard/exams', icon: GraduationCap },
       ],
     },
