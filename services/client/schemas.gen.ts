@@ -615,17 +615,17 @@ export const StudentSchema = {
       maxLength: 2000,
       minLength: 0,
     },
+    primaryGuardianContact: {
+      type: 'string',
+    },
+    secondaryGuardianContact: {
+      type: 'string',
+    },
     allGuardianContacts: {
       type: 'array',
       items: {
         type: 'string',
       },
-    },
-    secondaryGuardianContact: {
-      type: 'string',
-    },
-    primaryGuardianContact: {
-      type: 'string',
     },
     full_name: {
       type: 'string',
@@ -1406,6 +1406,18 @@ export const RubricScoringSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    performance_expectation: {
+      type: 'string',
+      description: '**[READ-ONLY]** Classification of performance expectation level.',
+      example: 'Exceptional Performance',
+      readOnly: true,
+    },
+    score_range: {
+      type: 'string',
+      description: '**[READ-ONLY]** Expected score range for this performance level.',
+      example: '5 points',
+      readOnly: true,
+    },
     is_passing_level: {
       type: 'boolean',
       description:
@@ -1417,18 +1429,6 @@ export const RubricScoringSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Feedback category for constructive assessment guidance.',
       example: 'Excellence',
-      readOnly: true,
-    },
-    performance_expectation: {
-      type: 'string',
-      description: '**[READ-ONLY]** Classification of performance expectation level.',
-      example: 'Exceptional Performance',
-      readOnly: true,
-    },
-    score_range: {
-      type: 'string',
-      description: '**[READ-ONLY]** Expected score range for this performance level.',
-      example: '5 points',
       readOnly: true,
     },
   },
@@ -2118,12 +2118,6 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
-      readOnly: true,
-    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -2140,6 +2134,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
   },
@@ -3519,25 +3519,16 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
+    summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
+      example: 'IEEE Member (4 years, 3 months) - Active',
+      readOnly: true,
+    },
     formatted_duration: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
       example: '4 years, 3 months',
-      readOnly: true,
-    },
-    is_recent_membership: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if this membership was started within the last 3 years.',
-      example: true,
-      readOnly: true,
-    },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
       readOnly: true,
     },
     membership_status: {
@@ -3573,10 +3564,19 @@ export const InstructorProfessionalMembershipSchema = {
       example: 4.25,
       readOnly: true,
     },
-    summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
-      example: 'IEEE Member (4 years, 3 months) - Active',
+    is_recent_membership: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if this membership was started within the last 3 years.',
+      example: true,
+      readOnly: true,
+    },
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
     is_complete: {
@@ -3731,6 +3731,12 @@ export const InstructorExperienceSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
+    summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
+      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
+      readOnly: true,
+    },
     duration_in_months: {
       type: ['integer', 'null'],
       format: 'int32',
@@ -3778,12 +3784,6 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
-      readOnly: true,
-    },
-    summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
-      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
     is_complete: {
@@ -4756,26 +4756,6 @@ export const CourseSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    has_multiple_categories: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
-      example: true,
-      readOnly: true,
-    },
-    category_count: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of categories this course belongs to.',
-      example: 2,
-      readOnly: true,
-    },
-    lifecycle_stage: {
-      type: 'string',
-      description:
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
-      example: 'Published and Active',
-      readOnly: true,
-    },
     accepts_new_enrollments: {
       type: 'boolean',
       description:
@@ -4811,6 +4791,26 @@ export const CourseSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of total course duration.',
       example: '40 hours 30 minutes',
+      readOnly: true,
+    },
+    has_multiple_categories: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
+      example: true,
+      readOnly: true,
+    },
+    category_count: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of categories this course belongs to.',
+      example: 2,
+      readOnly: true,
+    },
+    lifecycle_stage: {
+      type: 'string',
+      description:
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
+      example: 'Published and Active',
       readOnly: true,
     },
   },
@@ -5399,17 +5399,17 @@ export const LessonSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    lesson_sequence: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted lesson sequence for display purposes.',
-      example: 'Lesson 3',
-      readOnly: true,
-    },
     is_published: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the lesson is published and accessible to students.',
       example: true,
+      readOnly: true,
+    },
+    lesson_sequence: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted lesson sequence for display purposes.',
+      example: 'Lesson 3',
       readOnly: true,
     },
   },
@@ -5716,16 +5716,16 @@ export const LessonContentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    file_size_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of file size.',
-      example: '150 MB',
-      readOnly: true,
-    },
     content_category: {
       type: 'string',
       description: '**[READ-ONLY]** Category of content based on its type and format.',
       example: 'Video Content',
+      readOnly: true,
+    },
+    file_size_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of file size.',
+      example: '150 MB',
       readOnly: true,
     },
   },
@@ -9598,6 +9598,25 @@ export const ScheduledInstanceSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_started: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_ended: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
+      example: false,
+      readOnly: true,
+    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
@@ -9621,25 +9640,6 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
-      example: false,
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_started: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_ended: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
       example: false,
       readOnly: true,
     },
@@ -10163,6 +10163,121 @@ export const StudentGroupSchema = {
       type: 'string',
       format: 'date-time',
       description: 'When the group was created.',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const CreateCompetitionRequestSchema = {
+  type: 'object',
+  description: 'Payload to create an organisation competition.',
+  properties: {
+    name: {
+      type: 'string',
+      description: 'Competition name.',
+      minLength: 1,
+    },
+    category: {
+      type: ['string', 'null'],
+      description: 'Category.',
+    },
+    event_date: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'Scheduled date/time.',
+    },
+    venue_name: {
+      type: ['string', 'null'],
+      description: 'Venue name.',
+    },
+    capacity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Maximum number of teams.',
+    },
+    status: {
+      type: ['string', 'null'],
+      description: 'Lifecycle status. Defaults to Upcoming when omitted.',
+    },
+    description: {
+      type: ['string', 'null'],
+      description: 'Optional description.',
+    },
+  },
+  required: ['name'],
+} as const;
+
+export const ApiResponseCompetitionSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/Competition',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CompetitionSchema = {
+  type: 'object',
+  description: 'An organisation-scoped competition/event.',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Unique identifier.',
+      readOnly: true,
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Owning organisation UUID.',
+    },
+    name: {
+      type: 'string',
+      description: 'Competition name.',
+    },
+    category: {
+      type: ['string', 'null'],
+      description: 'Category (e.g. STEM, Music, TVET).',
+    },
+    event_date: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'Scheduled date/time of the event.',
+    },
+    venue_name: {
+      type: ['string', 'null'],
+      description: 'Venue name.',
+    },
+    capacity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Maximum number of teams.',
+    },
+    status: {
+      type: 'string',
+      description: 'Lifecycle status (Upcoming, Registration Open, In Progress, Completed).',
+    },
+    description: {
+      type: ['string', 'null'],
+      description: 'Optional description.',
+    },
+    team_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Number of teams registered.',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the competition was created.',
       readOnly: true,
     },
   },
@@ -10748,6 +10863,12 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -10764,12 +10885,6 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
       readOnly: true,
     },
   },
@@ -10962,6 +11077,53 @@ export const ApiResponseCourseCreatorSchema = {
     },
     data: {
       $ref: '#/components/schemas/CourseCreator',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CompetitionTeamSchema = {
+  type: 'object',
+  description: 'A team registered for a competition.',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Unique identifier.',
+      readOnly: true,
+    },
+    team_name: {
+      type: 'string',
+      description: 'Team name.',
+      minLength: 1,
+    },
+    competition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Competition UUID.',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the team registered.',
+      readOnly: true,
+    },
+  },
+  required: ['team_name'],
+} as const;
+
+export const ApiResponseCompetitionTeamSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CompetitionTeam',
     },
     message: {
       type: 'string',
@@ -12594,6 +12756,12 @@ export const AssignmentSubmissionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    is_graded: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the submission has been graded by an instructor.',
+      example: true,
+      readOnly: true,
+    },
     submission_category: {
       type: 'string',
       description:
@@ -12618,12 +12786,6 @@ export const AssignmentSubmissionSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Summary of files attached to this submission.',
       example: '2 files attached',
-      readOnly: true,
-    },
-    is_graded: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the submission has been graded by an instructor.',
-      example: true,
       readOnly: true,
     },
   },
@@ -13519,17 +13681,17 @@ export const StudentScheduleSchema = {
       example: '2024-09-15T09:15:00Z',
       readOnly: true,
     },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
+      readOnly: true,
+    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
       description: '**[READ-ONLY]** Duration of the scheduled class in minutes.',
       example: 90,
-      readOnly: true,
-    },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
       readOnly: true,
     },
     is_upcoming: {
@@ -13673,6 +13835,12 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
+    },
     size: {
       type: 'integer',
       format: 'int32',
@@ -13687,12 +13855,6 @@ export const PageSchema = {
     },
     sort: {
       $ref: '#/components/schemas/SortObject',
-    },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
     },
     numberOfElements: {
       type: 'integer',
@@ -15606,6 +15768,25 @@ export const ApiResponseListResourceAvailabilityRuleSchema = {
   },
 } as const;
 
+export const ApiResponseListCompetitionSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/Competition',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponsePagedDTONotificationDTOSchema = {
   type: 'object',
   properties: {
@@ -17427,12 +17608,6 @@ export const CourseAssessmentScoreSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '87.50 / 100.00 (87.50%)',
-      readOnly: true,
-    },
     is_passing: {
       type: 'boolean',
       description:
@@ -17458,6 +17633,12 @@ export const CourseAssessmentScoreSchema = {
       description:
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.',
       example: 'Detailed instructor feedback provided',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '87.50 / 100.00 (87.50%)',
       readOnly: true,
     },
   },
@@ -18271,6 +18452,25 @@ export const ApiResponseListCategorySchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/Category',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListCompetitionTeamSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CompetitionTeam',
       },
     },
     message: {

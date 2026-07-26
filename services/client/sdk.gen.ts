@@ -598,6 +598,12 @@ import type {
   AddAvailabilityRuleData,
   AddAvailabilityRuleResponses,
   AddAvailabilityRuleErrors,
+  ListCompetitionsData,
+  ListCompetitionsResponses,
+  ListCompetitionsErrors,
+  CreateCompetitionData,
+  CreateCompetitionResponses,
+  CreateCompetitionErrors,
   ListNotificationsData,
   ListNotificationsResponses,
   ListNotificationsErrors,
@@ -850,6 +856,12 @@ import type {
   CreateCategoryData,
   CreateCategoryResponses,
   CreateCategoryErrors,
+  ListTeamsData,
+  ListTeamsResponses,
+  ListTeamsErrors,
+  AddTeamData,
+  AddTeamResponses,
+  AddTeamErrors,
   PayWithMpesaData,
   PayWithMpesaResponses,
   PayWithMpesaErrors,
@@ -1693,6 +1705,12 @@ import type {
   RemoveCategoryFromCourseData,
   RemoveCategoryFromCourseResponses,
   RemoveCategoryFromCourseErrors,
+  DeleteCompetitionData,
+  DeleteCompetitionResponses,
+  DeleteCompetitionErrors,
+  RemoveTeamData,
+  RemoveTeamResponses,
+  RemoveTeamErrors,
   RemoveItemData,
   RemoveItemResponses,
   RemoveItemErrors,
@@ -1849,6 +1867,8 @@ import {
   createResourceResponseTransformer,
   listAvailabilityRulesResponseTransformer,
   addAvailabilityRuleResponseTransformer,
+  listCompetitionsResponseTransformer,
+  createCompetitionResponseTransformer,
   listNotificationsResponseTransformer,
   applyActionResponseTransformer,
   getAllInstructorsResponseTransformer,
@@ -1927,6 +1947,8 @@ import {
   createContentTypeResponseTransformer,
   getAllCategoriesResponseTransformer,
   createCategoryResponseTransformer,
+  listTeamsResponseTransformer,
+  addTeamResponseTransformer,
   completeCheckoutResponseTransformer,
   listCatalogItemsResponseTransformer,
   createCatalogItemResponseTransformer,
@@ -7986,6 +8008,65 @@ export const addAvailabilityRule = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List competitions for an organisation
+ * Returns all competitions for the organisation with team counts.
+ */
+export const listCompetitions = <ThrowOnError extends boolean = false>(
+  options: Options<ListCompetitionsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListCompetitionsResponses,
+    ListCompetitionsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listCompetitionsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/competitions',
+    ...options,
+  });
+};
+
+/**
+ * Create a competition
+ */
+export const createCompetition = <ThrowOnError extends boolean = false>(
+  options: Options<CreateCompetitionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateCompetitionResponses,
+    CreateCompetitionErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createCompetitionResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/competitions',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * List current user's notifications
  */
 export const listNotifications = <ThrowOnError extends boolean = false>(
@@ -10631,6 +10712,56 @@ export const createCategory = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/config/categories',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * List competition teams
+ */
+export const listTeams = <ThrowOnError extends boolean = false>(
+  options: Options<ListTeamsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<ListTeamsResponses, ListTeamsErrors, ThrowOnError>({
+    responseTransformer: listTeamsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/competitions/{competitionUuid}/teams',
+    ...options,
+  });
+};
+
+/**
+ * Register a team for a competition
+ */
+export const addTeam = <ThrowOnError extends boolean = false>(
+  options: Options<AddTeamData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<AddTeamResponses, AddTeamErrors, ThrowOnError>({
+    responseTransformer: addTeamResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/competitions/{competitionUuid}/teams',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -18866,6 +18997,58 @@ export const removeCategoryFromCourse = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{courseUuid}/categories/{categoryUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Delete a competition
+ */
+export const deleteCompetition = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCompetitionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCompetitionResponses,
+    DeleteCompetitionErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/competitions/{competitionUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Remove a team from a competition
+ */
+export const removeTeam = <ThrowOnError extends boolean = false>(
+  options: Options<RemoveTeamData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    RemoveTeamResponses,
+    RemoveTeamErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/competitions/{competitionUuid}/teams/{teamUuid}',
     ...options,
   });
 };

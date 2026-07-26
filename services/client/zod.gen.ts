@@ -375,9 +375,9 @@ export const zStudent = z
       ])
       .optional(),
     bio: z.union([z.string().min(0).max(2000), z.null()]).optional(),
-    allGuardianContacts: z.array(z.string()).optional(),
-    secondaryGuardianContact: z.string().optional(),
     primaryGuardianContact: z.string().optional(),
+    secondaryGuardianContact: z.string().optional(),
+    allGuardianContacts: z.array(z.string()).optional(),
     full_name: z
       .string()
       .describe(
@@ -934,16 +934,6 @@ export const zRubricScoring = z
       )
       .readonly()
       .optional(),
-    is_passing_level: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this scoring level represents passing performance.')
-      .readonly()
-      .optional(),
-    feedback_category: z
-      .string()
-      .describe('**[READ-ONLY]** Feedback category for constructive assessment guidance.')
-      .readonly()
-      .optional(),
     performance_expectation: z
       .string()
       .describe('**[READ-ONLY]** Classification of performance expectation level.')
@@ -952,6 +942,16 @@ export const zRubricScoring = z
     score_range: z
       .string()
       .describe('**[READ-ONLY]** Expected score range for this performance level.')
+      .readonly()
+      .optional(),
+    is_passing_level: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this scoring level represents passing performance.')
+      .readonly()
+      .optional(),
+    feedback_category: z
+      .string()
+      .describe('**[READ-ONLY]** Feedback category for constructive assessment guidance.')
       .readonly()
       .optional(),
   })
@@ -1433,11 +1433,6 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -1451,6 +1446,11 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -2361,16 +2361,12 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if the membership is currently valid and active.')
       .readonly()
       .optional(),
+    summary: z
+      .string()
+      .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
+      .readonly()
+      .optional(),
     formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
-    is_recent_membership: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
-      .readonly()
-      .optional(),
-    membership_duration_months: z
-      .union([z.number().int().readonly(), z.null()])
-      .readonly()
-      .optional(),
     membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
@@ -2385,9 +2381,13 @@ export const zInstructorProfessionalMembership = z
       .optional(),
     organisation_type: zOrganisationTypeEnum.optional(),
     years_of_membership: z.union([z.number().readonly(), z.null()]).readonly().optional(),
-    summary: z
-      .string()
-      .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
+    is_recent_membership: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
+      .readonly()
+      .optional(),
+    membership_duration_months: z
+      .union([z.number().int().readonly(), z.null()])
       .readonly()
       .optional(),
     is_complete: z
@@ -2480,6 +2480,11 @@ export const zInstructorExperience = z
       )
       .readonly()
       .optional(),
+    summary: z
+      .string()
+      .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
+      .readonly()
+      .optional(),
     duration_in_months: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
     formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     employment_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
@@ -2500,11 +2505,6 @@ export const zInstructorExperience = z
       .readonly()
       .optional(),
     calculated_years: z.union([z.number().readonly(), z.null()]).readonly().optional(),
-    summary: z
-      .string()
-      .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
-      .readonly()
-      .optional(),
     is_complete: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
@@ -3161,24 +3161,6 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
-    has_multiple_categories: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
-      .readonly()
-      .optional(),
-    category_count: z
-      .number()
-      .int()
-      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
-      .readonly()
-      .optional(),
-    lifecycle_stage: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
-      )
-      .readonly()
-      .optional(),
     accepts_new_enrollments: z
       .boolean()
       .describe(
@@ -3209,6 +3191,24 @@ export const zCourse = z
     total_duration_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of total course duration.')
+      .readonly()
+      .optional(),
+    has_multiple_categories: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
+      .readonly()
+      .optional(),
+    category_count: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
+      .readonly()
+      .optional(),
+    lifecycle_stage: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
+      )
       .readonly()
       .optional(),
   })
@@ -3520,14 +3520,14 @@ export const zLesson = z
       )
       .readonly()
       .optional(),
-    lesson_sequence: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted lesson sequence for display purposes.')
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the lesson is published and accessible to students.')
+      .readonly()
+      .optional(),
+    lesson_sequence: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted lesson sequence for display purposes.')
       .readonly()
       .optional(),
   })
@@ -3750,14 +3750,14 @@ export const zLessonContent = z
       )
       .readonly()
       .optional(),
-    file_size_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of file size.')
-      .readonly()
-      .optional(),
     content_category: z
       .string()
       .describe('**[READ-ONLY]** Category of content based on its type and format.')
+      .readonly()
+      .optional(),
+    file_size_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of file size.')
       .readonly()
       .optional(),
   })
@@ -5836,6 +5836,21 @@ export const zScheduledInstance = z
       )
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
+      .readonly()
+      .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
+      .readonly()
+      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
@@ -5856,21 +5871,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-    can_be_started: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
-      .readonly()
-      .optional(),
-    can_be_ended: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -6152,6 +6152,55 @@ export const zStudentGroup = z
 export const zApiResponseStudentGroup = z.object({
   success: z.boolean().optional(),
   data: zStudentGroup.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Payload to create an organisation competition.
+ */
+export const zCreateCompetitionRequest = z
+  .object({
+    name: z.string().min(1).describe('Competition name.'),
+    category: z.union([z.string(), z.null()]).optional(),
+    event_date: z.union([z.string().datetime(), z.null()]).optional(),
+    venue_name: z.union([z.string(), z.null()]).optional(),
+    capacity: z.union([z.number().int(), z.null()]).optional(),
+    status: z.union([z.string(), z.null()]).optional(),
+    description: z.union([z.string(), z.null()]).optional(),
+  })
+  .describe('Payload to create an organisation competition.');
+
+/**
+ * An organisation-scoped competition/event.
+ */
+export const zCompetition = z
+  .object({
+    uuid: z.string().uuid().describe('Unique identifier.').readonly().optional(),
+    organisation_uuid: z.string().uuid().describe('Owning organisation UUID.').optional(),
+    name: z.string().describe('Competition name.').optional(),
+    category: z.union([z.string(), z.null()]).optional(),
+    event_date: z.union([z.string().datetime(), z.null()]).optional(),
+    venue_name: z.union([z.string(), z.null()]).optional(),
+    capacity: z.union([z.number().int(), z.null()]).optional(),
+    status: z
+      .string()
+      .describe('Lifecycle status (Upcoming, Registration Open, In Progress, Completed).')
+      .optional(),
+    description: z.union([z.string(), z.null()]).optional(),
+    team_count: z.coerce.bigint().describe('Number of teams registered.').readonly().optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('When the competition was created.')
+      .readonly()
+      .optional(),
+  })
+  .describe('An organisation-scoped competition/event.');
+
+export const zApiResponseCompetition = z.object({
+  success: z.boolean().optional(),
+  data: zCompetition.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -6489,6 +6538,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .readonly()
+      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -6502,11 +6556,6 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -6611,6 +6660,25 @@ export const zApiResponseCourseReview = z.object({
 export const zApiResponseCourseCreator = z.object({
   success: z.boolean().optional(),
   data: zCourseCreator.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * A team registered for a competition.
+ */
+export const zCompetitionTeam = z
+  .object({
+    uuid: z.string().uuid().describe('Unique identifier.').readonly().optional(),
+    team_name: z.string().min(1).describe('Team name.'),
+    competition_uuid: z.string().uuid().describe('Competition UUID.').readonly().optional(),
+    created_date: z.string().datetime().describe('When the team registered.').readonly().optional(),
+  })
+  .describe('A team registered for a competition.');
+
+export const zApiResponseCompetitionTeam = z.object({
+  success: z.boolean().optional(),
+  data: zCompetitionTeam.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -7587,6 +7655,11 @@ export const zAssignmentSubmission = z
       )
       .readonly()
       .optional(),
+    is_graded: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
+      .readonly()
+      .optional(),
     submission_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
@@ -7607,11 +7680,6 @@ export const zAssignmentSubmission = z
     file_count_display: z
       .string()
       .describe('**[READ-ONLY]** Summary of files attached to this submission.')
-      .readonly()
-      .optional(),
-    is_graded: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
       .readonly()
       .optional(),
   })
@@ -8170,14 +8238,14 @@ export const zStudentSchedule = z
       .union([z.string().datetime().readonly(), z.null()])
       .readonly()
       .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended this class.')
+      .readonly()
+      .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
     is_upcoming: z
@@ -8259,12 +8327,12 @@ export const zPageableObject = z.object({
 export const zPage = z.object({
   totalElements: z.coerce.bigint().optional(),
   totalPages: z.number().int().optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   size: z.number().int().optional(),
   content: z.array(z.unknown()).optional(),
   number: z.number().int().optional(),
   sort: zSortObject.optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   numberOfElements: z.number().int().optional(),
   pageable: zPageableObject.optional(),
   empty: z.boolean().optional(),
@@ -9061,6 +9129,13 @@ export const zApiResponsePagedDtoResourceBooking = z.object({
 export const zApiResponseListResourceAvailabilityRule = z.object({
   success: z.boolean().optional(),
   data: z.array(zResourceAvailabilityRule).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListCompetition = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zCompetition).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -9905,11 +9980,6 @@ export const zCourseAssessmentScore = z
       )
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     is_passing: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).')
@@ -9932,6 +10002,11 @@ export const zCourseAssessmentScore = z
       .describe(
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.'
       )
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -10356,6 +10431,13 @@ export const zApiResponsePagedDtoCategory = z.object({
 export const zApiResponseListCategory = z.object({
   success: z.boolean().optional(),
   data: z.array(zCategory).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListCompetitionTeam = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zCompetitionTeam).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -14397,6 +14479,32 @@ export const zAddAvailabilityRuleData = z.object({
  */
 export const zAddAvailabilityRuleResponse = zApiResponseResourceAvailabilityRule;
 
+export const zListCompetitionsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListCompetitionsResponse = zApiResponseListCompetition;
+
+export const zCreateCompetitionData = z.object({
+  body: zCreateCompetitionRequest,
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreateCompetitionResponse = zApiResponseCompetition;
+
 export const zListNotificationsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -15616,6 +15724,32 @@ export const zCreateCategoryData = z.object({
  * OK
  */
 export const zCreateCategoryResponse = zApiResponseCategory;
+
+export const zListTeamsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    competitionUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListTeamsResponse = zApiResponseListCompetitionTeam;
+
+export const zAddTeamData = z.object({
+  body: zCompetitionTeam,
+  path: z.object({
+    competitionUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddTeamResponse = zApiResponseCompetitionTeam;
 
 export const zPayWithMpesaData = z.object({
   body: zMpesaPaymentRequest,
@@ -19620,6 +19754,33 @@ export const zRemoveCategoryFromCourseData = z.object({
  * OK
  */
 export const zRemoveCategoryFromCourseResponse = zApiResponseString;
+
+export const zDeleteCompetitionData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    competitionUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zDeleteCompetitionResponse = zApiResponseVoid;
+
+export const zRemoveTeamData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    competitionUuid: z.string().uuid(),
+    teamUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zRemoveTeamResponse = zApiResponseVoid;
 
 export const zRemoveItemData = z.object({
   body: z.never().optional(),

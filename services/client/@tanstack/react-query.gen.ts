@@ -200,6 +200,8 @@ import {
   createResource,
   listAvailabilityRules,
   addAvailabilityRule,
+  listCompetitions,
+  createCompetition,
   listNotifications,
   applyBulkAction,
   applyAction,
@@ -284,6 +286,8 @@ import {
   createContentType,
   getAllCategories,
   createCategory,
+  listTeams,
+  addTeam,
   payWithMpesa,
   completeCheckout,
   listCatalogItems,
@@ -565,6 +569,8 @@ import {
   dissociateRubric,
   dissociateRubricByContext,
   removeCategoryFromCourse,
+  deleteCompetition,
+  removeTeam,
   removeItem,
   deleteSubmissionAttachment,
   deleteAssignmentAttachment,
@@ -1081,6 +1087,10 @@ import type {
   AddAvailabilityRuleData,
   AddAvailabilityRuleError,
   AddAvailabilityRuleResponse,
+  ListCompetitionsData,
+  CreateCompetitionData,
+  CreateCompetitionError,
+  CreateCompetitionResponse,
   ListNotificationsData,
   ListNotificationsError,
   ListNotificationsResponse,
@@ -1315,6 +1325,10 @@ import type {
   CreateCategoryData,
   CreateCategoryError,
   CreateCategoryResponse,
+  ListTeamsData,
+  AddTeamData,
+  AddTeamError,
+  AddTeamResponse,
   PayWithMpesaData,
   PayWithMpesaError,
   PayWithMpesaResponse,
@@ -1938,6 +1952,12 @@ import type {
   RemoveCategoryFromCourseData,
   RemoveCategoryFromCourseError,
   RemoveCategoryFromCourseResponse,
+  DeleteCompetitionData,
+  DeleteCompetitionError,
+  DeleteCompetitionResponse,
+  RemoveTeamData,
+  RemoveTeamError,
+  RemoveTeamResponse,
   RemoveItemData,
   RemoveItemError,
   RemoveItemResponse,
@@ -8844,6 +8864,76 @@ export const addAvailabilityRuleMutation = (
   return mutationOptions;
 };
 
+export const listCompetitionsQueryKey = (options: Options<ListCompetitionsData>) =>
+  createQueryKey('listCompetitions', options);
+
+/**
+ * List competitions for an organisation
+ * Returns all competitions for the organisation with team counts.
+ */
+export const listCompetitionsOptions = (options: Options<ListCompetitionsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listCompetitions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listCompetitionsQueryKey(options),
+  });
+};
+
+export const createCompetitionQueryKey = (options: Options<CreateCompetitionData>) =>
+  createQueryKey('createCompetition', options);
+
+/**
+ * Create a competition
+ */
+export const createCompetitionOptions = (options: Options<CreateCompetitionData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createCompetition({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createCompetitionQueryKey(options),
+  });
+};
+
+/**
+ * Create a competition
+ */
+export const createCompetitionMutation = (
+  options?: Partial<Options<CreateCompetitionData>>
+): UseMutationOptions<
+  CreateCompetitionResponse,
+  CreateCompetitionError,
+  Options<CreateCompetitionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateCompetitionResponse,
+    CreateCompetitionError,
+    Options<CreateCompetitionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createCompetition({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const listNotificationsQueryKey = (options: Options<ListNotificationsData>) =>
   createQueryKey('listNotifications', options);
 
@@ -13460,6 +13550,67 @@ export const createCategoryMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await createCategory({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listTeamsQueryKey = (options: Options<ListTeamsData>) =>
+  createQueryKey('listTeams', options);
+
+/**
+ * List competition teams
+ */
+export const listTeamsOptions = (options: Options<ListTeamsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTeams({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTeamsQueryKey(options),
+  });
+};
+
+export const addTeamQueryKey = (options: Options<AddTeamData>) =>
+  createQueryKey('addTeam', options);
+
+/**
+ * Register a team for a competition
+ */
+export const addTeamOptions = (options: Options<AddTeamData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addTeam({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addTeamQueryKey(options),
+  });
+};
+
+/**
+ * Register a team for a competition
+ */
+export const addTeamMutation = (
+  options?: Partial<Options<AddTeamData>>
+): UseMutationOptions<AddTeamResponse, AddTeamError, Options<AddTeamData>> => {
+  const mutationOptions: UseMutationOptions<AddTeamResponse, AddTeamError, Options<AddTeamData>> = {
+    mutationFn: async localOptions => {
+      const { data } = await addTeam({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -26458,6 +26609,56 @@ export const removeCategoryFromCourseMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await removeCategoryFromCourse({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete a competition
+ */
+export const deleteCompetitionMutation = (
+  options?: Partial<Options<DeleteCompetitionData>>
+): UseMutationOptions<
+  DeleteCompetitionResponse,
+  DeleteCompetitionError,
+  Options<DeleteCompetitionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteCompetitionResponse,
+    DeleteCompetitionError,
+    Options<DeleteCompetitionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCompetition({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Remove a team from a competition
+ */
+export const removeTeamMutation = (
+  options?: Partial<Options<RemoveTeamData>>
+): UseMutationOptions<RemoveTeamResponse, RemoveTeamError, Options<RemoveTeamData>> => {
+  const mutationOptions: UseMutationOptions<
+    RemoveTeamResponse,
+    RemoveTeamError,
+    Options<RemoveTeamData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await removeTeam({
         ...options,
         ...localOptions,
         throwOnError: true,

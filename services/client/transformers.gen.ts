@@ -142,6 +142,8 @@ import type {
   CreateResourceResponse,
   ListAvailabilityRulesResponse,
   AddAvailabilityRuleResponse,
+  ListCompetitionsResponse,
+  CreateCompetitionResponse,
   ListNotificationsResponse,
   ApplyActionResponse,
   GetAllInstructorsResponse,
@@ -220,6 +222,8 @@ import type {
   CreateContentTypeResponse,
   GetAllCategoriesResponse,
   CreateCategoryResponse,
+  ListTeamsResponse,
+  AddTeamResponse,
   CompleteCheckoutResponse,
   ListCatalogItemsResponse,
   CreateCatalogItemResponse,
@@ -2987,6 +2991,49 @@ export const addAvailabilityRuleResponseTransformer = async (
   return data;
 };
 
+const competitionSchemaResponseTransformer = (data: any) => {
+  if (data.event_date) {
+    data.event_date = new Date(data.event_date);
+  }
+  if (data.team_count) {
+    data.team_count = BigInt(data.team_count.toString());
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseListCompetitionSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return competitionSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listCompetitionsResponseTransformer = async (
+  data: any
+): Promise<ListCompetitionsResponse> => {
+  data = apiResponseListCompetitionSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseCompetitionSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = competitionSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const createCompetitionResponseTransformer = async (
+  data: any
+): Promise<CreateCompetitionResponse> => {
+  data = apiResponseCompetitionSchemaResponseTransformer(data);
+  return data;
+};
+
 const notificationDtoSchemaResponseTransformer = (data: any) => {
   if (data.occurred_at) {
     data.occurred_at = new Date(data.occurred_at);
@@ -4115,6 +4162,39 @@ export const createCategoryResponseTransformer = async (
   data: any
 ): Promise<CreateCategoryResponse> => {
   data = apiResponseCategorySchemaResponseTransformer(data);
+  return data;
+};
+
+const competitionTeamSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseListCompetitionTeamSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return competitionTeamSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listTeamsResponseTransformer = async (data: any): Promise<ListTeamsResponse> => {
+  data = apiResponseListCompetitionTeamSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseCompetitionTeamSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = competitionTeamSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const addTeamResponseTransformer = async (data: any): Promise<AddTeamResponse> => {
+  data = apiResponseCompetitionTeamSchemaResponseTransformer(data);
   return data;
 };
 
