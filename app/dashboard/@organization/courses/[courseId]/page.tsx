@@ -3,12 +3,33 @@
 
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import { Archive, ArrowLeft, Briefcase, Copy, Download, Pencil, PlusSquare, Printer, Share2, Users } from 'lucide-react';
+import {
+  Archive,
+  ArrowLeft,
+  BookOpen,
+  Briefcase,
+  ClipboardList,
+  Clock,
+  Copy,
+  Download,
+  FileText,
+  HelpCircle,
+  Lock,
+  Paperclip,
+  Pencil,
+  PlayCircle,
+  PlusSquare,
+  Printer,
+  Share2,
+  Star,
+  Users,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
 
+import { AsyncSection } from '@/components/data/async-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,9 +39,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity, extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import type { ClassDefinition, Course, CourseTrainingApplication, DifficultyLevel, User } from '@/services/client';
+import type { ClassDefinition, ContentType, Course, CourseTrainingApplication, DifficultyLevel, User } from '@/services/client';
 import {
+  getAllContentTypesOptions,
   getAllDifficultyLevelsOptions,
   getClassDefinitionsForOrganisationOptions,
   getCourseByUuidOptions,
@@ -28,9 +49,40 @@ import {
   getUsersByOrganisationAndDomainOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { client } from '@/services/client/client.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 const currency = new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 });
 const stripHtml = (html?: string) => (html ?? '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+
+// Shape returned by GET /courses/{uuid}/organisations/{uuid}/content.
+type OrgLessonContent = { uuid?: string; title?: string; content_type_uuid?: string; is_required?: boolean };
+type OrgLesson = {
+  uuid?: string;
+  lesson_number?: number;
+  title?: string;
+  description?: string;
+  learning_objectives?: string;
+  content_count?: number;
+  contents?: OrgLessonContent[];
+};
+type OrgCourseContent = {
+  full_access?: boolean;
+  total_lessons?: number;
+  average_rating?: number | null;
+  total_reviews?: number;
+  lessons?: OrgLesson[];
+};
+
+// Pick an icon from a content-type name (video / quiz / assignment / document / …).
+const kindIconFor = (typeName?: string) => {
+  const n = (typeName ?? '').toLowerCase();
+  if (n.includes('video')) return PlayCircle;
+  if (n.includes('quiz') || n.includes('assessment')) return HelpCircle;
+  if (n.includes('assign')) return ClipboardList;
+  if (n.includes('text') || n.includes('article') || n.includes('read') || n.includes('doc') || n.includes('pdf')) return FileText;
+  return Paperclip;
+};
 
 const RATE_TIERS: { method: string; fmt: string; loc: string; key: string }[] = [
   { method: 'Group In-Person', fmt: 'GROUP', loc: 'IN_PERSON', key: 'group_inperson_rate' },
@@ -92,6 +144,33 @@ export default function CourseDetailPage() {
     retry: false,
   });
   const students = getTotalFromMetadata(extractPage(enrolQuery.data).metadata);
+
+  // Approval-gated course content. Served by the org content endpoint: full lesson
+  // content when the school is approved to train, outline-only summary otherwise.
+  const contentQuery = useQuery({
+    queryKey: ['organisation-course-content', courseId, organisationUuid],
+    enabled: Boolean(courseId && organisationUuid),
+    retry: false,
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const res = await client.get({
+        url: '/api/v1/courses/{courseUuid}/organisations/{organisationUuid}/content',
+        path: { courseUuid: courseId, organisationUuid },
+        security: [{ scheme: 'bearer', type: 'http' }],
+      });
+      return extractEntity(res.data);
+    },
+  });
+  const content = contentQuery.data as OrgCourseContent | null;
+  const lessons = content?.lessons ?? [];
+  const fullAccess = Boolean(content?.full_access);
+
+  const contentTypesQuery = useQuery({ ...getAllContentTypesOptions() });
+  const contentTypeName = useMemo(() => {
+    const map = new Map<string, string>();
+    extractList<ContentType>(contentTypesQuery.data).forEach(ct => ct.uuid && map.set(ct.uuid, ct.name ?? ''));
+    return map;
+  }, [contentTypesQuery.data]);
 
   const pricing = RATE_TIERS.filter(t => Number(application?.rate_card?.[t.key] ?? 0) > 0).map(t => ({
     method: t.method,
@@ -182,6 +261,7 @@ export default function CourseDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
           <TabsTrigger value="actions">Actions</TabsTrigger>
         </TabsList>
@@ -213,6 +293,83 @@ export default function CourseDetailPage() {
               </dl>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="curriculum" className="mt-4 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <Badge variant="outline" className="gap-1">
+                <BookOpen className="h-3.5 w-3.5" />
+                {content?.total_lessons ?? lessons.length} lessons
+              </Badge>
+              {content?.average_rating != null && (
+                <Badge variant="outline" className="gap-1">
+                  <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+                  {Number(content.average_rating).toFixed(1)} ({content?.total_reviews ?? 0})
+                </Badge>
+              )}
+              {fullAccess && (
+                <Badge variant="outline" className="gap-1 border-success/40 bg-success/10 text-success">
+                  Full read access
+                </Badge>
+              )}
+            </div>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Lock className="h-3.5 w-3.5" /> Read-only — only the creator can edit
+            </span>
+          </div>
+
+          <AsyncSection
+            loading={contentQuery.isLoading && !contentQuery.data}
+            error={contentQuery.error}
+            empty={!contentQuery.isLoading && lessons.length === 0}
+            emptyTitle="No curriculum yet"
+            emptyDescription="This course doesn't have any published lessons yet."
+          >
+            {!fullAccess && lessons.length > 0 && (
+              <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/5 px-3 py-2.5 text-sm">
+                <Lock className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+                <p className="text-muted-foreground">
+                  You're seeing the course outline. Full lesson content unlocks once your school is approved to train this course.
+                </p>
+              </div>
+            )}
+            {lessons.map((lesson: OrgLesson) => (
+              <Card key={lesson.lesson_number ?? lesson.uuid} className="mt-3">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">
+                    {lesson.title ?? `Lesson ${lesson.lesson_number}`}
+                  </CardTitle>
+                  {lesson.learning_objectives && (
+                    <p className="text-sm text-muted-foreground">{stripHtml(lesson.learning_objectives)}</p>
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-1.5">
+                  {fullAccess && Array.isArray(lesson.contents) ? (
+                    lesson.contents.map((item: OrgLessonContent) => {
+                      const typeName = contentTypeName.get(item.content_type_uuid) ?? '';
+                      const Icon = kindIconFor(typeName);
+                      return (
+                        <div key={item.uuid} className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2">
+                          <Icon className="h-4 w-4 shrink-0 text-primary" />
+                          <span className="min-w-0 flex-1 truncate text-sm">{item.title ?? (typeName || 'Content')}</span>
+                          {item.is_required && (
+                            <Badge variant="secondary" className="shrink-0 text-[10px]">Required</Badge>
+                          )}
+                          {typeName && <span className="shrink-0 text-xs text-muted-foreground">{typeName}</span>}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-lg border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                      <Lock className="h-3.5 w-3.5" />
+                      {lesson.content_count ?? 0} content items — locked until approved
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </AsyncSection>
         </TabsContent>
 
         <TabsContent value="pricing" className="mt-4">

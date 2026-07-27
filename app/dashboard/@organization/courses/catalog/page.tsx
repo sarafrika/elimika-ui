@@ -13,6 +13,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -25,7 +26,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type { Course, CourseCreator, CourseReview, DifficultyLevel } from '@/services/client';
 import {
   getAllCourseCreatorsOptions,
@@ -36,6 +36,7 @@ import {
   getPublishedCoursesOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 const stripHtml = (html?: string) =>
   (html ?? '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
@@ -317,7 +318,12 @@ export default function CatalogPage() {
                 {/* Body */}
                 <div className="flex flex-1 flex-col gap-3 p-3.5 pt-6 sm:p-4">
                   <div className="min-w-0">
-                    <h3 className="line-clamp-2 text-base font-semibold leading-snug text-foreground">{course.name}</h3>
+                    <Link
+                      href={`/dashboard/courses/catalog/${course.id}`}
+                      className="line-clamp-2 text-base font-semibold leading-snug text-foreground hover:text-teal-700 hover:underline"
+                    >
+                      {course.name}
+                    </Link>
                     <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{course.description}</p>
                   </div>
 
