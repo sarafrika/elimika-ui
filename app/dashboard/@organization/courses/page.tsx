@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type { ClassDefinition, Course, CourseTrainingApplication, User } from '@/services/client';
 import {
   getClassDefinitionsForOrganisationOptions,
@@ -179,14 +180,19 @@ export default function CoursesPage() {
   // One entry per (application × rate-card tier) — a course appears once per delivery method it's priced for.
   const rows = useMemo(
     () =>
-      applications.flatMap(app => {
+      applications
+        .filter(app => {
+          const s = (app.status ?? '').toLowerCase();
+          return s === 'approved' || s === 'accepted';
+        })
+        .flatMap(app => {
         const courseUuid = app.course_uuid ?? '';
         const course = courseByUuid.get(courseUuid);
         const cats = course?.category_names ?? [];
         const category = cats[0] ?? 'General';
         const subject = cats[1] ?? cats[0] ?? null;
         const name = course?.name ?? app.course_uuid ?? 'Course';
-        const image = course?.banner_url ?? course?.thumbnail_url ?? null;
+        const image = toAuthenticatedMediaUrl(course?.banner_url ?? course?.thumbnail_url) ?? null;
         const baseStatus = archived[app.uuid as string] ? 'Archived' : normStatus(app.status);
 
         const tiers = RATE_TIERS.filter(t => Number(app.rate_card?.[t.key] ?? 0) > 0);
