@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { AdminPageHeader, adminTheme, SectionCard } from '@/app/dashboard/@admin/_components/ui';
+import { AdminPageHeader, adminTheme, SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';

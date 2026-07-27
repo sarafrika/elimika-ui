@@ -10,7 +10,7 @@ import {
   DetailGrid,
   SectionCard,
   StatusBadge,
-} from '@/app/dashboard/@organization/_components/ui';
+} from '@/app/dashboard/organisation/_components/ui';
 import { KpiCard, KpiCardSkeleton } from '@/components/dashboard';
 import { Button } from '@/components/ui/button';
 import { useOrganisation } from '@/context/organisation-context';

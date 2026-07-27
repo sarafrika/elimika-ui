@@ -40,8 +40,8 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { ReviewCard } from '../@instructor/reviews/review-card';
-import { VideoPlayer } from '../@student/schedule/classes/[id]/VideoPlayer';
+import { ReviewCard } from '../instructor/reviews/review-card';
+import { VideoPlayer } from '../student/schedule/classes/[id]/VideoPlayer';
 import { FeedbackDialog } from './review-instructor-modal';
 
 type CourseDetailsProps = {

@@ -1,6 +1,6 @@
 'use client';
 
-import PDFViewer from '@/app/dashboard/@student/_components/pdf-viewer';
+import PDFViewer from '@/app/dashboard/student/_components/pdf-viewer';
 import {
   Sheet,
   SheetContent,

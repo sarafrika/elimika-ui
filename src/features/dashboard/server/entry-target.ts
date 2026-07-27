@@ -7,6 +7,11 @@ import {
   buildDashboardSwitchPath,
   normalizeStoredUserDomain,
 } from '@/src/features/dashboard/lib/active-domain-storage';
+import {
+  dashboardUrl,
+  domainToRouteSegment,
+  type RoleSegment,
+} from '@/src/features/dashboard/lib/dashboard-url';
 
 type DashboardEntryResolution = {
   redirectTo: string;
@@ -156,4 +161,54 @@ export async function resolveDashboardGuard(
     redirectTo: null,
     activeDomain,
   };
+}
+
+type RoleAccessResolution = {
+  /** A path to redirect to, or null when the viewer may see this role segment. */
+  redirectTo: string | null;
+  /** The viewer's own domain that satisfies this segment, when access is granted. */
+  matchedDomain: UserDomain | null;
+};
+
+/**
+ * Guard used by each role segment's layout (`/dashboard/<segment>/...`). Replaces
+ * the old cookie-driven slot selection: access is now decided by the URL segment +
+ * the viewer's real `user_domain[]`, not by a stored active-dashboard cookie.
+ *
+ * A viewer may see a segment iff one of their domains maps to it (so the
+ * `organisation` segment is satisfied by either `organisation` or
+ * `organisation_user`). Otherwise they are redirected to their own default
+ * dashboard rather than shown a 404.
+ */
+export async function assertRoleAccess(segment: RoleSegment): Promise<RoleAccessResolution> {
+  const user = await getServerDashboardUser();
+
+  if (!user) {
+    return { redirectTo: '/', matchedDomain: null };
+  }
+
+  const domains = extractUserDomains(user);
+  if (!domains.length) {
+    return { redirectTo: '/onboarding', matchedDomain: null };
+  }
+
+  const matchedDomain = domains.find(domain => domainToRouteSegment(domain) === segment) ?? null;
+
+  if (!matchedDomain) {
+    // Viewer lacks this role — send them to their own default dashboard.
+    const [primaryDomain] = domains;
+    return {
+      redirectTo: primaryDomain ? dashboardUrl(primaryDomain, 'overview') : '/dashboard',
+      matchedDomain: null,
+    };
+  }
+
+  if (
+    segment === 'organisation' &&
+    (!user.organisation_affiliations || user.organisation_affiliations.length === 0)
+  ) {
+    return { redirectTo: '/onboarding/organisation', matchedDomain };
+  }
+
+  return { redirectTo: null, matchedDomain };
 }

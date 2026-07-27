@@ -28,8 +28,8 @@ import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { toAuthenticatedMediaUrl } from '../../../../src/lib/media-url';
-import { getPreferredScheduleInstance } from '../../@instructor/classes/_components/new-class-page.utils';
-import { TrainingSchedule } from '../../@instructor/classes/class-training/[id]/_components/ClassTrainingPage';
+import { getPreferredScheduleInstance } from '../../instructor/classes/_components/new-class-page.utils';
+import { TrainingSchedule } from '../../instructor/classes/class-training/[id]/_components/ClassTrainingPage';
 import CertificatePage from './CertificatePage';
 import { CertificateData } from './CertificatePDF';
 

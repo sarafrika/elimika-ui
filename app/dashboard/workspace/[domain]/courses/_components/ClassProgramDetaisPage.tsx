@@ -68,7 +68,7 @@ import { useAssignmentsByLessonIds, useCourseAssessmentsByCourseUuids, useCourse
 import { CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
 import { useCourseEnrollmentsMap } from '../../../../../../hooks/use-enrollment-map';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../../lib/share';
-import { socialShareActions } from '../../../../@instructor/classes/overview/[id]/page';
+import { socialShareActions } from '../../../../instructor/classes/overview/[id]/page';
 import { CourseTrainingRequirements } from '../../../../_components/course-training-requirements';
 import { FeedbackDialog } from '../../../../_components/review-instructor-modal';
 import CourseFaq from './CourseFaq';

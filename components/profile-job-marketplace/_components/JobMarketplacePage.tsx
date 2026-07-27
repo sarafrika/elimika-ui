@@ -33,7 +33,7 @@ import {
   StatCard,
   StatCardSkeleton,
   StatusBadge,
-} from '@/app/dashboard/@admin/_components/ui';
+} from '@/app/dashboard/admin/_components/ui';
 import { PageHeader as AdminPageHeader } from '@/components/dashboard';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { AsyncSection } from '@/components/data/async-section';

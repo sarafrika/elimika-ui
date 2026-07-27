@@ -12,6 +12,10 @@ import {
   persistDashboardDomain,
   readPersistedDashboardDomain,
 } from '@/src/features/dashboard/lib/active-domain-storage';
+import {
+  domainToRouteSegment,
+  routeSegmentFromPath,
+} from '@/src/features/dashboard/lib/dashboard-url';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 type UserDomainContextValue = {
@@ -43,18 +47,13 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
   const [activeDomain, setActiveDomainState] = useState<UserDomain | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
+  // Active role now comes from the URL segment (/dashboard/<segment>/...). Match it
+  // against the user's own domains so organisation / organisation_user both resolve.
   const pathnameDomain = useMemo(() => {
-    if (!pathname?.startsWith('/dashboard/workspace/')) {
-      return null;
-    }
-
-    const [, , workspace, domain] = pathname.split('/');
-    if (workspace !== 'workspace') {
-      return null;
-    }
-
-    return normalizeStoredUserDomain(domain);
-  }, [pathname]);
+    const segment = routeSegmentFromPath(pathname);
+    if (!segment) return null;
+    return domains.find(domain => domainToRouteSegment(domain) === segment) ?? null;
+  }, [pathname, domains]);
 
   const dashboardStorageKey = useMemo(
     () => getDashboardStorageKey(profile?.uuid ?? profile?.email ?? undefined),

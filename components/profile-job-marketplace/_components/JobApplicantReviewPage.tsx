@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { AdminPageHeader, adminTheme, SectionCard, StatusBadge } from '@/app/dashboard/@admin/_components/ui';
+import { AdminPageHeader, adminTheme, SectionCard, StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { InstructorReviewProfile } from '@/components/instructor-review/InstructorReviewProfile';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

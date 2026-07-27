@@ -1,0 +1,350 @@
+'use client';
+
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { CustomPagination } from '@/components/pagination';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { formatCourseDate } from '@/lib/format-course-date';
+import {
+  searchCoursesOptions,
+  searchCoursesQueryKey,
+  unpublishCourseMutation,
+  unpublishCourseQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { EyeIcon, FilePenIcon, MoreVertical, PlusCircle, TrashIcon } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+
+type PublishedCourseItem = {
+  uuid?: string;
+  name: string;
+  thumbnail_url?: string;
+  description?: string;
+  category_names?: string[];
+  class_limit?: number;
+  updated_date?: string | Date;
+};
+
+export default function PublishedCoursesComponent({
+  courseCreatorId,
+}: {
+  courseCreatorId?: string;
+}) {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const { replaceBreadcrumbs } = useBreadcrumb();
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/course-creator/overview' },
+      {
+        id: 'course-management',
+        title: 'Course-management',
+        url: '/dashboard/course-creator/course-management/published',
+      },
+      {
+        id: 'published',
+        title: 'Published',
+        url: '/dashboard/course-creator/course-management/published',
+        isLast: true,
+      },
+    ]);
+  }, [replaceBreadcrumbs]);
+
+  const size = 20;
+  const [page, setPage] = useState(0);
+
+  // GET PUBLISHED INSTRUCTOR'S COURSES
+  const { data, isLoading } = useQuery({
+    ...searchCoursesOptions({
+      query: {
+        searchParams: { status: 'published', course_creator_uuid_eq: courseCreatorId },
+        pageable: { page, size },
+      },
+    }),
+    enabled: !!courseCreatorId,
+  });
+
+  // UNPUBLISH COURSE MUTATION
+  const unpublishCourse = useMutation(unpublishCourseMutation());
+  const handleUnpublish = (uuid: string) => {
+    if (!courseCreatorId) return;
+    unpublishCourse.mutate(
+      {
+        path: { uuid: uuid },
+      },
+      {
+        onSuccess(data) {
+          if (!data?.success) {
+            toast.error(
+              typeof data?.error === 'string'
+                ? data.error
+                : 'An error occurred while unpublishing the course.'
+            );
+            return;
+          }
+
+          if (data?.success) {
+            toast.success(data?.message);
+            queryClient.invalidateQueries({
+              queryKey: unpublishCourseQueryKey({ path: { uuid: data?.data?.uuid as string } }),
+            });
+            queryClient.invalidateQueries({
+              queryKey: searchCoursesQueryKey({
+                query: {
+                  searchParams: { course_creator_uuid_eq: courseCreatorId },
+                  pageable: { page, size },
+                },
+              }),
+            });
+            router.push('/dashboard/course-creator/course-management/drafts');
+          }
+        },
+      }
+    );
+  };
+
+  const publishedCourses = data?.data?.content || [];
+  const paginationMetadata = data?.data?.metadata || {};
+
+  return (
+    <div className='mx-auto w-full max-w-6xl space-y-6 py-10'>
+      <div className='mb-6 flex items-end justify-between'>
+        <div>
+          <p className='text-muted-foreground mt-2 max-w-2xl text-sm'>
+            You have {publishedCourses?.length} published course
+            {publishedCourses?.length > 1 ? 's' : ''}.
+          </p>
+        </div>
+        <Button asChild>
+          <Link prefetch href='/dashboard/course-creator/course-management/create-new-course'>
+            <PlusCircle className='mr-2 h-4 w-4' />
+            Create course
+          </Link>
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <Card>
+          <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='space-y-2'>
+              <div className='bg-muted h-5 w-32 animate-pulse rounded'></div>
+              <div className='bg-muted h-4 w-48 animate-pulse rounded'></div>
+            </div>
+          </CardHeader>
+          <CardContent className='p-0'>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead></TableHead>
+                  <TableHead>Course Name</TableHead>
+                  <TableHead>Categories</TableHead>
+                  <TableHead>Class Limit</TableHead>
+                  <TableHead>Last Updated</TableHead>
+                  <TableHead className='mx-auto text-center'>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[1, 2, 3].map(i => (
+                  <TableRow key={i}>
+                    <TableCell className='py-1'>
+                      <div className='bg-muted h-12 w-12 animate-pulse rounded-md'></div>
+                    </TableCell>
+                    <TableCell>
+                      <div className='space-y-2'>
+                        <div className='bg-muted h-4 w-48 animate-pulse rounded'></div>
+                        <div className='bg-muted h-3 w-32 animate-pulse rounded'></div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className='flex gap-1'>
+                        <div className='bg-muted h-5 w-16 animate-pulse rounded-full'></div>
+                        <div className='bg-muted h-5 w-20 animate-pulse rounded-full'></div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className='bg-muted h-4 w-20 animate-pulse rounded'></div>
+                    </TableCell>
+                    <TableCell>
+                      <div className='bg-muted h-4 w-24 animate-pulse rounded'></div>
+                    </TableCell>
+                    <TableCell className='text-center'>
+                      <div className='bg-muted mx-auto h-8 w-8 animate-pulse rounded'></div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {publishedCourses?.length === 0 ? (
+            <div className='bg-muted/20 rounded-md py-12 text-center'>
+              <FilePenIcon className='text-muted-foreground mx-auto h-8 w-8' />
+              <h3 className='text-md mt-4 font-medium'>No published courses</h3>
+              <p className='text-muted-foreground mt-2 text-sm'>
+                You don&apos;t have any published courses yet.
+              </p>
+            </div>
+          ) : (
+            <Card>
+              <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
+                <div>
+                  <CardTitle className='text-base font-semibold'>Published Courses</CardTitle>
+                  <CardDescription>
+                    {publishedCourses.length} draft course{publishedCourses.length === 1 ? '' : 's'}{' '}
+                    owned by this creator.
+                  </CardDescription>
+                </div>
+              </CardHeader>
+
+              <CardContent className='p-0'>
+                {publishedCourses?.length >= 1 && (
+                  <div className='bg-card border-border/50 rounded-t-0 overflow-hidden rounded-t-lg'>
+                    <Table>
+                      {/* <TableCaption className='py-4'>A list of your published courses</TableCaption> */}
+                      <TableHeader className=''>
+                        <TableRow>
+                          {/* <TableHead>
+                  <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
+                </TableHead> */}
+                          <TableHead></TableHead>
+                          <TableHead>Course Name</TableHead>
+                          <TableHead>Categories</TableHead>
+                          <TableHead>Class Limit</TableHead>
+                          <TableHead>Last Updated</TableHead>
+                          <TableHead className='mx-auto text-center'>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+
+                      <TableBody>
+                        {(publishedCourses as unknown as PublishedCourseItem[])?.map((course: PublishedCourseItem) => (
+                          <TableRow key={course.uuid}>
+                            {/* <TableHead>
+                    <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
+                  </TableHead> */}
+
+                            <TableCell className='py-1'>
+                              <Image
+                                src={
+                                  toAuthenticatedMediaUrl(course?.thumbnail_url) ||
+                                  '/illustration.png'
+                                }
+                                alt='thumbnail'
+                                width={48}
+                                height={48}
+                                className='bg-muted-foreground/30 min-h-12 min-w-12 rounded-md'
+                                unoptimized={isAuthenticatedMediaUrl(
+                                  toAuthenticatedMediaUrl(course?.thumbnail_url)
+                                )}
+                              />
+                            </TableCell>
+
+                            <TableCell className='font-medium'>
+                              <div>
+                                <h1 className='max-w-[270px] truncate'>{course.name}</h1>
+                                <div className='text-muted-foreground text-xs'>
+                                  <RichTextRenderer
+                                    htmlString={course?.description ?? ''}
+                                    maxChars={42}
+                                  />
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className='flex max-w-[250px] flex-wrap gap-1'>
+                                {Array.isArray(course.category_names) &&
+                                  course.category_names.map((name: string) => (
+                                    <Badge
+                                      key={name}
+                                      className='bg-muted/70 rounded-full text-black capitalize dark:text-white'
+                                    >
+                                      {name}
+                                    </Badge>
+                                  ))}
+                              </div>
+                            </TableCell>
+                            <TableCell>{course.class_limit || 'Unlimited'}</TableCell>
+                            <TableCell>
+                              {formatCourseDate(
+                                typeof course.updated_date === 'string'
+                                  ? course.updated_date
+                                  : course.updated_date?.toISOString()
+                              )}
+                            </TableCell>
+                            <TableCell className='text-center'>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant='ghost' size='icon'>
+                                    <span className='sr-only'>Open menu</span>
+                                    <MoreVertical className='h-4 w-4' />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align='end'>
+                                  <DropdownMenuItem>
+                                    <Link
+                                      href={`/dashboard/course-creator/course-management/preview/${course.uuid}`}
+                                      className='flex w-full items-center'
+                                    >
+                                      <EyeIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
+                                      View
+                                    </Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    variant='destructive'
+                                    onClick={() => course.uuid && handleUnpublish(course.uuid)}
+                                  >
+                                    <TrashIcon className='mr-2 h-4 w-4' />
+                                    Unpublish
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
+
+      {/*  @ts-ignore */}
+      {paginationMetadata?.totalPages >= 1 && (
+        <CustomPagination
+          totalPages={paginationMetadata?.totalPages as number}
+          onPageChange={page => {
+            setPage(page - 1);
+          }}
+        />
+      )}
+    </div>
+  );
+}

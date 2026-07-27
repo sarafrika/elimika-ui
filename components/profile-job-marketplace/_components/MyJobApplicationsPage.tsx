@@ -20,7 +20,7 @@ import {
   StatCard,
   StatCardSkeleton,
   StatusBadge,
-} from '@/app/dashboard/@admin/_components/ui';
+} from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

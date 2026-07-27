@@ -41,7 +41,7 @@ import { useUserDomain } from '../../context/user-domain-context';
 import { type BundledClass, getErrorMessage } from '../types';
 import AddToCartModal from './AddToCartModal';
 // Adjust these imports to match your actual paths
-import { socialShareActions } from '@/app/dashboard/@instructor/classes/overview/[id]/page';
+import { socialShareActions } from '@/app/dashboard/instructor/classes/overview/[id]/page';
 import { LinkShareCard } from '@/components/shared/link-share-card';
 import { buildSocialShareUrl, openShareWindow } from '@/lib/share';
 

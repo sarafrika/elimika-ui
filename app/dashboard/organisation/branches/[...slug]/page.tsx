@@ -1,0 +1,100 @@
+import { ArrowLeft, MapPin, UserIcon } from 'lucide-react';
+import Link from 'next/link';
+import { PageHeader } from '@/components/dashboard';
+import { Badge } from '../../../../../components/ui/badge';
+import { Calendar } from '../../../../../components/ui/calendar';
+import { Card, CardContent } from '../../../../../components/ui/card';
+import { getTrainingBranchByUuid, type TrainingBranch } from '../../../../../services/client';
+import { OrgPage } from '../../_components/org-page';
+import BranchOverviewStats from '../_components/branch-overview-stats';
+import TabSection from '../_components/tabsection';
+import type { Action } from './utils';
+
+export default async function ViewBranch({
+  params,
+  ...slots
+}: {
+  params: Promise<{ slug: Action[] }>;
+}) {
+  const {
+    slug: [branch_uuid, _tab],
+  } = await params;
+
+  if (branch_uuid === 'new' || branch_uuid === 'edit') {
+    return null;
+  }
+
+  const branchResp = await getTrainingBranchByUuid({ path: { uuid: branch_uuid! } });
+  if (branchResp.error || !branchResp.data) {
+    return <>No Branch</>;
+  }
+
+  const branch = branchResp.data.data as TrainingBranch;
+
+  return (
+    <OrgPage className='space-y-6'>
+      <div className='space-y-4'>
+        <Link
+          href='/dashboard/organisation/branches'
+          className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm'
+        >
+          <ArrowLeft className='h-4 w-4' />
+          All venues
+        </Link>
+        <PageHeader
+          title={branch.branch_name ?? 'Venue'}
+          description={`Venue details for ${branch.branch_name ?? 'this branch'}.`}
+        />
+      </div>
+
+      <div className='grid grid-cols-1 gap-5 lg:grid-cols-4'>
+        <div className='col-span-3 flex flex-col gap-5'>
+          <div className='flex flex-col flex-wrap gap-5 md:flex-row'>
+            <Card className='flex-grow'>
+              <CardContent>
+                <div className='flex flex-col'>
+                  <div className='flex gap-2'>
+                    <MapPin size={32} className='text-muted-foreground' />
+                    <div>
+                      <span className='text-muted-foreground'>Location</span>
+                      <h5 className=''>{branch.address}</h5>
+                    </div>
+                  </div>
+                  <div className='flex flex-col gap-2'>
+                    <h4 className='flex items-center gap-2'>
+                      <UserIcon size={32} className='text-muted-foreground' />
+                      <div>
+                        <span className='text-muted-foreground'>Point of contact</span>
+                        <h4>{branch.poc_name}</h4>
+                      </div>
+                    </h4>
+                    <div className='flex gap-3'>
+                      {branch.poc_email && <Badge variant={'outline'}>{branch.poc_email}</Badge>}
+                      {branch.poc_telephone && (
+                        <Badge variant={'outline'}>{branch.poc_telephone}</Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <BranchOverviewStats
+              organisationUuid={branch.organisation_uuid ?? ''}
+              branchUuid={branch.uuid ?? ''}
+            />
+          </div>
+
+          <TabSection {...{ branch }} />
+        </div>
+        <div>
+          <Card>
+            <CardContent>
+              <Calendar className='w-full' />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </OrgPage>
+  );
+}

@@ -1,3 +1,5 @@
+'use client';
+
 import { createContext, type ReactNode, useContext } from 'react';
 import type { Student } from '../services/client';
 import { useUserProfile } from './profile-context';

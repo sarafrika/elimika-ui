@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
 import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
-import StatisticsContent from '@/app/dashboard/@admin/overview/_components/StatisticsContent';
-import { ParentOverviewContent } from '@/app/dashboard/@parent/overview/_components/ParentOverviewContent';
-import OrganizationOverviewPage from '@/app/dashboard/@organization/overview/page';
+import StatisticsContent from '@/app/dashboard/admin/overview/_components/StatisticsContent';
+import { ParentOverviewContent } from '@/app/dashboard/parent/overview/_components/ParentOverviewContent';
+import OrganizationOverviewPage from '@/app/dashboard/organisation/overview/page';
 import { InstructorOverviewRoute } from '@/src/features/dashboard/instructor-overview/InstructorOverviewRoute';
 import { CourseCreatorOverviewPage } from '@/src/features/dashboard/workspace/pages/CourseCreatorOverviewPage';
 import StudentOverviewPage from '@/src/features/dashboard/workspace/pages/StudentOverviewPage';

@@ -11,6 +11,7 @@ import {
 import type { UserDomain } from '@/lib/types';
 import { type MenuItem, markActiveMenuItem } from '@/src/features/dashboard/config/menu';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { toBareDashboardPath } from '@/src/features/dashboard/lib/dashboard-url';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -25,7 +26,9 @@ export function NavMain({
   pathname: string;
   isAdmin?: boolean;
 }) {
-  const markedItems = markActiveMenuItem(items, pathname);
+  // Menu urls are bare (/dashboard/courses); the live pathname is role-scoped
+  // (/dashboard/<segment>/courses). Strip the segment before active-state matching.
+  const markedItems = markActiveMenuItem(items, toBareDashboardPath(pathname));
 
   const visibleItems = markedItems.filter(
     item => (item.requiresAdmin ? isAdmin : true) && (!item.domain || item.domain === activeDomain)

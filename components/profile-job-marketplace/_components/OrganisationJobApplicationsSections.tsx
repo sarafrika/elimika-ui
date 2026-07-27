@@ -19,7 +19,7 @@ import {
   StatCard,
   StatCardSkeleton,
   StatusBadge,
-} from '@/app/dashboard/@admin/_components/ui';
+} from '@/app/dashboard/admin/_components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';

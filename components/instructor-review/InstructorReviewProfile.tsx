@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BriefcaseBusiness, FileText, GraduationCap, Star } from 'lucide-react';
 import Link from 'next/link';
 
-import { adminTheme, StatusBadge } from '@/app/dashboard/@admin/_components/ui';
+import { adminTheme, StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
