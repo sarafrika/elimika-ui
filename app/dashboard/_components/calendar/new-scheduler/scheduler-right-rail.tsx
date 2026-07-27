@@ -1,13 +1,11 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import { Copy, ExternalLink, Share2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import type { StudentSummary } from './calendar-utils';
-import { studentMetric } from './data';
 import type { SchedulerEvent, SchedulerProfile } from './types';
 
 type InstructorSummary = {
@@ -137,8 +135,7 @@ export function SchedulerRightRail({
   const visibleLocations = showAllLocations ? dayLocations : dayLocations.slice(0, 5);
   const visibleSeats =
     dayStudents.length ||
-    dayEvents.reduce((total, event) => total + (event.maxParticipants ?? event.students.length), 0) ||
-    Number(studentMetric.value);
+    dayEvents.reduce((total, event) => total + (event.maxParticipants ?? event.students.length), 0);
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   const copyShareLink = async () => {
@@ -395,37 +392,6 @@ export function SchedulerRightRail({
         </p>
       </section>
 
-      <section className='bg-card rounded-md border p-3 shadow-sm'>
-        <div className='mb-2 flex items-center justify-between'>
-          <h2 className='text-foreground text-sm font-semibold'>To Do List</h2>
-          <Button variant='ghost' size='sm' className='h-7 px-2 text-xs'>
-            Add Mate
-          </Button>
-        </div>
-        <div className='space-y-2'>
-          {[
-            'Enable room booking notification system',
-            'Schedule lab equipment for Robotics class',
-          ].map(item => (
-            <label key={item} className='bg-muted/40 flex items-start gap-2 rounded-md p-2 text-xs'>
-              <Checkbox />
-              <span className='text-muted-foreground'>{item}</span>
-            </label>
-          ))}
-        </div>
-      </section>
-
-      <section className='bg-card rounded-md border p-3 shadow-sm'>
-        <div className='mb-2 flex items-center justify-between'>
-          <h2 className='text-foreground text-sm font-semibold'>Notes</h2>
-          <Button variant='ghost' size='sm' className='h-7 px-2 text-xs'>
-            Add Note
-          </Button>
-        </div>
-        <p className='bg-muted/40 text-muted-foreground rounded-md p-2 text-xs'>
-          Large classroom changes need projector and export coordination.
-        </p>
-      </section>
     </aside>
   );
 }

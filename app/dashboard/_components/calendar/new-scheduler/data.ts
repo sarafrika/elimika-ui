@@ -1,16 +1,7 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
-import { Building2, CalendarCheck2, GraduationCap, MapPinned, UsersRound } from 'lucide-react';
-import type { SchedulerCategory, SchedulerEvent, SchedulerMetric } from './types';
-
-export const schedulerDays = [
-  { label: 'Mon', date: '28' },
-  { label: 'Tue', date: '29' },
-  { label: 'Wed', date: '30' },
-  { label: 'Thu', date: '31' },
-  { label: 'Fri', date: '1' },
-  { label: 'Sat', date: '2' },
-  { label: 'Sun', date: '3' },
-];
+// Scheduler presentation config (labels, icons, tones, styles). Values are computed
+// from real data by the calendar view/grid — nothing here is sample content.
+import { Building2, CalendarCheck2, GraduationCap, MapPinned } from 'lucide-react';
+import type { SchedulerCategory, SchedulerMetric } from './types';
 
 export const schedulerHours = Array.from({ length: 24 }, (_, index) => index);
 
@@ -22,230 +13,35 @@ export const categoryStyles: Record<SchedulerCategory, string> = {
   Certifications: 'border-destructive/50 bg-destructive/10 text-destructive',
 };
 
-export const categoryDotStyles: Record<SchedulerCategory, string> = {
-  'TVET / Vocational': 'bg-primary',
-  STEM: 'bg-success',
-  Arts: 'bg-warning',
-  Sports: 'bg-secondary',
-  Certifications: 'bg-destructive',
-};
-
+// Stat-card config. `value` is a placeholder that the view always overrides with the
+// real count; only label/helper/icon/tone are consumed as-is.
 export const schedulerMetrics: SchedulerMetric[] = [
   {
     label: 'Active Classes',
-    value: '48',
-    helper: '5% this week',
+    value: '0',
+    helper: 'This week',
     icon: CalendarCheck2,
     tone: 'bg-primary text-primary-foreground',
   },
   {
     label: 'Instructor Bookings',
-    value: '12',
-    helper: 'Available',
+    value: '0',
+    helper: 'Assigned',
     icon: GraduationCap,
     tone: 'bg-warning text-warning-foreground',
   },
   {
     label: 'Venues in Use',
-    value: '7 / 10',
+    value: '0',
     helper: 'Today',
     icon: Building2,
     tone: 'bg-success text-success-foreground',
   },
   {
     label: 'Students',
-    value: '24',
-    helper: 'Students attending classes today',
+    value: '0',
+    helper: 'Attending classes today',
     icon: MapPinned,
     tone: 'bg-secondary text-secondary-foreground',
   },
 ];
-
-export const schedulerEvents: SchedulerEvent[] = [
-  {
-    id: 'basic-coding',
-    title: 'Basic Coding',
-    course: 'TVET',
-    instructor: 'Alex Patel',
-    location: 'Room 201',
-    startTime: new Date('2025-07-28T09:00:00'),
-    endTime: new Date('2025-07-28T10:24:00'),
-    category: 'TVET / Vocational',
-    students: ['AP', 'MY', 'BC'],
-  },
-  {
-    id: 'digital-marketing-1',
-    title: 'Digital Marketing',
-    course: 'STEM',
-    instructor: 'Mohiel Le',
-    location: 'Room 200',
-    startTime: new Date('2025-07-29T09:00:00'),
-    endTime: new Date('2025-07-29T10:30:00'),
-    category: 'STEM',
-    students: ['ML', 'SA', 'TO'],
-  },
-  {
-    id: 'aws-1',
-    title: 'AWS Certification',
-    course: 'Certifications',
-    instructor: 'Emily Wong',
-    location: 'Room 201',
-    startTime: new Date('2025-07-31T09:00:00'),
-    endTime: new Date('2025-07-31T10:30:00'),
-    category: 'Certifications',
-    students: ['EW', 'AD', 'CN'],
-  },
-  {
-    id: 'graphic-design-1',
-    title: 'Graphic Design',
-    course: 'Arts',
-    instructor: 'Emily Yong',
-    location: 'Studio 2',
-    startTime: new Date('2025-08-01T09:00:00'),
-    endTime: new Date('2025-08-01T10:30:00'),
-    category: 'STEM',
-    students: ['EY', 'LA', 'JM'],
-  },
-  {
-    id: 'robotics-1',
-    title: 'Robotics',
-    course: 'STEM',
-    instructor: 'Alex Patel',
-    location: 'Lab 203',
-    startTime: new Date('2025-07-28T11:00:00'),
-    endTime: new Date('2025-07-28T12:24:00'),
-    category: 'Arts',
-    students: ['AP', 'NO', 'IL'],
-  },
-  {
-    id: 'welding',
-    title: 'Welding Basics',
-    course: 'TVET',
-    instructor: 'Mielstel Lee',
-    location: 'Room 202',
-    startTime: new Date('2025-07-29T11:00:00'),
-    endTime: new Date('2025-07-29T12:24:00'),
-    category: 'Certifications',
-    students: ['ML', 'HY', 'RB'],
-  },
-  {
-    id: 'animation',
-    title: '3D Animation',
-    course: 'Arts',
-    instructor: 'Emily Wong',
-    location: 'Lab 204',
-    startTime: new Date('2025-07-31T11:00:00'),
-    endTime: new Date('2025-07-31T12:24:00'),
-    category: 'Arts',
-    students: ['EW', 'GE', 'AN'],
-  },
-  {
-    id: 'public-speaking',
-    title: 'Public Speaking',
-    course: 'Arts',
-    instructor: 'Brian Cia',
-    location: 'Room 104',
-    startTime: new Date('2025-08-01T11:00:00'),
-    endTime: new Date('2025-08-01T12:24:00'),
-    category: 'TVET / Vocational',
-    students: ['BC', 'MM', 'TR'],
-  },
-  {
-    id: 'autocad-1',
-    title: 'AutoCAD Essentials',
-    course: 'STEM',
-    instructor: 'Liam Brown',
-    location: 'Lab 201',
-    startTime: new Date('2025-07-28T14:00:00'),
-    endTime: new Date('2025-07-28T15:24:00'),
-    category: 'STEM',
-    students: ['LB', 'JR', 'KE'],
-  },
-  {
-    id: 'basketball',
-    title: 'Basketball Fundamentals',
-    course: 'Sports',
-    instructor: 'Creath Revit',
-    location: 'Court 1',
-    startTime: new Date('2025-07-29T14:00:00'),
-    endTime: new Date('2025-07-29T15:24:00'),
-    category: 'TVET / Vocational',
-    students: ['CR', 'EA', 'PL'],
-  },
-  {
-    id: 'digital-basics',
-    title: 'Digital Basics',
-    course: 'TVET',
-    instructor: 'Brian Silve',
-    location: 'Room 202',
-    startTime: new Date('2025-07-31T14:00:00'),
-    endTime: new Date('2025-07-31T15:24:00'),
-    category: 'STEM',
-    students: ['BS', 'QI', 'FR'],
-  },
-  {
-    id: 'aws-2',
-    title: 'AWS Certification',
-    course: 'Certifications',
-    instructor: 'Jiang Sho',
-    location: 'Lab 201',
-    startTime: new Date('2025-08-02T14:00:00'),
-    endTime: new Date('2025-08-02T15:24:00'),
-    category: 'Certifications',
-    students: ['JS', 'EM', 'OC'],
-  },
-  {
-    id: 'autocad-2',
-    title: 'AutoCAD Essentials',
-    course: 'STEM',
-    instructor: 'Liam Brown',
-    location: 'Room 202',
-    startTime: new Date('2025-07-28T17:00:00'),
-    endTime: new Date('2025-07-28T18:24:00'),
-    category: 'STEM',
-    students: ['LB', 'SP', 'MC'],
-  },
-  {
-    id: 'basket-design',
-    title: 'Basket Design',
-    course: 'Arts',
-    instructor: 'Emily Wong',
-    location: 'Room 201',
-    startTime: new Date('2025-07-29T17:00:00'),
-    endTime: new Date('2025-07-29T18:24:00'),
-    category: 'Arts',
-    students: ['EW', 'UR', 'LD'],
-  },
-  {
-    id: 'graphic-design-2',
-    title: 'Graphic Design',
-    course: 'Arts',
-    instructor: 'Bram Wong',
-    location: 'Room 202',
-    startTime: new Date('2025-07-31T17:00:00'),
-    endTime: new Date('2025-07-31T18:24:00'),
-    category: 'TVET / Vocational',
-    students: ['BW', 'NM', 'SK'],
-  },
-  {
-    id: 'robotics-2',
-    title: 'Robotics',
-    course: 'STEM',
-    instructor: 'Alex Patel',
-    location: 'Room 201',
-    startTime: new Date('2025-08-02T17:00:00'),
-    endTime: new Date('2025-08-02T18:24:00'),
-    category: 'Certifications',
-    students: ['AP', 'CY', 'KA'],
-  },
-];
-
-export const todaySchedule = schedulerEvents
-  .filter(event => [1, 2, 4, 6].includes(event.startTime.getDay()))
-  .slice(0, 5);
-
-export const studentMetric = {
-  label: 'Students Today',
-  value: '142',
-  icon: UsersRound,
-};
