@@ -34,6 +34,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -295,10 +296,12 @@ export default function StudentsPage() {
           />
         ) : (
           <div className="overflow-x-auto rounded-lg border">
-            <Table className="min-w-[760px]">
+            <Table className="min-w-[1040px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="whitespace-nowrap">Student</TableHead>
+                  <TableHead className="whitespace-nowrap">Wallet ID</TableHead>
+                  <TableHead className="whitespace-nowrap">Institution Ref</TableHead>
                   <TableHead className="whitespace-nowrap">Status</TableHead>
                   <TableHead className="whitespace-nowrap">Course Completion</TableHead>
                   <TableHead className="whitespace-nowrap">Wallet Balance</TableHead>
@@ -313,6 +316,12 @@ export default function StudentsPage() {
                         <AvatarWithSkeleton src="" name={student.name} className="h-8 w-8" />
                         <span className="font-medium">{student.name}</span>
                       </div>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <span className="font-mono text-xs">{generateWalletId(student.id)}</span>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <span className="font-mono text-xs text-muted-foreground">{institutionRef('ELM', student.id)}</span>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       <Badge variant={statusVariant(student.status)}>{student.status}</Badge>
