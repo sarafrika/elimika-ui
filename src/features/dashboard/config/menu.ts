@@ -91,26 +91,33 @@ export function flattenMenuItems(items: MenuItem[] | MenuGroup[]): MenuItem[] {
   return isMenuGroups(items) ? items.flatMap(group => group.items) : items;
 }
 
-export function markActiveMenuItem(items: MenuItem[], currentPath: string): MenuItem[] {
+function collectMenuUrls(items: MenuItem[]): string[] {
+  return items.flatMap(item => [...(item.url ? [item.url] : []), ...(item.items ? collectMenuUrls(item.items) : [])]);
+}
+
+// Only the single most-specific (longest) matching url is active, so /dashboard/courses/catalog
+// activates "Apply to Train" and never also "My Courses" (/dashboard/courses).
+function bestActiveUrl(items: MenuItem[], currentPath: string): string {
+  let best = '';
+  for (const url of collectMenuUrls(items)) {
+    if ((currentPath === url || currentPath.startsWith(`${url}/`)) && url.length > best.length) best = url;
+  }
+  return best;
+}
+
+function applyActive(items: MenuItem[], bestUrl: string): MenuItem[] {
   return items.map(item => {
     const newItem: MenuItem = { ...item };
-    const itemUrl = item.url;
-
-    // ==> Mark as active only if exact match // newItem.isActive = item.url === currentPath;
-
-    // == Mark as active only if exact match or path starts with item.url
-    newItem.isActive =
-      typeof itemUrl === 'string' && (currentPath === itemUrl || currentPath.startsWith(itemUrl));
-
+    newItem.isActive = Boolean(bestUrl) && item.url === bestUrl;
     if (item.items && item.items.length > 0) {
-      newItem.items = markActiveMenuItem(item.items, currentPath);
-
-      // ==> Mark parent as active if child is active
-      // if (newItem.items.some(child => child.isActive)) newItem.isActive = true
+      newItem.items = applyActive(item.items, bestUrl);
     }
-
     return newItem;
   });
+}
+
+export function markActiveMenuItem(items: MenuItem[], currentPath: string): MenuItem[] {
+  return applyActive(items, bestActiveUrl(items, currentPath));
 }
 
 export function getMenuWithActivePath(items: MenuItem[], currentPath: string): MenuItem[] {

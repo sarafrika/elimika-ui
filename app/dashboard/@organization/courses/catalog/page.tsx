@@ -22,8 +22,10 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useOrganisation } from '@/context/organisation-context';
 import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type { Course, CourseCreator, CourseReview, DifficultyLevel } from '@/services/client';
 import {
   getAllCourseCreatorsOptions,
@@ -32,7 +34,11 @@ import {
   getCourseLessonsOptions,
   getCourseReviewsOptions,
   getPublishedCoursesOptions,
+  searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+
+const stripHtml = (html?: string) =>
+  (html ?? '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 
 /** Lazily loads a course's real engagement stats (lessons, enrolments, ratings). */
 function useCourseStats(courseUuid?: string) {
@@ -135,6 +141,8 @@ const PROGRAM_TYPES = [
 
 export default function CatalogPage() {
   const router = useRouter();
+  const organisation = useOrganisation();
+  const organisationUuid = organisation?.uuid ?? '';
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [pageSize, setPageSize] = useState('8');
   const [page, setPage] = useState(0);
@@ -150,6 +158,25 @@ export default function CatalogPage() {
     ...getAllCourseCreatorsOptions({ query: { pageable: { page: 0, size: 200 } } }),
   });
   const difficultyQuery = useQuery({ ...getAllDifficultyLevelsOptions() });
+
+  // Courses the org is already approved to train are hidden — the catalogue is what it can still apply for.
+  const applicationsQuery = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: {
+        searchParams: { applicant_uuid_eq: organisationUuid, applicant_type_eq: 'organisation' },
+        pageable: { page: 0, size: 100 },
+      },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+  const approvedCourseUuids = useMemo(() => {
+    const set = new Set<string>();
+    for (const app of applicationsQuery.data?.data?.content ?? []) {
+      const s = (app.status ?? '').toLowerCase();
+      if ((s === 'approved' || s === 'accepted') && app.course_uuid) set.add(app.course_uuid);
+    }
+    return set;
+  }, [applicationsQuery.data]);
 
   const creatorsByUuid = useMemo(() => {
     const map = new Map<string, CourseCreator>();
@@ -172,18 +199,20 @@ export default function CatalogPage() {
 
   const catalogCourses = useMemo(
     () =>
-      courseItems.map(course => ({
-        id: course.uuid as string,
-        name: course.name,
-        description: course.description ?? '',
-        image: course.banner_url ?? course.thumbnail_url ?? null,
-        category: course.category_names?.[0] ?? 'General',
-        subject: course.category_names?.[1] ?? null,
-        programType: null as string | null,
-        level: (course.difficulty_uuid && difficultyByUuid.get(course.difficulty_uuid)) || 'All Levels',
-        instructor: creatorsByUuid.get(course.course_creator_uuid ?? '')?.full_name ?? 'Course creator',
-      })),
-    [courseItems, creatorsByUuid, difficultyByUuid]
+      courseItems
+        .filter(course => !(course.uuid && approvedCourseUuids.has(course.uuid)))
+        .map(course => ({
+          id: course.uuid as string,
+          name: course.name,
+          description: stripHtml(course.description),
+          image: toAuthenticatedMediaUrl(course.banner_url ?? course.thumbnail_url) ?? null,
+          category: course.category_names?.[0] ?? 'General',
+          subject: course.category_names?.[1] ?? null,
+          programType: null as string | null,
+          level: (course.difficulty_uuid && difficultyByUuid.get(course.difficulty_uuid)) || 'All Levels',
+          instructor: creatorsByUuid.get(course.course_creator_uuid ?? '')?.full_name ?? 'Course creator',
+        })),
+    [courseItems, creatorsByUuid, difficultyByUuid, approvedCourseUuids]
   );
 
   const courseById = useMemo(() => Object.fromEntries(catalogCourses.map(c => [c.id, c])), [catalogCourses]);
