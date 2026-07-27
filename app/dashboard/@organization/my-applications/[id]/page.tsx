@@ -127,7 +127,13 @@ export default function ApplicationDetailPage() {
   const modeLabel = modes.length ? (modes.length === 1 ? modes[0] : `${modes.length} methods`) : '—';
   const submitted = app?.created_date ? dayjs(app.created_date).format('DD MMM YYYY') : '—';
   const decided = app?.reviewed_at ? dayjs(app.reviewed_at).format('DD MMM YYYY') : null;
-  const reviewer = app?.reviewed_by ? app.reviewed_by.split('@')[0] : null;
+  const reviewer = app?.reviewed_by
+    ? (app.reviewed_by.includes('@')
+        ? app.reviewed_by.split('@')[0]
+        : /^[0-9a-f-]{32,36}$/i.test(app.reviewed_by)
+          ? 'Approvals team'
+          : app.reviewed_by)
+    : null;
   const notes = app?.review_notes ?? app?.rejection_reason ?? '';
   const applicantNotes = app?.application_notes ?? '';
   const statusLower = (app?.status ?? '').toLowerCase();
