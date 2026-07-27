@@ -36,7 +36,7 @@ import { useUserProfile } from "../../../../../../context/profile-context";
 import { CombinedClassDetailsData } from "../../../../../../hooks/use-class-details";
 import { UserDomain } from "../../../../../../lib/types";
 import { deactivateClassDefinitionMutation, getClassDefinitionsForInstructorQueryKey } from "../../../../../../services/client/@tanstack/react-query.gen";
-import { PreviewRow } from "../../../../@instructor/classes/new/_components/class-creation-preview-rail";
+import { PreviewRow } from "../../../../instructor/classes/new/_components/class-creation-preview-rail";
 
 type Props = {
   course: Course;

@@ -3,7 +3,7 @@
 import { BriefcaseBusiness, CalendarDays, MapPin, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
-import { StatusBadge } from '@/app/dashboard/@admin/_components/ui';
+import { StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/format-currency';

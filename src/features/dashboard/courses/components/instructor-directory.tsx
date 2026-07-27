@@ -1,8 +1,8 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { InstructorCard } from '@/app/dashboard/@student/_components/instructor-card';
-import { InstructorProfileComponent } from '@/app/dashboard/@student/_components/instructor-profile-modal';
+import { InstructorCard } from '@/app/dashboard/student/_components/instructor-card';
+import { InstructorProfileComponent } from '@/app/dashboard/student/_components/instructor-profile-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

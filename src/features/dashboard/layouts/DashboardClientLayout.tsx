@@ -4,13 +4,12 @@ import CustomLoader from '@/components/custom-loader';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { DashboardProviders } from '@/context/profile-providers';
-import type { DashboardChildrenTypes, UserDomain } from '@/lib/types';
+import type { UserDomain } from '@/lib/types';
 import { AppSidebar } from '@/src/features/dashboard/components/app-sidebar';
 import DashboardMainContent from '@/src/features/dashboard/components/dashboard-main-content';
 import { DomainSelection } from '@/src/features/dashboard/components/domain-selection';
 import {
   domainToDashboardViewMap,
-  domainToSlotKeyMap,
   type KnownDomain,
 } from '@/src/features/dashboard/config/workspaces';
 import {
@@ -18,19 +17,20 @@ import {
   DashboardViewProvider,
 } from '@/src/features/dashboard/context/dashboard-view-context';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { usePathname } from 'next/navigation';
 import { type ReactNode, useMemo } from 'react';
 
-export function DashboardClientLayout(dashboardProps: DashboardChildrenTypes) {
+export function DashboardClientLayout({ children }: { children: ReactNode }) {
   return (
     <DashboardProviders>
-      <DashboardLayoutContent {...dashboardProps} />
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
     </DashboardProviders>
   );
 }
 
-function DashboardLayoutContent(dashboardProps: DashboardChildrenTypes) {
+function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const profile = useUserProfile();
   const domain = useUserDomain();
   const pathname = usePathname();
@@ -42,30 +42,11 @@ function DashboardLayoutContent(dashboardProps: DashboardChildrenTypes) {
     [userDomains]
   );
 
-  const defaultSlot = dashboardProps.children ?? null;
-  const shouldUseDefaultSlot = useMemo(() => {
-    if (!defaultSlot || !pathname) {
-      return false;
-    }
-
-    return (
-      pathname.startsWith('/dashboard/add-profile') || pathname.startsWith('/dashboard/workspace/')
-    );
-  }, [defaultSlot, pathname]);
-
-  const domainSlot = useMemo<ReactNode | null>(() => {
-    if (!activeDomain) {
-      return null;
-    }
-
-    const slotKey = domainToSlotKeyMap[activeDomain];
-    if (!slotKey) {
-      return null;
-    }
-
-    const slot = dashboardProps[slotKey];
-    return slot !== undefined ? (slot ?? null) : null;
-  }, [activeDomain, dashboardProps]);
+  // The role now comes from the URL segment (/dashboard/<segment>/...); the
+  // cookie-derived active domain is only a fallback for non-segment paths
+  // (/dashboard root, /dashboard/add-profile, ...).
+  const urlDomain = useMemo(() => domainFromPath(pathname) as KnownDomain | null, [pathname]);
+  const effectiveDomain = urlDomain ?? activeDomain;
 
   const normalizedAvailableViews = useMemo(() => {
     const views = userDomains
@@ -76,20 +57,21 @@ function DashboardLayoutContent(dashboardProps: DashboardChildrenTypes) {
   }, [userDomains]);
 
   const normalizedActiveView =
-    (activeDomain ? domainToDashboardViewMap[activeDomain] : undefined) ??
+    (effectiveDomain ? domainToDashboardViewMap[effectiveDomain] : undefined) ??
     normalizedAvailableViews[0] ??
     'student';
 
-  const currentDashboard = shouldUseDefaultSlot ? defaultSlot : (domainSlot ?? defaultSlot);
   const sidebarDomain =
-    activeDomain === 'organization' ? ('organisation' as UserDomain) : (activeDomain as UserDomain);
+    effectiveDomain === 'organization'
+      ? ('organisation' as UserDomain)
+      : (effectiveDomain as UserDomain);
   const showLoader = profile?.isLoading || domain.isLoading || !profile;
 
   if (showLoader) {
     return <CustomLoader />;
   }
 
-  if (!activeDomain) {
+  if (!effectiveDomain) {
     return (
       <DomainSelection
         domains={selectableDomains}
@@ -110,7 +92,7 @@ function DashboardLayoutContent(dashboardProps: DashboardChildrenTypes) {
             <AppSidebar activeDomain={sidebarDomain} />
 
             <div className='flex min-w-0 flex-1 flex-col'>
-              <DashboardMainContent>{currentDashboard}</DashboardMainContent>
+              <DashboardMainContent>{children}</DashboardMainContent>
             </div>
           </div>
         </BreadcrumbProvider>

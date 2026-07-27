@@ -1,3 +1,5 @@
+'use client';
+
 import type { Instructor } from '@/services/api/schema';
 import { createContext, type ReactNode, useContext } from 'react';
 import { useUserProfile } from './profile-context';

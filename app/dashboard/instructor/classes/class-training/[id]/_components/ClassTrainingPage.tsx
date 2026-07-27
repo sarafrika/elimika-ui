@@ -1,0 +1,4207 @@
+// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
+'use client';
+
+import { PracticeActivityList } from '@/app/dashboard/course-creator/_components/practice-activity-management';
+import { getPreferredScheduleInstance } from '@/app/dashboard/instructor/classes/_components/new-class-page.utils';
+import ConfirmModal from '@/components/custom-modals/confirm-modal';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useUserProfile } from '@/context/profile-context';
+import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
+import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
+import { type RosterEntry, useClassRoster } from '@/hooks/use-class-roster';
+import {
+  type CourseLessonContent,
+  type CourseLessonWithContent,
+} from '@/hooks/use-courselessonwithcontent';
+import { dayjs } from '@/lib/date';
+import {
+  createAssignmentScheduleMutation,
+  createQuizScheduleMutation,
+  deleteAssignmentScheduleMutation,
+  deleteQuizScheduleMutation,
+  endScheduledInstanceMutation,
+  getAllAssignmentsOptions,
+  getAllQuizzesOptions,
+  getAssignmentAttachmentsOptions,
+  getAssignmentSchedulesOptions,
+  getAssignmentSchedulesQueryKey,
+  getAssignmentSubmissionsOptions,
+  getClassScheduleQueryKey,
+  getCourseAssessmentsOptions,
+  getCourseEnrollmentsOptions,
+  getCourseRubricsOptions,
+  getEnrollmentsForClassQueryKey,
+  getQuizSchedulesOptions,
+  getQuizSchedulesQueryKey,
+  getRubricMatrixOptions,
+  getSubmissionAttachmentsOptions,
+  markAttendanceMutation,
+  startScheduledInstanceMutation,
+  updateAssignmentScheduleMutation,
+  updateQuizScheduleMutation
+} from '@/services/client/@tanstack/react-query.gen';
+import type {
+  Assignment,
+  AssignmentSubmission,
+  AssignmentSubmissionAttachment,
+  ClassAssignmentSchedule,
+  ClassQuizSchedule,
+  CourseAssessment,
+  CourseRubricAssociation,
+  CreateAssignmentScheduleData,
+  CreateQuizScheduleData,
+  Quiz,
+  RubricMatrix,
+} from '@/services/client/types.gen';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  CalendarClock,
+  CheckCircle,
+  ClipboardCheck,
+  ClipboardList,
+  Eye,
+  ListChecks,
+  Loader2,
+  PanelLeft,
+  PanelRight,
+  Pencil,
+  Plus,
+  Search,
+  Send,
+  ShieldCheck,
+  SquarePen,
+  Trash2,
+  Video
+} from 'lucide-react';
+import Link from 'next/link';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { AttachmentResourceList } from '../../../../../../../components/assessment/AttachmentResourceList';
+import { AssignmentContentPreview } from '../../../../../../../components/content-preview/AssignmentContentPreview';
+import { LessonContentPreview } from '../../../../../../../components/content-preview/LessonContentPreview';
+import { QuizContentPreview } from '../../../../../../../components/content-preview/QuizContentPreview';
+import RichTextRenderer from '../../../../../../../components/editors/richTextRenders';
+import Spinner from '../../../../../../../components/ui/spinner';
+import { toAttachmentResourceItems } from '../../../../../student/_components/student-assignment-workspace';
+import { RubricGradingMatrix, useRubricGradeSelections } from './RubricGradingMatrix';
+
+
+
+export type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
+type LessonContentItem = CourseLessonContent;
+type LessonModule = CourseLessonWithContent & {
+  course?: {
+    uuid: string;
+    name?: string | null;
+    description?: string | null;
+  } | null;
+};
+type AssignmentScheduleItem = ClassAssignmentSchedule & {
+  class_lesson_plan_uuid?: string;
+  assignment?: Assignment | null;
+};
+type QuizScheduleItem = ClassQuizSchedule & {
+  class_lesson_plan_uuid?: string;
+  grading_due_at?: Date;
+  quiz?: Quiz | null;
+};
+type AssignmentSchedulePayload = CreateAssignmentScheduleData['body'] & {
+  class_lesson_plan_uuid?: string;
+};
+type QuizSchedulePayload = CreateQuizScheduleData['body'] & {
+  class_lesson_plan_uuid?: string;
+  grading_due_at?: Date;
+};
+type NoteEntry = {
+  id: string;
+  message: string;
+  sentAt: string;
+};
+
+const CLASS_RELATED_ASSESSMENT_CATEGORIES = [
+  "Class",
+  "Lesson",
+  "Module",
+  "Unit",
+  "Workshop",
+  "Seminar",
+  "Participation",
+  "Behavior",
+  "Attendance",
+  "Presentation",
+  "Continuous Assessment",
+  "General",
+];
+
+const CLASS_RELATED_ASSESSMENT_TYPES = [
+  "Attendance",
+  "Assignment",
+  "Homework",
+  "Quiz",
+  "Performance",
+  "Continuous Assessment",
+  "Participation",
+  "Behavior",
+  "Presentation",
+  "General",
+];
+
+export const GRACE_PERIOD_MS = 60 * 60 * 1000;
+
+function formatPercentage(value?: number | null) {
+  if (typeof value !== 'number' || Number.isNaN(value)) return 'N/A';
+  return `${value}%`;
+}
+
+function getSubmissionDisplayStatus(submission?: AssignmentSubmission | null) {
+  if (!submission) return 'missing' as const;
+  if (submission.is_graded || submission.graded_at) return 'graded' as const;
+  return 'submitted' as const;
+}
+
+function formatDateTime(value?: string | Date | null) {
+  if (!value) return 'Not scheduled';
+  return dayjs(value).format('ddd, MMM D · h:mm A');
+}
+
+function formatDateTimeInput(value?: string | Date | null) {
+  if (!value) return '';
+  const date = dayjs(value);
+  return date.isValid() ? date.format('YYYY-MM-DDTHH:mm') : '';
+}
+
+function getApiToastMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+
+  if (typeof error === 'object' && error !== null) {
+    const candidate = error as {
+      message?: unknown;
+      data?: { message?: unknown; error?: unknown };
+      response?: { data?: { message?: unknown; error?: unknown } };
+    };
+
+    if (typeof candidate.message === 'string') return candidate.message;
+    if (typeof candidate.data?.message === 'string') return candidate.data.message;
+    if (typeof candidate.response?.data?.message === 'string') {
+      return candidate.response.data.message;
+    }
+    if (typeof candidate.data?.error === 'string') return candidate.data.error;
+    if (typeof candidate.response?.data?.error === 'string') return candidate.response.data.error;
+  }
+
+  return fallback;
+}
+
+function formatRange(start?: string | Date | null, end?: string | Date | null) {
+  if (!start || !end) return 'Time not available';
+  return `${dayjs(start).format('ddd, MMM D')} · ${dayjs(start).format('h:mm A')} - ${dayjs(
+    end
+  ).format('h:mm A')}`;
+}
+
+function formatEnum(value?: string | null) {
+  if (!value) return 'Not set';
+  return value
+    .toLowerCase()
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+export function toSortableNumber(value: unknown) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+function getInitials(value?: string | null) {
+  return (
+    value
+      ?.split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0]?.toUpperCase())
+      .join('') ?? 'ST'
+  );
+}
+
+function getContentTitle(content: LessonContentItem, index: number) {
+  return content.title?.trim() || `Lesson content ${index + 1}`;
+}
+
+function looksLikeHtml(str: string) {
+  return /<\/?[a-z][\s\S]*>/i.test(str);
+}
+
+function decodeHtmlEntities(value: string) {
+  if (typeof document === 'undefined') return value;
+
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = value;
+  return textarea.value;
+}
+
+function normalizeLessonTextContent(value?: string | null) {
+  const rawContent = value?.trim() ?? '';
+  if (!rawContent) {
+    return { renderedContent: '', isHtml: false };
+  }
+
+  if (looksLikeHtml(rawContent)) {
+    return { renderedContent: rawContent, isHtml: true };
+  }
+
+  const decodedContent = decodeHtmlEntities(rawContent).trim();
+  if (decodedContent && looksLikeHtml(decodedContent)) {
+    return { renderedContent: decodedContent, isHtml: true };
+  }
+
+  return { renderedContent: rawContent, isHtml: false };
+}
+
+function getStudentAttendanceState(entry: RosterEntry | null | undefined) {
+  if (entry?.enrollment?.is_attendance_marked) {
+    return entry.enrollment?.did_attend ? 'present' : 'absent';
+  }
+
+  return 'pending';
+}
+
+function getScheduleState(schedule?: { start_time?: string | Date; end_time?: string | Date }) {
+  if (!schedule?.start_time || !schedule?.end_time) return 'upcoming' as const;
+
+  if (
+    dayjs(schedule.start_time).isBefore(dayjs()) &&
+    dayjs(schedule.end_time).isAfter(dayjs())
+  ) {
+    return 'live' as const;
+  }
+
+  if (dayjs(schedule.end_time).isBefore(dayjs())) {
+    return 'completed' as const;
+  }
+
+  return 'upcoming' as const;
+}
+
+function getContentTypeName(
+  content: LessonContentItem | null | undefined,
+  contentTypeDetailsMap: Record<
+    string,
+    { name: string; mime_types: string[]; upload_category?: string; is_media_type?: boolean }
+  >
+) {
+  const itemMimeType = content?.mime_type?.toLowerCase() ?? '';
+  const itemCategory = content?.content_category?.toLowerCase() ?? '';
+
+  if (itemMimeType === 'application/pdf') return 'pdf';
+  if (itemMimeType.includes('video/')) return 'video';
+  if (itemMimeType.includes('audio/')) return 'audio';
+  if (itemMimeType.includes('image/')) return 'image';
+  if (itemMimeType.includes('text/')) return 'text';
+
+  if (itemCategory.includes('video')) return 'video';
+  if (itemCategory.includes('audio')) return 'audio';
+  if (itemCategory.includes('image')) return 'image';
+  if (itemCategory.includes('pdf')) return 'pdf';
+  if (itemCategory.includes('text')) return 'text';
+
+  const contentType = content?.content_type_uuid
+    ? contentTypeDetailsMap[content.content_type_uuid]
+    : undefined;
+
+  const normalizedName = contentType?.name?.trim().toUpperCase() ?? '';
+  const mimeTypes = contentType?.mime_types ?? [];
+  const mimeList = mimeTypes.join(' ').toLowerCase();
+
+  if (normalizedName === 'TEXT') return 'text';
+  if (normalizedName === 'PDF') return 'pdf';
+  if (normalizedName === 'LINK') return 'link';
+  if (normalizedName === 'YOUTUBE') return 'video';
+
+  if (mimeTypes.some(type => type === 'application/pdf')) return 'pdf';
+  if (mimeList.includes('video/')) return 'video';
+  if (mimeList.includes('audio/')) return 'audio';
+  if (mimeList.includes('image/')) return 'image';
+  if (mimeList.includes('text/')) return 'text';
+
+  if (normalizedName.includes('VIDEO')) return 'video';
+  if (normalizedName.includes('AUDIO')) return 'audio';
+  if (normalizedName.includes('IMAGE')) return 'image';
+
+  return normalizedName ? normalizedName.toLowerCase() : 'file';
+}
+
+function getYouTubeEmbedUrl(source: string) {
+  try {
+    const url = new URL(source);
+
+    if (url.hostname.includes('youtu.be')) {
+      return `https://www.youtube.com/embed/${url.pathname.slice(1)}`;
+    }
+
+    if (url.hostname.includes('youtube.com')) {
+      if (url.pathname.includes('/embed/')) return source;
+      if (url.pathname.includes('/shorts/')) {
+        const videoId = url.pathname.split('/shorts/')[1]?.split('/')[0];
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+      }
+      const videoId = url.searchParams.get('v');
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+    }
+  } catch { }
+
+  return '';
+}
+
+function getVimeoEmbedUrl(source: string) {
+  try {
+    const url = new URL(source);
+    if (!url.hostname.includes('vimeo.com')) return '';
+    const videoId = url.pathname.split('/').filter(Boolean)[0];
+    return videoId ? `https://player.vimeo.com/video/${videoId}` : '';
+  } catch {
+    return '';
+  }
+}
+
+export const RichTextPreview = ({ html }: { html: string }) => {
+  return (
+    <p
+      className='
+          text-foreground mx-auto w-full text-[14px] leading-7
+          [&_*]:max-w-full
+          [&_h1]:mt-12 [&_h1]:mb-5 [&_h1]:text-[1.7rem] [&_h1]:font-bold [&_h1]:leading-tight
+          [&_h1:first-child]:mt-0
+          [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-[1.35rem] [&_h2]:font-bold [&_h2]:leading-snug
+          [&_h2:first-child]:mt-0
+          [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-[1.15rem] [&_h3]:font-semibold
+          [&_h4]:mt-8 [&_h4]:mb-3 [&_h4]:text-base [&_h4]:font-semibold
+          [&_p]:text-foreground/80 [&_p]:leading-7
+          [&_p:not(:first-child)]:mt-5
+          [&_ol]:my-6 [&_ol]:list-decimal [&_ol]:pl-6
+          [&_ul]:my-6 [&_ul]:list-disc [&_ul]:pl-6
+          [&_li]:text-foreground/80 [&_li]:leading-7
+          [&_li:not(:first-child)]:mt-1.5
+          [&_li_p]:mt-0
+          [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground
+          [&_blockquote]:my-6
+          [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4
+          [&_hr]:bg-border [&_hr]:my-10 [&_hr]:h-px [&_hr]:border-0
+          [&_pre]:bg-muted/60 [&_pre]:border-border/70 [&_pre]:my-8 [&_pre]:overflow-x-auto [&_pre]:rounded-2xl [&_pre]:border [&_pre]:p-5
+          [&_pre]:text-[0.95rem] [&_pre]:leading-7
+          [&_pre_code]:bg-transparent [&_pre_code]:border-0 [&_pre_code]:p-0
+          [&_code]:bg-muted [&_code]:rounded-md [&_code]:border [&_code]:border-border/60 [&_code]:px-1.5 [&_code]:py-0.5
+          [&_code]:font-mono [&_code]:text-[0.9em]
+          [&_img]:my-8 [&_img]:rounded-2xl [&_img]:border [&_img]:border-border/60
+          [&_img]:shadow-sm
+          [&_figure]:my-8
+          [&_table]:my-8 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden
+          [&_th]:bg-muted [&_th]:border [&_th]:border-border [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold
+          [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2
+        '
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+};
+
+const TAB_ITEMS = [
+  { value: 'content', label: 'Content' },
+  { value: 'practice', label: 'Practice Activities' },
+  { value: 'assessment', label: 'Assessment Tasks' },
+];
+
+const LEFT_TAB_ITEMS = [
+  { value: 'students', label: 'Students' },
+  // { value: 'lessons', label: 'Lessons' },
+  { value: 'evaluation', label: 'Evaluation' },
+];
+
+function renderLessonContentPreview(
+  content: LessonContentItem | null,
+  contentTypeDetailsMap: Record<
+    string,
+    { name: string; mime_types: string[]; upload_category?: string; is_media_type?: boolean }
+  >
+) {
+  return <LessonContentPreview content={content} contentTypeDetailsMap={contentTypeDetailsMap} />;
+}
+
+function AssessmentTasksSection({
+  activeSchedule,
+  lessonAssignments,
+  lessonQuizzes,
+  activeScheduleAssignments,
+  activeScheduleQuizzes,
+  selectedAssignmentUuid,
+  selectedQuizUuid,
+  assignmentVisibleAt,
+  assignmentDueAt,
+  assignmentGradingDueAt,
+  quizVisibleAt,
+  quizDueAt,
+  quizGradingDueAt,
+  onAssignmentSelect,
+  onQuizSelect,
+  onAssignmentDueAtChange,
+  onAssignmentGradingDueAtChange,
+  onQuizVisibleAtChange,
+  onAssignmentVisibleAtChange,
+  onQuizDueAtChange,
+  onQuizGradingDueAtChange,
+  onAssignAssignment,
+  onAssignQuiz,
+  isAssigningAssignment,
+  isAssigningQuiz,
+}: {
+  activeSchedule: TrainingSchedule | null;
+  lessonAssignments: Assignment[];
+  lessonQuizzes: Quiz[];
+  activeScheduleAssignments: AssignmentScheduleItem[];
+  activeScheduleQuizzes: QuizScheduleItem[];
+  selectedAssignmentUuid: string;
+  selectedQuizUuid: string;
+  assignmentVisibleAt: string;
+  assignmentDueAt: string;
+  assignmentGradingDueAt: string;
+  quizVisibleAt: string
+  quizDueAt: string;
+  quizGradingDueAt: string;
+  onAssignmentSelect: (value: string) => void;
+  onQuizSelect: (value: string) => void;
+  onAssignmentVisibleAtChange: (value: string) => void;
+  onAssignmentDueAtChange: (value: string) => void;
+  onAssignmentGradingDueAtChange: (value: string) => void;
+  onQuizVisibleAtChange: (value: string) => void;
+  onQuizDueAtChange: (value: string) => void;
+  onQuizGradingDueAtChange: (value: string) => void;
+  onAssignAssignment: () => void;
+  onAssignQuiz: () => void;
+  isAssigningAssignment: boolean;
+  isAssigningQuiz: boolean;
+}) {
+  const [activeTab, setActiveTab] = React.useState<'add' | 'assigned'>('assigned');
+  const [addType, setAddType] = React.useState<'assignment' | 'quiz'>('assignment');
+
+  const [isAssignmentPreviewOpen, setIsAssignmentPreviewOpen] =
+    React.useState(false);
+
+  const [previewAssignment, setPreviewAssignment] =
+    React.useState<Assignment | null>(null);
+
+  const isSelectedAssignmentDraft =
+    !!previewAssignment && !previewAssignment.is_published;
+
+  const [isQuizPreviewOpen, setIsQuizPreviewOpen] =
+    React.useState(false);
+
+  const [previewQuiz, setPreviewQuiz] =
+    React.useState<Quiz | null>(null);
+
+  const totalAssigned = activeScheduleAssignments.length + activeScheduleQuizzes.length;
+
+  const { data: assignmentAttachmentsData } = useQuery({
+    ...getAssignmentAttachmentsOptions({
+      path: {
+        assignmentUuid: previewAssignment?.uuid ?? '',
+      },
+    }),
+    enabled: !!previewAssignment?.uuid,
+  });
+
+  // Opens the assignment sheet for a given assignment, syncing the
+  // selection state so the deadline fields/CTA in the sheet operate on
+  // the right item.
+  function openAssignmentSheet(assignment: Assignment) {
+    onAssignmentSelect(assignment.uuid ?? '');
+    setPreviewAssignment(assignment);
+    setIsAssignmentPreviewOpen(true);
+  }
+
+  function openQuizSheet(quiz: Quiz) {
+    onQuizSelect(quiz.uuid ?? '');
+    setPreviewQuiz(quiz);
+    setIsQuizPreviewOpen(true);
+  }
+
+  const assignedAssignmentUuids = new Set(
+    activeScheduleAssignments
+      .map(item => item.assignment_uuid)
+      .filter(Boolean)
+  );
+
+  const assignedQuizUuids = new Set(
+    activeScheduleQuizzes
+      .map(item => item.quiz_uuid)
+      .filter(Boolean)
+  );
+
+  const filteredLessonAssignments = lessonAssignments.filter(
+    assignment => !assignedAssignmentUuids.has(assignment.uuid)
+  );
+
+  const filteredLessonQuizzes = lessonQuizzes.filter(
+    quiz => !assignedQuizUuids.has(quiz.uuid)
+  );
+
+
+  return (
+    <div className='space-y-3 mb-20'>
+      {/* Tab bar */}
+      <div className='bg-muted flex rounded-lg p-1'>
+        <button
+          type='button'
+          onClick={() => setActiveTab('assigned')}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${activeTab === 'assigned'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
+            }`}
+        >
+          <ListChecks className='size-3.5' />
+          Assigned Tasks
+          {totalAssigned > 0 && (
+            <span className='bg-primary text-primary-foreground flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold'>
+              {totalAssigned}
+            </span>
+          )}
+        </button>
+        <button
+          type='button'
+          onClick={() => setActiveTab('add')}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${activeTab === 'add'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
+            }`}
+        >
+          <Plus className='size-3.5' />
+          Issue a new task
+        </button>
+      </div>
+
+      {/* ── ADD TASK PANEL ── */}
+      {activeTab === 'add' && (
+        <div className='space-y-3'>
+          {/* Type toggle */}
+          <div className='border-border/60 grid grid-cols-2 gap-2 rounded-lg border p-1'>
+            <button
+              type='button'
+              onClick={() => setAddType('assignment')}
+              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${addType === 'assignment'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+                }`}
+            >
+              <SquarePen className='size-3.5' />
+              Assignment
+            </button>
+            <button
+              type='button'
+              onClick={() => setAddType('quiz')}
+              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${addType === 'quiz'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+                }`}
+            >
+              <ClipboardList className='size-3.5' />
+              Quiz
+            </button>
+          </div>
+
+          {/* Assignment form */}
+          {addType === 'assignment' && (
+            <div className='border-border/60 bg-background/80 rounded-lg border p-3'>
+              <div className='mb-4 flex items-start justify-between gap-2'>
+                <div>
+                  <p className='text-sm font-semibold'>Attach assignment</p>
+                  <p className='text-muted-foreground mt-0.5 text-xs'>
+                    Pick an assignment to review its deadlines and issue it to students.
+                  </p>
+                </div>
+
+                <Badge variant='outline' className='shrink-0 text-[10px]'>
+                  Assignment
+                </Badge>
+              </div>
+
+              <div className='space-y-4'>
+                {/* Assignment list */}
+                <div className='space-y-2'>
+                  <Label className='text-xs'>Select assignment</Label>
+
+                  <div className="space-y-2 overflow-y-auto pr-1">
+                    {filteredLessonAssignments.map(assignment => {
+                      const isSelected = selectedAssignmentUuid === assignment.uuid
+                      const isDraft = !assignment.is_published
+
+                      return (
+                        <div
+                          key={assignment.uuid}
+                          className={`rounded-lg border transition-all ${isDraft
+                            ? "opacity-60"
+                            : isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-border"
+                            }`}
+                        >
+                          <div className="p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="truncate text-sm font-medium">
+                                    {assignment.title}
+                                  </p>
+
+                                  {assignment.is_published ? (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-[10px]"
+                                    >
+                                      Published
+                                    </Badge>
+                                  ) : (
+                                    <Badge className="border border-destructive/20 bg-destructive/20 text-[10px] text-destructive">
+                                      Draft
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                {/* {assignment.description && (
+                                  <div className="text-muted-foreground mt-1 text-xs">
+                                    <RichTextRenderer
+                                      htmlString={assignment.description}
+                                      maxChars={500}
+                                    />
+                                  </div>
+                                )} */}
+
+                                {/* {assignment.instructions && (
+                                  <div className="text-muted-foreground mt-2 text-[11px] italic">
+                                    <RichTextRenderer
+                                      htmlString={assignment.instructions}
+                                    />
+                                  </div>
+                                )} */}
+
+                                <div className="text-muted-foreground mt-3 flex flex-wrap gap-2 text-[11px]">
+                                  {assignment.max_points && (
+                                    <Badge variant="outline">
+                                      🎯{" "}
+                                      {assignment.points_display ??
+                                        `${assignment.max_points} points`}
+                                    </Badge>
+                                  )}
+
+                                  {((assignment.submission_types as unknown as string[] | undefined)?.length ?? 0) > 0 && (
+                                    <Badge variant="outline">
+                                      📤{" "}
+                                      {assignment.submission_summary ??
+                                        `${(assignment.submission_types as unknown as string[] | undefined)?.length ?? 0} submission types`}
+                                    </Badge>
+                                  )}
+
+                                  {assignment.assignment_category && (
+                                    <Badge variant="outline">
+                                      📝 {assignment.assignment_category}
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                {((assignment.submission_types as unknown as string[] | undefined)?.length ?? 0) > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-1">
+                                    <p className="text-muted-foreground text-xs">
+                                      Accepted Submissions:
+                                    </p>
+
+                                    {(assignment.submission_types as unknown as string[] | undefined)?.map(type => (
+                                      <Badge
+                                        key={type}
+                                        variant="secondary"
+                                        className="text-[10px]"
+                                      >
+                                        {type}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  onClick={() => openAssignmentSheet(assignment)}
+                                >
+                                  {isSelected ? 'Selected' : 'Assign'}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {filteredLessonAssignments.length === 0 && (
+                    <div className='text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm'>
+                      No assignments available yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Quiz form */}
+          {addType === 'quiz' && (
+            <div className='border-border/60 bg-background/80 rounded-lg border p-3'>
+              <div className='mb-4 flex items-start justify-between gap-2'>
+                <div>
+                  <p className='text-sm font-semibold'>Attach quiz</p>
+                  <p className='text-muted-foreground mt-0.5 text-xs'>
+                    Pick a quiz to review its deadlines and issue it to students.
+                  </p>
+                </div>
+
+                <Badge variant='outline' className='shrink-0 text-[10px]'>
+                  Quiz
+                </Badge>
+              </div>
+
+              <div className='space-y-4'>
+                {/* Quiz list */}
+                <div className='space-y-2'>
+                  <Label className='text-xs'>Select quiz</Label>
+
+                  <div className="space-y-2 overflow-y-auto pr-1">
+                    {filteredLessonQuizzes.map(quiz => {
+                      const isSelected = selectedQuizUuid === quiz.uuid
+
+                      return (
+                        <div
+                          key={quiz.uuid}
+                          className={`rounded-lg border transition-all ${isSelected
+                            ? "border-primary bg-primary/5"
+                            : "border-border"
+                            }`}
+                        >
+                          <div className="p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="truncate text-sm font-medium">
+                                    {quiz.title}
+                                  </p>
+
+                                  {quiz.is_published && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-[10px]"
+                                    >
+                                      Published
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                {/* {quiz.description && (
+                                  <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">
+                                    {quiz.description}
+                                  </p>
+                                )}
+
+                                {quiz.instructions && (
+                                  <p className="text-muted-foreground mt-2 line-clamp-2 text-[11px] italic">
+                                    {quiz.instructions}
+                                  </p>
+                                )} */}
+
+                                <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+                                  {quiz.is_timed && quiz.time_limit_minutes && (
+                                    <Badge variant="outline">
+                                      ⏱{" "}
+                                      {quiz.time_limit_display ??
+                                        `${quiz.time_limit_minutes} mins`}
+                                    </Badge>
+                                  )}
+
+                                  {quiz.passing_score && (
+                                    <Badge variant="outline">
+                                      🎯 Pass: {quiz.passing_score}%
+                                    </Badge>
+                                  )}
+
+                                  {quiz.attempts_allowed && (
+                                    <Badge variant="outline">
+                                      🔁 {quiz.attempts_allowed}{" "}
+                                      {quiz.attempts_allowed === 1
+                                        ? "Attempt"
+                                        : "Attempts"}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  onClick={() => openQuizSheet(quiz)}
+                                >
+                                  {isSelected ? 'Selected' : 'Assign'}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    {filteredLessonQuizzes.length === 0 && (
+                      <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
+                        No quizzes available yet.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── ASSIGNED PANEL ── */}
+      {activeTab === 'assigned' && (
+        <div className='space-y-2'>
+          {totalAssigned === 0 ? (
+            <div className='border-border/60 rounded-lg border border-dashed px-4 py-8 text-center'>
+              <ListChecks className='text-muted-foreground/40 mx-auto mb-2 size-8' />
+              <p className='text-muted-foreground text-sm'>No tasks issued yet.</p>
+              <p className='text-muted-foreground mt-1 text-xs'>
+                Switch to "Issue a new task" to issue out assignments or quizzes to students for this course.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Assignments */}
+              {activeScheduleAssignments.map(item => (
+                <AssignedTaskRow
+                  key={item.uuid ?? item.assignment_uuid}
+                  type='assignment'
+                  title={item.assignment?.title || 'Assignment'}
+                  dueAt={item.due_at}
+                  assignmentVisibleAt={assignmentVisibleAt}
+                  onAssignmentVisibleAtChange={onAssignmentVisibleAtChange}
+                  gradingDueAt={item.grading_due_at}
+                  assignment={item.assignment}
+                  activeSchedule={item}
+                  onViewAssignment={assignment => openAssignmentSheet(assignment)}
+                />
+              ))}
+
+              {/* Quizzes */}
+              {activeScheduleQuizzes.map(item => (
+                <AssignedTaskRow
+                  key={item.uuid ?? item.quiz_uuid}
+                  type='quiz'
+                  title={item.quiz?.title || 'Quiz'}
+                  dueAt={item.due_at}
+                  gradingDueAt={item.grading_due_at}
+                  assignmentVisibleAt={assignmentVisibleAt}
+                  onAssignmentVisibleAtChange={onAssignmentVisibleAtChange}
+                  activeSchedule={item}
+                  quiz={item.quiz}
+
+
+                  onViewQuiz={quiz => openQuizSheet(quiz)}
+                />
+              ))}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── ASSIGNMENT SHEET: details + deadlines + Issue CTA ── */}
+      <Sheet
+        open={isAssignmentPreviewOpen}
+        onOpenChange={open => {
+          setIsAssignmentPreviewOpen(open);
+          if (!open) setPreviewAssignment(null);
+        }}
+      >
+        <SheetContent
+          side='right'
+          className='w-full overflow-y-auto sm:max-w-3xl p-2 sm:p-4'
+        >
+          <div className='space-y-6'>
+            {/* Header */}
+            <div>
+              <div className='flex items-center gap-2'>
+                <h2 className='text-lg font-semibold'>
+                  {previewAssignment?.title}
+                </h2>
+
+                {previewAssignment && (
+                  previewAssignment.is_published ? (
+                    <Badge variant='secondary' className='text-[10px]'>
+                      Published
+                    </Badge>
+                  ) : (
+                    <Badge className='border border-destructive/20 bg-destructive/20 text-[10px] text-destructive'>
+                      Draft
+                    </Badge>
+                  )
+                )}
+              </div>
+
+              {previewAssignment?.description && (
+                <div className='text-muted-foreground mt-2 text-sm'>
+                  <RichTextRenderer
+                    htmlString={previewAssignment.description}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Instructions */}
+            {previewAssignment?.instructions && (
+              <div className='space-y-2'>
+                <p className='text-sm font-medium'>
+                  Instructions
+                </p>
+
+                <div className='text-muted-foreground text-sm'>
+                  <RichTextRenderer
+                    htmlString={previewAssignment.instructions}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Attachments */}
+            <div className='space-y-3'>
+              <div className='flex items-center justify-between'>
+                <p className='text-sm font-medium'>
+                  Assignment Attachments
+                </p>
+
+                <Badge variant='outline'>
+                  {assignmentAttachmentsData?.data?.length ?? 0}{' '}
+                  files
+                </Badge>
+              </div>
+
+              <AssignmentContentPreview
+                attachments={
+                  assignmentAttachmentsData?.data ?? []
+                }
+              />
+            </div>
+
+            {/* Deadlines + CTA */}
+            <div className='border-border/60 bg-muted/30 rounded-lg border p-4'>
+              <p className='text-muted-foreground mb-3 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide'>
+                <CalendarClock className='size-3' />
+                Deadlines
+              </p>
+
+              <div className='grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3'>
+                <div className='space-y-1.5'>
+                  <Label className='text-xs'>Task visible date</Label>
+
+                  <Input
+                    type='datetime-local'
+                    value={assignmentVisibleAt}
+                    onChange={e => onAssignmentVisibleAtChange(e.target.value)}
+                  />
+                </div>
+
+                <div className='space-y-1.5'>
+                  <Label className='text-xs'>Student due date</Label>
+
+                  <Input
+                    type='datetime-local'
+                    value={assignmentDueAt}
+                    onChange={e => onAssignmentDueAtChange(e.target.value)}
+                  />
+                </div>
+
+                <div className='space-y-1.5'>
+                  <Label className='text-xs'>Grading due date</Label>
+
+                  <Input
+                    type='datetime-local'
+                    value={assignmentGradingDueAt}
+                    onChange={e => onAssignmentGradingDueAtChange(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {isSelectedAssignmentDraft && (
+                <div className='mt-4 rounded-md border border-destructive/20 bg-destructive/10 p-2 text-xs text-destructive'>
+                  This assignment is still in draft mode and cannot be assigned to students until it is published.
+                </div>
+              )}
+
+              <Button
+                className='mt-4 w-full'
+                onClick={onAssignAssignment}
+                disabled={
+                  !selectedAssignmentUuid ||
+                  !activeSchedule ||
+                  isAssigningAssignment ||
+                  isSelectedAssignmentDraft
+                }
+              >
+                <SquarePen className='mr-2 size-4' />
+
+                {isAssigningAssignment ? 'Issuing…' : 'Issue Assignment'}
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* ── QUIZ SHEET: details + deadlines + Issue CTA ── */}
+      <Sheet
+        open={isQuizPreviewOpen}
+        onOpenChange={open => {
+          setIsQuizPreviewOpen(open);
+          if (!open) setPreviewQuiz(null);
+        }}
+      >
+        <SheetContent
+          side='right'
+          className='w-full overflow-y-auto sm:max-w-4xl p-2 sm:p-6'
+        >
+          <div className='space-y-6'>
+            {/* Header */}
+            <div className='border-b pb-4'>
+              <div className='flex items-center justify-between gap-3'>
+                <div>
+                  <div className='flex items-center gap-2'>
+                    <h2 className='text-xl font-semibold'>
+                      {previewQuiz?.title}
+                    </h2>
+
+                    {previewQuiz?.is_published && (
+                      <Badge variant='secondary' className='text-[10px]'>
+                        Published
+                      </Badge>
+                    )}
+                  </div>
+
+                  {previewQuiz?.instructions && (
+                    <p className='text-muted-foreground mt-2 text-sm'>
+                      {previewQuiz.instructions}
+                    </p>
+                  )}
+                </div>
+
+                <Badge variant='outline'>
+                  Quiz Preview
+                </Badge>
+              </div>
+            </div>
+
+            {/* Quiz Content */}
+            {previewQuiz?.uuid ? (
+              <QuizContentPreview
+                quizUuid={previewQuiz.uuid}
+                role='instructor'
+              />
+            ) : (
+              <div className='text-muted-foreground py-10 text-center text-sm'>
+                No quiz selected.
+              </div>
+            )}
+
+            {/* Deadlines + CTA */}
+            <div className='border-border/60 bg-muted/30 rounded-lg border p-4'>
+              <p className='text-muted-foreground mb-3 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide'>
+                <CalendarClock className='size-3' />
+                Deadlines
+              </p>
+
+              <div className='grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3'>
+                <div className='space-y-1.5'>
+                  <Label className='text-xs'>Task visible date</Label>
+
+                  <Input
+                    type='datetime-local'
+                    value={quizVisibleAt}
+                    onChange={e => onQuizVisibleAtChange(e.target.value)}
+                    className='h-9'
+                  />
+                </div>
+
+                <div className='space-y-1.5'>
+                  <Label className='text-xs'>Student due date</Label>
+
+                  <Input
+                    type='datetime-local'
+                    value={quizDueAt}
+                    onChange={e => onQuizDueAtChange(e.target.value)}
+                    className='h-9'
+                  />
+                </div>
+
+                <div className='space-y-1.5'>
+                  <Label className='text-xs'>Grading due date</Label>
+
+                  <Input
+                    type='datetime-local'
+                    value={quizGradingDueAt}
+                    onChange={e => onQuizGradingDueAtChange(e.target.value)}
+                    className='h-9'
+                  />
+                </div>
+              </div>
+
+              <Button
+                className='mt-4 w-full'
+                onClick={onAssignQuiz}
+                disabled={!selectedQuizUuid || !activeSchedule || isAssigningQuiz}
+              >
+                <ClipboardList className='mr-2 size-4' />
+
+                {isAssigningQuiz ? 'Issuing…' : 'Issue Quiz'}
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
+
+/* ── Assigned task row with inline edit / remove ── */
+function AssignedTaskRow({
+  type,
+  title,
+  assignmentVisibleAt,
+  dueAt,
+  gradingDueAt,
+  assignment,
+  activeSchedule,
+  quiz,
+  onViewAssignment,
+  onAssignmentVisibleAtChange,
+  onViewQuiz,
+}: {
+  type: 'assignment' | 'quiz';
+  title: string;
+  dueAt?: string | Date | null;
+  gradingDueAt?: string | Date | null;
+  assignmentVisibleAt: string;
+  onAssignmentVisibleAtChange: (value: string) => void;
+
+  activeSchedule: AssignmentScheduleItem | QuizScheduleItem;
+  assignment?: Assignment | null;
+  quiz?: Quiz | null;
+
+  onViewAssignment?: (assignment: Assignment) => void;
+  onViewQuiz?: (quiz: Quiz) => void;
+}) {
+
+  const qc = useQueryClient()
+  const [expanded, setExpanded] = React.useState(false);
+
+  const [visibleAt, setEditVisibleAt] = React.useState(
+    formatDateTimeInput(assignmentVisibleAt)
+  );
+
+  const [editDueAt, setEditDueAt] = React.useState(
+    formatDateTimeInput(dueAt)
+  );
+
+  const [editGradingDueAt, setEditGradingDueAt] = React.useState(
+    formatDateTimeInput(gradingDueAt)
+  );
+
+  const deleteAssignmentSchedMut = useMutation(
+    deleteAssignmentScheduleMutation()
+  );
+
+  const deleteQuizSchedMut = useMutation(
+    deleteQuizScheduleMutation()
+  );
+
+  const updateAssignmentSchedMut = useMutation(
+    updateAssignmentScheduleMutation()
+  );
+
+  const updateQuizSchedMut = useMutation(
+    updateQuizScheduleMutation()
+  );
+
+  const isDeleting =
+    deleteAssignmentSchedMut.isPending ||
+    deleteQuizSchedMut.isPending;
+
+  const handleDelete = () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to remove this ${type} from the class schedule?`
+    );
+
+    if (!confirmed) return;
+
+    if (type === 'assignment' && assignment?.uuid) {
+      deleteAssignmentSchedMut.mutate(
+        {
+          path: {
+            classUuid: activeSchedule?.class_definition_uuid as string,
+            scheduleUuid: activeSchedule?.uuid as string,
+          },
+        },
+        {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: activeSchedule?.class_definition_uuid as string } }),
+            });
+
+          },
+        }
+      );
+
+      return;
+    }
+
+    if (type === 'quiz' && quiz?.uuid) {
+      deleteQuizSchedMut.mutate(
+        {
+          path: {
+            classUuid: activeSchedule?.class_definition_uuid as string,
+            scheduleUuid: activeSchedule?.uuid as string,
+          },
+        },
+        {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getQuizSchedulesQueryKey({ path: { classUuid: activeSchedule?.class_definition_uuid as string } }),
+            });
+          },
+        }
+      );
+    }
+  };
+
+  return (
+    <div className='bg-card border-border overflow-hidden rounded-lg border'>
+      {/* Row header */}
+      <div className='flex items-center gap-3 p-3'>
+        <div
+          className={`grid size-7 shrink-0 place-items-center rounded-md ${type === 'assignment'
+            ? 'bg-primary/10 text-primary'
+            : 'bg-muted text-muted-foreground'
+            }`}
+        >
+          {type === 'assignment' ? (
+            <SquarePen className='size-3.5' />
+          ) : (
+            <ClipboardList className='size-3.5' />
+          )}
+        </div>
+
+        <div className='min-w-0 flex-1'>
+          <p className='text-sm font-medium leading-tight'>{title}</p>
+
+          <p className='text-muted-foreground mt-0.5 text-[11px]'>
+            Due {formatDateTime(dueAt)} · Grading{' '}
+            {formatDateTime(gradingDueAt)}
+          </p>
+        </div>
+
+        <div className='flex shrink-0 items-center gap-1'>
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={e => {
+              e.stopPropagation();
+
+              if (
+                type === 'assignment' &&
+                assignment &&
+                onViewAssignment
+              ) {
+                onViewAssignment(assignment);
+              }
+
+              if (
+                type === 'quiz' &&
+                quiz &&
+                onViewQuiz
+              ) {
+                onViewQuiz(quiz);
+              }
+            }}
+          >
+            <Eye className='size-3.5' />
+          </Button>
+
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            className='size-7'
+            onClick={() => setExpanded(v => !v)}
+            title='Edit dates'
+          >
+            <Pencil className='size-3.5' />
+          </Button>
+
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            className='size-7 text-destructive hover:bg-destructive/10 hover:text-destructive'
+            disabled={isDeleting}
+            onClick={handleDelete}
+            title='Remove'
+          >
+            {isDeleting ? (
+              <Loader2 className='size-3.5 animate-spin' />
+            ) : (
+              <Trash2 className='size-3.5' />
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Inline date editor */}
+      {expanded && (
+        <div className='bg-muted/30 border-border border-t p-3'>
+          <p className='text-muted-foreground mb-2 text-[11px] font-medium uppercase tracking-wide'>
+            Adjust deadlines
+          </p>
+
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs'>Task visible date</Label>
+
+              <Input
+                type='datetime-local'
+                value={visibleAt}
+                onChange={e => setEditVisibleAt(e.target.value)}
+              />
+            </div>
+
+            <div className='space-y-1.5'>
+              <Label className='text-xs'>Student due date</Label>
+
+              <Input
+                type='datetime-local'
+                value={editDueAt}
+                onChange={e => setEditDueAt(e.target.value)}
+                className='h-8 text-xs'
+              />
+            </div>
+
+            <div className='space-y-1.5'>
+              <Label className='text-xs'>Grading due date</Label>
+
+              <Input
+                type='datetime-local'
+                value={editGradingDueAt}
+                onChange={e => setEditGradingDueAt(e.target.value)}
+                className='h-8 text-xs'
+              />
+            </div>
+          </div>
+
+          <div className='mt-3 flex justify-end gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='h-7 text-xs'
+              onClick={() => setExpanded(false)}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type='button'
+              size='sm'
+              className='h-7 text-xs'
+              onClick={() => {
+                const visibleAtDate = visibleAt ? new Date(visibleAt) : undefined;
+                const dueAtDate = editDueAt ? new Date(editDueAt) : undefined;
+                const gradingDueAtDate = editGradingDueAt ? new Date(editGradingDueAt) : undefined;
+
+                if (type === 'assignment') {
+                  updateAssignmentSchedMut.mutate(
+                    {
+                      path: {
+                        classUuid: activeSchedule?.class_definition_uuid as string,
+                        scheduleUuid: activeSchedule?.uuid as string,
+                      },
+                      body: {
+                        class_definition_uuid: activeSchedule?.class_definition_uuid,
+                        lesson_uuid: activeSchedule?.lesson_uuid,
+                        assignment_uuid: (activeSchedule as { assignment_uuid?: string })?.assignment_uuid,
+                        visible_at: visibleAtDate,
+                        due_at: dueAtDate,
+                        grading_due_at: gradingDueAtDate,
+                        timezone: activeSchedule?.timezone ?? 'Africa/Nairobi',
+                        release_strategy: activeSchedule?.release_strategy,
+                        max_attempts: (activeSchedule as { max_attempts?: number })?.max_attempts,
+                        instructor_uuid: activeSchedule?.instructor_uuid,
+                        notes: activeSchedule?.notes,
+                      },
+                    },
+                    {
+                      onSuccess: () => {
+                        qc.invalidateQueries({
+                          queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: activeSchedule?.class_definition_uuid as string } }),
+                        });
+                        toast.success('Assignment schedule updated.');
+                        setExpanded(false);
+                      },
+                      onError: error => {
+                        toast({
+                          title: 'Failed to update schedule',
+                          description: getApiToastMessage(error, 'Could not update assignment schedule.'),
+                          variant: 'destructive',
+                        });
+                      },
+                    }
+                  );
+
+                  return;
+                }
+
+                if (type === 'quiz') {
+                  updateQuizSchedMut.mutate(
+                    {
+                      path: {
+                        classUuid: activeSchedule?.class_definition_uuid as string,
+                        scheduleUuid: activeSchedule?.uuid as string,
+                      },
+                      body: {
+                        class_definition_uuid: activeSchedule?.class_definition_uuid,
+                        lesson_uuid: activeSchedule?.lesson_uuid,
+                        quiz_uuid: (activeSchedule as { quiz_uuid?: string })?.quiz_uuid,
+                        visible_at: visibleAtDate,
+                        due_at: dueAtDate,
+                        grading_due_at: gradingDueAtDate,
+                        timezone: activeSchedule?.timezone ?? 'Africa/Nairobi',
+                        release_strategy: activeSchedule?.release_strategy,
+                        instructor_uuid: activeSchedule?.instructor_uuid,
+                        notes: activeSchedule?.notes,
+                        time_limit_override: (activeSchedule as { time_limit_override?: number })?.time_limit_override,
+                        attempt_limit_override: (activeSchedule as { attempt_limit_override?: number })?.attempt_limit_override,
+                        passing_score_override: (activeSchedule as { passing_score_override?: number })?.passing_score_override,
+                      },
+                    },
+                    {
+                      onSuccess: () => {
+                        qc.invalidateQueries({
+                          queryKey: getQuizSchedulesQueryKey({ path: { classUuid: activeSchedule?.class_definition_uuid as string } }),
+                        });
+                        toast.success('Quiz schedule updated.');
+                        setExpanded(false);
+                      },
+                      onError: error => {
+                        toast({
+                          title: 'Failed to update schedule',
+                          description: getApiToastMessage(error, 'Could not update quiz schedule.'),
+                          variant: 'destructive',
+                        });
+                      },
+                    }
+                  );
+                }
+              }}
+            >
+              Save changes
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Shape-matching skeleton for the whole console shell (header + roster rail + main),
+// shown only while the primary class-details query is in flight.
+function ConsoleSkeleton() {
+  return (
+    <main className='text-foreground fixed inset-0 z-50 flex flex-col overflow-hidden bg-background'>
+      <header className='border-border/70 bg-card/95 flex h-16 shrink-0 items-center justify-between gap-3 border-b px-3 shadow-sm sm:px-4'>
+        <div className='flex items-center gap-3'>
+          <Skeleton className='size-8 rounded-full' />
+          <div className='space-y-1.5'>
+            <Skeleton className='h-4 w-40' />
+            <Skeleton className='h-3 w-24' />
+          </div>
+        </div>
+        <Skeleton className='hidden h-8 w-full max-w-xl rounded-full md:block' />
+        <Skeleton className='size-8 rounded-full' />
+      </header>
+      <section className='grid min-h-0 flex-1 gap-0 overflow-hidden xl:grid-cols-[420px_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]'>
+        <aside className='border-border/70 hidden space-y-3 border-r p-3 xl:block'>
+          <Skeleton className='h-9 w-full rounded-lg' />
+          <Skeleton className='h-9 w-full rounded-md' />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className='h-12 w-full rounded-md' />
+          ))}
+        </aside>
+        <div className='space-y-4 p-4'>
+          <Skeleton className='h-12 w-full rounded-lg' />
+          <Skeleton className='h-[60vh] w-full rounded-lg' />
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function LessonContentSkeleton() {
+  return (
+    <div className='mx-auto mb-40 space-y-4 p-2 md:p-2'>
+      <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+        <div className='mt-2 flex flex-wrap items-center gap-2 border-b p-4'>
+          <Skeleton className='h-5 w-20 rounded-full' />
+          <Skeleton className='h-4 w-16' />
+          <Skeleton className='h-4 w-24' />
+        </div>
+        <div className='border-border/70 space-y-2 border-b p-4'>
+          <Skeleton className='h-3 w-32' />
+          <Skeleton className='h-6 w-2/3' />
+        </div>
+        <div className='space-y-3 p-4'>
+          <Skeleton className='h-4 w-full' />
+          <Skeleton className='h-4 w-5/6' />
+          <Skeleton className='h-64 w-full rounded-md' />
+        </div>
+      </article>
+    </div>
+  );
+}
+
+function RosterListSkeleton() {
+  return (
+    <div className='space-y-1.5 p-2'>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className='flex items-center gap-2.5 rounded-md border border-transparent p-2.5'>
+          <Skeleton className='size-8 rounded-full' />
+          <div className='flex-1 space-y-1.5'>
+            <Skeleton className='h-3.5 w-3/4' />
+            <Skeleton className='h-3 w-1/3' />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function RosterPanel({
+  activeInstanceStudentsCount,
+  filteredRoster,
+  activeInstanceStudents,
+  activeSchedule,
+  studentSearch,
+  setStudentSearch,
+  selectedStudentId,
+  onSelectStudent,
+  onMarkAllPresent,
+  isMarkingAllAttendance,
+  markingStudentId,
+  onMarkAttendance,
+  isMarkingAttendance,
+  isLoadingRoster
+
+}: {
+  activeInstanceStudentsCount: number;
+  filteredRoster: RosterEntry[];
+  activeInstanceStudents: RosterEntry[];
+  activeSchedule: TrainingSchedule | null;
+  studentSearch: string;
+  setStudentSearch: (value: string) => void;
+  selectedStudentId: string;
+  onSelectStudent: (entry: RosterEntry) => void;
+  onMarkAllPresent: () => void;
+  isMarkingAllAttendance: boolean;
+  markingStudentId: string;
+  onMarkAttendance: (entry: RosterEntry, attended: boolean) => void;
+  isMarkingAttendance: boolean;
+  isLoadingRoster?: boolean;
+}) {
+
+  const isSessionExpired = useMemo(() => {
+    if (!activeSchedule?.end_time) return false;
+
+    const endTime = new Date(activeSchedule.end_time).getTime();
+
+    return endTime + GRACE_PERIOD_MS < Date.now();
+  }, [activeSchedule?.end_time]);
+
+  const presentCount = activeInstanceStudents.filter(
+    entry => getStudentAttendanceState(entry) === 'present'
+  ).length;
+
+  const absentCount = activeInstanceStudents.filter(
+    entry => getStudentAttendanceState(entry) === 'absent'
+  ).length;
+
+  const pendingCount = activeInstanceStudents.filter(
+    entry => getStudentAttendanceState(entry) === 'pending'
+  ).length;
+
+  const total = presentCount + pendingCount + absentCount;
+
+  const presentPct = total ? (presentCount / total) * 100 : 0;
+  const pendingPct = total ? (pendingCount / total) * 100 : 0;
+  const absentPct = total ? (absentCount / total) * 100 : 0;
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="border-border/70 bg-card/90 space-y-3 border-b p-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-foreground text-sm font-semibold">
+              All Students
+            </p>
+            <p className="text-muted-foreground text-xs">
+              Attendance rubric tracker
+            </p>
+          </div>
+
+          <Badge variant="outline" className="bg-primary/5 text-primary">
+            {activeInstanceStudentsCount}
+          </Badge>
+        </div>
+
+        {/* MARK ALL PRESENT BUTTON */}
+        {/* <Button
+          size="sm"
+          variant="outline"
+          className="w-full"
+          disabled={
+            isMarkingAllAttendance ||
+            pendingCount === 0 ||
+            isSessionExpired
+          }
+          onClick={onMarkAllPresent}
+        >
+          Mark All Present
+        </Button> */}
+
+        {/* STATUS MESSAGE (NEW UX) */}
+        <div
+          className={`text-xs text-center leading-snug ${isSessionExpired ? 'text-destructive' : 'text-muted-foreground'
+            }`}
+        >
+          {isSessionExpired && (
+            <span>
+              Attendance window closed. This session has exceeded its scheduled end time.
+            </span>
+          )}
+        </div>
+
+        {/* SEARCH */}
+        <div className="relative">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <Input
+            value={studentSearch}
+            onChange={event => setStudentSearch(event.target.value)}
+            placeholder="Search students"
+            className="bg-background/80 h-9 rounded-md pl-9 text-sm"
+          />
+        </div>
+      </div>
+
+      {/* ROSTER LIST */}
+      <ScrollArea className="min-h-0 flex-1 bg-background">
+        {isLoadingRoster && filteredRoster.length === 0 ? (
+          <RosterListSkeleton />
+        ) : (
+          <div className="space-y-1.5 p-2">
+            {filteredRoster.map((entry: RosterEntry) => {
+              const attendanceState = getStudentAttendanceState(entry);
+              const isSelected =
+                selectedStudentId === (entry.enrollment?.uuid ?? '');
+
+              const enrollmentId = entry.enrollment?.uuid ?? '';
+              const isLoading = markingStudentId === enrollmentId;
+
+              const isPresent =
+                attendanceState === 'present' ||
+                entry.enrollment?.is_attendance_marked;
+
+              return (
+                <button
+                  type="button"
+                  key={
+                    entry.enrollment?.uuid ??
+                    entry.user?.uuid ??
+                    entry.student?.uuid
+                  }
+                  onClick={() => onSelectStudent(entry)}
+                  className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected
+                    ? 'border-primary/30 bg-primary/8'
+                    : 'hover:bg-primary/5 border-transparent'
+                    }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <Avatar className="border-border/60 size-8 border">
+                      <AvatarImage
+                        src={entry.user?.profile_image_url ?? undefined}
+                        alt={entry.user?.full_name || 'Student'}
+                      />
+                      <AvatarFallback>
+                        {getInitials(entry.user?.full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="min-w-0 flex-1 flex-row flex-wrap items-center justify-between">
+                      <p className="truncate text-sm font-semibold">
+                        {entry.user?.full_name || 'Unknown student'}
+                      </p>
+
+                      <div>
+                        {isPresent ? (
+                          <span className="text-success text-[11px] font-medium">
+                            Present
+                          </span>
+                        ) : (
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onMarkAttendance(entry, true);
+                            }}
+                            disabled={isLoading}
+                            size="sm"
+                            className="rounded h-6 text-[11px]"
+                          >
+                            {isLoading ? <Spinner /> : 'Admit'}
+                          </Button>
+                        )}
+                      </div>
+
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+
+            {filteredRoster.length === 0 && (
+              <div className="text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm">
+                {activeSchedule
+                  ? 'No learners are attached to this class instance yet.'
+                  : 'No class instance was selected.'}
+              </div>
+            )}
+          </div>
+        )}
+      </ScrollArea>
+
+      {/* FOOTER STATS */}
+      <div className="border-border/70 bg-card/90 border-t p-3">
+        <p className="text-xs text-muted-foreground mb-2">
+          Attendance rubric tracker
+        </p>
+
+        <div className="grid grid-cols-2 items-center gap-3">
+          <div
+            className="grid size-[72px] shrink-0 place-items-center rounded-full"
+            style={{
+              background: `conic-gradient(
+                color-mix(in srgb, var(--primary) 85%, var(--background)) 0 ${presentPct}%,
+                color-mix(in srgb, var(--warning) 70%, var(--background)) ${presentPct}% ${presentPct + pendingPct}%,
+                color-mix(in srgb, var(--destructive) 80%, var(--background)) ${presentPct + pendingPct}% 100%
+              )`,
+            }}
+          >
+            <div className="grid size-[62px] place-items-center rounded-full bg-card text-center">
+              <div>
+                <div className="text-[0.9rem] font-semibold leading-none text-foreground">
+                  {total}
+                </div>
+                <div className="mt-0.5 text-[0.5rem] uppercase tracking-wide text-muted-foreground">
+                  students
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 text-xs">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-sm bg-primary" />
+                <p className="text-muted-foreground">Present</p>
+              </div>
+              <p className="font-semibold text-foreground">
+                {presentCount}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-sm bg-warning/70" />
+                <p className="text-muted-foreground">Pending</p>
+              </div>
+              <p className="font-semibold text-foreground">
+                {pendingCount}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-sm bg-destructive" />
+                <p className="text-muted-foreground">Absent</p>
+              </div>
+              <p className="font-semibold text-foreground">
+                {absentCount}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EvaluationSummary({
+  activeInstanceStudentsCount,
+  selectedStudent,
+  selectedStudentSubmissionsCount,
+  courseAssessmentsCount,
+}: {
+  activeInstanceStudentsCount: number;
+  selectedStudent: RosterEntry | null;
+  selectedStudentSubmissionsCount: number;
+  courseAssessmentsCount: number;
+}) {
+  return (
+    <div className='space-y-4'>
+      <div className='space-y-1'>
+        <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+          Selected student
+        </p>
+        <h3 className='text-foreground text-lg font-semibold'>
+          {selectedStudent?.user?.full_name || 'No student selected'}
+        </h3>
+        <p className='text-muted-foreground text-sm'>
+          Review attendance, submissions, and rubric context for the learner chosen on the left.
+        </p>
+      </div>
+
+      <div className='grid gap-3 sm:grid-cols-3'>
+        <div className='rounded-md border border-border/60 bg-background/80 p-3'>
+          <p className='text-muted-foreground text-xs'>Students</p>
+          <p className='text-foreground mt-1 text-lg font-semibold'>
+            {activeInstanceStudentsCount}
+          </p>
+        </div>
+
+        <div className='rounded-md border border-border/60 bg-background/80 p-3'>
+          <p className='text-muted-foreground text-xs'>Assignments</p>
+          <p className='text-foreground mt-1 text-lg font-semibold'>
+            {selectedStudentSubmissionsCount}
+          </p>
+        </div>
+
+        <div className='rounded-md border border-border/60 bg-background/80 p-3'>
+          <p className='text-muted-foreground text-xs'>Assessments</p>
+          <p className='text-foreground mt-1 text-lg font-semibold'>
+            {courseAssessmentsCount}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AssessmentRubricCard({
+  assessment,
+  rubric,
+}: {
+  assessment: {
+    uuid?: string;
+    title: string;
+    description?: string | null;
+    assessment_type?: string;
+    assessment_category?: string;
+    is_required?: boolean;
+    weight_percentage?: number;
+  };
+  rubric: RubricMatrix | null;
+}) {
+  const { selections, setSelection } = useRubricGradeSelections();
+
+  return (
+    <div className='border-border/70 bg-background/80 rounded-md border p-3'>
+      <div className='mb-2 flex items-center justify-between gap-3'>
+        <div className='min-w-0'>
+          <p className='truncate text-sm font-semibold'>{assessment.title}</p>
+          <p className='text-muted-foreground text-xs'>
+            {formatEnum(assessment.assessment_type)} ·{' '}
+            {assessment.is_required ? 'Required' : 'Optional'}
+          </p>
+        </div>
+        <span className='text-primary text-sm font-semibold'>
+          {formatPercentage(assessment.weight_percentage)}
+        </span>
+      </div>
+
+      {assessment.description ? (
+        <p className='text-muted-foreground mb-3 text-xs'>{assessment.description}</p>
+      ) : null}
+
+      <div className="space-y-2 rounded-md border border-dashed p-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-medium">
+            {rubric?.rubric.title || 'No rubric attached'}
+          </p>
+          {rubric?.rubric.max_score ? (
+            <Badge variant='outline'>Max {rubric.rubric.max_score}</Badge>
+          ) : null}
+        </div>
+
+        {rubric ? (
+          <div className="w-full overflow-x-auto">
+            <RubricGradingMatrix
+              matrix={rubric}
+              selections={selections}
+              onChange={setSelection}
+            />
+          </div>
+        ) : (
+          <p className='text-muted-foreground text-xs'>
+            This assessment has no rubric matrix linked yet.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+function SubmissionPanel({
+  activeSchedule,
+  activeInstanceStudentsCount,
+  selectedContentType,
+  selectedStudent,
+  courseAssessments,
+  rubricAssociations,
+  rubricMatrices,
+  noteDraft,
+  sentNotes,
+  selectedStudentSubmissions,
+  onNoteDraftChange,
+  handleEndClass,
+  isEndClassConfirmOpen,
+  setIsEndClassConfirmOpen,
+  isEndingClass,
+  onSendNote,
+  onMarkAttendance,
+  isMarkingAttendance,
+  onStartClass,
+  remainingTime,
+  onEndClass,
+  isStartingClass,
+}: {
+  activeSchedule: TrainingSchedule | null;
+  activeInstanceStudentsCount: number;
+  selectedContentType: string;
+  selectedStudent: RosterEntry | null;
+  courseAssessments: CourseAssessment[];
+  rubricAssociations: CourseRubricAssociation[];
+  rubricMatrices: Record<string, RubricMatrix | null>;
+  noteDraft: string;
+  handleEndClass: () => void;
+  isEndClassConfirmOpen: boolean;
+  setIsEndClassConfirmOpen: (value: boolean) => void;
+  sentNotes: NoteEntry[];
+  selectedStudentSubmissions: Array<{
+    scheduleId: string;
+    assignmentTitle: string;
+    dueAt?: Date;
+    submission: AssignmentSubmission | null;
+  }>;
+  onNoteDraftChange: (value: string) => void;
+  onSendNote: () => void;
+  onMarkAttendance: (entry: RosterEntry, attended: boolean) => void;
+  isMarkingAttendance: boolean;
+  onStartClass: () => void;
+  onEndClass: () => void;
+  remainingTime: string;
+  isStartingClass: boolean;
+  isEndingClass: boolean;
+}) {
+  const [activePanel, setActivePanel] = useState<'submissions' | 'trackers' | 'notes'>(
+    'submissions'
+  );
+
+  const selectedStudentAttendanceState = getStudentAttendanceState(selectedStudent);
+  const panelTabs = [
+    { value: 'submissions' as const, label: 'Submissions', icon: ClipboardCheck },
+    { value: 'trackers' as const, label: 'Trackers', icon: ShieldCheck },
+    // { value: 'notes' as const, label: 'Notes', icon: MessageSquareText },
+  ];
+
+  const isSessionExpired = useMemo(() => {
+    if (!activeSchedule?.end_time) return false;
+
+    const endTime = new Date(activeSchedule.end_time).getTime();
+
+    return endTime + GRACE_PERIOD_MS < Date.now();
+  }, [activeSchedule?.end_time]);
+
+  const attendanceActionDisabled =
+    isMarkingAttendance ||
+    !selectedStudent?.enrollment?.uuid ||
+    isSessionExpired;
+
+  const handleAttendanceClick = (entry: RosterEntry, attended: boolean) => {
+    if (isSessionExpired) {
+      toast({
+        title: 'Session ended',
+        description:
+          'This class session has elapsed. Attendance can no longer be recorded.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    onMarkAttendance(entry, attended);
+  };
+
+  const classAssessments = courseAssessments.filter((assessment) => {
+    const category = assessment.assessment_category;
+    const type = assessment.assessment_type;
+
+    return (
+      category === "General" ||
+      type === "General" ||
+      CLASS_RELATED_ASSESSMENT_CATEGORIES.includes(category) ||
+      CLASS_RELATED_ASSESSMENT_TYPES.includes(type)
+    );
+  });
+
+  return (
+    <aside className='bg-card/95 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden mb-12'>
+      <div className='border-border/70 border-b p-3'>
+        <div className='mb-3 flex min-w-0 items-center justify-between gap-3'>
+          <div className='min-w-0'>
+            <p className='text-sm font-semibold'>Class Work</p>
+            <p className='text-muted-foreground truncate text-xs'>
+              {activeInstanceStudentsCount} students · {selectedContentType}
+            </p>
+          </div>
+        </div>
+        <div className='bg-muted grid grid-cols-3 gap-1 rounded-md p-1 dark:bg-muted/60'>
+          {panelTabs.map(tab => {
+            const Icon = tab.icon;
+            const isActive = activePanel === tab.value;
+
+            return (
+              <Button
+                key={tab.value}
+                type="button"
+                variant="ghost"
+                onClick={() => setActivePanel(tab.value)}
+                className={`
+        flex h-8 min-w-0 items-center justify-center gap-1.5
+        overflow-hidden rounded-md px-2 py-1.5
+        text-[11px] font-medium transition-all
+
+        ${isActive
+                    ? `
+              bg-background text-foreground shadow-sm
+              dark:bg-primary
+              dark:text-primary-foreground
+              dark:shadow-md
+            `
+                    : `
+              text-muted-foreground
+              hover:bg-background/80
+              hover:text-foreground
+
+              dark:text-muted-foreground/70
+              dark:hover:bg-muted/50
+              dark:hover:text-foreground
+            `
+                  }
+      `}
+              >
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{tab.label}</span>
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+
+      <ScrollArea className='min-h-0 flex-1'>
+        <div className='max-w-full space-y-3 p-3'>
+          <div className='border-border/70 bg-background/90 rounded-md border p-3'>
+            <div className='flex items-start justify-between gap-3'>
+              <div className='min-w-0'>
+                <p className='text-muted-foreground text-[11px] tracking-[0.16em] uppercase'>
+                  Attendance
+                </p>
+                <p className='mt-1 truncate text-sm font-semibold'>
+                  {selectedStudent?.user?.full_name || 'Select a student from the roster'}
+                </p>
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  {selectedStudent
+                    ? selectedStudent.user?.email || formatEnum(selectedStudent.enrollment?.status)
+                    : activeSchedule
+                      ? 'Choose a learner to mark this class instance.'
+                      : 'Select a class instance to begin attendance.'}
+                </p>
+              </div>
+              {selectedStudent ? (
+                <Badge
+                  variant={
+                    selectedStudentAttendanceState === 'present'
+                      ? 'success'
+                      : selectedStudentAttendanceState === 'absent'
+                        ? 'destructive'
+                        : 'secondary'
+                  }
+                  className='shrink-0 capitalize'
+                >
+                  {selectedStudentAttendanceState}
+                </Badge>
+              ) : null}
+            </div>
+
+            {!isSessionExpired &&
+              <div className='mt-3 flex gap-2'>
+                <Button
+                  size='sm'
+                  className='flex-1'
+                  disabled={selectedStudentAttendanceState === 'present'}
+                  onClick={() =>
+                    selectedStudent && handleAttendanceClick(selectedStudent, true)
+                  }              >
+                  Admit
+                </Button>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  className='flex-1'
+                  disabled={attendanceActionDisabled}
+                  onClick={() =>
+                    selectedStudent && handleAttendanceClick(selectedStudent, false)
+                  }              >
+                  Mark Absent
+                </Button>
+              </div>}
+
+
+            {isSessionExpired ? (
+              <p className="text-xs text-destructive mt-2">
+                This class session has elapsed. Attendance is locked.
+              </p>
+            ) : null}
+
+            {selectedStudent?.enrollment?.attendance_marked_at ? (
+              <p className='text-muted-foreground mt-3 text-xs'>
+                Marked {formatDateTime(selectedStudent.enrollment.attendance_marked_at)}
+              </p>
+            ) : null}
+
+            {!selectedStudent && activeInstanceStudentsCount > 0 ? (
+              <p className='text-muted-foreground mt-3 text-xs'>
+                Select a student on the left to mark attendance for this session.
+              </p>
+            ) : null}
+
+            {!selectedStudent && !activeInstanceStudentsCount ? (
+              <p className='text-muted-foreground mt-3 text-xs'>
+                No students are attached to this class instance yet.
+              </p>
+            ) : null}
+          </div>
+
+          {activePanel === 'submissions' ? (
+            <>
+              <div className='bg-background/80 min-w-0 rounded-md border p-3'>
+                <p className='text-muted-foreground text-sm font-bold'>
+                  {selectedStudent
+                    ? `Showing assignment submissions for ${selectedStudent.user?.full_name ?? 'the selected student'}.`
+                    : 'Select a student to review their lesson submissions.'}
+                </p>
+                <div className='mb-3 flex items-center justify-between text-xs'>
+                  <span className='text-muted-foreground'>Due date</span>
+                  <span className='truncate pl-2 text-right font-semibold'>
+                    {formatDateTime(activeSchedule?.end_time)}
+                  </span>
+                </div>
+
+              </div>
+
+              {selectedStudentSubmissions.length > 0 ? (
+                selectedStudentSubmissions.map((item, index) => {
+                  const status = getSubmissionDisplayStatus(item.submission);
+                  const attachments = item.submission?.attachments ?? [];
+
+                  return (
+                    <div
+                      key={item.scheduleId}
+                      className='border-border/70 bg-background/80 min-w-0 overflow-hidden rounded-md border p-3'
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <p className="flex-1 min-w-0 truncate text-sm font-semibold">
+                            {item.assignmentTitle}
+                          </p>
+
+                          <div>
+                            <Badge
+                              variant={
+                                status === 'graded'
+                                  ? 'success'
+                                  : status === 'submitted'
+                                    ? 'warning'
+                                    : 'destructive'
+                              }
+                              className="shrink-0 max-w-[80px] truncate"
+                            >
+                              {status}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <p className="text-muted-foreground truncate text-xs">
+                          Due {formatDateTime(item.dueAt)}
+                        </p>
+                      </div>
+
+                      <p className='text-muted-foreground mt-2 text-xs'>
+                        {item.submission
+                          ? item.submission.grade_display ||
+                          item.submission.submission_status_display ||
+                          (item.submission.percentage != null
+                            ? `${item.submission.percentage}% recorded`
+                            : 'Submission received')
+                          : 'No submission recorded for this assignment yet.'}
+                      </p>
+
+                      {item.submission?.submitted_at ? (
+                        <p className='text-muted-foreground mt-1 text-xs'>
+                          Submitted {formatDateTime(item.submission.submitted_at)}
+                        </p>
+                      ) : null}
+
+                      {item.submission && (
+                        <div className='mt-3 space-y-2'>
+                          <p className='text-foreground text-sm font-medium'>
+                            Uploaded files
+                          </p>
+
+                          <AttachmentResourceList
+                            attachments={toAttachmentResourceItems(
+                              attachments as AssignmentSubmissionAttachment[]
+                            )}
+                            emptyMessage='No files were uploaded with the latest submission.'
+                            previewLabel='Read file'
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className='text-muted-foreground rounded-md border border-dashed p-5 text-sm'>
+                  {selectedStudent
+                    ? 'No assignment submissions are available for the selected lesson and student yet.'
+                    : 'Submission tracking will appear once a student is selected.'}
+                </div>
+              )}
+            </>
+          ) : null}
+
+
+          {activePanel === 'trackers' ? (
+            <div className='space-y-3'>
+              {classAssessments.length > 0 ? (
+                classAssessments.map(assessment => {
+                  const rubric = assessment.rubric_uuid
+                    ? rubricMatrices[assessment.rubric_uuid]
+                    : null;
+
+                  return (
+                    <AssessmentRubricCard
+                      key={assessment.uuid ?? assessment.title}
+                      assessment={assessment}
+                      rubric={rubric}
+                    />
+                  );
+                })
+              ) : (
+                <div className='text-muted-foreground rounded-md border border-dashed p-5 text-sm'>
+                  No course assessments are configured for this course yet.
+                </div>
+              )}
+
+              {/* {rubricAssociations.length > 0 ? (
+                <div className='border-border/70 bg-background/80 rounded-md border p-3'>
+                  <p className='text-sm font-semibold'>Course rubric associations</p>
+                  <div className='mt-3 space-y-2'>
+                    {rubricAssociations.map(association => {
+                      const rubric = rubricMatrices[association.rubric_uuid];
+                      return (
+                        <div
+                          key={association.uuid ?? association.rubric_uuid}
+                          className='rounded-md border border-dashed p-3'
+                        >
+                          <div className='flex items-center justify-between gap-2'>
+                            <p className='truncate text-xs font-medium'>
+                              {rubric?.rubric.title || association.rubric_uuid}
+                            </p>
+                            {association.is_primary_rubric ? (
+                              <Badge variant='success'>Primary</Badge>
+                            ) : null}
+                          </div>
+                          <p className='text-muted-foreground mt-1 text-[11px]'>
+                            {association.usage_context || rubric?.rubric.rubric_type || 'General use'}
+                          </p>
+                          {rubric ? (
+                            <div className='mt-2'>
+                              <RubricSummaryPreview matrix={rubric} />
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null} */}
+            </div>
+          ) : null}
+
+          {activePanel === 'notes' ? (
+            <div className='space-y-3'>
+              <div className='border-border/70 bg-background/80 rounded-md border p-3'>
+                <p className='text-sm font-semibold'>Send note to all students</p>
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  Share a class-wide note for the current training session.
+                </p>
+                <Textarea
+                  value={noteDraft}
+                  onChange={event => onNoteDraftChange(event.target.value)}
+                  placeholder='Type a note for all students'
+                  className='mt-3 min-h-28'
+                />
+                <Button onClick={onSendNote} className='mt-3 w-full'>
+                  <Send className='mr-2 h-4 w-4' />
+                  Send Note
+                </Button>
+                <p className='text-muted-foreground mt-2 text-[11px]'>
+                  Notes are currently kept in-session until a dedicated notes API is available.
+                </p>
+              </div>
+              {sentNotes.map(note => (
+                <div
+                  key={note.id}
+                  className='border-border/70 bg-background/80 rounded-md border p-3'
+                >
+                  <p className='text-sm'>{note.message}</p>
+                  <p className='text-muted-foreground mt-2 text-[11px]'>
+                    Sent {formatDateTime(note.sentAt)}
+                  </p>
+                </div>
+              ))}
+              {sentNotes.length === 0 ? (
+                <div className='text-muted-foreground rounded-md border border-dashed p-5 text-sm'>
+                  Session notes you send will appear here.
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </ScrollArea>
+
+      <div className='border-border/70 border-t p-3'>
+        {(() => {
+          const status = activeSchedule?.status?.toUpperCase();
+          const isCancelled = status === 'CANCELLED';
+          const isBlocked = status === 'BLOCKED';
+
+          const isConcluded =
+            Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
+
+          const canStart =
+            !!activeSchedule &&
+            !isCancelled &&
+            !isBlocked &&
+            !isConcluded &&
+            (activeSchedule.can_be_started ?? status === 'SCHEDULED');
+
+          const canEnd =
+            !!activeSchedule &&
+            !isCancelled &&
+            !isBlocked &&
+            !isConcluded &&
+            (activeSchedule.can_be_ended ?? status === 'ONGOING');
+
+          const isLifecycleLoading = isStartingClass || isEndingClass;
+
+          const statusStyles = {
+            SCHEDULED:
+              'bg-primary/10 text-primary border border-primary/20',
+
+            ONGOING:
+              'bg-success/10 text-success border border-success/20',
+
+            COMPLETED:
+              'bg-muted text-muted-foreground border border-border',
+
+            CANCELLED:
+              'bg-destructive/10 text-destructive border border-destructive/20',
+
+            BLOCKED:
+              'bg-warning/10 text-warning border border-warning/20',
+          };
+
+          return (
+            <div className='flex flex-col gap-3'>
+              {/* Action button */}
+              {isConcluded ? (
+                <Button disabled className='h-10 w-full gap-2 rounded-md'>
+                  <CheckCircle className='h-4 w-4' />
+                  Class ended
+                </Button>
+              ) : canEnd ? (
+                <Button
+                  variant='destructive'
+                  className='h-10 w-full gap-2 rounded-md'
+                  disabled={isLifecycleLoading}
+                  onClick={onEndClass}
+                >
+                  {isEndingClass ? (
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                  ) : (
+                    <CheckCircle className='h-4 w-4' />
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <span>End Class</span>
+                    {remainingTime && (
+                      <span className="rounded px-2 py-0.5 text-xs">
+                        {remainingTime}
+                      </span>
+                    )}
+                  </div>
+                </Button>
+              ) : (
+                <Button
+                  className='h-10 w-full gap-2 rounded-md'
+                  disabled={!canStart || isLifecycleLoading}
+                  onClick={onStartClass}
+                >
+                  {isStartingClass ? (
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                  ) : (
+                    <Video className='h-4 w-4' />
+                  )}
+
+                  {isCancelled
+                    ? 'Cancelled'
+                    : isBlocked
+                      ? 'Blocked'
+                      : !activeSchedule
+                        ? 'Select a session'
+                        : 'Start Class'}
+                </Button>
+              )}
+            </div>
+          );
+        })()}
+      </div>
+
+      <ConfirmModal
+        open={isEndClassConfirmOpen}
+        setOpen={setIsEndClassConfirmOpen}
+        title='End this class?'
+        description='This will conclude the selected class session and stop learners from resuming it until it is started again.'
+        confirmText={isEndingClass ? 'Ending...' : 'End Class'}
+        confirmButtonProps={{ variant: 'destructive' }}
+        cancelText='Cancel'
+        isLoading={isEndingClass}
+        onConfirm={handleEndClass}
+      />
+    </aside>
+  );
+}
+
+type ClassTrainingPageProps = {
+  classId?: string;
+  requestedScheduleId?: string;
+};
+
+export default function ClassTrainingPage({
+  classId: classIdProp,
+  requestedScheduleId: requestedScheduleIdProp,
+}: ClassTrainingPageProps = {}) {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const queryClient = useQueryClient();
+  const classId = classIdProp ?? (params?.id as string);
+  const requestedScheduleId = requestedScheduleIdProp ?? searchParams.get('schedule') ?? '';
+  const requestedLessonId = searchParams.get('lesson') ?? '';
+  const requestedContentId = searchParams.get('content') ?? '';
+  const requestedCourseId = searchParams.get('course') ?? '';
+  const userProfile = useUserProfile();
+  const { data, isLoading, isError } = useClassDetails(classId);
+  const { rosterAllEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [pageSearch, setPageSearch] = useState('');
+  const [selectedContentId, setSelectedContentId] = useState('');
+  const [activeScheduleId, setActiveScheduleId] = useState('');
+  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState('');
+  const [selectedQuizUuid, setSelectedQuizUuid] = useState('');
+  const [assignmentVisibleAt, setAssignmentVisibleAt] = useState('');
+  const [assignmentDueAt, setAssignmentDueAt] = useState('');
+  const [assignmentGradingDueAt, setAssignmentGradingDueAt] = useState('');
+  const [quizVisibleAt, setQuizVisibleAt] = useState('');
+  const [quizDueAt, setQuizDueAt] = useState('');
+  const [quizGradingDueAt, setQuizGradingDueAt] = useState('');
+  const [noteDraft, setNoteDraft] = useState('');
+  const [sentNotes, setSentNotes] = useState<NoteEntry[]>([]);
+  const [isEndClassConfirmOpen, setIsEndClassConfirmOpen] = useState(false);
+  const appliedRouteContentSelectionRef = useRef('');
+
+  const [activeTab, setActiveTab] = useState<'content' | 'practice' | 'assessment'>('content');
+  const [activeLefTab, setActiveLeftTab] = useState<'students' | 'evaluation'>('students');
+  // const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>('students');
+
+  const classData = data.class;
+  const course = data.course ?? data?.pCourses?.[0] ?? null;
+  const programCourses = data.pCourses ?? [];
+  const schedules = data.schedule ?? [];
+
+  const {
+    isLoading: lessonsLoading,
+    lessonModules: lessonsWithContent,
+    contentTypeDetailsMap,
+  } = useClassLessonContent({
+    courseUuid: classData?.course_uuid,
+    programUuid: classData?.program_uuid,
+  });
+
+  const sortedSchedules = useMemo<TrainingSchedule[]>(
+    () =>
+      [...schedules].sort((left, right) => dayjs(left.start_time).diff(dayjs(right.start_time))),
+    [schedules]
+  );
+
+  useEffect(() => {
+    if (sortedSchedules.length === 0) return;
+
+    const defaultSchedule = getPreferredScheduleInstance(sortedSchedules, requestedScheduleId);
+
+    if (defaultSchedule?.uuid && activeScheduleId !== defaultSchedule.uuid) {
+      setActiveScheduleId(defaultSchedule.uuid);
+    }
+  }, [activeScheduleId, requestedScheduleId, sortedSchedules]);
+
+  const activeSchedule =
+    sortedSchedules.find(schedule => schedule.uuid === activeScheduleId) ?? null;
+
+  const lessonModules = useMemo(() => {
+    const modules = (lessonsWithContent as LessonModule[]) ?? [];
+    return [...modules].sort(
+      (left, right) =>
+        toSortableNumber(left.lesson.lesson_sequence ?? left.lesson.lesson_number) -
+        toSortableNumber(right.lesson.lesson_sequence ?? right.lesson.lesson_number)
+    );
+  }, [lessonsWithContent]);
+
+  const sortedLessonModules = useMemo(() => {
+    return [...lessonModules].sort(
+      (a, b) => (a.lesson.lesson_number ?? 0) - (b.lesson.lesson_number ?? 0)
+    );
+  }, [lessonModules]);
+
+  const selectedCourseUuid = useMemo(() => {
+    if (classData?.program_uuid) {
+      return requestedCourseId || course?.uuid || programCourses[0]?.uuid || '';
+    }
+
+    return course?.uuid ?? '';
+  }, [classData?.program_uuid, course?.uuid, programCourses, requestedCourseId]);
+
+  const scopedLessonModules = useMemo(() => {
+    if (!selectedCourseUuid) return lessonModules;
+
+    const filteredModules = lessonModules.filter(
+      module => module.course?.uuid === selectedCourseUuid
+    );
+
+    return filteredModules.length > 0 ? filteredModules : lessonModules;
+  }, [lessonModules, selectedCourseUuid]);
+
+  const requestedLessonModule = useMemo(() => {
+    const activeModulePool = scopedLessonModules.length > 0 ? scopedLessonModules : lessonModules;
+    const byLessonId = activeModulePool.find(module => module.lesson.uuid === requestedLessonId);
+    if (byLessonId) return byLessonId;
+
+    if (!requestedContentId) return null;
+
+    return (
+      activeModulePool.find(module =>
+        module.content?.data?.some(content => content.uuid === requestedContentId)
+      ) ?? null
+    );
+  }, [lessonModules, requestedContentId, requestedLessonId, scopedLessonModules]);
+
+  const activeLessonModule =
+    requestedLessonModule ?? scopedLessonModules[0] ?? lessonModules[0] ?? null;
+  const activeLesson = activeLessonModule?.lesson ?? null;
+  const activeLessonContents = activeLessonModule?.content?.data ?? [];
+  const activeLessonCourse =
+    activeLessonModule?.course ??
+    programCourses.find(programCourse => programCourse.uuid === selectedCourseUuid) ??
+    course;
+  const activeLessonCourseUuid = activeLessonCourse?.uuid ?? '';
+
+  useEffect(() => {
+    if (activeLessonContents.length === 0) {
+      setSelectedContentId('');
+      return;
+    }
+
+    const contentSelectionKey = `${activeLesson?.uuid ?? ''}:${requestedContentId}`;
+
+    if (appliedRouteContentSelectionRef.current !== contentSelectionKey) {
+      const requestedContentExists = activeLessonContents.some(
+        content => content.uuid === requestedContentId
+      );
+
+      if (requestedContentExists) {
+        setSelectedContentId(requestedContentId);
+        appliedRouteContentSelectionRef.current = contentSelectionKey;
+        return;
+      }
+
+      appliedRouteContentSelectionRef.current = contentSelectionKey;
+    }
+
+    if (activeLessonContents.some(content => content.uuid === selectedContentId)) {
+      return;
+    }
+
+    setSelectedContentId(activeLessonContents[0]?.uuid ?? '');
+  }, [activeLesson?.uuid, activeLessonContents, requestedContentId, selectedContentId]);
+
+  const selectedContent =
+    activeLessonContents.find(content => content.uuid === selectedContentId) ?? null;
+  const selectedContentDuration =
+    selectedContent && 'duration' in selectedContent
+      ? String(selectedContent.duration || '')
+      : '';
+
+  const handleContentChange = (contentId: string) => {
+    const module = lessonModules.find(m =>
+      m.content?.data?.some(c => c.uuid === contentId)
+    );
+
+    const lessonId = module?.lesson?.uuid;
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set('content', contentId);
+
+    if (lessonId) {
+      params.set('lesson', lessonId);
+    }
+
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+
+  const activeInstanceStudents = useMemo(
+    () =>
+      rosterAllEnrollments.filter(
+        (entry: RosterEntry) => entry.enrollment?.scheduled_instance_uuid === activeSchedule?.uuid
+      ),
+    [activeSchedule?.uuid, rosterAllEnrollments]
+  );
+
+  const filteredRoster = useMemo(
+    () =>
+      activeInstanceStudents.filter((entry: RosterEntry) =>
+        (entry.user?.full_name ?? '').toLowerCase().includes(studentSearch.toLowerCase())
+      ),
+    [activeInstanceStudents, studentSearch]
+  );
+
+  useEffect(() => {
+    if (activeInstanceStudents.length === 0) {
+      setSelectedStudentId('');
+      return;
+    }
+
+    const currentStudentExists = activeInstanceStudents.some(
+      entry => entry.enrollment?.uuid === selectedStudentId
+    );
+
+    if (!currentStudentExists) {
+      setSelectedStudentId(activeInstanceStudents[0]?.enrollment?.uuid ?? '');
+    }
+  }, [activeInstanceStudents, selectedStudentId]);
+
+  const selectedStudent =
+    activeInstanceStudents.find(entry => entry.enrollment?.uuid === selectedStudentId) ?? null;
+  const selectedContentType = getContentTypeName(selectedContent, contentTypeDetailsMap);
+  const instructorName =
+    userProfile?.instructor?.full_name || userProfile?.full_name || 'Instructor';
+  const instructorProfileImage = userProfile?.profile_image_url ?? undefined;
+  const markAttendanceMut = useMutation(markAttendanceMutation());
+  const addAssignmentScheduleMut = useMutation(createAssignmentScheduleMutation());
+  const addQuizScheduleMut = useMutation(createQuizScheduleMutation());
+  const startScheduledInstanceMut = useMutation(startScheduledInstanceMutation());
+  const endScheduledInstanceMut = useMutation(endScheduledInstanceMutation());
+
+  const handleStartClass = () => {
+    if (!activeSchedule?.uuid) return;
+    const meetingLink = activeSchedule.meeting_url?.trim();
+    const meetingWindow = meetingLink
+      ? window.open('', '_blank', 'noopener,noreferrer')
+      : null;
+
+    startScheduledInstanceMut.mutate(
+      { path: { instanceUuid: activeSchedule.uuid } },
+      {
+        onSuccess: () => {
+          if (meetingLink) {
+            if (meetingWindow) {
+              meetingWindow.location.href = meetingLink;
+            } else {
+              window.open(meetingLink, '_blank', 'noopener,noreferrer');
+            }
+          }
+          toast.success(meetingLink ? 'Class started. Opening meeting.' : 'Class started.');
+          if (classId) {
+            queryClient.invalidateQueries({
+              queryKey: getClassScheduleQueryKey({
+                path: { uuid: classId },
+                query: { pageable: {} },
+              }),
+            });
+          }
+        },
+        onError: error => {
+          meetingWindow?.close();
+          toast.error(getApiToastMessage(error, 'Could not start class.'));
+        },
+      }
+    );
+  };
+
+  const handleEndClass = () => {
+    if (!activeSchedule?.uuid) return;
+
+    endScheduledInstanceMut.mutate(
+      { path: { instanceUuid: activeSchedule.uuid } },
+      {
+        onSuccess: () => {
+          toast.success('Class ended.');
+          if (classId) {
+            queryClient.invalidateQueries({
+              queryKey: getClassScheduleQueryKey({
+                path: { uuid: classId },
+                query: { pageable: {} },
+              }),
+            });
+          }
+          router.push('/dashboard/instructor/training-hub');
+        },
+        onError: error => {
+          toast.error(getApiToastMessage(error, 'Could not end class.'));
+        },
+      }
+    );
+  };
+
+  const { data: courseRubricsData } = useQuery({
+    ...getCourseRubricsOptions({
+      path: { courseUuid: activeLessonCourseUuid as string },
+      query: { pageable: { page: 0, size: 50 } },
+    }),
+    enabled: !!activeLessonCourseUuid,
+  });
+  const { data: courseAssessmentsData } = useQuery({
+    ...getCourseAssessmentsOptions({
+      path: { courseUuid: activeLessonCourseUuid as string },
+      query: { pageable: { page: 0, size: 50 } },
+    }),
+    enabled: !!activeLessonCourseUuid,
+  });
+  const { data: allAssignments } = useQuery({
+    ...getAllAssignmentsOptions({ query: { pageable: { page: 0, size: 100 } } }),
+    enabled: !!classId,
+  });
+  const { data: allQuizzes } = useQuery({
+    ...getAllQuizzesOptions({ query: { pageable: { page: 0, size: 100 } } }),
+    enabled: !!classId,
+  });
+  const { data: assignmentSchedules } = useQuery({
+    ...getAssignmentSchedulesOptions({ path: { classUuid: classId } }),
+    enabled: !!classId,
+  });
+  const { data: quizSchedules } = useQuery({
+    ...getQuizSchedulesOptions({ path: { classUuid: classId } }),
+    enabled: !!classId,
+  });
+
+  const rubricAssociations: CourseRubricAssociation[] = courseRubricsData?.data?.content ?? [];
+  const courseAssessments: CourseAssessment[] = courseAssessmentsData?.data?.content ?? [];
+  const assignmentOptions: Assignment[] = allAssignments?.data?.content ?? [];
+  const quizOptions: Quiz[] = allQuizzes?.data?.content ?? [];
+  const assignmentScheduleItems: AssignmentScheduleItem[] = assignmentSchedules?.data ?? [];
+  const quizScheduleItems: QuizScheduleItem[] = quizSchedules?.data ?? [];
+
+  const rubricUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [
+            ...rubricAssociations.map(item => item.rubric_uuid),
+            ...courseAssessments.map(item => item.rubric_uuid).filter(Boolean),
+          ].filter((rubricUuid): rubricUuid is string => Boolean(rubricUuid))
+        )
+      ),
+    [courseAssessments, rubricAssociations]
+  );
+
+  const rubricMatrixQueries = useQueries({
+    queries: rubricUuids.map(rubricUuid => ({
+      ...getRubricMatrixOptions({ path: { rubricUuid } }),
+      enabled: !!rubricUuid,
+    })),
+  });
+
+  const rubricMatrices = useMemo<Record<string, RubricMatrix | null>>(
+    () =>
+      Object.fromEntries(
+        rubricUuids.map((rubricUuid, index) => [
+          rubricUuid,
+          rubricMatrixQueries[index]?.data?.data ?? null,
+        ])
+      ),
+    [rubricMatrixQueries, rubricUuids]
+  );
+
+  const lessonAssignments = useMemo(
+    () =>
+      assignmentOptions.filter(
+        assignment =>
+          assignment.lesson_uuid === activeLesson?.uuid &&
+          (!assignment.class_definition_uuid || assignment.class_definition_uuid === classId)
+      ),
+    [activeLesson?.uuid, assignmentOptions, classId]
+  );
+
+  const lessonQuizzes = useMemo(
+    () =>
+      quizOptions.filter(
+        quiz =>
+          quiz.lesson_uuid === activeLesson?.uuid &&
+          (!quiz.class_definition_uuid || quiz.class_definition_uuid === classId)
+      ),
+    [activeLesson?.uuid, classId, quizOptions]
+  );
+
+  const activeScheduleAssignments = useMemo(
+    () =>
+      assignmentScheduleItems
+        // .filter(
+        //   item =>
+        //     item.class_lesson_plan_uuid === activeSchedule?.uuid &&
+        //     item.lesson_uuid === activeLesson?.uuid
+        // )
+        .map(item => ({
+          ...item,
+          assignment:
+            assignmentOptions.find(assignment => assignment.uuid === item.assignment_uuid) ?? null,
+        })),
+    [activeLesson?.uuid, activeSchedule?.uuid, assignmentOptions, assignmentScheduleItems]
+  );
+
+  const activeScheduleQuizzes = useMemo(
+    () =>
+      quizScheduleItems
+        // .filter(
+        //   item =>
+        //     item.class_lesson_plan_uuid === activeSchedule?.uuid &&
+        //     item.lesson_uuid === activeLesson?.uuid
+        // )
+        .map(item => ({
+          ...item,
+          quiz: quizOptions.find(quiz => quiz.uuid === item.quiz_uuid) ?? null,
+        })),
+    [activeLesson?.uuid, activeSchedule?.uuid, quizOptions, quizScheduleItems]
+  );
+
+  useEffect(() => {
+    if (lessonAssignments.some(item => item.uuid === selectedAssignmentUuid)) return;
+    setSelectedAssignmentUuid(lessonAssignments[0]?.uuid ?? '');
+  }, [lessonAssignments, selectedAssignmentUuid]);
+
+  useEffect(() => {
+    if (lessonQuizzes.some(item => item.uuid === selectedQuizUuid)) return;
+    setSelectedQuizUuid(lessonQuizzes[0]?.uuid ?? '');
+  }, [lessonQuizzes, selectedQuizUuid]);
+
+  useEffect(() => {
+    if (!assignmentDueAt && activeSchedule?.end_time) {
+      setAssignmentDueAt(formatDateTimeInput(activeSchedule.end_time));
+    }
+    if (!assignmentGradingDueAt && activeSchedule?.end_time) {
+      setAssignmentGradingDueAt(dayjs(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm'));
+    }
+    if (!quizDueAt && activeSchedule?.end_time) {
+      setQuizDueAt(formatDateTimeInput(activeSchedule.end_time));
+    }
+    if (!quizGradingDueAt && activeSchedule?.end_time) {
+      setQuizGradingDueAt(dayjs(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm'));
+    }
+  }, [
+    activeSchedule,
+    assignmentDueAt,
+    assignmentGradingDueAt,
+    quizDueAt,
+    quizGradingDueAt,
+  ]);
+
+  const { data: courseEnrollmentResp } = useQuery({
+    ...getCourseEnrollmentsOptions({
+      path: { courseUuid: course?.uuid as string },
+      query: { pageable: {} },
+    }),
+  });
+  const studentEnrollments = courseEnrollmentResp?.data?.content ?? [];
+
+  // Find the enrollment record for the selected student
+  const selectedEnrollment = useMemo(
+    () =>
+      studentEnrollments.find(
+        enrollment =>
+          enrollment?.student_uuid === selectedStudent?.student?.data?.uuid
+      ),
+    [studentEnrollments, selectedStudent?.student?.data?.uuid]
+  );
+
+  const submissionQueries = useQueries({
+    queries: activeScheduleAssignments.map(item => ({
+      ...getAssignmentSubmissionsOptions({
+        path: {
+          assignmentUuid: item.assignment_uuid!,
+        },
+      }),
+      enabled: !!item.assignment_uuid,
+    })),
+  });
+
+
+  const studentSubmissions = useMemo(
+    () =>
+      activeScheduleAssignments.map((item, index) => {
+        const submissions = submissionQueries[index]?.data?.data ?? [];
+
+        const submission =
+          submissions.find(s => {
+            const enrollmentMatch =
+              s.enrollment_uuid === selectedEnrollment?.uuid;
+
+            return enrollmentMatch;
+          }) ?? null;
+
+        return {
+          assignment: item,
+          submission,
+        };
+      }),
+    [
+      activeScheduleAssignments,
+      submissionQueries,
+      selectedEnrollment?.uuid,
+    ]
+  );
+
+  const submissionAttachmentQueries = useQueries({
+    queries: studentSubmissions.map(({ assignment, submission }) => ({
+      ...getSubmissionAttachmentsOptions({
+        path: {
+          assignmentUuid: assignment.assignment_uuid!,
+          submissionUuid: submission?.uuid!,
+        },
+      }),
+      enabled: Boolean(
+        assignment.assignment_uuid && submission?.uuid
+      ),
+    })),
+  });
+
+  const selectedStudentSubmissions = useMemo(
+    () =>
+      studentSubmissions.map(({ assignment, submission }, index) => ({
+        scheduleId:
+          assignment.uuid ??
+          assignment.assignment_uuid ??
+          `assignment-${index}`,
+        assignmentTitle:
+          assignment.assignment?.title || 'Assignment',
+        dueAt: assignment.due_at,
+        submission: submission
+          ? {
+            ...submission,
+            attachments:
+              submissionAttachmentQueries[index]?.data?.data ?? [],
+          }
+          : null,
+      })),
+    [studentSubmissions, submissionAttachmentQueries]
+  );
+
+  const [markingStudentId, setMarkingStudentId] = useState<string | null>(null);
+  const handleMarkAttendance = (entry: RosterEntry, attended: boolean) => {
+    if (!entry.enrollment?.uuid) return;
+    setMarkingStudentId(entry.enrollment?.uuid);
+
+    markAttendanceMut.mutate(
+      {
+        path: { enrollmentUuid: entry.enrollment.uuid },
+        query: { attended },
+      },
+      {
+        onSuccess: () => {
+          toast.success(
+            `Marked ${entry.user?.full_name || 'student'} as ${attended ? 'present' : 'absent'}.`
+          );
+          queryClient.invalidateQueries({
+            queryKey: getEnrollmentsForClassQueryKey({ path: { uuid: classId } }),
+          });
+        },
+        onError: error => {
+          toast.error(getApiToastMessage(error, 'Failed to mark attendance.'));
+        },
+      }
+    );
+  };
+
+  const handleMarkAllPresent = async () => {
+    const pendingStudents = activeInstanceStudents.filter(
+      entry => getStudentAttendanceState(entry) === 'pending' && entry.enrollment?.uuid
+    );
+
+    if (pendingStudents.length === 0) {
+      toast.error('There are no pending attendance records to mark.');
+      return;
+    }
+
+    try {
+      await Promise.all(
+        pendingStudents.map(entry => {
+          const enrollmentUuid = entry.enrollment?.uuid;
+          if (!enrollmentUuid) {
+            return Promise.resolve();
+          }
+
+          return markAttendanceMut.mutateAsync({
+            path: { enrollmentUuid },
+            query: { attended: true },
+          });
+        })
+      );
+
+      toast.success(`Marked ${pendingStudents.length} student(s) present.`);
+      queryClient.invalidateQueries({
+        queryKey: getEnrollmentsForClassQueryKey({ path: { uuid: classId } }),
+      });
+    } catch (error) {
+      toast.error(getApiToastMessage(error, 'Failed to mark all students present.'));
+    }
+  };
+
+  const handlePageSearch = () => {
+    if (!pageSearch.trim()) return;
+
+    const searchableWindow =
+      typeof window === 'undefined'
+        ? null
+        : (window as unknown as { find?: (...args: unknown[]) => boolean });
+
+    if (typeof searchableWindow?.find === 'function') {
+      const found = searchableWindow.find(
+        pageSearch.trim(),
+        false,
+        false,
+        true,
+        false,
+        false,
+        false
+      );
+      if (!found) {
+        toast.error(`No match found for "${pageSearch.trim()}".`);
+      }
+      return;
+    }
+
+    toast.error('Page search is not supported in this browser.');
+  };
+
+  const handleAssignAssignment = () => {
+    if (!activeSchedule || !selectedAssignmentUuid) {
+      toast.error('Select a class instance and assignment first.');
+      return;
+    }
+
+    const assignment = lessonAssignments.find(item => item.uuid === selectedAssignmentUuid);
+    if (!assignment) {
+      toast.error('The selected assignment could not be found for this lesson.');
+      return;
+    }
+
+    const assignmentDueDate = assignmentDueAt
+      ? new Date(assignmentDueAt)
+      : activeSchedule.end_time
+        ? new Date(activeSchedule.end_time)
+        : undefined;
+    const assignmentGradingDueDate = assignmentGradingDueAt
+      ? new Date(assignmentGradingDueAt)
+      : assignmentDueDate
+        ? dayjs(assignmentDueDate).add(7, 'days').toDate()
+        : undefined;
+
+    if (
+      assignmentDueDate &&
+      assignmentGradingDueDate &&
+      assignmentGradingDueDate.getTime() < assignmentDueDate.getTime()
+    ) {
+      toast.error('Assignment grading due date cannot be before the assignment due date.');
+      return;
+    }
+
+    const payload: AssignmentSchedulePayload = {
+      class_definition_uuid: classId,
+      lesson_uuid: assignment.lesson_uuid,
+      assignment_uuid: assignment.uuid,
+      class_lesson_plan_uuid: activeSchedule.uuid,
+      visible_at: activeSchedule.start_time ? new Date(activeSchedule.start_time) : undefined,
+      due_at: assignmentDueDate,
+      grading_due_at: assignmentGradingDueDate,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Nairobi',
+      release_strategy: 'CUSTOM',
+      max_attempts: 1,
+      instructor_uuid: userProfile?.instructor?.uuid as string,
+    };
+
+    addAssignmentScheduleMut.mutate(
+      { path: { classUuid: classId }, body: payload },
+      {
+        onSuccess: response => {
+          toast.success(response?.message || 'Assignment attached to this lesson instance.');
+          queryClient.invalidateQueries({
+            queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: classId } }),
+          });
+
+        },
+        onError: error => {
+          toast.error(getApiToastMessage(error, 'Failed to attach assignment.'));
+        },
+      }
+    );
+  };
+
+  const handleAssignQuiz = () => {
+    if (!activeSchedule || !selectedQuizUuid) {
+      toast.error('Select a class instance and quiz first.');
+      return;
+    }
+
+    const quiz = lessonQuizzes.find(item => item.uuid === selectedQuizUuid);
+    if (!quiz) {
+      toast.error('The selected quiz could not be found for this lesson.');
+      return;
+    }
+
+    const quizDueDate = quizDueAt
+      ? new Date(quizDueAt)
+      : activeSchedule.end_time
+        ? new Date(activeSchedule.end_time)
+        : undefined;
+    const quizGradingDueDate = quizGradingDueAt
+      ? new Date(quizGradingDueAt)
+      : quizDueDate
+        ? dayjs(quizDueDate).add(7, 'days').toDate()
+        : undefined;
+
+    if (
+      quizDueDate &&
+      quizGradingDueDate &&
+      quizGradingDueDate.getTime() < quizDueDate.getTime()
+    ) {
+      toast.error('Quiz grading due date cannot be before the quiz due date.');
+      return;
+    }
+
+    const payload: QuizSchedulePayload = {
+      class_definition_uuid: classId,
+      lesson_uuid: quiz.lesson_uuid,
+      quiz_uuid: quiz.uuid,
+      class_lesson_plan_uuid: activeSchedule.uuid,
+      visible_at: activeSchedule.start_time ? new Date(activeSchedule.start_time) : undefined,
+      due_at: quizDueDate,
+      grading_due_at: quizGradingDueDate,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Nairobi',
+      release_strategy: 'CUSTOM',
+      instructor_uuid: userProfile?.instructor?.uuid as string,
+    };
+
+    addQuizScheduleMut.mutate(
+      { path: { classUuid: classId }, body: payload },
+      {
+        onSuccess: response => {
+          toast.success(response?.message || 'Quiz attached to this lesson instance.');
+          queryClient.invalidateQueries({
+            queryKey: getQuizSchedulesQueryKey({ path: { classUuid: classId } }),
+          });
+        },
+        onError: error => {
+          toast.error(getApiToastMessage(error, 'Failed to attach quiz.'));
+        },
+      }
+    );
+  };
+
+  const [remainingTime, setRemainingTime] = useState('');
+  useEffect(() => {
+    if (!activeSchedule?.started_at) {
+      setRemainingTime("");
+      return;
+    }
+
+    const startedAt = new Date(activeSchedule.started_at).getTime();
+
+    const updateElapsedTime = () => {
+      const elapsed = Date.now() - startedAt;
+
+      if (elapsed <= 0) {
+        setRemainingTime("00:00:00");
+        return;
+      }
+
+      const hours = Math.floor(elapsed / 3_600_000);
+      const minutes = Math.floor((elapsed % 3_600_000) / 60_000);
+      const seconds = Math.floor((elapsed % 60_000) / 1000);
+
+      setRemainingTime(
+        `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+          2,
+          "0"
+        )}:${String(seconds).padStart(2, "0")}`
+      );
+    };
+
+    updateElapsedTime();
+
+    const interval = setInterval(updateElapsedTime, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeSchedule?.started_at]);
+
+  // const endClassMut = useMutation(endScheduledInstanceMutation());
+  // const handleEndClass = () => {
+  //   if (!requestedScheduleId) return;
+
+  //   endClassMut.mutate(
+  //     {
+  //       path: { instanceUuid: requestedScheduleId },
+  //     },
+  //     {
+  //       onSuccess: data => {
+  //         toast.success(data?.message || 'Class ended successfully.');
+  //         setIsEndClassConfirmOpen(false);
+  //       },
+  //       onError: error => {
+  //         toast.error(getApiToastMessage(error, 'Could not end class.'));
+  //       },
+  //     }
+  //   );
+  // };
+
+  const handleSendNote = () => {
+    if (!noteDraft.trim()) {
+      toast.error('Type a note before sending.');
+      return;
+    }
+
+    setSentNotes(previous => [
+      {
+        id: `${Date.now()}`,
+        message: noteDraft.trim(),
+        sentAt: new Date().toISOString(),
+      },
+      ...previous,
+    ]);
+    setNoteDraft('');
+    toast.success('Note shared for this session view.');
+  };
+
+  // Gate only on the primary class-details query — the shell needs it to render.
+  // Roster and lesson content degrade locally (skeletons in their own regions).
+  if (isLoading) {
+    return <ConsoleSkeleton />;
+  }
+
+  const rosterPending = rosterLoading && rosterAllEnrollments.length === 0;
+  const lessonsPending = lessonsLoading && lessonModules.length === 0;
+
+  if (isError) {
+    return (
+      <div className='fixed inset-0 z-50 flex items-center justify-center bg-background p-6'>
+        <div className='border-destructive/30 bg-card flex min-h-[280px] w-full max-w-xl flex-col items-center justify-center gap-4 rounded-lg border p-8 text-center shadow-sm'>
+          <AlertCircle className='text-destructive h-10 w-10' />
+          <div className='space-y-1'>
+            <h2 className='text-lg font-semibold'>Unable to load this class training room</h2>
+            <p className='text-muted-foreground text-sm'>
+              The class details could not be fetched right now. Please try again shortly.
+            </p>
+          </div>
+          <Button asChild variant='outline'>
+            <Link href='/dashboard/instructor/training-hub'>Back to classes</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <main className='text-foreground fixed inset-0 z-50 flex flex-col overflow-hidden bg-background'>
+      <header className='border-border/70 bg-card/95 text-foreground flex h-16 shrink-0 items-center justify-between gap-3 border-b px-3 shadow-sm backdrop-blur sm:px-4'>
+        <div className='flex min-w-0 items-center gap-3'>
+          <Button
+            variant='ghost'
+            size='icon'
+            className='text-foreground hover:bg-muted'
+            onClick={() => router.back()}
+            aria-label='Go back'
+          >
+            <ArrowLeft className='h-5 w-5' />
+          </Button>
+          <div className='flex min-w-0 items-center gap-2'>
+            <span className='bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-full'>
+              <BookOpen className='h-4 w-4' />
+            </span>
+            <div className='min-w-0'>
+              <h1 className='truncate text-sm font-semibold sm:text-base'>
+                {activeLessonCourse?.name || course?.name || classData?.title || 'Class Training'}
+              </h1>
+              <p className='text-muted-foreground truncate text-xs'>
+                {activeSchedule
+                  ? formatRange(activeSchedule.start_time, activeSchedule.end_time)
+                  : 'Training session'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className='hidden min-w-0 flex-1 justify-center md:flex'>
+          <div className='bg-muted/70 border-border/70 flex max-w-xl flex-1 items-center gap-2 rounded-full border px-3 py-0.5'>
+            <Search className='text-muted-foreground h-4 w-4 shrink-0' />
+            <Input
+              value={pageSearch}
+              onChange={event => setPageSearch(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === 'Enter') {
+                  handlePageSearch();
+                }
+              }}
+              placeholder='Search this page...'
+              className='border-0 bg-transparent px-0 text-xs text-foreground placeholder:text-muted-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none'
+            />
+            <Button
+              size='sm'
+              variant='ghost'
+              className='text-foreground hover:bg-muted h-7 shrink-0'
+              onClick={handlePageSearch}
+            >
+              Find
+            </Button>
+          </div>
+        </div>
+
+        <div className='flex items-center gap-2'>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='text-foreground gap-2 hover:bg-muted xl:hidden'
+              >
+                <PanelLeft className='h-4 w-4' />
+                {activeLefTab === 'evaluation' ? 'Evaluation' : 'Roster'}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side='left' className='flex w-[88vw] max-w-sm flex-col p-0'>
+              <SheetHeader className='sr-only'>
+                <SheetTitle>Class roster</SheetTitle>
+                <SheetDescription>
+                  Students assigned to this selected class instance, and the
+                  Students/Evaluation mode switch for the main viewport.
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className='border-border/70 border-b bg-card px-2 pt-2'>
+                <Tabs
+                  value={activeLefTab}
+                  onValueChange={value => setActiveLeftTab(value as typeof activeLefTab)}
+                  className='w-full'
+                >
+                  <TabsList className='bg-muted grid w-full grid-cols-2 rounded-lg p-1 dark:bg-muted/60'>
+                    {LEFT_TAB_ITEMS.map(tab => (
+                      <TabsTrigger
+                        key={tab.value}
+                        value={tab.value}
+                        className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
+                      >
+                        {tab.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </div>
+
+              {activeLefTab === 'evaluation' ? (
+                <div className='border-border/70 bg-card/90 border-b p-3'>
+                  <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+                    Evaluation roster
+                  </p>
+                  <p className='text-foreground mt-1 text-sm font-medium'>
+                    Select a student to review their evaluation details.
+                  </p>
+                </div>
+              ) : null}
+
+              <div className='min-h-0 flex-1'>
+                <RosterPanel
+                  activeInstanceStudentsCount={activeInstanceStudents.length}
+                  activeInstanceStudents={activeInstanceStudents}
+                  filteredRoster={filteredRoster}
+                  activeSchedule={activeSchedule}
+                  studentSearch={studentSearch}
+                  setStudentSearch={setStudentSearch}
+                  selectedStudentId={selectedStudentId}
+                  onSelectStudent={entry => setSelectedStudentId(entry.enrollment?.uuid ?? '')}
+                  onMarkAllPresent={handleMarkAllPresent}
+                  isMarkingAllAttendance={markAttendanceMut.isPending}
+                  onMarkAttendance={handleMarkAttendance}
+                  isMarkingAttendance={markAttendanceMut.isPending}
+                  markingStudentId={markingStudentId as string}
+                  isLoadingRoster={rosterPending}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='text-foreground gap-2 hover:bg-muted xl:hidden'
+              >
+                <PanelRight className='h-4 w-4' />
+                Work
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-screen max-w-none p-0">
+              <SheetHeader className='sr-only'>
+                <SheetTitle>Class work</SheetTitle>
+                <SheetDescription>Submissions, rubric, and notes.</SheetDescription>
+              </SheetHeader>
+
+              <SubmissionPanel
+                activeSchedule={activeSchedule}
+                activeInstanceStudentsCount={activeInstanceStudents.length}
+                selectedContentType={selectedContentType}
+                selectedStudent={selectedStudent}
+                courseAssessments={courseAssessments}
+                rubricAssociations={rubricAssociations}
+                rubricMatrices={rubricMatrices}
+                noteDraft={noteDraft}
+                sentNotes={sentNotes}
+                selectedStudentSubmissions={selectedStudentSubmissions}
+                onNoteDraftChange={setNoteDraft}
+                onSendNote={handleSendNote}
+                onMarkAttendance={handleMarkAttendance}
+                isMarkingAttendance={markAttendanceMut.isPending}
+                onStartClass={handleStartClass}
+                onEndClass={handleEndClass}
+                isStartingClass={startScheduledInstanceMut.isPending}
+                isEndingClass={endScheduledInstanceMut.isPending}
+                handleEndClass={handleEndClass}
+                isEndClassConfirmOpen={isEndClassConfirmOpen}
+                setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
+                remainingTime={remainingTime} />
+            </SheetContent>
+          </Sheet>
+
+          <div className='flex min-w-0 items-center gap-2 pl-1'>
+            <Avatar className='border-primary-foreground/30 size-8 shrink-0 border'>
+              <AvatarImage src={instructorProfileImage} alt={instructorName} />
+              <AvatarFallback>{getInitials(instructorName)}</AvatarFallback>
+            </Avatar>
+            <div className='hidden min-w-0 max-w-36 text-left sm:block lg:max-w-48'>
+              <p className='text-[11px] leading-tight'>Instructor</p>
+              <p className='truncate text-xs font-semibold leading-tight'>{instructorName}</p>
+            </div>
+
+          </div>
+        </div>
+      </header>
+
+      <section className='grid min-h-0 flex-1 gap-0 overflow-hidden xl:grid-cols-[420px_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]'>
+        <section className='hidden xl:block'>
+          <Tabs
+            value={activeLefTab}
+            onValueChange={value => setActiveLeftTab(value as typeof activeLefTab)}
+            className='w-full max-w-xl mt-2'
+          >
+            <TabsList className='bg-muted grid w-full grid-cols-2 rounded-lg p-1 dark:bg-muted/60'>
+              {LEFT_TAB_ITEMS.map(tab => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+
+          <ScrollArea className='h-[calc(100vh-8.5rem)]'>
+            {activeLefTab === 'students' || activeLefTab === 'evaluation' ? (
+              <aside className='border-border/70 min-h-0 border-r'>
+                {activeLefTab === 'evaluation' ? (
+                  <div className='border-border/70 bg-card/90 border-b p-3'>
+                    <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+                      Evaluation roster
+                    </p>
+                    <p className='text-foreground mt-1 text-sm font-medium'>
+                      Select a student to review their evaluation details.
+                    </p>
+                  </div>
+                ) : null}
+                <RosterPanel
+                  activeInstanceStudentsCount={activeInstanceStudents.length}
+                  activeInstanceStudents={activeInstanceStudents}
+                  filteredRoster={filteredRoster}
+                  activeSchedule={activeSchedule}
+                  studentSearch={studentSearch}
+                  setStudentSearch={setStudentSearch}
+                  selectedStudentId={selectedStudentId}
+                  onSelectStudent={entry => setSelectedStudentId(entry.enrollment?.uuid ?? '')}
+                  onMarkAllPresent={handleMarkAllPresent}
+                  isMarkingAllAttendance={markAttendanceMut.isPending}
+                  onMarkAttendance={handleMarkAttendance}
+                  isMarkingAttendance={markAttendanceMut.isPending}
+                  markingStudentId={markingStudentId as string}
+                  isLoadingRoster={rosterPending}
+                />
+              </aside>
+            ) : null}
+
+            {/* {activeLefTab === 'lessons' ? (
+              <div className='border-border/70 bg-card/90 rounded-lg border border-dashed p-8 text-center'>
+                <p className='text-foreground text-sm font-semibold'>Lessons</p>
+                <p className='text-muted-foreground mt-1 text-sm'>
+                  Lesson tools will be added here soon.
+                </p>
+              </div>
+            ) : null} */}
+
+            {activeLefTab === 'evaluation' ? (
+              <div className='border-border/70 bg-card/90 space-y-4 rounded-lg border p-4 shadow-sm xl:hidden'>
+                <EvaluationSummary
+                  activeInstanceStudentsCount={activeInstanceStudents.length}
+                  courseAssessmentsCount={courseAssessments.length}
+                  selectedStudent={selectedStudent}
+                  selectedStudentSubmissionsCount={selectedStudentSubmissions.length}
+                />
+              </div>
+            ) : null}
+          </ScrollArea>
+        </section>
+
+        {/* // on mobile, this part should only be visible when I select evaluation on activelefttab */}
+        {activeLefTab === "evaluation" ?
+          (<section className='min-h-0 overflow-hidden bg-background'>
+            {activeLefTab === 'evaluation' ? (
+              <div className='h-full overflow-hidden'>
+                <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
+                  <div className='flex flex-col gap-3'>
+                    <div className='min-w-0'>
+                      <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+                        Evaluation
+                      </p>
+                      <h2 className='truncate text-lg font-semibold'>
+                        {selectedStudent?.user?.full_name || 'Select a student'}
+                      </h2>
+                      <p className='text-muted-foreground mt-1 text-sm'>
+                        Review the selected student’s attendance, submissions, and rubric context.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <ScrollArea className='h-[calc(100vh-8.5rem)] w-full'>
+                  <SubmissionPanel
+                    activeSchedule={activeSchedule}
+                    activeInstanceStudentsCount={activeInstanceStudents.length}
+                    selectedContentType={selectedContentType}
+                    selectedStudent={selectedStudent}
+                    courseAssessments={courseAssessments}
+                    rubricAssociations={rubricAssociations}
+                    rubricMatrices={rubricMatrices}
+                    noteDraft={noteDraft}
+                    sentNotes={sentNotes}
+                    selectedStudentSubmissions={selectedStudentSubmissions}
+                    onNoteDraftChange={setNoteDraft}
+                    handleEndClass={handleEndClass}
+                    isEndClassConfirmOpen={isEndClassConfirmOpen}
+                    setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
+                    isEndingClass={endScheduledInstanceMut.isPending}
+                    onSendNote={handleSendNote}
+                    onMarkAttendance={handleMarkAttendance}
+                    isMarkingAttendance={markAttendanceMut.isPending}
+                    onStartClass={handleStartClass}
+                    remainingTime={remainingTime}
+                    onEndClass={handleEndClass}
+                    isStartingClass={startScheduledInstanceMut.isPending}
+                  />
+                </ScrollArea>
+              </div>
+            ) : (
+              <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
+                <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+                  <div className='min-w-0 w-full'>
+                    <h2 className='truncate text-lg font-semibold'>
+                      {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
+                    </h2>
+
+                    <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
+                      <Tabs
+                        value={activeTab}
+                        onValueChange={value => setActiveTab(value as typeof activeTab)}
+                        className='w-full max-w-xl'
+                      >
+                        <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
+                          {TAB_ITEMS.map(tab => (
+                            <TabsTrigger
+                              key={tab.value}
+                              value={tab.value}
+                              className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
+                            >
+                              {tab.label}
+                            </TabsTrigger>
+                          ))}
+                        </TabsList>
+                      </Tabs>
+
+                      <div className='flex flex-col items-start lg:w-72 lg:justify-end'>
+                        <p className='text-muted-foreground text-sm'>Lesson</p>
+                        <Select
+                          value={selectedContentId}
+                          onValueChange={handleContentChange}
+                          disabled={lessonModules.length === 0}
+                        >
+                          <SelectTrigger className='h-9 w-full lg:min-w-52'>
+                            <SelectValue placeholder='Select content' />
+                          </SelectTrigger>
+
+                          <SelectContent>
+                            {sortedLessonModules.map(module => (
+                              <div key={module.lesson.uuid}>
+                                <div className='bg-muted/60 text-muted-foreground my-1 rounded border border-muted px-2 py-1 text-[13px] font-semibold italic'>
+                                  {module.lesson.title}
+                                </div>
+
+                                {module.content?.data
+                                  ?.slice()
+                                  .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                                  .map(content => (
+                                    <SelectItem key={content.uuid} value={content.uuid}>
+                                      {content.title}
+                                    </SelectItem>
+                                  ))}
+                              </div>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <ScrollArea className='h-[calc(100vh-8.5rem)]'>
+                  {activeTab === 'content' && lessonsPending && <LessonContentSkeleton />}
+                  {activeTab === 'content' && !lessonsPending && (
+                    <div className='mx-auto mb-40 space-y-4 p-2 md:p-2'>
+                      <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                        <div className='mt-2 flex flex-wrap items-center gap-2 border-b p-4 text-xs text-muted-foreground'>
+                          <Badge variant='outline' className='capitalize'>
+                            {selectedContentType}
+                          </Badge>
+                          <span>Beginner</span>
+                          <span>{activeInstanceStudents.length} students</span>
+                          <span>{selectedContentDuration || 'Open during class'}</span>
+                        </div>
+
+                        <div className='border-border/70 border-b p-4'>
+                          <p className='text-muted-foreground text-xs'>
+                            {activeLessonCourse?.name || course?.name}
+                          </p>
+                          <h3 className='mt-1 text-xl font-semibold'>{activeLesson?.title}</h3>
+                        </div>
+                        <div className='p-4'>
+                          {selectedContent?.title ? (
+                            <div className='border-border/60 bg-background mb-4 rounded-md border p-4'>
+                              <p className='text-muted-foreground text-sm leading-7'>
+                                {selectedContent.title}
+                              </p>
+                            </div>
+                          ) : null}
+
+                          <div className='max-w-[inherit]'>
+                            {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                  )}
+
+                  {activeTab === 'practice' && (
+                    <div className="mx-auto space-y-4 p-2 md:p-2 pb-40">
+                      <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                        <div className='border-border/70 border-b p-4'>
+                          <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                            Practice Activities
+                          </p>
+                          <h3 className='mt-1 text-xl font-semibold'>
+                            {activeLesson?.title || 'Practice activities'}
+                          </h3>
+                          <p className='text-muted-foreground mt-2 text-sm'>
+                            Class activities tied to this skill — guide learners through these during class.
+                          </p>
+                        </div>
+
+                        <div className='p-4'>
+                          <PracticeActivityList
+                            courseUuid={activeLessonCourseUuid || undefined}
+                            lessonUuid={activeLesson?.uuid}
+                            variant='instructor'
+                          />
+                        </div>
+                      </article>
+                    </div>
+                  )}
+
+                  {activeTab === 'assessment' && (
+                    <div className='mx-auto space-y-4 p-2 md:p-2'>
+                      <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                        <div className='border-border/70 border-b p-4'>
+                          <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                            Assessment Tasks
+                          </p>
+                          <h3 className='mt-1 text-xl font-semibold'>
+                            {activeLesson?.title || 'Assessment tasks'}
+                          </h3>
+                          <p className='text-muted-foreground mt-2 text-sm'>
+                            Manage lesson assignments and quizzes from this tab.
+                          </p>
+                        </div>
+                        <div className='p-4'>
+                          <AssessmentTasksSection
+                            activeSchedule={activeSchedule}
+                            lessonAssignments={lessonAssignments}
+                            lessonQuizzes={lessonQuizzes}
+                            activeScheduleAssignments={activeScheduleAssignments}
+                            activeScheduleQuizzes={activeScheduleQuizzes}
+                            selectedAssignmentUuid={selectedAssignmentUuid}
+                            selectedQuizUuid={selectedQuizUuid}
+                            assignmentDueAt={assignmentDueAt}
+                            assignmentGradingDueAt={assignmentGradingDueAt}
+                            quizDueAt={quizDueAt}
+                            quizGradingDueAt={quizGradingDueAt}
+                            onAssignmentSelect={setSelectedAssignmentUuid}
+                            onQuizSelect={setSelectedQuizUuid}
+                            onAssignmentDueAtChange={setAssignmentDueAt}
+                            onAssignmentGradingDueAtChange={setAssignmentGradingDueAt}
+                            onQuizDueAtChange={setQuizDueAt}
+                            onQuizGradingDueAtChange={setQuizGradingDueAt}
+                            onAssignAssignment={handleAssignAssignment}
+                            onAssignQuiz={handleAssignQuiz}
+                            isAssigningAssignment={addAssignmentScheduleMut.isPending}
+                            isAssigningQuiz={addQuizScheduleMut.isPending}
+                            assignmentVisibleAt={assignmentVisibleAt}
+                            quizVisibleAt={quizVisibleAt}
+                            onAssignmentVisibleAtChange={setAssignmentVisibleAt}
+                            onQuizVisibleAtChange={setQuizVisibleAt}
+                          />
+                        </div>
+                      </article>
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
+            )}
+          </section>) :
+          (<section className='min-h-0 overflow-hidden bg-background'>
+            <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
+              <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+                <div className='min-w-0 w-full'>
+                  <div className='flex flex-row items-center justify-between' >
+                    <h2 className='truncate text-lg font-semibold'>
+                      {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
+                    </h2>
+
+                    <div className='border-border/70 border-t p-3 max-w-[500px]'>
+                      {(() => {
+                        const status = activeSchedule?.status?.toUpperCase();
+                        const isCancelled = status === 'CANCELLED';
+                        const isBlocked = status === 'BLOCKED';
+                        const isConcluded = Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
+                        const canStart =
+                          !!activeSchedule &&
+                          !isCancelled &&
+                          !isBlocked &&
+                          !isConcluded &&
+                          (activeSchedule.can_be_started ?? status === 'SCHEDULED');
+                        const canEnd =
+                          !!activeSchedule &&
+                          !isCancelled &&
+                          !isBlocked &&
+                          !isConcluded &&
+                          (activeSchedule.can_be_ended ?? status === 'ONGOING');
+                        const isLifecycleLoading =
+                          startScheduledInstanceMut.isPending || endScheduledInstanceMut.isPending;
+
+                        return (
+                          <div className='flex flex-col gap-3'>
+                            {isConcluded ? (
+                              <Button disabled className='h-10 w-full gap-2 rounded-md'>
+                                <CheckCircle className='h-4 w-4' />
+                                Class ended
+                              </Button>
+                            ) : canEnd ? (
+                              <Button
+                                variant="destructive"
+                                className="h-10 w-full gap-2 rounded-md"
+                                disabled={isLifecycleLoading}
+                                onClick={handleEndClass}
+                              >
+                                {endScheduledInstanceMut.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4" />
+                                )}
+
+                                <div className="flex items-center gap-2">
+                                  <span>End Class</span>
+                                  {remainingTime && (
+                                    <span className="rounded px-2 py-0.5 text-xs">
+                                      {remainingTime}
+                                    </span>
+                                  )}
+                                </div>
+                              </Button>
+                            ) : (
+                              <Button
+                                className='h-10 w-full gap-2 rounded-md'
+                                disabled={!canStart || isLifecycleLoading}
+                                onClick={handleStartClass}  // ✅ use the real handler
+                              >
+                                {startScheduledInstanceMut.isPending ? (
+                                  <Loader2 className='h-4 w-4 animate-spin' />
+                                ) : (
+                                  <Video className='h-4 w-4' />
+                                )}
+                                {isCancelled
+                                  ? 'Cancelled'
+                                  : isBlocked
+                                    ? 'Blocked'
+                                    : !activeSchedule
+                                      ? 'Select a session'
+                                      : 'Start Class'}
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
+                    <Tabs
+                      value={activeTab}
+                      onValueChange={value => setActiveTab(value as typeof activeTab)}
+                      className='w-full max-w-xl'
+                    >
+                      <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
+                        {TAB_ITEMS.map(tab => (
+                          <TabsTrigger
+                            key={tab.value}
+                            value={tab.value}
+                            className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
+                          >
+                            {tab.label}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
+
+                    <div className='flex flex-col items-start lg:w-72 lg:justify-end'>
+                      <p className='text-muted-foreground text-sm'>Lesson</p>
+                      <Select
+                        value={selectedContentId}
+                        onValueChange={handleContentChange}
+                        disabled={lessonModules.length === 0}
+                      >
+                        <SelectTrigger className="h-9 w-full lg:min-w-52">
+                          <SelectValue placeholder="Select content" />
+                        </SelectTrigger>
+
+                        <SelectContent>
+                          {sortedLessonModules.map((module) => (
+                            <div key={module.lesson.uuid}>
+                              <div className="px-2 py-1 text-[13px] italic font-semibold text-muted-foreground bg-muted/60 rounded my-1 border border-muted">
+                                {module.lesson.title}
+                              </div>
+
+                              {module.content?.data
+                                ?.slice()
+                                .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                                .map((content) => (
+                                  <SelectItem key={content.uuid} value={content.uuid}>
+                                    {content.title}
+                                  </SelectItem>
+                                ))}
+                            </div>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* on mobile, this part should always be visible, except when i select evaluation on the activelefttab */}
+            <ScrollArea className='flex h-[calc(100vh-8.5rem)]'>
+              {activeTab === 'content' && lessonsPending && <LessonContentSkeleton />}
+              {activeTab === 'content' && !lessonsPending && (
+                <div className='mx-auto space-y-4 p-2 md:p-2 mb-40'>
+                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                    <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
+                      <Badge variant='outline' className='capitalize'>
+                        {selectedContentType}
+                      </Badge>
+                      <span>Beginner</span>
+                      <span>{activeInstanceStudents.length} students</span>
+                      <span>{selectedContentDuration || 'Open during class'}</span>
+                    </div>
+
+                    <div className='border-border/70 border-b p-4'>
+                      <p className='text-muted-foreground text-xs'>
+                        {activeLessonCourse?.name || course?.name}
+                      </p>
+                      <h3 className='mt-1 text-xl font-semibold'>{activeLesson?.title}</h3>
+                    </div>
+                    <div className='p-4'>
+                      {selectedContent?.title ? (
+                        <div className='border-border/60 bg-background mb-4 rounded-md border p-4'>
+                          <p className='text-muted-foreground text-sm leading-7'>
+                            {selectedContent.title}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      <div className='max-w-[inherit]' >
+                        {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
+                      </div>
+                    </div>
+                  </article>
+
+                  {/* <section className='border-border/70 bg-card rounded-lg border p-4 shadow-sm'>
+                <div className='mb-3 flex items-center justify-between gap-3'>
+                  <h3 className='font-semibold'>Class discussion</h3>
+                  <Button variant='outline' size='sm'>
+                    View comments
+                  </Button>
+                </div>
+                <div className='space-y-3'>
+                  {activeInstanceStudents.slice(0, 3).map((entry, index) => (
+                    <div
+                      key={entry.enrollment?.uuid ?? entry.user?.uuid ?? `discussion-${index}`}
+                      className='flex gap-3'
+                    >
+                      <Avatar className='size-8'>
+                        <AvatarFallback>{getInitials(entry.user?.full_name)}</AvatarFallback>
+                      </Avatar>
+                      <div className='bg-muted min-w-0 flex-1 rounded-md p-3'>
+                        <p className='text-sm font-semibold'>
+                          {entry.user?.full_name || 'Student'}
+                        </p>
+                        <p className='text-muted-foreground mt-1 text-sm'>
+                          Reminder to review your notes before the next class and complete the quiz.
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  {activeInstanceStudents.length === 0 ? (
+                    <div className='text-muted-foreground rounded-md border border-dashed p-4 text-sm'>
+                      Discussion previews will appear when students are attached to this session.
+                    </div>
+                  ) : null}
+                </div>
+                <div className='mt-4 flex gap-2'>
+                  <Input placeholder='Add a comment...' className='h-10 rounded-md' />
+                  <Button size='icon' className='h-10 w-10 rounded-md'>
+                    <Send className='h-4 w-4' />
+                  </Button>
+                </div>
+              </section> */}
+                </div>
+              )}
+
+              {activeTab === 'practice' && (
+                <div className='mx-auto space-y-4 p-2 md:p-2'>
+                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                    <div className='border-border/70 border-b p-4'>
+                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                        Practice Activities
+                      </p>
+                      <h3 className='mt-1 text-xl font-semibold'>
+                        {activeLesson?.title || 'Practice activities'}
+                      </h3>
+                      <p className='text-muted-foreground mt-2 text-sm'>
+                        Class activities tied to this skill — guide learners through these during class.
+                      </p>
+                    </div>
+                    <div className='p-4'>
+                      <PracticeActivityList
+                        courseUuid={activeLessonCourseUuid || undefined}
+                        lessonUuid={activeLesson?.uuid}
+                        variant='instructor'
+                      />
+                    </div>
+                  </article>
+                </div>
+              )}
+
+              {activeTab === 'assessment' && (
+                <div className='mx-auto space-y-4 p-2 md:p-2'>
+                  <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                    <div className='border-border/70 border-b p-4'>
+                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                        Assessment Tasks
+                      </p>
+                      <h3 className='mt-1 text-xl font-semibold'>
+                        {activeLesson?.title || 'Assessment tasks'}
+                      </h3>
+                      <p className='text-muted-foreground mt-2 text-sm'>
+                        Manage lesson assignments and quizzes from this tab.
+                      </p>
+                    </div>
+                    <div className='p-4'>
+                      <AssessmentTasksSection
+                        activeSchedule={activeSchedule}
+                        lessonAssignments={lessonAssignments}
+                        lessonQuizzes={lessonQuizzes}
+                        activeScheduleAssignments={activeScheduleAssignments}
+                        activeScheduleQuizzes={activeScheduleQuizzes}
+                        selectedAssignmentUuid={selectedAssignmentUuid}
+                        selectedQuizUuid={selectedQuizUuid}
+                        assignmentDueAt={assignmentDueAt}
+                        assignmentGradingDueAt={assignmentGradingDueAt}
+                        quizDueAt={quizDueAt}
+                        quizGradingDueAt={quizGradingDueAt}
+                        onAssignmentSelect={setSelectedAssignmentUuid}
+                        onQuizSelect={setSelectedQuizUuid}
+                        onAssignmentDueAtChange={setAssignmentDueAt}
+                        onAssignmentGradingDueAtChange={setAssignmentGradingDueAt}
+                        onQuizDueAtChange={setQuizDueAt}
+                        onQuizGradingDueAtChange={setQuizGradingDueAt}
+                        onAssignAssignment={handleAssignAssignment}
+                        onAssignQuiz={handleAssignQuiz}
+                        isAssigningAssignment={addAssignmentScheduleMut.isPending}
+                        isAssigningQuiz={addQuizScheduleMut.isPending}
+                        assignmentVisibleAt={assignmentVisibleAt}
+                        quizVisibleAt={quizVisibleAt}
+                        onAssignmentVisibleAtChange={setAssignmentVisibleAt}
+                        onQuizVisibleAtChange={setQuizVisibleAt}
+                      />
+                    </div>
+                  </article>
+                </div>
+              )}
+            </ScrollArea>
+          </section>)
+        }
+
+        {/* <aside className='border-border/70 hidden min-h-0 border-l xl:block'>
+          <SubmissionPanel
+            activeSchedule={activeSchedule}
+            activeInstanceStudentsCount={activeInstanceStudents.length}
+            selectedContentType={selectedContentType}
+            selectedStudent={selectedStudent}
+            courseAssessments={courseAssessments}
+            rubricAssociations={rubricAssociations}
+            rubricMatrices={rubricMatrices}
+            noteDraft={noteDraft}
+            sentNotes={sentNotes}
+            selectedStudentSubmissions={selectedStudentSubmissions}
+            onNoteDraftChange={setNoteDraft}
+            isEndClassConfirmOpen={isEndClassConfirmOpen}
+            setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
+            isEndingClass={endScheduledInstanceMut.isPending}
+            onSendNote={handleSendNote}
+            onMarkAttendance={handleMarkAttendance}
+            isMarkingAttendance={markAttendanceMut.isPending}
+            onStartClass={handleStartClass}
+            onEndClass={handleEndClass}
+            isStartingClass={startScheduledInstanceMut.isPending}
+            handleEndClass={() => { }}
+          />
+        </aside> */}
+      </section>
+    </main>
+  );
+}

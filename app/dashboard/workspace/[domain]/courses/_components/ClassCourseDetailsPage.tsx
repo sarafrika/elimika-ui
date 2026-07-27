@@ -44,7 +44,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { useAssignmentsByLessonIds, useQuizzesByLessonIds } from '../../../../../../hooks/use-batched-lookups';
 import { ClassDetailsScheduleItem, CombinedClassDetailsData } from '../../../../../../hooks/use-class-details';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../../lib/share';
-import { socialShareActions } from '../../../../@instructor/classes/overview/[id]/page';
+import { socialShareActions } from '../../../../instructor/classes/overview/[id]/page';
 import { CourseTrainingRequirements } from '../../../../_components/course-training-requirements';
 import CourseDetailsHero from './CourseDetailsHero';
 import CourseFaq from './CourseFaq';

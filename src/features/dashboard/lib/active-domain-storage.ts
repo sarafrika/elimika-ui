@@ -1,4 +1,5 @@
 import type { UserDomain } from '@/lib/types';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 
 export const ACTIVE_DASHBOARD_COOKIE = 'elimika-active-dashboard';
 export const ACTIVE_DASHBOARD_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -107,95 +108,27 @@ export function normalizeRequestedDashboardPath(path?: string | null) {
   return `${pathname}${search}`;
 }
 
-function getWorkspaceRouteSegments(path: string) {
-  const { pathname } = splitDashboardPath(path);
-  const normalizedPath = pathname.replace(/^\/dashboard/, '').replace(/^\//, '');
-  const [firstSegment = '', ...restSegments] = normalizedPath.split('/');
-
-  const normalizedFirstSegment = firstSegment === 'all-courses' ? 'courses' : firstSegment;
-
-  return {
-    root: normalizedFirstSegment,
-    segments: [normalizedFirstSegment, ...restSegments].filter(Boolean),
-  };
-}
-
-function supportsWorkspaceAliasPath(domain: UserDomain, path: string) {
-  // Org uses its own @organization pages directly — never the shared workspace routes.
-  if (domain === 'organisation_user' || domain === 'organisation') return false;
-
-  const { root, segments } = getWorkspaceRouteSegments(path);
-
-  if (root === 'overview') {
-    return true;
-  }
-
-  if (root !== 'courses') {
-    return false;
-  }
-
-  const child = segments[1];
-
-  if (!child) {
-    return true;
-  }
-
-  if (child === 'my-courses') {
-    return domain === 'student';
-  }
-
-  if (child === 'instructor') {
-    return domain === 'student' || domain === 'instructor' || domain === 'course_creator' || domain === 'organisation_user' || domain === 'organisation';
-  }
-
-  if (
-    child === 'programs' ||
-    child === 'available-programs' ||
-    child === 'available-classes'
-  ) {
-    return domain === 'student' || domain === 'instructor' || domain === 'course_creator' || domain === 'organisation_user' || domain === 'organisation';
-  }
-
-  if (segments.length === 2) {
-    return domain === 'student' || domain === 'instructor' || domain === 'course_creator' || domain === 'organisation_user' || domain === 'organisation';
-  }
-
-  return false;
-}
-
+/**
+ * Build a role-scoped dashboard URL for `domain`. Formerly this produced
+ * `/dashboard/workspace/<domain>/...`; now every role has a real URL segment, so
+ * it delegates to the canonical `dashboardUrl` helper. Kept under the old name so
+ * the ~85 existing call sites (sidebar nav, breadcrumbs, shared course pages) all
+ * emit segment URLs without edits.
+ */
 export function buildWorkspaceAliasPath(domain: UserDomain | null, path = '/dashboard/overview') {
   if (!domain || !isInternalDashboardPath(path)) {
     return path;
   }
 
-  const normalizedPath = normalizeRequestedDashboardPath(path);
-  const { pathname, search } = splitDashboardPath(normalizedPath);
-
-  if (!supportsWorkspaceAliasPath(domain, pathname)) {
-    return `${pathname}${search}`;
-  }
-
-  const { segments } = getWorkspaceRouteSegments(pathname);
-  const rewrittenPath = segments.join('/');
-
-  return rewrittenPath
-    ? `/dashboard/workspace/${domain}/${rewrittenPath}${search}`
-    : `/dashboard/workspace/${domain}${search}`;
+  return dashboardUrl(domain, normalizeRequestedDashboardPath(path));
 }
 
 export function resolveWorkspaceSwitchPath(domain: UserDomain | null, requestedPath?: string | null) {
-  const fallbackPath = '/dashboard/overview';
   const normalizedRequestedPath = normalizeRequestedDashboardPath(requestedPath);
 
   if (!domain) {
-    return buildWorkspaceAliasPath(null, fallbackPath);
+    return normalizedRequestedPath;
   }
 
-  const { pathname } = splitDashboardPath(normalizedRequestedPath);
-
-  if (supportsWorkspaceAliasPath(domain, pathname)) {
-    return buildWorkspaceAliasPath(domain, normalizedRequestedPath);
-  }
-
-  return buildWorkspaceAliasPath(domain, fallbackPath);
+  return dashboardUrl(domain, normalizedRequestedPath);
 }
