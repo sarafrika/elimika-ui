@@ -121,6 +121,9 @@ function getWorkspaceRouteSegments(path: string) {
 }
 
 function supportsWorkspaceAliasPath(domain: UserDomain, path: string) {
+  // Org uses its own @organization pages directly — never the shared workspace routes.
+  if (domain === 'organisation_user' || domain === 'organisation') return false;
+
   const { root, segments } = getWorkspaceRouteSegments(path);
 
   if (root === 'overview') {
