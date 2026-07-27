@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { AsyncSection } from '@/components/data/async-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -102,6 +102,7 @@ export default function CoursePreviewPage() {
 
   const cats = course?.category_names ?? [];
   const image = toAuthenticatedMediaUrl(course?.banner_url ?? course?.thumbnail_url) ?? null;
+  const [imgError, setImgError] = useState(false);
   const apply = () => router.push(`/dashboard/courses/apply/${courseId}`);
 
   if (courseQuery.isLoading) {
@@ -140,8 +141,14 @@ export default function CoursePreviewPage() {
       {/* Hero */}
       <div className="overflow-hidden rounded-xl border bg-card">
         <div className="grid gap-4 p-4 sm:grid-cols-[260px_1fr] sm:p-6">
-          {image ? (
-            <img src={image} alt={course.name} loading="lazy" className="h-44 w-full rounded-lg object-cover sm:h-full" />
+          {image && !imgError ? (
+            <img
+              src={image}
+              alt={course.name}
+              loading="lazy"
+              onError={() => setImgError(true)}
+              className="h-44 w-full rounded-lg object-cover sm:h-full"
+            />
           ) : (
             <div className="flex h-44 w-full items-center justify-center rounded-lg bg-gradient-to-br from-primary/15 to-primary/5 sm:h-full">
               <BookOpen className="h-8 w-8 text-primary/50" />

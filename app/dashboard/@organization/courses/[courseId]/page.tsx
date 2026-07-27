@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { AsyncSection } from '@/components/data/async-section';
@@ -180,6 +180,7 @@ export default function CourseDetailPage() {
 
   const cats = course?.category_names ?? [];
   const image = toAuthenticatedMediaUrl(course?.banner_url ?? course?.thumbnail_url) ?? null;
+  const [imgError, setImgError] = useState(false);
   const status = course?.active !== false && course ? 'Active' : 'Inactive';
 
   const copyLink = async () => {
@@ -221,8 +222,13 @@ export default function CourseDetailPage() {
 
       <div className="overflow-hidden rounded-xl border bg-card">
         <div className="grid gap-4 p-4 sm:grid-cols-[220px_1fr] sm:p-6">
-          {image ? (
-            <img src={image} alt={course.name} className="h-40 w-full rounded-lg object-cover sm:h-full" />
+          {image && !imgError ? (
+            <img
+              src={image}
+              alt={course.name}
+              onError={() => setImgError(true)}
+              className="h-40 w-full rounded-lg object-cover sm:h-full"
+            />
           ) : (
             <div className="flex h-40 w-full items-center justify-center rounded-lg bg-gradient-to-br from-primary/15 to-primary/5 sm:h-full">
               <Users className="h-8 w-8 text-primary/50" />
