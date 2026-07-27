@@ -3,6 +3,7 @@
 
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Archive, BookOpen, Briefcase, Eye, MoreHorizontal, Pencil, PlusSquare } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -80,16 +81,16 @@ function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
   );
 }
 
-function CourseActions({ status, onArchive }: { status: string; onArchive: () => void }) {
+function CourseActions({ status, onArchive, onView }: { status: string; onArchive: () => void; onView: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={e => e.stopPropagation()}>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => toast.info('Course details', { description: 'Opening course details.' })}>
+      <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
+        <DropdownMenuItem onClick={onView}>
           <Eye className="mr-2 h-4 w-4" /> View details
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => toast.info('Edit course', { description: 'Opening the course editor.' })}>
@@ -112,8 +113,10 @@ function CourseActions({ status, onArchive }: { status: string; onArchive: () =>
 }
 
 export default function CoursesPage() {
+  const router = useRouter();
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
+  const goToCourse = (uuid?: string) => uuid && router.push(`/dashboard/courses/${uuid}`);
 
   // Approved/engaged courses the org is running come from its training applications (which carry the rate card).
   const applicationsQuery = useQuery({
@@ -202,6 +205,7 @@ export default function CoursesPage() {
           const cd = tier.fmt ? classDefByKey.get(`${courseUuid}|${tier.fmt}|${tier.loc}`) : undefined;
           return {
             rowKey: `${app.uuid}-${idx}`,
+            courseUuid,
             category,
             subject,
             programType: null,
@@ -269,7 +273,19 @@ export default function CoursesPage() {
                 ) : (
                   <div className="divide-y divide-border">
                     {filteredRows.map(row => (
-                      <div key={row.rowKey} className="flex items-start gap-3 p-3">
+                      <div
+                        key={row.rowKey}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => goToCourse(row.courseUuid)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            goToCourse(row.courseUuid);
+                          }
+                        }}
+                        className="flex cursor-pointer items-start gap-3 p-3 hover:bg-muted/40"
+                      >
                         <CourseImage src={row.image} alt={row.displayName} />
                         <div className="min-w-0 flex-1 space-y-1.5">
                           <div className="flex items-start justify-between gap-2">
@@ -296,7 +312,7 @@ export default function CoursesPage() {
                               </Avatar>
                               <span className="truncate text-sm text-muted-foreground">{instructorName(row.instructor)}</span>
                             </div>
-                            <CourseActions status={row.status} onArchive={() => handleArchive(row.rowKey.split('-')[0], row.displayName)} />
+                            <CourseActions status={row.status} onView={() => goToCourse(row.courseUuid)} onArchive={() => handleArchive(row.rowKey.split("-")[0], row.displayName)} />
                           </div>
                         </div>
                       </div>
@@ -330,7 +346,7 @@ export default function CoursesPage() {
                       </TableRow>
                     ) : (
                       filteredRows.map(row => (
-                        <TableRow key={row.rowKey}>
+                        <TableRow key={row.rowKey} onClick={() => goToCourse(row.courseUuid)} className="cursor-pointer hover:bg-muted/50">
                           <TableCell className="whitespace-nowrap">
                             <CourseImage src={row.image} alt={row.displayName} />
                           </TableCell>
@@ -357,7 +373,7 @@ export default function CoursesPage() {
                             <Badge variant={row.status === 'Active' ? 'default' : 'secondary'}>{row.status}</Badge>
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-right">
-                            <CourseActions status={row.status} onArchive={() => handleArchive(row.rowKey.split('-')[0], row.displayName)} />
+                            <CourseActions status={row.status} onView={() => goToCourse(row.courseUuid)} onArchive={() => handleArchive(row.rowKey.split("-")[0], row.displayName)} />
                           </TableCell>
                         </TableRow>
                       ))
