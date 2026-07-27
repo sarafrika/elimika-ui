@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
 import { EmptyState } from '@/components/empty-state';
 import { PageHeader } from '@/components/page-header';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -283,6 +283,7 @@ export default function CoursesPage() {
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex min-w-0 items-center gap-2">
                               <Avatar className="h-6 w-6 shrink-0">
+                                {row.instructor?.profile_image_url && <AvatarImage src={row.instructor.profile_image_url} alt={instructorName(row.instructor)} />}
                                 <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-semibold">
                                   {instructorInitials(row.instructor)}
                                 </AvatarFallback>
