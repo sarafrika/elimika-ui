@@ -72,8 +72,13 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
 
     const storedDomain = readPersistedDashboardDomain(dashboardStorageKey);
 
+    // With no saved choice, multi-profile users must pick a dashboard (activeDomain stays null).
     const nextDomain =
-      storedDomain && domains.includes(storedDomain) ? storedDomain : (domains[0] ?? null);
+      storedDomain && domains.includes(storedDomain)
+        ? storedDomain
+        : domains.length === 1
+          ? domains[0]
+          : null;
 
     setActiveDomainState(nextDomain);
     setHydrated(true);
@@ -89,7 +94,7 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
 
     setActiveDomainState(prev => {
       if (prev && domains.includes(prev)) return prev;
-      return domains[0] ?? null;
+      return domains.length === 1 ? domains[0] : null;
     });
   }, [domains, hydrated]);
 
