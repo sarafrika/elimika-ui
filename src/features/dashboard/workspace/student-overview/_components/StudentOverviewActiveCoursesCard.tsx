@@ -22,7 +22,7 @@ export function StudentOverviewActiveCoursesCard({
         </h2>
         <Link
           prefetch
-          href='/dashboard/workspace/student/courses/my-courses'
+          href='/dashboard/student/courses/my-courses'
           className='flex flex-row items-center gap-1 shrink-0 text-[0.8rem] font-medium text-primary transition hover:text-primary/80'
         >
           See All Courses

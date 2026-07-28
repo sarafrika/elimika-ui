@@ -274,7 +274,7 @@ export function useStudentOverviewData(): StudentOverviewData {
           nextDateLabel: formatDateLabel(updatedDate),
           buttonLabel: 'Continue',
           // href: `/dashboard/courses/${courseUuid}`,
-          href: `/dashboard/workspace/student/courses/my-courses`,
+          href: `/dashboard/student/courses/my-courses`,
           sortValue: updatedDate?.getTime() ?? 0,
         };
       })

@@ -20,7 +20,7 @@ import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { CoursesCatalogCardData, CoursesRecommendationCardData } from '../../app/dashboard/workspace/[domain]/courses/_components/courses-data';
+import { CoursesCatalogCardData, CoursesRecommendationCardData } from '../../src/features/dashboard/courses/shared/_components/courses-data';
 import { useUserDomain } from '../../context/user-domain-context';
 import { CourseTrainingRequirement } from '../../services/client';
 import { getCourseTrainingRequirementsOptions, getProgramRequirementsOptions } from '../../services/client/@tanstack/react-query.gen';
