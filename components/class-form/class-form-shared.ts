@@ -23,6 +23,14 @@ export const SERVICES: Service[] = [
 export const serviceFormat = (key: ServiceKey): 'INDIVIDUAL' | 'GROUP' =>
   SERVICES.find(s => s.key === key)?.format ?? 'GROUP';
 
+/** Map the UI service key onto the backend ServiceTypeEnum value. */
+export const SERVICE_TYPE_ENUM: Record<ServiceKey, 'ONE_ON_ONE' | 'GROUP' | 'ONLINE' | 'PRIVATE_ONLINE'> = {
+  '1on1': 'ONE_ON_ONE',
+  group: 'GROUP',
+  online: 'ONLINE',
+  'private-online': 'PRIVATE_ONLINE',
+};
+
 // ─── Days ─────────────────────────────────────────────────────────────────────
 export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
 export type DayKey = (typeof DAYS)[number];

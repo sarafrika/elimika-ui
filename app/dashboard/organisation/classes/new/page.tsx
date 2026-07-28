@@ -31,6 +31,7 @@ import {
   ReminderOptions,
   type ReminderState,
   ScheduleModeCards,
+  SERVICE_TYPE_ENUM,
   type ScheduleMode,
   ServiceCards,
   serviceFormat,
@@ -416,6 +417,14 @@ export default function OrganisationCreateClassPage() {
       max_participants: num(maxParticipants),
       allow_waitlist: allowWaitlist,
       training_fee: num(feePerSession),
+      service_type: SERVICE_TYPE_ENUM[service],
+      ...(instructorUuid ? { preferred_instructor_uuid: instructorUuid } : {}),
+      ...(targetGroups.length > 0 ? { target_groups: targetGroups } : {}),
+      remind_students: reminder.sendStudents,
+      remind_instructor: reminder.sendInstructor,
+      remind_via_email: reminder.email,
+      remind_via_sms: reminder.sms,
+      remind_via_push: reminder.push,
       class_reminder_minutes: REMINDER_MINUTES[reminder.window],
       ...(continuousReg
         ? {}
