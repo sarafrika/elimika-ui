@@ -1,7 +1,7 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Eye, Mail, MoreHorizontal, Plus, Send, Trash2, Upload, Users } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Eye, Mail, MoreHorizontal, Plus, Trash2, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -12,44 +12,26 @@ import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 
 import { useOrganisation } from '@/context/organisation-context';
 import { PendingInvitations } from './_components/pending-invitations';
-import { extractEntity, extractPage } from '@/lib/api-helpers';
-import type { ClassDefinition, User, Wallet } from '@/services/client';
+import { extractPage } from '@/lib/api-helpers';
+import type { User } from '@/services/client';
 import {
-  createOrganisationUserMutation,
-  getClassDefinitionsForOrganisationOptions,
   getStudentSummariesOptions,
   getUsersByOrganisationAndDomainOptions,
-  getUsersByOrganisationOptions,
-  getWalletOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 
 const fullName = (u: User) =>
