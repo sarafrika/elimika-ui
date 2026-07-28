@@ -1,9 +1,10 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { Briefcase, Building, GraduationCap, ShieldCheck, Users } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Briefcase, Building, GraduationCap, Loader2, ShieldCheck, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
+import { toast } from 'sonner';
 
 import { OrgPage } from '@/app/dashboard/organisation/_components/org-page';
 import { KpiCard, KpiCardSkeleton } from '@/components/dashboard';
@@ -14,13 +15,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
+import { dayjs } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { ClassDefinition, Organisation, User } from '@/services/client';
 import {
   getClassDefinitionsForOrganisationOptions,
   getOrganisationByUuidOptions,
+  getOrganisationByUuidQueryKey,
   getOrganisationStatisticsOptions,
   getUsersByOrganisationAndDomainOptions,
+  requestOrganisationVerificationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 
 const num = (value?: bigint | number | null): string =>
@@ -129,7 +133,28 @@ export default function OrganisationOverviewPage() {
   }, [adminsQuery.data]);
 
   const isVerified = Boolean(profile?.admin_verified);
+  const requestedAt = profile?.verification_requested_at;
+  const awaitingReview = !isVerified && Boolean(requestedAt);
   const kpiLoading = statsQuery.isLoading;
+
+  const qc = useQueryClient();
+  const requestVerification = useMutation({
+    ...requestOrganisationVerificationMutation(),
+    onSuccess: () => {
+      toast.success('Submitted for verification', {
+        description: 'An admin will review your organisation shortly.',
+      });
+      qc.invalidateQueries({ queryKey: getOrganisationByUuidQueryKey({ path: { uuid: organisationUuid } }) });
+    },
+    onError: error =>
+      toast.error(error instanceof Error ? error.message : 'Unable to submit for verification.'),
+  });
+
+  const verificationLabel = isVerified
+    ? 'Verified'
+    : awaitingReview
+      ? 'Awaiting review'
+      : 'Not submitted';
 
   return (
     <OrgPage className="space-y-6">
@@ -137,17 +162,32 @@ export default function OrganisationOverviewPage() {
         title={profile?.name || 'Organisation'}
         description="A complete view of your organisation — profile, people, branches and fees."
         action={
-          <Badge
-            variant="outline"
-            className={cn(
-              'rounded-md px-2.5 py-0.5 text-xs font-medium',
-              isVerified
-                ? 'border-success/30 bg-success/10 text-success'
-                : 'border-warning/30 bg-warning/10 text-warning'
-            )}
-          >
-            {isVerified ? 'Verified' : 'Pending verification'}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant="outline"
+              className={cn(
+                'rounded-md px-2.5 py-0.5 text-xs font-medium',
+                isVerified
+                  ? 'border-success/30 bg-success/10 text-success'
+                  : awaitingReview
+                    ? 'border-primary/30 bg-primary/10 text-primary'
+                    : 'border-warning/30 bg-warning/10 text-warning'
+              )}
+            >
+              {verificationLabel}
+            </Badge>
+            {!isVerified ? (
+              <Button
+                size="sm"
+                variant={awaitingReview ? 'outline' : 'default'}
+                disabled={requestVerification.isPending || !organisationUuid}
+                onClick={() => requestVerification.mutate({ path: { uuid: organisationUuid } })}
+              >
+                {requestVerification.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                {awaitingReview ? 'Resubmit for verification' : 'Submit for verification'}
+              </Button>
+            ) : null}
+          </div>
         }
       />
 
@@ -180,7 +220,16 @@ export default function OrganisationOverviewPage() {
             <Detail label="Location" value={profile?.location ?? '—'} />
             <Detail label="Country" value={profile?.country ?? '—'} />
             <Detail label="Status" value={profile?.active ? 'Active' : 'Inactive'} />
-            <Detail label="Verification" value={isVerified ? 'Verified' : 'Pending'} />
+            <Detail
+              label="Verification"
+              value={
+                isVerified
+                  ? 'Verified'
+                  : awaitingReview
+                    ? `Submitted ${dayjs.utc(requestedAt).format('DD MMM YYYY')}`
+                    : 'Not submitted'
+              }
+            />
           </div>
         </Section>
 

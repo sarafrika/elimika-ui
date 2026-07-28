@@ -20,6 +20,7 @@ export function OverviewAlerts() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
   const isUnverified = Boolean(organisationUuid) && organisation?.admin_verified !== true;
+  const awaitingReview = isUnverified && Boolean(organisation?.verification_requested_at);
 
   const applicationsQuery = useQuery({
     ...searchTrainingApplicationsOptions({
@@ -42,11 +43,15 @@ export function OverviewAlerts() {
   if (isUnverified) {
     alerts.push({
       id: 'verification',
-      severity: 'high',
-      title: 'Organisation pending verification',
-      description: 'Complete your profile and submit for admin verification to unlock all features.',
+      severity: awaitingReview ? 'medium' : 'high',
+      title: awaitingReview
+        ? 'Verification awaiting admin review'
+        : 'Organisation not yet submitted for verification',
+      description: awaitingReview
+        ? 'Your organisation has been submitted. An admin will review it shortly.'
+        : 'Complete your profile, then submit for admin verification to unlock all features.',
       icon: ShieldAlert,
-      actionLabel: 'Review',
+      actionLabel: awaitingReview ? 'View' : 'Submit',
       href: '/dashboard/organisation/account',
     });
   }

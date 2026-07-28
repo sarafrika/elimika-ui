@@ -347,9 +347,15 @@ export function OrganizationDetailView({
           />
           <MetricTile
             label='Verification'
-            value={verified ? 'Verified' : 'Pending'}
+            value={
+              verified
+                ? 'Verified'
+                : org.verification_requested_at
+                  ? `Submitted ${formatDate(org.verification_requested_at)}`
+                  : 'Not submitted'
+            }
             icon={ShieldCheck}
-            tone={verified ? 'success' : 'warning'}
+            tone={verified ? 'success' : org.verification_requested_at ? 'info' : 'warning'}
           />
           <MetricTile label='Location' value={locationLabel} icon={MapPin} tone='neutral' />
           <MetricTile label='Registered' value={formatDate(org.created_date)} icon={CalendarDays} tone='neutral' />
