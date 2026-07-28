@@ -3,6 +3,8 @@ import { access, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { render, toPlainText } from 'react-email';
 import { AccountCreatedEmail } from './templates/AccountCreatedEmail';
+import { GuardianConsentEmail } from './templates/GuardianConsentEmail';
+import { OrganisationInvitationEmail } from './templates/OrganisationInvitationEmail';
 
 type EmailTemplateExport = {
   filename: string;
@@ -13,6 +15,14 @@ const templates: EmailTemplateExport[] = [
   {
     filename: 'account-created',
     component: <AccountCreatedEmail />,
+  },
+  {
+    filename: 'organisation-invitation',
+    component: <OrganisationInvitationEmail />,
+  },
+  {
+    filename: 'guardian-consent-request',
+    component: <GuardianConsentEmail />,
   },
 ];
 
