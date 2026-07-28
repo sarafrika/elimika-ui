@@ -27,9 +27,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { useOrganisation } from '@/context/organisation-context';
-import type { ClassDefinition } from '@/services/client';
+import type { ClassDefinition, StudentGroup } from '@/services/client';
 import {
   getClassDefinitionsForOrganisationOptions,
+  listGroupsOptions,
   listOrganisationInvitationsQueryKey,
   sendOrganisationInvitationsMutation,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -99,6 +100,7 @@ export default function InviteStudentsPage() {
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [emails, setEmails] = useState('');
   const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE.id);
   const [message, setMessage] = useState<string>(DEFAULT_TEMPLATE.body);
@@ -130,7 +132,25 @@ export default function InviteStudentsPage() {
     [classTabItems, activeCategory, subjectByCategory]
   );
 
+  const groupsQuery = useQuery({
+    ...listGroupsOptions({ path: { organisationUuid } }),
+    enabled: Boolean(organisationUuid),
+  });
+  const groups = useMemo(
+    () => (groupsQuery.data?.data ?? []).filter((g): g is StudentGroup & { uuid: string } => Boolean(g?.uuid)),
+    [groupsQuery.data]
+  );
+
   const recipients = useMemo(() => parseRecipients(emails), [emails]);
+
+  /** Students reached via a group, on top of any addresses pasted in. */
+  const groupReach = useMemo(
+    () =>
+      groups
+        .filter(g => selectedGroups.includes(g.uuid))
+        .reduce((total, g) => total + Number(g.member_count ?? 0), 0),
+    [groups, selectedGroups]
+  );
 
   const sendInvitations = useMutation(sendOrganisationInvitationsMutation());
   const sending = sendInvitations.isPending;
@@ -140,8 +160,8 @@ export default function InviteStudentsPage() {
    * offer can be created, so a single bad address never costs the rest of the batch.
    */
   const send = async () => {
-    if (recipients.length === 0) {
-      toast.error('Add at least one recipient email.');
+    if (recipients.length === 0 && selectedGroups.length === 0) {
+      toast.error('Add at least one recipient email, or pick a student group.');
       return;
     }
 
@@ -150,6 +170,7 @@ export default function InviteStudentsPage() {
         path: { organisationUuid },
         body: {
           recipients: recipients.map(r => ({ email: r.email, name: r.name || null })),
+          student_group_uuids: selectedGroups.length ? selectedGroups : null,
           domain_name: 'student',
           class_uuids: selectedClasses.length ? selectedClasses : null,
           message: message.trim() || null,
@@ -193,9 +214,11 @@ export default function InviteStudentsPage() {
     setEmails('');
     setStep(1);
     setSelectedClasses([]);
+    setSelectedGroups([]);
   };
 
-  const canNext = step === 1 ? true : step === 2 ? recipients.length > 0 : true;
+  const canNext =
+    step === 1 ? true : step === 2 ? recipients.length > 0 || selectedGroups.length > 0 : true;
 
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]">
@@ -253,6 +276,12 @@ export default function InviteStudentsPage() {
           {recipients.length > 0 && (
             <Badge variant="secondary" className="gap-1">
               <UsersRound className="h-3 w-3" /> {recipients.length} recipient{recipients.length === 1 ? '' : 's'}
+            </Badge>
+          )}
+          {selectedGroups.length > 0 && (
+            <Badge variant="secondary" className="gap-1">
+              <Users className="h-3 w-3" /> {selectedGroups.length} group{selectedGroups.length === 1 ? '' : 's'}
+              {groupReach > 0 ? ` · ${groupReach}` : ''}
             </Badge>
           )}
         </div>
@@ -356,9 +385,48 @@ export default function InviteStudentsPage() {
                 <CardTitle className="flex items-center gap-2 text-base">
                   <UsersRound className="h-4 w-4" /> Add recipients
                 </CardTitle>
-                <CardDescription>Paste the email addresses of students you want to invite.</CardDescription>
+                <CardDescription>
+                  Pick a student group, paste addresses, or both. Everyone is invited individually and
+                  decides for themselves.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {groups.length > 0 && (
+                  <div>
+                    <Label className="mb-2 block text-xs uppercase text-muted-foreground">
+                      Student groups
+                    </Label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {groups.map(group => {
+                        const checked = selectedGroups.includes(group.uuid);
+                        return (
+                          <label
+                            key={group.uuid}
+                            className={cn(
+                              'flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors',
+                              checked ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                            )}
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={() => setSelectedGroups(g => toggle(g, group.uuid))}
+                              className="mt-0.5"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-medium">{group.name}</div>
+                              <div className="truncate text-xs text-muted-foreground">
+                                {Number(group.member_count ?? 0)} member
+                                {Number(group.member_count ?? 0) === 1 ? '' : 's'}
+                                {group.group_type ? ` · ${group.group_type}` : ''}
+                              </div>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <Label htmlFor="emails" className="mb-2 block text-xs uppercase text-muted-foreground">
                     Recipient emails
@@ -374,13 +442,28 @@ export default function InviteStudentsPage() {
                     One per line or comma-separated. Optional name before the email (e.g. "Jane Doe &lt;jane@example.com&gt;").
                   </p>
                 </div>
-                <div className="rounded-md bg-muted/50 p-3 text-sm">
+                <div className="space-y-1.5 rounded-md bg-muted/50 p-3 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Valid recipients parsed</span>
+                    <span className="text-muted-foreground">Valid addresses parsed</span>
                     <span className="font-semibold tabular-nums">
                       {recipients.length} student{recipients.length === 1 ? '' : 's'}
                     </span>
                   </div>
+                  {selectedGroups.length > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">
+                        From {selectedGroups.length} group{selectedGroups.length === 1 ? '' : 's'}
+                      </span>
+                      <span className="font-semibold tabular-nums">
+                        {groupReach} student{groupReach === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                  )}
+                  {selectedGroups.length > 0 && recipients.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Anyone appearing in both is invited once.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -614,13 +614,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -667,6 +667,10 @@ export type RubricScoring = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Classification of performance expectation level.
+   */
+  readonly performance_expectation?: string;
+  /**
    * **[READ-ONLY]** Expected score range for this performance level.
    */
   readonly score_range?: string;
@@ -678,10 +682,6 @@ export type RubricScoring = {
    * **[READ-ONLY]** Feedback category for constructive assessment guidance.
    */
   readonly feedback_category?: string;
-  /**
-   * **[READ-ONLY]** Classification of performance expectation level.
-   */
-  readonly performance_expectation?: string;
 };
 
 export type ApiResponseRubricScoring = {
@@ -836,13 +836,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -901,13 +901,13 @@ export type QuizQuestionOption = {
    */
   readonly is_incorrect?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the option's position within the question.
-   */
-  readonly position_display?: string;
-  /**
    * **[READ-ONLY]** Status description indicating whether this option is correct or incorrect.
    */
   readonly correctness_status?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the option's position within the question.
+   */
+  readonly position_display?: string;
   /**
    * **[READ-ONLY]** Comprehensive summary of the option including correctness and position.
    */
@@ -1024,10 +1024,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -1039,6 +1035,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 /**
@@ -1637,13 +1637,13 @@ export type Instructor = {
    */
   readonly is_profile_complete?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
-   */
-  readonly has_location_coordinates?: boolean;
-  /**
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string | null;
+  /**
+   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
+   */
+  readonly has_location_coordinates?: boolean;
 };
 
 /**
@@ -1684,13 +1684,13 @@ export type InstructorSkill = {
    */
   readonly display_name?: string;
   /**
-   * **[READ-ONLY]** Brief summary of the skill for display in skill lists.
-   */
-  readonly summary?: string;
-  /**
    * **[READ-ONLY]** Human-readable description of the proficiency level.
    */
   readonly proficiency_description?: string;
+  /**
+   * **[READ-ONLY]** Brief summary of the skill for display in skill lists.
+   */
+  readonly summary?: string;
 };
 
 export type ApiResponseInstructorSkill = {
@@ -1753,18 +1753,13 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_valid?: boolean;
   /**
-   * **[READ-ONLY]** Brief summary of the membership for display in listings.
-   */
-  readonly summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
-  membership_status?: MembershipStatusEnum;
+  /**
+   * **[READ-ONLY]** Brief summary of the membership for display in listings.
+   */
+  readonly summary?: string;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -1790,6 +1785,11 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number | null;
+  membership_status?: MembershipStatusEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1856,18 +1856,6 @@ export type InstructorExperience = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Brief summary of the experience for display in listings.
-   */
-  readonly summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
-   */
-  readonly duration_in_months?: number | null;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration of employment.
    */
   readonly formatted_duration?: string | null;
@@ -1892,6 +1880,18 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number | null;
+  /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   */
+  readonly duration_in_months?: number | null;
+  /**
+   * **[READ-ONLY]** Brief summary of the experience for display in listings.
+   */
+  readonly summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1954,9 +1954,14 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   * **[READ-ONLY]** Number of years since the qualification was completed.
    */
-  readonly is_complete?: boolean;
+  readonly years_since_completion?: number | null;
+  education_level?: EducationLevelEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
+   */
+  readonly has_certificate_number?: boolean;
   /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
@@ -1966,14 +1971,9 @@ export type InstructorEducation = {
    */
   readonly formatted_completion?: string;
   /**
-   * **[READ-ONLY]** Number of years since the qualification was completed.
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
-  readonly years_since_completion?: number | null;
-  education_level?: EducationLevelEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
-   */
-  readonly has_certificate_number?: boolean;
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -2196,14 +2196,6 @@ export type AvailabilitySlot = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the availability slot is currently active based on effective dates.
-   */
-  readonly is_currently_active?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable description of the availability pattern.
-   */
-  readonly availability_description?: string;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -2211,6 +2203,14 @@ export type AvailabilitySlot = {
    * **[READ-ONLY]** Human-readable time range.
    */
   readonly time_range?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the availability slot is currently active based on effective dates.
+   */
+  readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable description of the availability pattern.
+   */
+  readonly availability_description?: string;
 };
 
 export type ApiResponseAvailabilitySlot = {
@@ -2747,13 +2747,13 @@ export type LessonPracticeActivity = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Whether the activity is published.
-   */
-  readonly is_published?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable estimated duration.
    */
   readonly estimated_duration?: string;
+  /**
+   * **[READ-ONLY]** Whether the activity is published.
+   */
+  readonly is_published?: boolean;
 };
 
 export type ApiResponseLessonPracticeActivity = {
@@ -4700,10 +4700,6 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
-   */
-  readonly is_currently_active?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -4711,6 +4707,10 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Human-readable date and time range.
    */
   readonly time_range?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
+   */
+  readonly is_currently_active?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
@@ -5137,13 +5137,17 @@ export type OrganisationInvitationRecipient = {
 };
 
 /**
- * Invites one or more recipients to join an organisation.
+ * Invites one or more recipients to join an organisation. Supply `recipients`, `student_group_uuids`, or both - at least one must yield somebody to invite.
  */
 export type SendOrganisationInvitationsRequest = {
   /**
-   * **[REQUIRED]** People to invite.
+   * **[OPTIONAL when student_group_uuids is supplied]** People to invite by address.
    */
-  recipients: Array<OrganisationInvitationRecipient>;
+  recipients?: Array<OrganisationInvitationRecipient>;
+  /**
+   * **[OPTIONAL]** Organisation student groups to invite. Every member of each group is invited individually, so each person still decides for themselves. Combined with `recipients`, and de-duplicated by email.
+   */
+  student_group_uuids?: Array<string> | null;
   domain_name: DomainNameEnum;
   /**
    * **[OPTIONAL]** Training branch to scope the invitation to.
@@ -9432,10 +9436,6 @@ export type CourseAssessmentScore = {
    */
   readonly is_passing?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the score based on performance level.
    */
   readonly score_category?: string;
@@ -9447,6 +9447,10 @@ export type CourseAssessmentScore = {
    * **[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.
    */
   readonly feedback_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 /**
@@ -10971,21 +10975,6 @@ export const ProficiencyLevelEnum = {
 export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
-
-/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const OrganisationTypeEnum = {
@@ -11001,6 +10990,21 @@ export const OrganisationTypeEnum = {
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export type OrganisationTypeEnum = (typeof OrganisationTypeEnum)[keyof typeof OrganisationTypeEnum];
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.
@@ -25021,7 +25025,7 @@ export type CreateOrganisationUserData = {
 
 export type CreateOrganisationUserErrors = {
   /**
-   * Email already exists; use existing user assignment flow
+   * Email already exists, or the 'student' domain was requested; invite students instead
    */
   400: ApiResponseUser;
   /**

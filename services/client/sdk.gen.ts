@@ -12992,8 +12992,10 @@ export const moderateProgram = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create a new organisation user with domain
+ * Create a new organisation staff user with domain
  * Creates a new user, provisions them in Keycloak, assigns them to the organisation with the specified domain and optional branch. If the email already exists in Keycloak or locally, an error is returned so the client can use the existing email to assign roles instead.
+ *
+ * **Staff domains only.** The 'student' domain is rejected: this path creates an account and an active affiliation outright, which would give an organisation access to a learner's work without that learner ever agreeing to it. Invite students instead via POST /api/v1/organisations/{organisationUuid}/invitations.
  */
 export const createOrganisationUser = <ThrowOnError extends boolean = false>(
   options: Options<CreateOrganisationUserData, ThrowOnError>
