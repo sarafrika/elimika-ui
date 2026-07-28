@@ -11,6 +11,8 @@ import {
   AcademicPeriodsPanel,
   addDays,
   type AcademicPeriod,
+  type ApprovedRateCard,
+  approvedRateFor,
   computeUpcomingSessions,
   DAY_TOKEN,
   DAYS,
@@ -103,6 +105,18 @@ export default function OrganisationCreateClassPage() {
       ),
     [approvedCoursesQuery.data]
   );
+  // The application row carries the rate card its course creator approved — the only
+  // fees this organisation may advertise the class at.
+  const rateCardByOffering = useMemo(() => {
+    const map = new Map<string, ApprovedRateCard>();
+    for (const row of approvedCoursesQuery.data?.data?.content ?? []) {
+      if (row.course_uuid && row.rate_card) map.set(`course:${row.course_uuid}`, row.rate_card);
+    }
+    for (const row of approvedProgramsQuery.data?.data?.content ?? []) {
+      if (row.program_uuid && row.rate_card) map.set(`program:${row.program_uuid}`, row.rate_card);
+    }
+    return map;
+  }, [approvedCoursesQuery.data, approvedProgramsQuery.data]);
   const approvedProgramUuids = useMemo(
     () =>
       Array.from(
@@ -127,6 +141,7 @@ export default function OrganisationCreateClassPage() {
           label: course?.name ?? `Course ${uuid.slice(0, 8)}`,
           kind: 'Course' as const,
           categoryNames: (course?.category_names ?? []) as string[],
+          rateCard: rateCardByOffering.get(`course:${uuid}`),
         };
       }),
       ...approvedProgramUuids.map(uuid => ({
@@ -135,9 +150,10 @@ export default function OrganisationCreateClassPage() {
         kind: 'Program' as const,
         categoryNames: [],
         categoryUuid: programMap[uuid]?.category_uuid ?? undefined,
+        rateCard: rateCardByOffering.get(`program:${uuid}`),
       })),
     ],
-    [approvedCourseUuids, approvedProgramUuids, courseMap, programMap]
+    [approvedCourseUuids, approvedProgramUuids, courseMap, programMap, rateCardByOffering]
   );
 
   const [offering, setOffering] = useState('');
@@ -216,7 +232,12 @@ export default function OrganisationCreateClassPage() {
   const [equipmentUuids, setEquipmentUuids] = useState<string[]>([]);
   const [targetGroupUuids, setTargetGroupUuids] = useState<string[]>([]);
 
-  const [feePerSession, setFeePerSession] = useState('');
+  // Never user-entered: the fee is whatever the course creator approved for this
+  // session format and delivery mode. The backend rejects anything else.
+  const approvedFee = useMemo(
+    () => approvedRateFor(selectedOffering?.rateCard, sessionFormat, delivery),
+    [selectedOffering, sessionFormat, delivery]
+  );
   const [maxParticipants, setMaxParticipants] = useState('20');
   const [allowWaitlist, setAllowWaitlist] = useState(true);
 
@@ -374,6 +395,11 @@ export default function OrganisationCreateClassPage() {
     if (selectedOffering?.kind === 'Program' && !programCategoryUuid) {
       return toast.error('Pick the category these program classes fall under.');
     }
+    if (approvedFee === undefined) {
+      return toast.error(
+        'The course creator has not approved a rate for this session format and delivery mode.'
+      );
+    }
     const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';
     const requiresLink = delivery === 'ONLINE' || delivery === 'HYBRID';
     if (requiresPhysical && !locationName.trim() && !venueUuid) {
@@ -416,7 +442,7 @@ export default function OrganisationCreateClassPage() {
       meeting_link: requiresLink ? meetingLink.trim() || undefined : undefined,
       max_participants: num(maxParticipants),
       allow_waitlist: allowWaitlist,
-      training_fee: num(feePerSession),
+      ...(approvedFee !== undefined ? { training_fee: approvedFee } : {}),
       service_type: SERVICE_TYPE_ENUM[service],
       ...(instructorUuid ? { preferred_instructor_uuid: instructorUuid } : {}),
       ...(targetGroupUuids.length > 0 ? { target_group_uuids: targetGroupUuids } : {}),
@@ -480,11 +506,16 @@ export default function OrganisationCreateClassPage() {
           onOnlyAvailableChange={setOnlyAvailable}
         />
 
-        <ServiceCards value={service} onChange={setService} />
+        <ServiceCards
+          value={service}
+          onChange={setService}
+          rateCard={selectedOffering?.rateCard}
+          delivery={delivery}
+        />
 
         <PricingCapacity
-          feePerSession={feePerSession}
-          onFeeChange={setFeePerSession}
+          approvedFee={approvedFee}
+          currency={selectedOffering?.rateCard?.currency}
           maxParticipants={maxParticipants}
           onMaxChange={setMaxParticipants}
           allowWaitlist={allowWaitlist}

@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Category, User } from '@/services/client';
-import { instructorName } from './class-form-shared';
+import { type ApprovedRateCard, instructorName } from './class-form-shared';
 
 export type Offering = {
   value: string;
@@ -24,6 +24,8 @@ export type Offering = {
   categoryNames: string[];
   /** A program's own category, used to seed the picker when it has one. */
   categoryUuid?: string;
+  /** Rates the course creator approved for this organisation on this offering. */
+  rateCard?: ApprovedRateCard;
 };
 
 /**

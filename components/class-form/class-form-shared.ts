@@ -8,17 +8,48 @@ export type Service = {
   key: ServiceKey;
   title: string;
   subtitle?: string;
-  price: string;
   unit: string;
   format: 'INDIVIDUAL' | 'GROUP';
 };
 
 export const SERVICES: Service[] = [
-  { key: '1on1', title: '1-on-1 Session', price: 'KSh 1,500', unit: 'session', format: 'INDIVIDUAL' },
-  { key: 'group', title: 'Group Session', subtitle: '(2–5 people)', price: 'KSh 1,200', unit: 'person', format: 'GROUP' },
-  { key: 'online', title: 'Online Course', price: 'KSh 5,000', unit: 'course', format: 'GROUP' },
-  { key: 'private-online', title: 'Private Online Class', price: 'KSh 3,000', unit: 'class', format: 'INDIVIDUAL' },
+  { key: '1on1', title: '1-on-1 Session', unit: 'session', format: 'INDIVIDUAL' },
+  { key: 'group', title: 'Group Session', subtitle: '(2–5 people)', unit: 'person', format: 'GROUP' },
+  { key: 'online', title: 'Online Course', unit: 'course', format: 'GROUP' },
+  { key: 'private-online', title: 'Private Online Class', unit: 'class', format: 'INDIVIDUAL' },
 ];
+
+/**
+ * The rate card the course creator approved on the training application. These four
+ * values are the only fees an organisation may advertise a class at.
+ */
+export type ApprovedRateCard = {
+  currency?: string | null;
+  private_online_rate?: number;
+  private_inperson_rate?: number;
+  group_online_rate?: number;
+  group_inperson_rate?: number;
+};
+
+/**
+ * Picks the approved rate for a session format and delivery mode. Mirrors the backend's
+ * `extractRate`: online delivery uses the online rates, in-person and hybrid use in-person.
+ */
+export const approvedRateFor = (
+  rateCard: ApprovedRateCard | undefined,
+  format: 'INDIVIDUAL' | 'GROUP',
+  delivery: 'IN_PERSON' | 'ONLINE' | 'HYBRID'
+): number | undefined => {
+  if (!rateCard) return undefined;
+  const online = delivery === 'ONLINE';
+  if (format === 'INDIVIDUAL') {
+    return online ? rateCard.private_online_rate : rateCard.private_inperson_rate;
+  }
+  return online ? rateCard.group_online_rate : rateCard.group_inperson_rate;
+};
+
+export const formatMoney = (amount?: number, currency?: string | null) =>
+  amount === undefined ? '—' : `${currency ?? 'KES'} ${amount.toLocaleString()}`;
 
 export const serviceFormat = (key: ServiceKey): 'INDIVIDUAL' | 'GROUP' =>
   SERVICES.find(s => s.key === key)?.format ?? 'GROUP';

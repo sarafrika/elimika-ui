@@ -2,15 +2,32 @@
 
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { SERVICES, type ServiceKey } from './class-form-shared';
+import {
+  type ApprovedRateCard,
+  approvedRateFor,
+  formatMoney,
+  SERVICES,
+  type ServiceKey,
+} from './class-form-shared';
 
-export function ServiceCards({ value, onChange }: { value: ServiceKey; onChange: (v: ServiceKey) => void }) {
+export function ServiceCards({
+  value,
+  onChange,
+  rateCard,
+  delivery,
+}: {
+  value: ServiceKey;
+  onChange: (v: ServiceKey) => void;
+  rateCard?: ApprovedRateCard;
+  delivery: 'IN_PERSON' | 'ONLINE' | 'HYBRID';
+}) {
   return (
     <div className="space-y-3">
       <Label className="text-sm font-medium">Select Service</Label>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {SERVICES.map(s => {
           const selected = value === s.key;
+          const rate = approvedRateFor(rateCard, s.format, delivery);
           return (
             <button
               key={s.key}
@@ -36,14 +53,19 @@ export function ServiceCards({ value, onChange }: { value: ServiceKey; onChange:
                 </div>
               </div>
               <div className="mt-3 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">{s.price}</span> / {s.unit}
+                <span className="font-medium text-foreground">
+                  {formatMoney(rate, rateCard?.currency)}
+                </span>{' '}
+                / {s.unit}
               </div>
             </button>
           );
         })}
       </div>
       <p className="text-[11px] text-muted-foreground">
-        Determines the session format. Set the actual per-session fee below.
+        {rateCard
+          ? 'Rates are the ones the course creator approved for your organisation, for your selected delivery mode.'
+          : 'Select an approved course or program to see the rates its creator approved.'}
       </p>
     </div>
   );
