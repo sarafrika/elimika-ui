@@ -445,7 +445,7 @@ export default function OrganisationCreateClassPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <PageHeader
           title="Organisation — Create a class"
-          description="Configure course, service, location, and schedule, then post it so instructors can apply. The class belongs to your organisation."
+          description="Configure course, instructor, location, and schedule, then publish. Naming an instructor assigns and schedules the class immediately (on their calendar and yours); leaving it unset posts the class for instructors to apply. The class belongs to your organisation."
           action={
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={() => router.push('/dashboard/organisation/classes')}>

@@ -204,7 +204,8 @@ export function OfferingPicker({
             </SelectContent>
           </Select>
           <p className="text-[11px] text-muted-foreground">
-            Preferred instructor. Instructors still apply to the posted class — assignment is confirmed from applicants.
+            On publish the class is assigned to this instructor and scheduled — it appears on their calendar and the
+            organisation calendar. Leave unset to post it for instructors to apply instead.
           </p>
         </div>
       </div>
