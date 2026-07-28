@@ -1293,19 +1293,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
-      readOnly: true,
-    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1406,12 +1406,6 @@ export const RubricScoringSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    performance_expectation: {
-      type: 'string',
-      description: '**[READ-ONLY]** Classification of performance expectation level.',
-      example: 'Exceptional Performance',
-      readOnly: true,
-    },
     score_range: {
       type: 'string',
       description: '**[READ-ONLY]** Expected score range for this performance level.',
@@ -1429,6 +1423,12 @@ export const RubricScoringSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Feedback category for constructive assessment guidance.',
       example: 'Excellence',
+      readOnly: true,
+    },
+    performance_expectation: {
+      type: 'string',
+      description: '**[READ-ONLY]** Classification of performance expectation level.',
+      example: 'Exceptional Performance',
       readOnly: true,
     },
   },
@@ -4214,19 +4214,19 @@ export const InstructorDocumentSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
+    },
     file_url: {
       type: 'string',
       description:
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
       example:
         '/api/v1/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/documents/files/profile_documents/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
-      readOnly: true,
-    },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
       readOnly: true,
     },
     file_size_formatted: {
@@ -4434,18 +4434,6 @@ export const AvailabilitySlotSchema = {
       example: 480,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '8h',
-      readOnly: true,
-    },
-    time_range: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable time range.',
-      example: '09:00 - 17:00',
-      readOnly: true,
-    },
     is_currently_active: {
       type: 'boolean',
       description:
@@ -4457,6 +4445,18 @@ export const AvailabilitySlotSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the availability pattern.',
       example: 'Weekly on Monday',
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '8h',
+      readOnly: true,
+    },
+    time_range: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable time range.',
+      example: '09:00 - 17:00',
       readOnly: true,
     },
   },
@@ -6839,19 +6839,19 @@ export const CourseCreatorDocumentDTOSchema = {
       type: 'string',
       readOnly: true,
     },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
+    },
     file_url: {
       type: 'string',
       description:
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
       example:
         '/api/v1/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/documents/files/profile_documents/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
-      readOnly: true,
-    },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
       readOnly: true,
     },
     file_size_formatted: {
@@ -9719,6 +9719,13 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
+    is_currently_active: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
+      example: false,
+      readOnly: true,
+    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -9729,13 +9736,6 @@ export const ScheduledInstanceSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable date and time range.',
       example: '2024-09-15 09:00 - 10:30',
-      readOnly: true,
-    },
-    is_currently_active: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
-      example: false,
       readOnly: true,
     },
     can_be_cancelled: {

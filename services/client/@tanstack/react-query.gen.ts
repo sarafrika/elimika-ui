@@ -205,20 +205,20 @@ import {
   createResource,
   listAvailabilityRules,
   addAvailabilityRule,
-  list,
-  send,
-  revoke,
-  resend,
+  listOrganisationInvitations,
+  sendOrganisationInvitations,
+  revokeOrganisationInvitation,
+  resendOrganisationInvitation,
   listCompetitions,
   createCompetition,
   listNotifications,
   applyBulkAction,
   applyAction,
-  declineFromInbox,
-  acceptFromInbox,
+  declineInvitationFromInbox,
+  acceptInvitationFromInbox,
   submitGuardianDetails,
-  declineByToken,
-  acceptByToken,
+  declineInvitationByToken,
+  acceptInvitationByToken,
   getAllInstructors,
   createInstructor,
   getInstructorSkills,
@@ -238,8 +238,8 @@ import {
   getAvailabilitySlots,
   createAvailabilitySlot,
   createLink,
-  decline,
-  consent,
+  declineGuardianConsent,
+  grantGuardianConsent,
   sweep,
   reconcile,
   enrollStudent,
@@ -450,8 +450,8 @@ import {
   listBookings,
   search2,
   getCounts,
-  lookup,
-  listMine,
+  getInvitationByToken,
+  listMyInvitations,
   getInstructorRatingSummary,
   getInstructorDocumentMedia,
   getInstructorBookings,
@@ -466,7 +466,7 @@ import {
   searchDocuments,
   getStudentDashboard,
   getMyStudents,
-  lookup1,
+  getGuardianInvitationByToken,
   getFile,
   cancelEnrollment,
   getEnrollment,
@@ -1122,16 +1122,16 @@ import type {
   AddAvailabilityRuleData,
   AddAvailabilityRuleError,
   AddAvailabilityRuleResponse,
-  ListData,
-  SendData,
-  SendError,
-  SendResponse,
-  RevokeData,
-  RevokeError,
-  RevokeResponse,
-  ResendData,
-  ResendError,
-  ResendResponse,
+  ListOrganisationInvitationsData,
+  SendOrganisationInvitationsData,
+  SendOrganisationInvitationsError,
+  SendOrganisationInvitationsResponse,
+  RevokeOrganisationInvitationData,
+  RevokeOrganisationInvitationError,
+  RevokeOrganisationInvitationResponse,
+  ResendOrganisationInvitationData,
+  ResendOrganisationInvitationError,
+  ResendOrganisationInvitationResponse,
   ListCompetitionsData,
   CreateCompetitionData,
   CreateCompetitionError,
@@ -1145,21 +1145,21 @@ import type {
   ApplyActionData,
   ApplyActionError,
   ApplyActionResponse,
-  DeclineFromInboxData,
-  DeclineFromInboxError,
-  DeclineFromInboxResponse,
-  AcceptFromInboxData,
-  AcceptFromInboxError,
-  AcceptFromInboxResponse,
+  DeclineInvitationFromInboxData,
+  DeclineInvitationFromInboxError,
+  DeclineInvitationFromInboxResponse,
+  AcceptInvitationFromInboxData,
+  AcceptInvitationFromInboxError,
+  AcceptInvitationFromInboxResponse,
   SubmitGuardianDetailsData,
   SubmitGuardianDetailsError,
   SubmitGuardianDetailsResponse,
-  DeclineByTokenData,
-  DeclineByTokenError,
-  DeclineByTokenResponse,
-  AcceptByTokenData,
-  AcceptByTokenError,
-  AcceptByTokenResponse,
+  DeclineInvitationByTokenData,
+  DeclineInvitationByTokenError,
+  DeclineInvitationByTokenResponse,
+  AcceptInvitationByTokenData,
+  AcceptInvitationByTokenError,
+  AcceptInvitationByTokenResponse,
   GetAllInstructorsData,
   GetAllInstructorsError,
   GetAllInstructorsResponse,
@@ -1209,12 +1209,12 @@ import type {
   CreateLinkData,
   CreateLinkError,
   CreateLinkResponse,
-  DeclineData,
-  DeclineError,
-  DeclineResponse,
-  ConsentData,
-  ConsentError,
-  ConsentResponse,
+  DeclineGuardianConsentData,
+  DeclineGuardianConsentError,
+  DeclineGuardianConsentResponse,
+  GrantGuardianConsentData,
+  GrantGuardianConsentError,
+  GrantGuardianConsentResponse,
   SweepData,
   SweepError,
   SweepResponse,
@@ -1757,8 +1757,8 @@ import type {
   Search2Error,
   Search2Response,
   GetCountsData,
-  LookupData,
-  ListMineData,
+  GetInvitationByTokenData,
+  ListMyInvitationsData,
   GetInstructorRatingSummaryData,
   GetInstructorDocumentMediaData,
   GetInstructorBookingsData,
@@ -1789,7 +1789,7 @@ import type {
   SearchDocumentsResponse,
   GetStudentDashboardData,
   GetMyStudentsData,
-  Lookup1Data,
+  GetGuardianInvitationByTokenData,
   GetFileData,
   CancelEnrollmentData,
   CancelEnrollmentError,
@@ -9125,16 +9125,20 @@ export const addAvailabilityRuleMutation = (
   return mutationOptions;
 };
 
-export const listQueryKey = (options: Options<ListData>) => createQueryKey('list', options);
+export const listOrganisationInvitationsQueryKey = (
+  options: Options<ListOrganisationInvitationsData>
+) => createQueryKey('listOrganisationInvitations', options);
 
 /**
  * List the organisation's invitations
  * Newest first. Optionally filtered by status.
  */
-export const listOptions = (options: Options<ListData>) => {
+export const listOrganisationInvitationsOptions = (
+  options: Options<ListOrganisationInvitationsData>
+) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await list({
+      const { data } = await listOrganisationInvitations({
         ...options,
         ...queryKey[0],
         signal,
@@ -9142,20 +9146,24 @@ export const listOptions = (options: Options<ListData>) => {
       });
       return data;
     },
-    queryKey: listQueryKey(options),
+    queryKey: listOrganisationInvitationsQueryKey(options),
   });
 };
 
-export const sendQueryKey = (options: Options<SendData>) => createQueryKey('send', options);
+export const sendOrganisationInvitationsQueryKey = (
+  options: Options<SendOrganisationInvitationsData>
+) => createQueryKey('sendOrganisationInvitations', options);
 
 /**
  * Invite people to join the organisation
  * Creates a token-bearing offer for each recipient and emails it. No account is provisioned and no affiliation exists until the recipient - or, for a minor, their guardian - accepts. Recipients are processed independently, so the response reports each one.
  */
-export const sendOptions = (options: Options<SendData>) => {
+export const sendOrganisationInvitationsOptions = (
+  options: Options<SendOrganisationInvitationsData>
+) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await send({
+      const { data } = await sendOrganisationInvitations({
         ...options,
         ...queryKey[0],
         signal,
@@ -9163,7 +9171,7 @@ export const sendOptions = (options: Options<SendData>) => {
       });
       return data;
     },
-    queryKey: sendQueryKey(options),
+    queryKey: sendOrganisationInvitationsQueryKey(options),
   });
 };
 
@@ -9171,12 +9179,20 @@ export const sendOptions = (options: Options<SendData>) => {
  * Invite people to join the organisation
  * Creates a token-bearing offer for each recipient and emails it. No account is provisioned and no affiliation exists until the recipient - or, for a minor, their guardian - accepts. Recipients are processed independently, so the response reports each one.
  */
-export const sendMutation = (
-  options?: Partial<Options<SendData>>
-): UseMutationOptions<SendResponse, SendError, Options<SendData>> => {
-  const mutationOptions: UseMutationOptions<SendResponse, SendError, Options<SendData>> = {
+export const sendOrganisationInvitationsMutation = (
+  options?: Partial<Options<SendOrganisationInvitationsData>>
+): UseMutationOptions<
+  SendOrganisationInvitationsResponse,
+  SendOrganisationInvitationsError,
+  Options<SendOrganisationInvitationsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SendOrganisationInvitationsResponse,
+    SendOrganisationInvitationsError,
+    Options<SendOrganisationInvitationsData>
+  > = {
     mutationFn: async localOptions => {
-      const { data } = await send({
+      const { data } = await sendOrganisationInvitations({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9187,16 +9203,20 @@ export const sendMutation = (
   return mutationOptions;
 };
 
-export const revokeQueryKey = (options: Options<RevokeData>) => createQueryKey('revoke', options);
+export const revokeOrganisationInvitationQueryKey = (
+  options: Options<RevokeOrganisationInvitationData>
+) => createQueryKey('revokeOrganisationInvitation', options);
 
 /**
  * Withdraw a pending invitation
  * Marks the invitation revoked and invalidates the emailed link immediately.
  */
-export const revokeOptions = (options: Options<RevokeData>) => {
+export const revokeOrganisationInvitationOptions = (
+  options: Options<RevokeOrganisationInvitationData>
+) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await revoke({
+      const { data } = await revokeOrganisationInvitation({
         ...options,
         ...queryKey[0],
         signal,
@@ -9204,7 +9224,7 @@ export const revokeOptions = (options: Options<RevokeData>) => {
       });
       return data;
     },
-    queryKey: revokeQueryKey(options),
+    queryKey: revokeOrganisationInvitationQueryKey(options),
   });
 };
 
@@ -9212,12 +9232,20 @@ export const revokeOptions = (options: Options<RevokeData>) => {
  * Withdraw a pending invitation
  * Marks the invitation revoked and invalidates the emailed link immediately.
  */
-export const revokeMutation = (
-  options?: Partial<Options<RevokeData>>
-): UseMutationOptions<RevokeResponse, RevokeError, Options<RevokeData>> => {
-  const mutationOptions: UseMutationOptions<RevokeResponse, RevokeError, Options<RevokeData>> = {
+export const revokeOrganisationInvitationMutation = (
+  options?: Partial<Options<RevokeOrganisationInvitationData>>
+): UseMutationOptions<
+  RevokeOrganisationInvitationResponse,
+  RevokeOrganisationInvitationError,
+  Options<RevokeOrganisationInvitationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RevokeOrganisationInvitationResponse,
+    RevokeOrganisationInvitationError,
+    Options<RevokeOrganisationInvitationData>
+  > = {
     mutationFn: async localOptions => {
-      const { data } = await revoke({
+      const { data } = await revokeOrganisationInvitation({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9228,16 +9256,20 @@ export const revokeMutation = (
   return mutationOptions;
 };
 
-export const resendQueryKey = (options: Options<ResendData>) => createQueryKey('resend', options);
+export const resendOrganisationInvitationQueryKey = (
+  options: Options<ResendOrganisationInvitationData>
+) => createQueryKey('resendOrganisationInvitation', options);
 
 /**
  * Resend a pending invitation
  * Issues a fresh link and expiry. The previous link stops working.
  */
-export const resendOptions = (options: Options<ResendData>) => {
+export const resendOrganisationInvitationOptions = (
+  options: Options<ResendOrganisationInvitationData>
+) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await resend({
+      const { data } = await resendOrganisationInvitation({
         ...options,
         ...queryKey[0],
         signal,
@@ -9245,7 +9277,7 @@ export const resendOptions = (options: Options<ResendData>) => {
       });
       return data;
     },
-    queryKey: resendQueryKey(options),
+    queryKey: resendOrganisationInvitationQueryKey(options),
   });
 };
 
@@ -9253,12 +9285,20 @@ export const resendOptions = (options: Options<ResendData>) => {
  * Resend a pending invitation
  * Issues a fresh link and expiry. The previous link stops working.
  */
-export const resendMutation = (
-  options?: Partial<Options<ResendData>>
-): UseMutationOptions<ResendResponse, ResendError, Options<ResendData>> => {
-  const mutationOptions: UseMutationOptions<ResendResponse, ResendError, Options<ResendData>> = {
+export const resendOrganisationInvitationMutation = (
+  options?: Partial<Options<ResendOrganisationInvitationData>>
+): UseMutationOptions<
+  ResendOrganisationInvitationResponse,
+  ResendOrganisationInvitationError,
+  Options<ResendOrganisationInvitationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ResendOrganisationInvitationResponse,
+    ResendOrganisationInvitationError,
+    Options<ResendOrganisationInvitationData>
+  > = {
     mutationFn: async localOptions => {
-      const { data } = await resend({
+      const { data } = await resendOrganisationInvitation({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9495,16 +9535,19 @@ export const applyActionMutation = (
   return mutationOptions;
 };
 
-export const declineFromInboxQueryKey = (options: Options<DeclineFromInboxData>) =>
-  createQueryKey('declineFromInbox', options);
+export const declineInvitationFromInboxQueryKey = (
+  options: Options<DeclineInvitationFromInboxData>
+) => createQueryKey('declineInvitationFromInbox', options);
 
 /**
  * Decline an invitation from my inbox
  */
-export const declineFromInboxOptions = (options: Options<DeclineFromInboxData>) => {
+export const declineInvitationFromInboxOptions = (
+  options: Options<DeclineInvitationFromInboxData>
+) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await declineFromInbox({
+      const { data } = await declineInvitationFromInbox({
         ...options,
         ...queryKey[0],
         signal,
@@ -9512,27 +9555,27 @@ export const declineFromInboxOptions = (options: Options<DeclineFromInboxData>) 
       });
       return data;
     },
-    queryKey: declineFromInboxQueryKey(options),
+    queryKey: declineInvitationFromInboxQueryKey(options),
   });
 };
 
 /**
  * Decline an invitation from my inbox
  */
-export const declineFromInboxMutation = (
-  options?: Partial<Options<DeclineFromInboxData>>
+export const declineInvitationFromInboxMutation = (
+  options?: Partial<Options<DeclineInvitationFromInboxData>>
 ): UseMutationOptions<
-  DeclineFromInboxResponse,
-  DeclineFromInboxError,
-  Options<DeclineFromInboxData>
+  DeclineInvitationFromInboxResponse,
+  DeclineInvitationFromInboxError,
+  Options<DeclineInvitationFromInboxData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeclineFromInboxResponse,
-    DeclineFromInboxError,
-    Options<DeclineFromInboxData>
+    DeclineInvitationFromInboxResponse,
+    DeclineInvitationFromInboxError,
+    Options<DeclineInvitationFromInboxData>
   > = {
     mutationFn: async localOptions => {
-      const { data } = await declineFromInbox({
+      const { data } = await declineInvitationFromInbox({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9543,16 +9586,19 @@ export const declineFromInboxMutation = (
   return mutationOptions;
 };
 
-export const acceptFromInboxQueryKey = (options: Options<AcceptFromInboxData>) =>
-  createQueryKey('acceptFromInbox', options);
+export const acceptInvitationFromInboxQueryKey = (
+  options: Options<AcceptInvitationFromInboxData>
+) => createQueryKey('acceptInvitationFromInbox', options);
 
 /**
  * Accept an invitation from my inbox
  */
-export const acceptFromInboxOptions = (options: Options<AcceptFromInboxData>) => {
+export const acceptInvitationFromInboxOptions = (
+  options: Options<AcceptInvitationFromInboxData>
+) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await acceptFromInbox({
+      const { data } = await acceptInvitationFromInbox({
         ...options,
         ...queryKey[0],
         signal,
@@ -9560,27 +9606,27 @@ export const acceptFromInboxOptions = (options: Options<AcceptFromInboxData>) =>
       });
       return data;
     },
-    queryKey: acceptFromInboxQueryKey(options),
+    queryKey: acceptInvitationFromInboxQueryKey(options),
   });
 };
 
 /**
  * Accept an invitation from my inbox
  */
-export const acceptFromInboxMutation = (
-  options?: Partial<Options<AcceptFromInboxData>>
+export const acceptInvitationFromInboxMutation = (
+  options?: Partial<Options<AcceptInvitationFromInboxData>>
 ): UseMutationOptions<
-  AcceptFromInboxResponse,
-  AcceptFromInboxError,
-  Options<AcceptFromInboxData>
+  AcceptInvitationFromInboxResponse,
+  AcceptInvitationFromInboxError,
+  Options<AcceptInvitationFromInboxData>
 > => {
   const mutationOptions: UseMutationOptions<
-    AcceptFromInboxResponse,
-    AcceptFromInboxError,
-    Options<AcceptFromInboxData>
+    AcceptInvitationFromInboxResponse,
+    AcceptInvitationFromInboxError,
+    Options<AcceptInvitationFromInboxData>
   > = {
     mutationFn: async localOptions => {
-      const { data } = await acceptFromInbox({
+      const { data } = await acceptInvitationFromInbox({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9641,16 +9687,16 @@ export const submitGuardianDetailsMutation = (
   return mutationOptions;
 };
 
-export const declineByTokenQueryKey = (options: Options<DeclineByTokenData>) =>
-  createQueryKey('declineByToken', options);
+export const declineInvitationByTokenQueryKey = (options: Options<DeclineInvitationByTokenData>) =>
+  createQueryKey('declineInvitationByToken', options);
 
 /**
  * Decline an invitation from its link
  */
-export const declineByTokenOptions = (options: Options<DeclineByTokenData>) => {
+export const declineInvitationByTokenOptions = (options: Options<DeclineInvitationByTokenData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await declineByToken({
+      const { data } = await declineInvitationByToken({
         ...options,
         ...queryKey[0],
         signal,
@@ -9658,23 +9704,27 @@ export const declineByTokenOptions = (options: Options<DeclineByTokenData>) => {
       });
       return data;
     },
-    queryKey: declineByTokenQueryKey(options),
+    queryKey: declineInvitationByTokenQueryKey(options),
   });
 };
 
 /**
  * Decline an invitation from its link
  */
-export const declineByTokenMutation = (
-  options?: Partial<Options<DeclineByTokenData>>
-): UseMutationOptions<DeclineByTokenResponse, DeclineByTokenError, Options<DeclineByTokenData>> => {
+export const declineInvitationByTokenMutation = (
+  options?: Partial<Options<DeclineInvitationByTokenData>>
+): UseMutationOptions<
+  DeclineInvitationByTokenResponse,
+  DeclineInvitationByTokenError,
+  Options<DeclineInvitationByTokenData>
+> => {
   const mutationOptions: UseMutationOptions<
-    DeclineByTokenResponse,
-    DeclineByTokenError,
-    Options<DeclineByTokenData>
+    DeclineInvitationByTokenResponse,
+    DeclineInvitationByTokenError,
+    Options<DeclineInvitationByTokenData>
   > = {
     mutationFn: async localOptions => {
-      const { data } = await declineByToken({
+      const { data } = await declineInvitationByToken({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9685,17 +9735,17 @@ export const declineByTokenMutation = (
   return mutationOptions;
 };
 
-export const acceptByTokenQueryKey = (options: Options<AcceptByTokenData>) =>
-  createQueryKey('acceptByToken', options);
+export const acceptInvitationByTokenQueryKey = (options: Options<AcceptInvitationByTokenData>) =>
+  createQueryKey('acceptInvitationByToken', options);
 
 /**
  * Accept an invitation from its link
  * Creates the affiliation. If the accepting user turns out to be below the configured age gate, no affiliation is created - the invitation moves to awaiting guardian consent and guardian details must be supplied next.
  */
-export const acceptByTokenOptions = (options: Options<AcceptByTokenData>) => {
+export const acceptInvitationByTokenOptions = (options: Options<AcceptInvitationByTokenData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await acceptByToken({
+      const { data } = await acceptInvitationByToken({
         ...options,
         ...queryKey[0],
         signal,
@@ -9703,7 +9753,7 @@ export const acceptByTokenOptions = (options: Options<AcceptByTokenData>) => {
       });
       return data;
     },
-    queryKey: acceptByTokenQueryKey(options),
+    queryKey: acceptInvitationByTokenQueryKey(options),
   });
 };
 
@@ -9711,16 +9761,20 @@ export const acceptByTokenOptions = (options: Options<AcceptByTokenData>) => {
  * Accept an invitation from its link
  * Creates the affiliation. If the accepting user turns out to be below the configured age gate, no affiliation is created - the invitation moves to awaiting guardian consent and guardian details must be supplied next.
  */
-export const acceptByTokenMutation = (
-  options?: Partial<Options<AcceptByTokenData>>
-): UseMutationOptions<AcceptByTokenResponse, AcceptByTokenError, Options<AcceptByTokenData>> => {
+export const acceptInvitationByTokenMutation = (
+  options?: Partial<Options<AcceptInvitationByTokenData>>
+): UseMutationOptions<
+  AcceptInvitationByTokenResponse,
+  AcceptInvitationByTokenError,
+  Options<AcceptInvitationByTokenData>
+> => {
   const mutationOptions: UseMutationOptions<
-    AcceptByTokenResponse,
-    AcceptByTokenError,
-    Options<AcceptByTokenData>
+    AcceptInvitationByTokenResponse,
+    AcceptInvitationByTokenError,
+    Options<AcceptInvitationByTokenData>
   > = {
     mutationFn: async localOptions => {
-      const { data } = await acceptByToken({
+      const { data } = await acceptInvitationByToken({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -10663,16 +10717,16 @@ export const createLinkMutation = (
   return mutationOptions;
 };
 
-export const declineQueryKey = (options: Options<DeclineData>) =>
-  createQueryKey('decline', options);
+export const declineGuardianConsentQueryKey = (options: Options<DeclineGuardianConsentData>) =>
+  createQueryKey('declineGuardianConsent', options);
 
 /**
  * Refuse the minor joining the organisation
  */
-export const declineOptions = (options: Options<DeclineData>) => {
+export const declineGuardianConsentOptions = (options: Options<DeclineGuardianConsentData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await decline({
+      const { data } = await declineGuardianConsent({
         ...options,
         ...queryKey[0],
         signal,
@@ -10680,19 +10734,27 @@ export const declineOptions = (options: Options<DeclineData>) => {
       });
       return data;
     },
-    queryKey: declineQueryKey(options),
+    queryKey: declineGuardianConsentQueryKey(options),
   });
 };
 
 /**
  * Refuse the minor joining the organisation
  */
-export const declineMutation = (
-  options?: Partial<Options<DeclineData>>
-): UseMutationOptions<DeclineResponse, DeclineError, Options<DeclineData>> => {
-  const mutationOptions: UseMutationOptions<DeclineResponse, DeclineError, Options<DeclineData>> = {
+export const declineGuardianConsentMutation = (
+  options?: Partial<Options<DeclineGuardianConsentData>>
+): UseMutationOptions<
+  DeclineGuardianConsentResponse,
+  DeclineGuardianConsentError,
+  Options<DeclineGuardianConsentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeclineGuardianConsentResponse,
+    DeclineGuardianConsentError,
+    Options<DeclineGuardianConsentData>
+  > = {
     mutationFn: async localOptions => {
-      const { data } = await decline({
+      const { data } = await declineGuardianConsent({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -10703,17 +10765,17 @@ export const declineMutation = (
   return mutationOptions;
 };
 
-export const consentQueryKey = (options: Options<ConsentData>) =>
-  createQueryKey('consent', options);
+export const grantGuardianConsentQueryKey = (options: Options<GrantGuardianConsentData>) =>
+  createQueryKey('grantGuardianConsent', options);
 
 /**
  * Consent to the minor joining the organisation
  * Creates the child's affiliation and establishes the guardian's own ongoing visibility of that child's learning at the chosen scope.
  */
-export const consentOptions = (options: Options<ConsentData>) => {
+export const grantGuardianConsentOptions = (options: Options<GrantGuardianConsentData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await consent({
+      const { data } = await grantGuardianConsent({
         ...options,
         ...queryKey[0],
         signal,
@@ -10721,7 +10783,7 @@ export const consentOptions = (options: Options<ConsentData>) => {
       });
       return data;
     },
-    queryKey: consentQueryKey(options),
+    queryKey: grantGuardianConsentQueryKey(options),
   });
 };
 
@@ -10729,12 +10791,20 @@ export const consentOptions = (options: Options<ConsentData>) => {
  * Consent to the minor joining the organisation
  * Creates the child's affiliation and establishes the guardian's own ongoing visibility of that child's learning at the chosen scope.
  */
-export const consentMutation = (
-  options?: Partial<Options<ConsentData>>
-): UseMutationOptions<ConsentResponse, ConsentError, Options<ConsentData>> => {
-  const mutationOptions: UseMutationOptions<ConsentResponse, ConsentError, Options<ConsentData>> = {
+export const grantGuardianConsentMutation = (
+  options?: Partial<Options<GrantGuardianConsentData>>
+): UseMutationOptions<
+  GrantGuardianConsentResponse,
+  GrantGuardianConsentError,
+  Options<GrantGuardianConsentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    GrantGuardianConsentResponse,
+    GrantGuardianConsentError,
+    Options<GrantGuardianConsentData>
+  > = {
     mutationFn: async localOptions => {
-      const { data } = await consent({
+      const { data } = await grantGuardianConsent({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -21255,16 +21325,17 @@ export const getCountsOptions = (options?: Options<GetCountsData>) => {
   });
 };
 
-export const lookupQueryKey = (options: Options<LookupData>) => createQueryKey('lookup', options);
+export const getInvitationByTokenQueryKey = (options: Options<GetInvitationByTokenData>) =>
+  createQueryKey('getInvitationByToken', options);
 
 /**
  * Read an invitation from its link
  * Public. Returns only what the recipient needs in order to decide: the organisation, the inviter, the role and the expiry. The recipient's address is masked and no other personal data is disclosed.
  */
-export const lookupOptions = (options: Options<LookupData>) => {
+export const getInvitationByTokenOptions = (options: Options<GetInvitationByTokenData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await lookup({
+      const { data } = await getInvitationByToken({
         ...options,
         ...queryKey[0],
         signal,
@@ -21272,21 +21343,21 @@ export const lookupOptions = (options: Options<LookupData>) => {
       });
       return data;
     },
-    queryKey: lookupQueryKey(options),
+    queryKey: getInvitationByTokenQueryKey(options),
   });
 };
 
-export const listMineQueryKey = (options?: Options<ListMineData>) =>
-  createQueryKey('listMine', options);
+export const listMyInvitationsQueryKey = (options?: Options<ListMyInvitationsData>) =>
+  createQueryKey('listMyInvitations', options);
 
 /**
  * List invitations addressed to me
  * Lets someone who never opened the email still find and act on an offer.
  */
-export const listMineOptions = (options?: Options<ListMineData>) => {
+export const listMyInvitationsOptions = (options?: Options<ListMyInvitationsData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listMine({
+      const { data } = await listMyInvitations({
         ...options,
         ...queryKey[0],
         signal,
@@ -21294,7 +21365,7 @@ export const listMineOptions = (options?: Options<ListMineData>) => {
       });
       return data;
     },
-    queryKey: listMineQueryKey(options),
+    queryKey: listMyInvitationsQueryKey(options),
   });
 };
 
@@ -22217,17 +22288,20 @@ export const getMyStudentsOptions = (options?: Options<GetMyStudentsData>) => {
   });
 };
 
-export const lookup1QueryKey = (options: Options<Lookup1Data>) =>
-  createQueryKey('lookup1', options);
+export const getGuardianInvitationByTokenQueryKey = (
+  options: Options<GetGuardianInvitationByTokenData>
+) => createQueryKey('getGuardianInvitationByToken', options);
 
 /**
  * Read a guardian consent request from its link
  * Public, so a guardian with no Elimika account can see what they are being asked to approve before registering. Names the child and masks their address.
  */
-export const lookup1Options = (options: Options<Lookup1Data>) => {
+export const getGuardianInvitationByTokenOptions = (
+  options: Options<GetGuardianInvitationByTokenData>
+) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await lookup1({
+      const { data } = await getGuardianInvitationByToken({
         ...options,
         ...queryKey[0],
         signal,
@@ -22235,7 +22309,7 @@ export const lookup1Options = (options: Options<Lookup1Data>) => {
       });
       return data;
     },
-    queryKey: lookup1QueryKey(options),
+    queryKey: getGuardianInvitationByTokenQueryKey(options),
   });
 };
 

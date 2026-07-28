@@ -844,17 +844,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
-      .readonly()
-      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -934,11 +934,6 @@ export const zRubricScoring = z
       )
       .readonly()
       .optional(),
-    performance_expectation: z
-      .string()
-      .describe('**[READ-ONLY]** Classification of performance expectation level.')
-      .readonly()
-      .optional(),
     score_range: z
       .string()
       .describe('**[READ-ONLY]** Expected score range for this performance level.')
@@ -952,6 +947,11 @@ export const zRubricScoring = z
     feedback_category: z
       .string()
       .describe('**[READ-ONLY]** Feedback category for constructive assessment guidance.')
+      .readonly()
+      .optional(),
+    performance_expectation: z
+      .string()
+      .describe('**[READ-ONLY]** Classification of performance expectation level.')
       .readonly()
       .optional(),
   })
@@ -2793,16 +2793,16 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
+    is_expired: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+      .readonly()
+      .optional(),
     file_url: z
       .string()
       .describe(
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
       )
-      .readonly()
-      .optional(),
-    is_expired: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
       .readonly()
       .optional(),
     file_size_formatted: z
@@ -2908,16 +2908,6 @@ export const zAvailabilitySlot = z
       .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
       .readonly()
       .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
-    time_range: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable time range.')
-      .readonly()
-      .optional(),
     is_currently_active: z
       .boolean()
       .describe(
@@ -2928,6 +2918,16 @@ export const zAvailabilitySlot = z
     availability_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the availability pattern.')
+      .readonly()
+      .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
+      .readonly()
+      .optional(),
+    time_range: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable time range.')
       .readonly()
       .optional(),
   })
@@ -4251,16 +4251,16 @@ export const zCourseCreatorDocumentDto = z.object({
   created_by: z.string().readonly().optional(),
   updated_date: z.string().datetime().readonly().optional(),
   updated_by: z.string().readonly().optional(),
+  is_expired: z
+    .boolean()
+    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+    .readonly()
+    .optional(),
   file_url: z
     .string()
     .describe(
       '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
     )
-    .readonly()
-    .optional(),
-  is_expired: z
-    .boolean()
-    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
     .readonly()
     .optional(),
   file_size_formatted: z
@@ -5881,6 +5881,13 @@ export const zScheduledInstance = z
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
+    is_currently_active: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
+      )
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -5889,13 +5896,6 @@ export const zScheduledInstance = z
     time_range: z
       .string()
       .describe('**[READ-ONLY]** Human-readable date and time range.')
-      .readonly()
-      .optional(),
-    is_currently_active: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
-      )
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -15180,7 +15180,7 @@ export const zAddAvailabilityRuleData = z.object({
  */
 export const zAddAvailabilityRuleResponse = zApiResponseResourceAvailabilityRule;
 
-export const zListData = z.object({
+export const zListOrganisationInvitationsData = z.object({
   body: z.never().optional(),
   path: z.object({
     organisationUuid: z.string().uuid().describe('UUID of the organisation'),
@@ -15198,9 +15198,9 @@ export const zListData = z.object({
 /**
  * Invitations retrieved
  */
-export const zListResponse = zApiResponseListOrganisationInvitation;
+export const zListOrganisationInvitationsResponse = zApiResponseListOrganisationInvitation;
 
-export const zSendData = z.object({
+export const zSendOrganisationInvitationsData = z.object({
   body: zSendOrganisationInvitationsRequest,
   path: z.object({
     organisationUuid: z.string().uuid().describe('UUID of the inviting organisation'),
@@ -15211,9 +15211,9 @@ export const zSendData = z.object({
 /**
  * Invitations processed
  */
-export const zSendResponse = zApiResponseSendOrganisationInvitationsResult;
+export const zSendOrganisationInvitationsResponse = zApiResponseSendOrganisationInvitationsResult;
 
-export const zRevokeData = z.object({
+export const zRevokeOrganisationInvitationData = z.object({
   body: z.never().optional(),
   path: z.object({
     organisationUuid: z.string().uuid(),
@@ -15225,9 +15225,9 @@ export const zRevokeData = z.object({
 /**
  * Invitation revoked
  */
-export const zRevokeResponse = zApiResponseOrganisationInvitation;
+export const zRevokeOrganisationInvitationResponse = zApiResponseOrganisationInvitation;
 
-export const zResendData = z.object({
+export const zResendOrganisationInvitationData = z.object({
   body: z.never().optional(),
   path: z.object({
     organisationUuid: z.string().uuid(),
@@ -15239,7 +15239,7 @@ export const zResendData = z.object({
 /**
  * Invitation resent
  */
-export const zResendResponse = zApiResponseOrganisationInvitation;
+export const zResendOrganisationInvitationResponse = zApiResponseOrganisationInvitation;
 
 export const zListCompetitionsData = z.object({
   body: z.never().optional(),
@@ -15317,7 +15317,7 @@ export const zApplyActionData = z.object({
  */
 export const zApplyActionResponse = zApiResponseNotificationDto;
 
-export const zDeclineFromInboxData = z.object({
+export const zDeclineInvitationFromInboxData = z.object({
   body: z.never().optional(),
   path: z.object({
     invitationUuid: z.string().uuid(),
@@ -15328,9 +15328,9 @@ export const zDeclineFromInboxData = z.object({
 /**
  * Invitation declined
  */
-export const zDeclineFromInboxResponse = zApiResponseVoid;
+export const zDeclineInvitationFromInboxResponse = zApiResponseVoid;
 
-export const zAcceptFromInboxData = z.object({
+export const zAcceptInvitationFromInboxData = z.object({
   body: zAcceptInvitationRequest,
   path: z.object({
     invitationUuid: z.string().uuid(),
@@ -15341,7 +15341,7 @@ export const zAcceptFromInboxData = z.object({
 /**
  * Invitation accepted
  */
-export const zAcceptFromInboxResponse = zApiResponseAcceptInvitationResult;
+export const zAcceptInvitationFromInboxResponse = zApiResponseAcceptInvitationResult;
 
 export const zSubmitGuardianDetailsData = z.object({
   body: zGuardianDetailsRequest,
@@ -15356,7 +15356,7 @@ export const zSubmitGuardianDetailsData = z.object({
  */
 export const zSubmitGuardianDetailsResponse = zApiResponsePublicInvitation;
 
-export const zDeclineByTokenData = z.object({
+export const zDeclineInvitationByTokenData = z.object({
   body: z.never().optional(),
   path: z.object({
     token: z.string(),
@@ -15367,9 +15367,9 @@ export const zDeclineByTokenData = z.object({
 /**
  * Invitation declined
  */
-export const zDeclineByTokenResponse = zApiResponseVoid;
+export const zDeclineInvitationByTokenResponse = zApiResponseVoid;
 
-export const zAcceptByTokenData = z.object({
+export const zAcceptInvitationByTokenData = z.object({
   body: zAcceptInvitationRequest,
   path: z.object({
     token: z.string(),
@@ -15380,7 +15380,7 @@ export const zAcceptByTokenData = z.object({
 /**
  * Invitation accepted
  */
-export const zAcceptByTokenResponse = zApiResponseAcceptInvitationResult;
+export const zAcceptInvitationByTokenResponse = zApiResponseAcceptInvitationResult;
 
 export const zGetAllInstructorsData = z.object({
   body: z.never().optional(),
@@ -15648,7 +15648,7 @@ export const zCreateLinkData = z.object({
  */
 export const zCreateLinkResponse = zGuardianStudentLink;
 
-export const zDeclineData = z.object({
+export const zDeclineGuardianConsentData = z.object({
   body: z.never().optional(),
   path: z.object({
     token: z.string(),
@@ -15659,9 +15659,9 @@ export const zDeclineData = z.object({
 /**
  * Refusal recorded
  */
-export const zDeclineResponse = zApiResponseVoid;
+export const zDeclineGuardianConsentResponse = zApiResponseVoid;
 
-export const zConsentData = z.object({
+export const zGrantGuardianConsentData = z.object({
   body: zGuardianConsentRequest,
   path: z.object({
     token: z.string(),
@@ -15672,7 +15672,7 @@ export const zConsentData = z.object({
 /**
  * Consent recorded
  */
-export const zConsentResponse = zApiResponseAcceptInvitationResult;
+export const zGrantGuardianConsentResponse = zApiResponseAcceptInvitationResult;
 
 export const zSweepData = z.object({
   body: z.never().optional(),
@@ -18738,7 +18738,7 @@ export const zGetCountsData = z.object({
  */
 export const zGetCountsResponse = zApiResponseNotificationCountsDto;
 
-export const zLookupData = z.object({
+export const zGetInvitationByTokenData = z.object({
   body: z.never().optional(),
   path: z.object({
     token: z.string().describe('Token from the emailed invitation link'),
@@ -18749,9 +18749,9 @@ export const zLookupData = z.object({
 /**
  * Invitation retrieved
  */
-export const zLookupResponse = zApiResponsePublicInvitation;
+export const zGetInvitationByTokenResponse = zApiResponsePublicInvitation;
 
-export const zListMineData = z.object({
+export const zListMyInvitationsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.never().optional(),
@@ -18760,7 +18760,7 @@ export const zListMineData = z.object({
 /**
  * Invitations retrieved
  */
-export const zListMineResponse = zApiResponseListMyInvitation;
+export const zListMyInvitationsResponse = zApiResponseListMyInvitation;
 
 export const zGetInstructorRatingSummaryData = z.object({
   body: z.never().optional(),
@@ -18961,7 +18961,7 @@ export const zGetMyStudentsData = z.object({
  */
 export const zGetMyStudentsResponse = zApiResponseListGuardianStudentSummaryDto;
 
-export const zLookup1Data = z.object({
+export const zGetGuardianInvitationByTokenData = z.object({
   body: z.never().optional(),
   path: z.object({
     token: z.string().describe('Token from the emailed consent link'),
@@ -18972,7 +18972,7 @@ export const zLookup1Data = z.object({
 /**
  * Consent request retrieved
  */
-export const zLookup1Response = zApiResponsePublicGuardianInvitation;
+export const zGetGuardianInvitationByTokenResponse = zApiResponsePublicGuardianInvitation;
 
 export const zGetFileData = z.object({
   body: z.never().optional(),

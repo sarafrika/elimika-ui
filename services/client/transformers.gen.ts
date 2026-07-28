@@ -147,10 +147,10 @@ import type {
   CreateResourceResponse,
   ListAvailabilityRulesResponse,
   AddAvailabilityRuleResponse,
-  ListResponse,
-  SendResponse,
-  RevokeResponse,
-  ResendResponse,
+  ListOrganisationInvitationsResponse,
+  SendOrganisationInvitationsResponse,
+  RevokeOrganisationInvitationResponse,
+  ResendOrganisationInvitationResponse,
   ListCompetitionsResponse,
   CreateCompetitionResponse,
   ListNotificationsResponse,
@@ -352,8 +352,8 @@ import type {
   ListBookingsResponse,
   Search2Response,
   GetCountsResponse,
-  LookupResponse,
-  ListMineResponse,
+  GetInvitationByTokenResponse,
+  ListMyInvitationsResponse,
   GetInstructorRatingSummaryResponse,
   GetInstructorBookingsResponse,
   GetInstructorCalendarResponse,
@@ -365,7 +365,7 @@ import type {
   SearchEducationResponse,
   SearchDocumentsResponse,
   GetStudentDashboardResponse,
-  Lookup1Response,
+  GetGuardianInvitationByTokenResponse,
   GetEnrollmentResponse,
   GetScheduledInstanceEnrollmentsForStudentResponse,
   GetEnrollmentOverviewForStudentResponse,
@@ -3120,7 +3120,9 @@ const apiResponseListOrganisationInvitationSchemaResponseTransformer = (data: an
   return data;
 };
 
-export const listResponseTransformer = async (data: any): Promise<ListResponse> => {
+export const listOrganisationInvitationsResponseTransformer = async (
+  data: any
+): Promise<ListOrganisationInvitationsResponse> => {
   data = apiResponseListOrganisationInvitationSchemaResponseTransformer(data);
   return data;
 };
@@ -3141,7 +3143,9 @@ const apiResponseSendOrganisationInvitationsResultSchemaResponseTransformer = (d
   return data;
 };
 
-export const sendResponseTransformer = async (data: any): Promise<SendResponse> => {
+export const sendOrganisationInvitationsResponseTransformer = async (
+  data: any
+): Promise<SendOrganisationInvitationsResponse> => {
   data = apiResponseSendOrganisationInvitationsResultSchemaResponseTransformer(data);
   return data;
 };
@@ -3153,12 +3157,16 @@ const apiResponseOrganisationInvitationSchemaResponseTransformer = (data: any) =
   return data;
 };
 
-export const revokeResponseTransformer = async (data: any): Promise<RevokeResponse> => {
+export const revokeOrganisationInvitationResponseTransformer = async (
+  data: any
+): Promise<RevokeOrganisationInvitationResponse> => {
   data = apiResponseOrganisationInvitationSchemaResponseTransformer(data);
   return data;
 };
 
-export const resendResponseTransformer = async (data: any): Promise<ResendResponse> => {
+export const resendOrganisationInvitationResponseTransformer = async (
+  data: any
+): Promise<ResendOrganisationInvitationResponse> => {
   data = apiResponseOrganisationInvitationSchemaResponseTransformer(data);
   return data;
 };
@@ -6059,7 +6067,9 @@ export const getCountsResponseTransformer = async (data: any): Promise<GetCounts
   return data;
 };
 
-export const lookupResponseTransformer = async (data: any): Promise<LookupResponse> => {
+export const getInvitationByTokenResponseTransformer = async (
+  data: any
+): Promise<GetInvitationByTokenResponse> => {
   data = apiResponsePublicInvitationSchemaResponseTransformer(data);
   return data;
 };
@@ -6083,7 +6093,9 @@ const apiResponseListMyInvitationSchemaResponseTransformer = (data: any) => {
   return data;
 };
 
-export const listMineResponseTransformer = async (data: any): Promise<ListMineResponse> => {
+export const listMyInvitationsResponseTransformer = async (
+  data: any
+): Promise<ListMyInvitationsResponse> => {
   data = apiResponseListMyInvitationSchemaResponseTransformer(data);
   return data;
 };
@@ -6295,7 +6307,9 @@ const apiResponsePublicGuardianInvitationSchemaResponseTransformer = (data: any)
   return data;
 };
 
-export const lookup1ResponseTransformer = async (data: any): Promise<Lookup1Response> => {
+export const getGuardianInvitationByTokenResponseTransformer = async (
+  data: any
+): Promise<GetGuardianInvitationByTokenResponse> => {
   data = apiResponsePublicGuardianInvitationSchemaResponseTransformer(data);
   return data;
 };

@@ -613,18 +613,18 @@ import type {
   AddAvailabilityRuleData,
   AddAvailabilityRuleResponses,
   AddAvailabilityRuleErrors,
-  ListData,
-  ListResponses,
-  ListErrors,
-  SendData,
-  SendResponses,
-  SendErrors,
-  RevokeData,
-  RevokeResponses,
-  RevokeErrors,
-  ResendData,
-  ResendResponses,
-  ResendErrors,
+  ListOrganisationInvitationsData,
+  ListOrganisationInvitationsResponses,
+  ListOrganisationInvitationsErrors,
+  SendOrganisationInvitationsData,
+  SendOrganisationInvitationsResponses,
+  SendOrganisationInvitationsErrors,
+  RevokeOrganisationInvitationData,
+  RevokeOrganisationInvitationResponses,
+  RevokeOrganisationInvitationErrors,
+  ResendOrganisationInvitationData,
+  ResendOrganisationInvitationResponses,
+  ResendOrganisationInvitationErrors,
   ListCompetitionsData,
   ListCompetitionsResponses,
   ListCompetitionsErrors,
@@ -640,21 +640,21 @@ import type {
   ApplyActionData,
   ApplyActionResponses,
   ApplyActionErrors,
-  DeclineFromInboxData,
-  DeclineFromInboxResponses,
-  DeclineFromInboxErrors,
-  AcceptFromInboxData,
-  AcceptFromInboxResponses,
-  AcceptFromInboxErrors,
+  DeclineInvitationFromInboxData,
+  DeclineInvitationFromInboxResponses,
+  DeclineInvitationFromInboxErrors,
+  AcceptInvitationFromInboxData,
+  AcceptInvitationFromInboxResponses,
+  AcceptInvitationFromInboxErrors,
   SubmitGuardianDetailsData,
   SubmitGuardianDetailsResponses,
   SubmitGuardianDetailsErrors,
-  DeclineByTokenData,
-  DeclineByTokenResponses,
-  DeclineByTokenErrors,
-  AcceptByTokenData,
-  AcceptByTokenResponses,
-  AcceptByTokenErrors,
+  DeclineInvitationByTokenData,
+  DeclineInvitationByTokenResponses,
+  DeclineInvitationByTokenErrors,
+  AcceptInvitationByTokenData,
+  AcceptInvitationByTokenResponses,
+  AcceptInvitationByTokenErrors,
   GetAllInstructorsData,
   GetAllInstructorsResponses,
   GetAllInstructorsErrors,
@@ -712,12 +712,12 @@ import type {
   CreateLinkData,
   CreateLinkResponses,
   CreateLinkErrors,
-  DeclineData,
-  DeclineResponses,
-  DeclineErrors,
-  ConsentData,
-  ConsentResponses,
-  ConsentErrors,
+  DeclineGuardianConsentData,
+  DeclineGuardianConsentResponses,
+  DeclineGuardianConsentErrors,
+  GrantGuardianConsentData,
+  GrantGuardianConsentResponses,
+  GrantGuardianConsentErrors,
   SweepData,
   SweepResponses,
   SweepErrors,
@@ -1348,12 +1348,12 @@ import type {
   GetCountsData,
   GetCountsResponses,
   GetCountsErrors,
-  LookupData,
-  LookupResponses,
-  LookupErrors,
-  ListMineData,
-  ListMineResponses,
-  ListMineErrors,
+  GetInvitationByTokenData,
+  GetInvitationByTokenResponses,
+  GetInvitationByTokenErrors,
+  ListMyInvitationsData,
+  ListMyInvitationsResponses,
+  ListMyInvitationsErrors,
   GetInstructorRatingSummaryData,
   GetInstructorRatingSummaryResponses,
   GetInstructorRatingSummaryErrors,
@@ -1396,9 +1396,9 @@ import type {
   GetMyStudentsData,
   GetMyStudentsResponses,
   GetMyStudentsErrors,
-  Lookup1Data,
-  Lookup1Responses,
-  Lookup1Errors,
+  GetGuardianInvitationByTokenData,
+  GetGuardianInvitationByTokenResponses,
+  GetGuardianInvitationByTokenErrors,
   GetFileData,
   GetFileResponses,
   GetFileErrors,
@@ -1944,10 +1944,10 @@ import {
   createResourceResponseTransformer,
   listAvailabilityRulesResponseTransformer,
   addAvailabilityRuleResponseTransformer,
-  listResponseTransformer,
-  sendResponseTransformer,
-  revokeResponseTransformer,
-  resendResponseTransformer,
+  listOrganisationInvitationsResponseTransformer,
+  sendOrganisationInvitationsResponseTransformer,
+  revokeOrganisationInvitationResponseTransformer,
+  resendOrganisationInvitationResponseTransformer,
   listCompetitionsResponseTransformer,
   createCompetitionResponseTransformer,
   listNotificationsResponseTransformer,
@@ -2149,8 +2149,8 @@ import {
   listBookingsResponseTransformer,
   search2ResponseTransformer,
   getCountsResponseTransformer,
-  lookupResponseTransformer,
-  listMineResponseTransformer,
+  getInvitationByTokenResponseTransformer,
+  listMyInvitationsResponseTransformer,
   getInstructorRatingSummaryResponseTransformer,
   getInstructorBookingsResponseTransformer,
   getInstructorCalendarResponseTransformer,
@@ -2162,7 +2162,7 @@ import {
   searchEducationResponseTransformer,
   searchDocumentsResponseTransformer,
   getStudentDashboardResponseTransformer,
-  lookup1ResponseTransformer,
+  getGuardianInvitationByTokenResponseTransformer,
   getEnrollmentResponseTransformer,
   getScheduledInstanceEnrollmentsForStudentResponseTransformer,
   getEnrollmentOverviewForStudentResponseTransformer,
@@ -8238,11 +8238,15 @@ export const addAvailabilityRule = <ThrowOnError extends boolean = false>(
  * List the organisation's invitations
  * Newest first. Optionally filtered by status.
  */
-export const list = <ThrowOnError extends boolean = false>(
-  options: Options<ListData, ThrowOnError>
+export const listOrganisationInvitations = <ThrowOnError extends boolean = false>(
+  options: Options<ListOrganisationInvitationsData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).get<ListResponses, ListErrors, ThrowOnError>({
-    responseTransformer: listResponseTransformer,
+  return (options.client ?? _heyApiClient).get<
+    ListOrganisationInvitationsResponses,
+    ListOrganisationInvitationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listOrganisationInvitationsResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -8262,11 +8266,15 @@ export const list = <ThrowOnError extends boolean = false>(
  * Invite people to join the organisation
  * Creates a token-bearing offer for each recipient and emails it. No account is provisioned and no affiliation exists until the recipient - or, for a minor, their guardian - accepts. Recipients are processed independently, so the response reports each one.
  */
-export const send = <ThrowOnError extends boolean = false>(
-  options: Options<SendData, ThrowOnError>
+export const sendOrganisationInvitations = <ThrowOnError extends boolean = false>(
+  options: Options<SendOrganisationInvitationsData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).post<SendResponses, SendErrors, ThrowOnError>({
-    responseTransformer: sendResponseTransformer,
+  return (options.client ?? _heyApiClient).post<
+    SendOrganisationInvitationsResponses,
+    SendOrganisationInvitationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: sendOrganisationInvitationsResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -8290,11 +8298,15 @@ export const send = <ThrowOnError extends boolean = false>(
  * Withdraw a pending invitation
  * Marks the invitation revoked and invalidates the emailed link immediately.
  */
-export const revoke = <ThrowOnError extends boolean = false>(
-  options: Options<RevokeData, ThrowOnError>
+export const revokeOrganisationInvitation = <ThrowOnError extends boolean = false>(
+  options: Options<RevokeOrganisationInvitationData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).post<RevokeResponses, RevokeErrors, ThrowOnError>({
-    responseTransformer: revokeResponseTransformer,
+  return (options.client ?? _heyApiClient).post<
+    RevokeOrganisationInvitationResponses,
+    RevokeOrganisationInvitationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: revokeOrganisationInvitationResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -8314,11 +8326,15 @@ export const revoke = <ThrowOnError extends boolean = false>(
  * Resend a pending invitation
  * Issues a fresh link and expiry. The previous link stops working.
  */
-export const resend = <ThrowOnError extends boolean = false>(
-  options: Options<ResendData, ThrowOnError>
+export const resendOrganisationInvitation = <ThrowOnError extends boolean = false>(
+  options: Options<ResendOrganisationInvitationData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).post<ResendResponses, ResendErrors, ThrowOnError>({
-    responseTransformer: resendResponseTransformer,
+  return (options.client ?? _heyApiClient).post<
+    ResendOrganisationInvitationResponses,
+    ResendOrganisationInvitationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: resendOrganisationInvitationResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -8476,12 +8492,12 @@ export const applyAction = <ThrowOnError extends boolean = false>(
 /**
  * Decline an invitation from my inbox
  */
-export const declineFromInbox = <ThrowOnError extends boolean = false>(
-  options: Options<DeclineFromInboxData, ThrowOnError>
+export const declineInvitationFromInbox = <ThrowOnError extends boolean = false>(
+  options: Options<DeclineInvitationFromInboxData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).post<
-    DeclineFromInboxResponses,
-    DeclineFromInboxErrors,
+    DeclineInvitationFromInboxResponses,
+    DeclineInvitationFromInboxErrors,
     ThrowOnError
   >({
     security: [
@@ -8502,12 +8518,12 @@ export const declineFromInbox = <ThrowOnError extends boolean = false>(
 /**
  * Accept an invitation from my inbox
  */
-export const acceptFromInbox = <ThrowOnError extends boolean = false>(
-  options: Options<AcceptFromInboxData, ThrowOnError>
+export const acceptInvitationFromInbox = <ThrowOnError extends boolean = false>(
+  options: Options<AcceptInvitationFromInboxData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).post<
-    AcceptFromInboxResponses,
-    AcceptFromInboxErrors,
+    AcceptInvitationFromInboxResponses,
+    AcceptInvitationFromInboxErrors,
     ThrowOnError
   >({
     security: [
@@ -8564,12 +8580,12 @@ export const submitGuardianDetails = <ThrowOnError extends boolean = false>(
 /**
  * Decline an invitation from its link
  */
-export const declineByToken = <ThrowOnError extends boolean = false>(
-  options: Options<DeclineByTokenData, ThrowOnError>
+export const declineInvitationByToken = <ThrowOnError extends boolean = false>(
+  options: Options<DeclineInvitationByTokenData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).post<
-    DeclineByTokenResponses,
-    DeclineByTokenErrors,
+    DeclineInvitationByTokenResponses,
+    DeclineInvitationByTokenErrors,
     ThrowOnError
   >({
     security: [
@@ -8591,12 +8607,12 @@ export const declineByToken = <ThrowOnError extends boolean = false>(
  * Accept an invitation from its link
  * Creates the affiliation. If the accepting user turns out to be below the configured age gate, no affiliation is created - the invitation moves to awaiting guardian consent and guardian details must be supplied next.
  */
-export const acceptByToken = <ThrowOnError extends boolean = false>(
-  options: Options<AcceptByTokenData, ThrowOnError>
+export const acceptInvitationByToken = <ThrowOnError extends boolean = false>(
+  options: Options<AcceptInvitationByTokenData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).post<
-    AcceptByTokenResponses,
-    AcceptByTokenErrors,
+    AcceptInvitationByTokenResponses,
+    AcceptInvitationByTokenErrors,
     ThrowOnError
   >({
     security: [
@@ -9208,10 +9224,14 @@ export const createLink = <ThrowOnError extends boolean = false>(
 /**
  * Refuse the minor joining the organisation
  */
-export const decline = <ThrowOnError extends boolean = false>(
-  options: Options<DeclineData, ThrowOnError>
+export const declineGuardianConsent = <ThrowOnError extends boolean = false>(
+  options: Options<DeclineGuardianConsentData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).post<DeclineResponses, DeclineErrors, ThrowOnError>({
+  return (options.client ?? _heyApiClient).post<
+    DeclineGuardianConsentResponses,
+    DeclineGuardianConsentErrors,
+    ThrowOnError
+  >({
     security: [
       {
         scheme: 'bearer',
@@ -9231,10 +9251,14 @@ export const decline = <ThrowOnError extends boolean = false>(
  * Consent to the minor joining the organisation
  * Creates the child's affiliation and establishes the guardian's own ongoing visibility of that child's learning at the chosen scope.
  */
-export const consent = <ThrowOnError extends boolean = false>(
-  options: Options<ConsentData, ThrowOnError>
+export const grantGuardianConsent = <ThrowOnError extends boolean = false>(
+  options: Options<GrantGuardianConsentData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).post<ConsentResponses, ConsentErrors, ThrowOnError>({
+  return (options.client ?? _heyApiClient).post<
+    GrantGuardianConsentResponses,
+    GrantGuardianConsentErrors,
+    ThrowOnError
+  >({
     security: [
       {
         scheme: 'bearer',
@@ -15523,11 +15547,15 @@ export const getCounts = <ThrowOnError extends boolean = false>(
  * Read an invitation from its link
  * Public. Returns only what the recipient needs in order to decide: the organisation, the inviter, the role and the expiry. The recipient's address is masked and no other personal data is disclosed.
  */
-export const lookup = <ThrowOnError extends boolean = false>(
-  options: Options<LookupData, ThrowOnError>
+export const getInvitationByToken = <ThrowOnError extends boolean = false>(
+  options: Options<GetInvitationByTokenData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).get<LookupResponses, LookupErrors, ThrowOnError>({
-    responseTransformer: lookupResponseTransformer,
+  return (options.client ?? _heyApiClient).get<
+    GetInvitationByTokenResponses,
+    GetInvitationByTokenErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInvitationByTokenResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -15547,11 +15575,15 @@ export const lookup = <ThrowOnError extends boolean = false>(
  * List invitations addressed to me
  * Lets someone who never opened the email still find and act on an offer.
  */
-export const listMine = <ThrowOnError extends boolean = false>(
-  options?: Options<ListMineData, ThrowOnError>
+export const listMyInvitations = <ThrowOnError extends boolean = false>(
+  options?: Options<ListMyInvitationsData, ThrowOnError>
 ) => {
-  return (options?.client ?? _heyApiClient).get<ListMineResponses, ListMineErrors, ThrowOnError>({
-    responseTransformer: listMineResponseTransformer,
+  return (options?.client ?? _heyApiClient).get<
+    ListMyInvitationsResponses,
+    ListMyInvitationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listMyInvitationsResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -16085,11 +16117,15 @@ export const getMyStudents = <ThrowOnError extends boolean = false>(
  * Read a guardian consent request from its link
  * Public, so a guardian with no Elimika account can see what they are being asked to approve before registering. Names the child and masks their address.
  */
-export const lookup1 = <ThrowOnError extends boolean = false>(
-  options: Options<Lookup1Data, ThrowOnError>
+export const getGuardianInvitationByToken = <ThrowOnError extends boolean = false>(
+  options: Options<GetGuardianInvitationByTokenData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).get<Lookup1Responses, Lookup1Errors, ThrowOnError>({
-    responseTransformer: lookup1ResponseTransformer,
+  return (options.client ?? _heyApiClient).get<
+    GetGuardianInvitationByTokenResponses,
+    GetGuardianInvitationByTokenErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getGuardianInvitationByTokenResponseTransformer,
     security: [
       {
         scheme: 'bearer',

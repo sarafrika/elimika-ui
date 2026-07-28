@@ -614,13 +614,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -667,10 +667,6 @@ export type RubricScoring = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Classification of performance expectation level.
-   */
-  readonly performance_expectation?: string;
-  /**
    * **[READ-ONLY]** Expected score range for this performance level.
    */
   readonly score_range?: string;
@@ -682,6 +678,10 @@ export type RubricScoring = {
    * **[READ-ONLY]** Feedback category for constructive assessment guidance.
    */
   readonly feedback_category?: string;
+  /**
+   * **[READ-ONLY]** Classification of performance expectation level.
+   */
+  readonly performance_expectation?: string;
 };
 
 export type ApiResponseRubricScoring = {
@@ -2085,13 +2085,13 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
-   */
-  readonly file_url?: string;
-  /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
   readonly is_expired?: boolean;
+  /**
+   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
+   */
+  readonly file_url?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -2196,14 +2196,6 @@ export type AvailabilitySlot = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
-   * **[READ-ONLY]** Human-readable time range.
-   */
-  readonly time_range?: string;
-  /**
    * **[READ-ONLY]** Indicates if the availability slot is currently active based on effective dates.
    */
   readonly is_currently_active?: boolean;
@@ -2211,6 +2203,14 @@ export type AvailabilitySlot = {
    * **[READ-ONLY]** Human-readable description of the availability pattern.
    */
   readonly availability_description?: string;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable time range.
+   */
+  readonly time_range?: string;
 };
 
 export type ApiResponseAvailabilitySlot = {
@@ -3211,13 +3211,13 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
-   */
-  readonly file_url?: string;
-  /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
   readonly is_expired?: boolean;
+  /**
+   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
+   */
+  readonly file_url?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -4700,6 +4700,10 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
+   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
+   */
+  readonly is_currently_active?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -4707,10 +4711,6 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Human-readable date and time range.
    */
   readonly time_range?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
-   */
-  readonly is_currently_active?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
@@ -19624,7 +19624,7 @@ export type AddAvailabilityRuleResponses = {
 export type AddAvailabilityRuleResponse =
   AddAvailabilityRuleResponses[keyof AddAvailabilityRuleResponses];
 
-export type ListData = {
+export type ListOrganisationInvitationsData = {
   body?: never;
   path: {
     /**
@@ -19641,7 +19641,7 @@ export type ListData = {
   url: '/api/v1/organisations/{organisationUuid}/invitations';
 };
 
-export type ListErrors = {
+export type ListOrganisationInvitationsErrors = {
   /**
    * Not Found
    */
@@ -19652,18 +19652,20 @@ export type ListErrors = {
   500: ResponseDtoVoid;
 };
 
-export type ListError = ListErrors[keyof ListErrors];
+export type ListOrganisationInvitationsError =
+  ListOrganisationInvitationsErrors[keyof ListOrganisationInvitationsErrors];
 
-export type ListResponses = {
+export type ListOrganisationInvitationsResponses = {
   /**
    * Invitations retrieved
    */
   200: ApiResponseListOrganisationInvitation;
 };
 
-export type ListResponse = ListResponses[keyof ListResponses];
+export type ListOrganisationInvitationsResponse =
+  ListOrganisationInvitationsResponses[keyof ListOrganisationInvitationsResponses];
 
-export type SendData = {
+export type SendOrganisationInvitationsData = {
   body: SendOrganisationInvitationsRequest;
   path: {
     /**
@@ -19675,7 +19677,7 @@ export type SendData = {
   url: '/api/v1/organisations/{organisationUuid}/invitations';
 };
 
-export type SendErrors = {
+export type SendOrganisationInvitationsErrors = {
   /**
    * Invalid domain, branch or class selection
    */
@@ -19694,18 +19696,20 @@ export type SendErrors = {
   500: ResponseDtoVoid;
 };
 
-export type SendError = SendErrors[keyof SendErrors];
+export type SendOrganisationInvitationsError =
+  SendOrganisationInvitationsErrors[keyof SendOrganisationInvitationsErrors];
 
-export type SendResponses = {
+export type SendOrganisationInvitationsResponses = {
   /**
    * Invitations processed
    */
   201: ApiResponseSendOrganisationInvitationsResult;
 };
 
-export type SendResponse = SendResponses[keyof SendResponses];
+export type SendOrganisationInvitationsResponse =
+  SendOrganisationInvitationsResponses[keyof SendOrganisationInvitationsResponses];
 
-export type RevokeData = {
+export type RevokeOrganisationInvitationData = {
   body?: never;
   path: {
     organisationUuid: string;
@@ -19715,7 +19719,7 @@ export type RevokeData = {
   url: '/api/v1/organisations/{organisationUuid}/invitations/{invitationUuid}/revoke';
 };
 
-export type RevokeErrors = {
+export type RevokeOrganisationInvitationErrors = {
   /**
    * Invitation is not pending
    */
@@ -19730,18 +19734,20 @@ export type RevokeErrors = {
   500: ResponseDtoVoid;
 };
 
-export type RevokeError = RevokeErrors[keyof RevokeErrors];
+export type RevokeOrganisationInvitationError =
+  RevokeOrganisationInvitationErrors[keyof RevokeOrganisationInvitationErrors];
 
-export type RevokeResponses = {
+export type RevokeOrganisationInvitationResponses = {
   /**
    * Invitation revoked
    */
   200: ApiResponseOrganisationInvitation;
 };
 
-export type RevokeResponse = RevokeResponses[keyof RevokeResponses];
+export type RevokeOrganisationInvitationResponse =
+  RevokeOrganisationInvitationResponses[keyof RevokeOrganisationInvitationResponses];
 
-export type ResendData = {
+export type ResendOrganisationInvitationData = {
   body?: never;
   path: {
     organisationUuid: string;
@@ -19751,7 +19757,7 @@ export type ResendData = {
   url: '/api/v1/organisations/{organisationUuid}/invitations/{invitationUuid}/resend';
 };
 
-export type ResendErrors = {
+export type ResendOrganisationInvitationErrors = {
   /**
    * Invitation is not pending
    */
@@ -19766,16 +19772,18 @@ export type ResendErrors = {
   500: ResponseDtoVoid;
 };
 
-export type ResendError = ResendErrors[keyof ResendErrors];
+export type ResendOrganisationInvitationError =
+  ResendOrganisationInvitationErrors[keyof ResendOrganisationInvitationErrors];
 
-export type ResendResponses = {
+export type ResendOrganisationInvitationResponses = {
   /**
    * Invitation resent
    */
   200: ApiResponseOrganisationInvitation;
 };
 
-export type ResendResponse = ResendResponses[keyof ResendResponses];
+export type ResendOrganisationInvitationResponse =
+  ResendOrganisationInvitationResponses[keyof ResendOrganisationInvitationResponses];
 
 export type ListCompetitionsData = {
   body?: never;
@@ -19945,7 +19953,7 @@ export type ApplyActionResponses = {
 
 export type ApplyActionResponse = ApplyActionResponses[keyof ApplyActionResponses];
 
-export type DeclineFromInboxData = {
+export type DeclineInvitationFromInboxData = {
   body?: never;
   path: {
     invitationUuid: string;
@@ -19954,7 +19962,7 @@ export type DeclineFromInboxData = {
   url: '/api/v1/invitations/{invitationUuid}/decline';
 };
 
-export type DeclineFromInboxErrors = {
+export type DeclineInvitationFromInboxErrors = {
   /**
    * Not Found
    */
@@ -19965,18 +19973,20 @@ export type DeclineFromInboxErrors = {
   500: ResponseDtoVoid;
 };
 
-export type DeclineFromInboxError = DeclineFromInboxErrors[keyof DeclineFromInboxErrors];
+export type DeclineInvitationFromInboxError =
+  DeclineInvitationFromInboxErrors[keyof DeclineInvitationFromInboxErrors];
 
-export type DeclineFromInboxResponses = {
+export type DeclineInvitationFromInboxResponses = {
   /**
    * Invitation declined
    */
   200: ApiResponseVoid;
 };
 
-export type DeclineFromInboxResponse = DeclineFromInboxResponses[keyof DeclineFromInboxResponses];
+export type DeclineInvitationFromInboxResponse =
+  DeclineInvitationFromInboxResponses[keyof DeclineInvitationFromInboxResponses];
 
-export type AcceptFromInboxData = {
+export type AcceptInvitationFromInboxData = {
   body: AcceptInvitationRequest;
   path: {
     invitationUuid: string;
@@ -19985,7 +19995,7 @@ export type AcceptFromInboxData = {
   url: '/api/v1/invitations/{invitationUuid}/accept';
 };
 
-export type AcceptFromInboxErrors = {
+export type AcceptInvitationFromInboxErrors = {
   /**
    * Not Found
    */
@@ -19996,16 +20006,18 @@ export type AcceptFromInboxErrors = {
   500: ResponseDtoVoid;
 };
 
-export type AcceptFromInboxError = AcceptFromInboxErrors[keyof AcceptFromInboxErrors];
+export type AcceptInvitationFromInboxError =
+  AcceptInvitationFromInboxErrors[keyof AcceptInvitationFromInboxErrors];
 
-export type AcceptFromInboxResponses = {
+export type AcceptInvitationFromInboxResponses = {
   /**
    * Invitation accepted
    */
   200: ApiResponseAcceptInvitationResult;
 };
 
-export type AcceptFromInboxResponse = AcceptFromInboxResponses[keyof AcceptFromInboxResponses];
+export type AcceptInvitationFromInboxResponse =
+  AcceptInvitationFromInboxResponses[keyof AcceptInvitationFromInboxResponses];
 
 export type SubmitGuardianDetailsData = {
   body: GuardianDetailsRequest;
@@ -20044,7 +20056,7 @@ export type SubmitGuardianDetailsResponses = {
 export type SubmitGuardianDetailsResponse =
   SubmitGuardianDetailsResponses[keyof SubmitGuardianDetailsResponses];
 
-export type DeclineByTokenData = {
+export type DeclineInvitationByTokenData = {
   body?: never;
   path: {
     token: string;
@@ -20053,7 +20065,7 @@ export type DeclineByTokenData = {
   url: '/api/v1/invitations/token/{token}/decline';
 };
 
-export type DeclineByTokenErrors = {
+export type DeclineInvitationByTokenErrors = {
   /**
    * Not Found
    */
@@ -20064,18 +20076,20 @@ export type DeclineByTokenErrors = {
   500: ResponseDtoVoid;
 };
 
-export type DeclineByTokenError = DeclineByTokenErrors[keyof DeclineByTokenErrors];
+export type DeclineInvitationByTokenError =
+  DeclineInvitationByTokenErrors[keyof DeclineInvitationByTokenErrors];
 
-export type DeclineByTokenResponses = {
+export type DeclineInvitationByTokenResponses = {
   /**
    * Invitation declined
    */
   200: ApiResponseVoid;
 };
 
-export type DeclineByTokenResponse = DeclineByTokenResponses[keyof DeclineByTokenResponses];
+export type DeclineInvitationByTokenResponse =
+  DeclineInvitationByTokenResponses[keyof DeclineInvitationByTokenResponses];
 
-export type AcceptByTokenData = {
+export type AcceptInvitationByTokenData = {
   body: AcceptInvitationRequest;
   path: {
     token: string;
@@ -20084,7 +20098,7 @@ export type AcceptByTokenData = {
   url: '/api/v1/invitations/token/{token}/accept';
 };
 
-export type AcceptByTokenErrors = {
+export type AcceptInvitationByTokenErrors = {
   /**
    * Date of birth required, or invitation no longer open
    */
@@ -20103,16 +20117,18 @@ export type AcceptByTokenErrors = {
   500: ResponseDtoVoid;
 };
 
-export type AcceptByTokenError = AcceptByTokenErrors[keyof AcceptByTokenErrors];
+export type AcceptInvitationByTokenError =
+  AcceptInvitationByTokenErrors[keyof AcceptInvitationByTokenErrors];
 
-export type AcceptByTokenResponses = {
+export type AcceptInvitationByTokenResponses = {
   /**
    * Invitation accepted
    */
   200: ApiResponseAcceptInvitationResult;
 };
 
-export type AcceptByTokenResponse = AcceptByTokenResponses[keyof AcceptByTokenResponses];
+export type AcceptInvitationByTokenResponse =
+  AcceptInvitationByTokenResponses[keyof AcceptInvitationByTokenResponses];
 
 export type GetAllInstructorsData = {
   body?: never;
@@ -20758,7 +20774,7 @@ export type CreateLinkResponses = {
 
 export type CreateLinkResponse = CreateLinkResponses[keyof CreateLinkResponses];
 
-export type DeclineData = {
+export type DeclineGuardianConsentData = {
   body?: never;
   path: {
     token: string;
@@ -20767,7 +20783,7 @@ export type DeclineData = {
   url: '/api/v1/guardian-invitations/token/{token}/decline';
 };
 
-export type DeclineErrors = {
+export type DeclineGuardianConsentErrors = {
   /**
    * Not Found
    */
@@ -20778,18 +20794,20 @@ export type DeclineErrors = {
   500: ResponseDtoVoid;
 };
 
-export type DeclineError = DeclineErrors[keyof DeclineErrors];
+export type DeclineGuardianConsentError =
+  DeclineGuardianConsentErrors[keyof DeclineGuardianConsentErrors];
 
-export type DeclineResponses = {
+export type DeclineGuardianConsentResponses = {
   /**
    * Refusal recorded
    */
   200: ApiResponseVoid;
 };
 
-export type DeclineResponse = DeclineResponses[keyof DeclineResponses];
+export type DeclineGuardianConsentResponse =
+  DeclineGuardianConsentResponses[keyof DeclineGuardianConsentResponses];
 
-export type ConsentData = {
+export type GrantGuardianConsentData = {
   body: GuardianConsentRequest;
   path: {
     token: string;
@@ -20798,7 +20816,7 @@ export type ConsentData = {
   url: '/api/v1/guardian-invitations/token/{token}/accept';
 };
 
-export type ConsentErrors = {
+export type GrantGuardianConsentErrors = {
   /**
    * Signed-in address is not the nominated guardian
    */
@@ -20813,16 +20831,18 @@ export type ConsentErrors = {
   500: ResponseDtoVoid;
 };
 
-export type ConsentError = ConsentErrors[keyof ConsentErrors];
+export type GrantGuardianConsentError =
+  GrantGuardianConsentErrors[keyof GrantGuardianConsentErrors];
 
-export type ConsentResponses = {
+export type GrantGuardianConsentResponses = {
   /**
    * Consent recorded
    */
   200: ApiResponseAcceptInvitationResult;
 };
 
-export type ConsentResponse = ConsentResponses[keyof ConsentResponses];
+export type GrantGuardianConsentResponse =
+  GrantGuardianConsentResponses[keyof GrantGuardianConsentResponses];
 
 export type SweepData = {
   body?: never;
@@ -28258,7 +28278,7 @@ export type GetCountsResponses = {
 
 export type GetCountsResponse = GetCountsResponses[keyof GetCountsResponses];
 
-export type LookupData = {
+export type GetInvitationByTokenData = {
   body?: never;
   path: {
     /**
@@ -28270,7 +28290,7 @@ export type LookupData = {
   url: '/api/v1/invitations/token/{token}';
 };
 
-export type LookupErrors = {
+export type GetInvitationByTokenErrors = {
   /**
    * Link is not valid
    */
@@ -28281,25 +28301,27 @@ export type LookupErrors = {
   500: ResponseDtoVoid;
 };
 
-export type LookupError = LookupErrors[keyof LookupErrors];
+export type GetInvitationByTokenError =
+  GetInvitationByTokenErrors[keyof GetInvitationByTokenErrors];
 
-export type LookupResponses = {
+export type GetInvitationByTokenResponses = {
   /**
    * Invitation retrieved
    */
   200: ApiResponsePublicInvitation;
 };
 
-export type LookupResponse = LookupResponses[keyof LookupResponses];
+export type GetInvitationByTokenResponse =
+  GetInvitationByTokenResponses[keyof GetInvitationByTokenResponses];
 
-export type ListMineData = {
+export type ListMyInvitationsData = {
   body?: never;
   path?: never;
   query?: never;
   url: '/api/v1/invitations/me';
 };
 
-export type ListMineErrors = {
+export type ListMyInvitationsErrors = {
   /**
    * Not Found
    */
@@ -28310,16 +28332,17 @@ export type ListMineErrors = {
   500: ResponseDtoVoid;
 };
 
-export type ListMineError = ListMineErrors[keyof ListMineErrors];
+export type ListMyInvitationsError = ListMyInvitationsErrors[keyof ListMyInvitationsErrors];
 
-export type ListMineResponses = {
+export type ListMyInvitationsResponses = {
   /**
    * Invitations retrieved
    */
   200: ApiResponseListMyInvitation;
 };
 
-export type ListMineResponse = ListMineResponses[keyof ListMineResponses];
+export type ListMyInvitationsResponse =
+  ListMyInvitationsResponses[keyof ListMyInvitationsResponses];
 
 export type GetInstructorRatingSummaryData = {
   body?: never;
@@ -28837,7 +28860,7 @@ export type GetMyStudentsResponses = {
 
 export type GetMyStudentsResponse = GetMyStudentsResponses[keyof GetMyStudentsResponses];
 
-export type Lookup1Data = {
+export type GetGuardianInvitationByTokenData = {
   body?: never;
   path: {
     /**
@@ -28849,7 +28872,7 @@ export type Lookup1Data = {
   url: '/api/v1/guardian-invitations/token/{token}';
 };
 
-export type Lookup1Errors = {
+export type GetGuardianInvitationByTokenErrors = {
   /**
    * Link is not valid
    */
@@ -28860,16 +28883,18 @@ export type Lookup1Errors = {
   500: ResponseDtoVoid;
 };
 
-export type Lookup1Error = Lookup1Errors[keyof Lookup1Errors];
+export type GetGuardianInvitationByTokenError =
+  GetGuardianInvitationByTokenErrors[keyof GetGuardianInvitationByTokenErrors];
 
-export type Lookup1Responses = {
+export type GetGuardianInvitationByTokenResponses = {
   /**
    * Consent request retrieved
    */
   200: ApiResponsePublicGuardianInvitation;
 };
 
-export type Lookup1Response = Lookup1Responses[keyof Lookup1Responses];
+export type GetGuardianInvitationByTokenResponse =
+  GetGuardianInvitationByTokenResponses[keyof GetGuardianInvitationByTokenResponses];
 
 export type GetFileData = {
   body?: never;
