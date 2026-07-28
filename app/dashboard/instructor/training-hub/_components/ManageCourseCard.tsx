@@ -4,6 +4,7 @@ import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/medi
 import { BadgeCheck, BarChart3, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserDomain } from '../../../../../context/user-domain-context';
 import type { TrainingHubManagedCourse } from './training-hub-data';
 
@@ -35,7 +36,7 @@ export function ManageCourseCard({ course }: ManageCourseCardProps) {
         <div className='min-w-0 flex-1 basis-0'>
 
           <Link
-            href={`/dashboard/workspace/${activeDomain}/courses/${course.id}`}
+            href={buildWorkspaceAliasPath(activeDomain, `/dashboard/courses/${course.id}`)}
             className='block min-w-0'
           >
             <div className='min-w-0'>

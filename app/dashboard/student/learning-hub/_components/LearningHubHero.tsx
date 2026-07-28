@@ -78,7 +78,7 @@ export function LearningHubHero({
           <div className="mt-3 flex w-full flex-col gap-2 sm:w-auto lg:mt-0">
             <Link
               prefetch
-              href="/dashboard/workspace/student/courses/my-courses"
+              href="/dashboard/student/courses/my-courses"
               className="inline-flex items-center justify-center gap-2 rounded-[8px] bg-success px-4 py-2.5 text-[0.85rem] font-medium text-success-foreground transition hover:opacity-95"
             >
               <Plus className="size-4" />

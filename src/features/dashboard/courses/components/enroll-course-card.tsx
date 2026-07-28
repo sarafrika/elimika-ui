@@ -235,7 +235,7 @@ export default function EnrollCourseCard({
   const originUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const registrationLink = useMemo(() => {
     if (!originUrl || !cls.course?.uuid) return href ? `${originUrl}${href}` : '';
-    return `${originUrl}/dashboard/workspace/student/courses/available-classes/${cls.course.uuid}/enroll?id=${cls.uuid}`;
+    return `${originUrl}/dashboard/student/courses/available-classes/${cls.course.uuid}/enroll?id=${cls.uuid}`;
   }, [cls.uuid, cls.course?.uuid, originUrl, href]);
 
   const handleCreateCart = (cls: BundledClass | null) => {

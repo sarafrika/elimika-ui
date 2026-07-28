@@ -218,7 +218,7 @@ export default function DashboardTopBar() {
                 className='h-9 rounded-md px-4 text-sm font-semibold md:inline-flex'
               >
                 <Link className='flex flex-row items-center'
-                  href="/dashboard/workspace/student/courses"
+                  href="/dashboard/student/courses"
                 >
                   <Sparkles className='h-3 w-3' />
                   Enroll Course

@@ -5,8 +5,8 @@ import { AlertTriangle } from 'lucide-react';
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
-import ClassCourseDetailsPage from '../../../workspace/[domain]/courses/_components/ClassCourseDetailsPage';
-import ClassProgramDetailsPage from '../../../workspace/[domain]/courses/_components/ClassProgramDetaisPage';
+import ClassCourseDetailsPage from '@/src/features/dashboard/courses/shared/_components/ClassCourseDetailsPage';
+import ClassProgramDetailsPage from '@/src/features/dashboard/courses/shared/_components/ClassProgramDetaisPage';
 
 
 type Props = {

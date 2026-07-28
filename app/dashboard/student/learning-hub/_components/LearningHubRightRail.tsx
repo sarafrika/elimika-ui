@@ -137,7 +137,7 @@ export function LearningHubRightRail({
           <h2 className='text-[1rem] font-semibold text-foreground'>Recommended Courses</h2>
           <Link
             prefetch
-            href='/dashboard/workspace/student/courses'
+            href='/dashboard/student/courses'
             className='inline-flex items-center justify-center gap-1 bg-background px-4 py-2 text-[0.78rem] font-medium text-muted-foreground transition hover:text-primary'
           >
             See All {recommendedCourses.length}
@@ -159,7 +159,7 @@ export function LearningHubRightRail({
                   </div>
                 </>
               ) : (
-                <Link href={`/dashboard/workspace/student/course/${course?.id}`} className='flex w-full min-w-0 flex-row items-center gap-3'>
+                <Link href={`/dashboard/student/course/${course?.id}`} className='flex w-full min-w-0 flex-row items-center gap-3'>
                   <div className='grid size-8 place-items-center rounded-full bg-[color-mix(in_srgb,var(--primary)_10%,white)] text-primary'>
                     ⊕
                   </div>
