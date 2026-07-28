@@ -614,13 +614,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -2902,6 +2902,14 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -2913,14 +2921,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
-  /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -3815,6 +3815,10 @@ export type ClassDefinition = {
    */
   venue_resource_uuid?: string | null;
   /**
+   * **[OPTIONAL]** Category the class falls under. Courses supply their own categories, so this carries the category chosen for program-backed classes.
+   */
+  category_uuid?: string | null;
+  /**
    * **[READ-ONLY]** Persisted session templates originally used to generate scheduled class instances.
    * Legacy classes created before template persistence may return an empty list.
    * conflict_resolution per template:
@@ -4043,6 +4047,10 @@ export type ClassMarketplaceJobRequest = {
    */
   target_group_uuids?: Array<string> | null;
   /**
+   * **[OPTIONAL]** Category the class falls under. Course-backed classes inherit the course's own categories, so this is intended for program-backed classes which carry none per class.
+   */
+  category_uuid?: string | null;
+  /**
    * **[OPTIONAL]** Send session reminders to enrolled students.
    */
   remind_students?: boolean | null;
@@ -4132,6 +4140,7 @@ export type ClassMarketplaceJob = {
   readonly preferred_instructor_uuid?: string;
   readonly target_groups?: Array<string>;
   readonly target_group_uuids?: Array<string>;
+  readonly category_uuid?: string;
   readonly remind_students?: boolean;
   readonly remind_instructor?: boolean;
   readonly remind_via_email?: boolean;
@@ -5468,6 +5477,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -5479,10 +5492,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -7168,12 +7177,12 @@ export type PagedDtoBookingResponse = {
 export type Page = {
   totalElements?: bigint;
   totalPages?: number;
+  first?: boolean;
+  last?: boolean;
   size?: number;
   content?: Array<unknown>;
   number?: number;
   sort?: SortObject;
-  first?: boolean;
-  last?: boolean;
   numberOfElements?: number;
   pageable?: PageableObject;
   empty?: boolean;

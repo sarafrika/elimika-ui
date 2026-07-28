@@ -844,17 +844,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
-      .readonly()
-      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -3871,6 +3871,16 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    assessment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
+      .readonly()
+      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -3886,16 +3896,6 @@ export const zCourseAssessment = z
       .describe(
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
       )
-      .readonly()
-      .optional(),
-    assessment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -4990,6 +4990,7 @@ export const zClassDefinition = z
       )
       .optional(),
     venue_resource_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    category_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     session_templates: z
       .array(zClassSessionTemplate)
       .describe(
@@ -5160,6 +5161,7 @@ export const zClassMarketplaceJobRequest = z
     preferred_instructor_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     target_groups: z.union([z.array(z.string()), z.null()]).optional(),
     target_group_uuids: z.union([z.array(z.string().uuid()), z.null()]).optional(),
+    category_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     remind_students: z.union([z.boolean(), z.null()]).optional(),
     remind_instructor: z.union([z.boolean(), z.null()]).optional(),
     remind_via_email: z.union([z.boolean(), z.null()]).optional(),
@@ -5221,6 +5223,7 @@ export const zClassMarketplaceJob = z
     preferred_instructor_uuid: z.string().uuid().readonly().optional(),
     target_groups: z.array(z.string()).readonly().optional(),
     target_group_uuids: z.array(z.string().uuid()).readonly().optional(),
+    category_uuid: z.string().uuid().readonly().optional(),
     remind_students: z.boolean().readonly().optional(),
     remind_instructor: z.boolean().readonly().optional(),
     remind_via_email: z.boolean().readonly().optional(),
@@ -6648,6 +6651,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .readonly()
+      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -6661,11 +6669,6 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -8440,12 +8443,12 @@ export const zPageableObject = z.object({
 export const zPage = z.object({
   totalElements: z.coerce.bigint().optional(),
   totalPages: z.number().int().optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   size: z.number().int().optional(),
   content: z.array(z.unknown()).optional(),
   number: z.number().int().optional(),
   sort: zSortObject.optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   numberOfElements: z.number().int().optional(),
   pageable: zPageableObject.optional(),
   empty: z.boolean().optional(),

@@ -1293,19 +1293,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
-      readOnly: true,
-    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
       readOnly: true,
     },
   },
@@ -5876,6 +5876,18 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -5893,18 +5905,6 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
-      readOnly: true,
-    },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -8006,6 +8006,12 @@ export const ClassDefinitionSchema = {
       description:
         '**[OPTIONAL]** Organisation venue resource the class sessions are booked into. Null for classes without a managed venue.',
     },
+    category_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Category the class falls under. Courses supply their own categories, so this carries the category chosen for program-backed classes.',
+    },
     session_templates: {
       type: 'array',
       description: `**[READ-ONLY]** Persisted session templates originally used to generate scheduled class instances.
@@ -8396,6 +8402,12 @@ export const ClassMarketplaceJobRequestSchema = {
         format: 'uuid',
       },
     },
+    category_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        "**[OPTIONAL]** Category the class falls under. Course-backed classes inherit the course's own categories, so this is intended for program-backed classes which carry none per class.",
+    },
     remind_students: {
       type: ['boolean', 'null'],
       description: '**[OPTIONAL]** Send session reminders to enrolled students.',
@@ -8657,6 +8669,11 @@ export const ClassMarketplaceJobSchema = {
         type: 'string',
         format: 'uuid',
       },
+      readOnly: true,
+    },
+    category_uuid: {
+      type: 'string',
+      format: 'uuid',
       readOnly: true,
     },
     remind_students: {
@@ -11116,6 +11133,12 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -11132,12 +11155,6 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
       readOnly: true,
     },
   },
@@ -14088,6 +14105,12 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
+    },
     size: {
       type: 'integer',
       format: 'int32',
@@ -14102,12 +14125,6 @@ export const PageSchema = {
     },
     sort: {
       $ref: '#/components/schemas/SortObject',
-    },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
     },
     numberOfElements: {
       type: 'integer',
