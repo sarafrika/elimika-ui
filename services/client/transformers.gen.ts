@@ -147,10 +147,15 @@ import type {
   CreateResourceResponse,
   ListAvailabilityRulesResponse,
   AddAvailabilityRuleResponse,
+  ListResponse,
+  SendResponse,
+  RevokeResponse,
+  ResendResponse,
   ListCompetitionsResponse,
   CreateCompetitionResponse,
   ListNotificationsResponse,
   ApplyActionResponse,
+  SubmitGuardianDetailsResponse,
   GetAllInstructorsResponse,
   CreateInstructorResponse,
   GetInstructorSkillsResponse,
@@ -347,6 +352,8 @@ import type {
   ListBookingsResponse,
   Search2Response,
   GetCountsResponse,
+  LookupResponse,
+  ListMineResponse,
   GetInstructorRatingSummaryResponse,
   GetInstructorBookingsResponse,
   GetInstructorCalendarResponse,
@@ -358,6 +365,7 @@ import type {
   SearchEducationResponse,
   SearchDocumentsResponse,
   GetStudentDashboardResponse,
+  Lookup1Response,
   GetEnrollmentResponse,
   GetScheduledInstanceEnrollmentsForStudentResponse,
   GetEnrollmentOverviewForStudentResponse,
@@ -365,6 +373,7 @@ import type {
   GetClassEnrollmentsForStudentResponse,
   SearchEnrollmentsResponse,
   GetTodayGrowthResponse,
+  GetStudentPerformanceResponse,
   GetStudentSummariesResponse,
   GetEnrolmentTrendsResponse,
   GetClassEnrolmentCountsResponse,
@@ -3080,6 +3089,80 @@ export const addAvailabilityRuleResponseTransformer = async (
   return data;
 };
 
+const organisationInvitationSchemaResponseTransformer = (data: any) => {
+  if (data.expires_at) {
+    data.expires_at = new Date(data.expires_at);
+  }
+  if (data.accepted_at) {
+    data.accepted_at = new Date(data.accepted_at);
+  }
+  if (data.declined_at) {
+    data.declined_at = new Date(data.declined_at);
+  }
+  if (data.revoked_at) {
+    data.revoked_at = new Date(data.revoked_at);
+  }
+  if (data.guardian_consented_at) {
+    data.guardian_consented_at = new Date(data.guardian_consented_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseListOrganisationInvitationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return organisationInvitationSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listResponseTransformer = async (data: any): Promise<ListResponse> => {
+  data = apiResponseListOrganisationInvitationSchemaResponseTransformer(data);
+  return data;
+};
+
+const sendOrganisationInvitationsResultSchemaResponseTransformer = (data: any) => {
+  if (data.sent) {
+    data.sent = data.sent.map((item: any) => {
+      return organisationInvitationSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseSendOrganisationInvitationsResultSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = sendOrganisationInvitationsResultSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const sendResponseTransformer = async (data: any): Promise<SendResponse> => {
+  data = apiResponseSendOrganisationInvitationsResultSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseOrganisationInvitationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = organisationInvitationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const revokeResponseTransformer = async (data: any): Promise<RevokeResponse> => {
+  data = apiResponseOrganisationInvitationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const resendResponseTransformer = async (data: any): Promise<ResendResponse> => {
+  data = apiResponseOrganisationInvitationSchemaResponseTransformer(data);
+  return data;
+};
+
 const competitionSchemaResponseTransformer = (data: any) => {
   if (data.event_date) {
     data.event_date = new Date(data.event_date);
@@ -3177,6 +3260,27 @@ const apiResponseNotificationDtoSchemaResponseTransformer = (data: any) => {
 
 export const applyActionResponseTransformer = async (data: any): Promise<ApplyActionResponse> => {
   data = apiResponseNotificationDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const publicInvitationSchemaResponseTransformer = (data: any) => {
+  if (data.expires_at) {
+    data.expires_at = new Date(data.expires_at);
+  }
+  return data;
+};
+
+const apiResponsePublicInvitationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = publicInvitationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const submitGuardianDetailsResponseTransformer = async (
+  data: any
+): Promise<SubmitGuardianDetailsResponse> => {
+  data = apiResponsePublicInvitationSchemaResponseTransformer(data);
   return data;
 };
 
@@ -5955,6 +6059,35 @@ export const getCountsResponseTransformer = async (data: any): Promise<GetCounts
   return data;
 };
 
+export const lookupResponseTransformer = async (data: any): Promise<LookupResponse> => {
+  data = apiResponsePublicInvitationSchemaResponseTransformer(data);
+  return data;
+};
+
+const myInvitationSchemaResponseTransformer = (data: any) => {
+  if (data.expires_at) {
+    data.expires_at = new Date(data.expires_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseListMyInvitationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return myInvitationSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listMineResponseTransformer = async (data: any): Promise<ListMineResponse> => {
+  data = apiResponseListMyInvitationSchemaResponseTransformer(data);
+  return data;
+};
+
 const instructorRatingSummarySchemaResponseTransformer = (data: any) => {
   if (data.review_count) {
     data.review_count = BigInt(data.review_count.toString());
@@ -6148,6 +6281,25 @@ export const getStudentDashboardResponseTransformer = async (
   return data;
 };
 
+const publicGuardianInvitationSchemaResponseTransformer = (data: any) => {
+  if (data.expires_at) {
+    data.expires_at = new Date(data.expires_at);
+  }
+  return data;
+};
+
+const apiResponsePublicGuardianInvitationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = publicGuardianInvitationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const lookup1ResponseTransformer = async (data: any): Promise<Lookup1Response> => {
+  data = apiResponsePublicGuardianInvitationSchemaResponseTransformer(data);
+  return data;
+};
+
 const apiResponseEnrollmentSchemaResponseTransformer = (data: any) => {
   if (data.data) {
     data.data = enrollmentSchemaResponseTransformer(data.data);
@@ -6312,6 +6464,38 @@ export const getTodayGrowthResponseTransformer = async (
   data: any
 ): Promise<GetTodayGrowthResponse> => {
   data = apiResponseListTodayGrowthPointDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const organisationStudentPerformanceSchemaResponseTransformer = (data: any) => {
+  if (data.total_sessions) {
+    data.total_sessions = BigInt(data.total_sessions.toString());
+  }
+  if (data.attended) {
+    data.attended = BigInt(data.attended.toString());
+  }
+  if (data.absent) {
+    data.absent = BigInt(data.absent.toString());
+  }
+  if (data.last_session_at) {
+    data.last_session_at = new Date(data.last_session_at);
+  }
+  return data;
+};
+
+const apiResponseListOrganisationStudentPerformanceSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return organisationStudentPerformanceSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getStudentPerformanceResponseTransformer = async (
+  data: any
+): Promise<GetStudentPerformanceResponse> => {
+  data = apiResponseListOrganisationStudentPerformanceSchemaResponseTransformer(data);
   return data;
 };
 

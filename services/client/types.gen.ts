@@ -614,13 +614,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -2085,13 +2085,13 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -2902,14 +2902,6 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
-  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -2921,6 +2913,14 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
+  /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -3211,13 +3211,13 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -5123,6 +5123,168 @@ export type SkillsFundSource = {
 };
 
 /**
+ * A single invitee.
+ */
+export type OrganisationInvitationRecipient = {
+  /**
+   * **[REQUIRED]** Email address to invite.
+   */
+  email: string;
+  /**
+   * **[OPTIONAL]** Display name for the invitee.
+   */
+  name?: string | null;
+};
+
+/**
+ * Invites one or more recipients to join an organisation.
+ */
+export type SendOrganisationInvitationsRequest = {
+  /**
+   * **[REQUIRED]** People to invite.
+   */
+  recipients: Array<OrganisationInvitationRecipient>;
+  domain_name: DomainNameEnum;
+  /**
+   * **[OPTIONAL]** Training branch to scope the invitation to.
+   */
+  branch_uuid?: string | null;
+  /**
+   * **[OPTIONAL]** Classes to surface to the recipient once they accept. These are never auto-enrolled.
+   */
+  class_uuids?: Array<string> | null;
+  /**
+   * **[OPTIONAL]** Personal note included in the invitation email.
+   */
+  message?: string | null;
+  /**
+   * **[OPTIONAL]** Days until the invitation lapses. Defaults to 14.
+   */
+  expires_in_days?: number | null;
+};
+
+export type ApiResponseSendOrganisationInvitationsResult = {
+  success?: boolean;
+  data?: SendOrganisationInvitationsResult;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * An invitation to join an organisation, as seen by the inviting organisation.
+ */
+export type OrganisationInvitation = {
+  /**
+   * Invitation identifier
+   */
+  uuid?: string;
+  /**
+   * Organisation that issued the invitation
+   */
+  organisation_uuid?: string;
+  /**
+   * Training branch the invitation is scoped to, if any
+   */
+  branch_uuid?: string | null;
+  /**
+   * Org-scoped domain the recipient was invited into
+   */
+  domain_name?: string;
+  /**
+   * Email address invited
+   */
+  recipient_email?: string;
+  /**
+   * Display name of the invitee
+   */
+  recipient_name?: string | null;
+  /**
+   * Set when the invited email already belonged to a platform user
+   */
+  recipient_user_uuid?: string | null;
+  /**
+   * Whether the invited email already had a platform account when sent
+   */
+  existing_platform_user?: boolean;
+  /**
+   * Who sent the invitation
+   */
+  inviter_user_uuid?: string;
+  status?: ItemsEnum;
+  /**
+   * Personal note included in the invitation email
+   */
+  message?: string | null;
+  /**
+   * Classes surfaced to the recipient on acceptance
+   */
+  class_uuids?: Array<string>;
+  /**
+   * When the invitation lapses
+   */
+  expires_at?: Date;
+  /**
+   * When the invitation was accepted
+   */
+  accepted_at?: Date | null;
+  /**
+   * When the invitation was declined
+   */
+  declined_at?: Date | null;
+  /**
+   * When the organisation withdrew the invitation
+   */
+  revoked_at?: Date | null;
+  /**
+   * True when the invitee declared a date of birth below the age gate, so the offer awaits guardian consent. The date of birth itself is never exposed.
+   */
+  requires_guardian_consent?: boolean;
+  /**
+   * When the guardian consented
+   */
+  guardian_consented_at?: Date | null;
+  /**
+   * When the invitation was created
+   */
+  created_date?: Date;
+};
+
+/**
+ * A recipient that could not be invited.
+ */
+export type OrganisationInvitationFailure = {
+  /**
+   * Email address that could not be invited
+   */
+  email?: string;
+  /**
+   * Why the invitation was not created
+   */
+  reason?: string;
+};
+
+/**
+ * Per-recipient outcome of a batch invitation send.
+ */
+export type SendOrganisationInvitationsResult = {
+  /**
+   * Invitations that were created and queued for delivery
+   */
+  sent?: Array<OrganisationInvitation>;
+  /**
+   * Recipients that could not be invited, with the reason why
+   */
+  failed?: Array<OrganisationInvitationFailure>;
+};
+
+export type ApiResponseOrganisationInvitation = {
+  success?: boolean;
+  data?: OrganisationInvitation;
+  message?: string;
+  error?: unknown;
+};
+
+/**
  * Payload to create an organisation competition.
  */
 export type CreateCompetitionRequest = {
@@ -5254,6 +5416,139 @@ export type NotificationDto = {
   created_at?: Date;
 };
 
+/**
+ * Accepts an invitation, acknowledging what the organisation will be able to see.
+ */
+export type AcceptInvitationRequest = {
+  /**
+   * **[OPTIONAL]** Date of birth. Required only when the account does not already have one on file.
+   */
+  date_of_birth?: Date | null;
+  /**
+   * **[REQUIRED]** Confirms the invitee has seen what the organisation will be able to view: their enrolment and performance in that institution's own classes, and nothing beyond it.
+   */
+  scope_acknowledged: boolean;
+};
+
+/**
+ * What happened when an invitation was accepted.
+ */
+export type AcceptInvitationResult = {
+  status?: ItemsEnum;
+  /**
+   * True when the affiliation now exists. False when the offer has been passed to a guardian for consent.
+   */
+  affiliated?: boolean;
+  /**
+   * True when the invitee was found to be a minor and a guardian must consent
+   */
+  guardian_consent_required?: boolean;
+  /**
+   * Organisation joined, or that consent is being sought for
+   */
+  organisation_uuid?: string;
+  /**
+   * Name of that organisation
+   */
+  organisation_name?: string;
+  /**
+   * Classes now surfaced to the student. These are recommendations - the student still enrols in each one separately.
+   */
+  surfaced_class_uuids?: Array<string>;
+  /**
+   * What the caller should do next, in plain language
+   */
+  message?: string;
+};
+
+export type ApiResponseAcceptInvitationResult = {
+  success?: boolean;
+  data?: AcceptInvitationResult;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Contact details for the guardian who will consent on a minor's behalf.
+ */
+export type GuardianDetailsRequest = {
+  /**
+   * **[REQUIRED]** Guardian's email address. The consent link is sent here.
+   */
+  guardian_email: string;
+  /**
+   * **[REQUIRED]** Guardian's full name.
+   */
+  guardian_name: string;
+  guardian_relationship_type: GuardianRelationshipTypeEnum;
+  /**
+   * **[OPTIONAL]** Guardian's phone number, used only if the email bounces.
+   */
+  guardian_phone?: string | null;
+};
+
+export type ApiResponsePublicInvitation = {
+  success?: boolean;
+  data?: PublicInvitation;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * The publicly readable view of an invitation link.
+ */
+export type PublicInvitation = {
+  /**
+   * Name of the inviting organisation
+   */
+  organisation_name?: string;
+  /**
+   * Organisation identifier
+   */
+  organisation_uuid?: string;
+  /**
+   * Who sent the invitation
+   */
+  inviter_name?: string | null;
+  /**
+   * Role the recipient is invited into
+   */
+  domain_name?: string;
+  /**
+   * Masked recipient address, so the recipient can confirm the link is for them
+   */
+  masked_recipient_email?: string;
+  /**
+   * Display name the organisation supplied for the recipient
+   */
+  recipient_name?: string | null;
+  /**
+   * Whether this address already has an Elimika account. Drives whether the page offers sign-in or registration.
+   */
+  existing_platform_user?: boolean;
+  /**
+   * Personal note from the inviting organisation
+   */
+  message?: string | null;
+  /**
+   * Number of classes that will be surfaced on acceptance
+   */
+  class_count?: number;
+  status?: ItemsEnum;
+  /**
+   * Whether the offer can still be acted upon
+   */
+  actionable?: boolean;
+  /**
+   * Whether the offer is waiting on a guardian rather than the invitee
+   */
+  requires_guardian_consent?: boolean;
+  /**
+   * When the invitation lapses
+   */
+  expires_at?: Date;
+};
+
 export type ApiResponseInstructor = {
   success?: boolean;
   data?: Instructor;
@@ -5343,7 +5638,7 @@ export type GuardianStudentLink = {
   guardianUserUuid?: string;
   studentName?: string;
   guardianDisplayName?: string;
-  relationshipType?: RelationshipTypeEnum;
+  relationshipType?: GuardianRelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
   status?: StatusEnum11;
   primaryGuardian?: boolean;
@@ -5364,7 +5659,7 @@ export type GuardianStudentLinkRequest = {
    * UUID for the guardian's user account
    */
   guardianUserUuid: string;
-  relationshipType: RelationshipTypeEnum;
+  relationshipType: GuardianRelationshipTypeEnum;
   shareScope: ShareScopeEnum;
   /**
    * Marks this guardian as the primary contact
@@ -5374,6 +5669,17 @@ export type GuardianStudentLinkRequest = {
    * Optional note shown in audits or invitation emails
    */
   notes?: string;
+};
+
+/**
+ * Records a guardian's consent for a minor to join an organisation.
+ */
+export type GuardianConsentRequest = {
+  share_scope?: ShareScopeEnum2;
+  /**
+   * **[REQUIRED]** Confirms the guardian has seen what the organisation will be able to view: the child's enrolment and performance in that institution's own classes, and nothing beyond it.
+   */
+  scope_acknowledged: boolean;
 };
 
 export type ApiResponseSweepReport = {
@@ -8026,6 +8332,13 @@ export type ApiResponseListResourceAvailabilityRule = {
   error?: unknown;
 };
 
+export type ApiResponseListOrganisationInvitation = {
+  success?: boolean;
+  data?: Array<OrganisationInvitation>;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponseListCompetition = {
   success?: boolean;
   data?: Array<Competition>;
@@ -8056,6 +8369,60 @@ export type ApiResponseNotificationCountsDto = {
 export type NotificationCountsDto = {
   unread_count?: bigint;
   popup_count?: bigint;
+};
+
+export type ApiResponseListMyInvitation = {
+  success?: boolean;
+  data?: Array<MyInvitation>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * An open invitation addressed to the authenticated user.
+ */
+export type MyInvitation = {
+  /**
+   * Invitation identifier, used to accept or decline from the inbox
+   */
+  uuid?: string;
+  /**
+   * Name of the inviting organisation
+   */
+  organisation_name?: string;
+  /**
+   * Organisation identifier
+   */
+  organisation_uuid?: string;
+  /**
+   * Who sent the invitation
+   */
+  inviter_name?: string | null;
+  /**
+   * Role being offered
+   */
+  domain_name?: string;
+  /**
+   * Personal note from the organisation
+   */
+  message?: string | null;
+  /**
+   * Number of classes that will be surfaced on acceptance
+   */
+  class_count?: number;
+  status?: ItemsEnum;
+  /**
+   * Whether the offer is waiting on a guardian rather than on the recipient
+   */
+  requires_guardian_consent?: boolean;
+  /**
+   * When the invitation lapses
+   */
+  expires_at?: Date;
+  /**
+   * When the invitation was sent
+   */
+  created_date?: Date;
 };
 
 export type ApiResponsePagedDtoInstructor = {
@@ -8328,10 +8695,64 @@ export type GuardianStudentSummaryDto = {
   linkUuid?: string;
   studentUuid?: string;
   studentName?: string;
-  relationshipType?: RelationshipTypeEnum;
+  relationshipType?: GuardianRelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
   status?: StatusEnum11;
   primaryGuardian?: boolean;
+};
+
+export type ApiResponsePublicGuardianInvitation = {
+  success?: boolean;
+  data?: PublicGuardianInvitation;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * The publicly readable view of a guardian consent link.
+ */
+export type PublicGuardianInvitation = {
+  /**
+   * Name of the organisation seeking to enrol the child
+   */
+  organisation_name?: string;
+  /**
+   * Organisation identifier
+   */
+  organisation_uuid?: string;
+  /**
+   * The child's display name
+   */
+  student_name?: string | null;
+  /**
+   * Masked address of the child, so the guardian can confirm who this concerns
+   */
+  masked_student_email?: string;
+  /**
+   * Guardian's name as the child supplied it
+   */
+  guardian_name?: string;
+  /**
+   * Relationship the child declared
+   */
+  guardian_relationship_type?: string;
+  /**
+   * Role the child would take at the organisation
+   */
+  domain_name?: string;
+  /**
+   * Number of classes that would be surfaced to the child
+   */
+  class_count?: number;
+  status?: ItemsEnum;
+  /**
+   * Whether consent can still be given
+   */
+  actionable?: boolean;
+  /**
+   * When the request lapses
+   */
+  expires_at?: Date;
 };
 
 export type ApiResponseEnrollment = {
@@ -8485,6 +8906,47 @@ export type TodayGrowthPointDto = {
    * Enrolments recorded during the hour
    */
   enrolments?: bigint;
+};
+
+export type ApiResponseListOrganisationStudentPerformance = {
+  success?: boolean;
+  data?: Array<OrganisationStudentPerformance>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A student's performance in one of the organisation's own classes.
+ */
+export type OrganisationStudentPerformance = {
+  /**
+   * The organisation's class
+   */
+  class_definition_uuid?: string;
+  /**
+   * Title of the class
+   */
+  class_title?: string;
+  /**
+   * Sessions enrolled in, excluding cancelled and waitlisted
+   */
+  total_sessions?: bigint;
+  /**
+   * Sessions attended
+   */
+  attended?: bigint;
+  /**
+   * Sessions missed
+   */
+  absent?: bigint;
+  /**
+   * Attended as a percentage of total sessions
+   */
+  attendance_rate?: number;
+  /**
+   * Most recent session
+   */
+  last_session_at?: Date | null;
 };
 
 export type ApiResponseListStudentEnrolmentSummaryDto = {
@@ -10222,6 +10684,17 @@ export const SchemaEnum2 = {
 
 export type SchemaEnum2 = (typeof SchemaEnum2)[keyof typeof SchemaEnum2];
 
+export const ItemsEnum = {
+  PENDING: 'PENDING',
+  AWAITING_GUARDIAN_CONSENT: 'AWAITING_GUARDIAN_CONSENT',
+  ACCEPTED: 'ACCEPTED',
+  DECLINED: 'DECLINED',
+  EXPIRED: 'EXPIRED',
+  REVOKED: 'REVOKED',
+} as const;
+
+export type ItemsEnum = (typeof ItemsEnum)[keyof typeof ItemsEnum];
+
 export const SchemaEnum3 = {
   APPROVE: 'approve',
   REJECT: 'reject',
@@ -10940,6 +11413,9 @@ export const TypeEnum = {
   LEARNING_CERTIFICATE_ISSUED: 'LEARNING_CERTIFICATE_ISSUED',
   PROFILE_DOCUMENT_VERIFIED: 'PROFILE_DOCUMENT_VERIFIED',
   PROFILE_COMPLETION_REMINDER: 'PROFILE_COMPLETION_REMINDER',
+  ORGANISATION_INVITATION: 'ORGANISATION_INVITATION',
+  GUARDIAN_CONSENT_REQUEST: 'GUARDIAN_CONSENT_REQUEST',
+  ORGANISATION_INVITATION_ACCEPTED: 'ORGANISATION_INVITATION_ACCEPTED',
   WEEKLY_PROGRESS_SUMMARY: 'WEEKLY_PROGRESS_SUMMARY',
   LEARNING_STREAK_ACHIEVEMENT: 'LEARNING_STREAK_ACHIEVEMENT',
   PEER_ACHIEVEMENT_CELEBRATION: 'PEER_ACHIEVEMENT_CELEBRATION',
@@ -10981,13 +11457,20 @@ export const StatusEnum10 = {
 
 export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
 
-export const RelationshipTypeEnum = {
+/**
+ * **[REQUIRED]** Nature of the relationship.
+ */
+export const GuardianRelationshipTypeEnum = {
   PARENT: 'PARENT',
   GUARDIAN: 'GUARDIAN',
   SPONSOR: 'SPONSOR',
 } as const;
 
-export type RelationshipTypeEnum = (typeof RelationshipTypeEnum)[keyof typeof RelationshipTypeEnum];
+/**
+ * **[REQUIRED]** Nature of the relationship.
+ */
+export type GuardianRelationshipTypeEnum =
+  (typeof GuardianRelationshipTypeEnum)[keyof typeof GuardianRelationshipTypeEnum];
 
 export const ShareScopeEnum = {
   FULL: 'FULL',
@@ -11004,6 +11487,20 @@ export const StatusEnum11 = {
 } as const;
 
 export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
+
+/**
+ * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
+ */
+export const ShareScopeEnum2 = {
+  FULL: 'FULL',
+  ACADEMICS: 'ACADEMICS',
+  ATTENDANCE: 'ATTENDANCE',
+} as const;
+
+/**
+ * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
+ */
+export type ShareScopeEnum2 = (typeof ShareScopeEnum2)[keyof typeof ShareScopeEnum2];
 
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
@@ -11398,6 +11895,17 @@ export const SchemaEnum2Writable = {
 } as const;
 
 export type SchemaEnum2Writable = (typeof SchemaEnum2Writable)[keyof typeof SchemaEnum2Writable];
+
+export const ItemsEnumWritable = {
+  PENDING: 'PENDING',
+  AWAITING_GUARDIAN_CONSENT: 'AWAITING_GUARDIAN_CONSENT',
+  ACCEPTED: 'ACCEPTED',
+  DECLINED: 'DECLINED',
+  EXPIRED: 'EXPIRED',
+  REVOKED: 'REVOKED',
+} as const;
+
+export type ItemsEnumWritable = (typeof ItemsEnumWritable)[keyof typeof ItemsEnumWritable];
 
 export const SchemaEnum3Writable = {
   APPROVE: 'approve',
@@ -11938,6 +12446,9 @@ export const TypeEnumWritable = {
   LEARNING_CERTIFICATE_ISSUED: 'LEARNING_CERTIFICATE_ISSUED',
   PROFILE_DOCUMENT_VERIFIED: 'PROFILE_DOCUMENT_VERIFIED',
   PROFILE_COMPLETION_REMINDER: 'PROFILE_COMPLETION_REMINDER',
+  ORGANISATION_INVITATION: 'ORGANISATION_INVITATION',
+  GUARDIAN_CONSENT_REQUEST: 'GUARDIAN_CONSENT_REQUEST',
+  ORGANISATION_INVITATION_ACCEPTED: 'ORGANISATION_INVITATION_ACCEPTED',
   WEEKLY_PROGRESS_SUMMARY: 'WEEKLY_PROGRESS_SUMMARY',
   LEARNING_STREAK_ACHIEVEMENT: 'LEARNING_STREAK_ACHIEVEMENT',
   PEER_ACHIEVEMENT_CELEBRATION: 'PEER_ACHIEVEMENT_CELEBRATION',
@@ -11980,14 +12491,20 @@ export const StatusEnum10Writable = {
 
 export type StatusEnum10Writable = (typeof StatusEnum10Writable)[keyof typeof StatusEnum10Writable];
 
-export const RelationshipTypeEnumWritable = {
+/**
+ * **[REQUIRED]** Nature of the relationship.
+ */
+export const GuardianRelationshipTypeEnumWritable = {
   PARENT: 'PARENT',
   GUARDIAN: 'GUARDIAN',
   SPONSOR: 'SPONSOR',
 } as const;
 
-export type RelationshipTypeEnumWritable =
-  (typeof RelationshipTypeEnumWritable)[keyof typeof RelationshipTypeEnumWritable];
+/**
+ * **[REQUIRED]** Nature of the relationship.
+ */
+export type GuardianRelationshipTypeEnumWritable =
+  (typeof GuardianRelationshipTypeEnumWritable)[keyof typeof GuardianRelationshipTypeEnumWritable];
 
 export const ShareScopeEnumWritable = {
   FULL: 'FULL',
@@ -12005,6 +12522,21 @@ export const StatusEnum11Writable = {
 } as const;
 
 export type StatusEnum11Writable = (typeof StatusEnum11Writable)[keyof typeof StatusEnum11Writable];
+
+/**
+ * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
+ */
+export const ShareScopeEnum2Writable = {
+  FULL: 'FULL',
+  ACADEMICS: 'ACADEMICS',
+  ATTENDANCE: 'ATTENDANCE',
+} as const;
+
+/**
+ * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
+ */
+export type ShareScopeEnum2Writable =
+  (typeof ShareScopeEnum2Writable)[keyof typeof ShareScopeEnum2Writable];
 
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
@@ -19092,6 +19624,159 @@ export type AddAvailabilityRuleResponses = {
 export type AddAvailabilityRuleResponse =
   AddAvailabilityRuleResponses[keyof AddAvailabilityRuleResponses];
 
+export type ListData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation
+     */
+    organisationUuid: string;
+  };
+  query?: {
+    /**
+     * Optional status filter, e.g. PENDING,ACCEPTED
+     */
+    status?: Array<ItemsEnumWritable>;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/invitations';
+};
+
+export type ListErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListError = ListErrors[keyof ListErrors];
+
+export type ListResponses = {
+  /**
+   * Invitations retrieved
+   */
+  200: ApiResponseListOrganisationInvitation;
+};
+
+export type ListResponse = ListResponses[keyof ListResponses];
+
+export type SendData = {
+  body: SendOrganisationInvitationsRequest;
+  path: {
+    /**
+     * UUID of the inviting organisation
+     */
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/invitations';
+};
+
+export type SendErrors = {
+  /**
+   * Invalid domain, branch or class selection
+   */
+  400: ApiResponseSendOrganisationInvitationsResult;
+  /**
+   * Caller does not manage this organisation
+   */
+  403: ApiResponseSendOrganisationInvitationsResult;
+  /**
+   * Organisation not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SendError = SendErrors[keyof SendErrors];
+
+export type SendResponses = {
+  /**
+   * Invitations processed
+   */
+  201: ApiResponseSendOrganisationInvitationsResult;
+};
+
+export type SendResponse = SendResponses[keyof SendResponses];
+
+export type RevokeData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+    invitationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/invitations/{invitationUuid}/revoke';
+};
+
+export type RevokeErrors = {
+  /**
+   * Invitation is not pending
+   */
+  400: ApiResponseOrganisationInvitation;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RevokeError = RevokeErrors[keyof RevokeErrors];
+
+export type RevokeResponses = {
+  /**
+   * Invitation revoked
+   */
+  200: ApiResponseOrganisationInvitation;
+};
+
+export type RevokeResponse = RevokeResponses[keyof RevokeResponses];
+
+export type ResendData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+    invitationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/invitations/{invitationUuid}/resend';
+};
+
+export type ResendErrors = {
+  /**
+   * Invitation is not pending
+   */
+  400: ApiResponseOrganisationInvitation;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ResendError = ResendErrors[keyof ResendErrors];
+
+export type ResendResponses = {
+  /**
+   * Invitation resent
+   */
+  200: ApiResponseOrganisationInvitation;
+};
+
+export type ResendResponse = ResendResponses[keyof ResendResponses];
+
 export type ListCompetitionsData = {
   body?: never;
   path: {
@@ -19259,6 +19944,175 @@ export type ApplyActionResponses = {
 };
 
 export type ApplyActionResponse = ApplyActionResponses[keyof ApplyActionResponses];
+
+export type DeclineFromInboxData = {
+  body?: never;
+  path: {
+    invitationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/invitations/{invitationUuid}/decline';
+};
+
+export type DeclineFromInboxErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeclineFromInboxError = DeclineFromInboxErrors[keyof DeclineFromInboxErrors];
+
+export type DeclineFromInboxResponses = {
+  /**
+   * Invitation declined
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeclineFromInboxResponse = DeclineFromInboxResponses[keyof DeclineFromInboxResponses];
+
+export type AcceptFromInboxData = {
+  body: AcceptInvitationRequest;
+  path: {
+    invitationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/invitations/{invitationUuid}/accept';
+};
+
+export type AcceptFromInboxErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AcceptFromInboxError = AcceptFromInboxErrors[keyof AcceptFromInboxErrors];
+
+export type AcceptFromInboxResponses = {
+  /**
+   * Invitation accepted
+   */
+  200: ApiResponseAcceptInvitationResult;
+};
+
+export type AcceptFromInboxResponse = AcceptFromInboxResponses[keyof AcceptFromInboxResponses];
+
+export type SubmitGuardianDetailsData = {
+  body: GuardianDetailsRequest;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: '/api/v1/invitations/token/{token}/guardian-details';
+};
+
+export type SubmitGuardianDetailsErrors = {
+  /**
+   * Invitation is not awaiting guardian details
+   */
+  400: ApiResponsePublicInvitation;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SubmitGuardianDetailsError =
+  SubmitGuardianDetailsErrors[keyof SubmitGuardianDetailsErrors];
+
+export type SubmitGuardianDetailsResponses = {
+  /**
+   * Guardian recorded and consent requested
+   */
+  200: ApiResponsePublicInvitation;
+};
+
+export type SubmitGuardianDetailsResponse =
+  SubmitGuardianDetailsResponses[keyof SubmitGuardianDetailsResponses];
+
+export type DeclineByTokenData = {
+  body?: never;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: '/api/v1/invitations/token/{token}/decline';
+};
+
+export type DeclineByTokenErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeclineByTokenError = DeclineByTokenErrors[keyof DeclineByTokenErrors];
+
+export type DeclineByTokenResponses = {
+  /**
+   * Invitation declined
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeclineByTokenResponse = DeclineByTokenResponses[keyof DeclineByTokenResponses];
+
+export type AcceptByTokenData = {
+  body: AcceptInvitationRequest;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: '/api/v1/invitations/token/{token}/accept';
+};
+
+export type AcceptByTokenErrors = {
+  /**
+   * Date of birth required, or invitation no longer open
+   */
+  400: ApiResponseAcceptInvitationResult;
+  /**
+   * Signed-in address does not match the invitation
+   */
+  403: ApiResponseAcceptInvitationResult;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AcceptByTokenError = AcceptByTokenErrors[keyof AcceptByTokenErrors];
+
+export type AcceptByTokenResponses = {
+  /**
+   * Invitation accepted
+   */
+  200: ApiResponseAcceptInvitationResult;
+};
+
+export type AcceptByTokenResponse = AcceptByTokenResponses[keyof AcceptByTokenResponses];
 
 export type GetAllInstructorsData = {
   body?: never;
@@ -19903,6 +20757,72 @@ export type CreateLinkResponses = {
 };
 
 export type CreateLinkResponse = CreateLinkResponses[keyof CreateLinkResponses];
+
+export type DeclineData = {
+  body?: never;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: '/api/v1/guardian-invitations/token/{token}/decline';
+};
+
+export type DeclineErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeclineError = DeclineErrors[keyof DeclineErrors];
+
+export type DeclineResponses = {
+  /**
+   * Refusal recorded
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeclineResponse = DeclineResponses[keyof DeclineResponses];
+
+export type ConsentData = {
+  body: GuardianConsentRequest;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: '/api/v1/guardian-invitations/token/{token}/accept';
+};
+
+export type ConsentErrors = {
+  /**
+   * Signed-in address is not the nominated guardian
+   */
+  403: ApiResponseAcceptInvitationResult;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ConsentError = ConsentErrors[keyof ConsentErrors];
+
+export type ConsentResponses = {
+  /**
+   * Consent recorded
+   */
+  200: ApiResponseAcceptInvitationResult;
+};
+
+export type ConsentResponse = ConsentResponses[keyof ConsentResponses];
 
 export type SweepData = {
   body?: never;
@@ -27338,6 +28258,69 @@ export type GetCountsResponses = {
 
 export type GetCountsResponse = GetCountsResponses[keyof GetCountsResponses];
 
+export type LookupData = {
+  body?: never;
+  path: {
+    /**
+     * Token from the emailed invitation link
+     */
+    token: string;
+  };
+  query?: never;
+  url: '/api/v1/invitations/token/{token}';
+};
+
+export type LookupErrors = {
+  /**
+   * Link is not valid
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type LookupError = LookupErrors[keyof LookupErrors];
+
+export type LookupResponses = {
+  /**
+   * Invitation retrieved
+   */
+  200: ApiResponsePublicInvitation;
+};
+
+export type LookupResponse = LookupResponses[keyof LookupResponses];
+
+export type ListMineData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/invitations/me';
+};
+
+export type ListMineErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListMineError = ListMineErrors[keyof ListMineErrors];
+
+export type ListMineResponses = {
+  /**
+   * Invitations retrieved
+   */
+  200: ApiResponseListMyInvitation;
+};
+
+export type ListMineResponse = ListMineResponses[keyof ListMineResponses];
+
 export type GetInstructorRatingSummaryData = {
   body?: never;
   path: {
@@ -27854,6 +28837,40 @@ export type GetMyStudentsResponses = {
 
 export type GetMyStudentsResponse = GetMyStudentsResponses[keyof GetMyStudentsResponses];
 
+export type Lookup1Data = {
+  body?: never;
+  path: {
+    /**
+     * Token from the emailed consent link
+     */
+    token: string;
+  };
+  query?: never;
+  url: '/api/v1/guardian-invitations/token/{token}';
+};
+
+export type Lookup1Errors = {
+  /**
+   * Link is not valid
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type Lookup1Error = Lookup1Errors[keyof Lookup1Errors];
+
+export type Lookup1Responses = {
+  /**
+   * Consent request retrieved
+   */
+  200: ApiResponsePublicGuardianInvitation;
+};
+
+export type Lookup1Response = Lookup1Responses[keyof Lookup1Responses];
+
 export type GetFileData = {
   body?: never;
   path: {
@@ -28057,6 +29074,10 @@ export type GetCourseEnrollmentsForStudentData = {
 
 export type GetCourseEnrollmentsForStudentErrors = {
   /**
+   * Caller is neither the student nor a platform administrator
+   */
+  403: ApiResponsePagedDtoStudentCourseEnrollmentSummary;
+  /**
    * Not Found
    */
   404: ResponseDtoVoid;
@@ -28185,6 +29206,50 @@ export type GetTodayGrowthResponses = {
 };
 
 export type GetTodayGrowthResponse = GetTodayGrowthResponses[keyof GetTodayGrowthResponses];
+
+export type GetStudentPerformanceData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation to scope to
+     */
+    organisationUuid: string;
+    /**
+     * UUID of the student
+     */
+    studentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/enrollment/organisations/{organisationUuid}/students/{studentUuid}/performance';
+};
+
+export type GetStudentPerformanceErrors = {
+  /**
+   * Caller does not belong to this organisation
+   */
+  403: ApiResponseListOrganisationStudentPerformance;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetStudentPerformanceError =
+  GetStudentPerformanceErrors[keyof GetStudentPerformanceErrors];
+
+export type GetStudentPerformanceResponses = {
+  /**
+   * Student performance retrieved successfully
+   */
+  200: ApiResponseListOrganisationStudentPerformance;
+};
+
+export type GetStudentPerformanceResponse =
+  GetStudentPerformanceResponses[keyof GetStudentPerformanceResponses];
 
 export type GetStudentSummariesData = {
   body?: never;

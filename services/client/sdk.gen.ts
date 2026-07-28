@@ -613,6 +613,18 @@ import type {
   AddAvailabilityRuleData,
   AddAvailabilityRuleResponses,
   AddAvailabilityRuleErrors,
+  ListData,
+  ListResponses,
+  ListErrors,
+  SendData,
+  SendResponses,
+  SendErrors,
+  RevokeData,
+  RevokeResponses,
+  RevokeErrors,
+  ResendData,
+  ResendResponses,
+  ResendErrors,
   ListCompetitionsData,
   ListCompetitionsResponses,
   ListCompetitionsErrors,
@@ -628,6 +640,21 @@ import type {
   ApplyActionData,
   ApplyActionResponses,
   ApplyActionErrors,
+  DeclineFromInboxData,
+  DeclineFromInboxResponses,
+  DeclineFromInboxErrors,
+  AcceptFromInboxData,
+  AcceptFromInboxResponses,
+  AcceptFromInboxErrors,
+  SubmitGuardianDetailsData,
+  SubmitGuardianDetailsResponses,
+  SubmitGuardianDetailsErrors,
+  DeclineByTokenData,
+  DeclineByTokenResponses,
+  DeclineByTokenErrors,
+  AcceptByTokenData,
+  AcceptByTokenResponses,
+  AcceptByTokenErrors,
   GetAllInstructorsData,
   GetAllInstructorsResponses,
   GetAllInstructorsErrors,
@@ -685,6 +712,12 @@ import type {
   CreateLinkData,
   CreateLinkResponses,
   CreateLinkErrors,
+  DeclineData,
+  DeclineResponses,
+  DeclineErrors,
+  ConsentData,
+  ConsentResponses,
+  ConsentErrors,
   SweepData,
   SweepResponses,
   SweepErrors,
@@ -1315,6 +1348,12 @@ import type {
   GetCountsData,
   GetCountsResponses,
   GetCountsErrors,
+  LookupData,
+  LookupResponses,
+  LookupErrors,
+  ListMineData,
+  ListMineResponses,
+  ListMineErrors,
   GetInstructorRatingSummaryData,
   GetInstructorRatingSummaryResponses,
   GetInstructorRatingSummaryErrors,
@@ -1357,6 +1396,9 @@ import type {
   GetMyStudentsData,
   GetMyStudentsResponses,
   GetMyStudentsErrors,
+  Lookup1Data,
+  Lookup1Responses,
+  Lookup1Errors,
   GetFileData,
   GetFileResponses,
   GetFileErrors,
@@ -1384,6 +1426,9 @@ import type {
   GetTodayGrowthData,
   GetTodayGrowthResponses,
   GetTodayGrowthErrors,
+  GetStudentPerformanceData,
+  GetStudentPerformanceResponses,
+  GetStudentPerformanceErrors,
   GetStudentSummariesData,
   GetStudentSummariesResponses,
   GetStudentSummariesErrors,
@@ -1899,10 +1944,15 @@ import {
   createResourceResponseTransformer,
   listAvailabilityRulesResponseTransformer,
   addAvailabilityRuleResponseTransformer,
+  listResponseTransformer,
+  sendResponseTransformer,
+  revokeResponseTransformer,
+  resendResponseTransformer,
   listCompetitionsResponseTransformer,
   createCompetitionResponseTransformer,
   listNotificationsResponseTransformer,
   applyActionResponseTransformer,
+  submitGuardianDetailsResponseTransformer,
   getAllInstructorsResponseTransformer,
   createInstructorResponseTransformer,
   getInstructorSkillsResponseTransformer,
@@ -2099,6 +2149,8 @@ import {
   listBookingsResponseTransformer,
   search2ResponseTransformer,
   getCountsResponseTransformer,
+  lookupResponseTransformer,
+  listMineResponseTransformer,
   getInstructorRatingSummaryResponseTransformer,
   getInstructorBookingsResponseTransformer,
   getInstructorCalendarResponseTransformer,
@@ -2110,6 +2162,7 @@ import {
   searchEducationResponseTransformer,
   searchDocumentsResponseTransformer,
   getStudentDashboardResponseTransformer,
+  lookup1ResponseTransformer,
   getEnrollmentResponseTransformer,
   getScheduledInstanceEnrollmentsForStudentResponseTransformer,
   getEnrollmentOverviewForStudentResponseTransformer,
@@ -2117,6 +2170,7 @@ import {
   getClassEnrollmentsForStudentResponseTransformer,
   searchEnrollmentsResponseTransformer,
   getTodayGrowthResponseTransformer,
+  getStudentPerformanceResponseTransformer,
   getStudentSummariesResponseTransformer,
   getEnrolmentTrendsResponseTransformer,
   getClassEnrolmentCountsResponseTransformer,
@@ -8181,6 +8235,106 @@ export const addAvailabilityRule = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List the organisation's invitations
+ * Newest first. Optionally filtered by status.
+ */
+export const list = <ThrowOnError extends boolean = false>(
+  options: Options<ListData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<ListResponses, ListErrors, ThrowOnError>({
+    responseTransformer: listResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/invitations',
+    ...options,
+  });
+};
+
+/**
+ * Invite people to join the organisation
+ * Creates a token-bearing offer for each recipient and emails it. No account is provisioned and no affiliation exists until the recipient - or, for a minor, their guardian - accepts. Recipients are processed independently, so the response reports each one.
+ */
+export const send = <ThrowOnError extends boolean = false>(
+  options: Options<SendData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<SendResponses, SendErrors, ThrowOnError>({
+    responseTransformer: sendResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/invitations',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Withdraw a pending invitation
+ * Marks the invitation revoked and invalidates the emailed link immediately.
+ */
+export const revoke = <ThrowOnError extends boolean = false>(
+  options: Options<RevokeData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<RevokeResponses, RevokeErrors, ThrowOnError>({
+    responseTransformer: revokeResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/invitations/{invitationUuid}/revoke',
+    ...options,
+  });
+};
+
+/**
+ * Resend a pending invitation
+ * Issues a fresh link and expiry. The previous link stops working.
+ */
+export const resend = <ThrowOnError extends boolean = false>(
+  options: Options<ResendData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<ResendResponses, ResendErrors, ThrowOnError>({
+    responseTransformer: resendResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/invitations/{invitationUuid}/resend',
+    ...options,
+  });
+};
+
+/**
  * List competitions for an organisation
  * Returns all competitions for the organisation with team counts.
  */
@@ -8316,6 +8470,151 @@ export const applyAction = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/notifications/{uuid}',
     ...options,
+  });
+};
+
+/**
+ * Decline an invitation from my inbox
+ */
+export const declineFromInbox = <ThrowOnError extends boolean = false>(
+  options: Options<DeclineFromInboxData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DeclineFromInboxResponses,
+    DeclineFromInboxErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/invitations/{invitationUuid}/decline',
+    ...options,
+  });
+};
+
+/**
+ * Accept an invitation from my inbox
+ */
+export const acceptFromInbox = <ThrowOnError extends boolean = false>(
+  options: Options<AcceptFromInboxData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AcceptFromInboxResponses,
+    AcceptFromInboxErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/invitations/{invitationUuid}/accept',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Nominate a guardian for a minor's invitation
+ * Supplies the guardian who will decide on the minor's behalf, and issues that guardian their own consent link. Captures only what is needed to reach them and to record the relationship.
+ */
+export const submitGuardianDetails = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitGuardianDetailsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SubmitGuardianDetailsResponses,
+    SubmitGuardianDetailsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitGuardianDetailsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/invitations/token/{token}/guardian-details',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Decline an invitation from its link
+ */
+export const declineByToken = <ThrowOnError extends boolean = false>(
+  options: Options<DeclineByTokenData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DeclineByTokenResponses,
+    DeclineByTokenErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/invitations/token/{token}/decline',
+    ...options,
+  });
+};
+
+/**
+ * Accept an invitation from its link
+ * Creates the affiliation. If the accepting user turns out to be below the configured age gate, no affiliation is created - the invitation moves to awaiting guardian consent and guardian details must be supplied next.
+ */
+export const acceptByToken = <ThrowOnError extends boolean = false>(
+  options: Options<AcceptByTokenData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AcceptByTokenResponses,
+    AcceptByTokenErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/invitations/token/{token}/accept',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -8898,6 +9197,55 @@ export const createLink = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/guardians/links',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Refuse the minor joining the organisation
+ */
+export const decline = <ThrowOnError extends boolean = false>(
+  options: Options<DeclineData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<DeclineResponses, DeclineErrors, ThrowOnError>({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/guardian-invitations/token/{token}/decline',
+    ...options,
+  });
+};
+
+/**
+ * Consent to the minor joining the organisation
+ * Creates the child's affiliation and establishes the guardian's own ongoing visibility of that child's learning at the chosen scope.
+ */
+export const consent = <ThrowOnError extends boolean = false>(
+  options: Options<ConsentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<ConsentResponses, ConsentErrors, ThrowOnError>({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/guardian-invitations/token/{token}/accept',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -15172,6 +15520,54 @@ export const getCounts = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Read an invitation from its link
+ * Public. Returns only what the recipient needs in order to decide: the organisation, the inviter, the role and the expiry. The recipient's address is masked and no other personal data is disclosed.
+ */
+export const lookup = <ThrowOnError extends boolean = false>(
+  options: Options<LookupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<LookupResponses, LookupErrors, ThrowOnError>({
+    responseTransformer: lookupResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/invitations/token/{token}',
+    ...options,
+  });
+};
+
+/**
+ * List invitations addressed to me
+ * Lets someone who never opened the email still find and act on an offer.
+ */
+export const listMine = <ThrowOnError extends boolean = false>(
+  options?: Options<ListMineData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<ListMineResponses, ListMineErrors, ThrowOnError>({
+    responseTransformer: listMineResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/invitations/me',
+    ...options,
+  });
+};
+
+/**
  * Get instructor rating summary
  * Returns average rating and total review count for an instructor.
  */
@@ -15686,6 +16082,30 @@ export const getMyStudents = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Read a guardian consent request from its link
+ * Public, so a guardian with no Elimika account can see what they are being asked to approve before registering. Names the child and masks their address.
+ */
+export const lookup1 = <ThrowOnError extends boolean = false>(
+  options: Options<Lookup1Data, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<Lookup1Responses, Lookup1Errors, ThrowOnError>({
+    responseTransformer: lookup1ResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/guardian-invitations/token/{token}',
+    ...options,
+  });
+};
+
+/**
  * Get a stored file by its storage key
  * Serves any stored file (images, videos, documents, certificates) by its canonical storage key.
  */
@@ -15818,6 +16238,7 @@ export const getEnrollmentOverviewForStudent = <ThrowOnError extends boolean = f
 
 /**
  * Get course enrollments for a specific student
+ * Returns the student's course progress across the whole platform, so it is restricted to the student themselves and platform administrators. An organisation or instructor wanting to see how a student is doing at their own institution must use the organisation-scoped performance endpoint instead, which cannot reach beyond that institution's classes.
  */
 export const getCourseEnrollmentsForStudent = <ThrowOnError extends boolean = false>(
   options: Options<GetCourseEnrollmentsForStudentData, ThrowOnError>
@@ -15922,6 +16343,34 @@ export const getTodayGrowth = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/enrollment/organisations/{organisationUuid}/today-growth',
+    ...options,
+  });
+};
+
+/**
+ * Get one student's performance within an organisation
+ * Per-class attendance and performance for a single student, confined to the organisation's own classes. An organisation may only see how a student is doing at its own institution; their learning elsewhere on the platform is unreachable through this endpoint by construction, not by filtering afterwards.
+ */
+export const getStudentPerformance = <ThrowOnError extends boolean = false>(
+  options: Options<GetStudentPerformanceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetStudentPerformanceResponses,
+    GetStudentPerformanceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getStudentPerformanceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/organisations/{organisationUuid}/students/{studentUuid}/performance',
     ...options,
   });
 };

@@ -844,17 +844,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -2793,16 +2793,16 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
-    is_expired: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-      .readonly()
-      .optional(),
     file_url: z
       .string()
       .describe(
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
       )
+      .readonly()
+      .optional(),
+    is_expired: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
       .readonly()
       .optional(),
     file_size_formatted: z
@@ -3871,16 +3871,6 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
-    assessment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
-      .readonly()
-      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -3896,6 +3886,16 @@ export const zCourseAssessment = z
       .describe(
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
       )
+      .readonly()
+      .optional(),
+    assessment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -4251,16 +4251,16 @@ export const zCourseCreatorDocumentDto = z.object({
   created_by: z.string().readonly().optional(),
   updated_date: z.string().datetime().readonly().optional(),
   updated_by: z.string().readonly().optional(),
-  is_expired: z
-    .boolean()
-    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-    .readonly()
-    .optional(),
   file_url: z
     .string()
     .describe(
       '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
     )
+    .readonly()
+    .optional(),
+  is_expired: z
+    .boolean()
+    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
     .readonly()
     .optional(),
   file_size_formatted: z
@@ -6270,6 +6270,125 @@ export const zApiResponseSkillsFundSource = z.object({
 });
 
 /**
+ * A single invitee.
+ */
+export const zOrganisationInvitationRecipient = z
+  .object({
+    email: z.string().email().min(0).max(150).describe('**[REQUIRED]** Email address to invite.'),
+    name: z.union([z.string().min(0).max(150), z.null()]).optional(),
+  })
+  .describe('A single invitee.');
+
+/**
+ * Invites one or more recipients to join an organisation.
+ */
+export const zSendOrganisationInvitationsRequest = z
+  .object({
+    recipients: z
+      .array(zOrganisationInvitationRecipient)
+      .min(0)
+      .max(200)
+      .describe('**[REQUIRED]** People to invite.'),
+    domain_name: zDomainNameEnum,
+    branch_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    class_uuids: z.union([z.array(z.string().uuid()), z.null()]).optional(),
+    message: z.union([z.string().min(0).max(2000), z.null()]).optional(),
+    expires_in_days: z.union([z.number().int().gte(1).lte(90), z.null()]).optional(),
+  })
+  .describe('Invites one or more recipients to join an organisation.');
+
+export const zItemsEnum = z.enum([
+  'PENDING',
+  'AWAITING_GUARDIAN_CONSENT',
+  'ACCEPTED',
+  'DECLINED',
+  'EXPIRED',
+  'REVOKED',
+]);
+
+/**
+ * An invitation to join an organisation, as seen by the inviting organisation.
+ */
+export const zOrganisationInvitation = z
+  .object({
+    uuid: z.string().uuid().describe('Invitation identifier').optional(),
+    organisation_uuid: z
+      .string()
+      .uuid()
+      .describe('Organisation that issued the invitation')
+      .optional(),
+    branch_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    domain_name: z.string().describe('Org-scoped domain the recipient was invited into').optional(),
+    recipient_email: z.string().describe('Email address invited').optional(),
+    recipient_name: z.union([z.string(), z.null()]).optional(),
+    recipient_user_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    existing_platform_user: z
+      .boolean()
+      .describe('Whether the invited email already had a platform account when sent')
+      .optional(),
+    inviter_user_uuid: z.string().uuid().describe('Who sent the invitation').optional(),
+    status: zItemsEnum.optional(),
+    message: z.union([z.string(), z.null()]).optional(),
+    class_uuids: z
+      .array(z.string().uuid())
+      .describe('Classes surfaced to the recipient on acceptance')
+      .optional(),
+    expires_at: z.string().datetime().describe('When the invitation lapses').optional(),
+    accepted_at: z.union([z.string().datetime(), z.null()]).optional(),
+    declined_at: z.union([z.string().datetime(), z.null()]).optional(),
+    revoked_at: z.union([z.string().datetime(), z.null()]).optional(),
+    requires_guardian_consent: z
+      .boolean()
+      .describe(
+        'True when the invitee declared a date of birth below the age gate, so the offer awaits guardian consent. The date of birth itself is never exposed.'
+      )
+      .optional(),
+    guardian_consented_at: z.union([z.string().datetime(), z.null()]).optional(),
+    created_date: z.string().datetime().describe('When the invitation was created').optional(),
+  })
+  .describe('An invitation to join an organisation, as seen by the inviting organisation.');
+
+/**
+ * A recipient that could not be invited.
+ */
+export const zOrganisationInvitationFailure = z
+  .object({
+    email: z.string().describe('Email address that could not be invited').optional(),
+    reason: z.string().describe('Why the invitation was not created').optional(),
+  })
+  .describe('A recipient that could not be invited.');
+
+/**
+ * Per-recipient outcome of a batch invitation send.
+ */
+export const zSendOrganisationInvitationsResult = z
+  .object({
+    sent: z
+      .array(zOrganisationInvitation)
+      .describe('Invitations that were created and queued for delivery')
+      .optional(),
+    failed: z
+      .array(zOrganisationInvitationFailure)
+      .describe('Recipients that could not be invited, with the reason why')
+      .optional(),
+  })
+  .describe('Per-recipient outcome of a batch invitation send.');
+
+export const zApiResponseSendOrganisationInvitationsResult = z.object({
+  success: z.boolean().optional(),
+  data: zSendOrganisationInvitationsResult.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseOrganisationInvitation = z.object({
+  success: z.boolean().optional(),
+  data: zOrganisationInvitation.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
  * Payload to create an organisation competition.
  */
 export const zCreateCompetitionRequest = z
@@ -6372,6 +6491,9 @@ export const zTypeEnum = z.enum([
   'LEARNING_CERTIFICATE_ISSUED',
   'PROFILE_DOCUMENT_VERIFIED',
   'PROFILE_COMPLETION_REMINDER',
+  'ORGANISATION_INVITATION',
+  'GUARDIAN_CONSENT_REQUEST',
+  'ORGANISATION_INVITATION_ACCEPTED',
   'WEEKLY_PROGRESS_SUMMARY',
   'LEARNING_STREAK_ACHIEVEMENT',
   'PEER_ACHIEVEMENT_CELEBRATION',
@@ -6414,6 +6536,126 @@ export const zNotificationDto = z.object({
 export const zApiResponseNotificationDto = z.object({
   success: z.boolean().optional(),
   data: zNotificationDto.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Accepts an invitation, acknowledging what the organisation will be able to see.
+ */
+export const zAcceptInvitationRequest = z
+  .object({
+    date_of_birth: z.union([z.string().date(), z.null()]).optional(),
+    scope_acknowledged: z
+      .boolean()
+      .describe(
+        "**[REQUIRED]** Confirms the invitee has seen what the organisation will be able to view: their enrolment and performance in that institution's own classes, and nothing beyond it."
+      ),
+  })
+  .describe('Accepts an invitation, acknowledging what the organisation will be able to see.');
+
+/**
+ * What happened when an invitation was accepted.
+ */
+export const zAcceptInvitationResult = z
+  .object({
+    status: zItemsEnum.optional(),
+    affiliated: z
+      .boolean()
+      .describe(
+        'True when the affiliation now exists. False when the offer has been passed to a guardian for consent.'
+      )
+      .optional(),
+    guardian_consent_required: z
+      .boolean()
+      .describe('True when the invitee was found to be a minor and a guardian must consent')
+      .optional(),
+    organisation_uuid: z
+      .string()
+      .uuid()
+      .describe('Organisation joined, or that consent is being sought for')
+      .optional(),
+    organisation_name: z.string().describe('Name of that organisation').optional(),
+    surfaced_class_uuids: z
+      .array(z.string().uuid())
+      .describe(
+        'Classes now surfaced to the student. These are recommendations - the student still enrols in each one separately.'
+      )
+      .optional(),
+    message: z.string().describe('What the caller should do next, in plain language').optional(),
+  })
+  .describe('What happened when an invitation was accepted.');
+
+export const zApiResponseAcceptInvitationResult = z.object({
+  success: z.boolean().optional(),
+  data: zAcceptInvitationResult.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * **[REQUIRED]** Nature of the relationship.
+ */
+export const zGuardianRelationshipTypeEnum = z
+  .enum(['PARENT', 'GUARDIAN', 'SPONSOR'])
+  .describe('**[REQUIRED]** Nature of the relationship.');
+
+/**
+ * Contact details for the guardian who will consent on a minor's behalf.
+ */
+export const zGuardianDetailsRequest = z
+  .object({
+    guardian_email: z
+      .string()
+      .email()
+      .min(0)
+      .max(150)
+      .describe("**[REQUIRED]** Guardian's email address. The consent link is sent here."),
+    guardian_name: z.string().min(0).max(150).describe("**[REQUIRED]** Guardian's full name."),
+    guardian_relationship_type: zGuardianRelationshipTypeEnum,
+    guardian_phone: z.union([z.string().min(0).max(50), z.null()]).optional(),
+  })
+  .describe("Contact details for the guardian who will consent on a minor's behalf.");
+
+/**
+ * The publicly readable view of an invitation link.
+ */
+export const zPublicInvitation = z
+  .object({
+    organisation_name: z.string().describe('Name of the inviting organisation').optional(),
+    organisation_uuid: z.string().uuid().describe('Organisation identifier').optional(),
+    inviter_name: z.union([z.string(), z.null()]).optional(),
+    domain_name: z.string().describe('Role the recipient is invited into').optional(),
+    masked_recipient_email: z
+      .string()
+      .describe('Masked recipient address, so the recipient can confirm the link is for them')
+      .optional(),
+    recipient_name: z.union([z.string(), z.null()]).optional(),
+    existing_platform_user: z
+      .boolean()
+      .describe(
+        'Whether this address already has an Elimika account. Drives whether the page offers sign-in or registration.'
+      )
+      .optional(),
+    message: z.union([z.string(), z.null()]).optional(),
+    class_count: z
+      .number()
+      .int()
+      .describe('Number of classes that will be surfaced on acceptance')
+      .optional(),
+    status: zItemsEnum.optional(),
+    actionable: z.boolean().describe('Whether the offer can still be acted upon').optional(),
+    requires_guardian_consent: z
+      .boolean()
+      .describe('Whether the offer is waiting on a guardian rather than the invitee')
+      .optional(),
+    expires_at: z.string().datetime().describe('When the invitation lapses').optional(),
+  })
+  .describe('The publicly readable view of an invitation link.');
+
+export const zApiResponsePublicInvitation = z.object({
+  success: z.boolean().optional(),
+  data: zPublicInvitation.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -6490,8 +6732,6 @@ export const zApiResponseInstructorReview = z.object({
   error: z.unknown().optional(),
 });
 
-export const zRelationshipTypeEnum = z.enum(['PARENT', 'GUARDIAN', 'SPONSOR']);
-
 export const zShareScopeEnum = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']);
 
 export const zStatusEnum11 = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
@@ -6506,7 +6746,7 @@ export const zGuardianStudentLink = z
     guardianUserUuid: z.string().uuid().optional(),
     studentName: z.string().optional(),
     guardianDisplayName: z.string().optional(),
-    relationshipType: zRelationshipTypeEnum.optional(),
+    relationshipType: zGuardianRelationshipTypeEnum.optional(),
     shareScope: zShareScopeEnum.optional(),
     status: zStatusEnum11.optional(),
     primaryGuardian: z.boolean().optional(),
@@ -6523,7 +6763,7 @@ export const zGuardianStudentLinkRequest = z
   .object({
     studentUuid: z.string().uuid().describe('UUID for the student profile to be monitored'),
     guardianUserUuid: z.string().uuid().describe("UUID for the guardian's user account"),
-    relationshipType: zRelationshipTypeEnum,
+    relationshipType: zGuardianRelationshipTypeEnum,
     shareScope: zShareScopeEnum,
     isPrimary: z
       .boolean()
@@ -6533,6 +6773,29 @@ export const zGuardianStudentLinkRequest = z
     notes: z.string().describe('Optional note shown in audits or invitation emails').optional(),
   })
   .describe('Request payload to link a guardian/parent to a learner profile.');
+
+/**
+ * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
+ */
+export const zShareScopeEnum2 = z
+  .enum(['FULL', 'ACADEMICS', 'ATTENDANCE'])
+  .describe(
+    "**[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL."
+  );
+
+/**
+ * Records a guardian's consent for a minor to join an organisation.
+ */
+export const zGuardianConsentRequest = z
+  .object({
+    share_scope: zShareScopeEnum2.optional(),
+    scope_acknowledged: z
+      .boolean()
+      .describe(
+        "**[REQUIRED]** Confirms the guardian has seen what the organisation will be able to view: the child's enrolment and performance in that institution's own classes, and nothing beyond it."
+      ),
+  })
+  .describe("Records a guardian's consent for a minor to join an organisation.");
 
 export const zSweepReport = z.object({
   diskFiles: z.number().int().optional(),
@@ -9286,6 +9549,13 @@ export const zApiResponseListResourceAvailabilityRule = z.object({
   error: z.unknown().optional(),
 });
 
+export const zApiResponseListOrganisationInvitation = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zOrganisationInvitation).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zApiResponseListCompetition = z.object({
   success: z.boolean().optional(),
   data: z.array(zCompetition).optional(),
@@ -9314,6 +9584,43 @@ export const zNotificationCountsDto = z.object({
 export const zApiResponseNotificationCountsDto = z.object({
   success: z.boolean().optional(),
   data: zNotificationCountsDto.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * An open invitation addressed to the authenticated user.
+ */
+export const zMyInvitation = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('Invitation identifier, used to accept or decline from the inbox')
+      .optional(),
+    organisation_name: z.string().describe('Name of the inviting organisation').optional(),
+    organisation_uuid: z.string().uuid().describe('Organisation identifier').optional(),
+    inviter_name: z.union([z.string(), z.null()]).optional(),
+    domain_name: z.string().describe('Role being offered').optional(),
+    message: z.union([z.string(), z.null()]).optional(),
+    class_count: z
+      .number()
+      .int()
+      .describe('Number of classes that will be surfaced on acceptance')
+      .optional(),
+    status: zItemsEnum.optional(),
+    requires_guardian_consent: z
+      .boolean()
+      .describe('Whether the offer is waiting on a guardian rather than on the recipient')
+      .optional(),
+    expires_at: z.string().datetime().describe('When the invitation lapses').optional(),
+    created_date: z.string().datetime().describe('When the invitation was sent').optional(),
+  })
+  .describe('An open invitation addressed to the authenticated user.');
+
+export const zApiResponseListMyInvitation = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zMyInvitation).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -9552,7 +9859,7 @@ export const zGuardianStudentSummaryDto = z.object({
   linkUuid: z.string().uuid().optional(),
   studentUuid: z.string().uuid().optional(),
   studentName: z.string().optional(),
-  relationshipType: zRelationshipTypeEnum.optional(),
+  relationshipType: zGuardianRelationshipTypeEnum.optional(),
   shareScope: zShareScopeEnum.optional(),
   status: zStatusEnum11.optional(),
   primaryGuardian: z.boolean().optional(),
@@ -9561,6 +9868,42 @@ export const zGuardianStudentSummaryDto = z.object({
 export const zApiResponseListGuardianStudentSummaryDto = z.object({
   success: z.boolean().optional(),
   data: z.array(zGuardianStudentSummaryDto).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * The publicly readable view of a guardian consent link.
+ */
+export const zPublicGuardianInvitation = z
+  .object({
+    organisation_name: z
+      .string()
+      .describe('Name of the organisation seeking to enrol the child')
+      .optional(),
+    organisation_uuid: z.string().uuid().describe('Organisation identifier').optional(),
+    student_name: z.union([z.string(), z.null()]).optional(),
+    masked_student_email: z
+      .string()
+      .describe('Masked address of the child, so the guardian can confirm who this concerns')
+      .optional(),
+    guardian_name: z.string().describe("Guardian's name as the child supplied it").optional(),
+    guardian_relationship_type: z.string().describe('Relationship the child declared').optional(),
+    domain_name: z.string().describe('Role the child would take at the organisation').optional(),
+    class_count: z
+      .number()
+      .int()
+      .describe('Number of classes that would be surfaced to the child')
+      .optional(),
+    status: zItemsEnum.optional(),
+    actionable: z.boolean().describe('Whether consent can still be given').optional(),
+    expires_at: z.string().datetime().describe('When the request lapses').optional(),
+  })
+  .describe('The publicly readable view of a guardian consent link.');
+
+export const zApiResponsePublicGuardianInvitation = z.object({
+  success: z.boolean().optional(),
+  data: zPublicGuardianInvitation.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -9691,6 +10034,31 @@ export const zTodayGrowthPointDto = z
 export const zApiResponseListTodayGrowthPointDto = z.object({
   success: z.boolean().optional(),
   data: z.array(zTodayGrowthPointDto).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * A student's performance in one of the organisation's own classes.
+ */
+export const zOrganisationStudentPerformance = z
+  .object({
+    class_definition_uuid: z.string().uuid().describe("The organisation's class").optional(),
+    class_title: z.string().describe('Title of the class').optional(),
+    total_sessions: z.coerce
+      .bigint()
+      .describe('Sessions enrolled in, excluding cancelled and waitlisted')
+      .optional(),
+    attended: z.coerce.bigint().describe('Sessions attended').optional(),
+    absent: z.coerce.bigint().describe('Sessions missed').optional(),
+    attendance_rate: z.number().describe('Attended as a percentage of total sessions').optional(),
+    last_session_at: z.union([z.string().datetime(), z.null()]).optional(),
+  })
+  .describe("A student's performance in one of the organisation's own classes.");
+
+export const zApiResponseListOrganisationStudentPerformance = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zOrganisationStudentPerformance).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -11624,6 +11992,15 @@ export const zSchemaEnumWritable = z.enum([
 
 export const zSchemaEnum2Writable = z.enum(['DRAFT', 'ACTIVE', 'INACTIVE']);
 
+export const zItemsEnumWritable = z.enum([
+  'PENDING',
+  'AWAITING_GUARDIAN_CONSENT',
+  'ACCEPTED',
+  'DECLINED',
+  'EXPIRED',
+  'REVOKED',
+]);
+
 export const zSchemaEnum3Writable = z.enum(['approve', 'reject', 'revoke']);
 
 export const zSchemaEnum4Writable = z.enum(['draft', 'in_review', 'published', 'archived']);
@@ -11909,6 +12286,9 @@ export const zTypeEnumWritable = z.enum([
   'LEARNING_CERTIFICATE_ISSUED',
   'PROFILE_DOCUMENT_VERIFIED',
   'PROFILE_COMPLETION_REMINDER',
+  'ORGANISATION_INVITATION',
+  'GUARDIAN_CONSENT_REQUEST',
+  'ORGANISATION_INVITATION_ACCEPTED',
   'WEEKLY_PROGRESS_SUMMARY',
   'LEARNING_STREAK_ACHIEVEMENT',
   'PEER_ACHIEVEMENT_CELEBRATION',
@@ -11928,11 +12308,25 @@ export const zPresentationEnumWritable = z.enum(['POPUP', 'INBOX']);
 
 export const zStatusEnum10Writable = z.enum(['UNREAD', 'READ', 'ARCHIVED']);
 
-export const zRelationshipTypeEnumWritable = z.enum(['PARENT', 'GUARDIAN', 'SPONSOR']);
+/**
+ * **[REQUIRED]** Nature of the relationship.
+ */
+export const zGuardianRelationshipTypeEnumWritable = z
+  .enum(['PARENT', 'GUARDIAN', 'SPONSOR'])
+  .describe('**[REQUIRED]** Nature of the relationship.');
 
 export const zShareScopeEnumWritable = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']);
 
 export const zStatusEnum11Writable = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
+
+/**
+ * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
+ */
+export const zShareScopeEnum2Writable = z
+  .enum(['FULL', 'ACADEMICS', 'ATTENDANCE'])
+  .describe(
+    "**[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL."
+  );
 
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
@@ -14786,6 +15180,67 @@ export const zAddAvailabilityRuleData = z.object({
  */
 export const zAddAvailabilityRuleResponse = zApiResponseResourceAvailabilityRule;
 
+export const zListData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid().describe('UUID of the organisation'),
+  }),
+  query: z
+    .object({
+      status: z
+        .array(zItemsEnumWritable)
+        .describe('Optional status filter, e.g. PENDING,ACCEPTED')
+        .optional(),
+    })
+    .optional(),
+});
+
+/**
+ * Invitations retrieved
+ */
+export const zListResponse = zApiResponseListOrganisationInvitation;
+
+export const zSendData = z.object({
+  body: zSendOrganisationInvitationsRequest,
+  path: z.object({
+    organisationUuid: z.string().uuid().describe('UUID of the inviting organisation'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Invitations processed
+ */
+export const zSendResponse = zApiResponseSendOrganisationInvitationsResult;
+
+export const zRevokeData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+    invitationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Invitation revoked
+ */
+export const zRevokeResponse = zApiResponseOrganisationInvitation;
+
+export const zResendData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+    invitationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Invitation resent
+ */
+export const zResendResponse = zApiResponseOrganisationInvitation;
+
 export const zListCompetitionsData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -14861,6 +15316,71 @@ export const zApplyActionData = z.object({
  * OK
  */
 export const zApplyActionResponse = zApiResponseNotificationDto;
+
+export const zDeclineFromInboxData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    invitationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Invitation declined
+ */
+export const zDeclineFromInboxResponse = zApiResponseVoid;
+
+export const zAcceptFromInboxData = z.object({
+  body: zAcceptInvitationRequest,
+  path: z.object({
+    invitationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Invitation accepted
+ */
+export const zAcceptFromInboxResponse = zApiResponseAcceptInvitationResult;
+
+export const zSubmitGuardianDetailsData = z.object({
+  body: zGuardianDetailsRequest,
+  path: z.object({
+    token: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Guardian recorded and consent requested
+ */
+export const zSubmitGuardianDetailsResponse = zApiResponsePublicInvitation;
+
+export const zDeclineByTokenData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    token: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Invitation declined
+ */
+export const zDeclineByTokenResponse = zApiResponseVoid;
+
+export const zAcceptByTokenData = z.object({
+  body: zAcceptInvitationRequest,
+  path: z.object({
+    token: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Invitation accepted
+ */
+export const zAcceptByTokenResponse = zApiResponseAcceptInvitationResult;
 
 export const zGetAllInstructorsData = z.object({
   body: z.never().optional(),
@@ -15127,6 +15647,32 @@ export const zCreateLinkData = z.object({
  * Guardian link created
  */
 export const zCreateLinkResponse = zGuardianStudentLink;
+
+export const zDeclineData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    token: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Refusal recorded
+ */
+export const zDeclineResponse = zApiResponseVoid;
+
+export const zConsentData = z.object({
+  body: zGuardianConsentRequest,
+  path: z.object({
+    token: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Consent recorded
+ */
+export const zConsentResponse = zApiResponseAcceptInvitationResult;
 
 export const zSweepData = z.object({
   body: z.never().optional(),
@@ -18192,6 +18738,30 @@ export const zGetCountsData = z.object({
  */
 export const zGetCountsResponse = zApiResponseNotificationCountsDto;
 
+export const zLookupData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    token: z.string().describe('Token from the emailed invitation link'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Invitation retrieved
+ */
+export const zLookupResponse = zApiResponsePublicInvitation;
+
+export const zListMineData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * Invitations retrieved
+ */
+export const zListMineResponse = zApiResponseListMyInvitation;
+
 export const zGetInstructorRatingSummaryData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -18391,6 +18961,19 @@ export const zGetMyStudentsData = z.object({
  */
 export const zGetMyStudentsResponse = zApiResponseListGuardianStudentSummaryDto;
 
+export const zLookup1Data = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    token: z.string().describe('Token from the emailed consent link'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Consent request retrieved
+ */
+export const zLookup1Response = zApiResponsePublicGuardianInvitation;
+
 export const zGetFileData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -18520,6 +19103,20 @@ export const zGetTodayGrowthData = z.object({
  * Today's growth retrieved successfully
  */
 export const zGetTodayGrowthResponse = zApiResponseListTodayGrowthPointDto;
+
+export const zGetStudentPerformanceData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid().describe('UUID of the organisation to scope to'),
+    studentUuid: z.string().uuid().describe('UUID of the student'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Student performance retrieved successfully
+ */
+export const zGetStudentPerformanceResponse = zApiResponseListOrganisationStudentPerformance;
 
 export const zGetStudentSummariesData = z.object({
   body: z.never().optional(),

@@ -1293,19 +1293,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -4214,19 +4214,19 @@ export const InstructorDocumentSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_url: {
       type: 'string',
       description:
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
       example:
         '/api/v1/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/documents/files/profile_documents/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
+      readOnly: true,
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
       readOnly: true,
     },
     file_size_formatted: {
@@ -5876,18 +5876,6 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -5905,6 +5893,18 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
+      readOnly: true,
+    },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -6839,19 +6839,19 @@ export const CourseCreatorDocumentDTOSchema = {
       type: 'string',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_url: {
       type: 'string',
       description:
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
       example:
         '/api/v1/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/documents/files/profile_documents/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
+      readOnly: true,
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
       readOnly: true,
     },
     file_size_formatted: {
@@ -10438,6 +10438,247 @@ export const SkillsFundSourceSchema = {
   },
 } as const;
 
+export const OrganisationInvitationRecipientSchema = {
+  type: 'object',
+  description: 'A single invitee.',
+  properties: {
+    email: {
+      type: 'string',
+      format: 'email',
+      description: '**[REQUIRED]** Email address to invite.',
+      example: 'jane.doe@example.com',
+      maxLength: 150,
+      minLength: 0,
+    },
+    name: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Display name for the invitee.',
+      example: 'Jane Doe',
+      maxLength: 150,
+      minLength: 0,
+    },
+  },
+  required: ['email'],
+} as const;
+
+export const SendOrganisationInvitationsRequestSchema = {
+  type: 'object',
+  description: 'Invites one or more recipients to join an organisation.',
+  properties: {
+    recipients: {
+      type: 'array',
+      description: '**[REQUIRED]** People to invite.',
+      items: {
+        $ref: '#/components/schemas/OrganisationInvitationRecipient',
+      },
+      maxItems: 200,
+      minItems: 0,
+    },
+    domain_name: {
+      $ref: '#/components/schemas/DomainNameEnum',
+    },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[OPTIONAL]** Training branch to scope the invitation to.',
+    },
+    class_uuids: {
+      type: ['array', 'null'],
+      description:
+        '**[OPTIONAL]** Classes to surface to the recipient once they accept. These are never auto-enrolled.',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+    message: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Personal note included in the invitation email.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    expires_in_days: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[OPTIONAL]** Days until the invitation lapses. Defaults to 14.',
+      example: 14,
+      maximum: 90,
+      minimum: 1,
+    },
+  },
+  required: ['domain_name', 'recipients'],
+} as const;
+
+export const ApiResponseSendOrganisationInvitationsResultSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SendOrganisationInvitationsResult',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const OrganisationInvitationSchema = {
+  type: 'object',
+  description: 'An invitation to join an organisation, as seen by the inviting organisation.',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Invitation identifier',
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Organisation that issued the invitation',
+    },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Training branch the invitation is scoped to, if any',
+    },
+    domain_name: {
+      type: 'string',
+      description: 'Org-scoped domain the recipient was invited into',
+      example: 'student',
+    },
+    recipient_email: {
+      type: 'string',
+      description: 'Email address invited',
+      example: 'jane.doe@example.com',
+    },
+    recipient_name: {
+      type: ['string', 'null'],
+      description: 'Display name of the invitee',
+    },
+    recipient_user_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Set when the invited email already belonged to a platform user',
+    },
+    existing_platform_user: {
+      type: 'boolean',
+      description: 'Whether the invited email already had a platform account when sent',
+    },
+    inviter_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Who sent the invitation',
+    },
+    status: {
+      $ref: '#/components/schemas/ItemsEnum',
+    },
+    message: {
+      type: ['string', 'null'],
+      description: 'Personal note included in the invitation email',
+    },
+    class_uuids: {
+      type: 'array',
+      description: 'Classes surfaced to the recipient on acceptance',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+    expires_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the invitation lapses',
+    },
+    accepted_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'When the invitation was accepted',
+    },
+    declined_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'When the invitation was declined',
+    },
+    revoked_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'When the organisation withdrew the invitation',
+    },
+    requires_guardian_consent: {
+      type: 'boolean',
+      description:
+        'True when the invitee declared a date of birth below the age gate, so the offer awaits guardian consent. The date of birth itself is never exposed.',
+    },
+    guardian_consented_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'When the guardian consented',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the invitation was created',
+    },
+  },
+} as const;
+
+export const OrganisationInvitationFailureSchema = {
+  type: 'object',
+  description: 'A recipient that could not be invited.',
+  properties: {
+    email: {
+      type: 'string',
+      description: 'Email address that could not be invited',
+      example: 'jane.doe@example.com',
+    },
+    reason: {
+      type: 'string',
+      description: 'Why the invitation was not created',
+      example: 'This address already has a pending invitation to your organisation.',
+    },
+  },
+} as const;
+
+export const SendOrganisationInvitationsResultSchema = {
+  type: 'object',
+  description: 'Per-recipient outcome of a batch invitation send.',
+  properties: {
+    sent: {
+      type: 'array',
+      description: 'Invitations that were created and queued for delivery',
+      items: {
+        $ref: '#/components/schemas/OrganisationInvitation',
+      },
+    },
+    failed: {
+      type: 'array',
+      description: 'Recipients that could not be invited, with the reason why',
+      items: {
+        $ref: '#/components/schemas/OrganisationInvitationFailure',
+      },
+    },
+  },
+} as const;
+
+export const ApiResponseOrganisationInvitationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/OrganisationInvitation',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const CreateCompetitionRequestSchema = {
   type: 'object',
   description: 'Payload to create an organisation competition.',
@@ -10663,6 +10904,200 @@ export const NotificationDTOSchema = {
   },
 } as const;
 
+export const AcceptInvitationRequestSchema = {
+  type: 'object',
+  description: 'Accepts an invitation, acknowledging what the organisation will be able to see.',
+  properties: {
+    date_of_birth: {
+      type: ['string', 'null'],
+      format: 'date',
+      description:
+        '**[OPTIONAL]** Date of birth. Required only when the account does not already have one on file.',
+      example: '2004-05-17',
+    },
+    scope_acknowledged: {
+      type: 'boolean',
+      description:
+        "**[REQUIRED]** Confirms the invitee has seen what the organisation will be able to view: their enrolment and performance in that institution's own classes, and nothing beyond it.",
+      example: true,
+    },
+  },
+  required: ['scope_acknowledged'],
+} as const;
+
+export const AcceptInvitationResultSchema = {
+  type: 'object',
+  description: 'What happened when an invitation was accepted.',
+  properties: {
+    status: {
+      $ref: '#/components/schemas/ItemsEnum',
+    },
+    affiliated: {
+      type: 'boolean',
+      description:
+        'True when the affiliation now exists. False when the offer has been passed to a guardian for consent.',
+    },
+    guardian_consent_required: {
+      type: 'boolean',
+      description: 'True when the invitee was found to be a minor and a guardian must consent',
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Organisation joined, or that consent is being sought for',
+    },
+    organisation_name: {
+      type: 'string',
+      description: 'Name of that organisation',
+    },
+    surfaced_class_uuids: {
+      type: 'array',
+      description:
+        'Classes now surfaced to the student. These are recommendations - the student still enrols in each one separately.',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+    message: {
+      type: 'string',
+      description: 'What the caller should do next, in plain language',
+    },
+  },
+} as const;
+
+export const ApiResponseAcceptInvitationResultSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/AcceptInvitationResult',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const GuardianDetailsRequestSchema = {
+  type: 'object',
+  description: "Contact details for the guardian who will consent on a minor's behalf.",
+  properties: {
+    guardian_email: {
+      type: 'string',
+      format: 'email',
+      description: "**[REQUIRED]** Guardian's email address. The consent link is sent here.",
+      example: 'parent@example.com',
+      maxLength: 150,
+      minLength: 0,
+    },
+    guardian_name: {
+      type: 'string',
+      description: "**[REQUIRED]** Guardian's full name.",
+      example: 'Mary Doe',
+      maxLength: 150,
+      minLength: 0,
+    },
+    guardian_relationship_type: {
+      $ref: '#/components/schemas/GuardianRelationshipTypeEnum',
+    },
+    guardian_phone: {
+      type: ['string', 'null'],
+      description: "**[OPTIONAL]** Guardian's phone number, used only if the email bounces.",
+      example: '+254700000000',
+      maxLength: 50,
+      minLength: 0,
+    },
+  },
+  required: ['guardian_email', 'guardian_name', 'guardian_relationship_type'],
+} as const;
+
+export const ApiResponsePublicInvitationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PublicInvitation',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PublicInvitationSchema = {
+  type: 'object',
+  description: 'The publicly readable view of an invitation link.',
+  properties: {
+    organisation_name: {
+      type: 'string',
+      description: 'Name of the inviting organisation',
+      example: 'Sarafrika Academy',
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Organisation identifier',
+    },
+    inviter_name: {
+      type: ['string', 'null'],
+      description: 'Who sent the invitation',
+      example: 'Jane Doe',
+    },
+    domain_name: {
+      type: 'string',
+      description: 'Role the recipient is invited into',
+      example: 'student',
+    },
+    masked_recipient_email: {
+      type: 'string',
+      description: 'Masked recipient address, so the recipient can confirm the link is for them',
+      example: 'j***e@example.com',
+    },
+    recipient_name: {
+      type: ['string', 'null'],
+      description: 'Display name the organisation supplied for the recipient',
+    },
+    existing_platform_user: {
+      type: 'boolean',
+      description:
+        'Whether this address already has an Elimika account. Drives whether the page offers sign-in or registration.',
+    },
+    message: {
+      type: ['string', 'null'],
+      description: 'Personal note from the inviting organisation',
+    },
+    class_count: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Number of classes that will be surfaced on acceptance',
+      example: 3,
+    },
+    status: {
+      $ref: '#/components/schemas/ItemsEnum',
+    },
+    actionable: {
+      type: 'boolean',
+      description: 'Whether the offer can still be acted upon',
+    },
+    requires_guardian_consent: {
+      type: 'boolean',
+      description: 'Whether the offer is waiting on a guardian rather than the invitee',
+    },
+    expires_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the invitation lapses',
+    },
+  },
+} as const;
+
 export const ApiResponseInstructorSchema = {
   type: 'object',
   properties: {
@@ -10842,7 +11277,7 @@ export const GuardianStudentLinkSchema = {
       type: 'string',
     },
     relationshipType: {
-      $ref: '#/components/schemas/RelationshipTypeEnum',
+      $ref: '#/components/schemas/GuardianRelationshipTypeEnum',
     },
     shareScope: {
       $ref: '#/components/schemas/ShareScopeEnum',
@@ -10882,7 +11317,7 @@ export const GuardianStudentLinkRequestSchema = {
       description: "UUID for the guardian's user account",
     },
     relationshipType: {
-      $ref: '#/components/schemas/RelationshipTypeEnum',
+      $ref: '#/components/schemas/GuardianRelationshipTypeEnum',
     },
     shareScope: {
       $ref: '#/components/schemas/ShareScopeEnum',
@@ -10898,6 +11333,23 @@ export const GuardianStudentLinkRequestSchema = {
     },
   },
   required: ['guardianUserUuid', 'relationshipType', 'shareScope', 'studentUuid'],
+} as const;
+
+export const GuardianConsentRequestSchema = {
+  type: 'object',
+  description: "Records a guardian's consent for a minor to join an organisation.",
+  properties: {
+    share_scope: {
+      $ref: '#/components/schemas/ShareScopeEnum2',
+    },
+    scope_acknowledged: {
+      type: 'boolean',
+      description:
+        "**[REQUIRED]** Confirms the guardian has seen what the organisation will be able to view: the child's enrolment and performance in that institution's own classes, and nothing beyond it.",
+      example: true,
+    },
+  },
+  required: ['scope_acknowledged'],
 } as const;
 
 export const ApiResponseSweepReportSchema = {
@@ -16119,6 +16571,25 @@ export const ApiResponseListResourceAvailabilityRuleSchema = {
   },
 } as const;
 
+export const ApiResponseListOrganisationInvitationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OrganisationInvitation',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponseListCompetitionSchema = {
   type: 'object',
   properties: {
@@ -16198,6 +16669,83 @@ export const NotificationCountsDTOSchema = {
     popup_count: {
       type: 'integer',
       format: 'int64',
+    },
+  },
+} as const;
+
+export const ApiResponseListMyInvitationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/MyInvitation',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const MyInvitationSchema = {
+  type: 'object',
+  description: 'An open invitation addressed to the authenticated user.',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Invitation identifier, used to accept or decline from the inbox',
+    },
+    organisation_name: {
+      type: 'string',
+      description: 'Name of the inviting organisation',
+      example: 'Sarafrika Academy',
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Organisation identifier',
+    },
+    inviter_name: {
+      type: ['string', 'null'],
+      description: 'Who sent the invitation',
+    },
+    domain_name: {
+      type: 'string',
+      description: 'Role being offered',
+      example: 'student',
+    },
+    message: {
+      type: ['string', 'null'],
+      description: 'Personal note from the organisation',
+    },
+    class_count: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Number of classes that will be surfaced on acceptance',
+      example: 3,
+    },
+    status: {
+      $ref: '#/components/schemas/ItemsEnum',
+    },
+    requires_guardian_consent: {
+      type: 'boolean',
+      description: 'Whether the offer is waiting on a guardian rather than on the recipient',
+    },
+    expires_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the invitation lapses',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the invitation was sent',
     },
   },
 } as const;
@@ -16809,7 +17357,7 @@ export const GuardianStudentSummaryDTOSchema = {
       type: 'string',
     },
     relationshipType: {
-      $ref: '#/components/schemas/RelationshipTypeEnum',
+      $ref: '#/components/schemas/GuardianRelationshipTypeEnum',
     },
     shareScope: {
       $ref: '#/components/schemas/ShareScopeEnum',
@@ -16819,6 +17367,82 @@ export const GuardianStudentSummaryDTOSchema = {
     },
     primaryGuardian: {
       type: 'boolean',
+    },
+  },
+} as const;
+
+export const ApiResponsePublicGuardianInvitationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PublicGuardianInvitation',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PublicGuardianInvitationSchema = {
+  type: 'object',
+  description: 'The publicly readable view of a guardian consent link.',
+  properties: {
+    organisation_name: {
+      type: 'string',
+      description: 'Name of the organisation seeking to enrol the child',
+      example: 'Sarafrika Academy',
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Organisation identifier',
+    },
+    student_name: {
+      type: ['string', 'null'],
+      description: "The child's display name",
+      example: 'Sam Doe',
+    },
+    masked_student_email: {
+      type: 'string',
+      description: 'Masked address of the child, so the guardian can confirm who this concerns',
+      example: 's***m@example.com',
+    },
+    guardian_name: {
+      type: 'string',
+      description: "Guardian's name as the child supplied it",
+      example: 'Mary Doe',
+    },
+    guardian_relationship_type: {
+      type: 'string',
+      description: 'Relationship the child declared',
+      example: 'PARENT',
+    },
+    domain_name: {
+      type: 'string',
+      description: 'Role the child would take at the organisation',
+      example: 'student',
+    },
+    class_count: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Number of classes that would be surfaced to the child',
+      example: 3,
+    },
+    status: {
+      $ref: '#/components/schemas/ItemsEnum',
+    },
+    actionable: {
+      type: 'boolean',
+      description: 'Whether consent can still be given',
+    },
+    expires_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the request lapses',
     },
   },
 } as const;
@@ -17086,6 +17710,71 @@ export const TodayGrowthPointDTOSchema = {
       format: 'int64',
       description: 'Enrolments recorded during the hour',
       example: 5,
+    },
+  },
+} as const;
+
+export const ApiResponseListOrganisationStudentPerformanceSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OrganisationStudentPerformance',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const OrganisationStudentPerformanceSchema = {
+  type: 'object',
+  description: "A student's performance in one of the organisation's own classes.",
+  properties: {
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: "The organisation's class",
+    },
+    class_title: {
+      type: 'string',
+      description: 'Title of the class',
+      example: 'Beginner Piano',
+    },
+    total_sessions: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Sessions enrolled in, excluding cancelled and waitlisted',
+      example: 12,
+    },
+    attended: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Sessions attended',
+      example: 10,
+    },
+    absent: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Sessions missed',
+      example: 2,
+    },
+    attendance_rate: {
+      type: 'number',
+      format: 'double',
+      description: 'Attended as a percentage of total sessions',
+      example: 83.3,
+    },
+    last_session_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'Most recent session',
     },
   },
 } as const;
@@ -20626,6 +21315,11 @@ export const SchemaEnum2Schema = {
   enum: ['DRAFT', 'ACTIVE', 'INACTIVE'],
 } as const;
 
+export const ItemsEnumSchema = {
+  type: 'string',
+  enum: ['PENDING', 'AWAITING_GUARDIAN_CONSENT', 'ACCEPTED', 'DECLINED', 'EXPIRED', 'REVOKED'],
+} as const;
+
 export const SchemaEnum3Schema = {
   type: 'string',
   enum: ['approve', 'reject', 'revoke'],
@@ -21037,6 +21731,9 @@ export const TypeEnumSchema = {
     'LEARNING_CERTIFICATE_ISSUED',
     'PROFILE_DOCUMENT_VERIFIED',
     'PROFILE_COMPLETION_REMINDER',
+    'ORGANISATION_INVITATION',
+    'GUARDIAN_CONSENT_REQUEST',
+    'ORGANISATION_INVITATION_ACCEPTED',
     'WEEKLY_PROGRESS_SUMMARY',
     'LEARNING_STREAK_ACHIEVEMENT',
     'PEER_ACHIEVEMENT_CELEBRATION',
@@ -21069,9 +21766,13 @@ export const StatusEnum10Schema = {
   enum: ['UNREAD', 'READ', 'ARCHIVED'],
 } as const;
 
-export const RelationshipTypeEnumSchema = {
+export const GuardianRelationshipTypeEnumSchema = {
   type: 'string',
+  description: '**[REQUIRED]** Nature of the relationship.',
   enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
+  example: 'PARENT',
+  minLength: 1,
+  pattern: '(?i)PARENT|GUARDIAN|SPONSOR',
 } as const;
 
 export const ShareScopeEnumSchema = {
@@ -21082,6 +21783,15 @@ export const ShareScopeEnumSchema = {
 export const StatusEnum11Schema = {
   type: 'string',
   enum: ['PENDING', 'ACTIVE', 'REVOKED'],
+} as const;
+
+export const ShareScopeEnum2Schema = {
+  type: ['string', 'null'],
+  description:
+    "**[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.",
+  enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
+  example: 'FULL',
+  pattern: '(?i)FULL|ACADEMICS|ATTENDANCE',
 } as const;
 
 export const StatusEnum12Schema = {
@@ -21361,6 +22071,11 @@ export const SchemaEnumWritableSchema = {
 export const SchemaEnum2WritableSchema = {
   type: 'string',
   enum: ['DRAFT', 'ACTIVE', 'INACTIVE'],
+} as const;
+
+export const ItemsEnumWritableSchema = {
+  type: 'string',
+  enum: ['PENDING', 'AWAITING_GUARDIAN_CONSENT', 'ACCEPTED', 'DECLINED', 'EXPIRED', 'REVOKED'],
 } as const;
 
 export const SchemaEnum3WritableSchema = {
@@ -21655,6 +22370,9 @@ export const TypeEnumWritableSchema = {
     'LEARNING_CERTIFICATE_ISSUED',
     'PROFILE_DOCUMENT_VERIFIED',
     'PROFILE_COMPLETION_REMINDER',
+    'ORGANISATION_INVITATION',
+    'GUARDIAN_CONSENT_REQUEST',
+    'ORGANISATION_INVITATION_ACCEPTED',
     'WEEKLY_PROGRESS_SUMMARY',
     'LEARNING_STREAK_ACHIEVEMENT',
     'PEER_ACHIEVEMENT_CELEBRATION',
@@ -21687,9 +22405,13 @@ export const StatusEnum10WritableSchema = {
   enum: ['UNREAD', 'READ', 'ARCHIVED'],
 } as const;
 
-export const RelationshipTypeEnumWritableSchema = {
+export const GuardianRelationshipTypeEnumWritableSchema = {
   type: 'string',
+  description: '**[REQUIRED]** Nature of the relationship.',
   enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
+  example: 'PARENT',
+  minLength: 1,
+  pattern: '(?i)PARENT|GUARDIAN|SPONSOR',
 } as const;
 
 export const ShareScopeEnumWritableSchema = {
@@ -21700,6 +22422,15 @@ export const ShareScopeEnumWritableSchema = {
 export const StatusEnum11WritableSchema = {
   type: 'string',
   enum: ['PENDING', 'ACTIVE', 'REVOKED'],
+} as const;
+
+export const ShareScopeEnum2WritableSchema = {
+  type: ['string', 'null'],
+  description:
+    "**[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.",
+  enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
+  example: 'FULL',
+  pattern: '(?i)FULL|ACADEMICS|ATTENDANCE',
 } as const;
 
 export const StatusEnum12WritableSchema = {
