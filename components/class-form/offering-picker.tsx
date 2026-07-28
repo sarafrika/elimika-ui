@@ -12,30 +12,117 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { User } from '@/services/client';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { Category, User } from '@/services/client';
 import { instructorName } from './class-form-shared';
 
 export type Offering = {
   value: string;
   label: string;
   kind: 'Course' | 'Program';
-  category: string;
-  subject: string;
+  /** Categories the course already carries — auto-applied, never asked for. */
+  categoryNames: string[];
+  /** A program's own category, used to seed the picker when it has one. */
+  categoryUuid?: string;
 };
+
+/**
+ * Category row. A course brings its own categories, so they are shown as applied
+ * rather than asked for; a program has no per-class category, so the organisation
+ * chooses the one its classes fall under.
+ */
+function CategoryField({
+  selectedOffering,
+  categories,
+  categoriesLoading,
+  programCategoryUuid,
+  onProgramCategoryChange,
+}: {
+  selectedOffering?: Offering;
+  categories: Category[];
+  categoriesLoading: boolean;
+  programCategoryUuid: string;
+  onProgramCategoryChange: (v: string) => void;
+}) {
+  if (!selectedOffering) {
+    return (
+      <div className="space-y-2">
+        <Label>Category</Label>
+        <p className="text-xs text-muted-foreground">
+          Select a course or program first — its category is applied automatically.
+        </p>
+      </div>
+    );
+  }
+
+  if (selectedOffering.kind === 'Course') {
+    return (
+      <div className="space-y-2">
+        <Label className="flex items-center gap-1.5">
+          Category
+          <span className="text-[11px] font-normal text-muted-foreground">
+            (from the course)
+          </span>
+        </Label>
+        {selectedOffering.categoryNames.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            This course has no category set. The class inherits whatever the course creator adds later.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {selectedOffering.categoryNames.map(name => (
+              <Badge key={name} variant="secondary">
+                {name}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label>
+        Category <span className="text-destructive">*</span>
+      </Label>
+      {categoriesLoading ? (
+        <Skeleton className="h-9 w-full" />
+      ) : (
+        <Select value={programCategoryUuid} onValueChange={onProgramCategoryChange}>
+          <SelectTrigger aria-label="Select category">
+            <SelectValue placeholder="Choose the category these classes fall under" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.length === 0 ? (
+              <div className="px-2 py-1.5 text-xs text-muted-foreground">No categories configured</div>
+            ) : (
+              categories.map(c => (
+                <SelectItem key={c.uuid} value={c.uuid ?? ''}>
+                  {c.name}
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+      )}
+      <p className="text-[11px] text-muted-foreground">
+        Programs don&apos;t carry a category of their own — pick the one these classes belong under.
+      </p>
+    </div>
+  );
+}
 
 export function OfferingPicker({
   loading,
-  categories,
-  category,
-  onCategoryChange,
-  subjects,
-  subject,
-  onSubjectChange,
   offerings,
-  availableOfferings,
   offering,
   onOfferingChange,
   selectedOffering,
+  categories,
+  categoriesLoading,
+  programCategoryUuid,
+  onProgramCategoryChange,
   title,
   instructors,
   instructorUuid,
@@ -45,17 +132,14 @@ export function OfferingPicker({
   onOnlyAvailableChange,
 }: {
   loading: boolean;
-  categories: string[];
-  category: string;
-  onCategoryChange: (v: string) => void;
-  subjects: string[];
-  subject: string;
-  onSubjectChange: (v: string) => void;
   offerings: Offering[];
-  availableOfferings: Offering[];
   offering: string;
   onOfferingChange: (v: string) => void;
   selectedOffering?: Offering;
+  categories: Category[];
+  categoriesLoading: boolean;
+  programCategoryUuid: string;
+  onProgramCategoryChange: (v: string) => void;
   title: string;
   instructors: User[];
   instructorUuid: string;
@@ -66,60 +150,11 @@ export function OfferingPicker({
 }) {
   return (
     <>
-      {/* Category + Subject */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>
-            Select Category <span className="text-destructive">*</span>
-          </Label>
-          <Select value={category} onValueChange={onCategoryChange}>
-            <SelectTrigger aria-label="Select category">
-              <SelectValue placeholder={loading ? 'Loading…' : 'Select a category'} />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map(c => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>
-            Select Subject <span className="text-destructive">*</span>
-          </Label>
-          <Select value={subject} onValueChange={onSubjectChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a subject" />
-            </SelectTrigger>
-            <SelectContent>
-              {subjects.map(s => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Derived class title preview */}
-      <div className="rounded-lg border border-dashed border-teal-600/40 bg-teal-50/60 px-3 py-2.5 dark:bg-teal-950/20">
-        <div className="text-[11px] font-medium uppercase tracking-wide text-teal-700 dark:text-teal-400">
-          Class title
-        </div>
-        <div className="mt-0.5 truncate text-sm font-semibold text-foreground">{title}</div>
-        <div className="text-[11px] text-muted-foreground">
-          Auto-generated from the approved offering. This is what appears on the classes list.
-        </div>
-      </div>
-
-      {/* Course + Instructor */}
+      {/* Offering + Instructor */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="min-w-0 space-y-2">
           <Label>
-            Select Course <span className="text-destructive">*</span>
+            Select Course or Program <span className="text-destructive">*</span>
           </Label>
           <Select value={offering} onValueChange={onOfferingChange}>
             <SelectTrigger className="w-full">
@@ -129,7 +164,7 @@ export function OfferingPicker({
                     placeholder={
                       loading
                         ? 'Loading approved offerings…'
-                        : availableOfferings.length === 0
+                        : offerings.length === 0
                           ? 'No approved offerings'
                           : 'Select a course or program'
                     }
@@ -143,14 +178,17 @@ export function OfferingPicker({
               </div>
             </SelectTrigger>
             <SelectContent>
-              {availableOfferings.length === 0 ? (
-                <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                  No approved offerings for {subject || 'this subject'}
-                </div>
+              {offerings.length === 0 ? (
+                <div className="px-2 py-1.5 text-xs text-muted-foreground">No approved offerings</div>
               ) : (
-                availableOfferings.map(o => (
+                offerings.map(o => (
                   <SelectItem key={o.value} value={o.value}>
-                    {o.label}
+                    <span className="flex w-full items-center gap-2">
+                      <span className="truncate">{o.label}</span>
+                      <Badge variant="outline" className="ml-auto shrink-0 text-[10px]">
+                        {o.kind}
+                      </Badge>
+                    </span>
                   </SelectItem>
                 ))
               )}
@@ -207,6 +245,26 @@ export function OfferingPicker({
             On publish the class is assigned to this instructor and scheduled — it appears on their calendar and the
             organisation calendar. Leave unset to post it for instructors to apply instead.
           </p>
+        </div>
+      </div>
+
+      {/* Category — auto for courses, chosen for programs */}
+      <CategoryField
+        selectedOffering={selectedOffering}
+        categories={categories}
+        categoriesLoading={categoriesLoading}
+        programCategoryUuid={programCategoryUuid}
+        onProgramCategoryChange={onProgramCategoryChange}
+      />
+
+      {/* Derived class title preview */}
+      <div className="rounded-lg border border-dashed border-teal-600/40 bg-teal-50/60 px-3 py-2.5 dark:bg-teal-950/20">
+        <div className="text-[11px] font-medium uppercase tracking-wide text-teal-700 dark:text-teal-400">
+          Class title
+        </div>
+        <div className="mt-0.5 truncate text-sm font-semibold text-foreground">{title}</div>
+        <div className="text-[11px] text-muted-foreground">
+          Auto-generated from the approved offering. This is what appears on the classes list.
         </div>
       </div>
     </>

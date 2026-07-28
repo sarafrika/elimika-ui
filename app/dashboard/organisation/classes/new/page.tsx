@@ -48,7 +48,9 @@ import { Button } from '@/components/ui/button';
 import { useOrganisation } from '@/context/organisation-context';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import { extractPage } from '@/lib/api-helpers';
+import { STALE_TIMES } from '@/lib/query-client';
 import type {
+  Category,
   ClassMarketplaceJobRequest,
   ClassMarketplaceJobResource,
   ClassSessionTemplate,
@@ -58,6 +60,7 @@ import type {
 import { RecurrenceTypeEnum, ResourceTypeEnum } from '@/services/client';
 import {
   createJobMutation,
+  getAllCategoriesOptions,
   getUsersByOrganisationAndDomainOptions,
   listResourcesOptions,
   searchProgramTrainingApplicationsOptions,
@@ -119,63 +122,57 @@ export default function OrganisationCreateClassPage() {
     () => [
       ...approvedCourseUuids.map(uuid => {
         const course = courseMap[uuid];
-        const cats = (course?.category_names ?? []) as string[];
         return {
           value: `course:${uuid}`,
           label: course?.name ?? `Course ${uuid.slice(0, 8)}`,
           kind: 'Course' as const,
-          category: cats[0] ?? 'General',
-          subject: cats[1] ?? cats[0] ?? 'General',
+          categoryNames: (course?.category_names ?? []) as string[],
         };
       }),
       ...approvedProgramUuids.map(uuid => ({
         value: `program:${uuid}`,
         label: programMap[uuid]?.title ?? `Program ${uuid.slice(0, 8)}`,
         kind: 'Program' as const,
-        category: 'Programs',
-        subject: 'Programs',
+        categoryNames: [],
+        categoryUuid: programMap[uuid]?.category_uuid ?? undefined,
       })),
     ],
     [approvedCourseUuids, approvedProgramUuids, courseMap, programMap]
   );
 
-  const categories = useMemo(() => Array.from(new Set(offerings.map(o => o.category))), [offerings]);
-  const [category, setCategory] = useState('');
-  const subjectsByCategory = useMemo(() => {
-    const map = new Map<string, string[]>();
-    for (const o of offerings) {
-      if (!map.has(o.category)) map.set(o.category, []);
-      const list = map.get(o.category)!;
-      if (!list.includes(o.subject)) list.push(o.subject);
-    }
-    return map;
-  }, [offerings]);
-  const availableSubjects = useMemo(() => subjectsByCategory.get(category) ?? [], [category, subjectsByCategory]);
-  const [subject, setSubject] = useState('');
-  const availableOfferings = useMemo(
-    () => offerings.filter(o => o.category === category && o.subject === subject),
-    [offerings, category, subject]
-  );
   const [offering, setOffering] = useState('');
-
   useEffect(() => {
-    if (!category && categories.length > 0) setCategory(categories[0]);
-  }, [categories, category]);
-  useEffect(() => {
-    if (availableSubjects.length > 0 && !availableSubjects.includes(subject)) setSubject(availableSubjects[0]);
-  }, [availableSubjects, subject]);
-  useEffect(() => {
-    if (availableOfferings.length > 0 && !availableOfferings.some(o => o.value === offering)) {
-      setOffering(availableOfferings[0].value);
+    if (offerings.length > 0 && !offerings.some(o => o.value === offering)) {
+      setOffering(offerings[0].value);
     }
-  }, [availableOfferings, offering]);
+  }, [offerings, offering]);
 
   const selectedOffering = useMemo(() => offerings.find(o => o.value === offering), [offerings, offering]);
-  const title = useMemo(() => {
-    if (selectedOffering) return selectedOffering.label;
-    if (category && subject) return `${category} — ${subject}`;
-    return subject || category || 'New Class';
-  }, [selectedOffering, category, subject]);
+
+  // A course brings its own categories; a program has none per class, so the org picks one.
+  const categoriesQuery = useQuery({
+    ...getAllCategoriesOptions({ query: { pageable: { page: 0, size: 100 } } }),
+    enabled: selectedOffering?.kind === 'Program',
+    staleTime: STALE_TIMES.reference,
+  });
+  const categories = useMemo(
+    () => extractPage<Category>(categoriesQuery.data).items,
+    [categoriesQuery.data]
+  );
+  const [programCategoryUuid, setProgramCategoryUuid] = useState('');
+  useEffect(() => {
+    if (selectedOffering?.kind !== 'Program') return;
+    // Seed from the program's own category when it has one, else the first available.
+    if (selectedOffering.categoryUuid) {
+      setProgramCategoryUuid(selectedOffering.categoryUuid);
+      return;
+    }
+    if (categories.length > 0 && !categories.some(c => c.uuid === programCategoryUuid)) {
+      setProgramCategoryUuid(categories[0].uuid ?? '');
+    }
+  }, [selectedOffering, categories, programCategoryUuid]);
+
+  const title = useMemo(() => selectedOffering?.label ?? 'New Class', [selectedOffering]);
 
   const instructorsQuery = useQuery({
     ...getUsersByOrganisationAndDomainOptions({ path: { uuid: organisationUuid, domainName: 'instructor' } }),
@@ -374,6 +371,9 @@ export default function OrganisationCreateClassPage() {
     event.preventDefault();
     if (!organisationUuid) return toast.error('No active organisation.');
     if (!offering) return toast.error('Select an approved course or program.');
+    if (selectedOffering?.kind === 'Program' && !programCategoryUuid) {
+      return toast.error('Pick the category these program classes fall under.');
+    }
     const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';
     const requiresLink = delivery === 'ONLINE' || delivery === 'HYBRID';
     if (requiresPhysical && !locationName.trim() && !venueUuid) {
@@ -420,6 +420,8 @@ export default function OrganisationCreateClassPage() {
       service_type: SERVICE_TYPE_ENUM[service],
       ...(instructorUuid ? { preferred_instructor_uuid: instructorUuid } : {}),
       ...(targetGroupUuids.length > 0 ? { target_group_uuids: targetGroupUuids } : {}),
+      // Courses inherit their categories from the course record; only programs carry a choice.
+      ...(offeringKind === 'program' && programCategoryUuid ? { category_uuid: programCategoryUuid } : {}),
       remind_students: reminder.sendStudents,
       remind_instructor: reminder.sendInstructor,
       remind_via_email: reminder.email,
@@ -462,13 +464,10 @@ export default function OrganisationCreateClassPage() {
         <OfferingPicker
           loading={loading}
           categories={categories}
-          category={category}
-          onCategoryChange={setCategory}
-          subjects={availableSubjects}
-          subject={subject}
-          onSubjectChange={setSubject}
+          categoriesLoading={categoriesQuery.isLoading}
+          programCategoryUuid={programCategoryUuid}
+          onProgramCategoryChange={setProgramCategoryUuid}
           offerings={offerings}
-          availableOfferings={availableOfferings}
           offering={offering}
           onOfferingChange={setOffering}
           selectedOffering={selectedOffering}
