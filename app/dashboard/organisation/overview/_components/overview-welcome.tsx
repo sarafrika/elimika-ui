@@ -47,7 +47,7 @@ export function OverviewWelcome() {
             size='sm'
             className='bg-teal-500 text-white shadow-sm hover:bg-teal-600 sm:h-10 sm:px-4'
           >
-            <Link href='/dashboard/organisation/verification'>Manage Approvals</Link>
+            <Link href='/dashboard/organisation/approvals'>Manage Approvals</Link>
           </Button>
         </>
       }

@@ -1,19 +1,6 @@
 import type { ReactNode } from 'react';
 
-import type { KpiCardVariant } from '@/components/dashboard';
 import { cn } from '@/lib/utils';
-
-/**
- * Maps the legacy admin StatCard `tone` to a Lovable {@link KpiCardVariant} so
- * pages can migrate their KPI rows to colored KpiCards with minimal churn.
- */
-export const toneToKpiVariant: Record<string, KpiCardVariant> = {
-  info: 'primary',
-  success: 'green',
-  warning: 'amber',
-  destructive: 'coral',
-  neutral: 'indigo',
-};
 
 /**
  * Centered, responsive page shell for organisation dashboard pages. Widens on

@@ -59,7 +59,7 @@ export function OverviewAlerts() {
       description: 'Your training applications are awaiting admin review.',
       icon: ClipboardCheck,
       actionLabel: 'View',
-      href: '/dashboard/organisation/verification',
+      href: '/dashboard/organisation/approvals',
     });
   }
 

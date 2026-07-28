@@ -69,7 +69,7 @@ export function OverviewKpis() {
       hint: 'Everyone in your organisation',
       icon: Users,
       variant: 'primary',
-      href: '/dashboard/organisation/people',
+      href: '/dashboard/organisation/students',
       loading: membersQuery.isLoading,
     },
     {

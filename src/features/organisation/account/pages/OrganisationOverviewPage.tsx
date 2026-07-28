@@ -4,17 +4,17 @@ import { useQuery } from '@tanstack/react-query';
 import { Briefcase, Building, GraduationCap, ShieldCheck, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
-import {
-  AdminPageHeader,
-  adminTheme,
-  DetailGrid,
-  SectionCard,
-  StatusBadge,
-} from '@/app/dashboard/organisation/_components/ui';
+
+import { OrgPage } from '@/app/dashboard/organisation/_components/org-page';
 import { KpiCard, KpiCardSkeleton } from '@/components/dashboard';
+import { PageHeader } from '@/components/page-header';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
+import { cn } from '@/lib/utils';
 import type { ClassDefinition, Organisation, User } from '@/services/client';
 import {
   getClassDefinitionsForOrganisationOptions,
@@ -33,6 +33,44 @@ const money = (value?: number | null): string =>
 
 const fullName = (user?: User): string =>
   [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim() || (user?.email ?? '—');
+
+/** Labelled figure inside a section card. */
+function Detail({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border bg-muted/20 px-3 py-2.5">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="mt-1 text-sm font-medium text-foreground">{value ?? '—'}</div>
+    </div>
+  );
+}
+
+/** Titled card section with optional header action. */
+function Section({
+  title,
+  description,
+  action,
+  children,
+}: {
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <CardContent className="space-y-4 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-foreground">{title}</h2>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+          {action}
+        </div>
+        {children}
+      </CardContent>
+    </Card>
+  );
+}
 
 /**
  * Single, accurate overview of the organisation: profile, membership, branches,
@@ -76,7 +114,8 @@ export default function OrganisationOverviewPage() {
     const fees = classes
       .map(c => (c.training_fee == null ? null : Number(c.training_fee)))
       .filter((f): f is number => f != null && !Number.isNaN(f));
-    if (fees.length === 0) return { count: 0, min: null as number | null, max: null as number | null, avg: null as number | null };
+    if (fees.length === 0)
+      return { count: 0, min: null as number | null, max: null as number | null, avg: null as number | null };
     const min = Math.min(...fees);
     const max = Math.max(...fees);
     const avg = fees.reduce((s, f) => s + f, 0) / fees.length;
@@ -93,105 +132,110 @@ export default function OrganisationOverviewPage() {
   const kpiLoading = statsQuery.isLoading;
 
   return (
-    <div className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
-        <AdminPageHeader
-          title={profile?.name || 'Organisation'}
-          description='A complete view of your organisation — profile, people, branches and fees.'
-          actions={
-            <StatusBadge
-              status={isVerified ? 'verified' : 'pending'}
-              label={isVerified ? 'Verified' : 'Pending verification'}
-            />
-          }
-        />
-
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5'>
-          {kpiLoading ? (
-            Array.from({ length: 4 }).map((_, i) => <KpiCardSkeleton key={i} />)
-          ) : (
-            <>
-              <KpiCard title='Students' value={num(stats?.total_students)} icon={<GraduationCap className='h-5 w-5' />} variant='green' />
-              <KpiCard title='Instructors' value={num(stats?.total_instructors)} icon={<Briefcase className='h-5 w-5' />} variant='primary' />
-              <KpiCard title='Administrators' value={num(stats?.total_admins)} icon={<Users className='h-5 w-5' />} variant='indigo' />
-              <KpiCard title='Branches' value={num(stats?.total_branches)} icon={<Building className='h-5 w-5' />} variant='amber' />
-            </>
-          )}
-        </div>
-
-        <div className='grid gap-4 xl:grid-cols-2'>
-          <SectionCard
-            title='Profile'
-            description='Registered organisation details'
-            actions={
-              <Button asChild size='sm' variant='outline'>
-                <Link href='/dashboard/account/training-center'>Edit</Link>
-              </Button>
-            }
+    <OrgPage className="space-y-6">
+      <PageHeader
+        title={profile?.name || 'Organisation'}
+        description="A complete view of your organisation — profile, people, branches and fees."
+        action={
+          <Badge
+            variant="outline"
+            className={cn(
+              'rounded-md px-2.5 py-0.5 text-xs font-medium',
+              isVerified
+                ? 'border-success/30 bg-success/10 text-success'
+                : 'border-warning/30 bg-warning/10 text-warning'
+            )}
           >
-            <DetailGrid
-              items={[
-                { label: 'Name', value: profile?.name ?? '—' },
-                { label: 'Licence no.', value: profile?.licence_no ?? '—' },
-                { label: 'Location', value: profile?.location ?? '—' },
-                { label: 'Country', value: profile?.country ?? '—' },
-                { label: 'Status', value: profile?.active ? 'Active' : 'Inactive' },
-                { label: 'Verification', value: isVerified ? 'Verified' : 'Pending' },
-              ]}
-            />
-          </SectionCard>
+            {isVerified ? 'Verified' : 'Pending verification'}
+          </Badge>
+        }
+      />
 
-          <SectionCard
-            title='Training fees'
-            description='Per-session fees across your classes'
-            actions={
-              <Button asChild size='sm' variant='outline'>
-                <Link href='/dashboard/account/fees-scheduling'>Manage</Link>
-              </Button>
-            }
-          >
-            <DetailGrid
-              items={[
-                { label: 'Classes with a fee', value: num(feeSummary.count) },
-                { label: 'Average fee / session', value: money(feeSummary.avg) },
-                { label: 'Lowest fee', value: money(feeSummary.min) },
-                { label: 'Highest fee', value: money(feeSummary.max) },
-              ]}
-            />
-          </SectionCard>
-        </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {kpiLoading ? (
+          Array.from({ length: 4 }).map((_, i) => <KpiCardSkeleton key={i} />)
+        ) : (
+          <>
+            <KpiCard title="Students" value={num(stats?.total_students)} icon={<GraduationCap className="h-5 w-5" />} variant="green" />
+            <KpiCard title="Instructors" value={num(stats?.total_instructors)} icon={<Briefcase className="h-5 w-5" />} variant="primary" />
+            <KpiCard title="Administrators" value={num(stats?.total_admins)} icon={<Users className="h-5 w-5" />} variant="indigo" />
+            <KpiCard title="Branches" value={num(stats?.total_branches)} icon={<Building className="h-5 w-5" />} variant="amber" />
+          </>
+        )}
+      </div>
 
-        <SectionCard
-          title='Administrators'
-          description='People who manage this organisation'
-          actions={
-            <Button asChild size='sm' variant='outline'>
-              <Link href='/dashboard/account/admin'>Manage</Link>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Section
+          title="Profile"
+          description="Registered organisation details"
+          action={
+            <Button asChild size="sm" variant="outline">
+              <Link href="/dashboard/account/training-center">Edit</Link>
             </Button>
           }
         >
-          {adminsQuery.isLoading ? (
-            <p className='text-sm text-muted-foreground'>Loading…</p>
-          ) : admins.length === 0 ? (
-            <p className='text-sm text-muted-foreground'>No administrators found.</p>
-          ) : (
-            <ul className='divide-y divide-border/60'>
-              {admins.map(admin => (
-                <li
-                  key={admin.uuid ?? admin.email}
-                  className='flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0'
-                >
-                  <span className='inline-flex items-center gap-2 min-w-0'>
-                    <ShieldCheck className='text-primary size-4 shrink-0' />
-                    <span className='truncate text-sm font-medium text-foreground'>{fullName(admin)}</span>
-                  </span>
-                  <span className='truncate text-xs text-muted-foreground'>{admin.email ?? ''}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </SectionCard>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Detail label="Name" value={profile?.name ?? '—'} />
+            <Detail label="Licence no." value={profile?.licence_no ?? '—'} />
+            <Detail label="Location" value={profile?.location ?? '—'} />
+            <Detail label="Country" value={profile?.country ?? '—'} />
+            <Detail label="Status" value={profile?.active ? 'Active' : 'Inactive'} />
+            <Detail label="Verification" value={isVerified ? 'Verified' : 'Pending'} />
+          </div>
+        </Section>
+
+        <Section
+          title="Training fees"
+          description="Per-session fees across your classes"
+          action={
+            <Button asChild size="sm" variant="outline">
+              <Link href="/dashboard/account/fees-scheduling">Manage</Link>
+            </Button>
+          }
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Detail label="Classes with a fee" value={num(feeSummary.count)} />
+            <Detail label="Average fee / session" value={money(feeSummary.avg)} />
+            <Detail label="Lowest fee" value={money(feeSummary.min)} />
+            <Detail label="Highest fee" value={money(feeSummary.max)} />
+          </div>
+        </Section>
       </div>
-    </div>
+
+      <Section
+        title="Administrators"
+        description="People who manage this organisation"
+        action={
+          <Button asChild size="sm" variant="outline">
+            <Link href="/dashboard/account/admin">Manage</Link>
+          </Button>
+        }
+      >
+        {adminsQuery.isLoading ? (
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        ) : admins.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No administrators found.</p>
+        ) : (
+          <ul className="divide-y">
+            {admins.map(admin => (
+              <li
+                key={admin.uuid ?? admin.email}
+                className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+              >
+                <span className="inline-flex min-w-0 items-center gap-2">
+                  <ShieldCheck className="size-4 shrink-0 text-primary" />
+                  <span className="truncate text-sm font-medium text-foreground">{fullName(admin)}</span>
+                </span>
+                <span className="truncate text-xs text-muted-foreground">{admin.email ?? ''}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+    </OrgPage>
   );
 }

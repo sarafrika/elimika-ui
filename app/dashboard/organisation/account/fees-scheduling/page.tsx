@@ -4,7 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -14,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import type {
@@ -27,7 +31,7 @@ import {
   getClassDefinitionsForOrganisationQueryKey,
   updateClassDefinitionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { AdminPageHeader, adminTheme, SectionCard } from '../../_components/ui';
+import { OrgPage } from '../../_components/org-page';
 
 const SESSION_FORMATS: SessionFormatEnum[] = ['GROUP', 'INDIVIDUAL'];
 const LOCATION_TYPES: LocationTypeEnum[] = ['ONLINE', 'IN_PERSON', 'HYBRID'];
@@ -78,9 +82,7 @@ function FeeRow({
   const [fee, setFee] = useState(
     classDefinition.training_fee != null ? String(classDefinition.training_fee) : ''
   );
-  const [sessionFormat, setSessionFormat] = useState<SessionFormatEnum>(
-    classDefinition.session_format
-  );
+  const [sessionFormat, setSessionFormat] = useState<SessionFormatEnum>(classDefinition.session_format);
   const [locationType, setLocationType] = useState<LocationTypeEnum>(classDefinition.location_type);
 
   const update = useMutation({
@@ -114,17 +116,14 @@ function FeeRow({
   };
 
   return (
-    <div className='grid items-end gap-3 border-b border-border/40 py-4 last:border-b-0 md:grid-cols-[minmax(0,2fr)_1fr_1fr_1fr_auto]'>
-      <div className='min-w-0'>
-        <p className='truncate text-sm font-medium text-foreground'>{classDefinition.title}</p>
-        <p className='truncate text-xs text-muted-foreground'>{offering}</p>
+    <div className="grid items-end gap-3 border-b py-4 last:border-b-0 md:grid-cols-[minmax(0,2fr)_1fr_1fr_1fr_auto]">
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium text-foreground">{classDefinition.title}</p>
+        <p className="truncate text-xs text-muted-foreground">{offering}</p>
       </div>
-      <div className='space-y-1'>
-        <Label className='text-xs'>Class type</Label>
-        <Select
-          value={sessionFormat}
-          onValueChange={value => setSessionFormat(value as SessionFormatEnum)}
-        >
+      <div className="space-y-1">
+        <Label className="text-xs">Class type</Label>
+        <Select value={sessionFormat} onValueChange={value => setSessionFormat(value as SessionFormatEnum)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -137,8 +136,8 @@ function FeeRow({
           </SelectContent>
         </Select>
       </div>
-      <div className='space-y-1'>
-        <Label className='text-xs'>Method</Label>
+      <div className="space-y-1">
+        <Label className="text-xs">Method</Label>
         <Select value={locationType} onValueChange={value => setLocationType(value as LocationTypeEnum)}>
           <SelectTrigger>
             <SelectValue />
@@ -152,19 +151,19 @@ function FeeRow({
           </SelectContent>
         </Select>
       </div>
-      <div className='space-y-1'>
-        <Label className='text-xs'>Fee / session</Label>
+      <div className="space-y-1">
+        <Label className="text-xs">Fee / session</Label>
         <Input
-          type='number'
+          type="number"
           min={0}
-          step='0.01'
+          step="0.01"
           value={fee}
           onChange={e => setFee(e.target.value)}
-          placeholder='0.00'
+          placeholder="0.00"
         />
       </div>
-      <Button size='sm' onClick={save} disabled={update.isPending}>
-        {update.isPending ? <Loader2 className='size-4 animate-spin' /> : 'Save'}
+      <Button size="sm" onClick={save} disabled={update.isPending}>
+        {update.isPending ? <Loader2 className="size-4 animate-spin" /> : 'Save'}
       </Button>
     </div>
   );
@@ -189,10 +188,7 @@ export default function OrganisationFeesSchedulingPage() {
   );
 
   const courseIds = useMemo(() => classes.map(c => c.course_uuid ?? '').filter(Boolean), [classes]);
-  const programIds = useMemo(
-    () => classes.map(c => c.program_uuid ?? '').filter(Boolean),
-    [classes]
-  );
+  const programIds = useMemo(() => classes.map(c => c.program_uuid ?? '').filter(Boolean), [classes]);
   const { courseMap } = useCoursesByIds(courseIds);
   const { programMap } = useProgramsByIds(programIds);
 
@@ -217,37 +213,47 @@ export default function OrganisationFeesSchedulingPage() {
   );
 
   return (
-    <div className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
-        <AdminPageHeader
-          title='Fees & scheduling'
-          description='Set the per-session fee, class type and delivery method for each class.'
-          actions={
-            courseOptions.length > 0 ? (
-              <Select value={courseFilter} onValueChange={setCourseFilter}>
-                <SelectTrigger className='w-56'>
-                  <SelectValue placeholder='All courses' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>All courses</SelectItem>
-                  {courseOptions.map(([uuid, name]) => (
-                    <SelectItem key={uuid} value={uuid}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : null
-          }
-        />
+    <OrgPage className="space-y-6">
+      <PageHeader
+        title="Fees & scheduling"
+        description="Set the per-session fee, class type and delivery method for each class."
+        action={
+          courseOptions.length > 0 ? (
+            <Select value={courseFilter} onValueChange={setCourseFilter}>
+              <SelectTrigger className="w-56">
+                <SelectValue placeholder="All courses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All courses</SelectItem>
+                {courseOptions.map(([uuid, name]) => (
+                  <SelectItem key={uuid} value={uuid}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null
+        }
+      />
 
-        <SectionCard title='Classes' description='Fees are charged per session'>
+      <Card>
+        <CardContent className="space-y-4 p-6">
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-foreground">Classes</h2>
+            <p className="text-sm text-muted-foreground">Fees are charged per session</p>
+          </div>
+
           {classesQuery.isLoading ? (
-            <p className='text-sm text-muted-foreground'>Loading…</p>
+            <div className="space-y-2">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
           ) : filtered.length === 0 ? (
-            <p className='text-sm text-muted-foreground'>
-              No classes yet. Create a class to set its fees.
-            </p>
+            <div className="rounded-lg border border-dashed p-10 text-center">
+              <div className="font-medium">No classes yet</div>
+              <p className="text-sm text-muted-foreground">Create a class to set its fees.</p>
+            </div>
           ) : (
             <div>
               {filtered.map(c => (
@@ -260,8 +266,8 @@ export default function OrganisationFeesSchedulingPage() {
               ))}
             </div>
           )}
-        </SectionCard>
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    </OrgPage>
   );
 }
