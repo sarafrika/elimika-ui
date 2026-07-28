@@ -194,6 +194,7 @@ import {
   createTrainingBranch1,
   removeUserFromBranch,
   assignUserToBranch,
+  requestOrganisationVerification,
   listGroups,
   createGroup,
   listTransactions,
@@ -1081,6 +1082,9 @@ import type {
   AssignUserToBranchData,
   AssignUserToBranchError,
   AssignUserToBranchResponse,
+  RequestOrganisationVerificationData,
+  RequestOrganisationVerificationError,
+  RequestOrganisationVerificationResponse,
   ListGroupsData,
   CreateGroupData,
   CreateGroupError,
@@ -8634,6 +8638,59 @@ export const assignUserToBranchMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await assignUserToBranch({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const requestOrganisationVerificationQueryKey = (
+  options: Options<RequestOrganisationVerificationData>
+) => createQueryKey('requestOrganisationVerification', options);
+
+/**
+ * Submit an organisation for admin verification
+ * Called by the organisation itself. Records the verification request timestamp so the organisation can show an 'awaiting review' state and admins get a request queue. No-op when the organisation is already verified.
+ */
+export const requestOrganisationVerificationOptions = (
+  options: Options<RequestOrganisationVerificationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await requestOrganisationVerification({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: requestOrganisationVerificationQueryKey(options),
+  });
+};
+
+/**
+ * Submit an organisation for admin verification
+ * Called by the organisation itself. Records the verification request timestamp so the organisation can show an 'awaiting review' state and admins get a request queue. No-op when the organisation is already verified.
+ */
+export const requestOrganisationVerificationMutation = (
+  options?: Partial<Options<RequestOrganisationVerificationData>>
+): UseMutationOptions<
+  RequestOrganisationVerificationResponse,
+  RequestOrganisationVerificationError,
+  Options<RequestOrganisationVerificationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RequestOrganisationVerificationResponse,
+    RequestOrganisationVerificationError,
+    Options<RequestOrganisationVerificationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await requestOrganisationVerification({
         ...options,
         ...localOptions,
         throwOnError: true,

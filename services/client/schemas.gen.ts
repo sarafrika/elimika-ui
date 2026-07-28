@@ -2925,6 +2925,14 @@ export const OrganisationSchema = {
       example: '2024-04-15T14:30:00Z',
       readOnly: true,
     },
+    verification_requested_at: {
+      type: 'string',
+      format: 'date-time',
+      description:
+        "**[READ-ONLY]** Timestamp when the organisation submitted itself for admin verification. Null when the organisation has never requested verification. Combined with `admin_verified` this distinguishes 'not submitted' from 'submitted, awaiting review'.",
+      example: '2024-04-10T08:15:00Z',
+      readOnly: true,
+    },
   },
   required: ['active', 'name'],
 } as const;
@@ -8078,13 +8086,6 @@ conflict_resolution per template:
       example: false,
       readOnly: true,
     },
-    capacity_info: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
-      example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
@@ -8097,6 +8098,13 @@ conflict_resolution per template:
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
       example: '1h 30m',
+      readOnly: true,
+    },
+    capacity_info: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
+      example: 'Max 25 participants (waitlist enabled)',
       readOnly: true,
     },
   },
@@ -8369,7 +8377,7 @@ export const ClassMarketplaceJobRequestSchema = {
       type: ['string', 'null'],
       format: 'uuid',
       description:
-        '**[OPTIONAL]** Preferred instructor for the class. Instructors still apply; this is a hint recorded on the advert, not a final assignment.',
+        '**[OPTIONAL]** Instructor to assign at creation. When provided, the class is materialised and assigned to this instructor immediately (the job is filled, no open application step); when omitted, the class is posted for instructors to apply.',
     },
     target_groups: {
       type: ['array', 'null'],
@@ -11097,6 +11105,12 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
+      readOnly: true,
+    },
     status_description: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
@@ -11107,12 +11121,6 @@ export const EnrollmentSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
       example: true,
-      readOnly: true,
-    },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
       readOnly: true,
     },
   },
@@ -13916,16 +13924,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    is_upcoming: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
-      example: true,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended this class.',
       example: false,
+      readOnly: true,
+    },
+    is_upcoming: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
+      example: true,
       readOnly: true,
     },
   },
@@ -14063,12 +14071,6 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
-    },
     size: {
       type: 'integer',
       format: 'int32',
@@ -14083,6 +14085,12 @@ export const PageSchema = {
     },
     sort: {
       $ref: '#/components/schemas/SortObject',
+    },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
     },
     numberOfElements: {
       type: 'integer',

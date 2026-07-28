@@ -580,6 +580,9 @@ import type {
   AssignUserToBranchData,
   AssignUserToBranchResponses,
   AssignUserToBranchErrors,
+  RequestOrganisationVerificationData,
+  RequestOrganisationVerificationResponses,
+  RequestOrganisationVerificationErrors,
   ListGroupsData,
   ListGroupsResponses,
   ListGroupsErrors,
@@ -1885,6 +1888,7 @@ import {
   createOrganisationResponseTransformer,
   getTrainingBranchesByOrganisationResponseTransformer,
   createTrainingBranch1ResponseTransformer,
+  requestOrganisationVerificationResponseTransformer,
   listGroupsResponseTransformer,
   createGroupResponseTransformer,
   listTransactionsResponseTransformer,
@@ -7858,6 +7862,34 @@ export const assignUserToBranch = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/users/{userUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Submit an organisation for admin verification
+ * Called by the organisation itself. Records the verification request timestamp so the organisation can show an 'awaiting review' state and admins get a request queue. No-op when the organisation is already verified.
+ */
+export const requestOrganisationVerification = <ThrowOnError extends boolean = false>(
+  options: Options<RequestOrganisationVerificationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    RequestOrganisationVerificationResponses,
+    RequestOrganisationVerificationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: requestOrganisationVerificationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{uuid}/request-verification',
     ...options,
   });
 };

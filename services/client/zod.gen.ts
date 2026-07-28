@@ -1974,6 +1974,14 @@ export const zOrganisation = z
       )
       .readonly()
       .optional(),
+    verification_requested_at: z
+      .string()
+      .datetime()
+      .describe(
+        "**[READ-ONLY]** Timestamp when the organisation submitted itself for admin verification. Null when the organisation has never requested verification. Combined with `admin_verified` this distinguishes 'not submitted' from 'submitted, awaiting review'."
+      )
+      .readonly()
+      .optional(),
   })
   .describe(
     'Complete organisation profile information including basic details, configuration, and metadata'
@@ -5044,13 +5052,6 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    capacity_info: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
-      )
-      .readonly()
-      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe(
@@ -5061,6 +5062,13 @@ export const zClassDefinition = z
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
+      .readonly()
+      .optional(),
+    capacity_info: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
+      )
       .readonly()
       .optional(),
   })
@@ -6643,6 +6651,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
@@ -6651,11 +6664,6 @@ export const zEnrollment = z
     can_be_cancelled: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
-      .readonly()
-      .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
   })
@@ -8346,14 +8354,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    is_upcoming: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended this class.')
+      .readonly()
+      .optional(),
+    is_upcoming: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
       .readonly()
       .optional(),
   })
@@ -8430,12 +8438,12 @@ export const zPageableObject = z.object({
 export const zPage = z.object({
   totalElements: z.coerce.bigint().optional(),
   totalPages: z.number().int().optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   size: z.number().int().optional(),
   content: z.array(z.unknown()).optional(),
   number: z.number().int().optional(),
   sort: zSortObject.optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   numberOfElements: z.number().int().optional(),
   pageable: zPageableObject.optional(),
   empty: z.boolean().optional(),
@@ -14619,6 +14627,22 @@ export const zAssignUserToBranchData = z.object({
  * User assigned to branch successfully
  */
 export const zAssignUserToBranchResponse = zApiResponseVoid;
+
+export const zRequestOrganisationVerificationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('UUID of the organisation submitting itself for verification.'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Verification requested successfully
+ */
+export const zRequestOrganisationVerificationResponse = zApiResponseOrganisation;
 
 export const zListGroupsData = z.object({
   body: z.never().optional(),

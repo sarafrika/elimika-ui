@@ -1430,6 +1430,10 @@ export type Organisation = {
    * **[READ-ONLY]** Timestamp when the organisation was last updated. Automatically updated by the system on any changes and cannot be directly modified.
    */
   readonly updated_date?: Date;
+  /**
+   * **[READ-ONLY]** Timestamp when the organisation submitted itself for admin verification. Null when the organisation has never requested verification. Combined with `admin_verified` this distinguishes 'not submitted' from 'submitted, awaiting review'.
+   */
+  readonly verification_requested_at?: Date;
 };
 
 export type ApiResponseOrganisation = {
@@ -3857,10 +3861,6 @@ export type ClassDefinition = {
    */
   readonly is_standalone?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
-   */
-  readonly capacity_info?: string;
-  /**
    * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
   readonly duration_minutes?: bigint;
@@ -3868,6 +3868,10 @@ export type ClassDefinition = {
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   */
+  readonly capacity_info?: string;
 };
 
 /**
@@ -4027,7 +4031,7 @@ export type ClassMarketplaceJobRequest = {
   resources?: Array<ClassMarketplaceJobResource> | null;
   service_type?: ServiceTypeEnum;
   /**
-   * **[OPTIONAL]** Preferred instructor for the class. Instructors still apply; this is a hint recorded on the advert, not a final assignment.
+   * **[OPTIONAL]** Instructor to assign at creation. When provided, the class is materialised and assigned to this instructor immediately (the job is filled, no open application step); when omitted, the class is posted for instructors to apply.
    */
   preferred_instructor_uuid?: string | null;
   /**
@@ -5463,6 +5467,10 @@ export type Enrollment = {
    */
   readonly is_attendance_marked?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
@@ -5470,10 +5478,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
 };
 
 export type ApiResponse = {
@@ -7101,13 +7105,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if this class is upcoming.
-   */
-  readonly is_upcoming?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended this class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if this class is upcoming.
+   */
+  readonly is_upcoming?: boolean;
 };
 
 export type ApiResponseListScheduledInstance = {
@@ -7159,12 +7163,12 @@ export type PagedDtoBookingResponse = {
 export type Page = {
   totalElements?: bigint;
   totalPages?: number;
-  first?: boolean;
-  last?: boolean;
   size?: number;
   content?: Array<unknown>;
   number?: number;
   sort?: SortObject;
+  first?: boolean;
+  last?: boolean;
   numberOfElements?: number;
   pageable?: PageableObject;
   empty?: boolean;
@@ -18717,6 +18721,42 @@ export type AssignUserToBranchResponses = {
 
 export type AssignUserToBranchResponse =
   AssignUserToBranchResponses[keyof AssignUserToBranchResponses];
+
+export type RequestOrganisationVerificationData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation submitting itself for verification.
+     */
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{uuid}/request-verification';
+};
+
+export type RequestOrganisationVerificationErrors = {
+  /**
+   * Organisation not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RequestOrganisationVerificationError =
+  RequestOrganisationVerificationErrors[keyof RequestOrganisationVerificationErrors];
+
+export type RequestOrganisationVerificationResponses = {
+  /**
+   * Verification requested successfully
+   */
+  200: ApiResponseOrganisation;
+};
+
+export type RequestOrganisationVerificationResponse =
+  RequestOrganisationVerificationResponses[keyof RequestOrganisationVerificationResponses];
 
 export type ListGroupsData = {
   body?: never;

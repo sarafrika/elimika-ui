@@ -136,6 +136,7 @@ import type {
   CreateOrganisationResponse,
   GetTrainingBranchesByOrganisationResponse,
   CreateTrainingBranch1Response,
+  RequestOrganisationVerificationResponse,
   ListGroupsResponse,
   CreateGroupResponse,
   ListTransactionsResponse,
@@ -953,6 +954,9 @@ const organisationSchemaResponseTransformer = (data: any) => {
   }
   if (data.updated_date) {
     data.updated_date = new Date(data.updated_date);
+  }
+  if (data.verification_requested_at) {
+    data.verification_requested_at = new Date(data.verification_requested_at);
   }
   return data;
 };
@@ -2901,6 +2905,13 @@ export const createTrainingBranch1ResponseTransformer = async (
   data: any
 ): Promise<CreateTrainingBranch1Response> => {
   data = apiResponseTrainingBranchSchemaResponseTransformer(data);
+  return data;
+};
+
+export const requestOrganisationVerificationResponseTransformer = async (
+  data: any
+): Promise<RequestOrganisationVerificationResponse> => {
+  data = apiResponseOrganisationSchemaResponseTransformer(data);
   return data;
 };
 
