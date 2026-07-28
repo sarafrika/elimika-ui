@@ -339,7 +339,7 @@ function GuardianForm({
   const ready = value.guardian_email.trim() !== '' && value.guardian_name.trim() !== '';
   return (
     <div className='space-y-4 border-t pt-4'>
-      <div className='rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm'>
+      <div className='rounded-md border border-warning/30 bg-warning/5 p-3 text-sm'>
         <p className='font-medium'>We need a parent or guardian to approve this</p>
         <p className='mt-1 text-muted-foreground'>
           You are under the age we can accept consent from directly. Tell us who to ask and we will email
