@@ -1,4 +1,3 @@
-// @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -38,7 +37,10 @@ import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Link from 'next/link';
+
 import { useOrganisation } from '@/context/organisation-context';
+import { PendingInvitations } from './_components/pending-invitations';
 import { extractEntity, extractPage } from '@/lib/api-helpers';
 import type { ClassDefinition, User, Wallet } from '@/services/client';
 import {
@@ -56,167 +58,8 @@ const fullName = (u: User) =>
 function statusVariant(status: string) {
   if (status === 'Active') return 'default' as const;
   if (status === 'Completed') return 'secondary' as const;
-  if (status === 'Invited') return 'outline' as const;
+  if (status === 'No classes yet') return 'outline' as const;
   return 'destructive' as const;
-}
-
-/** Lazily fetches a student's Skills Wallet balance. */
-function WalletCell({ userUuid }: { userUuid?: string }) {
-  const walletQuery = useQuery({
-    ...getWalletOptions({ path: { userUuid: userUuid ?? '' } }),
-    enabled: Boolean(userUuid),
-    retry: false,
-  });
-  if (!userUuid) return <span className="text-muted-foreground">—</span>;
-  if (walletQuery.isLoading) return <Skeleton className="h-4 w-16" />;
-  const wallet = extractEntity<Wallet>(walletQuery.data);
-  if (walletQuery.isError || !wallet || wallet.balance_amount == null) {
-    return <span className="text-muted-foreground">—</span>;
-  }
-  return <span>{`${wallet.currency_code ?? 'KSh'} ${Number(wallet.balance_amount).toLocaleString()}`}</span>;
-}
-
-function InviteStudentsDialog({ organisationUuid }: { organisationUuid: string }) {
-  const [open, setOpen] = useState(false);
-  const qc = useQueryClient();
-  const createStudent = useMutation(createOrganisationUserMutation());
-
-  const classesQuery = useQuery({
-    ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
-    enabled: Boolean(organisationUuid),
-  });
-  const classes: ClassDefinition[] = (
-    (classesQuery.data?.data ?? []) as Array<{ class_definition?: ClassDefinition }>
-  )
-    .map(c => c.class_definition)
-    .filter((c): c is ClassDefinition => Boolean(c?.uuid));
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="mr-2 h-4 w-4" /> Invite students
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Invite students</DialogTitle>
-          <DialogDescription>Send invitations one at a time or upload a CSV.</DialogDescription>
-        </DialogHeader>
-        <Tabs defaultValue="single">
-          <TabsList className="mb-4">
-            <TabsTrigger value="single">Single invite</TabsTrigger>
-            <TabsTrigger value="bulk">Bulk upload</TabsTrigger>
-          </TabsList>
-          <TabsContent value="single">
-            <form
-              className="space-y-3"
-              onSubmit={e => {
-                e.preventDefault();
-                const form = e.currentTarget;
-                const name = (form.elements.namedItem('s-name') as HTMLInputElement)?.value || '';
-                const email = (form.elements.namedItem('s-email') as HTMLInputElement)?.value || '';
-                const phone = (form.elements.namedItem('s-phone') as HTMLInputElement)?.value || '';
-                const [first, ...rest] = name.trim().split(' ');
-                if (!first || !email) {
-                  toast.error('Name and email are required.');
-                  return;
-                }
-                createStudent.mutate(
-                  {
-                    path: { uuid: organisationUuid },
-                    body: {
-                      first_name: first,
-                      last_name: rest.join(' ') || first,
-                      email,
-                      phone_number: phone || undefined,
-                      domain_name: 'student',
-                    },
-                  },
-                  {
-                    onSuccess: async () => {
-                      setOpen(false);
-                      toast.success('Invitation sent', { description: `${name} will receive an email shortly.` });
-                      await qc.invalidateQueries({
-                        queryKey: getUsersByOrganisationOptions({
-                          path: { uuid: organisationUuid },
-                          query: { pageable: { page: 0, size: 100 } },
-                        }).queryKey,
-                      });
-                    },
-                    onError: err => toast.error(err instanceof Error ? err.message : 'Unable to invite student.'),
-                  }
-                );
-              }}
-            >
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="s-name">Full name</Label>
-                  <Input id="s-name" name="s-name" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="s-phone">Phone</Label>
-                  <Input id="s-phone" name="s-phone" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="s-email">Email</Label>
-                <Input id="s-email" name="s-email" type="email" required />
-              </div>
-              <div className="space-y-2">
-                <Label>Assign to class</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder={classes.length ? 'Select a class' : 'No classes yet'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map(c => (
-                      <SelectItem key={c.uuid} value={c.uuid as string}>
-                        {c.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" type="button" onClick={() => setOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createStudent.isPending}>
-                  <Send className="mr-2 h-4 w-4" /> Send invite
-                </Button>
-              </DialogFooter>
-            </form>
-          </TabsContent>
-          <TabsContent value="bulk">
-            <div className="space-y-3">
-              <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/30 text-center">
-                <Upload className="h-6 w-6 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Drop a CSV file here, or</p>
-                <Button variant="outline" size="sm">
-                  Browse files
-                </Button>
-              </div>
-              <Textarea rows={4} placeholder={'name,email,phone,class\nJane Doe,jane@example.com,+2547...'} />
-              <DialogFooter>
-                <Button variant="outline" type="button" onClick={() => setOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => {
-                    setOpen(false);
-                    toast.success('Bulk invites queued', { description: "We'll email each row and notify you when done." });
-                  }}
-                >
-                  <Mail className="mr-2 h-4 w-4" /> Send invites
-                </Button>
-              </DialogFooter>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 export default function StudentsPage() {
@@ -242,11 +85,14 @@ export default function StudentsPage() {
     return map;
   }, [summariesQuery.data]);
 
-  const students = extractPage<User>(studentsQuery.data).items.map(u => {
-    const summary = u.uuid ? summaryByStudent.get(u.uuid) : undefined;
+  // Members without a resolvable uuid cannot be rendered or acted on, so they are dropped
+  // rather than carried through as partially-undefined rows.
+  const students = extractPage<User>(studentsQuery.data).items.flatMap(u => {
+    if (!u.uuid) return [];
+    const summary = summaryByStudent.get(u.uuid);
     const pct = summary && summary.total > 0 ? Math.round((summary.completed / summary.total) * 100) : 0;
-    const status = !summary || summary.total === 0 ? 'Invited' : pct >= 100 ? 'Completed' : 'Active';
-    return {
+    const status = !summary || summary.total === 0 ? 'No classes yet' : pct >= 100 ? 'Completed' : 'Active';
+    return [{
       id: u.uuid,
       name: fullName(u),
       status,
@@ -254,7 +100,7 @@ export default function StudentsPage() {
       totalCourses: summary?.total ?? 0,
       pct,
       category: 'Uncategorised',
-    };
+    }];
   });
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
@@ -269,8 +115,16 @@ export default function StudentsPage() {
       <PageHeader
         title="Students"
         description="Invite, onboard and manage students across your programs."
-        action={<InviteStudentsDialog organisationUuid={organisationUuid} />}
+        action={
+          <Button asChild size="sm">
+            <Link href="/dashboard/organisation/invite-students">
+              <Plus className="mr-2 h-4 w-4" /> Invite students
+            </Link>
+          </Button>
+        }
       />
+
+      <PendingInvitations organisationUuid={organisationUuid} />
 
       <CategoryTabs
         items={students}
@@ -292,7 +146,13 @@ export default function StudentsPage() {
             icon={Users}
             title="No students yet"
             description="Invite students by email or upload a CSV to onboard a whole cohort in one go."
-            action={<InviteStudentsDialog organisationUuid={organisationUuid} />}
+            action={
+              <Button asChild size="sm">
+                <Link href="/dashboard/organisation/invite-students">
+                  <Plus className="mr-2 h-4 w-4" /> Invite students
+                </Link>
+              </Button>
+            }
           />
         ) : (
           <div className="overflow-x-auto rounded-lg border">
@@ -304,7 +164,6 @@ export default function StudentsPage() {
                   <TableHead className="whitespace-nowrap">Institution Ref</TableHead>
                   <TableHead className="whitespace-nowrap">Status</TableHead>
                   <TableHead className="whitespace-nowrap">Course Completion</TableHead>
-                  <TableHead className="whitespace-nowrap">Wallet Balance</TableHead>
                   <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -346,9 +205,6 @@ export default function StudentsPage() {
                           </Tooltip>
                         </TooltipProvider>
                       )}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <WalletCell userUuid={student.id} />
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right">
                       <DropdownMenu>
