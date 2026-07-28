@@ -1,4 +1,3 @@
-// @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -7,10 +6,9 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
-  Copy,
   Mail,
   Send,
-  Share2,
+  ShieldCheck,
   Users,
   UsersRound,
   XCircle,
@@ -31,15 +29,16 @@ import { cn } from '@/lib/utils';
 import { useOrganisation } from '@/context/organisation-context';
 import type { ClassDefinition } from '@/services/client';
 import {
-  createOrganisationUserMutation,
   getClassDefinitionsForOrganisationOptions,
-  getUsersByOrganisationAndDomainQueryKey,
+  listOrganisationInvitationsQueryKey,
+  sendOrganisationInvitationsMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 
 const categoryLabel = (cd: ClassDefinition) =>
   cd.location_type === 'ONLINE' ? 'Virtual' : cd.location_type === 'HYBRID' ? 'Hybrid' : 'In-Person';
 
-const CHANNELS = ['Email', 'WhatsApp', 'SMS', 'Copy link'] as const;
+/** Days an invitation stays open before it lapses. Mirrors the backend default. */
+const EXPIRES_IN_DAYS = 14;
 
 const TEMPLATES = [
   {
@@ -60,9 +59,12 @@ const TEMPLATES = [
     subject: 'A quick reminder to join {{school}}',
     body: "Hi {{student}},\n\nJust a friendly nudge — your invitation to {{school}} is still open. Accept it whenever you're ready.\n\n{{sender}}",
   },
-];
+] as const;
 
-type Recipient = { first: string; last: string; email: string };
+const DEFAULT_TEMPLATE = TEMPLATES[0];
+
+type Recipient = { name: string; email: string };
+type SendResult = { email: string; ok: boolean; message?: string };
 
 /** Parses "Name <email>", "Name, email" or bare emails from free text. */
 function parseRecipients(raw: string): Recipient[] {
@@ -77,8 +79,7 @@ function parseRecipients(raw: string): Recipient[] {
     if (seen.has(email)) continue;
     seen.add(email);
     const namePart = token.replace(emailMatch[0], '').replace(/[<>,]/g, '').trim();
-    const parts = (namePart || email.split('@')[0]).split(/\s+/);
-    out.push({ first: parts[0], last: parts.slice(1).join(' ') || parts[0], email });
+    out.push({ name: namePart, email });
   }
   return out;
 }
@@ -99,12 +100,11 @@ export default function InviteStudentsPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [emails, setEmails] = useState('');
-  const [templateId, setTemplateId] = useState(TEMPLATES[0].id);
-  const [message, setMessage] = useState(TEMPLATES[0].body);
-  const [selectedChannels, setSelectedChannels] = useState<string[]>(['Email', 'Copy link']);
+  const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE.id);
+  const [message, setMessage] = useState<string>(DEFAULT_TEMPLATE.body);
   const [activeCategory, setActiveCategory] = useState('All');
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
-  const [results, setResults] = useState<{ email: string; ok: boolean; message?: string }[] | null>(null);
+  const [results, setResults] = useState<SendResult[] | null>(null);
 
   const classesQuery = useQuery({
     ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
@@ -119,7 +119,10 @@ export default function InviteStudentsPage() {
   );
 
   const classTabItems = useMemo(
-    () => classes.map(c => ({ id: c.uuid, category: categoryLabel(c), subject: null, programType: null, title: c.title })),
+    () =>
+      classes.flatMap(c =>
+        c.uuid ? [{ id: c.uuid, category: categoryLabel(c), subject: null, programType: null, title: c.title }] : []
+      ),
     [classes]
   );
   const filteredClasses = useMemo(
@@ -129,50 +132,59 @@ export default function InviteStudentsPage() {
 
   const recipients = useMemo(() => parseRecipients(emails), [emails]);
 
-  const createStudent = useMutation(createOrganisationUserMutation());
-  const [sending, setSending] = useState(false);
+  const sendInvitations = useMutation(sendOrganisationInvitationsMutation());
+  const sending = sendInvitations.isPending;
 
-  const inviteLink = typeof window !== 'undefined' ? `${window.location.origin}/onboarding/student` : '/onboarding/student';
-
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      toast.success('Invite link copied');
-    } catch {
-      toast.error('Could not copy link');
-    }
-  };
-
+  /**
+   * One request carries the whole batch: the server decides per recipient whether an
+   * offer can be created, so a single bad address never costs the rest of the batch.
+   */
   const send = async () => {
     if (recipients.length === 0) {
       toast.error('Add at least one recipient email.');
       return;
     }
-    setSending(true);
-    const out: { email: string; ok: boolean; message?: string }[] = [];
-    for (const r of recipients) {
-      try {
-        await createStudent.mutateAsync({
-          path: { uuid: organisationUuid },
-          body: { first_name: r.first, last_name: r.last, email: r.email, domain_name: 'student' },
+
+    try {
+      const response = await sendInvitations.mutateAsync({
+        path: { organisationUuid },
+        body: {
+          recipients: recipients.map(r => ({ email: r.email, name: r.name || null })),
+          domain_name: 'student',
+          class_uuids: selectedClasses.length ? selectedClasses : null,
+          message: message.trim() || null,
+          expires_in_days: EXPIRES_IN_DAYS,
+        },
+      });
+
+      const result = response?.data ?? {};
+      const out: SendResult[] = [
+        ...(result.sent ?? []).map(i => ({ email: i.recipient_email ?? '', ok: true })),
+        ...(result.failed ?? []).map(f => ({
+          email: f.email ?? '',
+          ok: false,
+          message: f.reason ?? 'Could not be invited',
+        })),
+      ];
+      setResults(out);
+
+      const ok = result.sent?.length ?? 0;
+      if (ok) {
+        toast.success(`${ok} invitation${ok === 1 ? '' : 's'} sent`, {
+          description: out.length - ok ? `${out.length - ok} could not be invited.` : undefined,
         });
-        out.push({ email: r.email, ok: true });
-      } catch (err) {
-        out.push({ email: r.email, ok: false, message: err instanceof Error ? err.message : 'Failed' });
+        await queryClient.invalidateQueries({
+          queryKey: listOrganisationInvitationsQueryKey({ path: { organisationUuid } }),
+        });
+      } else {
+        toast.error('No invitations could be sent', {
+          description: out[0]?.message ?? 'Check the addresses and try again.',
+        });
       }
-    }
-    setSending(false);
-    setResults(out);
-    const ok = out.filter(o => o.ok).length;
-    if (ok) {
-      toast.success(`${ok} invitation${ok === 1 ? '' : 's'} sent`, {
-        description: out.length - ok ? `${out.length - ok} could not be invited.` : undefined,
+    } catch (err) {
+      toast.error('Could not send invitations', {
+        description: err instanceof Error ? err.message : 'Please try again.',
       });
-      await queryClient.invalidateQueries({
-        queryKey: getUsersByOrganisationAndDomainQueryKey({ path: { uuid: organisationUuid, domainName: 'student' } }),
-      });
-    } else {
-      toast.error('No invitations could be sent', { description: 'These emails may already exist.' });
     }
   };
 
@@ -241,11 +253,6 @@ export default function InviteStudentsPage() {
           {recipients.length > 0 && (
             <Badge variant="secondary" className="gap-1">
               <UsersRound className="h-3 w-3" /> {recipients.length} recipient{recipients.length === 1 ? '' : 's'}
-            </Badge>
-          )}
-          {step === 3 && selectedChannels.length > 0 && (
-            <Badge variant="secondary" className="gap-1">
-              <Share2 className="h-3 w-3" /> {selectedChannels.length} channel{selectedChannels.length === 1 ? '' : 's'}
             </Badge>
           )}
         </div>
@@ -419,44 +426,26 @@ export default function InviteStudentsPage() {
                   </p>
                 </div>
 
-                <div>
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <Label className="flex items-center gap-2 text-xs uppercase text-muted-foreground">
-                      <Share2 className="h-3.5 w-3.5" /> Invite channels
-                    </Label>
-                    <span className="text-[10px] text-muted-foreground">Email delivers automatically</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {CHANNELS.map(ch => {
-                      const on = selectedChannels.includes(ch);
-                      return (
-                        <button
-                          key={ch}
-                          type="button"
-                          onClick={() =>
-                            ch === 'Copy link' ? copyLink() : setSelectedChannels(s => toggle(s, ch))
-                          }
-                          className={cn(
-                            'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
-                            on ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'
-                          )}
-                        >
-                          {ch === 'Copy link' ? <Copy className="h-3.5 w-3.5" /> : on ? <Check className="h-3.5 w-3.5" /> : null}
-                          {ch}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
                 <div className="rounded-md border bg-muted/30 p-3 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Ready to invite</span>
                     <span className="font-semibold">{recipients.length} recipient{recipients.length === 1 ? '' : 's'}</span>
                   </div>
                   {selectedClasses.length > 0 && (
-                    <p className="mt-1 text-xs text-muted-foreground">Referencing {selectedClasses.length} selected class{selectedClasses.length === 1 ? '' : 'es'}.</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {selectedClasses.length} class{selectedClasses.length === 1 ? '' : 'es'} will be shown to
+                      each student once they accept — they still enrol themselves.
+                    </p>
                   )}
+                </div>
+
+                <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <p>
+                    Each student gets their own private link and chooses whether to join. Nothing is created
+                    for them until they accept, and invitations lapse after {EXPIRES_IN_DAYS} days. Students
+                    under the age we can accept consent from will be asked for a parent or guardian instead.
+                  </p>
                 </div>
               </CardContent>
             </Card>
