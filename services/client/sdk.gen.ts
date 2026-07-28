@@ -1429,6 +1429,9 @@ import type {
   GetRubricsByContextData,
   GetRubricsByContextResponses,
   GetRubricsByContextErrors,
+  GetOrganisationCourseContentData,
+  GetOrganisationCourseContentResponses,
+  GetOrganisationCourseContentErrors,
   GetEnrollmentGradeBookData,
   GetEnrollmentGradeBookResponses,
   GetEnrollmentGradeBookErrors,
@@ -2121,6 +2124,7 @@ import {
   getPendingEditResponseTransformer,
   getPrimaryRubricResponseTransformer,
   getRubricsByContextResponseTransformer,
+  getOrganisationCourseContentResponseTransformer,
   getEnrollmentGradeBookResponseTransformer,
   getCourseEnrollmentsResponseTransformer,
   getCourseCategoriesResponseTransformer,
@@ -9787,6 +9791,11 @@ export const reorderPracticeActivities = <ThrowOnError extends boolean = false>(
 /**
  * Get lesson content
  * Retrieves all content for a lesson in display order with computed properties.
+ *
+ * Restricted to the course owner, a member of an organisation approved to train
+ * the course, or a platform admin — so lesson content is never readable by
+ * arbitrary authenticated callers.
+ *
  */
 export const getLessonContent = <ThrowOnError extends boolean = false>(
   options: Options<GetLessonContentData, ThrowOnError>
@@ -16341,6 +16350,41 @@ export const getRubricsByContext = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{courseUuid}/rubrics/context/{context}',
+    ...options,
+  });
+};
+
+/**
+ * Get course content for an organisation (approval-gated)
+ * Returns course content scoped to what a given organisation is allowed to see.
+ *
+ * - **Not approved to train:** a decision-making summary — lesson outline, content
+ * counts and rating — with no lesson bodies, so full content never leaks.
+ * - **Approved to train:** full read access to every lesson's content.
+ *
+ * Content is read-only here regardless of access; only the course creator can edit it.
+ *
+ */
+export const getOrganisationCourseContent = <ThrowOnError extends boolean = false>(
+  options: Options<GetOrganisationCourseContentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetOrganisationCourseContentResponses,
+    GetOrganisationCourseContentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getOrganisationCourseContentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/organisations/{organisationUuid}/content',
     ...options,
   });
 };

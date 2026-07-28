@@ -477,6 +477,7 @@ import {
   checkRubricAssociation,
   getPrimaryRubric,
   getRubricsByContext,
+  getOrganisationCourseContent,
   getEnrollmentGradeBook,
   getCourseEnrollments,
   getCourseCompletionRate,
@@ -1781,6 +1782,7 @@ import type {
   GetRubricsByContextData,
   GetRubricsByContextError,
   GetRubricsByContextResponse,
+  GetOrganisationCourseContentData,
   GetEnrollmentGradeBookData,
   GetCourseEnrollmentsData,
   GetCourseEnrollmentsError,
@@ -11824,6 +11826,11 @@ export const getLessonContentQueryKey = (options: Options<GetLessonContentData>)
 /**
  * Get lesson content
  * Retrieves all content for a lesson in display order with computed properties.
+ *
+ * Restricted to the course owner, a member of an organisation approved to train
+ * the course, or a platform admin — so lesson content is never readable by
+ * arbitrary authenticated callers.
+ *
  */
 export const getLessonContentOptions = (options: Options<GetLessonContentData>) => {
   return queryOptions({
@@ -22562,6 +22569,38 @@ export const getRubricsByContextInfiniteOptions = (options: Options<GetRubricsBy
       queryKey: getRubricsByContextInfiniteQueryKey(options),
     }
   );
+};
+
+export const getOrganisationCourseContentQueryKey = (
+  options: Options<GetOrganisationCourseContentData>
+) => createQueryKey('getOrganisationCourseContent', options);
+
+/**
+ * Get course content for an organisation (approval-gated)
+ * Returns course content scoped to what a given organisation is allowed to see.
+ *
+ * - **Not approved to train:** a decision-making summary — lesson outline, content
+ * counts and rating — with no lesson bodies, so full content never leaks.
+ * - **Approved to train:** full read access to every lesson's content.
+ *
+ * Content is read-only here regardless of access; only the course creator can edit it.
+ *
+ */
+export const getOrganisationCourseContentOptions = (
+  options: Options<GetOrganisationCourseContentData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrganisationCourseContent({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getOrganisationCourseContentQueryKey(options),
+  });
 };
 
 export const getEnrollmentGradeBookQueryKey = (options: Options<GetEnrollmentGradeBookData>) =>

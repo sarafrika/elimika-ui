@@ -375,6 +375,7 @@ import type {
   GetPendingEditResponse,
   GetPrimaryRubricResponse,
   GetRubricsByContextResponse,
+  GetOrganisationCourseContentResponse,
   GetEnrollmentGradeBookResponse,
   GetCourseEnrollmentsResponse,
   GetCourseCategoriesResponse,
@@ -6492,6 +6493,38 @@ export const getRubricsByContextResponseTransformer = async (
   data: any
 ): Promise<GetRubricsByContextResponse> => {
   data = apiResponsePagedDtoCourseRubricAssociationSchemaResponseTransformer(data);
+  return data;
+};
+
+const organisationCourseLessonSchemaResponseTransformer = (data: any) => {
+  if (data.contents) {
+    data.contents = data.contents.map((item: any) => {
+      return lessonContentSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const organisationCourseContentSchemaResponseTransformer = (data: any) => {
+  if (data.lessons) {
+    data.lessons = data.lessons.map((item: any) => {
+      return organisationCourseLessonSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseOrganisationCourseContentSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = organisationCourseContentSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getOrganisationCourseContentResponseTransformer = async (
+  data: any
+): Promise<GetOrganisationCourseContentResponse> => {
+  data = apiResponseOrganisationCourseContentSchemaResponseTransformer(data);
   return data;
 };
 
