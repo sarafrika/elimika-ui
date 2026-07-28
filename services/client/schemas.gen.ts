@@ -8382,9 +8382,18 @@ export const ClassMarketplaceJobRequestSchema = {
     target_groups: {
       type: ['array', 'null'],
       description:
-        '**[OPTIONAL]** Target learner groups the class is aimed at (e.g. Grade 1, Grade 2).',
+        "**[OPTIONAL]** Name snapshot of the target learner groups. Ignored when target_group_uuids is supplied — the names are then resolved from the organisation's student groups.",
       items: {
         type: 'string',
+      },
+    },
+    target_group_uuids: {
+      type: ['array', 'null'],
+      description:
+        '**[OPTIONAL]** Organisation student groups (cohorts / streams) the class is aimed at. Identifiers that do not belong to the owning organisation are rejected.',
+      items: {
+        type: 'string',
+        format: 'uuid',
       },
     },
     remind_students: {
@@ -8639,6 +8648,14 @@ export const ClassMarketplaceJobSchema = {
       type: 'array',
       items: {
         type: 'string',
+      },
+      readOnly: true,
+    },
+    target_group_uuids: {
+      type: 'array',
+      items: {
+        type: 'string',
+        format: 'uuid',
       },
       readOnly: true,
     },

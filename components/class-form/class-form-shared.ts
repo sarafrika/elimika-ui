@@ -67,19 +67,6 @@ export const DEFAULT_DAYS: Record<DayKey, DayRow> = {
 };
 
 // Target groups are not yet backed — held in state only, ready for the group taxonomy endpoint.
-export const TARGET_GROUPS = [
-  'Nursery',
-  'Baby Class',
-  'Grade 1',
-  'Grade 2',
-  'Grade 3',
-  'Grade 4',
-  'Grade 5',
-  'Grade 6',
-  'Junior Secondary',
-  'Senior Secondary',
-];
-
 export const REMINDER_MINUTES: Record<string, number> = {
   '1h': 60,
   '6h': 360,

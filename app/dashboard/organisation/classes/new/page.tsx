@@ -217,7 +217,7 @@ export default function OrganisationCreateClassPage() {
   const [meetingLink, setMeetingLink] = useState('');
   const [venueUuid, setVenueUuid] = useState('');
   const [equipmentUuids, setEquipmentUuids] = useState<string[]>([]);
-  const [targetGroups, setTargetGroups] = useState<string[]>([]);
+  const [targetGroupUuids, setTargetGroupUuids] = useState<string[]>([]);
 
   const [feePerSession, setFeePerSession] = useState('');
   const [maxParticipants, setMaxParticipants] = useState('20');
@@ -419,7 +419,7 @@ export default function OrganisationCreateClassPage() {
       training_fee: num(feePerSession),
       service_type: SERVICE_TYPE_ENUM[service],
       ...(instructorUuid ? { preferred_instructor_uuid: instructorUuid } : {}),
-      ...(targetGroups.length > 0 ? { target_groups: targetGroups } : {}),
+      ...(targetGroupUuids.length > 0 ? { target_group_uuids: targetGroupUuids } : {}),
       remind_students: reminder.sendStudents,
       remind_instructor: reminder.sendInstructor,
       remind_via_email: reminder.email,
@@ -511,8 +511,9 @@ export default function OrganisationCreateClassPage() {
           equipmentResources={equipmentResources}
           equipmentUuids={equipmentUuids}
           onEquipmentChange={setEquipmentUuids}
-          targetGroups={targetGroups}
-          onTargetGroupsChange={setTargetGroups}
+          organisationUuid={organisationUuid}
+          targetGroupUuids={targetGroupUuids}
+          onTargetGroupsChange={setTargetGroupUuids}
         />
 
         <ScheduleModeCards value={mode} onChange={setMode} />

@@ -4035,9 +4035,13 @@ export type ClassMarketplaceJobRequest = {
    */
   preferred_instructor_uuid?: string | null;
   /**
-   * **[OPTIONAL]** Target learner groups the class is aimed at (e.g. Grade 1, Grade 2).
+   * **[OPTIONAL]** Name snapshot of the target learner groups. Ignored when target_group_uuids is supplied — the names are then resolved from the organisation's student groups.
    */
   target_groups?: Array<string> | null;
+  /**
+   * **[OPTIONAL]** Organisation student groups (cohorts / streams) the class is aimed at. Identifiers that do not belong to the owning organisation are rejected.
+   */
+  target_group_uuids?: Array<string> | null;
   /**
    * **[OPTIONAL]** Send session reminders to enrolled students.
    */
@@ -4127,6 +4131,7 @@ export type ClassMarketplaceJob = {
   service_type?: ServiceTypeEnum2;
   readonly preferred_instructor_uuid?: string;
   readonly target_groups?: Array<string>;
+  readonly target_group_uuids?: Array<string>;
   readonly remind_students?: boolean;
   readonly remind_instructor?: boolean;
   readonly remind_via_email?: boolean;

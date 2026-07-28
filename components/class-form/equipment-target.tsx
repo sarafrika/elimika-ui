@@ -5,19 +5,21 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import type { OrganisationResource } from '@/services/client';
-import { TARGET_GROUPS } from './class-form-shared';
+import { TargetGroupPicker } from './target-group-picker';
 
 export function EquipmentTarget({
   equipmentResources,
   equipmentUuids,
   onEquipmentChange,
-  targetGroups,
+  organisationUuid,
+  targetGroupUuids,
   onTargetGroupsChange,
 }: {
   equipmentResources: OrganisationResource[];
   equipmentUuids: string[];
   onEquipmentChange: (next: string[]) => void;
-  targetGroups: string[];
+  organisationUuid: string;
+  targetGroupUuids: string[];
   onTargetGroupsChange: (next: string[]) => void;
 }) {
   const toggle = (list: string[], value: string, on: boolean) =>
@@ -61,36 +63,11 @@ export function EquipmentTarget({
           </div>
         )}
       </div>
-      <div className="space-y-2">
-        <Label>Target Group</Label>
-        <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-md border p-2.5">
-          {TARGET_GROUPS.map(g => {
-            const checked = targetGroups.includes(g);
-            return (
-              <label key={g} className="flex cursor-pointer items-center gap-2 text-sm">
-                <Checkbox
-                  checked={checked}
-                  onCheckedChange={v => onTargetGroupsChange(toggle(targetGroups, g, v === true))}
-                />
-                <span>{g}</span>
-              </label>
-            );
-          })}
-        </div>
-        {targetGroups.length === 0 ? (
-          <div className="text-[11px] text-muted-foreground">
-            Pick one or more groups (e.g. Grade 1, Grade 2). Manage groups in the Groups tab.
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-1">
-            {targetGroups.map(g => (
-              <Badge key={g} variant="secondary" className="text-[10px]">
-                {g}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </div>
+      <TargetGroupPicker
+        organisationUuid={organisationUuid}
+        targetGroupUuids={targetGroupUuids}
+        onTargetGroupsChange={onTargetGroupsChange}
+      />
     </div>
   );
 }
