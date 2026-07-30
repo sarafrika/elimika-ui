@@ -1,172 +1,147 @@
 'use client';
 
-import { Card } from '@/components/ui/card';
-import { Check } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@radix-ui/react-avatar';
+import { ArrowUpRight, Download, QrCode, Sparkles, Wallet } from 'lucide-react';
+import { AvatarImage } from '../../../../../../components/ui/avatar';
+import { Badge } from '../../../../../../components/ui/badge';
+import { Button } from '../../../../../../components/ui/button';
+import { UserProfileType } from '../../../../../../lib/types';
+import { StudentOverviewData } from '../useStudentOverviewData';
 
-type StudentOverviewHeroCardProps = {
-  firstName: string;
-};
+type ProfileType =
+  | (Partial<UserProfileType> & {
+    isLoading: boolean;
+    invalidateQuery: () => void;
+    clearProfile: () => void;
+  })
+  | null;
 
-const benefits = [
-  'Gain new skills and certifications',
-  'Track achievements and progress',
-  'Unlock career opportunities',
-];
+interface StudentOverviewHeroCardProps {
+  profile: ProfileType;
+  data: StudentOverviewData
+}
+
+function ProgressRing({ value, size = 132, stroke = 12 }: { value: number; size?: number; stroke?: number }) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c - (value / 100) * c;
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="hsl(var(--muted))" strokeWidth={stroke} fill="none" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke="url(#ring-gradient)"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          fill="none"
+          strokeDasharray={c}
+          strokeDashoffset={offset}
+        />
+        <defs>
+          <linearGradient id="ring-gradient" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stopColor="hsl(var(--primary))" />
+            <stop offset="100%" stopColor="hsl(var(--success))" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="absolute inset-0 grid place-items-center">
+        <div className="text-center">
+          <div className="text-3xl font-semibold tracking-tight">{value}%</div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Skill Level</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function StudentOverviewHeroCard({
-  firstName,
+  profile,
+  data
 }: StudentOverviewHeroCardProps) {
+
+  const initials = profile?.full_name
+    ?.split(" ")
+    .map((name) => name[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
-    <Card className='relative overflow-hidden rounded-[26px] border border-border bg-card p-4 shadow-xl sm:p-6'>
-      {/* background accents */}
-      <div className='pointer-events-none absolute inset-0'>
-        <div className='absolute left-1/3 top-0 h-32 w-32 rounded-full bg-primary/10 blur-3xl' />
-        <div className='absolute bottom-0 right-0 h-40 w-40 rounded-full bg-primary/5 blur-3xl' />
-      </div>
+    <section className="grid gap-4 lg:grid-cols-3">
+      <Card className="lg:col-span-2 overflow-hidden border-0 bg-gradient-to-br from-primary to-success text-primary-foreground">
 
-      <div className='relative space-y-5'>
-        {/* heading */}
-        <div className='space-y-1'>
-          <h1 className='text-[1.55rem] font-semibold tracking-tight text-foreground sm:text-[1.95rem]'>
-            Welcome back, {firstName}!{' '}
-            <span className='inline-block align-middle text-xl'>🚀</span>
-          </h1>
+        <CardContent className="p-6 flex flex-col sm:flex-row gap-6 items-start">
+          <Avatar className="h-16 w-16 rounded-full ring-4 ring-primary-foreground/20">
+            <AvatarImage
+              src={profile?.profile_image_url ?? undefined}
+              alt={profile?.full_name ?? "Profile image"}
+            />
 
-          <p className='text-sm text-muted-foreground sm:text-base'>
-            Keep building your future skills and achievements today.
-          </p>
-        </div>
+            <AvatarFallback className="flex h-full w-full items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
+              {initials || "U"}
+            </AvatarFallback>
+          </Avatar>
 
-        {/* illustration section */}
-        <div className='relative overflow-hidden rounded-[24px] border border-border bg-muted/30 px-4 py-5 sm:px-6'>
-          <div className='absolute inset-x-8 bottom-0 h-10 rounded-full bg-primary/10 blur-xl' />
 
-          <div className='grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-end'>
-            {/* abstract student illustration */}
-            <div className='relative mx-auto flex h-[180px] w-[180px] items-end justify-center lg:mx-0'>
-              <div className='absolute bottom-0 h-20 w-32 rounded-full bg-primary/15 blur-2xl' />
-
-              {/* floating cards */}
-              <div className='absolute bottom-8 left-1 h-12 w-12 rounded-[18px] bg-success/20 shadow-sm' />
-              <div className='absolute bottom-12 right-2 h-16 w-20 rounded-[22px] bg-primary/20 blur-sm' />
-
-              {/* avatar */}
-              <div className='relative flex h-[150px] w-[112px] flex-col items-center'>
-                <div className='absolute top-5 h-10 w-10 rounded-full bg-foreground' />
-                <div className='absolute top-8 h-9 w-8 rounded-full bg-background' />
-
-                <div className='absolute top-16 h-16 w-16 rounded-t-[28px] bg-primary' />
-
-                <div className='absolute left-2 top-[72px] h-16 w-6 rotate-[16deg] rounded-full bg-primary' />
-
-                <div className='absolute right-2 top-[78px] h-14 w-5 -rotate-[16deg] rounded-full bg-primary' />
-
-                <div className='absolute bottom-3 h-9 w-[86px] rounded-[16px] bg-muted shadow-md' />
-              </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs uppercase tracking-wider opacity-80">Welcome back</p>
+            <h1 className="text-2xl font-semibold mt-1">{profile?.full_name}</h1>
+            <p className="text-sm opacity-90">Web Design & Data Analytics · Nairobi, Kenya</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Badge className="bg-primary-foreground/15 hover:bg-primary-foreground/20 text-primary-foreground border-0">Level 4 · Advanced</Badge>
+              <Badge className="bg-primary-foreground/15 hover:bg-primary-foreground/20 text-primary-foreground border-0">{data?.verifiedSkills} Portfolio Entries</Badge>
+              <Badge className="bg-warning hover:bg-warning/90 text-warning-foreground border-0">
+                <Sparkles className="h-3 w-3 mr-1" /> AI recommendations ready
+              </Badge>
             </div>
-
-            {/* right content */}
-            <div className='space-y-3'>
-              {/* passport card */}
-              <div className='mx-auto max-w-[360px] rounded-[20px] border border-border bg-card p-4 shadow-lg lg:mx-0'>
-                <div className='mb-2 flex items-center gap-2 text-xs font-semibold text-foreground'>
-                  <span className='inline-flex size-5 items-center justify-center rounded-md bg-primary/10 text-primary'>
-                    ◈
-                  </span>
-
-                  SkillLS Passport
-                </div>
-
-                <div className='flex items-center gap-3'>
-                  <div className='size-11 rounded-full bg-warning/20' />
-
-                  <div className='min-w-0 flex-1'>
-                    <div className='mb-1 h-2.5 w-20 rounded-full bg-muted' />
-
-                    <div className='mb-2 h-2 w-28 rounded-full bg-muted/60' />
-
-                    <div className='flex gap-1 text-[0.65rem] text-warning'>
-                      <span>★</span>
-                      <span>★</span>
-                      <span>★</span>
-                      <span>★</span>
-                      <span>★</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* description */}
-                <p className='mt-3 text-xs leading-relaxed text-muted-foreground'>
-                  Your digital skills passport helps you track completed
-                  courses, certifications, and achievements in one place.
-                </p>
-              </div>
-
-              {/* mini feature cards */}
-              <div className='grid grid-cols-2 gap-2 sm:grid-cols-3'>
-                {[
-                  {
-                    label: 'Profile',
-                    description: 'Manage your learner profile and personal details.',
-                  },
-                  {
-                    label: 'Courses',
-                    description: 'Access approved learning programs and progress.',
-                  },
-                  {
-                    label: 'Badges',
-                    description: 'Earn achievement badges as you complete milestones.',
-                  },
-                ].map((item, index) => (
-                  <div
-                    key={item.label}
-                    className={`rounded-[16px] border border-border bg-card p-3 shadow-md ${index === 2 ? 'hidden sm:block' : ''
-                      }`}
-                  >
-                    <div className='mb-2 h-2.5 w-10 rounded-full bg-muted' />
-
-                    <div className='h-8 rounded-xl bg-muted/60' />
-
-                    <div className='mt-2 text-[0.72rem] font-medium text-foreground'>
-                      {item.label}
-                    </div>
-
-                    <p className='mt-1 text-[0.68rem] leading-relaxed text-muted-foreground'>
-                      {item.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button size="sm" className="bg-background text-primary hover:bg-background/90">
+                <Download className="h-4 w-4 mr-2" /> Download CV
+              </Button>
+              <Button size="sm" variant="outline" className="bg-transparent text-primary-foreground border-primary-foreground/40 hover:bg-primary-foreground/10 hover:text-primary-foreground">
+                <QrCode className="h-4 w-4 mr-2" /> Share Profile
+              </Button>
             </div>
           </div>
-        </div>
-
-        <div className='space-y-3 pt-1'>
-          <h2 className='text-[1.32rem] font-semibold tracking-tight text-foreground sm:text-[1.65rem]'>
-            Welcome to Skills Wallet!
-          </h2>
-
-          <p className='text-[0.9rem] text-muted-foreground sm:text-[0.96rem]'>
-            Sign up to start building your future skills passport{' '}
-            <span className='align-top'>🚀</span>
-          </p>
-
-          <div className='space-y-2.5'>
-            {benefits.map(item => (
-              <div
-                key={item}
-                className='flex items-center gap-2.5 text-[0.88rem] text-foreground sm:gap-3 sm:text-[0.96rem]'
-              >
-                <span className='inline-flex size-4.5 items-center justify-center rounded-full bg-primary/10 text-primary sm:size-5'>
-                  <Check className='size-3.5 sm:size-4' />
-                </span>
-
-                <span>{item}</span>
-              </div>
-            ))}
+          <div className="hidden sm:block">
+            <ProgressRing value={data?.skillsProgress} />
           </div>
-        </div>
-      </div>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Wallet className="h-4 w-4 text-primary" /> Skills Wallet
+            </CardTitle>
+            <Badge variant="outline" className="text-success border-success/20 bg-success/10">Active</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <div className="text-3xl font-semibold tracking-tight">KES 24,000</div>
+            <p className="text-xs text-muted-foreground">Available balance</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-lg bg-muted p-3">
+              <p className="text-xs text-muted-foreground">Pending</p>
+              <p className="font-semibold text-warning">KES 14,000</p>
+            </div>
+            <div className="rounded-lg bg-muted p-3">
+              <p className="text-xs text-muted-foreground">Disbursed</p>
+              <p className="font-semibold text-success">KES 8,000</p>
+            </div>
+          </div>
+          <Button className="w-full bg-warning text-warning-foreground hover:bg-warning/90">
+            Apply for Funding <ArrowUpRight className="h-4 w-4 ml-1" />
+          </Button>
+        </CardContent>
+      </Card>
+    </section>
   );
 }
