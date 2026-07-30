@@ -6,13 +6,17 @@ import {
   getStudentCertificatesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
+  Assignment,
   Certificate,
+  Course,
   StudentClassEnrollmentSummary,
   StudentCourseEnrollmentSummary,
+  TrainingProgram
 } from '@/services/client/types.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useCoursesByIds, useProgramsByIds } from '../../../../../hooks/use-batched-lookups';
 
 export type StudentOverviewActiveCourse = {
   id: string;
@@ -25,16 +29,26 @@ export type StudentOverviewActiveCourse = {
 };
 
 export type StudentOverviewOpportunity = {
-  id: string;
-  title: string;
-  company: string;
-  meta: string;
+  uuid: string;
+  role: string;
+  org: string;
   location: string;
+  type: string;
   match: number;
-  badge: string;
-  badgeTone: 'teal' | 'amber';
-  footer: string;
 };
+
+export type StudentClassInvite = {
+  uuid: string;
+  title: string;
+  when: string;
+  host: string;
+};
+
+export type CertificateDetails = Certificate & {
+  course: Course | null;
+  program: TrainingProgram | null;
+};
+
 
 export type StudentOverviewEnrolledClassCourse = {
   id: string;
@@ -52,7 +66,7 @@ export type StudentOverviewEnrolledClassCourse = {
   href: string;
 };
 
-type StudentOverviewData = {
+export type StudentOverviewData = {
   firstName: string;
   searchPlaceholder: string;
   skillsProgress: number;
@@ -61,48 +75,15 @@ type StudentOverviewData = {
   activeCourses: StudentOverviewActiveCourse[];
   enrolledClassesAndCourses: StudentOverviewEnrolledClassCourse[];
   opportunities: StudentOverviewOpportunity[];
+  studentClassInvite: StudentClassInvite[];
+  certificates: CertificateDetails[];
+  assessments: Assignment[];
   isLoadingCourses: boolean;
 };
 
 const DEFAULT_PAGE_SIZE = 100;
 const FALLBACK_PROGRESS = [60, 45, 72, 55];
 
-const MOCK_OPPORTUNITIES: StudentOverviewOpportunity[] = []
-// [
-//   {
-//     id: 'junior-web-developer',
-//     title: 'Junior Web Developer',
-//     company: 'BrightWave Marketing',
-//     meta: 'AI Match',
-//     location: 'Nairobi, Kenya',
-//     match: 82,
-//     badge: 'AI Match',
-//     badgeTone: 'teal',
-//     footer: 'Hybrid · Full-Time',
-//   },
-//   {
-//     id: 'internship-program',
-//     title: 'Internship Program',
-//     company: 'CreativeBrands',
-//     meta: 'Pending',
-//     location: 'In-Office',
-//     match: 89,
-//     badge: 'Pending',
-//     badgeTone: 'amber',
-//     footer: 'Ongoing · May 23rd',
-//   },
-//   {
-//     id: 'part-time-data-analyst',
-//     title: 'Part-Time Data Analyst',
-//     company: 'Data Insight Hub',
-//     meta: 'AI Match',
-//     location: 'Cape Town, S. Africa',
-//     match: 75,
-//     badge: 'AI Match',
-//     badgeTone: 'teal',
-//     footer: 'Part-Time · Remote',
-//   },
-// ];
 
 const formatDateLabel = (value?: Date | string) => {
   if (!value) {
@@ -206,6 +187,22 @@ export function useStudentOverviewData(): StudentOverviewData {
 
   const certificates = certificatesResponse?.data ?? [];
 
+  const courseIds = [...new Set(certificates.flatMap(c => c.course_uuid ? [c.course_uuid] : []))];
+  const programIds = [...new Set(certificates.flatMap(c => c.program_uuid ? [c.program_uuid] : []))];
+
+  const { courseMap } = useCoursesByIds(courseIds);
+  const { programMap } = useProgramsByIds(programIds);
+
+  const certificateDetails = certificates.map((certificate) => ({
+    ...certificate,
+    course: certificate.course_uuid
+      ? courseMap[certificate.course_uuid] ?? null
+      : null,
+    program: certificate.program_uuid
+      ? programMap[certificate.program_uuid] ?? null
+      : null,
+  }));
+
   const certificatesByCourse = useMemo(() => {
     const map = new Map<string, Certificate>();
 
@@ -298,6 +295,7 @@ export function useStudentOverviewData(): StudentOverviewData {
   }, [certificatesByCourse, enrolledCourses]);
 
   const verifiedSkills = certificates.filter(item => item.is_valid).length;
+
   const newSkillsThisMonth = certificates.filter(item => {
     const completionDate = item.completion_date ? new Date(item.completion_date) : null;
 
@@ -323,6 +321,10 @@ export function useStudentOverviewData(): StudentOverviewData {
     return Math.max(0, Math.min(100, derived));
   })();
 
+  const opportunities: StudentOverviewOpportunity[] = []
+  const studentClassInvite: StudentClassInvite[] = []
+  const studentAssessments: Assignment[] = []
+
   return {
     firstName,
     searchPlaceholder: 'Search courses, opportunities,..',
@@ -331,7 +333,10 @@ export function useStudentOverviewData(): StudentOverviewData {
     newSkillsThisMonth,
     activeCourses,
     enrolledClassesAndCourses,
-    opportunities: MOCK_OPPORTUNITIES,
+    opportunities,
+    studentClassInvite,
+    certificates: certificateDetails,
+    assessments: studentAssessments,
     isLoadingCourses,
   };
 }
