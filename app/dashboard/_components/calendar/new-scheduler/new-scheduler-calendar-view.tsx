@@ -30,8 +30,8 @@ import {
 import { schedulerMetrics } from './data';
 import { SchedulerFilters } from './scheduler-filters';
 import { SchedulerGrid } from './scheduler-grid';
+import { SchedularKpiStrip } from './scheduler-kpi-strip';
 import { SchedulerRightRail } from './scheduler-right-rail';
-import { SchedulerStatCard } from './scheduler-stat-card';
 import type {
   SchedulerEvent,
   SchedulerFilterSection,
@@ -199,42 +199,43 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     }
   }, [currentDate, filteredEvents, hasActiveFilters]);
 
-  const activeEvents = visibleEvents;
-
   const metrics = useMemo<SchedulerMetric[]>(
     () => {
-      const items: SchedulerMetric[] = [
-        {
-          ...(schedulerMetrics[0] as SchedulerMetric),
-          value: String(
-            new Set(activeEvents.map(event => event.title)).size
-          ),
-        },
-      ];
+      const classCount = new Set(
+        visibleEvents.map(event => event.classDefinitionUuid || event.title)
+      ).size;
+      const eventCount = visibleEvents.length;
+      const instructorCount = new Set(
+        visibleEvents
+          .map(event => event.instructorUuid || event.instructor)
+          .filter(Boolean)
+      ).size;
+      const venueCount = new Set(
+        visibleEvents.map(event => event.location).filter(Boolean)
+      ).size;
+      const zeroCount = 0;
 
-      {
-        items.push({
-          ...(schedulerMetrics[1] as SchedulerMetric),
-          value: String(bookingFilterItems.length),
-        });
-      }
-
-      items.push(
-        {
-          ...(schedulerMetrics[2] as SchedulerMetric),
-          value: `${new Set(
-            activeEvents.map(event => event.location).filter(Boolean)
-          ).size}`,
-        },
-        {
-          ...(schedulerMetrics[3] as SchedulerMetric),
-          value: String(studentSummaries.length),
+      return schedulerMetrics.map(metric => {
+        if (metric.label === 'Classes') {
+          return { ...metric, value: String(classCount) };
         }
-      );
 
-      return items;
+        if (metric.label === 'Events') {
+          return { ...metric, value: String(eventCount) };
+        }
+
+        if (metric.label === 'Instructors') {
+          return { ...metric, value: String(instructorCount) };
+        }
+
+        if (metric.label === 'Venues') {
+          return { ...metric, value: String(venueCount) };
+        }
+
+        return { ...metric, value: String(zeroCount) };
+      });
     },
-    [activeEvents, bookingFilterItems.length, profile]
+    [visibleEvents]
   );
 
   const isLoading = data.isLoading;
@@ -462,37 +463,43 @@ export function SchedulerCalendarView({ profile, data }: Props) {
         </div>
       </header>
 
+      <div>
+        {/* <div className='grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+          {metrics.map(metric => (
+            <SchedulerStatCard key={metric.label} metric={metric} rangeLabel='' />
+          ))}
+        </div> */}
+
+        <SchedularKpiStrip metrics={metrics} rangeLabel={formatDateRange(currentDate, view)} />
+      </div>
+
+      <div className='flex flex-row items-center gap-2'>
+        <SchedulerFilters
+          activeFilterCount={Number(selectedFilter.kind !== 'all')}
+          onClearFilters={() => {
+            setSelectedFilter({ id: 'all', kind: 'all' });
+            setSearchQuery('');
+          }}
+          onSearchChange={setSearchQuery}
+          searchQuery={searchQuery}
+          sections={filterSections}
+        />
+        <div className='flex flex-wrap items-center justify-between gap-2 min-[1600px]:hidden'>
+          <Button
+            variant='outline'
+            className='h-10 rounded-md px-3 text-xs sm:text-sm'
+            onClick={() => setDetailsOpen(true)}
+          >
+            <Info className='h-4 w-4' />
+          </Button>
+        </div>
+      </div>
+
       <div className='flex min-w-0 flex-col gap-4 min-[1300px]:flex-row min-[1300px]:items-start'>
         <div className='flex min-w-0 flex-1 flex-col gap-4'>
-          <div className='grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4'>
-            {metrics.map(metric => (
-              <SchedulerStatCard key={metric.label} metric={metric} />
-            ))}
-          </div>
 
-          <div className='flex flex-wrap items-center justify-between gap-2 min-[1600px]:hidden'>
-            <Button
-              variant='outline'
-              className='h-10 rounded-md px-3 text-xs sm:text-sm'
-              onClick={() => setDetailsOpen(true)}
-            >
-              <Info className='h-4 w-4' />
-              Details
-            </Button>
-          </div>
 
-          <div className=''>
-            <SchedulerFilters
-              activeFilterCount={Number(selectedFilter.kind !== 'all')}
-              onClearFilters={() => {
-                setSelectedFilter({ id: 'all', kind: 'all' });
-                setSearchQuery('');
-              }}
-              onSearchChange={setSearchQuery}
-              searchQuery={searchQuery}
-              sections={filterSections}
-            />
-          </div>
+
 
           <div className='flex min-w-0 flex-col gap-4 min-[1300px]:flex-row min-[1300px]:items-start'>
             {isLoading ? (

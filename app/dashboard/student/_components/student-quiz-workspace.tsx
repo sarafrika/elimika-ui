@@ -10,9 +10,8 @@ import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import { cn } from '@/lib/utils';
 import {
   getEnrollmentsForClassOptions,
-  getQuizAttemptsOptions,
   getQuizByUuidOptions,
-  getQuizSchedulesOptions,
+  getQuizSchedulesOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassQuizSchedule, Enrollment, Quiz, QuizAttempt } from '@/services/client/types.gen';
 import { useQueries } from '@tanstack/react-query';
@@ -221,8 +220,8 @@ function StudentQuizCard({
             Timer,
             'Time',
             schedule?.time_limit_override ??
-              quiz?.time_limit_display ??
-              (quiz?.time_limit_minutes ? `${quiz.time_limit_minutes} min` : 'Untimed')
+            quiz?.time_limit_display ??
+            (quiz?.time_limit_minutes ? `${quiz.time_limit_minutes} min` : 'Untimed')
           )}
           {cell(
             Repeat2,
@@ -353,14 +352,14 @@ export function StudentQuizWorkspace({ embedded = false }: { embedded?: boolean 
     })),
   });
 
-  const quizAttemptQueries = useQueries({
-    queries: quizUuids.map(quizUuid => ({
-      ...getQuizAttemptsOptions({ path: { quizUuid }, query: { pageable: {} } }),
-      enabled: !!quizUuid,
-      staleTime: 60 * 1000,
-      refetchOnWindowFocus: false,
-    })),
-  });
+  // const quizAttemptQueries = useQueries({
+  //   queries: quizUuids.map(quizUuid => ({
+  //     ...getQuizAttemptsOptions({ path: { quizUuid }, query: { pageable: {} } }),
+  //     enabled: !!quizUuid,
+  //     staleTime: 60 * 1000,
+  //     refetchOnWindowFocus: false,
+  //   })),
+  // });
 
   const quizMap = useMemo(() => {
     const map = new Map<string, Quiz>();
@@ -371,14 +370,14 @@ export function StudentQuizWorkspace({ embedded = false }: { embedded?: boolean 
     return map;
   }, [quizDetailQueries, quizUuids]);
 
-  const attemptMap = useMemo(() => {
-    const map = new Map<string, QuizAttempt[]>();
-    quizUuids.forEach((quizUuid, index) => {
-      const attempts = quizAttemptQueries[index]?.data?.data?.content ?? [];
-      map.set(quizUuid, attempts);
-    });
-    return map;
-  }, [quizAttemptQueries, quizUuids]);
+  // const attemptMap = useMemo(() => {
+  //   const map = new Map<string, QuizAttempt[]>();
+  //   quizUuids.forEach((quizUuid, index) => {
+  //     const attempts = quizAttemptQueries[index]?.data?.data?.content ?? [];
+  //     map.set(quizUuid, attempts);
+  //   });
+  //   return map;
+  // }, [quizAttemptQueries, quizUuids]);
 
   const quizRows = useMemo(
     () =>
@@ -386,18 +385,19 @@ export function StudentQuizWorkspace({ embedded = false }: { embedded?: boolean 
         const quizUuid = schedule.quiz_uuid as string | undefined;
         const quiz = quizUuid ? quizMap.get(quizUuid) : undefined;
 
-        const attempts =
-          quizUuid && classMeta.enrollmentUuid
-            ? (attemptMap.get(quizUuid) ?? []).filter(
-                (attempt: QuizAttempt) => attempt.enrollment_uuid === classMeta.enrollmentUuid
-              )
-            : quizUuid
-              ? (attemptMap.get(quizUuid) ?? [])
-              : [];
+        // const attempts =
+        //   quizUuid && classMeta.enrollmentUuid
+        //     ? (attemptMap.get(quizUuid) ?? []).filter(
+        //         (attempt: QuizAttempt) => attempt.enrollment_uuid === classMeta.enrollmentUuid
+        //       )
+        //     : quizUuid
+        //       ? (attemptMap.get(quizUuid) ?? [])
+        //       : [];
+        const attempts: QuizAttempt[] = [];
 
         return { classMeta, attempts, quiz, schedule };
       }),
-    [attemptMap, quizMap, scheduleRows]
+    [quizMap, scheduleRows]
   );
 
   const filteredRows = useMemo(() => {
@@ -426,8 +426,8 @@ export function StudentQuizWorkspace({ embedded = false }: { embedded?: boolean 
     classDefinitionsLoading ||
     classEnrollmentQueries.some(q => q.isLoading) ||
     quizScheduleQueries.some(q => q.isLoading) ||
-    quizDetailQueries.some(q => q.isLoading) ||
-    quizAttemptQueries.some(q => q.isLoading);
+    quizDetailQueries.some(q => q.isLoading)
+  // || quizAttemptQueries.some(q => q.isLoading);
 
   // ─── Render ───────────────────────────────────────────────────────────────
 

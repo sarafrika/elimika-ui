@@ -12,14 +12,14 @@ import { cx, getEmptyStateClasses } from '@/lib/design-system';
 import { STALE_TIMES } from '@/lib/query-client';
 import { Student } from '@/services/api/schema';
 import {
+  getCourseEnrollmentsOptions,
   getEnrollmentsForClassOptions,
-  getQuizAttemptsOptions,
   getQuizAttemptsQueryKey,
   getQuizSchedulesOptions,
   getStudentQuizReviewOptions,
   getStudentQuizViewOptions,
   startQuizAttemptMutation,
-  submitQuizAttemptMutation,
+  submitQuizAttemptMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   ClassQuizSchedule,
@@ -50,6 +50,7 @@ type ClassMeta = {
   classTitle: string;
   courseTitle: string;
   enrollmentUuid?: string;
+  courseEnrollment: Enrollment
 };
 
 type StudentClassDefinitionRow = ReturnType<
@@ -199,10 +200,12 @@ export default function StudentQuizSubmissionPage() {
             classUuid:
               classDefinition.uuid || classDetails?.uuid || classDetails?.class_definition?.uuid,
             courseTitle:
-              classDefinition.course?.name || classDetails?.course_name || 'Untitled course',
+              classDefinition.course?.name || classDetails?.course_name,
+
+            courseUuid: classDefinition?.course?.uuid
           };
         })
-        .filter((item): item is { classTitle: string; classUuid: string; courseTitle: string } =>
+        .filter((item): item is { classTitle: string; classUuid: string; courseTitle: string, courseUuid: string } =>
           Boolean(item.classUuid)
         ),
     [classDefinitions]
@@ -217,13 +220,26 @@ export default function StudentQuizSubmissionPage() {
     })),
   });
 
+  const courseEnrollmentQueries = useQueries({
+    queries: classItems.map(classItem => ({
+      ...getCourseEnrollmentsOptions({ path: { courseUuid: classItem.courseUuid }, query: { pageable: {} } }),
+      enabled: !!classItem.classUuid,
+      staleTime: STALE_TIMES.live,
+      refetchOnWindowFocus: false,
+    })),
+  });
+
   const classMetaList = useMemo<ClassMeta[]>(
     () =>
       classItems.map((classItem, index) => {
         const enrollments = classEnrollmentQueries[index]?.data?.data ?? [];
+        const courseEnrollments = courseEnrollmentQueries[index]?.data?.data ?? [];
         const matchingEnrollment =
           enrollments.find((e: Enrollment) => e.student_uuid === student?.uuid) ?? null;
-        return { ...classItem, enrollmentUuid: matchingEnrollment?.uuid };
+        const courseEnrollment =
+          courseEnrollments?.content?.find((e: Enrollment) => e.student_uuid === student?.uuid) ?? null;
+
+        return { ...classItem, enrollmentUuid: matchingEnrollment?.uuid, courseEnrollment };
       }),
     [classEnrollmentQueries, classItems, student?.uuid]
   );
@@ -249,32 +265,35 @@ export default function StudentQuizSubmissionPage() {
   }, [classMetaList, quizScheduleQueries, quizId]);
 
   const enrollmentUuid = matchingScheduleRow?.classMeta.enrollmentUuid;
+  const courseEnrollmentUuid = matchingScheduleRow?.classMeta?.courseEnrollment?.uuid
   const schedule = matchingScheduleRow?.schedule;
 
   // ── Secure student view (no answer key) + this student's attempts ────────────
   const studentQuizQuery = useQuery({
     ...getStudentQuizViewOptions({
       path: { quizUuid: quizId },
-      query: { enrollment_uuid: enrollmentUuid as string },
+      query: { enrollment_uuid: courseEnrollmentUuid as string },
     }),
-    enabled: !!quizId && !!enrollmentUuid,
+    enabled: !!quizId && !!courseEnrollmentUuid,
     staleTime: STALE_TIMES.entity,
   });
   const studentQuiz = studentQuizQuery.data?.data;
 
-  const quizAttemptsQuery = useQuery({
-    ...getQuizAttemptsOptions({ path: { quizUuid: quizId }, query: { pageable: {} } }),
-    enabled: !!quizId,
-    staleTime: STALE_TIMES.live,
-  });
+  // const quizAttemptsQuery = useQuery({
+  //   ...getQuizAttemptsOptions({ path: { quizUuid: quizId }, query: { pageable: {} } }),
+  //   enabled: !!quizId,
+  //   staleTime: STALE_TIMES.live,
+  // });
 
-  const attempts = useMemo<QuizAttempt[]>(() => {
-    const all = quizAttemptsQuery.data?.data?.content ?? [];
-    return all
-      .filter(a => !enrollmentUuid || a.enrollment_uuid === enrollmentUuid)
-      .slice()
-      .sort((l, r) => (r.attempt_number ?? 0) - (l.attempt_number ?? 0));
-  }, [quizAttemptsQuery.data, enrollmentUuid]);
+  // const attempts = useMemo<QuizAttempt[]>(() => {
+  //   const all = quizAttemptsQuery.data?.data?.content ?? [];
+  //   return all
+  //     .filter(a => !enrollmentUuid || a.enrollment_uuid === enrollmentUuid)
+  //     .slice()
+  //     .sort((l, r) => (r.attempt_number ?? 0) - (l.attempt_number ?? 0));
+  // }, [quizAttemptsQuery.data, enrollmentUuid]);
+
+  const attempts: QuizAttempt[] = [];
 
   const latestAttempt = attempts[0] ?? null;
   const inProgressAttempt = attempts.find(a => String(a.status).toLowerCase() === 'in_progress');
@@ -298,13 +317,13 @@ export default function StudentQuizSubmissionPage() {
     phase === 'result' &&
     showReview &&
     !!attemptUuid &&
-    !!enrollmentUuid &&
+    !!courseEnrollmentUuid &&
     String(resultAttempt?.status || '').toLowerCase() === 'graded';
 
   const reviewQuery = useQuery({
     ...getStudentQuizReviewOptions({
       path: { quizUuid: quizId, attemptUuid: attemptUuid as string },
-      query: { enrollment_uuid: enrollmentUuid as string },
+      query: { enrollment_uuid: courseEnrollmentUuid as string },
     }),
     enabled: reviewEnabled,
     staleTime: STALE_TIMES.entity,
@@ -315,8 +334,8 @@ export default function StudentQuizSubmissionPage() {
     classDefinitionsLoading ||
     classEnrollmentQueries.some(q => q.isLoading) ||
     quizScheduleQueries.some(q => q.isLoading) ||
-    (!!enrollmentUuid && studentQuizQuery.isLoading) ||
-    quizAttemptsQuery.isLoading;
+    (!!courseEnrollmentUuid && studentQuizQuery.isLoading)
+  // ||    quizAttemptsQuery.isLoading;
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const startAttempt = () => {
@@ -325,7 +344,7 @@ export default function StudentQuizSubmissionPage() {
       return;
     }
     startMut.mutate(
-      { path: { quizUuid: quizId }, query: { enrollment_uuid: enrollmentUuid } },
+      { path: { quizUuid: quizId }, query: { enrollment_uuid: courseEnrollmentUuid as string } },
       {
         onSuccess: response => {
           setAttemptUuid(response.data?.uuid);
@@ -340,7 +359,7 @@ export default function StudentQuizSubmissionPage() {
   };
 
   const submitAttempt = () => {
-    if (!enrollmentUuid || !attemptUuid) return;
+    if (!courseEnrollmentUuid || !attemptUuid) return;
     const responses: QuizResponseSubmission[] = [];
     for (const question of questions) {
       const value = answers[question.uuid ?? ''];
@@ -355,7 +374,7 @@ export default function StudentQuizSubmissionPage() {
     submitMut.mutate(
       {
         path: { quizUuid: quizId, attemptUuid },
-        query: { enrollment_uuid: enrollmentUuid },
+        query: { enrollment_uuid: courseEnrollmentUuid },
         body: { responses },
       },
       {
@@ -707,8 +726,8 @@ export default function StudentQuizSubmissionPage() {
                                     'flex w-full items-start gap-3 rounded-2xl border p-3',
                                     isCorrect && 'border-success/40 bg-success/5',
                                     isSelected &&
-                                      !isCorrect &&
-                                      'border-destructive/40 bg-destructive/5'
+                                    !isCorrect &&
+                                    'border-destructive/40 bg-destructive/5'
                                   )}
                                 >
                                   {isCorrect ? (
