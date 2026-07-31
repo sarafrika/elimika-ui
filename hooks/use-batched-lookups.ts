@@ -3,13 +3,16 @@
 
 import { STALE_TIMES } from '@/lib/query-client';
 import {
+  ClassDefinition,
   CourseAssessment,
   CourseTrainingApplication,
+  type CourseCreator,
   ProgramTrainingApplication,
   type Assignment,
   type Course,
   type Enrollment,
   type Instructor,
+  type Organisation,
   type Quiz,
   type SearchResponse,
   type Student,
@@ -17,15 +20,18 @@ import {
   type User,
 } from '@/services/client';
 import {
+  getClassDefinitionOptions,
   getCourseAssessmentsOptions,
   searchAssignmentsOptions,
   searchCoursesOptions,
   searchEnrollmentsOptions,
   searchInstructorsOptions,
+  search2Options,
   searchOptions,
   searchProgramTrainingApplicationsOptions,
   searchQuizzesOptions,
   searchStudentsOptions,
+  searchCourseCreatorsOptions,
   searchTrainingApplicationsOptions,
   searchTrainingProgramsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -162,6 +168,15 @@ export function useCoursesByIds(ids: string[]) {
   return { courseMap: map, isLoading };
 }
 
+export function useProgramsByIds(ids: string[]) {
+  const { map, isLoading } = useSearchByIds<TrainingProgram>(
+    ids,
+    searchTrainingProgramsOptions,
+    STALE_TIMES.reference
+  );
+  return { programMap: map, isLoading };
+}
+
 export function useAssignmentsByIds(ids: string[]) {
   const { map, isLoading } = useSearchByIds<Assignment>(ids, searchAssignmentsOptions);
   return { assignmentMap: map, isLoading };
@@ -172,18 +187,23 @@ export function useQuizzesByIds(ids: string[]) {
   return { quizMap: map, isLoading };
 }
 
-export function useProgramsByIds(ids: string[]) {
-  const { map, isLoading } = useSearchByIds<TrainingProgram>(
-    ids,
-    searchTrainingProgramsOptions,
-    STALE_TIMES.reference
-  );
-  return { programMap: map, isLoading };
-}
-
 export function useInstructorsByIds(ids: string[]) {
   const { map, isLoading } = useSearchByIds<Instructor>(ids, searchInstructorsOptions);
   return { instructorMap: map, isLoading };
+}
+
+export function useCourseCreatorsByIds(ids: string[]) {
+  const { map, isLoading } = useSearchByIds<CourseCreator>(
+    ids,
+    searchCourseCreatorsOptions,
+    STALE_TIMES.reference
+  );
+  return { courseCreatorMap: map, isLoading };
+}
+
+export function useOrganisationsByIds(ids: string[]) {
+  const { map, isLoading } = useSearchByIds<Organisation>(ids, search2Options, STALE_TIMES.reference);
+  return { organisationMap: map, isLoading };
 }
 
 export function useTrainingApplicationsByCourseCreatorIds(courseCreatorIds: string[]) {
@@ -288,6 +308,43 @@ export function useCourseAssessmentsByCourseUuids(courseUuids: string[]) {
       return {
         assessmentMap,
         items: Object.values(assessmentMap).flat(),
+        isLoading: results.some(r => r.isLoading),
+      };
+    },
+  });
+}
+
+export function useClassesByIds(classUuids: string[]) {
+  const uniqueClassUuids = useMemo(
+    () => [...new Set(classUuids.filter(Boolean))].sort(),
+    [classUuids]
+  );
+
+  return useQueries({
+    queries: uniqueClassUuids.map(uuid => ({
+      ...getClassDefinitionOptions({
+        path: { uuid },
+        query: { pageable: {} },
+      }),
+      enabled: !!uuid,
+      staleTime: STALE_TIMES.entity,
+    })),
+
+    combine: results => {
+      const classDefinitionMap: Record<string, ClassDefinition> = {};
+
+      results.forEach((result, index) => {
+        const classUuid = uniqueClassUuids[index];
+        const classDefinition = result.data?.data?.class_definition;
+
+        if (classUuid && classDefinition) {
+          classDefinitionMap[classUuid] = classDefinition;
+        }
+      });
+
+      return {
+        classDefinitionMap,
+        items: Object.values(classDefinitionMap),
         isLoading: results.some(r => r.isLoading),
       };
     },
