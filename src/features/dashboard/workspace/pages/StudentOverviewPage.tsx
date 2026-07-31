@@ -14,7 +14,7 @@ export default function StudentOverviewPage() {
   const [searchValue, setSearchValue] = useState('');
   const deferredSearch = useDeferredValue(searchValue);
 
-  const profile = useUserProfile()
+  const profile = useUserProfile();
   const data = useStudentOverviewData();
 
 
@@ -36,8 +36,10 @@ export default function StudentOverviewPage() {
         <StudentOverviewHeroCard profile={profile} data={data} />
 
         <StudentOverviewActiveCoursesCard
-          courses={data.activeCourses}
-          isLoading={data.isLoadingCourses} upcomingAssessments={[]} />
+          courses={filteredCourses}
+          isLoading={data.isLoadingCourses}
+          upcomingAssessments={data.assessments}
+        />
 
         <StudentOpportunities
           opportunities={filteredOpportunities}

@@ -6,11 +6,13 @@ import {
   ClassDefinition,
   CourseAssessment,
   CourseTrainingApplication,
+  type CourseCreator,
   ProgramTrainingApplication,
   type Assignment,
   type Course,
   type Enrollment,
   type Instructor,
+  type Organisation,
   type Quiz,
   type SearchResponse,
   type Student,
@@ -24,10 +26,12 @@ import {
   searchCoursesOptions,
   searchEnrollmentsOptions,
   searchInstructorsOptions,
+  search2Options,
   searchOptions,
   searchProgramTrainingApplicationsOptions,
   searchQuizzesOptions,
   searchStudentsOptions,
+  searchCourseCreatorsOptions,
   searchTrainingApplicationsOptions,
   searchTrainingProgramsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -188,6 +192,20 @@ export function useInstructorsByIds(ids: string[]) {
   return { instructorMap: map, isLoading };
 }
 
+export function useCourseCreatorsByIds(ids: string[]) {
+  const { map, isLoading } = useSearchByIds<CourseCreator>(
+    ids,
+    searchCourseCreatorsOptions,
+    STALE_TIMES.reference
+  );
+  return { courseCreatorMap: map, isLoading };
+}
+
+export function useOrganisationsByIds(ids: string[]) {
+  const { map, isLoading } = useSearchByIds<Organisation>(ids, search2Options, STALE_TIMES.reference);
+  return { organisationMap: map, isLoading };
+}
+
 export function useTrainingApplicationsByCourseCreatorIds(courseCreatorIds: string[]) {
   return useSearchByField<CourseTrainingApplication>(
     courseCreatorIds,
@@ -313,17 +331,20 @@ export function useClassesByIds(classUuids: string[]) {
     })),
 
     combine: results => {
-      const classDefinitionMap: Record<string, ClassDefinition[]> = {};
+      const classDefinitionMap: Record<string, ClassDefinition> = {};
 
       results.forEach((result, index) => {
         const classUuid = uniqueClassUuids[index];
+        const classDefinition = result.data?.data?.class_definition;
 
-        classDefinitionMap[classUuid] = result.data?.data?.content ?? [];
+        if (classUuid && classDefinition) {
+          classDefinitionMap[classUuid] = classDefinition;
+        }
       });
 
       return {
         classDefinitionMap,
-        items: Object.values(classDefinitionMap).flat(),
+        items: Object.values(classDefinitionMap),
         isLoading: results.some(r => r.isLoading),
       };
     },
