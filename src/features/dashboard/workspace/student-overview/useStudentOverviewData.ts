@@ -16,7 +16,7 @@ import type {
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { useCoursesByIds, useProgramsByIds } from '../../../../../hooks/use-batched-lookups';
+import { useClassesByIds, useCoursesByIds, useProgramsByIds } from '../../../../../hooks/use-batched-lookups';
 
 export type StudentOverviewActiveCourse = {
   id: string;
@@ -173,6 +173,9 @@ export function useStudentOverviewData(): StudentOverviewData {
     }),
     enabled: Boolean(student?.uuid),
   });
+
+  const { classDefinitionMap } = useClassesByIds(['array of class uuids'])
+
   const enrolledClasses = enrolledClassesResponse?.data?.content ?? [];
 
   const { data: certificatesResponse } = useQuery({
@@ -215,6 +218,22 @@ export function useStudentOverviewData(): StudentOverviewData {
     return map;
   }, [certificates]);
 
+
+  const courseEnrollmentMap = useMemo(() => {
+    const map = new Map<string, (typeof enrolledCourses)[number]>();
+
+    enrolledCourses.forEach(courseEnrollment => {
+      if (courseEnrollment.course_uuid) {
+        map.set(courseEnrollment.course_uuid, courseEnrollment);
+      }
+    });
+
+    return map;
+  }, [enrolledCourses]);
+
+  console.log(enrolledClasses, "ENR CLASSES")
+  console.log(enrolledCourses, "ENR COURSES")
+
   const enrolledClassesAndCourses = useMemo<StudentOverviewEnrolledClassCourse[]>(() => {
     const rows: Array<StudentOverviewEnrolledClassCourse & { sortValue: number }> = [];
 
@@ -224,20 +243,31 @@ export function useStudentOverviewData(): StudentOverviewData {
       }
 
       const classId = classEnrollment.class_definition_uuid;
+
+      const courseEnrollment =
+        classEnrollment.course_uuid
+          ? courseEnrollmentMap.get(classEnrollment.course_uuid)
+          : undefined;
+
       const nextSchedule =
-        classEnrollment.latest_scheduled_instance_start_time ?? classEnrollment.latest_activity_date;
+        classEnrollment.latest_scheduled_instance_start_time ??
+        classEnrollment.latest_activity_date;
 
       rows.push({
         id: classId,
         classId,
         classTitle: classEnrollment.class_title ?? 'Class enrollment',
-        courseId: null,
-        courseTitle: null,
+
+        courseId: courseEnrollment?.course_uuid ?? null,
+        courseTitle: courseEnrollment?.course_title ?? null,
+
         enrollmentUuid: classEnrollment.latest_enrollment_uuid ?? null,
         enrollmentStatus: classEnrollment.latest_enrollment_status ?? null,
-        courseEnrollmentUuid: null,
-        courseEnrollmentStatus: null,
-        progress: null,
+
+        courseEnrollmentUuid: courseEnrollment?.uuid ?? null,
+        courseEnrollmentStatus: courseEnrollment?.latest_status ?? null,
+        progress: courseEnrollment?.progress_percentage ?? null,
+
         nextDateLabel: formatDateLabel(nextSchedule),
         scheduleCount: classEnrollment.scheduled_instance_count ?? 0,
         href: `/dashboard/schedule/classes/${classId}`,
@@ -247,8 +277,15 @@ export function useStudentOverviewData(): StudentOverviewData {
 
     return rows
       .sort((a, b) => a.sortValue - b.sortValue)
-      .map(({ sortValue: _sortValue, ...item }) => item);
-  }, [enrolledClasses]);
+      .map(({ sortValue, ...item }) => item);
+  }, [enrolledClasses, courseEnrollmentMap]);
+
+
+  // For studentoverviewpage, we need to update the usestudentoverviewdata, for enrolledClassesAndCourses data, update the data to fetch full details about an active class/course, including its progress percentage
+  // For StudentOverviewActiveCoursesCard, for the active courses, we need to add the course providers (class instructor name or organisation name --- for the uuids)
+  // also for students upcomingassessment, let it fetch students assignment and quizzes that are assigned to a student but has not been attempted. update the usestudentoverviewdata and populate the UI with data (remove mock data)
+
+  console.log(enrolledClassesAndCourses, "ENR CLASS COURSE")
 
   const activeCourses = useMemo<StudentOverviewActiveCourse[]>(() => {
     const resolvedCourses = enrolledCourses

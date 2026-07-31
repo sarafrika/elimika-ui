@@ -37,8 +37,7 @@ export default function StudentOverviewPage() {
 
         <StudentOverviewActiveCoursesCard
           courses={data.activeCourses}
-          isLoading={data.isLoadingCourses}
-        />
+          isLoading={data.isLoadingCourses} upcomingAssessments={[]} />
 
         <StudentOpportunities
           opportunities={filteredOpportunities}

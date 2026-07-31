@@ -1,14 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
-import Link from 'next/link';
-import type React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,19 +17,33 @@ import { Separator } from '@/components/ui/separator';
 import Spinner from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import type { User } from '@/services/client';
 import {
+  updateCourseCreatorMutation,
+  updateInstructorMutation,
+  updateStudentMutation,
   updateUserMutation,
   uploadProfileImageMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
+import Link from 'next/link';
+import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
+import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
 import ManageProfileActions from '../../../profile/add-profile/components/ManageProfileActions';
 import { SettingsField } from '../_components/settings-field';
-import { TimezoneSetting } from '../_components/timezone-setting';
 import { SettingsPageHeader } from '../_components/settings-page-header';
 import { SettingsToggleRow } from '../_components/settings-toggle-row';
+import { TimezoneSetting } from '../_components/timezone-setting';
 import {
   type DashboardSettingsVariant,
   formatDate,
@@ -60,6 +65,10 @@ const userDetailsSchema = z.object({
   last_name: z.string().trim().min(1, 'Last name is required'),
   email: z.string().trim().email('Enter a valid email address'),
   phone_number: z.string().trim().optional(),
+  bio: z.string().trim().optional(),
+  demographic_tag: z.string().trim().optional(),
+  website: z.string().trim().optional(),
+  professional_headline: z.string().trim().optional(),
 });
 
 type UserDetailsFormValues = z.infer<typeof userDetailsSchema>;
@@ -98,26 +107,85 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const updateUser = useMutation(updateUserMutation());
+  const updateStudentProfile = useMutation(updateStudentMutation());
+  const updateInstructorProfile = useMutation(updateInstructorMutation());
+  const updateCourseCreatorProfile = useMutation(updateCourseCreatorMutation());
   const uploadProfileImage = useMutation(uploadProfileImageMutation());
   const [isEditing, setIsEditing] = useState(false);
+  const [lastActive, setLastActive] = useState<string | null>(null);
 
-  const updateLastActive = () => {
-    localStorage.setItem("lastActive", new Date().toISOString());
-  };
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
 
-  ["click", "mousemove", "keydown", "scroll", "touchstart"].forEach((event) => {
-    window.addEventListener(event, updateLastActive);
-  });
+    const syncLastActive = () => {
+      setLastActive(window.localStorage.getItem('lastActive'));
+    };
 
-  const lastActive = localStorage.getItem("lastActive");
-  const formattedLastActive = new Intl.DateTimeFormat(undefined, {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(new Date(lastActive as string));
+    const updateLastActive = () => {
+      const nextValue = new Date().toISOString();
+      window.localStorage.setItem('lastActive', nextValue);
+      setLastActive(nextValue);
+    };
+
+    syncLastActive();
+
+    ['click', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+      window.addEventListener(event, updateLastActive);
+    });
+
+    return () => {
+      ['click', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+        window.removeEventListener(event, updateLastActive);
+      });
+    };
+  }, []);
+
+  const formattedLastActive = useMemo(() => {
+    if (!lastActive) {
+      return 'Not available';
+    }
+
+    const parsed = new Date(lastActive);
+    if (Number.isNaN(parsed.getTime())) {
+      return 'Not available';
+    }
+
+    return new Intl.DateTimeFormat(undefined, {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }).format(parsed);
+  }, [lastActive]);
+
+  const roleProfileBio =
+    variant === 'student'
+      ? profile?.student?.bio ?? ''
+      : variant === 'instructor'
+        ? profile?.instructor?.bio ?? ''
+        : variant === 'course_creator'
+          ? profile?.courseCreator?.bio ?? ''
+          : '';
+
+  const roleProfileWebsite =
+    variant === 'instructor'
+      ? profile?.instructor?.website ?? ''
+      : variant === 'course_creator'
+        ? profile?.courseCreator?.website ?? ''
+        : '';
+
+  const roleProfileProfessionalHeadline =
+    variant === 'instructor'
+      ? profile?.instructor?.professional_headline ?? ''
+      : variant === 'course_creator'
+        ? profile?.courseCreator?.professional_headline ?? ''
+        : '';
+
+  const roleProfileLocation = variant === 'student' ? profile?.student?.demographic_tag ?? '' : '';
 
   const form = useForm<UserDetailsFormValues>({
     resolver: zodResolver(userDetailsSchema),
@@ -127,6 +195,10 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
       last_name: profile?.last_name ?? '',
       email: profile?.email ?? '',
       phone_number: profile?.phone_number ?? '',
+      bio: roleProfileBio,
+      demographic_tag: roleProfileLocation,
+      professional_headline: roleProfileProfessionalHeadline,
+      website: roleProfileWebsite
     },
   });
 
@@ -137,6 +209,10 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
     profile?.last_name ?? '',
     profile?.email ?? '',
     profile?.phone_number ?? '',
+    roleProfileBio,
+    roleProfileLocation,
+    roleProfileProfessionalHeadline,
+    roleProfileWebsite
   ].join('|');
 
   useEffect(() => {
@@ -150,11 +226,15 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
       last_name: profile?.last_name ?? '',
       email: profile?.email ?? '',
       phone_number: profile?.phone_number ?? '',
+      bio: roleProfileBio,
+      demographic_tag: roleProfileLocation,
+      professional_headline: roleProfileProfessionalHeadline,
+      website: roleProfileWebsite
     });
   }, [form, isEditing, profileFormSnapshot]);
 
-  const profileImage = profile?.profile_image_url ?? '';
 
+  const profileImage = profile?.profile_image_url ?? '';
   const profileName = getProfileDisplayName(profile);
   const profileInitials = getProfileInitials(profileName);
   const config = useMemo(
@@ -230,6 +310,8 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
       last_name: profile?.last_name ?? '',
       email: profile?.email ?? '',
       phone_number: profile?.phone_number ?? '',
+      bio: roleProfileBio,
+      demographic_tag: roleProfileLocation,
     });
     setIsEditing(false);
   };
@@ -262,6 +344,42 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
         },
       });
 
+      if (variant === 'student' && profile.student?.uuid) {
+        await updateStudentProfile.mutateAsync({
+          path: { uuid: profile.student.uuid },
+          body: {
+            user_uuid: profile.uuid,
+            demographic_tag: values.demographic_tag?.trim() || undefined,
+            bio: values.bio?.trim() || undefined,
+          },
+        });
+      }
+
+      if (variant === 'instructor' && profile.instructor?.uuid) {
+        await updateInstructorProfile.mutateAsync({
+          path: { uuid: profile.instructor.uuid },
+          body: {
+            user_uuid: profile.uuid,
+            bio: values.bio?.trim() || undefined,
+            website: values.website?.trim() || undefined,
+            professional_headline: values.professional_headline?.trim() || undefined,
+          },
+        });
+      }
+
+      if (variant === 'course_creator' && profile.courseCreator?.uuid) {
+        await updateCourseCreatorProfile.mutateAsync({
+          path: { uuid: profile.courseCreator.uuid },
+          body: {
+            user_uuid: profile.uuid,
+            full_name: profile.courseCreator.full_name,
+            bio: values.bio?.trim() || undefined,
+            website: values.website?.trim() || undefined,
+            professional_headline: values.professional_headline?.trim() || undefined,
+          },
+        });
+      }
+
       toast.success('Profile updated successfully');
       setIsEditing(false);
       await qc.invalidateQueries({ queryKey: ['profile'] });
@@ -270,25 +388,10 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
     }
   };
 
-  const { isSubmitting } = form.formState;
+  // on Dashboardsettingspage, users needs to be able to update their bio (short description about themselves) and demographic_tag (their location) too
+  // however, that information to be updated does not fall under the updateusermutation, for students, it will fall under the updatestudentmutation (with student uuid), for instructors updateinstructormutation and so on for all the different userprofiletypes ... (see UserProfileProvider to see how that data is cojoined together)
 
-  const visibleFields = [
-    {
-      label: 'Full name',
-      value: profileName,
-      helperText: 'Primary display name from your current profile.',
-    },
-    {
-      label: 'Email',
-      value: profile?.email ?? 'Not set',
-      helperText: 'Used for sign in and system notifications.',
-    },
-    {
-      label: 'Phone number',
-      value: profile?.phone_number ?? 'Not set',
-      helperText: 'Shown for contact and recovery purposes.',
-    },
-  ];
+  const { isSubmitting } = form.formState;
 
   const roleFields: Record<DashboardSettingsVariant, { label: string; value: string }[]> = {
     admin: [
@@ -395,7 +498,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                   <div className='flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between'>
                     <div className='flex min-w-0 items-center gap-4'>
                       <Avatar className='size-20 border border-border/70 sm:size-24'>
-                        <AvatarImage src={profileImage} alt={profileName} />
+                        <AvatarImage src={toAuthenticatedMediaUrl(profileImage) as string} alt={profileName} />
                         <AvatarFallback className='bg-primary/10 text-primary text-xl font-semibold'>
                           {profileInitials}
                         </AvatarFallback>
@@ -409,8 +512,9 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                           {profile?.courseCreator?.professional_headline ??
                             profile?.instructor?.professional_headline ??
                             organisation?.description ??
-                            'Community dashboard member'}
+                            profile?.email}
                         </p>
+
                         <div className='flex flex-wrap gap-2 pt-1'>
                           <Badge variant='secondary' className='rounded-md px-3 py-1 text-xs'>
                             {roleLabel}
@@ -580,7 +684,109 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                             />
                           </div>
                         )}
+
+                        {isEditing && variant !== 'admin' && variant !== 'organisation' ? (
+                          <div className='grid gap-4 sm:grid-cols-2'>
+                            <FormField
+                              control={form.control}
+                              name='bio'
+                              render={({ field }) => (
+                                <FormItem className='space-y-2 sm:col-span-2'>
+                                  <FormLabel>Bio</FormLabel>
+                                  <FormControl>
+                                    <Textarea
+                                      placeholder='Write a short bio about yourself'
+                                      rows={4}
+                                      {...field}
+                                      className='border-border/70 bg-background/70 rounded-md text-sm shadow-none'
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            {variant === 'student' ? (
+                              <FormField
+                                control={form.control}
+                                name='demographic_tag'
+                                render={({ field }) => (
+                                  <FormItem className='space-y-2 sm:col-span-2 sm:max-w-[calc(50%-0.5rem)]'>
+                                    <FormLabel>Demographic tag</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder='e.g. Nairobi, Kenya'
+                                        {...field}
+                                        className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            ) :
+
+                              <>
+                                <FormField
+                                  control={form.control}
+                                  name="professional_headline"
+                                  render={({ field }) => (
+                                    <FormItem className="space-y-2 sm:col-span-2">
+                                      <FormLabel>Professional headline</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="e.g. Senior Software Engineer & AI Instructor"
+                                          {...field}
+                                          className="border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none"
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={form.control}
+                                  name="website"
+                                  render={({ field }) => (
+                                    <FormItem className="space-y-2 sm:col-span-2">
+                                      <FormLabel>Website</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="https://yourwebsite.com"
+                                          {...field}
+                                          className="border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none"
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </>}
+
+                          </div>
+                        ) : variant !== 'admin' && variant !== 'organisation' ? (
+                          <div className='space-y-4'>
+                            <SettingsField
+                              label={variant === 'student' ? 'Bio' : 'Profile bio'}
+                              value={roleProfileBio || 'Not set'}
+                              helperText='A short summary shown on your profile.'
+                              multiline
+                            />
+
+                            {(isEditing && variant === 'student') ? (
+                              <SettingsField
+                                label='Demographic tag'
+                                value={roleProfileLocation || 'Not set'}
+                                helperText='A location-style tag used on your student profile.'
+                              />
+                            ) : null}
+
+                          </div>
+                        ) : null}
                       </div>
+
+                      <Separator />
 
                       {variant !== 'organisation' ? (
                         <SettingsField
@@ -590,27 +796,12 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                         />
                       ) : null}
 
+
                       <div className='grid gap-4 sm:grid-cols-2'>
                         {roleFields[variant].map(field => (
                           <SettingsField key={field.label} label={field.label} value={field.value} />
                         ))}
                       </div>
-
-                      <SettingsField
-                        label={
-                          variant === 'organisation' ? 'Organisation description' : 'Bio / description'
-                        }
-                        value={
-                          variant === 'organisation'
-                            ? organisation?.description ?? 'Not set'
-                            : profile?.student?.bio ??
-                            profile?.instructor?.bio ??
-                            profile?.courseCreator?.bio ??
-                            profile?.full_name ??
-                            'Not set'
-                        }
-                        multiline
-                      />
 
                       <div className='flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-end'>
                         <Button
@@ -626,9 +817,20 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                         <Button
                           type='submit'
                           className='h-10 min-w-[140px] rounded-md px-4 text-sm'
-                          disabled={!isEditing || updateUser.isPending || isSubmitting}
+                          disabled={
+                            !isEditing ||
+                            updateUser.isPending ||
+                            isSubmitting ||
+                            updateStudentProfile.isPending ||
+                            updateInstructorProfile.isPending ||
+                            updateCourseCreatorProfile.isPending
+                          }
                         >
-                          {updateUser.isPending || isSubmitting ? (
+                          {updateUser.isPending ||
+                            updateStudentProfile.isPending ||
+                            updateInstructorProfile.isPending ||
+                            updateCourseCreatorProfile.isPending ||
+                            isSubmitting ? (
                             <span className='flex items-center gap-2'>
                               <Spinner className='h-4 w-4' />
                               Saving...

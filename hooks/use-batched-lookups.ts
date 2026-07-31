@@ -3,6 +3,7 @@
 
 import { STALE_TIMES } from '@/lib/query-client';
 import {
+  ClassDefinition,
   CourseAssessment,
   CourseTrainingApplication,
   ProgramTrainingApplication,
@@ -17,6 +18,7 @@ import {
   type User,
 } from '@/services/client';
 import {
+  getClassDefinitionOptions,
   getCourseAssessmentsOptions,
   searchAssignmentsOptions,
   searchCoursesOptions,
@@ -162,6 +164,15 @@ export function useCoursesByIds(ids: string[]) {
   return { courseMap: map, isLoading };
 }
 
+export function useProgramsByIds(ids: string[]) {
+  const { map, isLoading } = useSearchByIds<TrainingProgram>(
+    ids,
+    searchTrainingProgramsOptions,
+    STALE_TIMES.reference
+  );
+  return { programMap: map, isLoading };
+}
+
 export function useAssignmentsByIds(ids: string[]) {
   const { map, isLoading } = useSearchByIds<Assignment>(ids, searchAssignmentsOptions);
   return { assignmentMap: map, isLoading };
@@ -170,15 +181,6 @@ export function useAssignmentsByIds(ids: string[]) {
 export function useQuizzesByIds(ids: string[]) {
   const { map, isLoading } = useSearchByIds<Quiz>(ids, searchQuizzesOptions);
   return { quizMap: map, isLoading };
-}
-
-export function useProgramsByIds(ids: string[]) {
-  const { map, isLoading } = useSearchByIds<TrainingProgram>(
-    ids,
-    searchTrainingProgramsOptions,
-    STALE_TIMES.reference
-  );
-  return { programMap: map, isLoading };
 }
 
 export function useInstructorsByIds(ids: string[]) {
@@ -288,6 +290,40 @@ export function useCourseAssessmentsByCourseUuids(courseUuids: string[]) {
       return {
         assessmentMap,
         items: Object.values(assessmentMap).flat(),
+        isLoading: results.some(r => r.isLoading),
+      };
+    },
+  });
+}
+
+export function useClassesByIds(classUuids: string[]) {
+  const uniqueClassUuids = useMemo(
+    () => [...new Set(classUuids.filter(Boolean))].sort(),
+    [classUuids]
+  );
+
+  return useQueries({
+    queries: uniqueClassUuids.map(uuid => ({
+      ...getClassDefinitionOptions({
+        path: { uuid },
+        query: { pageable: {} },
+      }),
+      enabled: !!uuid,
+      staleTime: STALE_TIMES.entity,
+    })),
+
+    combine: results => {
+      const classDefinitionMap: Record<string, ClassDefinition[]> = {};
+
+      results.forEach((result, index) => {
+        const classUuid = uniqueClassUuids[index];
+
+        classDefinitionMap[classUuid] = result.data?.data?.content ?? [];
+      });
+
+      return {
+        classDefinitionMap,
+        items: Object.values(classDefinitionMap).flat(),
         isLoading: results.some(r => r.isLoading),
       };
     },

@@ -57,7 +57,7 @@ export function StudentOverviewActiveCoursesCard({
 
                   <div className="min-w-0">
                     <p className="font-medium truncate">{c.title}</p>
-                    <p className="text-xs text-muted-foreground">{c.progress} · {c.progress}</p>
+                    <p className="text-xs text-muted-foreground">{c.provider} · {c.nextDateLabel}</p>
                   </div>
                 </div>
 

@@ -49,9 +49,9 @@ const dashboardLabelByDomain = (domain?: string | null) => {
 };
 
 const currencyLabel = (currencyCode?: string | null) =>
-  currencyCode?.toUpperCase() === 'KES' ? 'Ksh' : currencyCode?.toUpperCase() ?? '';
+  currencyCode?.toUpperCase() === 'KES' ? 'KES' : currencyCode?.toUpperCase() ?? '';
 
-const formatBalance = (
+export const formatBalance = (
   balance?: number | null,
   currencyCode?: string | null
 ) => {
@@ -110,7 +110,7 @@ export default function DashboardTopBar() {
   const walletOptions = profile?.uuid ? getWalletOptions({ path: { userUuid: profile.uuid } }) : null;
 
   const walletQueryOptions = (walletOptions ?? {
-    queryKey: ['dashboard-wallet', 'disabled'],
+    queryKey: ['getWallet', 'disabled'],
     queryFn: async () => ({}),
     enabled: false,
     retry: 1,
