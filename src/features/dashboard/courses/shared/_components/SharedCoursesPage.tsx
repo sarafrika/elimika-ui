@@ -23,6 +23,10 @@ import {
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
+import { useOrganisation } from '@/context/organisation-context';
+import { useUserProfile } from '@/context/profile-context';
+import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
+import { averageRating, useCourseReviewsMap } from '@/hooks/use-reviews-map';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import type { UserDomain } from '@/lib/types';
 import { ApplicantTypeEnum } from '@/services/client';
@@ -42,27 +46,6 @@ import {
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Category, CourseReview } from '@/services/client/types.gen';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowRight,
-  GraduationCap,
-  Layers,
-  type LucideIcon,
-  Search,
-  SlidersHorizontal,
-  SquareDashedMousePointer,
-  Users,
-  X,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import { useOrganisation } from '@/context/organisation-context';
-import { useUserProfile } from '@/context/profile-context';
-import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
-import { averageRating, useCourseReviewsMap } from '@/hooks/use-reviews-map';
 import {
   type CoursesCatalogCardData,
   type CoursesCatalogTab,
@@ -82,6 +65,24 @@ import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_com
 import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryFilters';
 import { CoursesCategoryTabs } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryTabs';
 import { CoursesRecommendationCard } from '@/src/features/dashboard/courses/shared/_components/CoursesRecommendationCard';
+import { StudentCoursesCard } from '@/src/features/dashboard/courses/shared/_components/StudentCoursesCard';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowRight,
+  GraduationCap,
+  Layers,
+  type LucideIcon,
+  Search,
+  SlidersHorizontal,
+  SquareDashedMousePointer,
+  Users,
+  X,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 type SharedCoursesPageProps = {
   domain: UserDomain;
@@ -1147,7 +1148,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   return (
     <div className='mx-auto w-full max-w-[1680px] bg-background px-3 py-4 sm:px-4 lg:px-6 2xl:px-8'>
       <div className='space-y-6'>
-        <header className='border-border bg-card rounded-xl border p-4 sm:p-5'>
+        {isStudentDomain ? <div>
+          Student domain header here</div> : <header className='border-border bg-card rounded-xl border p-4 sm:p-5'>
           <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
             <div className='min-w-0'>
               <h1 className='text-foreground text-[clamp(1.35rem,2vw,1.75rem)] font-semibold tracking-[-0.02em]'>
@@ -1204,6 +1206,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             ) : null}
           </div>
         </header>
+        }
 
         <CoursesCategoryTabs
           activeFilter={activeFilter}
@@ -1221,7 +1224,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           <div className=''>
             <div className='space-y-2'>
               <div className='bg-card p-0 rounded-sm'>
-                <div className='border-border bg-card sticky top-0 z-10 flex flex-row items-center justify-between gap-3 border-b py-2.5'>
+                <div className='border-border bg-card sticky top-0 z-10 flex flex-row items-center justify-between gap-3  py-2.5'>
                   <p className="text-muted-foreground text-xs font-medium sm:text-sm">
                     <span className='text-foreground font-semibold tabular-nums'>{filteredItems.length}</span>{' '}
                     result{filteredItems.length === 1 ? "" : "s"}
@@ -1307,8 +1310,17 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                 ) : catalogCards.length > 0 ? (
                   <div className=''>
                     <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">
-                      {catalogCards.map(card => (
+                      {!isStudentDomain && catalogCards.map(card => (
                         <CoursesCatalogCard
+                          type='general'
+                          key={card.id}
+                          card={card}
+                          onPrimaryAction={handleCatalogCardAction}
+                        />
+                      ))}
+
+                      {isStudentDomain && catalogCards.map(card => (
+                        <StudentCoursesCard
                           type='general'
                           key={card.id}
                           card={card}
@@ -1400,73 +1412,79 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           </div>
         </section>
 
-        <section className='space-y-4'>
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-            <h2 className='text-foreground text-[clamp(1.1rem,1.5vw,1.35rem)] font-semibold tracking-[-0.02em]'>
-              Recommended for You
-            </h2>
-            <Link
-              href={buildWorkspaceAliasPath(domain, '/dashboard/courses')}
-              className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-semibold sm:text-sm'
-            >
-              View All
-              <ArrowRight className='size-3.5' />
-            </Link>
-          </div>
-
-          {isLoading ? (
-            <div className='grid gap-4 grid-cols-[repeat(auto-fit,minmax(270px,270px))]'>
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="rounded-2xl border p-4 space-y-4"
+        {!isStudentDomain &&
+          <>
+            <section className='space-y-4'>
+              <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                <h2 className='text-foreground text-[clamp(1.1rem,1.5vw,1.35rem)] font-semibold tracking-[-0.02em]'>
+                  Recommended for You
+                </h2>
+                <Link
+                  href={buildWorkspaceAliasPath(domain, '/dashboard/courses')}
+                  className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-semibold sm:text-sm'
                 >
-                  <Skeleton className="h-28 w-full rounded-xl" />
-                  <Skeleton className="h-6 w-3/4" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-5/6" />
-                  </div>
-                  <div className="flex items-center justify-between pt-2">
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-10 w-28 rounded-lg" />
-                  </div>
-                </div>))}
-            </div>
-          ) : recommendationCards.length > 0 ? (
-            <div className='scrollbar-hidden flex gap-4 overflow-x-auto pb-2'>
-              {recommendationCards.map(card => (
-                <CoursesRecommendationCard
-                  onApplyToTrain={handleRecommendedApply}
-                  key={card.id} card={card} />
-              ))}
-            </div>
-          ) : null}
-        </section>
+                  View All
+                  <ArrowRight className='size-3.5' />
+                </Link>
+              </div>
 
-        <section className='border-border bg-primary text-primary-foreground flex flex-col gap-4 rounded-[12px] border px-4 py-4 sm:px-5 md:flex-row md:items-center md:justify-between'>
-          <div className='flex items-start gap-3'>
-            <span className='mt-1 inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-background/15'>
-              <SquareDashedMousePointer className='size-4' />
-            </span>
-            <div>
-              <h2 className='text-[clamp(1rem,1.3vw,1.2rem)] font-semibold tracking-[-0.02em]'>
-                Want a structured career path?
-              </h2>
-              <p className='mt-1 text-sm text-primary-foreground/85 sm:text-[0.95rem]'>
-                Apply for a certified training program with funding opportunities.
-              </p>
-            </div>
-          </div>
+              {isLoading ? (
+                <div className='grid gap-4 grid-cols-[repeat(auto-fit,minmax(270px,270px))]'>
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="rounded-2xl border p-4 space-y-4"
+                    >
+                      <Skeleton className="h-28 w-full rounded-xl" />
+                      <Skeleton className="h-6 w-3/4" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                      </div>
+                      <div className="flex items-center justify-between pt-2">
+                        <Skeleton className="h-5 w-20" />
+                        <Skeleton className="h-10 w-28 rounded-lg" />
+                      </div>
+                    </div>))}
+                </div>
+              ) : recommendationCards.length > 0 ? (
+                <div className='scrollbar-hidden flex gap-4 overflow-x-auto pb-2'>
+                  {recommendationCards.map(card => (
+                    <CoursesRecommendationCard
+                      onApplyToTrain={handleRecommendedApply}
+                      key={card.id} card={card} />
+                  ))}
+                </div>
+              ) : null}
+            </section>
 
-          <Button
-            asChild
-            variant='warning'
-            className='h-10 w-full rounded-xl px-5 text-sm font-semibold shadow-none sm:w-auto'
-          >
-            <Link href={buildWorkspaceAliasPath(domain, '/dashboard/skills-fund')}>Apply Now</Link>
-          </Button>
-        </section>
+            <section className='border-border bg-primary text-primary-foreground flex flex-col gap-4 rounded-[12px] border px-4 py-4 sm:px-5 md:flex-row md:items-center md:justify-between'>
+              <div className='flex items-start gap-3'>
+                <span className='mt-1 inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-background/15'>
+                  <SquareDashedMousePointer className='size-4' />
+                </span>
+                <div>
+                  <h2 className='text-[clamp(1rem,1.3vw,1.2rem)] font-semibold tracking-[-0.02em]'>
+                    Want a structured career path?
+                  </h2>
+                  <p className='mt-1 text-sm text-primary-foreground/85 sm:text-[0.95rem]'>
+                    Apply for a certified training program with funding opportunities.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                asChild
+                variant='warning'
+                className='h-10 w-full rounded-xl px-5 text-sm font-semibold shadow-none sm:w-auto'
+              >
+                <Link href={buildWorkspaceAliasPath(domain, '/dashboard/skills-fund')}>Apply Now</Link>
+              </Button>
+            </section>
+          </>
+        }
+
+
       </div>
       {selectedApplicationCard ? (
         <NotesModal

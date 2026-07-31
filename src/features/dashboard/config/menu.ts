@@ -8,7 +8,6 @@ import {
   BookAIcon,
   BookOpen,
   Briefcase,
-  Building,
   Building2,
   Calendar,
   CalendarClock,
@@ -27,24 +26,23 @@ import {
   LineChart,
   LucideLandmark,
   MapPin,
-  School,
-  Tag,
-  Trophy,
-  UserCheck,
-  Wrench,
+  PiggyBank,
   Rocket,
+  School,
   Settings,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  Tag,
+  Trophy,
+  UserCheck,
   UserIcon,
   UserPlus,
   Users,
-  UsersRound,
   UsersIcon,
-  PiggyBank,
+  UsersRound,
   Wallet,
-  Warehouse,
+  Wrench
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -216,9 +214,9 @@ export default {
       icon: Users,
       items: [
         {
-          title: 'Courses',
+          title: 'Start a course',
           url: '/dashboard/courses',
-          icon: GraduationCap,
+          icon: Rocket,
         },
         // {
         //   title: 'My Courses',
