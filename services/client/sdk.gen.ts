@@ -1159,6 +1159,12 @@ import type {
   GetProfileImageData,
   GetProfileImageResponses,
   GetProfileImageErrors,
+  GetCurrentUserData,
+  GetCurrentUserResponses,
+  GetCurrentUserErrors,
+  GetUserDirectoryData,
+  GetUserDirectoryResponses,
+  GetUserDirectoryErrors,
   Search1Data,
   Search1Responses,
   Search1Errors,
@@ -2108,6 +2114,7 @@ import {
   listTransactions1ResponseTransformer,
   getAllUsersResponseTransformer,
   searchResponseTransformer,
+  getCurrentUserResponseTransformer,
   search1ResponseTransformer,
   getTrainingBranchesByOrganisation1ResponseTransformer,
   getStudentScheduleResponseTransformer,
@@ -13712,7 +13719,7 @@ export const getAllUsers = <ThrowOnError extends boolean = false>(
 
 /**
  * Search users
- * Fetches a paginated list of users based on optional filters. Supports pagination and sorting.
+ * Fetches a paginated list of users based on optional filters. Supports pagination and sorting. Restricted to platform administrators — callers looking up their own record should use GET /api/v1/users/me.
  */
 export const search = <ThrowOnError extends boolean = false>(
   options: Options<SearchData, ThrowOnError>
@@ -13756,6 +13763,61 @@ export const getProfileImage = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/users/profile-image/{fileName}',
+    ...options,
+  });
+};
+
+/**
+ * Get the authenticated user
+ * Returns the caller's own user record, resolved from the access token. Includes the caller's domains and organisation affiliations.
+ */
+export const getCurrentUser = <ThrowOnError extends boolean = false>(
+  options?: Options<GetCurrentUserData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetCurrentUserResponses,
+    GetCurrentUserErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCurrentUserResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/me',
+    ...options,
+  });
+};
+
+/**
+ * Look up a batch of users for display
+ * Resolves up to 100 user UUIDs to their directory summary — name, avatar and account number — in one request. Returns display identity only; it carries no email, phone number or date of birth. Unknown UUIDs are omitted from the response rather than treated as an error.
+ */
+export const getUserDirectory = <ThrowOnError extends boolean = false>(
+  options: Options<GetUserDirectoryData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetUserDirectoryResponses,
+    GetUserDirectoryErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/directory',
     ...options,
   });
 };

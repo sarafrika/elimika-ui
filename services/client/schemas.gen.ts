@@ -1877,16 +1877,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: '2.0 points',
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -2238,6 +2238,12 @@ export const QuizAttemptSchema = {
       example: 'system@sarafrika.com',
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
+      readOnly: true,
+    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -2254,12 +2260,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
     is_completed: {
@@ -4349,13 +4349,6 @@ export const InstructorDocumentSchema = {
         '/api/v1/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/documents/files/profile_documents/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_size_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted file size.',
@@ -4384,6 +4377,13 @@ export const InstructorDocumentSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum',
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
     },
   },
   required: ['document_type_uuid', 'instructor_uuid', 'original_filename', 'title'],
@@ -6974,13 +6974,6 @@ export const CourseCreatorDocumentDTOSchema = {
         '/api/v1/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/documents/files/profile_documents/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_size_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted file size.',
@@ -7009,6 +7002,13 @@ export const CourseCreatorDocumentDTOSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum',
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
     },
   },
   required: ['course_creator_uuid', 'document_type_uuid', 'original_filename'],
@@ -8220,17 +8220,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
       readOnly: true,
     },
     is_standalone: {
@@ -9291,17 +9291,17 @@ export const AssignmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: '100.00 points',
-      readOnly: true,
-    },
     assignment_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.',
       example: 'Theory Assignment',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: '100.00 points',
       readOnly: true,
     },
     assignment_scope: {
@@ -14336,6 +14336,98 @@ export const PagedDTOUserSchema = {
   },
 } as const;
 
+export const ApiResponseListUserSummarySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserSummary',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserSummarySchema = {
+  type: 'object',
+  description:
+    'Reduced user projection for directory lookups: display identity only, no contact details',
+  example: {
+    uuid: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
+    user_no: '123456789',
+    first_name: 'Jane',
+    middle_name: 'A.',
+    last_name: 'Doe',
+    full_name: 'Jane A. Doe',
+    display_name: 'Jane Doe',
+    profile_image_url: 'https://example.com/images/jane.jpg',
+    gender: 'FEMALE',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique system identifier for the user.',
+      example: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
+      readOnly: true,
+    },
+    user_no: {
+      type: 'string',
+      description: '**[READ-ONLY]** Unique numeric identifier used for payments and admissions.',
+      example: '123456789',
+      readOnly: true,
+    },
+    first_name: {
+      type: 'string',
+      description: "**[READ-ONLY]** User's given/first name.",
+      example: 'Jane',
+      readOnly: true,
+    },
+    middle_name: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** User's middle name or initial. Null when not recorded.",
+      example: 'A.',
+      readOnly: true,
+    },
+    last_name: {
+      type: 'string',
+      description: "**[READ-ONLY]** User's family/last name.",
+      example: 'Doe',
+      readOnly: true,
+    },
+    profile_image_url: {
+      type: ['string', 'null'],
+      format: 'uri',
+      description:
+        "**[READ-ONLY]** Public URL of the user's avatar. Null when no image has been uploaded.",
+      example: 'https://example.com/images/jane.jpg',
+      readOnly: true,
+    },
+    gender: {
+      $ref: '#/components/schemas/GenderEnum',
+    },
+    display_name: {
+      type: 'string',
+      description: '**[READ-ONLY]** Display name for UI purposes: first and last name only.',
+      example: 'Jane Doe',
+      readOnly: true,
+    },
+    full_name: {
+      type: 'string',
+      description: '**[READ-ONLY]** Full name including the middle name when one is recorded.',
+      example: 'Jane A. Doe',
+      readOnly: true,
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOTrainingBranchSchema = {
   type: 'object',
   properties: {
@@ -18948,6 +19040,18 @@ export const CourseAssessmentScoreSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '87.50 / 100.00 (87.50%)',
+      readOnly: true,
+    },
+    score_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the score based on performance level.',
+      example: 'High Performance',
+      readOnly: true,
+    },
     performance_level: {
       type: 'string',
       description:
@@ -18960,18 +19064,6 @@ export const CourseAssessmentScoreSchema = {
       description:
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.',
       example: 'Detailed instructor feedback provided',
-      readOnly: true,
-    },
-    score_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the score based on performance level.',
-      example: 'High Performance',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '87.50 / 100.00 (87.50%)',
       readOnly: true,
     },
   },

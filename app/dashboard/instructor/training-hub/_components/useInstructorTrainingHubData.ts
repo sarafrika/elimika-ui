@@ -2,7 +2,7 @@
 'use client';
 
 import { useInstructor } from '@/context/instructor-context';
-import { useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
+import { useStudentsByIds, useUsersWithContactByIds } from '@/hooks/use-batched-lookups';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import { dayjs } from '@/lib/date';
 import {
@@ -384,7 +384,7 @@ export function useInstructorTrainingHubData() {
   );
 
   const { userMap: personUsersById, isLoading: isLoadingPersonUsers } =
-    useUsersByIds(personUserUuids);
+    useUsersWithContactByIds(personUserUuids);
 
   const waitingList = useMemo<TrainingHubWaitingStudent[]>(() => {
     const items: TrainingHubWaitingStudent[] = [];

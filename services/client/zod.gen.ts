@@ -1225,14 +1225,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -1477,6 +1477,11 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -1490,11 +1495,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
     is_completed: z
@@ -2851,11 +2851,6 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
-    is_expired: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-      .readonly()
-      .optional(),
     file_size_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted file size.')
@@ -2873,6 +2868,11 @@ export const zInstructorDocument = z
       .readonly()
       .optional(),
     verification_status: zVerificationStatusEnum.optional(),
+    is_expired: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+      .readonly()
+      .optional(),
   })
   .describe(
     'Document record for instructor credential verification including educational certificates, experience documents, and professional memberships'
@@ -4309,11 +4309,6 @@ export const zCourseCreatorDocumentDto = z.object({
     )
     .readonly()
     .optional(),
-  is_expired: z
-    .boolean()
-    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-    .readonly()
-    .optional(),
   file_size_formatted: z
     .string()
     .describe('**[READ-ONLY]** Human-readable formatted file size.')
@@ -4331,6 +4326,11 @@ export const zCourseCreatorDocumentDto = z.object({
     .readonly()
     .optional(),
   verification_status: zVerificationStatusEnum.optional(),
+  is_expired: z
+    .boolean()
+    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+    .readonly()
+    .optional(),
 });
 
 export const zApiResponseCourseCreatorDocumentDto = z.object({
@@ -5104,16 +5104,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
     capacity_info: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
+      .readonly()
+      .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
     is_standalone: z
@@ -5601,16 +5601,16 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
-      .readonly()
-      .optional(),
     assignment_category: z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.'
       )
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
     assignment_scope: z
@@ -8544,6 +8544,57 @@ export const zApiResponsePagedDtoUser = z.object({
   error: z.unknown().optional(),
 });
 
+/**
+ * Reduced user projection for directory lookups: display identity only, no contact details
+ */
+export const zUserSummary = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique system identifier for the user.')
+      .readonly()
+      .optional(),
+    user_no: z
+      .string()
+      .describe('**[READ-ONLY]** Unique numeric identifier used for payments and admissions.')
+      .readonly()
+      .optional(),
+    first_name: z
+      .string()
+      .describe("**[READ-ONLY]** User's given/first name.")
+      .readonly()
+      .optional(),
+    middle_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    last_name: z
+      .string()
+      .describe("**[READ-ONLY]** User's family/last name.")
+      .readonly()
+      .optional(),
+    profile_image_url: z.union([z.string().url().readonly(), z.null()]).readonly().optional(),
+    gender: zGenderEnum.optional(),
+    display_name: z
+      .string()
+      .describe('**[READ-ONLY]** Display name for UI purposes: first and last name only.')
+      .readonly()
+      .optional(),
+    full_name: z
+      .string()
+      .describe('**[READ-ONLY]** Full name including the middle name when one is recorded.')
+      .readonly()
+      .optional(),
+  })
+  .describe(
+    'Reduced user projection for directory lookups: display identity only, no contact details'
+  );
+
+export const zApiResponseListUserSummary = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zUserSummary).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zPagedDtoTrainingBranch = z.object({
   content: z.array(zTrainingBranch).optional(),
   metadata: zPageMetadata.optional(),
@@ -10642,6 +10693,16 @@ export const zCourseAssessmentScore = z
       .describe('**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).')
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
+    score_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the score based on performance level.')
+      .readonly()
+      .optional(),
     performance_level: z
       .string()
       .describe(
@@ -10654,16 +10715,6 @@ export const zCourseAssessmentScore = z
       .describe(
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.'
       )
-      .readonly()
-      .optional(),
-    score_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the score based on performance level.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -17875,6 +17926,34 @@ export const zGetProfileImageData = z.object({
  * Profile image retrieved successfully
  */
 export const zGetProfileImageResponse = z.string().describe('Profile image retrieved successfully');
+
+export const zGetCurrentUserData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * Current user retrieved successfully
+ */
+export const zGetCurrentUserResponse = zApiResponseUser;
+
+export const zGetUserDirectoryData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    uuid_in: z
+      .array(z.string().uuid())
+      .describe(
+        'Comma-separated user UUIDs to resolve. At most 100 per request; chunk larger lists client-side.'
+      ),
+  }),
+});
+
+/**
+ * Directory summaries for the UUIDs that matched an existing user
+ */
+export const zGetUserDirectoryResponse = zApiResponseListUserSummary;
 
 export const zSearch1Data = z.object({
   body: z.never().optional(),

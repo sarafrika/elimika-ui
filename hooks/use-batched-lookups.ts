@@ -18,16 +18,18 @@ import {
   type Student,
   type TrainingProgram,
   type User,
+  type UserSummary,
 } from '@/services/client';
 import {
   getClassDefinitionOptions,
   getCourseAssessmentsOptions,
+  getUserByUuidOptions,
+  getUserDirectoryOptions,
   searchAssignmentsOptions,
   searchCoursesOptions,
   searchEnrollmentsOptions,
   searchInstructorsOptions,
   search2Options,
-  searchOptions,
   searchProgramTrainingApplicationsOptions,
   searchQuizzesOptions,
   searchStudentsOptions,
@@ -47,6 +49,13 @@ import { useMemo } from 'react';
  */
 
 const CHUNK_SIZE = 100;
+
+/**
+ * Must not exceed the backend's own cap on `GET /api/v1/users/directory`
+ * (`UserController.MAX_DIRECTORY_UUIDS`), which rejects an oversized batch
+ * outright rather than silently dropping the tail.
+ */
+const DIRECTORY_CHUNK_SIZE = 100;
 
 function chunk<T>(items: T[], size: number): T[][] {
   const chunks: T[][] = [];
@@ -154,8 +163,104 @@ export function useEnrollmentsByIds(ids: string[]) {
   return { enrollmentMap: map, isLoading };
 }
 
+/**
+ * Bulk directory lookup: names and avatars for a set of user uuids.
+ *
+ * Goes through `GET /api/v1/users/directory`, not `/users/search`. Two reasons.
+ * The response is a `UserSummary` — display identity only, no email, phone
+ * number or date of birth — which is all any caller here renders. And search
+ * is now restricted to platform admins, because an open, filterable projection
+ * of the whole user table is not something an ordinary learner needs in order
+ * to draw a roster row.
+ *
+ * The contract is unchanged from the search-backed version: pass uuids, get a
+ * map keyed by uuid. `UserSummary` is a strict subset of `User`, so the map is
+ * still typed as `Record<string, User>` for call sites — fields the summary
+ * does not carry simply read as undefined, exactly as they did for a user the
+ * lookup could not resolve.
+ *
+ * The backend caps a request at {@link DIRECTORY_CHUNK_SIZE} uuids and refuses
+ * anything longer rather than truncating, so the chunk size here is not a
+ * tuning knob: it must stay at or below that cap.
+ */
 export function useUsersByIds(ids: string[]) {
-  const { map, isLoading } = useSearchByIds<User>(ids, searchOptions);
+  const uniqueIds = useMemo(
+    () => Array.from(new Set(ids.filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [ids]
+  );
+
+  const idChunks = useMemo(() => chunk(uniqueIds, DIRECTORY_CHUNK_SIZE), [uniqueIds]);
+
+  const { map, isLoading } = useQueries({
+    queries: idChunks.map(idChunk => ({
+      ...getUserDirectoryOptions({ query: { uuid_in: idChunk } }),
+      enabled: idChunk.length > 0,
+      staleTime: STALE_TIMES.entity,
+    })),
+    combine: results => {
+      const userMap: Record<string, User> = {};
+      // Filtered against the requested set so an over-broad response can never
+      // introduce rows the caller did not ask for.
+      const wanted = new Set(uniqueIds);
+      for (const result of results) {
+        const content = (result.data as { data?: UserSummary[] } | undefined)?.data ?? [];
+        for (const summary of content) {
+          if (summary.uuid && wanted.has(summary.uuid)) {
+            userMap[summary.uuid] = summary as User;
+          }
+        }
+      }
+      return {
+        map: userMap,
+        isLoading: results.some(result => result.isLoading),
+      };
+    },
+  });
+
+  return { userMap: map, isLoading };
+}
+
+/**
+ * Users including their contact details, for the few screens that genuinely need them.
+ *
+ * {@link useUsersByIds} deliberately returns the contact-free directory projection — a lookup that
+ * renders a name and an avatar has no business carrying email, phone and date of birth, and that
+ * endpoint is open to any authenticated caller. Some screens do legitimately need contact details:
+ * an instructor must be able to reach a student waitlisted on their own class.
+ *
+ * Until there is a relationship-scoped contact endpoint that can express "this instructor may
+ * contact this student", those screens read the full record one user at a time. That is a fan-out,
+ * so use it only for a bounded set — a waiting list, not a roster — and prefer
+ * {@link useUsersByIds} everywhere else.
+ */
+export function useUsersWithContactByIds(ids: string[]) {
+  const uniqueIds = useMemo(
+    () => Array.from(new Set(ids.filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [ids]
+  );
+
+  const { map, isLoading } = useQueries({
+    queries: uniqueIds.map(uuid => ({
+      ...getUserByUuidOptions({ path: { uuid } }),
+      staleTime: STALE_TIMES.entity,
+      // A directory miss is a miss; without this a stale uuid costs three retries per user.
+      retry: 1,
+    })),
+    combine: results => {
+      const userMap: Record<string, User> = {};
+      for (const result of results) {
+        const user = result.data?.data;
+        if (user?.uuid) {
+          userMap[user.uuid] = user as User;
+        }
+      }
+      return {
+        map: userMap,
+        isLoading: results.some(result => result.isLoading),
+      };
+    },
+  });
+
   return { userMap: map, isLoading };
 }
 

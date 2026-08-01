@@ -302,6 +302,7 @@ import type {
   ListTransactions1Response,
   GetAllUsersResponse,
   SearchResponse,
+  GetCurrentUserResponse,
   Search1Response,
   GetTrainingBranchesByOrganisation1Response,
   GetStudentScheduleResponse,
@@ -5332,6 +5333,13 @@ export const getAllUsersResponseTransformer = async (data: any): Promise<GetAllU
 
 export const searchResponseTransformer = async (data: any): Promise<SearchResponse> => {
   data = apiResponsePagedDtoUserSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getCurrentUserResponseTransformer = async (
+  data: any
+): Promise<GetCurrentUserResponse> => {
+  data = apiResponseUserSchemaResponseTransformer(data);
   return data;
 };
 
