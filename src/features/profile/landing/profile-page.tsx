@@ -1,19 +1,11 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
-import {
-  updateCourseCreator,
-  updateInstructor,
-  updateStudent,
-  updateUser,
-} from '@/services/client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { parseApiDate } from '@/lib/date';
+import { updateCourseCreator, updateInstructor, updateStudent, updateUser } from '@/services/client';
 import { uploadProfileImageMutation } from '@/services/client/@tanstack/react-query.gen';
 import type {
   CourseCreator,
@@ -26,58 +18,37 @@ import type {
   User,
 } from '@/services/client/types.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Briefcase, Camera, Globe, Mail, MapPin, Phone, Upload, X } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { Camera, Upload, X } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import {
+  type EditableProfileDetails,
+  type EditableProfileErrors,
+  EditProfileDialog,
+} from './components/edit-profile-dialog';
+import { ProfileHero } from './components/profile-hero';
+import { ProfileSidebar } from './components/profile-sidebar';
+import { ProfileStatStrip } from './components/profile-stat-strip';
 import type { ProfilePageProps } from './types';
 
-type EditableProfileDetails = {
-  first_name: string;
-  last_name: string;
-  professional_headline: string;
-  website: string;
-  bio: string;
-  latitude: string;
-  longitude: string;
-};
-
-type EditableProfileErrors = Partial<Record<keyof EditableProfileDetails, string>>;
-
-function ProfileHeaderSkeleton() {
+function ProfileLayoutSkeleton() {
   return (
-    <div className='bg-card border-border rounded-2xl border p-7'>
-      <div className='mb-6 flex items-start gap-6'>
-        <Skeleton className='h-[90px] w-[90px] shrink-0 rounded-xl' />
-        <div className='flex-1 space-y-3'>
-          <Skeleton className='h-7 w-48' />
-          <div className='flex gap-4'>
-            <Skeleton className='h-4 w-32' />
-            <Skeleton className='h-4 w-40' />
-          </div>
-          <div className='grid grid-cols-3 gap-3'>
-            <Skeleton className='h-4 w-full' />
-            <Skeleton className='h-4 w-full' />
-            <Skeleton className='h-4 w-full' />
-          </div>
-          <Skeleton className='h-6 w-44' />
-        </div>
-      </div>
-      <div className='border-border flex gap-2 border-t pt-4'>
-        {[1, 2, 3, 4, 5].map(i => (
-          <Skeleton key={i} className='h-9 w-24 rounded-lg' />
+    <div className='space-y-6'>
+      <Skeleton className='h-52 w-full rounded-xl' />
+      <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+        {[1, 2, 3, 4].map(i => (
+          <Skeleton key={i} className='h-[74px] w-full rounded-xl' />
         ))}
       </div>
+      <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]'>
+        <div className='space-y-4'>
+          <Skeleton className='h-10 w-72 rounded-full' />
+          <Skeleton className='h-64 w-full rounded-xl' />
+        </div>
+        <Skeleton className='h-64 w-full rounded-xl' />
+      </div>
     </div>
-  );
-}
-
-function MetaItem({ icon, value }: { icon: React.ReactNode; value?: string }) {
-  if (!value) return null;
-  return (
-    <span className='text-muted-foreground flex items-center gap-1.5 text-sm'>
-      {icon}
-      <span>{value}</span>
-    </span>
   );
 }
 
@@ -142,7 +113,7 @@ function isValidUrl(value: string) {
   }
 }
 
-function stripHtml(value?: string) {
+function stripHtml(value?: string | null) {
   if (!value) return '';
   return value
     .replace(/<[^>]*>/g, ' ')
@@ -167,6 +138,11 @@ function getErrorMessage(error: unknown) {
   return 'Failed to update profile details';
 }
 
+/**
+ * Shared profile layout. Every domain profile page (student / instructor /
+ * course creator) composes this and feeds it its own tabs, stat tiles and
+ * sidebar cards as props — the layout itself stays domain-agnostic.
+ */
 export function ProfilePage({
   tabs,
   profile,
@@ -176,6 +152,8 @@ export function ProfilePage({
   headerBadge,
   defaultTab,
   isPublic = false,
+  stats = [],
+  sidebar,
 }: ProfilePageProps) {
   const [activeTabId, setActiveTabId] = useState(defaultTab ?? tabs[0]?.id ?? '');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -189,14 +167,16 @@ export function ProfilePage({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  const activeTab = tabs.find(t => t.id === activeTabId) ?? tabs[0];
-  const TabContent = activeTab?.component;
   const supportsExtendedDetails = domain === 'instructor' || domain === 'course_creator';
   const canEditProfileDetails =
     !isPublic &&
     ((domain === 'instructor' && Boolean(profileSource?.instructor?.uuid)) ||
       (domain === 'course_creator' && Boolean(profileSource?.courseCreator?.uuid)) ||
       (domain === 'student' && Boolean(profileSource?.student?.uuid)));
+  // The upload endpoint targets the *viewed* user's uuid, so a public viewer must
+  // never be offered the control — nor be able to fire the handler.
+  const canManagePhoto = !isPublic;
+  const canViewLocation = !isPublic;
 
   useEffect(() => {
     setDetailsValues(getEditableProfileDetails(profile, profileSource));
@@ -224,10 +204,13 @@ export function ProfilePage({
       const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
 
       if (profile.user_uuid) {
+        // `first_name` / `last_name` are required on the wire; validation already
+        // rejects blanks, so fall back to the source value rather than sending
+        // `undefined` and blanking the record.
         const userBody: UpdateUserData['body'] = {
           ...(profileSource as User),
-          first_name: firstName || undefined,
-          last_name: lastName || undefined,
+          ...(firstName ? { first_name: firstName } : {}),
+          ...(lastName ? { last_name: lastName } : {}),
           full_name: fullName || undefined,
         };
 
@@ -342,6 +325,8 @@ export function ProfilePage({
   };
 
   const handleUpload = () => {
+    if (!canManagePhoto) return;
+
     if (!selectedImage) {
       toast.error('Please select an image first');
       return;
@@ -349,7 +334,7 @@ export function ProfilePage({
 
     uploadProfileImageMut.mutate({
       body: { profileImage: selectedImage },
-      path: { userUuid: profile?.user_uuid },
+      path: { userUuid: profile.user_uuid },
     });
   };
 
@@ -418,10 +403,18 @@ export function ProfilePage({
     saveProfileDetailsMut.mutate(detailsValues);
   };
 
+  const closeEditDialog = (open: boolean) => {
+    setIsEditingDetails(open);
+    if (!open) {
+      setDetailsValues(getEditableProfileDetails(profile, profileSource));
+      setDetailsErrors({});
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className='space-y-0 p-6'>
-        <ProfileHeaderSkeleton />
+      <div className='p-6'>
+        <ProfileLayoutSkeleton />
       </div>
     );
   }
@@ -433,328 +426,157 @@ export function ProfilePage({
     .toUpperCase()
     .slice(0, 2);
   const bioPreview = stripHtml(profile.bio ?? profile.student_profile?.bio);
-  const hasDetailSummary =
-    Boolean(profile.professional_headline) ||
-    Boolean(profile.website) ||
-    Boolean(bioPreview) ||
-    typeof profile.latitude === 'number' ||
-    typeof profile.longitude === 'number';
-  const canViewLocation = !isPublic;
+  const memberSince = parseApiDate(profile.created_date)?.format('MMM YYYY');
+  const activeTab = tabs.find(tab => tab.id === activeTabId) ?? tabs[0];
+  const currentTabId = activeTab?.id ?? '';
 
   return (
-    <div className='space-y-0 font-sans'>
-      <div className='bg-card border-border rounded-2xl border p-4 sm:p-6 lg:p-7'>
-        <div className='mb-4 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-start sm:gap-6'>
-          <div className='relative w-24 shrink-0 self-center sm:w-[90px] sm:self-auto'>
-            <div className='group relative'>
-              <Avatar className='ring-border h-20 w-20 rounded-xl ring-2 sm:h-[90px] sm:w-[90px]'>
-                <AvatarImage
-                  src={previewUrl || profile?.profile_image_url || profile?.avatar_url}
-                  alt={displayFullName}
-                />
-                <AvatarFallback className='bg-primary/10 text-primary rounded-xl text-base font-semibold sm:text-lg'>
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className='absolute inset-0 flex items-center justify-center rounded-xl bg-black/60 opacity-0 transition-opacity group-hover:opacity-100'
-              >
-                <Camera className='h-5 w-5 text-white sm:h-6 sm:w-6' />
-              </button>
-
-              {profile.is_online && (
-                <span className='bg-success border-card absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full border-2 sm:-top-1 sm:-right-1 sm:h-5 sm:w-5' />
-              )}
-            </div>
-
-            <input
-              ref={fileInputRef}
-              type='file'
-              accept='image/*'
-              onChange={handleImageSelect}
-              className='hidden'
-            />
-
-            {selectedImage && (
-              <div className='mt-2 flex gap-2 sm:mt-3'>
-                <Button
-                  size='sm'
-                  onClick={handleUpload}
-                  disabled={uploadProfileImageMut.isPending}
-                  className='flex-1 text-xs'
-                >
-                  {uploadProfileImageMut.isPending ? (
-                    <>
-                      <Upload className='mr-1.5 h-3 w-3 animate-pulse' />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className='mr-1.5 h-3 w-3' />
-                      Upload
-                    </>
-                  )}
-                </Button>
-                <Button
-                  size='sm'
-                  variant='outline'
-                  onClick={handleCancel}
-                  disabled={uploadProfileImageMut.isPending}
-                >
-                  <X className='h-3 w-3' />
-                </Button>
-              </div>
-            )}
-
-            {!selectedImage && (
-              <Button
-                size='sm'
-                variant='outline'
-                onClick={() => fileInputRef.current?.click()}
-                className='mt-2 w-full min-w-fit text-xs sm:mt-3'
-              >
-                {/* <Camera className='mr-1.5 h-3 w-3' /> */}
-                Change Photo
-              </Button>
-            )}
-          </div>
-
-          <div className='min-w-0 flex-1'>
-            <div className='flex items-center gap-4'>
-              <span className='text-[14px]'>User No:</span>
-              <span className='bg-muted text-muted-foreground inline-block rounded-md px-2 py-0.5 font-mono text-[12px] tracking-wider sm:px-3 sm:py-1 sm:text-xs'>
-                {profile.user_no}
-              </span>
-            </div>
-
-            <div className='mb-2 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
-              <h1 className='text-foreground w-full truncate text-xl font-bold tracking-tight sm:text-2xl'>
-                {displayFullName}
-              </h1>
-              {headerBadge && <div className='shrink-0'>{headerBadge}</div>}
-            </div>
-
-            <div className='mb-2 flex flex-wrap gap-x-3 gap-y-1.5 sm:mb-3 sm:gap-x-5 sm:gap-y-2'>
-              <MetaItem
-                icon={<Briefcase className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
-                value={profile.professional_headline}
+    <div className='space-y-6 font-sans'>
+      <ProfileHero
+        name={displayFullName}
+        initials={initials}
+        avatarUrl={previewUrl || profile.profile_image_url || profile.avatar_url}
+        headline={profile.professional_headline}
+        isOnline={profile.is_online}
+        badge={headerBadge}
+        location={canViewLocation ? profile.address : undefined}
+        email={profile.email}
+        phone={profile.phone}
+        website={profile.website}
+        userNo={profile.user_no}
+        avatarOverlay={
+          canManagePhoto ? (
+            <button
+              type='button'
+              onClick={() => fileInputRef.current?.click()}
+              className='absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60 opacity-0 transition-opacity group-hover:opacity-100'
+            >
+              <Camera className='text-primary-foreground h-6 w-6' />
+              <span className='sr-only'>Change photo</span>
+            </button>
+          ) : null
+        }
+        avatarActions={
+          canManagePhoto ? (
+            <>
+              <input
+                ref={fileInputRef}
+                type='file'
+                accept='image/*'
+                onChange={handleImageSelect}
+                className='hidden'
               />
-              {canViewLocation ? (
-                <MetaItem
-                  icon={<MapPin className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
-                  value={profile.address}
-                />
-              ) : null}
-            </div>
 
-            <div className='mb-2 flex flex-wrap gap-x-3 gap-y-1.5 sm:mb-3 sm:gap-x-5 sm:gap-y-2'>
-              <MetaItem
-                icon={<Phone className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
-                value={profile.phone}
-              />
-              <MetaItem
-                icon={<Mail className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
-                value={profile.email}
-              />
-              {profile.website && (
-                <MetaItem
-                  icon={<Globe className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
-                  value={profile.website}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-
-        {canEditProfileDetails && (
-          <div className='flex items-end justify-end self-end sm:mb-6'>
-            <div className='flex max-w-fit flex-col items-end justify-end gap-3 self-end'>
-              {!isEditingDetails && (
-                <Button size='sm' variant='outline' onClick={() => setIsEditingDetails(true)}>
-                  Edit details
-                </Button>
-              )}
-            </div>
-
-            {!isEditingDetails ? (
-              <div className='mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'></div>
-            ) : (
-              <div className='mt-4 w-full rounded-2xl border p-4 sm:p-5'>
-                <div className='space-y-5'>
-                  <div className='grid gap-5 sm:grid-cols-2'>
-                    <div className='space-y-2'>
-                      <label className='text-sm font-medium'>First name</label>
-                      <Input
-                        value={detailsValues.first_name}
-                        onChange={event => handleDetailsChange('first_name', event.target.value)}
-                        placeholder='First name'
-                      />
-                      {detailsErrors.first_name ? (
-                        <p className='text-destructive text-xs'>{detailsErrors.first_name}</p>
-                      ) : null}
-                    </div>
-
-                    <div className='space-y-2'>
-                      <label className='text-sm font-medium'>Last name</label>
-                      <Input
-                        value={detailsValues.last_name}
-                        onChange={event => handleDetailsChange('last_name', event.target.value)}
-                        placeholder='Last name'
-                      />
-                      {detailsErrors.last_name ? (
-                        <p className='text-destructive text-xs'>{detailsErrors.last_name}</p>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {supportsExtendedDetails && (
-                    <div className='grid gap-5 sm:grid-cols-2'>
-                      <div className='space-y-2'>
-                        <label className='text-sm font-medium'>Professional headline</label>
-                        <Input
-                          value={detailsValues.professional_headline}
-                          onChange={event =>
-                            handleDetailsChange('professional_headline', event.target.value)
-                          }
-                          placeholder='Summarize your expertise in one line'
-                        />
-                        {detailsErrors.professional_headline ? (
-                          <p className='text-destructive text-xs'>
-                            {detailsErrors.professional_headline}
-                          </p>
-                        ) : null}
-                      </div>
-
-                      <div className='space-y-2'>
-                        <label className='text-sm font-medium'>Website</label>
-                        <Input
-                          value={detailsValues.website}
-                          onChange={event => handleDetailsChange('website', event.target.value)}
-                          placeholder='https://yourwebsite.com'
-                        />
-                        {detailsErrors.website ? (
-                          <p className='text-destructive text-xs'>{detailsErrors.website}</p>
-                        ) : null}
-                      </div>
-
-                      <div className='space-y-2'>
-                        <label className='text-sm font-medium'>Latitude</label>
-                        <Input
-                          type='number'
-                          inputMode='decimal'
-                          step='any'
-                          value={detailsValues.latitude}
-                          onChange={event => handleDetailsChange('latitude', event.target.value)}
-                          placeholder='-1.292100'
-                        />
-                        <p className='text-muted-foreground text-xs'>
-                          Use a value between -90 and 90.
-                        </p>
-                        {detailsErrors.latitude ? (
-                          <p className='text-destructive text-xs'>{detailsErrors.latitude}</p>
-                        ) : null}
-                      </div>
-
-                      <div className='space-y-2'>
-                        <label className='text-sm font-medium'>Longitude</label>
-                        <Input
-                          type='number'
-                          inputMode='decimal'
-                          step='any'
-                          value={detailsValues.longitude}
-                          onChange={event => handleDetailsChange('longitude', event.target.value)}
-                          placeholder='36.821900'
-                        />
-                        <p className='text-muted-foreground text-xs'>
-                          Use a value between -180 and 180.
-                        </p>
-                        {detailsErrors.longitude ? (
-                          <p className='text-destructive text-xs'>{detailsErrors.longitude}</p>
-                        ) : null}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className='w-full space-y-2'>
-                    <label className='text-sm font-medium'>Bio</label>
-                    {supportsExtendedDetails ? (
-                      <SimpleEditor
-                        value={detailsValues.bio}
-                        onChange={value => handleDetailsChange('bio', value)}
-                        isEditable
-                        showToolbar
-                      />
-                    ) : (
-                      <Textarea
-                        value={detailsValues.bio}
-                        onChange={event => handleDetailsChange('bio', event.target.value)}
-                        placeholder='Tell people a little about yourself'
-                        className='block min-h-32 w-full max-w-none resize-y'
-                      />
-                    )}
-                    {detailsErrors.bio ? (
-                      <p className='text-destructive text-xs'>{detailsErrors.bio}</p>
-                    ) : null}
-                  </div>
-
-                  <div className='flex flex-wrap justify-end gap-2 border-t pt-4'>
-                    <Button
-                      type='button'
-                      variant='outline'
-                      onClick={() => {
-                        setDetailsValues(getEditableProfileDetails(profile, profileSource));
-                        setDetailsErrors({});
-                        setIsEditingDetails(false);
-                      }}
-                      disabled={saveProfileDetailsMut.isPending}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type='button'
-                      onClick={handleSaveDetails}
-                      disabled={saveProfileDetailsMut.isPending}
-                    >
-                      {saveProfileDetailsMut.isPending ? 'Saving…' : 'Save changes'}
-                    </Button>
-                  </div>
+              {selectedImage ? (
+                <div className='mt-3 flex gap-2'>
+                  <Button
+                    size='sm'
+                    variant='secondary'
+                    onClick={handleUpload}
+                    disabled={uploadProfileImageMut.isPending}
+                    className='flex-1 text-xs'
+                  >
+                    <Upload
+                      className={
+                        uploadProfileImageMut.isPending
+                          ? 'mr-1.5 h-3 w-3 animate-pulse'
+                          : 'mr-1.5 h-3 w-3'
+                      }
+                    />
+                    {uploadProfileImageMut.isPending ? 'Uploading...' : 'Upload'}
+                  </Button>
+                  <Button
+                    size='sm'
+                    variant='secondary'
+                    onClick={handleCancel}
+                    disabled={uploadProfileImageMut.isPending}
+                  >
+                    <X className='h-3 w-3' />
+                    <span className='sr-only'>Discard selected photo</span>
+                  </Button>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              ) : (
+                <Button
+                  size='sm'
+                  variant='secondary'
+                  onClick={() => fileInputRef.current?.click()}
+                  className='mt-3 w-full min-w-fit text-xs'
+                >
+                  Change photo
+                </Button>
+              )}
+            </>
+          ) : null
+        }
+        actions={
+          canEditProfileDetails ? (
+            <Button size='sm' variant='secondary' onClick={() => setIsEditingDetails(true)}>
+              Edit details
+            </Button>
+          ) : null
+        }
+      />
 
-        <div className='border-border -mx-4 overflow-x-auto border-t px-4 pt-3 sm:-mx-6 sm:px-6 sm:pt-4 lg:-mx-7 lg:px-7'>
-          <div className='flex min-w-max gap-1 pb-1 sm:flex-wrap sm:pb-0'>
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTabId(tab.id)}
-                className={cn(
-                  'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-150 sm:px-5 sm:py-2 sm:text-sm',
-                  activeTabId === tab.id
-                    ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+      <ProfileStatStrip stats={stats} />
+
+      <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]'>
+        <div className='min-w-0'>
+          {tabs.length > 0 ? (
+            <Tabs value={currentTabId} onValueChange={setActiveTabId}>
+              <TabsList className='bg-muted/50 flex h-auto flex-wrap gap-1 rounded-full p-1'>
+                {tabs.map(tab => (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className='data-[state=active]:bg-background data-[state=active]:text-primary rounded-full data-[state=active]:shadow-sm'
+                  >
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {tabs.map(({ id, component: TabComponent }) => (
+                <TabsContent key={id} value={id} className='animate-in fade-in-0 duration-200'>
+                  <TabComponent
+                    userUuid={profile.user_uuid}
+                    domain={domain ?? 'student'}
+                    sharedProfile={profile}
+                    isPublic={isPublic}
+                  />
+                </TabsContent>
+              ))}
+            </Tabs>
+          ) : (
+            <Card>
+              <CardContent className='text-muted-foreground py-10 text-center text-sm'>
+                No profile sections are available for this account yet.
+              </CardContent>
+            </Card>
+          )}
         </div>
+
+        <ProfileSidebar
+          headline={profile.professional_headline}
+          website={profile.website}
+          location={canViewLocation ? profile.address : undefined}
+          bio={bioPreview}
+          memberSince={memberSince}
+        >
+          {sidebar}
+        </ProfileSidebar>
       </div>
 
-      {TabContent && (
-        <div key={activeTabId} className='animate-in fade-in-0 duration-200'>
-          <TabContent
-            userUuid={profile.user_uuid}
-            domain={domain ?? 'student'}
-            sharedProfile={profile}
-            isPublic={isPublic}
-          />
-        </div>
+      {canEditProfileDetails && (
+        <EditProfileDialog
+          open={isEditingDetails}
+          onOpenChange={closeEditDialog}
+          values={detailsValues}
+          errors={detailsErrors}
+          onChange={handleDetailsChange}
+          onSubmit={handleSaveDetails}
+          isSaving={saveProfileDetailsMut.isPending}
+          supportsExtendedDetails={supportsExtendedDetails}
+        />
       )}
     </div>
   );
