@@ -103,7 +103,7 @@ export function StudentCoursesCard({
             </Badge>
 
             {card.skillsFundEligible && (
-              <Badge className="bg-emerald-600 hover:bg-emerald-600">
+              <Badge className="bg-success/90 hover:bg-success/70">
                 <PiggyBank className="mr-1 h-3 w-3" />
                 Skills Fund
               </Badge>
@@ -122,7 +122,7 @@ export function StudentCoursesCard({
         <CardContent className="mt-auto space-y-3">
           <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              <Star className="h-3.5 w-3.5 fill-[var(--warning)] text-[var(--warning)]" />
               {(card.rating ?? 0).toFixed(1)}
             </div>
 

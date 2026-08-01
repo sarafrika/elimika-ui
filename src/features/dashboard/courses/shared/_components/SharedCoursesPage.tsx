@@ -1151,8 +1151,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         {isStudentDomain ?
           <div className="">
             <div className="mx-auto pb-4">
-              <h1 className="text-2xl font-bold text-slate-900">Start a Course</h1>
-              <p className="text-sm text-slate-500">Choose how you want to learn — join a class or find an instructor.</p>
+              <h1 className="text-2xl font-bold">Start a Course</h1>
+              <p className="text-sm text-muted-foreground/60">Choose how you want to learn — join a class or find an instructor.</p>
             </div>
           </div>
           :

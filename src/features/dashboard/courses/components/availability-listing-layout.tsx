@@ -26,10 +26,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 type Props = {
-  cls: any;
-  onEnroll: (cls: any) => void;
-  onViewCourse: (cls: any) => void;
-  onViewClass: (cls: any) => void;
+  cls: BundledClass;
+  onEnroll: (cls: BundledClass) => void;
+  onViewCourse: (cls: BundledClass) => void;
+  onViewClass: (cls: BundledClass) => void;
 };
 
 type SessionTemplate = {
@@ -132,7 +132,7 @@ export default function AvailabilityClassCard({
   const profile = useUserProfile();
   const student = profile?.student
 
-  const [detail, setDetail] = useState<any | null>(null);
+  const [detail, setDetail] = useState<BundledClass | null>(null);
 
   // CLASS LESSONS
   const { isLoading: lessonsLoading, lessons: lessonsWithContent } =
@@ -163,7 +163,7 @@ export default function AvailabilityClassCard({
     ...new Set(enrollments.map(({ student_uuid }: { student_uuid: string }) => student_uuid)),
   ];
   const isStudentEnrolled = student
-    ? uniqueStudentUuids.includes(student.uuid)
+    ? uniqueStudentUuids.includes(student?.uuid)
     : false;
 
   // console.log(cls, "CLASS")
@@ -175,7 +175,7 @@ export default function AvailabilityClassCard({
         className="
     transition
     cursor-pointer
-    hover:border-[#0f4c81]/50
+    hover:border-primary/50
     hover:shadow-md
   "
       >
@@ -190,12 +190,12 @@ export default function AvailabilityClassCard({
             {cls.thumbnail_url ? (
               <img
                 src={toAuthenticatedMediaUrl(cls.thumbnail_url) as string}
-                alt={cls.name}
+                alt={cls.name || cls.title}
                 className="h-12 w-12 rounded-full object-cover"
               />
             ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#0f4c81]/10">
-                <BookOpen className="h-6 w-6 text-[#0f4c81]" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <BookOpen className="h-6 w-6 text-primary" />
               </div>
             )}
 
@@ -218,13 +218,13 @@ export default function AvailabilityClassCard({
                 )}
 
                 {cls.skills_fund_eligible && (
-                  <Badge className="bg-emerald-100 text-emerald-800">
+                  <Badge className="bg-success/10 text-success">
                     Fund eligible
                   </Badge>
                 )}
               </div>
 
-              <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+              <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                 <span>
                   {cls.organization?.data?.name ?? "Institution not available"}
                 </span>
@@ -250,7 +250,7 @@ export default function AvailabilityClassCard({
           <div className="mb-2 flex flex-wrap gap-2">
             <Badge
               variant="outline"
-              className="gap-1 bg-[#0f4c81]/5 text-[#0f4c81]"
+              className="gap-1 bg-primary/5 text-primary"
             >
               <Calendar className="h-3 w-3" />
               {cls.schedule.length} sessions
@@ -258,7 +258,7 @@ export default function AvailabilityClassCard({
 
             <Badge
               variant="outline"
-              className="gap-1 bg-[#0f4c81]/5 text-[#0f4c81]"
+              className="gap-1 bg-primary/5 text-primary"
             >
               <Timer className="h-3 w-3" />
               {cls.duration_minutes} min / session
@@ -266,7 +266,7 @@ export default function AvailabilityClassCard({
 
             <Badge
               variant="outline"
-              className="gap-1 bg-[#0f4c81]/5 text-[#0f4c81]"
+              className="gap-1 bg-primary/5 text-primary"
             >
               <BookOpen className="h-3 w-3" />
               {courseLessons.length} units
@@ -274,7 +274,7 @@ export default function AvailabilityClassCard({
 
             <Badge
               variant="outline"
-              className="gap-1 bg-slate-50 text-slate-700"
+              className="gap-1 bg-muted text-muted-foreground"
             >
               <Layers className="h-3 w-3" />
               1 classes in this course
@@ -282,7 +282,7 @@ export default function AvailabilityClassCard({
           </div>
 
           {/* Details */}
-          <div className="grid gap-2 text-xs text-slate-600 md:grid-cols-3">
+          <div className="grid gap-2 text-xs text-muted-foreground md:grid-cols-3">
             <div className="inline-flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
               {cls.academic_period ?? "Academic period not provided"}
@@ -326,7 +326,7 @@ export default function AvailabilityClassCard({
               English
             </div>
 
-            <div className="inline-flex items-center gap-1.5 font-semibold text-slate-900">
+            <div className="inline-flex items-center gap-1.5 font-semibold text-foreground">
               KES {Number(cls.training_fee ?? 0).toLocaleString()}
             </div>
 
@@ -341,7 +341,7 @@ export default function AvailabilityClassCard({
               Enrolled
             </Button>) : (<Button
               onClick={() => onEnroll(cls)}
-              className="bg-[#0f4c81] hover:bg-[#0d3f6c]"
+              className="bg-primary hover:bg-primary/90"
             >
               Join Class
             </Button>)}
@@ -479,9 +479,10 @@ import { useCourseLessonsWithContent } from "../../../../../hooks/use-courseless
 import { toAuthenticatedMediaUrl } from "../../../../lib/media-url";
 import { useUserProfile } from "../../../profile/context/profile-context";
 import { ClassDetailSheet } from "../shared/_components/ClassDetailsSheet";
+import { BundledClass } from "../types";
 
 type RecommendedClassCardProps = {
-  item: any;
+  item: BundledClass;
 };
 
 export function RecommendedClassCard({
@@ -492,23 +493,23 @@ export function RecommendedClassCard({
       className="
         rounded-xl
         border
-        border-[#0f4c81]/30
+        border-primary/30
         bg-gradient-to-br
-        from-[#0f4c81]/5
+        from-primary/5
         to-transparent
         p-4
         text-left
         transition
-        hover:border-[#0f4c81]
+        hover:border-primary
       "
     >
       <div className="flex flex-wrap gap-2">
-        <Badge className="bg-[#0f4c81] text-white">
+        <Badge className="bg-primary text-primary-foreground">
           {item.match}% match
         </Badge>
 
         {item.skills_fund_eligible && (
-          <Badge className="bg-emerald-100 text-emerald-800">
+          <Badge className="bg-success/10 text-success">
             Fund eligible
           </Badge>
         )}
@@ -516,35 +517,35 @@ export function RecommendedClassCard({
 
 
       <div className="mt-3">
-        <h3 className="font-semibold text-slate-900">
+        <h3 className="font-semibold text-foreground">
           {item.title}
         </h3>
 
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           {item.institution_name}
         </p>
       </div>
 
 
-      <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
         <span>{item.language}</span>
         <span>• {item.level_of_study}</span>
       </div>
 
 
-      <p className="mt-2 font-semibold text-[#0f4c81]">
+      <p className="mt-2 font-semibold text-primary">
         KES {item.tuition_fee_kes.toLocaleString()}
       </p>
 
 
-      <div className="mt-3 rounded-md bg-[#0f4c81]/5 p-3">
+      <div className="mt-3 rounded-md bg-primary/5 p-3">
 
-        <div className="flex items-center gap-1 text-xs font-semibold text-[#0f4c81]">
+        <div className="flex items-center gap-1 text-xs font-semibold text-primary">
           <Sparkles className="h-3 w-3" />
           Why recommended
         </div>
 
-        <p className="mt-1 text-xs text-slate-700">
+        <p className="mt-1 text-xs text-muted-foreground">
           {item.why}
         </p>
 
@@ -553,7 +554,7 @@ export function RecommendedClassCard({
 
       <div className="mt-3 space-y-2">
 
-        {item.breakdown.map((b: any) => {
+        {item.breakdown.map((b: unknown) => {
 
           const percent =
             Math.round((b.score / b.max) * 100);
@@ -564,13 +565,13 @@ export function RecommendedClassCard({
               className="flex items-center gap-2 text-xs"
             >
 
-              <span className="w-20 text-slate-600">
+              <span className="w-20 text-muted-foreground">
                 {b.label}
               </span>
 
-              <div className="h-1.5 flex-1 rounded bg-slate-100 overflow-hidden">
+              <div className="h-1.5 flex-1 rounded bg-muted overflow-hidden">
                 <div
-                  className="h-full bg-[#0f4c81]"
+                  className="h-full bg-primary"
                   style={{
                     width: `${percent}%`
                   }}
@@ -584,39 +585,7 @@ export function RecommendedClassCard({
             </div>
           );
         })}
-
       </div>
-
     </button>
   );
 }
-
-function InfoRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="mt-0.5 text-[#0f4c81]">
-        {icon}
-      </div>
-
-      <div className="min-w-0">
-        <p className="text-xs text-slate-500">
-          {label}
-        </p>
-
-        <p className="font-medium break-words">
-          {value || "Not available"}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-

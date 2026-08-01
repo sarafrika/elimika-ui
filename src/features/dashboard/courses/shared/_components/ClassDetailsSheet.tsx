@@ -18,20 +18,22 @@ import {
     Users,
     Wallet,
 } from "lucide-react";
+import { ClassSessionTemplate, Lesson } from "../../../../../../services/client";
+import { BundledClass } from "../../types";
 
 interface ClassDetailSheetProps {
     open: boolean;
-    detail: any;
+    detail: BundledClass | null;
     startsAt?: string | Date | null;
     endsAt?: string | Date | null;
     uniqueStudentUuids: string[];
-    courseLessons: any[];
+    courseLessons: Lesson[];
 
     onClose: () => void;
-    onEnroll: (detail: any) => void;
-    onViewCourse: (detail: any) => void;
+    onEnroll: (detail: BundledClass) => void;
+    onViewCourse: (detail: BundledClass) => void;
 
-    formatSessionSchedule: (sessions: any[]) => string;
+    formatSessionSchedule: (sessions: ClassSessionTemplate[]) => string;
     formatScheduleDate: (date: string | Date) => string;
 }
 
@@ -69,7 +71,7 @@ export function ClassDetailSheet({
                                 )}
 
                                 {detail.skills_fund_eligible && (
-                                    <Badge className="bg-emerald-100 text-emerald-800">
+                                    <Badge className="bg-success/10 text-success">
                                         Fund Eligible
                                     </Badge>
                                 )}
@@ -182,7 +184,6 @@ export function ClassDetailSheet({
                                         icon={<MapPin className="h-4 w-4" />}
                                         label="Venue"
                                         value={
-                                            detail.venue ??
                                             detail.location_name ??
                                             detail.meeting_link ??
                                             "Not provided"
@@ -218,7 +219,7 @@ export function ClassDetailSheet({
 
                             <div className="flex gap-2 pt-2">
                                 <Button
-                                    className="flex-1 bg-[#0f4c81]"
+                                    className="flex-1 bg-primary hover:bg-primary/90"
                                     onClick={() => onEnroll(detail)}
                                 >
                                     Join Class
@@ -243,12 +244,12 @@ function InfoRow({
 }) {
     return (
         <div className="flex items-start gap-3">
-            <div className="mt-0.5 text-[#0f4c81]">
+            <div className="mt-0.5 text-primary">
                 {icon}
             </div>
 
             <div className="min-w-0">
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                     {label}
                 </p>
 

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -26,7 +25,7 @@ import {
 
 import { useCourseAssessmentsByCourseUuids } from "@/hooks/use-batched-lookups";
 import { useCourseLessonsWithContent } from "@/hooks/use-courselessonwithcontent";
-import type { Course, CourseReview, ProgramReview, TrainingProgram } from "@/services/client";
+import type { Course, CourseAssessment, CourseReview, CourseTrainingRequirement, Lesson, ProgramReview, TrainingProgram } from "@/services/client";
 import {
     getCourseAssessmentsOptions,
     getCourseByUuidOptions,
@@ -186,7 +185,7 @@ export function CourseDetailsSheet({
             ? (courseReqResp?.data?.content ?? [])
             : aggregatedRequirements
     ).filter(
-        (requirement: any) => requirement.provided_by?.toLowerCase() === "student"
+        (requirement: CourseTrainingRequirement) => requirement.provided_by?.toLowerCase() === "student"
     );
 
     const assessmentCount = isCourse
@@ -238,8 +237,8 @@ export function CourseDetailsSheet({
                             className="h-40 w-full rounded-lg object-cover"
                             unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(coverUrl))}
                             fallback={
-                                <div className="flex h-40 w-full items-center justify-center rounded-lg bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200">
-                                    <BookOpen className="h-12 w-12 text-slate-400" />
+                                <div className="flex h-40 w-full items-center justify-center rounded-lg bg-gradient-to-br from-muted via-muted/50 to-muted">
+                                    <BookOpen className="h-12 w-12 text-muted-foreground" />
                                 </div>
                             }
                         />
@@ -253,7 +252,7 @@ export function CourseDetailsSheet({
                             )}
 
                             {isCourse && course?.skills_fund_eligible && (
-                                <Badge className="bg-emerald-600 hover:bg-emerald-600">
+                                <Badge className="bg-success hover:bg-success">
                                     <PiggyBank className="mr-1 h-3 w-3" /> Skills Fund eligible
                                 </Badge>
                             )}
@@ -269,12 +268,12 @@ export function CourseDetailsSheet({
                             )}
                         </div>
 
-                        {description && <p className="text-slate-700">{stripHtml(description)}</p>}
+                        {description && <p className="text-foreground">{stripHtml(description)}</p>}
 
-                        <div className="grid grid-cols-2 gap-3 rounded-lg border bg-slate-50/60 p-3 text-xs text-slate-700">
+                        <div className="grid grid-cols-2 gap-3 rounded-lg border bg-muted/60 p-3 text-xs text-foreground">
                             {avgRating != null && (
                                 <div className="inline-flex items-center gap-1.5">
-                                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                                    <Star className="h-3.5 w-3.5 fill-warning text-warning" />
                                     {avgRating.toFixed(1)} rating
                                 </div>
                             )}
@@ -303,7 +302,7 @@ export function CourseDetailsSheet({
                         </div>
 
                         <Section icon={<CalendarDays className="h-4 w-4" />} title="Full schedule">
-                            <p className="text-slate-700">
+                            <p className="text-foreground">
                                 {isCourse
                                     ? course?.schedule_overview ??
                                     "Detailed schedule varies by class — open a class to see its weekly plan, session times, and delivery mode."
@@ -312,7 +311,7 @@ export function CourseDetailsSheet({
                         </Section>
 
                         <Section icon={<ClipboardList className="h-4 w-4" />} title="Prerequisites">
-                            <p className="text-slate-700">
+                            <p className="text-foreground">
                                 {isCourse
                                     ? stripHtml(course?.prerequisites) ?? "No formal prerequisites listed."
                                     : "Prerequisites vary by bundled course — review each course listed below."}
@@ -323,11 +322,11 @@ export function CourseDetailsSheet({
                             icon={<ListChecks className="h-4 w-4" />}
                             title={`Requirements (${studentRequirements.length})`}
                         >
-                            <p className="text-slate-700">
+                            <p className="text-foreground">
                                 {studentRequirements.length > 0
                                     ? studentRequirements
                                         .map(
-                                            (requirement: any) =>
+                                            (requirement: CourseTrainingRequirement) =>
                                                 `${requirement.name} (${requirement.quantity ?? 0} ${requirement.unit ?? ""
                                                 })`
                                         )
@@ -341,11 +340,11 @@ export function CourseDetailsSheet({
                             icon={<BookOpen className="h-4 w-4" />}
                             title={`Assessment (${assessmentCount})`}
                         >
-                            <p className="text-slate-700">
+                            <p className="text-foreground">
                                 {assessments.length > 0
                                     ? assessments
                                         .map(
-                                            (assessment: any) =>
+                                            (assessment: CourseAssessment) =>
                                                 `${assessment.title || "Untitled Assessment"} (${assessment.weight_percentage ?? 0}%)`
                                         )
                                         .join(", ") + "."
@@ -359,13 +358,13 @@ export function CourseDetailsSheet({
                                 title={`Units & lessons (${courseLessons.length})`}
                             >
                                 <ol className="space-y-2">
-                                    {courseLessons.map((l: any, i: number) => (
-                                        <li key={l.uuid ?? i} className="rounded-md border bg-white p-2">
-                                            <div className="text-sm font-medium text-slate-900">
+                                    {courseLessons.map((l: Lesson, i: number) => (
+                                        <li key={l.uuid ?? i} className="rounded-md border bg-card p-2">
+                                            <div className="text-sm font-medium text-foreground">
                                                 {i + 1}. {l.title}
                                             </div>
                                             {l.description && (
-                                                <div className="mt-0.5 text-xs text-slate-500">
+                                                <div className="mt-0.5 text-xs text-muted-foreground">
                                                     {stripHtml(l.description)}
                                                 </div>
                                             )}
@@ -382,12 +381,12 @@ export function CourseDetailsSheet({
                             >
                                 <ol className="space-y-2">
                                     {bundledCourses.map((c, i) => (
-                                        <li key={c.uuid ?? i} className="rounded-md border bg-white p-2">
-                                            <div className="text-sm font-medium text-slate-900">
+                                        <li key={c.uuid ?? i} className="rounded-md border bg-card p-2">
+                                            <div className="text-sm font-medium text-foreground">
                                                 {i + 1}. {c.name}
                                             </div>
                                             {c.description && (
-                                                <div className="mt-0.5 text-xs text-slate-500">
+                                                <div className="mt-0.5 text-xs text-muted-foreground">
                                                     {stripHtml(c.description)}
                                                 </div>
                                             )}
@@ -402,7 +401,7 @@ export function CourseDetailsSheet({
                         <div className="flex flex-wrap gap-2 pb-4">
                             <Button
                                 asChild
-                                className="bg-[#0f4c81] hover:bg-[#0d3f6c]"
+                                className="bg-primary hover:bg-primary/90"
                                 onClick={() => onOpenChange(false)}
                             >
                                 <Link
@@ -446,7 +445,7 @@ function Section({
 }) {
     return (
         <div>
-            <div className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#0f4c81]">
+            <div className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
                 {icon}
                 {title}
             </div>

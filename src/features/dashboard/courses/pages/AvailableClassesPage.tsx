@@ -17,13 +17,14 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { DateRange } from "react-day-picker";
 import { Calendar } from "react-multi-date-picker";
-import { toast } from 'sonner';
 import { Badge } from '../../../../../components/ui/badge';
 import { Button } from '../../../../../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../../../../components/ui/sheet';
 import { Skeleton } from "../../../../../components/ui/skeleton";
 import { useUserProfile } from '../../../profile/context/profile-context';
+import { buildWorkspaceAliasPath } from "../../lib/active-domain-storage";
 import { CourseDetailsSheet } from '../shared/_components/CourseDetailsSheet';
+import { BundledClass } from "../types";
 
 
 
@@ -88,14 +89,14 @@ export default function AvailableClassesPage({ courseId, instructorView = false 
 
   return (
     <div className='p-4 space-y-4'>
-      <Link href="/dashboard/student/courses" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800">
+      <Link href="/dashboard/student/courses" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to Start Course
       </Link>
 
       <div className="mt-3 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Available Classes</h2>
-          <p className="text-sm text-slate-500">{course?.name || ''}</p>
+          <p className="text-sm text-muted-foreground">{course?.name || ''}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -112,7 +113,7 @@ export default function AvailableClassesPage({ courseId, instructorView = false 
             <SheetContent side="right" className="w-full sm:max-w-4xl overflow-y-auto">
               <SheetHeader>
                 <SheetTitle>Compare Classes</SheetTitle>
-                <p className="text-xs text-slate-500">Differences are highlighted in amber.</p>
+                <p className="text-xs text-muted-foreground">Differences are highlighted in amber.</p>
               </SheetHeader>
               {filteredClasses.length >= 2 && <CompareTable classes={filteredClasses} onRemove={(id: string) => toggle(id)} />}
             </SheetContent>
@@ -155,7 +156,7 @@ export default function AvailableClassesPage({ courseId, instructorView = false 
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[#0f4c81]" />
+          <Sparkles className="h-4 w-4 text-primary" />
 
           <h2 className="text-lg font-semibold">
             Recommended Classes for You
@@ -204,15 +205,15 @@ export default function AvailableClassesPage({ courseId, instructorView = false 
             <AvailabilityClassCard
               key={item.uuid}
               cls={item}
-              onEnroll={() => toast.message("Enroll")}
+              // onEnroll={() => toast.message("Enroll")}
               onViewCourse={() => setCourseDetailsOpen(true)}
               onViewClass={() => setClassDetailsOpen(true)}
-            // onEnroll={selectedClass => {
-            //   window.location.href = buildWorkspaceAliasPath(
-            //     activeDomain,
-            //     `/dashboard/courses/available-classes/${courseId}/enroll?id=${selectedClass.uuid}`
-            //   );
-            // }}
+              onEnroll={selectedClass => {
+                window.location.href = buildWorkspaceAliasPath(
+                  activeDomain,
+                  `/dashboard/courses/available-classes/${courseId}/enroll?id=${selectedClass.uuid}`
+                );
+              }}
             />
           ))
         )}
@@ -237,8 +238,8 @@ export default function AvailableClassesPage({ courseId, instructorView = false 
   );
 }
 
-export function CompareTable({ classes, onRemove }: { classes: any[]; onRemove: (id: string) => void }) {
-  const rows: { key: string; label: string; get: (c: any) => string }[] = [
+export function CompareTable({ classes, onRemove }: { classes: BundledClass[]; onRemove: (id: string) => void }) {
+  const rows: { key: string; label: string; get: (c: BundledClass) => string }[] = [
     { key: "institution_name", label: "Institution", get: (c) => c.institution_name ?? "—" },
     { key: "instructor", label: "Instructor", get: (c) => c.instructor?.name ?? "—" },
     { key: "delivery_mode", label: "Delivery mode", get: (c) => c.delivery_mode ?? "—" },
@@ -258,13 +259,13 @@ export function CompareTable({ classes, onRemove }: { classes: any[]; onRemove: 
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
-            <th className="sticky left-0 z-10 bg-white p-2 text-left text-xs font-medium text-slate-500">Attribute</th>
+            <th className="sticky left-0 z-10 bg-card p-2 text-left text-xs font-medium text-muted-foreground">Attribute</th>
             {classes.map((c) => (
-              <th key={c.id} className="min-w-[180px] border-b p-2 text-left align-top">
-                <div className="font-semibold text-slate-900">{c.title}</div>
+              <th key={c.uuid} className="min-w-[180px] border-b p-2 text-left align-top">
+                <div className="font-semibold text-foreground">{c.title}</div>
                 <button
-                  className="mt-1 text-xs text-rose-600 hover:underline"
-                  onClick={() => onRemove(c.id)}
+                  className="mt-1 text-xs text-destructive hover:underline"
+                  onClick={() => onRemove(c.uuid as string)}
                 >
                   Remove
                 </button>
@@ -278,11 +279,11 @@ export function CompareTable({ classes, onRemove }: { classes: any[]; onRemove: 
             const differs = new Set(values).size > 1;
             return (
               <tr key={row.key} className="border-b last:border-0">
-                <td className="sticky left-0 z-10 bg-white p-2 text-xs font-medium text-slate-500">{row.label}</td>
+                <td className="sticky left-0 z-10 bg-card p-2 text-xs font-medium text-muted-foreground">{row.label}</td>
                 {values.map((v, i) => (
                   <td
                     key={i}
-                    className={`p-2 align-top ${differs ? "bg-amber-50 text-amber-900" : "text-slate-700"}`}
+                    className={`p-2 align-top ${differs ? "bg-warning/10 text-warning" : "text-foreground"}`}
                   >
                     {v}
                   </td>

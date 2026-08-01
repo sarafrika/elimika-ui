@@ -12,12 +12,12 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { DateRange } from "react-day-picker";
 import { Calendar } from 'react-multi-date-picker';
-import { toast } from 'sonner';
 import { Badge } from '../../../../../components/ui/badge';
 import { Button } from '../../../../../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../../../../../components/ui/popover';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../../../../components/ui/sheet';
 import { Skeleton } from '../../../../../components/ui/skeleton';
+import { buildWorkspaceAliasPath } from '../../lib/active-domain-storage';
 import { CourseDetailsSheet } from '../shared/_components/CourseDetailsSheet';
 import type { BundledClass } from '../types';
 import { CompareTable } from './AvailableClassesPage';
@@ -69,14 +69,14 @@ export default function AvailableProgramsPage({ programId, instructorView }: { p
 
   return (
     <div className='p-4 space-y-4'>
-      <Link href="/dashboard/student/courses" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800">
+      <Link href="/dashboard/student/courses" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to Start Course
       </Link>
 
       <div className="mt-3 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Available Classes</h2>
-          <p className="text-sm text-slate-500">{classes[0]?.program?.title ?? null}</p>
+          <p className="text-sm text-muted-foreground">{classes[0]?.program?.title ?? null}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -93,7 +93,7 @@ export default function AvailableProgramsPage({ programId, instructorView }: { p
             <SheetContent side="right" className="w-full sm:max-w-4xl overflow-y-auto">
               <SheetHeader>
                 <SheetTitle>Compare Classes</SheetTitle>
-                <p className="text-xs text-slate-500">Differences are highlighted in amber.</p>
+                <p className="text-xs text-muted-foreground">Differences are highlighted in amber.</p>
               </SheetHeader>
               {cardClasses.length >= 2 && <CompareTable classes={cardClasses} onRemove={(id: string) => toggle(id)} />}
             </SheetContent>
@@ -136,7 +136,7 @@ export default function AvailableProgramsPage({ programId, instructorView }: { p
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[#0f4c81]" />
+          <Sparkles className="h-4 w-4 text-primary" />
 
           <h2 className="text-lg font-semibold">
             Recommended Classes for You
@@ -186,21 +186,19 @@ export default function AvailableProgramsPage({ programId, instructorView }: { p
             <AvailabilityClassCard
               key={item.uuid}
               cls={item}
-              onEnroll={() => toast.message("Enroll")}
+              // onEnroll={() => toast.message("Enroll")}
               onViewCourse={() => setCourseDetailsOpen(true)}
               onViewClass={() => setClassDetailsOpen(true)}
-            // onEnroll={selectedClass => {
-            //   window.location.href = buildWorkspaceAliasPath(
-            //     activeDomain,
-            //     `/dashboard/courses/available-classes/${courseId}/enroll?id=${selectedClass.uuid}`
-            //   );
-            // }}
+              onEnroll={selectedClass => {
+                window.location.href = buildWorkspaceAliasPath(
+                  activeDomain,
+                  `/dashboard/courses/available-classes/${item.uuid}/enroll?id=${selectedClass.uuid}`
+                );
+              }}
             />
           ))
         )}
       </div>
-
-
 
       <CourseDetailsSheet
         key={programId}

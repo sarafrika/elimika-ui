@@ -352,7 +352,7 @@ export default function ClassEnrollmentPage({
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className='mx-auto w-full max-w-6xl px-6 py-12 lg:py-16 space-y-6'>
+    <div className='w-full max-w-6xl px-6 pb-12 pt-4 space-y-6'>
       {/* Back button */}
       <Button variant='ghost' onClick={handleCancel} className='gap-2 -ml-2'>
         <ArrowLeft className='h-4 w-4' />
