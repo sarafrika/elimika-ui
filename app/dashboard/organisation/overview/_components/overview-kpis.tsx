@@ -96,7 +96,7 @@ export function OverviewKpis() {
       hint: 'Training branches & facilities',
       icon: Building,
       variant: 'coral',
-      href: '/dashboard/organisation/branches',
+      href: '/dashboard/organisation/settings?tab=branches',
       loading: branchesQuery.isLoading,
     },
   ];

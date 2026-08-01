@@ -1,5 +1,5 @@
 import { getTrainingBranchByUuid, type TrainingBranch } from '@/services/client';
-import CreateEditBranchform from '../../_components/createedit-branch-form';
+import CreateEditBranchform from '@/src/features/organisation/branches/components/createedit-branch-form';
 import type { Action } from '../utils';
 
 export default async function CreateEditBranchPanel({

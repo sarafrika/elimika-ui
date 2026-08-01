@@ -3,6 +3,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Calendar, MapPin, Plus, Users, Wrench } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
@@ -62,9 +63,13 @@ export default function VenuesPage() {
         title='Venues & Resources'
         description='Classrooms, fields, studios, booking calendar, and resource allocation.'
         action={
-          <Button>
-            <Plus className='mr-2 h-4 w-4' />
-            Add Venue
+          // Venues are training branches. Creating one lives on the settings tab
+          // so there is exactly one branch form in the product.
+          <Button asChild>
+            <Link href='/dashboard/organisation/settings?tab=branches'>
+              <Plus className='mr-2 h-4 w-4' />
+              Add Venue
+            </Link>
           </Button>
         }
       />
