@@ -1,13 +1,18 @@
 import type { ComponentType, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-type EmptyStateProps = {
+export type EmptyStateProps = {
   icon?: ComponentType<{ className?: string }>;
   title: string;
   description?: ReactNode;
   action?: ReactNode;
   className?: string;
-  variant?: 'default' | 'card' | 'compact';
+  /**
+   * `default`/`card` render a contained card; `compact` a dashed strip.
+   * `plain` is a bare centred block with no border or background — for use
+   * inside a surface that already provides one.
+   */
+  variant?: 'default' | 'card' | 'compact' | 'plain';
 };
 
 export function EmptyState({
@@ -18,6 +23,30 @@ export function EmptyState({
   className,
   variant = 'default',
 }: EmptyStateProps) {
+  if (variant === 'plain') {
+    return (
+      <div
+        className={cn(
+          'flex flex-col items-center justify-center gap-3 px-6 py-12 text-center',
+          className
+        )}
+      >
+        {Icon && (
+          <div className='bg-primary/10 text-primary flex h-14 w-14 items-center justify-center rounded-full'>
+            <Icon className='h-6 w-6' />
+          </div>
+        )}
+        <div className='space-y-1'>
+          <h3 className='text-base font-semibold'>{title}</h3>
+          {description && (
+            <p className='text-muted-foreground mx-auto max-w-sm text-sm'>{description}</p>
+          )}
+        </div>
+        {action && <div className='mt-2 flex flex-wrap justify-center gap-2'>{action}</div>}
+      </div>
+    );
+  }
+
   if (variant === 'compact') {
     return (
       <div

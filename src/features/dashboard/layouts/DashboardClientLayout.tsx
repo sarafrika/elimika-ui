@@ -22,11 +22,32 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { usePathname } from 'next/navigation';
 import { type ReactNode, useMemo } from 'react';
 
-export function DashboardClientLayout({ children }: { children: ReactNode }) {
+export function DashboardClientLayout({
+  children,
+  initialDomain = null,
+}: {
+  children: ReactNode;
+  /** Cookie-derived domain resolved on the server, used for the first paint. */
+  initialDomain?: UserDomain | null;
+}) {
+  const pathname = usePathname();
+
+  // The URL segment is the source of truth once the router is driving, but it is
+  // null on the non-role-scoped paths (/dashboard, /dashboard/add-profile); the
+  // server-resolved cookie value covers those and the initial render. Kept outside
+  // the loading gate below so the attribute — and therefore the brand ramp — is in
+  // the server-rendered HTML rather than appearing after the profile query settles.
+  const themeDomain = domainFromPath(pathname) ?? initialDomain;
+
   return (
-    <DashboardProviders>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
-    </DashboardProviders>
+    // `contents` so this wrapper adds no box; app/globals.css matches it with
+    // `:root:has([data-dashboard-domain=...])`, which hoists the ramp override onto
+    // <html> so portalled UI (dropdowns, sheets, toasts) is themed too.
+    <div className='contents' data-dashboard-domain={themeDomain ?? undefined}>
+      <DashboardProviders>
+        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      </DashboardProviders>
+    </div>
   );
 }
 
