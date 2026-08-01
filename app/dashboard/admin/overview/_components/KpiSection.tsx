@@ -1,11 +1,4 @@
-import {
-  BadgeCheck,
-  BookOpen,
-  Building2,
-  FileClock,
-  ShoppingCart,
-  Users,
-} from 'lucide-react';
+import { BadgeCheck, BookOpen, Building2, FileClock, ShoppingCart, Users } from 'lucide-react';
 import { getDashboardStatistics } from '@/services/client';
 import type { AdminDashboardStats } from '@/services/client';
 import { StatCard } from '../../_components/ui/StatCard';

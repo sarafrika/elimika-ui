@@ -23,7 +23,7 @@ export function CoursesHero({ actions, domain }: CoursesHeroProps) {
     <section className='border-border bg-card relative overflow-hidden rounded-[20px] border px-4 py-4 sm:px-5 sm:py-5'>
       <div className='flex items-start justify-between gap-4'>
         <div className='min-w-0'>
-          <h1 className='text-foreground text-[clamp(1.55rem,2vw,2.2rem)] font-semibold leading-tight tracking-[-0.03em]'>
+          <h1 className='text-foreground text-[clamp(1.55rem,2vw,2.2rem)] leading-tight font-semibold tracking-[-0.03em]'>
             What would you like to do?
           </h1>
           <p className='text-muted-foreground mt-1 text-[clamp(0.82rem,1.1vw,1rem)]'>
@@ -51,7 +51,7 @@ export function CoursesHero({ actions, domain }: CoursesHeroProps) {
             )}
           >
             <Link href={buildWorkspaceAliasPath(domain, action.href)}>
-              <span className='mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-[4px] bg-background/15'>
+              <span className='bg-background/15 mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-[4px]'>
                 <action.icon className='size-4' />
               </span>
               <span className='flex min-w-0 flex-1 flex-col'>

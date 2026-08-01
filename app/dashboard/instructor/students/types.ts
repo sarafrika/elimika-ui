@@ -6,9 +6,9 @@ import type {
   StudentClassEnrollmentSummary,
   StudentCourseEnrollmentSummary,
   User,
-} from "@/services/client";
+} from '@/services/client';
 
-export type StudentStatus = "Enrolled" | "Graduated" | "On Hold";
+export type StudentStatus = 'Enrolled' | 'Graduated' | 'On Hold';
 
 export type StudentFilterState = {
   class: string;
@@ -37,10 +37,7 @@ export type StudentRosterStudent = {
   joinedAt?: Date;
 };
 
-export type StudentRosterClass = Pick<
-  ClassDefinition,
-  "uuid" | "title" | "course_uuid"
-> & {
+export type StudentRosterClass = Pick<ClassDefinition, 'uuid' | 'title' | 'course_uuid'> & {
   course?: Course | null;
   enrollment?: Enrollment[] | null;
 };
@@ -63,7 +60,7 @@ export type StudentRosterEntry = {
 
 export interface RecentActivity {
   id: string;
-  type: "completion" | "assignment" | "join";
+  type: 'completion' | 'assignment' | 'join';
   student: string;
   action: string;
   course?: string;
@@ -72,81 +69,69 @@ export interface RecentActivity {
 }
 
 const avatarPalette = [
-  "bg-primary/80 text-background",
-  "bg-success/80 text-background",
-  "bg-warning/80 text-background",
-  "bg-destructive/80 text-background",
-  "bg-foreground/80 text-background",
+  'bg-primary/80 text-background',
+  'bg-success/80 text-background',
+  'bg-warning/80 text-background',
+  'bg-destructive/80 text-background',
+  'bg-foreground/80 text-background',
 ];
 
 export function getStudentInitials(name?: string) {
-  const parts = (name ?? "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
 
-  if (parts.length === 0) return "ST";
+  if (parts.length === 0) return 'ST';
   const [first, last] = parts;
 
-  if (parts.length === 1) return (first ?? "ST").slice(0, 2).toUpperCase();
+  if (parts.length === 1) return (first ?? 'ST').slice(0, 2).toUpperCase();
 
-  return `${(first ?? "S").slice(0, 1)}${(last ?? "T").slice(0, 1)}`.toUpperCase();
+  return `${(first ?? 'S').slice(0, 1)}${(last ?? 'T').slice(0, 1)}`.toUpperCase();
 }
 
 export function getStudentAvatarColor(seed: string) {
-  const hash = seed
-    .split("")
-    .reduce((value, char) => value + char.charCodeAt(0), 0);
+  const hash = seed.split('').reduce((value, char) => value + char.charCodeAt(0), 0);
 
-  return (
-    avatarPalette[hash % avatarPalette.length] ?? "bg-primary/80 text-background"
-  );
+  return avatarPalette[hash % avatarPalette.length] ?? 'bg-primary/80 text-background';
 }
 
 export function formatStudentName(user?: User | null, profile?: Student | null) {
   const name =
-    user?.full_name ??
-    [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
+    user?.full_name ?? [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim();
 
   if (name) return name;
   if (profile?.user_uuid) return `Student ${profile.user_uuid.slice(0, 6)}`;
 
-  return "Student";
+  return 'Student';
 }
 
 export function normalizeStudentStatus(
   status?: string | null,
   progress?: number | null
 ): StudentStatus {
-  const normalized = (status ?? "").trim().toLowerCase();
+  const normalized = (status ?? '').trim().toLowerCase();
 
   if ((progress ?? 0) >= 100 || /complete|graduat/.test(normalized)) {
-    return "Graduated";
+    return 'Graduated';
   }
 
   if (/waitlist|cancel|hold|suspend|pause|absent/.test(normalized)) {
-    return "On Hold";
+    return 'On Hold';
   }
 
-  return "Enrolled";
+  return 'Enrolled';
 }
 
-export function getStudentProgress(
-  courseEnrollments: StudentCourseEnrollmentSummary[]
-) {
+export function getStudentProgress(courseEnrollments: StudentCourseEnrollmentSummary[]) {
   const values = courseEnrollments
-    .map((enrollment) => enrollment.progress_percentage)
-    .filter((value): value is number => typeof value === "number");
+    .map(enrollment => enrollment.progress_percentage)
+    .filter((value): value is number => typeof value === 'number');
 
   if (values.length === 0) return 0;
 
-  return Math.round(
-    values.reduce((sum, value) => sum + value, 0) / values.length
-  );
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
 
 export function formatRelativeTime(value?: Date) {
-  if (!value) return "Recently";
+  if (!value) return 'Recently';
 
   const diffMs = value.getTime() - Date.now();
   const diffMinutes = Math.round(diffMs / 60_000);
@@ -155,13 +140,13 @@ export function formatRelativeTime(value?: Date) {
 
   if (Math.abs(diffMinutes) < 60) {
     return diffMinutes === 0
-      ? "Just now"
-      : `${Math.abs(diffMinutes)} min${Math.abs(diffMinutes) === 1 ? "" : "s"} ago`;
+      ? 'Just now'
+      : `${Math.abs(diffMinutes)} min${Math.abs(diffMinutes) === 1 ? '' : 's'} ago`;
   }
 
   if (Math.abs(diffHours) < 24) {
-    return `${Math.abs(diffHours)} hour${Math.abs(diffHours) === 1 ? "" : "s"} ago`;
+    return `${Math.abs(diffHours)} hour${Math.abs(diffHours) === 1 ? '' : 's'} ago`;
   }
 
-  return `${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? "" : "s"} ago`;
+  return `${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? '' : 's'} ago`;
 }

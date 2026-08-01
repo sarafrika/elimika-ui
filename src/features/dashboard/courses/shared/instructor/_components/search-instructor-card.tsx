@@ -7,14 +7,7 @@ import { Card } from '@/components/ui/card';
 import { searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { useQuery } from '@tanstack/react-query';
-import {
-  ArrowRight,
-  CheckCircle2,
-  Heart,
-  MapPin,
-  MessageCircleMore,
-  Star,
-} from 'lucide-react';
+import { ArrowRight, CheckCircle2, Heart, MapPin, MessageCircleMore, Star } from 'lucide-react';
 import { useMemo } from 'react';
 
 type Props = {
@@ -86,19 +79,29 @@ export function SearchInstructorCard({
     enabled: !!instructor.uuid,
   });
 
-  const matchedCourse = appliedCourses?.data?.content?.find(course => course.course_uuid === courseId);
+  const matchedCourse = appliedCourses?.data?.content?.find(
+    course => course.course_uuid === courseId
+  );
   const rateCard = matchedCourse?.rate_card;
   const rates = rateCard ? Object.values(rateCard).filter(value => typeof value === 'number') : [];
   const minRate = rates.length ? Math.min(...rates) : null;
 
   const matchScore = useMemo(() => {
     const ratingScore = Math.min(20, Math.round((instructor.rating ?? 4.4) * 4));
-    const experienceScore = Math.min(10, Math.round((instructor.total_experience_years ?? 0) * 1.2));
+    const experienceScore = Math.min(
+      10,
+      Math.round((instructor.total_experience_years ?? 0) * 1.2)
+    );
     const verifiedScore = instructor.admin_verified ? 7 : 0;
     const profileScore = instructor.is_profile_complete ? 5 : 0;
 
     return Math.min(99, 60 + ratingScore + experienceScore + verifiedScore + profileScore);
-  }, [instructor.admin_verified, instructor.is_profile_complete, instructor.rating, instructor.total_experience_years]);
+  }, [
+    instructor.admin_verified,
+    instructor.is_profile_complete,
+    instructor.rating,
+    instructor.total_experience_years,
+  ]);
 
   const matchLabel =
     matchScore >= 92 ? 'Excellent match' : matchScore >= 82 ? 'Great match' : 'Good match';
@@ -113,7 +116,7 @@ export function SearchInstructorCard({
   return (
     <Card
       className={[
-        'group h-full rounded-xl border bg-card p-4 shadow-none transition-colors hover:border-primary/50 hover:shadow-sm',
+        'group bg-card hover:border-primary/50 h-full rounded-xl border p-4 shadow-none transition-colors hover:shadow-sm',
         selected ? 'border-primary bg-primary/5' : 'border-border/70',
       ].join(' ')}
     >
@@ -127,13 +130,16 @@ export function SearchInstructorCard({
             onSelect();
           }
         }}
-        className='flex h-full w-full flex-col text-left outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+        className='focus-visible:ring-primary/40 focus-visible:ring-offset-background flex h-full w-full flex-col text-left outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
       >
         <div className='flex items-start gap-3'>
           <div className='flex min-w-0 items-start gap-3'>
             <div className='relative'>
-              <Avatar className='size-14 border border-border/60'>
-                <AvatarImage src={instructor.profile_image_url ?? undefined} alt={instructor.full_name} />
+              <Avatar className='border-border/60 size-14 border'>
+                <AvatarImage
+                  src={instructor.profile_image_url ?? undefined}
+                  alt={instructor.full_name}
+                />
                 <AvatarFallback className='text-sm font-semibold'>
                   {instructor.full_name?.charAt(0) || 'I'}
                 </AvatarFallback>
@@ -144,12 +150,15 @@ export function SearchInstructorCard({
             </div>
 
             <div className='min-w-0 space-y-1'>
-              <div className='flex min-w-0 justify-between items-center gap-2'>
-                <Badge className='bg-success/10 border border-success/45 text-success rounded-full px-2.5 text-[11px]'>
+              <div className='flex min-w-0 items-center justify-between gap-2'>
+                <Badge className='bg-success/10 border-success/45 text-success rounded-full border px-2.5 text-[11px]'>
                   Available
                 </Badge>
 
-                <Badge variant='outlineSuccess' className='text-success rounded-full px-2.5 py-1 text-[11px]'>
+                <Badge
+                  variant='outlineSuccess'
+                  className='text-success rounded-full px-2.5 py-1 text-[11px]'
+                >
                   {matchScore}% Match
                 </Badge>
               </div>
@@ -157,7 +166,9 @@ export function SearchInstructorCard({
               <div className='min-w-0'>
                 <h3 className='flex items-center gap-2 truncate text-[0.98rem] font-semibold sm:text-[1.04rem]'>
                   {instructor.full_name}
-                  {isVerified ? <CheckCircle2 className='min-w-4 text-primary size-4 mb-1' /> : null}
+                  {isVerified ? (
+                    <CheckCircle2 className='text-primary mb-1 size-4 min-w-4' />
+                  ) : null}
                 </h3>
                 <p className='text-muted-foreground line-clamp-1 text-xs sm:text-sm'>
                   {instructor.professional_headline || 'Certified Instructor'}
@@ -187,9 +198,7 @@ export function SearchInstructorCard({
             <Star className='size-4 fill-current' />
             {rating.toFixed(1)}
           </span>
-          <span className='text-muted-foreground text-xs sm:text-sm'>
-            {reviewCount} reviews
-          </span>
+          <span className='text-muted-foreground text-xs sm:text-sm'>{reviewCount} reviews</span>
           <span className='bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-[11px]'>
             {matchLabel}
           </span>
@@ -241,15 +250,23 @@ export function SearchInstructorCard({
                   onToggleSave?.();
                 }}
               >
-                <Heart className={isSaved ? 'size-4 fill-current text-destructive' : 'size-4'} />
+                <Heart className={isSaved ? 'text-destructive size-4 fill-current' : 'size-4'} />
               </Button>
             </div>
 
             <div className='flex flex-wrap items-center gap-2'>
-              <Button type='button' variant='outline' className='h-9 rounded-xl px-3 text-xs sm:text-sm'>
+              <Button
+                type='button'
+                variant='outline'
+                className='h-9 rounded-xl px-3 text-xs sm:text-sm'
+              >
                 View Profile
               </Button>
-              <Button type='button' variant='outline' className='h-9 rounded-xl px-3 text-xs sm:text-sm'>
+              <Button
+                type='button'
+                variant='outline'
+                className='h-9 rounded-xl px-3 text-xs sm:text-sm'
+              >
                 <MessageCircleMore className='size-4' />
                 Message
               </Button>

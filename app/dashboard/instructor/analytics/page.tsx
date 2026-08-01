@@ -3,7 +3,10 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 
-import { AnalyticsFiltersProvider, useAnalyticsFilters } from './_components/analytics-filters-context';
+import {
+  AnalyticsFiltersProvider,
+  useAnalyticsFilters,
+} from './_components/analytics-filters-context';
 import {
   buildAnalyticsSearchParams,
   parseAnalyticsFiltersFromSearchParams,
@@ -96,7 +99,11 @@ function AnalyticsDashboardBody({
           availableLocations={analytics.availableLocations}
         />
 
-        <TabNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab as unknown as (tab: string) => void} />
+        <TabNav
+          tabs={TABS}
+          activeTab={activeTab}
+          onTabChange={setActiveTab as unknown as (tab: string) => void}
+        />
 
         {activeTab === 'Overview' && (
           <div className='space-y-4 sm:space-y-5'>
@@ -107,10 +114,14 @@ function AnalyticsDashboardBody({
                 <PerformanceChart />
               </div>
               <div className='min-w-[260px] flex-1'>
-                <CompletionByProgram handeViewProgramReport={() => setActiveTab("Program Report")} />
+                <CompletionByProgram
+                  handeViewProgramReport={() => setActiveTab('Program Report')}
+                />
               </div>
-              <div className='w-full lg:min-w-[220px] lg:w-auto xl:min-w-[240px]'>
-                <StatusBreakdown handleViewStatusBreakdown={() => setActiveTab("Location Report")} />
+              <div className='w-full lg:w-auto lg:min-w-[220px] xl:min-w-[240px]'>
+                <StatusBreakdown
+                  handleViewStatusBreakdown={() => setActiveTab('Location Report')}
+                />
               </div>
             </div>
 
@@ -118,10 +129,12 @@ function AnalyticsDashboardBody({
 
             <div className='flex flex-wrap gap-4'>
               <div className='min-w-[240px] flex-1'>
-                <TopLocations handleViewTopLocations={() => setActiveTab("Location Report")} />
+                <TopLocations handleViewTopLocations={() => setActiveTab('Location Report')} />
               </div>
               <div className='min-w-[240px] flex-1'>
-                <SatisfactionDistribution handleViewSatisfactionDistribution={() => setActiveTab('Participant Report')} />
+                <SatisfactionDistribution
+                  handleViewSatisfactionDistribution={() => setActiveTab('Participant Report')}
+                />
               </div>
             </div>
 

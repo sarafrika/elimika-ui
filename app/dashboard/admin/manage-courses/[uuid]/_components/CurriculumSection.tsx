@@ -20,9 +20,11 @@ import { getResourceIcon } from '@/lib/resources-icon';
 import { SectionCard } from '../../../_components/ui/SectionCard';
 
 export function CurriculumSection({ courseUuid }: { courseUuid: string }) {
-  const { isLoading, lessons, contentTypeMap, contentTypeDetailsMap } = useCourseLessonsWithContent({
-    courseUuid,
-  });
+  const { isLoading, lessons, contentTypeMap, contentTypeDetailsMap } = useCourseLessonsWithContent(
+    {
+      courseUuid,
+    }
+  );
 
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState<LessonContentPreviewItem | null>(null);
@@ -52,10 +54,10 @@ export function CurriculumSection({ courseUuid }: { courseUuid: string }) {
           ))}
         </div>
       ) : lessonCount === 0 ? (
-        <div className='flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border/70 p-8 text-center'>
-          <BookOpen className='size-8 text-muted-foreground' />
-          <p className='text-sm font-medium text-foreground'>No lessons yet</p>
-          <p className='text-xs text-muted-foreground'>
+        <div className='border-border/70 flex flex-col items-center justify-center gap-2 rounded-md border border-dashed p-8 text-center'>
+          <BookOpen className='text-muted-foreground size-8' />
+          <p className='text-foreground text-sm font-medium'>No lessons yet</p>
+          <p className='text-muted-foreground text-xs'>
             This course has no lessons — it is not ready for approval.
           </p>
         </div>
@@ -68,54 +70,64 @@ export function CurriculumSection({ courseUuid }: { courseUuid: string }) {
               <AccordionItem
                 key={lesson.uuid ?? index}
                 value={lesson.uuid ?? String(index)}
-                className='rounded-md border border-border/60 bg-muted/20 px-0 last:border-b'
+                className='border-border/60 bg-muted/20 rounded-md border px-0 last:border-b'
               >
                 <AccordionTrigger className='px-4 py-3 hover:no-underline'>
                   <div className='flex min-w-0 items-center gap-3 text-left'>
-                    <span className='flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary'>
+                    <span className='bg-primary/10 text-primary flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold'>
                       {index + 1}
                     </span>
                     <div className='min-w-0'>
-                      <p className='truncate text-sm font-semibold text-foreground'>{lesson.title}</p>
-                      <p className='text-xs text-muted-foreground'>
+                      <p className='text-foreground truncate text-sm font-semibold'>
+                        {lesson.title}
+                      </p>
+                      <p className='text-muted-foreground text-xs'>
                         {contentItems.length} item{contentItems.length === 1 ? '' : 's'}
-                        {lesson.status ? ` · ${String(lesson.status).toLowerCase().replace(/_/g, ' ')}` : ''}
+                        {lesson.status
+                          ? ` · ${String(lesson.status).toLowerCase().replace(/_/g, ' ')}`
+                          : ''}
                       </p>
                     </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className='px-4 pb-3'>
                   {lesson.description ? (
-                    <div className='mb-2 rounded-md border border-border/60 bg-background px-3 py-2 text-sm text-muted-foreground'>
+                    <div className='border-border/60 bg-background text-muted-foreground mb-2 rounded-md border px-3 py-2 text-sm'>
                       <RichTextRenderer htmlString={lesson.description} />
                     </div>
                   ) : null}
                   {contentItems.length ? (
-                    <div className='divide-y divide-border/60 rounded-md border border-border/60 bg-background'>
+                    <div className='divide-border/60 border-border/60 bg-background divide-y rounded-md border'>
                       {contentItems.map((content, contentIndex) => {
                         const typeName =
-                          (content.content_type_uuid && contentTypeMap[content.content_type_uuid]) || 'file';
+                          (content.content_type_uuid &&
+                            contentTypeMap[content.content_type_uuid]) ||
+                          'file';
                         return (
                           <div
                             key={content.uuid ?? contentIndex}
                             className='flex items-center justify-between gap-3 px-3 py-2.5'
                           >
                             <div className='flex min-w-0 items-center gap-3'>
-                              <span className='flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground'>
+                              <span className='bg-muted text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded-md'>
                                 {getResourceIcon(typeName)}
                               </span>
                               <div className='min-w-0'>
-                                <p className='truncate text-sm font-medium text-foreground'>
+                                <p className='text-foreground truncate text-sm font-medium'>
                                   {contentIndex + 1}. {content.title}
                                 </p>
-                                <p className='text-xs capitalize text-muted-foreground'>{typeName}</p>
+                                <p className='text-muted-foreground text-xs capitalize'>
+                                  {typeName}
+                                </p>
                               </div>
                             </div>
                             <Button
                               variant='ghost'
                               size='sm'
                               className='gap-1.5 text-xs'
-                              onClick={() => openContent(content as LessonContentPreviewItem, typeName)}
+                              onClick={() =>
+                                openContent(content as LessonContentPreviewItem, typeName)
+                              }
                             >
                               <Eye className='size-3.5' />
                               Review
@@ -125,7 +137,7 @@ export function CurriculumSection({ courseUuid }: { courseUuid: string }) {
                       })}
                     </div>
                   ) : (
-                    <p className='px-1 py-2 text-xs text-muted-foreground'>
+                    <p className='text-muted-foreground px-1 py-2 text-xs'>
                       No content items in this lesson.
                     </p>
                   )}

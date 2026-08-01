@@ -35,7 +35,7 @@ import {
   Search,
   Sparkles,
   SunMedium,
-  Wallet
+  Wallet,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -45,20 +45,20 @@ import { DashboardNotifications } from './dashboard-notifications';
 
 const dashboardLabelByDomain = (domain?: string | null) => {
   if (!domain) return 'Dashboard';
-  return dashboardDomainDisplayConfig[domain as keyof typeof dashboardDomainDisplayConfig]?.title ?? 'Dashboard';
+  return (
+    dashboardDomainDisplayConfig[domain as keyof typeof dashboardDomainDisplayConfig]?.title ??
+    'Dashboard'
+  );
 };
 
 const currencyLabel = (currencyCode?: string | null) =>
-  currencyCode?.toUpperCase() === 'KES' ? 'KES' : currencyCode?.toUpperCase() ?? '';
+  currencyCode?.toUpperCase() === 'KES' ? 'KES' : (currencyCode?.toUpperCase() ?? '');
 
-export const formatBalance = (
-  balance?: number | null,
-  currencyCode?: string | null
-) => {
+export const formatBalance = (balance?: number | null, currencyCode?: string | null) => {
   if (balance === undefined || balance === null) {
     return (
-      <div className="flex items-center">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary" />
+      <div className='flex items-center'>
+        <div className='border-border border-t-primary h-4 w-4 animate-spin rounded-full border-2' />
       </div>
     );
   }
@@ -102,12 +102,14 @@ export default function DashboardTopBar() {
   const isCourseCreator = activeDomain === 'course_creator';
   const isInstructor = activeDomain === 'instructor';
   const isOrganisation = activeDomain === 'organisation';
-  const isStudent = activeDomain === "student"
+  const isStudent = activeDomain === 'student';
 
   const profileName = getProfileName(profile);
   const profileInitials = getInitials(profileName);
 
-  const walletOptions = profile?.uuid ? getWalletOptions({ path: { userUuid: profile.uuid } }) : null;
+  const walletOptions = profile?.uuid
+    ? getWalletOptions({ path: { userUuid: profile.uuid } })
+    : null;
 
   const walletQueryOptions = (walletOptions ?? {
     queryKey: ['getWallet', 'disabled'],
@@ -123,7 +125,10 @@ export default function DashboardTopBar() {
   });
   const walletData = walletQuery.data;
 
-  const walletBalance = formatBalance(walletData?.data?.balance_amount, walletData?.data?.currency_code);
+  const walletBalance = formatBalance(
+    walletData?.data?.balance_amount,
+    walletData?.data?.currency_code
+  );
 
   const activeDomainLabel = activeDomainConfig?.title ?? dashboardLabelByDomain(activeDomain);
   const roleLabel = activeDomainLabel.replace(' Dashboard', '');
@@ -142,13 +147,10 @@ export default function DashboardTopBar() {
     activeDomain,
     '/dashboard/course-management/create-new-course'
   );
-  const createClassHref = buildWorkspaceAliasPath(
-    activeDomain,
-    '/dashboard/classes/new'
-  );
+  const createClassHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/classes/new');
 
   return (
-    <header className='bg-background/90 sticky top-0 z-50 backdrop-blur-md '>
+    <header className='bg-background/90 sticky top-0 z-50 backdrop-blur-md'>
       <div className='flex flex-col'>
         <div className='flex items-center gap-3 px-1 py-3 sm:px-3 lg:px-4'>
           {/* <div className='hidden min-w-0 flex-1 xl:block'>
@@ -172,9 +174,9 @@ export default function DashboardTopBar() {
               <Input
                 type='search'
                 placeholder='Search courses, students, and more...'
-                className='h-10 rounded-full border border-input bg-background pl-11 pr-16 text-xs shadow-sm transition-colors hover:border-primary/40'
+                className='border-input bg-background hover:border-primary/40 h-10 rounded-full border pr-16 pl-11 text-xs shadow-sm transition-colors'
               />
-              <kbd className='pointer-events-none absolute top-1/2 right-4 hidden -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground 2xl:inline-block'>
+              <kbd className='border-border bg-muted text-muted-foreground pointer-events-none absolute top-1/2 right-4 hidden -translate-y-1/2 rounded border px-1.5 py-0.5 text-[10px] font-medium 2xl:inline-block'>
                 ⌘K
               </kbd>
             </Label>
@@ -201,9 +203,7 @@ export default function DashboardTopBar() {
                 size='sm'
                 className='h-9 rounded-md px-4 font-semibold md:inline-flex'
               >
-                <Link href={createClassHref}
-                  className='flex flex-row items-center'
-                >
+                <Link href={createClassHref} className='flex flex-row items-center'>
                   <Sparkles className='h-4 w-4' />
                   Create Class
                   <ChevronDown className='h-4 w-4' />
@@ -217,9 +217,7 @@ export default function DashboardTopBar() {
                 size='sm'
                 className='h-9 rounded-md px-4 text-sm font-semibold md:inline-flex'
               >
-                <Link className='flex flex-row items-center'
-                  href="/dashboard/student/courses"
-                >
+                <Link className='flex flex-row items-center' href='/dashboard/student/courses'>
                   <Sparkles className='h-3 w-3' />
                   Enroll Course
                   <ChevronDown className='h-3 w-3' />
@@ -227,19 +225,22 @@ export default function DashboardTopBar() {
               </Button>
             )}
 
-            <DashboardNotifications notificationHref={notificationHref} activeDomain={activeDomain} />
+            <DashboardNotifications
+              notificationHref={notificationHref}
+              activeDomain={activeDomain}
+            />
 
             <div className='border-border/70 bg-card/80 hidden h-10 items-center gap-2 rounded-md border px-3 shadow-sm xl:flex'>
               <div className='bg-success/10 text-success flex h-8 w-8 items-center justify-center rounded-full'>
                 <Wallet className='h-4 w-4' />
               </div>
 
-              <div className='min-w-0 flex flex-col justify-center leading-tight'>
-                <div className='text-muted-foreground text-[10px] font-medium uppercase tracking-wide'>
+              <div className='flex min-w-0 flex-col justify-center leading-tight'>
+                <div className='text-muted-foreground text-[10px] font-medium tracking-wide uppercase'>
                   Skills Wallet
                 </div>
 
-                <div className='text-foreground truncate text-sm font-semibold leading-none'>
+                <div className='text-foreground truncate text-sm leading-none font-semibold'>
                   {walletBalance}
                 </div>
               </div>
@@ -268,13 +269,13 @@ export default function DashboardTopBar() {
           </div>
         </div>
 
-        <div className='border-border/70 border-t pt-2 px-3 sm:px-5 lg:px-6 xl:hidden'>
+        <div className='border-border/70 border-t px-3 pt-2 sm:px-5 lg:px-6 xl:hidden'>
           <label className='relative block'>
             <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
             <Input
               type='search'
               placeholder='Search courses, students, and more...'
-              className='border-border/70 bg-card/80 h-11 rounded-md pl-11 pr-14 shadow-sm text-sm'
+              className='border-border/70 bg-card/80 h-11 rounded-md pr-14 pl-11 text-sm shadow-sm'
             />
             {/* <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
               Ctrl K
@@ -291,19 +292,21 @@ export default function DashboardTopBar() {
               </Button>
             )}
 
-            {(
-              <div className='mb-2 border-border/70 bg-card/80 flex items-center gap-2 rounded-md border px-3 py-2 shadow-sm sm:hidden'>
+            {
+              <div className='border-border/70 bg-card/80 mb-2 flex items-center gap-2 rounded-md border px-3 py-2 shadow-sm sm:hidden'>
                 <div className='bg-success/10 text-success flex size-7 items-center justify-center rounded-full'>
                   <Wallet className='h-3.5 w-3.5' />
                 </div>
                 <div className='min-w-0 leading-tight'>
-                  <div className='text-muted-foreground text-[10px] uppercase tracking-wide'>
+                  <div className='text-muted-foreground text-[10px] tracking-wide uppercase'>
                     Skills Wallet
                   </div>
-                  <div className='text-foreground truncate text-xs font-semibold'>{walletBalance}</div>
+                  <div className='text-foreground truncate text-xs font-semibold'>
+                    {walletBalance}
+                  </div>
                 </div>
               </div>
-            )}
+            }
           </div>
         </div>
       </div>
@@ -340,7 +343,7 @@ function DashboardProfileMenu({
 }: DashboardProfileMenuProps) {
   const { theme, setTheme, systemTheme } = useTheme();
   const selectedTheme = theme ?? 'system';
-  const resolvedTheme = selectedTheme === 'system' ? systemTheme ?? 'light' : selectedTheme;
+  const resolvedTheme = selectedTheme === 'system' ? (systemTheme ?? 'light') : selectedTheme;
 
   const themeOptions = [
     { value: 'light', label: 'Light', Icon: SunMedium },
@@ -353,7 +356,7 @@ function DashboardProfileMenu({
       <DropdownMenuTrigger asChild>
         <Button
           variant='outline'
-          className='border-border/70 bg-card/80 h-10 rounded-md px-3 shadow-sm transition hover:border-primary/40 hover:bg-primary/15'
+          className='border-border/70 bg-card/80 hover:border-primary/40 hover:bg-primary/15 h-10 rounded-md px-3 shadow-sm transition'
         >
           <Avatar className='border-border/60 h-8 w-8 border'>
             <AvatarImage src={userImage} alt={profileName} />
@@ -363,24 +366,17 @@ function DashboardProfileMenu({
           </Avatar>
 
           <span className='hidden min-w-0 flex-col items-start leading-tight md:flex'>
-            <span className='text-foreground truncate text-sm font-semibold'>
-              {profileName}
-            </span>
+            <span className='text-foreground truncate text-sm font-semibold'>{profileName}</span>
 
-            <span className='text-muted-foreground truncate text-xs'>
-              {roleLabel}
-            </span>
+            <span className='text-muted-foreground truncate text-xs'>{roleLabel}</span>
           </span>
 
           <ChevronDown className='text-muted-foreground h-4 w-4' />
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent
-        align='end'
-        className='border-border/70 w-80 rounded-md p-3 shadow-lg'
-      >
-        <div className='flex items-center gap-3 rounded-md bg-muted/40 p-3'>
+      <DropdownMenuContent align='end' className='border-border/70 w-80 rounded-md p-3 shadow-lg'>
+        <div className='bg-muted/40 flex items-center gap-3 rounded-md p-3'>
           <Avatar className='h-10 w-10'>
             <AvatarImage src={userImage} alt={profileName} />
 
@@ -390,19 +386,12 @@ function DashboardProfileMenu({
           </Avatar>
 
           <div className='min-w-0'>
-            <p className='text-foreground truncate text-sm font-semibold'>
-              {profileName}
-            </p>
+            <p className='text-foreground truncate text-sm font-semibold'>{profileName}</p>
 
-            <p className='text-muted-foreground truncate text-xs'>
-              {profileEmail ?? 'No email'}
-            </p>
+            <p className='text-muted-foreground truncate text-xs'>{profileEmail ?? 'No email'}</p>
 
             <div className='mt-2 flex flex-wrap gap-2'>
-              <Badge
-                variant='secondary'
-                className='rounded-md px-2 py-0 text-[10px]'
-              >
+              <Badge variant='secondary' className='rounded-md px-2 py-0 text-[10px]'>
                 {activeDomainLabel}
               </Badge>
             </div>
@@ -411,7 +400,7 @@ function DashboardProfileMenu({
 
         <DropdownMenuSeparator className='my-3' />
 
-        <DropdownMenuLabel className='px-2 text-[11px] uppercase tracking-wide'>
+        <DropdownMenuLabel className='px-2 text-[11px] tracking-wide uppercase'>
           Appearance
         </DropdownMenuLabel>
 
@@ -446,16 +435,14 @@ function DashboardProfileMenu({
 
         <DropdownMenuSeparator className='my-3' />
 
-        <DropdownMenuLabel className='px-2 text-[11px] uppercase tracking-wide'>
+        <DropdownMenuLabel className='px-2 text-[11px] tracking-wide uppercase'>
           Switch profile
         </DropdownMenuLabel>
 
         <div className='space-y-1'>
           {availableDomains.map(domain => {
             const config =
-              dashboardDomainDisplayConfig[
-              domain as keyof typeof dashboardDomainDisplayConfig
-              ];
+              dashboardDomainDisplayConfig[domain as keyof typeof dashboardDomainDisplayConfig];
 
             if (!config) return null;
 
@@ -466,14 +453,14 @@ function DashboardProfileMenu({
               <DropdownMenuItem
                 key={domain}
                 className={cn(
-                  'flex h-10 cursor-pointer items-center gap-3 rounded-md px-3 hover:bg-primary/25 focus:bg-primary/25',
+                  'hover:bg-primary/25 focus:bg-primary/25 flex h-10 cursor-pointer items-center gap-3 rounded-md px-3',
                   isActive && 'bg-primary/10'
                 )}
                 onClick={() => onSwitch(domain)}
               >
                 <div
                   className={cn(
-                    'flex size-8 items-center justify-center rounded-full hover:bg-primary/15',
+                    'hover:bg-primary/15 flex size-8 items-center justify-center rounded-full',
                     config.bgColor
                   )}
                 >
@@ -481,13 +468,9 @@ function DashboardProfileMenu({
                 </div>
 
                 <div className='min-w-0 flex-1'>
-                  <p className='text-foreground truncate text-sm font-medium'>
-                    {config.title}
-                  </p>
+                  <p className='text-foreground truncate text-sm font-medium'>{config.title}</p>
 
-                  <p className='text-muted-foreground truncate text-xs'>
-                    {config.description}
-                  </p>
+                  <p className='text-muted-foreground truncate text-xs'>{config.description}</p>
                 </div>
 
                 {isActive && <LayoutDashboard className='text-primary h-4 w-4' />}
@@ -500,14 +483,14 @@ function DashboardProfileMenu({
 
         <div className='grid gap-1'>
           <DropdownMenuItem
-            className='h-10 cursor-pointer rounded-md px-3 hover:bg-primary/15 focus:bg-primary/15'
+            className='hover:bg-primary/15 focus:bg-primary/15 h-10 cursor-pointer rounded-md px-3'
             onClick={onAddProfile}
           >
             Add another profile
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            className='text-destructive h-10 cursor-pointer rounded-md px-3 hover:bg-primary/15 focus:bg-primary/15'
+            className='text-destructive hover:bg-primary/15 focus:bg-primary/15 h-10 cursor-pointer rounded-md px-3'
             onClick={() => void onLogout()}
           >
             Sign out

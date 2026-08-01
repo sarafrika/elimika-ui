@@ -26,9 +26,7 @@ export default async function CoursesEntryPage({ searchParams }: CoursesEntryPag
   }
 
   const queryString = search.toString();
-  const nextPath = queryString
-    ? `/dashboard/courses?${queryString}`
-    : '/dashboard/courses';
+  const nextPath = queryString ? `/dashboard/courses?${queryString}` : '/dashboard/courses';
   const target = await resolveDashboardEntryTarget(activeDomain, nextPath);
 
   redirect(target.redirectTo);

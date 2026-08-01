@@ -11,18 +11,9 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  Users
-} from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Search, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  formatPreferredScheduleLabel,
-  type DateFilter,
-} from './new-class-page.utils';
+import { formatPreferredScheduleLabel, type DateFilter } from './new-class-page.utils';
 
 const CLASSES_PER_PAGE = 8;
 
@@ -44,7 +35,8 @@ function getVisiblePageNumbers(currentPage: number, totalPages: number) {
 
 function getClassStatus(classItem: InstructorClassWithSchedule) {
   const activeSessions =
-    classItem.schedule?.filter(instance => instance.status?.toUpperCase() !== 'CANCELLED').length ?? 0;
+    classItem.schedule?.filter(instance => instance.status?.toUpperCase() !== 'CANCELLED').length ??
+    0;
   if (activeSessions === 0) return 'Draft';
   if (activeSessions > 0 && activeSessions < 5) return 'Ongoing';
   return 'Published';
@@ -60,7 +52,7 @@ export function ClassSidebar({
   onSelectClass,
   onSearchChange,
   onDateFilterChange,
-  instructorView = true
+  instructorView = true,
 }: {
   isLoading: boolean;
   classes: InstructorClassWithSchedule[];
@@ -71,7 +63,7 @@ export function ClassSidebar({
   onSelectClass: (classUuid: string) => void;
   onSearchChange: (value: string) => void;
   onDateFilterChange: (value: DateFilter) => void;
-  instructorView?: boolean
+  instructorView?: boolean;
 }) {
   const hasSearchTerm = searchTerm.trim().length > 0;
   const [currentPage, setCurrentPage] = useState(1);
@@ -95,10 +87,10 @@ export function ClassSidebar({
   }, [totalPages]);
 
   return (
-    <section className='rounded-lg border border-border/70 bg-card/85 p-3 shadow-sm backdrop-blur'>
+    <section className='border-border/70 bg-card/85 rounded-lg border p-3 shadow-sm backdrop-blur'>
       <div className='mb-4 flex items-center gap-3 px-1 pt-1'>
         <Select value={dateFilter} onValueChange={value => onDateFilterChange(value as DateFilter)}>
-          <SelectTrigger className='h-10 w-full rounded-md border-border/70 bg-background/75 shadow-none'>
+          <SelectTrigger className='border-border/70 bg-background/75 h-10 w-full rounded-md shadow-none'>
             <SelectValue placeholder='Filter by date' />
           </SelectTrigger>
 
@@ -113,12 +105,12 @@ export function ClassSidebar({
 
       <div className='mb-4 space-y-2'>
         <div className='relative'>
-          <Search className='pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+          <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
           <Input
             value={draftSearchTerm}
             onChange={event => onSearchChange(event.target.value)}
             placeholder='Search classes'
-            className='h-10 rounded-md border-border/70 bg-background/75 pl-9 pr-4 text-sm shadow-none'
+            className='border-border/70 bg-background/75 h-10 rounded-md pr-4 pl-9 text-sm shadow-none'
             aria-label='Search instructor classes'
           />
         </div>
@@ -130,11 +122,11 @@ export function ClassSidebar({
             <Skeleton key={index} className='h-[110px] rounded-lg' />
           ))
         ) : classes.length === 0 ? (
-          <div className='rounded-lg border border-dashed border-border/70 p-6 text-center'>
-            <p className='font-medium text-foreground'>
+          <div className='border-border/70 rounded-lg border border-dashed p-6 text-center'>
+            <p className='text-foreground font-medium'>
               {hasSearchTerm ? 'No classes match this search' : 'No classes for this filter'}
             </p>
-            <p className='mt-1 text-sm text-muted-foreground'>
+            <p className='text-muted-foreground mt-1 text-sm'>
               {hasSearchTerm
                 ? 'Try another class title or course name.'
                 : 'Switch the date filter to load more classes.'}
@@ -155,10 +147,11 @@ export function ClassSidebar({
                 key={classItem.uuid}
                 type='button'
                 onClick={() => classItem.uuid && onSelectClass(classItem.uuid)}
-                className={`w-full rounded-lg border px-3 py-3 text-left transition-all ${isSelected
-                  ? 'border-primary/40 bg-primary/10 shadow-sm'
-                  : 'border-border/70 bg-background/70 hover:border-primary/30 hover:bg-primary/5'
-                  }`}
+                className={`w-full rounded-lg border px-3 py-3 text-left transition-all ${
+                  isSelected
+                    ? 'border-primary/40 bg-primary/10 shadow-sm'
+                    : 'border-border/70 bg-background/70 hover:border-primary/30 hover:bg-primary/5'
+                }`}
               >
                 <div className='flex gap-3'>
                   {/* <div className='relative h-[76px] w-[96px] shrink-0 overflow-hidden rounded-md border border-border/60 bg-muted'>
@@ -180,41 +173,39 @@ export function ClassSidebar({
                   <div className='min-w-0 flex-1'>
                     <div className='flex items-start justify-between gap-2'>
                       <div className='min-w-0'>
-                        <p className='truncate text-sm font-semibold text-foreground'>
+                        <p className='text-foreground truncate text-sm font-semibold'>
                           {classItem.title}
                         </p>
-
                       </div>
 
-                      <span className='inline-flex shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                      <span className='border-border bg-muted text-muted-foreground inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase'>
                         {getClassStatus(classItem)}
                       </span>
                     </div>
 
-                    <p className='line-clamp-2 text-xs text-muted-foreground'>
+                    <p className='text-muted-foreground line-clamp-2 text-xs'>
                       {classItem.course?.name || 'Linked course not available'}
                     </p>
 
-                    {instructorView && <div className='mt-2 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2'>
-                      <span className='inline-flex items-center gap-1.5'>
-                        <Users className='size-3.5 shrink-0' />
+                    {instructorView && (
+                      <div className='text-muted-foreground mt-2 grid gap-2 text-xs sm:grid-cols-2'>
+                        <span className='inline-flex items-center gap-1.5'>
+                          <Users className='size-3.5 shrink-0' />
+                          {
+                            new Set(
+                              ((classItem.enrollments ?? []) as Array<{ student_uuid?: string }>)
+                                .map(enrollment => enrollment.student_uuid)
+                                .filter(Boolean)
+                            ).size
+                          }{' '}
+                          enrollments
+                        </span>
+                      </div>
+                    )}
 
-                        {
-                          new Set(
-                            ((classItem.enrollments ?? []) as Array<{ student_uuid?: string }>)
-                              .map(enrollment => enrollment.student_uuid)
-                              .filter(Boolean)
-                          ).size
-                        } enrollments
-                      </span>
-
-                    </div>}
-
-                    <div className='mt-2 flex items-center gap-1.5 text-xs text-muted-foreground'>
+                    <div className='text-muted-foreground mt-2 flex items-center gap-1.5 text-xs'>
                       <CalendarDays className='size-3.5 shrink-0' />
-                      <span className='truncate'>
-                        {formatPreferredScheduleLabel(classItem)}
-                      </span>
+                      <span className='truncate'>{formatPreferredScheduleLabel(classItem)}</span>
                     </div>
                   </div>
                 </div>
@@ -225,8 +216,8 @@ export function ClassSidebar({
       </div>
 
       {!isLoading && classes.length > CLASSES_PER_PAGE ? (
-        <div className='mt-4 space-y-3 border-t border-border/70 pt-3'>
-          <p className='px-1 text-xs text-muted-foreground'>
+        <div className='border-border/70 mt-4 space-y-3 border-t pt-3'>
+          <p className='text-muted-foreground px-1 text-xs'>
             Showing {resultStart}-{resultEnd} of {classes.length} classes
           </p>
 
@@ -235,7 +226,7 @@ export function ClassSidebar({
               type='button'
               onClick={() => setCurrentPage(page => Math.max(page - 1, 1))}
               disabled={safeCurrentPage === 1}
-              className='inline-flex h-9 w-9 items-center justify-center rounded-md border border-border/70 bg-background/70 text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-background/70'
+              className='border-border/70 bg-background/70 text-foreground hover:bg-muted focus-visible:ring-ring disabled:hover:bg-background/70 inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60'
               aria-label='Show previous classes'
             >
               <ChevronLeft className='h-4 w-4' />
@@ -250,16 +241,17 @@ export function ClassSidebar({
                 return (
                   <div key={pageNumber} className='flex items-center gap-1'>
                     {shouldShowGap ? (
-                      <span className='px-1 text-xs text-muted-foreground'>...</span>
+                      <span className='text-muted-foreground px-1 text-xs'>...</span>
                     ) : null}
                     <button
                       type='button'
                       onClick={() => setCurrentPage(pageNumber)}
                       aria-current={pageNumber === safeCurrentPage ? 'page' : undefined}
-                      className={`flex h-9 min-w-9 items-center justify-center rounded-md px-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pageNumber === safeCurrentPage
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                        }`}
+                      className={`focus-visible:ring-ring flex h-9 min-w-9 items-center justify-center rounded-md px-2 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none ${
+                        pageNumber === safeCurrentPage
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
                     >
                       {pageNumber}
                     </button>
@@ -272,7 +264,7 @@ export function ClassSidebar({
               type='button'
               onClick={() => setCurrentPage(page => Math.min(page + 1, totalPages))}
               disabled={safeCurrentPage === totalPages}
-              className='inline-flex h-9 w-9 items-center justify-center rounded-md border border-border/70 bg-background/70 text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-background/70'
+              className='border-border/70 bg-background/70 text-foreground hover:bg-muted focus-visible:ring-ring disabled:hover:bg-background/70 inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60'
               aria-label='Show next classes'
             >
               <ChevronRight className='h-4 w-4' />

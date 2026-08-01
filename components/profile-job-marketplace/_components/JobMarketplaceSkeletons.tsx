@@ -2,11 +2,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function JobListSkeleton() {
   return (
-    <div className='grid gap-4 3xl:grid-cols-2'>
+    <div className='3xl:grid-cols-2 grid gap-4'>
       {[0, 1, 2, 3].map(item => (
         <div
           key={item}
-          className='flex gap-4 rounded-md border border-border/70 bg-card p-5 shadow-sm'
+          className='border-border/70 bg-card flex gap-4 rounded-md border p-5 shadow-sm'
         >
           <Skeleton className='size-11 shrink-0 rounded-md' />
           <div className='min-w-0 flex-1 space-y-3'>
@@ -34,13 +34,13 @@ export function JobListSkeleton() {
 
 export function MarketplaceSidebarSkeleton() {
   return (
-    <div className='space-y-4 rounded-md border border-border/70 bg-card p-4 shadow-sm'>
-      <div className='space-y-2 border-b border-border/60 pb-4'>
+    <div className='border-border/70 bg-card space-y-4 rounded-md border p-4 shadow-sm'>
+      <div className='border-border/60 space-y-2 border-b pb-4'>
         <Skeleton className='h-5 w-24 rounded-md' />
         <Skeleton className='h-4 w-36 rounded-md' />
       </div>
       {[0, 1].map(group => (
-        <div key={group} className='space-y-3 border-b border-border/60 pb-4 last:border-b-0'>
+        <div key={group} className='border-border/60 space-y-3 border-b pb-4 last:border-b-0'>
           <Skeleton className='h-3.5 w-28 rounded-md' />
           {[0, 1, 2].map(item => (
             <Skeleton key={item} className='h-8 w-full rounded-md' />

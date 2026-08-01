@@ -36,7 +36,7 @@ export function StudentOverviewActiveCoursesCard({
             <Link
               prefetch
               href='/dashboard/student/courses/my-courses'
-              className='flex flex-row items-center gap-1 shrink-0 text-[0.8rem] font-medium text-primary transition hover:text-primary/80'
+              className='text-primary hover:text-primary/80 flex shrink-0 flex-row items-center gap-1 text-[0.8rem] font-medium transition'
             >
               View All
               <ArrowUpRight className='ml-1 h-3.5 w-3.5' />
@@ -48,11 +48,11 @@ export function StudentOverviewActiveCoursesCard({
           {courses.map(c => (
             <div
               key={c.id}
-              className='rounded-lg border p-4 transition-colors hover:border-primary/30'
+              className='hover:border-primary/30 rounded-lg border p-4 transition-colors'
             >
               <div className='flex items-start justify-between gap-3'>
-                <div className='flex flex-row items-center gap-2' >
-                  <div className='grid size-9 shrink-0 place-items-center rounded-[10px] bg-primary text-primary-foreground shadow-sm'>
+                <div className='flex flex-row items-center gap-2'>
+                  <div className='bg-primary text-primary-foreground grid size-9 shrink-0 place-items-center rounded-[10px] shadow-sm'>
                     <GraduationCap className='size-4' />
                   </div>
 
@@ -67,12 +67,11 @@ export function StudentOverviewActiveCoursesCard({
                 <Link
                   prefetch
                   href={c.href}
-                  className='inline-flex shrink-0 items-center gap-1 rounded-[8px] bg-primary px-2.5 py-1.5 text-[0.7rem] font-medium text-primary-foreground transition hover:bg-primary/90'
+                  className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex shrink-0 items-center gap-1 rounded-[8px] px-2.5 py-1.5 text-[0.7rem] font-medium transition'
                 >
                   {c.buttonLabel}
                   <ArrowRight className='size-3' />
                 </Link>
-
               </div>
 
               <div className='mt-3 flex items-center gap-3'>
@@ -86,11 +85,13 @@ export function StudentOverviewActiveCoursesCard({
         </CardContent>
 
         {isLoading && courses.length === 0 ? (
-          <p className='mt-3 text-[0.78rem] text-muted-foreground'>Syncing your current courses...</p>
+          <p className='text-muted-foreground mt-3 text-[0.78rem]'>
+            Syncing your current courses...
+          </p>
         ) : null}
 
         {!isLoading && courses.length === 0 ? (
-          <p className='mt-3 text-[0.78rem] text-muted-foreground'>
+          <p className='text-muted-foreground mt-3 text-[0.78rem]'>
             Your active enrollments will show up here once your courses are live.
           </p>
         ) : null}
@@ -99,37 +100,39 @@ export function StudentOverviewActiveCoursesCard({
       <Card>
         <CardHeader className='pb-3'>
           <CardTitle className='flex items-center gap-2 text-base'>
-            <Clock className='h-4 w-4 text-primary' /> Upcoming assessments
+            <Clock className='text-primary h-4 w-4' /> Upcoming assessments
           </CardTitle>
           <CardDescription>Assigned but not attempted yet</CardDescription>
         </CardHeader>
         <CardContent className='space-y-3'>
-          {hasAssessments ? upcomingAssessments.map(a => (
-            <Link
-              key={a.id}
-              href={a.href}
-              className='flex items-start gap-3 rounded-lg border p-3 transition-colors hover:border-primary/30'
-            >
-              <div className='grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary'>
-                <FileText className='h-4 w-4' />
-              </div>
-              <div className='min-w-0 flex-1'>
-                <p className='truncate text-sm font-medium'>{a.title}</p>
-                <p className='text-muted-foreground text-xs'>
-                  {a.provider} · {a.dueLabel}
-                </p>
-                <p className='text-muted-foreground mt-1 text-[0.72rem]'>
-                  {a.classTitle}
-                  {a.courseTitle ? ` · ${a.courseTitle}` : ''}
-                </p>
-              </div>
-              <Badge variant='secondary' className='h-fit text-[10px]'>
-                {a.badgeLabel}
-              </Badge>
-            </Link>
-          )) : (
+          {hasAssessments ? (
+            upcomingAssessments.map(a => (
+              <Link
+                key={a.id}
+                href={a.href}
+                className='hover:border-primary/30 flex items-start gap-3 rounded-lg border p-3 transition-colors'
+              >
+                <div className='bg-primary/10 text-primary grid h-9 w-9 shrink-0 place-items-center rounded-md'>
+                  <FileText className='h-4 w-4' />
+                </div>
+                <div className='min-w-0 flex-1'>
+                  <p className='truncate text-sm font-medium'>{a.title}</p>
+                  <p className='text-muted-foreground text-xs'>
+                    {a.provider} · {a.dueLabel}
+                  </p>
+                  <p className='text-muted-foreground mt-1 text-[0.72rem]'>
+                    {a.classTitle}
+                    {a.courseTitle ? ` · ${a.courseTitle}` : ''}
+                  </p>
+                </div>
+                <Badge variant='secondary' className='h-fit text-[10px]'>
+                  {a.badgeLabel}
+                </Badge>
+              </Link>
+            ))
+          ) : (
             <div className='rounded-lg border border-dashed p-4'>
-              <p className='text-sm text-muted-foreground'>
+              <p className='text-muted-foreground text-sm'>
                 No upcoming assessments are waiting for you right now.
               </p>
             </div>
@@ -137,6 +140,5 @@ export function StudentOverviewActiveCoursesCard({
         </CardContent>
       </Card>
     </section>
-
   );
 }

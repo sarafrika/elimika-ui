@@ -64,7 +64,7 @@ export const trainingHubTypeFilters = [
   { label: 'Today Classes', value: 'today' }, //classes with schedule happening on that day
   { label: 'Upcoming', value: 'upcoming' }, // classes with schedule happening on a future date
   { label: 'Incomplete', value: 'incomplete' }, // classes whose completion rate are not 100%
-  { label: 'Remedial', value: 'remedial' }, // 
+  { label: 'Remedial', value: 'remedial' }, //
   { label: 'Make-up Classes', value: 'make-up' },
   { label: 'Cancelled', value: 'cancelled' }, // cancelled classes
   { label: 'Completed', value: 'completed' }, // classes whose completion rate is 100%

@@ -33,7 +33,17 @@ import {
   updateResourceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Boxes, DoorOpen, Loader2, MapPin, MoreVertical, Pencil, Plus, Power, Users } from 'lucide-react';
+import {
+  Boxes,
+  DoorOpen,
+  Loader2,
+  MapPin,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Power,
+  Users,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 

@@ -19,7 +19,7 @@ import {
   getStudentQuizReviewOptions,
   getStudentQuizViewOptions,
   startQuizAttemptMutation,
-  submitQuizAttemptMutation
+  submitQuizAttemptMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   ClassQuizSchedule,
@@ -50,7 +50,7 @@ type ClassMeta = {
   classTitle: string;
   courseTitle: string;
   enrollmentUuid?: string;
-  courseEnrollment: Enrollment
+  courseEnrollment: Enrollment;
 };
 
 type StudentClassDefinitionRow = ReturnType<
@@ -199,14 +199,20 @@ export default function StudentQuizSubmissionPage() {
             classTitle: getClassTitle(classDetails),
             classUuid:
               classDefinition.uuid || classDetails?.uuid || classDetails?.class_definition?.uuid,
-            courseTitle:
-              classDefinition.course?.name || classDetails?.course_name,
+            courseTitle: classDefinition.course?.name || classDetails?.course_name,
 
-            courseUuid: classDefinition?.course?.uuid
+            courseUuid: classDefinition?.course?.uuid,
           };
         })
-        .filter((item): item is { classTitle: string; classUuid: string; courseTitle: string, courseUuid: string } =>
-          Boolean(item.classUuid)
+        .filter(
+          (
+            item
+          ): item is {
+            classTitle: string;
+            classUuid: string;
+            courseTitle: string;
+            courseUuid: string;
+          } => Boolean(item.classUuid)
         ),
     [classDefinitions]
   );
@@ -222,7 +228,10 @@ export default function StudentQuizSubmissionPage() {
 
   const courseEnrollmentQueries = useQueries({
     queries: classItems.map(classItem => ({
-      ...getCourseEnrollmentsOptions({ path: { courseUuid: classItem.courseUuid }, query: { pageable: {} } }),
+      ...getCourseEnrollmentsOptions({
+        path: { courseUuid: classItem.courseUuid },
+        query: { pageable: {} },
+      }),
       enabled: !!classItem.classUuid,
       staleTime: STALE_TIMES.live,
       refetchOnWindowFocus: false,
@@ -237,7 +246,8 @@ export default function StudentQuizSubmissionPage() {
         const matchingEnrollment =
           enrollments.find((e: Enrollment) => e.student_uuid === student?.uuid) ?? null;
         const courseEnrollment =
-          courseEnrollments?.content?.find((e: Enrollment) => e.student_uuid === student?.uuid) ?? null;
+          courseEnrollments?.content?.find((e: Enrollment) => e.student_uuid === student?.uuid) ??
+          null;
 
         return { ...classItem, enrollmentUuid: matchingEnrollment?.uuid, courseEnrollment };
       }),
@@ -265,7 +275,7 @@ export default function StudentQuizSubmissionPage() {
   }, [classMetaList, quizScheduleQueries, quizId]);
 
   const enrollmentUuid = matchingScheduleRow?.classMeta.enrollmentUuid;
-  const courseEnrollmentUuid = matchingScheduleRow?.classMeta?.courseEnrollment?.uuid
+  const courseEnrollmentUuid = matchingScheduleRow?.classMeta?.courseEnrollment?.uuid;
   const schedule = matchingScheduleRow?.schedule;
 
   // ── Secure student view (no answer key) + this student's attempts ────────────
@@ -334,7 +344,7 @@ export default function StudentQuizSubmissionPage() {
     classDefinitionsLoading ||
     classEnrollmentQueries.some(q => q.isLoading) ||
     quizScheduleQueries.some(q => q.isLoading) ||
-    (!!courseEnrollmentUuid && studentQuizQuery.isLoading)
+    (!!courseEnrollmentUuid && studentQuizQuery.isLoading);
   // ||    quizAttemptsQuery.isLoading;
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
@@ -726,8 +736,8 @@ export default function StudentQuizSubmissionPage() {
                                     'flex w-full items-start gap-3 rounded-2xl border p-3',
                                     isCorrect && 'border-success/40 bg-success/5',
                                     isSelected &&
-                                    !isCorrect &&
-                                    'border-destructive/40 bg-destructive/5'
+                                      !isCorrect &&
+                                      'border-destructive/40 bg-destructive/5'
                                   )}
                                 >
                                   {isCorrect ? (

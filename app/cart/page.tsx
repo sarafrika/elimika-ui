@@ -160,8 +160,8 @@ export default function CartPage() {
                 </div>
                 <CardTitle className='text-foreground text-2xl'>Your cart is empty</CardTitle>
                 <CardDescription className='text-muted-foreground text-base'>
-                  Looks like you haven't added any courses yet. Start exploring our catalogue to find
-                  courses that match your goals.
+                  Looks like you haven't added any courses yet. Start exploring our catalogue to
+                  find courses that match your goals.
                 </CardDescription>
                 <Link href='/courses' className='inline-block pt-4'>
                   <Button

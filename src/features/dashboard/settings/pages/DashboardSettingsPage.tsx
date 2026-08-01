@@ -164,28 +164,29 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
 
   const roleProfileBio =
     variant === 'student'
-      ? profile?.student?.bio ?? ''
+      ? (profile?.student?.bio ?? '')
       : variant === 'instructor'
-        ? profile?.instructor?.bio ?? ''
+        ? (profile?.instructor?.bio ?? '')
         : variant === 'course_creator'
-          ? profile?.courseCreator?.bio ?? ''
+          ? (profile?.courseCreator?.bio ?? '')
           : '';
 
   const roleProfileWebsite =
     variant === 'instructor'
-      ? profile?.instructor?.website ?? ''
+      ? (profile?.instructor?.website ?? '')
       : variant === 'course_creator'
-        ? profile?.courseCreator?.website ?? ''
+        ? (profile?.courseCreator?.website ?? '')
         : '';
 
   const roleProfileProfessionalHeadline =
     variant === 'instructor'
-      ? profile?.instructor?.professional_headline ?? ''
+      ? (profile?.instructor?.professional_headline ?? '')
       : variant === 'course_creator'
-        ? profile?.courseCreator?.professional_headline ?? ''
+        ? (profile?.courseCreator?.professional_headline ?? '')
         : '';
 
-  const roleProfileLocation = variant === 'student' ? profile?.student?.demographic_tag ?? '' : '';
+  const roleProfileLocation =
+    variant === 'student' ? (profile?.student?.demographic_tag ?? '') : '';
 
   const form = useForm<UserDetailsFormValues>({
     resolver: zodResolver(userDetailsSchema),
@@ -198,7 +199,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
       bio: roleProfileBio,
       demographic_tag: roleProfileLocation,
       professional_headline: roleProfileProfessionalHeadline,
-      website: roleProfileWebsite
+      website: roleProfileWebsite,
     },
   });
 
@@ -212,7 +213,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
     roleProfileBio,
     roleProfileLocation,
     roleProfileProfessionalHeadline,
-    roleProfileWebsite
+    roleProfileWebsite,
   ].join('|');
 
   useEffect(() => {
@@ -229,10 +230,9 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
       bio: roleProfileBio,
       demographic_tag: roleProfileLocation,
       professional_headline: roleProfileProfessionalHeadline,
-      website: roleProfileWebsite
+      website: roleProfileWebsite,
     });
   }, [form, isEditing, profileFormSnapshot]);
-
 
   const profileImage = profile?.profile_image_url ?? '';
   const profileName = getProfileDisplayName(profile);
@@ -412,7 +412,10 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
         value: profile?.instructor?.professional_headline ?? 'Not set',
       },
       { label: 'Website', value: profile?.instructor?.website ?? 'Not set' },
-      { label: 'Verification', value: profile?.instructor?.admin_verified ? 'Verified' : 'Pending' },
+      {
+        label: 'Verification',
+        value: profile?.instructor?.admin_verified ? 'Verified' : 'Pending',
+      },
       { label: 'Joined', value: joinedDate },
     ],
     organisation: [
@@ -424,7 +427,10 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
     course_creator: [
       { label: 'Headline', value: profile?.courseCreator?.professional_headline ?? 'Not set' },
       { label: 'Website', value: profile?.courseCreator?.website ?? 'Not set' },
-      { label: 'Verification', value: profile?.courseCreator?.admin_verified ? 'Verified' : 'Pending' },
+      {
+        label: 'Verification',
+        value: profile?.courseCreator?.admin_verified ? 'Verified' : 'Pending',
+      },
       { label: 'Joined', value: joinedDate },
     ],
   };
@@ -474,20 +480,20 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
 
           <TabsContent value='profile' className='mt-0'>
             <div className='grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.72fr)_minmax(320px,0.88fr)]'>
-              <Card className='rounded-md border-border/70 p-0 shadow-sm'>
+              <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                 <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                   <div className='flex flex-wrap items-start justify-between gap-4'>
                     <div className='min-w-0 space-y-1'>
                       <CardTitle className='text-base font-semibold sm:text-lg'>
                         {variant === 'organisation' ? 'Organisation Profile' : 'Profile Details'}
                       </CardTitle>
-                      <div className='text-muted-foreground text-sm leading-6 sm:text-md' >
+                      <div className='text-muted-foreground sm:text-md text-sm leading-6'>
                         <RichTextRenderer htmlString={descriptionByVariant[variant]} />
                       </div>
                     </div>
                     <Badge
                       variant='outline'
-                      className='rounded-md px-3 py-1 text-[10px] uppercase tracking-[0.16em]'
+                      className='rounded-md px-3 py-1 text-[10px] tracking-[0.16em] uppercase'
                     >
                       {roleLabel}
                     </Badge>
@@ -497,8 +503,11 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                 <CardContent className='space-y-5 px-4 py-5 sm:px-5'>
                   <div className='flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between'>
                     <div className='flex min-w-0 items-center gap-4'>
-                      <Avatar className='size-20 border border-border/70 sm:size-24'>
-                        <AvatarImage src={toAuthenticatedMediaUrl(profileImage) as string} alt={profileName} />
+                      <Avatar className='border-border/70 size-20 border sm:size-24'>
+                        <AvatarImage
+                          src={toAuthenticatedMediaUrl(profileImage) as string}
+                          alt={profileName}
+                        />
                         <AvatarFallback className='bg-primary/10 text-primary text-xl font-semibold'>
                           {profileInitials}
                         </AvatarFallback>
@@ -724,20 +733,19 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                                   </FormItem>
                                 )}
                               />
-                            ) :
-
+                            ) : (
                               <>
                                 <FormField
                                   control={form.control}
-                                  name="professional_headline"
+                                  name='professional_headline'
                                   render={({ field }) => (
-                                    <FormItem className="space-y-2 sm:col-span-2">
+                                    <FormItem className='space-y-2 sm:col-span-2'>
                                       <FormLabel>Professional headline</FormLabel>
                                       <FormControl>
                                         <Input
-                                          placeholder="e.g. Senior Software Engineer & AI Instructor"
+                                          placeholder='e.g. Senior Software Engineer & AI Instructor'
                                           {...field}
-                                          className="border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none"
+                                          className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
                                         />
                                       </FormControl>
                                       <FormMessage />
@@ -747,23 +755,23 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
 
                                 <FormField
                                   control={form.control}
-                                  name="website"
+                                  name='website'
                                   render={({ field }) => (
-                                    <FormItem className="space-y-2 sm:col-span-2">
+                                    <FormItem className='space-y-2 sm:col-span-2'>
                                       <FormLabel>Website</FormLabel>
                                       <FormControl>
                                         <Input
-                                          placeholder="https://yourwebsite.com"
+                                          placeholder='https://yourwebsite.com'
                                           {...field}
-                                          className="border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none"
+                                          className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
                                         />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
                                   )}
                                 />
-                              </>}
-
+                              </>
+                            )}
                           </div>
                         ) : variant !== 'admin' && variant !== 'organisation' ? (
                           <div className='space-y-4'>
@@ -774,14 +782,13 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                               multiline
                             />
 
-                            {(isEditing && variant === 'student') ? (
+                            {isEditing && variant === 'student' ? (
                               <SettingsField
                                 label='Demographic tag'
                                 value={roleProfileLocation || 'Not set'}
                                 helperText='A location-style tag used on your student profile.'
                               />
                             ) : null}
-
                           </div>
                         ) : null}
                       </div>
@@ -796,14 +803,17 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                         />
                       ) : null}
 
-
                       <div className='grid gap-4 sm:grid-cols-2'>
                         {roleFields[variant].map(field => (
-                          <SettingsField key={field.label} label={field.label} value={field.value} />
+                          <SettingsField
+                            key={field.label}
+                            label={field.label}
+                            value={field.value}
+                          />
                         ))}
                       </div>
 
-                      <div className='flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-end'>
+                      <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-end'>
                         <Button
                           type='button'
                           variant='outline'
@@ -827,10 +837,10 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                           }
                         >
                           {updateUser.isPending ||
-                            updateStudentProfile.isPending ||
-                            updateInstructorProfile.isPending ||
-                            updateCourseCreatorProfile.isPending ||
-                            isSubmitting ? (
+                          updateStudentProfile.isPending ||
+                          updateInstructorProfile.isPending ||
+                          updateCourseCreatorProfile.isPending ||
+                          isSubmitting ? (
                             <span className='flex items-center gap-2'>
                               <Spinner className='h-4 w-4' />
                               Saving...
@@ -842,12 +852,11 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                       </div>
                     </form>
                   </Form>
-
                 </CardContent>
               </Card>
 
               <div className='flex min-w-0 flex-col gap-4'>
-                <Card className='rounded-md border-border/70 p-0 shadow-sm'>
+                <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <CardTitle className='flex items-center gap-2 text-base font-semibold sm:text-lg'>
                       <Wallet className='text-primary size-4 sm:size-5' />
@@ -856,9 +865,9 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                   </CardHeader>
 
                   <CardContent className='space-y-4 px-4 py-5 sm:px-5'>
-                    <div className='flex items-center justify-between gap-4 rounded-[16px] border border-border/70 p-4'>
+                    <div className='border-border/70 flex items-center justify-between gap-4 rounded-[16px] border p-4'>
                       <div className='min-w-0'>
-                        <p className='text-sm font-semibold text-foreground'>Current status</p>
+                        <p className='text-foreground text-sm font-semibold'>Current status</p>
                         <p className='text-muted-foreground text-xs sm:text-sm'>
                           {profile?.active
                             ? 'Your account is active and ready to use.'
@@ -877,13 +886,13 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                       {summaryItems.map(item => (
                         <div
                           key={item.label}
-                          className='flex items-start justify-between gap-4 rounded-[16px] border border-border/70 px-4 py-3.5'
+                          className='border-border/70 flex items-start justify-between gap-4 rounded-[16px] border px-4 py-3.5'
                         >
                           <div className='min-w-0'>
-                            <p className='text-[0.78rem] font-medium text-muted-foreground sm:text-sm'>
+                            <p className='text-muted-foreground text-[0.78rem] font-medium sm:text-sm'>
                               {item.label}
                             </p>
-                            <p className='text-sm font-semibold text-foreground sm:text-base'>
+                            <p className='text-foreground text-sm font-semibold sm:text-base'>
                               {item.value}
                             </p>
                           </div>
@@ -911,7 +920,9 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                         title='Profile visibility'
                         description='Show this account in internal directories and collaboration lists.'
                         enabled={toggles.profileVisibility}
-                        onToggle={next => setToggles(prev => ({ ...prev, profileVisibility: next }))}
+                        onToggle={next =>
+                          setToggles(prev => ({ ...prev, profileVisibility: next }))
+                        }
                       />
                       <SettingsToggleRow
                         title='Data sharing'
@@ -930,7 +941,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                   </CardContent>
                 </Card>
 
-                <Card className='rounded-md border-border/70 p-0 shadow-sm'>
+                <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <CardTitle className='flex items-center gap-2 text-base font-semibold sm:text-lg'>
                       <ShieldCheck className='text-primary size-4 sm:size-5' />
@@ -943,16 +954,21 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                     {config.accessItems.map(item => (
                       <div
                         key={item.title}
-                        className='flex items-start justify-between gap-4 rounded-[16px] border border-border/70 px-4 py-3.5'
+                        className='border-border/70 flex items-start justify-between gap-4 rounded-[16px] border px-4 py-3.5'
                       >
                         <div className='min-w-0'>
-                          <p className='text-sm font-semibold text-foreground'>{item.title}</p>
+                          <p className='text-foreground text-sm font-semibold'>{item.title}</p>
                           <p className='text-muted-foreground text-xs leading-5 sm:text-sm'>
                             {item.description}
                           </p>
                         </div>
                         {item.href ? (
-                          <Button asChild size='icon' variant='ghost' className='shrink-0 rounded-md'>
+                          <Button
+                            asChild
+                            size='icon'
+                            variant='ghost'
+                            className='shrink-0 rounded-md'
+                          >
                             <Link href={item.href}>
                               <ChevronRight className='size-4' />
                             </Link>
@@ -985,18 +1001,14 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
           </TabsContent>
 
           <TabsContent value='access' className='mt-0'>
-            <Card className='rounded-md border-border/70 p-0 shadow-sm'>
+            <Card className='border-border/70 rounded-md p-0 shadow-sm'>
               <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                <CardTitle className='text-base font-semibold sm:text-lg'>
-                  Access
-                </CardTitle>
+                <CardTitle className='text-base font-semibold sm:text-lg'>Access</CardTitle>
               </CardHeader>
 
               <CardContent className='px-4 py-5 sm:px-5'>
-                <div className='flex min-h-[320px] items-center justify-center rounded-[16px] border border-dashed border-border/70 bg-muted/20'>
-                  <p className='text-sm text-muted-foreground'>
-                    No access settings available yet.
-                  </p>
+                <div className='border-border/70 bg-muted/20 flex min-h-[320px] items-center justify-center rounded-[16px] border border-dashed'>
+                  <p className='text-muted-foreground text-sm'>No access settings available yet.</p>
                 </div>
               </CardContent>
             </Card>
@@ -1004,9 +1016,11 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
 
           <TabsContent value='support' className='mt-0'>
             <div className='grid gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)]'>
-              <Card className='rounded-md border-border/70 p-0 shadow-sm'>
+              <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                 <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                  <CardTitle className='text-base font-semibold sm:text-lg'>Support details</CardTitle>
+                  <CardTitle className='text-base font-semibold sm:text-lg'>
+                    Support details
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-4 px-4 py-5 sm:px-5'>
                   <SettingsField
@@ -1022,14 +1036,16 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
               </Card>
 
               <div className='flex flex-col gap-4'>
-                <Card className='rounded-md border-border/70 p-0 shadow-sm'>
+                <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                    <CardTitle className='text-base font-semibold sm:text-lg'>Security snapshot</CardTitle>
+                    <CardTitle className='text-base font-semibold sm:text-lg'>
+                      Security snapshot
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
-                    <div className='flex items-center justify-between rounded-[16px] border border-border/70 px-4 py-3'>
+                    <div className='border-border/70 flex items-center justify-between rounded-[16px] border px-4 py-3'>
                       <div>
-                        <p className='text-sm font-semibold text-foreground'>Two-factor auth</p>
+                        <p className='text-foreground text-sm font-semibold'>Two-factor auth</p>
                         <p className='text-muted-foreground text-xs sm:text-sm'>
                           Recommended for all accounts.
                         </p>
@@ -1039,32 +1055,35 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                         onCheckedChange={next => setToggles(prev => ({ ...prev, twoFactor: next }))}
                       />
                     </div>
-                    <div className='flex items-center justify-between rounded-[16px] border border-border/70 px-4 py-3'>
+                    <div className='border-border/70 flex items-center justify-between rounded-[16px] border px-4 py-3'>
                       <div>
-                        <p className='text-sm font-semibold text-foreground'>Email updates</p>
+                        <p className='text-foreground text-sm font-semibold'>Email updates</p>
                         <p className='text-muted-foreground text-xs sm:text-sm'>
                           Stay informed on account changes.
                         </p>
                       </div>
                       <Switch
                         checked={toggles.emailAlerts}
-                        onCheckedChange={next => setToggles(prev => ({ ...prev, emailAlerts: next }))}
+                        onCheckedChange={next =>
+                          setToggles(prev => ({ ...prev, emailAlerts: next }))
+                        }
                       />
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className='rounded-md border-border/70 p-0 shadow-sm'>
+                <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <CardTitle className='text-base font-semibold sm:text-lg'>
                       Support widget preview
                     </CardTitle>
                   </CardHeader>
                   <CardContent className='px-4 py-5 sm:px-5'>
-                    <div className='rounded-[18px] border border-dashed border-border/70 p-4'>
-                      <p className='text-sm font-semibold text-foreground'>Need Help?</p>
+                    <div className='border-border/70 rounded-[18px] border border-dashed p-4'>
+                      <p className='text-foreground text-sm font-semibold'>Need Help?</p>
                       <p className='text-muted-foreground mt-1 text-sm leading-6'>
-                        The sidebar widget mirrors this support entry point so help is always close at hand.
+                        The sidebar widget mirrors this support entry point so help is always close
+                        at hand.
                       </p>
                     </div>
                   </CardContent>
@@ -1076,7 +1095,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
           <TabsContent value='advanced-settings' className='mt-0'>
             <>
               <div className='grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]'>
-                <Card className='rounded-md border-border/70 p-0 shadow-sm'>
+                <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <CardTitle className='text-base font-semibold sm:text-lg'>
                       Advanced preferences
@@ -1116,7 +1135,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                 </Card>
 
                 <div className='flex min-w-0 flex-col gap-4'>
-                  <Card className='rounded-md border-border/70 p-0 shadow-sm'>
+                  <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                     <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                       <CardTitle className='text-base font-semibold sm:text-lg'>
                         Session controls
@@ -1130,7 +1149,9 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                       />
                       <SettingsField
                         label='Account source'
-                        value={variant === 'organisation' ? 'Organisation workspace' : 'User profile'}
+                        value={
+                          variant === 'organisation' ? 'Organisation workspace' : 'User profile'
+                        }
                         helperText='Shows where these settings are being managed from.'
                       />
                       <SettingsField
@@ -1141,14 +1162,17 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                     </CardContent>
                   </Card>
 
-                  <Card className='rounded-md border-border/70 p-0 shadow-sm'>
+                  <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                     <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                       <CardTitle className='text-base font-semibold sm:text-lg'>
                         Recovery actions
                       </CardTitle>
                     </CardHeader>
                     <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
-                      <Button variant='outline' className='h-10 w-full rounded-md border-dashed text-sm'>
+                      <Button
+                        variant='outline'
+                        className='h-10 w-full rounded-md border-dashed text-sm'
+                      >
                         Reset advanced preferences
                       </Button>
                       <Button variant='outline' className='h-10 w-full rounded-md text-sm'>
@@ -1159,7 +1183,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                 </div>
               </div>
 
-              <Card className='rounded-md border-border/70 mt-6 overflow-hidden p-6 shadow-sm'>
+              <Card className='border-border/70 mt-6 overflow-hidden rounded-md p-6 shadow-sm'>
                 <ManageProfileActions />
               </Card>
             </>

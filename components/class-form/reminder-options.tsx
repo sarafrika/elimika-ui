@@ -19,11 +19,11 @@ export function ReminderOptions({
   onChange: (patch: Partial<ReminderState>) => void;
 }) {
   return (
-    <div className="space-y-3 rounded-lg border p-4">
-      <div className="text-sm font-semibold">Reminder Options</div>
-      <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
-        <div className="space-y-1">
-          <Label className="text-xs">Reminder</Label>
+    <div className='space-y-3 rounded-lg border p-4'>
+      <div className='text-sm font-semibold'>Reminder Options</div>
+      <div className='grid gap-3 sm:grid-cols-[160px_1fr]'>
+        <div className='space-y-1'>
+          <Label className='text-xs'>Reminder</Label>
           <Select value={value.window} onValueChange={v => onChange({ window: v })}>
             <SelectTrigger>
               <SelectValue />
@@ -37,28 +37,43 @@ export function ReminderOptions({
             </SelectContent>
           </Select>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-2">
-            <div className="text-xs font-medium text-muted-foreground">Send To</div>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={value.sendStudents} onCheckedChange={v => onChange({ sendStudents: v === true })} />{' '}
+        <div className='grid gap-3 sm:grid-cols-2'>
+          <div className='space-y-2'>
+            <div className='text-muted-foreground text-xs font-medium'>Send To</div>
+            <label className='flex items-center gap-2 text-sm'>
+              <Checkbox
+                checked={value.sendStudents}
+                onCheckedChange={v => onChange({ sendStudents: v === true })}
+              />{' '}
               Students
             </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={value.sendInstructor} onCheckedChange={v => onChange({ sendInstructor: v === true })} />{' '}
+            <label className='flex items-center gap-2 text-sm'>
+              <Checkbox
+                checked={value.sendInstructor}
+                onCheckedChange={v => onChange({ sendInstructor: v === true })}
+              />{' '}
               Instructor
             </label>
           </div>
-          <div className="space-y-2">
-            <div className="text-xs font-medium text-muted-foreground">Send Via</div>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={value.email} onCheckedChange={v => onChange({ email: v === true })} /> Email
+          <div className='space-y-2'>
+            <div className='text-muted-foreground text-xs font-medium'>Send Via</div>
+            <label className='flex items-center gap-2 text-sm'>
+              <Checkbox
+                checked={value.email}
+                onCheckedChange={v => onChange({ email: v === true })}
+              />{' '}
+              Email
             </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={value.sms} onCheckedChange={v => onChange({ sms: v === true })} /> SMS
+            <label className='flex items-center gap-2 text-sm'>
+              <Checkbox checked={value.sms} onCheckedChange={v => onChange({ sms: v === true })} />{' '}
+              SMS
             </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={value.push} onCheckedChange={v => onChange({ push: v === true })} /> Push Notification
+            <label className='flex items-center gap-2 text-sm'>
+              <Checkbox
+                checked={value.push}
+                onCheckedChange={v => onChange({ push: v === true })}
+              />{' '}
+              Push Notification
             </label>
           </div>
         </div>

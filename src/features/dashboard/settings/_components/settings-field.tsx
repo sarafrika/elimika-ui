@@ -25,9 +25,7 @@ export function SettingsField({
 
   return (
     <div className={cn('space-y-2', className)}>
-      <Label className='text-[0.82rem] font-medium text-foreground/90'>
-        {label}
-      </Label>
+      <Label className='text-foreground/90 text-[0.82rem] font-medium'>{label}</Label>
 
       {multiline ? (
         isHtml ? (

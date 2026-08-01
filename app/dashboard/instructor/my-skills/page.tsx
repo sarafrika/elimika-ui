@@ -114,9 +114,9 @@ export default function InstructorMySkillsPage() {
     joinedLabel:
       (getProfileString(user, ['created_date']) ?? getProfileString(instructor, ['created_date']))
         ? `Joined ${new Date(
-          (getProfileString(user, ['created_date']) ??
-            getProfileString(instructor, ['created_date'])) as string
-        ).toLocaleDateString()}`
+            (getProfileString(user, ['created_date']) ??
+              getProfileString(instructor, ['created_date'])) as string
+          ).toLocaleDateString()}`
         : undefined,
   };
 

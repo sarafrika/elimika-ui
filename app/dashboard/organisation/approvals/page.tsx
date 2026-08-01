@@ -1,7 +1,17 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, Clock, Eye, Inbox, Loader2, Pencil, RefreshCw, Trash2, XCircle } from 'lucide-react';
+import {
+  CheckCircle2,
+  Clock,
+  Eye,
+  Inbox,
+  Loader2,
+  Pencil,
+  RefreshCw,
+  Trash2,
+  XCircle,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -118,8 +128,11 @@ function StatusPill({ status }: { status?: string | null }) {
   const label = (status ?? 'Unknown').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   return (
     <Badge
-      variant="outline"
-      className={cn('rounded-md px-2.5 py-0.5 text-xs font-medium', STATUS_TONE[key] ?? 'border-border bg-muted/40 text-muted-foreground')}
+      variant='outline'
+      className={cn(
+        'rounded-md px-2.5 py-0.5 text-xs font-medium',
+        STATUS_TONE[key] ?? 'border-border bg-muted/40 text-muted-foreground'
+      )}
     >
       {label}
     </Badge>
@@ -129,9 +142,9 @@ function StatusPill({ status }: { status?: string | null }) {
 /** Labelled figure used in the request detail dialog. */
 function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-lg border bg-muted/20 px-3 py-2.5">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="mt-1 text-sm font-medium text-foreground">{value ?? '—'}</div>
+    <div className='bg-muted/20 rounded-lg border px-3 py-2.5'>
+      <p className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</p>
+      <div className='text-foreground mt-1 text-sm font-medium'>{value ?? '—'}</div>
     </div>
   );
 }
@@ -148,7 +161,9 @@ export default function OrganisationApprovalsPage() {
   const pageable = { page: 0, size: 100 };
 
   const courseOptions = searchTrainingApplicationsOptions({ query: { searchParams, pageable } });
-  const programOptions = searchProgramTrainingApplicationsOptions({ query: { searchParams, pageable } });
+  const programOptions = searchProgramTrainingApplicationsOptions({
+    query: { searchParams, pageable },
+  });
 
   const coursesQuery = useQuery({ ...courseOptions, enabled: Boolean(organisationUuid) });
   const programsQuery = useQuery({ ...programOptions, enabled: Boolean(organisationUuid) });
@@ -166,7 +181,9 @@ export default function OrganisationApprovalsPage() {
     () =>
       Array.from(
         new Set(
-          courseApplications.map(row => row.course_uuid).filter((uuid): uuid is string => Boolean(uuid))
+          courseApplications
+            .map(row => row.course_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
         )
       ),
     [courseApplications]
@@ -175,7 +192,9 @@ export default function OrganisationApprovalsPage() {
     () =>
       Array.from(
         new Set(
-          programApplications.map(row => row.program_uuid).filter((uuid): uuid is string => Boolean(uuid))
+          programApplications
+            .map(row => row.program_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
         )
       ),
     [programApplications]
@@ -292,12 +311,18 @@ export default function OrganisationApprovalsPage() {
 
     if (editRow.kind === 'course') {
       updateCourse.mutate(
-        { path: { courseUuid: editRow.offeringUuid, applicationUuid: editRow.applicationUuid }, body },
+        {
+          path: { courseUuid: editRow.offeringUuid, applicationUuid: editRow.applicationUuid },
+          body,
+        },
         { onSuccess, onError }
       );
     } else {
       updateProgram.mutate(
-        { path: { programUuid: editRow.offeringUuid, applicationUuid: editRow.applicationUuid }, body },
+        {
+          path: { programUuid: editRow.offeringUuid, applicationUuid: editRow.applicationUuid },
+          body,
+        },
         { onSuccess, onError }
       );
     }
@@ -316,109 +341,153 @@ export default function OrganisationApprovalsPage() {
 
     if (withdrawRow.kind === 'course') {
       withdrawCourse.mutate(
-        { path: { courseUuid: withdrawRow.offeringUuid, applicationUuid: withdrawRow.applicationUuid } },
+        {
+          path: {
+            courseUuid: withdrawRow.offeringUuid,
+            applicationUuid: withdrawRow.applicationUuid,
+          },
+        },
         { onSuccess, onError }
       );
     } else {
       withdrawProgram.mutate(
-        { path: { programUuid: withdrawRow.offeringUuid, applicationUuid: withdrawRow.applicationUuid } },
+        {
+          path: {
+            programUuid: withdrawRow.offeringUuid,
+            applicationUuid: withdrawRow.applicationUuid,
+          },
+        },
         { onSuccess, onError }
       );
     }
   };
 
   return (
-    <OrgPage className="space-y-6">
+    <OrgPage className='space-y-6'>
       <PageHeader
-        title="Approvals"
-        description="Track your organisation’s applications to train courses and programmes, and manage them while they await review."
+        title='Approvals'
+        description='Track your organisation’s applications to train courses and programmes, and manage them while they await review.'
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard title="Pending" value={counts.pending} icon={<Clock className="h-5 w-5" />} variant="amber" />
-        <KpiCard title="Approved" value={counts.approved} icon={<CheckCircle2 className="h-5 w-5" />} variant="green" />
-        <KpiCard title="Rejected" value={counts.rejected} icon={<XCircle className="h-5 w-5" />} variant="coral" />
-        <KpiCard title="Revoked" value={counts.revoked} icon={<RefreshCw className="h-5 w-5" />} variant="indigo" />
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <KpiCard
+          title='Pending'
+          value={counts.pending}
+          icon={<Clock className='h-5 w-5' />}
+          variant='amber'
+        />
+        <KpiCard
+          title='Approved'
+          value={counts.approved}
+          icon={<CheckCircle2 className='h-5 w-5' />}
+          variant='green'
+        />
+        <KpiCard
+          title='Rejected'
+          value={counts.rejected}
+          icon={<XCircle className='h-5 w-5' />}
+          variant='coral'
+        />
+        <KpiCard
+          title='Revoked'
+          value={counts.revoked}
+          icon={<RefreshCw className='h-5 w-5' />}
+          variant='indigo'
+        />
       </div>
 
       <Card>
-        <CardContent className="space-y-4 p-6">
-          <div className="space-y-1">
-            <h2 className="text-base font-semibold text-foreground">Your requests</h2>
-            <p className="text-sm text-muted-foreground">
+        <CardContent className='space-y-4 p-6'>
+          <div className='space-y-1'>
+            <h2 className='text-foreground text-base font-semibold'>Your requests</h2>
+            <p className='text-muted-foreground text-sm'>
               Courses and programmes your organisation has applied to train.
             </p>
           </div>
 
           {isLoading ? (
-            <div className="space-y-2">
+            <div className='space-y-2'>
               {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+                <Skeleton key={i} className='h-12 w-full' />
               ))}
             </div>
           ) : rows.length === 0 ? (
             <EmptyState
               icon={Inbox}
-              title="No training requests yet"
-              description="Apply to train a course or programme from the course catalogue."
+              title='No training requests yet'
+              description='Apply to train a course or programme from the course catalogue.'
             />
           ) : (
-            <div className="overflow-x-auto rounded-lg border">
-              <Table className="min-w-[820px]">
+            <div className='overflow-x-auto rounded-lg border'>
+              <Table className='min-w-[820px]'>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap">Offering</TableHead>
-                    <TableHead className="whitespace-nowrap">Type</TableHead>
-                    <TableHead className="whitespace-nowrap">Rate</TableHead>
-                    <TableHead className="whitespace-nowrap">Submitted</TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
+                    <TableHead className='whitespace-nowrap'>Offering</TableHead>
+                    <TableHead className='whitespace-nowrap'>Type</TableHead>
+                    <TableHead className='whitespace-nowrap'>Rate</TableHead>
+                    <TableHead className='whitespace-nowrap'>Submitted</TableHead>
+                    <TableHead className='whitespace-nowrap'>Status</TableHead>
+                    <TableHead className='text-right whitespace-nowrap'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.map(row => (
                     <TableRow key={`${row.kind}-${row.applicationUuid}`}>
                       <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-foreground">{row.name}</span>
+                        <div className='flex flex-col'>
+                          <span className='text-foreground font-medium'>{row.name}</span>
                           {row.reviewNotes ? (
-                            <span className="text-xs text-muted-foreground">Review: {row.reviewNotes}</span>
+                            <span className='text-muted-foreground text-xs'>
+                              Review: {row.reviewNotes}
+                            </span>
                           ) : null}
                         </div>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap capitalize text-muted-foreground">
+                      <TableCell className='text-muted-foreground whitespace-nowrap capitalize'>
                         {row.kind === 'program' ? 'Programme' : 'Course'}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{formatRate(row.rateCard)}</TableCell>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                      <TableCell className='whitespace-nowrap'>
+                        {formatRate(row.rateCard)}
+                      </TableCell>
+                      <TableCell className='text-muted-foreground whitespace-nowrap'>
                         {formatDate(row.createdDate)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className='whitespace-nowrap'>
                         <StatusPill status={row.status} />
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Button variant="ghost" size="sm" onClick={() => setViewRow(row)} aria-label="View details">
-                            <Eye className="size-4" />
+                      <TableCell className='text-right whitespace-nowrap'>
+                        <div className='flex items-center justify-end gap-1.5'>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => setViewRow(row)}
+                            aria-label='View details'
+                          >
+                            <Eye className='size-4' />
                           </Button>
                           {isPending(row.status) ? (
                             <>
-                              <Button variant="ghost" size="sm" onClick={() => openEdit(row)} aria-label="Edit request">
-                                <Pencil className="size-4" />
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={() => openEdit(row)}
+                                aria-label='Edit request'
+                              >
+                                <Pencil className='size-4' />
                               </Button>
                               <Button
-                                variant="ghost"
-                                size="sm"
+                                variant='ghost'
+                                size='sm'
                                 onClick={() => setWithdrawRow(row)}
-                                aria-label="Withdraw request"
+                                aria-label='Withdraw request'
                               >
-                                <Trash2 className="size-4 text-destructive" />
+                                <Trash2 className='text-destructive size-4' />
                               </Button>
                             </>
                           ) : null}
                           {canReapply(row.status) ? (
-                            <Button variant="outline" size="sm" asChild>
-                              <Link href="/dashboard/organisation/courses">Re-apply</Link>
+                            <Button variant='outline' size='sm' asChild>
+                              <Link href='/dashboard/organisation/courses'>Re-apply</Link>
                             </Button>
                           ) : null}
                         </div>
@@ -434,7 +503,7 @@ export default function OrganisationApprovalsPage() {
 
       {/* View details */}
       <Dialog open={Boolean(viewRow)} onOpenChange={open => !open && setViewRow(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className='max-w-lg'>
           <DialogHeader>
             <DialogTitle>{viewRow?.name}</DialogTitle>
             <DialogDescription>
@@ -442,17 +511,26 @@ export default function OrganisationApprovalsPage() {
             </DialogDescription>
           </DialogHeader>
           {viewRow ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Detail label="Status" value={<StatusPill status={viewRow.status} />} />
-              <Detail label="Currency" value={viewRow.rateCard?.currency ?? '—'} />
-              <Detail label="Private · online" value={viewRow.rateCard?.private_online_rate ?? '—'} />
-              <Detail label="Private · in-person" value={viewRow.rateCard?.private_inperson_rate ?? '—'} />
-              <Detail label="Group · online" value={viewRow.rateCard?.group_online_rate ?? '—'} />
-              <Detail label="Group · in-person" value={viewRow.rateCard?.group_inperson_rate ?? '—'} />
-              <Detail label="Submitted" value={formatDate(viewRow.createdDate)} />
-              <Detail label="Reviewed" value={formatDate(viewRow.reviewedAt)} />
-              <Detail label="Application notes" value={viewRow.applicationNotes ?? '—'} />
-              <Detail label="Review notes" value={viewRow.reviewNotes ?? '—'} />
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <Detail label='Status' value={<StatusPill status={viewRow.status} />} />
+              <Detail label='Currency' value={viewRow.rateCard?.currency ?? '—'} />
+              <Detail
+                label='Private · online'
+                value={viewRow.rateCard?.private_online_rate ?? '—'}
+              />
+              <Detail
+                label='Private · in-person'
+                value={viewRow.rateCard?.private_inperson_rate ?? '—'}
+              />
+              <Detail label='Group · online' value={viewRow.rateCard?.group_online_rate ?? '—'} />
+              <Detail
+                label='Group · in-person'
+                value={viewRow.rateCard?.group_inperson_rate ?? '—'}
+              />
+              <Detail label='Submitted' value={formatDate(viewRow.createdDate)} />
+              <Detail label='Reviewed' value={formatDate(viewRow.reviewedAt)} />
+              <Detail label='Application notes' value={viewRow.applicationNotes ?? '—'} />
+              <Detail label='Review notes' value={viewRow.reviewNotes ?? '—'} />
             </div>
           ) : null}
         </DialogContent>
@@ -460,7 +538,7 @@ export default function OrganisationApprovalsPage() {
 
       {/* Edit (pending only) */}
       <Dialog open={Boolean(editRow)} onOpenChange={open => !open && closeEdit()}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className='max-w-lg'>
           <DialogHeader>
             <DialogTitle>Edit training request</DialogTitle>
             <DialogDescription>
@@ -468,75 +546,77 @@ export default function OrganisationApprovalsPage() {
             </DialogDescription>
           </DialogHeader>
           {form ? (
-            <div className="space-y-4">
-              <div className="space-y-2">
+            <div className='space-y-4'>
+              <div className='space-y-2'>
                 <Label>Currency</Label>
                 <Input
                   value={form.currency}
                   maxLength={3}
-                  onChange={event => setForm({ ...form, currency: event.target.value.toUpperCase() })}
-                  placeholder="KES"
+                  onChange={event =>
+                    setForm({ ...form, currency: event.target.value.toUpperCase() })
+                  }
+                  placeholder='KES'
                 />
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <div className='space-y-2'>
                   <Label>Private · online rate</Label>
                   <Input
-                    type="number"
+                    type='number'
                     min={0}
-                    step="0.01"
+                    step='0.01'
                     value={form.privateOnline}
                     onChange={event => setForm({ ...form, privateOnline: event.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Private · in-person rate</Label>
                   <Input
-                    type="number"
+                    type='number'
                     min={0}
-                    step="0.01"
+                    step='0.01'
                     value={form.privateInperson}
                     onChange={event => setForm({ ...form, privateInperson: event.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Group · online rate</Label>
                   <Input
-                    type="number"
+                    type='number'
                     min={0}
-                    step="0.01"
+                    step='0.01'
                     value={form.groupOnline}
                     onChange={event => setForm({ ...form, groupOnline: event.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Group · in-person rate</Label>
                   <Input
-                    type="number"
+                    type='number'
                     min={0}
-                    step="0.01"
+                    step='0.01'
                     value={form.groupInperson}
                     onChange={event => setForm({ ...form, groupInperson: event.target.value })}
                   />
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <Label>Application notes</Label>
                 <Textarea
                   rows={3}
                   value={form.notes}
                   onChange={event => setForm({ ...form, notes: event.target.value })}
-                  placeholder="Optional context for the reviewer"
+                  placeholder='Optional context for the reviewer'
                 />
               </div>
             </div>
           ) : null}
           <DialogFooter>
-            <Button variant="outline" onClick={closeEdit} disabled={updatePending}>
+            <Button variant='outline' onClick={closeEdit} disabled={updatePending}>
               Cancel
             </Button>
             <Button onClick={handleUpdate} disabled={updatePending}>
-              {updatePending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+              {updatePending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
               Save changes
             </Button>
           </DialogFooter>
@@ -550,8 +630,8 @@ export default function OrganisationApprovalsPage() {
             <AlertDialogTitle>Withdraw training request?</AlertDialogTitle>
             <AlertDialogDescription>
               This removes your organisation’s pending application to train{' '}
-              <span className="font-medium text-foreground">{withdrawRow?.name}</span>. You can re-apply
-              later from the course catalogue.
+              <span className='text-foreground font-medium'>{withdrawRow?.name}</span>. You can
+              re-apply later from the course catalogue.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -563,7 +643,7 @@ export default function OrganisationApprovalsPage() {
               }}
               disabled={withdrawPending}
             >
-              {withdrawPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+              {withdrawPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
               Withdraw
             </AlertDialogAction>
           </AlertDialogFooter>

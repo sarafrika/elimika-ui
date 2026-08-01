@@ -1,7 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import {
-  BarChart3
-} from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 
 export type PortfolioRole = 'student' | 'instructor';
 
@@ -333,9 +331,8 @@ const portfolioTabs: PortfolioTab[] = [
 //   },
 // ];
 
-
-const studentAssessments: PortfolioAsset[] = []
-const studentFiles: PortfolioAsset[] = []
+const studentAssessments: PortfolioAsset[] = [];
+const studentFiles: PortfolioAsset[] = [];
 // const studentBadges: PortfolioAsset[] = [
 //   {
 //     id: 'responsive-layout',
@@ -371,10 +368,9 @@ const studentFiles: PortfolioAsset[] = []
 //     rating: 4,
 //   },
 // ];
-const studentBadges: PortfolioAsset[] = []
-const studentVideos: PortfolioAsset[] = []
-const studentProjects: PortfolioProject[] = []
-
+const studentBadges: PortfolioAsset[] = [];
+const studentVideos: PortfolioAsset[] = [];
+const studentProjects: PortfolioProject[] = [];
 
 const studentDataset: PortfolioDataset = {
   tabs: portfolioTabs,
@@ -565,11 +561,11 @@ const studentDataset: PortfolioDataset = {
 //   },
 // ];
 
-const instructorAssessments: PortfolioAsset[] = []
-const instructorFiles: PortfolioAsset[] = []
-const instructorBadges: PortfolioAsset[] = []
-const instructorVideos: PortfolioAsset[] = []
-const instructorProjects: PortfolioProject[] = []
+const instructorAssessments: PortfolioAsset[] = [];
+const instructorFiles: PortfolioAsset[] = [];
+const instructorBadges: PortfolioAsset[] = [];
+const instructorVideos: PortfolioAsset[] = [];
+const instructorProjects: PortfolioProject[] = [];
 
 const instructorDataset: PortfolioDataset = {
   tabs: portfolioTabs,

@@ -36,7 +36,7 @@ import {
   getAllCoursesOptions,
   scheduleClassMutation,
   updateClassDefinitionMutation,
-  updateScheduledInstanceStatusMutation
+  updateScheduledInstanceStatusMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { LocationTypeEnum, type StatusEnum3 } from '@/services/client/types.gen';
 import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
@@ -923,7 +923,7 @@ function ClassDialog({
             initialValues={initialValues}
             className='px-6 pb-6'
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -966,7 +966,7 @@ function RecurrenceDialog({
             initialValues={initialValues}
             className='px-6 pb-6'
             recurrenceId={editingRecurrenceId}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -1016,7 +1016,7 @@ function ScheduleDialog({
             className='px-6 pb-6'
             scheduleId={editingScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -1068,7 +1068,7 @@ function TimetableScheduleDialog({
             className='px-6 pb-6'
             timetableScheduleId={timetableScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
             status={status}
           />
         </ScrollArea>

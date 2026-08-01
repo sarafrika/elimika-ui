@@ -44,7 +44,7 @@ export function ModerationQueueClient() {
             <Badge variant='outline' className='mb-1 text-[10px] uppercase'>
               {row.original.entity_type?.replace(/_/g, ' ')}
             </Badge>
-            <p className='truncate text-xs text-muted-foreground'>{row.original.entity_uuid}</p>
+            <p className='text-muted-foreground truncate text-xs'>{row.original.entity_uuid}</p>
           </div>
         ),
       },
@@ -61,7 +61,7 @@ export function ModerationQueueClient() {
         header: 'Submitted',
         meta: { label: 'Submitted' },
         cell: ({ row }) => (
-          <span className='text-sm text-muted-foreground'>
+          <span className='text-muted-foreground text-sm'>
             {row.original.submitted_at
               ? new Date(row.original.submitted_at).toLocaleDateString(undefined, {
                   day: 'numeric',
@@ -106,7 +106,7 @@ export function ModerationQueueClient() {
               <Button
                 size='sm'
                 variant='ghost'
-                className='h-8 text-destructive'
+                className='text-destructive h-8'
                 disabled={action.isPending}
                 onClick={e => {
                   e.stopPropagation();

@@ -8,19 +8,15 @@ import {
   getCourseByUuidOptions,
   getEnrollmentsForClassOptions,
   getInstructorByUuidOptions,
-  listCatalogItemsOptions
+  listCatalogItemsOptions,
 } from '../services/client/@tanstack/react-query.gen';
-import type {
-  ClassDefinition,
-  Course,
-  Instructor
-} from '../services/client/types.gen';
+import type { ClassDefinition, Course, Instructor } from '../services/client/types.gen';
 import type { BundledClass } from '../src/features/dashboard/courses/types';
 
 type StudentLike =
   | {
-    uuid?: string | null;
-  }
+      uuid?: string | null;
+    }
   | null
   | undefined;
 
@@ -59,7 +55,10 @@ function useBundledClassInfo(
   const scheduleQueries = useQueries({
     queries:
       classes.map(cls => ({
-        ...getClassScheduleOptions({ path: { uuid: cls.uuid as string }, query: { pageable: { size: 1000 } } }),
+        ...getClassScheduleOptions({
+          path: { uuid: cls.uuid as string },
+          query: { pageable: { size: 1000 } },
+        }),
         enabled: !!cls.course_uuid,
       })) || [],
   });
@@ -94,8 +93,7 @@ function useBundledClassInfo(
 
   // Build a lookup map for catalogue by class_definition_uuid
   const catalogueMap = useMemo(
-    () =>
-      Object.fromEntries(catalogueItems.map(item => [item.class_definition_uuid, item])),
+    () => Object.fromEntries(catalogueItems.map(item => [item.class_definition_uuid, item])),
     [catalogueItems]
   );
 
@@ -108,7 +106,6 @@ function useBundledClassInfo(
   const bundledClassInfo: BundledClass[] = useMemo(
     () =>
       classes.map((cls, i) => {
-
         return {
           ...cls,
           course: courses[i] ?? null,

@@ -29,16 +29,13 @@ export function SectionCard({
 }: SectionCardProps) {
   return (
     <section
-      className={cn(
-        bare ? '' : 'rounded-md border border-border/70 bg-card shadow-sm',
-        className
-      )}
+      className={cn(bare ? '' : 'border-border/70 bg-card rounded-md border shadow-sm', className)}
     >
       {title || actions ? (
-        <div className='flex flex-wrap items-start justify-between gap-3 border-b border-border/60 px-5 py-4'>
+        <div className='border-border/60 flex flex-wrap items-start justify-between gap-3 border-b px-5 py-4'>
           <div className='space-y-1'>
-            {title ? <h2 className='text-base font-semibold text-foreground'>{title}</h2> : null}
-            {description ? <p className='text-sm text-muted-foreground'>{description}</p> : null}
+            {title ? <h2 className='text-foreground text-base font-semibold'>{title}</h2> : null}
+            {description ? <p className='text-muted-foreground text-sm'>{description}</p> : null}
           </div>
           {actions ? <div className='flex items-center gap-2'>{actions}</div> : null}
         </div>
@@ -59,9 +56,9 @@ export function SectionCardSkeleton({
   className?: string;
 }) {
   return (
-    <section className={cn('rounded-md border border-border/70 bg-card shadow-sm', className)}>
+    <section className={cn('border-border/70 bg-card rounded-md border shadow-sm', className)}>
       {withHeader ? (
-        <div className='space-y-2 border-b border-border/60 px-5 py-4'>
+        <div className='border-border/60 space-y-2 border-b px-5 py-4'>
           <Skeleton className='h-4 w-40' />
           <Skeleton className='h-3 w-64' />
         </div>

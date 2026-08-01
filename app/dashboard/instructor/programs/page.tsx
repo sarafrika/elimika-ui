@@ -55,7 +55,9 @@ import {
   ProgramRequirementDialog,
 } from '../../course-creator/_components/program-management-form';
 
-type ProgramListItem = NonNullable<NonNullable<SearchTrainingProgramsResponse['data']>['content']>[number];
+type ProgramListItem = NonNullable<
+  NonNullable<SearchTrainingProgramsResponse['data']>['content']
+>[number];
 
 export default function ClassesPage() {
   const queryClient = useQueryClient();

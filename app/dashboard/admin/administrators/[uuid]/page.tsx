@@ -1,6 +1,16 @@
 import { UserDetailView } from '../../users/_components/UserDetailView';
 
-export default async function AdministratorDetailPage({ params }: { params: Promise<{ uuid: string }> }) {
+export default async function AdministratorDetailPage({
+  params,
+}: {
+  params: Promise<{ uuid: string }>;
+}) {
   const { uuid } = await params;
-  return <UserDetailView uuid={uuid} backHref='/dashboard/admin/administrators' backLabel='Back to administrators' />;
+  return (
+    <UserDetailView
+      uuid={uuid}
+      backHref='/dashboard/admin/administrators'
+      backLabel='Back to administrators'
+    />
+  );
 }

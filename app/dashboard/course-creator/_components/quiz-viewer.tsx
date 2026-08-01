@@ -269,7 +269,7 @@ export function QuizViewer({ quiz, open, onOpenChange }: QuizViewerProps) {
                           }`}
                         >
                           {option.isCorrect ? (
-                            <CheckCircle2 className='mt-0.5 h-5 w-5 shrink-0 text-success' />
+                            <CheckCircle2 className='text-success mt-0.5 h-5 w-5 shrink-0' />
                           ) : (
                             <Circle className='text-muted-foreground mt-0.5 h-5 w-5 shrink-0' />
                           )}
@@ -278,7 +278,7 @@ export function QuizViewer({ quiz, open, onOpenChange }: QuizViewerProps) {
                             {option.isCorrect && (
                               <Badge
                                 variant='outline'
-                                className='just mt-2 flex items-end self-end bg-success/15 text-xs dark:bg-success/25'
+                                className='just bg-success/15 dark:bg-success/25 mt-2 flex items-end self-end text-xs'
                               >
                                 Correct Answer
                               </Badge>

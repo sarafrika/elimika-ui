@@ -125,7 +125,7 @@ export function CourseReviewPage({ uuid }: { uuid: string }) {
     return (
       <main className={adminTheme.page}>
         <div className='flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center'>
-          <BookOpen className='size-10 text-muted-foreground' />
+          <BookOpen className='text-muted-foreground size-10' />
           <p className='text-lg font-semibold'>Course not found</p>
           <Button variant='outline' asChild>
             <Link href='/dashboard/admin/manage-courses'>Back to courses</Link>
@@ -138,7 +138,12 @@ export function CourseReviewPage({ uuid }: { uuid: string }) {
   return (
     <main className={adminTheme.page}>
       <div className={adminTheme.pageStack}>
-        <Button variant='ghost' size='sm' asChild className='-ml-2 self-start text-muted-foreground'>
+        <Button
+          variant='ghost'
+          size='sm'
+          asChild
+          className='text-muted-foreground -ml-2 self-start'
+        >
           <Link href='/dashboard/admin/manage-courses'>
             <ArrowLeft className='size-4' />
             Back to courses
@@ -157,7 +162,9 @@ export function CourseReviewPage({ uuid }: { uuid: string }) {
                 <div>
                   <p className={adminTheme.sectionLabel}>Description</p>
                   <div className='mt-1.5 text-sm leading-relaxed'>
-                    <HTMLTextPreview htmlContent={course.description ?? 'No description provided.'} />
+                    <HTMLTextPreview
+                      htmlContent={course.description ?? 'No description provided.'}
+                    />
                   </div>
                 </div>
                 <div>
@@ -169,7 +176,9 @@ export function CourseReviewPage({ uuid }: { uuid: string }) {
                 <div>
                   <p className={adminTheme.sectionLabel}>Prerequisites</p>
                   <div className='mt-1.5 text-sm leading-relaxed'>
-                    <HTMLTextPreview htmlContent={course.prerequisites ?? 'No prerequisites listed.'} />
+                    <HTMLTextPreview
+                      htmlContent={course.prerequisites ?? 'No prerequisites listed.'}
+                    />
                   </div>
                 </div>
               </div>

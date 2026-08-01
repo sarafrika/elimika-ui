@@ -12,7 +12,6 @@ export const assignmentFilters: Array<{ label: string; value: AssignmentStatus }
   { label: 'Overdue', value: 'overdue' },
   { label: 'Graded', value: 'graded' },
   { label: 'All', value: 'all' },
-
 ];
 
 export const assignments: AssignmentCardData[] = [

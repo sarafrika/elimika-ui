@@ -202,7 +202,11 @@ export function useCourseCreatorsByIds(ids: string[]) {
 }
 
 export function useOrganisationsByIds(ids: string[]) {
-  const { map, isLoading } = useSearchByIds<Organisation>(ids, search2Options, STALE_TIMES.reference);
+  const { map, isLoading } = useSearchByIds<Organisation>(
+    ids,
+    search2Options,
+    STALE_TIMES.reference
+  );
   return { organisationMap: map, isLoading };
 }
 

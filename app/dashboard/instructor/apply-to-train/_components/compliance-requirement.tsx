@@ -291,10 +291,10 @@ export function ComplianceRequirements({ data, onDataChange }: ComplianceRequire
                     {docs.map(doc => (
                       <div
                         key={doc.id}
-                        className='flex items-center justify-between rounded border border-success/30 bg-success/10 p-3'
+                        className='border-success/30 bg-success/10 flex items-center justify-between rounded border p-3'
                       >
                         <div className='flex items-center gap-3'>
-                          <FileText className='h-4 w-4 text-success' />
+                          <FileText className='text-success h-4 w-4' />
                           <div>
                             <p className='text-sm font-medium'>{doc.type}</p>
                             <p className='text-muted-foreground text-xs'>
@@ -498,8 +498,8 @@ export function ComplianceRequirements({ data, onDataChange }: ComplianceRequire
                   area => getComplianceStatus(area.id) === 'completed'
                 ) ? (
                   <>
-                    <CheckCircle className='h-5 w-5 text-success' />
-                    <span className='font-medium text-success'>Ready for Review</span>
+                    <CheckCircle className='text-success h-5 w-5' />
+                    <span className='text-success font-medium'>Ready for Review</span>
                   </>
                 ) : (
                   <>

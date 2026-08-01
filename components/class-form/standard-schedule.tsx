@@ -55,24 +55,24 @@ export function StandardSchedule({
   totalSessions: number;
 }) {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-      <div className="space-y-2">
-        <div className="text-sm font-semibold">Schedule</div>
-        <div className="mb-2 text-xs text-muted-foreground">Set class days and times.</div>
-        <div className="min-w-0 overflow-hidden rounded-lg border">
-          <div className="hidden grid-cols-[64px_1fr_1fr_56px] gap-1 bg-muted/50 px-2 py-1.5 text-xs text-muted-foreground sm:grid">
+    <div className='grid gap-6 lg:grid-cols-[1.4fr_1fr]'>
+      <div className='space-y-2'>
+        <div className='text-sm font-semibold'>Schedule</div>
+        <div className='text-muted-foreground mb-2 text-xs'>Set class days and times.</div>
+        <div className='min-w-0 overflow-hidden rounded-lg border'>
+          <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[64px_1fr_1fr_56px] gap-1 px-2 py-1.5 text-xs sm:grid'>
             <div>Day</div>
             <div>Start</div>
             <div>End</div>
-            <div className="text-center leading-none">All Day</div>
+            <div className='text-center leading-none'>All Day</div>
           </div>
           {DAYS.map(d => {
             const row = days[d];
             return (
               <div key={d} className={cn('min-w-0 border-t', row.active && 'bg-primary/5')}>
-                <div className="hidden grid-cols-[64px_1fr_1fr_56px] items-center gap-1 px-2 py-1.5 sm:grid">
+                <div className='hidden grid-cols-[64px_1fr_1fr_56px] items-center gap-1 px-2 py-1.5 sm:grid'>
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => onDayChange(d, { active: !row.active })}
                     className={cn(
                       'h-8 rounded-md text-xs font-medium transition-colors',
@@ -84,20 +84,20 @@ export function StandardSchedule({
                     {d}
                   </button>
                   <Input
-                    type="time"
+                    type='time'
                     value={row.start}
                     disabled={!row.active || row.allDay}
                     onChange={e => onDayChange(d, { start: e.target.value })}
-                    className="h-8 w-full min-w-0 px-1 text-xs"
+                    className='h-8 w-full min-w-0 px-1 text-xs'
                   />
                   <Input
-                    type="time"
+                    type='time'
                     value={row.end}
                     disabled={!row.active || row.allDay}
                     onChange={e => onDayChange(d, { end: e.target.value })}
-                    className="h-8 w-full min-w-0 px-1 text-xs"
+                    className='h-8 w-full min-w-0 px-1 text-xs'
                   />
-                  <div className="flex justify-center">
+                  <div className='flex justify-center'>
                     <Checkbox
                       checked={row.allDay}
                       disabled={!row.active}
@@ -105,20 +105,22 @@ export function StandardSchedule({
                     />
                   </div>
                 </div>
-                <div className="space-y-2 px-3 py-2.5 sm:hidden">
-                  <div className="flex items-center justify-between gap-2">
+                <div className='space-y-2 px-3 py-2.5 sm:hidden'>
+                  <div className='flex items-center justify-between gap-2'>
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => onDayChange(d, { active: !row.active })}
                       aria-pressed={row.active}
                       className={cn(
                         'h-9 min-w-[64px] rounded-md px-3 text-sm font-medium transition-colors',
-                        row.active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                        row.active
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
                       )}
                     >
                       {d}
                     </button>
-                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <label className='text-muted-foreground flex items-center gap-2 text-xs'>
                       <Checkbox
                         checked={row.allDay}
                         disabled={!row.active}
@@ -128,23 +130,27 @@ export function StandardSchedule({
                     </label>
                   </div>
                   {row.active && !row.allDay && (
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Start</div>
+                    <div className='grid grid-cols-2 gap-2'>
+                      <div className='space-y-1'>
+                        <div className='text-muted-foreground text-[10px] tracking-wide uppercase'>
+                          Start
+                        </div>
                         <Input
-                          type="time"
+                          type='time'
                           value={row.start}
                           onChange={e => onDayChange(d, { start: e.target.value })}
-                          className="h-10 w-full text-sm"
+                          className='h-10 w-full text-sm'
                         />
                       </div>
-                      <div className="space-y-1">
-                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">End</div>
+                      <div className='space-y-1'>
+                        <div className='text-muted-foreground text-[10px] tracking-wide uppercase'>
+                          End
+                        </div>
                         <Input
-                          type="time"
+                          type='time'
                           value={row.end}
                           onChange={e => onDayChange(d, { end: e.target.value })}
-                          className="h-10 w-full text-sm"
+                          className='h-10 w-full text-sm'
                         />
                       </div>
                     </div>
@@ -156,10 +162,10 @@ export function StandardSchedule({
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="space-y-1">
-          <Label className="text-xs">Repeat Every</Label>
-          <div className="grid grid-cols-[80px_1fr] gap-2">
+      <div className='space-y-3'>
+        <div className='space-y-1'>
+          <Label className='text-xs'>Repeat Every</Label>
+          <div className='grid grid-cols-[80px_1fr] gap-2'>
             <Input value={repeatEvery} onChange={e => onRepeatEveryChange(e.target.value)} />
             <Select value={repeatUnit} onValueChange={onRepeatUnitChange}>
               <SelectTrigger>
@@ -175,30 +181,47 @@ export function StandardSchedule({
             </Select>
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label className="text-xs">Start Date *</Label>
-            <Input type="date" value={startDate} onChange={e => onStartDateChange(e.target.value)} />
+        <div className='grid gap-3 sm:grid-cols-2'>
+          <div className='space-y-1'>
+            <Label className='text-xs'>Start Date *</Label>
+            <Input
+              type='date'
+              value={startDate}
+              onChange={e => onStartDateChange(e.target.value)}
+            />
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs">End Repeat *</Label>
-            <Input type="date" value={endDate} onChange={e => onEndDateChange(e.target.value)} />
+          <div className='space-y-1'>
+            <Label className='text-xs'>End Repeat *</Label>
+            <Input type='date' value={endDate} onChange={e => onEndDateChange(e.target.value)} />
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Registration Start</Label>
-            <Input type="date" value={regStart} onChange={e => onRegStartChange(e.target.value)} disabled={continuousReg} />
+          <div className='space-y-1'>
+            <Label className='text-xs'>Registration Start</Label>
+            <Input
+              type='date'
+              value={regStart}
+              onChange={e => onRegStartChange(e.target.value)}
+              disabled={continuousReg}
+            />
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Registration End</Label>
-            <Input type="date" value={regEnd} onChange={e => onRegEndChange(e.target.value)} disabled={continuousReg} />
+          <div className='space-y-1'>
+            <Label className='text-xs'>Registration End</Label>
+            <Input
+              type='date'
+              value={regEnd}
+              onChange={e => onRegEndChange(e.target.value)}
+              disabled={continuousReg}
+            />
           </div>
         </div>
-        <label className="flex items-center gap-2 text-xs">
-          <Checkbox checked={continuousReg} onCheckedChange={v => onContinuousRegChange(v === true)} />
+        <label className='flex items-center gap-2 text-xs'>
+          <Checkbox
+            checked={continuousReg}
+            onCheckedChange={v => onContinuousRegChange(v === true)}
+          />
           Continuous Registration (no closing date)
         </label>
-        <div className="space-y-1">
-          <Label className="text-xs">Timezone</Label>
+        <div className='space-y-1'>
+          <Label className='text-xs'>Timezone</Label>
           <Select value={timezone} onValueChange={onTimezoneChange}>
             <SelectTrigger>
               <SelectValue />
@@ -212,7 +235,7 @@ export function StandardSchedule({
             </SelectContent>
           </Select>
         </div>
-        <div className="rounded-md bg-primary/10 px-3 py-2 text-center text-xs font-medium text-primary">
+        <div className='bg-primary/10 text-primary rounded-md px-3 py-2 text-center text-xs font-medium'>
           Total sessions: {totalSessions}
         </div>
       </div>

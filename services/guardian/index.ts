@@ -92,8 +92,7 @@ export type GuardianComplianceNotice = z.infer<typeof guardianComplianceNoticeSc
 export type GuardianDashboardSnapshot = z.infer<typeof guardianDashboardSchema>;
 
 const GUARDIAN_STUDENTS_PATH = '/api/v1/guardians/me/students' as keyof paths;
-const GUARDIAN_DASHBOARD_PATH =
-  '/api/v1/guardians/students/{studentUuid}/dashboard' as keyof paths;
+const GUARDIAN_DASHBOARD_PATH = '/api/v1/guardians/students/{studentUuid}/dashboard' as keyof paths;
 
 function normalizeGuardianStudents(payload: unknown): GuardianLinkedStudent[] {
   const arrayResult = z.array(guardianStudentSchema).safeParse(payload);

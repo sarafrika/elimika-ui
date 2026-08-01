@@ -91,10 +91,7 @@ export function AssignmentPageClient() {
   const { classes, loading } = useInstructorClassesWithDetails(instructorUuid);
   const uniqueClasses = useMemo(() => dedupeByKey(classes, item => item.uuid ?? null), [classes]);
 
-  const classUuids = useMemo(
-    () => uniqueClasses.map(c => c.uuid ?? ''),
-    [uniqueClasses]
-  );
+  const classUuids = useMemo(() => uniqueClasses.map(c => c.uuid ?? ''), [uniqueClasses]);
   const { classEnrollmentsMap } = useClassEnrollmentsMap(classUuids);
 
   const uniqueCourses = useMemo(
@@ -167,7 +164,9 @@ export function AssignmentPageClient() {
 
   const uniqueAssignmentUuids = useMemo(
     () =>
-      Array.from(new Set(assignmentSchedules.map(item => item.assignment_uuid).filter(isDefinedString))),
+      Array.from(
+        new Set(assignmentSchedules.map(item => item.assignment_uuid).filter(isDefinedString))
+      ),
     [assignmentSchedules]
   );
   const uniqueQuizUuids = useMemo(
@@ -175,9 +174,8 @@ export function AssignmentPageClient() {
     [quizSchedules]
   );
 
-  const { assignmentMap, isLoading: assignmentsLoading } = useAssignmentsByIds(
-    uniqueAssignmentUuids
-  );
+  const { assignmentMap, isLoading: assignmentsLoading } =
+    useAssignmentsByIds(uniqueAssignmentUuids);
   const { quizMap, isLoading: quizzesLoading } = useQuizzesByIds(uniqueQuizUuids);
 
   const assignmentMapMemo = useMemo(
@@ -272,24 +270,18 @@ export function AssignmentPageClient() {
         const lessonInfo = lessonMap.get(schedule.lesson_uuid);
         const classInfo = classMap.get(schedule.classUuid);
 
-        const uniqueCount = new Set(
-          classInfo?.enrollment?.map((e) => e.student_uuid) ?? []
-        ).size;
+        const uniqueCount = new Set(classInfo?.enrollment?.map(e => e.student_uuid) ?? []).size;
 
         const totalLearners = classEnrollmentsMap.get(schedule.classUuid)?.length ?? 0;
         const status = getTaskStatus(schedule.due_at, submissionCount, gradedCount, 'assignment');
         const pendingBadge =
           gradedCount < submissionCount ? `${submissionCount - gradedCount} Pending` : null;
         const metricLabel =
-          uniqueCount > 0
-            ? `${Math.round((submissionCount / uniqueCount) * 100)}% received`
-            : null;
+          uniqueCount > 0 ? `${Math.round((submissionCount / uniqueCount) * 100)}% received` : null;
 
         const assignmentCard: AssignmentCardData = {
           ctaLabel:
-            submissionCount > 0 && gradedCount < submissionCount
-              ? 'Grade Now'
-              : 'View Submissions',
+            submissionCount > 0 && gradedCount < submissionCount ? 'Grade Now' : 'View Submissions',
           classUuid: schedule.classUuid,
           scheduleUuid: schedule?.uuid as string,
           classTitle: classInfo?.title || 'Class',
@@ -337,13 +329,13 @@ export function AssignmentPageClient() {
         const attempts = quizAttemptMap.get(schedule.quiz_uuid ?? '') ?? [];
         const submissionCount = attempts.length;
 
-        const completedCount = attempts.filter(item => item.is_completed || item.submitted_at).length;
+        const completedCount = attempts.filter(
+          item => item.is_completed || item.submitted_at
+        ).length;
         const lessonInfo = lessonMap.get(schedule.lesson_uuid);
         const classInfo = classMap.get(schedule.classUuid);
 
-        const uniqueCount = new Set(
-          classInfo?.enrollment?.map((e) => e.student_uuid)
-        ).size;
+        const uniqueCount = new Set(classInfo?.enrollment?.map(e => e.student_uuid)).size;
 
         const totalLearners = classEnrollmentsMap.get(schedule.classUuid)?.length ?? 0;
         const status = getTaskStatus(schedule.due_at, submissionCount, completedCount, 'quiz');
@@ -395,7 +387,9 @@ export function AssignmentPageClient() {
       })
       .filter((item): item is AssignmentCardData => item !== null);
 
-    return [...assignmentCards, ...quizCards].sort((left, right) => left.lesson.localeCompare(right.lesson));
+    return [...assignmentCards, ...quizCards].sort((left, right) =>
+      left.lesson.localeCompare(right.lesson)
+    );
   }, [
     assignmentMapMemo,
     assignmentSchedules,
@@ -426,7 +420,8 @@ export function AssignmentPageClient() {
     });
   }, [activeFilter, search, taskCards]);
 
-  const scheduleLoading = assignmentScheduleQueries.some(query => query.isPending) ||
+  const scheduleLoading =
+    assignmentScheduleQueries.some(query => query.isPending) ||
     quizScheduleQueries.some(query => query.isPending);
 
   const hasScheduleData = assignmentSchedules.length + quizSchedules.length > 0;
@@ -492,7 +487,10 @@ export function AssignmentPageClient() {
             {isInitialLoading ? (
               <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-1'>
                 {Array.from({ length: 4 }).map((_, index) => (
-                  <div key={index} className='rounded-2xl border border-border/70 bg-card p-4 shadow-sm'>
+                  <div
+                    key={index}
+                    className='border-border/70 bg-card rounded-2xl border p-4 shadow-sm'
+                  >
                     <div className='flex items-center justify-between gap-3'>
                       <Skeleton className='h-5 w-32 rounded-full' />
                       <Skeleton className='h-8 w-20 rounded-full' />
@@ -509,18 +507,14 @@ export function AssignmentPageClient() {
                 ))}
               </div>
             ) : filteredAssignments.length > 0 ? (
-              <div className="flex flex-row flex-wrap gap-4">
+              <div className='flex flex-row flex-wrap gap-4'>
                 {filteredAssignments.map((assignment, index) => (
-                  <AssignmentCard
-                    key={`${assignment.id}-${index}`}
-                    assignment={assignment}
-                  />
+                  <AssignmentCard key={`${assignment.id}-${index}`} assignment={assignment} />
                 ))}
               </div>
             ) : (
-              <div className='border-border/70 bg-card rounded-xl border border-dashed p-4 text-xs text-muted-foreground shadow-sm sm:p-6 sm:text-sm'>
-                No lesson tasks with student submissions were found for this instructor
-                yet.
+              <div className='border-border/70 bg-card text-muted-foreground rounded-xl border border-dashed p-4 text-xs shadow-sm sm:p-6 sm:text-sm'>
+                No lesson tasks with student submissions were found for this instructor yet.
               </div>
             )}
           </section>

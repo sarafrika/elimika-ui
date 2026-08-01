@@ -73,7 +73,7 @@ export default function ParentBillingPage() {
       <div className={adminTheme.pageStack}>
         <AdminPageHeader
           title='Billing'
-          description="What your children have paid for across their learning journey."
+          description='What your children have paid for across their learning journey.'
         />
 
         <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
@@ -105,25 +105,25 @@ export default function ParentBillingPage() {
 
           <SectionCard title='Spending by category' description='Where the money went'>
             {scopes.length === 0 ? (
-              <p className='text-sm text-muted-foreground'>
+              <p className='text-muted-foreground text-sm'>
                 {isLoading ? 'Loading…' : 'No billing recorded yet.'}
               </p>
             ) : (
-              <ul className='divide-y divide-border/60'>
+              <ul className='divide-border/60 divide-y'>
                 {scopes.map((scope, index) => (
                   <li
                     key={`${scope.scope}-${index}`}
                     className='flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0'
                   >
                     <div className='min-w-0'>
-                      <p className='truncate text-sm font-medium text-foreground'>
+                      <p className='text-foreground truncate text-sm font-medium'>
                         {scope.scope ?? 'Unknown'}
                       </p>
-                      <p className='text-xs text-muted-foreground'>
+                      <p className='text-muted-foreground text-xs'>
                         {count(scope.units_sold)} items · {count(scope.line_item_count)} line items
                       </p>
                     </div>
-                    <span className='shrink-0 text-sm font-semibold tabular-nums text-foreground'>
+                    <span className='text-foreground shrink-0 text-sm font-semibold tabular-nums'>
                       {money(scope.gross_totals)}
                     </span>
                   </li>

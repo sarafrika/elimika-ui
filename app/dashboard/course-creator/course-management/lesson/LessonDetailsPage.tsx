@@ -58,10 +58,7 @@ import {
   searchAssignmentsOptions,
   searchQuizzesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import {
-  type ContentType as ApiContentType,
-  type Quiz,
-} from '@/services/client/types.gen';
+import { type ContentType as ApiContentType, type Quiz } from '@/services/client/types.gen';
 import type { TLesson, TLessonContentItem } from '../../_components/instructor-type';
 import {
   type ContentFormValues,
@@ -88,7 +85,6 @@ type AssignmentRecord = {
   time_limit_display?: string;
   passing_score?: number;
 };
-
 
 const LessonDetailsPage = () => {
   const searchParams = useSearchParams();
@@ -191,7 +187,6 @@ const LessonDetailsPage = () => {
       );
     } catch (_err) {}
   };
-
 
   // Quiz management
   const {
@@ -369,75 +364,77 @@ const LessonDetailsPage = () => {
           >
             <div className='space-y-6'>
               {contentItems.map(item => {
-              const type = contentTypeData.find(
-                (ct: ApiContentType) => ct.uuid === item.content_type_uuid
-              );
-              const content_type_key = type?.name?.toUpperCase();
+                const type = contentTypeData.find(
+                  (ct: ApiContentType) => ct.uuid === item.content_type_uuid
+                );
+                const content_type_key = type?.name?.toUpperCase();
 
-              return (
-                <div key={item.uuid} className={contentGroupClasses}>
-                  <div className='flex flex-col gap-1'>
-                    <div className='flex items-center gap-2'>
-                      {getContentTypeIcon(content_type_key as ContentType)}
-                      <span className='text-foreground text-base font-medium'>{item.title}</span>
-                    </div>
-
-                    <div className='text-muted-foreground line-clamp-2 text-sm'>
-                      <RichTextRenderer htmlString={item?.description} />
-                    </div>
-
-                    {item.content_text && (
-                      <div className='text-muted-foreground mt-2 text-sm'>
-                        <RichTextRenderer htmlString={item.content_text} maxChars={500} />
+                return (
+                  <div key={item.uuid} className={contentGroupClasses}>
+                    <div className='flex flex-col gap-1'>
+                      <div className='flex items-center gap-2'>
+                        {getContentTypeIcon(content_type_key as ContentType)}
+                        <span className='text-foreground text-base font-medium'>{item.title}</span>
                       </div>
-                    )}
 
-                    {item.file_url && (
-                      <a
-                        href={item.file_url}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='text-primary hover:text-primary/80 text-xs underline'
-                      >
-                        View File
-                      </a>
-                    )}
-                  </div>
+                      <div className='text-muted-foreground line-clamp-2 text-sm'>
+                        <RichTextRenderer htmlString={item?.description} />
+                      </div>
 
-                  {/* Dropdown for content actions */}
-                  <div className='self-start'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant='ghost'
-                          size='icon'
-                          className='cursor-pointer opacity-0 transition-opacity group-hover:opacity-100'
-                          aria-label='More actions'
+                      {item.content_text && (
+                        <div className='text-muted-foreground mt-2 text-sm'>
+                          <RichTextRenderer htmlString={item.content_text} maxChars={500} />
+                        </div>
+                      )}
+
+                      {item.file_url && (
+                        <a
+                          href={item.file_url}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='text-primary hover:text-primary/80 text-xs underline'
                         >
-                          <MoreVertical className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
+                          View File
+                        </a>
+                      )}
+                    </div>
 
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuItem onClick={() => handleEditContent(item)}>
-                          <PenLine className='mr-1 h-4 w-4' />
-                          Edit Content
-                        </DropdownMenuItem>
+                    {/* Dropdown for content actions */}
+                    <div className='self-start'>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='cursor-pointer opacity-0 transition-opacity group-hover:opacity-100'
+                            aria-label='More actions'
+                          >
+                            <MoreVertical className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
 
-                        <DropdownMenuSeparator />
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem onClick={() => handleEditContent(item)}>
+                            <PenLine className='mr-1 h-4 w-4' />
+                            Edit Content
+                          </DropdownMenuItem>
 
-                        <DropdownMenuItem
-                          className='text-destructive'
-                          onClick={() => handleDeleteContent(courseId, item.lesson_uuid, item.uuid)}
-                        >
-                          <Trash className='mr-1 h-4 w-4' />
-                          Delete Content
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          <DropdownMenuSeparator />
+
+                          <DropdownMenuItem
+                            className='text-destructive'
+                            onClick={() =>
+                              handleDeleteContent(courseId, item.lesson_uuid, item.uuid)
+                            }
+                          >
+                            <Trash className='mr-1 h-4 w-4' />
+                            Delete Content
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                </div>
-              );
+                );
               })}
             </div>
           </AsyncSection>

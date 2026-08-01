@@ -161,7 +161,7 @@ export const LinkShareCard = React.memo(function LinkShareCard({
     <Card className={cn('gap-0', className)}>
       {header ?? (
         <CardHeader className='space-y-4'>
-          <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between '>
+          <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
             <div className='space-y-1'>
               <CardTitle className='text-xl'>{title}</CardTitle>
               {description ? <CardDescription>{description}</CardDescription> : null}
@@ -197,7 +197,7 @@ export const LinkShareCard = React.memo(function LinkShareCard({
       )}
 
       <CardContent className='space-y-4'>
-        <div className='border-border bg-muted/40 rounded-lg border px-3 py-3 mb-2'>
+        <div className='border-border bg-muted/40 mb-2 rounded-lg border px-3 py-3'>
           {preview ?? defaultPreview}
         </div>
 

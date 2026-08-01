@@ -15,7 +15,10 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import { useClassRoster } from '@/hooks/use-class-roster';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { InstructorClassWithSchedule, useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
+import {
+  InstructorClassWithSchedule,
+  useInstructorClassesWithSchedules,
+} from '@/hooks/use-instructor-classes-with-schedules';
 import { startScheduledInstanceMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation } from '@tanstack/react-query';
 import { NotebookPen, PanelBottom, Search } from 'lucide-react';
@@ -232,8 +235,9 @@ export default function NewClassPage() {
     }
 
     const queryString = params.toString();
-    return `/dashboard/instructor/classes/class-training/${selectedClassUuid}${queryString ? `?${queryString}` : ''
-      }`;
+    return `/dashboard/instructor/classes/class-training/${selectedClassUuid}${
+      queryString ? `?${queryString}` : ''
+    }`;
   }, [
     selectedClassUuid,
     selectedScheduleInstance?.uuid,
@@ -265,10 +269,16 @@ export default function NewClassPage() {
       }
 
       const queryString = params.toString();
-      return `/dashboard/instructor/classes/class-training/${selectedClassUuid}${queryString ? `?${queryString}` : ''
-        }`;
+      return `/dashboard/instructor/classes/class-training/${selectedClassUuid}${
+        queryString ? `?${queryString}` : ''
+      }`;
     },
-    [lessonModules, selectedClassForDisplay?.course?.uuid, selectedClassUuid, selectedScheduleInstance?.uuid]
+    [
+      lessonModules,
+      selectedClassForDisplay?.course?.uuid,
+      selectedClassUuid,
+      selectedScheduleInstance?.uuid,
+    ]
   );
 
   const handleStartLesson = useCallback(
@@ -407,10 +417,11 @@ export default function NewClassPage() {
                             setActiveTab(tab.value);
                             setIsTabsSheetOpen(false);
                           }}
-                          className={`h-12 w-full justify-between rounded-[18px] border px-4 ${isActive
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border/70 bg-background text-foreground'
-                            }`}
+                          className={`h-12 w-full justify-between rounded-[18px] border px-4 ${
+                            isActive
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border/70 bg-background text-foreground'
+                          }`}
                         >
                           <span>{tab.label}</span>
                           {isActive ? (
@@ -428,12 +439,14 @@ export default function NewClassPage() {
               selectedClass={selectedClass as InstructorClassWithSchedule}
               difficultyMap={difficultyMap}
               instructorName={instructor?.full_name}
-              roleLabel={"instructor"}
+              roleLabel={'instructor'}
               sessionProgress={sessionProgress}
               remainingSessions={remainingSessions}
               startLessonHref={startLessonHref}
               selectedClassUuid={selectedClassUuid}
-              onAddClasses={() => router.push(`/dashboard/instructor/classes/new?id=${selectedClass?.uuid}`)}
+              onAddClasses={() =>
+                router.push(`/dashboard/instructor/classes/new?id=${selectedClass?.uuid}`)
+              }
             />
 
             <div>
@@ -449,10 +462,7 @@ export default function NewClassPage() {
                 ))}
               </TabsList>
 
-              <TabsContent
-                value='overview'
-                className='mt-0 rounded-b-[14px] rounded-t-none p-0'
-              >
+              <TabsContent value='overview' className='mt-0 rounded-t-none rounded-b-[14px] p-0'>
                 <ClassOverviewTab
                   isLoadingClasses={isLoadingClasses}
                   isLoadingLessons={isLoadingLessons}
@@ -471,19 +481,15 @@ export default function NewClassPage() {
                   getStartLessonHref={getStartLessonHref}
                   onStartLesson={handleStartLesson}
                   selectedLessonActionLabel={
-                    selectedScheduleInstance?.started_at &&
-                      !selectedScheduleInstance?.concluded_at
+                    selectedScheduleInstance?.started_at && !selectedScheduleInstance?.concluded_at
                       ? 'Resume Lesson'
                       : 'Start Lesson'
                   }
                   onAddClasses={() =>
-                    router.push(
-                      `/dashboard/instructor/classes/new?id=${selectedClass?.uuid}`
-                    )
+                    router.push(`/dashboard/instructor/classes/new?id=${selectedClass?.uuid}`)
                   }
                 />
               </TabsContent>
-
 
               <TabsContent value='lessons' className='mt-0'>
                 <ClassLessonTab
@@ -508,7 +514,9 @@ export default function NewClassPage() {
                       ? 'Resume Lesson'
                       : 'Start Lesson'
                   }
-                  onAddClasses={() => router.push(`/dashboard/instructor/classes/new?id=${selectedClass?.uuid}`)}
+                  onAddClasses={() =>
+                    router.push(`/dashboard/instructor/classes/new?id=${selectedClass?.uuid}`)
+                  }
                 />
               </TabsContent>
 

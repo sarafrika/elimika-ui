@@ -8,7 +8,13 @@ import { fetchStudentActivity } from '@/services/admin/user-profile-360';
 import { SectionCard, SectionCardSkeleton } from '../../_components/ui/SectionCard';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
 
-export function StudentActivityTab({ studentUuid, active }: { studentUuid: string; active: boolean }) {
+export function StudentActivityTab({
+  studentUuid,
+  active,
+}: {
+  studentUuid: string;
+  active: boolean;
+}) {
   const { data, isLoading } = useQuery({
     queryKey: ['student-activity', studentUuid],
     queryFn: () => fetchStudentActivity(studentUuid),
@@ -37,18 +43,20 @@ export function StudentActivityTab({ studentUuid, active }: { studentUuid: strin
             {courseEnrollments.map(enrollment => (
               <div
                 key={enrollment.enrollmentUuid ?? enrollment.courseUuid}
-                className='rounded-md border border-border/60 bg-muted/20 p-3'
+                className='border-border/60 bg-muted/20 rounded-md border p-3'
               >
                 <div className='mb-2 flex items-center justify-between gap-3'>
                   <div className='flex min-w-0 items-center gap-2'>
-                    <BookOpen className='size-4 shrink-0 text-muted-foreground' />
-                    <p className='truncate text-sm font-medium text-foreground'>{enrollment.courseName}</p>
+                    <BookOpen className='text-muted-foreground size-4 shrink-0' />
+                    <p className='text-foreground truncate text-sm font-medium'>
+                      {enrollment.courseName}
+                    </p>
                   </div>
                   <StatusBadge status={enrollment.status} />
                 </div>
                 <div className='flex items-center gap-3'>
                   <Progress value={enrollment.progress} className='h-2' />
-                  <span className='shrink-0 text-xs font-medium text-muted-foreground'>
+                  <span className='text-muted-foreground shrink-0 text-xs font-medium'>
                     {enrollment.progress}%
                   </span>
                 </div>
@@ -56,7 +64,7 @@ export function StudentActivityTab({ studentUuid, active }: { studentUuid: strin
             ))}
           </div>
         ) : (
-          <p className='text-sm text-muted-foreground'>No course enrollments.</p>
+          <p className='text-muted-foreground text-sm'>No course enrollments.</p>
         )}
       </SectionCard>
 
@@ -66,13 +74,15 @@ export function StudentActivityTab({ studentUuid, active }: { studentUuid: strin
             {classEnrollments.map(enrollment => (
               <div
                 key={enrollment.classUuid}
-                className='flex items-center justify-between gap-3 rounded-md border border-border/60 bg-muted/20 p-3'
+                className='border-border/60 bg-muted/20 flex items-center justify-between gap-3 rounded-md border p-3'
               >
                 <div className='flex min-w-0 items-center gap-2'>
-                  <GraduationCap className='size-4 shrink-0 text-muted-foreground' />
+                  <GraduationCap className='text-muted-foreground size-4 shrink-0' />
                   <div className='min-w-0'>
-                    <p className='truncate text-sm font-medium text-foreground'>{enrollment.classTitle}</p>
-                    <p className='truncate text-xs text-muted-foreground'>
+                    <p className='text-foreground truncate text-sm font-medium'>
+                      {enrollment.classTitle}
+                    </p>
+                    <p className='text-muted-foreground truncate text-xs'>
                       {enrollment.scheduledInstanceCount} session
                       {enrollment.scheduledInstanceCount === 1 ? '' : 's'}
                       {enrollment.lastActivity ? ` · last active ${enrollment.lastActivity}` : ''}
@@ -84,7 +94,7 @@ export function StudentActivityTab({ studentUuid, active }: { studentUuid: strin
             ))}
           </div>
         ) : (
-          <p className='text-sm text-muted-foreground'>No class enrollments.</p>
+          <p className='text-muted-foreground text-sm'>No class enrollments.</p>
         )}
       </SectionCard>
 
@@ -94,13 +104,13 @@ export function StudentActivityTab({ studentUuid, active }: { studentUuid: strin
             {certificates.map(cert => (
               <div
                 key={cert.uuid ?? cert.number}
-                className='flex items-center justify-between gap-3 rounded-md border border-border/60 bg-muted/20 p-3'
+                className='border-border/60 bg-muted/20 flex items-center justify-between gap-3 rounded-md border p-3'
               >
                 <div className='flex min-w-0 items-center gap-2'>
-                  <Award className='size-4 shrink-0 text-muted-foreground' />
+                  <Award className='text-muted-foreground size-4 shrink-0' />
                   <div className='min-w-0'>
-                    <p className='truncate text-sm font-medium text-foreground'>{cert.title}</p>
-                    <p className='truncate font-mono text-xs text-muted-foreground'>
+                    <p className='text-foreground truncate text-sm font-medium'>{cert.title}</p>
+                    <p className='text-muted-foreground truncate font-mono text-xs'>
                       {cert.number || '—'}
                       {cert.grade ? ` · grade ${cert.grade}` : ''}
                       {cert.issuedDate ? ` · ${cert.issuedDate}` : ''}
@@ -108,7 +118,10 @@ export function StudentActivityTab({ studentUuid, active }: { studentUuid: strin
                   </div>
                 </div>
                 <div className='flex items-center gap-2'>
-                  <StatusBadge status={cert.valid ? 'verified' : 'rejected'} label={cert.valid ? 'Valid' : 'Revoked'} />
+                  <StatusBadge
+                    status={cert.valid ? 'verified' : 'rejected'}
+                    label={cert.valid ? 'Valid' : 'Revoked'}
+                  />
                   {cert.downloadable && cert.url ? (
                     <Button size='sm' variant='outline' asChild>
                       <a href={cert.url} target='_blank' rel='noreferrer'>
@@ -122,7 +135,7 @@ export function StudentActivityTab({ studentUuid, active }: { studentUuid: strin
             ))}
           </div>
         ) : (
-          <p className='text-sm text-muted-foreground'>No certificates earned yet.</p>
+          <p className='text-muted-foreground text-sm'>No certificates earned yet.</p>
         )}
       </SectionCard>
     </div>

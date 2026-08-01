@@ -55,7 +55,9 @@ function toConflictItem(entry: unknown): ConflictItem | null {
  * 409 with `ApiResponse{message, error: [conflicts]}`. Returns null for any
  * other error shape so callers can fall back to the generic toast.
  */
-export function parseConflictError(error: unknown): { message: string; conflicts: ConflictItem[] } | null {
+export function parseConflictError(
+  error: unknown
+): { message: string; conflicts: ConflictItem[] } | null {
   if (!isRecord(error)) return null;
 
   const body = error as ApiErrorBody;

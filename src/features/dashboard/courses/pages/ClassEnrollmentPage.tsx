@@ -34,7 +34,7 @@ import {
   Layers,
   MapPin,
   User,
-  Users
+  Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -254,10 +254,7 @@ export default function ClassEnrollmentPage({
     });
   };
 
-  const handleEnrollmentSuccess = (
-    data: { message?: string } | undefined,
-    successText: string
-  ) => {
+  const handleEnrollmentSuccess = (data: { message?: string } | undefined, successText: string) => {
     invalidateStudentEnrollmentData();
     toast.success(data?.message || successText);
     router.push('/dashboard/courses');
@@ -271,8 +268,7 @@ export default function ClassEnrollmentPage({
     waitlistStudent.mutate(
       { body: { class_definition_uuid: classId, student_uuid: student.uuid } },
       {
-        onSuccess: data =>
-          handleEnrollmentSuccess(data, 'Student added to waitlist successfully'),
+        onSuccess: data => handleEnrollmentSuccess(data, 'Student added to waitlist successfully'),
         onError: err => toast.error(getErrorMessage(err, 'Failed to join the waitlist')),
       }
     );
@@ -280,9 +276,7 @@ export default function ClassEnrollmentPage({
 
   const isCapacityError = (error: unknown) => {
     const message = getErrorMessage(error, '').toLowerCase();
-    return (
-      message.includes('capacity') || message.includes('full') || message.includes('waitlist')
-    );
+    return message.includes('capacity') || message.includes('full') || message.includes('waitlist');
   };
 
   const handleEnrollStudent = () => {
@@ -313,10 +307,7 @@ export default function ClassEnrollmentPage({
 
   const handleCancel = () => {
     window.location.assign(
-      buildWorkspaceAliasPath(
-        activeDomain,
-        `/dashboard/courses/available-classes/${courseId}`
-      )
+      buildWorkspaceAliasPath(activeDomain, `/dashboard/courses/available-classes/${courseId}`)
     );
   };
 
@@ -332,12 +323,12 @@ export default function ClassEnrollmentPage({
 
   if (!enrollingClass) {
     return (
-      <div className='mx-auto w-full max-w-6xl px-6 py-12 lg:py-16 space-y-4'>
+      <div className='mx-auto w-full max-w-6xl space-y-4 px-6 py-12 lg:py-16'>
         <Button variant='ghost' onClick={handleCancel} className='gap-2'>
           <ArrowLeft className='h-4 w-4' />
           Back to Classes
         </Button>
-        <Card className='border-border/70 bg-card rounded-[28px] border shadow-sm flex flex-col items-center justify-center space-y-2 p-10 text-center'>
+        <Card className='border-border/70 bg-card flex flex-col items-center justify-center space-y-2 rounded-[28px] border p-10 text-center shadow-sm'>
           <AlertCircle className='text-muted-foreground h-10 w-10' />
           <h3 className='text-foreground text-lg font-medium'>Class Not Found</h3>
           <p className='text-muted-foreground text-sm'>
@@ -352,16 +343,15 @@ export default function ClassEnrollmentPage({
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className='w-full max-w-6xl px-6 pb-12 pt-4 space-y-6'>
+    <div className='w-full max-w-6xl space-y-6 px-6 pt-4 pb-12'>
       {/* Back button */}
-      <Button variant='ghost' onClick={handleCancel} className='gap-2 -ml-2'>
+      <Button variant='ghost' onClick={handleCancel} className='-ml-2 gap-2'>
         <ArrowLeft className='h-4 w-4' />
         Back to Classes
       </Button>
 
       {/* Main card */}
       <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
-
         {/* ── Card header: badges + title + description ── */}
         <CardHeader className='space-y-4'>
           <div className='flex items-center justify-between gap-4'>
@@ -401,7 +391,7 @@ export default function ClassEnrollmentPage({
         {/* ── Course description (rich text) ── */}
         {enrollingClass.course?.description && (
           <CardContent>
-            <div className='bg-muted/30 rounded-2xl border border-border/60 p-4'>
+            <div className='bg-muted/30 border-border/60 rounded-2xl border p-4'>
               <RichTextRenderer htmlString={enrollingClass.course.description} />
             </div>
           </CardContent>
@@ -483,8 +473,8 @@ export default function ClassEnrollmentPage({
 
         {/* ── What You'll Get (benefits) ── */}
         <CardContent>
-          <div className='bg-primary/5 rounded-2xl border border-primary/15 p-4'>
-            <h3 className='font-semibold mb-3'>What You&apos;ll Get</h3>
+          <div className='bg-primary/5 border-primary/15 rounded-2xl border p-4'>
+            <h3 className='mb-3 font-semibold'>What You&apos;ll Get</h3>
             <ul className='text-muted-foreground space-y-2 text-sm'>
               <li className='flex items-start gap-2'>
                 <BookOpen className='text-primary mt-0.5 h-4 w-4 shrink-0' />
@@ -508,9 +498,7 @@ export default function ClassEnrollmentPage({
             <div className='flex gap-3'>
               <AlertCircle className='h-5 w-5 flex-shrink-0 text-yellow-600 dark:text-yellow-400' />
               <div className='space-y-1'>
-                <p className='font-medium text-yellow-900 dark:text-yellow-100'>
-                  Important Notice
-                </p>
+                <p className='font-medium text-yellow-900 dark:text-yellow-100'>Important Notice</p>
                 <p className='text-sm text-yellow-800 dark:text-yellow-200'>
                   Once enrolled, you may need to contact your instructor or administrator to
                   withdraw from this class.
@@ -543,11 +531,7 @@ export default function ClassEnrollmentPage({
               className='rounded-full px-10 disabled:cursor-not-allowed disabled:opacity-60'
               variant='success'
             >
-              {isPending
-                ? 'Processing…'
-                : isClassFull
-                  ? 'Join Waitlist'
-                  : 'Yes, Enroll Me'}
+              {isPending ? 'Processing…' : isClassFull ? 'Join Waitlist' : 'Yes, Enroll Me'}
             </Button>
           </div>
         </div>

@@ -12,7 +12,8 @@ export function AssignmentQuickActions({ insights }: AssignmentQuickActionsProps
   const riskItems = [
     {
       icon: AlertCircle,
-      subtitle: insights.overdueTasks > 0 ? 'Tasks that need attention' : 'No overdue work right now',
+      subtitle:
+        insights.overdueTasks > 0 ? 'Tasks that need attention' : 'No overdue work right now',
       title: `${insights.overdueTasks} overdue task${insights.overdueTasks === 1 ? '' : 's'}`,
     },
     {

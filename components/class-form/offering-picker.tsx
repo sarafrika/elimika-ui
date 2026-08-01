@@ -48,9 +48,9 @@ function CategoryField({
 }) {
   if (!selectedOffering) {
     return (
-      <div className="space-y-2">
+      <div className='space-y-2'>
         <Label>Category</Label>
-        <p className="text-xs text-muted-foreground">
+        <p className='text-muted-foreground text-xs'>
           Select a course or program first — its category is applied automatically.
         </p>
       </div>
@@ -59,21 +59,20 @@ function CategoryField({
 
   if (selectedOffering.kind === 'Course') {
     return (
-      <div className="space-y-2">
-        <Label className="flex items-center gap-1.5">
+      <div className='space-y-2'>
+        <Label className='flex items-center gap-1.5'>
           Category
-          <span className="text-[11px] font-normal text-muted-foreground">
-            (from the course)
-          </span>
+          <span className='text-muted-foreground text-[11px] font-normal'>(from the course)</span>
         </Label>
         {selectedOffering.categoryNames.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            This course has no category set. The class inherits whatever the course creator adds later.
+          <p className='text-muted-foreground text-xs'>
+            This course has no category set. The class inherits whatever the course creator adds
+            later.
           </p>
         ) : (
-          <div className="flex flex-wrap gap-1.5">
+          <div className='flex flex-wrap gap-1.5'>
             {selectedOffering.categoryNames.map(name => (
-              <Badge key={name} variant="secondary">
+              <Badge key={name} variant='secondary'>
                 {name}
               </Badge>
             ))}
@@ -84,20 +83,22 @@ function CategoryField({
   }
 
   return (
-    <div className="space-y-2">
+    <div className='space-y-2'>
       <Label>
-        Category <span className="text-destructive">*</span>
+        Category <span className='text-destructive'>*</span>
       </Label>
       {categoriesLoading ? (
-        <Skeleton className="h-9 w-full" />
+        <Skeleton className='h-9 w-full' />
       ) : (
         <Select value={programCategoryUuid} onValueChange={onProgramCategoryChange}>
-          <SelectTrigger aria-label="Select category">
-            <SelectValue placeholder="Choose the category these classes fall under" />
+          <SelectTrigger aria-label='Select category'>
+            <SelectValue placeholder='Choose the category these classes fall under' />
           </SelectTrigger>
           <SelectContent>
             {categories.length === 0 ? (
-              <div className="px-2 py-1.5 text-xs text-muted-foreground">No categories configured</div>
+              <div className='text-muted-foreground px-2 py-1.5 text-xs'>
+                No categories configured
+              </div>
             ) : (
               categories.map(c => (
                 <SelectItem key={c.uuid} value={c.uuid ?? ''}>
@@ -108,7 +109,7 @@ function CategoryField({
           </SelectContent>
         </Select>
       )}
-      <p className="text-[11px] text-muted-foreground">
+      <p className='text-muted-foreground text-[11px]'>
         Programs don&apos;t carry a category of their own — pick the one these classes belong under.
       </p>
     </div>
@@ -153,15 +154,15 @@ export function OfferingPicker({
   return (
     <>
       {/* Offering + Instructor */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="min-w-0 space-y-2">
+      <div className='grid gap-4 sm:grid-cols-2'>
+        <div className='min-w-0 space-y-2'>
           <Label>
-            Select Course or Program <span className="text-destructive">*</span>
+            Select Course or Program <span className='text-destructive'>*</span>
           </Label>
           <Select value={offering} onValueChange={onOfferingChange}>
-            <SelectTrigger className="w-full">
-              <div className="flex w-full min-w-0 items-center justify-between gap-2">
-                <span className="truncate">
+            <SelectTrigger className='w-full'>
+              <div className='flex w-full min-w-0 items-center justify-between gap-2'>
+                <span className='truncate'>
                   <SelectValue
                     placeholder={
                       loading
@@ -173,7 +174,7 @@ export function OfferingPicker({
                   />
                 </span>
                 {selectedOffering ? (
-                  <Badge variant="secondary" className="ml-auto shrink-0">
+                  <Badge variant='secondary' className='ml-auto shrink-0'>
                     {selectedOffering.kind}
                   </Badge>
                 ) : null}
@@ -181,13 +182,15 @@ export function OfferingPicker({
             </SelectTrigger>
             <SelectContent>
               {offerings.length === 0 ? (
-                <div className="px-2 py-1.5 text-xs text-muted-foreground">No approved offerings</div>
+                <div className='text-muted-foreground px-2 py-1.5 text-xs'>
+                  No approved offerings
+                </div>
               ) : (
                 offerings.map(o => (
                   <SelectItem key={o.value} value={o.value}>
-                    <span className="flex w-full items-center gap-2">
-                      <span className="truncate">{o.label}</span>
-                      <Badge variant="outline" className="ml-auto shrink-0 text-[10px]">
+                    <span className='flex w-full items-center gap-2'>
+                      <span className='truncate'>{o.label}</span>
+                      <Badge variant='outline' className='ml-auto shrink-0 text-[10px]'>
                         {o.kind}
                       </Badge>
                     </span>
@@ -197,41 +200,41 @@ export function OfferingPicker({
             </SelectContent>
           </Select>
           {offerings.length === 0 && !loading ? (
-            <p className="text-xs text-muted-foreground">
+            <p className='text-muted-foreground text-xs'>
               Apply to train a course or program and get it approved before creating a class.
             </p>
           ) : null}
         </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
+        <div className='space-y-2'>
+          <div className='flex items-center justify-between gap-2'>
             <Label>Instructor</Label>
-            <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
+            <label className='text-muted-foreground flex cursor-pointer items-center gap-1.5 text-[11px]'>
               <Checkbox
                 checked={onlyAvailable}
                 onCheckedChange={v => onOnlyAvailableChange(v === true)}
-                className="h-3.5 w-3.5"
+                className='h-3.5 w-3.5'
               />
               Only available
             </label>
           </div>
           <Select value={instructorUuid} onValueChange={onInstructorChange}>
             <SelectTrigger>
-              <div className="flex min-w-0 items-center gap-2">
+              <div className='flex min-w-0 items-center gap-2'>
                 {selectedInstructor ? (
                   <AvatarWithSkeleton
                     src={selectedInstructor.profile_image_url ?? ''}
                     name={instructorName(selectedInstructor)}
-                    className="h-6 w-6 shrink-0"
+                    className='h-6 w-6 shrink-0'
                   />
                 ) : null}
-                <span className="truncate">
-                  <SelectValue placeholder="Select an instructor" />
+                <span className='truncate'>
+                  <SelectValue placeholder='Select an instructor' />
                 </span>
               </div>
             </SelectTrigger>
             <SelectContent>
               {instructors.length === 0 ? (
-                <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                <div className='text-muted-foreground px-2 py-1.5 text-xs'>
                   No instructors in your organisation yet
                 </div>
               ) : (
@@ -243,9 +246,10 @@ export function OfferingPicker({
               )}
             </SelectContent>
           </Select>
-          <p className="text-[11px] text-muted-foreground">
-            On publish the class is assigned to this instructor and scheduled — it appears on their calendar and the
-            organisation calendar. Leave unset to post it for instructors to apply instead.
+          <p className='text-muted-foreground text-[11px]'>
+            On publish the class is assigned to this instructor and scheduled — it appears on their
+            calendar and the organisation calendar. Leave unset to post it for instructors to apply
+            instead.
           </p>
         </div>
       </div>
@@ -260,12 +264,12 @@ export function OfferingPicker({
       />
 
       {/* Derived class title preview */}
-      <div className="rounded-lg border border-dashed border-teal-600/40 bg-teal-50/60 px-3 py-2.5 dark:bg-teal-950/20">
-        <div className="text-[11px] font-medium uppercase tracking-wide text-teal-700 dark:text-teal-400">
+      <div className='rounded-lg border border-dashed border-teal-600/40 bg-teal-50/60 px-3 py-2.5 dark:bg-teal-950/20'>
+        <div className='text-[11px] font-medium tracking-wide text-teal-700 uppercase dark:text-teal-400'>
           Class title
         </div>
-        <div className="mt-0.5 truncate text-sm font-semibold text-foreground">{title}</div>
-        <div className="text-[11px] text-muted-foreground">
+        <div className='text-foreground mt-0.5 truncate text-sm font-semibold'>{title}</div>
+        <div className='text-muted-foreground text-[11px]'>
           Auto-generated from the approved offering. This is what appears on the classes list.
         </div>
       </div>

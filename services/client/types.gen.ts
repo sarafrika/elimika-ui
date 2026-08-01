@@ -6202,12 +6202,12 @@ export type MultiValueMapStringString = {
   };
   empty?: boolean;
   [key: string]:
-  | Array<string>
-  | {
-    [key: string]: string;
-  }
-  | boolean
-  | undefined;
+    | Array<string>
+    | {
+        [key: string]: string;
+      }
+    | boolean
+    | undefined;
 };
 
 /**
@@ -33536,7 +33536,7 @@ export type RemoveAdminDomainResponse =
 
 export type ClientOptions = {
   baseUrl:
-  | 'https://api.elimika.staging.sarafrika.com'
-  | 'https://api.elimika.sarafrika.com'
-  | (string & {});
+    | 'https://api.elimika.staging.sarafrika.com'
+    | 'https://api.elimika.sarafrika.com'
+    | (string & {});
 };

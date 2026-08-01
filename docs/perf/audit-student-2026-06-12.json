@@ -110,9 +110,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ],
+    "apiUrls": ["/api/v1/users/search"],
     "slowestRequests": []
   },
   {
@@ -501,9 +499,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ],
+    "apiUrls": ["/api/v1/users/search"],
     "slowestRequests": []
   },
   {
@@ -518,9 +514,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ],
+    "apiUrls": ["/api/v1/users/search"],
     "slowestRequests": []
   },
   {
@@ -853,9 +847,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ],
+    "apiUrls": ["/api/v1/users/search"],
     "slowestRequests": []
   },
   {
@@ -923,11 +915,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search",
-      "/api/v1/students/search",
-      "/api/v1/instructors/search"
-    ],
+    "apiUrls": ["/api/v1/users/search", "/api/v1/students/search", "/api/v1/instructors/search"],
     "slowestRequests": [
       {
         "url": "/api/v1/users/search",
@@ -1017,9 +1005,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ],
+    "apiUrls": ["/api/v1/users/search"],
     "slowestRequests": []
   },
   {
@@ -1034,9 +1020,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ],
+    "apiUrls": ["/api/v1/users/search"],
     "slowestRequests": []
   },
   {
@@ -1196,9 +1180,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ],
+    "apiUrls": ["/api/v1/users/search"],
     "slowestRequests": []
   },
   {
@@ -1213,10 +1195,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search",
-      "/api/v1/students/search"
-    ],
+    "apiUrls": ["/api/v1/users/search", "/api/v1/students/search"],
     "slowestRequests": [
       {
         "url": "/api/v1/users/search",
@@ -1564,9 +1543,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ],
+    "apiUrls": ["/api/v1/users/search"],
     "slowestRequests": []
   },
   {
@@ -1581,11 +1558,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search",
-      "/api/v1/students/search",
-      "/api/v1/instructors/search"
-    ],
+    "apiUrls": ["/api/v1/users/search", "/api/v1/students/search", "/api/v1/instructors/search"],
     "slowestRequests": [
       {
         "url": "/api/v1/students/search",
@@ -1664,9 +1637,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ],
+    "apiUrls": ["/api/v1/users/search"],
     "slowestRequests": []
   },
   {
@@ -1681,9 +1652,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ],
+    "apiUrls": ["/api/v1/users/search"],
     "slowestRequests": []
   },
   {
@@ -1698,11 +1667,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search",
-      "/api/v1/students/search",
-      "/api/v1/instructors/search"
-    ],
+    "apiUrls": ["/api/v1/users/search", "/api/v1/students/search", "/api/v1/instructors/search"],
     "slowestRequests": [
       {
         "url": "/api/v1/students/search",
@@ -1728,9 +1693,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ],
+    "apiUrls": ["/api/v1/users/search"],
     "slowestRequests": []
   }
 ]

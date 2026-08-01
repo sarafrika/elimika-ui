@@ -1,14 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import {
-  ArrowRight,
-  BriefcaseBusiness,
-  CheckCircle2,
-  Clock,
-  Search,
-  XCircle,
-} from 'lucide-react';
+import { ArrowRight, BriefcaseBusiness, CheckCircle2, Clock, Search, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -26,7 +19,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ClassMarketplaceJob } from '@/services/client';
 import {
@@ -54,7 +53,9 @@ function formatLabel(value?: string | null) {
 export function MyJobApplicationsPage() {
   const profile = useUserProfile();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'pending' | 'approved' | 'rejected' | 'assigned'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<
+    'ALL' | 'pending' | 'approved' | 'rejected' | 'assigned'
+  >('ALL');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
   const { replaceBreadcrumbs } = useBreadcrumb();
 
@@ -89,7 +90,9 @@ export function MyJobApplicationsPage() {
   //   enabled: true,
   // });
   const { data: jobsResponse, isLoading: isJobsLoading } = useQuery({
-    ...listJobsOptions({ query: { pageable: {}, organisation_uuid: "ec237ec5-f13c-4248-bf70-8d0099cb3a15" } }),
+    ...listJobsOptions({
+      query: { pageable: {}, organisation_uuid: 'ec237ec5-f13c-4248-bf70-8d0099cb3a15' },
+    }),
     enabled: true,
   });
 
@@ -200,7 +203,10 @@ export function MyJobApplicationsPage() {
               <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
             </label>
 
-            <Select value={statusFilter} onValueChange={value => setStatusFilter(value as typeof statusFilter)}>
+            <Select
+              value={statusFilter}
+              onValueChange={value => setStatusFilter(value as typeof statusFilter)}
+            >
               <SelectTrigger className='h-10'>
                 <SelectValue placeholder='All statuses' />
               </SelectTrigger>
@@ -253,27 +259,36 @@ export function MyJobApplicationsPage() {
                 return (
                   <div
                     key={application.uuid}
-                    className='flex h-full flex-col rounded-md border border-border/70 bg-card p-5 shadow-sm'
+                    className='border-border/70 bg-card flex h-full flex-col rounded-md border p-5 shadow-sm'
                   >
                     <div className='flex flex-wrap items-start justify-between gap-3'>
                       <div className='min-w-0 space-y-1'>
                         <h3 className='truncate text-base font-semibold tracking-tight'>
                           {job?.title ?? 'Unknown job'}
                         </h3>
-                        <div className='flex flex-wrap gap-2 text-sm text-muted-foreground'>
+                        <div className='text-muted-foreground flex flex-wrap gap-2 text-sm'>
                           <span>{job?.location_name || formatLabel(job?.location_type)}</span>
                         </div>
                       </div>
 
-                      <StatusBadge status={application.status} label={formatLabel(application.status)} />
+                      <StatusBadge
+                        status={application.status}
+                        label={formatLabel(application.status)}
+                      />
                     </div>
 
                     <div className='mt-4'>
                       <DetailGrid
                         columns={1}
                         items={[
-                          { label: 'Application note', value: application.application_note || 'No note added.' },
-                          { label: 'Review notes', value: application.review_notes || 'No review notes yet.' },
+                          {
+                            label: 'Application note',
+                            value: application.application_note || 'No note added.',
+                          },
+                          {
+                            label: 'Review notes',
+                            value: application.review_notes || 'No review notes yet.',
+                          },
                         ]}
                       />
                     </div>

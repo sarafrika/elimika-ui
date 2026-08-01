@@ -1,13 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { NotebookPen } from 'lucide-react';
 
-export function PlaceholderTab({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
+export function PlaceholderTab({ title, description }: { title: string; description: string }) {
   return (
     <Card className='border-border/70 bg-card shadow-sm'>
       <CardContent className='flex min-h-[320px] flex-col items-center justify-center gap-4 p-8 text-center'>

@@ -210,7 +210,7 @@ export function TrainingClassList({
             <SlidersHorizontal className='text-muted-foreground h-4 w-4' />
 
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className='w-full bg-card/80 sm:w-[150px]'>
+              <SelectTrigger className='bg-card/80 w-full sm:w-[150px]'>
                 <SelectValue placeholder='Location' />
               </SelectTrigger>
               <SelectContent>
@@ -222,7 +222,7 @@ export function TrainingClassList({
             </Select>
 
             <Select value={activeFilter} onValueChange={setActiveFilter}>
-              <SelectTrigger className='w-full bg-card/80 sm:w-[150px]'>
+              <SelectTrigger className='bg-card/80 w-full sm:w-[150px]'>
                 <SelectValue placeholder='Class Status' />
               </SelectTrigger>
               <SelectContent>
@@ -278,217 +278,218 @@ export function TrainingClassList({
       >
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
           {filteredClasses.map((cls, index) => {
-          const isFull = (cls.current_enrollments ?? 0) >= (cls.max_participants ?? 0);
-          const difficultyName = cls.course?.difficulty_uuid
-            ? difficultyMap[cls.course.difficulty_uuid] || 'N/A'
-            : 'N/A';
+            const isFull = (cls.current_enrollments ?? 0) >= (cls.max_participants ?? 0);
+            const difficultyName = cls.course?.difficulty_uuid
+              ? difficultyMap[cls.course.difficulty_uuid] || 'N/A'
+              : 'N/A';
 
-          const enrollmentQuery = enrollmentQueries[index];
-          const enrollmentData: Enrollment[] = enrollmentQuery?.data?.data ?? [];
+            const enrollmentQuery = enrollmentQueries[index];
+            const enrollmentData: Enrollment[] = enrollmentQuery?.data?.data ?? [];
 
-          const uniqueStudentIds = new Set(
-            enrollmentData.map(enrollment => enrollment.student_uuid)
-          );
-          const enrolledCount = uniqueStudentIds.size;
-          const max = cls.max_participants ?? 0;
-          const enrolledPercentage = (enrolledCount / max) * 100;
+            const uniqueStudentIds = new Set(
+              enrollmentData.map(enrollment => enrollment.student_uuid)
+            );
+            const enrolledCount = uniqueStudentIds.size;
+            const max = cls.max_participants ?? 0;
+            const enrolledPercentage = (enrolledCount / max) * 100;
 
-          return (
-            <div key={cls.uuid} className='group cursor-pointer'>
-              <div className='border-primary/40 bg-card relative h-full max-w-[380px] rounded-2xl border p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl dark:bg-inherit'>
-                <div className='h-full overflow-hidden rounded-2xl'>
-                  {/* Image Header */}
-                  <div className='relative h-48 overflow-hidden'>
-                    <div className='bg-primary/10 absolute inset-0 z-10' />
+            return (
+              <div key={cls.uuid} className='group cursor-pointer'>
+                <div className='border-primary/40 bg-card relative h-full max-w-[380px] rounded-2xl border p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl dark:bg-inherit'>
+                  <div className='h-full overflow-hidden rounded-2xl'>
+                    {/* Image Header */}
+                    <div className='relative h-48 overflow-hidden'>
+                      <div className='bg-primary/10 absolute inset-0 z-10' />
 
-                    <div className='bg-muted-foreground/10 flex h-full w-full items-center justify-center'>
-                      {cls?.course?.banner_url ? (
-                        <Image
-                          src={
-                            toAuthenticatedMediaUrl(cls.course.banner_url) || cls.course.banner_url
-                          }
-                          alt={cls?.title || 'banner'}
-                          className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
-                          width={400}
-                          height={208}
-                          unoptimized={isAuthenticatedMediaUrl(
-                            toAuthenticatedMediaUrl(cls.course.banner_url)
-                          )}
-                        />
-                      ) : (
-                        <BookOpen className='text-muted-foreground/90 h-12 w-12' />
-                      )}
-                    </div>
-
-                    {/* Overlays */}
-                    <div className='absolute top-3 left-3 z-20 flex flex-wrap gap-2'>
-                      <Badge
-                        className={`${getLocationBadgeColor(cls?.location_type)} backdrop-blur-sm`}
-                      >
-                        <MapPin className='mr-1 h-3 w-3' />
-                        {cls?.location_type.replace('_', ' ')}
-                      </Badge>
-                      <Badge className={`${getDifficultyColor(difficultyName)} backdrop-blur-sm`}>
-                        {difficultyName}
-                      </Badge>
-                    </div>
-
-                    {isFull && (
-                      <div className='absolute top-3 right-3 z-20'>
-                        <Badge className='bg-destructive/90 text-destructive-foreground backdrop-blur-sm'>
-                          FULL
-                        </Badge>
-                      </div>
-                    )}
-
-                    {/* Dropdown menu button - positioned top-right */}
-                    <div className='absolute top-3 right-3 z-30'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' size='icon' aria-label='Open menu'>
-                            <MoreVertical className='h-4 w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuItem asChild>
-                            <Link
-                              href={`/dashboard/trainings/overview/${cls.uuid}`}
-                              className='flex w-full items-center'
-                            >
-                              <EyeIcon className='mr-2 h-4 w-4' />
-                              Preview
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              router.push(`/dashboard/trainings/create-new?id=${cls.uuid}`)
+                      <div className='bg-muted-foreground/10 flex h-full w-full items-center justify-center'>
+                        {cls?.course?.banner_url ? (
+                          <Image
+                            src={
+                              toAuthenticatedMediaUrl(cls.course.banner_url) ||
+                              cls.course.banner_url
                             }
-                            className='flex w-full cursor-pointer items-center'
-                          >
-                            <PenIcon className='mr-2 h-4 w-4' />
-                            Edit Class
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => onDelete?.(cls.uuid)}
-                            className='text-destructive flex w-full cursor-pointer items-center'
-                          >
-                            <LucideFileWarning className='mr-2 h-4 w-4' />
-                            Deactivate
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className='space-y-4 p-5'>
-                    {/* Title and Course */}
-                    <div className='space-y-2'>
-                      <h3 className='group-hover:text-primary line-clamp-1 transition-colors'>
-                        {cls?.title}
-                      </h3>
-                      <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-                        <BookOpen className='text-primary h-3.5 w-3.5' />
-                        <span className='line-clamp-1'>{cls?.course?.name}</span>
+                            alt={cls?.title || 'banner'}
+                            className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
+                            width={400}
+                            height={208}
+                            unoptimized={isAuthenticatedMediaUrl(
+                              toAuthenticatedMediaUrl(cls.course.banner_url)
+                            )}
+                          />
+                        ) : (
+                          <BookOpen className='text-muted-foreground/90 h-12 w-12' />
+                        )}
                       </div>
-                    </div>
 
-                    {/* Description */}
-                    <div className='text-muted-foreground line-clamp-2 text-sm'>
-                      <RichTextRenderer htmlString={cls?.description ?? ''} maxChars={50} />
-                    </div>
-
-                    {/* Categories */}
-                    <div className='flex flex-wrap gap-1.5'>
-                      {cls?.course?.category_names?.slice(0, 2).map((category, idx) => (
+                      {/* Overlays */}
+                      <div className='absolute top-3 left-3 z-20 flex flex-wrap gap-2'>
                         <Badge
-                          key={idx}
-                          variant='outline'
-                          className='border-border-100/50 text-primary text-xs'
+                          className={`${getLocationBadgeColor(cls?.location_type)} backdrop-blur-sm`}
                         >
-                          {category}
+                          <MapPin className='mr-1 h-3 w-3' />
+                          {cls?.location_type.replace('_', ' ')}
                         </Badge>
-                      ))}
+                        <Badge className={`${getDifficultyColor(difficultyName)} backdrop-blur-sm`}>
+                          {difficultyName}
+                        </Badge>
+                      </div>
+
+                      {isFull && (
+                        <div className='absolute top-3 right-3 z-20'>
+                          <Badge className='bg-destructive/90 text-destructive-foreground backdrop-blur-sm'>
+                            FULL
+                          </Badge>
+                        </div>
+                      )}
+
+                      {/* Dropdown menu button - positioned top-right */}
+                      <div className='absolute top-3 right-3 z-30'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant='ghost' size='icon' aria-label='Open menu'>
+                              <MoreVertical className='h-4 w-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href={`/dashboard/trainings/overview/${cls.uuid}`}
+                                className='flex w-full items-center'
+                              >
+                                <EyeIcon className='mr-2 h-4 w-4' />
+                                Preview
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(`/dashboard/trainings/create-new?id=${cls.uuid}`)
+                              }
+                              className='flex w-full cursor-pointer items-center'
+                            >
+                              <PenIcon className='mr-2 h-4 w-4' />
+                              Edit Class
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => onDelete?.(cls.uuid)}
+                              className='text-destructive flex w-full cursor-pointer items-center'
+                            >
+                              <LucideFileWarning className='mr-2 h-4 w-4' />
+                              Deactivate
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
 
-                    {/* Instructor */}
-                    <div className='border-primary/30 bg-muted flex items-center gap-2 rounded-lg border p-2.5'>
-                      <div className='bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm shadow-md'>
-                        {cls?.instructor?.full_name?.charAt(0)}
+                    {/* Content */}
+                    <div className='space-y-4 p-5'>
+                      {/* Title and Course */}
+                      <div className='space-y-2'>
+                        <h3 className='group-hover:text-primary line-clamp-1 transition-colors'>
+                          {cls?.title}
+                        </h3>
+                        <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+                          <BookOpen className='text-primary h-3.5 w-3.5' />
+                          <span className='line-clamp-1'>{cls?.course?.name}</span>
+                        </div>
                       </div>
-                      <div className='min-w-0 flex-1'>
-                        <p className='text-muted-foreground text-xs'>Instructor</p>
-                        <p className='truncate text-sm'>{cls?.instructor?.full_name}</p>
-                      </div>
-                    </div>
 
-                    {/* Stats Grid */}
-                    <div className='border-border grid grid-cols-2 gap-3 border-t pt-2'>
-                      <div className='flex items-center gap-2 text-sm'>
-                        <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg'>
-                          <Clock className='text-primary h-4 w-4' />
-                        </div>
-                        <div>
-                          <p className='text-muted-foreground text-xs'>Duration</p>
-                          <p className='text-sm'>{cls?.duration_minutes} min</p>
-                        </div>
+                      {/* Description */}
+                      <div className='text-muted-foreground line-clamp-2 text-sm'>
+                        <RichTextRenderer htmlString={cls?.description ?? ''} maxChars={50} />
                       </div>
-                      <div className='flex items-center gap-2 text-sm'>
-                        <div className='bg-success/10 flex h-8 w-8 items-center justify-center rounded-lg'>
-                          <Users className='text-success h-4 w-4' />
-                        </div>
-                        <div>
-                          <p className='text-muted-foreground text-xs'>Enrolled</p>
-                          <p className='text-sm'>
-                            {enrolledCount}/{cls?.max_participants}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Enrollment Progress */}
-                    <div className='space-y-1.5'>
-                      <div className='flex justify-between text-xs'>
-                        <span className='text-muted-foreground'>Enrollment</span>
-                        <span
-                          className={enrolledPercentage >= 80 ? 'text-warning' : 'text-primary'}
+                      {/* Categories */}
+                      <div className='flex flex-wrap gap-1.5'>
+                        {cls?.course?.category_names?.slice(0, 2).map((category, idx) => (
+                          <Badge
+                            key={idx}
+                            variant='outline'
+                            className='border-border-100/50 text-primary text-xs'
+                          >
+                            {category}
+                          </Badge>
+                        ))}
+                      </div>
+
+                      {/* Instructor */}
+                      <div className='border-primary/30 bg-muted flex items-center gap-2 rounded-lg border p-2.5'>
+                        <div className='bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm shadow-md'>
+                          {cls?.instructor?.full_name?.charAt(0)}
+                        </div>
+                        <div className='min-w-0 flex-1'>
+                          <p className='text-muted-foreground text-xs'>Instructor</p>
+                          <p className='truncate text-sm'>{cls?.instructor?.full_name}</p>
+                        </div>
+                      </div>
+
+                      {/* Stats Grid */}
+                      <div className='border-border grid grid-cols-2 gap-3 border-t pt-2'>
+                        <div className='flex items-center gap-2 text-sm'>
+                          <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg'>
+                            <Clock className='text-primary h-4 w-4' />
+                          </div>
+                          <div>
+                            <p className='text-muted-foreground text-xs'>Duration</p>
+                            <p className='text-sm'>{cls?.duration_minutes} min</p>
+                          </div>
+                        </div>
+                        <div className='flex items-center gap-2 text-sm'>
+                          <div className='bg-success/10 flex h-8 w-8 items-center justify-center rounded-lg'>
+                            <Users className='text-success h-4 w-4' />
+                          </div>
+                          <div>
+                            <p className='text-muted-foreground text-xs'>Enrolled</p>
+                            <p className='text-sm'>
+                              {enrolledCount}/{cls?.max_participants}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Enrollment Progress */}
+                      <div className='space-y-1.5'>
+                        <div className='flex justify-between text-xs'>
+                          <span className='text-muted-foreground'>Enrollment</span>
+                          <span
+                            className={enrolledPercentage >= 80 ? 'text-warning' : 'text-primary'}
+                          >
+                            {enrolledPercentage?.toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className='bg-primary/10 h-2 overflow-hidden rounded-full'>
+                          <div
+                            className={`h-full transition-all duration-500 ${
+                              enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
+                            }`}
+                            style={{ width: `${enrolledPercentage}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Footer */}
+                      <div className='border-border flex items-center justify-between border-t pt-2'>
+                        <div className='flex items-center gap-1.5'>
+                          <span className='text-lg'>KES {cls?.training_fee || 'N/A'}</span>
+                        </div>
+                      </div>
+
+                      <div className='flex flex-row items-center justify-between'>
+                        <Button
+                          onClick={() =>
+                            router.push(`/dashboard/trainings/instructor-console/${cls?.uuid}`)
+                          }
                         >
-                          {enrolledPercentage?.toFixed(0)}%
-                        </span>
+                          {' '}
+                          <Play /> Start Class
+                        </Button>
                       </div>
-                      <div className='bg-primary/10 h-2 overflow-hidden rounded-full'>
-                        <div
-                          className={`h-full transition-all duration-500 ${
-                            enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
-                          }`}
-                          style={{ width: `${enrolledPercentage}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className='border-border flex items-center justify-between border-t pt-2'>
-                      <div className='flex items-center gap-1.5'>
-                        <span className='text-lg'>KES {cls?.training_fee || 'N/A'}</span>
-                      </div>
-                    </div>
-
-                    <div className='flex flex-row items-center justify-between'>
-                      <Button
-                        onClick={() =>
-                          router.push(`/dashboard/trainings/instructor-console/${cls?.uuid}`)
-                        }
-                      >
-                        {' '}
-                        <Play /> Start Class
-                      </Button>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
+            );
           })}
         </div>
       </AsyncSection>

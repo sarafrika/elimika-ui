@@ -30,16 +30,16 @@ export async function ActivitySection() {
   }
 
   return (
-    <ul className='divide-y divide-border/60'>
+    <ul className='divide-border/60 divide-y'>
       {events.slice(0, 12).map((event, index) => {
         const when = formatWhen(event.occurred_at || event.created_at || event.timestamp);
         return (
           <li key={index} className='flex items-start justify-between gap-3 py-3'>
             <div className='min-w-0'>
-              <p className='truncate text-sm font-medium text-foreground'>
+              <p className='text-foreground truncate text-sm font-medium'>
                 {event.message || event.state || 'Event'}
               </p>
-              <p className='truncate text-xs text-muted-foreground'>
+              <p className='text-muted-foreground truncate text-xs'>
                 {event.actor_name || event.actor_identifier || 'System'}
                 {when ? ` · ${when}` : ''}
               </p>

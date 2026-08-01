@@ -15,20 +15,27 @@ interface StatCardProps {
 }
 
 /** Refined KPI card. Server-safe. */
-export function StatCard({ label, value, hint, icon: Icon, tone = 'info', className }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  hint,
+  icon: Icon,
+  tone = 'info',
+  className,
+}: StatCardProps) {
   return (
     <div
       className={cn(
-        'flex items-start justify-between gap-3 rounded-md border border-border/70 bg-card p-5 shadow-sm',
+        'border-border/70 bg-card flex items-start justify-between gap-3 rounded-md border p-5 shadow-sm',
         className
       )}
     >
       <div className='min-w-0 space-y-1'>
-        <p className='truncate text-xs font-medium uppercase tracking-wide text-muted-foreground'>
+        <p className='text-muted-foreground truncate text-xs font-medium tracking-wide uppercase'>
           {label}
         </p>
-        <p className='text-2xl font-semibold text-foreground'>{value}</p>
-        {hint ? <p className='text-xs text-muted-foreground'>{hint}</p> : null}
+        <p className='text-foreground text-2xl font-semibold'>{value}</p>
+        {hint ? <p className='text-muted-foreground text-xs'>{hint}</p> : null}
       </div>
       {Icon ? (
         <span
@@ -49,7 +56,7 @@ export function StatCardSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'flex items-start justify-between gap-3 rounded-md border border-border/70 bg-card p-5 shadow-sm',
+        'border-border/70 bg-card flex items-start justify-between gap-3 rounded-md border p-5 shadow-sm',
         className
       )}
     >

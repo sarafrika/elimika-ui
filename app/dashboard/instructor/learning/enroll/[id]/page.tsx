@@ -18,15 +18,13 @@ import {
   type BundledClass,
   getErrorMessage,
 } from '../../../../../../src/features/dashboard/courses/types';
-import {
-  CustomEmptyState,
-} from '../../../../course-creator/_components/loading-state';
+import { CustomEmptyState } from '../../../../course-creator/_components/loading-state';
 import EnrollCourseCard from '../../../../_components/enroll-course-card';
 
 const EnrollmentPage = () => {
   const { id: courseId } = useParams<{ id: string }>();
   const qc = useQueryClient();
-  const router = useRouter()
+  const router = useRouter();
   const instructor = useInstructor();
   const { replaceBreadcrumbs } = useBreadcrumb();
 

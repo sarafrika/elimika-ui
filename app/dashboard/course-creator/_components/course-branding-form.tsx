@@ -201,7 +201,10 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
         };
 
         updateCourse.mutate(
-          { body: editBody as UpdateCourseVariables['body'], path: { uuid: editingCourseId as string } },
+          {
+            body: editBody as UpdateCourseVariables['body'],
+            path: { uuid: editingCourseId as string },
+          },
           {
             onSuccess(data: UpdateCourseResponse) {
               const respObj = data?.data;
@@ -319,7 +322,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                     <div className='flex flex-col gap-4'>
                       {!videoPreview ? (
                         <DragDropUpload
-                          accept="video/*"
+                          accept='video/*'
                           multiple={false}
                           onFilesAdded={files => {
                             const file = files[0];
@@ -340,10 +343,10 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             });
                           }}
                         >
-                          <div className="flex flex-col items-center gap-2">
-                            <Upload className="h-6 w-6 text-muted-foreground" />
-                            <p className="text-sm">Drag & drop or click to upload video</p>
-                            <p className="text-xs text-muted-foreground">
+                          <div className='flex flex-col items-center gap-2'>
+                            <Upload className='text-muted-foreground h-6 w-6' />
+                            <p className='text-sm'>Drag & drop or click to upload video</p>
+                            <p className='text-muted-foreground text-xs'>
                               MP4 up to {MAX_VIDEO_SIZE_MB}MB
                             </p>
                           </div>
@@ -357,9 +360,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               type='button'
                               variant='outline'
                               size='sm'
-                              onClick={() =>
-                                document.getElementById('introVideoUpload')?.click()
-                              }
+                              onClick={() => document.getElementById('introVideoUpload')?.click()}
                             >
                               Replace
                             </Button>
@@ -368,7 +369,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                           <video controls className='w-full max-w-md rounded shadow'>
                             <source
                               src={toAuthenticatedMediaUrl(videoPreview) || videoPreview}
-                              type='video/mp4' />
+                              type='video/mp4'
+                            />
                             Your browser does not support the video tag.
                           </video>
                         </div>
@@ -424,7 +426,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                     <div className='flex flex-col gap-4'>
                       {!bannerPreview ? (
                         <DragDropUpload
-                          accept="image/*"
+                          accept='image/*'
                           multiple={false}
                           onFilesAdded={files => {
                             const file = files[0];
@@ -445,12 +447,10 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             });
                           }}
                         >
-                          <div className="flex flex-col items-center gap-2">
-                            <Upload className="h-6 w-6 text-muted-foreground" />
-                            <p className="text-sm">Drag & drop or click to upload banner</p>
-                            <p className="text-xs text-muted-foreground">
-                              PNG or JPG (4:1 ratio)
-                            </p>
+                          <div className='flex flex-col items-center gap-2'>
+                            <Upload className='text-muted-foreground h-6 w-6' />
+                            <p className='text-sm'>Drag & drop or click to upload banner</p>
+                            <p className='text-muted-foreground text-xs'>PNG or JPG (4:1 ratio)</p>
                           </div>
                         </DragDropUpload>
                       ) : (
@@ -462,9 +462,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               type='button'
                               variant='outline'
                               size='sm'
-                              onClick={() =>
-                                document.getElementById('bannerUpload')?.click()
-                              }
+                              onClick={() => document.getElementById('bannerUpload')?.click()}
                             >
                               Replace
                             </Button>
@@ -528,7 +526,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                     <div className='flex flex-col gap-4'>
                       {!thumbnailPreview ? (
                         <DragDropUpload
-                          accept="image/*"
+                          accept='image/*'
                           multiple={false}
                           onFilesAdded={files => {
                             const file = files[0];
@@ -549,12 +547,10 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             });
                           }}
                         >
-                          <div className="flex flex-col items-center gap-2">
-                            <Upload className="h-6 w-6 text-muted-foreground" />
-                            <p className="text-sm">Drag & drop or click to upload image</p>
-                            <p className="text-xs text-muted-foreground">
-                              PNG or JPG up to 15MB
-                            </p>
+                          <div className='flex flex-col items-center gap-2'>
+                            <Upload className='text-muted-foreground h-6 w-6' />
+                            <p className='text-sm'>Drag & drop or click to upload image</p>
+                            <p className='text-muted-foreground text-xs'>PNG or JPG up to 15MB</p>
                           </div>
                         </DragDropUpload>
                       ) : (
@@ -566,9 +562,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               type='button'
                               variant='outline'
                               size='sm'
-                              onClick={() =>
-                                document.getElementById('thumbnailUpload')?.click()
-                              }
+                              onClick={() => document.getElementById('thumbnailUpload')?.click()}
                             >
                               Replace
                             </Button>
@@ -576,10 +570,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                           <div className='h-32 w-48 overflow-hidden rounded border'>
                             <Image
-                              src={
-                                toAuthenticatedMediaUrl(thumbnailPreview) ||
-                                thumbnailPreview
-                              }
+                              src={toAuthenticatedMediaUrl(thumbnailPreview) || thumbnailPreview}
                               width={192}
                               height={128}
                               alt='Thumbnail Preview'

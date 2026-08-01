@@ -597,9 +597,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ],
+    "apiUrls": ["/api/v1/users/search"],
     "slowestRequests": []
   },
   {

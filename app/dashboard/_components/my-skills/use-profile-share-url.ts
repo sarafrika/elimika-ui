@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react';
 
 export type ProfileShareDomain = 'instructor' | 'student' | 'course_creator';
 
-export function useProfileShareUrl(userUuid?: string | null, domain: ProfileShareDomain = 'instructor') {
+export function useProfileShareUrl(
+  userUuid?: string | null,
+  domain: ProfileShareDomain = 'instructor'
+) {
   const [shareUrl, setShareUrl] = useState('');
 
   useEffect(() => {

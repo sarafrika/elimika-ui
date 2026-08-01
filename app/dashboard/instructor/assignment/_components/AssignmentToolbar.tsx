@@ -33,7 +33,7 @@ export function AssignmentToolbar({
               className={cn(
                 'h-9 rounded-xl px-3 text-xs font-semibold transition-all sm:h-10 sm:px-4 sm:text-sm',
                 activeFilter === filter.value
-                  ? 'bg-background text-foreground shadow-sm ring-1 ring-border hover:bg-background'
+                  ? 'bg-background text-foreground ring-border hover:bg-background shadow-sm ring-1'
                   : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
               )}
             >
@@ -48,7 +48,7 @@ export function AssignmentToolbar({
             value={search}
             onChange={event => setSearch(event.target.value)}
             placeholder='Search assignments'
-            className='h-10 rounded-lg bg-background pl-10 text-xs sm:pl-11 sm:text-sm'
+            className='bg-background h-10 rounded-lg pl-10 text-xs sm:pl-11 sm:text-sm'
           />
         </div>
       </div>

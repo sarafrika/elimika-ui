@@ -49,9 +49,9 @@ export function RoleMembersTable({
               <AvatarFallback className='text-xs'>{initials(row.original.name)}</AvatarFallback>
             </Avatar>
             <div className='min-w-0'>
-              <p className='truncate text-sm font-medium text-foreground'>{row.original.name}</p>
+              <p className='text-foreground truncate text-sm font-medium'>{row.original.name}</p>
               {row.original.subtitle ? (
-                <p className='truncate text-xs text-muted-foreground'>{row.original.subtitle}</p>
+                <p className='text-muted-foreground truncate text-xs'>{row.original.subtitle}</p>
               ) : null}
             </div>
           </div>
@@ -63,7 +63,7 @@ export function RoleMembersTable({
         header: 'Joined',
         meta: { label: 'Joined' },
         cell: ({ row }) => (
-          <span className='text-sm text-muted-foreground'>
+          <span className='text-muted-foreground text-sm'>
             {row.original.joined
               ? new Date(row.original.joined).toLocaleDateString(undefined, {
                   day: 'numeric',

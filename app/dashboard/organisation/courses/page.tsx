@@ -2,7 +2,15 @@
 'use client';
 
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { Archive, BookOpen, Briefcase, Eye, MoreHorizontal, Pencil, PlusSquare } from 'lucide-react';
+import {
+  Archive,
+  BookOpen,
+  Briefcase,
+  Eye,
+  MoreHorizontal,
+  Pencil,
+  PlusSquare,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -21,7 +29,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
@@ -50,10 +65,20 @@ const PROGRAM_TYPES = [
 ];
 
 /** Rate-card cells → Lovable's pricing-tier vocabulary (session format + location). */
-const RATE_TIERS: { method: string; fmt: string; loc: string; key: keyof NonNullable<CourseTrainingApplication['rate_card']> }[] = [
+const RATE_TIERS: {
+  method: string;
+  fmt: string;
+  loc: string;
+  key: keyof NonNullable<CourseTrainingApplication['rate_card']>;
+}[] = [
   { method: 'Group In-Person', fmt: 'GROUP', loc: 'IN_PERSON', key: 'group_inperson_rate' },
   { method: 'Group Virtual', fmt: 'GROUP', loc: 'ONLINE', key: 'group_online_rate' },
-  { method: 'Private In-Person', fmt: 'INDIVIDUAL', loc: 'IN_PERSON', key: 'private_inperson_rate' },
+  {
+    method: 'Private In-Person',
+    fmt: 'INDIVIDUAL',
+    loc: 'IN_PERSON',
+    key: 'private_inperson_rate',
+  },
   { method: 'Private Virtual', fmt: 'INDIVIDUAL', loc: 'ONLINE', key: 'private_online_rate' },
 ];
 
@@ -66,46 +91,67 @@ const normStatus = (s?: string): string => {
 };
 
 const instructorInitials = (u?: User) =>
-  u ? `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase() || (u.email?.[0] ?? '?').toUpperCase() : '?';
+  u
+    ? `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase() ||
+      (u.email?.[0] ?? '?').toUpperCase()
+    : '?';
 const instructorName = (u?: User) =>
   u ? `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email || 'Instructor' : '—';
 
 function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
   if (src) {
-    return <img src={src} alt={alt} className="h-12 w-16 shrink-0 rounded-md object-cover" />;
+    return <img src={src} alt={alt} className='h-12 w-16 shrink-0 rounded-md object-cover' />;
   }
   return (
-    <div className="flex h-12 w-16 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary/15 to-primary/5">
-      <BookOpen className="h-5 w-5 text-primary/70" />
+    <div className='from-primary/15 to-primary/5 flex h-12 w-16 shrink-0 items-center justify-center rounded-md bg-gradient-to-br'>
+      <BookOpen className='text-primary/70 h-5 w-5' />
     </div>
   );
 }
 
-function CourseActions({ status, onArchive, onView }: { status: string; onArchive: () => void; onView: () => void }) {
+function CourseActions({
+  status,
+  onArchive,
+  onView,
+}: {
+  status: string;
+  onArchive: () => void;
+  onView: () => void;
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={e => e.stopPropagation()}>
-          <MoreHorizontal className="h-4 w-4" />
+        <Button variant='ghost' size='icon' className='h-8 w-8' onClick={e => e.stopPropagation()}>
+          <MoreHorizontal className='h-4 w-4' />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
+      <DropdownMenuContent align='end' onClick={e => e.stopPropagation()}>
         <DropdownMenuItem onClick={onView}>
-          <Eye className="mr-2 h-4 w-4" /> View details
+          <Eye className='mr-2 h-4 w-4' /> View details
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => toast.info('Edit course', { description: 'Opening the course editor.' })}>
-          <Pencil className="mr-2 h-4 w-4" /> Edit
+        <DropdownMenuItem
+          onClick={() => toast.info('Edit course', { description: 'Opening the course editor.' })}
+        >
+          <Pencil className='mr-2 h-4 w-4' /> Edit
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => toast.info('Post a job', { description: 'Drafting an instructor job for this course.' })}>
-          <Briefcase className="mr-2 h-4 w-4" /> Post a job
+        <DropdownMenuItem
+          onClick={() =>
+            toast.info('Post a job', { description: 'Drafting an instructor job for this course.' })
+          }
+        >
+          <Briefcase className='mr-2 h-4 w-4' /> Post a job
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => toast.info('Create class', { description: 'Starting a new class from this course.' })}>
-          <PlusSquare className="mr-2 h-4 w-4" /> Create class
+        <DropdownMenuItem
+          onClick={() =>
+            toast.info('Create class', { description: 'Starting a new class from this course.' })
+          }
+        >
+          <PlusSquare className='mr-2 h-4 w-4' /> Create class
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onArchive} disabled={status === 'Archived'}>
-          <Archive className="mr-2 h-4 w-4" /> Archive
+          <Archive className='mr-2 h-4 w-4' /> Archive
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -116,7 +162,8 @@ export default function CoursesPage() {
   const router = useRouter();
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
-  const goToCourse = (uuid?: string) => uuid && router.push(`/dashboard/organisation/courses/${uuid}`);
+  const goToCourse = (uuid?: string) =>
+    uuid && router.push(`/dashboard/organisation/courses/${uuid}`);
 
   // Approved/engaged courses the org is running come from its training applications (which carry the rate card).
   const applicationsQuery = useQuery({
@@ -139,13 +186,16 @@ export default function CoursesPage() {
     const map = new Map<string, ClassDefinition>();
     for (const c of classesQuery.data?.data ?? []) {
       const cd = c.class_definition as ClassDefinition | undefined;
-      if (cd?.course_uuid) map.set(`${cd.course_uuid}|${cd.session_format}|${cd.location_type}`, cd);
+      if (cd?.course_uuid)
+        map.set(`${cd.course_uuid}|${cd.session_format}|${cd.location_type}`, cd);
     }
     return map;
   }, [classesQuery.data]);
 
   const instructorsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({ path: { uuid: organisationUuid, domainName: 'instructor' } }),
+    ...getUsersByOrganisationAndDomainOptions({
+      path: { uuid: organisationUuid, domainName: 'instructor' },
+    }),
     enabled: Boolean(organisationUuid),
   });
   const instructorsByUuid = useMemo(() => {
@@ -189,37 +239,42 @@ export default function CoursesPage() {
           return s === 'approved' || s === 'accepted';
         })
         .flatMap(app => {
-        const courseUuid = app.course_uuid ?? '';
-        const course = courseByUuid.get(courseUuid);
-        const cats = course?.category_names ?? [];
-        const category = cats[0] ?? 'General';
-        const subject = cats[1] ?? cats[0] ?? null;
-        const name = course?.name ?? app.course_uuid ?? 'Course';
-        const image = toAuthenticatedMediaUrl(course?.banner_url ?? course?.thumbnail_url) ?? null;
-        const baseStatus = archived[app.uuid as string] ? 'Archived' : normStatus(app.status);
+          const courseUuid = app.course_uuid ?? '';
+          const course = courseByUuid.get(courseUuid);
+          const cats = course?.category_names ?? [];
+          const category = cats[0] ?? 'General';
+          const subject = cats[1] ?? cats[0] ?? null;
+          const name = course?.name ?? app.course_uuid ?? 'Course';
+          const image =
+            toAuthenticatedMediaUrl(course?.banner_url ?? course?.thumbnail_url) ?? null;
+          const baseStatus = archived[app.uuid as string] ? 'Archived' : normStatus(app.status);
 
-        const tiers = RATE_TIERS.filter(t => Number(app.rate_card?.[t.key] ?? 0) > 0);
-        const effectiveTiers = tiers.length ? tiers : [{ method: '—', fmt: '', loc: '', key: '' }];
+          const tiers = RATE_TIERS.filter(t => Number(app.rate_card?.[t.key] ?? 0) > 0);
+          const effectiveTiers = tiers.length
+            ? tiers
+            : [{ method: '—', fmt: '', loc: '', key: '' }];
 
-        return effectiveTiers.map((tier, idx) => {
-          const cd = tier.fmt ? classDefByKey.get(`${courseUuid}|${tier.fmt}|${tier.loc}`) : undefined;
-          return {
-            rowKey: `${app.uuid}-${idx}`,
-            courseUuid,
-            category,
-            subject,
-            programType: null,
-            displayName: effectiveTiers.length > 1 ? `${name} — ${tier.method}` : name,
-            subjectLabel: subject ?? '—',
-            method: tier.method,
-            amount: tier.key ? Number(app.rate_card?.[tier.key] ?? 0) : (cd?.training_fee ?? 0),
-            lessons: cd ? Number(cd.scheduled_session_count ?? 0) : 0,
-            instructor: instructorsByUuid.get(cd?.default_instructor_uuid ?? ''),
-            image,
-            status: baseStatus,
-          };
-        });
-      }),
+          return effectiveTiers.map((tier, idx) => {
+            const cd = tier.fmt
+              ? classDefByKey.get(`${courseUuid}|${tier.fmt}|${tier.loc}`)
+              : undefined;
+            return {
+              rowKey: `${app.uuid}-${idx}`,
+              courseUuid,
+              category,
+              subject,
+              programType: null,
+              displayName: effectiveTiers.length > 1 ? `${name} — ${tier.method}` : name,
+              subjectLabel: subject ?? '—',
+              method: tier.method,
+              amount: tier.key ? Number(app.rate_card?.[tier.key] ?? 0) : (cd?.training_fee ?? 0),
+              lessons: cd ? Number(cd.scheduled_session_count ?? 0) : 0,
+              instructor: instructorsByUuid.get(cd?.default_instructor_uuid ?? ''),
+              image,
+              status: baseStatus,
+            };
+          });
+        }),
     [applications, courseByUuid, classDefByKey, instructorsByUuid, archived]
   );
 
@@ -236,20 +291,23 @@ export default function CoursesPage() {
   const loading = applicationsQuery.isLoading;
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]">
-      <PageHeader title="Courses & Programs" description="Approved courses your organisation is running." />
+    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+      <PageHeader
+        title='Courses & Programs'
+        description='Approved courses your organisation is running.'
+      />
 
       {loading ? (
-        <div className="space-y-2">
+        <div className='space-y-2'>
           {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full" />
+            <Skeleton key={i} className='h-14 w-full' />
           ))}
         </div>
       ) : rows.length === 0 ? (
         <EmptyState
           icon={BookOpen}
-          title="No courses yet"
-          description="Courses your organisation is approved to run will appear here once you apply to train."
+          title='No courses yet'
+          description='Courses your organisation is approved to run will appear here once you apply to train.'
         />
       ) : (
         <>
@@ -264,18 +322,20 @@ export default function CoursesPage() {
             onProgramTypeChange={setActiveProgramType}
           />
 
-          <div className="space-y-4">
-            <div className="space-y-3">
+          <div className='space-y-4'>
+            <div className='space-y-3'>
               {/* Mobile card list */}
-              <div className="sm:hidden">
+              <div className='sm:hidden'>
                 {filteredRows.length === 0 ? (
-                  <div className="py-12 text-center text-muted-foreground">No courses available.</div>
+                  <div className='text-muted-foreground py-12 text-center'>
+                    No courses available.
+                  </div>
                 ) : (
-                  <div className="divide-y divide-border">
+                  <div className='divide-border divide-y'>
                     {filteredRows.map(row => (
                       <div
                         key={row.rowKey}
-                        role="button"
+                        role='button'
                         tabIndex={0}
                         onClick={() => goToCourse(row.courseUuid)}
                         onKeyDown={e => {
@@ -284,35 +344,55 @@ export default function CoursesPage() {
                             goToCourse(row.courseUuid);
                           }
                         }}
-                        className="flex cursor-pointer items-start gap-3 p-3 hover:bg-muted/40"
+                        className='hover:bg-muted/40 flex cursor-pointer items-start gap-3 p-3'
                       >
                         <CourseImage src={row.image} alt={row.displayName} />
-                        <div className="min-w-0 flex-1 space-y-1.5">
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="truncate font-medium">{row.displayName}</span>
-                            <Badge variant={row.status === 'Active' ? 'default' : 'secondary'} className="shrink-0">
+                        <div className='min-w-0 flex-1 space-y-1.5'>
+                          <div className='flex items-start justify-between gap-2'>
+                            <span className='truncate font-medium'>{row.displayName}</span>
+                            <Badge
+                              variant={row.status === 'Active' ? 'default' : 'secondary'}
+                              className='shrink-0'
+                            >
                               {row.status}
                             </Badge>
                           </div>
-                          <p className="text-xs text-muted-foreground">{row.subjectLabel}</p>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline" className="text-xs">{row.method}</Badge>
-                            <Badge variant="outline" className="text-xs">
+                          <p className='text-muted-foreground text-xs'>{row.subjectLabel}</p>
+                          <div className='flex flex-wrap items-center gap-2'>
+                            <Badge variant='outline' className='text-xs'>
+                              {row.method}
+                            </Badge>
+                            <Badge variant='outline' className='text-xs'>
                               {row.amount > 0 ? currency.format(row.amount) : '—'}
                             </Badge>
-                            <Badge variant="outline" className="text-xs">{row.lessons} Lessons</Badge>
+                            <Badge variant='outline' className='text-xs'>
+                              {row.lessons} Lessons
+                            </Badge>
                           </div>
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex min-w-0 items-center gap-2">
-                              <Avatar className="h-6 w-6 shrink-0">
-                                {row.instructor?.profile_image_url && <AvatarImage src={row.instructor.profile_image_url} alt={instructorName(row.instructor)} />}
-                                <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-semibold">
+                          <div className='flex items-center justify-between gap-2'>
+                            <div className='flex min-w-0 items-center gap-2'>
+                              <Avatar className='h-6 w-6 shrink-0'>
+                                {row.instructor?.profile_image_url && (
+                                  <AvatarImage
+                                    src={row.instructor.profile_image_url}
+                                    alt={instructorName(row.instructor)}
+                                  />
+                                )}
+                                <AvatarFallback className='bg-primary/10 text-primary text-[10px] font-semibold'>
                                   {instructorInitials(row.instructor)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="truncate text-sm text-muted-foreground">{instructorName(row.instructor)}</span>
+                              <span className='text-muted-foreground truncate text-sm'>
+                                {instructorName(row.instructor)}
+                              </span>
                             </div>
-                            <CourseActions status={row.status} onView={() => goToCourse(row.courseUuid)} onArchive={() => handleArchive(row.rowKey.split("-")[0], row.displayName)} />
+                            <CourseActions
+                              status={row.status}
+                              onView={() => goToCourse(row.courseUuid)}
+                              onArchive={() =>
+                                handleArchive(row.rowKey.split('-')[0], row.displayName)
+                              }
+                            />
                           </div>
                         </div>
                       </div>
@@ -322,58 +402,78 @@ export default function CoursesPage() {
               </div>
 
               {/* Desktop table */}
-              <div className="hidden overflow-x-auto rounded-lg border sm:block">
-                <Table className="min-w-[820px]">
+              <div className='hidden overflow-x-auto rounded-lg border sm:block'>
+                <Table className='min-w-[820px]'>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-24 whitespace-nowrap">Image</TableHead>
-                      <TableHead className="whitespace-nowrap">Course</TableHead>
-                      <TableHead className="min-w-[120px] whitespace-nowrap">Subject</TableHead>
-                      <TableHead className="whitespace-nowrap">Lecture Type</TableHead>
-                      <TableHead className="whitespace-nowrap text-right">Amount</TableHead>
-                      <TableHead className="whitespace-nowrap">Lessons #</TableHead>
-                      <TableHead className="whitespace-nowrap">Instructor</TableHead>
-                      <TableHead className="whitespace-nowrap">Status</TableHead>
-                      <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
+                      <TableHead className='w-24 whitespace-nowrap'>Image</TableHead>
+                      <TableHead className='whitespace-nowrap'>Course</TableHead>
+                      <TableHead className='min-w-[120px] whitespace-nowrap'>Subject</TableHead>
+                      <TableHead className='whitespace-nowrap'>Lecture Type</TableHead>
+                      <TableHead className='text-right whitespace-nowrap'>Amount</TableHead>
+                      <TableHead className='whitespace-nowrap'>Lessons #</TableHead>
+                      <TableHead className='whitespace-nowrap'>Instructor</TableHead>
+                      <TableHead className='whitespace-nowrap'>Status</TableHead>
+                      <TableHead className='text-right whitespace-nowrap'>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredRows.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                        <TableCell colSpan={9} className='text-muted-foreground h-24 text-center'>
                           No courses available.
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredRows.map(row => (
-                        <TableRow key={row.rowKey} onClick={() => goToCourse(row.courseUuid)} className="cursor-pointer hover:bg-muted/50">
-                          <TableCell className="whitespace-nowrap">
+                        <TableRow
+                          key={row.rowKey}
+                          onClick={() => goToCourse(row.courseUuid)}
+                          className='hover:bg-muted/50 cursor-pointer'
+                        >
+                          <TableCell className='whitespace-nowrap'>
                             <CourseImage src={row.image} alt={row.displayName} />
                           </TableCell>
-                          <TableCell className="whitespace-nowrap font-medium">{row.displayName}</TableCell>
-                          <TableCell className="min-w-[120px] whitespace-nowrap">{row.subjectLabel}</TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            <Badge variant="outline" className="text-xs">{row.method}</Badge>
+                          <TableCell className='font-medium whitespace-nowrap'>
+                            {row.displayName}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap text-right font-mono">
+                          <TableCell className='min-w-[120px] whitespace-nowrap'>
+                            {row.subjectLabel}
+                          </TableCell>
+                          <TableCell className='whitespace-nowrap'>
+                            <Badge variant='outline' className='text-xs'>
+                              {row.method}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className='text-right font-mono whitespace-nowrap'>
                             {row.amount > 0 ? currency.format(row.amount) : '—'}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">{row.lessons}</TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-8 w-8 shrink-0">
-                                <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                          <TableCell className='whitespace-nowrap'>{row.lessons}</TableCell>
+                          <TableCell className='whitespace-nowrap'>
+                            <div className='flex items-center gap-2'>
+                              <Avatar className='h-8 w-8 shrink-0'>
+                                <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
                                   {instructorInitials(row.instructor)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="text-muted-foreground">{instructorName(row.instructor)}</span>
+                              <span className='text-muted-foreground'>
+                                {instructorName(row.instructor)}
+                              </span>
                             </div>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            <Badge variant={row.status === 'Active' ? 'default' : 'secondary'}>{row.status}</Badge>
+                          <TableCell className='whitespace-nowrap'>
+                            <Badge variant={row.status === 'Active' ? 'default' : 'secondary'}>
+                              {row.status}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap text-right">
-                            <CourseActions status={row.status} onView={() => goToCourse(row.courseUuid)} onArchive={() => handleArchive(row.rowKey.split("-")[0], row.displayName)} />
+                          <TableCell className='text-right whitespace-nowrap'>
+                            <CourseActions
+                              status={row.status}
+                              onView={() => goToCourse(row.courseUuid)}
+                              onArchive={() =>
+                                handleArchive(row.rowKey.split('-')[0], row.displayName)
+                              }
+                            />
                           </TableCell>
                         </TableRow>
                       ))

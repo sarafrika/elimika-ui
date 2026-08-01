@@ -20,7 +20,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
@@ -62,7 +69,11 @@ export default function StudentsPage() {
   const summaryByStudent = useMemo(() => {
     const map = new Map<string, { total: number; completed: number }>();
     for (const s of summariesQuery.data?.data ?? []) {
-      if (s.student_uuid) map.set(s.student_uuid, { total: Number(s.total ?? 0), completed: Number(s.completed ?? 0) });
+      if (s.student_uuid)
+        map.set(s.student_uuid, {
+          total: Number(s.total ?? 0),
+          completed: Number(s.completed ?? 0),
+        });
     }
     return map;
   }, [summariesQuery.data]);
@@ -72,17 +83,21 @@ export default function StudentsPage() {
   const students = extractPage<User>(studentsQuery.data).items.flatMap(u => {
     if (!u.uuid) return [];
     const summary = summaryByStudent.get(u.uuid);
-    const pct = summary && summary.total > 0 ? Math.round((summary.completed / summary.total) * 100) : 0;
-    const status = !summary || summary.total === 0 ? 'No classes yet' : pct >= 100 ? 'Completed' : 'Active';
-    return [{
-      id: u.uuid,
-      name: fullName(u),
-      status,
-      completedCourses: summary?.completed ?? 0,
-      totalCourses: summary?.total ?? 0,
-      pct,
-      category: 'Uncategorised',
-    }];
+    const pct =
+      summary && summary.total > 0 ? Math.round((summary.completed / summary.total) * 100) : 0;
+    const status =
+      !summary || summary.total === 0 ? 'No classes yet' : pct >= 100 ? 'Completed' : 'Active';
+    return [
+      {
+        id: u.uuid,
+        name: fullName(u),
+        status,
+        completedCourses: summary?.completed ?? 0,
+        totalCourses: summary?.total ?? 0,
+        pct,
+        category: 'Uncategorised',
+      },
+    ];
   });
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
@@ -93,14 +108,14 @@ export default function StudentsPage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]">
+    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
-        title="Students"
-        description="Invite, onboard and manage students across your programs."
+        title='Students'
+        description='Invite, onboard and manage students across your programs.'
         action={
-          <Button asChild size="sm">
-            <Link href="/dashboard/organisation/invite-students">
-              <Plus className="mr-2 h-4 w-4" /> Invite students
+          <Button asChild size='sm'>
+            <Link href='/dashboard/organisation/invite-students'>
+              <Plus className='mr-2 h-4 w-4' /> Invite students
             </Link>
           </Button>
         }
@@ -116,70 +131,74 @@ export default function StudentsPage() {
         onSubjectChange={setSubjectByCategory}
       />
 
-      <div className="space-y-4">
+      <div className='space-y-4'>
         {studentsQuery.isLoading ? (
-          <div className="space-y-2">
+          <div className='space-y-2'>
             {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full" />
+              <Skeleton key={i} className='h-14 w-full' />
             ))}
           </div>
         ) : visibleStudents.length === 0 ? (
           <EmptyState
             icon={Users}
-            title="No students yet"
-            description="Invite students by email or upload a CSV to onboard a whole cohort in one go."
+            title='No students yet'
+            description='Invite students by email or upload a CSV to onboard a whole cohort in one go.'
             action={
-              <Button asChild size="sm">
-                <Link href="/dashboard/organisation/invite-students">
-                  <Plus className="mr-2 h-4 w-4" /> Invite students
+              <Button asChild size='sm'>
+                <Link href='/dashboard/organisation/invite-students'>
+                  <Plus className='mr-2 h-4 w-4' /> Invite students
                 </Link>
               </Button>
             }
           />
         ) : (
-          <div className="overflow-x-auto rounded-lg border">
-            <Table className="min-w-[1040px]">
+          <div className='overflow-x-auto rounded-lg border'>
+            <Table className='min-w-[1040px]'>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="whitespace-nowrap">Student</TableHead>
-                  <TableHead className="whitespace-nowrap">Wallet ID</TableHead>
-                  <TableHead className="whitespace-nowrap">Institution Ref</TableHead>
-                  <TableHead className="whitespace-nowrap">Status</TableHead>
-                  <TableHead className="whitespace-nowrap">Course Completion</TableHead>
-                  <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
+                  <TableHead className='whitespace-nowrap'>Student</TableHead>
+                  <TableHead className='whitespace-nowrap'>Wallet ID</TableHead>
+                  <TableHead className='whitespace-nowrap'>Institution Ref</TableHead>
+                  <TableHead className='whitespace-nowrap'>Status</TableHead>
+                  <TableHead className='whitespace-nowrap'>Course Completion</TableHead>
+                  <TableHead className='text-right whitespace-nowrap'>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {visibleStudents.map(student => (
                   <TableRow key={student.id}>
-                    <TableCell className="whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <AvatarWithSkeleton src="" name={student.name} className="h-8 w-8" />
-                        <span className="font-medium">{student.name}</span>
+                    <TableCell className='whitespace-nowrap'>
+                      <div className='flex items-center gap-3'>
+                        <AvatarWithSkeleton src='' name={student.name} className='h-8 w-8' />
+                        <span className='font-medium'>{student.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <span className="font-mono text-xs">{generateWalletId(student.id)}</span>
+                    <TableCell className='whitespace-nowrap'>
+                      <span className='font-mono text-xs'>{generateWalletId(student.id)}</span>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <span className="font-mono text-xs text-muted-foreground">{institutionRef('ELM', student.id)}</span>
+                    <TableCell className='whitespace-nowrap'>
+                      <span className='text-muted-foreground font-mono text-xs'>
+                        {institutionRef('ELM', student.id)}
+                      </span>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell className='whitespace-nowrap'>
                       <Badge variant={statusVariant(student.status)}>{student.status}</Badge>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell className='whitespace-nowrap'>
                       {student.totalCourses === 0 ? (
-                        <span className="text-muted-foreground text-sm">—</span>
+                        <span className='text-muted-foreground text-sm'>—</span>
                       ) : (
                         <TooltipProvider delayDuration={100}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="flex w-36 items-center gap-3">
-                                <Progress value={student.pct} className="h-2 flex-1" />
-                                <span className="w-8 text-right text-xs text-muted-foreground">{student.pct}%</span>
+                              <div className='flex w-36 items-center gap-3'>
+                                <Progress value={student.pct} className='h-2 flex-1' />
+                                <span className='text-muted-foreground w-8 text-right text-xs'>
+                                  {student.pct}%
+                                </span>
                               </div>
                             </TooltipTrigger>
-                            <TooltipContent side="top">
+                            <TooltipContent side='top'>
                               <p>
                                 {student.completedCourses} of {student.totalCourses} attended
                               </p>
@@ -188,26 +207,42 @@ export default function StudentsPage() {
                         </TooltipProvider>
                       )}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-right">
+                    <TableCell className='text-right whitespace-nowrap'>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
+                          <Button variant='ghost' size='icon' className='h-8 w-8'>
+                            <MoreHorizontal className='h-4 w-4' />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => toast.info('View student', { description: `Opening ${student.name}'s profile.` })}>
-                            <Eye className="mr-2 h-4 w-4" /> View
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              toast.info('View student', {
+                                description: `Opening ${student.name}'s profile.`,
+                              })
+                            }
+                          >
+                            <Eye className='mr-2 h-4 w-4' /> View
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toast.info('Message student', { description: `Opening conversation with ${student.name}.` })}>
-                            <Mail className="mr-2 h-4 w-4" /> Message
+                          <DropdownMenuItem
+                            onClick={() =>
+                              toast.info('Message student', {
+                                description: `Opening conversation with ${student.name}.`,
+                              })
+                            }
+                          >
+                            <Mail className='mr-2 h-4 w-4' /> Message
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => toast.error('Student removed', { description: `${student.name} has been removed.` })}
+                            className='text-destructive focus:text-destructive'
+                            onClick={() =>
+                              toast.error('Student removed', {
+                                description: `${student.name} has been removed.`,
+                              })
+                            }
                           >
-                            <Trash2 className="mr-2 h-4 w-4" /> Remove
+                            <Trash2 className='mr-2 h-4 w-4' /> Remove
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

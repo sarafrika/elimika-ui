@@ -52,21 +52,25 @@ export function SearchInstructorMetrics({
   ];
 
   return (
-    <Card className='rounded-md border bg-card p-0 shadow-none'>
+    <Card className='bg-card rounded-md border p-0 shadow-none'>
       <div className='grid gap-0 sm:grid-cols-2 xl:grid-cols-4'>
         {cards.map(card => {
           const Icon = card.icon;
 
           return (
             <div key={card.label} className='flex items-center gap-3 px-4 py-4'>
-              <div className={`${card.iconBg} ${card.accent} flex size-10 items-center justify-center rounded-xl`}>
+              <div
+                className={`${card.iconBg} ${card.accent} flex size-10 items-center justify-center rounded-xl`}
+              >
                 <Icon className='size-4' />
               </div>
               <div className='min-w-0'>
                 <p className='text-muted-foreground text-xs sm:text-sm'>{card.label}</p>
                 <p className='line-clamp-1 text-sm font-semibold sm:text-base'>
                   {card.value}
-                  {card.suffix ? <span className='text-muted-foreground'>{card.suffix}</span> : null}
+                  {card.suffix ? (
+                    <span className='text-muted-foreground'>{card.suffix}</span>
+                  ) : null}
                 </p>
               </div>
             </div>

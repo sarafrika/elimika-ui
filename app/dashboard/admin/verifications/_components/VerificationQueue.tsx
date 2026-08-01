@@ -69,16 +69,16 @@ export function VerificationQueue({
 
         <div className='flex flex-1 flex-wrap items-center justify-end gap-2'>
           <div className='relative min-w-[200px] flex-1 sm:max-w-xs'>
-            <Search className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
+            <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
             <Input
               value={search}
               onChange={event => setSearch(event.target.value)}
               placeholder='Search by owner or document…'
-              className='h-9 rounded-md border-border/70 bg-background pl-9 shadow-sm'
+              className='border-border/70 bg-background h-9 rounded-md pl-9 shadow-sm'
             />
           </div>
           <Select value={status} onValueChange={value => setStatus(value as StatusFilter)}>
-            <SelectTrigger className='h-9 w-[150px] rounded-md border-border/70 bg-background shadow-sm'>
+            <SelectTrigger className='border-border/70 bg-background h-9 w-[150px] rounded-md shadow-sm'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

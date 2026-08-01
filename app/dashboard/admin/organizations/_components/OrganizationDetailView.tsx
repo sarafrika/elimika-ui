@@ -30,7 +30,10 @@ import {
   fetchOrganisationClasses,
   fetchOrganisationMembers,
 } from '@/services/admin/organisation-review';
-import { useUnverifyAdminOrganisation, useVerifyAdminOrganisation } from '@/services/admin/organizations';
+import {
+  useUnverifyAdminOrganisation,
+  useVerifyAdminOrganisation,
+} from '@/services/admin/organizations';
 import type { Organisation } from '@/services/client';
 import { getOrganisationByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { adminTheme, type StatusTone, statusToneClass } from '../../_components/ui/admin-theme';
@@ -65,14 +68,21 @@ function MetricTile({
   tone?: StatusTone;
 }) {
   return (
-    <div className='flex items-center gap-3 rounded-md border border-border/70 bg-card p-4 shadow-sm'>
-      <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-md border', statusToneClass[tone])}>
+    <div className='border-border/70 bg-card flex items-center gap-3 rounded-md border p-4 shadow-sm'>
+      <span
+        className={cn(
+          'flex size-10 shrink-0 items-center justify-center rounded-md border',
+          statusToneClass[tone]
+        )}
+      >
         <Icon className='size-5' />
       </span>
       <div className='min-w-0'>
-        <p className='truncate text-xs font-medium uppercase tracking-wide text-muted-foreground'>{label}</p>
-        <div className='truncate text-lg font-semibold text-foreground'>{value}</div>
-        {hint ? <p className='truncate text-xs text-muted-foreground'>{hint}</p> : null}
+        <p className='text-muted-foreground truncate text-xs font-medium tracking-wide uppercase'>
+          {label}
+        </p>
+        <div className='text-foreground truncate text-lg font-semibold'>{value}</div>
+        {hint ? <p className='text-muted-foreground truncate text-xs'>{hint}</p> : null}
       </div>
     </div>
   );
@@ -100,15 +110,15 @@ function BranchesTab({ uuid, active }: { uuid: string; active: boolean }) {
             ))}
           </div>
         }
-        emptyState={<p className='text-sm text-muted-foreground'>No branches registered.</p>}
+        emptyState={<p className='text-muted-foreground text-sm'>No branches registered.</p>}
       >
         <div className='space-y-3'>
           {branches.map(branch => (
-            <div key={branch.uuid} className='rounded-md border border-border/60 bg-muted/20 p-3'>
+            <div key={branch.uuid} className='border-border/60 bg-muted/20 rounded-md border p-3'>
               <div className='mb-2 flex items-center justify-between gap-3'>
                 <div className='flex min-w-0 items-center gap-2'>
-                  <GitBranch className='size-4 shrink-0 text-muted-foreground' />
-                  <p className='truncate text-sm font-medium text-foreground'>{branch.name}</p>
+                  <GitBranch className='text-muted-foreground size-4 shrink-0' />
+                  <p className='text-foreground truncate text-sm font-medium'>{branch.name}</p>
                 </div>
                 <StatusBadge status={branch.active ? 'active' : 'inactive'} />
               </div>
@@ -151,19 +161,21 @@ function MembersTab({ uuid, active }: { uuid: string; active: boolean }) {
             ))}
           </div>
         }
-        emptyState={<p className='text-sm text-muted-foreground'>No members affiliated.</p>}
+        emptyState={<p className='text-muted-foreground text-sm'>No members affiliated.</p>}
       >
         <div className='space-y-2'>
           {members.map(member => (
             <button
               type='button'
               key={member.userUuid ?? member.email}
-              onClick={() => member.userUuid && router.push(`/dashboard/admin/users/${member.userUuid}`)}
-              className='flex w-full items-center justify-between gap-3 rounded-md border border-border/60 bg-muted/20 p-3 text-left transition-colors hover:bg-muted/40'
+              onClick={() =>
+                member.userUuid && router.push(`/dashboard/admin/users/${member.userUuid}`)
+              }
+              className='border-border/60 bg-muted/20 hover:bg-muted/40 flex w-full items-center justify-between gap-3 rounded-md border p-3 text-left transition-colors'
             >
               <div className='min-w-0'>
-                <p className='truncate text-sm font-medium text-foreground'>{member.name}</p>
-                <p className='truncate text-xs text-muted-foreground'>
+                <p className='text-foreground truncate text-sm font-medium'>{member.name}</p>
+                <p className='text-muted-foreground truncate text-xs'>
                   {member.email || '—'}
                   {member.domain ? ` · ${member.domain}` : ''}
                   {member.branch ? ` · ${member.branch}` : ''}
@@ -200,24 +212,33 @@ function ClassesTab({ uuid, active }: { uuid: string; active: boolean }) {
             ))}
           </div>
         }
-        emptyState={<p className='text-sm text-muted-foreground'>No classes offered.</p>}
+        emptyState={<p className='text-muted-foreground text-sm'>No classes offered.</p>}
       >
         <div className='space-y-3'>
           {classes.map(klass => (
-            <div key={klass.uuid} className='rounded-md border border-border/60 bg-muted/20 p-3'>
+            <div key={klass.uuid} className='border-border/60 bg-muted/20 rounded-md border p-3'>
               <div className='mb-2 flex items-center justify-between gap-3'>
                 <div className='flex min-w-0 items-center gap-2'>
-                  <CalendarClock className='size-4 shrink-0 text-muted-foreground' />
-                  <p className='truncate text-sm font-medium text-foreground'>{klass.title}</p>
+                  <CalendarClock className='text-muted-foreground size-4 shrink-0' />
+                  <p className='text-foreground truncate text-sm font-medium'>{klass.title}</p>
                 </div>
                 <StatusBadge status={klass.isActive ? 'active' : 'inactive'} />
               </div>
               <DetailGrid
                 columns={3}
                 items={[
-                  { label: 'Format', value: <span className='capitalize'>{klass.sessionFormat || '—'}</span> },
-                  { label: 'Location', value: <span className='capitalize'>{klass.locationType || '—'}</span> },
-                  { label: 'Capacity', value: klass.maxParticipants != null ? String(klass.maxParticipants) : '—' },
+                  {
+                    label: 'Format',
+                    value: <span className='capitalize'>{klass.sessionFormat || '—'}</span>,
+                  },
+                  {
+                    label: 'Location',
+                    value: <span className='capitalize'>{klass.locationType || '—'}</span>,
+                  },
+                  {
+                    label: 'Capacity',
+                    value: klass.maxParticipants != null ? String(klass.maxParticipants) : '—',
+                  },
                 ]}
               />
             </div>
@@ -279,7 +300,7 @@ export function OrganizationDetailView({
     return (
       <main className={adminTheme.page}>
         <div className='flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center'>
-          <ShieldAlert className='size-10 text-muted-foreground' />
+          <ShieldAlert className='text-muted-foreground size-10' />
           <p className='text-lg font-semibold'>Organisation not found</p>
           <Button variant='outline' asChild>
             <Link href={backHref}>{backLabel}</Link>
@@ -296,24 +317,31 @@ export function OrganizationDetailView({
     <main className={adminTheme.page}>
       <div className={adminTheme.pageStack}>
         <div>
-          <Button variant='ghost' size='sm' asChild className='-ml-2 mb-2 text-muted-foreground'>
+          <Button variant='ghost' size='sm' asChild className='text-muted-foreground mb-2 -ml-2'>
             <Link href={backHref}>
               <ArrowLeft className='size-4' />
               {backLabel}
             </Link>
           </Button>
 
-          <header className='flex flex-col gap-4 rounded-md border border-border/70 bg-card px-5 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between'>
+          <header className='border-border/70 bg-card flex flex-col gap-4 rounded-md border px-5 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between'>
             <div className='flex items-center gap-4'>
-              <span className='flex size-14 items-center justify-center rounded-md border border-border/60 bg-muted/40'>
-                <Building2 className='size-6 text-muted-foreground' />
+              <span className='border-border/60 bg-muted/40 flex size-14 items-center justify-center rounded-md border'>
+                <Building2 className='text-muted-foreground size-6' />
               </span>
               <div className='min-w-0'>
-                <h1 className='truncate text-2xl font-semibold tracking-tight text-foreground'>{org.name}</h1>
-                <p className='truncate text-sm text-muted-foreground'>{org.description || org.slug || '—'}</p>
+                <h1 className='text-foreground truncate text-2xl font-semibold tracking-tight'>
+                  {org.name}
+                </h1>
+                <p className='text-muted-foreground truncate text-sm'>
+                  {org.description || org.slug || '—'}
+                </p>
                 <div className='mt-2 flex flex-wrap items-center gap-1.5'>
                   <StatusBadge status={org.active ? 'active' : 'inactive'} />
-                  <StatusBadge status={verified ? 'verified' : 'pending'} label={verified ? 'Verified' : 'Unverified'} />
+                  <StatusBadge
+                    status={verified ? 'verified' : 'pending'}
+                    label={verified ? 'Verified' : 'Unverified'}
+                  />
                 </div>
               </div>
             </div>
@@ -358,7 +386,12 @@ export function OrganizationDetailView({
             tone={verified ? 'success' : org.verification_requested_at ? 'info' : 'warning'}
           />
           <MetricTile label='Location' value={locationLabel} icon={MapPin} tone='neutral' />
-          <MetricTile label='Registered' value={formatDate(org.created_date)} icon={CalendarDays} tone='neutral' />
+          <MetricTile
+            label='Registered'
+            value={formatDate(org.created_date)}
+            icon={CalendarDays}
+            tone='neutral'
+          />
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
@@ -381,15 +414,24 @@ export function OrganizationDetailView({
           </TabsList>
 
           <TabsContent value='overview' className='mt-4'>
-            <SectionCard title='Organisation profile' description='Registration and contact details.'>
+            <SectionCard
+              title='Organisation profile'
+              description='Registration and contact details.'
+            >
               <DetailGrid
                 columns={2}
                 items={[
                   { label: 'Name', value: org.name },
-                  { label: 'Licence no.', value: <span className='font-mono'>{org.licence_no || '—'}</span> },
+                  {
+                    label: 'Licence no.',
+                    value: <span className='font-mono'>{org.licence_no || '—'}</span>,
+                  },
                   { label: 'Location', value: locationLabel },
                   { label: 'Country', value: org.country || '—' },
-                  { label: 'Slug', value: <span className='font-mono text-xs'>{org.slug || '—'}</span> },
+                  {
+                    label: 'Slug',
+                    value: <span className='font-mono text-xs'>{org.slug || '—'}</span>,
+                  },
                   {
                     label: 'Coordinates',
                     value:
@@ -399,13 +441,16 @@ export function OrganizationDetailView({
                   },
                   { label: 'Registered', value: formatDate(org.created_date) },
                   { label: 'Last updated', value: formatDate(org.updated_date) },
-                  { label: 'UUID', value: <span className='break-all font-mono text-xs'>{org.uuid}</span> },
+                  {
+                    label: 'UUID',
+                    value: <span className='font-mono text-xs break-all'>{org.uuid}</span>,
+                  },
                 ]}
               />
               {org.description ? (
                 <div className='mt-4 space-y-1'>
                   <p className={adminTheme.sectionLabel}>Description</p>
-                  <p className='text-sm text-muted-foreground'>{org.description}</p>
+                  <p className='text-muted-foreground text-sm'>{org.description}</p>
                 </div>
               ) : null}
             </SectionCard>

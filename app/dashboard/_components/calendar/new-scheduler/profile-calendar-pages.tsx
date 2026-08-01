@@ -20,23 +20,26 @@ import {
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, Course, Student, User } from '@/services/client/types.gen';
-import type { ClassWithScheduleInput, InstructorSummary, SchedulerCalendarData, StudentSummary } from './calendar-utils';
-import { mapClassDefinitionDetails, mapClassSchedule, mapStudentSchedule, toClassLookup } from './calendar-utils';
+import type {
+  ClassWithScheduleInput,
+  InstructorSummary,
+  SchedulerCalendarData,
+  StudentSummary,
+} from './calendar-utils';
+import {
+  mapClassDefinitionDetails,
+  mapClassSchedule,
+  mapStudentSchedule,
+  toClassLookup,
+} from './calendar-utils';
 import { SchedulerCalendarView } from './new-scheduler-calendar-view';
 import type { SchedulerProfile } from './types';
 
-function useClassStudentSummaries(
-  classUuids: Array<string | null | undefined>
-) {
+function useClassStudentSummaries(classUuids: Array<string | null | undefined>) {
   const normalizedClassUuids = useMemo(
     () =>
       Array.from(
-        new Set(
-          classUuids.filter(
-            (uuid): uuid is string =>
-              Boolean(uuid && uuid.trim())
-          )
-        )
+        new Set(classUuids.filter((uuid): uuid is string => Boolean(uuid && uuid.trim())))
       ),
     [classUuids]
   );
@@ -64,47 +67,33 @@ function useClassStudentSummaries(
       studentUuid: string;
     }> = [];
 
-    normalizedClassUuids.forEach(
-      (classDefinitionUuid, index) => {
-        const enrollments =
-          enrollmentQueries[index]?.data?.data ?? [];
+    normalizedClassUuids.forEach((classDefinitionUuid, index) => {
+      const enrollments = enrollmentQueries[index]?.data?.data ?? [];
 
-        const seenInClass = new Set<string>();
+      const seenInClass = new Set<string>();
 
-        enrollments.forEach(enrollment => {
-          const studentUuid =
-            enrollment.student_uuid?.trim();
+      enrollments.forEach(enrollment => {
+        const studentUuid = enrollment.student_uuid?.trim();
 
-          if (
-            !studentUuid ||
-            seenInClass.has(studentUuid)
-          ) {
-            return;
-          }
+        if (!studentUuid || seenInClass.has(studentUuid)) {
+          return;
+        }
 
-          seenInClass.add(studentUuid);
+        seenInClass.add(studentUuid);
 
-          entries.push({
-            classDefinitionUuid,
-            enrollmentUuid: enrollment.uuid,
-            studentUuid,
-          });
+        entries.push({
+          classDefinitionUuid,
+          enrollmentUuid: enrollment.uuid,
+          studentUuid,
         });
-      }
-    );
+      });
+    });
 
     return entries;
   }, [enrollmentQueries, normalizedClassUuids]);
 
   const uniqueStudentUuids = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          uniqueStudentEntries
-            .map(entry => entry.studentUuid)
-            .filter(Boolean)
-        )
-      ),
+    () => Array.from(new Set(uniqueStudentEntries.map(entry => entry.studentUuid).filter(Boolean))),
     [uniqueStudentEntries]
   );
 
@@ -126,9 +115,7 @@ function useClassStudentSummaries(
         new Set(
           Array.from(studentMap.values())
             .map(student => student?.user_uuid)
-            .filter(
-              (uuid): uuid is string => Boolean(uuid)
-            )
+            .filter((uuid): uuid is string => Boolean(uuid))
         )
       ),
     [studentMap]
@@ -150,57 +137,35 @@ function useClassStudentSummaries(
     () =>
       uniqueStudentEntries
         .map(entry => {
-          const student = studentMap.get(
-            entry.studentUuid
-          );
+          const student = studentMap.get(entry.studentUuid);
 
           if (!student?.uuid) {
             return null;
           }
 
-          const user = student.user_uuid
-            ? studentProfilesByUuid.get(
-              student.user_uuid
-            )
-            : undefined;
+          const user = student.user_uuid ? studentProfilesByUuid.get(student.user_uuid) : undefined;
 
           return {
             uuid: student.uuid,
 
-            fullName:
-              student.full_name ||
-              user?.full_name ||
-              user?.display_name ||
-              'Student',
+            fullName: student.full_name || user?.full_name || user?.display_name || 'Student',
 
-            avatarUrl:
-              user?.profile_image_url,
+            avatarUrl: user?.profile_image_url,
 
-            classDefinitionUuid:
-              entry.classDefinitionUuid,
+            classDefinitionUuid: entry.classDefinitionUuid,
 
-            enrollmentUuid:
-              entry.enrollmentUuid,
+            enrollmentUuid: entry.enrollmentUuid,
 
-            studentEnrollmentKey:
-              `${entry.classDefinitionUuid}:${student.uuid}`,
+            studentEnrollmentKey: `${entry.classDefinitionUuid}:${student.uuid}`,
           };
         })
         .filter(Boolean) as StudentSummary[],
-    [
-      uniqueStudentEntries,
-      studentMap,
-      studentProfilesByUuid,
-    ]
+    [uniqueStudentEntries, studentMap, studentProfilesByUuid]
   );
 
   return {
     isLoading:
-      enrollmentQueries.some(
-        query => query.isLoading
-      ) ||
-      studentsLoading ||
-      studentUsersLoading,
+      enrollmentQueries.some(query => query.isLoading) || studentsLoading || studentUsersLoading,
 
     students,
   };
@@ -261,23 +226,18 @@ function AdminCalendarPage() {
       map.set(instructor.uuid, {
         uuid: instructor.uuid,
         fullName:
-          instructor.full_name ||
-          user?.full_name ||
-          user?.display_name ||
-          'Instructor pending',
+          instructor.full_name || user?.full_name || user?.display_name || 'Instructor pending',
         avatarUrl: user?.profile_image_url,
-        subtitle:
-          instructor.professional_headline ||
-          user?.email ||
-          'Attached to class data',
+        subtitle: instructor.professional_headline || user?.email || 'Attached to class data',
       });
     });
 
     return Array.from(map.values());
   }, [batchedInstructors, instructorProfilesByUuid]);
 
-
-  const studentData = useClassStudentSummaries(classData.map(classDef => classDef.uuid ?? undefined));
+  const studentData = useClassStudentSummaries(
+    classData.map(classDef => classDef.uuid ?? undefined)
+  );
 
   const events = useMemo(
     () =>
@@ -290,7 +250,7 @@ function AdminCalendarPage() {
             new Map(instructorSummaries.map(item => [item.uuid, item]))
           )
         )
-        .filter(event => event.status !== "Cancelled")
+        .filter(event => event.status !== 'Cancelled')
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
     [classData, instructorSummaries]
   );
@@ -312,39 +272,51 @@ function InstructorCalendarPage() {
   const instructorClassesQuery = useInstructorClassesWithSchedules(instructorUuid);
 
   const classData = useMemo(
-    () => (instructorClassesQuery.classes ?? []) as Array<{
-      default_instructor_uuid?: string | null;
-      instructor?: { full_name?: string | null; professional_headline?: string | null; uuid?: string | null } | null;
-      schedule?: Array<{
+    () =>
+      (instructorClassesQuery.classes ?? []) as Array<{
+        default_instructor_uuid?: string | null;
+        instructor?: {
+          full_name?: string | null;
+          professional_headline?: string | null;
+          uuid?: string | null;
+        } | null;
+        schedule?: Array<{
+          uuid?: string | null;
+          instructor_uuid?: string | null;
+          start_time?: Date | string | null;
+          end_time?: Date | string | null;
+          title?: string | null;
+          location_name?: string | null;
+          location_type?: string | null;
+          max_participants?: number | null;
+          status?: string | null;
+        }>;
         uuid?: string | null;
-        instructor_uuid?: string | null;
-        start_time?: Date | string | null;
-        end_time?: Date | string | null;
         title?: string | null;
+        course?: { uuid?: string | null; name?: string | null } | null;
         location_name?: string | null;
-        location_type?: string | null;
+        meeting_link?: string | null;
         max_participants?: number | null;
-        status?: string | null;
-      }>;
-      uuid?: string | null;
-      title?: string | null;
-      course?: { uuid?: string | null; name?: string | null } | null;
-      location_name?: string | null;
-      meeting_link?: string | null;
-      max_participants?: number | null;
-    }>,
+      }>,
     [instructorClassesQuery.classes]
   );
 
   const instructorSummary = useMemo<InstructorSummary[]>(() => {
     const name = profile?.instructor?.full_name || 'Instructor';
     return instructorUuid
-      ? [{ uuid: instructorUuid, fullName: name, subtitle: profile?.instructor?.professional_headline || 'Your classes' }]
+      ? [
+          {
+            uuid: instructorUuid,
+            fullName: name,
+            subtitle: profile?.instructor?.professional_headline || 'Your classes',
+          },
+        ]
       : [];
   }, [instructorUuid, profile?.instructor?.full_name, profile?.instructor?.professional_headline]);
 
-
-  const studentData = useClassStudentSummaries(classData.map(classDef => classDef.uuid ?? undefined));
+  const studentData = useClassStudentSummaries(
+    classData.map(classDef => classDef.uuid ?? undefined)
+  );
 
   const events = useMemo(
     () =>
@@ -357,7 +329,7 @@ function InstructorCalendarPage() {
             new Map(instructorSummary.map(item => [item.uuid, item]))
           )
         )
-        .filter(event => event.status !== "Cancelled")
+        .filter(event => event.status !== 'Cancelled')
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
     [classData, instructorSummary]
   );
@@ -441,9 +413,7 @@ function StudentCalendarPage() {
     () =>
       Array.from(
         new Set(
-          studentClassDefinitions
-            .map(cd => cd.course_uuid)
-            .filter((uuid): uuid is string => !!uuid)
+          studentClassDefinitions.map(cd => cd.course_uuid).filter((uuid): uuid is string => !!uuid)
         )
       ),
     [studentClassDefinitions]
@@ -485,9 +455,7 @@ function StudentCalendarPage() {
   // STUDENTS
   // -----------------------------
 
-  const studentData = useClassStudentSummaries(
-    studentClassData.map(cd => cd.uuid ?? undefined)
-  );
+  const studentData = useClassStudentSummaries(studentClassData.map(cd => cd.uuid ?? undefined));
 
   // -----------------------------
   // INSTRUCTORS (FIXED)
@@ -516,9 +484,7 @@ function StudentCalendarPage() {
   // ✅ FIXED: correct data shape
   const instructorUserUuids = useMemo(
     () =>
-      instructorQueries
-        .map(q => q.data?.data?.user_uuid)
-        .filter((uuid): uuid is string => !!uuid),
+      instructorQueries.map(q => q.data?.data?.user_uuid).filter((uuid): uuid is string => !!uuid),
     [instructorQueries]
   );
 
@@ -559,15 +525,9 @@ function StudentCalendarPage() {
       map.set(instructor.uuid, {
         uuid: instructor.uuid,
         fullName:
-          instructor.full_name ||
-          user?.full_name ||
-          user?.display_name ||
-          'Instructor pending',
+          instructor.full_name || user?.full_name || user?.display_name || 'Instructor pending',
         avatarUrl: user?.profile_image_url,
-        subtitle:
-          instructor.professional_headline ||
-          user?.email ||
-          'Attached to class data',
+        subtitle: instructor.professional_headline || user?.email || 'Attached to class data',
       });
     });
 
@@ -583,19 +543,20 @@ function StudentCalendarPage() {
       (studentScheduleQuery.data?.data ?? [])
         .map(item => {
           const classDetails = item.class_definition_uuid
-            ? toClassLookup(studentClassData).get(item.class_definition_uuid) ?? null
+            ? (toClassLookup(studentClassData).get(item.class_definition_uuid) ?? null)
             : null;
 
-          const instructorDetails =
-            instructorSummaries.find(i => i.uuid === item.instructor_uuid) || {
-              uuid: item.instructor_uuid || '',
-              fullName: '',
-            };
+          const instructorDetails = instructorSummaries.find(
+            i => i.uuid === item.instructor_uuid
+          ) || {
+            uuid: item.instructor_uuid || '',
+            fullName: '',
+          };
 
           return mapStudentSchedule(item, instructorDetails, classDetails);
         })
         .filter(Boolean)
-        .filter(event => event.status !== "Cancelled")
+        .filter(event => event.status !== 'Cancelled')
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
     [studentScheduleQuery.data, studentClassData, instructorSummaries]
   );
@@ -603,12 +564,10 @@ function StudentCalendarPage() {
   const studentSummaries = useMemo(() => {
     return studentData.students.length
       ? studentData.students
-      : (studentScheduleQuery.data?.data ?? []).reduce<StudentSummary[]>(
-        (acc, item) => {
+      : (studentScheduleQuery.data?.data ?? []).reduce<StudentSummary[]>((acc, item) => {
           const classDefinitionUuid = item.class_definition_uuid?.trim();
           const enrollmentUuid =
-            item.enrollment_uuid?.trim() ||
-            item.scheduled_instance_uuid?.trim();
+            item.enrollment_uuid?.trim() || item.scheduled_instance_uuid?.trim();
 
           const studentUuid = enrollmentUuid || classDefinitionUuid;
           if (!studentUuid) return acc;
@@ -623,9 +582,7 @@ function StudentCalendarPage() {
           });
 
           return acc;
-        },
-        []
-      );
+        }, []);
   }, [studentData.students, studentScheduleQuery.data, profile?.student?.full_name]);
 
   const data: SchedulerCalendarData = {
@@ -641,7 +598,7 @@ function StudentCalendarPage() {
       studentData.isLoading,
   };
 
-  return <SchedulerCalendarView profile="student" data={data} />;
+  return <SchedulerCalendarView profile='student' data={data} />;
 }
 
 function OrganizationCalendarPage() {
@@ -737,7 +694,7 @@ function OrganizationCalendarPage() {
     queries: classData.map(cls => ({
       ...getClassScheduleOptions({
         path: { uuid: cls.uuid ?? '' },
-        query: { pageable: { page: 0, size: 1000 } }
+        query: { pageable: { page: 0, size: 1000 } },
       }),
       enabled: !!cls.uuid,
       staleTime: 5 * 60 * 1000,
@@ -767,12 +724,9 @@ function OrganizationCalendarPage() {
     () =>
       classesWithCourseAndInstructor
         .flatMap((classDef, classIndex) =>
-          mapClassSchedule(
-            classDef as ClassWithScheduleInput,
-            classIndex
-          )
+          mapClassSchedule(classDef as ClassWithScheduleInput, classIndex)
         )
-        .filter(event => event.status !== "Cancelled")
+        .filter(event => event.status !== 'Cancelled')
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
     [classesWithCourseAndInstructor]
   );
@@ -788,7 +742,9 @@ function OrganizationCalendarPage() {
     });
   }, [instructorMap, uniqueInstructorUuids]);
 
-  const studentData = useClassStudentSummaries(classData.map(classDef => classDef.uuid ?? undefined));
+  const studentData = useClassStudentSummaries(
+    classData.map(classDef => classDef.uuid ?? undefined)
+  );
 
   const data: SchedulerCalendarData = {
     allInstructors: instructorSummaries,

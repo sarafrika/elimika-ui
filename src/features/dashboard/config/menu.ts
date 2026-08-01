@@ -42,7 +42,7 @@ import {
   UsersIcon,
   UsersRound,
   Wallet,
-  Wrench
+  Wrench,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -90,7 +90,10 @@ export function flattenMenuItems(items: MenuItem[] | MenuGroup[]): MenuItem[] {
 }
 
 function collectMenuUrls(items: MenuItem[]): string[] {
-  return items.flatMap(item => [...(item.url ? [item.url] : []), ...(item.items ? collectMenuUrls(item.items) : [])]);
+  return items.flatMap(item => [
+    ...(item.url ? [item.url] : []),
+    ...(item.items ? collectMenuUrls(item.items) : []),
+  ]);
 }
 
 // Only the single most-specific (longest) matching url is active, so /dashboard/courses/catalog
@@ -98,7 +101,8 @@ function collectMenuUrls(items: MenuItem[]): string[] {
 function bestActiveUrl(items: MenuItem[], currentPath: string): string {
   let best = '';
   for (const url of collectMenuUrls(items)) {
-    if ((currentPath === url || currentPath.startsWith(`${url}/`)) && url.length > best.length) best = url;
+    if ((currentPath === url || currentPath.startsWith(`${url}/`)) && url.length > best.length)
+      best = url;
   }
   return best;
 }

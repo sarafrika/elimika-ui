@@ -568,45 +568,45 @@ function TrainingApplications({
         }
       >
         <div className='space-y-3'>
-        {courseApplications.map(application => (
-          <ApplicationRow
-            key={application.uuid}
-            title={`Course application ${application.course_uuid ?? ''}`}
-            subtitle={humanize(application.applicant_type)}
-            status={String(application.status ?? '')}
-            createdBy={application.created_by}
-            updatedBy={application.updated_by}
-            createdAt={application.created_date}
-            reviewedBy={application.reviewed_by}
-            reviewedAt={application.reviewed_at}
-          />
-        ))}
-        {programApplications.map(application => (
-          <ApplicationRow
-            key={application.uuid}
-            title={`Program application ${application.program_uuid ?? ''}`}
-            subtitle={humanize(application.applicant_type)}
-            status={String(application.status ?? '')}
-            createdBy={application.created_by}
-            updatedBy={application.updated_by}
-            createdAt={application.created_date}
-            reviewedBy={application.reviewed_by}
-            reviewedAt={application.reviewed_at}
-          />
-        ))}
-        {marketplaceApplications.map(application => (
-          <ApplicationRow
-            key={application.uuid}
-            title={`Marketplace job ${application.job_uuid ?? ''}`}
-            subtitle={application.application_note}
-            status={String(application.status ?? '')}
-            createdBy={application.created_by}
-            updatedBy={application.updated_by}
-            createdAt={application.created_date}
-            reviewedBy={application.reviewed_by}
-            reviewedAt={application.reviewed_at}
-          />
-        ))}
+          {courseApplications.map(application => (
+            <ApplicationRow
+              key={application.uuid}
+              title={`Course application ${application.course_uuid ?? ''}`}
+              subtitle={humanize(application.applicant_type)}
+              status={String(application.status ?? '')}
+              createdBy={application.created_by}
+              updatedBy={application.updated_by}
+              createdAt={application.created_date}
+              reviewedBy={application.reviewed_by}
+              reviewedAt={application.reviewed_at}
+            />
+          ))}
+          {programApplications.map(application => (
+            <ApplicationRow
+              key={application.uuid}
+              title={`Program application ${application.program_uuid ?? ''}`}
+              subtitle={humanize(application.applicant_type)}
+              status={String(application.status ?? '')}
+              createdBy={application.created_by}
+              updatedBy={application.updated_by}
+              createdAt={application.created_date}
+              reviewedBy={application.reviewed_by}
+              reviewedAt={application.reviewed_at}
+            />
+          ))}
+          {marketplaceApplications.map(application => (
+            <ApplicationRow
+              key={application.uuid}
+              title={`Marketplace job ${application.job_uuid ?? ''}`}
+              subtitle={application.application_note}
+              status={String(application.status ?? '')}
+              createdBy={application.created_by}
+              updatedBy={application.updated_by}
+              createdAt={application.created_date}
+              reviewedBy={application.reviewed_by}
+              reviewedAt={application.reviewed_at}
+            />
+          ))}
         </div>
       </AsyncSection>
     </SectionCard>

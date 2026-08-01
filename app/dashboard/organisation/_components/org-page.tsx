@@ -11,7 +11,7 @@ export function OrgPage({ children, className }: { children: ReactNode; classNam
   return (
     <div
       className={cn(
-        'mx-auto w-full max-w-[1600px] px-3 py-3 sm:px-5 lg:px-6 2xl:max-w-[1840px] min-[2000px]:max-w-[2200px]',
+        'mx-auto w-full max-w-[1600px] px-3 py-3 min-[2000px]:max-w-[2200px] sm:px-5 lg:px-6 2xl:max-w-[1840px]',
         className
       )}
     >

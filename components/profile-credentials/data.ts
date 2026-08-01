@@ -61,7 +61,7 @@ export type CredentialItem = {
   metadata?: string;
   details?: CredentialDetail[];
   timestamp?: number;
-  certificateNumber?: string
+  certificateNumber?: string;
 };
 
 export type GrowthItem = {
@@ -146,7 +146,6 @@ const studentCredentials: Record<CredentialsTabId, CredentialItem[]> = {
       statusIcon: Eye,
       actionLabel: 'Share',
       documentLabel: 'coursera',
-
     },
     {
       id: 'ui-ux-design-certificate',

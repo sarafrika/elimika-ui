@@ -9,7 +9,7 @@ import type {
   ScheduledInstance,
   StudentSchedule,
   TrainingProgram,
-  User
+  User,
 } from '@/services/client/types.gen';
 
 export type CourseListItem = Course | TrainingProgram;

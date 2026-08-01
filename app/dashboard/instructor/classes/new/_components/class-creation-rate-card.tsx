@@ -29,12 +29,10 @@ export function ClassCreationRateCard({
   const resolvedRatePerHour = summary?.ratePerHour ?? pricePerHour ?? 0;
 
   return (
-    <Card className='overflow-hidden border border-primary/20 p-0 shadow-sm'>
-      <div className='border-b border-primary/10 px-4 py-1.5'>
+    <Card className='border-primary/20 overflow-hidden border p-0 shadow-sm'>
+      <div className='border-primary/10 border-b px-4 py-1.5'>
         <div className='flex items-center gap-1.5 pt-2'>
-          <h3 className='text-foreground text-sm font-semibold'>
-            Instructor Rate Card
-          </h3>
+          <h3 className='text-foreground text-sm font-semibold'>Instructor Rate Card</h3>
           <Info className='text-muted-foreground h-3.5 w-3.5' />
         </div>
       </div>
@@ -42,9 +40,7 @@ export function ClassCreationRateCard({
       <div className='space-y-2 px-4 py-2'>
         <div className='grid gap-2 sm:grid-cols-2'>
           <div className='space-y-0.5'>
-            <p className='text-muted-foreground text-[11px] font-medium'>
-              Fee per Hour
-            </p>
+            <p className='text-muted-foreground text-[11px] font-medium'>Fee per Hour</p>
             <p className='text-foreground text-base font-semibold'>
               {currency} {resolvedRatePerHour.toLocaleString()}
             </p>

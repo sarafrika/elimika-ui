@@ -164,7 +164,9 @@ const ProgramPreview = ({ onEdit }: ProgramPreviewProps) => {
               }
 
               if (program.uuid) {
-                router.push(`/dashboard/course-creator/course-management/create-new-program?id=${program.uuid}`);
+                router.push(
+                  `/dashboard/course-creator/course-management/create-new-program?id=${program.uuid}`
+                );
               }
             }}
             className='bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-lg px-4 py-2 text-sm font-medium md:w-auto md:text-base'

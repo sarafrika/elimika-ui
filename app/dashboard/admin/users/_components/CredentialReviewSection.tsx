@@ -14,7 +14,10 @@ interface CredentialReviewSectionProps {
   verifierIdentity: string;
 }
 
-export function CredentialReviewSection({ documents, verifierIdentity }: CredentialReviewSectionProps) {
+export function CredentialReviewSection({
+  documents,
+  verifierIdentity,
+}: CredentialReviewSectionProps) {
   const [active, setActive] = useState<CredentialDocument | null>(null);
 
   if (documents.length === 0) {

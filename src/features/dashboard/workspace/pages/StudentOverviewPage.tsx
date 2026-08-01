@@ -17,7 +17,6 @@ export default function StudentOverviewPage() {
   const profile = useUserProfile();
   const data = useStudentOverviewData();
 
-
   const filteredCourses = data.activeCourses.filter(
     course =>
       matchesQuery(course.title, deferredSearch) || matchesQuery(course.subtitle, deferredSearch)
@@ -31,8 +30,8 @@ export default function StudentOverviewPage() {
   );
 
   return (
-    <div className='mb-10 w-full max-w-[1480px] overflow-x-clip bg-background px-2 py-3 sm:px-3 sm:py-4 lg:px-4'>
-      <div className='space-y-4 min-w-0'>
+    <div className='bg-background mb-10 w-full max-w-[1480px] overflow-x-clip px-2 py-3 sm:px-3 sm:py-4 lg:px-4'>
+      <div className='min-w-0 space-y-4'>
         <StudentOverviewHeroCard profile={profile} data={data} />
 
         <StudentOverviewActiveCoursesCard

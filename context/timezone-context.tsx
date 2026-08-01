@@ -50,10 +50,7 @@ interface TimeZoneProviderProps {
  * first client render agree — components using {@link useTimeZone} should render
  * inside a `<time suppressHydrationWarning>` to absorb the post-mount refinement.
  */
-export function TimeZoneProvider({
-  children,
-  initialPreferredZone = null,
-}: TimeZoneProviderProps) {
+export function TimeZoneProvider({ children, initialPreferredZone = null }: TimeZoneProviderProps) {
   const [preferredZone, setPreferredZoneState] = useState<string | null>(initialPreferredZone);
   const [detectedZone, setDetectedZone] = useState<string | null>(null);
 

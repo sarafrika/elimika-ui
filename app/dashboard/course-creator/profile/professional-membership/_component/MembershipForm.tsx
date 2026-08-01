@@ -68,7 +68,7 @@ type CourseCreatorMembershipType = z.infer<typeof CourseCreatorMembershipSchema>
 type ProfessionalMembershipFormValues = z.infer<typeof professionalMembershipSchema>;
 
 export default function ProfessionalBodySettings() {
-  const qc = useQueryClient()
+  const qc = useQueryClient();
 
   const user = useUserProfile();
   const { courseCreator, invalidateQuery } = user!;
@@ -113,7 +113,7 @@ export default function ProfessionalBodySettings() {
     mode: 'onChange',
   });
 
-  const professionalBodies = useWatch({ control: form.control, name: 'professional_bodies', });
+  const professionalBodies = useWatch({ control: form.control, name: 'professional_bodies' });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -327,9 +327,10 @@ export default function ProfessionalBodySettings() {
                           <h3 className='text-base font-medium'>
                             {professionalBodies?.[index]?.organisation_name || 'New membership'}
                           </h3>
-                          {professionalBodies?.[index]?.is_active && (<Badge className='border-success/30 bg-success/15 text-xs text-success'>
-                            Active
-                          </Badge>
+                          {professionalBodies?.[index]?.is_active && (
+                            <Badge className='border-success/30 bg-success/15 text-success text-xs'>
+                              Active
+                            </Badge>
                           )}
                         </div>
                       </div>

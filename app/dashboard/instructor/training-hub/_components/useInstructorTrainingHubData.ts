@@ -89,7 +89,8 @@ export function useInstructorTrainingHubData() {
   const instructor = useInstructor();
   const instructorUuid = instructor?.uuid;
 
-  const { classes, isLoading: isLoadingClasses } = useInstructorClassesWithSchedules(instructorUuid);
+  const { classes, isLoading: isLoadingClasses } =
+    useInstructorClassesWithSchedules(instructorUuid);
 
   const { data: coursesResponse, isLoading: isLoadingCourses } = useQuery({
     ...getAllCoursesOptions({
@@ -150,13 +151,9 @@ export function useInstructorTrainingHubData() {
   const relevantClasses = useMemo(
     () =>
       classes.filter(classItem => {
-        const resourceUuid =
-          classItem?.course_uuid ?? classItem?.program_uuid;
+        const resourceUuid = classItem?.course_uuid ?? classItem?.program_uuid;
 
-        return (
-          Boolean(resourceUuid) &&
-          approvedApplicationMap.has(resourceUuid as string)
-        );
+        return Boolean(resourceUuid) && approvedApplicationMap.has(resourceUuid as string);
       }),
     [approvedApplicationMap, classes]
   );
@@ -212,7 +209,8 @@ export function useInstructorTrainingHubData() {
         id: course.uuid ?? `course-${index + 1}`,
         title: course.name,
         provider: course.category_names?.[0] ?? 'Approved course',
-        level: course.total_duration_display || `${course.duration_hours}h ${course.duration_minutes}m`,
+        level:
+          course.total_duration_display || `${course.duration_hours}h ${course.duration_minutes}m`,
         students: `${learnerIds.size} students`,
         classes: `${courseClasses.length} classes`,
         ctaLabel: 'Create New Class',
@@ -279,24 +277,17 @@ export function useInstructorTrainingHubData() {
 
   const liveClasses = useMemo<TrainingHubLiveClass[]>(() => {
     return relevantClasses.map(classItem => {
-      const enrollments =
-        enrollmentsByClass.get(classItem.uuid ?? '') ?? [];
+      const enrollments = enrollmentsByClass.get(classItem.uuid ?? '') ?? [];
 
       const students = new Set(
         enrollments
-          .filter(enrollment =>
-            ACTIVE_ENROLLMENT_STATUSES.has(
-              enrollment.status ?? ''
-            )
-          )
+          .filter(enrollment => ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? ''))
           .map(enrollment => enrollment.student_uuid)
           .filter(Boolean)
       ).size;
 
       const classSchedules =
-        classItem.schedule?.filter(
-          instance => instance.status !== 'CANCELLED'
-        ) ?? [];
+        classItem.schedule?.filter(instance => instance.status !== 'CANCELLED') ?? [];
 
       const nextSession = classSchedules[0] ?? null;
 
@@ -305,19 +296,14 @@ export function useInstructorTrainingHubData() {
         class: classItem,
         classUuid: classItem.uuid ?? '',
         title: classItem.title,
-        duration_minutes:
-          classItem.duration_minutes ?? 'N/A',
-        provider:
-          classItem.course?.category_names?.[0] ??
-          'Approved course',
+        duration_minutes: classItem.duration_minutes ?? 'N/A',
+        provider: classItem.course?.category_names?.[0] ?? 'Approved course',
         level:
           classItem.course?.total_duration_display ||
           classItem.course?.category_names?.[0] ||
           'General',
-        students: `${students} student${students === 1 ? '' : 's'
-          }`,
-        classes: `${classSchedules.length} class${classSchedules.length === 1 ? '' : 'es'
-          }`,
+        students: `${students} student${students === 1 ? '' : 's'}`,
+        classes: `${classSchedules.length} class${classSchedules.length === 1 ? '' : 'es'}`,
         fee: formatCurrency(classItem.training_fee),
         sessions: `${classSchedules.length}`,
         status: nextSession ? 'scheduled' : 'draft',
@@ -330,8 +316,7 @@ export function useInstructorTrainingHubData() {
         manageHref: classItem.uuid
           ? `/dashboard/instructor/classes/overview/${classItem.uuid}`
           : '/dashboard/instructor/classes',
-        inviteHref:
-          '/dashboard/instructor/training-hub/waiting-list',
+        inviteHref: '/dashboard/instructor/training-hub/waiting-list',
       };
     });
   }, [enrollmentsByClass, relevantClasses]);
@@ -420,8 +405,11 @@ export function useInstructorTrainingHubData() {
             enrollment.uuid ??
             `${classUuid}-${enrollment.student_uuid}-${enrollment.scheduled_instance_uuid}`,
           name:
-            resolvePersonName(user?.first_name, user?.last_name, user?.display_name ?? user?.email) ||
-            enrollment.student_uuid.slice(0, 8),
+            resolvePersonName(
+              user?.first_name,
+              user?.last_name,
+              user?.display_name ?? user?.email
+            ) || enrollment.student_uuid.slice(0, 8),
           email: user?.email ?? 'No email available',
           status:
             enrollment.status === 'WAITLISTED'
@@ -458,8 +446,9 @@ export function useInstructorTrainingHubData() {
           subtitle: booking.purpose || formatDateTime(booking.start_time),
           status: normalizeStatusLabel(booking.status || 'confirmed'),
           statusTone: getBookingStatusTone(booking.status),
-          meta: `${formatTimeRange(booking.start_time, booking.end_time)} • ${booking.currency ? formatCurrency(booking.price_amount, booking.currency) : 'Booking'
-            }`,
+          meta: `${formatTimeRange(booking.start_time, booking.end_time)} • ${
+            booking.currency ? formatCurrency(booking.price_amount, booking.currency) : 'Booking'
+          }`,
           actionLabel: 'View booking',
           actionTone: 'primary',
           href: '/dashboard/instructor/training-hub/bookings',

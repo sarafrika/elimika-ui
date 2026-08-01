@@ -21,7 +21,11 @@ export function OverviewWelcome() {
 
   const firstName = profile?.first_name?.trim();
   const orgName = organisation?.name?.trim();
-  const title = firstName ? `Welcome back, ${firstName}` : orgName ? `Welcome, ${orgName}` : 'Welcome back';
+  const title = firstName
+    ? `Welcome back, ${firstName}`
+    : orgName
+      ? `Welcome, ${orgName}`
+      : 'Welcome back';
 
   return (
     <WelcomeBanner

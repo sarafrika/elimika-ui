@@ -63,8 +63,8 @@ function WaitlistRow({
       <div className='min-w-0 flex-1'>
         <div className='flex items-start justify-between gap-3'>
           <div className='min-w-0'>
-            <p className='truncate text-sm font-semibold text-foreground'>{name}</p>
-            <p className='truncate text-xs text-muted-foreground'>
+            <p className='text-foreground truncate text-sm font-semibold'>{name}</p>
+            <p className='text-muted-foreground truncate text-xs'>
               {user?.email ?? 'No email available'}
             </p>
           </div>
@@ -72,7 +72,7 @@ function WaitlistRow({
             Waitlisted
           </Badge>
         </div>
-        <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground'>
+        <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
           <span>{formatDateTime(enrollment.created_date)}</span>
           <span>Enrollment created</span>
         </div>
@@ -235,7 +235,7 @@ export function ClassWaitingListTab({
   return (
     <Card className='border-border/70 bg-card shadow-sm'>
       <CardContent className='space-y-4 p-4 md:p-5'>
-        <div className='flex flex-col gap-2 border-b border-border/60 pb-4'>
+        <div className='border-border/60 flex flex-col gap-2 border-b pb-4'>
           <div className='flex items-start justify-between gap-3'>
             <div>
               <h3 className='text-foreground text-xl font-semibold'>Waiting List</h3>
@@ -260,7 +260,10 @@ export function ClassWaitingListTab({
         {visibleWaitlistInstances.length > 0 ? (
           <div className='space-y-4'>
             {visibleWaitlistInstances.map(group => (
-              <section key={group.instance.uuid ?? formatDateTime(group.instance.start_time)} className='space-y-3'>
+              <section
+                key={group.instance.uuid ?? formatDateTime(group.instance.start_time)}
+                className='space-y-3'
+              >
                 <div className='flex items-start justify-between gap-3'>
                   <div className='space-y-1'>
                     <h4 className='text-foreground font-semibold'>

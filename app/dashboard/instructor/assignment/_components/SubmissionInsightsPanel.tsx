@@ -1,7 +1,16 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { RubricMatrix } from '@/services/client/types.gen';
-import { CheckCircle2, Dot, Gauge, MessageSquareText, MoreHorizontal, Plus, Sparkles, SquarePen } from 'lucide-react';
+import {
+  CheckCircle2,
+  Dot,
+  Gauge,
+  MessageSquareText,
+  MoreHorizontal,
+  Plus,
+  Sparkles,
+  SquarePen,
+} from 'lucide-react';
 import type { SubmissionStudent } from './assignment-types';
 
 type SubmissionInsightsPanelProps = {
@@ -33,7 +42,7 @@ export function SubmissionInsightsPanel({
               <p className='text-2xl font-semibold'>
                 {student.score} <span className='text-muted-foreground text-xl'>points</span>
               </p>
-              <Badge className='rounded-full bg-warning/15 px-3 text-foreground hover:bg-warning/15'>
+              <Badge className='bg-warning/15 text-foreground hover:bg-warning/15 rounded-full px-3'>
                 <Dot className='text-warning mr-1 h-4 w-4 fill-current' />
                 {student.insightLabel}
               </Badge>
@@ -47,37 +56,38 @@ export function SubmissionInsightsPanel({
             <div className='divide-y'>
               {summaryMetrics.length > 0 ? (
                 summaryMetrics.map(metric => (
-                  <div key={metric.uuid ?? metric.component_name} className='flex items-center justify-between gap-3 px-4 py-3 text-sm'>
+                  <div
+                    key={metric.uuid ?? metric.component_name}
+                    className='flex items-center justify-between gap-3 px-4 py-3 text-sm'
+                  >
                     <p className='text-muted-foreground'>{metric.component_name}</p>
                     <div className='flex items-center gap-2'>
-                      <span className='font-semibold'>
-                        {metric.criteria_number || 'Criterion'}
-                      </span>
+                      <span className='font-semibold'>{metric.criteria_number || 'Criterion'}</span>
                       <CheckCircle2 className='text-success h-4 w-4' />
                     </div>
                   </div>
                 ))
               ) : (
-                <div className='px-4 py-3 text-sm text-muted-foreground'>
+                <div className='text-muted-foreground px-4 py-3 text-sm'>
                   No rubric criteria available for this task.
                 </div>
               )}
             </div>
           </div>
 
-          <div className='rounded-xl border bg-background/80'>
+          <div className='bg-background/80 rounded-xl border'>
             <div className='flex items-center justify-between border-b px-4 py-3'>
               <p className='font-medium'>Performance Insights</p>
               <Gauge className='text-primary h-4 w-4' />
             </div>
             <div className='space-y-3 p-4 text-sm'>
-              <div className='rounded-lg bg-muted/60 p-3'>
+              <div className='bg-muted/60 rounded-lg p-3'>
                 <p className='font-medium'>Submission type</p>
                 <p className='text-muted-foreground mt-1 capitalize'>
                   {student.submissionKind || taskType}
                 </p>
               </div>
-              <div className='rounded-lg bg-muted/60 p-3'>
+              <div className='bg-muted/60 rounded-lg p-3'>
                 <p className='font-medium'>Status</p>
                 <p className='text-muted-foreground mt-1'>
                   {student.submissionStatus || 'Awaiting review'}
@@ -86,7 +96,7 @@ export function SubmissionInsightsPanel({
             </div>
           </div>
 
-          <div className='rounded-xl border bg-background/80'>
+          <div className='bg-background/80 rounded-xl border'>
             <div className='flex items-center justify-between border-b px-4 py-3'>
               <p className='font-medium'>Instructor Notes</p>
               <Badge variant='outline' className='rounded-full'>
@@ -102,7 +112,7 @@ export function SubmissionInsightsPanel({
                   </div>
                 ))
               ) : (
-                <p className='text-sm text-muted-foreground'>
+                <p className='text-muted-foreground text-sm'>
                   No instructor comments have been added yet.
                 </p>
               )}
@@ -114,7 +124,7 @@ export function SubmissionInsightsPanel({
               <button
                 key={`panel-action-${index}`}
                 type='button'
-                className='text-muted-foreground hover:text-foreground flex h-10 items-center justify-center rounded-lg border bg-background/80 transition-colors'
+                className='text-muted-foreground hover:text-foreground bg-background/80 flex h-10 items-center justify-center rounded-lg border transition-colors'
               >
                 <Icon className='h-4 w-4' />
               </button>

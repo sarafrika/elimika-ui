@@ -3,11 +3,7 @@
 import { Check } from 'lucide-react';
 import { useMemo } from 'react';
 
-export type ServiceType =
-  | 'PRIVATE_ONLINE'
-  | 'GROUP_ONLINE'
-  | 'GROUP_INPERSON'
-  | 'PRIVATE_INPERSON'
+export type ServiceType = 'PRIVATE_ONLINE' | 'GROUP_ONLINE' | 'GROUP_INPERSON' | 'PRIVATE_INPERSON';
 
 export interface ServiceTypeOption {
   label: string;
@@ -21,7 +17,11 @@ export interface ServiceTypeOption {
 
 interface ServiceTypeSelectorProps {
   value: ServiceType | undefined;
-  onChange: (value: ServiceType, classType: 'PRIVATE' | 'GROUP', locationType: 'ONLINE' | 'IN_PERSON' | 'HYBRID') => void;
+  onChange: (
+    value: ServiceType,
+    classType: 'PRIVATE' | 'GROUP',
+    locationType: 'ONLINE' | 'IN_PERSON' | 'HYBRID'
+  ) => void;
   rateCard?: Record<string, number | string | null | undefined>;
 }
 
@@ -99,22 +99,23 @@ export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSe
             key={option.value}
             type='button'
             onClick={() => onChange(option.value, option.classType, option.locationType)}
-            className={`relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-all ${value === option.value
-              ? 'border-primary bg-primary/5'
-              : 'border-border hover:border-primary/50 hover:bg-accent/50'
-              }`}
+            className={`relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-all ${
+              value === option.value
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/50 hover:bg-accent/50'
+            }`}
           >
             {value === option.value && (
-              <div className='absolute right-3 top-3 rounded-full bg-primary p-1'>
-                <Check className='h-4 w-4 text-primary-foreground' />
+              <div className='bg-primary absolute top-3 right-3 rounded-full p-1'>
+                <Check className='text-primary-foreground h-4 w-4' />
               </div>
             )}
             <div>
-              <p className='text-sm font-semibold text-foreground'>{option.label}</p>
-              <p className='text-xs text-muted-foreground'>{option.description}</p>
+              <p className='text-foreground text-sm font-semibold'>{option.label}</p>
+              <p className='text-muted-foreground text-xs'>{option.description}</p>
             </div>
             {(option?.price ?? 0) > 0 && (
-              <div className='text-xs font-medium text-primary'>
+              <div className='text-primary text-xs font-medium'>
                 KES {option?.price?.toLocaleString()}/hour
               </div>
             )}

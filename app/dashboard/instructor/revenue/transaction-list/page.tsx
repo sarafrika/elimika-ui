@@ -202,13 +202,7 @@ const getStatusFromClass = (
   return 'pending';
 };
 
-function TruncatedCellText({
-  value,
-  maxLength,
-}: {
-  value: string;
-  maxLength: number;
-}) {
+function TruncatedCellText({ value, maxLength }: { value: string; maxLength: number }) {
   const displayValue = truncateText(value, maxLength);
 
   return (
@@ -226,7 +220,9 @@ function TruncatedCellText({
 function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
     <div className='bg-card flex min-h-20 flex-col items-center justify-center rounded-[18px] border px-4 py-3 text-center shadow-sm'>
-      <p className='text-foreground text-[10px] font-semibold uppercase tracking-[0.16em]'>{label}</p>
+      <p className='text-foreground text-[10px] font-semibold tracking-[0.16em] uppercase'>
+        {label}
+      </p>
       <p className='text-foreground mt-2 text-xl font-semibold'>{value}</p>
     </div>
   );
@@ -246,7 +242,9 @@ const TransactionList = () => {
   const [activeTab, setActiveTab] = useState<RevenueTab>('transaction-history');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { classes, isLoading: isLoadingClasses } = useInstructorClassesWithSchedules(instructor?.uuid);
+  const { classes, isLoading: isLoadingClasses } = useInstructorClassesWithSchedules(
+    instructor?.uuid
+  );
 
   const enrollmentsQueries = useQueries({
     queries: classes.map(classItem => ({
@@ -300,7 +298,9 @@ const TransactionList = () => {
         const feePerStudent = sessionFee * sessions;
         const classFees = feePerStudent * activeEnrollments.length;
         const firstSessionDate =
-          classItem.schedule[0]?.start_time ?? classItem.default_start_time ?? classItem.created_date;
+          classItem.schedule[0]?.start_time ??
+          classItem.default_start_time ??
+          classItem.created_date;
         const statusKey = getStatusFromClass(classItem, enrollments, now);
 
         return {
@@ -380,7 +380,7 @@ const TransactionList = () => {
         className='gap-8'
       >
         <div className='flex flex-col gap-5 border-b pb-5 lg:flex-row lg:items-center lg:justify-between'>
-          <TabsList className='bg-transparent h-auto w-full justify-start gap-2 rounded-none p-0'>
+          <TabsList className='h-auto w-full justify-start gap-2 rounded-none bg-transparent p-0'>
             {revenueTabs.map(tab => (
               <TabsTrigger
                 key={tab.value}
@@ -406,14 +406,26 @@ const TransactionList = () => {
             {tab.value === 'transaction-history' ? (
               <section className='space-y-8'>
                 <div className='grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6'>
-                  <SummaryStat label='Total Orders' value={formatCurrency(totals.total, displayCurrency)} />
+                  <SummaryStat
+                    label='Total Orders'
+                    value={formatCurrency(totals.total, displayCurrency)}
+                  />
                   <SummaryStat
                     label='Fulfilled'
                     value={formatCurrency(totals.fulfilled, displayCurrency)}
                   />
-                  <SummaryStat label='Pending' value={formatCurrency(totals.pending, displayCurrency)} />
-                  <SummaryStat label='Partial' value={formatCurrency(totals.partial, displayCurrency)} />
-                  <SummaryStat label='Refund' value={formatCurrency(totals.refund, displayCurrency)} />
+                  <SummaryStat
+                    label='Pending'
+                    value={formatCurrency(totals.pending, displayCurrency)}
+                  />
+                  <SummaryStat
+                    label='Partial'
+                    value={formatCurrency(totals.partial, displayCurrency)}
+                  />
+                  <SummaryStat
+                    label='Refund'
+                    value={formatCurrency(totals.refund, displayCurrency)}
+                  />
                   <SummaryStat
                     label='Cancelled'
                     value={formatCurrency(totals.cancelled, displayCurrency)}
@@ -453,7 +465,9 @@ const TransactionList = () => {
                           <TableHead className='py-4 text-sm font-semibold'>Class Title</TableHead>
                           <TableHead className='py-4 text-sm font-semibold'>Order Date</TableHead>
                           <TableHead className='py-4 text-sm font-semibold'>Location</TableHead>
-                          <TableHead className='py-4 text-sm font-semibold'>Delivery Status</TableHead>
+                          <TableHead className='py-4 text-sm font-semibold'>
+                            Delivery Status
+                          </TableHead>
                           <TableHead className='py-4 text-sm font-semibold'>Sessions</TableHead>
                           <TableHead className='py-4 text-sm font-semibold'>Duration</TableHead>
                           <TableHead className='py-4 text-sm font-semibold'>Students</TableHead>
@@ -465,7 +479,10 @@ const TransactionList = () => {
                       <TableBody>
                         {isLoadingRevenue ? (
                           <TableRow className='hover:bg-transparent'>
-                            <TableCell colSpan={11} className='py-10 text-center text-sm text-muted-foreground'>
+                            <TableCell
+                              colSpan={11}
+                              className='text-muted-foreground py-10 text-center text-sm'
+                            >
                               Loading transaction history...
                             </TableCell>
                           </TableRow>
@@ -504,7 +521,10 @@ const TransactionList = () => {
                                 {formatCurrency(transaction.sessionFee, transaction.currencyCode)}
                               </TableCell>
                               <TableCell className='text-muted-foreground py-4 text-sm'>
-                                {formatCurrency(transaction.feePerStudent, transaction.currencyCode)}
+                                {formatCurrency(
+                                  transaction.feePerStudent,
+                                  transaction.currencyCode
+                                )}
                               </TableCell>
                               <TableCell className='text-muted-foreground py-4 text-sm'>
                                 {formatCurrency(transaction.classFees, transaction.currencyCode)}
@@ -513,7 +533,10 @@ const TransactionList = () => {
                           ))
                         ) : (
                           <TableRow className='hover:bg-transparent'>
-                            <TableCell colSpan={11} className='py-10 text-center text-sm text-muted-foreground'>
+                            <TableCell
+                              colSpan={11}
+                              className='text-muted-foreground py-10 text-center text-sm'
+                            >
                               No transaction rows match your search.
                             </TableCell>
                           </TableRow>

@@ -24,13 +24,7 @@ import { adminTheme } from '../../_components/ui/admin-theme';
 import { SectionCard } from '../../_components/ui/SectionCard';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
 
-function ContentRow({
-  item,
-  onModerated,
-}: {
-  item: ContentItem;
-  onModerated: () => void;
-}) {
+function ContentRow({ item, onModerated }: { item: ContentItem; onModerated: () => void }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
   const moderateCourse = useMutation(moderateCourseMutation());
@@ -60,14 +54,14 @@ function ContentRow({
   const Icon = item.type === 'course' ? BookOpen : Layers;
 
   return (
-    <div className='flex flex-col gap-3 rounded-md border border-border/60 bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between'>
+    <div className='border-border/60 bg-muted/20 flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between'>
       <div className='flex min-w-0 items-center gap-3'>
-        <span className='flex size-9 shrink-0 items-center justify-center rounded-md border border-border/60 bg-card'>
-          <Icon className='size-4 text-muted-foreground' />
+        <span className='border-border/60 bg-card flex size-9 shrink-0 items-center justify-center rounded-md border'>
+          <Icon className='text-muted-foreground size-4' />
         </span>
         <div className='min-w-0'>
-          <p className='truncate text-sm font-medium text-foreground'>{item.title}</p>
-          <p className='truncate text-xs capitalize text-muted-foreground'>
+          <p className='text-foreground truncate text-sm font-medium'>{item.title}</p>
+          <p className='text-muted-foreground truncate text-xs capitalize'>
             {item.type}
             {item.subtitle ? ` · ${item.subtitle}` : ''}
           </p>
@@ -81,7 +75,12 @@ function ContentRow({
               <CheckCircle2 className='size-4' />
               Approve
             </Button>
-            <Button size='sm' variant='ghost' disabled={isPending} onClick={() => setRejecting(true)}>
+            <Button
+              size='sm'
+              variant='ghost'
+              disabled={isPending}
+              onClick={() => setRejecting(true)}
+            >
               <XCircle className='size-4' />
               Reject
             </Button>
@@ -94,7 +93,8 @@ function ContentRow({
           <DialogHeader>
             <DialogTitle>Reject {item.title}</DialogTitle>
             <DialogDescription>
-              Add an optional reason — the creator will see this when their {item.type} is sent back.
+              Add an optional reason — the creator will see this when their {item.type} is sent
+              back.
             </DialogDescription>
           </DialogHeader>
           <Textarea
@@ -107,7 +107,11 @@ function ContentRow({
             <Button variant='ghost' onClick={() => setRejecting(false)} disabled={isPending}>
               Cancel
             </Button>
-            <Button variant='destructive' onClick={() => run('reject', reason.trim() || undefined)} disabled={isPending}>
+            <Button
+              variant='destructive'
+              onClick={() => run('reject', reason.trim() || undefined)}
+              disabled={isPending}
+            >
               Reject {item.type}
             </Button>
           </DialogFooter>

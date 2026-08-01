@@ -7,23 +7,17 @@ import {
   getAssignmentSchedulesOptions,
   getRevenueDashboard1Options,
   getStudentByIdOptions,
-  listPaymentsOptions
+  listPaymentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   ClassAssignmentSchedule,
   RevenueDashboardDto,
   RevenuePaymentDto,
   ScheduledInstance,
-  Student
+  Student,
 } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import {
-  BarChart3,
-  BookOpen,
-  CheckSquare,
-  GraduationCap,
-  type LucideIcon,
-} from 'lucide-react';
+import { BarChart3, BookOpen, CheckSquare, GraduationCap, type LucideIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useClassEnrollmentsMap } from '../../../../hooks/use-enrollment-map';
 import type {
@@ -308,12 +302,12 @@ export function useInstructorOverviewData() {
         courseInstances[0] ??
         null;
 
-      const enrollments = (classEnrollmentsMap.get(cls.uuid ?? '') ?? []).filter(
-        enrollment => ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
+      const enrollments = (classEnrollmentsMap.get(cls.uuid ?? '') ?? []).filter(enrollment =>
+        ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
       );
 
       // Courses can have multiple class definitions, so we collapse repeat learners per course card.
-      const uniqueStudents = new Map<string, typeof enrollments[number]>();
+      const uniqueStudents = new Map<string, (typeof enrollments)[number]>();
       enrollments.forEach(enrollment => {
         const studentId = enrollment.student_uuid;
         if (studentId) {
@@ -321,16 +315,12 @@ export function useInstructorOverviewData() {
         }
       });
 
-      const progress = calculateProgress(
-        classSchedulesMap.get(cls.uuid ?? '') ?? []
-      );
+      const progress = calculateProgress(classSchedulesMap.get(cls.uuid ?? '') ?? []);
 
       uniqueCourses.set(courseId, {
         id: courseId,
         title: course?.name ?? cls.title,
-        provider:
-          course?.category_names?.[0] ??
-          formatSessionFormat(cls.session_format),
+        provider: course?.category_names?.[0] ?? formatSessionFormat(cls.session_format),
         level: formatSessionFormat(cls.location_type),
         students: uniqueStudents.size,
         progress,
@@ -350,12 +340,11 @@ export function useInstructorOverviewData() {
     () =>
       Array.from(
         new Set(
-          classes.flatMap(
-            cls =>
-              (classEnrollmentsMap.get(cls.uuid ?? '') ?? [])
-                .filter(enrollment => ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? ''))
-                .map(enrollment => enrollment.student_uuid)
-                .filter((value): value is string => Boolean(value))
+          classes.flatMap(cls =>
+            (classEnrollmentsMap.get(cls.uuid ?? '') ?? [])
+              .filter(enrollment => ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? ''))
+              .map(enrollment => enrollment.student_uuid)
+              .filter((value): value is string => Boolean(value))
           )
         )
       ).length,
@@ -374,7 +363,8 @@ export function useInstructorOverviewData() {
         .filter(item => isFutureLikeInstance(item.instance, now))
         .sort(
           (left, right) =>
-            new Date(left.instance.start_time).getTime() - new Date(right.instance.start_time).getTime()
+            new Date(left.instance.start_time).getTime() -
+            new Date(right.instance.start_time).getTime()
         ),
     [allSchedules, now]
   );
@@ -397,10 +387,7 @@ export function useInstructorOverviewData() {
   const liveInstanceIds = new Set(liveSource.map(item => item.instance.uuid).filter(Boolean));
 
   const upcomingSource = useMemo(
-    () =>
-      futureInstances
-        .filter(item => !liveInstanceIds.has(item.instance.uuid))
-        .slice(0, 3),
+    () => futureInstances.filter(item => !liveInstanceIds.has(item.instance.uuid)).slice(0, 3),
     [futureInstances, liveInstanceIds]
   );
 
@@ -417,7 +404,9 @@ export function useInstructorOverviewData() {
           id: item.instance.uuid ?? item.classDefinition.uuid ?? item.instance.title,
           timeLabel: formatRelativeClassTime(item.instance.start_time),
           title: item.classDefinition.title,
-          provider: item.course?.category_names?.[0] ?? formatSessionFormat(item.classDefinition.session_format),
+          provider:
+            item.course?.category_names?.[0] ??
+            formatSessionFormat(item.classDefinition.session_format),
           students: `${enrolledCount} students`,
           actionLabel: 'Manage class',
           infoHref: item.classDefinition.uuid
@@ -459,9 +448,9 @@ export function useInstructorOverviewData() {
           const leftSchedule = (classSchedulesMap.get(left.classDefinition.uuid ?? '') ?? []).find(
             instance => instance.uuid === left.enrollment.scheduled_instance_uuid
           );
-          const rightSchedule = (classSchedulesMap.get(right.classDefinition.uuid ?? '') ?? []).find(
-            instance => instance.uuid === right.enrollment.scheduled_instance_uuid
-          );
+          const rightSchedule = (
+            classSchedulesMap.get(right.classDefinition.uuid ?? '') ?? []
+          ).find(instance => instance.uuid === right.enrollment.scheduled_instance_uuid);
 
           const leftTime = new Date(
             leftSchedule?.start_time ?? left.enrollment.created_date ?? 0
@@ -496,25 +485,25 @@ export function useInstructorOverviewData() {
   const earningOverview = useMemo<OverviewEarningCard[]>(() => {
     const summaryCards: OverviewEarningCard[] = revenueDashboard
       ? [
-        {
-          id: 'estimated-earnings',
-          title: formatMoney(revenueDashboard.estimated_earnings?.[0]?.amount, displayCurrency),
-          subtitle: 'Estimated earnings',
-          provider: 'Gross sales',
-          students: formatMoney(revenueDashboard.gross_totals?.[0]?.amount, displayCurrency),
-          valueLabel: `${Number(revenueDashboard.order_count ?? 0n)} payments processed`,
-          attendeeInitials: [],
-        },
-        {
-          id: 'average-order-value',
-          title: formatMoney(revenueDashboard.average_order_value?.[0]?.amount, displayCurrency),
-          subtitle: 'Average order value',
-          provider: 'Units sold',
-          students: formatCompactNumber(Number(revenueDashboard.units_sold ?? 0n)),
-          valueLabel: `${Number(revenueDashboard.line_item_count ?? 0n)} line items`,
-          attendeeInitials: [],
-        },
-      ]
+          {
+            id: 'estimated-earnings',
+            title: formatMoney(revenueDashboard.estimated_earnings?.[0]?.amount, displayCurrency),
+            subtitle: 'Estimated earnings',
+            provider: 'Gross sales',
+            students: formatMoney(revenueDashboard.gross_totals?.[0]?.amount, displayCurrency),
+            valueLabel: `${Number(revenueDashboard.order_count ?? 0n)} payments processed`,
+            attendeeInitials: [],
+          },
+          {
+            id: 'average-order-value',
+            title: formatMoney(revenueDashboard.average_order_value?.[0]?.amount, displayCurrency),
+            subtitle: 'Average order value',
+            provider: 'Units sold',
+            students: formatCompactNumber(Number(revenueDashboard.units_sold ?? 0n)),
+            valueLabel: `${Number(revenueDashboard.line_item_count ?? 0n)} line items`,
+            attendeeInitials: [],
+          },
+        ]
       : [];
 
     if (summaryCards.length) {

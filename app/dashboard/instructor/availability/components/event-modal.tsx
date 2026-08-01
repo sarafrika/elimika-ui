@@ -118,35 +118,35 @@ const eventTypes: Array<{
   icon: typeof Calendar;
   badgeVariant: 'default' | 'secondary' | 'success' | 'warning' | 'outline' | 'destructive';
 }> = [
-    {
-      value: 'SCHEDULED_INSTANCE',
-      label: 'Class Schedule Instance',
-      description: 'Review a scheduled class session on the calendar.',
-      icon: BookOpen,
-      badgeVariant: 'default',
-    },
-    {
-      value: 'BLOCKED',
-      label: 'Blocked Time',
-      description: 'Prevent students from booking across one or many dates.',
-      icon: Coffee,
-      badgeVariant: 'warning',
-    },
-    {
-      value: 'AVAILABILITY',
-      label: 'Availability',
-      description: 'Add or adjust an available slot in the local calendar view.',
-      icon: Calendar,
-      badgeVariant: 'success',
-    },
-    {
-      value: 'BOOKING',
-      label: 'Student Booking',
-      description: 'Request one or more instructor sessions from available slots.',
-      icon: Clock,
-      badgeVariant: 'secondary',
-    },
-  ];
+  {
+    value: 'SCHEDULED_INSTANCE',
+    label: 'Class Schedule Instance',
+    description: 'Review a scheduled class session on the calendar.',
+    icon: BookOpen,
+    badgeVariant: 'default',
+  },
+  {
+    value: 'BLOCKED',
+    label: 'Blocked Time',
+    description: 'Prevent students from booking across one or many dates.',
+    icon: Coffee,
+    badgeVariant: 'warning',
+  },
+  {
+    value: 'AVAILABILITY',
+    label: 'Availability',
+    description: 'Add or adjust an available slot in the local calendar view.',
+    icon: Calendar,
+    badgeVariant: 'success',
+  },
+  {
+    value: 'BOOKING',
+    label: 'Student Booking',
+    description: 'Request one or more instructor sessions from available slots.',
+    icon: Clock,
+    badgeVariant: 'secondary',
+  },
+];
 
 const weekdayOptions = [
   { label: 'Sun', value: 0 },
@@ -454,12 +454,12 @@ export function EventModal({
       setBlockDates(
         event.entry_type === 'BLOCKED'
           ? [
-            {
-              date: formatDateInput(new Date(event.date)),
-              startTime: event.startTime,
-              endTime: event.endTime,
-            },
-          ]
+              {
+                date: formatDateInput(new Date(event.date)),
+                startTime: event.startTime,
+                endTime: event.endTime,
+              },
+            ]
           : []
       );
       setErrors({});
@@ -654,9 +654,9 @@ export function EventModal({
       predicate: query =>
         Boolean(
           (query.queryKey?.[0] as { _id?: string; path?: { instructorUuid?: string } })?._id ===
-          'getInstructorCalendar' &&
-          (query.queryKey?.[0] as { path?: { instructorUuid?: string } })?.path
-            ?.instructorUuid === targetInstructorUuid
+            'getInstructorCalendar' &&
+            (query.queryKey?.[0] as { path?: { instructorUuid?: string } })?.path
+              ?.instructorUuid === targetInstructorUuid
         ),
     });
 
@@ -752,8 +752,8 @@ export function EventModal({
               Boolean(
                 (query.queryKey?.[0] as { _id?: string; path?: { instructorUuid?: string } })
                   ?._id === 'getInstructorCalendar' &&
-                (query.queryKey?.[0] as { path?: { instructorUuid?: string } })?.path
-                  ?.instructorUuid === targetInstructorUuid
+                  (query.queryKey?.[0] as { path?: { instructorUuid?: string } })?.path
+                    ?.instructorUuid === targetInstructorUuid
               ),
           });
           toast.success(response?.message || 'Time blocked successfully');
@@ -922,62 +922,52 @@ export function EventModal({
                   </div>
 
                   {blockDates.length > 0 && (
-                    <div className="space-y-2">
+                    <div className='space-y-2'>
                       {blockDates.map((item, index) => (
                         <div
                           key={`${item.date}-${index}`}
-                          className="bg-card flex items-center gap-3 rounded-xl border px-3 py-2"
+                          className='bg-card flex items-center gap-3 rounded-xl border px-3 py-2'
                         >
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate font-medium">
-                              {new Date(`${item.date}T00:00:00`).toLocaleDateString("en-US", {
-                                weekday: "short",
-                                month: "short",
-                                day: "numeric",
+                          <div className='min-w-0 flex-1'>
+                            <p className='truncate font-medium'>
+                              {new Date(`${item.date}T00:00:00`).toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
                               })}
                             </p>
                           </div>
 
                           <Input
-                            type="time"
-                            className="w-28"
+                            type='time'
+                            className='w-28'
                             value={item.startTime}
-                            onChange={(e) =>
-                              updateTime(index, "startTime", e.target.value)
-                            }
+                            onChange={e => updateTime(index, 'startTime', e.target.value)}
                           />
 
-                          <span className="text-muted-foreground text-sm">–</span>
+                          <span className='text-muted-foreground text-sm'>–</span>
 
                           <Input
-                            type="time"
-                            className="w-28"
+                            type='time'
+                            className='w-28'
                             value={item.endTime}
-                            onChange={(e) =>
-                              updateTime(index, "endTime", e.target.value)
-                            }
+                            onChange={e => updateTime(index, 'endTime', e.target.value)}
                           />
 
                           <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
+                            variant='ghost'
+                            size='icon'
+                            className='h-8 w-8'
                             onClick={() =>
-                              setBlockDates(prev =>
-                                prev.filter((_, i) => i !== index)
-                              )
+                              setBlockDates(prev => prev.filter((_, i) => i !== index))
                             }
                           >
-                            <Trash2 className="text-destructive h-4 w-4" />
+                            <Trash2 className='text-destructive h-4 w-4' />
                           </Button>
                         </div>
                       ))}
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setBlockDates([])}
-                      >
+                      <Button variant='outline' size='sm' onClick={() => setBlockDates([])}>
                         Clear selected dates
                       </Button>
                     </div>
@@ -1292,7 +1282,6 @@ export function EventModal({
               </Card>
             )}
 
-
             <div className='space-y-6'>
               <Card className='gap-0 py-0'>
                 <CardHeader className='border-b px-6 py-5'>
@@ -1380,22 +1369,22 @@ export function EventModal({
                           <div className='font-medium'>
                             {formData.startDateTime
                               ? new Date(formData.startDateTime).toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })
+                                  weekday: 'long',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })
                               : 'No date selected'}
                           </div>
                           <p className='text-muted-foreground'>
                             {formData.startDateTime && formData.endDateTime
                               ? `${new Date(formData.startDateTime).toLocaleTimeString('en-US', {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                              })} - ${new Date(formData.endDateTime).toLocaleTimeString('en-US', {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                              })}`
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                })} - ${new Date(formData.endDateTime).toLocaleTimeString('en-US', {
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                })}`
                               : 'Choose a start and end time'}
                           </p>
                         </div>
@@ -1415,7 +1404,6 @@ export function EventModal({
               </Card>
             </div>
           </div>
-
         </div>
 
         <SheetFooter className='border-t px-6 py-4 sm:flex-row sm:items-center sm:justify-between'>

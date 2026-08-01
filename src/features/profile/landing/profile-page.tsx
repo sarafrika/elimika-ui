@@ -8,7 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { updateCourseCreator, updateInstructor, updateStudent, updateUser } from '@/services/client';
+import {
+  updateCourseCreator,
+  updateInstructor,
+  updateStudent,
+  updateUser,
+} from '@/services/client';
 import { uploadProfileImageMutation } from '@/services/client/@tanstack/react-query.gen';
 import type {
   CourseCreator,
@@ -107,7 +112,9 @@ function getEditableProfileDetails(
   return {
     ...defaults,
     first_name:
-      typeof profileSource?.first_name === 'string' ? profileSource.first_name : defaults.first_name,
+      typeof profileSource?.first_name === 'string'
+        ? profileSource.first_name
+        : defaults.first_name,
     last_name:
       typeof profileSource?.last_name === 'string' ? profileSource.last_name : defaults.last_name,
   };

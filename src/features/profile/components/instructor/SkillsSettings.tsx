@@ -32,7 +32,10 @@ import {
   updateInstructorSkillMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zInstructorSkill } from '@/services/client/zod.gen';
-import { ProfileFormSection, ProfileFormShell } from '@/src/features/profile/components/profile-form-layout';
+import {
+  ProfileFormSection,
+  ProfileFormShell,
+} from '@/src/features/profile/components/profile-form-layout';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -123,7 +126,7 @@ export default function SkillsSettings({
     mode: 'onChange',
   });
 
-  const skills = useWatch({ control: form.control, name: 'skills', });
+  const skills = useWatch({ control: form.control, name: 'skills' });
 
   useEffect(() => {
     if (instructorSkills && instructorSkills.length > 0) {

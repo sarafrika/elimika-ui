@@ -136,9 +136,11 @@ export default function CourseCreatorProfile() {
     },
   });
 
-
-  const courseCreatorLatitude = useWatch({ control: form.control, name: 'courseCreator.latitude', });
-  const courseCreatorLongitude = useWatch({ control: form.control, name: 'courseCreator.longitude', });
+  const courseCreatorLatitude = useWatch({ control: form.control, name: 'courseCreator.latitude' });
+  const courseCreatorLongitude = useWatch({
+    control: form.control,
+    name: 'courseCreator.longitude',
+  });
 
   const normalizeCoordinate = (value: unknown) => {
     if (typeof value === 'number' && Number.isFinite(value)) {
@@ -191,14 +193,14 @@ export default function CourseCreatorProfile() {
           const manageCourseCreator = () =>
             courseCreator
               ? updateCourseCreator({
-                path: {
-                  uuid: courseCreator.uuid!,
-                },
-                body: updatedProfileData.courseCreator,
-              })
+                  path: {
+                    uuid: courseCreator.uuid!,
+                  },
+                  body: updatedProfileData.courseCreator,
+                })
               : createCourseCreator({
-                body: updatedProfileData.courseCreator,
-              });
+                  body: updatedProfileData.courseCreator,
+                });
 
           const response = await Promise.all([
             updateUser({
@@ -405,7 +407,12 @@ export default function CourseCreatorProfile() {
                     <FormItem>
                       <FormLabel>Phone number</FormLabel>
                       <FormControl>
-                        <Input type='tel' placeholder='+254712345678' {...field} value={field.value ?? ''} />
+                        <Input
+                          type='tel'
+                          placeholder='+254712345678'
+                          {...field}
+                          value={field.value ?? ''}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

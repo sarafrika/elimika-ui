@@ -24,12 +24,12 @@ export function OverviewSectionShell({
   return (
     <section
       className={cn(
-        'w-full min-w-0 overflow-hidden rounded-[12px] border border-border bg-card',
+        'border-border bg-card w-full min-w-0 overflow-hidden rounded-[12px] border',
         className
       )}
     >
       <div className='flex min-w-0 items-center gap-2 px-3 py-3 sm:gap-3 sm:px-4'>
-        <h2 className='min-w-0 flex-1 truncate text-[1.1rem] font-semibold text-foreground sm:text-[1.2rem]'>
+        <h2 className='text-foreground min-w-0 flex-1 truncate text-[1.1rem] font-semibold sm:text-[1.2rem]'>
           {title}
         </h2>
 
@@ -37,7 +37,7 @@ export function OverviewSectionShell({
           <button
             type='button'
             aria-label={`${title} options`}
-            className='shrink-0 text-muted-foreground transition hover:text-foreground'
+            className='text-muted-foreground hover:text-foreground shrink-0 transition'
           >
             <MoreHorizontal className='size-5' />
           </button>
@@ -47,7 +47,7 @@ export function OverviewSectionShell({
           <Link href={onActionHref} className='shrink-0'>
             <Button
               variant='ghost'
-              className='h-auto gap-1 p-0 text-[0.82rem] font-medium text-primary hover:bg-transparent hover:text-primary/80 sm:text-sm'
+              className='text-primary hover:text-primary/80 h-auto gap-1 p-0 text-[0.82rem] font-medium hover:bg-transparent sm:text-sm'
             >
               {onActionLabel}
               <ChevronRight className='size-4' />
@@ -56,9 +56,7 @@ export function OverviewSectionShell({
         ) : null}
       </div>
 
-      <div className='w-full min-w-0 overflow-hidden px-3 pb-3'>
-        {children}
-      </div>
+      <div className='w-full min-w-0 overflow-hidden px-3 pb-3'>{children}</div>
     </section>
   );
 }

@@ -88,7 +88,11 @@ function typeLabel(uuid: string | undefined, map: Map<string, DocumentTypeOption
   return resolved?.name || resolved?.description || 'Document';
 }
 
-function instructorStatus(document: InstructorDocument): { label: string; tone: StatusTone; verified: boolean } {
+function instructorStatus(document: InstructorDocument): {
+  label: string;
+  tone: StatusTone;
+  verified: boolean;
+} {
   const verified = Boolean(document.is_verified) || document.verification_status === 'VERIFIED';
   if (verified) return { label: 'Verified', tone: 'success', verified: true };
   if (document.verification_status === 'REJECTED')
@@ -96,7 +100,11 @@ function instructorStatus(document: InstructorDocument): { label: string; tone: 
   return { label: 'Pending review', tone: 'warning', verified: false };
 }
 
-function creatorStatus(document: CourseCreatorDocumentDto): { label: string; tone: StatusTone; verified: boolean } {
+function creatorStatus(document: CourseCreatorDocumentDto): {
+  label: string;
+  tone: StatusTone;
+  verified: boolean;
+} {
   if (document.is_verified) return { label: 'Verified', tone: 'success', verified: true };
   return { label: 'Pending review', tone: 'warning', verified: false };
 }
@@ -109,12 +117,12 @@ const PAGEABLE = { page: 0, size: 200 };
  */
 export async function fetchUserCredentials(userUuid: string): Promise<CredentialDocument[]> {
   const [instructorsRes, creatorsRes, typesRes] = await Promise.all([
-    searchInstructors({ query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE } }).catch(
-      () => null
-    ),
-    searchCourseCreators({ query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE } }).catch(
-      () => null
-    ),
+    searchInstructors({
+      query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE },
+    }).catch(() => null),
+    searchCourseCreators({
+      query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE },
+    }).catch(() => null),
     listDocumentTypes().catch(() => null),
   ]);
 
@@ -127,9 +135,9 @@ export async function fetchUserCredentials(userUuid: string): Promise<Credential
   const items: CredentialDocument[] = [];
 
   if (instructor?.uuid) {
-    const docsRes = await getInstructorDocuments({ path: { instructorUuid: instructor.uuid } }).catch(
-      () => null
-    );
+    const docsRes = await getInstructorDocuments({
+      path: { instructorUuid: instructor.uuid },
+    }).catch(() => null);
     const documents = (docsRes?.data?.data ?? []) as InstructorDocument[];
     const ownerName = instructor.full_name || 'Instructor';
     for (const document of documents) {
@@ -229,9 +237,13 @@ export async function fetchVerificationQueue(): Promise<CredentialDocument[]> {
   const instructors = ((instructorsRes?.data?.data?.content ?? []) as Instructor[]).filter(
     i => i.uuid
   );
-  const creators = ((creatorsRes?.data?.data?.content ?? []) as CourseCreator[]).filter(c => c.uuid);
+  const creators = ((creatorsRes?.data?.data?.content ?? []) as CourseCreator[]).filter(
+    c => c.uuid
+  );
 
-  const instructorNames = new Map(instructors.map(i => [i.uuid as string, i.full_name || 'Instructor']));
+  const instructorNames = new Map(
+    instructors.map(i => [i.uuid as string, i.full_name || 'Instructor'])
+  );
 
   const items: CredentialDocument[] = [];
 
@@ -246,7 +258,12 @@ export async function fetchVerificationQueue(): Promise<CredentialDocument[]> {
       const ownerUuid = document.instructor_uuid;
       if (!ownerUuid) continue;
       items.push(
-        mapInstructorDocument(document, ownerUuid, instructorNames.get(ownerUuid) ?? 'Instructor', typeMap)
+        mapInstructorDocument(
+          document,
+          ownerUuid,
+          instructorNames.get(ownerUuid) ?? 'Instructor',
+          typeMap
+        )
       );
     }
   }
@@ -262,13 +279,19 @@ export async function fetchVerificationQueue(): Promise<CredentialDocument[]> {
   for (const { creator, documents } of creatorDocs) {
     for (const document of documents) {
       items.push(
-        mapCreatorDocument(document, creator.uuid as string, creator.full_name || 'Course creator', typeMap)
+        mapCreatorDocument(
+          document,
+          creator.uuid as string,
+          creator.full_name || 'Course creator',
+          typeMap
+        )
       );
     }
   }
 
   // Pending first, then newest.
-  const rank = (item: CredentialDocument) => (item.statusTone === 'warning' ? 0 : item.isVerified ? 2 : 1);
+  const rank = (item: CredentialDocument) =>
+    item.statusTone === 'warning' ? 0 : item.isVerified ? 2 : 1;
   return items.sort((a, b) => rank(a) - rank(b) || b.uploadedTimestamp - a.uploadedTimestamp);
 }
 
@@ -365,11 +388,17 @@ function year(value?: number | string | Date | null): string {
   return Number.isNaN(parsed.getTime()) ? String(value) : String(parsed.getFullYear());
 }
 
-function period(start?: Date | string | null, end?: Date | string | null, current?: boolean | null): string {
+function period(
+  start?: Date | string | null,
+  end?: Date | string | null,
+  current?: boolean | null
+): string {
   const fmt = (v?: Date | string | null) => {
     if (!v) return undefined;
     const d = v instanceof Date ? v : new Date(v);
-    return Number.isNaN(d.getTime()) ? undefined : d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+    return Number.isNaN(d.getTime())
+      ? undefined
+      : d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
   };
   return [fmt(start), current ? 'Present' : fmt(end)].filter(Boolean).join(' – ') || '—';
 }
@@ -395,7 +424,10 @@ function mapExperience(record: RawExperience): CredentialRecord {
     title: record.position || 'Experience',
     subtitle: record.organisation_name || undefined,
     details: [
-      { label: 'Period', value: period(record.start_date, record.end_date, record.is_current_position) },
+      {
+        label: 'Period',
+        value: period(record.start_date, record.end_date, record.is_current_position),
+      },
       { label: 'Years', value: year(record.years_of_experience) },
       { label: 'Responsibilities', value: record.responsibilities || '—' },
     ],
@@ -541,9 +573,15 @@ export interface ResolvedUserProfiles {
  */
 export async function resolveUserProfiles(userUuid: string): Promise<ResolvedUserProfiles> {
   const [instructorsRes, creatorsRes, studentsRes] = await Promise.all([
-    searchInstructors({ query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE } }).catch(() => null),
-    searchCourseCreators({ query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE } }).catch(() => null),
-    searchStudents({ query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE } }).catch(() => null),
+    searchInstructors({
+      query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE },
+    }).catch(() => null),
+    searchCourseCreators({
+      query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE },
+    }).catch(() => null),
+    searchStudents({ query: { searchParams: { user_uuid: userUuid }, pageable: PAGEABLE } }).catch(
+      () => null
+    ),
   ]);
 
   const instructor = (instructorsRes?.data?.content ?? [])[0] as Instructor | undefined;
@@ -579,16 +617,29 @@ export async function fetchUserVerification(userUuid: string): Promise<DomainVer
 
   if (instructor?.uuid) {
     const uuid = instructor.uuid;
-    const [docsRes, eduRes, expRes, memRes, skillRes, reviewRes, summaryRes, courseRes] = await Promise.all([
-      getInstructorDocuments({ path: { instructorUuid: uuid } }).catch(() => null),
-      getInstructorEducation({ path: { instructorUuid: uuid } }).catch(() => null),
-      getInstructorExperience({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
-      getInstructorMemberships({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
-      getInstructorSkills({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
-      getInstructorReviews({ path: { instructorUuid: uuid } }).catch(() => null),
-      getInstructorRatingSummary({ path: { instructorUuid: uuid } }).catch(() => null),
-      getCoursesByInstructor({ path: { instructorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
-    ]);
+    const [docsRes, eduRes, expRes, memRes, skillRes, reviewRes, summaryRes, courseRes] =
+      await Promise.all([
+        getInstructorDocuments({ path: { instructorUuid: uuid } }).catch(() => null),
+        getInstructorEducation({ path: { instructorUuid: uuid } }).catch(() => null),
+        getInstructorExperience({
+          path: { instructorUuid: uuid },
+          query: { pageable: PAGEABLE },
+        }).catch(() => null),
+        getInstructorMemberships({
+          path: { instructorUuid: uuid },
+          query: { pageable: PAGEABLE },
+        }).catch(() => null),
+        getInstructorSkills({
+          path: { instructorUuid: uuid },
+          query: { pageable: PAGEABLE },
+        }).catch(() => null),
+        getInstructorReviews({ path: { instructorUuid: uuid } }).catch(() => null),
+        getInstructorRatingSummary({ path: { instructorUuid: uuid } }).catch(() => null),
+        getCoursesByInstructor({
+          path: { instructorUuid: uuid },
+          query: { pageable: PAGEABLE },
+        }).catch(() => null),
+      ]);
     const ownerName = instructor.full_name || 'Instructor';
     const reviews = ((reviewRes?.data?.data ?? []) as InstructorReview[]) ?? [];
     const summary = (summaryRes?.data?.data ?? null) as InstructorRatingSummary | null;
@@ -618,7 +669,8 @@ export async function fetchUserVerification(userUuid: string): Promise<DomainVer
       certifications: [],
       reviews: reviews.map(mapReview),
       averageRating:
-        summary?.average_rating ?? average(reviews.map(r => r.rating).filter(n => typeof n === 'number')),
+        summary?.average_rating ??
+        average(reviews.map(r => r.rating).filter(n => typeof n === 'number')),
       reviewCount: summary?.review_count != null ? Number(summary.review_count) : reviews.length,
       contentItems,
       contentLabel: 'Courses taught',
@@ -628,16 +680,37 @@ export async function fetchUserVerification(userUuid: string): Promise<DomainVer
 
   if (creator?.uuid) {
     const uuid = creator.uuid;
-    const [docsRes, eduRes, expRes, memRes, skillRes, certRes, programRes, courseRes] = await Promise.all([
-      getCourseCreatorDocuments({ path: { courseCreatorUuid: uuid } }).catch(() => null),
-      getCourseCreatorEducation({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
-      getCourseCreatorExperience({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
-      getCourseCreatorMemberships({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
-      getCourseCreatorSkills({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
-      getCourseCreatorCertifications({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
-      getProgramsByCourseCreator({ path: { courseCreatorUuid: uuid }, query: { pageable: PAGEABLE } }).catch(() => null),
-      searchCourses({ query: { searchParams: { course_creator_uuid: uuid }, pageable: PAGEABLE } }).catch(() => null),
-    ]);
+    const [docsRes, eduRes, expRes, memRes, skillRes, certRes, programRes, courseRes] =
+      await Promise.all([
+        getCourseCreatorDocuments({ path: { courseCreatorUuid: uuid } }).catch(() => null),
+        getCourseCreatorEducation({
+          path: { courseCreatorUuid: uuid },
+          query: { pageable: PAGEABLE },
+        }).catch(() => null),
+        getCourseCreatorExperience({
+          path: { courseCreatorUuid: uuid },
+          query: { pageable: PAGEABLE },
+        }).catch(() => null),
+        getCourseCreatorMemberships({
+          path: { courseCreatorUuid: uuid },
+          query: { pageable: PAGEABLE },
+        }).catch(() => null),
+        getCourseCreatorSkills({
+          path: { courseCreatorUuid: uuid },
+          query: { pageable: PAGEABLE },
+        }).catch(() => null),
+        getCourseCreatorCertifications({
+          path: { courseCreatorUuid: uuid },
+          query: { pageable: PAGEABLE },
+        }).catch(() => null),
+        getProgramsByCourseCreator({
+          path: { courseCreatorUuid: uuid },
+          query: { pageable: PAGEABLE },
+        }).catch(() => null),
+        searchCourses({
+          query: { searchParams: { course_creator_uuid: uuid }, pageable: PAGEABLE },
+        }).catch(() => null),
+      ]);
     const ownerName = creator.full_name || 'Course creator';
     const allDocs = ((docsRes?.data?.data ?? []) as CourseCreatorDocumentDto[]).map(d =>
       mapCreatorDocument(d, uuid, ownerName, typeMap)

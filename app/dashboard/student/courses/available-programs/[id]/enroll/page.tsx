@@ -5,7 +5,10 @@ type WorkspaceProgramEnrollPageProps = {
   searchParams: Promise<{ id?: string }>;
 };
 
-export default async function WorkspaceProgramEnrollPage({ params, searchParams }: WorkspaceProgramEnrollPageProps) {
+export default async function WorkspaceProgramEnrollPage({
+  params,
+  searchParams,
+}: WorkspaceProgramEnrollPageProps) {
   const { id } = await params;
   const { id: classId } = await searchParams;
 

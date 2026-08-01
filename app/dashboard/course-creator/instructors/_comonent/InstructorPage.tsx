@@ -45,7 +45,7 @@ import {
   getTrainingProgramByUuidOptions,
   getUserByUuidOptions,
   searchProgramTrainingApplicationsQueryKey,
-  searchTrainingApplicationsQueryKey
+  searchTrainingApplicationsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -74,7 +74,7 @@ import {
   User,
   Users,
   X,
-  XCircle
+  XCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -87,7 +87,10 @@ import {
   DialogTitle,
 } from '../../../../../components/ui/dialog';
 import { Textarea } from '../../../../../components/ui/textarea';
-import { useProgramTrainingApplicationsByCourseCreatorIds, useTrainingApplicationsByCourseCreatorIds } from '../../../../../hooks/use-batched-lookups';
+import {
+  useProgramTrainingApplicationsByCourseCreatorIds,
+  useTrainingApplicationsByCourseCreatorIds,
+} from '../../../../../hooks/use-batched-lookups';
 
 type TrainingApplication = CourseTrainingApplication | ProgramTrainingApplication;
 type ApplicantType = 'instructor' | 'organisation';
@@ -135,8 +138,7 @@ const formatDisplayDate = (value: unknown) => {
 
 const isCourseApplication = (
   application: TrainingApplication | null
-): application is CourseTrainingApplication =>
-  application !== null && 'course_uuid' in application;
+): application is CourseTrainingApplication => application !== null && 'course_uuid' in application;
 
 const isProgramApplication = (
   application: TrainingApplication | null
@@ -159,34 +161,41 @@ const applicantTypeOptions = [
 
 function getStatusBadgeVariant(status?: string) {
   switch (status?.toLowerCase()) {
-    case 'approved': return 'default';
-    case 'pending': return 'secondary';
+    case 'approved':
+      return 'default';
+    case 'pending':
+      return 'secondary';
     case 'rejected':
-    case 'revoked': return 'destructive';
-    default: return 'secondary';
+    case 'revoked':
+      return 'destructive';
+    default:
+      return 'secondary';
   }
 }
 
 function getStatusIcon(status?: string) {
   switch (status?.toLowerCase()) {
-    case 'approved': return <CheckCircle2 className='h-3.5 w-3.5' />;
+    case 'approved':
+      return <CheckCircle2 className='h-3.5 w-3.5' />;
     case 'rejected':
-    case 'revoked': return <XCircle className='h-3.5 w-3.5' />;
-    default: return <Clock className='h-3.5 w-3.5' />;
+    case 'revoked':
+      return <XCircle className='h-3.5 w-3.5' />;
+    default:
+      return <Clock className='h-3.5 w-3.5' />;
   }
 }
 
 function ApplicantTypePill({ type }: { type: ApplicantType }) {
   if (type === 'instructor') {
     return (
-      <span className='inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary'>
+      <span className='bg-primary/10 text-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold'>
         <GraduationCap className='h-3 w-3' />
         Instructor
       </span>
     );
   }
   return (
-    <span className='inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent-foreground'>
+    <span className='bg-accent/10 text-accent-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold'>
       <Building2 className='h-3 w-3' />
       Organisation
     </span>
@@ -215,7 +224,7 @@ function StatCard({
           <Icon className={`h-4 w-4 ${accent ? 'text-warning' : 'text-primary'}`} />
         </div>
         <div>
-          <p className='text-muted-foreground text-[10px] uppercase tracking-wide'>{label}</p>
+          <p className='text-muted-foreground text-[10px] tracking-wide uppercase'>{label}</p>
           <p className='text-foreground text-lg font-bold'>{value}</p>
         </div>
       </div>
@@ -242,8 +251,10 @@ function ApplicationCard({
   const applicationType = application.applicant_type;
 
   const isCourse = type === 'course';
-  const courseUuid = isCourse && isCourseApplication(application) ? application.course_uuid : undefined;
-  const programUuid = !isCourse && isProgramApplication(application) ? application.program_uuid : undefined;
+  const courseUuid =
+    isCourse && isCourseApplication(application) ? application.course_uuid : undefined;
+  const programUuid =
+    !isCourse && isProgramApplication(application) ? application.program_uuid : undefined;
 
   const { data: courseData } = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseUuid as string } }),
@@ -261,7 +272,10 @@ function ApplicationCard({
     <div className='bg-card border-border rounded-2xl border p-4 shadow-sm'>
       <div className='mb-2 flex items-start justify-between gap-2'>
         <p className='text-foreground truncate text-sm font-semibold'>{name || 'Loading...'}</p>
-        <Badge variant={getStatusBadgeVariant(application.status)} className='flex shrink-0 items-center gap-1'>
+        <Badge
+          variant={getStatusBadgeVariant(application.status)}
+          className='flex shrink-0 items-center gap-1'
+        >
           {getStatusIcon(application.status)}
           {application.status}
         </Badge>
@@ -291,13 +305,15 @@ function ApplicationCard({
               <div>
                 <span className='text-muted-foreground'>Private online:</span>
                 <p className='text-foreground font-medium'>
-                  {application.rate_card.currency || 'KES'} {application.rate_card.private_online_rate || 0}
+                  {application.rate_card.currency || 'KES'}{' '}
+                  {application.rate_card.private_online_rate || 0}
                 </p>
               </div>
               <div>
                 <span className='text-muted-foreground'>Group online:</span>
                 <p className='text-foreground font-medium'>
-                  {application.rate_card.currency || 'KES'} {application.rate_card.group_online_rate || 0}
+                  {application.rate_card.currency || 'KES'}{' '}
+                  {application.rate_card.group_online_rate || 0}
                 </p>
               </div>
             </div>
@@ -341,7 +357,9 @@ function ApplicationCard({
         )}
         {!isPending && !isApproved && (
           <p className='text-muted-foreground flex-1 text-center text-xs'>
-            {application.status === 'rejected' ? 'Application was rejected' : 'Approval was revoked'}
+            {application.status === 'rejected'
+              ? 'Application was rejected'
+              : 'Approval was revoked'}
           </p>
         )}
       </div>
@@ -426,8 +444,7 @@ function ReviewDialog({
 
             <div className='space-y-2'>
               <Label>
-                Review notes{' '}
-                {action === 'reject' && <span className='text-destructive'>*</span>}
+                Review notes {action === 'reject' && <span className='text-destructive'>*</span>}
               </Label>
               <Textarea
                 placeholder={`Add your ${action} notes...`}
@@ -445,7 +462,10 @@ function ReviewDialog({
             Cancel
           </Button>
           <Button
-            onClick={() => { onSubmit(reviewNotes); setReviewNotes(''); }}
+            onClick={() => {
+              onSubmit(reviewNotes);
+              setReviewNotes('');
+            }}
             disabled={isLoading || (action === 'reject' && !reviewNotes.trim())}
           >
             {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
@@ -601,13 +621,17 @@ function ApplicationsTabContent({
       {/* Grid */}
       {isLoading ? (
         <div className='grid grid-cols-1 gap-4 min-[1299px]:grid-cols-2'>
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className='h-56 rounded-2xl' />)}
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className='h-56 rounded-2xl' />
+          ))}
         </div>
       ) : applications.length === 0 ? (
         <div className={elimikaDesignSystem.components.emptyState.container}>
           <FileText className={elimikaDesignSystem.components.emptyState.icon} />
           <h3 className={elimikaDesignSystem.components.emptyState.title}>
-            {searchValue || statusFilter || applicantTypeFilter ? 'No applications found' : `No ${label.toLowerCase()} applications yet`}
+            {searchValue || statusFilter || applicantTypeFilter
+              ? 'No applications found'
+              : `No ${label.toLowerCase()} applications yet`}
           </h3>
           <p className={elimikaDesignSystem.components.emptyState.description}>
             {searchValue || statusFilter || applicantTypeFilter
@@ -632,11 +656,23 @@ function ApplicationsTabContent({
 
           {totalPages > 1 && (
             <div className='flex items-center justify-center gap-2 pt-2'>
-              <Button variant='outline' size='sm' onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={page === 0}
+              >
                 Previous
               </Button>
-              <span className='text-muted-foreground text-sm'>Page {page + 1} of {totalPages}</span>
-              <Button variant='outline' size='sm' onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
+              <span className='text-muted-foreground text-sm'>
+                Page {page + 1} of {totalPages}
+              </span>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1}
+              >
                 Next
               </Button>
             </div>
@@ -687,12 +723,12 @@ function ProfileTabContent({
   selectedApplicantId: string;
   selectedApplicantStatusBadge: string;
 }) {
-  const instructorData = instructor?.data
+  const instructorData = instructor?.data;
 
   return (
     <div className='space-y-5'>
       {/* Header card */}
-      <Card className='rounded-lg border-border border-1 p-6 shadow-sm'>
+      <Card className='border-border rounded-lg border-1 p-6 shadow-sm'>
         {/* Links row */}
         <div className='mb-5 flex flex-wrap items-center gap-4 text-sm'>
           {selectedApplicantType === 'instructor' && instructorData?.user_uuid ? (
@@ -727,29 +763,43 @@ function ProfileTabContent({
           )}
         </div>
 
-        <div className='flex flex-col gap-5 justify-between'>
-          <div className='flex flex-col sm:flex-row items-center sm:items-start gap-4'>
+        <div className='flex flex-col justify-between gap-5'>
+          <div className='flex flex-col items-center gap-4 sm:flex-row sm:items-start'>
             <Avatar className='h-16 w-16 border'>
-              <AvatarImage src={selectedApplicantType === 'instructor' ? instructorData?.profile_picture_url : undefined} />
-              <AvatarFallback className={`text-lg ${selectedApplicantType === 'organisation' ? 'bg-accent/20 text-accent-foreground' : 'bg-primary/10 text-primary'}`}>
+              <AvatarImage
+                src={
+                  selectedApplicantType === 'instructor'
+                    ? instructorData?.profile_picture_url
+                    : undefined
+                }
+              />
+              <AvatarFallback
+                className={`text-lg ${selectedApplicantType === 'organisation' ? 'bg-accent/20 text-accent-foreground' : 'bg-primary/10 text-primary'}`}
+              >
                 {selectedApplicantInitials}
               </AvatarFallback>
             </Avatar>
 
             <div className='space-y-1.5'>
               <div className='flex items-center gap-2'>
-                {selectedApplicantType === "instructor" ? <h3 className='text-foreground text-2xl font-bold tracking-tight'>
-                  {instructorData?.full_name}
-                </h3> : <h3 className='text-foreground text-2xl font-bold tracking-tight'>
-                  {organisation?.name}
-                </h3>}
+                {selectedApplicantType === 'instructor' ? (
+                  <h3 className='text-foreground text-2xl font-bold tracking-tight'>
+                    {instructorData?.full_name}
+                  </h3>
+                ) : (
+                  <h3 className='text-foreground text-2xl font-bold tracking-tight'>
+                    {organisation?.name}
+                  </h3>
+                )}
 
                 <ApplicantTypePill type={selectedApplicantType ?? 'instructor'} />
               </div>
 
-              {selectedApplicantType === "instructor" ? <p className='text-muted-foreground'>{instructorData?.professional_headline}</p>
-                : <p className='text-muted-foreground'>{organisation?.licence_no}</p>
-              }
+              {selectedApplicantType === 'instructor' ? (
+                <p className='text-muted-foreground'>{instructorData?.professional_headline}</p>
+              ) : (
+                <p className='text-muted-foreground'>{organisation?.licence_no}</p>
+              )}
 
               <p className='text-muted-foreground flex items-center gap-1.5 text-sm'>
                 <MapPin className='h-4 w-4 shrink-0' />
@@ -758,7 +808,7 @@ function ProfileTabContent({
             </div>
           </div>
 
-          <div className='grid grid-cols-1 gap-4 text-left min-[1299px]:min-w-[200px] min-[1299px]:grid-cols-2 min-[1299px]:text-right self-end'>
+          <div className='grid grid-cols-1 gap-4 self-end text-left min-[1299px]:min-w-[200px] min-[1299px]:grid-cols-2 min-[1299px]:text-right'>
             {/* <div>
               <p className='text-muted-foreground text-sm font-medium'>
                 {selectedApplicantType === 'organisation' ? 'Organisation ID' : 'Instructor ID'}
@@ -767,7 +817,10 @@ function ProfileTabContent({
             </div> */}
             <div>
               <p className='text-muted-foreground text-sm font-medium'>Status</p>
-              <Badge variant={selectedApplicantStatusBadge === 'Verified' ? 'success' : 'secondary'} className='mt-1'>
+              <Badge
+                variant={selectedApplicantStatusBadge === 'Verified' ? 'success' : 'secondary'}
+                className='mt-1'
+              >
                 {selectedApplicantStatusBadge}
               </Badge>
             </div>
@@ -804,7 +857,7 @@ function ProfileTabContent({
 
       {/* Organisation-specific overview */}
       {selectedApplicantType === 'organisation' && organisation && (
-        <Card className='rounded-[28px] border-border/70 p-6 shadow-sm'>
+        <Card className='border-border/70 rounded-[28px] p-6 shadow-sm'>
           <div className='mb-4 flex items-center gap-2'>
             <Building2 className='text-primary h-5 w-5' />
             <h3 className='text-foreground text-xl font-semibold'>Organisation overview</h3>
@@ -812,14 +865,16 @@ function ProfileTabContent({
           <div className='grid grid-cols-1 gap-4 min-[1299px]:grid-cols-2'>
             <div>
               <p className='text-muted-foreground text-sm font-medium'>Description</p>
-              <p className='text-foreground mt-1 text-sm leading-6'>{organisation.description || 'No description provided.'}</p>
+              <p className='text-foreground mt-1 text-sm leading-6'>
+                {organisation.description || 'No description provided.'}
+              </p>
             </div>
             <div className='space-y-3'>
               {organisation.location && (
                 <div>
                   <p className='text-muted-foreground text-sm font-medium'>Location</p>
                   <p className='text-foreground mt-1 flex items-center gap-1.5 text-sm'>
-                    <MapPin className='h-4 w-4 text-primary' />
+                    <MapPin className='text-primary h-4 w-4' />
                     {organisation.location}
                   </p>
                 </div>
@@ -840,7 +895,7 @@ function ProfileTabContent({
         <>
           <div className='grid grid-cols-1 gap-5 min-[1299px]:grid-cols-2'>
             {/* Personal info */}
-            <Card className='rounded-[28px] border-border/70 p-6 shadow-sm'>
+            <Card className='border-border/70 rounded-[28px] p-6 shadow-sm'>
               <div className='mb-4 flex items-center gap-2'>
                 <User className='text-primary h-5 w-5' />
                 <h3 className='text-foreground text-xl font-semibold'>Personal information</h3>
@@ -860,7 +915,8 @@ function ProfileTabContent({
                     <p className='text-foreground mt-1 text-sm'>
                       {formatDisplayDate(
                         (instructorUserData?.data as { dob?: unknown } | undefined)?.dob ||
-                        (instructor as InstructorProfile & { date_of_birth?: unknown })?.date_of_birth
+                          (instructor as InstructorProfile & { date_of_birth?: unknown })
+                            ?.date_of_birth
                       )}
                     </p>
                   </div>
@@ -874,7 +930,9 @@ function ProfileTabContent({
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm font-medium'>Profile complete</p>
-                  <p className='text-foreground mt-1 text-sm'>{instructor?.is_profile_complete ? 'Yes' : 'No'}</p>
+                  <p className='text-foreground mt-1 text-sm'>
+                    {instructor?.is_profile_complete ? 'Yes' : 'No'}
+                  </p>
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm font-medium'>About</p>
@@ -891,7 +949,7 @@ function ProfileTabContent({
             </Card>
 
             {/* Education */}
-            <Card className='rounded-[28px] border-border/70 p-6 shadow-sm'>
+            <Card className='border-border/70 rounded-[28px] p-6 shadow-sm'>
               <div className='mb-4 flex items-center gap-2'>
                 <GraduationCap className='text-primary h-5 w-5' />
                 <h3 className='text-foreground text-xl font-semibold'>Education</h3>
@@ -902,12 +960,20 @@ function ProfileTabContent({
                 <div className='space-y-4'>
                   {education.map(edu => (
                     <div key={edu.uuid} className='space-y-1'>
-                      <p className='text-foreground text-sm font-semibold'>{edu.qualification || 'Qualification not specified'}</p>
-                      <p className='text-muted-foreground text-sm'>{edu.school_name || 'Institution not specified'}</p>
-                      <p className='text-muted-foreground text-xs'>
-                        {edu.year_completed ? `Completed ${edu.year_completed}` : 'Year not specified'}
+                      <p className='text-foreground text-sm font-semibold'>
+                        {edu.qualification || 'Qualification not specified'}
                       </p>
-                      {edu.education_level && <p className='text-muted-foreground text-xs'>{edu.education_level}</p>}
+                      <p className='text-muted-foreground text-sm'>
+                        {edu.school_name || 'Institution not specified'}
+                      </p>
+                      <p className='text-muted-foreground text-xs'>
+                        {edu.year_completed
+                          ? `Completed ${edu.year_completed}`
+                          : 'Year not specified'}
+                      </p>
+                      {edu.education_level && (
+                        <p className='text-muted-foreground text-xs'>{edu.education_level}</p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -917,7 +983,7 @@ function ProfileTabContent({
 
           <div className='grid grid-cols-1 gap-5 min-[1299px]:grid-cols-[1.1fr_0.9fr]'>
             {/* Skills */}
-            <Card className='rounded-[28px] border-border/70 p-6 shadow-sm'>
+            <Card className='border-border/70 rounded-[28px] p-6 shadow-sm'>
               <div className='mb-4 flex items-center gap-2'>
                 <Award className='text-primary h-5 w-5' />
                 <h3 className='text-foreground text-xl font-semibold'>Skills</h3>
@@ -936,7 +1002,7 @@ function ProfileTabContent({
             </Card>
 
             {/* Documents */}
-            <Card className='rounded-[28px] border-border/70 p-6 shadow-sm'>
+            <Card className='border-border/70 rounded-[28px] p-6 shadow-sm'>
               <div className='mb-4 flex items-center gap-2'>
                 <FileText className='text-primary h-5 w-5' />
                 <h3 className='text-foreground text-xl font-semibold'>Documents</h3>
@@ -947,8 +1013,12 @@ function ProfileTabContent({
                 <div className='space-y-3'>
                   {documents.map(doc => (
                     <div key={doc.uuid} className='border-border/60 rounded-xl border p-3'>
-                      <p className='text-foreground text-sm font-medium'>{doc.title || doc.original_filename}</p>
-                      <p className='text-muted-foreground mt-0.5 text-xs'>{doc.verification_status || doc.status || 'Document'}</p>
+                      <p className='text-foreground text-sm font-medium'>
+                        {doc.title || doc.original_filename}
+                      </p>
+                      <p className='text-muted-foreground mt-0.5 text-xs'>
+                        {doc.verification_status || doc.status || 'Document'}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -957,7 +1027,7 @@ function ProfileTabContent({
           </div>
 
           {/* Reviews */}
-          <Card className='rounded-[28px] border-border/70 p-6 shadow-sm'>
+          <Card className='border-border/70 rounded-[28px] p-6 shadow-sm'>
             <div className='mb-4 flex items-center gap-2'>
               <Star className='text-primary h-5 w-5' />
               <h3 className='text-foreground text-xl font-semibold'>Reviews</h3>
@@ -977,10 +1047,9 @@ function ProfileTabContent({
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-4 w-4 ${i < (review.rating || 0)
-                              ? 'fill-warning text-warning'
-                              : 'text-muted'
-                              }`}
+                            className={`h-4 w-4 ${
+                              i < (review.rating || 0) ? 'fill-warning text-warning' : 'text-muted'
+                            }`}
                           />
                         ))}
                       </div>
@@ -1006,10 +1075,13 @@ const InstructorsApplicationPage = () => {
   const [isMobileTabsOpen, setIsMobileTabsOpen] = useState(false);
 
   // Left sidebar filters
-  const [applicantListTypeFilter, setApplicantListTypeFilter] = useState<ApplicantListTypeFilter>('all');
+  const [applicantListTypeFilter, setApplicantListTypeFilter] =
+    useState<ApplicantListTypeFilter>('all');
   const [instructorSearchQuery, setInstructorSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [verificationFilter, setVerificationFilter] = useState<'all' | 'approved' | 'pending'>('all');
+  const [verificationFilter, setVerificationFilter] = useState<'all' | 'approved' | 'pending'>(
+    'all'
+  );
 
   // Application filters
   const [statusFilter, setStatusFilter] = useState('');
@@ -1027,10 +1099,11 @@ const InstructorsApplicationPage = () => {
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revoke'>('approve');
 
   // ── Data fetching ──────────────────────────────────────────────────────────
-  const { items: applicationsQuery } = useTrainingApplicationsByCourseCreatorIds([courseCreator?.uuid] as string[]);
+  const { items: applicationsQuery } = useTrainingApplicationsByCourseCreatorIds([
+    courseCreator?.uuid,
+  ] as string[]);
   const applicationsPage = extractPage<CourseTrainingApplication>(applicationsQuery);
   const allApplications = applicationsPage.items;
-
 
   const { items: programApplicationsQuery } = useProgramTrainingApplicationsByCourseCreatorIds([]);
   const programApplicationsPage = extractPage<ProgramTrainingApplication>(programApplicationsQuery);
@@ -1038,22 +1111,26 @@ const InstructorsApplicationPage = () => {
 
   const instructorUuids = useMemo(() => {
     const combined = [...(allApplications ?? []), ...(allProgramApplications ?? [])];
-    return Array.from(new Set(
-      combined
-        .filter(app => app.applicant_type === 'instructor')
-        .map(app => app.applicant_uuid)
-        .filter(Boolean)
-    )) as string[];
+    return Array.from(
+      new Set(
+        combined
+          .filter(app => app.applicant_type === 'instructor')
+          .map(app => app.applicant_uuid)
+          .filter(Boolean)
+      )
+    ) as string[];
   }, [allApplications, allProgramApplications]);
 
   const organisationUuids = useMemo(() => {
     const combined = [...(allApplications ?? []), ...(allProgramApplications ?? [])];
-    return Array.from(new Set(
-      combined
-        .filter(app => app.applicant_type === 'organisation')
-        .map(app => app.applicant_uuid)
-        .filter(Boolean)
-    )) as string[];
+    return Array.from(
+      new Set(
+        combined
+          .filter(app => app.applicant_type === 'organisation')
+          .map(app => app.applicant_uuid)
+          .filter(Boolean)
+      )
+    ) as string[];
   }, [allApplications, allProgramApplications]);
 
   const instructorQueries = useQueries({
@@ -1107,8 +1184,10 @@ const InstructorsApplicationPage = () => {
       const dateA = new Date(a.data?.created_date || '').getTime();
       const dateB = new Date(b.data?.created_date || '').getTime();
       if (Number.isNaN(dateA) || Number.isNaN(dateB)) {
-        const nameA = (a.data as InstructorProfile)?.full_name || (a.data as Organisation)?.name || '';
-        const nameB = (b.data as InstructorProfile)?.full_name || (b.data as Organisation)?.name || '';
+        const nameA =
+          (a.data as InstructorProfile)?.full_name || (a.data as Organisation)?.name || '';
+        const nameB =
+          (b.data as InstructorProfile)?.full_name || (b.data as Organisation)?.name || '';
         return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
       return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
@@ -1116,8 +1195,7 @@ const InstructorsApplicationPage = () => {
   }, [instructors, organisations, sortOrder]);
 
   const isLoadingApplicants =
-    instructorQueries.some(q => q.isLoading) ||
-    organisationQueries.some(q => q.isLoading);
+    instructorQueries.some(q => q.isLoading) || organisationQueries.some(q => q.isLoading);
 
   // Auto-select first applicant
   useEffect(() => {
@@ -1148,12 +1226,18 @@ const InstructorsApplicationPage = () => {
     if (instructorSearchQuery) {
       const q = instructorSearchQuery.toLowerCase();
       filtered = filtered.filter(item => {
-        const name = item.type === 'instructor'
-          ? (item.data as InstructorProfile)?.full_name || ''
-          : (item.data as Organisation)?.name || '';
-        const secondary = item.type === 'instructor'
-          ? [(item.data as InstructorProfile)?.professional_headline, (item.data as InstructorProfile)?.email, (item.data as InstructorProfile)?.bio]
-          : [(item.data as Organisation)?.description, (item.data as Organisation)?.location];
+        const name =
+          item.type === 'instructor'
+            ? (item.data as InstructorProfile)?.full_name || ''
+            : (item.data as Organisation)?.name || '';
+        const secondary =
+          item.type === 'instructor'
+            ? [
+                (item.data as InstructorProfile)?.professional_headline,
+                (item.data as InstructorProfile)?.email,
+                (item.data as InstructorProfile)?.bio,
+              ]
+            : [(item.data as Organisation)?.description, (item.data as Organisation)?.location];
         return [name, ...secondary].filter(Boolean).some(v => v!.toLowerCase().includes(q));
       });
     }
@@ -1179,14 +1263,14 @@ const InstructorsApplicationPage = () => {
       ? (selectedApplicant?.data as InstructorProfile)
       : selectedApplicantType === 'organisation'
         ? ({
-          uuid: organisation?.uuid,
-          full_name: organisation?.name,
-          professional_headline: organisation?.description,
-          formatted_location: organisation?.location || organisation?.country,
-          location: organisation?.location || organisation?.country,
-          admin_verified: organisation?.admin_verified,
-          bio: organisation?.description,
-        } as InstructorProfile)
+            uuid: organisation?.uuid,
+            full_name: organisation?.name,
+            professional_headline: organisation?.description,
+            formatted_location: organisation?.location || organisation?.country,
+            location: organisation?.location || organisation?.country,
+            admin_verified: organisation?.admin_verified,
+            bio: organisation?.description,
+          } as InstructorProfile)
         : undefined;
 
   const selectedApplicantName =
@@ -1199,13 +1283,24 @@ const InstructorsApplicationPage = () => {
     selectedApplicantType === 'organisation'
       ? organisation?.location || organisation?.country || 'Location not specified'
       : instructor?.formatted_location || instructor?.location || 'Location not specified';
-  const selectedApplicantInitials =
-    (selectedApplicantName || 'IN').split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
+  const selectedApplicantInitials = (selectedApplicantName || 'IN')
+    .split(' ')
+    .map(p => p[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
   const selectedApplicantId =
-    (selectedApplicantType === 'organisation' ? organisation?.uuid : instructor?.uuid)?.slice(0, 8) || 'N/A';
-  const selectedApplicantStatusBadge =
-    (selectedApplicantType === 'organisation' ? organisation?.admin_verified : instructor?.admin_verified)
-      ? 'Verified' : 'Pending';
+    (selectedApplicantType === 'organisation' ? organisation?.uuid : instructor?.uuid)?.slice(
+      0,
+      8
+    ) || 'N/A';
+  const selectedApplicantStatusBadge = (
+    selectedApplicantType === 'organisation'
+      ? organisation?.admin_verified
+      : instructor?.admin_verified
+  )
+    ? 'Verified'
+    : 'Pending';
 
   // ── Secondary queries for selected instructor ──────────────────────────────
 
@@ -1257,52 +1352,93 @@ const InstructorsApplicationPage = () => {
 
   const filteredApplications = useMemo(() => {
     let items = allApplications;
-    if (selectedApplicantUuid) items = items.filter(app => app.applicant_uuid === selectedApplicantUuid);
-    if (statusFilter) items = items.filter(app => app.status?.toLowerCase() === statusFilter.toLowerCase());
-    if (applicantTypeFilter) items = items.filter(app => app.applicant_type?.toLowerCase() === applicantTypeFilter.toLowerCase());
+    if (selectedApplicantUuid)
+      items = items.filter(app => app.applicant_uuid === selectedApplicantUuid);
+    if (statusFilter)
+      items = items.filter(app => app.status?.toLowerCase() === statusFilter.toLowerCase());
+    if (applicantTypeFilter)
+      items = items.filter(
+        app => app.applicant_type?.toLowerCase() === applicantTypeFilter.toLowerCase()
+      );
     if (searchValue) {
       const term = searchValue.toLowerCase();
       items = items.filter(app => {
         const name = applicantNameMap.get(app.applicant_uuid ?? '')?.toLowerCase() ?? '';
-        return name.includes(term) || app.course_uuid?.toLowerCase().includes(term) || app.application_notes?.toLowerCase().includes(term);
+        return (
+          name.includes(term) ||
+          app.course_uuid?.toLowerCase().includes(term) ||
+          app.application_notes?.toLowerCase().includes(term)
+        );
       });
     }
     return items;
-  }, [allApplications, selectedApplicantUuid, statusFilter, applicantTypeFilter, searchValue, applicantNameMap]);
-
+  }, [
+    allApplications,
+    selectedApplicantUuid,
+    statusFilter,
+    applicantTypeFilter,
+    searchValue,
+    applicantNameMap,
+  ]);
 
   const filteredProgramApplications = useMemo(() => {
     let items = allProgramApplications;
-    if (selectedApplicantUuid) items = items.filter(app => app.applicant_uuid === selectedApplicantUuid);
-    if (statusFilter) items = items.filter(app => app.status?.toLowerCase() === statusFilter.toLowerCase());
-    if (applicantTypeFilter) items = items.filter(app => app.applicant_type?.toLowerCase() === applicantTypeFilter.toLowerCase());
+    if (selectedApplicantUuid)
+      items = items.filter(app => app.applicant_uuid === selectedApplicantUuid);
+    if (statusFilter)
+      items = items.filter(app => app.status?.toLowerCase() === statusFilter.toLowerCase());
+    if (applicantTypeFilter)
+      items = items.filter(
+        app => app.applicant_type?.toLowerCase() === applicantTypeFilter.toLowerCase()
+      );
     if (searchValue) {
       const term = searchValue.toLowerCase();
       items = items.filter(app => {
         const name = applicantNameMap.get(app.applicant_uuid ?? '')?.toLowerCase() ?? '';
-        return name.includes(term) || app.program_uuid?.toLowerCase().includes(term) || app.application_notes?.toLowerCase().includes(term);
+        return (
+          name.includes(term) ||
+          app.program_uuid?.toLowerCase().includes(term) ||
+          app.application_notes?.toLowerCase().includes(term)
+        );
       });
     }
     return items;
-  }, [allProgramApplications, selectedApplicantUuid, statusFilter, applicantTypeFilter, searchValue, applicantNameMap]);
+  }, [
+    allProgramApplications,
+    selectedApplicantUuid,
+    statusFilter,
+    applicantTypeFilter,
+    searchValue,
+    applicantNameMap,
+  ]);
 
   // ── Stats ──────────────────────────────────────────────────────────────────
 
-  const stats = useMemo(() => ({
-    total: filteredApplications.length,
-    pending: filteredApplications.filter(a => a.status?.toLowerCase() === 'pending').length,
-    approved: filteredApplications.filter(a => a.status?.toLowerCase() === 'approved').length,
-    revoked: filteredApplications.filter(a => a.status?.toLowerCase() === 'revoked').length,
-    rejected: filteredApplications.filter(a => a.status?.toLowerCase() === 'rejected').length,
-  }), [filteredApplications]);
+  const stats = useMemo(
+    () => ({
+      total: filteredApplications.length,
+      pending: filteredApplications.filter(a => a.status?.toLowerCase() === 'pending').length,
+      approved: filteredApplications.filter(a => a.status?.toLowerCase() === 'approved').length,
+      revoked: filteredApplications.filter(a => a.status?.toLowerCase() === 'revoked').length,
+      rejected: filteredApplications.filter(a => a.status?.toLowerCase() === 'rejected').length,
+    }),
+    [filteredApplications]
+  );
 
-  const programStats = useMemo(() => ({
-    total: filteredProgramApplications.length,
-    pending: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'pending').length,
-    approved: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'approved').length,
-    revoked: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'revoked').length,
-    rejected: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'rejected').length,
-  }), [filteredProgramApplications]);
+  const programStats = useMemo(
+    () => ({
+      total: filteredProgramApplications.length,
+      pending: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'pending')
+        .length,
+      approved: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'approved')
+        .length,
+      revoked: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'revoked')
+        .length,
+      rejected: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'rejected')
+        .length,
+    }),
+    [filteredProgramApplications]
+  );
 
   const totalPages = Math.max(Math.ceil(filteredApplications.length / pageSize), 1);
   const programTotalPages = Math.max(Math.ceil(filteredProgramApplications.length / pageSize), 1);
@@ -1316,7 +1452,10 @@ const InstructorsApplicationPage = () => {
 
   // ── Mutations ──────────────────────────────────────────────────────────────
 
-  const handleReview = (application: TrainingApplication, action: 'approve' | 'reject' | 'revoke') => {
+  const handleReview = (
+    application: TrainingApplication,
+    action: 'approve' | 'reject' | 'revoke'
+  ) => {
     setSelectedApplication(application);
     setReviewAction(action);
     setReviewDialogOpen(true);
@@ -1324,48 +1463,77 @@ const InstructorsApplicationPage = () => {
 
   const decideMutation = useMutation(decideOnTrainingApplicationMutation());
   const handleSubmitReview = (reviewNotes: string) => {
-    if (!selectedApplication?.uuid || !isCourseApplication(selectedApplication) || !selectedApplication.course_uuid) {
+    if (
+      !selectedApplication?.uuid ||
+      !isCourseApplication(selectedApplication) ||
+      !selectedApplication.course_uuid
+    ) {
       toast.error('Missing application details');
       return;
     }
     decideMutation.mutate(
       {
-        path: { courseUuid: selectedApplication.course_uuid, applicationUuid: selectedApplication.uuid },
+        path: {
+          courseUuid: selectedApplication.course_uuid,
+          applicationUuid: selectedApplication.uuid,
+        },
         query: { action: reviewAction },
         body: { review_notes: reviewNotes },
       },
       {
         onSuccess: () => {
           toast.success(`Application ${reviewAction}d successfully`);
-          qc.invalidateQueries({ queryKey: searchTrainingApplicationsQueryKey({ query: { searchParams: { course_creator_uuid: courseCreator?.uuid as string }, pageable: {} } }) });
+          qc.invalidateQueries({
+            queryKey: searchTrainingApplicationsQueryKey({
+              query: {
+                searchParams: { course_creator_uuid: courseCreator?.uuid as string },
+                pageable: {},
+              },
+            }),
+          });
           setReviewDialogOpen(false);
           setSelectedApplication(null);
         },
-        onError: (error: unknown) => toast.error(getErrorMessage(error) || `Failed to ${reviewAction} application`),
+        onError: (error: unknown) =>
+          toast.error(getErrorMessage(error) || `Failed to ${reviewAction} application`),
       }
     );
   };
 
   const decideProgramMutation = useMutation(decideOnProgramTrainingApplicationMutation());
   const handleSubmitProgramReview = (reviewNotes: string) => {
-    if (!selectedApplication?.uuid || !isProgramApplication(selectedApplication) || !selectedApplication.program_uuid) {
+    if (
+      !selectedApplication?.uuid ||
+      !isProgramApplication(selectedApplication) ||
+      !selectedApplication.program_uuid
+    ) {
       toast.error('Missing application details');
       return;
     }
     decideProgramMutation.mutate(
       {
-        path: { programUuid: selectedApplication.program_uuid, applicationUuid: selectedApplication.uuid },
+        path: {
+          programUuid: selectedApplication.program_uuid,
+          applicationUuid: selectedApplication.uuid,
+        },
         query: { action: reviewAction },
         body: { review_notes: reviewNotes },
       },
       {
         onSuccess: () => {
           toast.success(`Application ${reviewAction}d successfully`);
-          qc.invalidateQueries({ queryKey: searchProgramTrainingApplicationsQueryKey({ query: { searchParams: {}, pageable: {} } }) });
+          qc.invalidateQueries({
+            queryKey: searchProgramTrainingApplicationsQueryKey({
+              query: { searchParams: {}, pageable: {} },
+            }),
+          });
           setReviewDialogOpen(false);
           setSelectedApplication(null);
         },
-        onError: (error: unknown) => toast.error(getErrorMessage(error) || `Failed to ${reviewAction} application`, { duration: 8000 }),
+        onError: (error: unknown) =>
+          toast.error(getErrorMessage(error) || `Failed to ${reviewAction} application`, {
+            duration: 8000,
+          }),
       }
     );
   };
@@ -1395,12 +1563,17 @@ const InstructorsApplicationPage = () => {
     closedCount: stats.revoked + stats.rejected,
     isLoading: applicationsQuery.isLoading,
     applications: filteredApplications,
-    statusFilter, setStatusFilter,
-    applicantTypeFilter, setApplicantTypeFilter,
-    searchValue, setSearchValue,
-    page, setPage,
+    statusFilter,
+    setStatusFilter,
+    applicantTypeFilter,
+    setApplicantTypeFilter,
+    searchValue,
+    setSearchValue,
+    page,
+    setPage,
     totalPages,
-    reviewDialogOpen, setReviewDialogOpen,
+    reviewDialogOpen,
+    setReviewDialogOpen,
     selectedApplication,
     reviewAction,
     handleReview,
@@ -1410,16 +1583,25 @@ const InstructorsApplicationPage = () => {
 
   const programAppProps = {
     type: 'program' as const,
-    stats: { total: programStats.total, pending: programStats.pending, approved: programStats.approved },
+    stats: {
+      total: programStats.total,
+      pending: programStats.pending,
+      approved: programStats.approved,
+    },
     closedCount: programStats.revoked + programStats.rejected,
     isLoading: programApplicationsQuery.isLoading,
     applications: filteredProgramApplications,
-    statusFilter, setStatusFilter,
-    applicantTypeFilter, setApplicantTypeFilter,
-    searchValue, setSearchValue,
-    page, setPage,
+    statusFilter,
+    setStatusFilter,
+    applicantTypeFilter,
+    setApplicantTypeFilter,
+    searchValue,
+    setSearchValue,
+    page,
+    setPage,
     totalPages: programTotalPages,
-    reviewDialogOpen, setReviewDialogOpen,
+    reviewDialogOpen,
+    setReviewDialogOpen,
     selectedApplication,
     reviewAction,
     handleReview,
@@ -1486,10 +1668,11 @@ const InstructorsApplicationPage = () => {
           setSelectedApplicantUuid(applicant.uuid);
           if (window.innerWidth < 1299) setIsMobileDetailsOpen(true);
         }}
-        className={`relative w-full rounded-2xl border p-4 text-left transition-colors ${isSelected
-          ? 'border-primary bg-primary/5 ring-primary/30 shadow-sm ring-1'
-          : 'border-border/60 bg-card hover:bg-muted/40'
-          }`}
+        className={`relative w-full rounded-2xl border p-4 text-left transition-colors ${
+          isSelected
+            ? 'border-primary bg-primary/5 ring-primary/30 shadow-sm ring-1'
+            : 'border-border/60 bg-card hover:bg-muted/40'
+        }`}
       >
         <div className='flex items-start gap-3'>
           <Avatar className='h-11 w-11 shrink-0'>
@@ -1501,20 +1684,14 @@ const InstructorsApplicationPage = () => {
                   : 'bg-accent/10 text-accent-foreground'
               }
             >
-              {applicant.type === 'instructor'
-                ? initials
-                : <Building2 className='h-5 w-5' />}
+              {applicant.type === 'instructor' ? initials : <Building2 className='h-5 w-5' />}
             </AvatarFallback>
           </Avatar>
 
           <div className='min-w-0 flex-1'>
-            <p className='text-foreground truncate text-sm font-semibold'>
-              {applicant.fullName}
-            </p>
+            <p className='text-foreground truncate text-sm font-semibold'>{applicant.fullName}</p>
 
-            <p className='text-muted-foreground mt-0.5 truncate text-xs'>
-              {applicant.subtitle}
-            </p>
+            <p className='text-muted-foreground mt-0.5 truncate text-xs'>{applicant.subtitle}</p>
 
             <div className='mt-2.5 flex items-center justify-between gap-2'>
               <ApplicantTypePill type={applicant.type} />
@@ -1551,13 +1728,17 @@ const InstructorsApplicationPage = () => {
 
       <Card className='overflow-hidden p-0'>
         <div className='flex flex-col min-[1299px]:h-[calc(100vh-190px)] min-[1299px]:flex-row'>
-
           {/* ── Left sidebar ──────────────────────────────────────────────── */}
           <div className='bg-background flex w-full flex-col border-b min-[1299px]:w-[22rem] min-[1299px]:border-r min-[1299px]:border-b-0'>
             <div className='space-y-3 border-b p-4'>
               {/* Mobile: menu + search row */}
               <div className='flex items-center gap-2 min-[1299px]:hidden'>
-                <Button variant='outline' size='icon' className='shrink-0' onClick={() => setIsMobileFiltersOpen(true)}>
+                <Button
+                  variant='outline'
+                  size='icon'
+                  className='shrink-0'
+                  onClick={() => setIsMobileFiltersOpen(true)}
+                >
                   <Menu size={18} />
                 </Button>
                 <div className='relative flex-1'>
@@ -1583,32 +1764,38 @@ const InstructorsApplicationPage = () => {
               </div>
 
               {/* Type toggle: All / Instructors / Organisations */}
-              <div className='flex gap-1 rounded-xl bg-muted/50 p-1'>
-                {(['all', 'instructor', 'organisation'] as ApplicantListTypeFilter[]).map(filter => (
-                  <button
-                    key={filter}
-                    onClick={() => setApplicantListTypeFilter(filter)}
-                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${applicantListTypeFilter === filter
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
+              <div className='bg-muted/50 flex gap-1 rounded-xl p-1'>
+                {(['all', 'instructor', 'organisation'] as ApplicantListTypeFilter[]).map(
+                  filter => (
+                    <button
+                      key={filter}
+                      onClick={() => setApplicantListTypeFilter(filter)}
+                      className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
+                        applicantListTypeFilter === filter
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
                       }`}
-                  >
-                    {filter === 'all' && <Users className='h-3.5 w-3.5' />}
-                    {filter === 'instructor' && <GraduationCap className='h-3.5 w-3.5' />}
-                    {filter === 'organisation' && <Building2 className='h-3.5 w-3.5' />}
-                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                    {filter !== 'all' && (
-                      <span className='text-muted-foreground text-[10px]'>
-                        ({applicants.filter(a => a.type === filter).length})
-                      </span>
-                    )}
-                  </button>
-                ))}
+                    >
+                      {filter === 'all' && <Users className='h-3.5 w-3.5' />}
+                      {filter === 'instructor' && <GraduationCap className='h-3.5 w-3.5' />}
+                      {filter === 'organisation' && <Building2 className='h-3.5 w-3.5' />}
+                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                      {filter !== 'all' && (
+                        <span className='text-muted-foreground text-[10px]'>
+                          ({applicants.filter(a => a.type === filter).length})
+                        </span>
+                      )}
+                    </button>
+                  )
+                )}
               </div>
 
               {/* Desktop: filters row */}
               <div className='hidden gap-2 min-[1299px]:flex'>
-                <Select value={verificationFilter} onValueChange={v => setVerificationFilter(v as typeof verificationFilter)}>
+                <Select
+                  value={verificationFilter}
+                  onValueChange={v => setVerificationFilter(v as typeof verificationFilter)}
+                >
                   <SelectTrigger className='h-9 flex-1 text-sm'>
                     <Filter className='mr-1.5 h-3.5 w-3.5' />
                     <SelectValue placeholder='All statuses' />
@@ -1623,9 +1810,13 @@ const InstructorsApplicationPage = () => {
                   variant='outline'
                   size='sm'
                   className='h-9 shrink-0'
-                  onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
+                  onClick={() => setSortOrder(o => (o === 'asc' ? 'desc' : 'asc'))}
                 >
-                  {sortOrder === 'asc' ? <SortAsc className='h-4 w-4' /> : <SortDesc className='h-4 w-4' />}
+                  {sortOrder === 'asc' ? (
+                    <SortAsc className='h-4 w-4' />
+                  ) : (
+                    <SortDesc className='h-4 w-4' />
+                  )}
                   <span className='ml-1'>Date</span>
                 </Button>
               </div>
@@ -1640,7 +1831,9 @@ const InstructorsApplicationPage = () => {
               {isLoadingApplicants ? (
                 [...Array(3)].map((_, i) => <Skeleton key={i} className='h-20 rounded-2xl' />)
               ) : filteredApplicants.length === 0 ? (
-                <div className='text-muted-foreground py-10 text-center text-sm'>No applicants found</div>
+                <div className='text-muted-foreground py-10 text-center text-sm'>
+                  No applicants found
+                </div>
               ) : (
                 filteredApplicants.map(renderApplicantCard)
               )}
@@ -1662,18 +1855,30 @@ const InstructorsApplicationPage = () => {
                   <h2 className='text-foreground text-2xl font-semibold'>Applicant details</h2>
                 </div>
                 <div className='flex-1 overflow-y-auto p-6'>
-                  <Tabs value={tabs} onValueChange={v => setTabs(v as InstructorTab)} className='gap-6'>
-                    <TabsList className='h-auto w-full justify-start gap-1 rounded-2xl bg-muted/60 p-1'>
+                  <Tabs
+                    value={tabs}
+                    onValueChange={v => setTabs(v as InstructorTab)}
+                    className='gap-6'
+                  >
+                    <TabsList className='bg-muted/60 h-auto w-full justify-start gap-1 rounded-2xl p-1'>
                       {tabOptions.map(o => (
-                        <TabsTrigger key={o.value} value={o.value} className='rounded-xl px-4 py-2.5'>
+                        <TabsTrigger
+                          key={o.value}
+                          value={o.value}
+                          className='rounded-xl px-4 py-2.5'
+                        >
                           {o.label}
                         </TabsTrigger>
                       ))}
                     </TabsList>
 
                     {tabs === 'profile' && <ProfileTabContent {...profileProps} />}
-                    {tabs === 'course-application' && <ApplicationsTabContent {...courseAppProps} />}
-                    {tabs === 'program-application' && <ApplicationsTabContent {...programAppProps} />}
+                    {tabs === 'course-application' && (
+                      <ApplicationsTabContent {...courseAppProps} />
+                    )}
+                    {tabs === 'program-application' && (
+                      <ApplicationsTabContent {...programAppProps} />
+                    )}
                   </Tabs>
                 </div>
               </div>
@@ -1692,9 +1897,15 @@ const InstructorsApplicationPage = () => {
                 {(['all', 'approved', 'pending'] as const).map(v => (
                   <button
                     key={v}
-                    onClick={() => { setVerificationFilter(v); setIsMobileFiltersOpen(false); }}
-                    className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm ${verificationFilter === v ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'
-                      }`}
+                    onClick={() => {
+                      setVerificationFilter(v);
+                      setIsMobileFiltersOpen(false);
+                    }}
+                    className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm ${
+                      verificationFilter === v
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-muted-foreground hover:bg-muted'
+                    }`}
                   >
                     {v === 'all' && <Filter size={15} />}
                     {v === 'approved' && <CheckCircle2 className='text-success' size={15} />}
@@ -1707,19 +1918,41 @@ const InstructorsApplicationPage = () => {
               <Button
                 variant='outline'
                 size='sm'
-                onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
+                onClick={() => setSortOrder(o => (o === 'asc' ? 'desc' : 'asc'))}
                 className='w-full justify-start'
               >
-                {sortOrder === 'asc' ? <SortAsc className='mr-2 h-4 w-4' /> : <SortDesc className='mr-2 h-4 w-4' />}
+                {sortOrder === 'asc' ? (
+                  <SortAsc className='mr-2 h-4 w-4' />
+                ) : (
+                  <SortDesc className='mr-2 h-4 w-4' />
+                )}
                 Sort by date ({sortOrder})
               </Button>
               <Separator />
               <div className='space-y-2 text-sm'>
-                <p className='text-muted-foreground text-xs font-semibold uppercase tracking-wide'>Summary</p>
-                <div className='flex justify-between'><span className='text-muted-foreground'>Total</span><span className='text-foreground font-semibold'>{applicants.length}</span></div>
-                <div className='flex justify-between'><span className='text-muted-foreground'>Instructors</span><span className='text-foreground font-semibold'>{applicants.filter(a => a.type === 'instructor').length}</span></div>
-                <div className='flex justify-between'><span className='text-muted-foreground'>Organisations</span><span className='text-foreground font-semibold'>{applicants.filter(a => a.type === 'organisation').length}</span></div>
-                <div className='flex justify-between'><span className='text-muted-foreground'>Showing</span><span className='text-foreground font-semibold'>{filteredApplicants.length}</span></div>
+                <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+                  Summary
+                </p>
+                <div className='flex justify-between'>
+                  <span className='text-muted-foreground'>Total</span>
+                  <span className='text-foreground font-semibold'>{applicants.length}</span>
+                </div>
+                <div className='flex justify-between'>
+                  <span className='text-muted-foreground'>Instructors</span>
+                  <span className='text-foreground font-semibold'>
+                    {applicants.filter(a => a.type === 'instructor').length}
+                  </span>
+                </div>
+                <div className='flex justify-between'>
+                  <span className='text-muted-foreground'>Organisations</span>
+                  <span className='text-foreground font-semibold'>
+                    {applicants.filter(a => a.type === 'organisation').length}
+                  </span>
+                </div>
+                <div className='flex justify-between'>
+                  <span className='text-muted-foreground'>Showing</span>
+                  <span className='text-foreground font-semibold'>{filteredApplicants.length}</span>
+                </div>
               </div>
             </div>
           </SheetContent>
@@ -1727,32 +1960,32 @@ const InstructorsApplicationPage = () => {
 
         {/* ── Mobile: details sheet ─────────────────────────────────────────── */}
         <Sheet open={isMobileDetailsOpen} onOpenChange={setIsMobileDetailsOpen}>
-          <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
+          <SheetContent side='right' className='w-full overflow-y-auto sm:max-w-2xl'>
             <SheetHeader>
               <SheetTitle>Applicant details</SheetTitle>
             </SheetHeader>
 
-            <div className="mt-4 px-4 pb-8">
+            <div className='mt-4 px-4 pb-8'>
               {selectedApplicantUuid && (
-                <Tabs value={tabs} onValueChange={setTabs} className="w-full">
+                <Tabs value={tabs} onValueChange={setTabs} className='w-full'>
                   {/* Tab triggers */}
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="profile">Profile</TabsTrigger>
-                    <TabsTrigger value="course-application">Course</TabsTrigger>
-                    <TabsTrigger value="program-application">Program</TabsTrigger>
+                  <TabsList className='grid w-full grid-cols-3'>
+                    <TabsTrigger value='profile'>Profile</TabsTrigger>
+                    <TabsTrigger value='course-application'>Course</TabsTrigger>
+                    <TabsTrigger value='program-application'>Program</TabsTrigger>
                   </TabsList>
 
                   {/* Tab contents */}
-                  <div className="mt-4">
-                    <TabsContent value="profile">
+                  <div className='mt-4'>
+                    <TabsContent value='profile'>
                       <ProfileTabContent {...profileProps} />
                     </TabsContent>
 
-                    <TabsContent value="course-application">
+                    <TabsContent value='course-application'>
                       <ApplicationsTabContent {...courseAppProps} />
                     </TabsContent>
 
-                    <TabsContent value="program-application">
+                    <TabsContent value='program-application'>
                       <ApplicationsTabContent {...programAppProps} />
                     </TabsContent>
                   </div>
@@ -1761,7 +1994,6 @@ const InstructorsApplicationPage = () => {
             </div>
           </SheetContent>
         </Sheet>
-
       </Card>
     </div>
   );

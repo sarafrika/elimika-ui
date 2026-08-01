@@ -98,7 +98,9 @@ export function SchedulerRightRail({
   );
 
   const visibleSchedule = dayEvents.slice(0, 5);
-  const visibleInstructors = showAllInstructors ? allInstructors : dayInstructorSummaries.slice(0, 5);
+  const visibleInstructors = showAllInstructors
+    ? allInstructors
+    : dayInstructorSummaries.slice(0, 5);
 
   const dayClassDefinitionUuids = useMemo(
     () => new Set(dayEvents.map(event => event.classDefinitionUuid).filter(Boolean)),
@@ -109,7 +111,9 @@ export function SchedulerRightRail({
     () =>
       uniqueBy(
         students.filter(student =>
-          student.classDefinitionUuid ? dayClassDefinitionUuids.has(student.classDefinitionUuid) : true
+          student.classDefinitionUuid
+            ? dayClassDefinitionUuids.has(student.classDefinitionUuid)
+            : true
         ),
         student => student.studentEnrollmentKey || student.uuid
       ),
@@ -187,7 +191,9 @@ export function SchedulerRightRail({
                   <div className='text-muted-foreground mb-1 truncate text-[11px] font-bold'>
                     {event.course}
                   </div>
-                  <div className='text-foreground truncate text-xs font-semibold'>{event.title}</div>
+                  <div className='text-foreground truncate text-xs font-semibold'>
+                    {event.title}
+                  </div>
 
                   <div className='text-muted-foreground truncate text-[11px]'>
                     {joinParts([event.instructor, event.location])}
@@ -211,58 +217,66 @@ export function SchedulerRightRail({
         </div>
       </section>
 
-      {(profile === "organization" || profile === "admin") && <section className='bg-card w-full min-w-0 rounded-md border p-3 shadow-sm'>
-        <div className='mb-2 flex items-center justify-between gap-3'>
-          <h2 className='text-foreground text-sm font-semibold'>Instructors</h2>
-          <div className='flex items-center gap-2'>
-            <span className='text-muted-foreground text-xs'>
-              {showAllInstructors ? `${visibleInstructors.length} shown` : `${Math.min(visibleInstructors.length, 5)} shown`}
-            </span>
-            <Button variant='ghost' size='sm' className='h-7 px-2 text-xs' onClick={onToggleInstructors}>
-              {showAllInstructors ? 'See today' : 'See all'}
-            </Button>
-          </div>
-        </div>
-
-        <div
-          className={
-            showAllInstructors
-              ? 'grid max-h-72 grid-cols-1 gap-2 overflow-y-auto w-full pr-1 '
-              : 'grid grid-cols-1 gap-2 w-full'
-          }
-        >
-          {visibleInstructors.length === 0 ? (
-            <p className='text-muted-foreground bg-muted/30 rounded-md border border-dashed p-3 text-xs w-full'>
-              No visible instructors
-            </p>
-          ) : (
-            visibleInstructors.map(instructor => (
-              <div
-                key={instructor.uuid}
-                className='bg-muted/40 flex min-w-0 items-center gap-2 rounded-md p-2 w-full'
+      {(profile === 'organization' || profile === 'admin') && (
+        <section className='bg-card w-full min-w-0 rounded-md border p-3 shadow-sm'>
+          <div className='mb-2 flex items-center justify-between gap-3'>
+            <h2 className='text-foreground text-sm font-semibold'>Instructors</h2>
+            <div className='flex items-center gap-2'>
+              <span className='text-muted-foreground text-xs'>
+                {showAllInstructors
+                  ? `${visibleInstructors.length} shown`
+                  : `${Math.min(visibleInstructors.length, 5)} shown`}
+              </span>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-7 px-2 text-xs'
+                onClick={onToggleInstructors}
               >
-                <Avatar className='h-8 w-8 border'>
-                  <AvatarImage src={instructor.avatarUrl} />
-                  <AvatarFallback className='text-[10px]'>
-                    {makeInitials(instructor.fullName)}
-                  </AvatarFallback>
-                </Avatar>
+                {showAllInstructors ? 'See today' : 'See all'}
+              </Button>
+            </div>
+          </div>
 
-                <div className='min-w-0'>
-                  <span className='text-foreground block truncate text-xs font-medium'>
-                    {instructor.fullName}
-                  </span>
+          <div
+            className={
+              showAllInstructors
+                ? 'grid max-h-72 w-full grid-cols-1 gap-2 overflow-y-auto pr-1'
+                : 'grid w-full grid-cols-1 gap-2'
+            }
+          >
+            {visibleInstructors.length === 0 ? (
+              <p className='text-muted-foreground bg-muted/30 w-full rounded-md border border-dashed p-3 text-xs'>
+                No visible instructors
+              </p>
+            ) : (
+              visibleInstructors.map(instructor => (
+                <div
+                  key={instructor.uuid}
+                  className='bg-muted/40 flex w-full min-w-0 items-center gap-2 rounded-md p-2'
+                >
+                  <Avatar className='h-8 w-8 border'>
+                    <AvatarImage src={instructor.avatarUrl} />
+                    <AvatarFallback className='text-[10px]'>
+                      {makeInitials(instructor.fullName)}
+                    </AvatarFallback>
+                  </Avatar>
 
-                  <span className='text-muted-foreground block truncate text-[10px]'>
-                    {instructor.subtitle || "Attached to today's classes"}
-                  </span>
+                  <div className='min-w-0'>
+                    <span className='text-foreground block truncate text-xs font-medium'>
+                      {instructor.fullName}
+                    </span>
+
+                    <span className='text-muted-foreground block truncate text-[10px]'>
+                      {instructor.subtitle || "Attached to today's classes"}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>}
-
+              ))
+            )}
+          </div>
+        </section>
+      )}
 
       <section className='bg-card w-full min-w-0 rounded-md border p-3 shadow-sm'>
         <div className='mb-2 flex items-center justify-between gap-3'>
@@ -337,18 +351,15 @@ export function SchedulerRightRail({
           </div>
         </div>
         <div
-          className={
-            showAllLocations
-              ? 'grid max-h-72 gap-2 overflow-y-auto pr-1'
-              : 'space-y-2'
-          }
+          className={showAllLocations ? 'grid max-h-72 gap-2 overflow-y-auto pr-1' : 'space-y-2'}
         >
           {visibleLocations.length ? (
             visibleLocations.map(location => (
-              <div key={`${location.label}-${location.detail}`} className='bg-muted/40 rounded-md p-2'>
-                <p className='text-foreground truncate text-sm font-semibold'>
-                  {location.detail}
-                </p>
+              <div
+                key={`${location.label}-${location.detail}`}
+                className='bg-muted/40 rounded-md p-2'
+              >
+                <p className='text-foreground truncate text-sm font-semibold'>{location.detail}</p>
                 <div className='flex items-center gap-2'>
                   <p className='text-muted-foreground truncate text-xs'>{location.label}</p>
                   {location.meetingLink ? (
@@ -383,15 +394,21 @@ export function SchedulerRightRail({
         </div>
         <div className='flex gap-2'>
           <Input value={shareUrl} readOnly className='h-9 text-xs' />
-          <Button variant='outline' size='icon' className='h-9 w-9 shrink-0' onClick={copyShareLink}>
+          <Button
+            variant='outline'
+            size='icon'
+            className='h-9 w-9 shrink-0'
+            onClick={copyShareLink}
+          >
             <Copy className='h-4 w-4' />
           </Button>
         </div>
         <p className='text-muted-foreground mt-2 text-[11px]'>
-          {shareFeedback === 'copied' ? 'Calendar link copied.' : 'Share this calendar page with collaborators.'}
+          {shareFeedback === 'copied'
+            ? 'Calendar link copied.'
+            : 'Share this calendar page with collaborators.'}
         </p>
       </section>
-
     </aside>
   );
 }

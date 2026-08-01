@@ -26,7 +26,9 @@ import { PdfPreview } from './PdfPreview';
 import { StatusBadge } from './StatusBadge';
 
 function resolvePreview(document: CredentialDocument): string | undefined {
-  return document.fileUrl ? toAuthenticatedMediaUrl(document.fileUrl) || document.fileUrl : undefined;
+  return document.fileUrl
+    ? toAuthenticatedMediaUrl(document.fileUrl) || document.fileUrl
+    : undefined;
 }
 
 /** A single document card with preview, status, and a "Review & verify" action. */
@@ -41,25 +43,31 @@ export function CredentialDocumentCard({
 }) {
   const previewUrl = resolvePreview(document);
   return (
-    <div className='flex flex-col overflow-hidden rounded-md border border-border/70 bg-card shadow-sm'>
+    <div className='border-border/70 bg-card flex flex-col overflow-hidden rounded-md border shadow-sm'>
       {previewUrl ? (
-        <PdfPreview documentUrl={previewUrl} documentTitle={document.documentTypeLabel} height={170} />
+        <PdfPreview
+          documentUrl={previewUrl}
+          documentTitle={document.documentTypeLabel}
+          height={170}
+        />
       ) : (
-        <div className='flex h-[170px] items-center justify-center border-b border-border/60 bg-muted/20 text-sm text-muted-foreground'>
+        <div className='border-border/60 bg-muted/20 text-muted-foreground flex h-[170px] items-center justify-center border-b text-sm'>
           No preview
         </div>
       )}
       <div className='flex flex-1 flex-col gap-3 p-4'>
         <div className='flex items-start justify-between gap-2'>
           <div className='min-w-0'>
-            <p className='truncate text-sm font-medium text-foreground'>{document.documentTypeLabel}</p>
-            <p className='truncate text-xs text-muted-foreground'>
+            <p className='text-foreground truncate text-sm font-medium'>
+              {document.documentTypeLabel}
+            </p>
+            <p className='text-muted-foreground truncate text-xs'>
               {showOwner ? document.ownerName : document.title}
             </p>
           </div>
           <StatusBadge tone={document.statusTone} label={document.statusLabel} />
         </div>
-        <p className='text-xs text-muted-foreground'>
+        <p className='text-muted-foreground text-xs'>
           {document.roleLabel} · {document.fileSize ?? 'Unknown size'}
           {document.uploadedAt ? ` · ${document.uploadedAt}` : ''}
         </p>
@@ -133,7 +141,7 @@ export function CredentialReviewDialog({
             </DialogHeader>
 
             {previewUrl ? (
-              <div className='overflow-hidden rounded-md border border-border/70'>
+              <div className='border-border/70 overflow-hidden rounded-md border'>
                 <PdfPreview documentUrl={previewUrl} documentTitle={document.title} fullHeight />
               </div>
             ) : null}
@@ -149,8 +157,8 @@ export function CredentialReviewDialog({
             </div>
 
             {document.notes ? (
-              <div className='rounded-md border border-dashed border-border/60 bg-muted/20 p-3 text-sm'>
-                <p className='font-medium text-foreground'>Existing notes</p>
+              <div className='border-border/60 bg-muted/20 rounded-md border border-dashed p-3 text-sm'>
+                <p className='text-foreground font-medium'>Existing notes</p>
                 <p className='text-muted-foreground'>{document.notes}</p>
               </div>
             ) : null}
@@ -175,7 +183,11 @@ export function CredentialReviewDialog({
               ) : null}
               <Button onClick={handleVerify} disabled={isPending || document.isVerified}>
                 <ShieldCheck className='size-4' />
-                {document.isVerified ? 'Already verified' : isPending ? 'Verifying…' : 'Verify document'}
+                {document.isVerified
+                  ? 'Already verified'
+                  : isPending
+                    ? 'Verifying…'
+                    : 'Verify document'}
               </Button>
             </DialogFooter>
           </>

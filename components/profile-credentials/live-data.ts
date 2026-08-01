@@ -85,7 +85,8 @@ function getFirstValue(...values: Array<string | undefined | null>) {
 function formatYearValue(value?: number | string | Date | null) {
   if (value === null || value === undefined || value === '') return undefined;
   if (typeof value === 'number') return `${value}`;
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? undefined : `${value.getFullYear()}`;
+  if (value instanceof Date)
+    return Number.isNaN(value.getTime()) ? undefined : `${value.getFullYear()}`;
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? String(value) : `${parsed.getFullYear()}`;
 }
@@ -122,8 +123,8 @@ function buildEducationDetails(education?: InstructorEducation | CourseCreatorEd
       label: 'Completed',
       value: String(
         record.formatted_completion ||
-        formatYearValue(record.year_completed as number | string | Date | null) ||
-        'Not specified'
+          formatYearValue(record.year_completed as number | string | Date | null) ||
+          'Not specified'
       ),
     },
     {
@@ -151,8 +152,10 @@ function buildMembershipDetails(
       : typeof record.status_label === 'string'
         ? record.status_label
         : undefined;
-  const membershipNumber = typeof record.membership_number === 'string' ? record.membership_number : undefined;
-  const membershipPeriod = typeof record.membership_period === 'string' ? record.membership_period : undefined;
+  const membershipNumber =
+    typeof record.membership_number === 'string' ? record.membership_number : undefined;
+  const membershipPeriod =
+    typeof record.membership_period === 'string' ? record.membership_period : undefined;
   const isActive = typeof record.is_active === 'boolean' ? record.is_active : undefined;
 
   return [
@@ -174,19 +177,16 @@ function buildMembershipDetails(
     },
     {
       label: 'Status',
-      value:
-        statusLabel ||
-        (isActive ? 'Active' : 'Inactive'),
+      value: statusLabel || (isActive ? 'Active' : 'Inactive'),
     },
   ];
 }
 
-function buildExperienceDetails(
-  experience?: InstructorExperience | CourseCreatorExperience
-) {
+function buildExperienceDetails(experience?: InstructorExperience | CourseCreatorExperience) {
   if (!experience) return [];
 
-  const responsibilities = 'responsibilities' in experience ? experience.responsibilities : undefined;
+  const responsibilities =
+    'responsibilities' in experience ? experience.responsibilities : undefined;
   return [
     { label: 'Position', value: String(experience.position || 'Not specified') },
     { label: 'Organisation', value: String(experience.organisation_name || 'Not specified') },
@@ -194,7 +194,11 @@ function buildExperienceDetails(
       label: 'Period',
       value:
         ('tenure_label' in experience ? experience.tenure_label : undefined) ||
-        formatDateRange(experience.start_date, experience.end_date, experience.is_current_position) ||
+        formatDateRange(
+          experience.start_date,
+          experience.end_date,
+          experience.is_current_position
+        ) ||
         'Not specified',
     },
     {
@@ -218,7 +222,10 @@ function getLinkedRecordData({
 }: {
   document: LinkedDocument;
   educationMap?: Map<string, InstructorEducation | CourseCreatorEducation>;
-  membershipMap?: Map<string, InstructorProfessionalMembership | CourseCreatorProfessionalMembership>;
+  membershipMap?: Map<
+    string,
+    InstructorProfessionalMembership | CourseCreatorProfessionalMembership
+  >;
   experienceMap?: Map<string, InstructorExperience | CourseCreatorExperience>;
 }) {
   const educationUuid = document.education_uuid;
@@ -364,7 +371,7 @@ function getCertificateStatus(certificate: StudentCertificate) {
 }
 
 function getCertificateCompletionTimestamp(certificate: StudentCertificate) {
-  return certificate.completion_date
+  return certificate.completion_date;
 }
 function getCertificateIssueTimestamp(certificate: StudentCertificate) {
   return certificate.issued_date ?? certificate.created_date;
@@ -382,7 +389,10 @@ function getCertificateLabel(certificate: StudentCertificate) {
 }
 
 function getCertificateIssuer(certificate: StudentCertificate) {
-  return getFirstValue(certificate.certificate_type, certificate.template_uuid, 'Certificate') ?? 'Certificate';
+  return (
+    getFirstValue(certificate.certificate_type, certificate.template_uuid, 'Certificate') ??
+    'Certificate'
+  );
 }
 
 function mapCertificateItems(
@@ -436,17 +446,13 @@ function mapCertificateItems(
       const issueTimeStamp = getCertificateIssueTimestamp(certificate);
 
       const credentialName =
-        certificate.course?.name ??
-        certificate.program?.title ??
-        getCertificateLabel(certificate);
+        certificate.course?.name ?? certificate.program?.title ?? getCertificateLabel(certificate);
 
-      const issuer =
-        certificate.course?.course_creator_uuid
-          ? 'Course Creator'
-          : certificate.program?.title
-            ? 'Training Program'
-            : getCertificateIssuer(certificate);
-
+      const issuer = certificate.course?.course_creator_uuid
+        ? 'Course Creator'
+        : certificate.program?.title
+          ? 'Training Program'
+          : getCertificateIssuer(certificate);
 
       return {
         id: certificate.uuid as string,
@@ -454,12 +460,10 @@ function mapCertificateItems(
         title: credentialName,
         // Updated issuer
         issuer,
-        issuerIconText:
-          getInitials(issuer).slice(0, 1) || 'C',
+        issuerIconText: getInitials(issuer).slice(0, 1) || 'C',
 
         completionLabel: `Completed ${formatLongDate(completedTimeStamp)}`,
         issueLabel: `Issued ${formatLongDate(issueTimeStamp)}`,
-
 
         level: status.stage,
 
@@ -467,32 +471,18 @@ function mapCertificateItems(
 
         statusIcon: status.icon,
 
-        actionLabel: certificate.certificate_url
-          ? 'View'
-          : 'Details',
-
+        actionLabel: certificate.certificate_url ? 'View' : 'Details',
 
         documentLabel:
-          certificate.certificate_number ??
-          credentialName ??
-          certificate.template_uuid,
+          certificate.certificate_number ?? credentialName ?? certificate.template_uuid,
 
-        documentUrl: getFirstValue(
-          certificate.certificate_url,
-          undefined
-        ),
+        documentUrl: getFirstValue(certificate.certificate_url, undefined),
 
-        metadata: certificate.final_grade
-          ? `${certificate.final_grade}%`
-          : undefined,
+        metadata: certificate.final_grade ? `${certificate.final_grade}%` : undefined,
 
-        timestamp: issueTimeStamp
-          ? new Date(issueTimeStamp).getTime()
-          : undefined,
+        timestamp: issueTimeStamp ? new Date(issueTimeStamp).getTime() : undefined,
 
-        completedDate: completedTimeStamp
-          ? new Date(completedTimeStamp).getTime()
-          : undefined,
+        completedDate: completedTimeStamp ? new Date(completedTimeStamp).getTime() : undefined,
 
         // optional: expose original learning object
         course: certificate.course,
@@ -513,10 +503,7 @@ function getDocumentStatus(document: CredentialsDocument) {
     'is_pending_verification' in document ? document.is_pending_verification : undefined;
   const verified = document.is_verified || verificationStatus === 'VERIFIED';
   const rejected = verificationStatus === 'REJECTED';
-  const pending =
-    verificationStatus === 'PENDING' ||
-    isPendingVerification ||
-    !verificationStatus;
+  const pending = verificationStatus === 'PENDING' || isPendingVerification || !verificationStatus;
 
   if (verified) {
     return {
@@ -612,7 +599,8 @@ function mapCredentialItems(
         id: document.uuid ?? `${document.document_type_uuid}-${document.original_filename}`,
         title: label,
         issuer: getDocumentTypeText(document, documentTypes),
-        issuerIconText: getInitials(getDocumentTypeText(document, documentTypes)).slice(0, 1) || 'D',
+        issuerIconText:
+          getInitials(getDocumentTypeText(document, documentTypes)).slice(0, 1) || 'D',
         stage: `Uploaded ${formatLongDate(stageDate)}`,
         level: status.stage,
         status: status.label,
@@ -638,7 +626,10 @@ function mapLinkedCredentialItems({
   documents: LinkedDocument[];
   documentTypes: DocumentTypeOption[];
   educationMap?: Map<string, InstructorEducation | CourseCreatorEducation>;
-  membershipMap?: Map<string, InstructorProfessionalMembership | CourseCreatorProfessionalMembership>;
+  membershipMap?: Map<
+    string,
+    InstructorProfessionalMembership | CourseCreatorProfessionalMembership
+  >;
   experienceMap?: Map<string, InstructorExperience | CourseCreatorExperience>;
   searchValue?: string;
   statusFilter?: CredentialsStatusFilter;
@@ -647,7 +638,8 @@ function mapLinkedCredentialItems({
 
   return baseItems.map(item => {
     const sourceDocument = documents.find(document => {
-      const candidateUuid = document.uuid ?? `${document.document_type_uuid}-${document.original_filename}`;
+      const candidateUuid =
+        document.uuid ?? `${document.document_type_uuid}-${document.original_filename}`;
       return candidateUuid === item.id || document.original_filename === item.documentLabel;
     });
 
@@ -662,10 +654,7 @@ function mapLinkedCredentialItems({
 
     return {
       ...item,
-      documentUuid:
-        sourceDocument.uuid ||
-        item.id ||
-        undefined,
+      documentUuid: sourceDocument.uuid || item.id || undefined,
       recordKind: linked.recordKind,
       recordUuid: linked.recordUuid,
       recordSummary: linked.recordSummary,
@@ -679,7 +668,15 @@ function mapLinkedCredentialItems({
 }
 
 function buildTimelineItems(items: CredentialItem[]): GrowthItem[] {
-  const timelineIcons = [GraduationCap, BriefcaseBusiness, Building2, WalletCards, Cloud, Globe, Star];
+  const timelineIcons = [
+    GraduationCap,
+    BriefcaseBusiness,
+    Building2,
+    WalletCards,
+    Cloud,
+    Globe,
+    Star,
+  ];
 
   return items
     .filter(item => item.level === 'Verified' || !!item.recordKind)
@@ -712,8 +709,11 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
   const courseCreator = profile?.courseCreator;
   const organisation = profile?.organizations?.[0];
   const displayName =
-    getFirstValue(user?.full_name, user?.display_name, user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : undefined) ??
-    'Profile';
+    getFirstValue(
+      user?.full_name,
+      user?.display_name,
+      user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : undefined
+    ) ?? 'Profile';
   const initials = getInitials(displayName);
 
   if (role === 'instructor') {
@@ -734,7 +734,8 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
   if (role === 'course_creator') {
     return {
       name: getFirstValue(courseCreator?.full_name, displayName) ?? displayName,
-      title: getFirstValue(courseCreator?.professional_headline, 'Course Creator') ?? 'Course Creator',
+      title:
+        getFirstValue(courseCreator?.professional_headline, 'Course Creator') ?? 'Course Creator',
       profileImageUrl: user?.profile_image_url ?? undefined,
       website: getFirstValue(courseCreator?.website, 'Website not set') ?? 'Website not set',
       email: user?.email ?? 'Email not set',
@@ -751,9 +752,13 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
 
     return {
       name: organisationName,
-      title: getFirstValue(organisation?.description, 'Training Organisation') ?? 'Training Organisation',
+      title:
+        getFirstValue(organisation?.description, 'Training Organisation') ??
+        'Training Organisation',
       profileImageUrl: user?.profile_image_url ?? undefined,
-      website: getFirstValue(organisation?.location, organisation?.country, 'Location not set') ?? 'Location not set',
+      website:
+        getFirstValue(organisation?.location, organisation?.country, 'Location not set') ??
+        'Location not set',
       email: user?.email ?? 'Email not set',
       phone: getFirstValue(user?.phone_number, 'Phone not set') ?? 'Phone not set',
       joined: formatMonthYear(organisation?.created_date ?? user?.created_date),
@@ -817,8 +822,8 @@ function filterFallbackContentWithStatus(
           const matchesSearch = !hasSearchFilter
             ? true
             : [item.title, item.issuer, item.status, item.documentLabel].some(value =>
-              value.toLowerCase().includes(filter)
-            );
+                value.toLowerCase().includes(filter)
+              );
 
           if (!matchesSearch) return false;
 
@@ -826,7 +831,8 @@ function filterFallbackContentWithStatus(
 
           const statusText = item.status.toLowerCase();
           if (statusFilter === 'verified') return statusText.includes('verified');
-          if (statusFilter === 'pending') return statusText.includes('pending') || statusText.includes('review');
+          if (statusFilter === 'pending')
+            return statusText.includes('pending') || statusText.includes('review');
           if (statusFilter === 'rejected') return statusText.includes('rejected');
 
           return true;
@@ -853,8 +859,8 @@ export function buildCredentialsContent({
   role: CredentialsRole;
   profile?: UserProfileType;
   documents?: CredentialsDocument[];
-  courseMap?: Record<string, Course>,
-  programMap?: Record<string, TrainingProgram>,
+  courseMap?: Record<string, Course>;
+  programMap?: Record<string, TrainingProgram>;
   certificates?: StudentCertificate[];
   educationRecords?: Array<InstructorEducation | CourseCreatorEducation>;
   membershipRecords?: Array<InstructorProfessionalMembership | CourseCreatorProfessionalMembership>;
@@ -868,12 +874,8 @@ export function buildCredentialsContent({
   const liveCertificates = (certificates ?? []).filter(Boolean);
   const certificatesWithContent = liveCertificates.map(certificate => ({
     ...certificate,
-    course: certificate.course_uuid
-      ? courseMap?.[certificate.course_uuid]
-      : undefined,
-    program: certificate.program_uuid
-      ? programMap?.[certificate.program_uuid]
-      : undefined,
+    course: certificate.course_uuid ? courseMap?.[certificate.course_uuid] : undefined,
+    program: certificate.program_uuid ? programMap?.[certificate.program_uuid] : undefined,
   }));
 
   const educationMap = new Map(
@@ -897,24 +899,27 @@ export function buildCredentialsContent({
     role === 'student'
       ? mapCredentialItems(liveDocuments, types, searchValue, statusFilter)
       : mapLinkedCredentialItems({
-        documents: linkedDocuments,
-        documentTypes: types,
-        educationMap,
-        membershipMap,
-        experienceMap,
-        searchValue,
-        statusFilter,
-      });
+          documents: linkedDocuments,
+          documentTypes: types,
+          educationMap,
+          membershipMap,
+          experienceMap,
+          searchValue,
+          statusFilter,
+        });
   const verifiedItems = liveItems.filter(item => item.status.includes('Verified'));
   const groupedByTab = fallback.tabs.reduce<Record<CredentialsTabId, CredentialItem[]>>(
     (acc, tab) => {
       acc[tab.id as CredentialsTabId] = liveItems.filter(item => {
-        const normalized = `${item.title} ${item.issuer} ${item.status} ${item.documentLabel}`.toLowerCase();
+        const normalized =
+          `${item.title} ${item.issuer} ${item.status} ${item.documentLabel}`.toLowerCase();
 
         if (tab.id === 'all') return true;
-        if (tab.id === 'blockchain') return blockchainKeywords.some(keyword => normalized.includes(keyword));
+        if (tab.id === 'blockchain')
+          return blockchainKeywords.some(keyword => normalized.includes(keyword));
         if (tab.id === 'badges') return badgeKeywords.some(keyword => normalized.includes(keyword));
-        if (tab.id === 'certificates') return certificateKeywords.some(keyword => normalized.includes(keyword));
+        if (tab.id === 'certificates')
+          return certificateKeywords.some(keyword => normalized.includes(keyword));
 
         return true;
       });
@@ -954,12 +959,16 @@ export function buildCredentialsContent({
     const groupedByTab = fallback.tabs.reduce<Record<CredentialsTabId, CredentialItem[]>>(
       (acc, tab) => {
         acc[tab.id as CredentialsTabId] = certificateItems.filter(item => {
-          const normalized = `${item.title} ${item.issuer} ${item.status} ${item.documentLabel}`.toLowerCase();
+          const normalized =
+            `${item.title} ${item.issuer} ${item.status} ${item.documentLabel}`.toLowerCase();
 
           if (tab.id === 'all') return true;
-          if (tab.id === 'blockchain') return blockchainKeywords.some(keyword => normalized.includes(keyword));
-          if (tab.id === 'badges') return badgeKeywords.some(keyword => normalized.includes(keyword));
-          if (tab.id === 'certificates') return certificateKeywords.some(keyword => normalized.includes(keyword));
+          if (tab.id === 'blockchain')
+            return blockchainKeywords.some(keyword => normalized.includes(keyword));
+          if (tab.id === 'badges')
+            return badgeKeywords.some(keyword => normalized.includes(keyword));
+          if (tab.id === 'certificates')
+            return certificateKeywords.some(keyword => normalized.includes(keyword));
 
           return true;
         });

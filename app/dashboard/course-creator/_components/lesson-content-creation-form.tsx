@@ -40,13 +40,13 @@ import {
   getAllContentTypesOptions,
   getLessonContentQueryKey,
   updateLessonContentMutation,
-  uploadLessonMediaMutation
+  uploadLessonMediaMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type {
   ApiResponseCourse,
   Lesson,
   LessonContent,
-  PagedDtoLesson
+  PagedDtoLesson,
 } from '../../../../services/client/types.gen';
 import { ContentItem } from '../../instructor/trainings/overview/[id]/page';
 import { PracticeActivityManager } from './practice-activity-management';
@@ -119,7 +119,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
     },
   });
 
-  const watchedType = useWatch({ control: contentForm.control, name: 'content_type', });
+  const watchedType = useWatch({ control: contentForm.control, name: 'content_type' });
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [lessonContents, setLessonContents] = useState<LessonContentFormItem[]>([]);
@@ -379,7 +379,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const getContentIcon = (type: string) => {
@@ -459,10 +459,11 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`-mb-px border-b-2 px-4 py-2 transition-colors ${activeTab === tab
-                  ? 'border-primary text-primary font-semibold'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={`-mb-px border-b-2 px-4 py-2 transition-colors ${
+                  activeTab === tab
+                    ? 'border-primary text-primary font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
               >
                 {tab}
               </button>
@@ -513,10 +514,11 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                             )}
                           >
                             <div
-                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${selectedContentId === content.uuid
-                                ? 'bg-primary/20 text-primary'
-                                : 'bg-background text-muted-foreground'
-                                }`}
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                                selectedContentId === content.uuid
+                                  ? 'bg-primary/20 text-primary'
+                                  : 'bg-background text-muted-foreground'
+                              }`}
                             >
                               {getContentIcon(content.content_type_key ?? 'TEXT')}
                             </div>
@@ -578,7 +580,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
 
                       {(enrichedLessonContentsMap.get(activeLessonId)?.length ?? 0) === 0 &&
                         !showContentForm && (
-                          <div className='bg-muted border-border rounded-lg border-2 border-dashed px-4 space-y-4 py-16 text-center'>
+                          <div className='bg-muted border-border space-y-4 rounded-lg border-2 border-dashed px-4 py-16 text-center'>
                             <p className='text-foreground font-medium'>No lesson content yet</p>
                             <p className='text-muted-foreground mt-1 text-sm'>
                               Click <span className='font-semibold'>"Add New Content"</span> to get
@@ -911,12 +913,12 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                 )}
               </CardContent>
 
-              {(enrichedLessonContentsMap.get(activeLessonId as string) || [])?.length > 0 &&
-                <div className="flex justify-end w-full mt-3">
+              {(enrichedLessonContentsMap.get(activeLessonId as string) || [])?.length > 0 && (
+                <div className='mt-3 flex w-full justify-end'>
                   {activeLessonId && (
                     <Button
-                      size="sm"
-                      variant="outline"
+                      size='sm'
+                      variant='outline'
                       onClick={() => {
                         resetContentForm();
                         setShowContentForm(true);
@@ -925,8 +927,8 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                       <PlusCircle /> Add New Content
                     </Button>
                   )}
-                </div>}
-
+                </div>
+              )}
             </div>
           )}
 

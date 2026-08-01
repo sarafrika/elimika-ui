@@ -55,7 +55,12 @@ export function OverviewGettingStarted() {
   const classCount = (classesQuery.data?.data ?? []).length;
 
   const steps: GettingStartedStep[] = [
-    { key: 'account', label: 'Create organisation account', href: '/dashboard/organisation/account', done: enabled },
+    {
+      key: 'account',
+      label: 'Create organisation account',
+      href: '/dashboard/organisation/account',
+      done: enabled,
+    },
     {
       key: 'verify',
       label: 'Get verified',
@@ -74,7 +79,12 @@ export function OverviewGettingStarted() {
       href: '/dashboard/organisation/instructors',
       done: instructorCount > 0,
     },
-    { key: 'classes', label: 'Create classes', href: '/dashboard/organisation/classes', done: classCount > 0 },
+    {
+      key: 'classes',
+      label: 'Create classes',
+      href: '/dashboard/organisation/classes',
+      done: classCount > 0,
+    },
     {
       key: 'students',
       label: 'Invite students',

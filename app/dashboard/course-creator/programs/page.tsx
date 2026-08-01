@@ -19,7 +19,9 @@ const ProgramsPage = () => {
 
   const handleEdit = (program: Pick<TrainingProgram, 'uuid'>) => {
     if (!program.uuid) return;
-    router.push(`/dashboard/course-creator/course-management/create-new-program?id=${program.uuid}`);
+    router.push(
+      `/dashboard/course-creator/course-management/create-new-program?id=${program.uuid}`
+    );
   };
 
   const handlePreview = (programUuid: string) => {

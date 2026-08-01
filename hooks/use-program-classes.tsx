@@ -15,8 +15,8 @@ import type { ProgramBundledClass } from '../src/features/dashboard/courses/type
 
 type StudentLike =
   | {
-    uuid?: string | null;
-  }
+      uuid?: string | null;
+    }
   | null
   | undefined;
 
@@ -64,7 +64,10 @@ function useProgramBundledClassInfo(
   // Fetch schedules for each class
   const scheduleQueries = useQueries({
     queries: classes.map(cls => ({
-      ...getClassScheduleOptions({ path: { uuid: cls.uuid as string }, query: { pageable: { size: 1000 } } }),
+      ...getClassScheduleOptions({
+        path: { uuid: cls.uuid as string },
+        query: { pageable: { size: 1000 } },
+      }),
       enabled: !!cls.uuid,
     })),
   });

@@ -6,7 +6,10 @@ type WorkspaceClassEnrollPageProps = {
   searchParams: Promise<{ id?: string }>;
 };
 
-export default async function WorkspaceClassEnrollPage({ params, searchParams }: WorkspaceClassEnrollPageProps) {
+export default async function WorkspaceClassEnrollPage({
+  params,
+  searchParams,
+}: WorkspaceClassEnrollPageProps) {
   const { domain, id } = await params;
   const { id: classId } = await searchParams;
   const normalizedDomain = normalizeStoredUserDomain(domain);

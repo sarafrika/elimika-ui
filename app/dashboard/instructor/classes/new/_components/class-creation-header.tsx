@@ -40,7 +40,7 @@ export function ClassCreationHeader({
   }, [draftSavedTick]);
 
   return (
-    <header className='flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between'>
+    <header className='border-border/60 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-start sm:justify-between'>
       <div className='space-y-0.5'>
         <h1 className='text-foreground text-xl font-semibold tracking-tight sm:text-2xl lg:text-[1.7rem]'>
           Create New Class
@@ -75,7 +75,7 @@ export function ClassCreationHeader({
 
         <Button
           type='button'
-          className='h-10 rounded-md bg-primary px-5 text-sm font-medium shadow-sm sm:w-auto'
+          className='bg-primary h-10 rounded-md px-5 text-sm font-medium shadow-sm sm:w-auto'
           onClick={onPublish}
           disabled={isSubmitting}
         >

@@ -22,12 +22,12 @@ import { StatusBadge } from '../../_components/ui/StatusBadge';
 function Thumb({ url, alt }: { url?: string | null; alt: string }) {
   const src = url ? toAuthenticatedMediaUrl(url) || url : undefined;
   return (
-    <div className='flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/60 bg-muted/40'>
+    <div className='border-border/60 bg-muted/40 flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border'>
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt={alt} className='h-full w-full object-cover' loading='lazy' />
       ) : (
-        <BookOpen className='size-5 text-muted-foreground' />
+        <BookOpen className='text-muted-foreground size-5' />
       )}
     </div>
   );
@@ -44,11 +44,17 @@ function CoursesTableView({ courses, isLoading }: { courses: Course[]; isLoading
         meta: { label: 'Course' },
         cell: ({ row }) => (
           <div className='flex items-start gap-3'>
-            <Thumb url={row.original.thumbnail_url ?? row.original.banner_url} alt={row.original.name ?? ''} />
-            <div className='min-w-0 max-w-md'>
-              <p className='truncate font-medium text-foreground'>{row.original.name}</p>
+            <Thumb
+              url={row.original.thumbnail_url ?? row.original.banner_url}
+              alt={row.original.name ?? ''}
+            />
+            <div className='max-w-md min-w-0'>
+              <p className='text-foreground truncate font-medium'>{row.original.name}</p>
               {row.original.description ? (
-                <HTMLTextPreview className='mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground' htmlContent={row.original.description} />
+                <HTMLTextPreview
+                  className='text-muted-foreground mt-0.5 line-clamp-2 text-xs leading-relaxed'
+                  htmlContent={row.original.description}
+                />
               ) : null}
             </div>
           </div>
@@ -95,11 +101,9 @@ function CoursesTableView({ courses, isLoading }: { courses: Course[]; isLoading
         meta: { label: 'Details' },
         cell: ({ row }) => (
           <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              router.push(`/dashboard/admin/manage-courses/${row.original.uuid}`)
-            }
+            variant='outline'
+            size='sm'
+            onClick={() => router.push(`/dashboard/admin/manage-courses/${row.original.uuid}`)}
           >
             View
           </Button>
@@ -174,10 +178,8 @@ function PendingEditsTableView({
         header: 'Submitted',
         accessorFn: row => row.submitted_at ?? '',
         cell: ({ row }) => (
-          <span className='text-sm text-muted-foreground'>
-            {row.original.submitted_at
-              ? new Date(row.original.submitted_at).toLocaleString()
-              : '—'}
+          <span className='text-muted-foreground text-sm'>
+            {row.original.submitted_at ? new Date(row.original.submitted_at).toLocaleString() : '—'}
           </span>
         ),
       },
@@ -234,7 +236,9 @@ function PendingEditCourseCell({ courseUuid }: { courseUuid?: string }) {
       <Thumb url={course?.thumbnail_url} alt={course?.name ?? 'Course'} />
       <div className='min-w-0'>
         <p className='truncate text-sm font-medium'>{course?.name ?? 'Loading…'}</p>
-        <p className='truncate text-xs text-muted-foreground'>Still live · showing approved version</p>
+        <p className='text-muted-foreground truncate text-xs'>
+          Still live · showing approved version
+        </p>
       </div>
     </div>
   );

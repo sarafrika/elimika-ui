@@ -1,16 +1,32 @@
-"use client";
+'use client';
 
-import { ImageWithFallback } from "@/components/data/image-with-fallback";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import type { CoursesCatalogCardData } from "@/src/features/dashboard/courses/shared/_components/courses-data";
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from "@/src/lib/media-url";
-import { CalendarDays, Clock, GraduationCap, Layers, PiggyBank, Search, Star, UserCheck, Users } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import { Badge } from "../../../../../../components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../../../../components/ui/card";
-import { CourseDetailsSheet } from "./CourseDetailsSheet";
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import type { CoursesCatalogCardData } from '@/src/features/dashboard/courses/shared/_components/courses-data';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import {
+  CalendarDays,
+  Clock,
+  GraduationCap,
+  Layers,
+  PiggyBank,
+  Search,
+  Star,
+  UserCheck,
+  Users,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
+import { Badge } from '../../../../../../components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../../../../../components/ui/card';
+import { CourseDetailsSheet } from './CourseDetailsSheet';
 
 type StudentCoursesCardProps = {
   card: CoursesCatalogCardData;
@@ -20,26 +36,26 @@ type StudentCoursesCardProps = {
 };
 
 const imageToneClasses = {
-  primary: "bg-gradient-to-br from-primary/20 via-primary/10 to-background",
-  success: "bg-gradient-to-br from-success/20 via-success/10 to-background",
-  warning: "bg-gradient-to-br from-warning/20 via-warning/10 to-background",
+  primary: 'bg-gradient-to-br from-primary/20 via-primary/10 to-background',
+  success: 'bg-gradient-to-br from-success/20 via-success/10 to-background',
+  warning: 'bg-gradient-to-br from-warning/20 via-warning/10 to-background',
 } as const;
 
-const ctaToneClasses: Record<NonNullable<CoursesCatalogCardData["ctaTone"]>, string> = {
-  default: "bg-primary text-primary-foreground hover:bg-primary/90",
+const ctaToneClasses: Record<NonNullable<CoursesCatalogCardData['ctaTone']>, string> = {
+  default: 'bg-primary text-primary-foreground hover:bg-primary/90',
   pending:
-    "border border-[color:var(--warning)] bg-[color:var(--warning)] text-[color:var(--warning-foreground)] hover:brightness-95 disabled:opacity-100",
+    'border border-[color:var(--warning)] bg-[color:var(--warning)] text-[color:var(--warning-foreground)] hover:brightness-95 disabled:opacity-100',
   approved:
-    "border border-[color:var(--success)] bg-[color:var(--success)] text-[color:var(--success-foreground)] hover:brightness-95 disabled:opacity-100",
+    'border border-[color:var(--success)] bg-[color:var(--success)] text-[color:var(--success-foreground)] hover:brightness-95 disabled:opacity-100',
   revoked:
-    "border border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-100",
+    'border border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-100',
 };
 
 const levelStyles: Record<string, string> = {
-  prep: "bg-success/5 text-success border-success/20 border",
-  beginner: "bg-success/5 text-success border-success/20 border",
-  intermediate: "bg-warning/5 text-warning border-warning/20 border",
-  advanced: "bg-primary/5 text-primary border-primary/20 border",
+  prep: 'bg-success/5 text-success border-success/20 border',
+  beginner: 'bg-success/5 text-success border-success/20 border',
+  intermediate: 'bg-warning/5 text-warning border-warning/20 border',
+  advanced: 'bg-primary/5 text-primary border-primary/20 border',
 };
 
 export function StudentCoursesCard({
@@ -62,115 +78,106 @@ export function StudentCoursesCard({
           setOpen(true);
           onOpenDetails(card);
         }}
-
-        className="flex cursor-pointer flex-col overflow-hidden pt-0 transition hover:border-primary/40 hover:shadow-md"
+        className='hover:border-primary/40 flex cursor-pointer flex-col overflow-hidden pt-0 transition hover:shadow-md'
       >
         {/* Cover */}
-        <div className="relative h-40 w-full overflow-hidden">
+        <div className='relative h-40 w-full overflow-hidden'>
           <ImageWithFallback
             src={imageUrl}
-            alt={card.title || "Course"}
+            alt={card.title || 'Course'}
             fill
-            className="object-cover transition-transform duration-300 hover:scale-105"
+            className='object-cover transition-transform duration-300 hover:scale-105'
             unoptimized={isAuthenticatedMediaUrl(imageUrl)}
             fallback={
               <div
                 className={cn(
-                  "flex h-full w-full items-center justify-center",
+                  'flex h-full w-full items-center justify-center',
                   imageToneClasses[card.imageTone]
                 )}
               >
-                <card.icon className="h-10 w-10 text-muted-foreground" />
+                <card.icon className='text-muted-foreground h-10 w-10' />
               </div>
             }
           />
         </div>
 
-        <CardHeader className="pb-2">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge variant="secondary">
-              {card.category || "Not available"}
-            </Badge>
+        <CardHeader className='pb-2'>
+          <div className='flex flex-wrap items-center gap-1.5'>
+            <Badge variant='secondary'>{card.category || 'Not available'}</Badge>
 
             <Badge
-              variant="outline"
+              variant='outline'
               className={cn(
-                levelStyles[card.secondaryMeta?.toLowerCase()] ??
-                "bg-muted text-muted-foreground"
+                levelStyles[card.secondaryMeta?.toLowerCase()] ?? 'bg-muted text-muted-foreground'
               )}
             >
-              {card.secondaryMeta || "Not available"}
+              {card.secondaryMeta || 'Not available'}
             </Badge>
 
             {card.skillsFundEligible && (
-              <Badge className="bg-success/90 hover:bg-success/70">
-                <PiggyBank className="mr-1 h-3 w-3" />
+              <Badge className='bg-success/90 hover:bg-success/70'>
+                <PiggyBank className='mr-1 h-3 w-3' />
                 Skills Fund
               </Badge>
             )}
           </div>
 
-          <CardTitle className="mt-2 text-lg">
-            {card.title || "Untitled Course"}
-          </CardTitle>
+          <CardTitle className='mt-2 text-lg'>{card.title || 'Untitled Course'}</CardTitle>
 
-          <CardDescription className="line-clamp-2">
-            {card.description || "Not available"}
+          <CardDescription className='line-clamp-2'>
+            {card.description || 'Not available'}
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="mt-auto space-y-3">
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Star className="h-3.5 w-3.5 fill-[var(--warning)] text-[var(--warning)]" />
+        <CardContent className='mt-auto space-y-3'>
+          <div className='text-muted-foreground grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs'>
+            <div className='flex items-center gap-1'>
+              <Star className='h-3.5 w-3.5 fill-[var(--warning)] text-[var(--warning)]' />
               {(card.rating ?? 0).toFixed(1)}
             </div>
 
-            <div className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" />
-              {card.duration || "0h"}
+            <div className='flex items-center gap-1'>
+              <Clock className='h-3.5 w-3.5' />
+              {card.duration || '0h'}
             </div>
 
-            <div className="flex items-center gap-1">
-              <GraduationCap className="h-3.5 w-3.5" />
-              {card.ageGroup || "Not available"}
+            <div className='flex items-center gap-1'>
+              <GraduationCap className='h-3.5 w-3.5' />
+              {card.ageGroup || 'Not available'}
             </div>
 
-            <div className="flex items-center gap-1">
-              <Layers className="h-3.5 w-3.5" />
+            <div className='flex items-center gap-1'>
+              <Layers className='h-3.5 w-3.5' />
               {card.units ?? 0} units
             </div>
 
-            <div className="flex items-center gap-1">
-              <Users className="h-3.5 w-3.5" />
+            <div className='flex items-center gap-1'>
+              <Users className='h-3.5 w-3.5' />
               {card.enrollmentCount ?? 0} learners
             </div>
 
-            <div className="flex items-center gap-1">
-              <CalendarDays className="h-3.5 w-3.5" />
+            <div className='flex items-center gap-1'>
+              <CalendarDays className='h-3.5 w-3.5' />
               {card.activeClasses ?? 0} classes
             </div>
 
-            <div className="flex items-center gap-1">
-              <UserCheck className="h-3.5 w-3.5" />
+            <div className='flex items-center gap-1'>
+              <UserCheck className='h-3.5 w-3.5' />
               {card.instructorCount ?? 0} instructors
             </div>
           </div>
 
-          <div
-            className="grid grid-cols-2 gap-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Button asChild size="sm">
+          <div className='grid grid-cols-2 gap-2' onClick={e => e.stopPropagation()}>
+            <Button asChild size='sm'>
               <Link href={card.enrollHref}>
-                <Users className="mr-1 h-3 w-3" />
+                <Users className='mr-1 h-3 w-3' />
                 Join Class
               </Link>
             </Button>
 
-            <Button asChild size="sm" variant="outline">
+            <Button asChild size='sm' variant='outline'>
               <Link href={card.instructorHref}>
-                <Search className="h-3 w-3" />
+                <Search className='h-3 w-3' />
                 Search Instructor
               </Link>
             </Button>
@@ -183,7 +190,7 @@ export function StudentCoursesCard({
         itemId={selectedId}
         type={card.contentKind}
         open={open}
-        onOpenChange={(value) => {
+        onOpenChange={value => {
           setOpen(value);
 
           if (!value) {

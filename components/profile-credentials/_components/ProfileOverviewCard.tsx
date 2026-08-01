@@ -38,9 +38,9 @@ export function ProfileOverviewCard({ profile }: ProfileOverviewCardProps) {
       ? `${profile?.courseCreator?.uuid ? 1 : 0} Creator Entries`
       : organisation
         ? `${organisation.licence_no ? 1 : 0} Validation Document${organisation.licence_no ? '' : 's'}`
-      : profile?.student
-        ? 'Student Profile'
-        : 'Profile';
+        : profile?.student
+          ? 'Student Profile'
+          : 'Profile';
   const levelLabel = profile?.instructor?.admin_verified
     ? 'Verified Instructor'
     : profile?.courseCreator?.admin_verified
@@ -49,15 +49,15 @@ export function ProfileOverviewCard({ profile }: ProfileOverviewCardProps) {
         ? organisation.admin_verified
           ? 'Verified Organisation'
           : 'Pending Verification'
-      : profile?.student
-        ? 'Learner Profile'
-        : 'Profile';
+        : profile?.student
+          ? 'Learner Profile'
+          : 'Profile';
 
   return (
-    <Card className='gap-0 overflow-hidden rounded-[18px] border-border bg-card/95 py-0 shadow-sm'>
-      <div className='bg-[color-mix(in_srgb,var(--el-accent-azure)_45%,var(--background)_55%)] dark:bg-[color-mix(in_srgb,var(--el-accent-azure)_60%,var(--background)_40%)] px-3 py-4'>
+    <Card className='border-border bg-card/95 gap-0 overflow-hidden rounded-[18px] py-0 shadow-sm'>
+      <div className='bg-[color-mix(in_srgb,var(--el-accent-azure)_45%,var(--background)_55%)] px-3 py-4 dark:bg-[color-mix(in_srgb,var(--el-accent-azure)_60%,var(--background)_40%)]'>
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
-          <Avatar className='size-16 border-2 border-background/70 shadow-md'>
+          <Avatar className='border-background/70 size-16 border-2 shadow-md'>
             {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
             <AvatarFallback className='text-primary-foreground bg-[linear-gradient(135deg,var(--el-accent-azure),color-mix(in_srgb,var(--el-accent-amber)_55%,var(--background)))] text-lg font-semibold'>
               {displayName
@@ -77,7 +77,7 @@ export function ProfileOverviewCard({ profile }: ProfileOverviewCardProps) {
 
         <Badge
           variant='outline'
-          className='mt-5 rounded-full border-white/70 bg-background/80 px-4 py-1 text-xs font-semibold text-primary shadow-sm'
+          className='bg-background/80 text-primary mt-5 rounded-full border-white/70 px-4 py-1 text-xs font-semibold shadow-sm'
         >
           {levelLabel}
         </Badge>
@@ -85,14 +85,16 @@ export function ProfileOverviewCard({ profile }: ProfileOverviewCardProps) {
 
       <CardContent className='space-y-4 px-3 py-4'>
         <div className='space-y-3'>
-          <div className='text-foreground flex items-center gap-3 text-md font-medium'>
+          <div className='text-foreground text-md flex items-center gap-3 font-medium'>
             Base Info
           </div>
           <div className='text-muted-foreground space-y-2 text-sm'>
-            {website && <div className='flex items-center gap-3'>
-              <Globe className='size-4' />
-              <span>{website}</span>
-            </div>}
+            {website && (
+              <div className='flex items-center gap-3'>
+                <Globe className='size-4' />
+                <span>{website}</span>
+              </div>
+            )}
             {profile?.email ? (
               <div className='flex items-center gap-3'>
                 <Mail className='size-4' />
@@ -109,7 +111,14 @@ export function ProfileOverviewCard({ profile }: ProfileOverviewCardProps) {
         </div>
 
         <div className='text-muted-foreground border-t pt-4 text-sm'>
-          Joined | {profile?.created_date ? new Date(profile.created_date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : 'Recently'} | {entriesLabel}
+          Joined |{' '}
+          {profile?.created_date
+            ? new Date(profile.created_date).toLocaleDateString(undefined, {
+                month: 'short',
+                year: 'numeric',
+              })
+            : 'Recently'}{' '}
+          | {entriesLabel}
         </div>
       </CardContent>
     </Card>

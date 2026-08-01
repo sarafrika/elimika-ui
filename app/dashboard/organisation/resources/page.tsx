@@ -28,7 +28,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractPage } from '@/lib/api-helpers';
 import type { OrganisationResource } from '@/services/client';
@@ -51,16 +58,18 @@ function AddEquipmentDialog({ organisationUuid }: { organisationUuid: string }) 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" /> Add equipment
+          <Plus className='mr-2 h-4 w-4' /> Add equipment
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className='max-w-lg'>
         <DialogHeader>
           <DialogTitle>Add equipment</DialogTitle>
-          <DialogDescription>Register a piece of equipment owned by your organisation.</DialogDescription>
+          <DialogDescription>
+            Register a piece of equipment owned by your organisation.
+          </DialogDescription>
         </DialogHeader>
         <form
-          className="space-y-4"
+          className='space-y-4'
           onSubmit={e => {
             e.preventDefault();
             const f = e.currentTarget;
@@ -93,29 +102,29 @@ function AddEquipmentDialog({ organisationUuid }: { organisationUuid: string }) 
             );
           }}
         >
-          <div className="space-y-2">
-            <Label htmlFor="e-name">Name</Label>
-            <Input id="e-name" name="e-name" placeholder="e.g. 3D Printer" required />
+          <div className='space-y-2'>
+            <Label htmlFor='e-name'>Name</Label>
+            <Input id='e-name' name='e-name' placeholder='e.g. 3D Printer' required />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="e-desc">Description</Label>
-            <Input id="e-desc" name="e-desc" placeholder="Optional details" />
+          <div className='space-y-2'>
+            <Label htmlFor='e-desc'>Description</Label>
+            <Input id='e-desc' name='e-desc' placeholder='Optional details' />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="e-qty">Quantity</Label>
-              <Input id="e-qty" name="e-qty" type="number" min={1} defaultValue={1} />
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-2'>
+              <Label htmlFor='e-qty'>Quantity</Label>
+              <Input id='e-qty' name='e-qty' type='number' min={1} defaultValue={1} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="e-loc">Location / classroom</Label>
-              <Input id="e-loc" name="e-loc" placeholder="e.g. Lab B" />
+            <div className='space-y-2'>
+              <Label htmlFor='e-loc'>Location / classroom</Label>
+              <Input id='e-loc' name='e-loc' placeholder='e.g. Lab B' />
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type='button' variant='outline' onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={create.isPending}>
+            <Button type='submit' disabled={create.isPending}>
               {create.isPending ? 'Adding…' : 'Add'}
             </Button>
           </DialogFooter>
@@ -144,7 +153,9 @@ export default function OrganisationResourcesPage() {
     () =>
       equipment.filter(r => {
         if (!query) return true;
-        return `${r.name ?? ''} ${r.location_name ?? ''} ${r.description ?? ''}`.toLowerCase().includes(query.toLowerCase());
+        return `${r.name ?? ''} ${r.location_name ?? ''} ${r.description ?? ''}`
+          .toLowerCase()
+          .includes(query.toLowerCase());
       }),
     [equipment, query]
   );
@@ -157,113 +168,138 @@ export default function OrganisationResourcesPage() {
   }, [equipment]);
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]">
+    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
-        title="Equipment"
-        description="All equipment owned by the organisation. Add new items, update them, or retire assets."
+        title='Equipment'
+        description='All equipment owned by the organisation. Add new items, update them, or retire assets.'
         action={<AddEquipmentDialog organisationUuid={organisationUuid} />}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.total}</div>
-            <div className="text-xs text-muted-foreground">Equipment items</div>
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <Card className='border-l-primary border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.total}</div>
+            <div className='text-muted-foreground text-xs'>Equipment items</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-success">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.totalUnits}</div>
-            <div className="text-xs text-muted-foreground">Total units</div>
+        <Card className='border-l-success border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.totalUnits}</div>
+            <div className='text-muted-foreground text-xs'>Total units</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-teal-400">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.active}</div>
-            <div className="text-xs text-muted-foreground">Active</div>
+        <Card className='border-l-4 border-l-teal-400'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.active}</div>
+            <div className='text-muted-foreground text-xs'>Active</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-warning">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.inactive}</div>
-            <div className="text-xs text-muted-foreground">Inactive</div>
+        <Card className='border-l-warning border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.inactive}</div>
+            <div className='text-muted-foreground text-xs'>Inactive</div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search name, location" value={query} onChange={e => setQuery(e.target.value)} className="pl-9" />
+      <div className='relative max-w-md'>
+        <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+        <Input
+          placeholder='Search name, location'
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          className='pl-9'
+        />
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Inventory</CardTitle>
+        <CardHeader className='pb-3'>
+          <CardTitle className='text-base'>Inventory</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className='p-0'>
           {resourcesQuery.isLoading ? (
-            <div className="space-y-2 p-4">
+            <div className='space-y-2 p-4'>
               {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+                <Skeleton key={i} className='h-12 w-full' />
               ))}
             </div>
           ) : rows.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 p-12 text-center">
-              <Package className="h-8 w-8 text-muted-foreground" />
-              <div className="font-medium">{equipment.length === 0 ? 'No equipment yet' : 'No equipment match'}</div>
-              <p className="text-sm text-muted-foreground">
-                {equipment.length === 0 ? 'Add equipment your organisation owns.' : 'Try a different search.'}
+            <div className='flex flex-col items-center justify-center gap-2 p-12 text-center'>
+              <Package className='text-muted-foreground h-8 w-8' />
+              <div className='font-medium'>
+                {equipment.length === 0 ? 'No equipment yet' : 'No equipment match'}
+              </div>
+              <p className='text-muted-foreground text-sm'>
+                {equipment.length === 0
+                  ? 'Add equipment your organisation owns.'
+                  : 'Try a different search.'}
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table className="min-w-[720px]">
+            <div className='overflow-x-auto'>
+              <Table className='min-w-[720px]'>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap">Equipment</TableHead>
-                    <TableHead className="whitespace-nowrap text-center">Qty</TableHead>
-                    <TableHead className="whitespace-nowrap">Location</TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
+                    <TableHead className='whitespace-nowrap'>Equipment</TableHead>
+                    <TableHead className='text-center whitespace-nowrap'>Qty</TableHead>
+                    <TableHead className='whitespace-nowrap'>Location</TableHead>
+                    <TableHead className='whitespace-nowrap'>Status</TableHead>
+                    <TableHead className='text-right whitespace-nowrap'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.map(r => (
                     <TableRow key={r.uuid}>
-                      <TableCell className="whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                            <Wrench className="h-4 w-4" />
+                      <TableCell className='whitespace-nowrap'>
+                        <div className='flex items-center gap-3'>
+                          <div className='bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-md'>
+                            <Wrench className='h-4 w-4' />
                           </div>
-                          <div className="min-w-0">
-                            <div className="font-medium">{r.name}</div>
-                            {r.description && <div className="max-w-xs truncate text-xs text-muted-foreground">{r.description}</div>}
+                          <div className='min-w-0'>
+                            <div className='font-medium'>{r.name}</div>
+                            {r.description && (
+                              <div className='text-muted-foreground max-w-xs truncate text-xs'>
+                                {r.description}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-center">{Number(r.total_quantity ?? 0)}</TableCell>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">{r.location_name ?? '—'}</TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className='text-center whitespace-nowrap'>
+                        {Number(r.total_quantity ?? 0)}
+                      </TableCell>
+                      <TableCell className='text-muted-foreground whitespace-nowrap'>
+                        {r.location_name ?? '—'}
+                      </TableCell>
+                      <TableCell className='whitespace-nowrap'>
                         <Badge variant={r.is_active !== false ? 'default' : 'secondary'}>
                           {r.is_active !== false ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right">
+                      <TableCell className='text-right whitespace-nowrap'>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
+                            <Button variant='ghost' size='icon' className='h-8 w-8'>
+                              <MoreHorizontal className='h-4 w-4' />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => toast.info('Manage equipment', { description: r.name })}>
-                              <Wrench className="mr-2 h-4 w-4" /> Manage
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                toast.info('Manage equipment', { description: r.name })
+                              }
+                            >
+                              <Wrench className='mr-2 h-4 w-4' /> Manage
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => toast.error('Retire equipment', { description: `${r.name} marked for retirement.` })}
+                              className='text-destructive focus:text-destructive'
+                              onClick={() =>
+                                toast.error('Retire equipment', {
+                                  description: `${r.name} marked for retirement.`,
+                                })
+                              }
                             >
-                              <Trash2 className="mr-2 h-4 w-4" /> Retire
+                              <Trash2 className='mr-2 h-4 w-4' /> Retire
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

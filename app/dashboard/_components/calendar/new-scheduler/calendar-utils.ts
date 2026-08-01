@@ -4,7 +4,12 @@ import type {
   ScheduledInstance,
   StudentSchedule,
 } from '@/services/client/types.gen';
-import type { SchedulerCategory, SchedulerEvent, SchedulerFilterValues, SchedulerProfile } from './types';
+import type {
+  SchedulerCategory,
+  SchedulerEvent,
+  SchedulerFilterValues,
+  SchedulerProfile,
+} from './types';
 
 export type SchedulePreferences = {
   defaultClassDuration: string;
@@ -204,10 +209,10 @@ export const makeInitials = (value?: string | null) =>
 export const formatStatus = (status?: string | null) =>
   status
     ? status
-      .toLowerCase()
-      .split('_')
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ')
+        .toLowerCase()
+        .split('_')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
     : 'Scheduled';
 
 export const inferCategory = (value?: string | null): SchedulerCategory => {
@@ -284,7 +289,8 @@ export const mapStudentSchedule = (
 ): SchedulerEvent | null => {
   if (!item.start_time || !item.end_time) return null;
 
-  const title = item.title || classDetails?.title || classDetails?.course?.name || 'Scheduled class';
+  const title =
+    item.title || classDetails?.title || classDetails?.course?.name || 'Scheduled class';
   const courseName = classDetails?.course?.name || classDetails?.title || 'Class';
   const instructorName = instructorDetails.fullName || 'Unknown Instructor';
   const locationName = item.location_name || classDetails?.location_name || '';
@@ -327,12 +333,13 @@ export const mapClassSchedule = (
     .filter(schedule => schedule.start_time && schedule.end_time)
     .map((schedule, scheduleIndex) => {
       const instructorUuid = schedule.instructor_uuid || resolvedInstructorUuid || undefined;
-      const instructorDetails =
-        (instructorUuid ? instructorSummaryLookup?.get(instructorUuid) : undefined) || {
-          uuid: instructorUuid || '',
-          fullName: resolvedInstructorName,
-          subtitle: classDef.instructor?.professional_headline || 'Attached to class data',
-        };
+      const instructorDetails = (instructorUuid
+        ? instructorSummaryLookup?.get(instructorUuid)
+        : undefined) || {
+        uuid: instructorUuid || '',
+        fullName: resolvedInstructorName,
+        subtitle: classDef.instructor?.professional_headline || 'Attached to class data',
+      };
 
       const title = classDef?.title as string;
       const classCode = schedule.title as string;

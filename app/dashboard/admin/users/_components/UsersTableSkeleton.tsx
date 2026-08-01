@@ -11,12 +11,12 @@ export function UsersTableSkeleton() {
           <Skeleton className='h-9 w-24 rounded-md' />
         </div>
       </div>
-      <div className='overflow-hidden rounded-md border border-border/70 bg-card shadow-sm'>
-        <div className='border-b border-border/60 bg-muted/60 px-4 py-3'>
+      <div className='border-border/70 bg-card overflow-hidden rounded-md border shadow-sm'>
+        <div className='border-border/60 bg-muted/60 border-b px-4 py-3'>
           <Skeleton className='h-4 w-40' />
         </div>
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className='flex items-center gap-3 border-b border-border/50 px-4 py-3'>
+          <div key={index} className='border-border/50 flex items-center gap-3 border-b px-4 py-3'>
             <Skeleton className='size-9 rounded-full' />
             <div className='flex-1 space-y-1.5'>
               <Skeleton className='h-3.5 w-48' />

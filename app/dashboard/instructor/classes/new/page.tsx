@@ -54,7 +54,7 @@ import {
   searchTrainingApplicationsOptions,
   updateClassDefinitionMutation,
   uploadClassPromotionalVideoMutation,
-  uploadClassThumbnailMutation
+  uploadClassThumbnailMutation,
 } from '../../../../../services/client/@tanstack/react-query.gen';
 import type { CreateClassDefinitionMultipartData } from '../../../../../services/client/types.gen';
 import {
@@ -65,11 +65,7 @@ import {
 } from '../../../../../services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
 import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
-import {
-  defaultRecurrenceValue,
-  type RecurrenceValue,
-  toClassRecurrence,
-} from '@/lib/recurrence';
+import { defaultRecurrenceValue, type RecurrenceValue, toClassRecurrence } from '@/lib/recurrence';
 import { CLASS_COLOR_OPTIONS } from '../../../_components/class-colors';
 import {
   ClassDetails,
@@ -443,9 +439,9 @@ const expandSessionsForConflictCheck = (
 const ClassCreationPage = () => {
   const router = useRouter();
   const qc = useQueryClient();
-  const profile = useUserProfile()
-  const instructor = profile?.instructor
-  const organisation = profile?.organisation_affiliations?.[0]
+  const profile = useUserProfile();
+  const instructor = profile?.instructor;
+  const organisation = profile?.organisation_affiliations?.[0];
 
   const [classId, setClassId] = useState<string | null>(null);
   const [isClientReady, setIsClientReady] = useState(false);
@@ -503,11 +499,7 @@ const ClassCreationPage = () => {
       repeat: {
         interval: value.interval,
         unit:
-          value.frequency === 'DAILY'
-            ? 'day'
-            : value.frequency === 'MONTHLY'
-              ? 'month'
-              : 'week',
+          value.frequency === 'DAILY' ? 'day' : value.frequency === 'MONTHLY' ? 'month' : 'week',
         days:
           value.frequency === 'WEEKLY'
             ? value.daysOfWeek.map(day => DAY_NAMES.indexOf(day)).filter(index => index >= 0)
@@ -546,7 +538,7 @@ const ClassCreationPage = () => {
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
   const addClassThumbnailMut = useMutation(uploadClassThumbnailMutation());
   const addClassIntroVideoMut = useMutation(uploadClassPromotionalVideoMutation());
-  const isSubmitting = createClassDefinition.isPending || updateClassDefinition.isPending
+  const isSubmitting = createClassDefinition.isPending || updateClassDefinition.isPending;
 
   const handleServiceTypeChange = (
     newServiceType: ServiceType,
@@ -571,15 +563,14 @@ const ClassCreationPage = () => {
     enabled: !!instructor?.uuid,
   });
 
-  const courseIds =
-    appliedCourses?.data?.content?.map(app => app.course_uuid) ?? [];
+  const courseIds = appliedCourses?.data?.content?.map(app => app.course_uuid) ?? [];
   const { courseMap } = useCoursesByIds(courseIds as string[]);
 
   const approvedCourses = useMemo(() => {
     if (!appliedCourses?.data?.content || !courseMap) return [];
 
     return appliedCourses.data.content
-      .filter(app => app.status === "approved")
+      .filter(app => app.status === 'approved')
       .map(app => {
         const course = courseMap[app?.course_uuid as string];
 
@@ -603,8 +594,7 @@ const ClassCreationPage = () => {
     enabled: !!instructor?.uuid,
   });
 
-  const programIds =
-    appliedPrograms?.data?.content?.map(app => app.program_uuid) ?? [];
+  const programIds = appliedPrograms?.data?.content?.map(app => app.program_uuid) ?? [];
 
   const { programMap } = useProgramsByIds(programIds as string[]);
 
@@ -612,7 +602,7 @@ const ClassCreationPage = () => {
     if (!appliedPrograms?.data?.content || !programMap) return [];
 
     return appliedPrograms.data.content
-      .filter(app => app.status === "approved")
+      .filter(app => app.status === 'approved')
       .map(app => {
         const program = programMap[app.program_uuid as string]; // or programMap.get(app.program_uuid)
 
@@ -627,7 +617,7 @@ const ClassCreationPage = () => {
   }, [appliedPrograms, programMap]);
 
   const catalogItems = useMemo<CatalogItem[]>(() => {
-    const courseItems: CatalogItem[] = approvedCourses.map((course) => ({
+    const courseItems: CatalogItem[] = approvedCourses.map(course => ({
       label: course?.name,
       source: 'course',
       uuid: String(course?.uuid),
@@ -641,7 +631,7 @@ const ClassCreationPage = () => {
       uuid: String(program?.uuid),
       classLimit: program?.class_limit ?? 0,
       rateCard: program?.application?.rate_card as CatalogRateCard | undefined,
-      thumbnailUrl: ''
+      thumbnailUrl: '',
     }));
     return [...courseItems, ...programItems];
   }, [approvedCourses, approvedPrograms]);
@@ -1375,9 +1365,7 @@ const ClassCreationPage = () => {
             toast.success('Video uploaded');
           }
         } catch (error) {
-          toast.error(
-            getMutationErrorMessage(error, 'Failed to upload class media')
-          );
+          toast.error(getMutationErrorMessage(error, 'Failed to upload class media'));
         }
       }
 
@@ -1394,10 +1382,10 @@ const ClassCreationPage = () => {
         }),
         resolvedId
           ? qc.invalidateQueries({
-            queryKey: getClassDefinitionQueryKey({
-              path: { uuid: resolvedId },
-            }),
-          })
+              queryKey: getClassDefinitionQueryKey({
+                path: { uuid: resolvedId },
+              }),
+            })
           : Promise.resolve(),
       ]);
 
@@ -1541,8 +1529,9 @@ const ClassCreationPage = () => {
           <div
             key={day}
             onClick={toggleDay}
-            className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${active ? 'border-primary bg-primary/5' : 'border-border bg-background'
-              }`}
+            className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${
+              active ? 'border-primary bg-primary/5' : 'border-border bg-background'
+            }`}
           >
             <button
               type='button'
@@ -1555,10 +1544,11 @@ const ClassCreationPage = () => {
               //     return { ...prev, repeat: { ...prev.repeat, days: nextDays, unit: 'week' } };
               //   })
               // }
-              className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${active
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
-                }`}
+              className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${
+                active
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
+              }`}
             >
               {DAY_SHORT[index]}
             </button>
@@ -1997,10 +1987,11 @@ const ClassCreationPage = () => {
                       key={option.key}
                       type='button'
                       onClick={() => setSchedulePreset(option.key)}
-                      className={`flex-1 rounded-md border px-4 py-3 text-left transition ${schedulePreset === option.key
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/40'
-                        }`}
+                      className={`flex-1 rounded-md border px-4 py-3 text-left transition ${
+                        schedulePreset === option.key
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/40'
+                      }`}
                     >
                       <div className='text-sm font-semibold'>{option.title}</div>
                       <div className='text-muted-foreground mt-1 text-xs'>{option.description}</div>
@@ -2385,10 +2376,10 @@ const ClassCreationPage = () => {
               </div>
             </Card>
 
-            <div className='w-full flex self-end justify-end'>
+            <div className='flex w-full justify-end self-end'>
               <Button
                 type='button'
-                className='h-10 rounded-md bg-primary px-5 text-sm font-medium shadow-sm sm:w-auto'
+                className='bg-primary h-10 rounded-md px-5 text-sm font-medium shadow-sm sm:w-auto'
                 onClick={() => submitClass(false)}
                 disabled={isSubmitting}
               >

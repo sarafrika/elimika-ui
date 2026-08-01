@@ -120,7 +120,6 @@ const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
     [courses, selectedCourseCategory]
   );
 
-
   if (programLoading) {
     return (
       <div className='flex h-96 items-center justify-center'>
@@ -164,7 +163,9 @@ const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
       {/* Header */}
       <div className='mb-4 md:mb-6'>
         <button
-          onClick={() => router.push('/dashboard/course-creator/course-management/all?type=programs')}
+          onClick={() =>
+            router.push('/dashboard/course-creator/course-management/all?type=programs')
+          }
           className='mb- text-primary flex items-center gap-2 py-4 text-sm hover:underline md:mb-4 md:text-base'
         >
           ← Back
@@ -237,10 +238,11 @@ const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`border-b-2 px-1 py-2 text-sm font-medium whitespace-nowrap md:py-3 md:text-base ${activeTab === tab
+              className={`border-b-2 px-1 py-2 text-sm font-medium whitespace-nowrap md:py-3 md:text-base ${
+                activeTab === tab
                   ? 'border-primary text-primary'
                   : 'text-muted-foreground hover:text-foreground border-transparent'
-                }`}
+              }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === 'courses' && ` (${courses.length})`}

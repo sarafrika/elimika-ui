@@ -40,8 +40,7 @@ export function OrganizationsTable() {
           toast.success(action === 'verify' ? 'Organisation verified' : 'Verification revoked');
           router.refresh();
         },
-        onError: error =>
-          toast.error(error instanceof Error ? error.message : 'Action failed'),
+        onError: error => toast.error(error instanceof Error ? error.message : 'Action failed'),
       }
     );
   };
@@ -55,12 +54,12 @@ export function OrganizationsTable() {
         meta: { label: 'Organisation' },
         cell: ({ row }) => (
           <div className='flex items-center gap-3'>
-            <span className='flex size-9 items-center justify-center rounded-md border border-border/60 bg-muted/40'>
-              <Building2 className='size-4 text-muted-foreground' />
+            <span className='border-border/60 bg-muted/40 flex size-9 items-center justify-center rounded-md border'>
+              <Building2 className='text-muted-foreground size-4' />
             </span>
             <div className='min-w-0'>
-              <p className='truncate text-sm font-medium text-foreground'>{row.original.name}</p>
-              <p className='truncate text-xs text-muted-foreground'>
+              <p className='text-foreground truncate text-sm font-medium'>{row.original.name}</p>
+              <p className='text-muted-foreground truncate text-xs'>
                 {row.original.description || row.original.slug || '—'}
               </p>
             </div>
@@ -73,7 +72,7 @@ export function OrganizationsTable() {
         header: 'Location',
         meta: { label: 'Location' },
         cell: ({ getValue }) => (
-          <span className='text-sm text-muted-foreground'>{(getValue() as string) || '—'}</span>
+          <span className='text-muted-foreground text-sm'>{(getValue() as string) || '—'}</span>
         ),
       },
       {
@@ -106,7 +105,12 @@ export function OrganizationsTable() {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant='ghost' size='icon' className='size-8' onClick={e => e.stopPropagation()}>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='size-8'
+                  onClick={e => e.stopPropagation()}
+                >
                   <MoreHorizontal className='size-4' />
                 </Button>
               </DropdownMenuTrigger>

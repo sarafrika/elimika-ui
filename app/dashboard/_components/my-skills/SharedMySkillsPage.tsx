@@ -43,31 +43,27 @@ export function SharedMySkillsPage({
   const displaySummary = hasSummaryData(summary)
     ? summary
     : {
-      badgesEarned: skills.length,
-      certificatesEarned: 0,
-      shares: 0,
-    };
+        badgesEarned: skills.length,
+        certificatesEarned: 0,
+        shares: 0,
+      };
 
   const sortedSkills = [...skills].sort((a, b) => b.score - a.score);
   const averageScore =
     sortedSkills.length > 0
       ? Math.round(
-        sortedSkills.reduce((total, skill) => total + skill.score, 0) / sortedSkills.length
-      )
+          sortedSkills.reduce((total, skill) => total + skill.score, 0) / sortedSkills.length
+        )
       : 0;
   const levelLabel = getLevelLabel(averageScore);
 
   const loading = Boolean(isLoading);
 
   return (
-    <main className='bg-background px-3 py-3 sm:px-4 lg:px-5 mb-20'>
+    <main className='bg-background mb-20 px-3 py-3 sm:px-4 lg:px-5'>
       <div className='flex w-full flex-col gap-4'>
         {/* Non-data shell renders immediately; each region degrades locally. */}
-        <SkillsWalletHeader
-          profile={profile}
-          shareUrl={shareUrl}
-          levelLabel={levelLabel}
-        />
+        <SkillsWalletHeader profile={profile} shareUrl={shareUrl} levelLabel={levelLabel} />
 
         <AsyncSection loading={loading} skeleton={<SkillsOverviewSkeleton />}>
           <section className='grid items-start gap-3 xl:grid-cols-[minmax(230px,0.88fr)_minmax(300px,1.05fr)_minmax(280px,0.95fr)]'>
@@ -190,7 +186,8 @@ function CareerTimeline({ items }: { items: SharedTimelineItem[] }) {
           <Sparkles className='text-primary mx-auto mb-3 size-8' />
           <p className='text-foreground text-sm font-semibold'>No career records yet</p>
           <p className='text-muted-foreground mt-1 text-xs'>
-            Verified instructor and course creator documents will appear here once they are uploaded and approved.
+            Verified instructor and course creator documents will appear here once they are uploaded
+            and approved.
           </p>
         </div>
       )}
@@ -207,7 +204,12 @@ function getLevelLabel(score: number) {
 
 function buildCareerTimeline(items: SharedTimelineItem[]) {
   return items
-    .filter(item => item.recordKind === 'experience' || item.recordKind === 'education' || item.recordKind === 'membership')
+    .filter(
+      item =>
+        item.recordKind === 'experience' ||
+        item.recordKind === 'education' ||
+        item.recordKind === 'membership'
+    )
     .slice()
     .sort((left, right) => (left.timestamp ?? 0) - (right.timestamp ?? 0))
     .slice(0, 6);

@@ -36,17 +36,17 @@ export function CourseRail({
       <div className='flex items-center justify-between'>
         <h3 className='text-base font-semibold'>{title}</h3>
         {viewAllHref && (
-          <Button asChild variant='link' size='sm' className='h-auto px-0 text-primary'>
+          <Button asChild variant='link' size='sm' className='text-primary h-auto px-0'>
             <Link href={viewAllHref}>View all</Link>
           </Button>
         )}
       </div>
       {items.length === 0 ? (
         <div className='flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-10 text-center'>
-          <div className='flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground'>
+          <div className='bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-full'>
             <BookOpen className='h-5 w-5' />
           </div>
-          <p className='text-sm text-muted-foreground'>No active courses yet.</p>
+          <p className='text-muted-foreground text-sm'>No active courses yet.</p>
         </div>
       ) : (
         <div className='-mx-1 overflow-x-auto px-1 pb-2'>
@@ -63,7 +63,7 @@ export function CourseRail({
 
 function CourseRailCard({ course }: { course: CourseRailItem }) {
   const inner = (
-    <div className='w-60 shrink-0 snap-start rounded-xl border bg-card p-3 shadow-sm transition-shadow hover:shadow-md 2xl:w-72'>
+    <div className='bg-card w-60 shrink-0 snap-start rounded-xl border p-3 shadow-sm transition-shadow hover:shadow-md 2xl:w-72'>
       <div className='flex items-start justify-between gap-2'>
         <div className='flex min-w-0 items-center gap-3'>
           <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-50 font-semibold text-teal-600 dark:bg-teal-950/50 dark:text-teal-300'>
@@ -72,7 +72,7 @@ function CourseRailCard({ course }: { course: CourseRailItem }) {
           <div className='min-w-0'>
             <p className='truncate text-sm font-semibold'>{course.name}</p>
             {course.subtitle && (
-              <p className='truncate text-xs text-muted-foreground'>{course.subtitle}</p>
+              <p className='text-muted-foreground truncate text-xs'>{course.subtitle}</p>
             )}
           </div>
         </div>
@@ -82,7 +82,7 @@ function CourseRailCard({ course }: { course: CourseRailItem }) {
           </Badge>
         )}
       </div>
-      <div className='mt-4 flex items-center justify-between text-xs text-muted-foreground'>
+      <div className='text-muted-foreground mt-4 flex items-center justify-between text-xs'>
         <span>{course.metaLeft}</span>
         {course.metaRight && <span className='font-medium text-teal-600'>{course.metaRight}</span>}
       </div>
@@ -104,7 +104,7 @@ export function CourseRailSkeleton({ cards = 5 }: { cards?: number }) {
       <div className='-mx-1 overflow-x-auto px-1 pb-2'>
         <div className='flex gap-4'>
           {Array.from({ length: cards }).map((_, i) => (
-            <div key={i} className='w-64 shrink-0 rounded-xl border bg-card p-4 shadow-sm 2xl:w-72'>
+            <div key={i} className='bg-card w-64 shrink-0 rounded-xl border p-4 shadow-sm 2xl:w-72'>
               <div className='flex items-center gap-3'>
                 <Skeleton className='h-10 w-10 rounded-lg' />
                 <div className='flex-1 space-y-1.5'>

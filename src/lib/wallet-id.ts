@@ -18,7 +18,7 @@
 // learner (institutionRef helper below) — those live alongside, they do
 // not replace the wallet ID.
 
-const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/1/I/O ambiguity
+const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/1/I/O ambiguity
 
 function hash32(input: string): number {
   // Small deterministic FNV-1a; fine for display IDs (not a security hash).
@@ -31,7 +31,7 @@ function hash32(input: string): number {
 }
 
 function encodeBlock(n: number, len: number): string {
-  let out = "";
+  let out = '';
   let x = n;
   for (let i = 0; i < len; i++) {
     out = ALPHABET[x % ALPHABET.length] + out;
@@ -63,7 +63,7 @@ export type WalletIdOptions = {
  * email — those can change.
  */
 export function generateWalletId(seed: string | number, opts: WalletIdOptions = {}): string {
-  const country = (opts.country ?? "KE").toUpperCase().slice(0, 3);
+  const country = (opts.country ?? 'KE').toUpperCase().slice(0, 3);
   const year = opts.year ?? 2024;
   const random = encodeBlock(hash32(`elm:${country}:${year}:${seed}`), 6);
   const body = `ELM-${country}-${year}-${random}`;

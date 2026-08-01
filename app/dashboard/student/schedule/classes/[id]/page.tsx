@@ -133,7 +133,11 @@ export default function ClassDetailsPage() {
   const [isReading, setIsReading] = useState(false);
 
   // API Queries
-  const { data: classData, isLoading: classLoading, isError: classError } = useQuery({
+  const {
+    data: classData,
+    isLoading: classLoading,
+    isError: classError,
+  } = useQuery({
     ...getClassDefinitionOptions({ path: { uuid: classId } }),
     enabled: !!classId,
   });
@@ -250,7 +254,9 @@ export default function ClassDetailsPage() {
     return (
       nextClass.location_name ||
       classDefinition?.location_name ||
-      (nextClass.location_type === 'ONLINE' ? 'online classroom' : 'the classroom listed for this class')
+      (nextClass.location_type === 'ONLINE'
+        ? 'online classroom'
+        : 'the classroom listed for this class')
     );
   }, [classDefinition?.location_name, nextClass]);
 
@@ -281,7 +287,11 @@ export default function ClassDetailsPage() {
     if (classDefinition) {
       replaceBreadcrumbs([
         { id: 'dashboard', title: 'Dashboard', url: '/dashboard/student/overview' },
-        { id: 'classes', title: 'Classes', url: `/dashboard/student/learning-hub/classes/${classId}` },
+        {
+          id: 'classes',
+          title: 'Classes',
+          url: `/dashboard/student/learning-hub/classes/${classId}`,
+        },
         {
           id: 'training-page',
           title: classDefinition.title,
@@ -596,7 +606,9 @@ export default function ClassDetailsPage() {
         }}
         content={viewedLesson}
         contentType={
-          viewedLesson ? contentTypeMap[viewedLesson.content_type_uuid] ?? viewedLesson.type : null
+          viewedLesson
+            ? (contentTypeMap[viewedLesson.content_type_uuid] ?? viewedLesson.type)
+            : null
         }
       />
     </div>

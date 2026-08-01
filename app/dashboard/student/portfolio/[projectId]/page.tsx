@@ -1,9 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import {
-  SharedProjectDetailsView,
-  getPortfolioContent,
-} from '@/components/profile-portfolio';
+import { SharedProjectDetailsView, getPortfolioContent } from '@/components/profile-portfolio';
 
 type ProjectDetailsPageProps = {
   params: Promise<{ projectId: string }>;

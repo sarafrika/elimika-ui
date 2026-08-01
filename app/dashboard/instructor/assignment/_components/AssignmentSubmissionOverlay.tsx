@@ -57,7 +57,10 @@ function parseTaskId(taskId: string) {
   return null;
 }
 
-function detectSubmissionKind(submission: AssignmentSubmission | null, attempt: QuizAttempt | null) {
+function detectSubmissionKind(
+  submission: AssignmentSubmission | null,
+  attempt: QuizAttempt | null
+) {
   if (attempt) return 'quiz' as const;
   if (!submission) return 'text' as const;
   const fileUrl = submission.file_urls?.[0]?.toLowerCase();
@@ -119,11 +122,11 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
   const rubricQuery = useQueries({
     queries: rubricUuid
       ? [
-        {
-          ...getRubricMatrixOptions({ path: { rubricUuid } }),
-          enabled: !!rubricUuid,
-        },
-      ]
+          {
+            ...getRubricMatrixOptions({ path: { rubricUuid } }),
+            enabled: !!rubricUuid,
+          },
+        ]
       : [],
   });
 
@@ -132,8 +135,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
   const { courseEnrollmentMap } = useCourseEnrollmentsMap([courseId]);
   const submissions = assignmentSubmissionsQuery.data?.data ?? [];
 
-  const enrollments =
-    courseEnrollmentMap?.[courseId]?.enrollments ?? [];
+  const enrollments = courseEnrollmentMap?.[courseId]?.enrollments ?? [];
 
   // Fetch attachments for every submission
   const attachmentQueries = useQueries({
@@ -149,11 +151,8 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
 
   // Build lookup table
   const attachmentsBySubmissionId = useMemo(() => {
-    return submissions.reduce<
-      Record<string, unknown[]>
-    >((acc, submission, index) => {
-      acc[submission.uuid as string] =
-        attachmentQueries[index]?.data?.data ?? [];
+    return submissions.reduce<Record<string, unknown[]>>((acc, submission, index) => {
+      acc[submission.uuid as string] = attachmentQueries[index]?.data?.data ?? [];
 
       return acc;
     }, {});
@@ -165,12 +164,10 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
       submissions.map(submission => ({
         ...submission,
 
-        student_uuid: enrollments.find(
-          enrollment => enrollment.uuid === submission.enrollment_uuid
-        )?.student_uuid,
+        student_uuid: enrollments.find(enrollment => enrollment.uuid === submission.enrollment_uuid)
+          ?.student_uuid,
 
-        attachments:
-          attachmentsBySubmissionId[submission.uuid as string] ?? [],
+        attachments: attachmentsBySubmissionId[submission.uuid as string] ?? [],
       })),
     [submissions, enrollments, attachmentsBySubmissionId]
   );
@@ -200,9 +197,12 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
             sections: [],
             submissionKind: detectSubmissionKind(submission, null),
             submissionStatus:
-              submission.submission_status_display || (submission.is_graded ? 'Graded' : 'Submitted'),
+              submission.submission_status_display ||
+              (submission.is_graded ? 'Graded' : 'Submitted'),
             submissionText: submission.submission_text,
-            submittedAt: submission.submitted_at ? new Date(submission.submitted_at).toISOString() : undefined,
+            submittedAt: submission.submitted_at
+              ? new Date(submission.submitted_at).toISOString()
+              : undefined,
           } satisfies SubmissionStudent;
         })
         .filter((item): item is SubmissionStudent => item !== null);
@@ -227,14 +227,17 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
           sections: [],
           submissionKind: 'quiz',
           submissionStatus: attempt.grade_display || `${attempt.status}`,
-          submittedAt: attempt.submitted_at ? new Date(attempt.submitted_at).toISOString() : undefined,
+          submittedAt: attempt.submitted_at
+            ? new Date(attempt.submitted_at).toISOString()
+            : undefined,
         } satisfies SubmissionStudent;
       })
       .filter((item): item is SubmissionStudent => item !== null);
   }, [attempts, parsedTask?.taskType, rosterAllEnrollments, submissions]);
 
   const filteredStudents = useMemo(
-    () => students.filter(student => student.name.toLowerCase().includes(search.trim().toLowerCase())),
+    () =>
+      students.filter(student => student.name.toLowerCase().includes(search.trim().toLowerCase())),
     [search, students]
   );
 
@@ -246,11 +249,12 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
 
   const selectedSubmission =
     parsedTask?.taskType === 'assignment'
-      ? enrichedSubmissions.find(item => item.student_uuid === selectedStudent?.student_uuid) ?? null
+      ? (enrichedSubmissions.find(item => item.student_uuid === selectedStudent?.student_uuid) ??
+        null)
       : null;
   const selectedAttempt =
     parsedTask?.taskType === 'quiz'
-      ? attempts.find(item => item.student_uuid === selectedStudent?.student_uuid) ?? null
+      ? (attempts.find(item => item.student_uuid === selectedStudent?.student_uuid) ?? null)
       : null;
 
   const gradeSubmissionMut = useMutation(gradeSubmissionMutation());
@@ -276,9 +280,18 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
       studentSummary: course?.name,
       subtitle: task.title,
       taskType: parsedTask.taskType,
-      max_point: assignmentTask?.max_points
+      max_point: assignmentTask?.max_points,
     };
-  }, [classDetails.class?.title, course?.name, lessonTitle, parsedTask, rubricUuid, selectedAttempt?.submitted_at, task, taskId]);
+  }, [
+    classDetails.class?.title,
+    course?.name,
+    lessonTitle,
+    parsedTask,
+    rubricUuid,
+    selectedAttempt?.submitted_at,
+    task,
+    taskId,
+  ]);
 
   const handleClose = () => {
     router.push('/dashboard/instructor/assignment');
@@ -325,12 +338,9 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
 
   if (!parsedTask || !assignmentCard) {
     return (
-      <div className='p-6 text-sm text-muted-foreground'>
-        This task could not be resolved.
-      </div>
+      <div className='text-muted-foreground p-6 text-sm'>This task could not be resolved.</div>
     );
   }
-
 
   return (
     <div className='fixed inset-0 z-[100]'>
@@ -356,7 +366,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
               value={search}
               onChange={event => setSearch(event.target.value)}
               placeholder='Search students'
-              className='h-11 rounded-full border-white/15 bg-white/10 pl-11 text-primary-foreground placeholder:text-primary-foreground/60'
+              className='text-primary-foreground placeholder:text-primary-foreground/60 h-11 rounded-full border-white/15 bg-white/10 pl-11'
             />
           </div>
         </div>
@@ -404,7 +414,9 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
             <SheetContent side='right' className='w-[92vw] max-w-sm p-0'>
               <SheetHeader className='sr-only'>
                 <SheetTitle>Submission insights</SheetTitle>
-                <SheetDescription>Review grading insights and actions for this student.</SheetDescription>
+                <SheetDescription>
+                  Review grading insights and actions for this student.
+                </SheetDescription>
               </SheetHeader>
               {selectedStudent ? (
                 <SubmissionInsightsPanel
@@ -420,7 +432,11 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
           <Button variant='ghost' size='icon' className='text-primary-foreground hover:bg-white/10'>
             <Bell className='h-4 w-4' />
           </Button>
-          <Button variant='ghost' onClick={handleClose} className='text-primary-foreground hover:bg-white/10'>
+          <Button
+            variant='ghost'
+            onClick={handleClose}
+            className='text-primary-foreground hover:bg-white/10'
+          >
             Close
           </Button>
         </div>
@@ -456,7 +472,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
           />
         </div>
 
-        <div className='min-h-0 min-w-0 overflow-hidden xl:block border-l'>
+        <div className='min-h-0 min-w-0 overflow-hidden border-l xl:block'>
           {selectedStudent ? (
             <SubmissionInsightsPanel
               rubricMatrix={rubricMatrix}
@@ -464,11 +480,9 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
               taskType={parsedTask.taskType}
             />
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center text-foreground px-4">
-              <div className="text-lg font-medium mb-2">
-                No student selected
-              </div>
-              <p className="text-sm">
+            <div className='text-foreground flex h-full flex-col items-center justify-center px-4 text-center'>
+              <div className='mb-2 text-lg font-medium'>No student selected</div>
+              <p className='text-sm'>
                 Choose a student from the list to view their submission insights.
               </p>
             </div>

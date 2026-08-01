@@ -53,7 +53,8 @@ export function extractPage<T>(apiResponse: unknown): { items: T[]; metadata: Pa
   }
 
   const content = getObjectValue<unknown[]>(dataLayer, 'content') ?? [];
-  const metadata = (getObjectValue<PageMetadataLike>(dataLayer, 'metadata') ?? {}) as PageMetadataLike;
+  const metadata = (getObjectValue<PageMetadataLike>(dataLayer, 'metadata') ??
+    {}) as PageMetadataLike;
 
   return {
     items: Array.isArray(content) ? (content as T[]) : [],

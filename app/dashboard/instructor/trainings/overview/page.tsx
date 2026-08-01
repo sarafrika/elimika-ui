@@ -78,16 +78,15 @@ export default function TrainingsPage({
 
   return (
     <div className='mb-20 space-y-6'>
-
       <Link
-        href="/dashboard/instructor/new-class"
+        href='/dashboard/instructor/new-class'
         className={cx(
           elimikaDesignSystem.components.header.badge,
-          'inline-flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity'
+          'inline-flex cursor-pointer items-center gap-2 transition-opacity hover:opacity-80'
         )}
       >
         <span>New Class Page</span>
-        <ArrowRight className="h-4 w-4" />
+        <ArrowRight className='h-4 w-4' />
       </Link>
 
       <div className='flex flex-col self-end'>

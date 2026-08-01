@@ -30,7 +30,7 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
 
   if (isLoading) {
     return (
-      <main className='w-full mb-20'>
+      <main className='mb-20 w-full'>
         <div className='space-y-3 px-2 py-2 sm:px-3 lg:px-4'>
           <Skeleton className='h-16 w-full rounded-2xl' />
           <div className='grid gap-3 sm:grid-cols-2 2xl:grid-cols-4'>
@@ -49,7 +49,7 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
   }
 
   return (
-    <main className='w-full mb-20'>
+    <main className='mb-20 w-full'>
       <div className='px-2 py-2 sm:px-3 lg:px-4'>
         <div className='space-y-3'>
           <OverviewHeader firstName={firstName} />
@@ -60,17 +60,10 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
             ))}
           </section>
 
-          <section
-            className='grid min-w-0 gap-3 overflow-x-hidden
-  xl:grid-cols-[minmax(0,0.94fr)_minmax(0,0.94fr)_minmax(240px,0.72fr)]
-  2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(260px,0.78fr)]'
-          >
+          <section className='grid min-w-0 gap-3 overflow-x-hidden xl:grid-cols-[minmax(0,0.94fr)_minmax(0,0.94fr)_minmax(240px,0.72fr)] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(260px,0.78fr)]'>
             {/* LEFT COLUMN */}
             <div className='min-w-0 space-y-3 overflow-hidden'>
-              <OverviewCourseListPanel
-                courses={activeCourses}
-                summary={courseSummary}
-              />
+              <OverviewCourseListPanel courses={activeCourses} summary={courseSummary} />
             </div>
 
             {/* MIDDLE COLUMN */}
@@ -80,13 +73,13 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
             </div>
 
             {/* RIGHT COLUMN */}
-            <div className='min-w-0 grid gap-3 overflow-hidden'>
+            <div className='grid min-w-0 gap-3 overflow-hidden'>
               <OverviewUpcomingClassesPanel upcomingClasses={upcomingClasses} />
               <OverviewClassInvitesPanel invites={classInvites} />
 
               <Button
                 type='button'
-                className='flex w-full items-center justify-center gap-3 rounded-md bg-primary px-4 py-3 text-[0.96rem] font-medium transition mt-4'
+                className='bg-primary mt-4 flex w-full items-center justify-center gap-3 rounded-md px-4 py-3 text-[0.96rem] font-medium transition'
               >
                 <CalendarDays className='size-4 shrink-0' />
                 <span className='truncate'>Invite Past Students</span>

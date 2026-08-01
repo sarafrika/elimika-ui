@@ -12,10 +12,19 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
-import { listTrainingApplicationsOptions, searchSkillsOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  listTrainingApplicationsOptions,
+  searchSkillsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -50,7 +59,15 @@ function buildPaginationItems(currentPage: number, totalPages: number): Paginati
   }
 
   if (currentPage >= totalPages - 3) {
-    return [1, 'ellipsis', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    return [
+      1,
+      'ellipsis',
+      totalPages - 4,
+      totalPages - 3,
+      totalPages - 2,
+      totalPages - 1,
+      totalPages,
+    ];
   }
 
   return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
@@ -97,7 +114,9 @@ export default function StudentInstructorSearchPage() {
   const [sortBy, setSortBy] = useState<SortBy>('relevance');
   const [selectedInstructorUuid, setSelectedInstructorUuid] = useState<string | null>(null);
   const [hireModalInstructorUuid, setHireModalInstructorUuid] = useState<string | null>(null);
-  const [filters, setFilters] = useState<InstructorSearchFiltersState>(searchInstructorFiltersDefaults);
+  const [filters, setFilters] = useState<InstructorSearchFiltersState>(
+    searchInstructorFiltersDefaults
+  );
   const [page, setPage] = useState(1);
   const [savedInstructorUuids, setSavedInstructorUuids] = useState<string[]>([]);
 
@@ -139,7 +158,9 @@ export default function StudentInstructorSearchPage() {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed)) {
         setSavedInstructorUuids(
-          parsed.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+          parsed.filter(
+            (value): value is string => typeof value === 'string' && value.trim().length > 0
+          )
         );
       }
     } catch {
@@ -207,7 +228,8 @@ export default function StudentInstructorSearchPage() {
   );
 
   const hiredInstructors = useMemo(
-    () => trainingInstructors.filter(instructor => approvedInstructorUuids.includes(instructor.uuid)),
+    () =>
+      trainingInstructors.filter(instructor => approvedInstructorUuids.includes(instructor.uuid)),
     [approvedInstructorUuids, trainingInstructors]
   );
 
@@ -273,7 +295,10 @@ export default function StudentInstructorSearchPage() {
         return false;
       }
 
-      if (filters.gender !== 'all' && String(instructor.gender ?? '').toLowerCase() !== filters.gender) {
+      if (
+        filters.gender !== 'all' &&
+        String(instructor.gender ?? '').toLowerCase() !== filters.gender
+      ) {
         return false;
       }
 
@@ -333,7 +358,6 @@ export default function StudentInstructorSearchPage() {
     [filteredInstructors, page]
   );
   const paginationItems = useMemo(() => buildPaginationItems(page, totalPages), [page, totalPages]);
-
 
   useEffect(() => {
     setPage(1);
@@ -431,7 +455,9 @@ export default function StudentInstructorSearchPage() {
       return;
     }
 
-    const selectedExists = filteredInstructors.some(instructor => instructor.uuid === selectedInstructorUuid);
+    const selectedExists = filteredInstructors.some(
+      instructor => instructor.uuid === selectedInstructorUuid
+    );
     if (!selectedExists) {
       setSelectedInstructorUuid(filteredInstructors[0]?.uuid ?? null);
     }
@@ -538,7 +564,10 @@ export default function StudentInstructorSearchPage() {
             <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-3'>
               {loading ? (
                 Array.from({ length: 6 }).map((_, index) => (
-                  <Card key={index} className='h-[280px] rounded-xl border bg-card p-4 shadow-none' />
+                  <Card
+                    key={index}
+                    className='bg-card h-[280px] rounded-xl border p-4 shadow-none'
+                  />
                 ))
               ) : paginatedInstructors.length > 0 ? (
                 paginatedInstructors.map(instructor => (
@@ -554,8 +583,8 @@ export default function StudentInstructorSearchPage() {
                   />
                 ))
               ) : (
-                <Card className='col-span-1 md:col-span-2 2xl:col-span-3 w-full rounded-xl border border-dashed bg-card p-8 text-center shadow-none'>
-                  <div className='mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted/40'>
+                <Card className='bg-card col-span-1 w-full rounded-xl border border-dashed p-8 text-center shadow-none md:col-span-2 2xl:col-span-3'>
+                  <div className='bg-muted/40 mx-auto mb-4 flex size-12 items-center justify-center rounded-full'>
                     <Search className='text-muted-foreground size-5' />
                   </div>
                   <h3 className='text-base font-semibold'>No instructors found</h3>
@@ -642,7 +671,7 @@ export default function StudentInstructorSearchPage() {
       ) : (
         <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]'>
           <div className='min-w-0 space-y-4'>
-            <Card className='rounded-xl border bg-card p-4 shadow-none'>
+            <Card className='bg-card rounded-xl border p-4 shadow-none'>
               <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
                 <div>
                   <p className='text-sm font-semibold sm:text-base'>
@@ -673,7 +702,10 @@ export default function StudentInstructorSearchPage() {
             <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-3'>
               {loading ? (
                 Array.from({ length: 6 }).map((_, index) => (
-                  <Card key={index} className='h-[280px] rounded-xl border bg-card p-4 shadow-none' />
+                  <Card
+                    key={index}
+                    className='bg-card h-[280px] rounded-xl border p-4 shadow-none'
+                  />
                 ))
               ) : filteredInstructors.length > 0 ? (
                 filteredInstructors.map(instructor => (
@@ -689,12 +721,14 @@ export default function StudentInstructorSearchPage() {
                   />
                 ))
               ) : (
-                <Card className='col-span-1 md:col-span-2 2xl:col-span-3 w-full rounded-xl border border-dashed bg-card p-8 text-center shadow-none'>
-                  <div className='mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted/40'>
+                <Card className='bg-card col-span-1 w-full rounded-xl border border-dashed p-8 text-center shadow-none md:col-span-2 2xl:col-span-3'>
+                  <div className='bg-muted/40 mx-auto mb-4 flex size-12 items-center justify-center rounded-full'>
                     <Bookmark className='text-muted-foreground size-5' />
                   </div>
                   <h3 className='text-base font-semibold'>
-                    {activeView === 'saved' ? 'No saved instructors yet' : 'No hired instructors yet'}
+                    {activeView === 'saved'
+                      ? 'No saved instructors yet'
+                      : 'No hired instructors yet'}
                   </h3>
                   <p className='text-muted-foreground mt-2 text-sm'>
                     {activeView === 'saved'
@@ -715,7 +749,7 @@ export default function StudentInstructorSearchPage() {
           </div>
 
           <aside className='min-w-0 xl:sticky xl:top-4 xl:h-fit'>
-            <Card className='rounded-xl border bg-card p-4 shadow-none'>
+            <Card className='bg-card rounded-xl border p-4 shadow-none'>
               <div className='space-y-3'>
                 <h3 className='text-sm font-semibold sm:text-base'>
                   {activeView === 'saved' ? 'Saved list' : 'Hired list'}

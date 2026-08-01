@@ -70,8 +70,7 @@ const STATUS_BADGE_MAP: Record<RevenueStatus, string> = {
     'bg-primary/10 dark:bg-primary/15 text-primary dark:text-primary-foreground border border-primary/20 dark:border-primary/30',
   cancelled:
     'bg-destructive/10 dark:bg-destructive/15 text-destructive dark:text-destructive-foreground border border-destructive/20 dark:border-destructive/30',
-  refund:
-    'bg-muted text-muted-foreground border border-border',
+  refund: 'bg-muted text-muted-foreground border border-border',
 };
 
 const STATUS_LABEL_MAP: Record<RevenueStatus, string> = {
@@ -193,7 +192,10 @@ const getHourlyRate = (
     };
   }
 
-  if (typeof classItem.course?.minimum_training_fee === 'number' && classItem.course.minimum_training_fee > 0) {
+  if (
+    typeof classItem.course?.minimum_training_fee === 'number' &&
+    classItem.course.minimum_training_fee > 0
+  ) {
     return {
       amount: classItem.course.minimum_training_fee,
       currencyCode: approvedRateCards.get(classItem.course_uuid ?? '')?.currency ?? 'KES',
@@ -236,13 +238,7 @@ const getStatusFromClass = (
   return 'pending';
 };
 
-function TruncatedCellText({
-  value,
-  maxLength,
-}: {
-  value: string;
-  maxLength: number;
-}) {
+function TruncatedCellText({ value, maxLength }: { value: string; maxLength: number }) {
   const displayValue = truncateText(value, maxLength);
 
   return (
@@ -288,7 +284,9 @@ const RevenuePage = () => {
     },
   });
 
-  const { classes, isLoading: isLoadingClasses } = useInstructorClassesWithSchedules(instructor?.uuid);
+  const { classes, isLoading: isLoadingClasses } = useInstructorClassesWithSchedules(
+    instructor?.uuid
+  );
 
   const enrollmentsQueries = useQueries({
     queries: classes.map(classItem => ({
@@ -342,7 +340,9 @@ const RevenuePage = () => {
         const feePerStudent = sessionFee * sessions;
         const classFees = feePerStudent * activeEnrollments.length;
         const firstSessionDate =
-          classItem.schedule[0]?.start_time ?? classItem.default_start_time ?? classItem.created_date;
+          classItem.schedule[0]?.start_time ??
+          classItem.default_start_time ??
+          classItem.created_date;
         const statusKey = getStatusFromClass(classItem, enrollments, now);
 
         return {
@@ -372,14 +372,7 @@ const RevenuePage = () => {
     return revenueRows.filter(row => {
       const matchesSearch =
         !query ||
-        [
-          row.id,
-          row.classTitle,
-          row.orderDate,
-          row.location,
-          row.deliveryStatus,
-          row.currencyCode,
-        ]
+        [row.id, row.classTitle, row.orderDate, row.location, row.deliveryStatus, row.currencyCode]
           .join(' ')
           .toLowerCase()
           .includes(query);
@@ -501,7 +494,10 @@ const RevenuePage = () => {
             </p>
           </div>
 
-          <Link href='/dashboard/instructor/revenue/transaction-list' className='text-primary text-sm font-medium'>
+          <Link
+            href='/dashboard/instructor/revenue/transaction-list'
+            className='text-primary text-sm font-medium'
+          >
             Open table view
           </Link>
         </div>
@@ -601,7 +597,9 @@ const RevenuePage = () => {
                 </span>
               </div>
               <p className='text-muted-foreground mt-3 text-sm'>Enrolled Students</p>
-              <p className='text-foreground mt-1 text-2xl font-bold'>{analyticsData.totalStudents}</p>
+              <p className='text-foreground mt-1 text-2xl font-bold'>
+                {analyticsData.totalStudents}
+              </p>
             </div>
 
             <div className='border-border bg-card rounded-lg border p-5'>
@@ -652,7 +650,10 @@ const RevenuePage = () => {
                   </SelectContent>
                 </Select>
 
-                <Select value={statusFilter} onValueChange={value => handleStatusFilter(value as RevenueStatusFilter)}>
+                <Select
+                  value={statusFilter}
+                  onValueChange={value => handleStatusFilter(value as RevenueStatusFilter)}
+                >
                   <SelectTrigger className='w-full'>
                     <SelectValue placeholder='Status' />
                   </SelectTrigger>
@@ -733,9 +734,15 @@ const RevenuePage = () => {
                             {row.deliveryStatus}
                           </span>
                         </td>
-                        <td className='text-foreground px-6 py-4 text-right text-sm'>{row.sessions}</td>
-                        <td className='text-foreground px-6 py-4 text-right text-sm'>{row.duration}</td>
-                        <td className='text-foreground px-6 py-4 text-right text-sm'>{row.students}</td>
+                        <td className='text-foreground px-6 py-4 text-right text-sm'>
+                          {row.sessions}
+                        </td>
+                        <td className='text-foreground px-6 py-4 text-right text-sm'>
+                          {row.duration}
+                        </td>
+                        <td className='text-foreground px-6 py-4 text-right text-sm'>
+                          {row.students}
+                        </td>
                         <td className='text-foreground px-6 py-4 text-right text-sm'>
                           {formatCurrency(row.sessionFee, row.currencyCode)}
                         </td>
@@ -762,8 +769,8 @@ const RevenuePage = () => {
 
             <div className='border-border flex items-center justify-between border-t p-6'>
               <div className='text-muted-foreground text-sm'>
-                Page {Math.min(page + 1, totalPages)} of {totalPages} • {paginatedTransactions.length}{' '}
-                of {filteredTransactions.length} results
+                Page {Math.min(page + 1, totalPages)} of {totalPages} •{' '}
+                {paginatedTransactions.length} of {filteredTransactions.length} results
               </div>
               <div className='flex gap-2'>
                 <Button
@@ -797,7 +804,9 @@ const RevenuePage = () => {
               {topPerformingClasses.length > 0 ? (
                 topPerformingClasses.map(item => {
                   const share =
-                    analyticsData.totalRevenue > 0 ? (item.classFees / analyticsData.totalRevenue) * 100 : 0;
+                    analyticsData.totalRevenue > 0
+                      ? (item.classFees / analyticsData.totalRevenue) * 100
+                      : 0;
 
                   return (
                     <div key={item.id}>
@@ -815,13 +824,16 @@ const RevenuePage = () => {
                           style={{ width: `${Math.min(100, share)}%` }}
                         />
                       </div>
-                      <div className='text-muted-foreground mt-1 text-xs'>{share.toFixed(1)}% of total</div>
+                      <div className='text-muted-foreground mt-1 text-xs'>
+                        {share.toFixed(1)}% of total
+                      </div>
                     </div>
                   );
                 })
               ) : (
                 <p className='text-muted-foreground text-sm'>
-                  Revenue by course will appear here once your classes have schedules and enrollments.
+                  Revenue by course will appear here once your classes have schedules and
+                  enrollments.
                 </p>
               )}
             </div>

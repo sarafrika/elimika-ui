@@ -41,7 +41,10 @@ export default function UserBadge({
   return (
     <div className='flex items-center gap-3'>
       <Avatar>
-        <AvatarImage src={toAuthenticatedMediaUrl(user.profile_image_url) ?? undefined} alt='@shadcn' />
+        <AvatarImage
+          src={toAuthenticatedMediaUrl(user.profile_image_url) ?? undefined}
+          alt='@shadcn'
+        />
         <AvatarFallback>
           <div className='bg-secondary text-primary rounded-full p-3'>
             <UserIcon size={iconSize} />

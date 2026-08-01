@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function Loading() {
   return (
     <div className='space-y-4 px-3 py-4 sm:px-4 lg:px-6'>
-      <div className='flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-none sm:p-5'>
+      <div className='bg-card flex flex-col gap-4 rounded-xl border p-4 shadow-none sm:p-5'>
         <div className='space-y-2'>
           <Skeleton className='h-8 w-56' />
           <Skeleton className='h-4 w-80 max-w-full' />

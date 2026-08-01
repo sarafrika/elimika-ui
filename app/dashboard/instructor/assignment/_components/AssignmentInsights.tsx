@@ -83,9 +83,9 @@ export function AssignmentInsights({ insights }: AssignmentInsightsProps) {
                 </p>
               </div>
 
-              <div className='mt-3 h-2 overflow-hidden rounded-full bg-muted'>
+              <div className='bg-muted mt-3 h-2 overflow-hidden rounded-full'>
                 <div
-                  className='h-full rounded-full bg-primary transition-all'
+                  className='bg-primary h-full rounded-full transition-all'
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -93,7 +93,7 @@ export function AssignmentInsights({ insights }: AssignmentInsightsProps) {
           );
         })}
 
-        <div className='from-primary/10 via-primary/5 to-background rounded-lg border border-primary/15 bg-gradient-to-br p-3 sm:p-4'>
+        <div className='from-primary/10 via-primary/5 to-background border-primary/15 rounded-lg border bg-gradient-to-br p-3 sm:p-4'>
           <div className='flex items-center justify-between gap-3'>
             <div>
               <p className='text-foreground text-sm font-semibold sm:text-base'>Overdue Tasks</p>

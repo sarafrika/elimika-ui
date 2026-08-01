@@ -65,11 +65,11 @@ export function CourseTrainingRequirements({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-5">
+      <CardContent className='space-y-5'>
         {isEmpty ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center">
-            <p className="text-sm font-medium">No requirements yet</p>
-            <p className="text-muted-foreground mt-1 text-sm">
+          <div className='flex flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center'>
+            <p className='text-sm font-medium'>No requirements yet</p>
+            <p className='text-muted-foreground mt-1 text-sm'>
               {viewerRole && FULL_ACCESS_ROLES.has(viewerRole)
                 ? 'Add training requirements to guide participants.'
                 : 'There are no requirements for this course.'}
@@ -77,40 +77,39 @@ export function CourseTrainingRequirements({
           </div>
         ) : (
           groupedRequirements.map(group => (
-            <section key={group.provider} className="space-y-3">
-
+            <section key={group.provider} className='space-y-3'>
               {/* HEADER */}
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="capitalize">
+              <div className='flex items-center gap-2'>
+                <Badge variant='outline' className='capitalize'>
                   {group.label}
                 </Badge>
-                <span className="text-muted-foreground text-sm">
+                <span className='text-muted-foreground text-sm'>
                   {group.items.length} requirement{group.items.length === 1 ? '' : 's'}
                 </span>
               </div>
 
               {/* RESPONSIVE GRID */}
-              <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
+              <div className='grid [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))] gap-3'>
                 {group.items.map(requirement => (
                   <div
                     key={requirement.uuid ?? `${group.provider}-${requirement.name}`}
-                    className="bg-muted/30 border-border/60 rounded-xl border p-4 space-y-2 min-w-0"
+                    className='bg-muted/30 border-border/60 min-w-0 space-y-2 rounded-xl border p-4'
                   >
-
                     {/* TITLE + BADGE */}
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold break-words">
-                          {requirement.name}
-                        </p>
-                        <p className="text-muted-foreground text-xs capitalize">
-                          {String(requirement.requirement_type ?? 'requirement').replaceAll('_', ' ')}
+                    <div className='flex flex-wrap items-start justify-between gap-2'>
+                      <div className='min-w-0'>
+                        <p className='text-sm font-semibold break-words'>{requirement.name}</p>
+                        <p className='text-muted-foreground text-xs capitalize'>
+                          {String(requirement.requirement_type ?? 'requirement').replaceAll(
+                            '_',
+                            ' '
+                          )}
                         </p>
                       </div>
 
                       <Badge
                         variant={requirement.is_mandatory ? 'default' : 'secondary'}
-                        className="shrink-0"
+                        className='shrink-0'
                       >
                         {requirement.is_mandatory ? 'Mandatory' : 'Optional'}
                       </Badge>
@@ -118,15 +117,15 @@ export function CourseTrainingRequirements({
 
                     {/* QUANTITY */}
                     {(requirement.quantity || requirement.unit) && (
-                      <p className="text-sm">
-                        <span className="text-muted-foreground">Quantity:</span>{' '}
+                      <p className='text-sm'>
+                        <span className='text-muted-foreground'>Quantity:</span>{' '}
                         {[requirement.quantity, requirement.unit].filter(Boolean).join(' ')}
                       </p>
                     )}
 
                     {/* DESCRIPTION */}
                     {requirement.description && (
-                      <p className="text-muted-foreground text-sm break-words">
+                      <p className='text-muted-foreground text-sm break-words'>
                         {requirement.description}
                       </p>
                     )}

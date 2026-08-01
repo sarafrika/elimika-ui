@@ -11,10 +11,7 @@ import {
   type SetStateAction,
 } from 'react';
 
-import {
-  DEFAULT_ANALYTICS_FILTERS,
-  type InstructorAnalyticsFilters,
-} from './analytics-filters';
+import { DEFAULT_ANALYTICS_FILTERS, type InstructorAnalyticsFilters } from './analytics-filters';
 import { normalizeAnalyticsFilters } from './analytics-url';
 
 type AnalyticsFiltersContextValue = {
@@ -47,14 +44,16 @@ export function AnalyticsFiltersProvider({
   const [filters, setFilters] = useState<InstructorAnalyticsFilters>(normalizedInitialFilters);
 
   useEffect(() => {
-    setFilters((current) => {
+    setFilters(current => {
       const sameFilters =
         current.dateFrom === normalizedInitialFilters.dateFrom &&
         current.dateTo === normalizedInitialFilters.dateTo &&
         current.program === normalizedInitialFilters.program &&
         current.location === normalizedInitialFilters.location &&
         current.statuses.length === normalizedInitialFilters.statuses.length &&
-        current.statuses.every((status, index) => status === normalizedInitialFilters.statuses[index]);
+        current.statuses.every(
+          (status, index) => status === normalizedInitialFilters.statuses[index]
+        );
 
       return sameFilters ? current : normalizedInitialFilters;
     });
@@ -64,15 +63,10 @@ export function AnalyticsFiltersProvider({
     setFilters(cloneDefaultFilters());
   };
 
-  const value = useMemo(
-    () => ({ filters, setFilters, resetFilters }),
-    [filters]
-  );
+  const value = useMemo(() => ({ filters, setFilters, resetFilters }), [filters]);
 
   return (
-    <AnalyticsFiltersContext.Provider value={value}>
-      {children}
-    </AnalyticsFiltersContext.Provider>
+    <AnalyticsFiltersContext.Provider value={value}>{children}</AnalyticsFiltersContext.Provider>
   );
 }
 

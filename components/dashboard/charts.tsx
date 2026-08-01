@@ -38,12 +38,12 @@ function ChartEmpty({ label = 'No data yet', className }: { label?: string; clas
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center gap-2 text-center text-muted-foreground',
+        'text-muted-foreground flex flex-col items-center justify-center gap-2 text-center',
         chartHeight,
         className
       )}
     >
-      <div className='flex h-10 w-10 items-center justify-center rounded-full bg-muted'>
+      <div className='bg-muted flex h-10 w-10 items-center justify-center rounded-full'>
         <BarChart3 className='h-5 w-5' />
       </div>
       <p className='text-sm'>{label}</p>
@@ -79,7 +79,12 @@ export function FundUtilizationChart({
           />
           <Tooltip contentStyle={tooltipContentStyle} cursor={{ fill: 'var(--color-muted)' }} />
           <Legend iconType='circle' wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-          <Bar dataKey='allocated' fill='var(--color-chart-1)' radius={[4, 4, 0, 0]} name='Allocated' />
+          <Bar
+            dataKey='allocated'
+            fill='var(--color-chart-1)'
+            radius={[4, 4, 0, 0]}
+            name='Allocated'
+          />
           <Bar dataKey='spent' fill='var(--color-chart-2)' radius={[4, 4, 0, 0]} name='Spent' />
         </BarChart>
       </ResponsiveContainer>

@@ -135,7 +135,7 @@ export default function CertificatesSettings() {
     name: 'certifications',
   });
 
-  const watchedCertifications = useWatch({ control: form.control, name: 'certifications', });
+  const watchedCertifications = useWatch({ control: form.control, name: 'certifications' });
 
   const uploadDocumentMut = useMutation(uploadCourseCreatorDocumentMutation());
   const handleUplod = () => {
@@ -355,16 +355,18 @@ export default function CertificatesSettings() {
                         <div>
                           <div className='flex items-center gap-2'>
                             <h3 className='text-base font-medium'>
-                              {watchedCertifications?.[index]?.certification_name || 'New certification'}
+                              {watchedCertifications?.[index]?.certification_name ||
+                                'New certification'}
                             </h3>
                             {watchedCertifications?.[index]?.is_verified && (
-                              <Badge className='border-success/30 bg-success/15 text-xs text-success'>
+                              <Badge className='border-success/30 bg-success/15 text-success text-xs'>
                                 Verified
                               </Badge>
                             )}
                           </div>
                           <p className='text-muted-foreground text-sm'>
-                            {watchedCertifications?.[index]?.issuing_organization || 'Issuer not set'}
+                            {watchedCertifications?.[index]?.issuing_organization ||
+                              'Issuer not set'}
                           </p>
                         </div>
                       </div>

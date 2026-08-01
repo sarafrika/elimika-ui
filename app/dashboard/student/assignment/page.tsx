@@ -25,16 +25,16 @@ export default function AssignmentsPage() {
     <div className='space-y-6 p-4 sm:p-6 lg:p-8'>
       {/* ── Hub header ─────────────────────────────────────────────── */}
       <header className='space-y-3'>
-        <span className='inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-primary'>
+        <span className='border-primary/20 bg-primary/10 text-primary inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold tracking-wide uppercase'>
           <GraduationCap className='h-3.5 w-3.5' />
           Assessments
         </span>
 
         <div className='space-y-1.5'>
-          <h1 className='text-2xl font-bold tracking-tight text-foreground sm:text-3xl'>
+          <h1 className='text-foreground text-2xl font-bold tracking-tight sm:text-3xl'>
             Your coursework
           </h1>
-          <p className='max-w-2xl text-sm text-muted-foreground'>
+          <p className='text-muted-foreground max-w-2xl text-sm'>
             Submit assignments, review instructor feedback, and take scheduled quizzes across your
             enrolled classes — all in one place.
           </p>
@@ -43,7 +43,7 @@ export default function AssignmentsPage() {
 
       {/* ── Tabbed workspaces ──────────────────────────────────────── */}
       <Tabs value={tab} onValueChange={handleTabChange} className='w-full gap-6'>
-        <TabsList className='grid h-auto w-full grid-cols-2 gap-1 rounded-xl bg-muted p-1 sm:inline-flex sm:w-auto'>
+        <TabsList className='bg-muted grid h-auto w-full grid-cols-2 gap-1 rounded-xl p-1 sm:inline-flex sm:w-auto'>
           <TabsTrigger
             value='assignments'
             className='gap-2 rounded-lg px-5 py-2 text-sm font-medium'

@@ -13,10 +13,7 @@ import type { Enrollment, InstructorReview } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import {
-  DEFAULT_ANALYTICS_FILTERS,
-  type InstructorAnalyticsFilters,
-} from './analytics-filters';
+import { DEFAULT_ANALYTICS_FILTERS, type InstructorAnalyticsFilters } from './analytics-filters';
 import { useAnalyticsFilters } from './analytics-filters-context';
 
 export type AnalyticsSession = {
@@ -109,7 +106,8 @@ const formatStatusLabel = (status?: string) => {
   if (COMPLETED_STATUS.has(status) || lower.includes('completed')) return 'Completed';
   if (CANCELLED_STATUS.has(status) || lower.includes('cancel')) return 'Cancelled';
   if (IN_PROGRESS_STATUS.has(status) || lower.includes('ongoing')) return 'Ongoing';
-  if (UPCOMING_STATUS.has(status) || lower.includes('schedule') || lower.includes('pending')) return 'Upcoming';
+  if (UPCOMING_STATUS.has(status) || lower.includes('schedule') || lower.includes('pending'))
+    return 'Upcoming';
   return 'Upcoming';
 };
 
@@ -131,7 +129,7 @@ const getClassLocation = (
   instances: Array<{ location_name?: string; location_type?: string }>,
   fallback?: { location_name?: string; location_type?: string }
 ) => {
-  const locations = instances.map(formatLocation).filter((value) => value && value !== 'TBD');
+  const locations = instances.map(formatLocation).filter(value => value && value !== 'TBD');
 
   if (locations.length === 0) {
     return formatLocation(fallback ?? {});
@@ -150,11 +148,11 @@ const getClassLocation = (
 };
 
 const getClassStatus = (instances: Array<{ status?: string }>) => {
-  const statusLabels = instances.map((instance) => formatStatusLabel(instance.status));
+  const statusLabels = instances.map(instance => formatStatusLabel(instance.status));
   if (!statusLabels.length) return 'Upcoming';
-  if (statusLabels.every((label) => label === 'Cancelled')) return 'Cancelled';
-  if (statusLabels.some((label) => label === 'Ongoing')) return 'Ongoing';
-  if (statusLabels.every((label) => label === 'Completed')) return 'Completed';
+  if (statusLabels.every(label => label === 'Cancelled')) return 'Cancelled';
+  if (statusLabels.some(label => label === 'Ongoing')) return 'Ongoing';
+  if (statusLabels.every(label => label === 'Completed')) return 'Completed';
   return 'Upcoming';
 };
 
@@ -181,7 +179,10 @@ const getDurationMinutes = (instance: {
   }
 
   if (instance.start_time && instance.end_time) {
-    return Math.max(0, Math.round((instance.end_time.getTime() - instance.start_time.getTime()) / 60000));
+    return Math.max(
+      0,
+      Math.round((instance.end_time.getTime() - instance.start_time.getTime()) / 60000)
+    );
   }
 
   return 0;
@@ -251,19 +252,19 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
       ...DEFAULT_ANALYTICS_FILTERS,
       ...contextFilters,
       ...filters,
-      statuses:
-        filters?.statuses?.length
-          ? filters.statuses
-          : contextFilters.statuses?.length
-            ? contextFilters.statuses
-            : [...DEFAULT_ANALYTICS_FILTERS.statuses],
+      statuses: filters?.statuses?.length
+        ? filters.statuses
+        : contextFilters.statuses?.length
+          ? contextFilters.statuses
+          : [...DEFAULT_ANALYTICS_FILTERS.statuses],
     }),
     [contextFilters, filters]
   );
 
   const instructor = useInstructor();
   const instructorUuid = instructor?.uuid;
-  const { classes, isLoading: isLoadingClasses } = useInstructorClassesWithSchedules(instructorUuid);
+  const { classes, isLoading: isLoadingClasses } =
+    useInstructorClassesWithSchedules(instructorUuid);
 
   const ratingSummaryQuery = useQuery({
     ...getInstructorRatingSummaryOptions({
@@ -286,7 +287,7 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
   const reviewItems = reviewsQuery.data?.data ?? [];
 
   const classRatingQueries = useQueries({
-    queries: classes.map((classItem) => ({
+    queries: classes.map(classItem => ({
       ...getClassRatingSummaryOptions({
         path: { uuid: classItem.uuid ?? '' },
       }),
@@ -306,26 +307,32 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
     [classes, classRatingQueries]
   );
 
-
   const classSessionBundle = useMemo(() => {
     if (!classes.length) {
-      return { sessions: [] as AnalyticsSession[], sessionByClassId: new Map<string, AnalyticsSession>() };
+      return {
+        sessions: [] as AnalyticsSession[],
+        sessionByClassId: new Map<string, AnalyticsSession>(),
+      };
     }
 
     const instructorName = [instructor?.full_name, ''].filter(Boolean).join(' ').trim();
     const sessionByClassId = new Map<string, AnalyticsSession>();
 
     const sessions = classes
-      .flatMap((classItem) => {
+      .flatMap(classItem => {
         const enrollments = (classItem.enrollments ?? []) as Array<{
           status?: string;
           student_uuid?: string;
         }>;
 
-        const enrolled = enrollments.filter((enrollment) => ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')).length;
-        const attended = enrollments.filter((enrollment) => ATTENDED_STATUSES.has(enrollment.status ?? '')).length;
+        const enrolled = enrollments.filter(enrollment =>
+          ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
+        ).length;
+        const attended = enrollments.filter(enrollment =>
+          ATTENDED_STATUSES.has(enrollment.status ?? '')
+        ).length;
 
-        return (classItem.schedule ?? []).map((instance) => {
+        return (classItem.schedule ?? []).map(instance => {
           const durationMinutes = getDurationMinutes(instance);
           const startTime = instance.start_time ? new Date(instance.start_time) : new Date(0);
           const session: AnalyticsSession = {
@@ -350,18 +357,18 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
       })
       .sort((left, right) => right.startTime.getTime() - left.startTime.getTime());
 
-    classes.forEach((classItem) => {
+    classes.forEach(classItem => {
       const enrollments = (classItem.enrollments ?? []) as Array<Enrollment>;
       const classUuid = classItem.uuid ?? '';
       if (!classUuid) return;
 
-      const session = sessions.find((item) => item.classUuid === classUuid) ?? null;
+      const session = sessions.find(item => item.classUuid === classUuid) ?? null;
       if (session) {
         sessionByClassId.set(classUuid, session);
       }
 
       // Preserve a direct mapping for review filtering below.
-      enrollments.forEach((enrollment) => {
+      enrollments.forEach(enrollment => {
         if (!enrollment.uuid) return;
         if (session) {
           sessionByClassId.set(enrollment.uuid, session);
@@ -380,24 +387,18 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
 
     const instructorName = instructor?.full_name || 'You';
 
-    const classSessions = classes.map((classItem) => {
+    const classSessions = classes.map(classItem => {
       const enrollments = classItem.enrollments ?? [];
 
-      const enrolled = enrollments.filter((e) =>
+      const enrolled = enrollments.filter(e =>
         ACTIVE_ENROLLMENT_STATUSES.has(e.status ?? '')
       ).length;
 
-      const attended = enrollments.filter((e) =>
-        ATTENDED_STATUSES.has(e.status ?? '')
-      ).length;
+      const attended = enrollments.filter(e => ATTENDED_STATUSES.has(e.status ?? '')).length;
 
-      const instances = (classItem.schedule ?? []).map((instance) => {
-        const startTime = instance.start_time
-          ? new Date(instance.start_time)
-          : new Date(0);
-        const endTime = instance.end_time
-          ? new Date(instance.end_time)
-          : null;
+      const instances = (classItem.schedule ?? []).map(instance => {
+        const startTime = instance.start_time ? new Date(instance.start_time) : new Date(0);
+        const endTime = instance.end_time ? new Date(instance.end_time) : null;
         return {
           id: instance.uuid ?? `${classItem.uuid}-${startTime.toISOString()}`,
           date: formatDate(instance.start_time),
@@ -419,34 +420,20 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
         sortedInstances[sortedInstances.length - 1]?.startTime ??
         null;
 
-      const totalHours = instances.reduce(
-        (acc, item) => acc + Number(item.hours),
-        0
-      );
-      const avgHours = instances.length
-        ? Math.round((totalHours / instances.length) * 10) / 10
-        : 0;
+      const totalHours = instances.reduce((acc, item) => acc + Number(item.hours), 0);
+      const avgHours = instances.length ? Math.round((totalHours / instances.length) * 10) / 10 : 0;
 
       return {
         id: classItem.uuid ?? `class-${Math.random().toString(36).slice(2)}`,
-        program:
-          classItem.course?.name ??
-          classItem.title ??
-          'Untitled Session',
-        session:
-          classItem.title ??
-          'Untitled Session',
+        program: classItem.course?.name ?? classItem.title ?? 'Untitled Session',
+        session: classItem.title ?? 'Untitled Session',
         dateRange: formatDateRange(startDate ?? undefined, endDate ?? undefined),
         location: getClassLocation(sortedInstances, classItem),
         instructor: instructorName,
         enrolled,
         attended,
-        completionRate:
-          enrolled > 0
-            ? Math.round((attended / enrolled) * 100)
-            : 0,
-        satisfaction:
-          ratingsByClass.get(classItem.uuid) ?? null,
+        completionRate: enrolled > 0 ? Math.round((attended / enrolled) * 100) : 0,
+        satisfaction: ratingsByClass.get(classItem.uuid) ?? null,
         totalHours,
         avgHours,
         instanceCount: instances.length,
@@ -464,12 +451,13 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
     });
   }, [classes, instructor, ratingSummaryQuery.data]);
 
-
   // FILTERING WITH FULL SESSIONS
   const filteredSessions = useMemo(() => {
-    return fullSessions.filter((session) => {
-      const matchesProgram = activeFilters.program === 'all' || session.program === activeFilters.program;
-      const matchesLocation = activeFilters.location === 'all' || session.location === activeFilters.location;
+    return fullSessions.filter(session => {
+      const matchesProgram =
+        activeFilters.program === 'all' || session.program === activeFilters.program;
+      const matchesLocation =
+        activeFilters.location === 'all' || session.location === activeFilters.location;
       const matchesStatus = hasSelectedStatus(activeFilters.statuses, session.status);
       const matchesDate = overlapsDateRange(
         session.startDate,
@@ -480,26 +468,33 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
 
       return matchesProgram && matchesLocation && matchesStatus && matchesDate;
     });
-  }, [activeFilters.dateFrom, activeFilters.dateTo, activeFilters.location, activeFilters.program, activeFilters.statuses, fullSessions]);
+  }, [
+    activeFilters.dateFrom,
+    activeFilters.dateTo,
+    activeFilters.location,
+    activeFilters.program,
+    activeFilters.statuses,
+    fullSessions,
+  ]);
 
   const filteredSessionIds = useMemo(
-    () => new Set(filteredSessions.map((session) => session.classUuid ?? session.id)),
+    () => new Set(filteredSessions.map(session => session.classUuid ?? session.id)),
     [filteredSessions]
   );
 
   const filteredClasses = useMemo(
-    () => classes.filter((classItem) => classItem.uuid && filteredSessionIds.has(classItem.uuid)),
+    () => classes.filter(classItem => classItem.uuid && filteredSessionIds.has(classItem.uuid)),
     [classes, filteredSessionIds]
   );
 
   const enrollmentToClassId = useMemo(() => {
     const map = new Map<string, string>();
 
-    classes.forEach((classItem) => {
+    classes.forEach(classItem => {
       const classUuid = classItem.uuid ?? '';
       if (!classUuid) return;
 
-      (classItem.enrollments ?? []).forEach((enrollment) => {
+      (classItem.enrollments ?? []).forEach(enrollment => {
         const record = enrollment as Enrollment;
         if (record.uuid) {
           map.set(record.uuid, classUuid);
@@ -511,8 +506,15 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
   }, [classes]);
 
   const filteredReviewItems = useMemo(() => {
-    return reviewItems.filter((review) => {
-      if (!overlapsDateRange(review.created_date ?? null, review.created_date ?? null, activeFilters.dateFrom, activeFilters.dateTo)) {
+    return reviewItems.filter(review => {
+      if (
+        !overlapsDateRange(
+          review.created_date ?? null,
+          review.created_date ?? null,
+          activeFilters.dateFrom,
+          activeFilters.dateTo
+        )
+      ) {
         return false;
       }
 
@@ -527,21 +529,35 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
 
       return filteredSessionIds.has(classUuid);
     });
-  }, [activeFilters.dateFrom, activeFilters.dateTo, activeFilters.location, activeFilters.program, enrollmentToClassId, filteredSessionIds, reviewItems]);
+  }, [
+    activeFilters.dateFrom,
+    activeFilters.dateTo,
+    activeFilters.location,
+    activeFilters.program,
+    enrollmentToClassId,
+    filteredSessionIds,
+    reviewItems,
+  ]);
 
   const filteredMetrics = useMemo<AnalyticsMetrics>(() => {
-    const totalSessions = filteredSessions.filter((session) => session.status !== 'Cancelled').length;
-    const completedSessions = filteredSessions.filter((session) => session.status === 'Completed').length;
+    const totalSessions = filteredSessions.filter(session => session.status !== 'Cancelled').length;
+    const completedSessions = filteredSessions.filter(
+      session => session.status === 'Completed'
+    ).length;
     const trainingHours = filteredSessions
-      .filter((session) => session.status === 'Completed')
+      .filter(session => session.status === 'Completed')
       .reduce((sum, session) => sum + session.hours, 0);
 
-    const numberOfPrograms = new Set(filteredSessions.map((session) => session.program).filter(Boolean)).size;
-    const totalInstructors = new Set(filteredClasses.map((classItem) => classItem.default_instructor_uuid).filter(Boolean)).size;
+    const numberOfPrograms = new Set(
+      filteredSessions.map(session => session.program).filter(Boolean)
+    ).size;
+    const totalInstructors = new Set(
+      filteredClasses.map(classItem => classItem.default_instructor_uuid).filter(Boolean)
+    ).size;
 
     const uniqueLearnerIds = new Set<string>();
-    filteredClasses.forEach((classItem) => {
-      (classItem.enrollments ?? []).forEach((enrollment) => {
+    filteredClasses.forEach(classItem => {
+      (classItem.enrollments ?? []).forEach(enrollment => {
         const record = enrollment as Enrollment;
         if (record.student_uuid && ACTIVE_ENROLLMENT_STATUSES.has(record.status ?? '')) {
           uniqueLearnerIds.add(record.student_uuid);
@@ -552,11 +568,14 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
     const averageSatisfaction =
       filteredReviewItems.length > 0
         ? Math.round(
-          (filteredReviewItems.reduce((sum, review) => sum + Number((review as InstructorReview).rating ?? 0), 0) /
-            filteredReviewItems.length) *
-          10
-        ) / 10
-        : ratingSummaryQuery.data?.data?.average_rating ?? null;
+            (filteredReviewItems.reduce(
+              (sum, review) => sum + Number((review as InstructorReview).rating ?? 0),
+              0
+            ) /
+              filteredReviewItems.length) *
+              10
+          ) / 10
+        : (ratingSummaryQuery.data?.data?.average_rating ?? null);
 
     return {
       totalSessions,
@@ -578,9 +597,9 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
   const performance = useMemo(() => {
     const weeks = getWeekBuckets();
 
-    return weeks.map((week) => {
+    return weeks.map(week => {
       const weeklySessions = filteredSessions.filter(
-        (session) =>
+        session =>
           session.startDate &&
           session.startDate >= week.start &&
           session.startDate <= week.end &&
@@ -588,7 +607,9 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
       );
       const sessionCount = weeklySessions.length;
       const participantCount = weeklySessions.reduce((sum, session) => sum + session.enrolled, 0);
-      const completedCount = weeklySessions.filter((session) => session.status === 'Completed').length;
+      const completedCount = weeklySessions.filter(
+        session => session.status === 'Completed'
+      ).length;
 
       return {
         label: week.label,
@@ -602,7 +623,7 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
   const programCompletion = useMemo(() => {
     const programMap = new Map<string, { completed: number; total: number }>();
 
-    filteredSessions.forEach((session) => {
+    filteredSessions.forEach(session => {
       const key = session.program;
       const current = programMap.get(key) ?? { completed: 0, total: 0 };
       current.total += 1;
@@ -623,7 +644,7 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
 
   const statusBreakdown = useMemo<StatusBreakdownItem[]>(() => {
     const counts = new Map<string, number>();
-    filteredSessions.forEach((session) => {
+    filteredSessions.forEach(session => {
       counts.set(session.status, (counts.get(session.status) ?? 0) + 1);
     });
 
@@ -647,7 +668,7 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
   const locations = useMemo<LocationSummary[]>(() => {
     const counts = new Map<string, number>();
 
-    filteredSessions.forEach((session) => {
+    filteredSessions.forEach(session => {
       counts.set(session.location, (counts.get(session.location) ?? 0) + 1);
     });
 
@@ -670,7 +691,7 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
       poor: 0,
     };
 
-    filteredReviewItems.forEach((review) => {
+    filteredReviewItems.forEach(review => {
       const rating = review.rating ?? 0;
       if (rating >= 4.5) counts.excellent += 1;
       else if (rating >= 3.5) counts.good += 1;
@@ -709,12 +730,18 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
   }, [filteredReviewItems]);
 
   const availablePrograms = useMemo(
-    () => [...new Set(fullSessions.map((session) => session.program))].sort((left, right) => left.localeCompare(right)),
+    () =>
+      [...new Set(fullSessions.map(session => session.program))].sort((left, right) =>
+        left.localeCompare(right)
+      ),
     [fullSessions]
   );
 
   const availableLocations = useMemo(
-    () => [...new Set(fullSessions.map((session) => session.location))].sort((left, right) => left.localeCompare(right)),
+    () =>
+      [...new Set(fullSessions.map(session => session.location))].sort((left, right) =>
+        left.localeCompare(right)
+      ),
     [fullSessions]
   );
 

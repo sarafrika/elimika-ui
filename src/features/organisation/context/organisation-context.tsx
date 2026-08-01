@@ -78,11 +78,7 @@ export default function OrganisationProvider({
   const { data, isLoading } = useQuery(
     createQueryOptions(activeOrgId, {
       enabled:
-        !initialOrganisation &&
-        hasOrgDomain &&
-        !!userProfile &&
-        !!session?.user &&
-        !!activeOrgId,
+        !initialOrganisation && hasOrgDomain && !!userProfile && !!session?.user && !!activeOrgId,
     })
   );
 

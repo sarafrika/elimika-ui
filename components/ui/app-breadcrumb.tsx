@@ -117,7 +117,9 @@ export function AppBreadcrumb({ className, showHome = true }: AppBreadcrumbProps
 
         {displayBreadcrumbs.length > 0 && (
           <BreadcrumbItem className='md:hidden'>
-            <BreadcrumbPage>{displayBreadcrumbs?.[displayBreadcrumbs.length - 1]?.title}</BreadcrumbPage>
+            <BreadcrumbPage>
+              {displayBreadcrumbs?.[displayBreadcrumbs.length - 1]?.title}
+            </BreadcrumbPage>
           </BreadcrumbItem>
         )}
       </BreadcrumbList>

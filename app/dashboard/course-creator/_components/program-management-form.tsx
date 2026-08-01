@@ -141,7 +141,7 @@ function ProgramCreationForm({
     },
   });
 
-  const isFree = useWatch({ control: form.control, name: 'is_free', });
+  const isFree = useWatch({ control: form.control, name: 'is_free' });
 
   const queryClient = useQueryClient();
   const instructor = useInstructor();
@@ -383,13 +383,7 @@ function ProgramCreationForm({
                 <FormItem>
                   <FormLabel>Price</FormLabel>
                   <FormControl>
-                    <Input
-                      type='number'
-                      min='0'
-                      step='0.01'
-                      {...field}
-                      disabled={isFree}
-                    />
+                    <Input type='number' min='0' step='0.01' {...field} disabled={isFree} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -486,8 +480,9 @@ function AddCourseToProgramForm({
       has_prerequisites: !!values.prerequisite_course_uuid,
       association_category: values.is_required ? 'Required Course' : 'Optional Course',
       requirement_status: values.is_required ? 'Mandatory Course' : 'Elective Course',
-      curriculum_summary: `${values.is_required ? 'Required' : 'Optional'
-        } course${values.prerequisite_course_uuid ? ' with prerequisites' : ''} in sequence position ${values.sequence_order}`,
+      curriculum_summary: `${
+        values.is_required ? 'Required' : 'Optional'
+      } course${values.prerequisite_course_uuid ? ' with prerequisites' : ''} in sequence position ${values.sequence_order}`,
     };
 
     addProgramCourses.mutate(

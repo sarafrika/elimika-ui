@@ -198,7 +198,9 @@ export function UserIdentityForm({ user }: { user: User }) {
                 <FormLabel>Gender</FormLabel>
                 <Select
                   value={field.value ?? 'UNSPECIFIED'}
-                  onValueChange={value => field.onChange(value === 'UNSPECIFIED' ? undefined : value)}
+                  onValueChange={value =>
+                    field.onChange(value === 'UNSPECIFIED' ? undefined : value)
+                  }
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -223,10 +225,10 @@ export function UserIdentityForm({ user }: { user: User }) {
           control={form.control}
           name='active'
           render={({ field }) => (
-            <FormItem className='flex flex-row items-center justify-between rounded-md border border-border/70 bg-muted/30 p-4'>
+            <FormItem className='border-border/70 bg-muted/30 flex flex-row items-center justify-between rounded-md border p-4'>
               <div className='space-y-0.5'>
                 <FormLabel>Account status</FormLabel>
-                <p className='text-xs text-muted-foreground'>
+                <p className='text-muted-foreground text-xs'>
                   Toggle to immediately enable or disable user access.
                 </p>
               </div>

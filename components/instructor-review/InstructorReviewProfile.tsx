@@ -46,14 +46,14 @@ function ProfileSection({
   return (
     <div className={adminTheme.cardPadded}>
       <h3 className={cn(adminTheme.sectionLabel, 'flex items-center gap-2')}>
-        <Icon className='size-4 text-primary' />
+        <Icon className='text-primary size-4' />
         {title}
       </h3>
       <div className='mt-3 space-y-2'>
         {isLoading ? (
           <Skeleton className='h-16 rounded-md' />
         ) : isEmpty ? (
-          <p className='text-sm text-muted-foreground'>{emptyLabel}</p>
+          <p className='text-muted-foreground text-sm'>{emptyLabel}</p>
         ) : (
           children
         )}
@@ -118,12 +118,12 @@ export function InstructorReviewProfile({
     <div className='space-y-4'>
       <div className={adminTheme.cardPadded}>
         <div className='flex items-start gap-3'>
-          <div className='flex size-12 shrink-0 items-center justify-center rounded-md border border-primary/30 bg-primary/10 text-lg font-semibold text-primary'>
+          <div className='border-primary/30 bg-primary/10 text-primary flex size-12 shrink-0 items-center justify-center rounded-md border text-lg font-semibold'>
             {initials}
           </div>
           <div className='min-w-0 flex-1'>
             <div className='flex flex-wrap items-center gap-2'>
-              <h2 className='text-xl font-semibold tracking-tight text-foreground'>
+              <h2 className='text-foreground text-xl font-semibold tracking-tight'>
                 {displayName}
               </h2>
               {profile?.admin_verified ? (
@@ -132,7 +132,7 @@ export function InstructorReviewProfile({
                 <StatusBadge status='pending' label='Unverified' />
               ) : null}
             </div>
-            <p className='mt-0.5 text-sm text-muted-foreground'>
+            <p className='text-muted-foreground mt-0.5 text-sm'>
               {profile?.professional_headline || 'Instructor applicant profile'}
             </p>
           </div>
@@ -141,7 +141,7 @@ export function InstructorReviewProfile({
         <div className='mt-3 flex flex-wrap items-center gap-2'>
           {typeof rating?.average_rating === 'number' ? (
             <Badge variant='outline' className='rounded-md'>
-              <Star className='mr-1 size-3.5 fill-warning text-warning' />
+              <Star className='fill-warning text-warning mr-1 size-3.5' />
               {rating.average_rating.toFixed(1)} ({String(rating.review_count ?? 0)} reviews)
             </Badge>
           ) : null}
@@ -156,7 +156,7 @@ export function InstructorReviewProfile({
         </div>
 
         {profile?.bio ? (
-          <p className='mt-3 whitespace-pre-line text-sm leading-6 text-muted-foreground'>
+          <p className='text-muted-foreground mt-3 text-sm leading-6 whitespace-pre-line'>
             {profile.bio}
           </p>
         ) : null}
@@ -188,7 +188,7 @@ export function InstructorReviewProfile({
       >
         {experience.map(item => (
           <div key={item.uuid ?? `${item.position}-${item.organisation_name}`} className='text-sm'>
-            <p className='font-medium text-foreground'>
+            <p className='text-foreground font-medium'>
               {item.position} · {item.organisation_name}
             </p>
             <p className='text-muted-foreground'>
@@ -209,7 +209,7 @@ export function InstructorReviewProfile({
       >
         {education.map(item => (
           <div key={item.uuid ?? `${item.qualification}-${item.school_name}`} className='text-sm'>
-            <p className='font-medium text-foreground'>{item.qualification}</p>
+            <p className='text-foreground font-medium'>{item.qualification}</p>
             <p className='text-muted-foreground'>
               {item.school_name}
               {item.year_completed ? ` · ${item.year_completed}` : ''}
@@ -227,7 +227,7 @@ export function InstructorReviewProfile({
       >
         {documents.map(document => (
           <div key={document.uuid ?? document.original_filename} className='text-sm'>
-            <p className='font-medium text-foreground'>
+            <p className='text-foreground font-medium'>
               {document.title || document.original_filename}
             </p>
           </div>
@@ -244,15 +244,15 @@ export function InstructorReviewProfile({
         {reviews.slice(0, 5).map(review => (
           <div
             key={review.uuid}
-            className='rounded-md border border-border/60 bg-muted/20 p-3 text-sm'
+            className='border-border/60 bg-muted/20 rounded-md border p-3 text-sm'
           >
             <div className='flex items-center gap-2'>
-              <Star className='size-3.5 fill-warning text-warning' />
+              <Star className='fill-warning text-warning size-3.5' />
               <span className='font-medium'>{review.rating}/5</span>
               {review.headline ? <span className='text-foreground'>{review.headline}</span> : null}
             </div>
             {review.comments ? (
-              <p className='mt-1 text-muted-foreground'>{review.comments}</p>
+              <p className='text-muted-foreground mt-1'>{review.comments}</p>
             ) : null}
           </div>
         ))}

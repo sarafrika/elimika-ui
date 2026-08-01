@@ -1080,11 +1080,24 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
                         <Grip className='text-muted-foreground mt-1 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100' />
                         <div>
                           <p className='text-foreground text-sm leading-snug font-semibold'>
-                            <WatchedText control={form.control} name={`educations.${index}.school_name`} fallback='New Institution' />
+                            <WatchedText
+                              control={form.control}
+                              name={`educations.${index}.school_name`}
+                              fallback='New Institution'
+                            />
                           </p>
                           <p className='text-muted-foreground text-xs'>
-                            <WatchedText control={form.control} name={`educations.${index}.qualification`} fallback='Degree' /> ·{' '}
-                            <WatchedText control={form.control} name={`educations.${index}.field_of_study`} fallback='Field of study' />
+                            <WatchedText
+                              control={form.control}
+                              name={`educations.${index}.qualification`}
+                              fallback='Degree'
+                            />{' '}
+                            ·{' '}
+                            <WatchedText
+                              control={form.control}
+                              name={`educations.${index}.field_of_study`}
+                              fallback='Field of study'
+                            />
                           </p>
                         </div>
                       </div>
@@ -1643,10 +1656,18 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
                         <Grip className='text-muted-foreground mt-1 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100' />
                         <div>
                           <p className='text-foreground text-sm leading-snug font-semibold'>
-                            <WatchedText control={form.control} name={`experiences.${index}.organisation_name`} fallback='New Experience' />
+                            <WatchedText
+                              control={form.control}
+                              name={`experiences.${index}.organisation_name`}
+                              fallback='New Experience'
+                            />
                           </p>
                           <p className='text-muted-foreground text-xs'>
-                            <WatchedText control={form.control} name={`experiences.${index}.position`} fallback='Role not set' />
+                            <WatchedText
+                              control={form.control}
+                              name={`experiences.${index}.position`}
+                              fallback='Role not set'
+                            />
                           </p>
                         </div>
                       </div>

@@ -44,56 +44,63 @@ export function LocationVenue({
   const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';
   const requiresLink = delivery === 'ONLINE' || delivery === 'HYBRID';
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <div className="space-y-2">
+    <div className='grid gap-4 sm:grid-cols-2'>
+      <div className='space-y-2'>
         <Label>
-          Location <span className="text-destructive">*</span>
+          Location <span className='text-destructive'>*</span>
         </Label>
         <Select value={delivery} onValueChange={v => onDeliveryChange(v as Delivery)}>
           <SelectTrigger>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
+            <div className='flex items-center gap-2'>
+              <MapPin className='text-muted-foreground h-4 w-4' />
               <SelectValue />
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ONLINE">Online</SelectItem>
-            <SelectItem value="IN_PERSON">In person</SelectItem>
-            <SelectItem value="HYBRID">Hybrid</SelectItem>
+            <SelectItem value='ONLINE'>Online</SelectItem>
+            <SelectItem value='IN_PERSON'>In person</SelectItem>
+            <SelectItem value='HYBRID'>Hybrid</SelectItem>
           </SelectContent>
         </Select>
         {requiresLink ? (
-          <Input value={meetingLink} onChange={e => onMeetingLinkChange(e.target.value)} placeholder="https://meet.…" />
+          <Input
+            value={meetingLink}
+            onChange={e => onMeetingLinkChange(e.target.value)}
+            placeholder='https://meet.…'
+          />
         ) : null}
         {requiresPhysical ? (
           <Input
             value={locationName}
             onChange={e => onLocationNameChange(e.target.value)}
-            placeholder="Location name — e.g. Nairobi Campus, Lab 2"
+            placeholder='Location name — e.g. Nairobi Campus, Lab 2'
           />
         ) : null}
       </div>
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
+      <div className='space-y-2'>
+        <div className='flex items-center justify-between gap-2'>
           <Label>Classroom / Venue</Label>
-          <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
+          <label className='text-muted-foreground flex cursor-pointer items-center gap-1.5 text-[11px]'>
             <Checkbox
               checked={onlyAvailable}
               onCheckedChange={v => onOnlyAvailableChange(v === true)}
-              className="h-3.5 w-3.5"
+              className='h-3.5 w-3.5'
             />
             Only available
           </label>
         </div>
-        <Select value={venueUuid || 'none'} onValueChange={v => onVenueChange(v === 'none' ? '' : v)}>
+        <Select
+          value={venueUuid || 'none'}
+          onValueChange={v => onVenueChange(v === 'none' ? '' : v)}
+        >
           <SelectTrigger>
-            <div className="flex items-center gap-2">
-              <Presentation className="h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder="No venue" />
+            <div className='flex items-center gap-2'>
+              <Presentation className='text-muted-foreground h-4 w-4' />
+              <SelectValue placeholder='No venue' />
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">No venue</SelectItem>
+            <SelectItem value='none'>No venue</SelectItem>
             {venueResources.map(v => (
               <SelectItem key={v.uuid} value={v.uuid ?? ''}>
                 {v.name}

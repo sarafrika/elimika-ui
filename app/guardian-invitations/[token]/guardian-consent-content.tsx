@@ -21,7 +21,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ShareScopeEnum2 } from '@/services/client';
 import {
@@ -58,7 +64,9 @@ export function GuardianConsentContent() {
 
   const returnHere = useMemo(
     () =>
-      typeof window === 'undefined' ? '' : `${window.location.origin}/guardian-invitations/${token}`,
+      typeof window === 'undefined'
+        ? ''
+        : `${window.location.origin}/guardian-invitations/${token}`,
     [token]
   );
 
@@ -92,15 +100,15 @@ export function GuardianConsentContent() {
       <Card>
         <CardContent className='flex flex-col items-center gap-4 py-14 text-center'>
           {outcome === 'granted' ? (
-            <CheckCircle2 className='h-8 w-8 text-success' />
+            <CheckCircle2 className='text-success h-8 w-8' />
           ) : (
-            <XCircle className='h-8 w-8 text-muted-foreground' />
+            <XCircle className='text-muted-foreground h-8 w-8' />
           )}
           <div className='space-y-1.5'>
             <h2 className='text-xl font-semibold'>
               {outcome === 'granted' ? 'Approved' : 'Not approved'}
             </h2>
-            <p className='mx-auto max-w-md text-sm text-muted-foreground'>
+            <p className='text-muted-foreground mx-auto max-w-md text-sm'>
               {outcome === 'granted'
                 ? `${request?.student_name ?? 'They'} can now join ${request?.organisation_name ?? 'the organisation'}, and you can follow their learning from your dashboard. You can withdraw this at any time.`
                 : 'Nothing was set up and the organisation gained no access.'}
@@ -135,49 +143,50 @@ export function GuardianConsentContent() {
           </CardTitle>
           <CardDescription>
             {request?.student_name ?? 'They'} ({request?.masked_student_email}) named you as their{' '}
-            {(request?.guardian_relationship_type ?? 'guardian').toLowerCase()}. Because they are under the
-            age we accept consent from directly, nothing has been set up without your approval.
+            {(request?.guardian_relationship_type ?? 'guardian').toLowerCase()}. Because they are
+            under the age we accept consent from directly, nothing has been set up without your
+            approval.
           </CardDescription>
         </CardHeader>
 
         <CardContent className='space-y-5'>
           {request?.class_count ? (
-            <div className='flex items-center gap-2 rounded-md border bg-muted/30 p-3 text-sm'>
-              <GraduationCap className='h-4 w-4 text-muted-foreground' />
+            <div className='bg-muted/30 flex items-center gap-2 rounded-md border p-3 text-sm'>
+              <GraduationCap className='text-muted-foreground h-4 w-4' />
               <span>
-                {request.class_count} class{request.class_count === 1 ? '' : 'es'} would be shown to them —
-                they still choose which to enrol in.
+                {request.class_count} class{request.class_count === 1 ? '' : 'es'} would be shown to
+                them — they still choose which to enrol in.
               </span>
             </div>
           ) : null}
 
-          <div className='rounded-md border border-primary/30 bg-primary/5 p-4'>
+          <div className='border-primary/30 bg-primary/5 rounded-md border p-4'>
             <p className='mb-2 flex items-center gap-2 text-sm font-semibold'>
-              <ShieldCheck className='h-4 w-4 text-primary' /> What{' '}
+              <ShieldCheck className='text-primary h-4 w-4' /> What{' '}
               {request?.organisation_name ?? 'the organisation'} will be able to see
             </p>
-            <ul className='space-y-1.5 text-sm text-muted-foreground'>
+            <ul className='text-muted-foreground space-y-1.5 text-sm'>
               <li className='flex gap-2'>
-                <CheckCircle2 className='mt-0.5 h-3.5 w-3.5 shrink-0 text-primary' />
+                <CheckCircle2 className='text-primary mt-0.5 h-3.5 w-3.5 shrink-0' />
                 Their enrolment, attendance and performance in{' '}
                 <strong>its own courses and classes</strong>.
               </li>
               <li className='flex gap-2'>
-                <XCircle className='mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground' />
+                <XCircle className='text-muted-foreground mt-0.5 h-3.5 w-3.5 shrink-0' />
                 Not their learning with any other institution on Elimika.
               </li>
             </ul>
           </div>
 
           {!request?.actionable ? (
-            <p className='rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive'>
+            <p className='border-destructive/30 bg-destructive/5 text-destructive rounded-md border p-3 text-sm'>
               This request is no longer open.
             </p>
           ) : !isAuthenticated ? (
             <div className='space-y-3 border-t pt-4'>
-              <p className='text-sm text-muted-foreground'>
-                Sign in or create your Elimika account to make this decision. We need an account so the
-                approval is recorded against you, and so you can withdraw it later.
+              <p className='text-muted-foreground text-sm'>
+                Sign in or create your Elimika account to make this decision. We need an account so
+                the approval is recorded against you, and so you can withdraw it later.
               </p>
               <Button
                 onClick={() => signIn('keycloak', { redirectTo: returnHere })}
@@ -191,7 +200,10 @@ export function GuardianConsentContent() {
           ) : (
             <div className='space-y-4 border-t pt-4'>
               <div className='space-y-2'>
-                <Label htmlFor='scope' className='flex items-center gap-1.5 text-xs uppercase text-muted-foreground'>
+                <Label
+                  htmlFor='scope'
+                  className='text-muted-foreground flex items-center gap-1.5 text-xs uppercase'
+                >
                   <Eye className='h-3.5 w-3.5' /> What you want to see of their learning
                 </Label>
                 <Select value={shareScope} onValueChange={v => setShareScope(v as ShareScopeEnum2)}>
@@ -215,16 +227,23 @@ export function GuardianConsentContent() {
                   className='mt-0.5'
                 />
                 <span className='text-muted-foreground'>
-                  I am this child&apos;s parent or guardian, and I understand what the organisation will be
-                  able to see.
+                  I am this child&apos;s parent or guardian, and I understand what the organisation
+                  will be able to see.
                 </span>
               </label>
 
               <div className='flex flex-col-reverse gap-2 sm:flex-row sm:justify-end'>
-                <Button variant='outline' onClick={onRefuse} disabled={refuse.isPending || grant.isPending}>
+                <Button
+                  variant='outline'
+                  onClick={onRefuse}
+                  disabled={refuse.isPending || grant.isPending}
+                >
                   Do not approve
                 </Button>
-                <Button onClick={onGrant} disabled={!acknowledged || grant.isPending || refuse.isPending}>
+                <Button
+                  onClick={onGrant}
+                  disabled={!acknowledged || grant.isPending || refuse.isPending}
+                >
                   {grant.isPending ? 'Recording…' : 'Approve'}
                 </Button>
               </div>

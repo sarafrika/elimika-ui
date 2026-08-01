@@ -14,7 +14,7 @@ import {
   Plus,
   UserRound,
   Users,
-  Video
+  Video,
 } from 'lucide-react';
 import Link from 'next/link';
 import { type ReactNode, useState } from 'react';
@@ -84,7 +84,13 @@ function getInitials(value?: string | null) {
   );
 }
 
-export function CourseArtwork({ imageUrl, courseName }: { imageUrl?: string | null; courseName: string }) {
+export function CourseArtwork({
+  imageUrl,
+  courseName,
+}: {
+  imageUrl?: string | null;
+  courseName: string;
+}) {
   const resolvedImageUrl = toAuthenticatedMediaUrl(imageUrl) || imageUrl;
 
   if (resolvedImageUrl) {
@@ -293,9 +299,7 @@ export function ClassHero({
           </Button>
         </div>
 
-        <p className='text-foreground mt-1 text-sm'>
-          {sessionProgress}% completed
-        </p>
+        <p className='text-foreground mt-1 text-sm'>{sessionProgress}% completed</p>
 
         {selectedClassUuid ? (
           <Link href={startLessonHref} className='sr-only'>
@@ -356,7 +360,7 @@ function CourseProgram({
                       </p>
                     ) : null}
 
-                    <p className='text-foreground break-words text-base font-semibold sm:truncate sm:text-lg'>
+                    <p className='text-foreground text-base font-semibold break-words sm:truncate sm:text-lg'>
                       Module {moduleIndex + 1}: {moduleTitle}
                     </p>
                   </div>
@@ -858,8 +862,8 @@ function OverviewMetaCard({
   loading?: boolean;
 }) {
   return (
-    <div className='rounded-[12px] border border-border/70 bg-background/80 px-4 py-3'>
-      <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]'>
+    <div className='border-border/70 bg-background/80 rounded-[12px] border px-4 py-3'>
+      <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold tracking-[0.14em] uppercase'>
         {icon}
         {label}
       </p>
@@ -899,23 +903,34 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
   const lessonsPending = isLoadingLessons && lessonModules.length === 0;
 
   const difficultyLabel = selectedClass.course?.difficulty_uuid
-    ? mergedDifficultyMap[selectedClass.course.difficulty_uuid] ?? 'General'
+    ? (mergedDifficultyMap[selectedClass.course.difficulty_uuid] ?? 'General')
     : 'General';
 
   const scheduleInstances = (selectedClass.schedule ?? [])
     .filter(instance => instance.status?.toUpperCase() !== 'CANCELLED')
     .filter(instance => instance.status?.toUpperCase() !== 'BLOCKED')
-    .sort((left, right) => new Date(left.start_time ?? 0).getTime() - new Date(right.start_time ?? 0).getTime());
+    .sort(
+      (left, right) =>
+        new Date(left.start_time ?? 0).getTime() - new Date(right.start_time ?? 0).getTime()
+    );
 
-  const upcomingInstances = scheduleInstances.filter(instance => isUpcoming(instance.start_time)).slice(0, 3);
+  const upcomingInstances = scheduleInstances
+    .filter(instance => isUpcoming(instance.start_time))
+    .slice(0, 3);
   const lessonCount = lessonModules.reduce(
     (sum, module) => sum + (module.content?.data?.length ?? 0),
     0
   );
   const moduleCount = lessonModules.length;
   const categoryNames = selectedClass.course?.category_names?.filter(Boolean) ?? [];
-  const courseSummary = selectedClass.course?.description || selectedClass.description || 'No course summary has been provided yet.';
-  const classSummary = selectedClass.description || selectedClass.course?.description || 'This class will appear here with a detailed overview, schedule, and course context.';
+  const courseSummary =
+    selectedClass.course?.description ||
+    selectedClass.description ||
+    'No course summary has been provided yet.';
+  const classSummary =
+    selectedClass.description ||
+    selectedClass.course?.description ||
+    'This class will appear here with a detailed overview, schedule, and course context.';
   const nextSession = scheduleInstances[0] ?? null;
   const nextSessionLabel = nextSession
     ? `${formatDateOnly(nextSession.start_time)} · ${formatTimeRange(nextSession.start_time, nextSession.end_time)}`
@@ -930,18 +945,27 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
 
   return (
     <div className='space-y-3'>
-      <section className='overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm'>
+      <section className='border-border/70 bg-card overflow-hidden rounded-[14px] border shadow-sm'>
         <div className='border-border/70 border-b px-4 py-4 sm:px-5 sm:py-5'>
           <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
             <div className='min-w-0 space-y-3'>
               <div className='flex flex-wrap items-center gap-2'>
-                <Badge variant='outline' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
+                <Badge
+                  variant='outline'
+                  className='rounded-full px-3 py-1 text-[11px] font-semibold'
+                >
                   {roleLabel}
                 </Badge>
-                <Badge variant='secondary' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
+                <Badge
+                  variant='secondary'
+                  className='rounded-full px-3 py-1 text-[11px] font-semibold'
+                >
                   {difficultyLabel}
                 </Badge>
-                <Badge variant='secondary' className='rounded-full px-3 py-1 text-[11px] font-semibold'>
+                <Badge
+                  variant='secondary'
+                  className='rounded-full px-3 py-1 text-[11px] font-semibold'
+                >
                   {selectedClass.session_format || 'Format not set'}
                 </Badge>
               </div>
@@ -951,7 +975,7 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
 
         <CardContent className='space-y-4 px-4 py-4 sm:px-5 sm:py-5'>
           <div className='space-y-4'>
-            <div className='overflow-hidden rounded-[12px] border border-border/70 bg-background/80'>
+            <div className='border-border/70 bg-background/80 overflow-hidden rounded-[12px] border'>
               <div className='border-border/70 border-b px-4 py-3'>
                 <div className='flex items-center justify-between gap-3'>
                   <div>
@@ -961,24 +985,25 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
                     </p>
                   </div>
 
-                  {roleLabel === "Instructor view" && <>
-                    {hasLessonCta ? (
-                      <Button
-                        type='button'
-                        onClick={() => onStartLesson?.()}
-                        className='inline-flex items-center gap-2 rounded-md'
-                      >
-                        <Play className='h-4 w-4' />
-                        {selectedLessonActionLabel || 'Open lesson'}
-                      </Button>
-                    ) : null}
-                  </>}
-
+                  {roleLabel === 'Instructor view' && (
+                    <>
+                      {hasLessonCta ? (
+                        <Button
+                          type='button'
+                          onClick={() => onStartLesson?.()}
+                          className='inline-flex items-center gap-2 rounded-md'
+                        >
+                          <Play className='h-4 w-4' />
+                          {selectedLessonActionLabel || 'Open lesson'}
+                        </Button>
+                      ) : null}
+                    </>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div className='overflow-hidden rounded-[12px] border border-border/70 bg-background/80'>
+            <div className='border-border/70 bg-background/80 overflow-hidden rounded-[12px] border'>
               <div className='border-border/70 border-b px-4 py-3'>
                 <h3 className='text-foreground text-lg font-semibold'>Course details</h3>
                 <p className='text-muted-foreground text-sm'>
@@ -1005,11 +1030,7 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
 
                     <OverviewMetaCard
                       label='Categories'
-                      value={
-                        categoryNames.length
-                          ? categoryNames.join(', ')
-                          : 'General'
-                      }
+                      value={categoryNames.length ? categoryNames.join(', ') : 'General'}
                       icon={<Layers3 className='h-4 w-4' />}
                     />
 
@@ -1052,24 +1073,21 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
                     <OverviewMetaCard
                       label='Class fee'
                       value={
-                        selectedClass.training_fee
-                          ? `KSh ${selectedClass.training_fee}`
-                          : 'Not set'
+                        selectedClass.training_fee ? `KSh ${selectedClass.training_fee}` : 'Not set'
                       }
                       icon={<Award className='h-4 w-4' />}
                     />
 
                     <OverviewMetaCard
                       label='Maximum students'
-                      value={`${selectedClass.max_participants ?? 'Not set'
-                        }`}
+                      value={`${selectedClass.max_participants ?? 'Not set'}`}
                       icon={<Users className='h-4 w-4' />}
                     />
                   </div>
 
                   {/* COURSE SUMMARY */}
-                  <div className='rounded-[12px] border border-border/70 bg-card px-4 py-3'>
-                    <p className='text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  <div className='border-border/70 bg-card rounded-[12px] border px-4 py-3'>
+                    <p className='text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase'>
                       Course summary
                     </p>
 
@@ -1083,8 +1101,8 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
                 {/* RIGHT SIDE */}
                 <div className='grid min-w-0 gap-4 sm:grid-cols-2 2xl:grid-cols-1'>
                   {/* UPCOMING */}
-                  <div className='rounded-[12px] border border-border/70 bg-card px-4 py-4'>
-                    <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  <div className='border-border/70 bg-card rounded-[12px] border px-4 py-4'>
+                    <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold tracking-[0.14em] uppercase'>
                       <CalendarDays className='h-4 w-4' />
                       Upcoming sessions
                     </p>
@@ -1093,10 +1111,7 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
                       {upcomingInstances.length ? (
                         upcomingInstances.map((session, index) => (
                           <div
-                            key={
-                              session.uuid ??
-                              `${session.start_time}-${index}`
-                            }
+                            key={session.uuid ?? `${session.start_time}-${index}`}
                             className='border-border/70 bg-background rounded-lg border px-3 py-3'
                           >
                             <p className='text-foreground text-sm font-semibold'>
@@ -1104,10 +1119,7 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
                             </p>
 
                             <p className='text-muted-foreground mt-1 text-xs'>
-                              {formatTimeRange(
-                                session.start_time,
-                                session.end_time
-                              )}
+                              {formatTimeRange(session.start_time, session.end_time)}
                             </p>
 
                             <p className='text-muted-foreground mt-1 flex items-center gap-1.5 text-xs'>
@@ -1127,8 +1139,8 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
                   </div>
 
                   {/* CLASS LINK */}
-                  <div className='sm:col-span-2 2xl:col-span-1 rounded-[12px] border border-border/70 bg-card px-4 py-4'>
-                    <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]'>
+                  <div className='border-border/70 bg-card rounded-[12px] border px-4 py-4 sm:col-span-2 2xl:col-span-1'>
+                    <p className='text-muted-foreground flex items-center gap-2 text-[11px] font-semibold tracking-[0.14em] uppercase'>
                       <Video className='h-4 w-4' />
                       Class link
                     </p>

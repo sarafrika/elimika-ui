@@ -170,7 +170,7 @@ export default function CourseCreatorProfile() {
       .join(' ');
   };
 
-  function onSubmit(_updatedProfileData: GeneralProfileFormValues) { }
+  function onSubmit(_updatedProfileData: GeneralProfileFormValues) {}
 
   return (
     <ProfileFormShell

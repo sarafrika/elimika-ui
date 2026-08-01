@@ -25,18 +25,18 @@ export function AdminPageHeader({
   return (
     <header
       className={cn(
-        'rounded-md border border-border/70 bg-card px-5 py-5 shadow-sm sm:px-6 lg:px-7',
+        'border-border/70 bg-card rounded-md border px-5 py-5 shadow-sm sm:px-6 lg:px-7',
         className
       )}
     >
       <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
         <div className='space-y-1.5'>
-          {eyebrow ? <div className='text-xs text-muted-foreground'>{eyebrow}</div> : null}
-          <h1 className='text-2xl font-semibold tracking-tight text-foreground sm:text-3xl'>
+          {eyebrow ? <div className='text-muted-foreground text-xs'>{eyebrow}</div> : null}
+          <h1 className='text-foreground text-2xl font-semibold tracking-tight sm:text-3xl'>
             {title}
           </h1>
           {description ? (
-            <p className='max-w-2xl text-sm text-muted-foreground'>{description}</p>
+            <p className='text-muted-foreground max-w-2xl text-sm'>{description}</p>
           ) : null}
         </div>
         {actions ? <div className='flex flex-wrap items-center gap-2'>{actions}</div> : null}

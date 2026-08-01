@@ -152,19 +152,20 @@ export function CredentialsUploadSheet({
   const addCourseCreatorExperience = useMutation(addCourseCreatorExperienceMutation());
   const uploadCourseCreatorDocument = useMutation(uploadCourseCreatorDocumentMutation());
 
-  const roleMutations = role === 'instructor'
-    ? {
-      education: addInstructorEducation,
-      membership: addInstructorMembership,
-      experience: addInstructorExperience,
-      upload: uploadInstructorDocument,
-    }
-    : {
-      education: addCourseCreatorEducation,
-      membership: addCourseCreatorMembership,
-      experience: addCourseCreatorExperience,
-      upload: uploadCourseCreatorDocument,
-    };
+  const roleMutations =
+    role === 'instructor'
+      ? {
+          education: addInstructorEducation,
+          membership: addInstructorMembership,
+          experience: addInstructorExperience,
+          upload: uploadInstructorDocument,
+        }
+      : {
+          education: addCourseCreatorEducation,
+          membership: addCourseCreatorMembership,
+          experience: addCourseCreatorExperience,
+          upload: uploadCourseCreatorDocument,
+        };
 
   const selectedDocumentType = useMemo(
     () => documentTypes.find(item => item.uuid === draft.documentTypeUuid),
@@ -191,9 +192,7 @@ export function CredentialsUploadSheet({
 
     const findType = (keywords: string[]) =>
       documentTypes.find(type =>
-        keywords.some(keyword =>
-          type.name?.toLowerCase().includes(keyword)
-        )
+        keywords.some(keyword => type.name?.toLowerCase().includes(keyword))
       );
 
     let defaultType;
@@ -230,15 +229,21 @@ export function CredentialsUploadSheet({
     setDraft(current => ({ ...current, experience: { ...current.experience, ...patch } }));
   };
 
-  const selectedTabLabel = activeTab === 'education' ? 'Education' : activeTab === 'membership' ? 'Membership' : 'Experience';
+  const selectedTabLabel =
+    activeTab === 'education'
+      ? 'Education'
+      : activeTab === 'membership'
+        ? 'Membership'
+        : 'Experience';
 
   const sectionIsComplete =
     activeTab === 'education'
-      ? draft.education.qualification.trim().length > 0 && draft.education.schoolName.trim().length > 0
+      ? draft.education.qualification.trim().length > 0 &&
+        draft.education.schoolName.trim().length > 0
       : activeTab === 'membership'
         ? draft.membership.organizationName.trim().length > 0
         : draft.experience.position.trim().length > 0 &&
-        draft.experience.organizationName.trim().length > 0;
+          draft.experience.organizationName.trim().length > 0;
 
   const hasUploadDetails =
     draft.documentTypeUuid.trim().length > 0 &&
@@ -267,7 +272,10 @@ export function CredentialsUploadSheet({
     }
   };
 
-  const buildUploadQuery = (referenceKey: 'education_uuid' | 'membership_uuid' | 'experience_uuid', referenceValue: string) =>
+  const buildUploadQuery = (
+    referenceKey: 'education_uuid' | 'membership_uuid' | 'experience_uuid',
+    referenceValue: string
+  ) =>
     ({
       document_type_uuid: draft.documentTypeUuid,
       title: draft.title.trim(),
@@ -305,25 +313,25 @@ export function CredentialsUploadSheet({
         const body =
           role === 'instructor'
             ? {
-              instructor_uuid: profileUuid,
-              qualification: draft.education.qualification.trim(),
-              school_name: draft.education.schoolName.trim(),
-              field_of_study: draft.education.fieldOfStudy.trim() || undefined,
-              year_completed: draft.education.yearCompleted
-                ? Number(draft.education.yearCompleted)
-                : undefined,
-              certificate_number: draft.education.certificateNumber.trim() || undefined,
-            }
+                instructor_uuid: profileUuid,
+                qualification: draft.education.qualification.trim(),
+                school_name: draft.education.schoolName.trim(),
+                field_of_study: draft.education.fieldOfStudy.trim() || undefined,
+                year_completed: draft.education.yearCompleted
+                  ? Number(draft.education.yearCompleted)
+                  : undefined,
+                certificate_number: draft.education.certificateNumber.trim() || undefined,
+              }
             : {
-              course_creator_uuid: profileUuid,
-              qualification: draft.education.qualification.trim(),
-              school_name: draft.education.schoolName.trim(),
-              field_of_study: draft.education.fieldOfStudy.trim() || undefined,
-              year_completed: draft.education.yearCompleted
-                ? Number(draft.education.yearCompleted)
-                : undefined,
-              certificate_number: draft.education.certificateNumber.trim() || undefined,
-            };
+                course_creator_uuid: profileUuid,
+                qualification: draft.education.qualification.trim(),
+                school_name: draft.education.schoolName.trim(),
+                field_of_study: draft.education.fieldOfStudy.trim() || undefined,
+                year_completed: draft.education.yearCompleted
+                  ? Number(draft.education.yearCompleted)
+                  : undefined,
+                certificate_number: draft.education.certificateNumber.trim() || undefined,
+              };
 
         const response = (await roleMutations.education.mutateAsync({
           path:
@@ -339,25 +347,31 @@ export function CredentialsUploadSheet({
         const body =
           role === 'instructor'
             ? {
-              instructor_uuid: profileUuid,
-              organisation_name: draft.membership.organizationName.trim(),
-              membership_number: draft.membership.membershipNumber.trim() || undefined,
-              start_date: draft.membership.startDate ? toDateValue(draft.membership.startDate) : undefined,
-              end_date: draft.membership.isActive || !draft.membership.endDate
-                ? undefined
-                : toDateValue(draft.membership.endDate),
-              is_active: draft.membership.isActive,
-            }
+                instructor_uuid: profileUuid,
+                organisation_name: draft.membership.organizationName.trim(),
+                membership_number: draft.membership.membershipNumber.trim() || undefined,
+                start_date: draft.membership.startDate
+                  ? toDateValue(draft.membership.startDate)
+                  : undefined,
+                end_date:
+                  draft.membership.isActive || !draft.membership.endDate
+                    ? undefined
+                    : toDateValue(draft.membership.endDate),
+                is_active: draft.membership.isActive,
+              }
             : {
-              course_creator_uuid: profileUuid,
-              organization_name: draft.membership.organizationName.trim(),
-              membership_number: draft.membership.membershipNumber.trim() || undefined,
-              start_date: draft.membership.startDate ? toDateValue(draft.membership.startDate) : undefined,
-              end_date: draft.membership.isActive || !draft.membership.endDate
-                ? undefined
-                : toDateValue(draft.membership.endDate),
-              is_active: draft.membership.isActive,
-            };
+                course_creator_uuid: profileUuid,
+                organization_name: draft.membership.organizationName.trim(),
+                membership_number: draft.membership.membershipNumber.trim() || undefined,
+                start_date: draft.membership.startDate
+                  ? toDateValue(draft.membership.startDate)
+                  : undefined,
+                end_date:
+                  draft.membership.isActive || !draft.membership.endDate
+                    ? undefined
+                    : toDateValue(draft.membership.endDate),
+                is_active: draft.membership.isActive,
+              };
 
         const response = (await roleMutations.membership.mutateAsync({
           path:
@@ -373,33 +387,39 @@ export function CredentialsUploadSheet({
         const body =
           role === 'instructor'
             ? {
-              instructor_uuid: profileUuid,
-              position: draft.experience.position.trim(),
-              organisation_name: draft.experience.organizationName.trim(),
-              responsibilities: draft.experience.responsibilities.trim() || undefined,
-              years_of_experience: draft.experience.yearsOfExperience
-                ? Number(draft.experience.yearsOfExperience)
-                : undefined,
-              start_date: draft.experience.startDate ? toDateValue(draft.experience.startDate) : undefined,
-              end_date: draft.experience.isCurrentPosition || !draft.experience.endDate
-                ? undefined
-                : toDateValue(draft.experience.endDate),
-              is_current_position: draft.experience.isCurrentPosition,
-            }
+                instructor_uuid: profileUuid,
+                position: draft.experience.position.trim(),
+                organisation_name: draft.experience.organizationName.trim(),
+                responsibilities: draft.experience.responsibilities.trim() || undefined,
+                years_of_experience: draft.experience.yearsOfExperience
+                  ? Number(draft.experience.yearsOfExperience)
+                  : undefined,
+                start_date: draft.experience.startDate
+                  ? toDateValue(draft.experience.startDate)
+                  : undefined,
+                end_date:
+                  draft.experience.isCurrentPosition || !draft.experience.endDate
+                    ? undefined
+                    : toDateValue(draft.experience.endDate),
+                is_current_position: draft.experience.isCurrentPosition,
+              }
             : {
-              course_creator_uuid: profileUuid,
-              position: draft.experience.position.trim(),
-              organisation_name: draft.experience.organizationName.trim(),
-              responsibilities: draft.experience.responsibilities.trim() || undefined,
-              years_of_experience: draft.experience.yearsOfExperience
-                ? Number(draft.experience.yearsOfExperience)
-                : undefined,
-              start_date: draft.experience.startDate ? toDateValue(draft.experience.startDate) : undefined,
-              end_date: draft.experience.isCurrentPosition || !draft.experience.endDate
-                ? undefined
-                : toDateValue(draft.experience.endDate),
-              is_current_position: draft.experience.isCurrentPosition,
-            };
+                course_creator_uuid: profileUuid,
+                position: draft.experience.position.trim(),
+                organisation_name: draft.experience.organizationName.trim(),
+                responsibilities: draft.experience.responsibilities.trim() || undefined,
+                years_of_experience: draft.experience.yearsOfExperience
+                  ? Number(draft.experience.yearsOfExperience)
+                  : undefined,
+                start_date: draft.experience.startDate
+                  ? toDateValue(draft.experience.startDate)
+                  : undefined,
+                end_date:
+                  draft.experience.isCurrentPosition || !draft.experience.endDate
+                    ? undefined
+                    : toDateValue(draft.experience.endDate),
+                is_current_position: draft.experience.isCurrentPosition,
+              };
 
         const response = (await roleMutations.experience.mutateAsync({
           path:
@@ -444,18 +464,20 @@ export function CredentialsUploadSheet({
 
   return (
     <Sheet open={open} onOpenChange={openState => !isSubmitting && onOpenChange(openState)}>
-      <SheetContent side='right' className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[760px]'>
+      <SheetContent
+        side='right'
+        className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[760px]'
+      >
         <SheetHeader className='border-border/70 border-b px-6 py-5 text-left'>
           <div className='flex items-center gap-3'>
             <span className='bg-primary/10 text-primary grid size-10 place-items-center rounded-xl'>
               <FileUp className='size-5' />
             </span>
             <div>
-              <SheetTitle className='text-2xl'>
-                Add {getRoleLabel(role)} credential
-              </SheetTitle>
+              <SheetTitle className='text-2xl'>Add {getRoleLabel(role)} credential</SheetTitle>
               <SheetDescription>
-                Create an education, membership, or experience record, then attach a supporting PDF to it.
+                Create an education, membership, or experience record, then attach a supporting PDF
+                to it.
               </SheetDescription>
             </div>
           </div>
@@ -463,7 +485,7 @@ export function CredentialsUploadSheet({
 
         <div className='space-y-5 px-6 py-5'>
           <Tabs value={activeTab} onValueChange={value => setActiveTab(value as ActiveTab)}>
-            <TabsList className='grid h-auto w-full grid-cols-3 gap-2 rounded-2xl border bg-card/95 p-2 shadow-sm'>
+            <TabsList className='bg-card/95 grid h-auto w-full grid-cols-3 gap-2 rounded-2xl border p-2 shadow-sm'>
               <TabsTrigger value='education' className='rounded-xl px-4 py-2'>
                 <GraduationCap className='size-4' />
                 Education
@@ -479,15 +501,14 @@ export function CredentialsUploadSheet({
             </TabsList>
 
             <TabsContent value={activeTab} className='mt-5 space-y-5'>
-              <div className='rounded-2xl border bg-card px-4 py-4'>
+              <div className='bg-card rounded-2xl border px-4 py-4'>
                 <div className='flex items-start gap-3'>
                   <AlertCircle className='text-muted-foreground mt-0.5 size-4 shrink-0' />
                   <div className='space-y-1'>
-                    <p className='text-sm font-medium'>
-                      {selectedTabLabel} record
-                    </p>
+                    <p className='text-sm font-medium'>{selectedTabLabel} record</p>
                     <p className='text-muted-foreground text-sm'>
-                      Fill in the fields below. We will save the record first, then upload the PDF against the returned UUID.
+                      Fill in the fields below. We will save the record first, then upload the PDF
+                      against the returned UUID.
                     </p>
                   </div>
                 </div>
@@ -501,9 +522,7 @@ export function CredentialsUploadSheet({
                       <Input
                         id='education-qualification'
                         value={draft.education.qualification}
-                        onChange={event =>
-                          setEducationDraft({ qualification: event.target.value })
-                        }
+                        onChange={event => setEducationDraft({ qualification: event.target.value })}
                         placeholder='e.g. Bachelor of Science'
                       />
                     </div>
@@ -524,9 +543,7 @@ export function CredentialsUploadSheet({
                       <Input
                         id='education-field'
                         value={draft.education.fieldOfStudy}
-                        onChange={event =>
-                          setEducationDraft({ fieldOfStudy: event.target.value })
-                        }
+                        onChange={event => setEducationDraft({ fieldOfStudy: event.target.value })}
                         placeholder='e.g. Computer Science'
                       />
                     </div>
@@ -538,9 +555,7 @@ export function CredentialsUploadSheet({
                         min='1950'
                         max='2100'
                         value={draft.education.yearCompleted}
-                        onChange={event =>
-                          setEducationDraft({ yearCompleted: event.target.value })
-                        }
+                        onChange={event => setEducationDraft({ yearCompleted: event.target.value })}
                         placeholder='2024'
                       />
                     </div>
@@ -594,9 +609,7 @@ export function CredentialsUploadSheet({
                         id='membership-start'
                         type='date'
                         value={draft.membership.startDate}
-                        onChange={event =>
-                          setMembershipDraft({ startDate: event.target.value })
-                        }
+                        onChange={event => setMembershipDraft({ startDate: event.target.value })}
                       />
                     </div>
                     <div className='space-y-2'>
@@ -633,9 +646,7 @@ export function CredentialsUploadSheet({
                       <Input
                         id='experience-position'
                         value={draft.experience.position}
-                        onChange={event =>
-                          setExperienceDraft({ position: event.target.value })
-                        }
+                        onChange={event => setExperienceDraft({ position: event.target.value })}
                         placeholder='e.g. Senior Trainer'
                       />
                     </div>
@@ -687,9 +698,7 @@ export function CredentialsUploadSheet({
                         id='experience-start'
                         type='date'
                         value={draft.experience.startDate}
-                        onChange={event =>
-                          setExperienceDraft({ startDate: event.target.value })
-                        }
+                        onChange={event => setExperienceDraft({ startDate: event.target.value })}
                       />
                     </div>
                     <div className='space-y-2'>
@@ -720,7 +729,7 @@ export function CredentialsUploadSheet({
             </TabsContent>
           </Tabs>
 
-          <div className='space-y-4 rounded-md border bg-card px-4 py-4'>
+          <div className='bg-card space-y-4 rounded-md border px-4 py-4'>
             <div className='grid gap-4 sm:grid-cols-2'>
               <div className='space-y-2'>
                 <Label>Document type</Label>
@@ -740,7 +749,9 @@ export function CredentialsUploadSheet({
                 <Input
                   id='document-title'
                   value={draft.title}
-                  onChange={event => setDraft(current => ({ ...current, title: event.target.value }))}
+                  onChange={event =>
+                    setDraft(current => ({ ...current, title: event.target.value }))
+                  }
                   placeholder='Enter a title for the uploaded document'
                 />
               </div>
@@ -827,13 +838,14 @@ export function CredentialsUploadSheet({
             </div>
           </div>
 
-          <div className='rounded-2xl border bg-card px-4 py-4'>
+          <div className='bg-card rounded-2xl border px-4 py-4'>
             <div className='flex items-start gap-3'>
               <AlertCircle className='text-muted-foreground mt-0.5 size-4 shrink-0' />
               <div className='space-y-1'>
                 <p className='text-sm font-medium'>Submission checks</p>
                 <p className='text-muted-foreground text-sm'>
-                  The button stays disabled until the selected {selectedTabLabel.toLowerCase()} fields, document type, title, description, and PDF file are all provided.
+                  The button stays disabled until the selected {selectedTabLabel.toLowerCase()}{' '}
+                  fields, document type, title, description, and PDF file are all provided.
                 </p>
               </div>
             </div>

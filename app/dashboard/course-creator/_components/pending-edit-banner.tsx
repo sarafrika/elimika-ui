@@ -50,14 +50,14 @@ export function PendingEditBanner({ courseUuid }: { courseUuid: string }) {
   };
 
   return (
-    <div className='flex flex-col gap-3 rounded-md border border-warning/40 bg-warning/10 p-4 sm:flex-row sm:items-center sm:justify-between'>
+    <div className='border-warning/40 bg-warning/10 flex flex-col gap-3 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between'>
       <div className='flex min-w-0 items-start gap-3'>
-        <Clock className='mt-0.5 size-4 shrink-0 text-warning' />
+        <Clock className='text-warning mt-0.5 size-4 shrink-0' />
         <div className='min-w-0'>
           <p className='text-sm font-medium'>Your changes are waiting for review</p>
-          <p className='mt-0.5 text-sm text-muted-foreground'>
-            Your course stays published and learners keep seeing the approved version until an
-            admin reviews these changes.
+          <p className='text-muted-foreground mt-0.5 text-sm'>
+            Your course stays published and learners keep seeing the approved version until an admin
+            reviews these changes.
             {submittedAt ? ` Submitted ${submittedAt}.` : ''}
           </p>
         </div>

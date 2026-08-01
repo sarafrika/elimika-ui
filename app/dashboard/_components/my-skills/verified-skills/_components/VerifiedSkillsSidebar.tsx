@@ -22,7 +22,11 @@ const suggestionToneClassNames = {
   warning: 'bg-warning/15 text-warning',
 } as const;
 
-export function VerifiedSkillsSidebar({ insights, suggestions, report }: VerifiedSkillsSidebarProps) {
+export function VerifiedSkillsSidebar({
+  insights,
+  suggestions,
+  report,
+}: VerifiedSkillsSidebarProps) {
   return (
     <aside className='grid gap-4 lg:sticky lg:top-4 lg:self-start'>
       <section className='border-border/60 bg-card rounded-lg border p-3 shadow-sm'>

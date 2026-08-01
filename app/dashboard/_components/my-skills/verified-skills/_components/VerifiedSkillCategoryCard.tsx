@@ -18,7 +18,10 @@ const toneClassNames = {
   muted: 'bg-muted text-muted-foreground',
 } as const;
 
-export function VerifiedSkillCategoryCard({ category, onOpenDetails }: VerifiedSkillCategoryCardProps) {
+export function VerifiedSkillCategoryCard({
+  category,
+  onOpenDetails,
+}: VerifiedSkillCategoryCardProps) {
   const CategoryIcon = category.skills[0]?.icon;
   const featured = category.skills.slice(0, 3);
   const supporting = category.skills.slice(3);

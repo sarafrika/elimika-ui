@@ -139,9 +139,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ]
+    "apiUrls": ["/api/v1/users/search"]
   },
   {
     "path": "/dashboard/analytics",
@@ -155,9 +153,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ]
+    "apiUrls": ["/api/v1/users/search"]
   },
   {
     "path": "/dashboard/assessment",
@@ -344,10 +340,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search",
-      "/api/v1/students/search"
-    ]
+    "apiUrls": ["/api/v1/users/search", "/api/v1/students/search"]
   },
   {
     "path": "/dashboard/classes/new",
@@ -432,9 +425,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ]
+    "apiUrls": ["/api/v1/users/search"]
   },
   {
     "path": "/dashboard/learning",
@@ -474,11 +465,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search",
-      "/api/v1/students/search",
-      "/api/v1/instructors/search"
-    ]
+    "apiUrls": ["/api/v1/users/search", "/api/v1/students/search", "/api/v1/instructors/search"]
   },
   {
     "path": "/dashboard/my-skills",
@@ -529,9 +516,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ]
+    "apiUrls": ["/api/v1/users/search"]
   },
   {
     "path": "/dashboard/notifications",
@@ -545,11 +530,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search",
-      "/api/v1/students/search",
-      "/api/v1/instructors/search"
-    ]
+    "apiUrls": ["/api/v1/users/search", "/api/v1/students/search", "/api/v1/instructors/search"]
   },
   {
     "path": "/dashboard/opportunities",
@@ -563,9 +544,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ]
+    "apiUrls": ["/api/v1/users/search"]
   },
   {
     "path": "/dashboard/opportunities/my-applications",
@@ -579,11 +558,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search",
-      "/api/v1/students/search",
-      "/api/v1/instructors/search"
-    ]
+    "apiUrls": ["/api/v1/users/search", "/api/v1/students/search", "/api/v1/instructors/search"]
   },
   {
     "path": "/dashboard/overview",
@@ -597,10 +572,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search",
-      "/api/v1/students/search"
-    ]
+    "apiUrls": ["/api/v1/users/search", "/api/v1/students/search"]
   },
   {
     "path": "/dashboard/portfolio",
@@ -659,9 +631,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ]
+    "apiUrls": ["/api/v1/users/search"]
   },
   {
     "path": "/dashboard/profile/education",
@@ -694,9 +664,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ]
+    "apiUrls": ["/api/v1/users/search"]
   },
   {
     "path": "/dashboard/profile/general",
@@ -769,9 +737,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ]
+    "apiUrls": ["/api/v1/users/search"]
   },
   {
     "path": "/dashboard/profile/skills",
@@ -785,9 +751,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ]
+    "apiUrls": ["/api/v1/users/search"]
   },
   {
     "path": "/dashboard/programs",
@@ -849,10 +813,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search",
-      "/api/v1/students/search"
-    ]
+    "apiUrls": ["/api/v1/users/search", "/api/v1/students/search"]
   },
   {
     "path": "/dashboard/revenue/transaction-list",
@@ -971,11 +932,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search",
-      "/api/v1/students/search",
-      "/api/v1/instructors/search"
-    ]
+    "apiUrls": ["/api/v1/users/search", "/api/v1/students/search", "/api/v1/instructors/search"]
   },
   {
     "path": "/dashboard/training-hub",
@@ -1008,9 +965,7 @@
     "longTaskMs": 0,
     "consoleErrors": 0,
     "consoleErrorSamples": [],
-    "apiUrls": [
-      "/api/v1/users/search"
-    ]
+    "apiUrls": ["/api/v1/users/search"]
   },
   {
     "path": "/dashboard/training-hub/waiting-list",

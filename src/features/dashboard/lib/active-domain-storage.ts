@@ -101,7 +101,9 @@ export function normalizeRequestedDashboardPath(path?: string | null) {
   if (pathname.startsWith('/dashboard/workspace/')) {
     const segments = pathname.split('/');
     const remainder = segments.slice(4).filter(Boolean);
-    const workspacePath = remainder.length ? `/dashboard/${remainder.join('/')}` : '/dashboard/overview';
+    const workspacePath = remainder.length
+      ? `/dashboard/${remainder.join('/')}`
+      : '/dashboard/overview';
     return `${workspacePath}${search}`;
   }
 
@@ -123,7 +125,10 @@ export function buildWorkspaceAliasPath(domain: UserDomain | null, path = '/dash
   return dashboardUrl(domain, normalizeRequestedDashboardPath(path));
 }
 
-export function resolveWorkspaceSwitchPath(domain: UserDomain | null, requestedPath?: string | null) {
+export function resolveWorkspaceSwitchPath(
+  domain: UserDomain | null,
+  requestedPath?: string | null
+) {
   const normalizedRequestedPath = normalizeRequestedDashboardPath(requestedPath);
 
   if (!domain) {

@@ -138,7 +138,8 @@ export default function AdminFinancialOverview() {
   const platformFeesQuery = useQuery(getPlatformFeeSummaryOptions());
 
   const studentsPaid = (data?.data?.gross_totals ?? []) as RevenueAmountDto[];
-  const instructorsEarned = (instructorQuery.data?.data?.estimated_earnings ?? []) as RevenueAmountDto[];
+  const instructorsEarned = (instructorQuery.data?.data?.estimated_earnings ??
+    []) as RevenueAmountDto[];
   const platformGross = (data?.data?.gross_totals ?? []) as RevenueAmountDto[];
   const platformFees = (platformFeesQuery.data?.data ?? []) as RevenueAmountDto[];
 

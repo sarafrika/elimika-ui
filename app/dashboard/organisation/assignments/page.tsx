@@ -12,8 +12,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractPage } from '@/lib/api-helpers';
 import type { Assignment, ClassDefinition } from '@/services/client';
@@ -97,91 +110,106 @@ export default function AssignmentsPage() {
   const loading = classesQuery.isLoading || assignmentsQuery.isLoading;
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]">
+    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
-        title="Assignments"
-        description="Create, distribute, and grade student assignments."
+        title='Assignments'
+        description='Create, distribute, and grade student assignments.'
         action={
-          <Button onClick={() => toast.info('New assignment', { description: 'Assignments are created from within a class lesson.' })}>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button
+            onClick={() =>
+              toast.info('New assignment', {
+                description: 'Assignments are created from within a class lesson.',
+              })
+            }
+          >
+            <Plus className='mr-2 h-4 w-4' />
             New Assignment
           </Button>
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.total}</div>
-            <div className="text-xs text-muted-foreground">Total assignments</div>
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <Card className='border-l-primary border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.total}</div>
+            <div className='text-muted-foreground text-xs'>Total assignments</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-sky-500">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.published}</div>
-            <div className="text-xs text-muted-foreground">Published</div>
+        <Card className='border-l-4 border-l-sky-500'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.published}</div>
+            <div className='text-muted-foreground text-xs'>Published</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-warning">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.dueSoon}</div>
-            <div className="text-xs text-muted-foreground">Due soon</div>
+        <Card className='border-l-warning border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.dueSoon}</div>
+            <div className='text-muted-foreground text-xs'>Due soon</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-teal-400">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.drafts}</div>
-            <div className="text-xs text-muted-foreground">Drafts</div>
+        <Card className='border-l-4 border-l-teal-400'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.drafts}</div>
+            <div className='text-muted-foreground text-xs'>Drafts</div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search assignments or courses" value={query} onChange={e => setQuery(e.target.value)} className="pl-9" />
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
+        <div className='relative flex-1'>
+          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+          <Input
+            placeholder='Search assignments or courses'
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            className='pl-9'
+          />
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="sm:w-52">
-            <SelectValue placeholder="All statuses" />
+          <SelectTrigger className='sm:w-52'>
+            <SelectValue placeholder='All statuses' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="Draft">Draft</SelectItem>
-            <SelectItem value="Published">Published</SelectItem>
-            <SelectItem value="Due soon">Due soon</SelectItem>
-            <SelectItem value="Closed">Closed</SelectItem>
+            <SelectItem value='all'>All statuses</SelectItem>
+            <SelectItem value='Draft'>Draft</SelectItem>
+            <SelectItem value='Published'>Published</SelectItem>
+            <SelectItem value='Due soon'>Due soon</SelectItem>
+            <SelectItem value='Closed'>Closed</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className='p-0'>
           {loading ? (
-            <div className="space-y-2 p-4">
+            <div className='space-y-2 p-4'>
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-12 w-full animate-pulse rounded bg-muted" />
+                <div key={i} className='bg-muted h-12 w-full animate-pulse rounded' />
               ))}
             </div>
           ) : rows.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 p-12 text-center">
-              <FileText className="h-8 w-8 text-muted-foreground" />
-              <div className="font-medium">{orgAssignments.length === 0 ? 'No assignments yet' : 'No assignments match'}</div>
-              <p className="text-sm text-muted-foreground">
-                {orgAssignments.length === 0 ? 'Assignments created in your class lessons will appear here.' : 'Try adjusting your filters.'}
+            <div className='flex flex-col items-center justify-center gap-2 p-12 text-center'>
+              <FileText className='text-muted-foreground h-8 w-8' />
+              <div className='font-medium'>
+                {orgAssignments.length === 0 ? 'No assignments yet' : 'No assignments match'}
+              </div>
+              <p className='text-muted-foreground text-sm'>
+                {orgAssignments.length === 0
+                  ? 'Assignments created in your class lessons will appear here.'
+                  : 'Try adjusting your filters.'}
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table className="min-w-[820px]">
+            <div className='overflow-x-auto'>
+              <Table className='min-w-[820px]'>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap">Assignment</TableHead>
-                    <TableHead className="whitespace-nowrap">Course</TableHead>
-                    <TableHead className="whitespace-nowrap">Due</TableHead>
-                    <TableHead className="whitespace-nowrap">Points</TableHead>
-                    <TableHead className="whitespace-nowrap">Submission types</TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
+                    <TableHead className='whitespace-nowrap'>Assignment</TableHead>
+                    <TableHead className='whitespace-nowrap'>Course</TableHead>
+                    <TableHead className='whitespace-nowrap'>Due</TableHead>
+                    <TableHead className='whitespace-nowrap'>Points</TableHead>
+                    <TableHead className='whitespace-nowrap'>Submission types</TableHead>
+                    <TableHead className='whitespace-nowrap'>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -189,20 +217,28 @@ export default function AssignmentsPage() {
                     const st = statusOf(a);
                     return (
                       <TableRow key={a.uuid}>
-                        <TableCell className="whitespace-nowrap">
-                          <div className="font-medium">{a.title}</div>
+                        <TableCell className='whitespace-nowrap'>
+                          <div className='font-medium'>{a.title}</div>
                           {a.assignment_category && (
-                            <div className="text-xs capitalize text-muted-foreground">
+                            <div className='text-muted-foreground text-xs capitalize'>
                               {String(a.assignment_category).toLowerCase().replace(/_/g, ' ')}
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="whitespace-nowrap">{classTitleByUuid.get(a.class_definition_uuid ?? '') ?? '—'}</TableCell>
-                        <TableCell className="whitespace-nowrap">{a.due_date ? dayjs(a.due_date).format('DD MMM YYYY') : '—'}</TableCell>
-                        <TableCell className="whitespace-nowrap">{a.points_display ?? (a.max_points != null ? `${a.max_points} pts` : '—')}</TableCell>
-                        <TableCell className="max-w-xs truncate whitespace-nowrap text-muted-foreground">{a.submission_summary ?? '—'}</TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          <Badge className={STATUS_STYLE[st]} variant="secondary">
+                        <TableCell className='whitespace-nowrap'>
+                          {classTitleByUuid.get(a.class_definition_uuid ?? '') ?? '—'}
+                        </TableCell>
+                        <TableCell className='whitespace-nowrap'>
+                          {a.due_date ? dayjs(a.due_date).format('DD MMM YYYY') : '—'}
+                        </TableCell>
+                        <TableCell className='whitespace-nowrap'>
+                          {a.points_display ?? (a.max_points != null ? `${a.max_points} pts` : '—')}
+                        </TableCell>
+                        <TableCell className='text-muted-foreground max-w-xs truncate whitespace-nowrap'>
+                          {a.submission_summary ?? '—'}
+                        </TableCell>
+                        <TableCell className='whitespace-nowrap'>
+                          <Badge className={STATUS_STYLE[st]} variant='secondary'>
                             {st}
                           </Badge>
                         </TableCell>

@@ -98,10 +98,30 @@ function ClassBoardStats({
 }) {
   return (
     <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5'>
-      <KpiCard title='Classes' value={totalClasses} icon={<GraduationCap className='h-5 w-5' />} variant='primary' />
-      <KpiCard title='Active' value={activeClasses} icon={<CheckCircle2 className='h-5 w-5' />} variant='green' />
-      <KpiCard title='Open Jobs' value={openJobs} icon={<BriefcaseBusiness className='h-5 w-5' />} variant='amber' />
-      <KpiCard title='Upcoming' value={upcomingClasses} icon={<CalendarDays className='h-5 w-5' />} variant='indigo' />
+      <KpiCard
+        title='Classes'
+        value={totalClasses}
+        icon={<GraduationCap className='h-5 w-5' />}
+        variant='primary'
+      />
+      <KpiCard
+        title='Active'
+        value={activeClasses}
+        icon={<CheckCircle2 className='h-5 w-5' />}
+        variant='green'
+      />
+      <KpiCard
+        title='Open Jobs'
+        value={openJobs}
+        icon={<BriefcaseBusiness className='h-5 w-5' />}
+        variant='amber'
+      />
+      <KpiCard
+        title='Upcoming'
+        value={upcomingClasses}
+        icon={<CalendarDays className='h-5 w-5' />}
+        variant='indigo'
+      />
     </div>
   );
 }
@@ -151,69 +171,69 @@ function ClassesSection({
     >
       <div className='grid gap-3 lg:grid-cols-2'>
         {classes.map(classDefinition => (
-        <Card
-          key={classDefinition.uuid}
-          className='rounded-[14px] border border-border bg-card p-4'
-        >
-          <div className='flex flex-wrap items-start justify-between gap-3'>
-            <div className='min-w-0'>
-              <h3 className='truncate text-base font-semibold text-foreground'>
-                {classDefinition.title}
-              </h3>
-              <p className='mt-1 text-sm text-muted-foreground'>
-                {getContentLabel({
-                  courseUuid: classDefinition.course_uuid,
-                  programUuid: classDefinition.program_uuid,
-                  courseMap,
-                  programMap,
-                })}
-              </p>
+          <Card
+            key={classDefinition.uuid}
+            className='border-border bg-card rounded-[14px] border p-4'
+          >
+            <div className='flex flex-wrap items-start justify-between gap-3'>
+              <div className='min-w-0'>
+                <h3 className='text-foreground truncate text-base font-semibold'>
+                  {classDefinition.title}
+                </h3>
+                <p className='text-muted-foreground mt-1 text-sm'>
+                  {getContentLabel({
+                    courseUuid: classDefinition.course_uuid,
+                    programUuid: classDefinition.program_uuid,
+                    courseMap,
+                    programMap,
+                  })}
+                </p>
+              </div>
+              <Badge variant={classDefinition.is_active ? 'success' : 'secondary'}>
+                {classDefinition.is_active ? 'Active' : 'Inactive'}
+              </Badge>
             </div>
-            <Badge variant={classDefinition.is_active ? 'success' : 'secondary'}>
-              {classDefinition.is_active ? 'Active' : 'Inactive'}
-            </Badge>
-          </div>
 
-          <div className='mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2'>
-            <span className='inline-flex items-center gap-2'>
-              <CalendarDays className='size-4 text-primary' />
-              {formatDate(classDefinition.default_start_time)}
-            </span>
-            <span className='inline-flex items-center gap-2'>
-              <MapPin className='size-4 text-primary' />
-              {classDefinition.location_name || formatLabel(classDefinition.location_type)}
-            </span>
-            <span className='inline-flex items-center gap-2'>
-              <Users className='size-4 text-primary' />
-              {(() => {
-                const enrolled = classDefinition.uuid
-                  ? enrolledByClass?.get(classDefinition.uuid)
-                  : undefined;
-                const cap =
-                  typeof classDefinition.max_participants === 'number'
-                    ? classDefinition.max_participants
+            <div className='text-muted-foreground mt-4 grid gap-2 text-sm sm:grid-cols-2'>
+              <span className='inline-flex items-center gap-2'>
+                <CalendarDays className='text-primary size-4' />
+                {formatDate(classDefinition.default_start_time)}
+              </span>
+              <span className='inline-flex items-center gap-2'>
+                <MapPin className='text-primary size-4' />
+                {classDefinition.location_name || formatLabel(classDefinition.location_type)}
+              </span>
+              <span className='inline-flex items-center gap-2'>
+                <Users className='text-primary size-4' />
+                {(() => {
+                  const enrolled = classDefinition.uuid
+                    ? enrolledByClass?.get(classDefinition.uuid)
                     : undefined;
-                if (enrolled != null) {
-                  return cap != null ? `${enrolled}/${cap} enrolled` : `${enrolled} enrolled`;
-                }
-                return (
-                  classDefinition.capacity_info ??
-                  (cap != null ? `${cap} participants` : 'Capacity not set')
-                );
-              })()}
-            </span>
-            <span>{formatLabel(classDefinition.session_format)}</span>
-          </div>
-
-          {classDefinition.uuid ? (
-            <div className='mt-4 flex justify-end border-t border-border/60 pt-3'>
-              <EnrollStudentDialog
-                classDefinitionUuid={classDefinition.uuid}
-                classTitle={classDefinition.title ?? 'this class'}
-              />
+                  const cap =
+                    typeof classDefinition.max_participants === 'number'
+                      ? classDefinition.max_participants
+                      : undefined;
+                  if (enrolled != null) {
+                    return cap != null ? `${enrolled}/${cap} enrolled` : `${enrolled} enrolled`;
+                  }
+                  return (
+                    classDefinition.capacity_info ??
+                    (cap != null ? `${cap} participants` : 'Capacity not set')
+                  );
+                })()}
+              </span>
+              <span>{formatLabel(classDefinition.session_format)}</span>
             </div>
-          ) : null}
-        </Card>
+
+            {classDefinition.uuid ? (
+              <div className='border-border/60 mt-4 flex justify-end border-t pt-3'>
+                <EnrollStudentDialog
+                  classDefinitionUuid={classDefinition.uuid}
+                  classTitle={classDefinition.title ?? 'this class'}
+                />
+              </div>
+            ) : null}
+          </Card>
         ))}
       </div>
     </AsyncSection>
@@ -258,55 +278,57 @@ function JobsSection({
     >
       <div className='grid gap-3 lg:grid-cols-2'>
         {jobs.map(job => (
-        <Card key={job.uuid} className='rounded-[14px] border border-border bg-card p-4'>
-          {job.thumbnail_url ? (
-            <img
-              src={job.thumbnail_url}
-              alt={job.title ?? 'Class thumbnail'}
-              className='mb-3 h-32 w-full rounded-[10px] object-cover'
-            />
-          ) : null}
-          <div className='flex flex-wrap items-start justify-between gap-3'>
-            <div className='min-w-0'>
-              <h3 className='truncate text-base font-semibold text-foreground'>
-                {job.title ?? 'Untitled job'}
-              </h3>
-              <p className='mt-1 text-sm text-muted-foreground'>
-                {getContentLabel({
-                  courseUuid: job.course_uuid,
-                  programUuid: getJobProgramUuid(job),
-                  courseMap,
-                  programMap,
-                })}
-              </p>
-            </div>
-            <Badge variant={job.status === 'open' ? 'secondary' : 'outline'}>
-              {formatLabel(job.status)}
-            </Badge>
-          </div>
-
-          <div className='mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2'>
-            <span className='inline-flex items-center gap-2'>
-              <CalendarDays className='size-4 text-primary' />
-              {formatDate(job.default_start_time)}
-            </span>
-            <span className='inline-flex items-center gap-2'>
-              <MapPin className='size-4 text-primary' />
-              {job.location_name || formatLabel(job.location_type)}
-            </span>
-          </div>
-
-          <div className='mt-4 flex flex-wrap gap-2'>
-            {job.uuid ? (
-              <Button asChild variant='outline' className='rounded-xl'>
-                <Link href={`/dashboard/organisation/opportunities/${job.uuid}`}>View applications</Link>
-              </Button>
+          <Card key={job.uuid} className='border-border bg-card rounded-[14px] border p-4'>
+            {job.thumbnail_url ? (
+              <img
+                src={job.thumbnail_url}
+                alt={job.title ?? 'Class thumbnail'}
+                className='mb-3 h-32 w-full rounded-[10px] object-cover'
+              />
             ) : null}
-            <Button asChild variant='secondary' className='rounded-xl'>
-              <Link href='/dashboard/organisation/opportunities'>Manage jobs</Link>
-            </Button>
-          </div>
-        </Card>
+            <div className='flex flex-wrap items-start justify-between gap-3'>
+              <div className='min-w-0'>
+                <h3 className='text-foreground truncate text-base font-semibold'>
+                  {job.title ?? 'Untitled job'}
+                </h3>
+                <p className='text-muted-foreground mt-1 text-sm'>
+                  {getContentLabel({
+                    courseUuid: job.course_uuid,
+                    programUuid: getJobProgramUuid(job),
+                    courseMap,
+                    programMap,
+                  })}
+                </p>
+              </div>
+              <Badge variant={job.status === 'open' ? 'secondary' : 'outline'}>
+                {formatLabel(job.status)}
+              </Badge>
+            </div>
+
+            <div className='text-muted-foreground mt-4 grid gap-2 text-sm sm:grid-cols-2'>
+              <span className='inline-flex items-center gap-2'>
+                <CalendarDays className='text-primary size-4' />
+                {formatDate(job.default_start_time)}
+              </span>
+              <span className='inline-flex items-center gap-2'>
+                <MapPin className='text-primary size-4' />
+                {job.location_name || formatLabel(job.location_type)}
+              </span>
+            </div>
+
+            <div className='mt-4 flex flex-wrap gap-2'>
+              {job.uuid ? (
+                <Button asChild variant='outline' className='rounded-xl'>
+                  <Link href={`/dashboard/organisation/opportunities/${job.uuid}`}>
+                    View applications
+                  </Link>
+                </Button>
+              ) : null}
+              <Button asChild variant='secondary' className='rounded-xl'>
+                <Link href='/dashboard/organisation/opportunities'>Manage jobs</Link>
+              </Button>
+            </div>
+          </Card>
         ))}
       </div>
     </AsyncSection>
@@ -421,8 +443,8 @@ export default function ClassroomList() {
 
       <section className='space-y-3'>
         <div>
-          <h2 className='text-lg font-semibold text-foreground'>Assigned classes</h2>
-          <p className='text-sm text-muted-foreground'>
+          <h2 className='text-foreground text-lg font-semibold'>Assigned classes</h2>
+          <p className='text-muted-foreground text-sm'>
             Classes created after an approved instructor application is assigned.
           </p>
         </div>
@@ -439,8 +461,8 @@ export default function ClassroomList() {
 
       <section className='space-y-3'>
         <div>
-          <h2 className='text-lg font-semibold text-foreground'>Class jobs</h2>
-          <p className='text-sm text-muted-foreground'>
+          <h2 className='text-foreground text-lg font-semibold'>Class jobs</h2>
+          <p className='text-muted-foreground text-sm'>
             Open and historical marketplace adverts owned by this organisation.
           </p>
         </div>

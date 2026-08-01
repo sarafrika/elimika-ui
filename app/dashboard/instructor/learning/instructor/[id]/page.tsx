@@ -511,8 +511,8 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-success/15 p-2'>
-              <BookOpen className='h-5 w-5 text-success' />
+            <div className='bg-success/15 rounded-lg p-2'>
+              <BookOpen className='text-success h-5 w-5' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Total Bookings</p>

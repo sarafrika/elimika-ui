@@ -5,7 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Edit2, X } from 'lucide-react';
-import { calculateSessionHours, formatSessionDate, ScheduledSessionInstance } from './schedule-utils';
+import {
+  calculateSessionHours,
+  formatSessionDate,
+  ScheduledSessionInstance,
+} from './schedule-utils';
 
 interface ScheduleInstancesTableProps {
   sessions: ScheduledSessionInstance[];
@@ -78,7 +82,7 @@ export const ScheduleInstancesTable = ({
                 <tr
                   key={`${session.date}-${index}`}
                   className={cn(
-                    'border-b last:border-0 hover:bg-muted/30',
+                    'hover:bg-muted/30 border-b last:border-0',
                     getConflictMessage?.(session) && 'bg-destructive/5'
                   )}
                 >

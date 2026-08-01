@@ -7,7 +7,7 @@ import {
   format,
   isSameMonth,
   startOfMonth,
-  startOfWeek
+  startOfWeek,
 } from 'date-fns';
 import {
   Armchair,
@@ -162,8 +162,8 @@ function ClassInviteContent() {
                   Create a student profile to register
                 </CardTitle>
                 <CardDescription className='text-muted-foreground max-w-2xl'>
-                  You can review this invite now, but you will need a student profile before you
-                  can enroll. We&apos;ll take you back here after you create or switch to one.
+                  You can review this invite now, but you will need a student profile before you can
+                  enroll. We&apos;ll take you back here after you create or switch to one.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -193,205 +193,202 @@ function ClassInviteContent() {
 
                 <CardTitle className='text-3xl font-semibold'>{data?.title}</CardTitle>
 
-                  {data?.description ? (
-                    <CardDescription className='text-muted-foreground'>
-                      {data?.description}
-                    </CardDescription>
-                  ) : null}
-                </CardHeader>
-
-                {course ? <CourseDetailedCard course={course} /> : null}
-
-                <CardContent className='space-y-6'>
-                  <div className='grid gap-4 sm:grid-cols-2'>
-                    <InfoRow
-                      icon={<Clock className='h-4 w-4' />}
-                      label='CLASS BEGINS'
-                      value={`${new Date(data?.default_start_time).toLocaleString()} – ${new Date(
-                        data?.default_end_time
-                      ).toLocaleTimeString()}`}
-                    />
-
-                    <InfoRow
-                      icon={<MapPin className='h-4 w-4' />}
-                      label='Location'
-                      value={data?.location_type === 'ONLINE' ? 'Online' : data?.location_name}
-                    />
-
-                    <InfoRow
-                      icon={<Users className='h-4 w-4' />}
-                      label='Capacity'
-                      value={data?.capacity_info}
-                    />
-
-                    <InfoRow
-                      icon={<Layers className='h-4 w-4' />}
-                      label='Fee'
-                      value={
-                        typeof data?.training_fee === 'number'
-                          ? `KES ${data?.training_fee.toLocaleString()}`
-                          : 'Free'
-                      }
-                    />
-
-                    <InfoRow
-                      icon={<Armchair className='h-4 w-4' />}
-                      label='Available Seats'
-                      value={
-                        <div>
-                          {Number(data?.max_participants) - uniqueEnrollments?.length} of{' '}
-                          {data?.max_participants}
-                        </div>
-                      }
-                    />
-                  </div>
-                </CardContent>
-
-                <CardContent>
-                  <CourseTrainingRequirements
-                    requirements={course?.training_requirements}
-                    title='Course Training Requirements'
-                    description='Review what you need to prepare before registering for this class.'
-                  />
-                </CardContent>
-
-                <CardContent>
-                  <ClassScheduleCalendar schedules={schedules} />
-                </CardContent>
-
-                <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
-                  <div className='text-muted-foreground text-sm'>
-                    Open to the public • Limited seats
-                  </div>
-
-                  <div className='flex items-center gap-3'>
-                    <Button
-                      onClick={handleRegister}
-                      size='lg'
-                      className='rounded-full px-10'
-                      disabled={status === 'loading'}
-                    >
-                      Register for Class
-                    </Button>
-
-                    <Button variant='outline' size='sm' onClick={copyLink} disabled={copied}>
-                      {copied ? 'Copied!' : 'Copy link'}
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            )
-          }
-
-          {
-            data?.program_uuid && (
-              <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
-                <CardHeader className='space-y-4'>
-                  <div className='flex items-center justify-between gap-4'>
-                    <div className='flex flex-wrap gap-2'>
-                      <Badge className='rounded-full'>{data?.session_format}</Badge>
-                      <Badge variant='outline' className='rounded-full'>
-                        {data?.class_visibility}
-                      </Badge>
-                      <Badge
-                        variant='outline'
-                        className='border-primary/30 bg-primary/10 text-primary rounded-full'
-                      >
-                        {data?.duration_formatted}
-                      </Badge>
-                    </div>
-
-                    <span className='text-on-accent bg-accent rounded-full px-3 py-1 text-xs font-semibold shadow-sm'>
-                      PROGRAM
-                    </span>
-                  </div>
-
-                  <CardTitle className='text-3xl font-semibold'>{data?.title}</CardTitle>
-
-                  {data?.description ? (
-                    <CardDescription className='text-muted-foreground'>
-                      {data?.description}
-                    </CardDescription>
-                  ) : null}
-                </CardHeader>
-
-                {program ? (
-                  <ProgramDetailsCard program={program} courses={programCourses ?? []} />
+                {data?.description ? (
+                  <CardDescription className='text-muted-foreground'>
+                    {data?.description}
+                  </CardDescription>
                 ) : null}
+              </CardHeader>
 
-                <CardContent className='space-y-6'>
-                  <div className='grid gap-4 sm:grid-cols-2'>
-                    <InfoRow
-                      icon={<Clock className='h-4 w-4' />}
-                      label='CLASS BEGINS'
-                      value={`${new Date(data?.default_start_time).toLocaleString()} – ${new Date(
-                        data?.default_end_time
-                      ).toLocaleTimeString()}`}
-                    />
+              {course ? <CourseDetailedCard course={course} /> : null}
 
-                    <InfoRow
-                      icon={<MapPin className='h-4 w-4' />}
-                      label='Location'
-                      value={data?.location_type === 'ONLINE' ? 'Online' : data?.location_name}
-                    />
+              <CardContent className='space-y-6'>
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  <InfoRow
+                    icon={<Clock className='h-4 w-4' />}
+                    label='CLASS BEGINS'
+                    value={`${new Date(data?.default_start_time).toLocaleString()} – ${new Date(
+                      data?.default_end_time
+                    ).toLocaleTimeString()}`}
+                  />
 
-                    <InfoRow
-                      icon={<Users className='h-4 w-4' />}
-                      label='Capacity'
-                      value={data?.capacity_info}
-                    />
+                  <InfoRow
+                    icon={<MapPin className='h-4 w-4' />}
+                    label='Location'
+                    value={data?.location_type === 'ONLINE' ? 'Online' : data?.location_name}
+                  />
 
-                    <InfoRow
-                      icon={<Layers className='h-4 w-4' />}
-                      label='Fee'
-                      value={
-                        typeof data?.training_fee === 'number'
-                          ? `KES ${data?.training_fee.toLocaleString()}`
-                          : 'Free'
-                      }
-                    />
+                  <InfoRow
+                    icon={<Users className='h-4 w-4' />}
+                    label='Capacity'
+                    value={data?.capacity_info}
+                  />
 
-                    <InfoRow
-                      icon={<Armchair className='h-4 w-4' />}
-                      label='Available Seats'
-                      value={
-                        <div>
-                          {Number(data?.max_participants) - uniqueEnrollments?.length} of{' '}
-                          {data?.max_participants}
-                        </div>
-                      }
-                    />
-                  </div>
-                </CardContent>
+                  <InfoRow
+                    icon={<Layers className='h-4 w-4' />}
+                    label='Fee'
+                    value={
+                      typeof data?.training_fee === 'number'
+                        ? `KES ${data?.training_fee.toLocaleString()}`
+                        : 'Free'
+                    }
+                  />
 
-                <CardContent>
-                  <ClassScheduleCalendar schedules={schedules} />
-                </CardContent>
-
-                {/* CTA */}
-                <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
-                  <div className='text-muted-foreground text-sm'>
-                    Open to the public • Limited seats
-                  </div>
-
-                  <div className='flex items-center gap-3'>
-                    <Button
-                      onClick={handleRegister}
-                      size='lg'
-                      className='rounded-full px-10'
-                      disabled={status === 'loading'}
-                    >
-                      Register for Class
-                    </Button>
-
-                    <Button variant='outline' size='sm' onClick={copyLink} disabled={copied}>
-                      {copied ? 'Copied!' : 'Copy link'}
-                    </Button>
-                  </div>
+                  <InfoRow
+                    icon={<Armchair className='h-4 w-4' />}
+                    label='Available Seats'
+                    value={
+                      <div>
+                        {Number(data?.max_participants) - uniqueEnrollments?.length} of{' '}
+                        {data?.max_participants}
+                      </div>
+                    }
+                  />
                 </div>
-              </Card>
-            )
-          }
+              </CardContent>
+
+              <CardContent>
+                <CourseTrainingRequirements
+                  requirements={course?.training_requirements}
+                  title='Course Training Requirements'
+                  description='Review what you need to prepare before registering for this class.'
+                />
+              </CardContent>
+
+              <CardContent>
+                <ClassScheduleCalendar schedules={schedules} />
+              </CardContent>
+
+              <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
+                <div className='text-muted-foreground text-sm'>
+                  Open to the public • Limited seats
+                </div>
+
+                <div className='flex items-center gap-3'>
+                  <Button
+                    onClick={handleRegister}
+                    size='lg'
+                    className='rounded-full px-10'
+                    disabled={status === 'loading'}
+                  >
+                    Register for Class
+                  </Button>
+
+                  <Button variant='outline' size='sm' onClick={copyLink} disabled={copied}>
+                    {copied ? 'Copied!' : 'Copy link'}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {data?.program_uuid && (
+            <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
+              <CardHeader className='space-y-4'>
+                <div className='flex items-center justify-between gap-4'>
+                  <div className='flex flex-wrap gap-2'>
+                    <Badge className='rounded-full'>{data?.session_format}</Badge>
+                    <Badge variant='outline' className='rounded-full'>
+                      {data?.class_visibility}
+                    </Badge>
+                    <Badge
+                      variant='outline'
+                      className='border-primary/30 bg-primary/10 text-primary rounded-full'
+                    >
+                      {data?.duration_formatted}
+                    </Badge>
+                  </div>
+
+                  <span className='text-on-accent bg-accent rounded-full px-3 py-1 text-xs font-semibold shadow-sm'>
+                    PROGRAM
+                  </span>
+                </div>
+
+                <CardTitle className='text-3xl font-semibold'>{data?.title}</CardTitle>
+
+                {data?.description ? (
+                  <CardDescription className='text-muted-foreground'>
+                    {data?.description}
+                  </CardDescription>
+                ) : null}
+              </CardHeader>
+
+              {program ? (
+                <ProgramDetailsCard program={program} courses={programCourses ?? []} />
+              ) : null}
+
+              <CardContent className='space-y-6'>
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  <InfoRow
+                    icon={<Clock className='h-4 w-4' />}
+                    label='CLASS BEGINS'
+                    value={`${new Date(data?.default_start_time).toLocaleString()} – ${new Date(
+                      data?.default_end_time
+                    ).toLocaleTimeString()}`}
+                  />
+
+                  <InfoRow
+                    icon={<MapPin className='h-4 w-4' />}
+                    label='Location'
+                    value={data?.location_type === 'ONLINE' ? 'Online' : data?.location_name}
+                  />
+
+                  <InfoRow
+                    icon={<Users className='h-4 w-4' />}
+                    label='Capacity'
+                    value={data?.capacity_info}
+                  />
+
+                  <InfoRow
+                    icon={<Layers className='h-4 w-4' />}
+                    label='Fee'
+                    value={
+                      typeof data?.training_fee === 'number'
+                        ? `KES ${data?.training_fee.toLocaleString()}`
+                        : 'Free'
+                    }
+                  />
+
+                  <InfoRow
+                    icon={<Armchair className='h-4 w-4' />}
+                    label='Available Seats'
+                    value={
+                      <div>
+                        {Number(data?.max_participants) - uniqueEnrollments?.length} of{' '}
+                        {data?.max_participants}
+                      </div>
+                    }
+                  />
+                </div>
+              </CardContent>
+
+              <CardContent>
+                <ClassScheduleCalendar schedules={schedules} />
+              </CardContent>
+
+              {/* CTA */}
+              <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
+                <div className='text-muted-foreground text-sm'>
+                  Open to the public • Limited seats
+                </div>
+
+                <div className='flex items-center gap-3'>
+                  <Button
+                    onClick={handleRegister}
+                    size='lg'
+                    className='rounded-full px-10'
+                    disabled={status === 'loading'}
+                  >
+                    Register for Class
+                  </Button>
+
+                  <Button variant='outline' size='sm' onClick={copyLink} disabled={copied}>
+                    {copied ? 'Copied!' : 'Copy link'}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
         </>
       )}
 
@@ -429,7 +426,7 @@ function ClassInviteContent() {
           </div>
         </DialogContent>
       </Dialog>
-    </div >
+    </div>
   );
 }
 
@@ -688,7 +685,7 @@ export function CourseDetailedCard({ course }: CourseProps) {
         </div>
 
         {course?.intro_video_url ? (
-          <div className='w-full max-w-xl overflow-hidden rounded-2xl border border-border/60 bg-background shadow-sm lg:w-[320px]'>
+          <div className='border-border/60 bg-background w-full max-w-xl overflow-hidden rounded-2xl border shadow-sm lg:w-[320px]'>
             <video src={course?.intro_video_url} controls className='h-full w-full' />
           </div>
         ) : null}
@@ -697,7 +694,7 @@ export function CourseDetailedCard({ course }: CourseProps) {
       <div className='grid gap-4 md:grid-cols-2'>
         {/* Objectives */}
         {course?.objectives && (
-          <div className='bg-muted/30 rounded-2xl border border-border/60 p-4'>
+          <div className='bg-muted/30 border-border/60 rounded-2xl border p-4'>
             <h3 className='font-semibold'>Objectives</h3>
             <div
               className='text-muted-foreground mt-2 text-sm leading-7'
@@ -708,7 +705,7 @@ export function CourseDetailedCard({ course }: CourseProps) {
 
         {/* Prerequisites */}
         {course?.prerequisites && (
-          <div className='bg-muted/30 rounded-2xl border border-border/60 p-4'>
+          <div className='bg-muted/30 border-border/60 rounded-2xl border p-4'>
             <h3 className='font-semibold'>Prerequisites</h3>
             <div
               className='text-muted-foreground mt-2 text-sm leading-7'
@@ -733,7 +730,7 @@ export function ProgramDetailsCard({
       <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start'>
         {/* Objectives */}
         {program?.objectives && (
-          <div className='bg-muted/30 rounded-2xl border border-border/60 p-4'>
+          <div className='bg-muted/30 border-border/60 rounded-2xl border p-4'>
             <h3 className='font-semibold'>Objectives</h3>
             <div
               className='text-muted-foreground mt-2 text-sm leading-7'
@@ -744,7 +741,7 @@ export function ProgramDetailsCard({
 
         {/* Prerequisites */}
         {program?.prerequisites && (
-          <div className='bg-muted/30 rounded-2xl border border-border/60 p-4'>
+          <div className='bg-muted/30 border-border/60 rounded-2xl border p-4'>
             <h3 className='font-semibold'>Prerequisites</h3>
             <div
               className='text-muted-foreground mt-2 text-sm leading-7'
@@ -754,7 +751,7 @@ export function ProgramDetailsCard({
         )}
       </div>
 
-      <div className='bg-primary/5 rounded-2xl border border-primary/15 p-4'>
+      <div className='bg-primary/5 border-primary/15 rounded-2xl border p-4'>
         <h3 className='font-semibold'>Courses Included in This Training</h3>
         <ul className='text-muted-foreground mt-3 space-y-2 text-sm'>
           {courses.length === 0 ? (

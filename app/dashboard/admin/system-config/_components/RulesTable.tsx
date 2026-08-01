@@ -55,8 +55,10 @@ export function RulesTable() {
         meta: { label: 'Rule' },
         cell: ({ row }) => (
           <div className='min-w-0'>
-            <p className='truncate font-mono text-sm font-medium text-foreground'>{row.original.key}</p>
-            <p className='truncate text-xs text-muted-foreground'>{row.original.category}</p>
+            <p className='text-foreground truncate font-mono text-sm font-medium'>
+              {row.original.key}
+            </p>
+            <p className='text-muted-foreground truncate text-xs'>{row.original.category}</p>
           </div>
         ),
       },
@@ -73,7 +75,9 @@ export function RulesTable() {
               {row.original.scope?.replace(/_/g, ' ') || '—'}
             </Badge>
             {row.original.scopeReference ? (
-              <p className='mt-1 truncate text-xs text-muted-foreground'>{row.original.scopeReference}</p>
+              <p className='text-muted-foreground mt-1 truncate text-xs'>
+                {row.original.scopeReference}
+              </p>
             ) : null}
           </div>
         ),
@@ -93,7 +97,7 @@ export function RulesTable() {
         header: 'Priority',
         meta: { label: 'Priority' },
         cell: ({ row }) => (
-          <span className='text-sm text-muted-foreground'>{row.original.priority ?? '—'}</span>
+          <span className='text-muted-foreground text-sm'>{row.original.priority ?? '—'}</span>
         ),
       },
     ],
@@ -110,7 +114,11 @@ export function RulesTable() {
         getRowId={(rule, index) => rule.uuid ?? String(index)}
         onRowClick={rule => setDrawer({ open: true, mode: 'edit', rule })}
         toolbar={
-          <Button size='sm' className='h-9 rounded-md' onClick={() => setDrawer({ open: true, mode: 'create', rule: null })}>
+          <Button
+            size='sm'
+            className='h-9 rounded-md'
+            onClick={() => setDrawer({ open: true, mode: 'create', rule: null })}
+          >
             <Plus className='size-4' />
             New rule
           </Button>

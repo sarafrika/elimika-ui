@@ -33,7 +33,9 @@ export function OverviewCourseRail() {
     return <CourseRailSkeleton />;
   }
 
-  const definitions = ((classesQuery.data?.data ?? []) as Array<{ class_definition?: ClassDefinition }>)
+  const definitions = (
+    (classesQuery.data?.data ?? []) as Array<{ class_definition?: ClassDefinition }>
+  )
     .map(item => item.class_definition)
     .filter((item): item is ClassDefinition => Boolean(item?.uuid));
 
@@ -46,5 +48,11 @@ export function OverviewCourseRail() {
     href: '/dashboard/organisation/classes',
   }));
 
-  return <CourseRail title='Active classes' items={items} viewAllHref='/dashboard/organisation/classes' />;
+  return (
+    <CourseRail
+      title='Active classes'
+      items={items}
+      viewAllHref='/dashboard/organisation/classes'
+    />
+  );
 }

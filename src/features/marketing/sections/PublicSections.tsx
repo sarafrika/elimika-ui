@@ -95,53 +95,35 @@ export function OpportunitiesSection() {
 
 export function HelpSection() {
   return (
-    <section
-      id='help'
-      className='border-border/60 bg-muted/30 rounded-[28px] border p-8 shadow-sm'
-    >
+    <section id='help' className='border-border/60 bg-muted/30 rounded-[28px] border p-8 shadow-sm'>
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div className='space-y-2'>
-          <p className='text-primary text-xs font-semibold tracking-[0.3em] uppercase'>
-            Help
-          </p>
+          <p className='text-primary text-xs font-semibold tracking-[0.3em] uppercase'>Help</p>
 
-          <h3 className='text-foreground text-2xl font-semibold'>
-            Need support?
-          </h3>
+          <h3 className='text-foreground text-2xl font-semibold'>Need support?</h3>
 
           <p className='text-muted-foreground text-sm'>
-            Visit our help center or reach out for guidance on building your
-            Skills Wallet, funding, or employer access.
+            Visit our help center or reach out for guidance on building your Skills Wallet, funding,
+            or employer access.
           </p>
         </div>
 
         <div className='flex flex-wrap items-center gap-3'>
-          <Button
-            asChild
-            className='rounded-full px-6'
-            variant='outline'
-          >
-            <Link href='/help'>
-              Help center
-            </Link>
+          <Button asChild className='rounded-full px-6' variant='outline'>
+            <Link href='/help'>Help center</Link>
           </Button>
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button className='rounded-full px-6'>
-                Contact support
-              </Button>
+              <Button className='rounded-full px-6'>Contact support</Button>
             </DialogTrigger>
 
             <DialogContent className='sm:max-w-[640px]'>
               <DialogHeader>
-                <DialogTitle>
-                  Contact support
-                </DialogTitle>
+                <DialogTitle>Contact support</DialogTitle>
 
                 <DialogDescription>
-                  Tell us what you need help with and our team will respond as
-                  soon as possible.
+                  Tell us what you need help with and our team will respond as soon as possible.
                 </DialogDescription>
               </DialogHeader>
 
@@ -152,11 +134,11 @@ export function HelpSection() {
           </Dialog>
 
           <a
-            href="mailto:support@yourapp.com?subject=Help%20Request"
-            className="inline-flex items-center justify-center rounded-full border border-border bg-background p-2 text-foreground transition-colors hover:bg-muted mr-1 hover:text-foreground"
-            aria-label="Send support email"
+            href='mailto:support@yourapp.com?subject=Help%20Request'
+            className='border-border bg-background text-foreground hover:bg-muted hover:text-foreground mr-1 inline-flex items-center justify-center rounded-full border p-2 transition-colors'
+            aria-label='Send support email'
           >
-            <Send className="size-4" />
+            <Send className='size-4' />
           </a>
         </div>
       </div>

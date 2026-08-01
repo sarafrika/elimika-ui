@@ -48,7 +48,7 @@ export function NavMain({
 
           return (
             <SidebarGroup className='-space-y-2' key={`${item.title}-${index}`}>
-              <SidebarGroupLabel className='text-sidebar-foreground/50 text-xs font-medium tracking-wide -mt-3 mb-[1px]'>
+              <SidebarGroupLabel className='text-sidebar-foreground/50 -mt-3 mb-[1px] text-xs font-medium tracking-wide'>
                 {item.title}
               </SidebarGroupLabel>
               <SidebarGroupContent>

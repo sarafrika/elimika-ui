@@ -12,9 +12,9 @@ export function DetailRow({
   className?: string;
 }) {
   return (
-    <div className={cn('rounded-md border border-border/60 bg-muted/20 px-3 py-2.5', className)}>
-      <p className='text-xs uppercase tracking-wide text-muted-foreground'>{label}</p>
-      <div className='mt-1 text-sm font-medium text-foreground'>{value ?? '—'}</div>
+    <div className={cn('border-border/60 bg-muted/20 rounded-md border px-3 py-2.5', className)}>
+      <p className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</p>
+      <div className='text-foreground mt-1 text-sm font-medium'>{value ?? '—'}</div>
     </div>
   );
 }

@@ -88,7 +88,7 @@ export function SearchInstructorFilters({
   onApply,
 }: Props) {
   return (
-    <Card className='rounded-md border bg-card p-4'>
+    <Card className='bg-card rounded-md border p-4'>
       <div className='flex flex-col gap-3 lg:flex-row lg:items-center'>
         <div className='relative flex-1'>
           <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
@@ -107,7 +107,10 @@ export function SearchInstructorFilters({
 
       <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
         <Field label='Skill Category'>
-          <Select value={filters.skillCategory} onValueChange={value => onChange('skillCategory', value)}>
+          <Select
+            value={filters.skillCategory}
+            onValueChange={value => onChange('skillCategory', value)}
+          >
             <SelectTrigger className='h-10 w-full rounded-md text-sm'>
               <SelectValue placeholder='All Categories' />
             </SelectTrigger>
@@ -123,7 +126,10 @@ export function SearchInstructorFilters({
         </Field>
 
         <Field label='Availability'>
-          <Select value={filters.availability} onValueChange={value => onChange('availability', value)}>
+          <Select
+            value={filters.availability}
+            onValueChange={value => onChange('availability', value)}
+          >
             <SelectTrigger className='h-10 w-full rounded-md text-sm'>
               <SelectValue placeholder='All Availability' />
             </SelectTrigger>
@@ -163,7 +169,10 @@ export function SearchInstructorFilters({
         </Field>
 
         <Field label='Rating'>
-          <Select value={String(filters.minRating)} onValueChange={value => onChange('minRating', Number(value))}>
+          <Select
+            value={String(filters.minRating)}
+            onValueChange={value => onChange('minRating', Number(value))}
+          >
             <SelectTrigger className='h-10 w-full rounded-md text-sm'>
               <SelectValue placeholder='Any Rating' />
             </SelectTrigger>
@@ -235,7 +244,9 @@ export function SearchInstructorFilters({
               <button
                 key={option.value}
                 type='button'
-                onClick={() => onChange('mode', filters.mode === option.value ? 'all' : option.value)}
+                onClick={() =>
+                  onChange('mode', filters.mode === option.value ? 'all' : option.value)
+                }
                 className={[
                   'rounded-md border px-3 py-2 text-xs font-medium transition-colors sm:text-sm',
                   filters.mode === option.value
@@ -318,7 +329,7 @@ export function SearchInstructorFilters({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className='space-y-1.5'>
-      <Label className='text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground'>
+      <Label className='text-muted-foreground text-[11px] font-semibold tracking-[0.12em] uppercase'>
         {label}
       </Label>
       {children}

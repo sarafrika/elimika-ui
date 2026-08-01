@@ -33,7 +33,7 @@ export function RubricsSection({ courseUuid }: { courseUuid: string }) {
           ))}
         </div>
       ) : rubrics.length === 0 ? (
-        <p className='rounded-md border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground'>
+        <p className='border-border/70 text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
           No rubrics attached to this course.
         </p>
       ) : (
@@ -41,10 +41,10 @@ export function RubricsSection({ courseUuid }: { courseUuid: string }) {
           {rubrics.map(association => (
             <div
               key={association.uuid}
-              className='rounded-md border border-border/60 bg-muted/20 px-4 py-3'
+              className='border-border/60 bg-muted/20 rounded-md border px-4 py-3'
             >
               <div className='flex flex-wrap items-center justify-between gap-2'>
-                <h3 className='text-sm font-semibold text-foreground'>
+                <h3 className='text-foreground text-sm font-semibold'>
                   {association.rubric?.title ?? 'Untitled rubric'}
                 </h3>
                 <StatusBadge
@@ -53,11 +53,11 @@ export function RubricsSection({ courseUuid }: { courseUuid: string }) {
                 />
               </div>
               {association.rubric?.description ? (
-                <div className='mt-1 text-sm text-muted-foreground'>
+                <div className='text-muted-foreground mt-1 text-sm'>
                   <RichTextRenderer htmlString={association.rubric.description} />
                 </div>
               ) : null}
-              <div className='mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground'>
+              <div className='text-muted-foreground mt-2 flex flex-wrap gap-4 text-xs'>
                 {association.rubric?.duration_display ? (
                   <span className='inline-flex items-center gap-1'>
                     <Clock className='size-3.5' />

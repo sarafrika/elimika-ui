@@ -4,17 +4,19 @@ import { fetchClient } from '@/services/api/fetch-client';
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
 
-const notificationMetadataSchema = z.object({
-  quiz_uuid: z.string().optional(),
-  assignment_uuid: z.string().optional(),
-  class_definition_uuid: z.string().optional(),
-  due_at: z.string().optional(),
-  start_time: z.string().optional(),
-  schedule_uuid: z.string().optional(),
-  student_uuid: z.string().optional(),
-  instructor_uuid: z.string().optional(),
-  reminder_minutes: z.number().optional(),
-}).passthrough();
+const notificationMetadataSchema = z
+  .object({
+    quiz_uuid: z.string().optional(),
+    assignment_uuid: z.string().optional(),
+    class_definition_uuid: z.string().optional(),
+    due_at: z.string().optional(),
+    start_time: z.string().optional(),
+    schedule_uuid: z.string().optional(),
+    student_uuid: z.string().optional(),
+    instructor_uuid: z.string().optional(),
+    reminder_minutes: z.number().optional(),
+  })
+  .passthrough();
 
 const notificationSchema = z.object({
   uuid: z.string().uuid(),
@@ -125,20 +127,23 @@ export async function fetchNotifications(
 ): Promise<NotificationListResult> {
   const normalizedParams = normalizeListParams(params);
 
-  const response = await fetchClient.GET('/api/v1/notifications' as never, {
-    params: {
-      query: {
-        page: normalizedParams.page,
-        size: normalizedParams.size,
-        sort: 'createdDate,desc',
-        domain: normalizedParams.domain,
-        status: normalizedParams.status,
-        presentation: normalizedParams.presentation,
-        type: normalizedParams.type,
-        popup_seen: normalizedParams.popupSeen,
+  const response = await fetchClient.GET(
+    '/api/v1/notifications' as never,
+    {
+      params: {
+        query: {
+          page: normalizedParams.page,
+          size: normalizedParams.size,
+          sort: 'createdDate,desc',
+          domain: normalizedParams.domain,
+          status: normalizedParams.status,
+          presentation: normalizedParams.presentation,
+          type: normalizedParams.type,
+          popup_seen: normalizedParams.popupSeen,
+        },
       },
-    },
-  } as never);
+    } as never
+  );
 
   if (response.error) {
     throw new Error(
@@ -158,7 +163,8 @@ export async function fetchNotifications(
   const totalItems =
     metadata.totalElements === undefined ? items.length : toNumber(metadata.totalElements);
   const totalPages =
-    metadata.totalPages ?? (totalItems > 0 ? Math.ceil(totalItems / size) : items.length > 0 ? 1 : 0);
+    metadata.totalPages ??
+    (totalItems > 0 ? Math.ceil(totalItems / size) : items.length > 0 ? 1 : 0);
 
   return {
     items,
@@ -172,9 +178,12 @@ export async function fetchNotifications(
 }
 
 export async function fetchNotificationCounts(domain?: string): Promise<NotificationCounts> {
-  const response = await fetchClient.GET('/api/v1/notifications/counts' as never, {
-    params: { query: { domain } },
-  } as never);
+  const response = await fetchClient.GET(
+    '/api/v1/notifications/counts' as never,
+    {
+      params: { query: { domain } },
+    } as never
+  );
 
   if (response.error) {
     throw new Error(
@@ -191,12 +200,15 @@ export async function fetchNotificationCounts(domain?: string): Promise<Notifica
 }
 
 async function applyNotificationAction(uuid: string, action: 'read' | 'archive' | 'popup_seen') {
-  const response = await fetchClient.POST('/api/v1/notifications/{uuid}' as never, {
-    params: {
-      path: { uuid },
-      query: { action },
-    },
-  } as never);
+  const response = await fetchClient.POST(
+    '/api/v1/notifications/{uuid}' as never,
+    {
+      params: {
+        path: { uuid },
+        query: { action },
+      },
+    } as never
+  );
 
   if (response.error) {
     throw new Error(
@@ -208,11 +220,14 @@ async function applyNotificationAction(uuid: string, action: 'read' | 'archive' 
 }
 
 async function markAllNotificationsRead(domain?: string) {
-  const response = await fetchClient.POST('/api/v1/notifications' as never, {
-    params: {
-      query: { action: 'read_all', domain },
-    },
-  } as never);
+  const response = await fetchClient.POST(
+    '/api/v1/notifications' as never,
+    {
+      params: {
+        query: { action: 'read_all', domain },
+      },
+    } as never
+  );
 
   if (response.error) {
     throw new Error(

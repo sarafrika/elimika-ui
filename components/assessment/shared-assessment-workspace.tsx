@@ -48,7 +48,7 @@ import {
   Plus,
   Search,
   Settings2,
-  UploadCloud
+  UploadCloud,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -105,7 +105,7 @@ type Competency = {
   trend: string;
 };
 
-const competencies: Competency[] = []
+const competencies: Competency[] = [];
 
 // [
 //   {
@@ -249,9 +249,7 @@ function getAverageScore(submissions: AssignmentSubmission[]) {
 
   if (gradedScores.length === 0) return null;
 
-  return Math.round(
-    gradedScores.reduce((total, score) => total + score, 0) / gradedScores.length
-  );
+  return Math.round(gradedScores.reduce((total, score) => total + score, 0) / gradedScores.length);
 }
 
 function getAveragePercentage(submissions: AssignmentSubmission[]) {
@@ -263,7 +261,7 @@ function getAveragePercentage(submissions: AssignmentSubmission[]) {
 
   return Math.round(
     gradedPercentages.reduce((total, percentage) => total + percentage, 0) /
-    gradedPercentages.length
+      gradedPercentages.length
   );
 }
 
@@ -633,30 +631,25 @@ function AssessmentCard({
     ? `/dashboard/assignment/${assessment.assignmentUuid}`
     : undefined;
 
-  const actionHref =
-    role === 'instructor'
-      ? viewSubmissionHref
-      : viewGradeDetailsHref;
+  const actionHref = role === 'instructor' ? viewSubmissionHref : viewGradeDetailsHref;
 
   return (
-    <article className="border-border/70 bg-card w-full min-w-0 overflow-hidden rounded-md border shadow-xs">
-      <div className="border-border/60 flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold sm:text-xl">
-            {assessment.title}
-          </h3>
+    <article className='border-border/70 bg-card w-full min-w-0 overflow-hidden rounded-md border shadow-xs'>
+      <div className='border-border/60 flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-start sm:justify-between'>
+        <div className='min-w-0 flex-1'>
+          <h3 className='truncate text-base font-semibold sm:text-xl'>{assessment.title}</h3>
 
-          <p className="text-muted-foreground mt-2 text-xs sm:text-sm">
+          <p className='text-muted-foreground mt-2 text-xs sm:text-sm'>
             Submitted by {assessment.learnerName} on {assessment.submittedAt}
           </p>
         </div>
 
-        <div className="shrink-0">
+        <div className='shrink-0'>
           <StatusBadge assessment={assessment} />
         </div>
       </div>
 
-      <div className="border-border/60 space-y-4 border-b p-4">
+      <div className='border-border/60 space-y-4 border-b p-4'>
         {/* <div className="flex min-w-0 items-start gap-2">
           <Star className="text-warning fill-warning mt-0.5 size-4 shrink-0" />
 
@@ -665,81 +658,71 @@ function AssessmentCard({
           </div>
         </div> */}
 
-        <div className="grid gap-3 md:grid-cols-[120px_minmax(0,1fr)_auto] md:items-center">
-          <Badge className="bg-primary/15 text-primary inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium">
+        <div className='grid gap-3 md:grid-cols-[120px_minmax(0,1fr)_auto] md:items-center'>
+          <Badge className='bg-primary/15 text-primary inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium'>
             {assessment.category}
           </Badge>
 
-          <div className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-2 text-sm">
-            <FileText className="text-primary size-4 shrink-0" />
+          <div className='text-muted-foreground flex min-w-0 flex-wrap items-center gap-2 text-sm'>
+            <FileText className='text-primary size-4 shrink-0' />
 
-            <span className="text-foreground min-w-0 truncate font-medium">
+            <span className='text-foreground min-w-0 truncate font-medium'>
               {assessment.fileName}
             </span>
 
-            <span className="shrink-0">
-              ({assessment.fileSize})
-            </span>
+            <span className='shrink-0'>({assessment.fileSize})</span>
           </div>
 
           {actionHref ? (
             <Button
               asChild
-              className="h-9 w-full rounded-md px-5 sm:w-auto"
+              className='h-9 w-full rounded-md px-5 sm:w-auto'
               disabled={role === 'student' && assessment.score === null}
-              type="button"
+              type='button'
             >
               <Link href={actionHref}>
                 {primaryAction}
-                <ArrowUpRight className="size-4" />
+                <ArrowUpRight className='size-4' />
               </Link>
             </Button>
           ) : (
-            <Button
-              className="h-9 w-full rounded-md px-5 sm:w-auto"
-              disabled
-              type="button"
-            >
+            <Button className='h-9 w-full rounded-md px-5 sm:w-auto' disabled type='button'>
               {primaryAction}
-              <ArrowUpRight className="size-4" />
+              <ArrowUpRight className='size-4' />
             </Button>
           )}
         </div>
       </div>
 
-      <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 p-4 text-xs sm:text-sm">
-        <span className="text-muted-foreground">
+      <footer className='flex flex-wrap items-center gap-x-4 gap-y-2 p-4 text-xs sm:text-sm'>
+        <span className='text-muted-foreground'>
           Grade:{' '}
-          <span className="text-foreground font-medium">
-            {assessment.gradeDisplay ||
-              `${assessment.score ?? '----'} / ${assessment.points}`}
+          <span className='text-foreground font-medium'>
+            {assessment.gradeDisplay || `${assessment.score ?? '----'} / ${assessment.points}`}
           </span>
         </span>
 
         {typeof assessment.percentage === 'number' ? (
-          <span className="text-muted-foreground">
+          <span className='text-muted-foreground'>
             Percentage:{' '}
-            <span className="text-foreground font-medium">
-              {assessment.percentage}%
-            </span>
+            <span className='text-foreground font-medium'>{assessment.percentage}%</span>
           </span>
         ) : null}
 
         <span
           className={cn(
             'text-muted-foreground',
-            isAssessmentOverdue(assessment) &&
-            'text-destructive font-medium'
+            isAssessmentOverdue(assessment) && 'text-destructive font-medium'
           )}
         >
           {getAssessmentDueLabel(assessment)}
         </span>
 
         <button
-          className="text-muted-foreground hover:text-foreground ml-auto shrink-0"
-          type="button"
+          className='text-muted-foreground hover:text-foreground ml-auto shrink-0'
+          type='button'
         >
-          <MoreHorizontal className="size-5" />
+          <MoreHorizontal className='size-5' />
         </button>
       </footer>
     </article>
@@ -878,9 +861,7 @@ function TopStudentsPanel() {
                   <AvatarImage src={student.avatar} alt={student.name} />
                   <AvatarFallback>{student.initials}</AvatarFallback>
                 </Avatar>
-                <span className='min-w-0 flex-1 truncate text-sm font-medium'>
-                  {student.name}
-                </span>
+                <span className='min-w-0 flex-1 truncate text-sm font-medium'>{student.name}</span>
                 <span className='text-muted-foreground text-xs'>{student.due}</span>
               </div>
             ))
@@ -956,9 +937,7 @@ function CompetencyChart({ compact = false }: { compact?: boolean }) {
       <div className='space-y-3'>
         {competencies.length === 0 ? (
           <div className='border-border/60 bg-card/80 flex min-h-[160px] flex-col items-center justify-center rounded-xl border border-dashed px-4 py-6 text-center'>
-            <p className='text-foreground text-sm font-semibold'>
-              No competencies yet
-            </p>
+            <p className='text-foreground text-sm font-semibold'>No competencies yet</p>
             <p className='text-muted-foreground mt-1 text-xs'>
               Competencies will appear here once they are added.
             </p>
@@ -1034,9 +1013,9 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
           statusLabel: status.label,
           submittedAt: formatDate(
             row.latestSubmission?.submitted_at ||
-            row.latestSubmission?.updated_date ||
-            row.latestSubmission?.created_date ||
-            dueAt
+              row.latestSubmission?.updated_date ||
+              row.latestSubmission?.created_date ||
+              dueAt
           ),
           summary:
             row.assignment.description ||
@@ -1168,8 +1147,8 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
 
 export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceRole }) {
   const userProfile = useUserProfile();
-  const instructor = userProfile?.instructor
-  const student = userProfile?.student
+  const instructor = userProfile?.instructor;
+  const student = userProfile?.student;
 
   const [activeTab, setActiveTab] = useState<AssessmentTab>('active');
   const [search, setSearch] = useState('');
@@ -1430,11 +1409,7 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
                   ))
                 ) : filteredAssessments.length > 0 ? (
                   filteredAssessments.map(assessment => (
-                    <AssessmentCard
-                      assessment={assessment}
-                      key={assessment.id}
-                      role={role}
-                    />
+                    <AssessmentCard assessment={assessment} key={assessment.id} role={role} />
                   ))
                 ) : (
                   <EmptyAssessmentsState />

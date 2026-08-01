@@ -13,10 +13,7 @@ export type UseClassLessonContentParams = {
   programUuid?: string | null;
 };
 
-export function useClassLessonContent({
-  courseUuid,
-  programUuid,
-}: UseClassLessonContentParams) {
+export function useClassLessonContent({ courseUuid, programUuid }: UseClassLessonContentParams) {
   const hasProgram = Boolean(programUuid);
 
   const { data: programCoursesResp, isLoading: isLoadingProgramCourses } = useQuery({
@@ -29,14 +26,14 @@ export function useClassLessonContent({
 
   const programCourses = useMemo<ProgramCourseLike[]>(
     () =>
-      (programCoursesResp?.data ?? []).filter(
-        (course): course is ProgramCourseLike => Boolean(course?.uuid)
+      (programCoursesResp?.data ?? []).filter((course): course is ProgramCourseLike =>
+        Boolean(course?.uuid)
       ),
     [programCoursesResp]
   );
 
   const courseLessonResult = useCourseLessonsWithContent({
-    courseUuid: hasProgram ? undefined : courseUuid ?? undefined,
+    courseUuid: hasProgram ? undefined : (courseUuid ?? undefined),
     enabled: !hasProgram && Boolean(courseUuid),
   });
 
@@ -62,16 +59,18 @@ export function useClassLessonContent({
   );
 
   return {
-    contentTypeMap: hasProgram ? programLessonResult.contentTypeMap : courseLessonResult.contentTypeMap,
+    contentTypeMap: hasProgram
+      ? programLessonResult.contentTypeMap
+      : courseLessonResult.contentTypeMap,
     contentTypeDetailsMap: hasProgram
       ? programLessonResult.contentTypeDetailsMap
       : courseLessonResult.contentTypeDetailsMap,
-    isLoading:
-      (hasProgram ? isLoadingProgramCourses || programLessonResult.isLoading : courseLessonResult.isLoading),
-    isFetching:
-      hasProgram
-        ? isLoadingProgramCourses || programLessonResult.isFetching
-        : courseLessonResult.isFetching,
+    isLoading: hasProgram
+      ? isLoadingProgramCourses || programLessonResult.isLoading
+      : courseLessonResult.isLoading,
+    isFetching: hasProgram
+      ? isLoadingProgramCourses || programLessonResult.isFetching
+      : courseLessonResult.isFetching,
     lessonModules,
     programCourses,
   };

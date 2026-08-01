@@ -36,7 +36,9 @@ export function OverviewAlerts() {
   });
 
   const applications = (applicationsQuery.data?.data?.content ?? []) as TrainingApplicationLike[];
-  const pendingApplications = applications.filter(application => isPending(application.status)).length;
+  const pendingApplications = applications.filter(application =>
+    isPending(application.status)
+  ).length;
 
   const alerts: AlertItem[] = [];
 

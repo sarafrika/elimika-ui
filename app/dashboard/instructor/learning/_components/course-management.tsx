@@ -96,7 +96,9 @@ export default function CourseMangementPage() {
               key={course.uuid}
               course={course}
               isStudentView={true}
-              handleEnroll={() => router.push(`/dashboard/instructor/learning/enroll/${course.uuid}`)}
+              handleEnroll={() =>
+                router.push(`/dashboard/instructor/learning/enroll/${course.uuid}`)
+              }
               handleSearchInstructor={() =>
                 router.push(`/dashboard/instructor/learning/instructor/${course.uuid}`)
               }

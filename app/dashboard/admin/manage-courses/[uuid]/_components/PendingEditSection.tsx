@@ -17,9 +17,9 @@ function Value({ children }: { children?: string | null }) {
 
 function CountPill({ label, count }: { label: string; count: number }) {
   return (
-    <div className='rounded-md border border-border bg-card px-3 py-2'>
+    <div className='border-border bg-card rounded-md border px-3 py-2'>
       <p className='text-lg font-semibold tabular-nums'>{count}</p>
-      <p className='text-xs text-muted-foreground'>{label}</p>
+      <p className='text-muted-foreground text-xs'>{label}</p>
     </div>
   );
 }
@@ -66,7 +66,7 @@ export function PendingEditSection({
         </div>
 
         {fieldChanges.length === 0 ? (
-          <p className='text-sm text-muted-foreground'>
+          <p className='text-muted-foreground text-sm'>
             No course fields changed. The edit only affects the curriculum.
           </p>
         ) : (
@@ -75,7 +75,7 @@ export function PendingEditSection({
             <div className='mt-2 overflow-x-auto'>
               <table className='w-full min-w-[32rem] border-collapse text-sm'>
                 <thead>
-                  <tr className='border-b border-border text-left text-xs text-muted-foreground'>
+                  <tr className='border-border text-muted-foreground border-b text-left text-xs'>
                     <th className='py-2 pr-4 font-medium'>Field</th>
                     <th className='py-2 pr-4 font-medium'>Live now</th>
                     <th className='py-2 font-medium'>Proposed</th>
@@ -83,9 +83,9 @@ export function PendingEditSection({
                 </thead>
                 <tbody>
                   {fieldChanges.map(change => (
-                    <tr key={change.field} className='border-b border-border/60 align-top'>
+                    <tr key={change.field} className='border-border/60 border-b align-top'>
                       <td className='py-2 pr-4 font-medium'>{change.field}</td>
-                      <td className='py-2 pr-4 text-muted-foreground'>
+                      <td className='text-muted-foreground py-2 pr-4'>
                         <Value>{change.live_value}</Value>
                       </td>
                       <td className='py-2'>
@@ -99,7 +99,7 @@ export function PendingEditSection({
           </div>
         )}
 
-        <p className='flex items-start gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground'>
+        <p className='border-border bg-muted/40 text-muted-foreground flex items-start gap-2 rounded-md border px-3 py-2 text-xs'>
           <FilePenLine className='mt-0.5 size-3.5 shrink-0' />
           <span>
             Approving replaces the live content with these changes. Rejecting discards them and

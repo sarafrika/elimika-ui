@@ -12,16 +12,12 @@ type SkillsWalletHeaderProps = {
   levelLabel: string;
 };
 
-export function SkillsWalletHeader({
-  profile,
-  shareUrl,
-  levelLabel,
-}: SkillsWalletHeaderProps) {
+export function SkillsWalletHeader({ profile, shareUrl, levelLabel }: SkillsWalletHeaderProps) {
   return (
     <section className='border-border/60 bg-card overflow-hidden rounded-lg border'>
       <div className='bg-muted/40 flex min-h-28 flex-col gap-3 p-3 sm:p-4 md:flex-row md:items-end md:justify-between'>
         <div className='flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end'>
-          <div className='border-background bg-muted grid size-16 shrink-0 self-start place-items-start overflow-hidden rounded-lg border-4 sm:size-[4.75rem]'>
+          <div className='border-background bg-muted grid size-16 shrink-0 place-items-start self-start overflow-hidden rounded-lg border-4 sm:size-[4.75rem]'>
             {profile.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={profile.avatarUrl} alt='' className='h-full w-full object-cover' />

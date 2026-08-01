@@ -61,7 +61,7 @@ import {
   markAttendanceMutation,
   startScheduledInstanceMutation,
   updateAssignmentScheduleMutation,
-  updateQuizScheduleMutation
+  updateQuizScheduleMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
@@ -97,7 +97,7 @@ import {
   ShieldCheck,
   SquarePen,
   Trash2,
-  Video
+  Video,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -111,8 +111,6 @@ import RichTextRenderer from '../../../../../../../components/editors/richTextRe
 import Spinner from '../../../../../../../components/ui/spinner';
 import { toAttachmentResourceItems } from '../../../../../student/_components/student-assignment-workspace';
 import { RubricGradingMatrix, useRubricGradeSelections } from './RubricGradingMatrix';
-
-
 
 export type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
 type LessonContentItem = CourseLessonContent;
@@ -146,31 +144,31 @@ type NoteEntry = {
 };
 
 const CLASS_RELATED_ASSESSMENT_CATEGORIES = [
-  "Class",
-  "Lesson",
-  "Module",
-  "Unit",
-  "Workshop",
-  "Seminar",
-  "Participation",
-  "Behavior",
-  "Attendance",
-  "Presentation",
-  "Continuous Assessment",
-  "General",
+  'Class',
+  'Lesson',
+  'Module',
+  'Unit',
+  'Workshop',
+  'Seminar',
+  'Participation',
+  'Behavior',
+  'Attendance',
+  'Presentation',
+  'Continuous Assessment',
+  'General',
 ];
 
 const CLASS_RELATED_ASSESSMENT_TYPES = [
-  "Attendance",
-  "Assignment",
-  "Homework",
-  "Quiz",
-  "Performance",
-  "Continuous Assessment",
-  "Participation",
-  "Behavior",
-  "Presentation",
-  "General",
+  'Attendance',
+  'Assignment',
+  'Homework',
+  'Quiz',
+  'Performance',
+  'Continuous Assessment',
+  'Participation',
+  'Behavior',
+  'Presentation',
+  'General',
 ];
 
 export const GRACE_PERIOD_MS = 60 * 60 * 1000;
@@ -296,10 +294,7 @@ function getStudentAttendanceState(entry: RosterEntry | null | undefined) {
 function getScheduleState(schedule?: { start_time?: string | Date; end_time?: string | Date }) {
   if (!schedule?.start_time || !schedule?.end_time) return 'upcoming' as const;
 
-  if (
-    dayjs(schedule.start_time).isBefore(dayjs()) &&
-    dayjs(schedule.end_time).isAfter(dayjs())
-  ) {
+  if (dayjs(schedule.start_time).isBefore(dayjs()) && dayjs(schedule.end_time).isAfter(dayjs())) {
     return 'live' as const;
   }
 
@@ -375,7 +370,7 @@ function getYouTubeEmbedUrl(source: string) {
       const videoId = url.searchParams.get('v');
       return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     }
-  } catch { }
+  } catch {}
 
   return '';
 }
@@ -394,38 +389,7 @@ function getVimeoEmbedUrl(source: string) {
 export const RichTextPreview = ({ html }: { html: string }) => {
   return (
     <p
-      className='
-          text-foreground mx-auto w-full text-[14px] leading-7
-          [&_*]:max-w-full
-          [&_h1]:mt-12 [&_h1]:mb-5 [&_h1]:text-[1.7rem] [&_h1]:font-bold [&_h1]:leading-tight
-          [&_h1:first-child]:mt-0
-          [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-[1.35rem] [&_h2]:font-bold [&_h2]:leading-snug
-          [&_h2:first-child]:mt-0
-          [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-[1.15rem] [&_h3]:font-semibold
-          [&_h4]:mt-8 [&_h4]:mb-3 [&_h4]:text-base [&_h4]:font-semibold
-          [&_p]:text-foreground/80 [&_p]:leading-7
-          [&_p:not(:first-child)]:mt-5
-          [&_ol]:my-6 [&_ol]:list-decimal [&_ol]:pl-6
-          [&_ul]:my-6 [&_ul]:list-disc [&_ul]:pl-6
-          [&_li]:text-foreground/80 [&_li]:leading-7
-          [&_li:not(:first-child)]:mt-1.5
-          [&_li_p]:mt-0
-          [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground
-          [&_blockquote]:my-6
-          [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4
-          [&_hr]:bg-border [&_hr]:my-10 [&_hr]:h-px [&_hr]:border-0
-          [&_pre]:bg-muted/60 [&_pre]:border-border/70 [&_pre]:my-8 [&_pre]:overflow-x-auto [&_pre]:rounded-2xl [&_pre]:border [&_pre]:p-5
-          [&_pre]:text-[0.95rem] [&_pre]:leading-7
-          [&_pre_code]:bg-transparent [&_pre_code]:border-0 [&_pre_code]:p-0
-          [&_code]:bg-muted [&_code]:rounded-md [&_code]:border [&_code]:border-border/60 [&_code]:px-1.5 [&_code]:py-0.5
-          [&_code]:font-mono [&_code]:text-[0.9em]
-          [&_img]:my-8 [&_img]:rounded-2xl [&_img]:border [&_img]:border-border/60
-          [&_img]:shadow-sm
-          [&_figure]:my-8
-          [&_table]:my-8 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden
-          [&_th]:bg-muted [&_th]:border [&_th]:border-border [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold
-          [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2
-        '
+      className='text-foreground [&_p]:text-foreground/80 [&_li]:text-foreground/80 [&_blockquote]:border-border [&_blockquote]:text-muted-foreground [&_a]:text-primary [&_hr]:bg-border [&_pre]:bg-muted/60 [&_pre]:border-border/70 [&_code]:bg-muted [&_code]:border-border/60 [&_img]:border-border/60 [&_th]:bg-muted [&_th]:border-border [&_td]:border-border mx-auto w-full text-[14px] leading-7 [&_*]:max-w-full [&_a]:underline [&_a]:underline-offset-4 [&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:rounded-md [&_code]:border [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.9em] [&_figure]:my-8 [&_h1]:mt-12 [&_h1]:mb-5 [&_h1]:text-[1.7rem] [&_h1]:leading-tight [&_h1]:font-bold [&_h1:first-child]:mt-0 [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-[1.35rem] [&_h2]:leading-snug [&_h2]:font-bold [&_h2:first-child]:mt-0 [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-[1.15rem] [&_h3]:font-semibold [&_h4]:mt-8 [&_h4]:mb-3 [&_h4]:text-base [&_h4]:font-semibold [&_hr]:my-10 [&_hr]:h-px [&_hr]:border-0 [&_img]:my-8 [&_img]:rounded-2xl [&_img]:border [&_img]:shadow-sm [&_li]:leading-7 [&_li_p]:mt-0 [&_li:not(:first-child)]:mt-1.5 [&_ol]:my-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:leading-7 [&_p:not(:first-child)]:mt-5 [&_pre]:my-8 [&_pre]:overflow-x-auto [&_pre]:rounded-2xl [&_pre]:border [&_pre]:p-5 [&_pre]:text-[0.95rem] [&_pre]:leading-7 [&_pre_code]:border-0 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_table]:my-8 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden [&_td]:border [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_ul]:my-6 [&_ul]:list-disc [&_ul]:pl-6'
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
@@ -490,7 +454,7 @@ function AssessmentTasksSection({
   assignmentVisibleAt: string;
   assignmentDueAt: string;
   assignmentGradingDueAt: string;
-  quizVisibleAt: string
+  quizVisibleAt: string;
   quizDueAt: string;
   quizGradingDueAt: string;
   onAssignmentSelect: (value: string) => void;
@@ -509,20 +473,15 @@ function AssessmentTasksSection({
   const [activeTab, setActiveTab] = React.useState<'add' | 'assigned'>('assigned');
   const [addType, setAddType] = React.useState<'assignment' | 'quiz'>('assignment');
 
-  const [isAssignmentPreviewOpen, setIsAssignmentPreviewOpen] =
-    React.useState(false);
+  const [isAssignmentPreviewOpen, setIsAssignmentPreviewOpen] = React.useState(false);
 
-  const [previewAssignment, setPreviewAssignment] =
-    React.useState<Assignment | null>(null);
+  const [previewAssignment, setPreviewAssignment] = React.useState<Assignment | null>(null);
 
-  const isSelectedAssignmentDraft =
-    !!previewAssignment && !previewAssignment.is_published;
+  const isSelectedAssignmentDraft = !!previewAssignment && !previewAssignment.is_published;
 
-  const [isQuizPreviewOpen, setIsQuizPreviewOpen] =
-    React.useState(false);
+  const [isQuizPreviewOpen, setIsQuizPreviewOpen] = React.useState(false);
 
-  const [previewQuiz, setPreviewQuiz] =
-    React.useState<Quiz | null>(null);
+  const [previewQuiz, setPreviewQuiz] = React.useState<Quiz | null>(null);
 
   const totalAssigned = activeScheduleAssignments.length + activeScheduleQuizzes.length;
 
@@ -551,37 +510,31 @@ function AssessmentTasksSection({
   }
 
   const assignedAssignmentUuids = new Set(
-    activeScheduleAssignments
-      .map(item => item.assignment_uuid)
-      .filter(Boolean)
+    activeScheduleAssignments.map(item => item.assignment_uuid).filter(Boolean)
   );
 
   const assignedQuizUuids = new Set(
-    activeScheduleQuizzes
-      .map(item => item.quiz_uuid)
-      .filter(Boolean)
+    activeScheduleQuizzes.map(item => item.quiz_uuid).filter(Boolean)
   );
 
   const filteredLessonAssignments = lessonAssignments.filter(
     assignment => !assignedAssignmentUuids.has(assignment.uuid)
   );
 
-  const filteredLessonQuizzes = lessonQuizzes.filter(
-    quiz => !assignedQuizUuids.has(quiz.uuid)
-  );
-
+  const filteredLessonQuizzes = lessonQuizzes.filter(quiz => !assignedQuizUuids.has(quiz.uuid));
 
   return (
-    <div className='space-y-3 mb-20'>
+    <div className='mb-20 space-y-3'>
       {/* Tab bar */}
       <div className='bg-muted flex rounded-lg p-1'>
         <button
           type='button'
           onClick={() => setActiveTab('assigned')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${activeTab === 'assigned'
-            ? 'bg-background text-foreground shadow-sm'
-            : 'text-muted-foreground hover:text-foreground'
-            }`}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+            activeTab === 'assigned'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
         >
           <ListChecks className='size-3.5' />
           Assigned Tasks
@@ -594,10 +547,11 @@ function AssessmentTasksSection({
         <button
           type='button'
           onClick={() => setActiveTab('add')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${activeTab === 'add'
-            ? 'bg-background text-foreground shadow-sm'
-            : 'text-muted-foreground hover:text-foreground'
-            }`}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+            activeTab === 'add'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
         >
           <Plus className='size-3.5' />
           Issue a new task
@@ -612,10 +566,11 @@ function AssessmentTasksSection({
             <button
               type='button'
               onClick={() => setAddType('assignment')}
-              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${addType === 'assignment'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-                }`}
+              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${
+                addType === 'assignment'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
               <SquarePen className='size-3.5' />
               Assignment
@@ -623,10 +578,11 @@ function AssessmentTasksSection({
             <button
               type='button'
               onClick={() => setAddType('quiz')}
-              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${addType === 'quiz'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-                }`}
+              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${
+                addType === 'quiz'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
               <ClipboardList className='size-3.5' />
               Quiz
@@ -654,38 +610,34 @@ function AssessmentTasksSection({
                 <div className='space-y-2'>
                   <Label className='text-xs'>Select assignment</Label>
 
-                  <div className="space-y-2 overflow-y-auto pr-1">
+                  <div className='space-y-2 overflow-y-auto pr-1'>
                     {filteredLessonAssignments.map(assignment => {
-                      const isSelected = selectedAssignmentUuid === assignment.uuid
-                      const isDraft = !assignment.is_published
+                      const isSelected = selectedAssignmentUuid === assignment.uuid;
+                      const isDraft = !assignment.is_published;
 
                       return (
                         <div
                           key={assignment.uuid}
-                          className={`rounded-lg border transition-all ${isDraft
-                            ? "opacity-60"
-                            : isSelected
-                              ? "border-primary bg-primary/5"
-                              : "border-border"
-                            }`}
+                          className={`rounded-lg border transition-all ${
+                            isDraft
+                              ? 'opacity-60'
+                              : isSelected
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border'
+                          }`}
                         >
-                          <div className="p-3">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="truncate text-sm font-medium">
-                                    {assignment.title}
-                                  </p>
+                          <div className='p-3'>
+                            <div className='flex items-start justify-between gap-3'>
+                              <div className='min-w-0 flex-1'>
+                                <div className='flex items-center gap-2'>
+                                  <p className='truncate text-sm font-medium'>{assignment.title}</p>
 
                                   {assignment.is_published ? (
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-[10px]"
-                                    >
+                                    <Badge variant='secondary' className='text-[10px]'>
                                       Published
                                     </Badge>
                                   ) : (
-                                    <Badge className="border border-destructive/20 bg-destructive/20 text-[10px] text-destructive">
+                                    <Badge className='border-destructive/20 bg-destructive/20 text-destructive border text-[10px]'>
                                       Draft
                                     </Badge>
                                   )}
@@ -708,42 +660,42 @@ function AssessmentTasksSection({
                                   </div>
                                 )} */}
 
-                                <div className="text-muted-foreground mt-3 flex flex-wrap gap-2 text-[11px]">
+                                <div className='text-muted-foreground mt-3 flex flex-wrap gap-2 text-[11px]'>
                                   {assignment.max_points && (
-                                    <Badge variant="outline">
-                                      🎯{" "}
+                                    <Badge variant='outline'>
+                                      🎯{' '}
                                       {assignment.points_display ??
                                         `${assignment.max_points} points`}
                                     </Badge>
                                   )}
 
-                                  {((assignment.submission_types as unknown as string[] | undefined)?.length ?? 0) > 0 && (
-                                    <Badge variant="outline">
-                                      📤{" "}
+                                  {((assignment.submission_types as unknown as string[] | undefined)
+                                    ?.length ?? 0) > 0 && (
+                                    <Badge variant='outline'>
+                                      📤{' '}
                                       {assignment.submission_summary ??
                                         `${(assignment.submission_types as unknown as string[] | undefined)?.length ?? 0} submission types`}
                                     </Badge>
                                   )}
 
                                   {assignment.assignment_category && (
-                                    <Badge variant="outline">
+                                    <Badge variant='outline'>
                                       📝 {assignment.assignment_category}
                                     </Badge>
                                   )}
                                 </div>
 
-                                {((assignment.submission_types as unknown as string[] | undefined)?.length ?? 0) > 0 && (
-                                  <div className="mt-2 flex flex-wrap gap-1">
-                                    <p className="text-muted-foreground text-xs">
+                                {((assignment.submission_types as unknown as string[] | undefined)
+                                  ?.length ?? 0) > 0 && (
+                                  <div className='mt-2 flex flex-wrap gap-1'>
+                                    <p className='text-muted-foreground text-xs'>
                                       Accepted Submissions:
                                     </p>
 
-                                    {(assignment.submission_types as unknown as string[] | undefined)?.map(type => (
-                                      <Badge
-                                        key={type}
-                                        variant="secondary"
-                                        className="text-[10px]"
-                                      >
+                                    {(
+                                      assignment.submission_types as unknown as string[] | undefined
+                                    )?.map(type => (
+                                      <Badge key={type} variant='secondary' className='text-[10px]'>
                                         {type}
                                       </Badge>
                                     ))}
@@ -751,9 +703,9 @@ function AssessmentTasksSection({
                                 )}
                               </div>
 
-                              <div className="flex items-center gap-2">
+                              <div className='flex items-center gap-2'>
                                 <Button
-                                  size="sm"
+                                  size='sm'
                                   variant={isSelected ? 'default' : 'outline'}
                                   onClick={() => openAssignmentSheet(assignment)}
                                 >
@@ -763,7 +715,7 @@ function AssessmentTasksSection({
                             </div>
                           </div>
                         </div>
-                      )
+                      );
                     })}
                   </div>
 
@@ -798,31 +750,25 @@ function AssessmentTasksSection({
                 <div className='space-y-2'>
                   <Label className='text-xs'>Select quiz</Label>
 
-                  <div className="space-y-2 overflow-y-auto pr-1">
+                  <div className='space-y-2 overflow-y-auto pr-1'>
                     {filteredLessonQuizzes.map(quiz => {
-                      const isSelected = selectedQuizUuid === quiz.uuid
+                      const isSelected = selectedQuizUuid === quiz.uuid;
 
                       return (
                         <div
                           key={quiz.uuid}
-                          className={`rounded-lg border transition-all ${isSelected
-                            ? "border-primary bg-primary/5"
-                            : "border-border"
-                            }`}
+                          className={`rounded-lg border transition-all ${
+                            isSelected ? 'border-primary bg-primary/5' : 'border-border'
+                          }`}
                         >
-                          <div className="p-3">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="truncate text-sm font-medium">
-                                    {quiz.title}
-                                  </p>
+                          <div className='p-3'>
+                            <div className='flex items-start justify-between gap-3'>
+                              <div className='min-w-0 flex-1'>
+                                <div className='flex items-center gap-2'>
+                                  <p className='truncate text-sm font-medium'>{quiz.title}</p>
 
                                   {quiz.is_published && (
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-[10px]"
-                                    >
+                                    <Badge variant='secondary' className='text-[10px]'>
                                       Published
                                     </Badge>
                                   )}
@@ -840,35 +786,30 @@ function AssessmentTasksSection({
                                   </p>
                                 )} */}
 
-                                <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+                                <div className='text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-[11px]'>
                                   {quiz.is_timed && quiz.time_limit_minutes && (
-                                    <Badge variant="outline">
-                                      ⏱{" "}
-                                      {quiz.time_limit_display ??
-                                        `${quiz.time_limit_minutes} mins`}
+                                    <Badge variant='outline'>
+                                      ⏱{' '}
+                                      {quiz.time_limit_display ?? `${quiz.time_limit_minutes} mins`}
                                     </Badge>
                                   )}
 
                                   {quiz.passing_score && (
-                                    <Badge variant="outline">
-                                      🎯 Pass: {quiz.passing_score}%
-                                    </Badge>
+                                    <Badge variant='outline'>🎯 Pass: {quiz.passing_score}%</Badge>
                                   )}
 
                                   {quiz.attempts_allowed && (
-                                    <Badge variant="outline">
-                                      🔁 {quiz.attempts_allowed}{" "}
-                                      {quiz.attempts_allowed === 1
-                                        ? "Attempt"
-                                        : "Attempts"}
+                                    <Badge variant='outline'>
+                                      🔁 {quiz.attempts_allowed}{' '}
+                                      {quiz.attempts_allowed === 1 ? 'Attempt' : 'Attempts'}
                                     </Badge>
                                   )}
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2">
+                              <div className='flex items-center gap-2'>
                                 <Button
-                                  size="sm"
+                                  size='sm'
                                   variant={isSelected ? 'default' : 'outline'}
                                   onClick={() => openQuizSheet(quiz)}
                                 >
@@ -878,11 +819,11 @@ function AssessmentTasksSection({
                             </div>
                           </div>
                         </div>
-                      )
+                      );
                     })}
 
                     {filteredLessonQuizzes.length === 0 && (
-                      <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
+                      <div className='text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm'>
                         No quizzes available yet.
                       </div>
                     )}
@@ -902,7 +843,8 @@ function AssessmentTasksSection({
               <ListChecks className='text-muted-foreground/40 mx-auto mb-2 size-8' />
               <p className='text-muted-foreground text-sm'>No tasks issued yet.</p>
               <p className='text-muted-foreground mt-1 text-xs'>
-                Switch to "Issue a new task" to issue out assignments or quizzes to students for this course.
+                Switch to "Issue a new task" to issue out assignments or quizzes to students for
+                this course.
               </p>
             </div>
           ) : (
@@ -935,8 +877,6 @@ function AssessmentTasksSection({
                   onAssignmentVisibleAtChange={onAssignmentVisibleAtChange}
                   activeSchedule={item}
                   quiz={item.quiz}
-
-
                   onViewQuiz={quiz => openQuizSheet(quiz)}
                 />
               ))}
@@ -953,36 +893,28 @@ function AssessmentTasksSection({
           if (!open) setPreviewAssignment(null);
         }}
       >
-        <SheetContent
-          side='right'
-          className='w-full overflow-y-auto sm:max-w-3xl p-2 sm:p-4'
-        >
+        <SheetContent side='right' className='w-full overflow-y-auto p-2 sm:max-w-3xl sm:p-4'>
           <div className='space-y-6'>
             {/* Header */}
             <div>
               <div className='flex items-center gap-2'>
-                <h2 className='text-lg font-semibold'>
-                  {previewAssignment?.title}
-                </h2>
+                <h2 className='text-lg font-semibold'>{previewAssignment?.title}</h2>
 
-                {previewAssignment && (
-                  previewAssignment.is_published ? (
+                {previewAssignment &&
+                  (previewAssignment.is_published ? (
                     <Badge variant='secondary' className='text-[10px]'>
                       Published
                     </Badge>
                   ) : (
-                    <Badge className='border border-destructive/20 bg-destructive/20 text-[10px] text-destructive'>
+                    <Badge className='border-destructive/20 bg-destructive/20 text-destructive border text-[10px]'>
                       Draft
                     </Badge>
-                  )
-                )}
+                  ))}
               </div>
 
               {previewAssignment?.description && (
                 <div className='text-muted-foreground mt-2 text-sm'>
-                  <RichTextRenderer
-                    htmlString={previewAssignment.description}
-                  />
+                  <RichTextRenderer htmlString={previewAssignment.description} />
                 </div>
               )}
             </div>
@@ -990,14 +922,10 @@ function AssessmentTasksSection({
             {/* Instructions */}
             {previewAssignment?.instructions && (
               <div className='space-y-2'>
-                <p className='text-sm font-medium'>
-                  Instructions
-                </p>
+                <p className='text-sm font-medium'>Instructions</p>
 
                 <div className='text-muted-foreground text-sm'>
-                  <RichTextRenderer
-                    htmlString={previewAssignment.instructions}
-                  />
+                  <RichTextRenderer htmlString={previewAssignment.instructions} />
                 </div>
               </div>
             )}
@@ -1005,26 +933,19 @@ function AssessmentTasksSection({
             {/* Attachments */}
             <div className='space-y-3'>
               <div className='flex items-center justify-between'>
-                <p className='text-sm font-medium'>
-                  Assignment Attachments
-                </p>
+                <p className='text-sm font-medium'>Assignment Attachments</p>
 
                 <Badge variant='outline'>
-                  {assignmentAttachmentsData?.data?.length ?? 0}{' '}
-                  files
+                  {assignmentAttachmentsData?.data?.length ?? 0} files
                 </Badge>
               </div>
 
-              <AssignmentContentPreview
-                attachments={
-                  assignmentAttachmentsData?.data ?? []
-                }
-              />
+              <AssignmentContentPreview attachments={assignmentAttachmentsData?.data ?? []} />
             </div>
 
             {/* Deadlines + CTA */}
             <div className='border-border/60 bg-muted/30 rounded-lg border p-4'>
-              <p className='text-muted-foreground mb-3 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide'>
+              <p className='text-muted-foreground mb-3 flex items-center gap-2 text-[11px] font-medium tracking-wide uppercase'>
                 <CalendarClock className='size-3' />
                 Deadlines
               </p>
@@ -1062,8 +983,9 @@ function AssessmentTasksSection({
               </div>
 
               {isSelectedAssignmentDraft && (
-                <div className='mt-4 rounded-md border border-destructive/20 bg-destructive/10 p-2 text-xs text-destructive'>
-                  This assignment is still in draft mode and cannot be assigned to students until it is published.
+                <div className='border-destructive/20 bg-destructive/10 text-destructive mt-4 rounded-md border p-2 text-xs'>
+                  This assignment is still in draft mode and cannot be assigned to students until it
+                  is published.
                 </div>
               )}
 
@@ -1094,19 +1016,14 @@ function AssessmentTasksSection({
           if (!open) setPreviewQuiz(null);
         }}
       >
-        <SheetContent
-          side='right'
-          className='w-full overflow-y-auto sm:max-w-4xl p-2 sm:p-6'
-        >
+        <SheetContent side='right' className='w-full overflow-y-auto p-2 sm:max-w-4xl sm:p-6'>
           <div className='space-y-6'>
             {/* Header */}
             <div className='border-b pb-4'>
               <div className='flex items-center justify-between gap-3'>
                 <div>
                   <div className='flex items-center gap-2'>
-                    <h2 className='text-xl font-semibold'>
-                      {previewQuiz?.title}
-                    </h2>
+                    <h2 className='text-xl font-semibold'>{previewQuiz?.title}</h2>
 
                     {previewQuiz?.is_published && (
                       <Badge variant='secondary' className='text-[10px]'>
@@ -1116,24 +1033,17 @@ function AssessmentTasksSection({
                   </div>
 
                   {previewQuiz?.instructions && (
-                    <p className='text-muted-foreground mt-2 text-sm'>
-                      {previewQuiz.instructions}
-                    </p>
+                    <p className='text-muted-foreground mt-2 text-sm'>{previewQuiz.instructions}</p>
                   )}
                 </div>
 
-                <Badge variant='outline'>
-                  Quiz Preview
-                </Badge>
+                <Badge variant='outline'>Quiz Preview</Badge>
               </div>
             </div>
 
             {/* Quiz Content */}
             {previewQuiz?.uuid ? (
-              <QuizContentPreview
-                quizUuid={previewQuiz.uuid}
-                role='instructor'
-              />
+              <QuizContentPreview quizUuid={previewQuiz.uuid} role='instructor' />
             ) : (
               <div className='text-muted-foreground py-10 text-center text-sm'>
                 No quiz selected.
@@ -1142,7 +1052,7 @@ function AssessmentTasksSection({
 
             {/* Deadlines + CTA */}
             <div className='border-border/60 bg-muted/30 rounded-lg border p-4'>
-              <p className='text-muted-foreground mb-3 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide'>
+              <p className='text-muted-foreground mb-3 flex items-center gap-2 text-[11px] font-medium tracking-wide uppercase'>
                 <CalendarClock className='size-3' />
                 Deadlines
               </p>
@@ -1227,41 +1137,24 @@ function AssignedTaskRow({
   onViewAssignment?: (assignment: Assignment) => void;
   onViewQuiz?: (quiz: Quiz) => void;
 }) {
-
-  const qc = useQueryClient()
+  const qc = useQueryClient();
   const [expanded, setExpanded] = React.useState(false);
 
-  const [visibleAt, setEditVisibleAt] = React.useState(
-    formatDateTimeInput(assignmentVisibleAt)
-  );
+  const [visibleAt, setEditVisibleAt] = React.useState(formatDateTimeInput(assignmentVisibleAt));
 
-  const [editDueAt, setEditDueAt] = React.useState(
-    formatDateTimeInput(dueAt)
-  );
+  const [editDueAt, setEditDueAt] = React.useState(formatDateTimeInput(dueAt));
 
-  const [editGradingDueAt, setEditGradingDueAt] = React.useState(
-    formatDateTimeInput(gradingDueAt)
-  );
+  const [editGradingDueAt, setEditGradingDueAt] = React.useState(formatDateTimeInput(gradingDueAt));
 
-  const deleteAssignmentSchedMut = useMutation(
-    deleteAssignmentScheduleMutation()
-  );
+  const deleteAssignmentSchedMut = useMutation(deleteAssignmentScheduleMutation());
 
-  const deleteQuizSchedMut = useMutation(
-    deleteQuizScheduleMutation()
-  );
+  const deleteQuizSchedMut = useMutation(deleteQuizScheduleMutation());
 
-  const updateAssignmentSchedMut = useMutation(
-    updateAssignmentScheduleMutation()
-  );
+  const updateAssignmentSchedMut = useMutation(updateAssignmentScheduleMutation());
 
-  const updateQuizSchedMut = useMutation(
-    updateQuizScheduleMutation()
-  );
+  const updateQuizSchedMut = useMutation(updateQuizScheduleMutation());
 
-  const isDeleting =
-    deleteAssignmentSchedMut.isPending ||
-    deleteQuizSchedMut.isPending;
+  const isDeleting = deleteAssignmentSchedMut.isPending || deleteQuizSchedMut.isPending;
 
   const handleDelete = () => {
     const confirmed = window.confirm(
@@ -1281,9 +1174,10 @@ function AssignedTaskRow({
         {
           onSuccess: () => {
             qc.invalidateQueries({
-              queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: activeSchedule?.class_definition_uuid as string } }),
+              queryKey: getAssignmentSchedulesQueryKey({
+                path: { classUuid: activeSchedule?.class_definition_uuid as string },
+              }),
             });
-
           },
         }
       );
@@ -1302,7 +1196,9 @@ function AssignedTaskRow({
         {
           onSuccess: () => {
             qc.invalidateQueries({
-              queryKey: getQuizSchedulesQueryKey({ path: { classUuid: activeSchedule?.class_definition_uuid as string } }),
+              queryKey: getQuizSchedulesQueryKey({
+                path: { classUuid: activeSchedule?.class_definition_uuid as string },
+              }),
             });
           },
         }
@@ -1315,10 +1211,9 @@ function AssignedTaskRow({
       {/* Row header */}
       <div className='flex items-center gap-3 p-3'>
         <div
-          className={`grid size-7 shrink-0 place-items-center rounded-md ${type === 'assignment'
-            ? 'bg-primary/10 text-primary'
-            : 'bg-muted text-muted-foreground'
-            }`}
+          className={`grid size-7 shrink-0 place-items-center rounded-md ${
+            type === 'assignment' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+          }`}
         >
           {type === 'assignment' ? (
             <SquarePen className='size-3.5' />
@@ -1328,11 +1223,10 @@ function AssignedTaskRow({
         </div>
 
         <div className='min-w-0 flex-1'>
-          <p className='text-sm font-medium leading-tight'>{title}</p>
+          <p className='text-sm leading-tight font-medium'>{title}</p>
 
           <p className='text-muted-foreground mt-0.5 text-[11px]'>
-            Due {formatDateTime(dueAt)} · Grading{' '}
-            {formatDateTime(gradingDueAt)}
+            Due {formatDateTime(dueAt)} · Grading {formatDateTime(gradingDueAt)}
           </p>
         </div>
 
@@ -1343,19 +1237,11 @@ function AssignedTaskRow({
             onClick={e => {
               e.stopPropagation();
 
-              if (
-                type === 'assignment' &&
-                assignment &&
-                onViewAssignment
-              ) {
+              if (type === 'assignment' && assignment && onViewAssignment) {
                 onViewAssignment(assignment);
               }
 
-              if (
-                type === 'quiz' &&
-                quiz &&
-                onViewQuiz
-              ) {
+              if (type === 'quiz' && quiz && onViewQuiz) {
                 onViewQuiz(quiz);
               }
             }}
@@ -1378,7 +1264,7 @@ function AssignedTaskRow({
             type='button'
             variant='ghost'
             size='icon'
-            className='size-7 text-destructive hover:bg-destructive/10 hover:text-destructive'
+            className='text-destructive hover:bg-destructive/10 hover:text-destructive size-7'
             disabled={isDeleting}
             onClick={handleDelete}
             title='Remove'
@@ -1395,7 +1281,7 @@ function AssignedTaskRow({
       {/* Inline date editor */}
       {expanded && (
         <div className='bg-muted/30 border-border border-t p-3'>
-          <p className='text-muted-foreground mb-2 text-[11px] font-medium uppercase tracking-wide'>
+          <p className='text-muted-foreground mb-2 text-[11px] font-medium tracking-wide uppercase'>
             Adjust deadlines
           </p>
 
@@ -1463,7 +1349,8 @@ function AssignedTaskRow({
                       body: {
                         class_definition_uuid: activeSchedule?.class_definition_uuid,
                         lesson_uuid: activeSchedule?.lesson_uuid,
-                        assignment_uuid: (activeSchedule as { assignment_uuid?: string })?.assignment_uuid,
+                        assignment_uuid: (activeSchedule as { assignment_uuid?: string })
+                          ?.assignment_uuid,
                         visible_at: visibleAtDate,
                         due_at: dueAtDate,
                         grading_due_at: gradingDueAtDate,
@@ -1477,7 +1364,9 @@ function AssignedTaskRow({
                     {
                       onSuccess: () => {
                         qc.invalidateQueries({
-                          queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: activeSchedule?.class_definition_uuid as string } }),
+                          queryKey: getAssignmentSchedulesQueryKey({
+                            path: { classUuid: activeSchedule?.class_definition_uuid as string },
+                          }),
                         });
                         toast.success('Assignment schedule updated.');
                         setExpanded(false);
@@ -1485,7 +1374,10 @@ function AssignedTaskRow({
                       onError: error => {
                         toast({
                           title: 'Failed to update schedule',
-                          description: getApiToastMessage(error, 'Could not update assignment schedule.'),
+                          description: getApiToastMessage(
+                            error,
+                            'Could not update assignment schedule.'
+                          ),
                           variant: 'destructive',
                         });
                       },
@@ -1513,15 +1405,22 @@ function AssignedTaskRow({
                         release_strategy: activeSchedule?.release_strategy,
                         instructor_uuid: activeSchedule?.instructor_uuid,
                         notes: activeSchedule?.notes,
-                        time_limit_override: (activeSchedule as { time_limit_override?: number })?.time_limit_override,
-                        attempt_limit_override: (activeSchedule as { attempt_limit_override?: number })?.attempt_limit_override,
-                        passing_score_override: (activeSchedule as { passing_score_override?: number })?.passing_score_override,
+                        time_limit_override: (activeSchedule as { time_limit_override?: number })
+                          ?.time_limit_override,
+                        attempt_limit_override: (
+                          activeSchedule as { attempt_limit_override?: number }
+                        )?.attempt_limit_override,
+                        passing_score_override: (
+                          activeSchedule as { passing_score_override?: number }
+                        )?.passing_score_override,
                       },
                     },
                     {
                       onSuccess: () => {
                         qc.invalidateQueries({
-                          queryKey: getQuizSchedulesQueryKey({ path: { classUuid: activeSchedule?.class_definition_uuid as string } }),
+                          queryKey: getQuizSchedulesQueryKey({
+                            path: { classUuid: activeSchedule?.class_definition_uuid as string },
+                          }),
                         });
                         toast.success('Quiz schedule updated.');
                         setExpanded(false);
@@ -1551,7 +1450,7 @@ function AssignedTaskRow({
 // shown only while the primary class-details query is in flight.
 function ConsoleSkeleton() {
   return (
-    <main className='text-foreground fixed inset-0 z-50 flex flex-col overflow-hidden bg-background'>
+    <main className='text-foreground bg-background fixed inset-0 z-50 flex flex-col overflow-hidden'>
       <header className='border-border/70 bg-card/95 flex h-16 shrink-0 items-center justify-between gap-3 border-b px-3 shadow-sm sm:px-4'>
         <div className='flex items-center gap-3'>
           <Skeleton className='size-8 rounded-full' />
@@ -1607,7 +1506,10 @@ function RosterListSkeleton() {
   return (
     <div className='space-y-1.5 p-2'>
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className='flex items-center gap-2.5 rounded-md border border-transparent p-2.5'>
+        <div
+          key={i}
+          className='flex items-center gap-2.5 rounded-md border border-transparent p-2.5'
+        >
           <Skeleton className='size-8 rounded-full' />
           <div className='flex-1 space-y-1.5'>
             <Skeleton className='h-3.5 w-3/4' />
@@ -1633,8 +1535,7 @@ export function RosterPanel({
   markingStudentId,
   onMarkAttendance,
   isMarkingAttendance,
-  isLoadingRoster
-
+  isLoadingRoster,
 }: {
   activeInstanceStudentsCount: number;
   filteredRoster: RosterEntry[];
@@ -1651,7 +1552,6 @@ export function RosterPanel({
   isMarkingAttendance: boolean;
   isLoadingRoster?: boolean;
 }) {
-
   const isSessionExpired = useMemo(() => {
     if (!activeSchedule?.end_time) return false;
 
@@ -1679,19 +1579,15 @@ export function RosterPanel({
   const absentPct = total ? (absentCount / total) * 100 : 0;
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="border-border/70 bg-card/90 space-y-3 border-b p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-foreground text-sm font-semibold">
-              All Students
-            </p>
-            <p className="text-muted-foreground text-xs">
-              Attendance rubric tracker
-            </p>
+    <div className='flex h-full min-h-0 flex-col'>
+      <div className='border-border/70 bg-card/90 space-y-3 border-b p-3'>
+        <div className='flex items-center justify-between gap-3'>
+          <div className='min-w-0'>
+            <p className='text-foreground text-sm font-semibold'>All Students</p>
+            <p className='text-muted-foreground text-xs'>Attendance rubric tracker</p>
           </div>
 
-          <Badge variant="outline" className="bg-primary/5 text-primary">
+          <Badge variant='outline' className='bg-primary/5 text-primary'>
             {activeInstanceStudentsCount}
           </Badge>
         </div>
@@ -1713,96 +1609,85 @@ export function RosterPanel({
 
         {/* STATUS MESSAGE (NEW UX) */}
         <div
-          className={`text-xs text-center leading-snug ${isSessionExpired ? 'text-destructive' : 'text-muted-foreground'
-            }`}
+          className={`text-center text-xs leading-snug ${
+            isSessionExpired ? 'text-destructive' : 'text-muted-foreground'
+          }`}
         >
           {isSessionExpired && (
-            <span>
-              Attendance window closed. This session has exceeded its scheduled end time.
-            </span>
+            <span>Attendance window closed. This session has exceeded its scheduled end time.</span>
           )}
         </div>
 
         {/* SEARCH */}
-        <div className="relative">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        <div className='relative'>
+          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
           <Input
             value={studentSearch}
             onChange={event => setStudentSearch(event.target.value)}
-            placeholder="Search students"
-            className="bg-background/80 h-9 rounded-md pl-9 text-sm"
+            placeholder='Search students'
+            className='bg-background/80 h-9 rounded-md pl-9 text-sm'
           />
         </div>
       </div>
 
       {/* ROSTER LIST */}
-      <ScrollArea className="min-h-0 flex-1 bg-background">
+      <ScrollArea className='bg-background min-h-0 flex-1'>
         {isLoadingRoster && filteredRoster.length === 0 ? (
           <RosterListSkeleton />
         ) : (
-          <div className="space-y-1.5 p-2">
+          <div className='space-y-1.5 p-2'>
             {filteredRoster.map((entry: RosterEntry) => {
               const attendanceState = getStudentAttendanceState(entry);
-              const isSelected =
-                selectedStudentId === (entry.enrollment?.uuid ?? '');
+              const isSelected = selectedStudentId === (entry.enrollment?.uuid ?? '');
 
               const enrollmentId = entry.enrollment?.uuid ?? '';
               const isLoading = markingStudentId === enrollmentId;
 
               const isPresent =
-                attendanceState === 'present' ||
-                entry.enrollment?.is_attendance_marked;
+                attendanceState === 'present' || entry.enrollment?.is_attendance_marked;
 
               return (
                 <button
-                  type="button"
-                  key={
-                    entry.enrollment?.uuid ??
-                    entry.user?.uuid ??
-                    entry.student?.uuid
-                  }
+                  type='button'
+                  key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
                   onClick={() => onSelectStudent(entry)}
-                  className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected
-                    ? 'border-primary/30 bg-primary/8'
-                    : 'hover:bg-primary/5 border-transparent'
-                    }`}
+                  className={`w-full rounded-md border p-2.5 text-left transition-colors ${
+                    isSelected
+                      ? 'border-primary/30 bg-primary/8'
+                      : 'hover:bg-primary/5 border-transparent'
+                  }`}
                 >
-                  <div className="flex items-start gap-2.5">
-                    <Avatar className="border-border/60 size-8 border">
+                  <div className='flex items-start gap-2.5'>
+                    <Avatar className='border-border/60 size-8 border'>
                       <AvatarImage
                         src={entry.user?.profile_image_url ?? undefined}
                         alt={entry.user?.full_name || 'Student'}
                       />
-                      <AvatarFallback>
-                        {getInitials(entry.user?.full_name)}
-                      </AvatarFallback>
+                      <AvatarFallback>{getInitials(entry.user?.full_name)}</AvatarFallback>
                     </Avatar>
 
-                    <div className="min-w-0 flex-1 flex-row flex-wrap items-center justify-between">
-                      <p className="truncate text-sm font-semibold">
+                    <div className='min-w-0 flex-1 flex-row flex-wrap items-center justify-between'>
+                      <p className='truncate text-sm font-semibold'>
                         {entry.user?.full_name || 'Unknown student'}
                       </p>
 
                       <div>
                         {isPresent ? (
-                          <span className="text-success text-[11px] font-medium">
-                            Present
-                          </span>
+                          <span className='text-success text-[11px] font-medium'>Present</span>
                         ) : (
                           <Button
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               onMarkAttendance(entry, true);
                             }}
                             disabled={isLoading}
-                            size="sm"
-                            className="rounded h-6 text-[11px]"
+                            size='sm'
+                            className='h-6 rounded text-[11px]'
                           >
                             {isLoading ? <Spinner /> : 'Admit'}
                           </Button>
                         )}
                       </div>
-
                     </div>
                   </div>
                 </button>
@@ -1810,7 +1695,7 @@ export function RosterPanel({
             })}
 
             {filteredRoster.length === 0 && (
-              <div className="text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm">
+              <div className='text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm'>
                 {activeSchedule
                   ? 'No learners are attached to this class instance yet.'
                   : 'No class instance was selected.'}
@@ -1821,14 +1706,12 @@ export function RosterPanel({
       </ScrollArea>
 
       {/* FOOTER STATS */}
-      <div className="border-border/70 bg-card/90 border-t p-3">
-        <p className="text-xs text-muted-foreground mb-2">
-          Attendance rubric tracker
-        </p>
+      <div className='border-border/70 bg-card/90 border-t p-3'>
+        <p className='text-muted-foreground mb-2 text-xs'>Attendance rubric tracker</p>
 
-        <div className="grid grid-cols-2 items-center gap-3">
+        <div className='grid grid-cols-2 items-center gap-3'>
           <div
-            className="grid size-[72px] shrink-0 place-items-center rounded-full"
+            className='grid size-[72px] shrink-0 place-items-center rounded-full'
             style={{
               background: `conic-gradient(
                 color-mix(in srgb, var(--primary) 85%, var(--background)) 0 ${presentPct}%,
@@ -1837,47 +1720,41 @@ export function RosterPanel({
               )`,
             }}
           >
-            <div className="grid size-[62px] place-items-center rounded-full bg-card text-center">
+            <div className='bg-card grid size-[62px] place-items-center rounded-full text-center'>
               <div>
-                <div className="text-[0.9rem] font-semibold leading-none text-foreground">
+                <div className='text-foreground text-[0.9rem] leading-none font-semibold'>
                   {total}
                 </div>
-                <div className="mt-0.5 text-[0.5rem] uppercase tracking-wide text-muted-foreground">
+                <div className='text-muted-foreground mt-0.5 text-[0.5rem] tracking-wide uppercase'>
                   students
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 text-xs">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-sm bg-primary" />
-                <p className="text-muted-foreground">Present</p>
+          <div className='flex flex-col gap-2 text-xs'>
+            <div className='flex items-center gap-4'>
+              <div className='flex items-center gap-2'>
+                <span className='bg-primary h-2.5 w-2.5 rounded-sm' />
+                <p className='text-muted-foreground'>Present</p>
               </div>
-              <p className="font-semibold text-foreground">
-                {presentCount}
-              </p>
+              <p className='text-foreground font-semibold'>{presentCount}</p>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-sm bg-warning/70" />
-                <p className="text-muted-foreground">Pending</p>
+            <div className='flex items-center gap-4'>
+              <div className='flex items-center gap-2'>
+                <span className='bg-warning/70 h-2.5 w-2.5 rounded-sm' />
+                <p className='text-muted-foreground'>Pending</p>
               </div>
-              <p className="font-semibold text-foreground">
-                {pendingCount}
-              </p>
+              <p className='text-foreground font-semibold'>{pendingCount}</p>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-sm bg-destructive" />
-                <p className="text-muted-foreground">Absent</p>
+            <div className='flex items-center gap-4'>
+              <div className='flex items-center gap-2'>
+                <span className='bg-destructive h-2.5 w-2.5 rounded-sm' />
+                <p className='text-muted-foreground'>Absent</p>
               </div>
-              <p className="font-semibold text-foreground">
-                {absentCount}
-              </p>
+              <p className='text-foreground font-semibold'>{absentCount}</p>
             </div>
           </div>
         </div>
@@ -1900,7 +1777,7 @@ function EvaluationSummary({
   return (
     <div className='space-y-4'>
       <div className='space-y-1'>
-        <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+        <p className='text-muted-foreground text-[11px] tracking-[0.16em] uppercase'>
           Selected student
         </p>
         <h3 className='text-foreground text-lg font-semibold'>
@@ -1912,25 +1789,23 @@ function EvaluationSummary({
       </div>
 
       <div className='grid gap-3 sm:grid-cols-3'>
-        <div className='rounded-md border border-border/60 bg-background/80 p-3'>
+        <div className='border-border/60 bg-background/80 rounded-md border p-3'>
           <p className='text-muted-foreground text-xs'>Students</p>
           <p className='text-foreground mt-1 text-lg font-semibold'>
             {activeInstanceStudentsCount}
           </p>
         </div>
 
-        <div className='rounded-md border border-border/60 bg-background/80 p-3'>
+        <div className='border-border/60 bg-background/80 rounded-md border p-3'>
           <p className='text-muted-foreground text-xs'>Assignments</p>
           <p className='text-foreground mt-1 text-lg font-semibold'>
             {selectedStudentSubmissionsCount}
           </p>
         </div>
 
-        <div className='rounded-md border border-border/60 bg-background/80 p-3'>
+        <div className='border-border/60 bg-background/80 rounded-md border p-3'>
           <p className='text-muted-foreground text-xs'>Assessments</p>
-          <p className='text-foreground mt-1 text-lg font-semibold'>
-            {courseAssessmentsCount}
-          </p>
+          <p className='text-foreground mt-1 text-lg font-semibold'>{courseAssessmentsCount}</p>
         </div>
       </div>
     </div>
@@ -1973,23 +1848,17 @@ function AssessmentRubricCard({
         <p className='text-muted-foreground mb-3 text-xs'>{assessment.description}</p>
       ) : null}
 
-      <div className="space-y-2 rounded-md border border-dashed p-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-medium">
-            {rubric?.rubric.title || 'No rubric attached'}
-          </p>
+      <div className='space-y-2 rounded-md border border-dashed p-3'>
+        <div className='flex items-center justify-between gap-3'>
+          <p className='text-xs font-medium'>{rubric?.rubric.title || 'No rubric attached'}</p>
           {rubric?.rubric.max_score ? (
             <Badge variant='outline'>Max {rubric.rubric.max_score}</Badge>
           ) : null}
         </div>
 
         {rubric ? (
-          <div className="w-full overflow-x-auto">
-            <RubricGradingMatrix
-              matrix={rubric}
-              selections={selections}
-              onChange={setSelection}
-            />
+          <div className='w-full overflow-x-auto'>
+            <RubricGradingMatrix matrix={rubric} selections={selections} onChange={setSelection} />
           </div>
         ) : (
           <p className='text-muted-foreground text-xs'>
@@ -2000,7 +1869,6 @@ function AssessmentRubricCard({
     </div>
   );
 }
-
 
 function SubmissionPanel({
   activeSchedule,
@@ -2074,16 +1942,13 @@ function SubmissionPanel({
   }, [activeSchedule?.end_time]);
 
   const attendanceActionDisabled =
-    isMarkingAttendance ||
-    !selectedStudent?.enrollment?.uuid ||
-    isSessionExpired;
+    isMarkingAttendance || !selectedStudent?.enrollment?.uuid || isSessionExpired;
 
   const handleAttendanceClick = (entry: RosterEntry, attended: boolean) => {
     if (isSessionExpired) {
       toast({
         title: 'Session ended',
-        description:
-          'This class session has elapsed. Attendance can no longer be recorded.',
+        description: 'This class session has elapsed. Attendance can no longer be recorded.',
         variant: 'destructive',
       });
       return;
@@ -2092,20 +1957,20 @@ function SubmissionPanel({
     onMarkAttendance(entry, attended);
   };
 
-  const classAssessments = courseAssessments.filter((assessment) => {
+  const classAssessments = courseAssessments.filter(assessment => {
     const category = assessment.assessment_category;
     const type = assessment.assessment_type;
 
     return (
-      category === "General" ||
-      type === "General" ||
+      category === 'General' ||
+      type === 'General' ||
       CLASS_RELATED_ASSESSMENT_CATEGORIES.includes(category) ||
       CLASS_RELATED_ASSESSMENT_TYPES.includes(type)
     );
   });
 
   return (
-    <aside className='bg-card/95 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden mb-12'>
+    <aside className='bg-card/95 mb-12 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden'>
       <div className='border-border/70 border-b p-3'>
         <div className='mb-3 flex min-w-0 items-center justify-between gap-3'>
           <div className='min-w-0'>
@@ -2115,7 +1980,7 @@ function SubmissionPanel({
             </p>
           </div>
         </div>
-        <div className='bg-muted grid grid-cols-3 gap-1 rounded-md p-1 dark:bg-muted/60'>
+        <div className='bg-muted dark:bg-muted/60 grid grid-cols-3 gap-1 rounded-md p-1'>
           {panelTabs.map(tab => {
             const Icon = tab.icon;
             const isActive = activePanel === tab.value;
@@ -2123,35 +1988,17 @@ function SubmissionPanel({
             return (
               <Button
                 key={tab.value}
-                type="button"
-                variant="ghost"
+                type='button'
+                variant='ghost'
                 onClick={() => setActivePanel(tab.value)}
-                className={`
-        flex h-8 min-w-0 items-center justify-center gap-1.5
-        overflow-hidden rounded-md px-2 py-1.5
-        text-[11px] font-medium transition-all
-
-        ${isActive
-                    ? `
-              bg-background text-foreground shadow-sm
-              dark:bg-primary
-              dark:text-primary-foreground
-              dark:shadow-md
-            `
-                    : `
-              text-muted-foreground
-              hover:bg-background/80
-              hover:text-foreground
-
-              dark:text-muted-foreground/70
-              dark:hover:bg-muted/50
-              dark:hover:text-foreground
-            `
-                  }
-      `}
+                className={`flex h-8 min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded-md px-2 py-1.5 text-[11px] font-medium transition-all ${
+                  isActive
+                    ? `bg-background text-foreground dark:bg-primary dark:text-primary-foreground shadow-sm dark:shadow-md`
+                    : `text-muted-foreground hover:bg-background/80 hover:text-foreground dark:text-muted-foreground/70 dark:hover:bg-muted/50 dark:hover:text-foreground`
+                } `}
               >
-                <Icon className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{tab.label}</span>
+                <Icon className='h-3.5 w-3.5 shrink-0' />
+                <span className='truncate'>{tab.label}</span>
               </Button>
             );
           })}
@@ -2193,15 +2040,14 @@ function SubmissionPanel({
               ) : null}
             </div>
 
-            {!isSessionExpired &&
+            {!isSessionExpired && (
               <div className='mt-3 flex gap-2'>
                 <Button
                   size='sm'
                   className='flex-1'
                   disabled={selectedStudentAttendanceState === 'present'}
-                  onClick={() =>
-                    selectedStudent && handleAttendanceClick(selectedStudent, true)
-                  }              >
+                  onClick={() => selectedStudent && handleAttendanceClick(selectedStudent, true)}
+                >
                   Admit
                 </Button>
                 <Button
@@ -2209,16 +2055,15 @@ function SubmissionPanel({
                   variant='outline'
                   className='flex-1'
                   disabled={attendanceActionDisabled}
-                  onClick={() =>
-                    selectedStudent && handleAttendanceClick(selectedStudent, false)
-                  }              >
+                  onClick={() => selectedStudent && handleAttendanceClick(selectedStudent, false)}
+                >
                   Mark Absent
                 </Button>
-              </div>}
-
+              </div>
+            )}
 
             {isSessionExpired ? (
-              <p className="text-xs text-destructive mt-2">
+              <p className='text-destructive mt-2 text-xs'>
                 This class session has elapsed. Attendance is locked.
               </p>
             ) : null}
@@ -2256,7 +2101,6 @@ function SubmissionPanel({
                     {formatDateTime(activeSchedule?.end_time)}
                   </span>
                 </div>
-
               </div>
 
               {selectedStudentSubmissions.length > 0 ? (
@@ -2269,9 +2113,9 @@ function SubmissionPanel({
                       key={item.scheduleId}
                       className='border-border/70 bg-background/80 min-w-0 overflow-hidden rounded-md border p-3'
                     >
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <p className="flex-1 min-w-0 truncate text-sm font-semibold">
+                      <div className='min-w-0 space-y-1'>
+                        <div className='flex min-w-0 items-center gap-2'>
+                          <p className='min-w-0 flex-1 truncate text-sm font-semibold'>
                             {item.assignmentTitle}
                           </p>
 
@@ -2284,14 +2128,14 @@ function SubmissionPanel({
                                     ? 'warning'
                                     : 'destructive'
                               }
-                              className="shrink-0 max-w-[80px] truncate"
+                              className='max-w-[80px] shrink-0 truncate'
                             >
                               {status}
                             </Badge>
                           </div>
                         </div>
 
-                        <p className="text-muted-foreground truncate text-xs">
+                        <p className='text-muted-foreground truncate text-xs'>
                           Due {formatDateTime(item.dueAt)}
                         </p>
                       </div>
@@ -2299,10 +2143,10 @@ function SubmissionPanel({
                       <p className='text-muted-foreground mt-2 text-xs'>
                         {item.submission
                           ? item.submission.grade_display ||
-                          item.submission.submission_status_display ||
-                          (item.submission.percentage != null
-                            ? `${item.submission.percentage}% recorded`
-                            : 'Submission received')
+                            item.submission.submission_status_display ||
+                            (item.submission.percentage != null
+                              ? `${item.submission.percentage}% recorded`
+                              : 'Submission received')
                           : 'No submission recorded for this assignment yet.'}
                       </p>
 
@@ -2314,9 +2158,7 @@ function SubmissionPanel({
 
                       {item.submission && (
                         <div className='mt-3 space-y-2'>
-                          <p className='text-foreground text-sm font-medium'>
-                            Uploaded files
-                          </p>
+                          <p className='text-foreground text-sm font-medium'>Uploaded files</p>
 
                           <AttachmentResourceList
                             attachments={toAttachmentResourceItems(
@@ -2339,7 +2181,6 @@ function SubmissionPanel({
               )}
             </>
           ) : null}
-
 
           {activePanel === 'trackers' ? (
             <div className='space-y-3'>
@@ -2447,8 +2288,7 @@ function SubmissionPanel({
           const isCancelled = status === 'CANCELLED';
           const isBlocked = status === 'BLOCKED';
 
-          const isConcluded =
-            Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
+          const isConcluded = Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
 
           const canStart =
             !!activeSchedule &&
@@ -2467,20 +2307,15 @@ function SubmissionPanel({
           const isLifecycleLoading = isStartingClass || isEndingClass;
 
           const statusStyles = {
-            SCHEDULED:
-              'bg-primary/10 text-primary border border-primary/20',
+            SCHEDULED: 'bg-primary/10 text-primary border border-primary/20',
 
-            ONGOING:
-              'bg-success/10 text-success border border-success/20',
+            ONGOING: 'bg-success/10 text-success border border-success/20',
 
-            COMPLETED:
-              'bg-muted text-muted-foreground border border-border',
+            COMPLETED: 'bg-muted text-muted-foreground border border-border',
 
-            CANCELLED:
-              'bg-destructive/10 text-destructive border border-destructive/20',
+            CANCELLED: 'bg-destructive/10 text-destructive border border-destructive/20',
 
-            BLOCKED:
-              'bg-warning/10 text-warning border border-warning/20',
+            BLOCKED: 'bg-warning/10 text-warning border border-warning/20',
           };
 
           return (
@@ -2504,12 +2339,10 @@ function SubmissionPanel({
                     <CheckCircle className='h-4 w-4' />
                   )}
 
-                  <div className="flex items-center gap-2">
+                  <div className='flex items-center gap-2'>
                     <span>End Class</span>
                     {remainingTime && (
-                      <span className="rounded px-2 py-0.5 text-xs">
-                        {remainingTime}
-                      </span>
+                      <span className='rounded px-2 py-0.5 text-xs'>{remainingTime}</span>
                     )}
                   </div>
                 </Button>
@@ -2720,14 +2553,10 @@ export default function ClassTrainingPage({
   const selectedContent =
     activeLessonContents.find(content => content.uuid === selectedContentId) ?? null;
   const selectedContentDuration =
-    selectedContent && 'duration' in selectedContent
-      ? String(selectedContent.duration || '')
-      : '';
+    selectedContent && 'duration' in selectedContent ? String(selectedContent.duration || '') : '';
 
   const handleContentChange = (contentId: string) => {
-    const module = lessonModules.find(m =>
-      m.content?.data?.some(c => c.uuid === contentId)
-    );
+    const module = lessonModules.find(m => m.content?.data?.some(c => c.uuid === contentId));
 
     const lessonId = module?.lesson?.uuid;
 
@@ -2741,7 +2570,6 @@ export default function ClassTrainingPage({
 
     router.push(`${pathname}?${params.toString()}`);
   };
-
 
   const activeInstanceStudents = useMemo(
     () =>
@@ -2789,9 +2617,7 @@ export default function ClassTrainingPage({
   const handleStartClass = () => {
     if (!activeSchedule?.uuid) return;
     const meetingLink = activeSchedule.meeting_url?.trim();
-    const meetingWindow = meetingLink
-      ? window.open('', '_blank', 'noopener,noreferrer')
-      : null;
+    const meetingWindow = meetingLink ? window.open('', '_blank', 'noopener,noreferrer') : null;
 
     startScheduledInstanceMut.mutate(
       { path: { instanceUuid: activeSchedule.uuid } },
@@ -2982,7 +2808,9 @@ export default function ClassTrainingPage({
       setAssignmentDueAt(formatDateTimeInput(activeSchedule.end_time));
     }
     if (!assignmentGradingDueAt && activeSchedule?.end_time) {
-      setAssignmentGradingDueAt(dayjs(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm'));
+      setAssignmentGradingDueAt(
+        dayjs(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm')
+      );
     }
     if (!quizDueAt && activeSchedule?.end_time) {
       setQuizDueAt(formatDateTimeInput(activeSchedule.end_time));
@@ -2990,13 +2818,7 @@ export default function ClassTrainingPage({
     if (!quizGradingDueAt && activeSchedule?.end_time) {
       setQuizGradingDueAt(dayjs(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm'));
     }
-  }, [
-    activeSchedule,
-    assignmentDueAt,
-    assignmentGradingDueAt,
-    quizDueAt,
-    quizGradingDueAt,
-  ]);
+  }, [activeSchedule, assignmentDueAt, assignmentGradingDueAt, quizDueAt, quizGradingDueAt]);
 
   const { data: courseEnrollmentResp } = useQuery({
     ...getCourseEnrollmentsOptions({
@@ -3010,8 +2832,7 @@ export default function ClassTrainingPage({
   const selectedEnrollment = useMemo(
     () =>
       studentEnrollments.find(
-        enrollment =>
-          enrollment?.student_uuid === selectedStudent?.student?.data?.uuid
+        enrollment => enrollment?.student_uuid === selectedStudent?.student?.data?.uuid
       ),
     [studentEnrollments, selectedStudent?.student?.data?.uuid]
   );
@@ -3027,7 +2848,6 @@ export default function ClassTrainingPage({
     })),
   });
 
-
   const studentSubmissions = useMemo(
     () =>
       activeScheduleAssignments.map((item, index) => {
@@ -3035,8 +2855,7 @@ export default function ClassTrainingPage({
 
         const submission =
           submissions.find(s => {
-            const enrollmentMatch =
-              s.enrollment_uuid === selectedEnrollment?.uuid;
+            const enrollmentMatch = s.enrollment_uuid === selectedEnrollment?.uuid;
 
             return enrollmentMatch;
           }) ?? null;
@@ -3046,11 +2865,7 @@ export default function ClassTrainingPage({
           submission,
         };
       }),
-    [
-      activeScheduleAssignments,
-      submissionQueries,
-      selectedEnrollment?.uuid,
-    ]
+    [activeScheduleAssignments, submissionQueries, selectedEnrollment?.uuid]
   );
 
   const submissionAttachmentQueries = useQueries({
@@ -3061,28 +2876,21 @@ export default function ClassTrainingPage({
           submissionUuid: submission?.uuid!,
         },
       }),
-      enabled: Boolean(
-        assignment.assignment_uuid && submission?.uuid
-      ),
+      enabled: Boolean(assignment.assignment_uuid && submission?.uuid),
     })),
   });
 
   const selectedStudentSubmissions = useMemo(
     () =>
       studentSubmissions.map(({ assignment, submission }, index) => ({
-        scheduleId:
-          assignment.uuid ??
-          assignment.assignment_uuid ??
-          `assignment-${index}`,
-        assignmentTitle:
-          assignment.assignment?.title || 'Assignment',
+        scheduleId: assignment.uuid ?? assignment.assignment_uuid ?? `assignment-${index}`,
+        assignmentTitle: assignment.assignment?.title || 'Assignment',
         dueAt: assignment.due_at,
         submission: submission
           ? {
-            ...submission,
-            attachments:
-              submissionAttachmentQueries[index]?.data?.data ?? [],
-          }
+              ...submission,
+              attachments: submissionAttachmentQueries[index]?.data?.data ?? [],
+            }
           : null,
       })),
     [studentSubmissions, submissionAttachmentQueries]
@@ -3229,7 +3037,6 @@ export default function ClassTrainingPage({
           queryClient.invalidateQueries({
             queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: classId } }),
           });
-
         },
         onError: error => {
           toast.error(getApiToastMessage(error, 'Failed to attach assignment.'));
@@ -3261,11 +3068,7 @@ export default function ClassTrainingPage({
         ? dayjs(quizDueDate).add(7, 'days').toDate()
         : undefined;
 
-    if (
-      quizDueDate &&
-      quizGradingDueDate &&
-      quizGradingDueDate.getTime() < quizDueDate.getTime()
-    ) {
+    if (quizDueDate && quizGradingDueDate && quizGradingDueDate.getTime() < quizDueDate.getTime()) {
       toast.error('Quiz grading due date cannot be before the quiz due date.');
       return;
     }
@@ -3302,7 +3105,7 @@ export default function ClassTrainingPage({
   const [remainingTime, setRemainingTime] = useState('');
   useEffect(() => {
     if (!activeSchedule?.started_at) {
-      setRemainingTime("");
+      setRemainingTime('');
       return;
     }
 
@@ -3312,7 +3115,7 @@ export default function ClassTrainingPage({
       const elapsed = Date.now() - startedAt;
 
       if (elapsed <= 0) {
-        setRemainingTime("00:00:00");
+        setRemainingTime('00:00:00');
         return;
       }
 
@@ -3321,10 +3124,10 @@ export default function ClassTrainingPage({
       const seconds = Math.floor((elapsed % 60_000) / 1000);
 
       setRemainingTime(
-        `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
           2,
-          "0"
-        )}:${String(seconds).padStart(2, "0")}`
+          '0'
+        )}:${String(seconds).padStart(2, '0')}`
       );
     };
 
@@ -3384,7 +3187,7 @@ export default function ClassTrainingPage({
 
   if (isError) {
     return (
-      <div className='fixed inset-0 z-50 flex items-center justify-center bg-background p-6'>
+      <div className='bg-background fixed inset-0 z-50 flex items-center justify-center p-6'>
         <div className='border-destructive/30 bg-card flex min-h-[280px] w-full max-w-xl flex-col items-center justify-center gap-4 rounded-lg border p-8 text-center shadow-sm'>
           <AlertCircle className='text-destructive h-10 w-10' />
           <div className='space-y-1'>
@@ -3402,7 +3205,7 @@ export default function ClassTrainingPage({
   }
 
   return (
-    <main className='text-foreground fixed inset-0 z-50 flex flex-col overflow-hidden bg-background'>
+    <main className='text-foreground bg-background fixed inset-0 z-50 flex flex-col overflow-hidden'>
       <header className='border-border/70 bg-card/95 text-foreground flex h-16 shrink-0 items-center justify-between gap-3 border-b px-3 shadow-sm backdrop-blur sm:px-4'>
         <div className='flex min-w-0 items-center gap-3'>
           <Button
@@ -3443,7 +3246,7 @@ export default function ClassTrainingPage({
                 }
               }}
               placeholder='Search this page...'
-              className='border-0 bg-transparent px-0 text-xs text-foreground placeholder:text-muted-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none'
+              className='text-foreground placeholder:text-muted-foreground border-0 bg-transparent px-0 text-xs shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none'
             />
             <Button
               size='sm'
@@ -3462,7 +3265,7 @@ export default function ClassTrainingPage({
               <Button
                 variant='ghost'
                 size='sm'
-                className='text-foreground gap-2 hover:bg-muted xl:hidden'
+                className='text-foreground hover:bg-muted gap-2 xl:hidden'
               >
                 <PanelLeft className='h-4 w-4' />
                 {activeLefTab === 'evaluation' ? 'Evaluation' : 'Roster'}
@@ -3472,23 +3275,23 @@ export default function ClassTrainingPage({
               <SheetHeader className='sr-only'>
                 <SheetTitle>Class roster</SheetTitle>
                 <SheetDescription>
-                  Students assigned to this selected class instance, and the
-                  Students/Evaluation mode switch for the main viewport.
+                  Students assigned to this selected class instance, and the Students/Evaluation
+                  mode switch for the main viewport.
                 </SheetDescription>
               </SheetHeader>
 
-              <div className='border-border/70 border-b bg-card px-2 pt-2'>
+              <div className='border-border/70 bg-card border-b px-2 pt-2'>
                 <Tabs
                   value={activeLefTab}
                   onValueChange={value => setActiveLeftTab(value as typeof activeLefTab)}
                   className='w-full'
                 >
-                  <TabsList className='bg-muted grid w-full grid-cols-2 rounded-lg p-1 dark:bg-muted/60'>
+                  <TabsList className='bg-muted dark:bg-muted/60 grid w-full grid-cols-2 rounded-lg p-1'>
                     {LEFT_TAB_ITEMS.map(tab => (
                       <TabsTrigger
                         key={tab.value}
                         value={tab.value}
-                        className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
+                        className='text-muted-foreground dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground truncate rounded-md px-2 py-1.5 text-xs data-[state=active]:shadow-sm sm:text-sm dark:data-[state=active]:shadow-md'
                       >
                         {tab.label}
                       </TabsTrigger>
@@ -3499,7 +3302,7 @@ export default function ClassTrainingPage({
 
               {activeLefTab === 'evaluation' ? (
                 <div className='border-border/70 bg-card/90 border-b p-3'>
-                  <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+                  <p className='text-muted-foreground text-[11px] tracking-[0.16em] uppercase'>
                     Evaluation roster
                   </p>
                   <p className='text-foreground mt-1 text-sm font-medium'>
@@ -3534,13 +3337,13 @@ export default function ClassTrainingPage({
               <Button
                 variant='ghost'
                 size='sm'
-                className='text-foreground gap-2 hover:bg-muted xl:hidden'
+                className='text-foreground hover:bg-muted gap-2 xl:hidden'
               >
                 <PanelRight className='h-4 w-4' />
                 Work
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-screen max-w-none p-0">
+            <SheetContent side='right' className='w-screen max-w-none p-0'>
               <SheetHeader className='sr-only'>
                 <SheetTitle>Class work</SheetTitle>
                 <SheetDescription>Submissions, rubric, and notes.</SheetDescription>
@@ -3568,7 +3371,8 @@ export default function ClassTrainingPage({
                 handleEndClass={handleEndClass}
                 isEndClassConfirmOpen={isEndClassConfirmOpen}
                 setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
-                remainingTime={remainingTime} />
+                remainingTime={remainingTime}
+              />
             </SheetContent>
           </Sheet>
 
@@ -3577,11 +3381,10 @@ export default function ClassTrainingPage({
               <AvatarImage src={instructorProfileImage} alt={instructorName} />
               <AvatarFallback>{getInitials(instructorName)}</AvatarFallback>
             </Avatar>
-            <div className='hidden min-w-0 max-w-36 text-left sm:block lg:max-w-48'>
+            <div className='hidden max-w-36 min-w-0 text-left sm:block lg:max-w-48'>
               <p className='text-[11px] leading-tight'>Instructor</p>
-              <p className='truncate text-xs font-semibold leading-tight'>{instructorName}</p>
+              <p className='truncate text-xs leading-tight font-semibold'>{instructorName}</p>
             </div>
-
           </div>
         </div>
       </header>
@@ -3591,14 +3394,14 @@ export default function ClassTrainingPage({
           <Tabs
             value={activeLefTab}
             onValueChange={value => setActiveLeftTab(value as typeof activeLefTab)}
-            className='w-full max-w-xl mt-2'
+            className='mt-2 w-full max-w-xl'
           >
-            <TabsList className='bg-muted grid w-full grid-cols-2 rounded-lg p-1 dark:bg-muted/60'>
+            <TabsList className='bg-muted dark:bg-muted/60 grid w-full grid-cols-2 rounded-lg p-1'>
               {LEFT_TAB_ITEMS.map(tab => (
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
+                  className='text-muted-foreground dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground truncate rounded-md px-2 py-1.5 text-xs data-[state=active]:shadow-sm sm:text-sm dark:data-[state=active]:shadow-md'
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -3611,7 +3414,7 @@ export default function ClassTrainingPage({
               <aside className='border-border/70 min-h-0 border-r'>
                 {activeLefTab === 'evaluation' ? (
                   <div className='border-border/70 bg-card/90 border-b p-3'>
-                    <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+                    <p className='text-muted-foreground text-[11px] tracking-[0.16em] uppercase'>
                       Evaluation roster
                     </p>
                     <p className='text-foreground mt-1 text-sm font-medium'>
@@ -3661,14 +3464,14 @@ export default function ClassTrainingPage({
         </section>
 
         {/* // on mobile, this part should only be visible when I select evaluation on activelefttab */}
-        {activeLefTab === "evaluation" ?
-          (<section className='min-h-0 overflow-hidden bg-background'>
+        {activeLefTab === 'evaluation' ? (
+          <section className='bg-background min-h-0 overflow-hidden'>
             {activeLefTab === 'evaluation' ? (
               <div className='h-full overflow-hidden'>
                 <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
                   <div className='flex flex-col gap-3'>
                     <div className='min-w-0'>
-                      <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+                      <p className='text-muted-foreground text-[11px] tracking-[0.16em] uppercase'>
                         Evaluation
                       </p>
                       <h2 className='truncate text-lg font-semibold'>
@@ -3711,7 +3514,7 @@ export default function ClassTrainingPage({
             ) : (
               <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
                 <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-                  <div className='min-w-0 w-full'>
+                  <div className='w-full min-w-0'>
                     <h2 className='truncate text-lg font-semibold'>
                       {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
                     </h2>
@@ -3722,12 +3525,12 @@ export default function ClassTrainingPage({
                         onValueChange={value => setActiveTab(value as typeof activeTab)}
                         className='w-full max-w-xl'
                       >
-                        <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
+                        <TabsList className='bg-muted dark:bg-muted/60 grid w-full grid-cols-3 rounded-lg p-1'>
                           {TAB_ITEMS.map(tab => (
                             <TabsTrigger
                               key={tab.value}
                               value={tab.value}
-                              className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
+                              className='text-muted-foreground dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground truncate rounded-md px-2 py-1.5 text-xs data-[state=active]:shadow-sm sm:text-sm dark:data-[state=active]:shadow-md'
                             >
                               {tab.label}
                             </TabsTrigger>
@@ -3749,7 +3552,7 @@ export default function ClassTrainingPage({
                           <SelectContent>
                             {sortedLessonModules.map(module => (
                               <div key={module.lesson.uuid}>
-                                <div className='bg-muted/60 text-muted-foreground my-1 rounded border border-muted px-2 py-1 text-[13px] font-semibold italic'>
+                                <div className='bg-muted/60 text-muted-foreground border-muted my-1 rounded border px-2 py-1 text-[13px] font-semibold italic'>
                                   {module.lesson.title}
                                 </div>
 
@@ -3775,7 +3578,7 @@ export default function ClassTrainingPage({
                   {activeTab === 'content' && !lessonsPending && (
                     <div className='mx-auto mb-40 space-y-4 p-2 md:p-2'>
                       <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                        <div className='mt-2 flex flex-wrap items-center gap-2 border-b p-4 text-xs text-muted-foreground'>
+                        <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 border-b p-4 text-xs'>
                           <Badge variant='outline' className='capitalize'>
                             {selectedContentType}
                           </Badge>
@@ -3808,17 +3611,18 @@ export default function ClassTrainingPage({
                   )}
 
                   {activeTab === 'practice' && (
-                    <div className="mx-auto space-y-4 p-2 md:p-2 pb-40">
+                    <div className='mx-auto space-y-4 p-2 pb-40 md:p-2'>
                       <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
                         <div className='border-border/70 border-b p-4'>
-                          <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                          <p className='text-muted-foreground text-xs tracking-[0.16em] uppercase'>
                             Practice Activities
                           </p>
                           <h3 className='mt-1 text-xl font-semibold'>
                             {activeLesson?.title || 'Practice activities'}
                           </h3>
                           <p className='text-muted-foreground mt-2 text-sm'>
-                            Class activities tied to this skill — guide learners through these during class.
+                            Class activities tied to this skill — guide learners through these
+                            during class.
                           </p>
                         </div>
 
@@ -3837,7 +3641,7 @@ export default function ClassTrainingPage({
                     <div className='mx-auto space-y-4 p-2 md:p-2'>
                       <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
                         <div className='border-border/70 border-b p-4'>
-                          <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                          <p className='text-muted-foreground text-xs tracking-[0.16em] uppercase'>
                             Assessment Tasks
                           </p>
                           <h3 className='mt-1 text-xl font-semibold'>
@@ -3882,22 +3686,24 @@ export default function ClassTrainingPage({
                 </ScrollArea>
               </div>
             )}
-          </section>) :
-          (<section className='min-h-0 overflow-hidden bg-background'>
+          </section>
+        ) : (
+          <section className='bg-background min-h-0 overflow-hidden'>
             <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
               <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-                <div className='min-w-0 w-full'>
-                  <div className='flex flex-row items-center justify-between' >
+                <div className='w-full min-w-0'>
+                  <div className='flex flex-row items-center justify-between'>
                     <h2 className='truncate text-lg font-semibold'>
                       {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
                     </h2>
 
-                    <div className='border-border/70 border-t p-3 max-w-[500px]'>
+                    <div className='border-border/70 max-w-[500px] border-t p-3'>
                       {(() => {
                         const status = activeSchedule?.status?.toUpperCase();
                         const isCancelled = status === 'CANCELLED';
                         const isBlocked = status === 'BLOCKED';
-                        const isConcluded = Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
+                        const isConcluded =
+                          Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
                         const canStart =
                           !!activeSchedule &&
                           !isCancelled &&
@@ -3922,21 +3728,21 @@ export default function ClassTrainingPage({
                               </Button>
                             ) : canEnd ? (
                               <Button
-                                variant="destructive"
-                                className="h-10 w-full gap-2 rounded-md"
+                                variant='destructive'
+                                className='h-10 w-full gap-2 rounded-md'
                                 disabled={isLifecycleLoading}
                                 onClick={handleEndClass}
                               >
                                 {endScheduledInstanceMut.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className='h-4 w-4 animate-spin' />
                                 ) : (
-                                  <CheckCircle className="h-4 w-4" />
+                                  <CheckCircle className='h-4 w-4' />
                                 )}
 
-                                <div className="flex items-center gap-2">
+                                <div className='flex items-center gap-2'>
                                   <span>End Class</span>
                                   {remainingTime && (
-                                    <span className="rounded px-2 py-0.5 text-xs">
+                                    <span className='rounded px-2 py-0.5 text-xs'>
                                       {remainingTime}
                                     </span>
                                   )}
@@ -3946,7 +3752,7 @@ export default function ClassTrainingPage({
                               <Button
                                 className='h-10 w-full gap-2 rounded-md'
                                 disabled={!canStart || isLifecycleLoading}
-                                onClick={handleStartClass}  // ✅ use the real handler
+                                onClick={handleStartClass} // ✅ use the real handler
                               >
                                 {startScheduledInstanceMut.isPending ? (
                                   <Loader2 className='h-4 w-4 animate-spin' />
@@ -3974,12 +3780,12 @@ export default function ClassTrainingPage({
                       onValueChange={value => setActiveTab(value as typeof activeTab)}
                       className='w-full max-w-xl'
                     >
-                      <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
+                      <TabsList className='bg-muted dark:bg-muted/60 grid w-full grid-cols-3 rounded-lg p-1'>
                         {TAB_ITEMS.map(tab => (
                           <TabsTrigger
                             key={tab.value}
                             value={tab.value}
-                            className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
+                            className='text-muted-foreground dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground truncate rounded-md px-2 py-1.5 text-xs data-[state=active]:shadow-sm sm:text-sm dark:data-[state=active]:shadow-md'
                           >
                             {tab.label}
                           </TabsTrigger>
@@ -3994,21 +3800,21 @@ export default function ClassTrainingPage({
                         onValueChange={handleContentChange}
                         disabled={lessonModules.length === 0}
                       >
-                        <SelectTrigger className="h-9 w-full lg:min-w-52">
-                          <SelectValue placeholder="Select content" />
+                        <SelectTrigger className='h-9 w-full lg:min-w-52'>
+                          <SelectValue placeholder='Select content' />
                         </SelectTrigger>
 
                         <SelectContent>
-                          {sortedLessonModules.map((module) => (
+                          {sortedLessonModules.map(module => (
                             <div key={module.lesson.uuid}>
-                              <div className="px-2 py-1 text-[13px] italic font-semibold text-muted-foreground bg-muted/60 rounded my-1 border border-muted">
+                              <div className='text-muted-foreground bg-muted/60 border-muted my-1 rounded border px-2 py-1 text-[13px] font-semibold italic'>
                                 {module.lesson.title}
                               </div>
 
                               {module.content?.data
                                 ?.slice()
                                 .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-                                .map((content) => (
+                                .map(content => (
                                   <SelectItem key={content.uuid} value={content.uuid}>
                                     {content.title}
                                   </SelectItem>
@@ -4027,9 +3833,9 @@ export default function ClassTrainingPage({
             <ScrollArea className='flex h-[calc(100vh-8.5rem)]'>
               {activeTab === 'content' && lessonsPending && <LessonContentSkeleton />}
               {activeTab === 'content' && !lessonsPending && (
-                <div className='mx-auto space-y-4 p-2 md:p-2 mb-40'>
+                <div className='mx-auto mb-40 space-y-4 p-2 md:p-2'>
                   <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                    <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
+                    <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 border-b p-4 text-xs'>
                       <Badge variant='outline' className='capitalize'>
                         {selectedContentType}
                       </Badge>
@@ -4053,7 +3859,7 @@ export default function ClassTrainingPage({
                         </div>
                       ) : null}
 
-                      <div className='max-w-[inherit]' >
+                      <div className='max-w-[inherit]'>
                         {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
                       </div>
                     </div>
@@ -4105,14 +3911,15 @@ export default function ClassTrainingPage({
                 <div className='mx-auto space-y-4 p-2 md:p-2'>
                   <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
                     <div className='border-border/70 border-b p-4'>
-                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                      <p className='text-muted-foreground text-xs tracking-[0.16em] uppercase'>
                         Practice Activities
                       </p>
                       <h3 className='mt-1 text-xl font-semibold'>
                         {activeLesson?.title || 'Practice activities'}
                       </h3>
                       <p className='text-muted-foreground mt-2 text-sm'>
-                        Class activities tied to this skill — guide learners through these during class.
+                        Class activities tied to this skill — guide learners through these during
+                        class.
                       </p>
                     </div>
                     <div className='p-4'>
@@ -4130,7 +3937,7 @@ export default function ClassTrainingPage({
                 <div className='mx-auto space-y-4 p-2 md:p-2'>
                   <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
                     <div className='border-border/70 border-b p-4'>
-                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                      <p className='text-muted-foreground text-xs tracking-[0.16em] uppercase'>
                         Assessment Tasks
                       </p>
                       <h3 className='mt-1 text-xl font-semibold'>
@@ -4173,8 +3980,8 @@ export default function ClassTrainingPage({
                 </div>
               )}
             </ScrollArea>
-          </section>)
-        }
+          </section>
+        )}
 
         {/* <aside className='border-border/70 hidden min-h-0 border-l xl:block'>
           <SubmissionPanel

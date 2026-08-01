@@ -30,7 +30,7 @@ export type CourseLessonWithContent = {
 };
 
 export function useCourseLessonsWithContent({ courseUuid, enabled = true }: Params) {
-  const { activeDomain } = useUserDomain()
+  const { activeDomain } = useUserDomain();
   const isEnabled = enabled && !!courseUuid;
 
   const {
@@ -58,7 +58,7 @@ export function useCourseLessonsWithContent({ courseUuid, enabled = true }: Para
             lessonUuid: lesson.uuid as string,
           },
         }),
-        enabled: isEnabled && !!lesson.uuid && activeDomain !== "student",
+        enabled: isEnabled && !!lesson.uuid && activeDomain !== 'student',
         staleTime: 10 * 60 * 1000,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
@@ -88,12 +88,10 @@ export function useCourseLessonsWithContent({ courseUuid, enabled = true }: Para
     );
   }, [cLessons?.data?.content, lessonContentData]);
 
-  const { data: contentTypeList, isFetching: contentTypeFetching } = useQuery(
-    {
-      ...getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }),
-      enabled: isEnabled,
-    }
-  );
+  const { data: contentTypeList, isFetching: contentTypeFetching } = useQuery({
+    ...getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }),
+    enabled: isEnabled,
+  });
 
   const contentTypeData = useMemo(() => {
     const content = contentTypeList?.data?.content;

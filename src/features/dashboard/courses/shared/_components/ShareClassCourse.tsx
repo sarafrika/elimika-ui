@@ -2,202 +2,182 @@
 
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import {
-    buildSocialShareUrl,
-    openShareWindow,
-} from '@/lib/share';
+import { buildSocialShareUrl, openShareWindow } from '@/lib/share';
 
 type ShareClassCourseProps = {
-    courseTitle: string;
-    courseUrl: string;
-    type?: string
+  courseTitle: string;
+  courseUrl: string;
+  type?: string;
 };
 
 type ShareClassProps = {
-    classTitle: string;
-    classUrl: string;
-    type?: string
+  classTitle: string;
+  classUrl: string;
+  type?: string;
 };
 
 export default function ShareClassCourse({
-    courseTitle,
-    courseUrl,
-    type = 'course'
+  courseTitle,
+  courseUrl,
+  type = 'course',
 }: ShareClassCourseProps) {
-    const handleCopyLink = async () => {
-        try {
-            await navigator.clipboard.writeText(courseUrl);
-            toast.success('Course link copied');
-        } catch {
-            toast.error('Failed to copy course link');
-        }
-    };
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(courseUrl);
+      toast.success('Course link copied');
+    } catch {
+      toast.error('Failed to copy course link');
+    }
+  };
 
-    const shareItems = [
-        {
-            label: 'Facebook',
-            icon: 'f',
-            variant: 'default' as const,
-            href: buildSocialShareUrl('facebook', {
-                title: courseTitle,
-                url: courseUrl,
-                description: `Check out this course: ${courseTitle}`,
-            }),
-        },
-        {
-            label: 'Twitter',
-            icon: '𝕏',
-            variant: 'secondary' as const,
-            href: buildSocialShareUrl('twitter', {
-                title: courseTitle,
-                url: courseUrl,
-                description: `Check out this course: ${courseTitle}`,
-            }),
-        },
-        {
-            label: 'LinkedIn',
-            icon: 'in',
-            variant: 'outline' as const,
-            href: buildSocialShareUrl('linkedin', {
-                title: courseTitle,
-                url: courseUrl,
-                description: `Check out this course: ${courseTitle}`,
-            }),
-        },
-    ];
+  const shareItems = [
+    {
+      label: 'Facebook',
+      icon: 'f',
+      variant: 'default' as const,
+      href: buildSocialShareUrl('facebook', {
+        title: courseTitle,
+        url: courseUrl,
+        description: `Check out this course: ${courseTitle}`,
+      }),
+    },
+    {
+      label: 'Twitter',
+      icon: '𝕏',
+      variant: 'secondary' as const,
+      href: buildSocialShareUrl('twitter', {
+        title: courseTitle,
+        url: courseUrl,
+        description: `Check out this course: ${courseTitle}`,
+      }),
+    },
+    {
+      label: 'LinkedIn',
+      icon: 'in',
+      variant: 'outline' as const,
+      href: buildSocialShareUrl('linkedin', {
+        title: courseTitle,
+        url: courseUrl,
+        description: `Check out this course: ${courseTitle}`,
+      }),
+    },
+  ];
 
-    return (
-        <div className="bg-card border border-border rounded-md p-4 sm:p-5 shadow-sm">
-            <h3 className="mb-3 text-sm font-bold text-foreground sm:text-base">
-                Share this {type === "course" ? "course" : "program"}
-            </h3>
+  return (
+    <div className='bg-card border-border rounded-md border p-4 shadow-sm sm:p-5'>
+      <h3 className='text-foreground mb-3 text-sm font-bold sm:text-base'>
+        Share this {type === 'course' ? 'course' : 'program'}
+      </h3>
 
-            <div className="flex items-center gap-3">
-                {shareItems.map((item) => (
-                    <Button
-                        key={item.label}
-                        asChild
-                        size="icon"
-                        variant={item.variant}
-                        disabled={!courseUrl}
-                    >
-                        <a
-                            href={item.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={item.label}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                openShareWindow(item.href);
-                            }}
-                        >
-                            {item.icon}
-                        </a>
-                    </Button>
-                ))}
+      <div className='flex items-center gap-3'>
+        {shareItems.map(item => (
+          <Button key={item.label} asChild size='icon' variant={item.variant} disabled={!courseUrl}>
+            <a
+              href={item.href}
+              target='_blank'
+              rel='noopener noreferrer'
+              title={item.label}
+              onClick={e => {
+                e.preventDefault();
+                openShareWindow(item.href);
+              }}
+            >
+              {item.icon}
+            </a>
+          </Button>
+        ))}
 
-                <Button
-                    size="icon"
-                    variant="ghost"
-                    title="Copy Link"
-                    onClick={handleCopyLink}
-                    disabled={!courseUrl}
-                >
-                    🔗
-                </Button>
-            </div>
-        </div>
-    );
+        <Button
+          size='icon'
+          variant='ghost'
+          title='Copy Link'
+          onClick={handleCopyLink}
+          disabled={!courseUrl}
+        >
+          🔗
+        </Button>
+      </div>
+    </div>
+  );
 }
 
-export function ShareClass({
-    classTitle,
-    classUrl,
-    type = 'course'
+export function ShareClass({ classTitle, classUrl, type = 'course' }: ShareClassProps) {
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(classUrl);
+      toast.success('Class link copied');
+    } catch {
+      toast.error('Failed to copy class link');
+    }
+  };
 
-}: ShareClassProps) {
-    const handleCopyLink = async () => {
-        try {
-            await navigator.clipboard.writeText(classUrl);
-            toast.success('Class link copied');
-        } catch {
-            toast.error('Failed to copy class link');
-        }
-    };
+  const shareItems = [
+    {
+      label: 'Facebook',
+      icon: 'f',
+      variant: 'default' as const,
+      href: buildSocialShareUrl('facebook', {
+        title: classTitle,
+        url: classUrl,
+        description: `Check out this class: ${classTitle}`,
+      }),
+    },
+    {
+      label: 'Twitter',
+      icon: '𝕏',
+      variant: 'secondary' as const,
+      href: buildSocialShareUrl('twitter', {
+        title: classTitle,
+        url: classUrl,
+        description: `Check out this course: ${classTitle}`,
+      }),
+    },
+    {
+      label: 'LinkedIn',
+      icon: 'in',
+      variant: 'outline' as const,
+      href: buildSocialShareUrl('linkedin', {
+        title: classTitle,
+        url: classUrl,
+        description: `Check out this class: ${classTitle}`,
+      }),
+    },
+  ];
 
-    const shareItems = [
-        {
-            label: 'Facebook',
-            icon: 'f',
-            variant: 'default' as const,
-            href: buildSocialShareUrl('facebook', {
-                title: classTitle,
-                url: classUrl,
-                description: `Check out this class: ${classTitle}`,
-            }),
-        },
-        {
-            label: 'Twitter',
-            icon: '𝕏',
-            variant: 'secondary' as const,
-            href: buildSocialShareUrl('twitter', {
-                title: classTitle,
-                url: classUrl,
-                description: `Check out this course: ${classTitle}`,
-            }),
-        },
-        {
-            label: 'LinkedIn',
-            icon: 'in',
-            variant: 'outline' as const,
-            href: buildSocialShareUrl('linkedin', {
-                title: classTitle,
-                url: classUrl,
-                description: `Check out this class: ${classTitle}`,
-            }),
-        },
-    ];
+  return (
+    <div className='bg-card border-border rounded-md border p-4 shadow-sm sm:p-5'>
+      <h3 className='text-foreground mb-3 text-sm font-bold sm:text-base'>
+        Share this {type === 'course' ? 'class' : 'class'}
+      </h3>
 
-    return (
-        <div className="bg-card border border-border rounded-md p-4 sm:p-5 shadow-sm">
-            <h3 className="mb-3 text-sm font-bold text-foreground sm:text-base">
-                Share this {type === "course" ? "class" : "class"}
-            </h3>
+      <div className='flex items-center gap-3'>
+        {shareItems.map(item => (
+          <Button key={item.label} asChild size='icon' variant={item.variant} disabled={!classUrl}>
+            <a
+              href={item.href}
+              target='_blank'
+              rel='noopener noreferrer'
+              title={item.label}
+              onClick={e => {
+                e.preventDefault();
+                openShareWindow(item.href);
+              }}
+            >
+              {item.icon}
+            </a>
+          </Button>
+        ))}
 
-            <div className="flex items-center gap-3">
-                {shareItems.map((item) => (
-                    <Button
-                        key={item.label}
-                        asChild
-                        size="icon"
-                        variant={item.variant}
-                        disabled={!classUrl}
-                    >
-                        <a
-                            href={item.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={item.label}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                openShareWindow(item.href);
-                            }}
-                        >
-                            {item.icon}
-                        </a>
-                    </Button>
-                ))}
-
-                <Button
-                    size="icon"
-                    variant="ghost"
-                    title="Copy Link"
-                    onClick={handleCopyLink}
-                    disabled={!classUrl}
-                >
-                    🔗
-                </Button>
-            </div>
-        </div>
-    );
+        <Button
+          size='icon'
+          variant='ghost'
+          title='Copy Link'
+          onClick={handleCopyLink}
+          disabled={!classUrl}
+        >
+          🔗
+        </Button>
+      </div>
+    </div>
+  );
 }

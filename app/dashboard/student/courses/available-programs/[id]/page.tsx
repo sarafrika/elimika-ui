@@ -4,7 +4,9 @@ type WorkspaceAvailableProgramsPageProps = {
   params: Promise<{ domain: string; id: string }>;
 };
 
-export default async function WorkspaceAvailableProgramsPage({ params }: WorkspaceAvailableProgramsPageProps) {
+export default async function WorkspaceAvailableProgramsPage({
+  params,
+}: WorkspaceAvailableProgramsPageProps) {
   const { id } = await params;
 
   return <AvailableProgramsPage programId={id} />;

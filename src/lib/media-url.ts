@@ -53,9 +53,5 @@ export function toAuthenticatedMediaUrl(url?: string | null | undefined) {
 // }
 
 export function isAuthenticatedMediaUrl(url?: string | null) {
-  return (
-    typeof url === 'string' &&
-    (url.startsWith('/api?') ||
-      url.startsWith('/api/proxy/'))
-  );
+  return typeof url === 'string' && (url.startsWith('/api?') || url.startsWith('/api/proxy/'));
 }

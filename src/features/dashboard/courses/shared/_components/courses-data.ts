@@ -65,8 +65,8 @@ export type CoursesCatalogCardData = {
   imageTone: 'primary' | 'warning' | 'success';
   imageUrl?: string;
   rating?: number;
-  reviewCount?: number
-  enrollmentCount?: number | undefined
+  reviewCount?: number;
+  enrollmentCount?: number | undefined;
 };
 
 export type CoursesRecommendationCardData = {
@@ -212,7 +212,12 @@ export function formatDurationFromParts(hours?: number, minutes?: number, displa
 }
 
 export function stripHtml(value?: string | null) {
-  return value?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() ?? '';
+  return (
+    value
+      ?.replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim() ?? ''
+  );
 }
 
 export function isShortCourse(totalMinutes: number) {

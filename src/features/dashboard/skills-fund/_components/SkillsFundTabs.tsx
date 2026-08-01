@@ -11,7 +11,7 @@ export function SkillsFundTabs({ activeTab, onTabChange, tabs }: SkillsFundTabsP
   return (
     <nav
       aria-label='Skills funding categories'
-      className='flex flex-wrap gap-x-5 gap-y-2 border-b border-border px-3 py-2 sm:px-4'
+      className='border-border flex flex-wrap gap-x-5 gap-y-2 border-b px-3 py-2 sm:px-4'
     >
       {tabs.map(tab => (
         <button
@@ -22,7 +22,7 @@ export function SkillsFundTabs({ activeTab, onTabChange, tabs }: SkillsFundTabsP
             'border-b-2 pb-2 text-[0.95rem] font-medium transition sm:text-[1rem]',
             activeTab === tab.id
               ? 'border-primary text-foreground'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              : 'text-muted-foreground hover:text-foreground border-transparent'
           )}
         >
           {tab.label} ({tab.count})

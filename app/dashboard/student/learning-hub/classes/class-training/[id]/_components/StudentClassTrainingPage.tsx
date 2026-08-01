@@ -49,7 +49,7 @@ import {
   getQuizSchedulesOptions,
   getQuizSchedulesQueryKey,
   getRubricMatrixOptions,
-  markAttendanceMutation
+  markAttendanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
@@ -72,7 +72,7 @@ import {
   Loader2,
   MessageSquareText,
   PanelRight,
-  Search
+  Search,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -83,8 +83,6 @@ import { LessonContentPreview } from '../../../../../../../../components/content
 import { QuizContentPreview } from '../../../../../../../../components/content-preview/QuizContentPreview';
 import RichTextRenderer from '../../../../../../../../components/editors/richTextRenders';
 import { getPreferredScheduleInstance } from '../../../../../../instructor/classes/_components/new-class-page.utils';
-
-
 
 type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
 type LessonContentItem = CourseLessonContent;
@@ -238,10 +236,7 @@ function getStudentAttendanceState(entry: RosterEntry | null | undefined) {
 function getScheduleState(schedule?: { start_time?: string | Date; end_time?: string | Date }) {
   if (!schedule?.start_time || !schedule?.end_time) return 'upcoming' as const;
 
-  if (
-    dayjs(schedule.start_time).isBefore(dayjs()) &&
-    dayjs(schedule.end_time).isAfter(dayjs())
-  ) {
+  if (dayjs(schedule.start_time).isBefore(dayjs()) && dayjs(schedule.end_time).isAfter(dayjs())) {
     return 'live' as const;
   }
 
@@ -317,7 +312,7 @@ function getYouTubeEmbedUrl(source: string) {
       const videoId = url.searchParams.get('v');
       return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     }
-  } catch { }
+  } catch {}
 
   return '';
 }
@@ -336,38 +331,7 @@ function getVimeoEmbedUrl(source: string) {
 export const RichTextPreview = ({ html }: { html: string }) => {
   return (
     <p
-      className='
-          text-foreground mx-auto w-full text-[14px] leading-7
-          [&_*]:max-w-full
-          [&_h1]:mt-12 [&_h1]:mb-5 [&_h1]:text-[1.7rem] [&_h1]:font-bold [&_h1]:leading-tight
-          [&_h1:first-child]:mt-0
-          [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-[1.35rem] [&_h2]:font-bold [&_h2]:leading-snug
-          [&_h2:first-child]:mt-0
-          [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-[1.15rem] [&_h3]:font-semibold
-          [&_h4]:mt-8 [&_h4]:mb-3 [&_h4]:text-base [&_h4]:font-semibold
-          [&_p]:text-foreground/80 [&_p]:leading-7
-          [&_p:not(:first-child)]:mt-5
-          [&_ol]:my-6 [&_ol]:list-decimal [&_ol]:pl-6
-          [&_ul]:my-6 [&_ul]:list-disc [&_ul]:pl-6
-          [&_li]:text-foreground/80 [&_li]:leading-7
-          [&_li:not(:first-child)]:mt-1.5
-          [&_li_p]:mt-0
-          [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground
-          [&_blockquote]:my-6
-          [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4
-          [&_hr]:bg-border [&_hr]:my-10 [&_hr]:h-px [&_hr]:border-0
-          [&_pre]:bg-muted/60 [&_pre]:border-border/70 [&_pre]:my-8 [&_pre]:overflow-x-auto [&_pre]:rounded-2xl [&_pre]:border [&_pre]:p-5
-          [&_pre]:text-[0.95rem] [&_pre]:leading-7
-          [&_pre_code]:bg-transparent [&_pre_code]:border-0 [&_pre_code]:p-0
-          [&_code]:bg-muted [&_code]:rounded-md [&_code]:border [&_code]:border-border/60 [&_code]:px-1.5 [&_code]:py-0.5
-          [&_code]:font-mono [&_code]:text-[0.9em]
-          [&_img]:my-8 [&_img]:rounded-2xl [&_img]:border [&_img]:border-border/60
-          [&_img]:shadow-sm
-          [&_figure]:my-8
-          [&_table]:my-8 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden
-          [&_th]:bg-muted [&_th]:border [&_th]:border-border [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold
-          [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2
-        '
+      className='text-foreground [&_p]:text-foreground/80 [&_li]:text-foreground/80 [&_blockquote]:border-border [&_blockquote]:text-muted-foreground [&_a]:text-primary [&_hr]:bg-border [&_pre]:bg-muted/60 [&_pre]:border-border/70 [&_code]:bg-muted [&_code]:border-border/60 [&_img]:border-border/60 [&_th]:bg-muted [&_th]:border-border [&_td]:border-border mx-auto w-full text-[14px] leading-7 [&_*]:max-w-full [&_a]:underline [&_a]:underline-offset-4 [&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:rounded-md [&_code]:border [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.9em] [&_figure]:my-8 [&_h1]:mt-12 [&_h1]:mb-5 [&_h1]:text-[1.7rem] [&_h1]:leading-tight [&_h1]:font-bold [&_h1:first-child]:mt-0 [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-[1.35rem] [&_h2]:leading-snug [&_h2]:font-bold [&_h2:first-child]:mt-0 [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-[1.15rem] [&_h3]:font-semibold [&_h4]:mt-8 [&_h4]:mb-3 [&_h4]:text-base [&_h4]:font-semibold [&_hr]:my-10 [&_hr]:h-px [&_hr]:border-0 [&_img]:my-8 [&_img]:rounded-2xl [&_img]:border [&_img]:shadow-sm [&_li]:leading-7 [&_li_p]:mt-0 [&_li:not(:first-child)]:mt-1.5 [&_ol]:my-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:leading-7 [&_p:not(:first-child)]:mt-5 [&_pre]:my-8 [&_pre]:overflow-x-auto [&_pre]:rounded-2xl [&_pre]:border [&_pre]:p-5 [&_pre]:text-[0.95rem] [&_pre]:leading-7 [&_pre_code]:border-0 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_table]:my-8 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden [&_td]:border [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_ul]:my-6 [&_ul]:list-disc [&_ul]:pl-6'
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
@@ -434,17 +398,13 @@ function AssessmentTasksSection({
   isAssigningAssignment: boolean;
   isAssigningQuiz: boolean;
 }) {
-  const [isAssignmentPreviewOpen, setIsAssignmentPreviewOpen] =
-    React.useState(false);
+  const [isAssignmentPreviewOpen, setIsAssignmentPreviewOpen] = React.useState(false);
 
-  const [previewAssignment, setPreviewAssignment] =
-    React.useState<Assignment | null>(null);
+  const [previewAssignment, setPreviewAssignment] = React.useState<Assignment | null>(null);
 
-  const [isQuizPreviewOpen, setIsQuizPreviewOpen] =
-    React.useState(false);
+  const [isQuizPreviewOpen, setIsQuizPreviewOpen] = React.useState(false);
 
-  const [previewQuiz, setPreviewQuiz] =
-    React.useState<Quiz | null>(null);
+  const [previewQuiz, setPreviewQuiz] = React.useState<Quiz | null>(null);
 
   const { data: assignmentAttachmentsData } = useQuery({
     ...getAssignmentAttachmentsOptions({
@@ -458,22 +418,15 @@ function AssessmentTasksSection({
   return (
     <div className='space-y-3'>
       <div className='border-border/70 bg-background/80 rounded-md border p-3'>
-        <p className='text-sm font-semibold'>
-          Tasks assigned for this lesson
-        </p>
+        <p className='text-sm font-semibold'>Tasks assigned for this lesson</p>
 
         <div className='mt-3 space-y-2'>
           {/* Assignments */}
           {activeScheduleAssignments.map(item => (
-            <div
-              key={item.uuid ?? item.assignment_uuid}
-              className='rounded-md border p-3'
-            >
+            <div key={item.uuid ?? item.assignment_uuid} className='rounded-md border p-3'>
               <div className='flex items-start justify-between gap-3'>
                 <div className='min-w-0 flex-1'>
-                  <p className='text-xs font-medium'>
-                    {item.assignment?.title || 'Assignment'}
-                  </p>
+                  <p className='text-xs font-medium'>{item.assignment?.title || 'Assignment'}</p>
 
                   <p className='text-muted-foreground mt-1 text-[11px]'>
                     Due {formatDateTime(item.due_at)}
@@ -503,15 +456,10 @@ function AssessmentTasksSection({
 
           {/* Quizzes */}
           {activeScheduleQuizzes.map(item => (
-            <div
-              key={item.uuid ?? item.quiz_uuid}
-              className='rounded-md border p-3'
-            >
+            <div key={item.uuid ?? item.quiz_uuid} className='rounded-md border p-3'>
               <div className='flex items-start justify-between gap-3'>
                 <div className='min-w-0 flex-1'>
-                  <p className='text-xs font-medium'>
-                    {item.quiz?.title || 'Quiz'}
-                  </p>
+                  <p className='text-xs font-medium'>{item.quiz?.title || 'Quiz'}</p>
 
                   <p className='text-muted-foreground mt-1 text-[11px]'>
                     Due {formatDateTime(item.due_at)}
@@ -539,8 +487,7 @@ function AssessmentTasksSection({
             </div>
           ))}
 
-          {activeScheduleAssignments.length === 0 &&
-            activeScheduleQuizzes.length === 0 ? (
+          {activeScheduleAssignments.length === 0 && activeScheduleQuizzes.length === 0 ? (
             <p className='text-muted-foreground text-xs'>
               No tasks have been attached to this lesson instance yet.
             </p>
@@ -549,99 +496,64 @@ function AssessmentTasksSection({
       </div>
 
       {/* Assignment Preview */}
-      <Sheet
-        open={isAssignmentPreviewOpen}
-        onOpenChange={setIsAssignmentPreviewOpen}
-      >
-        <SheetContent
-          side='right'
-          className='w-full overflow-y-auto sm:max-w-3xl p-2 sm:p-4'
-        >
+      <Sheet open={isAssignmentPreviewOpen} onOpenChange={setIsAssignmentPreviewOpen}>
+        <SheetContent side='right' className='w-full overflow-y-auto p-2 sm:max-w-3xl sm:p-4'>
           <div className='space-y-6'>
             <div>
-              <h2 className='text-lg font-semibold'>
-                {previewAssignment?.title}
-              </h2>
+              <h2 className='text-lg font-semibold'>{previewAssignment?.title}</h2>
 
               {previewAssignment?.description && (
                 <div className='text-muted-foreground mt-2 text-sm'>
-                  <RichTextRenderer
-                    htmlString={previewAssignment.description}
-                  />
+                  <RichTextRenderer htmlString={previewAssignment.description} />
                 </div>
               )}
             </div>
 
             {previewAssignment?.instructions && (
               <div className='space-y-2'>
-                <p className='text-sm font-medium'>
-                  Instructions
-                </p>
+                <p className='text-sm font-medium'>Instructions</p>
 
                 <div className='text-muted-foreground text-sm'>
-                  <RichTextRenderer
-                    htmlString={previewAssignment.instructions}
-                  />
+                  <RichTextRenderer htmlString={previewAssignment.instructions} />
                 </div>
               </div>
             )}
 
             <div className='space-y-3'>
               <div className='flex items-center justify-between'>
-                <p className='text-sm font-medium'>
-                  Assignment Attachments
-                </p>
+                <p className='text-sm font-medium'>Assignment Attachments</p>
 
                 <Badge variant='outline'>
                   {assignmentAttachmentsData?.data?.length ?? 0} files
                 </Badge>
               </div>
 
-              <AssignmentContentPreview
-                attachments={
-                  assignmentAttachmentsData?.data ?? []
-                }
-              />
+              <AssignmentContentPreview attachments={assignmentAttachmentsData?.data ?? []} />
             </div>
           </div>
         </SheetContent>
       </Sheet>
 
       {/* Quiz Preview */}
-      <Sheet
-        open={isQuizPreviewOpen}
-        onOpenChange={setIsQuizPreviewOpen}
-      >
-        <SheetContent
-          side='right'
-          className='w-full overflow-y-auto sm:max-w-4xl p-2 sm:p-6'
-        >
+      <Sheet open={isQuizPreviewOpen} onOpenChange={setIsQuizPreviewOpen}>
+        <SheetContent side='right' className='w-full overflow-y-auto p-2 sm:max-w-4xl sm:p-6'>
           <div className='space-y-6'>
             <div className='border-b pb-4'>
               <div className='flex items-center justify-between gap-3'>
                 <div>
-                  <h2 className='text-xl font-semibold'>
-                    {previewQuiz?.title}
-                  </h2>
+                  <h2 className='text-xl font-semibold'>{previewQuiz?.title}</h2>
 
                   {previewQuiz?.instructions && (
-                    <p className='text-muted-foreground mt-2 text-sm'>
-                      {previewQuiz.instructions}
-                    </p>
+                    <p className='text-muted-foreground mt-2 text-sm'>{previewQuiz.instructions}</p>
                   )}
                 </div>
 
-                <Badge variant='outline'>
-                  Quiz Preview
-                </Badge>
+                <Badge variant='outline'>Quiz Preview</Badge>
               </div>
             </div>
 
             {previewQuiz?.uuid ? (
-              <QuizContentPreview
-                quizUuid={previewQuiz.uuid}
-                role='student'
-              />
+              <QuizContentPreview quizUuid={previewQuiz.uuid} role='student' />
             ) : (
               <div className='text-muted-foreground py-10 text-center text-sm'>
                 No quiz selected.
@@ -656,17 +568,15 @@ function AssessmentTasksSection({
 
 function ConsoleSkeleton() {
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm'>
+    <div className='bg-background/95 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm'>
       <div className='flex flex-col items-center gap-4 text-center'>
-        <div className='flex items-center justify-center rounded-full bg-primary/10 p-4'>
+        <div className='bg-primary/10 flex items-center justify-center rounded-full p-4'>
           <Loader2 className='text-primary h-8 w-8 animate-spin' />
         </div>
 
         {/* Text */}
         <div className='space-y-1'>
-          <p className='text-foreground text-base font-semibold'>
-            Loading class session
-          </p>
+          <p className='text-foreground text-base font-semibold'>Loading class session</p>
           <p className='text-muted-foreground text-sm'>
             Please wait while we retrieve session details...
           </p>
@@ -683,7 +593,7 @@ function LessonContentSkeleton() {
         <div className='border-b p-4'>
           <Skeleton className='h-4 w-40' />
         </div>
-        <div className='border-border/70 border-b p-4 space-y-2'>
+        <div className='border-border/70 space-y-2 border-b p-4'>
           <Skeleton className='h-3 w-24' />
           <Skeleton className='h-6 w-2/3' />
         </div>
@@ -761,7 +671,7 @@ function RosterPanel({
           />
         </div>
       </div>
-      <ScrollArea className='min-h-0 flex-1 bg-background'>
+      <ScrollArea className='bg-background min-h-0 flex-1'>
         <div className='space-y-1.5 p-2'>
           {filteredRoster.map((entry: RosterEntry) => {
             const attendanceState = getStudentAttendanceState(entry);
@@ -772,8 +682,11 @@ function RosterPanel({
                 type='button'
                 key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
                 onClick={() => onSelectStudent(entry)}
-                className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected ? 'border-primary/30 bg-primary/8' : 'hover:bg-primary/5 border-transparent'
-                  }`}
+                className={`w-full rounded-md border p-2.5 text-left transition-colors ${
+                  isSelected
+                    ? 'border-primary/30 bg-primary/8'
+                    : 'hover:bg-primary/5 border-transparent'
+                }`}
               >
                 <div className='flex items-start gap-2.5'>
                   <Avatar className='border-border/60 size-8 border'>
@@ -864,9 +777,7 @@ function SubmissionPanel({
   onMarkAttendance: (entry: RosterEntry, attended: boolean) => void;
   isMarkingAttendance: boolean;
 }) {
-  const [activePanel, setActivePanel] = useState<'submissions' | 'notes'>(
-    'notes'
-  );
+  const [activePanel, setActivePanel] = useState<'submissions' | 'notes'>('notes');
   const selectedStudentAttendanceState = getStudentAttendanceState(selectedStudent);
   const attendanceActionDisabled = isMarkingAttendance || !selectedStudent?.enrollment?.uuid;
   const panelTabs = [
@@ -892,10 +803,11 @@ function SubmissionPanel({
                 key={tab.value}
                 type='button'
                 onClick={() => setActivePanel(tab.value)}
-                className={`flex h-8 min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded px-1 text-[11px] font-medium transition-colors ${isActive
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={`flex h-8 min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded px-1 text-[11px] font-medium transition-colors ${
+                  isActive
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
               >
                 <Icon className='h-3.5 w-3.5 shrink-0' />
                 <span className='truncate'>{tab.label}</span>
@@ -984,9 +896,9 @@ function SubmissionPanel({
                       key={item.scheduleId}
                       className='border-border/70 bg-background/80 min-w-0 overflow-hidden rounded-md border p-3'
                     >
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <p className="flex-1 min-w-0 truncate text-sm font-semibold">
+                      <div className='min-w-0 space-y-1'>
+                        <div className='flex min-w-0 items-center gap-2'>
+                          <p className='min-w-0 flex-1 truncate text-sm font-semibold'>
                             {item.assignmentTitle}
                           </p>
                           <Badge
@@ -997,23 +909,23 @@ function SubmissionPanel({
                                   ? 'warning'
                                   : 'destructive'
                             }
-                            className="shrink-0 max-w-[80px] truncate"
+                            className='max-w-[80px] shrink-0 truncate'
                           >
                             {status}
                           </Badge>
                         </div>
 
-                        <p className="text-muted-foreground truncate text-xs">
+                        <p className='text-muted-foreground truncate text-xs'>
                           Due {formatDateTime(item.dueAt)}
                         </p>
                       </div>
                       <p className='text-muted-foreground mt-2 text-xs'>
                         {item.submission
                           ? item.submission.grade_display ||
-                          item.submission.submission_status_display ||
-                          (item.submission.percentage != null
-                            ? `${item.submission.percentage}% recorded`
-                            : 'Submission received')
+                            item.submission.submission_status_display ||
+                            (item.submission.percentage != null
+                              ? `${item.submission.percentage}% recorded`
+                              : 'Submission received')
                           : 'No submission recorded for this assignment yet.'}
                       </p>
                       {item.submission?.submitted_at ? (
@@ -1071,7 +983,7 @@ export default function StudentClassTrainingPage({
 }: ClassTrainingPageProps = {}) {
   const params = useParams();
   const searchParams = useSearchParams();
-  const router = useRouter()
+  const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const classId = classIdProp ?? (params?.id as string);
@@ -1100,7 +1012,9 @@ export default function StudentClassTrainingPage({
   const appliedRouteContentSelectionRef = useRef('');
 
   const [activeTab, setActiveTab] = useState<'content' | 'practice' | 'assessment'>('content');
-  const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>('students');
+  const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>(
+    'students'
+  );
 
   const classData = data.class;
   const course = data.course ?? data?.pCourses?.[0] ?? null;
@@ -1226,14 +1140,10 @@ export default function StudentClassTrainingPage({
   const selectedContent =
     activeLessonContents.find(content => content.uuid === selectedContentId) ?? null;
   const selectedContentDuration =
-    selectedContent && 'duration' in selectedContent
-      ? String(selectedContent.duration || '')
-      : '';
+    selectedContent && 'duration' in selectedContent ? String(selectedContent.duration || '') : '';
 
   const handleContentChange = (contentId: string) => {
-    const module = lessonModules.find(m =>
-      m.content?.data?.some(c => c.uuid === contentId)
-    );
+    const module = lessonModules.find(m => m.content?.data?.some(c => c.uuid === contentId));
 
     const lessonId = module?.lesson?.uuid;
 
@@ -1248,7 +1158,6 @@ export default function StudentClassTrainingPage({
     router.push(`${pathname}?${params.toString()}`);
   };
 
-
   const activeInstanceStudents = useMemo(
     () =>
       rosterAllEnrollments.filter(
@@ -1258,12 +1167,12 @@ export default function StudentClassTrainingPage({
   );
 
   const selectedStudent =
-    activeInstanceStudents.find(entry => entry.enrollment?.student_uuid === selectedStudentId) ?? null;
+    activeInstanceStudents.find(entry => entry.enrollment?.student_uuid === selectedStudentId) ??
+    null;
 
   const selectedContentType = getContentTypeName(selectedContent, contentTypeDetailsMap);
 
-  const instructorName =
-    instructorProfile?.full_name;
+  const instructorName = instructorProfile?.full_name;
   const instructorProfileImage = instructorProfile?.profile_image_url ?? undefined;
 
   const markAttendanceMut = useMutation(markAttendanceMutation());
@@ -1307,7 +1216,6 @@ export default function StudentClassTrainingPage({
   const quizOptions: Quiz[] = allQuizzes?.data?.content ?? [];
   const assignmentScheduleItems: AssignmentScheduleItem[] = assignmentSchedules?.data ?? [];
   const quizScheduleItems: QuizScheduleItem[] = quizSchedules?.data ?? [];
-
 
   const rubricUuids = useMemo(
     () =>
@@ -1406,7 +1314,9 @@ export default function StudentClassTrainingPage({
       setAssignmentDueAt(formatDateTimeInput(activeSchedule.end_time));
     }
     if (!assignmentGradingDueAt && activeSchedule?.end_time) {
-      setAssignmentGradingDueAt(dayjs(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm'));
+      setAssignmentGradingDueAt(
+        dayjs(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm')
+      );
     }
     if (!quizDueAt && activeSchedule?.end_time) {
       setQuizDueAt(formatDateTimeInput(activeSchedule.end_time));
@@ -1414,13 +1324,7 @@ export default function StudentClassTrainingPage({
     if (!quizGradingDueAt && activeSchedule?.end_time) {
       setQuizGradingDueAt(dayjs(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm'));
     }
-  }, [
-    activeSchedule,
-    assignmentDueAt,
-    assignmentGradingDueAt,
-    quizDueAt,
-    quizGradingDueAt,
-  ]);
+  }, [activeSchedule, assignmentDueAt, assignmentGradingDueAt, quizDueAt, quizGradingDueAt]);
 
   const submissionQueries = useQueries({
     queries: activeScheduleAssignments.map(item => ({
@@ -1436,9 +1340,8 @@ export default function StudentClassTrainingPage({
       activeScheduleAssignments.map((item, index) => {
         const submissions = submissionQueries[index]?.data?.data ?? [];
         const submission =
-          submissions.find(
-            entry => entry.enrollment_uuid === selectedStudent?.enrollment?.uuid
-          ) ?? null;
+          submissions.find(entry => entry.enrollment_uuid === selectedStudent?.enrollment?.uuid) ??
+          null;
 
         return {
           scheduleId: item.uuid ?? item.assignment_uuid ?? `assignment-${index}`,
@@ -1586,11 +1489,7 @@ export default function StudentClassTrainingPage({
         ? dayjs(quizDueDate).add(7, 'days').toDate()
         : undefined;
 
-    if (
-      quizDueDate &&
-      quizGradingDueDate &&
-      quizGradingDueDate.getTime() < quizDueDate.getTime()
-    ) {
+    if (quizDueDate && quizGradingDueDate && quizGradingDueDate.getTime() < quizDueDate.getTime()) {
       toast.error('Quiz grading due date cannot be before the quiz due date.');
       return;
     }
@@ -1687,12 +1586,12 @@ export default function StudentClassTrainingPage({
                 }
               }}
               placeholder='Search this page...'
-              className='border-0 bg-transparent px-0 text-xs text-foreground placeholder:text-muted-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none'
+              className='text-foreground placeholder:text-muted-foreground border-0 bg-transparent px-0 text-xs shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none'
             />
             <Button
               size='sm'
               variant='ghost'
-              className='h-7 shrink-0 text-primary-foreground hover:bg-white/10'
+              className='text-primary-foreground h-7 shrink-0 hover:bg-white/10'
               onClick={handlePageSearch}
             >
               Find
@@ -1741,11 +1640,10 @@ export default function StudentClassTrainingPage({
               <AvatarImage src={instructorProfileImage} alt={instructorName} />
               <AvatarFallback>{getInitials(instructorName)}</AvatarFallback>
             </Avatar>
-            <div className='hidden min-w-0 max-w-36 text-left sm:block lg:max-w-48'>
+            <div className='hidden max-w-36 min-w-0 text-left sm:block lg:max-w-48'>
               <p className='text-[11px] leading-tight'>Instructor</p>
-              <p className='truncate text-xs font-semibold leading-tight'>{instructorName}</p>
+              <p className='truncate text-xs leading-tight font-semibold'>{instructorName}</p>
             </div>
-
           </div>
         </div>
       </header>
@@ -1754,7 +1652,7 @@ export default function StudentClassTrainingPage({
         <section className='min-h-0 overflow-hidden bg-[color-mix(in_oklch,var(--el-brand-50)_35%,var(--background))]'>
           <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
             <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-              <div className='min-w-0 w-full'>
+              <div className='w-full min-w-0'>
                 <h2 className='truncate text-lg font-semibold'>
                   {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
                 </h2>
@@ -1785,21 +1683,21 @@ export default function StudentClassTrainingPage({
                       onValueChange={handleContentChange}
                       disabled={lessonModules.length === 0}
                     >
-                      <SelectTrigger className="h-9 w-full lg:min-w-52">
+                      <SelectTrigger className='h-9 w-full lg:min-w-52'>
                         <SelectValue placeholder='Select content' />
                       </SelectTrigger>
 
                       <SelectContent>
-                        {sortedLessonModules.map((module) => (
+                        {sortedLessonModules.map(module => (
                           <div key={module.lesson.uuid}>
-                            <div className="px-2 py-1 text-[13px] italic font-semibold text-muted-foreground bg-muted/60 rounded my-1 border border-muted">
+                            <div className='text-muted-foreground bg-muted/60 border-muted my-1 rounded border px-2 py-1 text-[13px] font-semibold italic'>
                               {module.lesson.title}
                             </div>
 
                             {module.content?.data
                               ?.slice() // optional safety copy
                               .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-                              .map((content) => (
+                              .map(content => (
                                 <SelectItem key={content.uuid} value={content.uuid}>
                                   {content.title}
                                 </SelectItem>
@@ -1826,7 +1724,7 @@ export default function StudentClassTrainingPage({
               {activeTab === 'content' && (
                 <div className='mx-auto space-y-4 p-2 md:p-2'>
                   <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                    <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
+                    <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 border-b p-4 text-xs'>
                       <Badge variant='outline' className='capitalize'>
                         {selectedContentType}
                       </Badge>
@@ -1899,7 +1797,7 @@ export default function StudentClassTrainingPage({
                 <div className='mx-auto space-y-4 p-2 md:p-2'>
                   <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
                     <div className='border-border/70 border-b p-4'>
-                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                      <p className='text-muted-foreground text-xs tracking-[0.16em] uppercase'>
                         Practice Activities
                       </p>
                       <h3 className='mt-1 text-xl font-semibold'>
@@ -1924,7 +1822,7 @@ export default function StudentClassTrainingPage({
                 <div className='mx-auto space-y-4 p-2 md:p-2'>
                   <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
                     <div className='border-border/70 border-b p-4'>
-                      <p className='text-muted-foreground text-xs uppercase tracking-[0.16em]'>
+                      <p className='text-muted-foreground text-xs tracking-[0.16em] uppercase'>
                         Assessment Tasks
                       </p>
                       <h3 className='mt-1 text-xl font-semibold'>

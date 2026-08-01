@@ -15,10 +15,10 @@ type GrowthTimelineSectionProps = {
 
 export function GrowthTimelineSection({ items, ownerName }: GrowthTimelineSectionProps) {
   return (
-    <Card className='rounded-[18px] border-white/60 bg-card/95 px-4 py-4 shadow-sm sm:px-5 mb-20'>
+    <Card className='bg-card/95 mb-20 rounded-[18px] border-white/60 px-4 py-4 shadow-sm sm:px-5'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <h2 className='text-foreground text-xl font-semibold tracking-tight'>Growth Timeline</h2>
-        <Button variant='ghost' className='rounded-xl text-primary'>
+        <Button variant='ghost' className='text-primary rounded-xl'>
           View Full Timeline
           <ChevronRight className='size-4' />
         </Button>

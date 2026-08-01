@@ -5,7 +5,10 @@ type CourseCreatorProgramEnrollRouteProps = {
   searchParams: Promise<{ id?: string }>;
 };
 
-export default async function CourseCreatorProgramEnrollRoute({ params, searchParams }: CourseCreatorProgramEnrollRouteProps) {
+export default async function CourseCreatorProgramEnrollRoute({
+  params,
+  searchParams,
+}: CourseCreatorProgramEnrollRouteProps) {
   const { id } = await params;
   const { id: classId = '' } = await searchParams;
   return <ProgramClassEnrollmentPage programId={id} classId={classId} />;

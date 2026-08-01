@@ -36,22 +36,14 @@ type StudentEnrollment = NonNullable<
 >[number];
 
 type CourseDetails = NonNullable<GetCourseByUuidResponse['data']>;
-type LessonDetails = NonNullable<
-  NonNullable<GetCourseLessonsResponse['data']>['content']
->;
+type LessonDetails = NonNullable<NonNullable<GetCourseLessonsResponse['data']>['content']>;
 type QuizDetails = NonNullable<GetQuizSchedulesResponse['data']>;
-type AssignmentDetails =
-  NonNullable<GetAssignmentSchedulesResponse['data']>;
-type EnrollmentDetails =
-  NonNullable<GetEnrollmentsForClassResponse['data']>;
+type AssignmentDetails = NonNullable<GetAssignmentSchedulesResponse['data']>;
+type EnrollmentDetails = NonNullable<GetEnrollmentsForClassResponse['data']>;
 
-const isDefined = <T,>(
-  value: T | null | undefined
-): value is T => value != null;
+const isDefined = <T,>(value: T | null | undefined): value is T => value != null;
 
-function useStudentClassDefinitions(
-  student?: StudentLike
-) {
+function useStudentClassDefinitions(student?: StudentLike) {
   /**
    * Student enrollments
    */
@@ -67,8 +59,7 @@ function useStudentClassDefinitions(
     enabled: !!student?.uuid,
   });
 
-  const enrollments: StudentEnrollment[] =
-    enrollmentsData?.data?.content ?? [];
+  const enrollments: StudentEnrollment[] = enrollmentsData?.data?.content ?? [];
 
   /**
    * Class UUIDs
@@ -76,14 +67,7 @@ function useStudentClassDefinitions(
   const classDefinitionUuids = useMemo(
     () =>
       Array.from(
-        new Set(
-          enrollments
-            .map(
-              enrollment =>
-                enrollment.class_definition_uuid
-            )
-            .filter(isDefined)
-        )
+        new Set(enrollments.map(enrollment => enrollment.class_definition_uuid).filter(isDefined))
       ),
     [enrollments]
   );
@@ -107,11 +91,7 @@ function useStudentClassDefinitions(
   const classDetailsByUuid = useMemo(() => {
     const map = new Map<string, ClassDefinition>();
 
-    for (
-      const item of
-      classDefinitionsQuery.data?.data?.content ??
-      []
-    ) {
+    for (const item of classDefinitionsQuery.data?.data?.content ?? []) {
       const definition = item.class_definition;
 
       if (definition?.uuid) {
@@ -148,11 +128,7 @@ function useStudentClassDefinitions(
       Array.from(
         new Set(
           classDefinitionUuids
-            .map(
-              uuid =>
-                classDetailsByUuid.get(uuid)
-                  ?.course_uuid
-            )
+            .map(uuid => classDetailsByUuid.get(uuid)?.course_uuid)
             .filter(isDefined)
         )
       ),
@@ -162,10 +138,7 @@ function useStudentClassDefinitions(
   /**
    * Batched course lookup
    */
-  const {
-    courseMap: batchedCourseMap,
-    isLoading: coursesLoading,
-  } = useCoursesByIds(courseUuids);
+  const { courseMap: batchedCourseMap, isLoading: coursesLoading } = useCoursesByIds(courseUuids);
 
   /**
    * Course enrollments
@@ -207,297 +180,200 @@ function useStudentClassDefinitions(
    * Quizzes
    */
   const quizQueries = useQueries({
-    queries: classDefinitionUuids.map(
-      classUuid => ({
-        ...getQuizSchedulesOptions({
-          path: {
-            classUuid,
-          },
-        }),
-        enabled: !!classUuid,
-        staleTime: STALE_TIMES.live,
-      })
-    ),
+    queries: classDefinitionUuids.map(classUuid => ({
+      ...getQuizSchedulesOptions({
+        path: {
+          classUuid,
+        },
+      }),
+      enabled: !!classUuid,
+      staleTime: STALE_TIMES.live,
+    })),
   });
 
   /**
    * Assignments
    */
   const assignmentQueries = useQueries({
-    queries: classDefinitionUuids.map(
-      classUuid => ({
-        ...getAssignmentSchedulesOptions({
-          path: {
-            classUuid,
-          },
-        }),
-        enabled: !!classUuid,
-        staleTime: STALE_TIMES.live,
-      })
-    ),
+    queries: classDefinitionUuids.map(classUuid => ({
+      ...getAssignmentSchedulesOptions({
+        path: {
+          classUuid,
+        },
+      }),
+      enabled: !!classUuid,
+      staleTime: STALE_TIMES.live,
+    })),
   });
 
   /**
    * Class enrollments
    */
   const classEnrollmentQueries = useQueries({
-    queries: classDefinitionUuids.map(
-      classUuid => ({
-        ...getEnrollmentsForClassOptions({
-          path: {
-            uuid: classUuid,
-          },
-        }),
-        enabled: !!classUuid,
-        staleTime: STALE_TIMES.live,
-      })
-    ),
+    queries: classDefinitionUuids.map(classUuid => ({
+      ...getEnrollmentsForClassOptions({
+        path: {
+          uuid: classUuid,
+        },
+      }),
+      enabled: !!classUuid,
+      staleTime: STALE_TIMES.live,
+    })),
   });
 
   /**
    * Lesson map
    */
-  const lessonMap = new Map<
-    string,
-    LessonDetails
-  >();
+  const lessonMap = new Map<string, LessonDetails>();
 
   lessonQueries.forEach((query, index) => {
     const courseUuid = courseUuids[index];
 
     if (courseUuid) {
-      lessonMap.set(
-        courseUuid,
-        query.data?.data?.content ?? []
-      );
+      lessonMap.set(courseUuid, query.data?.data?.content ?? []);
     }
   });
 
   /**
    * Quiz map
    */
-  const quizMap = new Map<
-    string,
-    QuizDetails
-  >();
+  const quizMap = new Map<string, QuizDetails>();
 
   quizQueries.forEach((query, index) => {
-    const classUuid =
-      classDefinitionUuids[index];
+    const classUuid = classDefinitionUuids[index];
 
     if (classUuid) {
-      quizMap.set(
-        classUuid,
-        (query.data?.data as QuizDetails) ??
-        []
-      );
+      quizMap.set(classUuid, (query.data?.data as QuizDetails) ?? []);
     }
   });
 
   /**
    * Assignment map
    */
-  const assignmentMap = new Map<
-    string,
-    AssignmentDetails
-  >();
+  const assignmentMap = new Map<string, AssignmentDetails>();
 
-  assignmentQueries.forEach(
-    (query, index) => {
-      const classUuid =
-        classDefinitionUuids[index];
+  assignmentQueries.forEach((query, index) => {
+    const classUuid = classDefinitionUuids[index];
 
-      if (classUuid) {
-        assignmentMap.set(
-          classUuid,
-          (query.data?.data as AssignmentDetails) ??
-          []
-        );
-      }
+    if (classUuid) {
+      assignmentMap.set(classUuid, (query.data?.data as AssignmentDetails) ?? []);
     }
-  );
+  });
 
   /**
    * Schedule map
    */
-  const scheduleMap = new Map<
-    string,
-    ScheduledInstance[]
-  >();
+  const scheduleMap = new Map<string, ScheduledInstance[]>();
 
   scheduleQueries.forEach((query, index) => {
-    const classUuid =
-      classDefinitionUuids[index];
+    const classUuid = classDefinitionUuids[index];
 
     if (classUuid) {
-      scheduleMap.set(
-        classUuid,
-        query.data?.data?.content ?? []
-      );
+      scheduleMap.set(classUuid, query.data?.data?.content ?? []);
     }
   });
 
   /**
    * Course enrollments grouped by course UUID
    */
-  const courseEnrollmentMap = new Map<
-    string,
-    CourseEnrollment[]
-  >();
+  const courseEnrollmentMap = new Map<string, CourseEnrollment[]>();
 
   courseEnrollmentQueries.forEach(query => {
-    const enrollments =
-      query.data?.data?.content ?? [];
+    const enrollments = query.data?.data?.content ?? [];
 
     enrollments.forEach(enrollment => {
       if (!enrollment.course_uuid) {
         return;
       }
 
-      const existing =
-        courseEnrollmentMap.get(
-          enrollment.course_uuid
-        ) ?? [];
+      const existing = courseEnrollmentMap.get(enrollment.course_uuid) ?? [];
 
       existing.push(enrollment);
 
-      courseEnrollmentMap.set(
-        enrollment.course_uuid,
-        existing
-      );
+      courseEnrollmentMap.set(enrollment.course_uuid, existing);
     });
   });
 
   /**
    * Class enrollments grouped by class UUID
    */
-  const classEnrollmentMap = new Map<
-    string,
-    EnrollmentDetails
-  >();
+  const classEnrollmentMap = new Map<string, EnrollmentDetails>();
 
-  classEnrollmentQueries.forEach(
-    (query, index) => {
-      const classUuid =
-        classDefinitionUuids[index];
+  classEnrollmentQueries.forEach((query, index) => {
+    const classUuid = classDefinitionUuids[index];
 
-      if (classUuid) {
-        classEnrollmentMap.set(
-          classUuid,
-          query.data?.data ?? []
-        );
-      }
+    if (classUuid) {
+      classEnrollmentMap.set(classUuid, query.data?.data ?? []);
     }
-  );
+  });
 
   /**
    * Final class definitions
    */
-  const classDefinitions =
-    classDefinitionUuids.map(classUuid => {
-      const classDetails =
-        classDetailsByUuid.get(classUuid) ??
-        null;
+  const classDefinitions = classDefinitionUuids.map(classUuid => {
+    const classDetails = classDetailsByUuid.get(classUuid) ?? null;
 
-      const courseUuid =
-        classDetails?.course_uuid;
+    const courseUuid = classDetails?.course_uuid;
 
-      const course = courseUuid
-        ? ((batchedCourseMap[
-          courseUuid
-        ] as CourseDetails) ?? null)
-        : null;
+    const course = courseUuid ? ((batchedCourseMap[courseUuid] as CourseDetails) ?? null) : null;
 
-      const lessons = courseUuid
-        ? lessonMap.get(courseUuid) ?? []
-        : [];
+    const lessons = courseUuid ? (lessonMap.get(courseUuid) ?? []) : [];
 
-      const courseEnrollments =
-        courseUuid
-          ? courseEnrollmentMap.get(
-            courseUuid
-          ) ?? []
-          : [];
+    const courseEnrollments = courseUuid ? (courseEnrollmentMap.get(courseUuid) ?? []) : [];
 
-      const quizzes =
-        quizMap.get(classUuid) ?? [];
+    const quizzes = quizMap.get(classUuid) ?? [];
 
-      const assignments =
-        assignmentMap.get(classUuid) ?? [];
+    const assignments = assignmentMap.get(classUuid) ?? [];
 
-      const schedules =
-        scheduleMap.get(classUuid) ?? [];
+    const schedules = scheduleMap.get(classUuid) ?? [];
 
-      const classEnrollments =
-        classEnrollmentMap.get(classUuid) ??
-        [];
+    const classEnrollments = classEnrollmentMap.get(classUuid) ?? [];
 
-      const studentEnrollments =
-        enrollments.filter(
-          enrollment =>
-            enrollment.class_definition_uuid ===
-            classUuid
-        );
+    const studentEnrollments = enrollments.filter(
+      enrollment => enrollment.class_definition_uuid === classUuid
+    );
 
-      return {
-        uuid: classUuid,
+    return {
+      uuid: classUuid,
 
-        classDetails,
+      classDetails,
 
-        course,
+      course,
 
-        lessons,
+      lessons,
 
-        quizzes,
+      quizzes,
 
-        assignments,
+      assignments,
 
-        schedules,
+      schedules,
 
-        courseEnrollments,
+      courseEnrollments,
 
-        classEnrollments,
+      classEnrollments,
 
-        studentEnrollments,
-      };
-    });
+      studentEnrollments,
+    };
+  });
 
   const loading =
     classDefinitionsQuery.isLoading ||
-    scheduleQueries.some(
-      q => q.isLoading || q.isFetching
-    ) ||
+    scheduleQueries.some(q => q.isLoading || q.isFetching) ||
     coursesLoading ||
-    courseEnrollmentQueries.some(
-      q => q.isLoading || q.isFetching
-    ) ||
-    lessonQueries.some(
-      q => q.isLoading || q.isFetching
-    ) ||
-    quizQueries.some(
-      q => q.isLoading || q.isFetching
-    ) ||
-    assignmentQueries.some(
-      q => q.isLoading || q.isFetching
-    ) ||
-    classEnrollmentQueries.some(
-      q => q.isLoading || q.isFetching
-    );
+    courseEnrollmentQueries.some(q => q.isLoading || q.isFetching) ||
+    lessonQueries.some(q => q.isLoading || q.isFetching) ||
+    quizQueries.some(q => q.isLoading || q.isFetching) ||
+    assignmentQueries.some(q => q.isLoading || q.isFetching) ||
+    classEnrollmentQueries.some(q => q.isLoading || q.isFetching);
 
   const isError =
     classDefinitionsQuery.isError ||
     scheduleQueries.some(q => q.isError) ||
-    courseEnrollmentQueries.some(
-      q => q.isError
-    ) ||
+    courseEnrollmentQueries.some(q => q.isError) ||
     lessonQueries.some(q => q.isError) ||
     quizQueries.some(q => q.isError) ||
-    assignmentQueries.some(
-      q => q.isError
-    ) ||
-    classEnrollmentQueries.some(
-      q => q.isError
-    );
+    assignmentQueries.some(q => q.isError) ||
+    classEnrollmentQueries.some(q => q.isError);
 
   return {
     classDefinitions,

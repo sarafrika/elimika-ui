@@ -44,13 +44,19 @@ export function resolveStatusTone(status?: string | null): { tone: StatusTone; l
   if (!raw) return { tone: 'neutral', label: 'Unknown' };
 
   const key = raw.toLowerCase().replace(/[\s-]+/g, '_');
-  const label = raw
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, char => char.toUpperCase());
+  const label = raw.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 
   const success = ['verified', 'active', 'published', 'approved', 'completed', 'paid', 'true'];
   const warning = ['pending', 'in_review', 'pending_review', 'draft', 'processing', 'submitted'];
-  const destructive = ['rejected', 'inactive', 'archived', 'dismissed', 'failed', 'suspended', 'false'];
+  const destructive = [
+    'rejected',
+    'inactive',
+    'archived',
+    'dismissed',
+    'failed',
+    'suspended',
+    'false',
+  ];
 
   if (success.includes(key)) return { tone: 'success', label };
   if (warning.includes(key)) return { tone: 'warning', label };

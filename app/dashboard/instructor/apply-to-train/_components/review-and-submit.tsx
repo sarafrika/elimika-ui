@@ -159,7 +159,7 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
         <CardContent className='pt-6'>
           <div className='flex items-start gap-4'>
             {isReadyToSubmit ? (
-              <CheckCircle className='mt-1 h-6 w-6 text-success' />
+              <CheckCircle className='text-success mt-1 h-6 w-6' />
             ) : (
               <AlertTriangle className='mt-1 h-6 w-6 text-yellow-600' />
             )}
@@ -171,9 +171,7 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
                 Application {isReadyToSubmit ? 'Ready for Submission' : 'Incomplete'}
               </h4>
 
-              <p
-                className={`mt-1 text-sm ${isReadyToSubmit ? 'text-success' : 'text-yellow-600'}`}
-              >
+              <p className={`mt-1 text-sm ${isReadyToSubmit ? 'text-success' : 'text-yellow-600'}`}>
                 {status.completed} of {status.total} required sections completed (
                 {status.percentage}%)
               </p>
@@ -435,7 +433,7 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
               </div>
               {data?.gdprCompliant && (
                 <div className='mt-2 flex items-center gap-2 text-sm'>
-                  <CheckCircle className='h-3 w-3 text-success' />
+                  <CheckCircle className='text-success h-3 w-3' />
                   <span>GDPR Compliant</span>
                 </div>
               )}

@@ -109,14 +109,13 @@ export const InstructorDirectory: React.FC<Props> = ({
   );
 
   const allSpecializations = useMemo(
-    () =>
-      [
-        ...new Set(
-          skillsResponse?.data?.content
-            ?.map(skill => skill?.skill_name)
-            ?.filter((name): name is string => typeof name === 'string' && name.trim().length > 0)
-        ),
-      ],
+    () => [
+      ...new Set(
+        skillsResponse?.data?.content
+          ?.map(skill => skill?.skill_name)
+          ?.filter((name): name is string => typeof name === 'string' && name.trim().length > 0)
+      ),
+    ],
     [skillsResponse]
   );
 
@@ -126,7 +125,9 @@ export const InstructorDirectory: React.FC<Props> = ({
         ?.filter(instructor => {
           if (
             filters.searchQuery &&
-            !(instructor.full_name ?? '').toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
+            !(instructor.full_name ?? '')
+              .toLowerCase()
+              .includes(filters.searchQuery.toLowerCase()) &&
             !(instructor.professional_headline ?? '')
               .toLowerCase()
               .includes(filters.searchQuery.toLowerCase()) &&
@@ -143,7 +144,10 @@ export const InstructorDirectory: React.FC<Props> = ({
             }
           }
 
-          if (filters.gender !== 'all' && (instructor.gender ?? '').toLowerCase() !== filters.gender) {
+          if (
+            filters.gender !== 'all' &&
+            (instructor.gender ?? '').toLowerCase() !== filters.gender
+          ) {
             return false;
           }
 
@@ -174,7 +178,9 @@ export const InstructorDirectory: React.FC<Props> = ({
 
           if (
             filters.location &&
-            !(instructor.location?.city ?? '').toLowerCase().includes(filters.location.toLowerCase())
+            !(instructor.location?.city ?? '')
+              .toLowerCase()
+              .includes(filters.location.toLowerCase())
           ) {
             return false;
           }
@@ -240,7 +246,7 @@ export const InstructorDirectory: React.FC<Props> = ({
     (filters.location ? 1 : 0);
 
   const filterPanel = (
-    <Card className='space-y-4 rounded-[22px] border bg-card p-4 shadow-none'>
+    <Card className='bg-card space-y-4 rounded-[22px] border p-4 shadow-none'>
       <div className='flex items-center justify-between gap-3'>
         <h3 className='flex items-center gap-2 text-sm font-semibold'>
           <Filter className='h-4 w-4' />
@@ -346,7 +352,10 @@ export const InstructorDirectory: React.FC<Props> = ({
         </div>
         <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-1'>
           {allSpecializations.slice(0, 6).map(spec => (
-            <label key={spec} className='flex items-center gap-2 rounded-xl border px-3 py-2 text-sm'>
+            <label
+              key={spec}
+              className='flex items-center gap-2 rounded-xl border px-3 py-2 text-sm'
+            >
               <Checkbox
                 checked={filters.specializations.includes(spec)}
                 onCheckedChange={() => toggleSpecialization(spec)}
@@ -395,7 +404,10 @@ export const InstructorDirectory: React.FC<Props> = ({
         <Label className='text-xs font-medium'>Mode</Label>
         <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-1'>
           {['online', 'onsite'].map(mode => (
-            <label key={mode} className='flex items-center gap-2 rounded-xl border px-3 py-2 text-sm capitalize'>
+            <label
+              key={mode}
+              className='flex items-center gap-2 rounded-xl border px-3 py-2 text-sm capitalize'
+            >
               <Checkbox
                 checked={filters.mode.includes(mode)}
                 onCheckedChange={() => toggleMode(mode)}
@@ -412,15 +424,16 @@ export const InstructorDirectory: React.FC<Props> = ({
     <div className='grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]'>
       {!selectedInstructor ? (
         <>
-          <div className='hidden xl:block xl:sticky xl:top-4 xl:h-fit'>{filterPanel}</div>
+          <div className='hidden xl:sticky xl:top-4 xl:block xl:h-fit'>{filterPanel}</div>
 
           <div className='min-w-0'>
-            <Card className='mb-5 rounded-[22px] border bg-card p-4 shadow-none sm:p-5'>
+            <Card className='bg-card mb-5 rounded-[22px] border p-4 shadow-none sm:p-5'>
               <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
                 <div>
                   <p className='text-foreground text-sm font-semibold'>Instructor results</p>
                   <p className='text-muted-foreground text-sm'>
-                    Showing {visibleInstructors.length} of {filteredInstructors.length} matching instructors
+                    Showing {visibleInstructors.length} of {filteredInstructors.length} matching
+                    instructors
                   </p>
                 </div>
 
@@ -436,7 +449,8 @@ export const InstructorDirectory: React.FC<Props> = ({
                     <SheetHeader className='border-b px-4 py-4'>
                       <SheetTitle>Filter Instructors</SheetTitle>
                       <SheetDescription>
-                        Refine the instructor list by search, experience, rating, mode and specialization.
+                        Refine the instructor list by search, experience, rating, mode and
+                        specialization.
                       </SheetDescription>
                     </SheetHeader>
                     <div className='p-4'>{filterPanel}</div>
@@ -450,7 +464,10 @@ export const InstructorDirectory: React.FC<Props> = ({
                 {filters.specializations.map(spec => (
                   <Badge key={spec} variant='secondary' className='gap-1 rounded-full px-3 py-1'>
                     {spec}
-                    <X className='h-3 w-3 cursor-pointer' onClick={() => toggleSpecialization(spec)} />
+                    <X
+                      className='h-3 w-3 cursor-pointer'
+                      onClick={() => toggleSpecialization(spec)}
+                    />
                   </Badge>
                 ))}
                 {filters.mode.map(mode => (
@@ -471,13 +488,19 @@ export const InstructorDirectory: React.FC<Props> = ({
                 {filters.gender !== 'all' ? (
                   <Badge variant='secondary' className='gap-1 rounded-full px-3 py-1'>
                     {filters.gender}
-                    <X className='h-3 w-3 cursor-pointer' onClick={() => updateFilter('gender', 'all')} />
+                    <X
+                      className='h-3 w-3 cursor-pointer'
+                      onClick={() => updateFilter('gender', 'all')}
+                    />
                   </Badge>
                 ) : null}
                 {filters.minRating > 0 ? (
                   <Badge variant='secondary' className='gap-1 rounded-full px-3 py-1'>
                     {filters.minRating}+ rating
-                    <X className='h-3 w-3 cursor-pointer' onClick={() => updateFilter('minRating', 0)} />
+                    <X
+                      className='h-3 w-3 cursor-pointer'
+                      onClick={() => updateFilter('minRating', 0)}
+                    />
                   </Badge>
                 ) : null}
               </div>
@@ -490,7 +513,11 @@ export const InstructorDirectory: React.FC<Props> = ({
                 <p className='text-muted-foreground mt-2'>
                   Try adjusting your filters to see more results.
                 </p>
-                <Button onClick={clearFilters} variant='outline' className='max-auto self-center max-w-fit px-4 mt-4 rounded-md shadow-none'>
+                <Button
+                  onClick={clearFilters}
+                  variant='outline'
+                  className='max-auto mt-4 max-w-fit self-center rounded-md px-4 shadow-none'
+                >
                   Clear Filters
                 </Button>
               </Card>
@@ -513,7 +540,9 @@ export const InstructorDirectory: React.FC<Props> = ({
                       type='button'
                       variant='outline'
                       onClick={() =>
-                        setVisibleInstructorCount(current => current + getInstructorBatchSize(window.innerWidth))
+                        setVisibleInstructorCount(
+                          current => current + getInstructorBatchSize(window.innerWidth)
+                        )
                       }
                       className='rounded-xl px-5 shadow-none'
                     >

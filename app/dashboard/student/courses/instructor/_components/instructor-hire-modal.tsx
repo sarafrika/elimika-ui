@@ -5,12 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -69,17 +64,17 @@ const serviceOptions: Array<{
   label: string;
   description: string;
 }> = [
-    {
-      id: 'private',
-      label: '1-on-1 Session',
-      description: 'Private booking for one learner',
-    },
-    {
-      id: 'group',
-      label: 'Group Session',
-      description: 'Shared class for multiple learners',
-    },
-  ];
+  {
+    id: 'private',
+    label: '1-on-1 Session',
+    description: 'Private booking for one learner',
+  },
+  {
+    id: 'group',
+    label: 'Group Session',
+    description: 'Shared class for multiple learners',
+  },
+];
 
 const timeSlots = [
   '08:00 AM',
@@ -101,25 +96,25 @@ const paymentMethods: Array<{
   description: string;
   icon: typeof Wallet;
 }> = [
-    {
-      id: 'skills-fund',
-      label: 'Skills Fund',
-      description: 'Pay using your Skills Wallet',
-      icon: Wallet,
-    },
-    {
-      id: 'm-pesa',
-      label: 'M-Pesa',
-      description: 'Pay with mobile money',
-      icon: Phone,
-    },
-    {
-      id: 'card',
-      label: 'Card',
-      description: 'Visa, Mastercard, and more',
-      icon: CreditCard,
-    },
-  ];
+  {
+    id: 'skills-fund',
+    label: 'Skills Fund',
+    description: 'Pay using your Skills Wallet',
+    icon: Wallet,
+  },
+  {
+    id: 'm-pesa',
+    label: 'M-Pesa',
+    description: 'Pay with mobile money',
+    icon: Phone,
+  },
+  {
+    id: 'card',
+    label: 'Card',
+    description: 'Visa, Mastercard, and more',
+    icon: CreditCard,
+  },
+];
 
 const stepItems = ['Service Details', 'Schedule', 'Payment', 'Confirm'];
 
@@ -135,7 +130,7 @@ function getLocation(instructor: SearchInstructor) {
 // }
 
 function getTopSkills(instructor: SearchInstructor) {
-  return {}
+  return {};
 }
 
 function getCourseLabel(course: { name?: string; category_names?: Array<string> }) {
@@ -227,7 +222,10 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
   }, [trainingApplications]);
 
   const courseUuids = useMemo(
-    () => Array.from(new Set(approvedApplications.map(application => application.course_uuid).filter(Boolean))),
+    () =>
+      Array.from(
+        new Set(approvedApplications.map(application => application.course_uuid).filter(Boolean))
+      ),
     [approvedApplications]
   );
 
@@ -243,7 +241,9 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
   const allowedCourses = useMemo(() => {
     return courseQueries
       .map(query => query.data?.data)
-      .filter((course): course is { uuid?: string; name?: string; category_names?: string[] } => Boolean(course));
+      .filter((course): course is { uuid?: string; name?: string; category_names?: string[] } =>
+        Boolean(course)
+      );
   }, [courseQueries]);
 
   const selectedApplication = useMemo(
@@ -252,7 +252,10 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
   );
 
   const selectedCourse = useMemo(
-    () => allowedCourses.find(course => course.uuid === selectedCourseUuid) ?? allowedCourses[0] ?? null,
+    () =>
+      allowedCourses.find(course => course.uuid === selectedCourseUuid) ??
+      allowedCourses[0] ??
+      null,
     [allowedCourses, selectedCourseUuid]
   );
 
@@ -285,19 +288,22 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
     [selectedDates]
   );
 
-  const reviewCount = instructor?.review_count ?? Math.max(18, Math.round(((instructor?.rating ?? 4.8) || 4.8) * 25));
+  const reviewCount =
+    instructor?.review_count ?? Math.max(18, Math.round(((instructor?.rating ?? 4.8) || 4.8) * 25));
   const topSkills = getTopSkills(instructor ?? ({} as SearchInstructor));
   const matchScore = Math.min(
     99,
     60 +
-    Math.min(20, Math.round((instructor?.rating ?? 4.4) * 4)) +
-    Math.min(10, Math.round((instructor?.total_experience_years ?? 0) * 1.2)) +
-    (instructor?.admin_verified ? 7 : 0) +
-    (instructor?.is_profile_complete ? 5 : 0)
+      Math.min(20, Math.round((instructor?.rating ?? 4.4) * 4)) +
+      Math.min(10, Math.round((instructor?.total_experience_years ?? 0) * 1.2)) +
+      (instructor?.admin_verified ? 7 : 0) +
+      (instructor?.is_profile_complete ? 5 : 0)
   );
 
   const currentStep = useMemo(() => {
-    const hasServiceDetails = Boolean(selectedCourseUuid && selectedService && selectedSessionType && hoursPerClass > 0);
+    const hasServiceDetails = Boolean(
+      selectedCourseUuid && selectedService && selectedSessionType && hoursPerClass > 0
+    );
     const hasSchedule = selectedDates.length > 0 && Boolean(selectedTime);
     const hasPayment = Boolean(selectedPayment);
     const hasSummary = hasServiceDetails && hasSchedule && hasPayment;
@@ -307,7 +313,15 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
     if (!hasPayment) return 3;
     if (hasSummary) return 4;
     return 1;
-  }, [hoursPerClass, selectedCourseUuid, selectedDates.length, selectedPayment, selectedService, selectedSessionType, selectedTime]);
+  }, [
+    hoursPerClass,
+    selectedCourseUuid,
+    selectedDates.length,
+    selectedPayment,
+    selectedService,
+    selectedSessionType,
+    selectedTime,
+  ]);
 
   useEffect(() => {
     if (!open) {
@@ -421,7 +435,9 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
     }
 
     if (successCount > 0) {
-      toast.error(`${successCount} booking request${successCount === 1 ? '' : 's'} created, ${failures.length} failed`);
+      toast.error(
+        `${successCount} booking request${successCount === 1 ? '' : 's'} created, ${failures.length} failed`
+      );
       return;
     }
 
@@ -433,7 +449,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
       <DialogContent className='max-h-[92vh] max-w-[calc(100vw-1rem)] overflow-hidden rounded-[20px] p-0 sm:max-w-5xl lg:max-w-6xl'>
         <div className='flex max-h-[92vh] flex-col'>
           <DialogHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-            <DialogTitle className='self-statrt text-start sm:text-center text-[1.1rem] font-semibold sm:text-[1.25rem]'>
+            <DialogTitle className='self-statrt text-start text-[1.1rem] font-semibold sm:text-center sm:text-[1.25rem]'>
               Hire {instructor.full_name || 'Instructor'}
             </DialogTitle>
           </DialogHeader>
@@ -443,8 +459,11 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
               <div className='bg-card shadow-none'>
                 <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
                   <div className='flex min-w-0 items-start gap-4'>
-                    <Avatar className='size-20 border border-border/60 sm:size-24'>
-                      <AvatarImage src={instructor.profile_image_url ?? undefined} alt={instructor.full_name} />
+                    <Avatar className='border-border/60 size-20 border sm:size-24'>
+                      <AvatarImage
+                        src={instructor.profile_image_url ?? undefined}
+                        alt={instructor.full_name}
+                      />
                       <AvatarFallback className='text-lg font-semibold'>
                         {instructor.full_name?.charAt(0) || 'I'}
                       </AvatarFallback>
@@ -452,7 +471,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
 
                     <div className='min-w-0 space-y-2'>
                       <div className='flex flex-wrap items-center gap-2'>
-                        <Badge className='bg-success/10 border border-success/45 text-success rounded-full px-2.5 text-[11px]'>
+                        <Badge className='bg-success/10 border-success/45 text-success rounded-full border px-2.5 text-[11px]'>
                           Available
                         </Badge>
                       </div>
@@ -499,9 +518,9 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                     </div>
                   </div>
 
-                  <Card className='h-auto w-full rounded-[18px] border bg-background p-4 shadow-none sm:max-w-[300px]'>
+                  <Card className='bg-background h-auto w-full rounded-[18px] border p-4 shadow-none sm:max-w-[300px]'>
                     <div className='space-y-2'>
-                      <p className='text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
+                      <p className='text-muted-foreground text-xs font-semibold tracking-[0.14em] uppercase'>
                         AI Match Score
                       </p>
                       <div className='flex items-center gap-3'>
@@ -514,12 +533,12 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                             )`,
                           }}
                         >
-                          <div className='grid size-[58px] place-items-center rounded-full bg-card text-center'>
+                          <div className='bg-card grid size-[58px] place-items-center rounded-full text-center'>
                             <div>
-                              <div className='text-[0.95rem] font-semibold leading-none text-foreground'>
+                              <div className='text-foreground text-[0.95rem] leading-none font-semibold'>
                                 {matchScore}%
                               </div>
-                              <div className='mt-0.5 text-[0.55rem] uppercase tracking-wide text-muted-foreground'>
+                              <div className='text-muted-foreground mt-0.5 text-[0.55rem] tracking-wide uppercase'>
                                 match
                               </div>
                             </div>
@@ -542,10 +561,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                   const isCompleted = index + 1 < currentStep;
 
                   return (
-                    <div
-                      key={step}
-                      className='flex items-center md:w-full'
-                    >
+                    <div key={step} className='flex items-center md:w-full'>
                       <div className='flex items-center gap-2'>
                         <div
                           className={[
@@ -563,9 +579,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                         <span
                           className={[
                             'text-xs font-medium',
-                            isActive
-                              ? 'text-foreground'
-                              : 'text-muted-foreground',
+                            isActive ? 'text-foreground' : 'text-muted-foreground',
                           ].join(' ')}
                         >
                           {step}
@@ -574,11 +588,11 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
 
                       {/* connector line only on desktop */}
                       {index !== stepItems.length - 1 ? (
-                        <div className='relative mx-3 hidden h-[2px] flex-1 bg-border md:block'>
+                        <div className='bg-border relative mx-3 hidden h-[2px] flex-1 md:block'>
                           <div
                             className={[
-                              'absolute left-0 top-0 h-full transition-all',
-                              isCompleted ? 'w-full bg-primary' : 'w-0',
+                              'absolute top-0 left-0 h-full transition-all',
+                              isCompleted ? 'bg-primary w-full' : 'w-0',
                             ].join(' ')}
                           />
                         </div>
@@ -590,7 +604,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
 
               <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_400px] xl:grid-cols-[minmax(0,1fr)_400px]'>
                 <div className='space-y-4'>
-                  <Card className='rounded-[16px] border bg-card p-4 shadow-none'>
+                  <Card className='bg-card rounded-[16px] border p-4 shadow-none'>
                     <div className='space-y-2'>
                       <h3 className='text-sm font-semibold sm:text-base'>Select Service</h3>
                       <p className='text-muted-foreground text-xs sm:text-sm'>
@@ -601,7 +615,8 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                     <div className='mt-4 grid gap-3 md:grid-cols-2'>
                       {serviceOptions.map(option => {
                         const active = option.id === selectedService;
-                        const rateForService = selectedRateCard?.[resolveRateKey(option.id, selectedSessionType)] ?? 0;
+                        const rateForService =
+                          selectedRateCard?.[resolveRateKey(option.id, selectedSessionType)] ?? 0;
 
                         return (
                           <button
@@ -624,9 +639,13 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                               />
                               <div className='min-w-0'>
                                 <p className='text-sm font-medium'>{option.label}</p>
-                                <p className='text-muted-foreground mt-1 text-xs'>{option.description}</p>
+                                <p className='text-muted-foreground mt-1 text-xs'>
+                                  {option.description}
+                                </p>
                                 <p className='text-primary mt-2 text-xs font-medium'>
-                                  {rateForService > 0 ? formatMoney(rateForService, currency) : 'Rate unavailable'}
+                                  {rateForService > 0
+                                    ? formatMoney(rateForService, currency)
+                                    : 'Rate unavailable'}
                                 </p>
                               </div>
                             </div>
@@ -636,7 +655,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                     </div>
                   </Card>
 
-                  <Card className='rounded-[16px] border bg-card p-4 shadow-none'>
+                  <Card className='bg-card rounded-[16px] border p-4 shadow-none'>
                     <div className='space-y-4'>
                       <div>
                         <h3 className='text-sm font-semibold sm:text-base'>Session Details</h3>
@@ -647,7 +666,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
 
                       <div className='grid gap-3 sm:grid-cols-2'>
                         <div className='space-y-1.5 sm:col-span-2'>
-                          <p className='text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground'>
+                          <p className='text-muted-foreground text-[11px] font-semibold tracking-[0.12em] uppercase'>
                             Approved Course
                           </p>
                           <div className='w-full min-w-0'>
@@ -656,7 +675,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                               onValueChange={setSelectedCourseUuid}
                               disabled={!allowedCourses.length}
                             >
-                              <SelectTrigger className='text-start h-10 w-full min-w-0 rounded-md text-sm'>
+                              <SelectTrigger className='h-10 w-full min-w-0 rounded-md text-start text-sm'>
                                 <SelectValue
                                   placeholder={
                                     allowedCourses.length
@@ -693,7 +712,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                         </div>
 
                         <div className='space-y-1.5'>
-                          <p className='text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground'>
+                          <p className='text-muted-foreground text-[11px] font-semibold tracking-[0.12em] uppercase'>
                             Session Type
                           </p>
                           <div className='grid grid-cols-2 gap-2'>
@@ -728,7 +747,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                         </div>
 
                         <div className='space-y-1.5'>
-                          <p className='text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground'>
+                          <p className='text-muted-foreground text-[11px] font-semibold tracking-[0.12em] uppercase'>
                             Hours per Class
                           </p>
                           <Input
@@ -740,12 +759,13 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                             className='h-10 rounded-[12px] text-sm'
                           />
                           <p className='text-muted-foreground text-xs'>
-                            The final amount uses the rate per hour for each selected class instance.
+                            The final amount uses the rate per hour for each selected class
+                            instance.
                           </p>
                         </div>
 
                         <div className='space-y-1.5 sm:col-span-2'>
-                          <Label className='text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground'>
+                          <Label className='text-muted-foreground text-[11px] font-semibold tracking-[0.12em] uppercase'>
                             Notes
                           </Label>
                           <Textarea
@@ -755,13 +775,15 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                             placeholder='Add learning goals, special instructions, or any booking notes...'
                             maxLength={500}
                           />
-                          <p className='text-right text-xs text-muted-foreground'>{hireNotes.length}/500</p>
+                          <p className='text-muted-foreground text-right text-xs'>
+                            {hireNotes.length}/500
+                          </p>
                         </div>
                       </div>
                     </div>
                   </Card>
 
-                  <Card className='rounded-[16px] border bg-card p-4 shadow-none'>
+                  <Card className='bg-card rounded-[16px] border p-4 shadow-none'>
                     <div className='flex items-center justify-between gap-3'>
                       <div>
                         <h3 className='text-sm font-semibold sm:text-base'>Choose Days</h3>
@@ -783,9 +805,9 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                         className='w-full rounded-lg border'
                       />
 
-                      <div className='space-y-3 rounded-[14px] border bg-background p-3'>
+                      <div className='bg-background space-y-3 rounded-[14px] border p-3'>
                         <div>
-                          <p className='text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground'>
+                          <p className='text-muted-foreground text-xs font-semibold tracking-[0.12em] uppercase'>
                             Available Time Slots
                           </p>
                           <p className='text-muted-foreground mt-1 text-xs'>
@@ -815,21 +837,17 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                         </div>
 
                         <div className='space-y-2'>
-                          <p className='text-xs font-medium text-muted-foreground'>
-                            Selected days
-                          </p>
+                          <p className='text-muted-foreground text-xs font-medium'>Selected days</p>
                           {selectedDateLabels.length ? (
                             <ul className='space-y-2 text-xs'>
                               {selectedDateLabels.map(label => (
-                                <li key={label} className='rounded-md border bg-card px-2.5 py-2'>
+                                <li key={label} className='bg-card rounded-md border px-2.5 py-2'>
                                   {label}
                                 </li>
                               ))}
                             </ul>
                           ) : (
-                            <p className='text-muted-foreground text-xs'>
-                              No dates selected yet.
-                            </p>
+                            <p className='text-muted-foreground text-xs'>No dates selected yet.</p>
                           )}
                         </div>
                       </div>
@@ -838,13 +856,21 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                 </div>
 
                 <div className='space-y-4'>
-                  <Card className='rounded-[16px] border bg-success/5 p-4 shadow-none'>
+                  <Card className='bg-success/5 rounded-[16px] border p-4 shadow-none'>
                     <h3 className='text-sm font-semibold sm:text-base'>Booking Summary</h3>
                     <div className='mt-4 space-y-3 text-sm'>
                       <SummaryRow label='Instructor' value={instructor.full_name || 'Instructor'} />
                       <SummaryRow label='Service' value={selectedServiceOption.label} />
-                      <SummaryRow label='Session type' value={selectedSessionType === 'online' ? 'Online' : 'Physical'} />
-                      <SummaryRow label='Course' value={selectedCourse ? getCourseLabel(selectedCourse) : 'No course selected'} />
+                      <SummaryRow
+                        label='Session type'
+                        value={selectedSessionType === 'online' ? 'Online' : 'Physical'}
+                      />
+                      <SummaryRow
+                        label='Course'
+                        value={
+                          selectedCourse ? getCourseLabel(selectedCourse) : 'No course selected'
+                        }
+                      />
                       <SummaryRow label='Class days' value={String(classInstances || 0)} />
                       <SummaryRow label='Hours per class' value={getDurationLabel(hoursPerClass)} />
                       <SummaryRow label='Time' value={selectedTime || 'No time selected'} />
@@ -856,17 +882,25 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                       />
                       <SummaryRow
                         label='Per class amount'
-                        value={perSessionAmount > 0 ? formatMoney(perSessionAmount, currency) : 'Unavailable'}
+                        value={
+                          perSessionAmount > 0
+                            ? formatMoney(perSessionAmount, currency)
+                            : 'Unavailable'
+                        }
                       />
                       <SummaryRow
                         label='Total booking amount'
-                        value={totalAmount > 0 ? formatMoney(totalAmount, currency) : 'Select days to calculate'}
+                        value={
+                          totalAmount > 0
+                            ? formatMoney(totalAmount, currency)
+                            : 'Select days to calculate'
+                        }
                         strong
                       />
                     </div>
                   </Card>
 
-                  <Card className='rounded-[16px] border bg-card p-4 shadow-none'>
+                  <Card className='bg-card rounded-[16px] border p-4 shadow-none'>
                     <h3 className='text-sm font-semibold sm:text-base'>Payment Method</h3>
                     <div className='mt-3 space-y-2'>
                       {paymentMethods.map(method => {
@@ -889,14 +923,18 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                               <div
                                 className={[
                                   'flex size-9 items-center justify-center rounded-xl',
-                                  active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+                                  active
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'bg-muted text-muted-foreground',
                                 ].join(' ')}
                               >
                                 <Icon className='size-4' />
                               </div>
                               <div>
                                 <p className='text-sm font-medium'>{method.label}</p>
-                                <p className='text-muted-foreground text-xs'>{method.description}</p>
+                                <p className='text-muted-foreground text-xs'>
+                                  {method.description}
+                                </p>
                               </div>
                             </div>
                             <div
@@ -905,19 +943,24 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                                 active ? 'border-primary bg-primary' : 'border-muted-foreground',
                               ].join(' ')}
                             >
-                              {active ? <Check className='size-3 text-white' strokeWidth={3} /> : null}
+                              {active ? (
+                                <Check className='size-3 text-white' strokeWidth={3} />
+                              ) : null}
                             </div>
                           </button>
                         );
                       })}
                     </div>
 
-                    <Card className='mt-4 rounded-[18px] border bg-success/10 p-4 shadow-none'>
+                    <Card className='bg-success/10 mt-4 rounded-[18px] border p-4 shadow-none'>
                       <div className='flex items-start gap-3'>
                         <CheckCircle2 className='text-success mt-0.5 size-4' />
                         <div className='text-sm'>
                           <p className='text-success font-medium'>
-                            You will be charged {totalAmount > 0 ? formatMoney(totalAmount, currency) : 'when booking details are complete'}
+                            You will be charged{' '}
+                            {totalAmount > 0
+                              ? formatMoney(totalAmount, currency)
+                              : 'when booking details are complete'}
                           </p>
                           <p className='text-success/80 mt-1'>
                             {classInstances > 0 && hoursPerClass > 0
@@ -931,7 +974,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                 </div>
               </div>
 
-              <Card className='rounded-md border bg-card p-4 shadow-none mb-10'>
+              <Card className='bg-card mb-10 rounded-md border p-4 shadow-none'>
                 <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                   <div className='text-sm'>
                     <div className='text-success flex items-center gap-2 font-medium'>
@@ -939,7 +982,8 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                       Secure Booking
                     </div>
                     <p className='text-muted-foreground mt-1 text-xs sm:text-sm'>
-                      Your booking will be created using the selected schedule and approved course rate.
+                      Your booking will be created using the selected schedule and approved course
+                      rate.
                     </p>
                   </div>
 
@@ -992,11 +1036,10 @@ function SummaryRow({
   strong?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-muted-foreground shrink-0">{label}</span>
+    <div className='flex items-center justify-between gap-3'>
+      <span className='text-muted-foreground shrink-0'>{label}</span>
       <span
-        className={`truncate max-w-[60%] text-right ${strong ? "font-semibold" : "font-medium"
-          }`}
+        className={`max-w-[60%] truncate text-right ${strong ? 'font-semibold' : 'font-medium'}`}
         title={value} // shows full text on hover
       >
         {value}

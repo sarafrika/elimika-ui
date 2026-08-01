@@ -192,8 +192,8 @@ export default function ReusableCourseDetailsPage({
   const avgRating =
     reviewCount > 0
       ? (reviewItems.reduce((sum, review) => sum + (review.rating || 0), 0) / reviewCount).toFixed(
-        1
-      )
+          1
+        )
       : null;
   const detailStats = [
     { label: 'Lessons', value: lessonsWithContent?.length || 0, icon: BookOpen },
@@ -236,10 +236,11 @@ export default function ReusableCourseDetailsPage({
                       {[1, 2, 3, 4, 5].map(s => (
                         <Star
                           key={s}
-                          className={`h-4 w-4 ${s <= Math.round(Number(avgRating))
-                            ? 'fill-warning text-warning'
-                            : 'text-muted-foreground/40'
-                            }`}
+                          className={`h-4 w-4 ${
+                            s <= Math.round(Number(avgRating))
+                              ? 'fill-warning text-warning'
+                              : 'text-muted-foreground/40'
+                          }`}
                         />
                       ))}
                     </div>
@@ -387,10 +388,7 @@ export default function ReusableCourseDetailsPage({
                   href={`/dashboard/instructor/courses/${courseData?.uuid}/my-classes`}
                   className='w-full rounded-xl font-semibold'
                 >
-                  <Button
-                    className='w-full rounded-xl font-semibold'
-                    size='lg'
-                  >
+                  <Button className='w-full rounded-xl font-semibold' size='lg'>
                     View my classes
                   </Button>
                 </Link>
@@ -470,12 +468,12 @@ export default function ReusableCourseDetailsPage({
             requirements={courseData?.training_requirements}
             viewerRole={
               userRole as
-              | 'admin'
-              | 'course_creator'
-              | 'instructor'
-              | 'organization'
-              | 'student'
-              | undefined
+                | 'admin'
+                | 'course_creator'
+                | 'instructor'
+                | 'organization'
+                | 'student'
+                | undefined
             }
             description='Review what is required for this course before enrollment or delivery.'
           />

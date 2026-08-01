@@ -45,7 +45,8 @@ function inferAttachmentContentType(attachment: AttachmentItem) {
   if (mime.startsWith('video/') || /\.(mp4|webm|mov|m4v|mkv)$/.test(fileName)) return 'video';
   if (mime.startsWith('audio/') || /\.(mp3|wav|m4a|aac|ogg|flac)$/.test(fileName)) return 'audio';
   if (mime.includes('pdf') || fileName.endsWith('.pdf')) return 'pdf';
-  if (mime.startsWith('text/') || /\.(txt|md|csv|html?|xml|json|rtf)$/.test(fileName)) return 'text';
+  if (mime.startsWith('text/') || /\.(txt|md|csv|html?|xml|json|rtf)$/.test(fileName))
+    return 'text';
   if (officeExtensions.includes(extension)) {
     if (['doc', 'docx', 'odt'].includes(extension)) return 'document';
     if (['xls', 'xlsx', 'ods'].includes(extension)) return 'spreadsheet';
@@ -82,11 +83,11 @@ export function AttachmentResourceList({
 
   const previewContent: PreviewableAttachment | null = previewAttachment
     ? ({
-      ...previewAttachment,
-      title: previewAttachment.original_filename ?? 'Attachment',
-      content_text: null,
-      value: previewAttachment.file_url || null,
-    } as unknown as PreviewableAttachment)
+        ...previewAttachment,
+        title: previewAttachment.original_filename ?? 'Attachment',
+        content_text: null,
+        value: previewAttachment.file_url || null,
+      } as unknown as PreviewableAttachment)
     : null;
 
   return (

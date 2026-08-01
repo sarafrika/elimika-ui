@@ -30,7 +30,7 @@ export function RequirementsSection({ course }: { course: Course }) {
             ))}
           </div>
         ) : requirements.length === 0 ? (
-          <p className='rounded-md border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground'>
+          <p className='border-border/70 text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
             No enrollment requirements defined.
           </p>
         ) : (
@@ -38,14 +38,16 @@ export function RequirementsSection({ course }: { course: Course }) {
             {requirements.map(requirement => (
               <li
                 key={requirement.uuid}
-                className='flex items-start gap-3 rounded-md border border-border/60 bg-muted/20 px-4 py-3'
+                className='border-border/60 bg-muted/20 flex items-start gap-3 rounded-md border px-4 py-3'
               >
-                <ClipboardList className='mt-0.5 size-4 shrink-0 text-muted-foreground' />
+                <ClipboardList className='text-muted-foreground mt-0.5 size-4 shrink-0' />
                 <div className='min-w-0 flex-1'>
-                  <p className='text-sm text-foreground'>{requirement.requirement_text}</p>
+                  <p className='text-foreground text-sm'>{requirement.requirement_text}</p>
                   <div className='mt-1 flex flex-wrap gap-1.5'>
                     <Badge variant='secondary' className='rounded-md text-[11px] capitalize'>
-                      {String(requirement.requirement_type ?? '').replace(/_/g, ' ').toLowerCase()}
+                      {String(requirement.requirement_type ?? '')
+                        .replace(/_/g, ' ')
+                        .toLowerCase()}
                     </Badge>
                     {requirement.is_mandatory === false ? (
                       <Badge variant='outline' className='rounded-md text-[11px]'>

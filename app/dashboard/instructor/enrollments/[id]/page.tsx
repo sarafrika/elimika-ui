@@ -182,9 +182,9 @@ const EnrollmentDetails = () => {
   const enrollmentDetails = useMemo<StudentEnrollmentDetail[]>(() => {
     return instructorClasses
       .map((classItem, index: number) => {
-        const enrollments = ((enrollmentQueries[index]?.data?.data ?? []) as EnrollmentRecord[]).filter(
-          enrollment => enrollment.student_uuid === studentId
-        );
+        const enrollments = (
+          (enrollmentQueries[index]?.data?.data ?? []) as EnrollmentRecord[]
+        ).filter(enrollment => enrollment.student_uuid === studentId);
 
         if (enrollments.length === 0) {
           return null;
@@ -415,10 +415,11 @@ const EnrollmentDetails = () => {
                     key={enrollment.courseId}
                     type='button'
                     onClick={() => setSelectedCourseId(enrollment.courseId)}
-                    className={`border-border/50 w-full rounded-xl border p-4 text-left transition-colors ${selectedEnrollment?.courseId === enrollment.courseId
-                      ? 'border-primary bg-primary/5'
-                      : 'hover:bg-accent/5'
-                      }`}
+                    className={`border-border/50 w-full rounded-xl border p-4 text-left transition-colors ${
+                      selectedEnrollment?.courseId === enrollment.courseId
+                        ? 'border-primary bg-primary/5'
+                        : 'hover:bg-accent/5'
+                    }`}
                   >
                     <div className='flex items-start justify-between gap-3'>
                       <div className='min-w-0 space-y-2'>
@@ -494,10 +495,10 @@ const EnrollmentDetails = () => {
                       <p className='text-foreground text-xl font-semibold'>
                         {selectedEnrollment.markedSessions > 0
                           ? `${Math.round(
-                            (selectedEnrollment.attendedSessions /
-                              selectedEnrollment.markedSessions) *
-                            100
-                          )}%`
+                              (selectedEnrollment.attendedSessions /
+                                selectedEnrollment.markedSessions) *
+                                100
+                            )}%`
                           : 'N/A'}
                       </p>
                     </div>

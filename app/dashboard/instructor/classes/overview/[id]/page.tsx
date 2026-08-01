@@ -42,7 +42,7 @@ import {
   MessageCircle,
   Share2,
   Twitter,
-  Users
+  Users,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -72,13 +72,12 @@ export const socialShareActions: Array<{
   label: string;
   platform: SharePlatform;
 }> = [
-    { icon: Facebook, label: 'Facebook', platform: 'facebook' },
-    { icon: Twitter, label: 'Twitter', platform: 'twitter' },
-    { icon: Linkedin, label: 'LinkedIn', platform: 'linkedin' },
-    { icon: MessageCircle, label: 'WhatsApp', platform: 'whatsapp' },
-    { icon: Share2, label: 'Email', platform: 'email' },
-  ];
-
+  { icon: Facebook, label: 'Facebook', platform: 'facebook' },
+  { icon: Twitter, label: 'Twitter', platform: 'twitter' },
+  { icon: Linkedin, label: 'LinkedIn', platform: 'linkedin' },
+  { icon: MessageCircle, label: 'WhatsApp', platform: 'whatsapp' },
+  { icon: Share2, label: 'Email', platform: 'email' },
+];
 
 type SharePlatform = 'facebook' | 'twitter' | 'linkedin' | 'whatsapp' | 'email';
 
@@ -93,7 +92,6 @@ export default function ClassPreviewPage() {
   const classId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
   const [siteOrigin, setSiteOrigin] = useState('');
-
 
   // State for video player and reading mode
   const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -267,7 +265,7 @@ export default function ClassPreviewPage() {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const shareToSocial = (platform: SharePlatform, { title, links }: ShareOptions) => {
@@ -315,16 +313,16 @@ export default function ClassPreviewPage() {
   }
 
   return (
-    <div className='mb-20 space-y-6 my-8 px-2 sm:px-6'>
+    <div className='my-8 mb-20 space-y-6 px-2 sm:px-6'>
       {/* Status Banner */}
       <div>
         {classData?.is_active ? (
-          <Card className='p-2 py-2 rounded-md border-success/30 bg-success/10'>
+          <Card className='border-success/30 bg-success/10 rounded-md p-2 py-2'>
             <CardContent className='flex items-center gap-2 px-3 py-2'>
               <CheckCircle className='text-success h-4 w-4 shrink-0' />
 
               <div className='min-w-0'>
-                <h3 className='text-success text-sm font-semibold leading-none'>
+                <h3 className='text-success text-sm leading-none font-semibold'>
                   Class Published Successfully
                 </h3>
 
@@ -335,7 +333,7 @@ export default function ClassPreviewPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card className='p-2 rounded-md border-warning/40 bg-warning/10 py-0'>
+          <Card className='border-warning/40 bg-warning/10 rounded-md p-2 py-0'>
             <CardContent className='flex items-center gap-2 px-3 py-2'>
               <svg
                 xmlns='http://www.w3.org/2000/svg'
@@ -353,7 +351,7 @@ export default function ClassPreviewPage() {
               </svg>
 
               <div className='min-w-0'>
-                <h3 className='text-warning text-sm font-semibold leading-none'>
+                <h3 className='text-warning text-sm leading-none font-semibold'>
                   Class Currently Inactive
                 </h3>
 

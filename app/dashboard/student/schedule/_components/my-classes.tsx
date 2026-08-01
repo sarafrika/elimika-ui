@@ -291,7 +291,9 @@ export default function MyClassesPage({ classDefinitions, isError, loading }: Pr
                   Clear filters
                 </Button>
               )}
-              <Button onClick={() => router.push('/dashboard/student/courses')}>Browse classes</Button>
+              <Button onClick={() => router.push('/dashboard/student/courses')}>
+                Browse classes
+              </Button>
             </div>
           </section>
         )}

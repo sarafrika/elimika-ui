@@ -89,7 +89,7 @@ function JobBadgeRow({
   return (
     <div className='flex flex-wrap items-center gap-2'>
       {typeof job.training_fee === 'number' ? (
-        <Badge className='rounded-md border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary'>
+        <Badge className='border-primary/30 bg-primary/10 text-primary rounded-md px-2.5 py-0.5 text-xs font-semibold'>
           {formatCurrency(job.training_fee)} / session
         </Badge>
       ) : (
@@ -133,19 +133,26 @@ export function JobCard({
   const applicationLabel = getApplicationStatusLabel(applicationStatus);
 
   return (
-    <div className='group flex gap-4 rounded-md border border-border/70 bg-card p-5 shadow-sm transition hover:border-border hover:shadow-md'>
+    <div className='group border-border/70 bg-card hover:border-border flex gap-4 rounded-md border p-5 shadow-sm transition hover:shadow-md'>
       <div className='flex flex-col items-center gap-2'>
-        <div className='flex size-11 shrink-0 items-center justify-center rounded-md border border-primary/30 bg-primary/10 text-primary'>
-          {isManagementView ? <ShieldCheck className='size-5' /> : <BriefcaseBusiness className='size-5' />}
+        <div className='border-primary/30 bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-md border'>
+          {isManagementView ? (
+            <ShieldCheck className='size-5' />
+          ) : (
+            <BriefcaseBusiness className='size-5' />
+          )}
         </div>
       </div>
 
       <div className='min-w-0 flex-1 space-y-3'>
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='min-w-0'>
-            <h3 className='truncate text-lg font-semibold tracking-tight text-foreground'>{title}</h3>
-            <p className='mt-0.5 text-sm text-muted-foreground'>
-              {getDisplayOrganisationLabel(job, organisationName)} · {getDisplayContentLabel(job, course, program)}
+            <h3 className='text-foreground truncate text-lg font-semibold tracking-tight'>
+              {title}
+            </h3>
+            <p className='text-muted-foreground mt-0.5 text-sm'>
+              {getDisplayOrganisationLabel(job, organisationName)} ·{' '}
+              {getDisplayContentLabel(job, course, program)}
             </p>
           </div>
           <div className='flex shrink-0 flex-wrap items-center justify-end gap-2'>
@@ -164,17 +171,17 @@ export function JobCard({
         />
 
         <div className='grid gap-2 sm:grid-cols-2'>
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <CalendarDays className='size-4 text-primary' />
+          <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+            <CalendarDays className='text-primary size-4' />
             <span>{formatDateTime(job.default_start_time)}</span>
           </div>
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <MapPin className='size-4 text-primary' />
+          <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+            <MapPin className='text-primary size-4' />
             <span>{job.location_name || formatEnumLabel(job.location_type)}</span>
           </div>
         </div>
 
-        <p className='line-clamp-3 text-sm leading-6 text-muted-foreground'>
+        <p className='text-muted-foreground line-clamp-3 text-sm leading-6'>
           {job.description || 'No description has been provided for this posting yet.'}
         </p>
 

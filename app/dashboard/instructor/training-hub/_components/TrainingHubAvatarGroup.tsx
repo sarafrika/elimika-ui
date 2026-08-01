@@ -13,10 +13,7 @@ const avatarTones = [
   'bg-[color-mix(in_srgb,var(--warning)_28%,white)] text-[color-mix(in_srgb,var(--warning)_85%,black)]',
 ];
 
-export function TrainingHubAvatarGroup({
-  names,
-  size = 'sm',
-}: TrainingHubAvatarGroupProps) {
+export function TrainingHubAvatarGroup({ names, size = 'sm' }: TrainingHubAvatarGroupProps) {
   return (
     <div className='flex items-center'>
       {names.map((name, index) => (
@@ -27,7 +24,7 @@ export function TrainingHubAvatarGroup({
             'inline-flex items-center justify-center rounded-full border-2 border-white font-semibold',
             size === 'sm' ? 'size-6 text-[0.62rem]' : 'size-7 text-[0.68rem]',
             avatarTones[index % avatarTones.length],
-            index > 0 ? '-ml-2' : '',
+            index > 0 ? '-ml-2' : ''
           )}
         >
           {name

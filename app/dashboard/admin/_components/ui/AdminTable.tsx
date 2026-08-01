@@ -167,18 +167,18 @@ export function AdminTable<TData, TValue>({
       <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
         <div className='flex flex-1 flex-wrap items-center gap-2'>
           <div className='relative min-w-[200px] flex-1 sm:max-w-xs'>
-            <Search className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
+            <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
             <Input
               value={globalFilter}
               onChange={event => setGlobalFilter(event.target.value)}
               placeholder={searchPlaceholder}
-              className='h-9 rounded-md border-border/70 bg-background pl-9 shadow-sm'
+              className='border-border/70 bg-background h-9 rounded-md pl-9 shadow-sm'
             />
             {globalFilter ? (
               <Button
                 variant='ghost'
                 size='icon'
-                className='absolute right-1 top-1/2 size-7 -translate-y-1/2'
+                className='absolute top-1/2 right-1 size-7 -translate-y-1/2'
                 onClick={() => setGlobalFilter('')}
               >
                 <X className='size-4' />
@@ -232,8 +232,8 @@ export function AdminTable<TData, TValue>({
 
       {/* Bulk action bar */}
       {enableRowSelection && selectedRows.length > 0 ? (
-        <div className='flex flex-wrap items-center justify-between gap-3 rounded-md border border-primary/30 bg-primary/5 px-4 py-2.5'>
-          <span className='text-sm font-medium text-foreground'>
+        <div className='border-primary/30 bg-primary/5 flex flex-wrap items-center justify-between gap-3 rounded-md border px-4 py-2.5'>
+          <span className='text-foreground text-sm font-medium'>
             {selectedRows.length} selected
           </span>
           <div className='flex items-center gap-2'>
@@ -253,13 +253,13 @@ export function AdminTable<TData, TValue>({
       {/* Table */}
       <div
         className={cn(
-          'overflow-hidden rounded-md border border-border/70 bg-card shadow-sm',
+          'border-border/70 bg-card overflow-hidden rounded-md border shadow-sm',
           fill && 'flex min-h-0 flex-1 flex-col'
         )}
       >
         <div className={cn(fill ? 'min-h-0 flex-1 overflow-auto' : 'overflow-x-auto')}>
           <Table>
-            <TableHeader className='sticky top-0 z-10 bg-muted/60 backdrop-blur'>
+            <TableHeader className='bg-muted/60 sticky top-0 z-10 backdrop-blur'>
               {table.getHeaderGroups().map(headerGroup => (
                 <TableRow key={headerGroup.id} className='border-border/60 hover:bg-transparent'>
                   {headerGroup.headers.map(header => {
@@ -269,14 +269,14 @@ export function AdminTable<TData, TValue>({
                         key={header.id}
                         className={cn(
                           cellPad,
-                          'text-xs font-medium uppercase tracking-wide text-muted-foreground'
+                          'text-muted-foreground text-xs font-medium tracking-wide uppercase'
                         )}
                       >
                         {header.isPlaceholder ? null : canSort ? (
                           <button
                             type='button'
                             onClick={header.column.getToggleSortingHandler()}
-                            className='inline-flex items-center gap-1 hover:text-foreground'
+                            className='hover:text-foreground inline-flex items-center gap-1'
                           >
                             {flexRender(header.column.columnDef.header, header.getContext())}
                             <SortIcon sorted={header.column.getIsSorted()} />
@@ -405,7 +405,7 @@ function FacetedFilterMenu<TData, TValue>({
             <DropdownMenuSeparator />
             <button
               type='button'
-              className='w-full px-2 py-1.5 text-left text-sm text-muted-foreground hover:text-foreground'
+              className='text-muted-foreground hover:text-foreground w-full px-2 py-1.5 text-left text-sm'
               onClick={() => column.setFilterValue(undefined)}
             >
               Clear filter
@@ -425,7 +425,7 @@ function TablePagination<TData>({ table }: { table: TableInstance<TData> }) {
 
   return (
     <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-      <p className='text-sm text-muted-foreground'>
+      <p className='text-muted-foreground text-sm'>
         Showing {from}–{to} of {total}
       </p>
       <div className='flex items-center gap-1'>
@@ -438,7 +438,7 @@ function TablePagination<TData>({ table }: { table: TableInstance<TData> }) {
         >
           Previous
         </Button>
-        <span className='px-2 text-sm text-muted-foreground'>
+        <span className='text-muted-foreground px-2 text-sm'>
           Page {pageIndex + 1} of {Math.max(table.getPageCount(), 1)}
         </span>
         <Button

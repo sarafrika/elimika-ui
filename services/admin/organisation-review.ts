@@ -1,8 +1,4 @@
-import type {
-  ClassDefinitionResponse,
-  TrainingBranch,
-  User,
-} from '@/services/client';
+import type { ClassDefinitionResponse, TrainingBranch, User } from '@/services/client';
 import {
   getClassDefinitionsForOrganisation,
   getTrainingBranchesByOrganisation,

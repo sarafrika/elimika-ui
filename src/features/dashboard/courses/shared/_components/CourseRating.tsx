@@ -1,12 +1,17 @@
-import type { CourseReview } from "@/services/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { useUserProfile } from "@/context/profile-context";
-import { getClassReviewsQueryKey, getCourseReviewsQueryKey, submitClassReviewMutation, submitCourseReviewMutation } from "@/services/client/@tanstack/react-query.gen";
-import { FeedbackDialog } from "@/app/dashboard/_components/review-instructor-modal";
-import StarRating from "@/src/features/dashboard/courses/shared/_components/StarRating";
+import type { CourseReview } from '@/services/client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { useUserProfile } from '@/context/profile-context';
+import {
+  getClassReviewsQueryKey,
+  getCourseReviewsQueryKey,
+  submitClassReviewMutation,
+  submitCourseReviewMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { FeedbackDialog } from '@/app/dashboard/_components/review-instructor-modal';
+import StarRating from '@/src/features/dashboard/courses/shared/_components/StarRating';
 
 const breakdown = [
   { stars: 5, pct: 0 },
@@ -21,26 +26,18 @@ type Props = {
   averageRating: string | null;
   reviews: CourseReview[];
   courseId: string;
-  classId?: string
+  classId?: string;
 };
 
-export default function CourseRating({
-  reviewCount,
-  averageRating,
-  reviews,
-  courseId
-}: Props) {
+export default function CourseRating({ reviewCount, averageRating, reviews, courseId }: Props) {
   const profile = useUserProfile();
   const student_uuid = profile?.student?.uuid;
   const rating = averageRating ? Number(averageRating) : 0;
 
-  const dynamicBreakdown = breakdown.map((row) => {
-    const matched = reviews.filter(
-      (review) => Math.round(review.rating || 0) === row.stars
-    ).length;
+  const dynamicBreakdown = breakdown.map(row => {
+    const matched = reviews.filter(review => Math.round(review.rating || 0) === row.stars).length;
 
-    const pct =
-      reviewCount > 0 ? Math.round((matched / reviewCount) * 100) : row.pct;
+    const pct = reviewCount > 0 ? Math.round((matched / reviewCount) * 100) : row.pct;
 
     return { ...row, pct };
   });
@@ -83,45 +80,41 @@ export default function CourseRating({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5">
-      <h3 className="mb-4 text-sm font-semibold text-foreground sm:text-base">
-        Course Rating
-      </h3>
+    <div className='border-border bg-card rounded-xl border p-4 shadow-sm sm:p-5'>
+      <h3 className='text-foreground mb-4 text-sm font-semibold sm:text-base'>Course Rating</h3>
 
-      <div className="mb-4 flex flex-col gap-4 sm:gap-6">
+      <div className='mb-4 flex flex-col gap-4 sm:gap-6'>
         {/* Rating summary */}
-        <div className="flex flex-row items-center text-center gap-3">
-          <p className="text-3xl font-black text-foreground sm:text-4xl">
-            {rating ? rating.toFixed(1) : "0.0"}
+        <div className='flex flex-row items-center gap-3 text-center'>
+          <p className='text-foreground text-3xl font-black sm:text-4xl'>
+            {rating ? rating.toFixed(1) : '0.0'}
           </p>
 
-          <StarRating rating={rating} size="sm" showCount={false} />
+          <StarRating rating={rating} size='sm' showCount={false} />
 
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className='text-muted-foreground mt-1 text-xs'>
             {reviewCount.toLocaleString()} review
-            {reviewCount === 1 ? "" : "s"}
+            {reviewCount === 1 ? '' : 's'}
           </p>
         </div>
 
         {/* Breakdown */}
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          {dynamicBreakdown.map((row) => (
-            <div key={row.stars} className="flex items-center gap-2 text-xs">
-              <div className="flex shrink-0 items-center gap-0.5 text-muted-foreground">
+        <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
+          {dynamicBreakdown.map(row => (
+            <div key={row.stars} className='flex items-center gap-2 text-xs'>
+              <div className='text-muted-foreground flex shrink-0 items-center gap-0.5'>
                 <span>★</span>
                 <span>{row.stars}</span>
               </div>
 
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+              <div className='bg-muted h-1.5 flex-1 overflow-hidden rounded-full'>
                 <div
-                  className="h-full rounded-full bg-primary transition-all"
+                  className='bg-primary h-full rounded-full transition-all'
                   style={{ width: `${row.pct}%` }}
                 />
               </div>
 
-              <span className="w-6 shrink-0 text-right text-muted-foreground">
-                {row.pct}%
-              </span>
+              <span className='text-muted-foreground w-6 shrink-0 text-right'>{row.pct}%</span>
             </div>
           ))}
         </div>
@@ -129,11 +122,10 @@ export default function CourseRating({
 
       <Button
         onClick={() => setShowFeedbackDialog(true)}
-
-        className="w-full h-10 rounded-lg border border-border bg-background px-4 py-2 text-xs font-medium text-foreground transition hover:bg-accent hover:text-accent-foreground sm:text-sm">
+        className='border-border bg-background text-foreground hover:bg-accent hover:text-accent-foreground h-10 w-full rounded-lg border px-4 py-2 text-xs font-medium transition sm:text-sm'
+      >
         Write a Review
       </Button>
-
 
       <FeedbackDialog
         type='others'
@@ -152,24 +144,15 @@ export default function CourseRating({
   );
 }
 
-export function ClassRating({
-  reviewCount,
-  averageRating,
-  reviews,
-  courseId,
-  classId
-}: Props) {
+export function ClassRating({ reviewCount, averageRating, reviews, courseId, classId }: Props) {
   const profile = useUserProfile();
   const student_uuid = profile?.student?.uuid;
   const rating = averageRating ? Number(averageRating) : 0;
 
-  const dynamicBreakdown = breakdown.map((row) => {
-    const matched = reviews.filter(
-      (review) => Math.round(review.rating || 0) === row.stars
-    ).length;
+  const dynamicBreakdown = breakdown.map(row => {
+    const matched = reviews.filter(review => Math.round(review.rating || 0) === row.stars).length;
 
-    const pct =
-      reviewCount > 0 ? Math.round((matched / reviewCount) * 100) : row.pct;
+    const pct = reviewCount > 0 ? Math.round((matched / reviewCount) * 100) : row.pct;
 
     return { ...row, pct };
   });
@@ -199,7 +182,10 @@ export function ClassRating({
           toast.success(data?.message);
           setShowFeedbackDialog(false);
           qc.invalidateQueries({
-            queryKey: getClassReviewsQueryKey({ path: { uuid: classId as string }, query: { pageable: {} } }),
+            queryKey: getClassReviewsQueryKey({
+              path: { uuid: classId as string },
+              query: { pageable: {} },
+            }),
           });
         },
         onError: error => {
@@ -211,45 +197,41 @@ export function ClassRating({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5">
-      <h3 className="mb-4 text-sm font-semibold text-foreground sm:text-base">
-        Class Rating
-      </h3>
+    <div className='border-border bg-card rounded-xl border p-4 shadow-sm sm:p-5'>
+      <h3 className='text-foreground mb-4 text-sm font-semibold sm:text-base'>Class Rating</h3>
 
-      <div className="mb-4 flex flex-col gap-4 sm:gap-6">
+      <div className='mb-4 flex flex-col gap-4 sm:gap-6'>
         {/* Rating summary */}
-        <div className="flex flex-row items-center text-center gap-3">
-          <p className="text-3xl font-black text-foreground sm:text-4xl">
-            {rating ? rating.toFixed(1) : "0.0"}
+        <div className='flex flex-row items-center gap-3 text-center'>
+          <p className='text-foreground text-3xl font-black sm:text-4xl'>
+            {rating ? rating.toFixed(1) : '0.0'}
           </p>
 
-          <StarRating rating={rating} size="sm" showCount={false} />
+          <StarRating rating={rating} size='sm' showCount={false} />
 
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className='text-muted-foreground mt-1 text-xs'>
             {reviewCount.toLocaleString()} review
-            {reviewCount === 1 ? "" : "s"}
+            {reviewCount === 1 ? '' : 's'}
           </p>
         </div>
 
         {/* Breakdown */}
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          {dynamicBreakdown.map((row) => (
-            <div key={row.stars} className="flex items-center gap-2 text-xs">
-              <div className="flex shrink-0 items-center gap-0.5 text-muted-foreground">
+        <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
+          {dynamicBreakdown.map(row => (
+            <div key={row.stars} className='flex items-center gap-2 text-xs'>
+              <div className='text-muted-foreground flex shrink-0 items-center gap-0.5'>
                 <span>★</span>
                 <span>{row.stars}</span>
               </div>
 
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+              <div className='bg-muted h-1.5 flex-1 overflow-hidden rounded-full'>
                 <div
-                  className="h-full rounded-full bg-primary transition-all"
+                  className='bg-primary h-full rounded-full transition-all'
                   style={{ width: `${row.pct}%` }}
                 />
               </div>
 
-              <span className="w-6 shrink-0 text-right text-muted-foreground">
-                {row.pct}%
-              </span>
+              <span className='text-muted-foreground w-6 shrink-0 text-right'>{row.pct}%</span>
             </div>
           ))}
         </div>
@@ -257,11 +239,10 @@ export function ClassRating({
 
       <Button
         onClick={() => setShowFeedbackDialog(true)}
-
-        className="w-full h-10 rounded-lg border border-border bg-background px-4 py-2 text-xs font-medium text-foreground transition hover:bg-accent hover:text-accent-foreground sm:text-sm">
+        className='border-border bg-background text-foreground hover:bg-accent hover:text-accent-foreground h-10 w-full rounded-lg border px-4 py-2 text-xs font-medium transition sm:text-sm'
+      >
         Write a Review
       </Button>
-
 
       <FeedbackDialog
         type='others'

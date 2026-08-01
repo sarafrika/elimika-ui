@@ -1,16 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 import * as React from 'react';
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Img,
-  Section,
-  Text,
-} from 'react-email';
+import { Body, Container, Head, Heading, Hr, Html, Img, Section, Text } from 'react-email';
 
 type ElimikaEmailLayoutProps = {
   preview: string;
@@ -49,13 +39,7 @@ export function ElimikaEmailLayout({
       <Body style={body}>
         <Container style={container}>
           <Section style={brandBar}>
-            <Img
-              src='cid:elimikaLogo'
-              alt='Elimika'
-              width='112'
-              height='112'
-              style={logo}
-            />
+            <Img src='cid:elimikaLogo' alt='Elimika' width='112' height='112' style={logo} />
             <Text style={brandKicker}>Powered by Sarafrika</Text>
           </Section>
 

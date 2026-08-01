@@ -226,7 +226,6 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
   const key = useWatch({ control: form.control, name: 'key' });
   const scopeReference = useWatch({ control: form.control, name: 'scopeReference' });
 
-
   const handlePrettyPrint = (field: 'valuePayload' | 'conditions') => {
     const raw = form.getValues(field);
     if (!raw || !raw.trim()) return;
@@ -882,9 +881,7 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
               <p className='text-muted-foreground mt-1 text-xs'>Optional rule constraints</p>
               <ScrollArea className='border-border/70 bg-muted/30 mt-3 h-32 rounded-lg border border-dashed p-3 shadow-inner'>
                 <pre className='text-muted-foreground font-mono text-xs break-all whitespace-pre-wrap'>
-                  {conditions?.trim()
-                    ? conditions
-                    : 'No conditions. Rule always applies.'}
+                  {conditions?.trim() ? conditions : 'No conditions. Rule always applies.'}
                 </pre>
               </ScrollArea>
             </div>

@@ -7,12 +7,21 @@ import { ArrowRight, Bookmark, Plus, Search } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
-import { listTrainingApplicationsOptions, searchSkillsOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  listTrainingApplicationsOptions,
+  searchSkillsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { SearchInstructorCard } from './search-instructor-card';
 import {
@@ -64,7 +73,9 @@ export default function StudentInstructorSearchPage() {
   const { data: trainingInstructors = [], loading } = useSearchTrainingInstructors();
   const [sortBy, setSortBy] = useState<SortBy>('relevance');
   const [selectedInstructorUuid, setSelectedInstructorUuid] = useState<string | null>(null);
-  const [filters, setFilters] = useState<InstructorSearchFiltersState>(searchInstructorFiltersDefaults);
+  const [filters, setFilters] = useState<InstructorSearchFiltersState>(
+    searchInstructorFiltersDefaults
+  );
 
   const { data: applications } = useQuery(
     courseId
@@ -126,7 +137,9 @@ export default function StudentInstructorSearchPage() {
   const scopedInstructors = useMemo(
     () =>
       courseId && approvedInstructorUuids.length > 0
-        ? trainingInstructors.filter(instructor => approvedInstructorUuids.includes(instructor.uuid))
+        ? trainingInstructors.filter(instructor =>
+            approvedInstructorUuids.includes(instructor.uuid)
+          )
         : trainingInstructors,
     [approvedInstructorUuids, courseId, trainingInstructors]
   );
@@ -182,7 +195,10 @@ export default function StudentInstructorSearchPage() {
         return false;
       }
 
-      if (filters.gender !== 'all' && String(instructor.gender ?? '').toLowerCase() !== filters.gender) {
+      if (
+        filters.gender !== 'all' &&
+        String(instructor.gender ?? '').toLowerCase() !== filters.gender
+      ) {
         return false;
       }
 
@@ -242,7 +258,9 @@ export default function StudentInstructorSearchPage() {
       return;
     }
 
-    const selectedExists = filteredInstructors.some(instructor => instructor.uuid === selectedInstructorUuid);
+    const selectedExists = filteredInstructors.some(
+      instructor => instructor.uuid === selectedInstructorUuid
+    );
     if (!selectedExists) {
       setSelectedInstructorUuid(filteredInstructors[0]?.uuid ?? null);
     }
@@ -300,7 +318,7 @@ export default function StudentInstructorSearchPage() {
 
   return (
     <div className='space-y-4 px-3 py-4 sm:px-4 lg:px-6'>
-      <section className='rounded-xl border bg-card p-4 shadow-none sm:p-5'>
+      <section className='bg-card rounded-xl border p-4 shadow-none sm:p-5'>
         <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
           <div className='space-y-2'>
             <div className='flex items-center gap-2'>
@@ -312,10 +330,10 @@ export default function StudentInstructorSearchPage() {
               </h1>
             </div>
             <p className='text-muted-foreground max-w-3xl text-sm sm:text-[0.95rem]'>
-              Find, compare, and hire verified instructors for your course without leaving the student
-              workspace.
+              Find, compare, and hire verified instructors for your course without leaving the
+              student workspace.
             </p>
-            <div className='inline-flex rounded-full border bg-muted/40 px-3 py-1 text-[11px] font-medium text-muted-foreground'>
+            <div className='bg-muted/40 text-muted-foreground inline-flex rounded-full border px-3 py-1 text-[11px] font-medium'>
               {courseId ? 'Course-scoped instructor search' : 'All approved instructors'}
             </div>
           </div>
@@ -350,10 +368,12 @@ export default function StudentInstructorSearchPage() {
             topRating={topRating}
           />
 
-          <Card className='rounded-xl border bg-card p-4 shadow-none'>
+          <Card className='bg-card rounded-xl border p-4 shadow-none'>
             <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
               <div>
-                <p className='text-sm font-semibold sm:text-base'>Showing {filteredInstructors.length} instructors</p>
+                <p className='text-sm font-semibold sm:text-base'>
+                  Showing {filteredInstructors.length} instructors
+                </p>
                 <p className='text-muted-foreground text-xs sm:text-sm'>
                   Compare verified instructors and narrow results by fit
                 </p>
@@ -385,7 +405,7 @@ export default function StudentInstructorSearchPage() {
           <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-3'>
             {loading ? (
               Array.from({ length: 6 }).map((_, index) => (
-                <Card key={index} className='h-[280px] rounded-xl border bg-card p-4 shadow-none' />
+                <Card key={index} className='bg-card h-[280px] rounded-xl border p-4 shadow-none' />
               ))
             ) : filteredInstructors.length > 0 ? (
               filteredInstructors.map(instructor => (
@@ -398,15 +418,20 @@ export default function StudentInstructorSearchPage() {
                 />
               ))
             ) : (
-              <Card className='rounded-xl border border-dashed bg-card p-8 text-center shadow-none'>
-                <div className='mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted/40'>
+              <Card className='bg-card rounded-xl border border-dashed p-8 text-center shadow-none'>
+                <div className='bg-muted/40 mx-auto mb-4 flex size-12 items-center justify-center rounded-full'>
                   <Search className='text-muted-foreground size-5' />
                 </div>
                 <h3 className='text-base font-semibold'>No instructors found</h3>
                 <p className='text-muted-foreground mt-2 text-sm'>
                   Try broadening the filters or clearing the current search.
                 </p>
-                <Button type='button' variant='outline' className='mt-4 rounded-xl' onClick={resetFilters}>
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='mt-4 rounded-xl'
+                  onClick={resetFilters}
+                >
                   Clear Filters
                 </Button>
               </Card>

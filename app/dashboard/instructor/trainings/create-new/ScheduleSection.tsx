@@ -276,7 +276,7 @@ export const ScheduleSection = ({
                 One or more selected sessions overlap with this instructor&apos;s existing class
                 schedule. Adjust the times below before publishing.
               </p>
-              <ul className='marker:text-destructive list-disc space-y-1.5 pl-5 text-muted-foreground'>
+              <ul className='marker:text-destructive text-muted-foreground list-disc space-y-1.5 pl-5'>
                 {activeScheduleConflicts.slice(0, 5).map(conflict => (
                   <li
                     key={`${conflict.proposed.date}-${conflict.proposed.startTime}-${conflict.existing.classTitle}-${conflict.existing.startTime}`}
@@ -496,9 +496,7 @@ export const ScheduleSection = ({
                 <TableCell className='bg-card py-4'>
                   <div className='space-y-4'>
                     <div className='flex flex-wrap items-end gap-3'>
-                      <label className='text-foreground text-sm font-semibold'>
-                        Repeat every:
-                      </label>
+                      <label className='text-foreground text-sm font-semibold'>Repeat every:</label>
                       <Input
                         type='number'
                         min={1}
@@ -546,7 +544,7 @@ export const ScheduleSection = ({
                             <label
                               key={day}
                               className={cn(
-                                'flex cursor-pointer select-none items-center gap-2 rounded-lg border px-4 py-2.5 transition-all',
+                                'flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 transition-all select-none',
                                 data.repeat.days?.includes(idx)
                                   ? 'border-primary bg-primary/10 text-primary font-medium'
                                   : 'border-border hover:bg-muted'
@@ -627,9 +625,7 @@ export const ScheduleSection = ({
               sessions={scheduleInstances}
               title={`Class Schedule Instances (${scheduleInstances.length})`}
               emptyMessage='Complete the recurring schedule fields to preview generated class instances.'
-              getConflictMessage={session =>
-                getConflictMessage(session, classScheduleConflicts)
-              }
+              getConflictMessage={session => getConflictMessage(session, classScheduleConflicts)}
             />
           </div>
         </>
@@ -678,7 +674,11 @@ export const ScheduleSection = ({
                   <span className='text-sm font-medium'>All Day</span>
                 </label>
                 <div className='text-muted-foreground text-sm'>
-                  Duration: {allDay ? '24' : calculateSessionHours(defaultStartTime, defaultEndTime).toFixed(1)} hours
+                  Duration:{' '}
+                  {allDay
+                    ? '24'
+                    : calculateSessionHours(defaultStartTime, defaultEndTime).toFixed(1)}{' '}
+                  hours
                 </div>
               </div>
 
@@ -707,9 +707,7 @@ export const ScheduleSection = ({
               onSave={handleSaveEdit}
               onCancel={handleCancelEdit}
               onRemove={handleRemoveSession}
-              getConflictMessage={session =>
-                getConflictMessage(session, customScheduleConflicts)
-              }
+              getConflictMessage={session => getConflictMessage(session, customScheduleConflicts)}
             />
           </div>
         </div>

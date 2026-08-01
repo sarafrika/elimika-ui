@@ -21,7 +21,7 @@ export function StudentOverviewSearchBar({
         value={value}
         onChange={event => onChange(event.target.value)}
         placeholder={placeholder}
-        className='h-10 rounded-md border-border bg-card pl-11 text-sm shadow-sm placeholder:text-muted-foreground'
+        className='border-border bg-card placeholder:text-muted-foreground h-10 rounded-md pl-11 text-sm shadow-sm'
       />
     </label>
   );

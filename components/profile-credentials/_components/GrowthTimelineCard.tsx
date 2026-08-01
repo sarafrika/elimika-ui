@@ -27,12 +27,14 @@ const accentStyles = {
 
 export function GrowthTimelineCard({ item, ownerName }: GrowthTimelineCardProps) {
   const Icon = item.icon;
-  const recordKindLabel = item.recordKind ? item.recordKind.charAt(0).toUpperCase() + item.recordKind.slice(1) : null;
+  const recordKindLabel = item.recordKind
+    ? item.recordKind.charAt(0).toUpperCase() + item.recordKind.slice(1)
+    : null;
 
   const [viewerOpen, setViewerOpen] = useState(false);
 
   return (
-    <Card className='gap-4 rounded-[16px] border-white/60 bg-card/95 px-4 py-4 shadow-sm'>
+    <Card className='bg-card/95 gap-4 rounded-[16px] border-white/60 px-4 py-4 shadow-sm'>
       <div className='flex items-start gap-3'>
         <span
           className={cn(
@@ -48,7 +50,7 @@ export function GrowthTimelineCard({ item, ownerName }: GrowthTimelineCardProps)
             {recordKindLabel ? (
               <Badge
                 variant='outline'
-                className='rounded-lg border-white/70 bg-background/90 py-1.5 text-sm text-muted-foreground'
+                className='bg-background/90 text-muted-foreground rounded-lg border-white/70 py-1.5 text-sm'
               >
                 {recordKindLabel}
               </Badge>
@@ -56,13 +58,15 @@ export function GrowthTimelineCard({ item, ownerName }: GrowthTimelineCardProps)
             <p className='text-foreground text-base font-semibold tracking-tight'>{item.title}</p>
           </div>
           {item.recordSummary ? (
-            <p className='text-foreground/80 mt-2 line-clamp-2 text-sm leading-5'>{item.recordSummary}</p>
+            <p className='text-foreground/80 mt-2 line-clamp-2 text-sm leading-5'>
+              {item.recordSummary}
+            </p>
           ) : null}
         </div>
 
         <Badge
           variant='secondary'
-          className='rounded-lg bg-[color-mix(in_srgb,var(--primary)_8%,white)] px-3 py-1 text-primary'
+          className='text-primary rounded-lg bg-[color-mix(in_srgb,var(--primary)_8%,white)] px-3 py-1'
         >
           {item.badge}
         </Badge>
@@ -72,23 +76,23 @@ export function GrowthTimelineCard({ item, ownerName }: GrowthTimelineCardProps)
         {item.documentName ? (
           <Badge
             variant='outline'
-            className='rounded-lg border-white/70 bg-background/80 px-3 py-1.5 text-sm text-muted-foreground'
+            className='bg-background/80 text-muted-foreground rounded-lg border-white/70 px-3 py-1.5 text-sm'
           >
             {item.documentName}
           </Badge>
         ) : null}
-        <Button variant='outline' size='sm' className='rounded-lg border-white/70 bg-background/80'>
+        <Button variant='outline' size='sm' className='bg-background/80 rounded-lg border-white/70'>
           <Share2 className='size-4' />
           Share
         </Button>
       </div>
 
-      <div className='flex flex-end flex-wrap justify-between gap-2 border-t pt-3'>
+      <div className='flex-end flex flex-wrap justify-between gap-2 border-t pt-3'>
         {item.documentUrl ? (
           <Button
             type='button'
             variant='outline'
-            className='min-h-8 rounded-md border-white/70 bg-background/80 px-3 text-xs'
+            className='bg-background/80 min-h-8 rounded-md border-white/70 px-3 text-xs'
             onClick={() => setViewerOpen(true)}
             disabled={!item.documentUrl}
           >
@@ -98,7 +102,7 @@ export function GrowthTimelineCard({ item, ownerName }: GrowthTimelineCardProps)
         ) : (
           <Button
             variant='outline'
-            className='min-h-8 rounded-md border-white/70 bg-background/80 px-3 text-xs'
+            className='bg-background/80 min-h-8 rounded-md border-white/70 px-3 text-xs'
           >
             {item.actionLabel}
             <ChevronRight className='size-3.5' />
@@ -114,22 +118,18 @@ export function GrowthTimelineCard({ item, ownerName }: GrowthTimelineCardProps)
         >
           <SheetHeader className='border-border/70 border-b px-5 py-4 text-left'>
             <SheetTitle className='text-lg'>{item.documentName as string}</SheetTitle>
-            <SheetDescription className="text-xs space-y-0.5">
-              <p className="font-medium text-foreground">
-                {ownerName}
-              </p>
+            <SheetDescription className='space-y-0.5 text-xs'>
+              <p className='text-foreground font-medium'>{ownerName}</p>
 
               {item.recordSummary && (
-                <p className="text-muted-foreground leading-snug">
-                  {item.recordSummary}
-                </p>
+                <p className='text-muted-foreground leading-snug'>{item.recordSummary}</p>
               )}
             </SheetDescription>
           </SheetHeader>
 
           {item.documentUrl ? (
             <div className='flex-1 space-y-4 overflow-y-auto px-5 py-4'>
-              <div className='overflow-hidden rounded-[14px] border bg-card shadow-sm'>
+              <div className='bg-card overflow-hidden rounded-[14px] border shadow-sm'>
                 <PdfPreview
                   documentUrl={item.documentUrl}
                   documentLabel={item.documentName as string}
@@ -139,7 +139,7 @@ export function GrowthTimelineCard({ item, ownerName }: GrowthTimelineCardProps)
               </div>
             </div>
           ) : (
-            <div className='flex flex-1 items-center justify-center p-5 text-center text-xs text-muted-foreground'>
+            <div className='text-muted-foreground flex flex-1 items-center justify-center p-5 text-center text-xs'>
               No document URL available for this credential.
             </div>
           )}

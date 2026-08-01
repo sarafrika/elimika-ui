@@ -11,7 +11,7 @@ import {
   Layers3,
   ListChecks,
   PlayCircle,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react';
 import { Fragment, useMemo, useState } from 'react';
 
@@ -22,9 +22,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -33,16 +33,24 @@ import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import { localDate } from '@/lib/date';
 import { AttachmentResourceList } from '../../../../components/assessment/AttachmentResourceList';
 import RichTextRenderer from '../../../../components/editors/richTextRenders';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../../../../components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '../../../../components/ui/sheet';
 import { useStudent } from '../../../../context/student-context';
 import { cn } from '../../../../lib/utils';
 import {
   getAllActiveClassDefinitionsOptions,
   getEnrollmentOverviewForStudentOptions,
-  getStudentScheduleOptions, getSubmissionAttachmentsOptions, searchAssignmentsOptions,
+  getStudentScheduleOptions,
+  getSubmissionAttachmentsOptions,
+  searchAssignmentsOptions,
   searchAttemptsOptions,
   searchQuizzesOptions,
-  searchSubmissionsOptions
+  searchSubmissionsOptions,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
@@ -123,10 +131,12 @@ function formatDurationMinutes(minutes?: number | bigint | null) {
 }
 
 function getAssignmentPassingScore(assignment?: Assignment | null) {
-  const assignmentWithThreshold = assignment as (Assignment & {
-    passing_score?: number | null;
-    min_passing_score?: number | null;
-  }) | null;
+  const assignmentWithThreshold = assignment as
+    | (Assignment & {
+        passing_score?: number | null;
+        min_passing_score?: number | null;
+      })
+    | null;
 
   return assignmentWithThreshold?.passing_score ?? assignmentWithThreshold?.min_passing_score ?? 50;
 }
@@ -216,7 +226,7 @@ function TabNav({
   onTabChange: (tab: StudentAnalyticsTab) => void;
 }) {
   return (
-    <div className='mb-4 overflow-x-auto border-b border-border sm:mb-5 scrollbar-hide'>
+    <div className='border-border scrollbar-hide mb-4 overflow-x-auto border-b sm:mb-5'>
       <nav role='tablist' aria-label='Student analytics tabs' className='flex min-w-max'>
         {tabs.map(tab => {
           const isActive = activeTab === tab;
@@ -230,10 +240,10 @@ function TabNav({
               tabIndex={isActive ? 0 : -1}
               onClick={() => onTabChange(tab)}
               className={[
-                'whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-medium transition-colors sm:px-4 sm:text-sm',
+                'border-b-2 px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors sm:px-4 sm:text-sm',
                 isActive
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
+                  : 'text-muted-foreground hover:border-border hover:text-foreground border-transparent',
               ].join(' ')}
             >
               {tab}
@@ -277,14 +287,14 @@ function MetricCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className='border-border bg-card flex-1 min-w-[180px] rounded-2xl p-4 shadow-sm'>
+    <Card className='border-border bg-card min-w-[180px] flex-1 rounded-2xl p-4 shadow-sm'>
       <div className='flex items-start justify-between gap-3'>
         <div className='min-w-0'>
-          <p className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
+          <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
             {label}
           </p>
           <div className='mt-2 flex flex-wrap items-baseline gap-2'>
-            <span className='text-foreground text-2xl font-semibold leading-none sm:text-3xl'>
+            <span className='text-foreground text-2xl leading-none font-semibold sm:text-3xl'>
               {value}
             </span>
             {subtext && <span className='text-muted-foreground text-sm'>{subtext}</span>}
@@ -441,7 +451,7 @@ export default function StudentAnalyticsDashboard() {
 
   const groupedSchedules = Array.from(
     scheduleRows.reduce((map, row) => {
-      const classUuid = row.class_definition_uuid ?? "";
+      const classUuid = row.class_definition_uuid ?? '';
 
       if (!map.has(classUuid)) {
         map.set(classUuid, []);
@@ -452,40 +462,26 @@ export default function StudentAnalyticsDashboard() {
       return map;
     }, new Map<string, typeof scheduleRows>())
   ).map(([classUuid, sessions]) => {
-    const classDefinition =
-      classUuid !== ""
-        ? classDefinitionMap.get(classUuid)
-        : undefined;
+    const classDefinition = classUuid !== '' ? classDefinitionMap.get(classUuid) : undefined;
 
     const courseUuid = classDefinition?.course_uuid ?? null;
     const programUuid = classDefinition?.program_uuid ?? null;
 
-    const parentName =
-      courseUuid
-        ? (
-          courseLookupById.get(courseUuid) ??
-          courseMap[courseUuid]?.name
-        )
-        : programUuid
-          ? programMap[programUuid]?.title
-          : undefined;
+    const parentName = courseUuid
+      ? (courseLookupById.get(courseUuid) ?? courseMap[courseUuid]?.name)
+      : programUuid
+        ? programMap[programUuid]?.title
+        : undefined;
 
-    const parentType = courseUuid ? "Course" : programUuid ? "Program" : null;
+    const parentType = courseUuid ? 'Course' : programUuid ? 'Program' : null;
 
-    const className =
-      classDefinition?.title ??
-      sessions[0]?.title ??
-      "—";
+    const className = classDefinition?.title ?? sessions[0]?.title ?? '—';
 
     const sorted = [...sessions].sort(
-      (a, b) =>
-        new Date(a.start_time ?? 0).getTime() -
-        new Date(b.start_time ?? 0).getTime()
+      (a, b) => new Date(a.start_time ?? 0).getTime() - new Date(b.start_time ?? 0).getTime()
     );
 
-    const completed = sorted.filter(
-      s => s.scheduling_status === "COMPLETED"
-    ).length;
+    const completed = sorted.filter(s => s.scheduling_status === 'COMPLETED').length;
 
     const total = sorted.length;
 
@@ -493,8 +489,7 @@ export default function StudentAnalyticsDashboard() {
 
     const completedAt =
       completed === total
-        ? sorted[total - 1]?.end_time ??
-        sorted[total - 1]?.attendance_marked_at
+        ? (sorted[total - 1]?.end_time ?? sorted[total - 1]?.attendance_marked_at)
         : null;
 
     const now = Date.now();
@@ -503,25 +498,24 @@ export default function StudentAnalyticsDashboard() {
       if (!session.start_time || !session.end_time) return false;
 
       return (
-        new Date(session.start_time).getTime() <= now &&
-        new Date(session.end_time).getTime() >= now
+        new Date(session.start_time).getTime() <= now && new Date(session.end_time).getTime() >= now
       );
     });
 
-    let status = "Upcoming";
+    let status = 'Upcoming';
 
     if (completed === total && total > 0) {
-      status = "Completed";
+      status = 'Completed';
     } else if (hasOngoing) {
-      status = "Ongoing";
+      status = 'Ongoing';
     } else if (completed > 0) {
-      status = "In Progress";
+      status = 'In Progress';
     }
 
     return {
       classUuid,
       className,
-      parentName,   // ← correctly declared above
+      parentName, // ← correctly declared above
       parentType,
       sessions: sorted,
       total,
@@ -558,7 +552,9 @@ export default function StudentAnalyticsDashboard() {
 
   const assignmentIds = useMemo(() => {
     const submissions = assignmentSubmissionsQuery.data?.data?.content ?? [];
-    return Array.from(new Set(submissions.map(submission => submission.assignment_uuid).filter(Boolean)));
+    return Array.from(
+      new Set(submissions.map(submission => submission.assignment_uuid).filter(Boolean))
+    );
   }, [assignmentSubmissionsQuery.data]);
 
   const quizIds = useMemo(() => {
@@ -621,9 +617,13 @@ export default function StudentAnalyticsDashboard() {
       }
 
       const current = acc[quizUuid];
-      const nextTime = new Date(attempt.submitted_at ?? attempt.started_at ?? attempt.created_date ?? 0).getTime();
+      const nextTime = new Date(
+        attempt.submitted_at ?? attempt.started_at ?? attempt.created_date ?? 0
+      ).getTime();
       const currentTime = current
-        ? new Date(current.submitted_at ?? current.started_at ?? current.created_date ?? 0).getTime()
+        ? new Date(
+            current.submitted_at ?? current.started_at ?? current.created_date ?? 0
+          ).getTime()
         : -1;
 
       if (!current || nextTime >= currentTime) {
@@ -664,13 +664,20 @@ export default function StudentAnalyticsDashboard() {
     const total = scheduleRows.length;
     const completed = scheduleRows.filter(row => row.scheduling_status === 'COMPLETED').length;
     const ongoing = scheduleRows.filter(row => row.scheduling_status === 'ONGOING').length;
-    const upcoming = scheduleRows.filter(row => row.is_upcoming || row.scheduling_status === 'SCHEDULED').length;
+    const upcoming = scheduleRows.filter(
+      row => row.is_upcoming || row.scheduling_status === 'SCHEDULED'
+    ).length;
     const cancelled = scheduleRows.filter(row => row.scheduling_status === 'CANCELLED').length;
-    const attended = scheduleRows.filter(row => row.did_attend || row.enrollment_status === 'ATTENDED').length;
+    const attended = scheduleRows.filter(
+      row => row.did_attend || row.enrollment_status === 'ATTENDED'
+    ).length;
     const completedMinutes = scheduleRows
       .filter(row => row.scheduling_status === 'COMPLETED')
       .reduce((sum, row) => sum + Number(row.duration_minutes ?? 0), 0);
-    const totalMinutes = scheduleRows.reduce((sum, row) => sum + Number(row.duration_minutes ?? 0), 0);
+    const totalMinutes = scheduleRows.reduce(
+      (sum, row) => sum + Number(row.duration_minutes ?? 0),
+      0
+    );
 
     return {
       total,
@@ -697,22 +704,22 @@ export default function StudentAnalyticsDashboard() {
 
     return [
       {
-        label: "Upcoming",
+        label: 'Upcoming',
         value: sessionSummary.upcoming,
         pct: total > 0 ? Math.round((sessionSummary.upcoming / total) * 100) : 0,
-        color: "text-primary",
+        color: 'text-primary',
       },
       {
-        label: "Ongoing",
+        label: 'Ongoing',
         value: sessionSummary.ongoing,
         pct: total > 0 ? Math.round((sessionSummary.ongoing / total) * 100) : 0,
-        color: "text-warning",
+        color: 'text-warning',
       },
       {
-        label: "Completed",
+        label: 'Completed',
         value: sessionSummary.completed,
         pct: total > 0 ? Math.round((sessionSummary.completed / total) * 100) : 0,
-        color: "text-success",
+        color: 'text-success',
       },
     ];
   }, [
@@ -724,7 +731,9 @@ export default function StudentAnalyticsDashboard() {
 
   const courseProgressStats = useMemo(() => {
     const total = courseEnrollmentRows.length;
-    const completed = courseEnrollmentRows.filter(row => row.enrollment_status === 'COMPLETED').length;
+    const completed = courseEnrollmentRows.filter(
+      row => row.enrollment_status === 'COMPLETED'
+    ).length;
     const active = courseEnrollmentRows.filter(row => row.enrollment_status === 'ACTIVE').length;
     const progressValues = courseEnrollmentRows
       .map(row => row.progress_percentage ?? 0)
@@ -747,7 +756,9 @@ export default function StudentAnalyticsDashboard() {
     () =>
       Object.values(latestSubmissionsByAssignment)
         .map(submission => {
-          const assignment = submission.assignment_uuid ? assignmentLookup.get(submission.assignment_uuid) : undefined;
+          const assignment = submission.assignment_uuid
+            ? assignmentLookup.get(submission.assignment_uuid)
+            : undefined;
           const classDefinition = assignment?.class_definition_uuid
             ? classDefinitionMap.get(assignment.class_definition_uuid)
             : undefined;
@@ -757,15 +768,28 @@ export default function StudentAnalyticsDashboard() {
             submission,
             assignment,
             courseName:
-              (courseUuid ? courseLookupById.get(courseUuid) : undefined) ?? courseMap[courseUuid ?? '']?.name ?? '—',
+              (courseUuid ? courseLookupById.get(courseUuid) : undefined) ??
+              courseMap[courseUuid ?? '']?.name ??
+              '—',
             className: classDefinition?.title ?? '—',
           };
         })
-        .sort((a, b) => new Date(b.submission.submitted_at ?? b.submission.created_date ?? 0).getTime() - new Date(a.submission.submitted_at ?? a.submission.created_date ?? 0).getTime()),
-    [assignmentLookup, classDefinitionMap, courseLookupById, courseMap, latestSubmissionsByAssignment]
+        .sort(
+          (a, b) =>
+            new Date(b.submission.submitted_at ?? b.submission.created_date ?? 0).getTime() -
+            new Date(a.submission.submitted_at ?? a.submission.created_date ?? 0).getTime()
+        ),
+    [
+      assignmentLookup,
+      classDefinitionMap,
+      courseLookupById,
+      courseMap,
+      latestSubmissionsByAssignment,
+    ]
   );
 
-  const { assignmentRows: studentAssignmentRows, isLoading: isStudentAssignmentDataLoading } = useStudentAssignmentData();
+  const { assignmentRows: studentAssignmentRows, isLoading: isStudentAssignmentDataLoading } =
+    useStudentAssignmentData();
 
   const assignmentAnalyticsRows = useMemo(() => {
     return studentAssignmentRows
@@ -799,8 +823,12 @@ export default function StudentAnalyticsDashboard() {
         };
       })
       .sort((a, b) => {
-        const aTime = new Date(a.submission.submitted_at ?? a.submission.created_date ?? 0).getTime();
-        const bTime = new Date(b.submission.submitted_at ?? b.submission.created_date ?? 0).getTime();
+        const aTime = new Date(
+          a.submission.submitted_at ?? a.submission.created_date ?? 0
+        ).getTime();
+        const bTime = new Date(
+          b.submission.submitted_at ?? b.submission.created_date ?? 0
+        ).getTime();
         return bTime - aTime;
       });
   }, [studentAssignmentRows]);
@@ -831,11 +859,21 @@ export default function StudentAnalyticsDashboard() {
             attempt,
             quiz,
             courseName:
-              (courseUuid ? courseLookupById.get(courseUuid) : undefined) ?? courseMap[courseUuid ?? '']?.name ?? '—',
+              (courseUuid ? courseLookupById.get(courseUuid) : undefined) ??
+              courseMap[courseUuid ?? '']?.name ??
+              '—',
             className: classDefinition?.title ?? '—',
           };
         })
-        .sort((a, b) => new Date(b.attempt.submitted_at ?? b.attempt.started_at ?? b.attempt.created_date ?? 0).getTime() - new Date(a.attempt.submitted_at ?? a.attempt.started_at ?? a.attempt.created_date ?? 0).getTime()),
+        .sort(
+          (a, b) =>
+            new Date(
+              b.attempt.submitted_at ?? b.attempt.started_at ?? b.attempt.created_date ?? 0
+            ).getTime() -
+            new Date(
+              a.attempt.submitted_at ?? a.attempt.started_at ?? a.attempt.created_date ?? 0
+            ).getTime()
+        ),
     [classDefinitionMap, courseLookupById, courseMap, latestAttemptsByQuiz, quizLookup]
   );
 
@@ -843,7 +881,9 @@ export default function StudentAnalyticsDashboard() {
     const submissionRows = assignmentAnalyticsRows;
     const attemptRows = quizRows;
 
-    const gradedSubmissions = submissionRows.filter(row => row.submission.status === 'GRADED' || row.submission.percentage != null).length;
+    const gradedSubmissions = submissionRows.filter(
+      row => row.submission.status === 'GRADED' || row.submission.percentage != null
+    ).length;
     const averageSubmissionScore =
       submissionRows
         .map(row => row.gradePercentage)
@@ -892,22 +932,19 @@ export default function StudentAnalyticsDashboard() {
     );
   }
 
-
   {
-    isLoading && (
-      <div className='text-muted-foreground mt-4 text-sm'>Loading analytics data…</div>
-    )
+    isLoading && <div className='text-muted-foreground mt-4 text-sm'>Loading analytics data…</div>;
   }
 
   return (
-    <div className='min-h-screen py-4 sm:py-6 px-2 sm:px-4'>
-      <div className='space-y-2 mb-4'>
+    <div className='min-h-screen px-2 py-4 sm:px-4 sm:py-6'>
+      <div className='mb-4 space-y-2'>
         <div className='flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
           <div>
-            <h1 className="text-lg font-bold leading-tight text-foreground sm:text-xl lg:text-2xl">
+            <h1 className='text-foreground text-lg leading-tight font-bold sm:text-xl lg:text-2xl'>
               {student?.full_name ?? 'Student'}
             </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+            <p className='text-muted-foreground mt-0.5 text-xs sm:text-sm'>
               Overview of sessions, enrollment progress, and assessment performance.
             </p>
           </div>
@@ -953,36 +990,29 @@ export default function StudentAnalyticsDashboard() {
 
           <div className='grid gap-4 lg:grid-cols-3'>
             <SectionCard
-              title="Status Breakdown"
-              description="Upcoming, ongoing, and completed sessions in the selected range."
+              title='Status Breakdown'
+              description='Upcoming, ongoing, and completed sessions in the selected range.'
             >
-              <div className="space-y-5">
+              <div className='space-y-5'>
                 <DonutChart breakdown={statusRows} />
 
-                <div className="space-y-2">
-                  {statusRows.map((row) => (
-                    <div
-                      key={row.label}
-                      className="flex items-center justify-between gap-2"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
+                <div className='space-y-2'>
+                  {statusRows.map(row => (
+                    <div key={row.label} className='flex items-center justify-between gap-2'>
+                      <div className='flex min-w-0 items-center gap-2'>
                         <span
-                          className={`h-2.5 w-2.5 rounded-full shrink-0 ${row.color.replace(
-                            "text-",
-                            "bg-"
+                          className={`h-2.5 w-2.5 shrink-0 rounded-full ${row.color.replace(
+                            'text-',
+                            'bg-'
                           )}`}
                         />
 
-                        <span className="truncate text-sm text-muted-foreground">
-                          {row.label}
-                        </span>
+                        <span className='text-muted-foreground truncate text-sm'>{row.label}</span>
                       </div>
 
-                      <span className="shrink-0 text-sm font-semibold text-foreground">
-                        {metricValue(row.value)}{" "}
-                        <span className="font-normal text-muted-foreground">
-                          ({row.pct}%)
-                        </span>
+                      <span className='text-foreground shrink-0 text-sm font-semibold'>
+                        {metricValue(row.value)}{' '}
+                        <span className='text-muted-foreground font-normal'>({row.pct}%)</span>
                       </span>
                     </div>
                   ))}
@@ -996,25 +1026,33 @@ export default function StudentAnalyticsDashboard() {
             >
               <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-1'>
                 <div className='bg-muted/40 rounded-xl p-3'>
-                  <p className='text-muted-foreground text-xs uppercase tracking-wide'>Total scheduled</p>
+                  <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                    Total scheduled
+                  </p>
                   <p className='text-foreground mt-1 text-2xl font-semibold'>
                     {metricValue(sessionSummary.total)}
                   </p>
                 </div>
                 <div className='bg-muted/40 rounded-xl p-3'>
-                  <p className='text-muted-foreground text-xs uppercase tracking-wide'>Currently ongoing</p>
+                  <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                    Currently ongoing
+                  </p>
                   <p className='text-foreground mt-1 text-2xl font-semibold'>
                     {metricValue(sessionSummary.ongoing)}
                   </p>
                 </div>
                 <div className='bg-muted/40 rounded-xl p-3'>
-                  <p className='text-muted-foreground text-xs uppercase tracking-wide'>Marked attended</p>
+                  <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                    Marked attended
+                  </p>
                   <p className='text-foreground mt-1 text-2xl font-semibold'>
                     {metricValue(sessionSummary.attended)}
                   </p>
                 </div>
                 <div className='bg-muted/40 rounded-xl p-3'>
-                  <p className='text-muted-foreground text-xs uppercase tracking-wide'>Last session</p>
+                  <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                    Last session
+                  </p>
                   <p className='text-foreground mt-1 text-sm font-medium'>
                     {formatDateTime(sessionSummary.latestSession)}
                   </p>
@@ -1028,7 +1066,7 @@ export default function StudentAnalyticsDashboard() {
             >
               <div className='space-y-3'>
                 <div className='bg-muted/40 rounded-xl p-3'>
-                  <p className='text-muted-foreground text-xs uppercase tracking-wide'>Courses</p>
+                  <p className='text-muted-foreground text-xs tracking-wide uppercase'>Courses</p>
                   <p className='text-foreground mt-1 text-2xl font-semibold'>
                     {metricValue(courseProgressStats.total)}
                   </p>
@@ -1037,13 +1075,17 @@ export default function StudentAnalyticsDashboard() {
                   </p>
                 </div>
                 <div className='bg-muted/40 rounded-xl p-3'>
-                  <p className='text-muted-foreground text-xs uppercase tracking-wide'>Average progress</p>
+                  <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                    Average progress
+                  </p>
                   <p className='text-foreground mt-1 text-2xl font-semibold'>
                     {formatPercent(courseProgressStats.averageProgress)}
                   </p>
                 </div>
                 <div className='bg-muted/40 rounded-xl p-3'>
-                  <p className='text-muted-foreground text-xs uppercase tracking-wide'>Class enrollments</p>
+                  <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                    Class enrollments
+                  </p>
                   <p className='text-foreground mt-1 text-2xl font-semibold'>
                     {metricValue(classEnrollmentRows.length)}
                   </p>
@@ -1063,7 +1105,7 @@ export default function StudentAnalyticsDashboard() {
             <div className='overflow-x-auto'>
               <table className='w-full min-w-[760px] text-sm'>
                 <thead>
-                  <tr className='text-muted-foreground border-b border-border text-left text-xs uppercase tracking-wide'>
+                  <tr className='text-muted-foreground border-border border-b text-left text-xs tracking-wide uppercase'>
                     <th className='py-3 pr-4'>Course</th>
                     <th className='py-3 pr-4'>Status</th>
                     <th className='py-3 pr-4'>Progress</th>
@@ -1072,12 +1114,17 @@ export default function StudentAnalyticsDashboard() {
                 </thead>
                 <tbody>
                   {courseEnrollmentRows.map(row => (
-                    <tr key={`${row.course_uuid}-${row.enrollment_uuid ?? row.updated_date ?? ''}`} className='border-border border-b last:border-b-0'>
+                    <tr
+                      key={`${row.course_uuid}-${row.enrollment_uuid ?? row.updated_date ?? ''}`}
+                      className='border-border border-b last:border-b-0'
+                    >
                       <td className='text-foreground py-3 pr-4 font-medium'>
                         {row.course_name ?? courseMap[row.course_uuid]?.name ?? '—'}
                       </td>
                       <td className='py-3 pr-4'>
-                        <Badge variant={row.enrollment_status === 'COMPLETED' ? 'success' : 'secondary'}>
+                        <Badge
+                          variant={row.enrollment_status === 'COMPLETED' ? 'success' : 'secondary'}
+                        >
                           {formatStatusLabel(row.enrollment_status)}
                         </Badge>
                       </td>
@@ -1108,60 +1155,57 @@ export default function StudentAnalyticsDashboard() {
           </SectionCard>
 
           <SectionCard
-            title="Enrolled Classes"
-            description="Class-level schedule details with start and completion timestamps."
+            title='Enrolled Classes'
+            description='Class-level schedule details with start and completion timestamps.'
           >
-            <div className="overflow-hidden rounded-lg border bg-card">
+            <div className='bg-card overflow-hidden rounded-lg border'>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[220px]">Course</TableHead>
+                    <TableHead className='w-[220px]'>Course</TableHead>
                     <TableHead>Class</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Started</TableHead>
                     <TableHead>Completed</TableHead>
-                    <TableHead className="text-right">Duration</TableHead>
+                    <TableHead className='text-right'>Duration</TableHead>
                   </TableRow>
                 </TableHeader>
 
                 <TableBody>
                   {groupedSchedules.map(group => (
                     <Fragment key={group.classUuid}>
-                      <TableRow className="hover:bg-muted/40">
-                        <TableCell className="font-medium align-top max-w-[240px]">
-                          <div className="min-w-0">
-                            <div className="line-clamp-2 font-medium leading-snug">
-                              {group.parentName ?? "—"}
+                      <TableRow className='hover:bg-muted/40'>
+                        <TableCell className='max-w-[240px] align-top font-medium'>
+                          <div className='min-w-0'>
+                            <div className='line-clamp-2 leading-snug font-medium'>
+                              {group.parentName ?? '—'}
                             </div>
 
                             {group.parentType && (
-                              <div className="line-clamp-1 text-xs text-muted-foreground">
+                              <div className='text-muted-foreground line-clamp-1 text-xs'>
                                 {group.parentType}
                               </div>
                             )}
                           </div>
                         </TableCell>
 
-
-                        <TableCell className="max-w-[360px]">
+                        <TableCell className='max-w-[360px]'>
                           <button
                             onClick={() => toggleClass(group.classUuid)}
-                            className="flex w-full min-w-0 items-start gap-3 rounded-md p-1 text-left transition-colors hover:text-primary"
+                            className='hover:text-primary flex w-full min-w-0 items-start gap-3 rounded-md p-1 text-left transition-colors'
                           >
                             <ChevronRight
                               className={cn(
-                                "mt-0.5 h-4 w-4 shrink-0 transition-transform",
-                                expandedClasses.has(group.classUuid) && "rotate-90"
+                                'mt-0.5 h-4 w-4 shrink-0 transition-transform',
+                                expandedClasses.has(group.classUuid) && 'rotate-90'
                               )}
                             />
 
                             {/* IMPORTANT: min-w-0 enables truncation inside flex */}
-                            <div className="min-w-0 flex-1">
-                              <div className="truncate font-medium">
-                                {group.className}
-                              </div>
+                            <div className='min-w-0 flex-1'>
+                              <div className='truncate font-medium'>{group.className}</div>
 
-                              <div className="mt-1 truncate text-xs text-muted-foreground">
+                              <div className='text-muted-foreground mt-1 truncate text-xs'>
                                 {group.completed} of {group.total} sessions completed
                               </div>
                             </div>
@@ -1173,18 +1217,14 @@ export default function StudentAnalyticsDashboard() {
                         </TableCell>
 
                         <TableCell>
-                          <p className='text-xs' >
-                            {formatDateTime(group.startedAt)}
-                          </p>
+                          <p className='text-xs'>{formatDateTime(group.startedAt)}</p>
                         </TableCell>
 
                         <TableCell>
-                          <p className='text-xs' >
-                            {formatDateTime(group.completedAt)}
-                          </p>
+                          <p className='text-xs'>{formatDateTime(group.completedAt)}</p>
                         </TableCell>
 
-                        <TableCell className="text-right font-medium">
+                        <TableCell className='text-right font-medium'>
                           {group.completed}/{group.total}
                         </TableCell>
                       </TableRow>
@@ -1192,27 +1232,25 @@ export default function StudentAnalyticsDashboard() {
                       {expandedClasses.has(group.classUuid) &&
                         group.sessions.map(session => {
                           const completedAt =
-                            session.scheduling_status === "COMPLETED"
-                              ? session.end_time ?? session.attendance_marked_at
+                            session.scheduling_status === 'COMPLETED'
+                              ? (session.end_time ?? session.attendance_marked_at)
                               : session.attendance_marked_at;
 
                           return (
                             <TableRow
                               key={session.enrollment_uuid}
-                              className="bg-muted/30 hover:bg-muted/50"
+                              className='bg-muted/30 hover:bg-muted/50'
                             >
                               <TableCell />
 
-                              <TableCell className="pl-10">
-                                <div className="flex items-center gap-3">
-                                  <div className="h-px w-2 bg-border" />
+                              <TableCell className='pl-10'>
+                                <div className='flex items-center gap-3'>
+                                  <div className='bg-border h-px w-2' />
 
                                   <div>
-                                    <p className="text-sm font-medium">
-                                      Session
-                                    </p>
+                                    <p className='text-sm font-medium'>Session</p>
 
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className='text-muted-foreground text-xs'>
                                       {formatDateTime(session.start_time)}
                                     </p>
                                   </div>
@@ -1220,25 +1258,17 @@ export default function StudentAnalyticsDashboard() {
                               </TableCell>
 
                               <TableCell>
-                                <Badge
-                                  variant={getSessionBadgeVariant(session)}
-                                >
+                                <Badge variant={getSessionBadgeVariant(session)}>
                                   {getSessionLabel(session)}
                                 </Badge>
                               </TableCell>
 
-                              <TableCell>
-                                {formatDateTime(session.start_time)}
-                              </TableCell>
+                              <TableCell>{formatDateTime(session.start_time)}</TableCell>
 
-                              <TableCell>
-                                {formatDateTime(completedAt)}
-                              </TableCell>
+                              <TableCell>{formatDateTime(completedAt)}</TableCell>
 
-                              <TableCell className="text-right">
-                                {formatDurationMinutes(
-                                  session.duration_minutes
-                                )}
+                              <TableCell className='text-right'>
+                                {formatDurationMinutes(session.duration_minutes)}
                               </TableCell>
                             </TableRow>
                           );
@@ -1248,12 +1278,12 @@ export default function StudentAnalyticsDashboard() {
 
                   {groupedSchedules.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-48">
+                      <TableCell colSpan={6} className='h-48'>
                         <EmptyState
                           icon={Layers3}
-                          title="No class enrollments found"
-                          description="The student does not have any scheduled class activity in the selected range."
-                          variant="compact"
+                          title='No class enrollments found'
+                          description='The student does not have any scheduled class activity in the selected range.'
+                          variant='compact'
                         />
                       </TableCell>
                     </TableRow>
@@ -1313,7 +1343,7 @@ export default function StudentAnalyticsDashboard() {
             <div className='overflow-x-auto'>
               <table className='w-full min-w-[920px] text-sm'>
                 <thead>
-                  <tr className='text-muted-foreground border-b border-border text-left text-xs uppercase tracking-wide'>
+                  <tr className='text-muted-foreground border-border border-b text-left text-xs tracking-wide uppercase'>
                     <th className='py-3 pr-4'>Assignment</th>
                     <th className='py-3 pr-4'>Course</th>
                     <th className='py-3 pr-4'>Class</th>
@@ -1326,7 +1356,7 @@ export default function StudentAnalyticsDashboard() {
                   {assignmentAnalyticsRows.map(row => (
                     <tr
                       key={row.id}
-                      className='border-border cursor-pointer border-b last:border-b-0 hover:bg-muted/40'
+                      className='border-border hover:bg-muted/40 cursor-pointer border-b last:border-b-0'
                       onClick={() => {
                         setSelectedSubmission({
                           assignment: row.assignment,
@@ -1354,7 +1384,9 @@ export default function StudentAnalyticsDashboard() {
                           {row.isPassing ? 'Pass' : 'Fail'}
                         </Badge>
                       </td>
-                      <td className='text-muted-foreground py-3 pr-4'>{formatDateTime(row.submission.submitted_at)}</td>
+                      <td className='text-muted-foreground py-3 pr-4'>
+                        {formatDateTime(row.submission.submitted_at)}
+                      </td>
                     </tr>
                   ))}
 
@@ -1375,12 +1407,11 @@ export default function StudentAnalyticsDashboard() {
             </div>
           </SectionCard>
 
-
           <SectionCard title='Quiz Report' description='Latest quiz attempts for the student.'>
             <div className='overflow-x-auto'>
               <table className='w-full min-w-[980px] text-sm'>
                 <thead>
-                  <tr className='text-muted-foreground border-b border-border text-left text-xs uppercase tracking-wide'>
+                  <tr className='text-muted-foreground border-border border-b text-left text-xs tracking-wide uppercase'>
                     <th className='py-3 pr-4'>Quiz</th>
                     <th className='py-3 pr-4'>Course</th>
                     <th className='py-3 pr-4'>Class</th>
@@ -1392,8 +1423,13 @@ export default function StudentAnalyticsDashboard() {
                 </thead>
                 <tbody>
                   {quizRows.map(({ attempt, quiz, courseName, className }) => (
-                    <tr key={attempt.uuid ?? `${attempt.quiz_uuid}-${attempt.started_at ?? ''}`} className='border-border border-b last:border-b-0'>
-                      <td className='text-foreground py-3 pr-4 font-medium'>{quiz?.title ?? attempt.quiz_uuid}</td>
+                    <tr
+                      key={attempt.uuid ?? `${attempt.quiz_uuid}-${attempt.started_at ?? ''}`}
+                      className='border-border border-b last:border-b-0'
+                    >
+                      <td className='text-foreground py-3 pr-4 font-medium'>
+                        {quiz?.title ?? attempt.quiz_uuid}
+                      </td>
                       <td className='text-muted-foreground py-3 pr-4'>{courseName}</td>
                       <td className='text-muted-foreground py-3 pr-4'>{className}</td>
                       <td className='py-3 pr-4'>
@@ -1408,8 +1444,12 @@ export default function StudentAnalyticsDashboard() {
                             ? `${attempt.score}/${attempt.max_score}`
                             : '—'}
                       </td>
-                      <td className='text-muted-foreground py-3 pr-4'>{formatDateTime(attempt.started_at)}</td>
-                      <td className='text-muted-foreground py-3 pr-4'>{formatDateTime(attempt.submitted_at)}</td>
+                      <td className='text-muted-foreground py-3 pr-4'>
+                        {formatDateTime(attempt.started_at)}
+                      </td>
+                      <td className='text-muted-foreground py-3 pr-4'>
+                        {formatDateTime(attempt.submitted_at)}
+                      </td>
                     </tr>
                   ))}
 
@@ -1432,19 +1472,37 @@ export default function StudentAnalyticsDashboard() {
         </div>
       )}
 
-      <Sheet open={isSubmissionSheetOpen} onOpenChange={open => {
-        setIsSubmissionSheetOpen(open);
-        if (!open) {
-          setSelectedSubmission(null);
-        }
-      }}>
-        <SheetContent side='right' className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[760px]'>
+      <Sheet
+        open={isSubmissionSheetOpen}
+        onOpenChange={open => {
+          setIsSubmissionSheetOpen(open);
+          if (!open) {
+            setSelectedSubmission(null);
+          }
+        }}
+      >
+        <SheetContent
+          side='right'
+          className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[760px]'
+        >
           <SheetHeader className='border-border/70 border-b px-6 py-5 text-left'>
             <div className='flex flex-wrap items-center gap-2'>
               <Badge variant='outline'>{selectedSubmission?.courseName ?? 'Assignment'}</Badge>
               {selectedSubmission && (
-                <Badge variant={selectedSubmission.submission.percentage != null && selectedSubmission.submission.percentage >= getAssignmentPassingScore(selectedSubmission.assignment) ? 'success' : 'destructive'}>
-                  {selectedSubmission.submission.percentage != null && selectedSubmission.submission.percentage >= getAssignmentPassingScore(selectedSubmission.assignment) ? 'Pass' : 'Fail'}
+                <Badge
+                  variant={
+                    selectedSubmission.submission.percentage != null &&
+                    selectedSubmission.submission.percentage >=
+                      getAssignmentPassingScore(selectedSubmission.assignment)
+                      ? 'success'
+                      : 'destructive'
+                  }
+                >
+                  {selectedSubmission.submission.percentage != null &&
+                  selectedSubmission.submission.percentage >=
+                    getAssignmentPassingScore(selectedSubmission.assignment)
+                    ? 'Pass'
+                    : 'Fail'}
                 </Badge>
               )}
             </div>
@@ -1456,11 +1514,10 @@ export default function StudentAnalyticsDashboard() {
             </SheetDescription>
           </SheetHeader>
 
-
           {selectedSubmission && (
             <div className='space-y-6 px-6 py-6'>
               {selectedSubmission.submission.instructor_comments && (
-                <div className='rounded-lg border border-border/70 bg-muted/20 p-3'>
+                <div className='border-border/70 bg-muted/20 rounded-lg border p-3'>
                   <p className='text-foreground text-sm font-medium'>Instructor feedback</p>
                   <p className='text-muted-foreground mt-1 text-sm'>
                     {selectedSubmission.submission.instructor_comments}
@@ -1468,61 +1525,59 @@ export default function StudentAnalyticsDashboard() {
                 </div>
               )}
 
-
-
               <div className='space-y-3'>
                 <div className='grid gap-3 md:grid-cols-2'>
-                  <div className='rounded-xl border border-border/70 bg-muted/20 p-3'>
-                    <p className='text-muted-foreground text-xs uppercase tracking-wide'>Grade</p>
+                  <div className='border-border/70 bg-muted/20 rounded-xl border p-3'>
+                    <p className='text-muted-foreground text-xs tracking-wide uppercase'>Grade</p>
                     <p className='text-foreground mt-1 text-xl font-semibold'>
                       {selectedSubmission.submission.percentage != null
                         ? formatPercent(selectedSubmission.submission.percentage)
-                        : selectedSubmission.submission.score != null && selectedSubmission.submission.max_score != null
+                        : selectedSubmission.submission.score != null &&
+                            selectedSubmission.submission.max_score != null
                           ? `${selectedSubmission.submission.score}/${selectedSubmission.submission.max_score}`
                           : '—'}
                     </p>
                   </div>
-                  <div className='rounded-xl border border-border/70 bg-muted/20 p-3'>
-                    <p className='text-muted-foreground text-xs uppercase tracking-wide'>Submitted</p>
+                  <div className='border-border/70 bg-muted/20 rounded-xl border p-3'>
+                    <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                      Submitted
+                    </p>
                     <p className='text-foreground mt-1 text-sm font-medium'>
                       {formatDateTime(selectedSubmission.submission.submitted_at)}
                     </p>
                   </div>
                 </div>
 
-                <div className='rounded-xl border border-border/70 bg-card p-4'>
+                <div className='border-border/70 bg-card rounded-xl border p-4'>
                   <h3 className='text-foreground text-sm font-semibold'>Assignment details</h3>
-                  <div className="text-muted-foreground mt-2 space-y-2 text-sm">
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <div className='text-muted-foreground mt-2 space-y-2 text-sm'>
+                    <div className='prose prose-sm dark:prose-invert max-w-none'>
                       <RichTextRenderer
                         htmlString={
                           selectedSubmission.assignment.description ||
-                          "<p>No description provided.</p>"
+                          '<p>No description provided.</p>'
                         }
                       />
                     </div>
 
                     {selectedSubmission.assignment.instructions && (
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <RichTextRenderer
-                          htmlString={selectedSubmission.assignment.instructions}
-                        />
+                      <div className='prose prose-sm dark:prose-invert max-w-none'>
+                        <RichTextRenderer htmlString={selectedSubmission.assignment.instructions} />
                       </div>
                     )}
                   </div>
                 </div>
 
-
-                <div className='rounded-xl border border-border/70 bg-card p-4'>
+                <div className='border-border/70 bg-card rounded-xl border p-4'>
                   <h3 className='text-foreground text-sm font-semibold'>Assignment Attachments</h3>
                   <div className='mt-3 space-y-3'>
-
                     <AttachmentResourceList
                       attachments={selectedSubmission.attachments.map(attachment => ({
                         ...attachment,
-                        file_size_bytes: typeof attachment.file_size_bytes === 'bigint'
-                          ? Number(attachment.file_size_bytes)
-                          : attachment.file_size_bytes,
+                        file_size_bytes:
+                          typeof attachment.file_size_bytes === 'bigint'
+                            ? Number(attachment.file_size_bytes)
+                            : attachment.file_size_bytes,
                       }))}
                       emptyMessage='No attachments were included with this question.'
                       previewLabel='Open file'
@@ -1530,17 +1585,18 @@ export default function StudentAnalyticsDashboard() {
                   </div>
                 </div>
 
-                <div className='rounded-xl border border-border/70 bg-card p-4'>
+                <div className='border-border/70 bg-card rounded-xl border p-4'>
                   <h3 className='text-foreground text-sm font-semibold'>Submission summary</h3>
                   <div className='text-muted-foreground mt-3 space-y-2 text-sm'>
                     {selectedSubmission.submission.submission_text ? (
                       <div className='prose prose-sm dark:prose-invert max-w-none'>
-                        <RichTextRenderer htmlString={selectedSubmission.submission.submission_text} />
+                        <RichTextRenderer
+                          htmlString={selectedSubmission.submission.submission_text}
+                        />
                       </div>
                     ) : (
                       <p>No written submission content was provided.</p>
                     )}
-
 
                     <AttachmentResourceList
                       attachments={toAttachmentResourceItems(
@@ -1551,16 +1607,15 @@ export default function StudentAnalyticsDashboard() {
                       previewLabel='Read file'
                     />
 
-                    {selectedSubmissionAttachmentsQuery.data?.data && selectedSubmissionAttachmentsQuery.data.data.length > 0 && (
-                      <div className='rounded-lg border border-border/70 bg-muted/20 p-3 text-sm text-muted-foreground'>
-                        {selectedSubmissionAttachmentsQuery.data.data.length} submission attachment(s) available.
-                      </div>
-                    )}
-
-
+                    {selectedSubmissionAttachmentsQuery.data?.data &&
+                      selectedSubmissionAttachmentsQuery.data.data.length > 0 && (
+                        <div className='border-border/70 bg-muted/20 text-muted-foreground rounded-lg border p-3 text-sm'>
+                          {selectedSubmissionAttachmentsQuery.data.data.length} submission
+                          attachment(s) available.
+                        </div>
+                      )}
                   </div>
                 </div>
-
               </div>
             </div>
           )}

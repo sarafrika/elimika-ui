@@ -70,7 +70,7 @@ export function CourseCard({
       path: { courseUuid: course?.uuid as string },
     }),
     enabled: !!course?.uuid,
-  })
+  });
   const enrollments = data?.data?.content || [];
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
@@ -183,7 +183,9 @@ export function CourseCard({
                 alt={creatorName}
                 className='h-full w-full object-cover'
               />
-              <AvatarFallback className='text-xs'>{getInitials(creatorName) || 'XY'}</AvatarFallback>
+              <AvatarFallback className='text-xs'>
+                {getInitials(creatorName) || 'XY'}
+              </AvatarFallback>
             </Avatar>
             <span className='text-muted-foreground text-sm'>{creatorName}</span>
           </div>
