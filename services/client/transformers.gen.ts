@@ -9,6 +9,7 @@ import type {
   UpdateRuleResponse,
   GetStudentByIdResponse,
   UpdateStudentResponse,
+  UpdateGroupResponse,
   GetAssessmentRubricByUuidResponse,
   UpdateAssessmentRubricResponse,
   GetScoringLevelResponse,
@@ -348,6 +349,7 @@ import type {
   GetBranchUsersResponse,
   GetBranchUsersByDomainResponse,
   GetOrganisationStatisticsResponse,
+  ListRosterResponse,
   GetCalendarResponse,
   ListBookingsResponse,
   Search2Response,
@@ -589,6 +591,28 @@ export const updateStudentResponseTransformer = async (
   data: any
 ): Promise<UpdateStudentResponse> => {
   data = studentSchemaResponseTransformer(data);
+  return data;
+};
+
+const studentGroupSchemaResponseTransformer = (data: any) => {
+  if (data.member_count) {
+    data.member_count = BigInt(data.member_count.toString());
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseStudentGroupSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = studentGroupSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateGroupResponseTransformer = async (data: any): Promise<UpdateGroupResponse> => {
+  data = apiResponseStudentGroupSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2924,16 +2948,6 @@ export const requestOrganisationVerificationResponseTransformer = async (
   return data;
 };
 
-const studentGroupSchemaResponseTransformer = (data: any) => {
-  if (data.member_count) {
-    data.member_count = BigInt(data.member_count.toString());
-  }
-  if (data.created_date) {
-    data.created_date = new Date(data.created_date);
-  }
-  return data;
-};
-
 const apiResponseListStudentGroupSchemaResponseTransformer = (data: any) => {
   if (data.data) {
     data.data = data.data.map((item: any) => {
@@ -2945,13 +2959,6 @@ const apiResponseListStudentGroupSchemaResponseTransformer = (data: any) => {
 
 export const listGroupsResponseTransformer = async (data: any): Promise<ListGroupsResponse> => {
   data = apiResponseListStudentGroupSchemaResponseTransformer(data);
-  return data;
-};
-
-const apiResponseStudentGroupSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = studentGroupSchemaResponseTransformer(data.data);
-  }
   return data;
 };
 
@@ -5976,6 +5983,40 @@ export const getOrganisationStatisticsResponseTransformer = async (
   data: any
 ): Promise<GetOrganisationStatisticsResponse> => {
   data = apiResponseOrganisationDashboardStatsSchemaResponseTransformer(data);
+  return data;
+};
+
+const studentGroupRosterEntrySchemaResponseTransformer = (data: any) => {
+  if (data.dob) {
+    data.dob = new Date(data.dob);
+  }
+  if (data.joined_date) {
+    data.joined_date = new Date(data.joined_date);
+  }
+  return data;
+};
+
+const pagedDtoStudentGroupRosterEntrySchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return studentGroupRosterEntrySchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoStudentGroupRosterEntrySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoStudentGroupRosterEntrySchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listRosterResponseTransformer = async (data: any): Promise<ListRosterResponse> => {
+  data = apiResponsePagedDtoStudentGroupRosterEntrySchemaResponseTransformer(data);
   return data;
 };
 

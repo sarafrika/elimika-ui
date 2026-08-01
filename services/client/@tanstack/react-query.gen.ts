@@ -14,6 +14,8 @@ import {
   deleteStudent,
   getStudentById,
   updateStudent,
+  deleteGroup,
+  updateGroup,
   deleteAssessmentRubric,
   getAssessmentRubricByUuid,
   updateAssessmentRubric,
@@ -445,6 +447,7 @@ import {
   getBranchUsers,
   getBranchUsersByDomain,
   getOrganisationStatistics,
+  listRoster,
   getSummary,
   getCalendar,
   listBookings,
@@ -584,7 +587,7 @@ import {
   getCourseApprovalStatus,
   listPendingCourses,
   listPendingCourseEdits,
-  deleteGroup,
+  listTiers,
   removeMember,
   deleteTransaction,
   deleteSource,
@@ -632,6 +635,12 @@ import type {
   UpdateStudentData,
   UpdateStudentError,
   UpdateStudentResponse,
+  DeleteGroupData,
+  DeleteGroupError,
+  DeleteGroupResponse,
+  UpdateGroupData,
+  UpdateGroupError,
+  UpdateGroupResponse,
   DeleteAssessmentRubricData,
   DeleteAssessmentRubricError,
   GetAssessmentRubricByUuidData,
@@ -1748,6 +1757,9 @@ import type {
   GetBranchUsersData,
   GetBranchUsersByDomainData,
   GetOrganisationStatisticsData,
+  ListRosterData,
+  ListRosterError,
+  ListRosterResponse,
   GetSummaryData,
   GetCalendarData,
   ListBookingsData,
@@ -2003,9 +2015,7 @@ import type {
   ListPendingCourseEditsData,
   ListPendingCourseEditsError,
   ListPendingCourseEditsResponse,
-  DeleteGroupData,
-  DeleteGroupError,
-  DeleteGroupResponse,
+  ListTiersData,
   RemoveMemberData,
   RemoveMemberError,
   RemoveMemberResponse,
@@ -2335,6 +2345,54 @@ export const updateStudentMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateStudent({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete a student group
+ * Deletes a student group and its membership rows.
+ */
+export const deleteGroupMutation = (
+  options?: Partial<Options<DeleteGroupData>>
+): UseMutationOptions<DeleteGroupResponse, DeleteGroupError, Options<DeleteGroupData>> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteGroupResponse,
+    DeleteGroupError,
+    Options<DeleteGroupData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteGroup({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update a student group
+ * Replaces the group's editable attributes. Omitted optional fields are cleared.
+ */
+export const updateGroupMutation = (
+  options?: Partial<Options<UpdateGroupData>>
+): UseMutationOptions<UpdateGroupResponse, UpdateGroupError, Options<UpdateGroupData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateGroupResponse,
+    UpdateGroupError,
+    Options<UpdateGroupData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateGroup({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -7537,7 +7595,7 @@ export const getQuizAttemptsQueryKey = (options: Options<GetQuizAttemptsData>) =
 
 /**
  * Get quiz attempts
- * Retrieves all attempts for a specific quiz with scoring data.
+ * Retrieves attempts for a specific quiz with scoring data. Teaching staff see every learner's attempts; students see only attempts on their own enrolments.
  */
 export const getQuizAttemptsOptions = (options: Options<GetQuizAttemptsData>) => {
   return queryOptions({
@@ -7560,7 +7618,7 @@ export const getQuizAttemptsInfiniteQueryKey = (
 
 /**
  * Get quiz attempts
- * Retrieves all attempts for a specific quiz with scoring data.
+ * Retrieves attempts for a specific quiz with scoring data. Teaching staff see every learner's attempts; students see only attempts on their own enrolments.
  */
 export const getQuizAttemptsInfiniteOptions = (options: Options<GetQuizAttemptsData>) => {
   return infiniteQueryOptions<
@@ -8721,7 +8779,7 @@ export const listGroupsQueryKey = (options: Options<ListGroupsData>) =>
 
 /**
  * List student groups for an organisation
- * Returns all student groups for the organisation with member counts.
+ * Returns the organisation's student groups with member counts, optionally narrowed to one training branch and/or one academic tier.
  */
 export const listGroupsOptions = (options: Options<ListGroupsData>) => {
   return queryOptions({
@@ -20945,6 +21003,71 @@ export const getOrganisationStatisticsOptions = (
   });
 };
 
+export const listRosterQueryKey = (options: Options<ListRosterData>) =>
+  createQueryKey('listRoster', options);
+
+/**
+ * Page the organisation's student roster
+ * Returns students with the group they sit in, joined to their user record, as a single paginated table. Optionally narrowed by branch, academic tier or a single group. Age is not returned; derive it from dob.
+ */
+export const listRosterOptions = (options: Options<ListRosterData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listRoster({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listRosterQueryKey(options),
+  });
+};
+
+export const listRosterInfiniteQueryKey = (
+  options: Options<ListRosterData>
+): QueryKey<Options<ListRosterData>> => createQueryKey('listRoster', options, true);
+
+/**
+ * Page the organisation's student roster
+ * Returns students with the group they sit in, joined to their user record, as a single paginated table. Optionally narrowed by branch, academic tier or a single group. Age is not returned; derive it from dob.
+ */
+export const listRosterInfiniteOptions = (options: Options<ListRosterData>) => {
+  return infiniteQueryOptions<
+    ListRosterResponse,
+    ListRosterError,
+    InfiniteData<ListRosterResponse>,
+    QueryKey<Options<ListRosterData>>,
+    number | Pick<QueryKey<Options<ListRosterData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListRosterData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listRoster({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listRosterInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const getSummaryQueryKey = (options: Options<GetSummaryData>) =>
   createQueryKey('getSummary', options);
 
@@ -25784,7 +25907,7 @@ export const getAssignmentSubmissionsQueryKey = (options: Options<GetAssignmentS
 
 /**
  * Get assignment submissions
- * Retrieves all submissions for a specific assignment.
+ * Retrieves submissions for a specific assignment. Teaching staff see every learner's submissions; students see only submissions on their own enrolments.
  */
 export const getAssignmentSubmissionsOptions = (options: Options<GetAssignmentSubmissionsData>) => {
   return queryOptions({
@@ -27101,28 +27224,26 @@ export const listPendingCourseEditsInfiniteOptions = (
   });
 };
 
+export const listTiersQueryKey = (options?: Options<ListTiersData>) =>
+  createQueryKey('listTiers', options);
+
 /**
- * Delete a student group
- * Deletes a student group and its membership rows.
+ * List academic tiers
+ * Returns the active platform-wide schooling levels for an education system, ordered by tier order. Read-only reference data.
  */
-export const deleteGroupMutation = (
-  options?: Partial<Options<DeleteGroupData>>
-): UseMutationOptions<DeleteGroupResponse, DeleteGroupError, Options<DeleteGroupData>> => {
-  const mutationOptions: UseMutationOptions<
-    DeleteGroupResponse,
-    DeleteGroupError,
-    Options<DeleteGroupData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await deleteGroup({
+export const listTiersOptions = (options?: Options<ListTiersData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTiers({
         ...options,
-        ...localOptions,
+        ...queryKey[0],
+        signal,
         throwOnError: true,
       });
       return data;
     },
-  };
-  return mutationOptions;
+    queryKey: listTiersQueryKey(options),
+  });
 };
 
 /**

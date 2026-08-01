@@ -40,6 +40,12 @@ import type {
   UpdateStudentData,
   UpdateStudentResponses,
   UpdateStudentErrors,
+  DeleteGroupData,
+  DeleteGroupResponses,
+  DeleteGroupErrors,
+  UpdateGroupData,
+  UpdateGroupResponses,
+  UpdateGroupErrors,
   DeleteAssessmentRubricData,
   DeleteAssessmentRubricResponses,
   DeleteAssessmentRubricErrors,
@@ -1333,6 +1339,9 @@ import type {
   GetOrganisationStatisticsData,
   GetOrganisationStatisticsResponses,
   GetOrganisationStatisticsErrors,
+  ListRosterData,
+  ListRosterResponses,
+  ListRosterErrors,
   GetSummaryData,
   GetSummaryResponses,
   GetSummaryErrors,
@@ -1750,9 +1759,9 @@ import type {
   ListPendingCourseEditsData,
   ListPendingCourseEditsResponses,
   ListPendingCourseEditsErrors,
-  DeleteGroupData,
-  DeleteGroupResponses,
-  DeleteGroupErrors,
+  ListTiersData,
+  ListTiersResponses,
+  ListTiersErrors,
   RemoveMemberData,
   RemoveMemberResponses,
   RemoveMemberErrors,
@@ -1806,6 +1815,7 @@ import {
   updateRuleResponseTransformer,
   getStudentByIdResponseTransformer,
   updateStudentResponseTransformer,
+  updateGroupResponseTransformer,
   getAssessmentRubricByUuidResponseTransformer,
   updateAssessmentRubricResponseTransformer,
   getScoringLevelResponseTransformer,
@@ -2145,6 +2155,7 @@ import {
   getBranchUsersResponseTransformer,
   getBranchUsersByDomainResponseTransformer,
   getOrganisationStatisticsResponseTransformer,
+  listRosterResponseTransformer,
   getCalendarResponseTransformer,
   listBookingsResponseTransformer,
   search2ResponseTransformer,
@@ -2568,6 +2579,65 @@ export const updateStudent = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/students/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete a student group
+ * Deletes a student group and its membership rows.
+ */
+export const deleteGroup = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteGroupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteGroupResponses,
+    DeleteGroupErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/student-groups/{groupUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a student group
+ * Replaces the group's editable attributes. Omitted optional fields are cleared.
+ */
+export const updateGroup = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateGroupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateGroupResponses,
+    UpdateGroupErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateGroupResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/student-groups/{groupUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -7295,7 +7365,7 @@ export const reorderQuizQuestions = <ThrowOnError extends boolean = false>(
 
 /**
  * Get quiz attempts
- * Retrieves all attempts for a specific quiz with scoring data.
+ * Retrieves attempts for a specific quiz with scoring data. Teaching staff see every learner's attempts; students see only attempts on their own enrolments.
  */
 export const getQuizAttempts = <ThrowOnError extends boolean = false>(
   options: Options<GetQuizAttemptsData, ThrowOnError>
@@ -7950,7 +8020,7 @@ export const requestOrganisationVerification = <ThrowOnError extends boolean = f
 
 /**
  * List student groups for an organisation
- * Returns all student groups for the organisation with member counts.
+ * Returns the organisation's student groups with member counts, optionally narrowed to one training branch and/or one academic tier.
  */
 export const listGroups = <ThrowOnError extends boolean = false>(
   options: Options<ListGroupsData, ThrowOnError>
@@ -15410,6 +15480,32 @@ export const getOrganisationStatistics = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Page the organisation's student roster
+ * Returns students with the group they sit in, joined to their user record, as a single paginated table. Optionally narrowed by branch, academic tier or a single group. Age is not returned; derive it from dob.
+ */
+export const listRoster = <ThrowOnError extends boolean = false>(
+  options: Options<ListRosterData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<ListRosterResponses, ListRosterErrors, ThrowOnError>(
+    {
+      responseTransformer: listRosterResponseTransformer,
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+      ],
+      url: '/api/v1/organisations/{organisationUuid}/student-group-members',
+      ...options,
+    }
+  );
+};
+
+/**
  * Get skills fund summary (KPIs)
  */
 export const getSummary = <ThrowOnError extends boolean = false>(
@@ -18659,7 +18755,7 @@ export const getBooking = <ThrowOnError extends boolean = false>(
 
 /**
  * Get assignment submissions
- * Retrieves all submissions for a specific assignment.
+ * Retrieves submissions for a specific assignment. Teaching staff see every learner's submissions; students see only submissions on their own enrolments.
  */
 export const getAssignmentSubmissions = <ThrowOnError extends boolean = false>(
   options: Options<GetAssignmentSubmissionsData, ThrowOnError>
@@ -19539,17 +19635,13 @@ export const listPendingCourseEdits = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Delete a student group
- * Deletes a student group and its membership rows.
+ * List academic tiers
+ * Returns the active platform-wide schooling levels for an education system, ordered by tier order. Read-only reference data.
  */
-export const deleteGroup = <ThrowOnError extends boolean = false>(
-  options: Options<DeleteGroupData, ThrowOnError>
+export const listTiers = <ThrowOnError extends boolean = false>(
+  options?: Options<ListTiersData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).delete<
-    DeleteGroupResponses,
-    DeleteGroupErrors,
-    ThrowOnError
-  >({
+  return (options?.client ?? _heyApiClient).get<ListTiersResponses, ListTiersErrors, ThrowOnError>({
     security: [
       {
         scheme: 'bearer',
@@ -19560,7 +19652,7 @@ export const deleteGroup = <ThrowOnError extends boolean = false>(
         type: 'http',
       },
     ],
-    url: '/api/v1/student-groups/{groupUuid}',
+    url: '/api/v1/academic-tiers',
     ...options,
   });
 };
