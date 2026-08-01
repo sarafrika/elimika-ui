@@ -210,7 +210,6 @@ export function CourseDetailsSheet({
         );
     }
 
-
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetDescription />
@@ -410,7 +409,7 @@ export function CourseDetailsSheet({
                                     href={buildWorkspaceAliasPath(
                                         activeDomain,
                                         isCourse
-                                            ? `/dashboard/courses/${resolvedId}/classes`
+                                            ? `/dashboard/courses/available-classes/${resolvedId}`
                                             : `/dashboard/courses/available-programs/${resolvedId}`
                                     )}
                                 >
@@ -418,18 +417,16 @@ export function CourseDetailsSheet({
                                 </Link>
                             </Button>
 
-                            {isCourse && (
-                                <Button asChild variant="outline" onClick={() => onOpenChange(false)}>
-                                    <Link
-                                        href={buildWorkspaceAliasPath(
-                                            activeDomain,
-                                            `/dashboard/courses/instructor?courseId=${resolvedId}`
-                                        )}
-                                    >
-                                        <UserSearch className="mr-1 h-4 w-4" /> Search Instructor
-                                    </Link>
-                                </Button>
-                            )}
+                            <Button asChild variant="outline" onClick={() => onOpenChange(false)}>
+                                <Link
+                                    href={buildWorkspaceAliasPath(
+                                        activeDomain,
+                                        `/dashboard/courses/instructor?courseId=${resolvedId}`
+                                    )}
+                                >
+                                    <UserSearch className="mr-1 h-4 w-4" /> Search Instructor
+                                </Link>
+                            </Button>
                         </div>
                     </div>
                 )}

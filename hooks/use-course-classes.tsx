@@ -3,17 +3,17 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import {
   getClassDefinitionsForCourseOptions,
+  getClassRatingSummaryOptions,
   getClassScheduleOptions,
   getCourseByUuidOptions,
+  getEnrollmentsForClassOptions,
   getInstructorByUuidOptions,
-  getStudentScheduleOptions,
-  listCatalogItemsOptions,
+  listCatalogItemsOptions
 } from '../services/client/@tanstack/react-query.gen';
 import type {
   ClassDefinition,
   Course,
-  Instructor,
-  StudentSchedule,
+  Instructor
 } from '../services/client/types.gen';
 import type { BundledClass } from '../src/features/dashboard/courses/types';
 
@@ -64,6 +64,22 @@ function useBundledClassInfo(
       })) || [],
   });
 
+  const classRatingSummaryQueries = useQueries({
+    queries:
+      classes.map(cls => ({
+        ...getClassRatingSummaryOptions({ path: { uuid: cls.uuid as string } }),
+        enabled: !!cls.uuid,
+      })) || [],
+  });
+
+  const classEnrolmentQueries = useQueries({
+    queries:
+      classes.map(cls => ({
+        ...getEnrollmentsForClassOptions({ path: { uuid: cls.uuid as string } }),
+        enabled: !!cls.uuid,
+      })) || [],
+  });
+
   const instructorQueries = useQueries({
     queries:
       classes.map(cls => ({
@@ -83,34 +99,27 @@ function useBundledClassInfo(
     [catalogueItems]
   );
 
-  const { data: enrollmentsData } = useQuery({
-    ...getStudentScheduleOptions({
-      path: { studentUuid: studentUuid as string },
-      query: { start: scheduleRange.start, end: scheduleRange.end },
-    }),
-    enabled: !!studentUuid,
-  });
-  const enrollments: StudentSchedule[] = enrollmentsData?.data ?? [];
-
   const courses: Array<Course | null> = courseQueries.map(q => q.data?.data ?? null);
   const instructors: Array<Instructor | null> = instructorQueries.map(q => q.data ?? null);
   const schedules = scheduleQueries.map(q => q.data?.data?.content ?? []);
+  const classRatingSummary = classRatingSummaryQueries.map(q => q.data?.data ?? null);
+  const classEnrollments = classEnrolmentQueries.map(q => q.data?.data ?? null);
 
   const bundledClassInfo: BundledClass[] = useMemo(
     () =>
       classes.map((cls, i) => {
-        const classEnrollments = enrollments.filter(en => en.class_definition_uuid === cls.uuid);
 
         return {
           ...cls,
           course: courses[i] ?? null,
           instructor: instructors[i] ?? null,
           schedule: schedules[i] ?? [],
-          enrollments: classEnrollments,
+          enrollments: classEnrollments[i] ?? [],
           catalogue: cls.uuid ? (catalogueMap[cls.uuid] ?? null) : null,
+          classRating: classRatingSummary[i] ?? null,
         };
       }),
-    [catalogueMap, classes, courses, enrollments, instructors, schedules]
+    [catalogueMap, classes, courses, classEnrollments, instructors, schedules]
   );
 
   // Compute combined loading states

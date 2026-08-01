@@ -7,6 +7,7 @@ import {
   getInstructorByUuidOptions,
   getProgramCoursesOptions,
   getStudentScheduleOptions,
+  getTrainingProgramByUuidOptions,
   listCatalogItemsOptions,
 } from '../services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, Instructor, StudentSchedule } from '../services/client/types.gen';
@@ -41,6 +42,11 @@ function useProgramBundledClassInfo(
   // Fetch program courses
   const { data: pCourses } = useQuery({
     ...getProgramCoursesOptions({ path: { programUuid: programUuid as string } }),
+    enabled: !!programUuid,
+  });
+
+  const { data: program } = useQuery({
+    ...getTrainingProgramByUuidOptions({ path: { uuid: programUuid as string } }),
     enabled: !!programUuid,
   });
 
@@ -116,6 +122,7 @@ function useProgramBundledClassInfo(
       return {
         ...cls,
         course: cls.program_uuid ? (pCourses?.data ?? null) : null,
+        program: program?.data ?? null,
         instructor: cls.default_instructor_uuid
           ? (instructorMap.get(cls.default_instructor_uuid) ?? null)
           : null,
@@ -136,6 +143,7 @@ function useProgramBundledClassInfo(
     classes: bundledClassInfo,
     loading,
     isError,
+    program: program?.data ?? null,
     // Additional useful data
   };
 }

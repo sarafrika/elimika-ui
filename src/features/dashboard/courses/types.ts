@@ -4,13 +4,12 @@ import type {
   CommerceCatalogueItem,
   Course,
   Instructor,
-  InstructorSkill,
   InstructorReview,
-  ProgramCourse,
+  InstructorSkill,
   ScheduledInstance,
   StudentSchedule,
   TrainingProgram,
-  User,
+  User
 } from '@/services/client/types.gen';
 
 export type CourseListItem = Course | TrainingProgram;
@@ -25,6 +24,7 @@ export type BundledClass = ClassDefinition & {
 
 export type ProgramBundledClass = ClassDefinition & {
   course: Course[] | null;
+  program: TrainingProgram | null;
   instructor: Instructor | null;
   schedule: ScheduledInstance[];
   enrollments: StudentSchedule[];

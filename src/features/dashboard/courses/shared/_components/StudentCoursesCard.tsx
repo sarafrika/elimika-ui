@@ -191,7 +191,6 @@ export function StudentCoursesCard({
           }
         }}
       />
-
     </div>
   );
 }

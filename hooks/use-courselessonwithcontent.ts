@@ -6,6 +6,7 @@ import type {
 } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useUserDomain } from '../context/user-domain-context';
 import {
   getAllContentTypesOptions,
   getCourseLessonsOptions,
@@ -29,7 +30,9 @@ export type CourseLessonWithContent = {
 };
 
 export function useCourseLessonsWithContent({ courseUuid, enabled = true }: Params) {
+  const { activeDomain } = useUserDomain()
   const isEnabled = enabled && !!courseUuid;
+
   const {
     data: cLessons,
     isLoading: lessonsLoading,
@@ -55,7 +58,7 @@ export function useCourseLessonsWithContent({ courseUuid, enabled = true }: Para
             lessonUuid: lesson.uuid as string,
           },
         }),
-        enabled: isEnabled && !!lesson.uuid,
+        enabled: isEnabled && !!lesson.uuid && activeDomain !== "student",
         staleTime: 10 * 60 * 1000,
         refetchOnWindowFocus: false,
         refetchOnMount: false,

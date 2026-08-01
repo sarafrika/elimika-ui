@@ -1148,64 +1148,71 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   return (
     <div className='mx-auto w-full max-w-[1680px] bg-background px-3 py-4 sm:px-4 lg:px-6 2xl:px-8'>
       <div className='space-y-6'>
-        {isStudentDomain ? <div>
-          Student domain header here</div> : <header className='border-border bg-card rounded-xl border p-4 sm:p-5'>
-          <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-            <div className='min-w-0'>
-              <h1 className='text-foreground text-[clamp(1.35rem,2vw,1.75rem)] font-semibold tracking-[-0.02em]'>
-                Course Catalogue
-              </h1>
-              <p className='text-muted-foreground mt-1 max-w-2xl text-sm sm:text-[0.95rem]'>
-                {catalogueSubtitle}
-              </p>
-            </div>
-
-            <div className='flex flex-wrap gap-2'>
-              <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
-                <GraduationCap className='text-primary size-4' />
-                <span className='text-foreground text-sm font-semibold tabular-nums'>
-                  {mappedCourses.length}
-                </span>
-                <span className='text-muted-foreground text-xs'>Courses</span>
-              </span>
-              <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
-                <Layers className='text-primary size-4' />
-                <span className='text-foreground text-sm font-semibold tabular-nums'>
-                  {mappedPrograms.length}
-                </span>
-                <span className='text-muted-foreground text-xs'>Programmes</span>
-              </span>
-              <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
-                <Users className='text-primary size-4' />
-                <span className='text-foreground text-sm font-semibold tabular-nums'>
-                  {providerCount}
-                </span>
-                <span className='text-muted-foreground text-xs'>Providers</span>
-              </span>
+        {isStudentDomain ?
+          <div className="">
+            <div className="mx-auto pb-4">
+              <h1 className="text-2xl font-bold text-slate-900">Start a Course</h1>
+              <p className="text-sm text-slate-500">Choose how you want to learn — join a class or find an instructor.</p>
             </div>
           </div>
+          :
+          <header className='border-border bg-card rounded-xl border p-4 sm:p-5'>
+            <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+              <div className='min-w-0'>
+                <h1 className='text-foreground text-[clamp(1.35rem,2vw,1.75rem)] font-semibold tracking-[-0.02em]'>
+                  Course Catalogue
+                </h1>
+                <p className='text-muted-foreground mt-1 max-w-2xl text-sm sm:text-[0.95rem]'>
+                  {catalogueSubtitle}
+                </p>
+              </div>
 
-          <div className='relative mt-4'>
-            <Search className='text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2' />
-            <Input
-              value={search}
-              onChange={event => setSearch(event.target.value)}
-              placeholder='Search courses, programmes, providers…'
-              className='h-11 pl-9 pr-9'
-              aria-label='Search the course catalogue'
-            />
-            {search ? (
-              <button
-                type='button'
-                onClick={() => setSearch('')}
-                aria-label='Clear search'
-                className='text-muted-foreground hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2'
-              >
-                <X className='size-4' />
-              </button>
-            ) : null}
-          </div>
-        </header>
+              <div className='flex flex-wrap gap-2'>
+                <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
+                  <GraduationCap className='text-primary size-4' />
+                  <span className='text-foreground text-sm font-semibold tabular-nums'>
+                    {mappedCourses.length}
+                  </span>
+                  <span className='text-muted-foreground text-xs'>Courses</span>
+                </span>
+                <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
+                  <Layers className='text-primary size-4' />
+                  <span className='text-foreground text-sm font-semibold tabular-nums'>
+                    {mappedPrograms.length}
+                  </span>
+                  <span className='text-muted-foreground text-xs'>Programmes</span>
+                </span>
+                <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
+                  <Users className='text-primary size-4' />
+                  <span className='text-foreground text-sm font-semibold tabular-nums'>
+                    {providerCount}
+                  </span>
+                  <span className='text-muted-foreground text-xs'>Providers</span>
+                </span>
+              </div>
+            </div>
+
+            <div className='relative mt-4'>
+              <Search className='text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2' />
+              <Input
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+                placeholder='Search courses, programmes, providers…'
+                className='h-11 pl-9 pr-9'
+                aria-label='Search the course catalogue'
+              />
+              {search ? (
+                <button
+                  type='button'
+                  onClick={() => setSearch('')}
+                  aria-label='Clear search'
+                  className='text-muted-foreground hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2'
+                >
+                  <X className='size-4' />
+                </button>
+              ) : null}
+            </div>
+          </header>
         }
 
         <CoursesCategoryTabs
