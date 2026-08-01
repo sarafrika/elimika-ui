@@ -16,12 +16,12 @@ import {
   type Instructor,
   type SearchResponse,
   type Student,
-  search,
   searchCourseCreators,
   searchInstructors,
   searchStudents,
   type User,
 } from '@/services/client';
+import { fetchCurrentUser } from '@/services/user/current-user';
 
 const UserProfileContext = createContext<
   | (Partial<UserProfileType> & {
@@ -81,29 +81,16 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
   return <UserProfileContext.Provider value={value}>{children}</UserProfileContext.Provider>;
 }
 
-async function fetchUserProfile(email: string): Promise<UserProfileType> {
-  // First, search for the user by email
-  const userResponse = await search({
-    query: {
-      searchParams: {
-        email_eq: email,
-      },
-      pageable: {
-        page: 0,
-        size: 1,
-      },
-    },
-  });
+async function fetchUserProfile(): Promise<UserProfileType> {
+  // Identity comes from the access token, not from a query parameter: the old
+  // `?email_eq=` bootstrap meant the user search had to stay open to every
+  // authenticated caller, which exposed the whole user table.
+  const userContent = await fetchCurrentUser();
 
-  if (userResponse.error || !userResponse.data) {
-    throw new Error('User not found');
-  }
-  const userData = userResponse.data as SearchResponse;
-  if (!userData.data?.content || userData.data.content.length === 0) {
+  if (!userContent) {
     throw new Error('User not found');
   }
 
-  const userContent = userData.data.content[0];
   const user = { ...userContent, dob: new Date(userContent?.dob ?? Date.now()) } as User &
     UserProfileType;
 
@@ -166,12 +153,15 @@ function createQueryOptions(
 ) {
   return queryOptions({
     ...options,
+    // Still keyed by email: the identity lookup no longer needs it, but the cache
+    // entry must still be per-session so a sign-out cannot serve the previous
+    // user's profile.
     queryKey: ['profile', email],
     queryFn: async () => {
       if (!email) {
         throw new Error('Email is required to fetch profile');
       }
-      return await fetchUserProfile(email);
+      return await fetchUserProfile();
     },
     staleTime: 1000 * 60 * 15,
     refetchOnWindowFocus: true,

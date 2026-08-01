@@ -1,8 +1,16 @@
 'use server';
 
-import { fetchClient } from '@/services/api/fetch-client';
 import { auth } from '@/services/auth';
+import { fetchCurrentUser } from '@/services/user/current-user';
 
+/**
+ * The caller's own user record.
+ *
+ * Previously a `?email_eq=` query against `/api/v1/users/search`, which is now restricted to
+ * platform admins — identity comes from the access token instead. `getUserByEmail`, which looked
+ * up an arbitrary account by address, went with it: nothing called it and no ordinary caller may
+ * do that any more.
+ */
 export const getUserProfile = async () => {
   const session = await auth();
   if (!session?.user?.id) {
@@ -11,41 +19,14 @@ export const getUserProfile = async () => {
       data: null,
     };
   }
-  const resp = await fetchClient.GET('/api/v1/users/search', {
-    params: {
-      searchParams: {
-        email_eq: session.user.email,
-      },
-      query: {
-        pageable: {
-          page: 0,
-          size: 1,
-        },
-      },
-    },
-  });
-  return resp.data;
-};
 
-export const getUserByEmail = async (email: string) => {
-  const resp = await fetchClient.GET('/api/v1/users/search', {
-    params: {
-      query: {
-        // @ts-expect-error
-        page: 0,
-        size: 1,
-        email_eq: email,
-      },
-    },
-  });
-
-  if (resp.error) {
-    throw new Error(resp.error.message);
+  const user = await fetchCurrentUser();
+  if (!user) {
+    return {
+      error: 'User not found',
+      data: null,
+    };
   }
 
-  if (resp.data.data?.content?.length === 0) {
-    throw new Error('User not found');
-  }
-
-  return resp.data.data?.content?.[0];
+  return { error: null, data: user };
 };

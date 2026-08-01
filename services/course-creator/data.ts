@@ -14,12 +14,11 @@ import { auth } from '@/services/auth';
 import {
   type Course,
   type CourseCreator,
-  search,
   searchCourseCreators,
   searchCourses,
   type SearchResponse,
-  type User,
 } from '@/services/client';
+import { fetchCurrentUser } from '@/services/user/current-user';
 
 export async function getCourseCreatorDashboardData(): Promise<CourseCreatorDashboardData> {
   const session = await auth();
@@ -28,23 +27,9 @@ export async function getCourseCreatorDashboardData(): Promise<CourseCreatorDash
   }
 
   try {
-    const { data: userSearchData } = await search({
-      query: {
-        searchParams: {
-          email_eq: session.user.email,
-        },
-        pageable: {
-          page: 0,
-          size: 1,
-          sort: [],
-        },
-      },
-    });
-
-    const userSearch = userSearchData as SearchResponse;
-    const userRecord = Array.isArray(userSearch.data?.content)
-      ? (userSearch.data.content[0] as unknown as User)
-      : undefined;
+    // Identity from the access token; the email-filtered user search is now
+    // restricted to platform admins.
+    const userRecord = await fetchCurrentUser();
 
     if (!userRecord || !userRecord.uuid) {
       return emptyCourseCreatorDashboardData;

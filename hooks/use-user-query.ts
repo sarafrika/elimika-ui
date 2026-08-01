@@ -1,7 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 import type { UserDomain } from '@/lib/types';
 import { getDashboardStorageKey } from '@/lib/utils';
-import { search } from '@/services/client';
+import { fetchCurrentUser } from '@/services/user/current-user';
 import {
   clearPersistedDashboardDomain,
   persistDashboardDomain,
@@ -21,19 +21,9 @@ export function useUserQuery() {
         return null;
       }
 
-      const resp = await search({
-        query: {
-          searchParams: { email_eq: session.user.email },
-          pageable: { page: 0, size: 100 },
-        },
-      });
-
-      if (resp.error) {
-        throw new Error('Failed to fetch user data');
-      }
-
-      const results = resp.data.data?.content;
-      return results?.[0] || null;
+      // Identity from the access token; the email-filtered user search is now
+      // restricted to platform admins.
+      return await fetchCurrentUser();
     },
     enabled: status === 'authenticated' && !!session?.user?.email,
     staleTime: 1000 * 60 * 15, // 15 minutes
