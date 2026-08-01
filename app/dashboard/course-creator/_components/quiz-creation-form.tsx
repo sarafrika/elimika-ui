@@ -181,20 +181,23 @@ const QuestionRow = ({
               <div
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border hover:border-primary/50'
-                  }`}
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
+                  opt.isCorrect
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                }`}
               >
                 <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
-                    }`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                    opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
+                  }`}
                 >
                   {opt.isCorrect && <Check className='text-primary-foreground h-3 w-3' />}
                 </div>
                 <span
-                  className={`text-sm font-medium ${opt.isCorrect ? 'text-primary' : 'text-foreground'
-                    }`}
+                  className={`text-sm font-medium ${
+                    opt.isCorrect ? 'text-primary' : 'text-foreground'
+                  }`}
                 >
                   {opt.text}
                 </span>
@@ -388,7 +391,7 @@ export const QuizCreationForm = ({
   updateQuizForLesson,
   deleteQuizForLesson,
   isPending,
-  openBulkUploadSheet
+  openBulkUploadSheet,
 }: QuizCreationFormProps) => {
   const creator = useCourseCreator();
 
@@ -578,7 +581,7 @@ export const QuizCreationForm = ({
               <div className='flex flex-col space-y-2'>
                 {quizzes?.data?.content?.length ? (
                   quizzes.data.content.map((quiz, idx: number) => {
-                    const isSelected = quizUuid === quiz.uuid
+                    const isSelected = quizUuid === quiz.uuid;
 
                     return (
                       <div
@@ -602,12 +605,12 @@ export const QuizCreationForm = ({
                             Published
                           </Badge>
                         ) : (
-                          <Badge className='bg-destructive/10 text-destructive border border-destructive/20 text-[10px]'>
+                          <Badge className='bg-destructive/10 text-destructive border-destructive/20 border text-[10px]'>
                             Draft
                           </Badge>
                         )}
                       </div>
-                    )
+                    );
                   })
                 ) : (
                   <div className='text-muted-foreground rounded-lg border border-dashed py-4 text-center text-sm'>
@@ -621,8 +624,8 @@ export const QuizCreationForm = ({
           {/* Quiz fields */}
           <div className='flex flex-col gap-6'>
             <Separator />
-            {selectedQuizData.title && selectedQuizData?.status !== "published" && (
-              <div className='rounded-md border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive'>
+            {selectedQuizData.title && selectedQuizData?.status !== 'published' && (
+              <div className='border-destructive/20 bg-destructive/5 text-destructive rounded-md border p-3 text-sm'>
                 This quiz is in draft mode and is not visible to instructors until it is published.
               </div>
             )}
@@ -812,7 +815,7 @@ export const QuizCreationForm = ({
               <div className='mb-6'>
                 <h4 className='text-foreground mb-3 text-lg font-semibold'>Questions</h4>
 
-                <div className='flex flex-wrap flex-row w-full items-center justify-between' >
+                <div className='flex w-full flex-row flex-wrap items-center justify-between'>
                   <div className='flex flex-wrap gap-2'>
                     {QUESTION_TYPES.map(type => (
                       <Button
@@ -826,11 +829,8 @@ export const QuizCreationForm = ({
                     ))}
                   </div>
 
-                  <Button
-                    variant="outline"
-                    onClick={openBulkUploadSheet}
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
+                  <Button variant='outline' onClick={openBulkUploadSheet}>
+                    <FileText className='mr-2 h-4 w-4' />
                     Paste Bulk Questions
                   </Button>
                 </div>

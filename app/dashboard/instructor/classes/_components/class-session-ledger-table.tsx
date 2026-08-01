@@ -98,46 +98,46 @@ export function ClassSessionLedgerTable({
   }, [totalPages]);
 
   return (
-    <div className='overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm'>
+    <div className='border-border/70 bg-card overflow-hidden rounded-[14px] border shadow-sm'>
       <div className='overflow-x-auto'>
         <Table className='min-w-[1120px]'>
           <TableHeader>
             <TableRow className='border-border/70 hover:bg-transparent'>
-              <TableHead className='px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
+              <TableHead className='text-foreground px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase'>
                 #
               </TableHead>
-              <TableHead className='px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
+              <TableHead className='text-foreground px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase'>
                 Session Dates &amp; Time
               </TableHead>
-              <TableHead className='px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
+              <TableHead className='text-foreground px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase'>
                 Class Duration
               </TableHead>
-              <TableHead className='px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
+              <TableHead className='text-foreground px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase'>
                 Trainer Attendance
               </TableHead>
-              <TableHead className='px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
+              <TableHead className='text-foreground px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase'>
                 Student Attendance
               </TableHead>
-              <TableHead className='px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
+              <TableHead className='text-foreground px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase'>
                 Training
               </TableHead>
-              <TableHead className='px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
+              <TableHead className='text-foreground px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase'>
                 Assessment
               </TableHead>
               {showFinancialColumns ? (
                 <>
-                  <TableHead className='px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
+                  <TableHead className='text-foreground px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase'>
                     Order Amount
                   </TableHead>
-                  <TableHead className='px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
+                  <TableHead className='text-foreground px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase'>
                     Payable Amount
                   </TableHead>
                 </>
               ) : null}
-              <TableHead className='px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
+              <TableHead className='text-foreground px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase'>
                 Status
               </TableHead>
-              <TableHead className='px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground'>
+              <TableHead className='text-foreground px-4 py-3 text-right text-[11px] font-semibold tracking-[0.12em] uppercase'>
                 Actions
               </TableHead>
             </TableRow>
@@ -155,13 +155,13 @@ export function ClassSessionLedgerTable({
                     row.statusTone === 'info' ? 'bg-primary/5' : ''
                   )}
                 >
-                  <TableCell className='px-4 py-4 text-sm font-semibold text-foreground'>
+                  <TableCell className='text-foreground px-4 py-4 text-sm font-semibold'>
                     {row.index}
                   </TableCell>
-                  <TableCell className='px-4 py-4 text-sm text-foreground whitespace-nowrap'>
+                  <TableCell className='text-foreground px-4 py-4 text-sm whitespace-nowrap'>
                     {row.sessionDateTime}
                   </TableCell>
-                  <TableCell className='px-4 py-4 text-sm text-foreground whitespace-nowrap'>
+                  <TableCell className='text-foreground px-4 py-4 text-sm whitespace-nowrap'>
                     {row.classDuration}
                   </TableCell>
                   <TableCell className='px-4 py-4 text-sm whitespace-nowrap'>
@@ -182,10 +182,10 @@ export function ClassSessionLedgerTable({
                   </TableCell>
                   {showFinancialColumns ? (
                     <>
-                      <TableCell className='px-4 py-4 text-sm text-foreground whitespace-nowrap'>
+                      <TableCell className='text-foreground px-4 py-4 text-sm whitespace-nowrap'>
                         {row.orderAmount ?? 'Ksh 0'}
                       </TableCell>
-                      <TableCell className='px-4 py-4 text-sm text-foreground whitespace-nowrap'>
+                      <TableCell className='text-foreground px-4 py-4 text-sm whitespace-nowrap'>
                         {row.payableAmount ?? 'Ksh 0'}
                       </TableCell>
                     </>
@@ -216,10 +216,7 @@ export function ClassSessionLedgerTable({
               ))
             ) : (
               <TableRow className='hover:bg-transparent'>
-                <TableCell
-                  colSpan={showFinancialColumns ? 11 : 9}
-                  className='py-12 text-center'
-                >
+                <TableCell colSpan={showFinancialColumns ? 11 : 9} className='py-12 text-center'>
                   <div className='space-y-2'>
                     <p className='text-foreground text-sm font-semibold'>{emptyTitle}</p>
                     <p className='text-muted-foreground text-sm'>{emptyDescription}</p>
@@ -241,7 +238,7 @@ export function ClassSessionLedgerTable({
             type='button'
             onClick={() => setCurrentPage(page => Math.max(page - 1, 1))}
             disabled={safeCurrentPage === 1}
-            className='inline-flex h-9 w-9 items-center justify-center rounded-md border border-border/70 bg-background text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50'
+            className='border-border/70 bg-background text-foreground hover:bg-muted inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-50'
             aria-label='Previous page'
           >
             <ChevronLeft className='h-4 w-4' />
@@ -255,7 +252,9 @@ export function ClassSessionLedgerTable({
 
               return (
                 <div key={pageNumber} className='flex items-center gap-1.5'>
-                  {shouldShowGap ? <span className='px-1 text-sm text-muted-foreground'>…</span> : null}
+                  {shouldShowGap ? (
+                    <span className='text-muted-foreground px-1 text-sm'>…</span>
+                  ) : null}
                   <button
                     type='button'
                     onClick={() => setCurrentPage(pageNumber)}
@@ -278,7 +277,7 @@ export function ClassSessionLedgerTable({
             type='button'
             onClick={() => setCurrentPage(page => Math.min(page + 1, totalPages))}
             disabled={safeCurrentPage === totalPages}
-            className='inline-flex h-9 w-9 items-center justify-center rounded-md border border-border/70 bg-background text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50'
+            className='border-border/70 bg-background text-foreground hover:bg-muted inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-50'
             aria-label='Next page'
           >
             <ChevronRight className='h-4 w-4' />

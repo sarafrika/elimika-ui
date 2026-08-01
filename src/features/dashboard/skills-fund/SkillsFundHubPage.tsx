@@ -9,7 +9,12 @@ import { SkillsFundOpportunityCard } from './_components/SkillsFundOpportunityCa
 import { SkillsFundSidebar } from './_components/SkillsFundSidebar';
 import { SkillsFundTabs } from './_components/SkillsFundTabs';
 import { SkillsFundToolbar } from './_components/SkillsFundToolbar';
-import { getSkillsFundContent, type SkillsFundRole, type SkillsFundSortValue, type SkillsFundTabId } from './data';
+import {
+  getSkillsFundContent,
+  type SkillsFundRole,
+  type SkillsFundSortValue,
+  type SkillsFundTabId,
+} from './data';
 
 type SkillsFundHubPageProps = {
   role: SkillsFundRole;
@@ -26,7 +31,9 @@ function sortOpportunities<T extends { recommendation: string; supportAmount: nu
     case 'highest-support':
       return nextItems.sort((left, right) => right.supportAmount - left.supportAmount);
     case 'recommended':
-      return nextItems.sort((left, right) => right.recommendation.localeCompare(left.recommendation));
+      return nextItems.sort((left, right) =>
+        right.recommendation.localeCompare(left.recommendation)
+      );
     case 'best-match':
     default:
       return nextItems;
@@ -52,7 +59,7 @@ export function SkillsFundHubPage({ role, profileName }: SkillsFundHubPageProps)
   return (
     <main className='w-full'>
       <div className='px-2 py-2'>
-        <section className='overflow-hidden bg-card'>
+        <section className='bg-card overflow-hidden'>
           <SkillsFundHeader profileName={content.profileName} title={content.title} />
           <SkillsFundTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={content.tabs} />
 
@@ -73,10 +80,10 @@ export function SkillsFundHubPage({ role, profileName }: SkillsFundHubPageProps)
                     ))}
                   </div>
                 ) : (
-                  <div className='flex min-h-[280px] flex-col items-center justify-center rounded-[12px] border border-dashed border-border bg-muted/20 p-8 text-center'>
-                    <GraduationCap className='mb-4 size-10 text-muted-foreground' />
+                  <div className='border-border bg-muted/20 flex min-h-[280px] flex-col items-center justify-center rounded-[12px] border border-dashed p-8 text-center'>
+                    <GraduationCap className='text-muted-foreground mb-4 size-10' />
                     <h3 className='text-lg font-semibold'>No funding opportunities available</h3>
-                    <p className='mt-2 max-w-md text-sm text-muted-foreground'>
+                    <p className='text-muted-foreground mt-2 max-w-md text-sm'>
                       There are currently no bursaries, scholarships, sponsorships, or
                       apprenticeships available. Check back later for new opportunities.
                     </p>
@@ -84,14 +91,14 @@ export function SkillsFundHubPage({ role, profileName }: SkillsFundHubPageProps)
                 )}
               </section>
 
-              <section className='rounded-[12px] border border-border bg-muted/20 p-3 sm:p-4'>
+              <section className='border-border bg-muted/20 rounded-[12px] border p-3 sm:p-4'>
                 <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
-                  <h2 className='text-[1.2rem] font-semibold text-foreground sm:text-[1.35rem]'>
+                  <h2 className='text-foreground text-[1.2rem] font-semibold sm:text-[1.35rem]'>
                     Application Tracker
                   </h2>
                   <Button
                     variant='ghost'
-                    className='h-auto px-0 text-sm font-semibold text-primary hover:bg-transparent hover:text-primary/80'
+                    className='text-primary hover:text-primary/80 h-auto px-0 text-sm font-semibold hover:bg-transparent'
                   >
                     View All Applications
                     <ChevronRight className='size-4' />
@@ -105,10 +112,10 @@ export function SkillsFundHubPage({ role, profileName }: SkillsFundHubPageProps)
                     ))}
                   </div>
                 ) : (
-                  <div className='flex min-h-[180px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-background/50 p-6 text-center'>
-                    <FileText className='mb-3 size-8 text-muted-foreground' />
+                  <div className='border-border bg-background/50 flex min-h-[180px] flex-col items-center justify-center rounded-xl border border-dashed p-6 text-center'>
+                    <FileText className='text-muted-foreground mb-3 size-8' />
                     <h3 className='font-semibold'>No applications yet</h3>
-                    <p className='mt-1 text-sm text-muted-foreground'>
+                    <p className='text-muted-foreground mt-1 text-sm'>
                       Applications you submit will appear here for tracking.
                     </p>
                   </div>
@@ -117,8 +124,8 @@ export function SkillsFundHubPage({ role, profileName }: SkillsFundHubPageProps)
             </div>
 
             {content.trackerEntries.length > 0 ||
-              content.activityEntries.length > 0 ||
-              content.resources.length > 0 ? (
+            content.activityEntries.length > 0 ||
+            content.resources.length > 0 ? (
               <SkillsFundSidebar
                 activityEntries={content.activityEntries}
                 resources={content.resources}
@@ -133,12 +140,12 @@ export function SkillsFundHubPage({ role, profileName }: SkillsFundHubPageProps)
                 walletUtilizationPercent={content.walletUtilizationPercent}
               />
             ) : (
-              <aside className='flex min-h-[500px] flex-col items-center justify-center rounded-[16px] border border-dashed border-border bg-muted/20 p-8 text-center'>
-                <WalletCards className='mb-4 size-10 text-muted-foreground' />
+              <aside className='border-border bg-muted/20 flex min-h-[500px] flex-col items-center justify-center rounded-[16px] border border-dashed p-8 text-center'>
+                <WalletCards className='text-muted-foreground mb-4 size-10' />
                 <h3 className='text-lg font-semibold'>No funding activity</h3>
-                <p className='mt-2 max-w-xs text-sm text-muted-foreground'>
-                  Your wallet, activity history, resources, and funding tracker will appear
-                  here once funding data becomes available.
+                <p className='text-muted-foreground mt-2 max-w-xs text-sm'>
+                  Your wallet, activity history, resources, and funding tracker will appear here
+                  once funding data becomes available.
                 </p>
               </aside>
             )}

@@ -1,7 +1,12 @@
 import type { UserDomain, UserProfileType } from '@/lib/types';
 import type { Organisation } from '@/services/client';
 
-export type DashboardSettingsVariant = 'admin' | 'student' | 'instructor' | 'organisation' | 'course_creator';
+export type DashboardSettingsVariant =
+  | 'admin'
+  | 'student'
+  | 'instructor'
+  | 'organisation'
+  | 'course_creator';
 
 export type SettingsTabConfig = {
   value: string;
@@ -46,10 +51,10 @@ const formatDomain = (domain?: UserDomain | string | string[] | null) => {
 
   return normalized
     ? normalized
-      .split('_')
-      .filter(Boolean)
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ')
+        .split('_')
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
     : 'Account';
 };
 

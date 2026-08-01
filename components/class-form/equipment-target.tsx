@@ -26,24 +26,28 @@ export function EquipmentTarget({
     on ? Array.from(new Set([...list, value])) : list.filter(x => x !== value);
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <div className="space-y-2">
+    <div className='grid gap-4 sm:grid-cols-2'>
+      <div className='space-y-2'>
         <Label>Equipment</Label>
-        <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-md border p-2.5">
+        <div className='max-h-40 space-y-1.5 overflow-y-auto rounded-md border p-2.5'>
           {equipmentResources.length === 0 ? (
-            <div className="text-xs text-muted-foreground">No equipment pools registered.</div>
+            <div className='text-muted-foreground text-xs'>No equipment pools registered.</div>
           ) : (
             equipmentResources.map(eq => {
               const checked = equipmentUuids.includes(eq.uuid ?? '');
               return (
-                <label key={eq.uuid} className="flex cursor-pointer items-center gap-2 text-sm">
+                <label key={eq.uuid} className='flex cursor-pointer items-center gap-2 text-sm'>
                   <Checkbox
                     checked={checked}
-                    onCheckedChange={v => onEquipmentChange(toggle(equipmentUuids, eq.uuid ?? '', v === true))}
+                    onCheckedChange={v =>
+                      onEquipmentChange(toggle(equipmentUuids, eq.uuid ?? '', v === true))
+                    }
                   />
-                  <span className="flex-1">{eq.name}</span>
+                  <span className='flex-1'>{eq.name}</span>
                   {eq.total_quantity != null ? (
-                    <span className="text-[10px] text-muted-foreground">{eq.total_quantity} units</span>
+                    <span className='text-muted-foreground text-[10px]'>
+                      {eq.total_quantity} units
+                    </span>
                   ) : null}
                 </label>
               );
@@ -51,11 +55,11 @@ export function EquipmentTarget({
           )}
         </div>
         {equipmentUuids.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className='flex flex-wrap gap-1'>
             {equipmentUuids.map(uuid => {
               const eq = equipmentResources.find(e => e.uuid === uuid);
               return (
-                <Badge key={uuid} variant="secondary" className="text-[10px]">
+                <Badge key={uuid} variant='secondary' className='text-[10px]'>
                   {eq?.name ?? uuid.slice(0, 8)}
                 </Badge>
               );

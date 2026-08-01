@@ -86,8 +86,7 @@ function canAttemptCache(response: Response) {
 
   const parsedContentLength = Number(contentLength);
   return (
-    Number.isFinite(parsedContentLength) &&
-    parsedContentLength <= PRIVATE_BFF_CACHE_MAX_BODY_BYTES
+    Number.isFinite(parsedContentLength) && parsedContentLength <= PRIVATE_BFF_CACHE_MAX_BODY_BYTES
   );
 }
 
@@ -223,10 +222,21 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
     sanitizeHeaders(responseHeaders);
 
     if (request.method === 'GET' && cacheKey && cacheUserId && canAttemptCache(upstreamResponse)) {
-      return cacheGetResponse(upstreamUrl, upstreamResponse, responseHeaders, cacheUserId, cacheKey);
+      return cacheGetResponse(
+        upstreamUrl,
+        upstreamResponse,
+        responseHeaders,
+        cacheUserId,
+        cacheKey
+      );
     }
 
-    if (request.method !== 'GET' && request.method !== 'HEAD' && upstreamResponse.ok && cacheUserId) {
+    if (
+      request.method !== 'GET' &&
+      request.method !== 'HEAD' &&
+      upstreamResponse.ok &&
+      cacheUserId
+    ) {
       clearPrivateBffCacheForUser(cacheUserId);
     }
 

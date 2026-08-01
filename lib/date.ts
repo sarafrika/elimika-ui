@@ -48,9 +48,7 @@ export function parseApiDate(value: ApiDateInput) {
   }
 
   const parsed =
-    typeof value === 'string' && !HAS_TIMEZONE.test(value.trim())
-      ? dayjs.utc(value)
-      : dayjs(value);
+    typeof value === 'string' && !HAS_TIMEZONE.test(value.trim()) ? dayjs.utc(value) : dayjs(value);
 
   return parsed.isValid() ? parsed : null;
 }

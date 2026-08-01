@@ -14,7 +14,7 @@ type Props = {
   selectedInstructor: SearchInstructor | null;
   shortlist: SearchInstructor[];
   onSelectShortlist: (uuid: string) => void;
-  instructorIntroVideo: string
+  instructorIntroVideo: string;
 };
 
 function getMatchScore(instructor: SearchInstructor | null) {
@@ -58,11 +58,11 @@ export function SearchInstructorSidebar({
   const score = useMemo(() => getMatchScore(selectedInstructor), [selectedInstructor]);
   const matchLabel = getMatchLabel(score);
   // const primaryShortlist = shortlist.slice(0, 3) || [];
-  const primaryShortlist = [] as SearchInstructor[]
+  const primaryShortlist = [] as SearchInstructor[];
 
   return (
     <div className='space-y-4'>
-      <Card className='rounded-xl border bg-card p-4 shadow-none'>
+      <Card className='bg-card rounded-xl border p-4 shadow-none'>
         <div className='mb-3 flex items-center justify-between gap-3'>
           <div className='flex items-center gap-2'>
             <h3 className='text-sm font-semibold sm:text-base'>AI Match for You</h3>
@@ -77,15 +77,13 @@ export function SearchInstructorSidebar({
           <MatchRing score={score} />
           <div className='min-w-0 space-y-1'>
             <p className='text-foreground text-sm font-semibold sm:text-base'>{matchLabel}</p>
-            <p className='text-muted-foreground text-xs sm:text-sm'>
-              Great match for your needs!
-            </p>
+            <p className='text-muted-foreground text-xs sm:text-sm'>Great match for your needs!</p>
             <p className='text-primary text-xs font-medium'>Why this match?</p>
           </div>
         </div>
       </Card>
 
-      <Card className='rounded-xl border bg-card p-4 shadow-none'>
+      <Card className='bg-card rounded-xl border p-4 shadow-none'>
         <div className='space-y-2'>
           <h3 className='text-sm font-semibold sm:text-base'>Quick Hire (1-Click Booking)</h3>
           <p className='text-muted-foreground text-xs sm:text-sm'>Book instantly with one click.</p>
@@ -103,7 +101,7 @@ export function SearchInstructorSidebar({
         </div>
       </Card>
 
-      <Card className='rounded-xl border bg-card p-4 shadow-none'>
+      <Card className='bg-card rounded-xl border p-4 shadow-none'>
         <div className='flex items-start justify-between gap-3'>
           <div>
             <h3 className='text-sm font-semibold sm:text-base'>Pay using Skills Fund</h3>
@@ -112,7 +110,7 @@ export function SearchInstructorSidebar({
           <Switch checked={skillsFundEnabled} onCheckedChange={setSkillsFundEnabled} />
         </div>
 
-        <div className='mt-4 rounded-xl border bg-background p-3'>
+        <div className='bg-background mt-4 rounded-xl border p-3'>
           <div className='flex items-center justify-between gap-3'>
             <p className='text-base font-semibold sm:text-lg'>KSh 1,500</p>
             <p className='text-muted-foreground text-xs sm:text-sm'>This booking</p>
@@ -135,24 +133,26 @@ export function SearchInstructorSidebar({
         </div>
       </Card>
 
-      <Card className='rounded-xl border bg-card p-4 shadow-none'>
+      <Card className='bg-card rounded-xl border p-4 shadow-none'>
         <div className='mb-3 flex items-center justify-between gap-3'>
           <div>
             <h3 className='text-sm font-semibold sm:text-base'>Instructor Video Preview</h3>
-            <p className='text-muted-foreground text-xs sm:text-sm'>Quick introduction from the instructor</p>
+            <p className='text-muted-foreground text-xs sm:text-sm'>
+              Quick introduction from the instructor
+            </p>
           </div>
           <Video className='text-muted-foreground size-4' />
         </div>
 
         {instructorIntroVideo ? (
-          <div className='relative overflow-hidden rounded-xl border bg-muted/40'>
+          <div className='bg-muted/40 relative overflow-hidden rounded-xl border'>
             <div className='from-primary/25 via-background/80 to-card h-40 bg-gradient-to-br' />
             <div className='absolute inset-0 flex items-center justify-center'>
               <Button
                 type='button'
                 variant='outline'
                 size='icon'
-                className='bg-background/90 text-foreground size-12 rounded-full shadow-md hover:bg-background'
+                className='bg-background/90 text-foreground hover:bg-background size-12 rounded-full shadow-md'
               >
                 <Play className='ms-0.5 size-5 fill-current' />
               </Button>
@@ -162,7 +162,7 @@ export function SearchInstructorSidebar({
             </Badge>
           </div>
         ) : (
-          <div className='flex h-40 flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 text-center'>
+          <div className='bg-muted/20 flex h-40 flex-col items-center justify-center rounded-xl border border-dashed text-center'>
             <p className='text-sm font-medium'>No intro video</p>
             <p className='text-muted-foreground text-xs'>
               This instructor hasn’t uploaded a video yet
@@ -170,16 +170,20 @@ export function SearchInstructorSidebar({
           </div>
         )}
 
-
         <div className='mt-3 flex items-center gap-3'>
-          <Avatar className='size-11 border border-border/60'>
-            <AvatarImage src={selectedInstructor?.profile_image_url ?? undefined} alt={selectedInstructor?.full_name} />
+          <Avatar className='border-border/60 size-11 border'>
+            <AvatarImage
+              src={selectedInstructor?.profile_image_url ?? undefined}
+              alt={selectedInstructor?.full_name}
+            />
             <AvatarFallback className='text-xs font-semibold'>
               {selectedInstructor?.full_name?.charAt(0) ?? 'I'}
             </AvatarFallback>
           </Avatar>
           <div className='min-w-0'>
-            <p className='truncate text-sm font-semibold'>{selectedInstructor?.full_name ?? 'John Mwangi'}</p>
+            <p className='truncate text-sm font-semibold'>
+              {selectedInstructor?.full_name ?? 'John Mwangi'}
+            </p>
             <p className='text-muted-foreground text-xs sm:text-sm'>
               {selectedInstructor?.professional_headline ?? 'Certified Piano Instructor'}
             </p>
@@ -187,11 +191,12 @@ export function SearchInstructorSidebar({
         </div>
       </Card>
 
-      <Card className='rounded-xl border bg-card p-4 shadow-none'>
+      <Card className='bg-card rounded-xl border p-4 shadow-none'>
         <div className='mb-3 flex items-center justify-between gap-3'>
           <div>
-            <h3 className='text-sm font-semibold sm:text-base'>Your Shortlist ({primaryShortlist.length})</h3>
-
+            <h3 className='text-sm font-semibold sm:text-base'>
+              Your Shortlist ({primaryShortlist.length})
+            </h3>
           </div>
           <Button type='button' variant='link' className='h-auto p-0 text-xs sm:text-sm'>
             View all
@@ -204,10 +209,13 @@ export function SearchInstructorSidebar({
               key={instructor.uuid}
               type='button'
               onClick={() => onSelectShortlist(instructor.uuid as string)}
-              className='flex w-full items-center gap-3 rounded-xl border bg-background px-3 py-2 text-left transition-colors hover:bg-accent'
+              className='bg-background hover:bg-accent flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors'
             >
-              <Avatar className='size-10 border border-border/60'>
-                <AvatarImage src={instructor.profile_image_url ?? undefined} alt={instructor.full_name} />
+              <Avatar className='border-border/60 size-10 border'>
+                <AvatarImage
+                  src={instructor.profile_image_url ?? undefined}
+                  alt={instructor.full_name}
+                />
                 <AvatarFallback className='text-xs font-semibold'>
                   {instructor.full_name?.charAt(0) ?? 'I'}
                 </AvatarFallback>
@@ -215,7 +223,7 @@ export function SearchInstructorSidebar({
               <div className='min-w-0 flex-1'>
                 <p className='truncate text-sm font-medium'>{instructor.full_name}</p>
                 <p className='text-muted-foreground text-xs'>
-                  {((instructor.rating ?? 0).toFixed(1) || '4.8')} • KSh 1,500 / session
+                  {(instructor.rating ?? 0).toFixed(1) || '4.8'} • KSh 1,500 / session
                 </p>
               </div>
               <span className='text-muted-foreground text-xs'>×</span>

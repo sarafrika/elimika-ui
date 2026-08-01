@@ -224,31 +224,32 @@ export const ManageBookings: React.FC<Props> = ({
         <div className='mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]'>
           <div className='grid gap-3 sm:grid-cols-2'>
             <div className='bg-muted/50 rounded-2xl p-3 text-sm'>
-            <div className='flex items-center gap-2'>
-              <Calendar className='text-muted-foreground h-4 w-4' />
-              <span>
-                {start.toLocaleDateString('en-US', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </span>
-            </div>
+              <div className='flex items-center gap-2'>
+                <Calendar className='text-muted-foreground h-4 w-4' />
+                <span>
+                  {start.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
             </div>
 
             <div className='bg-muted/50 rounded-2xl p-3 text-sm'>
               <div className='flex items-center gap-2'>
-              <Clock className='text-muted-foreground h-4 w-4' />
-              <span>
-                {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} –{' '}
-                {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
+                <Clock className='text-muted-foreground h-4 w-4' />
+                <span>
+                  {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} –{' '}
+                  {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
             </div>
 
             <div className='bg-muted/50 rounded-2xl p-3 text-sm sm:col-span-2'>
-              <span className='font-medium'>Session note:</span> {booking?.purpose || 'No note added'}
+              <span className='font-medium'>Session note:</span>{' '}
+              {booking?.purpose || 'No note added'}
             </div>
           </div>
 
@@ -295,7 +296,10 @@ export const ManageBookings: React.FC<Props> = ({
           </Button>
 
           {!isPastBooking && !booking?.payment_reference && (
-            <Button className='w-full gap-2 rounded-xl sm:w-auto' onClick={() => handlePayBooking(booking)}>
+            <Button
+              className='w-full gap-2 rounded-xl sm:w-auto'
+              onClick={() => handlePayBooking(booking)}
+            >
               Pay {booking.currency} {booking.price_amount}
             </Button>
           )}

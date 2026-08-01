@@ -64,10 +64,7 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
   );
 
   const programUuids = useMemo(
-    () =>
-      Array.from(
-        new Set(classes.map(cls => cls.program_uuid).filter(Boolean))
-      ) as string[],
+    () => Array.from(new Set(classes.map(cls => cls.program_uuid).filter(Boolean))) as string[],
     [classes]
   );
 
@@ -100,7 +97,8 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
   const programCoursesMap = useMemo(() => {
     const map: Record<string, CourseDetails[]> = {};
     programUuids.forEach((programUuid, index) => {
-      map[programUuid] = (programCourseQueries[index]?.data?.data ?? EMPTY_ARRAY) as CourseDetails[];
+      map[programUuid] = (programCourseQueries[index]?.data?.data ??
+        EMPTY_ARRAY) as CourseDetails[];
     });
     return map;
   }, [programUuids, programCourseQueries]);

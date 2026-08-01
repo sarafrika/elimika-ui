@@ -35,10 +35,7 @@
   },
   "overrides": [
     {
-      "includes": [
-        "lib/pdfjs.ts",
-        "context/root-providers.tsx"
-      ],
+      "includes": ["lib/pdfjs.ts", "context/root-providers.tsx"],
       "linter": {
         "rules": {
           "style": {
@@ -48,9 +45,7 @@
       }
     },
     {
-      "includes": [
-        "scripts/**"
-      ],
+      "includes": ["scripts/**"],
       "linter": {
         "rules": {
           "suspicious": {

@@ -10,7 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { CalendarDays, ChevronLeft, ChevronRight, Info, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -47,7 +53,7 @@ type Props = {
 
 type FilterSelection =
   | { id: 'all'; kind: 'all' }
-  | { id: string; kind: 'class' | 'booking' | 'venue' | 'classroom' | 'instructor'; };
+  | { id: string; kind: 'class' | 'booking' | 'venue' | 'classroom' | 'instructor' };
 
 const normalizeText = (value?: string | null) => value?.trim().toLowerCase() ?? '';
 
@@ -63,7 +69,7 @@ const isClassroomLocation = (value?: string | null) => {
 
 export function SchedulerCalendarView({ profile, data }: Props) {
   const router = useRouter();
-  const { activeDomain } = useUserDomain()
+  const { activeDomain } = useUserDomain();
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -76,15 +82,18 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
 
   const events = data.events;
-  const allInstructorSummaries = data.allInstructors.length > 0 ? data.allInstructors : data.instructors;
+  const allInstructorSummaries =
+    data.allInstructors.length > 0 ? data.allInstructors : data.instructors;
   const studentSummaries = data.students;
 
   const allEvents = useMemo(() => events, [events]);
   const filteredEvents = useMemo(
     () =>
       allEvents.filter(event => {
-        if (selectedFilter.kind === 'class' && event.classDefinitionUuid !== selectedFilter.id) return false;
-        if (selectedFilter.kind === 'booking' && event.eventType !== 'booking_request') return false;
+        if (selectedFilter.kind === 'class' && event.classDefinitionUuid !== selectedFilter.id)
+          return false;
+        if (selectedFilter.kind === 'booking' && event.eventType !== 'booking_request')
+          return false;
         if (
           (selectedFilter.kind === 'venue' || selectedFilter.kind === 'classroom') &&
           event.location !== selectedFilter.id
@@ -119,7 +128,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             {
               id: event.classDefinitionUuid as string,
               name: event.title,
-              course: event.course
+              course: event.course,
             },
           ])
       ).values()
@@ -190,53 +199,42 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   useEffect(() => {
     if (!hasActiveFilters || !filteredEvents.length) return;
 
-    const closest = findClosestDate(
-      currentDate,
-      filteredEvents
-    );
+    const closest = findClosestDate(currentDate, filteredEvents);
     if (!isSameCalendarDay(closest, currentDate)) {
       setCurrentDate(closest);
     }
   }, [currentDate, filteredEvents, hasActiveFilters]);
 
-  const metrics = useMemo<SchedulerMetric[]>(
-    () => {
-      const classCount = new Set(
-        visibleEvents.map(event => event.classDefinitionUuid || event.title)
-      ).size;
-      const eventCount = visibleEvents.length;
-      const instructorCount = new Set(
-        visibleEvents
-          .map(event => event.instructorUuid || event.instructor)
-          .filter(Boolean)
-      ).size;
-      const venueCount = new Set(
-        visibleEvents.map(event => event.location).filter(Boolean)
-      ).size;
-      const zeroCount = 0;
+  const metrics = useMemo<SchedulerMetric[]>(() => {
+    const classCount = new Set(visibleEvents.map(event => event.classDefinitionUuid || event.title))
+      .size;
+    const eventCount = visibleEvents.length;
+    const instructorCount = new Set(
+      visibleEvents.map(event => event.instructorUuid || event.instructor).filter(Boolean)
+    ).size;
+    const venueCount = new Set(visibleEvents.map(event => event.location).filter(Boolean)).size;
+    const zeroCount = 0;
 
-      return schedulerMetrics.map(metric => {
-        if (metric.label === 'Classes') {
-          return { ...metric, value: String(classCount) };
-        }
+    return schedulerMetrics.map(metric => {
+      if (metric.label === 'Classes') {
+        return { ...metric, value: String(classCount) };
+      }
 
-        if (metric.label === 'Events') {
-          return { ...metric, value: String(eventCount) };
-        }
+      if (metric.label === 'Events') {
+        return { ...metric, value: String(eventCount) };
+      }
 
-        if (metric.label === 'Instructors') {
-          return { ...metric, value: String(instructorCount) };
-        }
+      if (metric.label === 'Instructors') {
+        return { ...metric, value: String(instructorCount) };
+      }
 
-        if (metric.label === 'Venues') {
-          return { ...metric, value: String(venueCount) };
-        }
+      if (metric.label === 'Venues') {
+        return { ...metric, value: String(venueCount) };
+      }
 
-        return { ...metric, value: String(zeroCount) };
-      });
-    },
-    [visibleEvents]
-  );
+      return { ...metric, value: String(zeroCount) };
+    });
+  }, [visibleEvents]);
 
   const isLoading = data.isLoading;
 
@@ -274,22 +272,14 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   };
 
   const instructorFilterItems = useMemo(() => {
-    const items = Array.from(
-      new Set(
-        allEvents
-          .map(event => event.instructor)
-          .filter(Boolean)
-      )
-    )
+    const items = Array.from(new Set(allEvents.map(event => event.instructor).filter(Boolean)))
       .map(instructor => ({
         id: instructor,
         name: instructor,
       }))
       .sort((left, right) => left.name.localeCompare(right.name));
 
-    return items.filter(
-      item => !searchTerm || item.name.toLowerCase().includes(searchTerm)
-    );
+    return items.filter(item => !searchTerm || item.name.toLowerCase().includes(searchTerm));
   }, [allEvents, searchTerm]);
 
   const filterSections = useMemo<SchedulerFilterSection[]>(() => {
@@ -304,11 +294,8 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           setSelectedFilter({ id, kind: 'class' });
           setFiltersOpen(false);
         },
-        onToggle: () => { },
-        selectedId:
-          selectedFilter.kind === 'class'
-            ? selectedFilter.id
-            : null,
+        onToggle: () => {},
+        selectedId: selectedFilter.kind === 'class' ? selectedFilter.id : null,
       },
 
       {
@@ -321,11 +308,8 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           setSelectedFilter({ id, kind: 'venue' });
           setFiltersOpen(false);
         },
-        onToggle: () => { },
-        selectedId:
-          selectedFilter.kind === 'venue'
-            ? selectedFilter.id
-            : null,
+        onToggle: () => {},
+        selectedId: selectedFilter.kind === 'venue' ? selectedFilter.id : null,
       },
       // {
       //   count: classroomFilterItems.length,
@@ -357,11 +341,8 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           setSelectedFilter({ id, kind: 'instructor' });
           setFiltersOpen(false);
         },
-        onToggle: () => { },
-        selectedId:
-          selectedFilter.kind === 'instructor'
-            ? selectedFilter.id
-            : null,
+        onToggle: () => {},
+        selectedId: selectedFilter.kind === 'instructor' ? selectedFilter.id : null,
       });
     }
 
@@ -393,8 +374,8 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   ]);
 
   return (
-    <main className='bg-background space-y-4 pt-4 pb-8 px-4'>
-      <header className='w-full flex flex-wrap gap-4 justify-between'>
+    <main className='bg-background space-y-4 px-4 pt-4 pb-8'>
+      <header className='flex w-full flex-wrap justify-between gap-4'>
         <div className='flex gap-2 overflow-x-auto xl:w-auto xl:flex-nowrap xl:overflow-visible'>
           <Button
             variant='outline'
@@ -497,10 +478,6 @@ export function SchedulerCalendarView({ profile, data }: Props) {
 
       <div className='flex min-w-0 flex-col gap-4 min-[1300px]:flex-row min-[1300px]:items-start'>
         <div className='flex min-w-0 flex-1 flex-col gap-4'>
-
-
-
-
           <div className='flex min-w-0 flex-col gap-4 min-[1300px]:flex-row min-[1300px]:items-start'>
             {isLoading ? (
               <div className='bg-card flex min-h-[420px] w-full items-center justify-center rounded-md border p-6 shadow-sm'>
@@ -516,8 +493,10 @@ export function SchedulerCalendarView({ profile, data }: Props) {
                 view={view}
                 onEventClick={handleEventClick}
                 onEmptySlotClick={handleEmptySlotClick}
-                canCreateClass={activeDomain === 'instructor' || activeDomain === 'organisation_user'}
-                onClassCreated={() => { }}
+                canCreateClass={
+                  activeDomain === 'instructor' || activeDomain === 'organisation_user'
+                }
+                onClassCreated={() => {}}
                 onSelectDate={handleSelectDate}
               />
             )}
@@ -541,7 +520,9 @@ export function SchedulerCalendarView({ profile, data }: Props) {
         <SheetContent side='right' className='w-[94vw] max-w-md overflow-y-auto p-3'>
           <SheetHeader>
             <SheetTitle>Schedule Details</SheetTitle>
-            <SheetDescription>Today&apos;s sessions, students, location, notes, and sharing.</SheetDescription>
+            <SheetDescription>
+              Today&apos;s sessions, students, location, notes, and sharing.
+            </SheetDescription>
           </SheetHeader>
 
           <SchedulerRightRail
@@ -560,20 +541,26 @@ export function SchedulerCalendarView({ profile, data }: Props) {
         <SheetContent side='right' className='w-full overflow-y-auto sm:max-w-xl'>
           <SheetHeader>
             <SheetTitle>Calendar settings</SheetTitle>
-            <SheetDescription>Adjust view preferences, timezone, location, and scheduling defaults.</SheetDescription>
+            <SheetDescription>
+              Adjust view preferences, timezone, location, and scheduling defaults.
+            </SheetDescription>
           </SheetHeader>
 
           <div className='space-y-6 px-3 pb-6 sm:px-6'>
             <section className='space-y-4'>
               <div>
                 <h3 className='text-foreground text-sm font-semibold'>View and appearance</h3>
-                <p className='text-muted-foreground text-sm'>Control how schedule cards are grouped and displayed.</p>
+                <p className='text-muted-foreground text-sm'>
+                  Control how schedule cards are grouped and displayed.
+                </p>
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='event-color-mode'>Event colors</Label>
                 <Select
                   value={preferences.eventColorMode}
-                  onValueChange={value => setPreferences(prev => ({ ...prev, eventColorMode: value }))}
+                  onValueChange={value =>
+                    setPreferences(prev => ({ ...prev, eventColorMode: value }))
+                  }
                 >
                   <SelectTrigger id='event-color-mode'>
                     <SelectValue placeholder='Choose color mode' />
@@ -603,7 +590,9 @@ export function SchedulerCalendarView({ profile, data }: Props) {
               <div className='flex items-center justify-between rounded-md border p-3'>
                 <div>
                   <p className='text-foreground text-sm font-medium'>Show holidays</p>
-                  <p className='text-muted-foreground text-xs'>Reserve space for holiday indicators.</p>
+                  <p className='text-muted-foreground text-xs'>
+                    Reserve space for holiday indicators.
+                  </p>
                 </div>
                 <Switch
                   checked={preferences.showHolidays}

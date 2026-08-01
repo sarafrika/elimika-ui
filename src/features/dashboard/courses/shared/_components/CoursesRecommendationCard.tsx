@@ -17,12 +17,15 @@ type CoursesRecommendationCardProps = {
   onApplyToTrain?: (card: CoursesRecommendationCardData) => void;
 };
 
-export function CoursesRecommendationCard({ card, onApplyToTrain }: CoursesRecommendationCardProps) {
+export function CoursesRecommendationCard({
+  card,
+  onApplyToTrain,
+}: CoursesRecommendationCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
   const isApplyToTrain = card.ctaKind === 'apply-to-train';
 
   return (
-    <article className='border-border bg-card group overflow-hidden rounded-lg border min-w-[248px] max-w-[248px] sm:min-w-[300px] sm:max-w-[350px]'>
+    <article className='border-border bg-card group max-w-[248px] min-w-[248px] overflow-hidden rounded-lg border sm:max-w-[350px] sm:min-w-[300px]'>
       <Link href={card.detailsHref} className='block'>
         <div
           className={cn(
@@ -40,9 +43,9 @@ export function CoursesRecommendationCard({ card, onApplyToTrain }: CoursesRecom
             />
           ) : (
             <>
-              <div className='absolute right-4 top-4 size-8 rounded-full bg-background/70' />
-              <div className='absolute left-5 top-5 h-4 w-16 rounded-full bg-background/70' />
-              <span className='inline-flex size-14 items-center justify-center rounded-full bg-background/90 shadow-sm'>
+              <div className='bg-background/70 absolute top-4 right-4 size-8 rounded-full' />
+              <div className='bg-background/70 absolute top-5 left-5 h-4 w-16 rounded-full' />
+              <span className='bg-background/90 inline-flex size-14 items-center justify-center rounded-full shadow-sm'>
                 <card.icon className='text-foreground size-7' />
               </span>
             </>
@@ -54,7 +57,7 @@ export function CoursesRecommendationCard({ card, onApplyToTrain }: CoursesRecom
         <div>
           <Link href={card.detailsHref} className='block'>
             <h3
-              className='text-foreground line-clamp-1 text-[clamp(0.95rem,1vw,1.05rem)] font-semibold leading-tight group-hover:line-clamp-none'
+              className='text-foreground line-clamp-1 text-[clamp(0.95rem,1vw,1.05rem)] leading-tight font-semibold group-hover:line-clamp-none'
               title={card.title}
             >
               {card.title}
@@ -70,14 +73,14 @@ export function CoursesRecommendationCard({ card, onApplyToTrain }: CoursesRecom
         </div>
 
         <div className='text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-[0.8rem]'>
-          <span className='inline-flex items-center gap-1 text-warning'>
+          <span className='text-warning inline-flex items-center gap-1'>
             <Star className='size-3.5 fill-current' />
             <span className='text-muted-foreground'>{card.rating}</span>
           </span>
           <span>{card.secondaryMeta}</span>
         </div>
 
-        <div className='flex items-center justify-between gap-3 border-t border-border pt-3'>
+        <div className='border-border flex items-center justify-between gap-3 border-t pt-3'>
           {card.weeks ? (
             <span className='text-muted-foreground inline-flex items-center gap-1.5 text-xs sm:text-[0.8rem]'>
               <Clock3 className='size-3.5' />

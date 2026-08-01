@@ -156,19 +156,21 @@ export const InstructorProfileComponent: React.FC<Props> = ({
       <div className='space-y-6 pt-6 pr-6'>
         <div className='border-border bg-card rounded-[24px] border p-5 sm:p-6'>
           <div className='flex flex-col gap-5 lg:flex-row lg:items-start'>
-          <Avatar className='h-24 w-24'>
-            <AvatarImage
-              src={instructor.profile_image_url ?? undefined}
-              alt={instructor.full_name}
-            />
-            <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
-          </Avatar>
+            <Avatar className='h-24 w-24'>
+              <AvatarImage
+                src={instructor.profile_image_url ?? undefined}
+                alt={instructor.full_name}
+              />
+              <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
+            </Avatar>
 
             <div className='flex-1'>
               <div className='flex items-start justify-between'>
-              <div>
+                <div>
                   <div className='mb-1 flex items-center gap-2'>
-                    <h2 className='text-2xl font-semibold tracking-[-0.03em]'>{instructor?.full_name}</h2>
+                    <h2 className='text-2xl font-semibold tracking-[-0.03em]'>
+                      {instructor?.full_name}
+                    </h2>
                   </div>
                   <p className='text-muted-foreground'>{instructor?.professional_headline}</p>
                 </div>
@@ -185,7 +187,9 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 </div>
                 <div className='bg-muted/50 text-muted-foreground flex items-center gap-2 rounded-2xl px-3 py-2'>
                   <Briefcase className='h-4 w-4' />
-                  <span className='text-sm'>{instructor?.total_experience_years} years experience</span>
+                  <span className='text-sm'>
+                    {instructor?.total_experience_years} years experience
+                  </span>
                 </div>
                 {instructor?.has_location_coordinates && (
                   <div className='bg-muted/50 text-muted-foreground flex items-center gap-2 rounded-2xl px-3 py-2'>
@@ -197,11 +201,11 @@ export const InstructorProfileComponent: React.FC<Props> = ({
 
               <div className='mt-3 flex gap-2'>
                 <Badge variant='secondary' className='gap-1 rounded-full'>
-                <Video className='h-3 w-3' />
-                Online / Onsite
-              </Badge>
+                  <Video className='h-3 w-3' />
+                  Online / Onsite
+                </Badge>
+              </div>
             </div>
-          </div>
           </div>
 
           <div className='mt-5 flex justify-end'>
@@ -210,10 +214,10 @@ export const InstructorProfileComponent: React.FC<Props> = ({
               size='lg'
               className='flex items-center gap-2 rounded-xl'
             >
-            <Calendar className='h-4 w-4' />
-            Book Session
-          </Button>
-        </div>
+              <Calendar className='h-4 w-4' />
+              Book Session
+            </Button>
+          </div>
         </div>
 
         {showBooking && (
@@ -237,10 +241,18 @@ export const InstructorProfileComponent: React.FC<Props> = ({
 
         <Tabs defaultValue='overview' className='w-full'>
           <TabsList className='bg-muted/50 flex h-auto flex-row gap-2 rounded-2xl p-1'>
-            <TabsTrigger value='overview' className='rounded-xl'>Overview</TabsTrigger>
-            <TabsTrigger value='reviews' className='rounded-xl'>Reviews ({instructorReviews.length})</TabsTrigger>
-            <TabsTrigger value='certifications' className='rounded-xl'>Certifications</TabsTrigger>
-            <TabsTrigger value='rates' className='rounded-xl'>Rates</TabsTrigger>
+            <TabsTrigger value='overview' className='rounded-xl'>
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value='reviews' className='rounded-xl'>
+              Reviews ({instructorReviews.length})
+            </TabsTrigger>
+            <TabsTrigger value='certifications' className='rounded-xl'>
+              Certifications
+            </TabsTrigger>
+            <TabsTrigger value='rates' className='rounded-xl'>
+              Rates
+            </TabsTrigger>
           </TabsList>
 
           <div className='relative'>
@@ -308,7 +320,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                         key={course?.uuid}
                         className='hover:bg-secondary dark:hover:bg-muted flex items-start gap-3 p-4 transition'
                       >
-                        <CheckCircle className='mt-1 h-5 w-5 text-success' />
+                        <CheckCircle className='text-success mt-1 h-5 w-5' />
                         <div className='flex flex-col'>
                           <div>
                             <p className='font-medium'>{course?.title}</p>

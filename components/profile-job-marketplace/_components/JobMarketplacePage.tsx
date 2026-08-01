@@ -103,7 +103,11 @@ import { extractPage } from '../../../lib/api-helpers';
 import type { JobMarketplaceRole } from '../data';
 import { getJobMarketplaceRoleConfig } from '../data';
 import { JobCard } from './JobMarketplaceCard';
-import { JobListSkeleton, MarketplaceSidebarSkeleton, SelectSkeleton } from './JobMarketplaceSkeletons';
+import {
+  JobListSkeleton,
+  MarketplaceSidebarSkeleton,
+  SelectSkeleton,
+} from './JobMarketplaceSkeletons';
 import { MarketplaceSidebar } from './MarketplaceSidebar';
 import { MarketplaceTabs } from './MarketplaceTabs';
 
@@ -375,21 +379,21 @@ function getInitialFormState(
           .map(day => day.trim().toUpperCase())
           .filter(Boolean)
       : [];
-  const sessionStart = sessionTemplate?.start_time ? new Date(sessionTemplate.start_time) : defaultStart;
+  const sessionStart = sessionTemplate?.start_time
+    ? new Date(sessionTemplate.start_time)
+    : defaultStart;
   const sessionEnd = sessionTemplate?.end_time ? new Date(sessionTemplate.end_time) : defaultEnd;
-  const trainingEnd = templateRecurrence?.end_date ? new Date(templateRecurrence.end_date) : defaultEnd;
+  const trainingEnd = templateRecurrence?.end_date
+    ? new Date(templateRecurrence.end_date)
+    : defaultEnd;
   const jobProgramUuid = job ? getJobProgramUuid(job) : null;
-  const contentType = job
-    ? getJobContentType(job)
-    : (initialContent?.type ?? 'course');
+  const contentType = job ? getJobContentType(job) : (initialContent?.type ?? 'course');
 
   return {
     organisation_uuid: job?.organisation_uuid ?? organisationUuid,
     content_type: contentType,
-    course_uuid:
-      job?.course_uuid ?? (initialContent?.type === 'course' ? initialContent.id : ''),
-    program_uuid:
-      jobProgramUuid ?? (initialContent?.type === 'program' ? initialContent.id : ''),
+    course_uuid: job?.course_uuid ?? (initialContent?.type === 'course' ? initialContent.id : ''),
+    program_uuid: jobProgramUuid ?? (initialContent?.type === 'program' ? initialContent.id : ''),
     title: job?.title ?? '',
     description: job?.description ?? '',
     class_visibility: job?.class_visibility ?? 'PUBLIC',
@@ -517,7 +521,7 @@ function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
         {
           label: 'Pay per session',
           value: (
-            <span className='text-base font-bold text-primary'>
+            <span className='text-primary text-base font-bold'>
               {typeof job.training_fee === 'number'
                 ? formatCurrency(job.training_fee)
                 : 'Not specified'}
@@ -529,10 +533,10 @@ function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
           label: 'Training start / end',
           value: (
             <div className='space-y-0.5'>
-              <div className='text-sm font-medium text-foreground'>
+              <div className='text-foreground text-sm font-medium'>
                 {formatDateTime(job.default_start_time)}
               </div>
-              <div className='text-xs text-muted-foreground'>
+              <div className='text-muted-foreground text-xs'>
                 to {formatDateTime(job.default_end_time)}
               </div>
             </div>
@@ -542,12 +546,12 @@ function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
           label: 'Capacity',
           value: (
             <div className='space-y-0.5'>
-              <div className='text-sm font-medium text-foreground'>
+              <div className='text-foreground text-sm font-medium'>
                 {typeof job.max_participants === 'number'
                   ? `${job.max_participants} participants`
                   : 'Not provided'}
               </div>
-              <div className='text-xs text-muted-foreground'>
+              <div className='text-muted-foreground text-xs'>
                 Waitlist {job.allow_waitlist ? 'enabled' : 'disabled'}
               </div>
             </div>
@@ -604,10 +608,11 @@ function JobDetailsSheet({
         ? new Date(conflict.requested_start).toLocaleString()
         : undefined,
       end: conflict.requested_end ? new Date(conflict.requested_end).toLocaleString() : undefined,
-      reasons: (conflict.reasons ?? []).filter((reason): reason is string => typeof reason === 'string'),
+      reasons: (conflict.reasons ?? []).filter(
+        (reason): reason is string => typeof reason === 'string'
+      ),
     }));
   }, [eligibility]);
-
 
   const applyMutation = useMutation({
     ...applyToJobMutation(),
@@ -654,9 +659,11 @@ function JobDetailsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='right' className='flex w-[min(98vw,650px)] max-w-none flex-col overflow-y-auto sm:max-w-none'
+      <SheetContent
+        side='right'
+        className='flex w-[min(98vw,650px)] max-w-none flex-col overflow-y-auto sm:max-w-none'
       >
-        <div className='space-y-6 p-3 sm:p-6 mb-10'>
+        <div className='mb-10 space-y-6 p-3 sm:p-6'>
           <SheetHeader className='space-y-3 pr-10 text-left'>
             <div className='flex flex-wrap items-center gap-2'>
               <StatusBadge status={job.status} />
@@ -667,9 +674,12 @@ function JobDetailsSheet({
                 {formatEnumLabel(job.location_type)}
               </Badge>
             </div>
-            <SheetTitle className='text-2xl tracking-tight'>{job.title || 'Untitled job'}</SheetTitle>
+            <SheetTitle className='text-2xl tracking-tight'>
+              {job.title || 'Untitled job'}
+            </SheetTitle>
             <SheetDescription>
-              {getDisplayOrganisationLabel(job, organisationName)} · {getDisplayContentLabel(job, course, program)}
+              {getDisplayOrganisationLabel(job, organisationName)} ·{' '}
+              {getDisplayContentLabel(job, course, program)}
             </SheetDescription>
           </SheetHeader>
 
@@ -691,7 +701,7 @@ function JobDetailsSheet({
                   ) : null}
                 </div>
                 {application.application_note ? (
-                  <p className='mt-3 whitespace-pre-line text-sm leading-6 text-muted-foreground'>
+                  <p className='text-muted-foreground mt-3 text-sm leading-6 whitespace-pre-line'>
                     {application.application_note}
                   </p>
                 ) : null}
@@ -712,8 +722,7 @@ function JobDetailsSheet({
                   const start = new Date(session.start_time);
                   const end = new Date(session.end_time);
 
-                  const hours =
-                    (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+                  const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
 
                   const recurrence = session.recurrence;
                   const recurrenceLabel =
@@ -738,24 +747,20 @@ function JobDetailsSheet({
                     >
                       <div className='flex flex-col'>
                         <div className='flex flex-row gap-2'>
-                          <p className='font-medium'>
-                            {start.toLocaleDateString()}
-                          </p>
+                          <p className='font-medium'>{start.toLocaleDateString()}</p>
                           <p className='text-muted-foreground'>
-                            (
-                            {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{' '}
-                            -{' '}
-                            {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                            ({start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{' '}
+                            - {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
                           </p>
                         </div>
                         {recurrenceLabel ? (
-                          <p className='text-xs text-muted-foreground'>{recurrenceLabel}</p>
+                          <p className='text-muted-foreground text-xs'>{recurrenceLabel}</p>
                         ) : null}
                       </div>
 
                       <Badge
                         variant='outline'
-                        className='rounded-md border-primary/30 bg-primary/10 px-2 py-0.5 text-primary tabular-nums'
+                        className='border-primary/30 bg-primary/10 text-primary rounded-md px-2 py-0.5 tabular-nums'
                       >
                         {hours} hr{hours !== 1 ? 's' : ''}
                       </Badge>
@@ -780,7 +785,7 @@ function JobDetailsSheet({
 
             <div className={adminTheme.cardPadded}>
               <h3 className={adminTheme.sectionLabel}>Description</h3>
-              <p className='mt-2 whitespace-pre-line text-sm leading-6 text-foreground'>
+              <p className='text-foreground mt-2 text-sm leading-6 whitespace-pre-line'>
                 {job.description || 'No description has been provided for this posting yet.'}
               </p>
             </div>
@@ -790,10 +795,22 @@ function JobDetailsSheet({
               items={[
                 { label: 'Location name', value: job.location_name || 'Not provided' },
                 { label: 'Meeting link', value: job.meeting_link || 'Not provided' },
-                { label: 'Academic period start', value: formatDateTime(job.academic_period_start_date) },
-                { label: 'Academic period end', value: formatDateTime(job.academic_period_end_date) },
-                { label: 'Registration start', value: formatDateTime(job.registration_period_start_date) },
-                { label: 'Registration end', value: formatDateTime(job.registration_period_end_date) },
+                {
+                  label: 'Academic period start',
+                  value: formatDateTime(job.academic_period_start_date),
+                },
+                {
+                  label: 'Academic period end',
+                  value: formatDateTime(job.academic_period_end_date),
+                },
+                {
+                  label: 'Registration start',
+                  value: formatDateTime(job.registration_period_start_date),
+                },
+                {
+                  label: 'Registration end',
+                  value: formatDateTime(job.registration_period_end_date),
+                },
               ]}
             />
           </div>
@@ -822,11 +839,11 @@ function JobDetailsSheet({
             </div>
           ) : (
             <div className={cn('space-y-3', adminTheme.cardPadded)}>
-              <p className='rounded-md border border-primary/30 bg-primary/10 p-3 text-sm text-foreground'>
+              <p className='border-primary/30 bg-primary/10 text-foreground rounded-md border p-3 text-sm'>
                 {typeof job.training_fee === 'number' ? (
                   <>
                     You will be paid{' '}
-                    <span className='font-bold text-primary'>
+                    <span className='text-primary font-bold'>
                       {formatCurrency(job.training_fee)} per session
                     </span>{' '}
                     for this engagement.
@@ -837,7 +854,7 @@ function JobDetailsSheet({
               </p>
 
               {isIneligible ? (
-                <div className='space-y-2 rounded-md border border-dashed border-warning/60 bg-warning/10 p-3 text-sm text-foreground'>
+                <div className='border-warning/60 bg-warning/10 text-foreground space-y-2 rounded-md border border-dashed p-3 text-sm'>
                   <p>
                     {eligibility?.reason ??
                       'You are not currently eligible to apply for this posting.'}
@@ -871,7 +888,7 @@ function JobDetailsSheet({
                 disabled={alreadyApplied}
               />
               {alreadyApplied ? (
-                <div className='flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border/70 bg-muted/30 p-3 text-sm text-muted-foreground'>
+                <div className='border-border/70 bg-muted/30 text-muted-foreground flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3 text-sm'>
                   <StatusBadge status='approved' label='Applied' />
                   <span>You have already applied to this opportunity.</span>
                   {myApplicationsHref ? (
@@ -933,9 +950,7 @@ function JobFormSheet({
     () =>
       programs.filter(
         program =>
-          program.active === true &&
-          program.published === true &&
-          program.admin_approved === true
+          program.active === true && program.published === true && program.admin_approved === true
       ),
     [programs]
   );
@@ -969,7 +984,10 @@ function JobFormSheet({
     form.job_resources.find(entry => venueUuids.has(entry.resource_uuid))?.resource_uuid ?? '';
   const equipmentEntries = form.job_resources.filter(entry => !venueUuids.has(entry.resource_uuid));
 
-  const setJobResources = (venueUuid: string, equipment: Array<{ resource_uuid: string; quantity: string }>) => {
+  const setJobResources = (
+    venueUuid: string,
+    equipment: Array<{ resource_uuid: string; quantity: string }>
+  ) => {
     setForm(previous => ({
       ...previous,
       job_resources: [
@@ -1140,12 +1158,17 @@ function JobFormSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='right' className='flex w-[min(98vw,700px)] max-w-none flex-col overflow-y-auto p-3 sm:p-6 sm:max-w-none'
+      <SheetContent
+        side='right'
+        className='flex w-[min(98vw,700px)] max-w-none flex-col overflow-y-auto p-3 sm:max-w-none sm:p-6'
       >
         <div className='space-y-6'>
           <SheetHeader className='space-y-3 pr-10 text-left'>
             <div className='flex items-center gap-2'>
-              <Badge variant='outline' className='rounded-md border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary'>
+              <Badge
+                variant='outline'
+                className='border-primary/30 bg-primary/10 text-primary rounded-md px-2.5 py-0.5 text-xs font-medium'
+              >
                 {isEditMode ? 'Edit job' : 'Create job'}
               </Badge>
               <Badge variant='outline' className='rounded-md px-2.5 py-0.5 text-xs font-medium'>
@@ -1164,12 +1187,17 @@ function JobFormSheet({
             <SectionShell title='Basic details'>
               <div className='grid gap-4 md:grid-cols-3'>
                 <Field label='Job title *'>
-                  <Input value={form.title} onChange={event => updateField('title', event.target.value)} />
+                  <Input
+                    value={form.title}
+                    onChange={event => updateField('title', event.target.value)}
+                  />
                 </Field>
                 <Field label='Content type *'>
                   <Select
                     value={form.content_type}
-                    onValueChange={value => handleContentTypeChange(value as MarketplaceContentType)}
+                    onValueChange={value =>
+                      handleContentTypeChange(value as MarketplaceContentType)
+                    }
                     disabled={isEditMode}
                   >
                     <SelectTrigger className='w-full min-w-0'>
@@ -1189,7 +1217,9 @@ function JobFormSheet({
                   >
                     <SelectTrigger className='w-full min-w-0'>
                       <SelectValue
-                        placeholder={form.content_type === 'program' ? 'Choose program' : 'Choose course'}
+                        placeholder={
+                          form.content_type === 'program' ? 'Choose program' : 'Choose course'
+                        }
                         className='min-w-0 truncate'
                       />
                     </SelectTrigger>
@@ -1197,15 +1227,15 @@ function JobFormSheet({
                     <SelectContent>
                       {form.content_type === 'program'
                         ? availablePrograms.map(program => (
-                          <SelectItem key={program.uuid} value={program.uuid ?? ''}>
-                            {program.title}
-                          </SelectItem>
-                        ))
+                            <SelectItem key={program.uuid} value={program.uuid ?? ''}>
+                              {program.title}
+                            </SelectItem>
+                          ))
                         : availableCourses.map(course => (
-                          <SelectItem key={course.uuid} value={course.uuid ?? ''}>
-                            {course.name}
-                          </SelectItem>
-                        ))}
+                            <SelectItem key={course.uuid} value={course.uuid ?? ''}>
+                              {course.name}
+                            </SelectItem>
+                          ))}
                     </SelectContent>
                   </Select>
                 </Field>
@@ -1224,7 +1254,9 @@ function JobFormSheet({
                 <Field label='Visibility'>
                   <Select
                     value={form.class_visibility}
-                    onValueChange={value => updateField('class_visibility', value as ClassVisibilityEnum)}
+                    onValueChange={value =>
+                      updateField('class_visibility', value as ClassVisibilityEnum)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1241,7 +1273,9 @@ function JobFormSheet({
                 <Field label='Session format'>
                   <Select
                     value={form.session_format}
-                    onValueChange={value => updateField('session_format', value as SessionFormatEnum)}
+                    onValueChange={value =>
+                      updateField('session_format', value as SessionFormatEnum)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1273,7 +1307,7 @@ function JobFormSheet({
                   onChange={event => updateField('training_fee', event.target.value)}
                   placeholder='e.g. 2400'
                 />
-                <p className='mt-1 text-xs text-muted-foreground'>
+                <p className='text-muted-foreground mt-1 text-xs'>
                   Amount the instructor is paid per session; carried onto the class when an
                   instructor is assigned.
                 </p>
@@ -1329,7 +1363,7 @@ function JobFormSheet({
                     );
                   })}
                 </div>
-                <p className='mt-1 text-xs text-muted-foreground'>
+                <p className='text-muted-foreground mt-1 text-xs'>
                   Sessions repeat weekly on the selected days between the training dates.
                 </p>
               </Field>
@@ -1339,7 +1373,9 @@ function JobFormSheet({
                   <Input
                     type='date'
                     value={form.academic_period_start_date}
-                    onChange={event => updateField('academic_period_start_date', event.target.value)}
+                    onChange={event =>
+                      updateField('academic_period_start_date', event.target.value)
+                    }
                   />
                 </Field>
                 <Field label='Academic period end'>
@@ -1353,18 +1389,21 @@ function JobFormSheet({
                   <Input
                     type='date'
                     value={form.registration_period_start_date}
-                    onChange={event => updateField('registration_period_start_date', event.target.value)}
+                    onChange={event =>
+                      updateField('registration_period_start_date', event.target.value)
+                    }
                   />
                 </Field>
                 <Field label='Registration end'>
                   <Input
                     type='date'
                     value={form.registration_period_end_date}
-                    onChange={event => updateField('registration_period_end_date', event.target.value)}
+                    onChange={event =>
+                      updateField('registration_period_end_date', event.target.value)
+                    }
                   />
                 </Field>
               </div>
-
             </SectionShell>
 
             <SectionShell title='Location & capacity'>
@@ -1426,7 +1465,7 @@ function JobFormSheet({
                 </Field>
               </div>
 
-              <label className='flex items-center gap-3 rounded-md border border-border/70 bg-muted/20 px-4 py-3 text-sm'>
+              <label className='border-border/70 bg-muted/20 flex items-center gap-3 rounded-md border px-4 py-3 text-sm'>
                 <Checkbox
                   checked={form.allow_waitlist}
                   onCheckedChange={checked => updateField('allow_waitlist', checked === true)}
@@ -1467,7 +1506,10 @@ function JobFormSheet({
                 <div className='space-y-2'>
                   <Label className='text-sm'>Equipment</Label>
                   {equipmentEntries.map((entry, index) => (
-                    <div key={`${entry.resource_uuid}-${index}`} className='flex items-center gap-2'>
+                    <div
+                      key={`${entry.resource_uuid}-${index}`}
+                      className='flex items-center gap-2'
+                    >
                       <Select
                         value={entry.resource_uuid || undefined}
                         onValueChange={value => {
@@ -1537,8 +1579,7 @@ function JobFormSheet({
                   </Button>
                   {equipmentResources.length === 0 && venueResources.length === 0 ? (
                     <p className='text-muted-foreground text-xs'>
-                      No bookable resources registered yet. Add them under Resources in the
-                      sidebar.
+                      No bookable resources registered yet. Add them under Resources in the sidebar.
                     </p>
                   ) : null}
                 </div>
@@ -1551,7 +1592,7 @@ function JobFormSheet({
             conflicts={resourceConflicts}
           />
 
-          <div className='flex flex-wrap gap-2 border-t border-border/60 pt-4'>
+          <div className='border-border/60 flex flex-wrap gap-2 border-t pt-4'>
             <Button
               onClick={handleSubmit}
               disabled={createMutation.isPending || updateMutation.isPending}
@@ -1574,9 +1615,9 @@ function JobFormSheet({
 
 function SectionShell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className='rounded-md border border-border/70 bg-card p-5 shadow-sm'>
+    <section className='border-border/70 bg-card rounded-md border p-5 shadow-sm'>
       <div className='mb-4 flex items-center justify-between gap-3'>
-        <h3 className='text-base font-semibold text-foreground'>{title}</h3>
+        <h3 className='text-foreground text-base font-semibold'>{title}</h3>
       </div>
       <div className='space-y-4'>{children}</div>
     </section>
@@ -1623,7 +1664,9 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const [contentFilter, setContentFilter] = useState<'all' | string>('all');
   const [sortDirection, setSortDirection] = useState<JobSortDirection>('newest');
   const [selectedJobUuid, setSelectedJobUuid] = useState<string | null>(null);
-  const [pendingCancelJob, setPendingCancelJob] = useState<ClassMarketplaceJobWithProgram | null>(null);
+  const [pendingCancelJob, setPendingCancelJob] = useState<ClassMarketplaceJobWithProgram | null>(
+    null
+  );
   const [formOpen, setFormOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<ClassMarketplaceJobWithProgram | null>(null);
   const [initialContent, setInitialContent] = useState<JobContentPrefill | null>(null);
@@ -1882,10 +1925,15 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   }, [contentFilter, jobs, locationFilter, organisationFilter, search, sessionFormatFilter]);
 
   const filteredJobs = useMemo(() => {
-    return jobsBeforeStatusFilter.filter(job => statusFilter === 'all' || job.status === statusFilter);
+    return jobsBeforeStatusFilter.filter(
+      job => statusFilter === 'all' || job.status === statusFilter
+    );
   }, [jobsBeforeStatusFilter, statusFilter]);
 
-  const sortedJobs = useMemo(() => sortJobs(filteredJobs, sortDirection), [filteredJobs, sortDirection]);
+  const sortedJobs = useMemo(
+    () => sortJobs(filteredJobs, sortDirection),
+    [filteredJobs, sortDirection]
+  );
 
   const tabDefinitions = useMemo(
     () =>
@@ -1905,7 +1953,12 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
 
     if (isOrganizationView) {
       return [
-        { label: 'Total postings', value: jobs.length, icon: BriefcaseBusiness, tone: 'info' as const },
+        {
+          label: 'Total postings',
+          value: jobs.length,
+          icon: BriefcaseBusiness,
+          tone: 'info' as const,
+        },
         { label: 'Open', value: openCount, icon: CheckCircle2, tone: 'success' as const },
         {
           label: 'Filled',
@@ -1922,18 +1975,29 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       ];
     }
 
-    const distinctOrganisations = new Set(
-      jobs.map(job => job.organisation_uuid).filter(Boolean)
-    ).size;
+    const distinctOrganisations = new Set(jobs.map(job => job.organisation_uuid).filter(Boolean))
+      .size;
     const remoteCount = jobs.filter(job => job.location_type === 'ONLINE').length;
 
     return [
       { label: 'Open roles', value: openCount, icon: BriefcaseBusiness, tone: 'success' as const },
-      { label: 'Organisations', value: distinctOrganisations, icon: Building2, tone: 'info' as const },
+      {
+        label: 'Organisations',
+        value: distinctOrganisations,
+        icon: Building2,
+        tone: 'info' as const,
+      },
       // "Applied" only makes sense for applying roles (instructor); orgs don't apply.
       ...(isOrganizationView
         ? []
-        : [{ label: 'Applied', value: myApplications.length, icon: CheckCircle2, tone: 'neutral' as const }]),
+        : [
+            {
+              label: 'Applied',
+              value: myApplications.length,
+              icon: CheckCircle2,
+              tone: 'neutral' as const,
+            },
+          ]),
       { label: 'Remote', value: remoteCount, icon: Globe2, tone: 'warning' as const },
     ];
   }, [isOrganizationView, jobs, myApplications.length]);
@@ -2074,10 +2138,15 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                       Filters
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side='left' className='w-[88vw] max-w-sm overflow-y-auto border-r p-4'>
+                  <SheetContent
+                    side='left'
+                    className='w-[88vw] max-w-sm overflow-y-auto border-r p-4'
+                  >
                     <SheetHeader className='sr-only'>
                       <SheetTitle>Filters</SheetTitle>
-                      <SheetDescription>Explore job marketplace filters and quick actions.</SheetDescription>
+                      <SheetDescription>
+                        Explore job marketplace filters and quick actions.
+                      </SheetDescription>
                     </SheetHeader>
                     {jobsLoading ? (
                       <MarketplaceSidebarSkeleton />
@@ -2162,7 +2231,9 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 <div className='min-w-[200px] flex-1'>
                   <Select
                     value={sessionFormatFilter}
-                    onValueChange={value => setSessionFormatFilter(value as 'all' | SessionFormatEnum)}
+                    onValueChange={value =>
+                      setSessionFormatFilter(value as 'all' | SessionFormatEnum)
+                    }
                   >
                     <SelectTrigger className='h-10 w-full'>
                       <CalendarDays className='text-muted-foreground mr-2 size-4 shrink-0' />
@@ -2240,7 +2311,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                         />
                       }
                     >
-                      <div className='grid gap-4 3xl:grid-cols-2'>
+                      <div className='3xl:grid-cols-2 grid gap-4'>
                         {tabJobs.map(job => {
                           const course = jobsByCourseId.get(job.course_uuid ?? '') ?? null;
                           const program = jobsByProgramId.get(getJobProgramUuid(job) ?? '') ?? null;
@@ -2287,16 +2358,18 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         }}
         isManagementView={isOrganizationView}
         organisationName={organisationName}
-        course={selectedJob ? jobsByCourseId.get(selectedJob.course_uuid ?? '') ?? null : null}
+        course={selectedJob ? (jobsByCourseId.get(selectedJob.course_uuid ?? '') ?? null) : null}
         program={
-          selectedJob ? jobsByProgramId.get(getJobProgramUuid(selectedJob) ?? '') ?? null : null
+          selectedJob ? (jobsByProgramId.get(getJobProgramUuid(selectedJob) ?? '') ?? null) : null
         }
         onEdit={selectedJob ? () => handleEdit(selectedJob) : undefined}
         onCancel={selectedJob ? () => setPendingCancelJob(selectedJob) : undefined}
         application={
           selectedJob ? (applicationByJobUuid.get(selectedJob.uuid ?? '') ?? null) : null
         }
-        myApplicationsHref={!isOrganizationView ? '/dashboard/opportunities/my-applications' : undefined}
+        myApplicationsHref={
+          !isOrganizationView ? '/dashboard/opportunities/my-applications' : undefined
+        }
       />
 
       <div className='w-full'>

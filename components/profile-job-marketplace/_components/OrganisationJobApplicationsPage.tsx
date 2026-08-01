@@ -21,12 +21,13 @@ import {
 } from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { useCoursesByIds, useInstructorsByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
+import {
+  useCoursesByIds,
+  useInstructorsByIds,
+  useProgramsByIds,
+} from '@/hooks/use-batched-lookups';
 import { cn } from '@/lib/utils';
-import type {
-  ClassMarketplaceJob,
-  ClassMarketplaceJobApplication,
-} from '@/services/client';
+import type { ClassMarketplaceJob, ClassMarketplaceJobApplication } from '@/services/client';
 import {
   assignInstructorMutation,
   listJobApplicationsOptions,
@@ -98,15 +99,17 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
   });
 
   const job: ClassMarketplaceJobWithProgram | null =
-    (jobsResponse?.data?.content ?? []).find((item: ClassMarketplaceJob) => item.uuid === jobUuid) ??
-    null;
+    (jobsResponse?.data?.content ?? []).find(
+      (item: ClassMarketplaceJob) => item.uuid === jobUuid
+    ) ?? null;
 
   const applicationsQuery = useQuery({
     ...listJobApplicationsOptions(applicationsListOptions),
     enabled: Boolean(jobUuid),
   });
 
-  const applications: ClassMarketplaceJobApplication[] = applicationsQuery.data?.data?.content ?? [];
+  const applications: ClassMarketplaceJobApplication[] =
+    applicationsQuery.data?.data?.content ?? [];
   const isApplicationsLoading = applicationsQuery.isLoading && !applicationsQuery.data;
   const instructorUuids = useMemo(
     () => applications.map(application => application.instructor_uuid ?? '').filter(Boolean),
@@ -117,9 +120,9 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
   const { courseMap } = useCoursesByIds(job?.course_uuid ? [job.course_uuid] : []);
   const { programMap } = useProgramsByIds(programUuid ? [programUuid] : []);
   const contentLabel = programUuid
-    ? programMap[programUuid]?.title ?? `Program ${shortId(programUuid)}`
+    ? (programMap[programUuid]?.title ?? `Program ${shortId(programUuid)}`)
     : job?.course_uuid
-      ? courseMap[job.course_uuid]?.name ?? `Course ${shortId(job.course_uuid)}`
+      ? (courseMap[job.course_uuid]?.name ?? `Course ${shortId(job.course_uuid)}`)
       : 'Course or program';
 
   const reviewMutation = useMutation({
@@ -189,12 +192,14 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
       approved: applications.filter(application => application.status === 'approved').length,
       rejected: applications.filter(application => application.status === 'rejected').length,
       assigned: applications.filter(application => application.status === 'assigned').length,
-
     }),
     [applications]
   );
 
-  const openReviewDialog = (application: ClassMarketplaceJobApplication, action: 'APPROVE' | 'REJECT') => {
+  const openReviewDialog = (
+    application: ClassMarketplaceJobApplication,
+    action: 'APPROVE' | 'REJECT'
+  ) => {
     setPendingReview({ application, action });
     setReviewNotes(application.review_notes ?? '');
     setReviewDialogOpen(true);
@@ -232,7 +237,11 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
   if (!organisationUuid) {
     return (
       <div className={cn(adminTheme.page, 'max-w-3xl')}>
-        <Button variant='ghost' className='mb-4 px-0 text-muted-foreground' onClick={() => router.back()}>
+        <Button
+          variant='ghost'
+          className='text-muted-foreground mb-4 px-0'
+          onClick={() => router.back()}
+        >
           <ArrowLeft className='mr-2 size-4' />
           Back to opportunities
         </Button>
@@ -257,7 +266,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
         <Button
           variant='ghost'
           size='sm'
-          className='w-fit px-0 text-muted-foreground'
+          className='text-muted-foreground w-fit px-0'
           onClick={() => router.back()}
         >
           <ArrowLeft className='mr-2 size-4' />
@@ -265,7 +274,9 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
         </Button>
 
         <AdminPageHeader
-          title={isJobsLoading && !jobsResponse ? 'Job applications' : job?.title ?? 'Job applications'}
+          title={
+            isJobsLoading && !jobsResponse ? 'Job applications' : (job?.title ?? 'Job applications')
+          }
           description='Review applicants, approve or reject submissions, then assign an approved instructor.'
         />
 
@@ -301,7 +312,9 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                 onAssign={handleAssign}
                 onViewProfile={application => {
                   if (application.uuid) {
-                    router.push(`/dashboard/opportunities/${jobUuid}/applications/${application.uuid}`);
+                    router.push(
+                      `/dashboard/opportunities/${jobUuid}/applications/${application.uuid}`
+                    );
                   }
                 }}
               />
@@ -316,76 +329,78 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
           />
         </div>
 
-      <Sheet
-        open={reviewDialogOpen}
-        onOpenChange={open => {
-          setReviewDialogOpen(open);
-          if (!open) {
-            setPendingReview(null);
-            setReviewNotes('');
-          }
-        }}
-      >
-        <SheetContent
-          side='right'
-          className='flex w-[min(98vw,480px)] max-w-none flex-col overflow-y-auto sm:max-w-none'
+        <Sheet
+          open={reviewDialogOpen}
+          onOpenChange={open => {
+            setReviewDialogOpen(open);
+            if (!open) {
+              setPendingReview(null);
+              setReviewNotes('');
+            }
+          }}
         >
-          <div className='space-y-6 p-3 sm:p-6'>
-            <SheetHeader className='space-y-3 pr-10 text-left'>
-              <SheetTitle>
-                {pendingReview?.action === 'APPROVE' ? 'Approve application' : 'Reject application'}
-              </SheetTitle>
-              <SheetDescription>
-                Add review notes before confirming this decision. The applicant will receive the
-                submitted notes with the review outcome.
-              </SheetDescription>
-            </SheetHeader>
+          <SheetContent
+            side='right'
+            className='flex w-[min(98vw,480px)] max-w-none flex-col overflow-y-auto sm:max-w-none'
+          >
+            <div className='space-y-6 p-3 sm:p-6'>
+              <SheetHeader className='space-y-3 pr-10 text-left'>
+                <SheetTitle>
+                  {pendingReview?.action === 'APPROVE'
+                    ? 'Approve application'
+                    : 'Reject application'}
+                </SheetTitle>
+                <SheetDescription>
+                  Add review notes before confirming this decision. The applicant will receive the
+                  submitted notes with the review outcome.
+                </SheetDescription>
+              </SheetHeader>
 
-            <div className='space-y-2'>
-              <Label htmlFor='review-notes' className='text-sm font-medium'>
-                Review notes
-              </Label>
-              <Textarea
-                id='review-notes'
-                value={reviewNotes}
-                onChange={event => setReviewNotes(event.target.value)}
-                placeholder='Add optional notes for this review...'
-                className='min-h-32'
-              />
-            </div>
+              <div className='space-y-2'>
+                <Label htmlFor='review-notes' className='text-sm font-medium'>
+                  Review notes
+                </Label>
+                <Textarea
+                  id='review-notes'
+                  value={reviewNotes}
+                  onChange={event => setReviewNotes(event.target.value)}
+                  placeholder='Add optional notes for this review...'
+                  className='min-h-32'
+                />
+              </div>
 
-            <div className='flex flex-wrap justify-end gap-2'>
-              <Button
-                variant='outline'
-                onClick={() => {
-                  setReviewDialogOpen(false);
-                  setPendingReview(null);
-                  setReviewNotes('');
-                }}
-                disabled={reviewMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant={pendingReview?.action === 'REJECT' ? 'destructive' : 'default'}
-                onClick={handleReviewConfirm}
-                disabled={reviewMutation.isPending || !pendingReview?.application.uuid}
-              >
-                {reviewMutation.isPending ? (
-                  <>
-                    <Spinner className='mr-2 size-4' />
-                    Submitting...
-                  </>
-                ) : pendingReview?.action === 'APPROVE' ? (
-                  'Confirm approval'
-                ) : (
-                  'Confirm rejection'
-                )}
-              </Button>
+              <div className='flex flex-wrap justify-end gap-2'>
+                <Button
+                  variant='outline'
+                  onClick={() => {
+                    setReviewDialogOpen(false);
+                    setPendingReview(null);
+                    setReviewNotes('');
+                  }}
+                  disabled={reviewMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant={pendingReview?.action === 'REJECT' ? 'destructive' : 'default'}
+                  onClick={handleReviewConfirm}
+                  disabled={reviewMutation.isPending || !pendingReview?.application.uuid}
+                >
+                  {reviewMutation.isPending ? (
+                    <>
+                      <Spinner className='mr-2 size-4' />
+                      Submitting...
+                    </>
+                  ) : pendingReview?.action === 'APPROVE' ? (
+                    'Confirm approval'
+                  ) : (
+                    'Confirm rejection'
+                  )}
+                </Button>
+              </div>
             </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );

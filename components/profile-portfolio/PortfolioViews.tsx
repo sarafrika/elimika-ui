@@ -25,12 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
-import type {
-  PortfolioAsset,
-  PortfolioProject,
-  PortfolioRole,
-  PortfolioTabId,
-} from './data';
+import type { PortfolioAsset, PortfolioProject, PortfolioRole, PortfolioTabId } from './data';
 import { getPortfolioContent } from './data';
 
 const getPortfolioHref = (projectId?: string) =>
@@ -333,7 +328,11 @@ function CourseProgressCard({ project }: { project: PortfolioProject }) {
         </span>
         <div className='min-w-0 flex-1 space-y-4'>
           <h4 className='text-foreground text-base font-semibold'>{project.title}</h4>
-          <Progress value={project.progress} className='bg-muted h-2' indicatorClassName='bg-primary/35' />
+          <Progress
+            value={project.progress}
+            className='bg-muted h-2'
+            indicatorClassName='bg-primary/35'
+          />
           <div className='text-muted-foreground flex items-center justify-between text-sm'>
             <span>{project.evidenceCount} evidence items</span>
             <span>{project.progress ?? 0}% complete</span>
@@ -388,20 +387,13 @@ function ProjectSections({
           <FolderOpen className='text-muted-foreground size-7' />
         </div>
 
-        <h2 className='text-foreground text-lg font-semibold'>
-          No projects yet
-        </h2>
+        <h2 className='text-foreground text-lg font-semibold'>No projects yet</h2>
 
         <p className='text-muted-foreground mt-2 max-w-md text-sm'>
-          Your portfolio projects will appear here once you create or import
-          them.
+          Your portfolio projects will appear here once you create or import them.
         </p>
 
-        <Button
-          type='button'
-          className='mt-6'
-          onClick={onOpenProjects}
-        >
+        <Button type='button' className='mt-6' onClick={onOpenProjects}>
           Add your first project
           <ChevronRight className='size-4' />
         </Button>
@@ -489,13 +481,10 @@ function ProjectsPanel({ content }: { content: ReturnType<typeof getPortfolioCon
           <FolderOpen className='text-muted-foreground size-7' />
         </div>
 
-        <h2 className='text-foreground text-lg font-semibold'>
-          No projects yet
-        </h2>
+        <h2 className='text-foreground text-lg font-semibold'>No projects yet</h2>
 
         <p className='text-muted-foreground mt-2 max-w-md text-sm'>
-          Your portfolio projects will appear here once you create or import
-          them.
+          Your portfolio projects will appear here once you create or import them.
         </p>
       </div>
     );
@@ -535,21 +524,19 @@ function AssetPanel({
           <CollectionItemCard key={item.id} item={item} />
         ))}
 
-        {items.length === 0 &&
+        {items.length === 0 && (
           <div className='flex min-h-[400px] flex-col items-center justify-center p-6 text-center'>
             <div className='bg-muted mb-4 flex size-14 items-center justify-center rounded-full'>
               <Video className='text-muted-foreground size-7' />
             </div>
 
-            <h2 className='text-foreground text-lg font-semibold'>
-              No asset yet
-            </h2>
+            <h2 className='text-foreground text-lg font-semibold'>No asset yet</h2>
 
             <p className='text-muted-foreground mt-2 max-w-md text-sm'>
-              Your portfolio projects will appear here once you create or import
-              them.
+              Your portfolio projects will appear here once you create or import them.
             </p>
-          </div>}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -570,7 +557,7 @@ function PortfolioSidebar({ content }: { content: ReturnType<typeof getPortfolio
   const hasProjects = content.projects.length > 0;
   const hasHighlights = content.highlights.length > 0;
   // const hasInsight = Boolean(content.insightHighlight);
-  const hasInsight = false
+  const hasInsight = false;
 
   const verifiedEvidence = content.projects.reduce(
     (total, project) => total + (project.status ? 1 : 0),
@@ -589,9 +576,7 @@ function PortfolioSidebar({ content }: { content: ReturnType<typeof getPortfolio
           <div className='text-muted-foreground flex min-h-[220px] flex-col items-center justify-center rounded-md border border-dashed px-4 text-center'>
             <ShieldCheck className='mb-3 size-8 opacity-50' />
             <p className='font-medium'>No evidence tracked</p>
-            <p className='mt-1 text-xs'>
-              Evidence metrics will appear once projects are added.
-            </p>
+            <p className='mt-1 text-xs'>Evidence metrics will appear once projects are added.</p>
           </div>
         ) : (
           <div className='bg-secondary/40 rounded-md border p-3'>
@@ -608,12 +593,8 @@ function PortfolioSidebar({ content }: { content: ReturnType<typeof getPortfolio
 
             <div className='space-y-3'>
               <div className='flex items-center justify-between text-sm'>
-                <span className='text-muted-foreground font-medium'>
-                  Total Evidence:
-                </span>
-                <span className='text-foreground font-semibold'>
-                  {totalEvidence} tracked
-                </span>
+                <span className='text-muted-foreground font-medium'>Total Evidence:</span>
+                <span className='text-foreground font-semibold'>{totalEvidence} tracked</span>
               </div>
 
               <Progress
@@ -624,18 +605,14 @@ function PortfolioSidebar({ content }: { content: ReturnType<typeof getPortfolio
 
               <div className='space-y-2 text-sm'>
                 <div className='flex justify-between'>
-                  <span className='text-muted-foreground'>
-                    Pending Verifications:
-                  </span>
+                  <span className='text-muted-foreground'>Pending Verifications:</span>
                   <strong className='text-foreground'>
                     {Math.max(content.projects.length - verifiedEvidence, 0)}
                   </strong>
                 </div>
 
                 <div className='flex justify-between'>
-                  <span className='text-muted-foreground'>
-                    Verified Evidence:
-                  </span>
+                  <span className='text-muted-foreground'>Verified Evidence:</span>
                   <strong className='text-foreground'>{verifiedEvidence}</strong>
                 </div>
               </div>
@@ -649,9 +626,7 @@ function PortfolioSidebar({ content }: { content: ReturnType<typeof getPortfolio
           <div className='text-muted-foreground flex min-h-[220px] flex-col items-center justify-center rounded-md border border-dashed px-4 text-center'>
             <Sparkles className='mb-3 size-8 opacity-50' />
             <p className='font-medium'>No highlights yet</p>
-            <p className='mt-1 text-xs'>
-              Featured skills and achievements will appear here.
-            </p>
+            <p className='mt-1 text-xs'>Featured skills and achievements will appear here.</p>
           </div>
         ) : (
           <>
@@ -702,9 +677,7 @@ function PortfolioSidebar({ content }: { content: ReturnType<typeof getPortfolio
               </div>
 
               <div className='p-3'>
-                <p className='text-muted-foreground text-sm'>
-                  {content.copy.sidebarLedgerLabel}
-                </p>
+                <p className='text-muted-foreground text-sm'>{content.copy.sidebarLedgerLabel}</p>
 
                 <article className='mt-3 flex items-center gap-3'>
                   <span className='bg-success text-success-foreground grid size-10 shrink-0 place-items-center rounded-md'>
@@ -737,8 +710,6 @@ function PortfolioSidebar({ content }: { content: ReturnType<typeof getPortfolio
     </aside>
   );
 }
-
-
 
 // ACTUAL COMPONENT
 export function SharedPortfolioShell({ role }: { role: PortfolioRole }) {
@@ -786,7 +757,9 @@ export function SharedPortfolioShell({ role }: { role: PortfolioRole }) {
         );
       case 'dashboard':
       default:
-        return <ProjectSections content={content} onOpenProjects={() => setActiveTab('projects')} />;
+        return (
+          <ProjectSections content={content} onOpenProjects={() => setActiveTab('projects')} />
+        );
     }
   };
 

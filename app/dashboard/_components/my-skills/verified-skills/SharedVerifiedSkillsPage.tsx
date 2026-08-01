@@ -82,9 +82,9 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
     );
     const averageScore = filteredCategories.length
       ? Math.round(
-        filteredCategories.reduce((total, category) => total + category.score, 0) /
-        filteredCategories.length
-      )
+          filteredCategories.reduce((total, category) => total + category.score, 0) /
+            filteredCategories.length
+        )
       : 0;
 
     return {
@@ -99,15 +99,15 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
   return (
     <main className='bg-background min-h-screen px-3 py-3 sm:px-4 lg:px-5'>
       <div className='mx-auto grid w-full max-w-7xl gap-4'>
-        <div className="flex items-center">
+        <div className='flex items-center'>
           <Button
-            variant="ghost"
-            size="icon"
-            className="text-foreground hover:bg-muted"
+            variant='ghost'
+            size='icon'
+            className='text-foreground hover:bg-muted'
             onClick={() => router.back()}
-            aria-label="Go back"
+            aria-label='Go back'
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className='h-5 w-5' />
           </Button>
         </div>
 
@@ -153,7 +153,10 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
           }
         }}
       >
-        <SheetContent side='right' className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[760px]'>
+        <SheetContent
+          side='right'
+          className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[760px]'
+        >
           {selectedCategory ? (
             <>
               <SheetHeader className='border-border/70 border-b px-6 py-5 text-left'>
@@ -165,7 +168,7 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
 
               <div className='space-y-5 px-6 py-5'>
                 {previewUrl ? (
-                  <Card className='overflow-hidden rounded-[18px] border bg-card shadow-sm'>
+                  <Card className='bg-card overflow-hidden rounded-[18px] border shadow-sm'>
                     <div className='border-border/70 flex items-center justify-between gap-3 border-b px-4 py-3'>
                       <div className='min-w-0'>
                         <p className='text-foreground truncate text-sm font-semibold'>
@@ -180,7 +183,7 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
                         type='button'
                         variant='ghost'
                         size='icon'
-                        className='shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground'
+                        className='text-muted-foreground hover:bg-muted hover:text-foreground shrink-0'
                         onClick={() => setPreviewedRecord(null)}
                         aria-label='Close preview'
                       >
@@ -189,12 +192,16 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
                     </div>
 
                     <div className='bg-muted/10 h-[52vh] min-h-[360px]'>
-                      <iframe src={previewUrl} title={previewedRecord.documentLabel} className='h-full w-full' />
+                      <iframe
+                        src={previewUrl}
+                        title={previewedRecord.documentLabel}
+                        className='h-full w-full'
+                      />
                     </div>
                   </Card>
                 ) : null}
 
-                <Card className='rounded-[18px] border bg-card p-4 shadow-sm'>
+                <Card className='bg-card rounded-[18px] border p-4 shadow-sm'>
                   <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
                     <StatBox label='Group' value={selectedCategory.group} />
                     <StatBox label='Level' value={selectedCategory.level} />
@@ -212,13 +219,14 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
                       </p>
                     </div>
                     <Badge variant='outline' className='rounded-lg px-3 py-1'>
-                      {selectedCategory.records.length} item{selectedCategory.records.length === 1 ? '' : 's'}
+                      {selectedCategory.records.length} item
+                      {selectedCategory.records.length === 1 ? '' : 's'}
                     </Badge>
                   </div>
 
                   <div className='space-y-3'>
                     {selectedCategoryRecords.map(record => (
-                      <Card key={record.id} className='rounded-[16px] border bg-card p-4 shadow-sm'>
+                      <Card key={record.id} className='bg-card rounded-[16px] border p-4 shadow-sm'>
                         <div className='flex flex-wrap items-start justify-between gap-3'>
                           <div className='space-y-1'>
                             <h4 className='text-foreground font-semibold'>{record.title}</h4>
@@ -227,10 +235,7 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
                               {record.documentLabel ? ` • ${record.documentLabel}` : ''}
                             </p>
                           </div>
-                          <Badge
-                            variant='outline'
-                            className='rounded-lg px-3 py-1 text-xs'
-                          >
+                          <Badge variant='outline' className='rounded-lg px-3 py-1 text-xs'>
                             {record.status}
                           </Badge>
                         </div>
@@ -240,13 +245,17 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
                             <DetailRow label='Credential' value={record.documentLabel} />
                             <DetailRow
                               label='Kind'
-                              value={record.recordKind ? capitalize(record.recordKind) : 'Verified record'}
+                              value={
+                                record.recordKind
+                                  ? capitalize(record.recordKind)
+                                  : 'Verified record'
+                              }
                             />
                           </div>
 
                           {record.recordSummary ? (
-                            <div className='rounded-xl border bg-muted/20 px-3 py-2.5'>
-                              <p className='text-muted-foreground text-xs uppercase tracking-wide'>
+                            <div className='bg-muted/20 rounded-xl border px-3 py-2.5'>
+                              <p className='text-muted-foreground text-xs tracking-wide uppercase'>
                                 Summary
                               </p>
                               <p className='text-foreground mt-1 text-sm leading-6'>
@@ -271,7 +280,9 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
                               </Button>
                             ) : null}
                             <span className='text-muted-foreground text-xs'>
-                              {record.timestamp ? new Date(record.timestamp).toLocaleDateString() : 'Recently'}
+                              {record.timestamp
+                                ? new Date(record.timestamp).toLocaleDateString()
+                                : 'Recently'}
                             </span>
                           </div>
                         </div>
@@ -292,8 +303,8 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
 
 function StatBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className='rounded-xl border bg-muted/20 px-3 py-2.5'>
-      <p className='text-muted-foreground text-xs uppercase tracking-wide'>{label}</p>
+    <div className='bg-muted/20 rounded-xl border px-3 py-2.5'>
+      <p className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</p>
       <p className='text-foreground mt-1 text-sm font-medium'>{value}</p>
     </div>
   );
@@ -301,8 +312,8 @@ function StatBox({ label, value }: { label: string; value: string }) {
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className='rounded-xl border bg-muted/20 px-3 py-2.5'>
-      <p className='text-muted-foreground text-xs uppercase tracking-wide'>{label}</p>
+    <div className='bg-muted/20 rounded-xl border px-3 py-2.5'>
+      <p className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</p>
       <p className='text-foreground mt-1 text-sm font-medium'>{value}</p>
     </div>
   );

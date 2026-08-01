@@ -141,29 +141,31 @@ export function LessonDetailsSidebar({
 
         {/* Action Buttons */}
         <div className='space-y-2'>
-          {!isCompleted && <>
-            <div className='py-4 text-center'>
-              <div className='bg-success/10 mb-2 inline-flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14'>
-                <svg
-                  className='text-success h-6 w-6 sm:h-7 sm:w-7'
-                  fill='none'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth='2'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                >
-                  <path d='M5 13l4 4L19 7'></path>
-                </svg>
+          {!isCompleted && (
+            <>
+              <div className='py-4 text-center'>
+                <div className='bg-success/10 mb-2 inline-flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14'>
+                  <svg
+                    className='text-success h-6 w-6 sm:h-7 sm:w-7'
+                    fill='none'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth='2'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                  >
+                    <path d='M5 13l4 4L19 7'></path>
+                  </svg>
+                </div>
+                <p className='text-success text-sm font-medium sm:text-base'>Lesson Completed!</p>
               </div>
-              <p className='text-success text-sm font-medium sm:text-base'>Lesson Completed!</p>
-            </div>
 
-            {/* <Button variant='outline' className='w-full gap-2' onClick={onStartLesson}>
+              {/* <Button variant='outline' className='w-full gap-2' onClick={onStartLesson}>
               <Play className='h-4 w-4' />
               Review Lesson
             </Button> */}
-          </>}
+            </>
+          )}
         </div>
 
         <Separator />

@@ -14,12 +14,9 @@ type OpportunityCardProps = {
 };
 
 const artworkAccent = {
-  blue:
-    'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_16%,white),color-mix(in_srgb,var(--el-accent-azure)_35%,white))]',
-  teal:
-    'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--success)_20%,white),color-mix(in_srgb,var(--el-accent-azure)_28%,white))]',
-  gold:
-    'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--el-accent-amber)_26%,white),color-mix(in_srgb,var(--primary)_12%,white))]',
+  blue: 'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_16%,white),color-mix(in_srgb,var(--el-accent-azure)_35%,white))]',
+  teal: 'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--success)_20%,white),color-mix(in_srgb,var(--el-accent-azure)_28%,white))]',
+  gold: 'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--el-accent-amber)_26%,white),color-mix(in_srgb,var(--primary)_12%,white))]',
 } as const;
 
 const buttonVariant = {
@@ -50,22 +47,27 @@ function OpportunityArtwork({ item }: { item: JobCardItem }) {
   const isVideo = item.type === 'video';
 
   return (
-    <div className={cn('relative overflow-hidden rounded-[14px] border p-3', artworkAccent[item.accent])}>
-      <div className='absolute top-3 left-3 grid size-7 place-items-center rounded-md bg-primary text-primary-foreground shadow-sm'>
+    <div
+      className={cn(
+        'relative overflow-hidden rounded-[14px] border p-3',
+        artworkAccent[item.accent]
+      )}
+    >
+      <div className='bg-primary text-primary-foreground absolute top-3 left-3 grid size-7 place-items-center rounded-md shadow-sm'>
         <Bookmark className='size-4' />
       </div>
       {item.matchLabel ? (
-        <Badge className='absolute top-3 right-3 rounded-lg bg-[color-mix(in_srgb,var(--el-accent-amber)_30%,white)] text-foreground'>
+        <Badge className='text-foreground absolute top-3 right-3 rounded-lg bg-[color-mix(in_srgb,var(--el-accent-amber)_30%,white)]'>
           {item.matchLabel}
         </Badge>
       ) : null}
       <div className='grid min-h-[124px] grid-cols-[1.25fr_0.8fr] gap-3 pt-5'>
         <div className='rounded-xl border bg-white/70 p-3 shadow-sm'>
-          <div className='h-3 w-16 rounded-full bg-primary/20' />
+          <div className='bg-primary/20 h-3 w-16 rounded-full' />
           <div className='mt-3 h-14 rounded-lg bg-[color-mix(in_srgb,var(--primary)_18%,white)]' />
           <div className='mt-3 flex gap-2'>
-            <div className='h-2.5 w-16 rounded-full bg-muted' />
-            <div className='h-2.5 w-10 rounded-full bg-muted/70' />
+            <div className='bg-muted h-2.5 w-16 rounded-full' />
+            <div className='bg-muted/70 h-2.5 w-10 rounded-full' />
           </div>
         </div>
         <div className='space-y-3'>
@@ -75,13 +77,13 @@ function OpportunityArtwork({ item }: { item: JobCardItem }) {
       </div>
       {isVideo ? (
         <div className='absolute inset-0 grid place-items-center'>
-          <span className='grid size-16 place-items-center rounded-full bg-foreground/65 text-background shadow-lg'>
+          <span className='bg-foreground/65 text-background grid size-16 place-items-center rounded-full shadow-lg'>
             <Play className='ml-1 size-7 fill-current' />
           </span>
         </div>
       ) : null}
       {item.duration ? (
-        <Badge className='absolute right-3 bottom-3 rounded-lg bg-foreground/75 text-background'>
+        <Badge className='bg-foreground/75 text-background absolute right-3 bottom-3 rounded-lg'>
           {item.duration}
         </Badge>
       ) : null}
@@ -91,12 +93,14 @@ function OpportunityArtwork({ item }: { item: JobCardItem }) {
 
 export function OpportunityCard({ item }: OpportunityCardProps) {
   return (
-    <Card className='gap-4 rounded-[18px] border-white/60 bg-card/95 px-4 py-4 shadow-sm'>
+    <Card className='bg-card/95 gap-4 rounded-[18px] border-white/60 px-4 py-4 shadow-sm'>
       <OpportunityArtwork item={item} />
 
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div className='min-w-0 flex-1'>
-          <h3 className='text-foreground text-[1.1rem] font-semibold leading-tight'>{item.title}</h3>
+          <h3 className='text-foreground text-[1.1rem] leading-tight font-semibold'>
+            {item.title}
+          </h3>
           <p className='text-muted-foreground mt-1 text-base'>{item.company}</p>
         </div>
         <StarRating rating={item.rating} />

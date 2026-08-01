@@ -74,11 +74,7 @@ export function DateTime({
   }
 
   const iso =
-    typeof value === 'string'
-      ? value
-      : value instanceof Date
-        ? value.toISOString()
-        : undefined;
+    typeof value === 'string' ? value : value instanceof Date ? value.toISOString() : undefined;
 
   // Tooltip always shows the unambiguous zoned date-time.
   const title =
@@ -87,12 +83,7 @@ export function DateTime({
       : formatDateTimeWithZone(value, { zone: targetZone, fallback: '' }) || undefined;
 
   return (
-    <time
-      dateTime={iso}
-      title={title}
-      className={cn(className)}
-      suppressHydrationWarning
-    >
+    <time dateTime={iso} title={title} className={cn(className)} suppressHydrationWarning>
       {text}
     </time>
   );

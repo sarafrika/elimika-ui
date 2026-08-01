@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useQueries } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useQueries } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 import type {
   Course,
@@ -11,14 +11,14 @@ import type {
   StudentCourseEnrollmentSummary,
   StudentEnrollmentOverview,
   User,
-} from "@/services/client";
-import { useUserProfile } from "../../../../context/profile-context";
-import { useStudentsByIds, useUsersByIds } from "../../../../hooks/use-batched-lookups";
-import { useDifficultyLevels } from "../../../../hooks/use-difficultyLevels";
+} from '@/services/client';
+import { useUserProfile } from '../../../../context/profile-context';
+import { useStudentsByIds, useUsersByIds } from '../../../../hooks/use-batched-lookups';
+import { useDifficultyLevels } from '../../../../hooks/use-difficultyLevels';
 import useInstructorClassesWithDetails, {
   type InstructorClassWithDetails,
-} from "../../../../hooks/use-instructor-classes";
-import { getEnrollmentOverviewForStudentOptions } from "../../../../services/client/@tanstack/react-query.gen";
+} from '../../../../hooks/use-instructor-classes';
+import { getEnrollmentOverviewForStudentOptions } from '../../../../services/client/@tanstack/react-query.gen';
 
 import type {
   CourseTab,
@@ -28,7 +28,7 @@ import type {
   StudentRosterEntry,
   StudentRosterStudent,
   StudentStatus,
-} from "./types";
+} from './types';
 import {
   formatRelativeTime,
   formatStudentName,
@@ -36,7 +36,7 @@ import {
   getStudentInitials,
   getStudentProgress,
   normalizeStudentStatus,
-} from "./types";
+} from './types';
 
 type StudentBuilder = {
   studentUuid: string;
@@ -48,9 +48,7 @@ type StudentBuilder = {
   levels: Set<string>;
 };
 
-function toRosterClass(
-  cls: InstructorClassWithDetails
-): StudentRosterClass {
+function toRosterClass(cls: InstructorClassWithDetails): StudentRosterClass {
   return {
     uuid: cls.uuid,
     title: cls.title,
@@ -65,8 +63,8 @@ function getLatestDate(
   classEnrollments: StudentClassEnrollmentSummary[]
 ) {
   const dates = [
-    ...courseEnrollments.map((item) => item.updated_date).filter(Boolean),
-    ...classEnrollments.map((item) => item.latest_activity_date).filter(Boolean),
+    ...courseEnrollments.map(item => item.updated_date).filter(Boolean),
+    ...classEnrollments.map(item => item.latest_activity_date).filter(Boolean),
   ] as Date[];
 
   if (dates.length === 0) return undefined;
@@ -76,9 +74,7 @@ function getLatestDate(
   );
 }
 
-function getLatestCourseEnrollment(
-  courseEnrollments: StudentCourseEnrollmentSummary[]
-) {
+function getLatestCourseEnrollment(courseEnrollments: StudentCourseEnrollmentSummary[]) {
   return [...courseEnrollments].sort((a, b) => {
     const aDate = a.updated_date?.getTime() ?? 0;
     const bDate = b.updated_date?.getTime() ?? 0;
@@ -91,18 +87,14 @@ function getStudentStatus(
   classEnrollments: StudentClassEnrollmentSummary[],
   progress: number
 ): StudentStatus {
-  const latestCourseStatus = getLatestCourseEnrollment(courseEnrollments)
-    ?.enrollment_status;
-  const latestClassStatus = [...classEnrollments]
-    .sort((a, b) => {
-      const aDate = a.latest_activity_date?.getTime() ?? 0;
-      const bDate = b.latest_activity_date?.getTime() ?? 0;
-      return bDate - aDate;
-    })[0]?.latest_enrollment_status;
+  const latestCourseStatus = getLatestCourseEnrollment(courseEnrollments)?.enrollment_status;
+  const latestClassStatus = [...classEnrollments].sort((a, b) => {
+    const aDate = a.latest_activity_date?.getTime() ?? 0;
+    const bDate = b.latest_activity_date?.getTime() ?? 0;
+    return bDate - aDate;
+  })[0]?.latest_enrollment_status;
 
-  const statusText = [latestCourseStatus, latestClassStatus]
-    .filter(Boolean)
-    .join(" ");
+  const statusText = [latestCourseStatus, latestClassStatus].filter(Boolean).join(' ');
 
   return normalizeStudentStatus(statusText, progress);
 }
@@ -117,12 +109,12 @@ function buildSearchIndex(
   return [
     studentName,
     email,
-    ...classes.map((item) => item.title),
-    ...courses.map((item) => item.name),
+    ...classes.map(item => item.title),
+    ...courses.map(item => item.name),
     ...levels,
   ]
     .filter(Boolean)
-    .join(" ")
+    .join(' ')
     .toLowerCase();
 }
 
@@ -130,8 +122,7 @@ export function useInstructorStudentsData() {
   const profile = useUserProfile();
   const instructor = profile?.instructor;
 
-  const { difficultyMap, isLoading: difficultyIsLoading } =
-    useDifficultyLevels();
+  const { difficultyMap, isLoading: difficultyIsLoading } = useDifficultyLevels();
 
   const { classes, loading: classesLoading } = useInstructorClassesWithDetails(
     instructor?.uuid as string
@@ -139,7 +130,7 @@ export function useInstructorStudentsData() {
 
   const studentIds = useMemo(() => {
     const ids = new Set<string>();
-    classes.forEach((cls) => {
+    classes.forEach(cls => {
       (cls.enrollment ?? []).forEach((enrollment: Enrollment) => {
         if (enrollment.student_uuid) ids.add(enrollment.student_uuid);
       });
@@ -154,7 +145,7 @@ export function useInstructorStudentsData() {
   const userIds = useMemo(
     () =>
       Object.values(studentMap)
-        .map((student) => student.user_uuid)
+        .map(student => student.user_uuid)
         .filter(Boolean) as string[],
     [studentMap]
   );
@@ -165,7 +156,7 @@ export function useInstructorStudentsData() {
   // the page only derives status/progress/latest-activity from the
   // most recent summaries, so size 50 is ample (was 1000).
   const overviewQueries = useQueries({
-    queries: studentIds.map((studentUuid) => ({
+    queries: studentIds.map(studentUuid => ({
       ...getEnrollmentOverviewForStudentOptions({
         path: { studentUuid },
         query: { pageable: { page: 0, size: 50 } },
@@ -190,7 +181,7 @@ export function useInstructorStudentsData() {
   const students = useMemo<StudentRosterEntry[]>(() => {
     const roster = new Map<string, StudentBuilder>();
 
-    classes.forEach((cls) => {
+    classes.forEach(cls => {
       const rosterClass = toRosterClass(cls);
       // cls.course is already resolved by useInstructorClassesWithDetails
       const allCourses = [...(cls.pCourses ?? []), cls.course ?? []]
@@ -203,7 +194,7 @@ export function useInstructorStudentsData() {
 
         const profileStudent = studentMap?.[studentUuid] ?? null;
         const user = profileStudent?.user_uuid
-          ? userMap?.[profileStudent.user_uuid] ?? null
+          ? (userMap?.[profileStudent.user_uuid] ?? null)
           : null;
         const fullName = formatStudentName(user, profileStudent);
 
@@ -240,7 +231,7 @@ export function useInstructorStudentsData() {
           joinedAt: profileStudent?.created_date,
         };
         entry.classes.add(rosterClass);
-        allCourses.forEach((course) => {
+        allCourses.forEach(course => {
           entry.courses.add(course);
           if (course.difficulty_uuid) {
             const level = difficultyMap[course.difficulty_uuid];
@@ -251,7 +242,7 @@ export function useInstructorStudentsData() {
     });
 
     return Array.from(roster.values())
-      .map((entry) => {
+      .map(entry => {
         const overview = overviewMap.get(entry.studentUuid);
         const courseEnrollments = overview?.course_enrollments?.content ?? [];
         const classEnrollments = overview?.class_enrollments?.content ?? [];
@@ -291,19 +282,19 @@ export function useInstructorStudentsData() {
 
   const uniqueCourses = useMemo<Course[]>(() => {
     const coursesSet = new Map<string, Course>();
-    classes.forEach((cls) => {
+    classes.forEach(cls => {
       [...(cls.pCourses ?? []), cls.course ?? []]
         .flat()
         .filter(Boolean)
-        .forEach((course) => coursesSet.set(course?.uuid ?? course.name, course));
+        .forEach(course => coursesSet.set(course?.uuid ?? course.name, course));
     });
     return Array.from(coursesSet.values());
   }, [classes]);
 
   const courseTabs = useMemo<CourseTab[]>(() => {
     return [
-      { id: "all", label: "All" },
-      ...uniqueCourses.map((course) => ({
+      { id: 'all', label: 'All' },
+      ...uniqueCourses.map(course => ({
         id: course.uuid ?? course.name,
         label: course.name,
         thumbnail_url: course.thumbnail_url,
@@ -318,23 +309,23 @@ export function useInstructorStudentsData() {
   }>(() => {
     const classOptions = Array.from(
       new Map(
-        students.flatMap((student) =>
-          student.classes.flatMap((item) => (item.uuid ? [[item.uuid, item] as const] : []))
+        students.flatMap(student =>
+          student.classes.flatMap(item => (item.uuid ? [[item.uuid, item] as const] : []))
         )
       ).values()
     )
-      .map((item) => ({
-        value: item.uuid ?? item.title ?? "class",
-        label: item.title ?? item.course?.name ?? "Class",
+      .map(item => ({
+        value: item.uuid ?? item.title ?? 'class',
+        label: item.title ?? item.course?.name ?? 'Class',
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
 
-    const statusOptions = Array.from(new Set(students.map((student) => student.status)))
-      .map((status) => ({ value: status, label: status }))
+    const statusOptions = Array.from(new Set(students.map(student => student.status)))
+      .map(status => ({ value: status, label: status }))
       .sort((a, b) => a.label.localeCompare(b.label));
 
-    const levelOptions = Array.from(new Set(students.flatMap((student) => student.levels)))
-      .map((level) => ({ value: level, label: level }))
+    const levelOptions = Array.from(new Set(students.flatMap(student => student.levels)))
+      .map(level => ({ value: level, label: level }))
       .sort((a, b) => a.label.localeCompare(b.label));
 
     return { classes: classOptions, statuses: statusOptions, levels: levelOptions };
@@ -342,7 +333,7 @@ export function useInstructorStudentsData() {
 
   const recentActivities = useMemo<RecentActivity[]>(() => {
     return students
-      .filter((student) => student.latestActivityAt)
+      .filter(student => student.latestActivityAt)
       .slice(0, 5)
       .map((student, index) => {
         const latestCourseEnrollment = [...student.courseEnrollments].sort(
@@ -350,18 +341,18 @@ export function useInstructorStudentsData() {
         )[0];
 
         const action =
-          student.status === "Graduated"
-            ? "completed"
-            : student.status === "On Hold"
-              ? "updated"
-              : "joined";
+          student.status === 'Graduated'
+            ? 'completed'
+            : student.status === 'On Hold'
+              ? 'updated'
+              : 'joined';
 
         const activityType =
-          student.status === "Graduated"
-            ? "completion"
-            : student.status === "On Hold"
-              ? "assignment"
-              : "join";
+          student.status === 'Graduated'
+            ? 'completion'
+            : student.status === 'On Hold'
+              ? 'assignment'
+              : 'join';
 
         return {
           id: `${student.student.uuid}-${index}`,
@@ -380,13 +371,13 @@ export function useInstructorStudentsData() {
     difficultyIsLoading ||
     studentIsLoading ||
     userIsLoading ||
-    overviewQueries.some((query) => query.isPending);
+    overviewQueries.some(query => query.isPending);
 
   return {
     classes,
     students,
     courses: uniqueCourses,
-    pCourses: classes.flatMap((cls) => cls.pCourses ?? []),
+    pCourses: classes.flatMap(cls => cls.pCourses ?? []),
     courseTabs,
     filterOptions,
     recentActivities,

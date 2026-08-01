@@ -454,7 +454,7 @@ export function TrainingClassList({
             <SlidersHorizontal className='text-muted-foreground h-4 w-4' />
 
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className='w-full bg-card/80 sm:w-[150px]'>
+              <SelectTrigger className='bg-card/80 w-full sm:w-[150px]'>
                 <SelectValue placeholder='Location' />
               </SelectTrigger>
               <SelectContent>
@@ -466,7 +466,7 @@ export function TrainingClassList({
             </Select>
 
             <Select value={activeFilter} onValueChange={setActiveFilter}>
-              <SelectTrigger className='w-full bg-card/80 sm:w-[150px]'>
+              <SelectTrigger className='bg-card/80 w-full sm:w-[150px]'>
                 <SelectValue placeholder='Class Status' />
               </SelectTrigger>
               <SelectContent>
@@ -491,7 +491,10 @@ export function TrainingClassList({
         skeleton={
           <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
             {Array.from({ length: 8 }).map((_, index) => (
-              <Card key={index} className='border-border bg-card flex h-full flex-col overflow-hidden border py-0'>
+              <Card
+                key={index}
+                className='border-border bg-card flex h-full flex-col overflow-hidden border py-0'
+              >
                 <div className='border-border from-primary/10 to-primary/5 border-b bg-gradient-to-r px-6 py-4'>
                   <Skeleton className='mb-2 h-3 w-1/2' />
                   <Skeleton className='h-6 w-3/4' />
@@ -521,31 +524,31 @@ export function TrainingClassList({
       >
         <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
           {filteredClasses.map((cls, index: number) => {
-          const difficultyName = cls.course?.difficulty_uuid
-            ? difficultyMap[cls.course.difficulty_uuid] || 'N/A'
-            : 'N/A';
+            const difficultyName = cls.course?.difficulty_uuid
+              ? difficultyMap[cls.course.difficulty_uuid] || 'N/A'
+              : 'N/A';
 
-          const enrollmentQuery = enrollmentQueries[index];
-          const enrollmentData: Enrollment[] = enrollmentQuery?.data?.data ?? [];
-          const uniqueStudentIds = new Set(
-            enrollmentData.map(enrollment => enrollment.student_uuid)
-          );
-          const enrolledCount = uniqueStudentIds.size;
-          const enrolledPercentage = (enrolledCount / (cls.max_participants ?? 0)) * 100;
+            const enrollmentQuery = enrollmentQueries[index];
+            const enrollmentData: Enrollment[] = enrollmentQuery?.data?.data ?? [];
+            const uniqueStudentIds = new Set(
+              enrollmentData.map(enrollment => enrollment.student_uuid)
+            );
+            const enrolledCount = uniqueStudentIds.size;
+            const enrolledPercentage = (enrolledCount / (cls.max_participants ?? 0)) * 100;
 
-          return (
-            <ClassCard
-              key={cls.uuid}
-              cls={cls}
-              difficultyName={difficultyName}
-              enrolledCount={enrolledCount}
-              enrolledPercentage={enrolledPercentage}
-              onStart={() => router.push(`/dashboard/trainings/instructor-console/${cls.uuid}`)}
-              onPreview={() => router.push(`/dashboard/trainings/overview/${cls.uuid}`)}
-              onEdit={() => router.push(`/dashboard/trainings/create-new?id=${cls.uuid}`)}
-              onDeactivate={() => onDelete?.(cls.uuid)}
-            />
-          );
+            return (
+              <ClassCard
+                key={cls.uuid}
+                cls={cls}
+                difficultyName={difficultyName}
+                enrolledCount={enrolledCount}
+                enrolledPercentage={enrolledPercentage}
+                onStart={() => router.push(`/dashboard/trainings/instructor-console/${cls.uuid}`)}
+                onPreview={() => router.push(`/dashboard/trainings/overview/${cls.uuid}`)}
+                onEdit={() => router.push(`/dashboard/trainings/create-new?id=${cls.uuid}`)}
+                onDeactivate={() => onDelete?.(cls.uuid)}
+              />
+            );
           })}
         </div>
       </AsyncSection>

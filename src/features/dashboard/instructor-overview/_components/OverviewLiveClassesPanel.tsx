@@ -17,11 +17,9 @@ type OverviewLiveClassesPanelProps = {
 
 function LiveClassRow({ liveClass }: { liveClass: OverviewLiveClass }) {
   return (
-    <article className='rounded-[10px] border border-border bg-card px-4 py-3 shadow-sm'>
+    <article className='border-border bg-card rounded-[10px] border px-4 py-3 shadow-sm'>
       <div className='flex items-start justify-between gap-3'>
-        <p className='text-[0.9rem] font-medium text-muted-foreground'>
-          {liveClass.timeLabel}
-        </p>
+        <p className='text-muted-foreground text-[0.9rem] font-medium'>{liveClass.timeLabel}</p>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -29,7 +27,7 @@ function LiveClassRow({ liveClass }: { liveClass: OverviewLiveClass }) {
               variant='ghost'
               size='icon'
               aria-label={`${liveClass.title} options`}
-              className='rounded-full text-muted-foreground transition hover:bg-muted/50 hover:text-foreground'
+              className='text-muted-foreground hover:bg-muted/50 hover:text-foreground rounded-full transition'
             >
               <EllipsisVertical className='size-4' />
             </Button>
@@ -50,21 +48,19 @@ function LiveClassRow({ liveClass }: { liveClass: OverviewLiveClass }) {
         </DropdownMenu>
       </div>
 
-      <h3 className='mt-1 text-[1.05rem] font-semibold text-foreground sm:text-[1.1rem]'>
+      <h3 className='text-foreground mt-1 text-[1.05rem] font-semibold sm:text-[1.1rem]'>
         {liveClass.title}
       </h3>
 
       <div className='mt-3 flex flex-col gap-3 min-[520px]:flex-row min-[520px]:items-center min-[520px]:justify-between'>
-        <div className='flex flex-wrap items-center gap-2 text-[0.9rem] text-muted-foreground'>
-          <span className='font-semibold text-primary'>
-            {liveClass.provider}
-          </span>
+        <div className='text-muted-foreground flex flex-wrap items-center gap-2 text-[0.9rem]'>
+          <span className='text-primary font-semibold'>{liveClass.provider}</span>
           <span>|</span>
           <span>{liveClass.students}</span>
         </div>
       </div>
 
-      <div className='flex flex-wrap items-center gap-2 mt-2 self-end justify-end'>
+      <div className='mt-2 flex flex-wrap items-center justify-end gap-2 self-end'>
         <InitialsGroup initials={liveClass.attendeeInitials} />
         <ActionButton href={liveClass.infoHref} label='View info' tone='muted' />
         <ActionButton href={liveClass.href} label={liveClass.actionLabel} />
@@ -75,7 +71,11 @@ function LiveClassRow({ liveClass }: { liveClass: OverviewLiveClass }) {
 
 export function OverviewLiveClassesPanel({ liveClasses }: OverviewLiveClassesPanelProps) {
   return (
-    <OverviewSectionShell title='Live Classes' onActionLabel='See All' onActionHref='/dashboard/classes'>
+    <OverviewSectionShell
+      title='Live Classes'
+      onActionLabel='See All'
+      onActionHref='/dashboard/classes'
+    >
       {liveClasses.length ? (
         <div className='space-y-3'>
           {liveClasses.map(liveClass => (
@@ -83,7 +83,7 @@ export function OverviewLiveClassesPanel({ liveClasses }: OverviewLiveClassesPan
           ))}
         </div>
       ) : (
-        <p className='rounded-[10px] border border-dashed border-border bg-card px-4 py-6 text-sm text-muted-foreground'>
+        <p className='border-border bg-card text-muted-foreground rounded-[10px] border border-dashed px-4 py-6 text-sm'>
           No live or imminent class instances found.
         </p>
       )}

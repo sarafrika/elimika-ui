@@ -165,7 +165,8 @@ function inferAttachmentContentType(attachment: AssignmentAttachment) {
   if (mime.startsWith('video/') || /\.(mp4|webm|mov|m4v|mkv)$/.test(filename)) return 'video';
   if (mime.startsWith('audio/') || /\.(mp3|wav|m4a|aac|ogg|flac)$/.test(filename)) return 'audio';
   if (mime.includes('pdf') || filename.endsWith('.pdf')) return 'pdf';
-  if (mime.startsWith('text/') || /\.(txt|md|csv|html?|xml|json|rtf)$/.test(filename)) return 'text';
+  if (mime.startsWith('text/') || /\.(txt|md|csv|html?|xml|json|rtf)$/.test(filename))
+    return 'text';
   if (officeExtensions.includes(extension)) {
     if (['doc', 'docx', 'odt'].includes(extension)) return 'document';
     if (['xls', 'xlsx', 'ods'].includes(extension)) return 'spreadsheet';
@@ -341,26 +342,24 @@ export function ClassScheduleManager({
   });
 
   const assignmentUuids = useMemo(
-    () =>
-      [
-        ...new Set(
-          (assignmentSchedules?.data ?? [])
-            .map(item => item.assignment_uuid)
-            .filter((uuid): uuid is string => Boolean(uuid))
-        ),
-      ],
+    () => [
+      ...new Set(
+        (assignmentSchedules?.data ?? [])
+          .map(item => item.assignment_uuid)
+          .filter((uuid): uuid is string => Boolean(uuid))
+      ),
+    ],
     [assignmentSchedules]
   );
 
   const quizUuids = useMemo(
-    () =>
-      [
-        ...new Set(
-          (quizSchedules?.data ?? [])
-            .map(item => item.quiz_uuid)
-            .filter((uuid): uuid is string => Boolean(uuid))
-        ),
-      ],
+    () => [
+      ...new Set(
+        (quizSchedules?.data ?? [])
+          .map(item => item.quiz_uuid)
+          .filter((uuid): uuid is string => Boolean(uuid))
+      ),
+    ],
     [quizSchedules]
   );
 
@@ -441,8 +440,7 @@ export function ClassScheduleManager({
           quiz: quizDetailsMap[item.quiz_uuid] ?? null,
         }))
         .filter(
-          (item): item is QuizScheduleWithDetails =>
-            item.quiz !== null && item.quiz !== undefined
+          (item): item is QuizScheduleWithDetails => item.quiz !== null && item.quiz !== undefined
         ),
     [quizDetailsMap, quizSchedules]
   );
@@ -525,9 +523,8 @@ export function ClassScheduleManager({
       { path: { enrollmentUuid }, query: { attended: isPresent } },
       {
         onSuccess: () => {
-          const name = selectedScheduleStudents.find(
-            entry => entry.user?.uuid === studentId
-          )?.user?.full_name;
+          const name = selectedScheduleStudents.find(entry => entry.user?.uuid === studentId)?.user
+            ?.full_name;
           toast.success(`Marked ${isPresent ? 'present' : 'absent'}${name ? ` for ${name}` : ''}.`);
         },
         onSettled: () => {
@@ -1539,11 +1536,11 @@ export function ClassScheduleManager({
         content={
           previewAttachment
             ? {
-              title: previewAttachment.original_filename ?? 'Attachment',
-              file_url: previewAttachment.file_url ?? null,
-              mime_type: (previewAttachment as { mime_type?: string }).mime_type ?? null,
-              value: previewAttachment.file_url ?? null,
-            }
+                title: previewAttachment.original_filename ?? 'Attachment',
+                file_url: previewAttachment.file_url ?? null,
+                mime_type: (previewAttachment as { mime_type?: string }).mime_type ?? null,
+                value: previewAttachment.file_url ?? null,
+              }
             : null
         }
         contentType={previewAttachment ? inferAttachmentContentType(previewAttachment) : undefined}

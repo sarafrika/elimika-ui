@@ -20,7 +20,7 @@ import {
   Plus,
   Search,
   Star,
-  Trophy
+  Trophy,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -32,7 +32,6 @@ import {
   getCardPresentation,
   type CoursesCatalogCardData,
 } from '@/src/features/dashboard/courses/shared/_components/courses-data';
-
 
 type CourseStatus = 'in_progress' | 'completed' | 'not_started';
 
@@ -57,10 +56,11 @@ function FilterPill({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${active
-        ? 'bg-primary text-white shadow-sm'
-        : 'bg-muted text-muted-foreground hover:bg-muted/80'
-        }`}
+      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+        active
+          ? 'bg-primary text-white shadow-sm'
+          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+      }`}
     >
       {label === 'In Progress' && <Clock className='size-3.5' />}
       {label === 'Completed' && <CheckCircle2 className='size-3.5' />}
@@ -94,9 +94,9 @@ function CourseProgressWidget({
           </div>
         ))}
       </div>
-      <div className='h-2 overflow-hidden rounded-full bg-muted'>
+      <div className='bg-muted h-2 overflow-hidden rounded-full'>
         <div
-          className='h-full rounded-full bg-success/50 transition-all'
+          className='bg-success/50 h-full rounded-full transition-all'
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -115,8 +115,8 @@ function RecommendedItem({
 }) {
   return (
     <div className='flex items-center gap-3'>
-      <div className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10'>
-        <Star className='size-5 text-primary/60' />
+      <div className='bg-primary/10 flex size-10 shrink-0 items-center justify-center rounded-xl'>
+        <Star className='text-primary/60 size-5' />
       </div>
       <div className='min-w-0 flex-1'>
         <p className='text-foreground truncate text-sm font-semibold'>{title}</p>
@@ -143,13 +143,14 @@ function MilestoneItem({
   return (
     <div className='flex items-start gap-3'>
       <div
-        className={`flex size-9 shrink-0 items-center justify-center rounded-full ${icon === 'award' ? 'bg-accent/20' : 'bg-primary/10'
-          }`}
+        className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
+          icon === 'award' ? 'bg-accent/20' : 'bg-primary/10'
+        }`}
       >
         {icon === 'award' ? (
-          <Award className='size-5 text-accent-foreground' />
+          <Award className='text-accent-foreground size-5' />
         ) : (
-          <Trophy className='size-5 text-primary' />
+          <Trophy className='text-primary size-5' />
         )}
       </div>
 
@@ -161,28 +162,23 @@ function MilestoneItem({
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`size-3 ${i < rating
-                  ? 'fill-primary text-primary'
-                  : 'text-muted-foreground'
-                  }`}
+                className={`size-3 ${
+                  i < rating ? 'fill-primary text-primary' : 'text-muted-foreground'
+                }`}
               />
             ))}
           </div>
         )}
 
-        {subtitle && (
-          <p className='text-muted-foreground mt-0.5 text-[11px]'>
-            {subtitle}
-          </p>
-        )}
+        {subtitle && <p className='text-muted-foreground mt-0.5 text-[11px]'>{subtitle}</p>}
       </div>
     </div>
   );
 }
 
 export function StudentMyCoursesPage() {
-  const user = useUserProfile()
-  const student = user?.student
+  const user = useUserProfile();
+  const student = user?.student;
   const { classDefinitions, loading } = useStudentClassDefinitions(student ?? undefined);
 
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
@@ -236,23 +232,18 @@ export function StudentMyCoursesPage() {
       if (cards.has(course.uuid)) return;
 
       const scheduleCount = item.schedules?.length ?? item?.classEnrollments.length;
-      const enrolledClasses = item.classEnrollments.filter((s) => s.student_uuid === student?.uuid)
+      const enrolledClasses = item.classEnrollments.filter(s => s.student_uuid === student?.uuid);
 
       // Derive status from enrollment data
       const enrollmentStatus = activeEnrollment?.status ?? '';
 
       const rawProgress = item?.classDetails?.class_progress_percentage ?? 0;
 
-      const progress = Math.min(
-        100,
-        Math.max(0, Math.round(rawProgress))
-      );
+      const progress = Math.min(100, Math.max(0, Math.round(rawProgress)));
 
       const isCompleted = progress === 100;
 
-      const status: CourseStatus = isCompleted
-        ? "completed"
-        : "in_progress";
+      const status: CourseStatus = isCompleted ? 'completed' : 'in_progress';
 
       cards.set(course.uuid, {
         id: course.uuid,
@@ -326,16 +317,15 @@ export function StudentMyCoursesPage() {
     return cards;
   }, [activeTab, enrolledCourseCards, inProgressCards, completedCards, searchQuery]);
 
-  const isLoading =
-    loading || creatorQueries.some(query => query.isLoading || query.isFetching);
+  const isLoading = loading || creatorQueries.some(query => query.isLoading || query.isFetching);
 
   const studentName = student?.full_name ?? 'Student';
 
-  const recommendedData = []
-  const learningMilestonesData = completedCards || []
+  const recommendedData = [];
+  const learningMilestonesData = completedCards || [];
 
   return (
-    <div className='mx-auto w-full max-w-[1680px] bg-background px-3 py-4 sm:px-4 lg:px-6 2xl:px-8'>
+    <div className='bg-background mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-4 lg:px-6 2xl:px-8'>
       <div className='mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex items-center gap-3'>
           <h1 className='text-foreground text-[clamp(1.4rem,2vw,2rem)] font-bold tracking-[-0.03em]'>
@@ -343,24 +333,24 @@ export function StudentMyCoursesPage() {
           </h1>
         </div>
 
-        <div className="flex flex-row items-center gap-4">
+        <div className='flex flex-row items-center gap-4'>
           <Button
             asChild
-            variant="outline"
-            className="h-9 gap-1.5 rounded-sm border-primary px-4 text-sm font-semibold text-primary hover:bg-primary/90"
+            variant='outline'
+            className='border-primary text-primary hover:bg-primary/90 h-9 gap-1.5 rounded-sm px-4 text-sm font-semibold'
           >
-            <Link href="/dashboard/learning-hub">
-              <Plus className="size-4" />
+            <Link href='/dashboard/learning-hub'>
+              <Plus className='size-4' />
               My Classes
             </Link>
           </Button>
 
           <Button
             asChild
-            className="h-9 gap-1.5 rounded-sm bg-primary px-4 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+            className='bg-primary hover:bg-primary/90 h-9 gap-1.5 rounded-sm px-4 text-sm font-semibold text-white shadow-sm'
           >
-            <Link href="/dashboard/student/courses">
-              <Plus className="size-4" />
+            <Link href='/dashboard/student/courses'>
+              <Plus className='size-4' />
               Enroll in New Course
             </Link>
           </Button>
@@ -394,19 +384,19 @@ export function StudentMyCoursesPage() {
                 onClick={() => setActiveTab('completed')}
               />
 
-              <div className='ml-auto flex items-center gap-1.5 text-sm text-muted-foreground'>
+              <div className='text-muted-foreground ml-auto flex items-center gap-1.5 text-sm'>
                 <span className='font-medium'>Sort by</span>
                 <div className='relative'>
                   <select
                     value={sortBy}
                     onChange={e => setSortBy(e.target.value)}
-                    className='border-border bg-card text-foreground appearance-none rounded-md border py-1.5 pl-3 pr-8 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/50'
+                    className='border-border bg-card text-foreground focus:ring-primary/50 appearance-none rounded-md border py-1.5 pr-8 pl-3 text-sm font-medium outline-none focus:ring-2'
                   >
                     {['Auto-Suggested', 'A-Z', 'Z-A', 'Recently Accessed', 'Progress'].map(opt => (
                       <option key={opt}>{opt}</option>
                     ))}
                   </select>
-                  <ChevronDown className='pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground' />
+                  <ChevronDown className='text-muted-foreground pointer-events-none absolute top-1/2 right-2 size-3.5 -translate-y-1/2' />
                 </div>
               </div>
             </div>
@@ -414,13 +404,13 @@ export function StudentMyCoursesPage() {
             {/* Search + category filter */}
             <div className='flex items-center gap-2'>
               <div className='relative flex-1'>
-                <Search className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
+                <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
                 <input
                   type='text'
                   placeholder='Search'
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className='border-border bg-card text-foreground placeholder:text-muted-foreground w-full rounded-md border py-2 pl-9 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary/50'
+                  className='border-border bg-card text-foreground placeholder:text-muted-foreground focus:ring-primary/50 w-full rounded-md border py-2 pr-4 pl-9 text-sm outline-none focus:ring-2'
                 />
               </div>
               <button className='border-border bg-card text-muted-foreground flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium'>
@@ -440,10 +430,12 @@ export function StudentMyCoursesPage() {
             </div>
           ) : filteredCards.length === 0 ? (
             <div className='border-border bg-card rounded-2xl border px-4 py-14 text-center'>
-              <span className='mx-auto inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary'>
+              <span className='bg-primary/10 text-primary mx-auto inline-flex size-12 items-center justify-center rounded-xl'>
                 <BookOpenCheck className='size-6' />
               </span>
-              <p className='text-foreground mt-4 text-base font-semibold'>No enrolled courses yet</p>
+              <p className='text-foreground mt-4 text-base font-semibold'>
+                No enrolled courses yet
+              </p>
               <p className='text-muted-foreground mx-auto mt-2 max-w-md text-sm'>
                 Courses you enroll in will appear here with quick links back to your active classes.
               </p>
@@ -465,14 +457,22 @@ export function StudentMyCoursesPage() {
                   )) && (
                   <section className='space-y-3'>
                     <h2 className='text-foreground text-base font-semibold'>
-                      In Progress ({inProgressCards.filter(c =>
-                        !searchQuery || c.title.toLowerCase().includes(searchQuery.toLowerCase())
-                      ).length})
+                      In Progress (
+                      {
+                        inProgressCards.filter(
+                          c =>
+                            !searchQuery ||
+                            c.title.toLowerCase().includes(searchQuery.toLowerCase())
+                        ).length
+                      }
+                      )
                     </h2>
                     <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
                       {inProgressCards
                         .filter(
-                          c => !searchQuery || c.title.toLowerCase().includes(searchQuery.toLowerCase())
+                          c =>
+                            !searchQuery ||
+                            c.title.toLowerCase().includes(searchQuery.toLowerCase())
                         )
                         .map(({ sortTitle: _sortTitle, status: _status, ...card }) => (
                           <CoursesCatalogCard type='class' key={card.id} card={card} />
@@ -490,14 +490,22 @@ export function StudentMyCoursesPage() {
                   )) && (
                   <section className='space-y-3'>
                     <h2 className='text-foreground text-base font-semibold'>
-                      Completed ({completedCards.filter(c =>
-                        !searchQuery || c.title.toLowerCase().includes(searchQuery.toLowerCase())
-                      ).length})
+                      Completed (
+                      {
+                        completedCards.filter(
+                          c =>
+                            !searchQuery ||
+                            c.title.toLowerCase().includes(searchQuery.toLowerCase())
+                        ).length
+                      }
+                      )
                     </h2>
                     <div className='grid gap-4 sm:grid-cols-2'>
                       {completedCards
                         .filter(
-                          c => !searchQuery || c.title.toLowerCase().includes(searchQuery.toLowerCase())
+                          c =>
+                            !searchQuery ||
+                            c.title.toLowerCase().includes(searchQuery.toLowerCase())
                         )
                         .map(({ sortTitle: _sortTitle, status: _status, ...card }) => (
                           <CoursesCatalogCard type='class' key={card.id} card={card} />
@@ -518,15 +526,17 @@ export function StudentMyCoursesPage() {
 
           {/* Recommended for You */}
           <div className='border-border bg-card rounded-2xl border p-4 shadow-sm'>
-            <h3 className='text-foreground mb-3 text-sm font-semibold'>
-              Recommended for You
-            </h3>
+            <h3 className='text-foreground mb-3 text-sm font-semibold'>Recommended for You</h3>
 
             {recommendedData.length > 0 ? (
               <>
                 <div className='space-y-3'>
                   <RecommendedItem title='SEO Essentials' level='Beginner' duration='6 h' />
-                  <RecommendedItem title='Advanced Excel Analysis' level='Intermediate' duration='5 h' />
+                  <RecommendedItem
+                    title='Advanced Excel Analysis'
+                    level='Intermediate'
+                    duration='5 h'
+                  />
                 </div>
 
                 <Button
@@ -542,65 +552,57 @@ export function StudentMyCoursesPage() {
                 </Button>
               </>
             ) : (
-              <div className='flex min-h-[140px] items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 text-center'>
-                <p className='text-muted-foreground text-xs'>
-                  No recommendations yet
-                </p>
+              <div className='border-border/60 bg-muted/20 flex min-h-[140px] items-center justify-center rounded-xl border border-dashed text-center'>
+                <p className='text-muted-foreground text-xs'>No recommendations yet</p>
               </div>
             )}
           </div>
 
           {/* Learning Milestones */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <h3 className="mb-3 text-sm font-semibold text-foreground">
-              Learning Milestones
-            </h3>
+          <div className='border-border bg-card rounded-2xl border p-4 shadow-sm'>
+            <h3 className='text-foreground mb-3 text-sm font-semibold'>Learning Milestones</h3>
 
             {learningMilestonesData?.length > 0 ? (
               <>
-                <div className="space-y-3">
-                  {learningMilestonesData.map((item) => {
-                    const attendedClasses = item.enrolledClasses?.filter(
-                      (c) => c.did_attend
-                    ).length;
+                <div className='space-y-3'>
+                  {learningMilestonesData.map(item => {
+                    const attendedClasses = item.enrolledClasses?.filter(c => c.did_attend).length;
 
                     const totalClasses = item.enrolledClasses?.length ?? 0;
 
                     const progress =
-                      totalClasses > 0
-                        ? Math.round((attendedClasses / totalClasses) * 100)
-                        : 0;
+                      totalClasses > 0 ? Math.round((attendedClasses / totalClasses) * 100) : 0;
 
-                    const isCompleted = item.status === "completed";
+                    const isCompleted = item.status === 'completed';
 
                     return (
                       <div
                         key={item.id}
-                        className="flex items-start gap-3 rounded-xl bg-muted/20 py-3"
+                        className='bg-muted/20 flex items-start gap-3 rounded-xl py-3'
                       >
                         <div
                           className={cn(
-                            "mt-0.5 flex h-8 w-8 items-center justify-center rounded-full",
+                            'mt-0.5 flex h-8 w-8 items-center justify-center rounded-full',
                             isCompleted
-                              ? "bg-success/15 text-success"
-                              : "bg-primary/10 text-primary"
+                              ? 'bg-success/15 text-success'
+                              : 'bg-primary/10 text-primary'
                           )}
                         >
                           {isCompleted ? (
-                            <CheckCircle2 className="size-4" />
+                            <CheckCircle2 className='size-4' />
                           ) : (
-                            <BookOpen className="size-4" />
+                            <BookOpen className='size-4' />
                           )}
                         </div>
 
-                        <div className="min-w-0 flex-1">
+                        <div className='min-w-0 flex-1'>
                           {/* COURSE TITLE */}
-                          <p className="truncate text-sm font-semibold text-foreground">
+                          <p className='text-foreground truncate text-sm font-semibold'>
                             {item.title}
                           </p>
 
                           {/* CLASS + META */}
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          <p className='text-muted-foreground mt-0.5 truncate text-xs'>
                             {item.secondaryMeta}
                           </p>
 
@@ -622,20 +624,18 @@ export function StudentMyCoursesPage() {
 
                 <Button
                   asChild
-                  size="sm"
-                  className="mt-4 w-full rounded-xl bg-primary/60 text-xs font-semibold text-white shadow-none hover:bg-primary/70"
+                  size='sm'
+                  className='bg-primary/60 hover:bg-primary/70 mt-4 w-full rounded-xl text-xs font-semibold text-white shadow-none'
                 >
-                  <Link href="/dashboard/student/report">
+                  <Link href='/dashboard/student/report'>
                     View Report
-                    <ArrowRight className="size-3.5" />
+                    <ArrowRight className='size-3.5' />
                   </Link>
                 </Button>
               </>
             ) : (
-              <div className="flex min-h-[160px] items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 text-center">
-                <p className="text-xs text-muted-foreground">
-                  No learning milestones yet
-                </p>
+              <div className='border-border/60 bg-muted/20 flex min-h-[160px] items-center justify-center rounded-xl border border-dashed text-center'>
+                <p className='text-muted-foreground text-xs'>No learning milestones yet</p>
               </div>
             )}
           </div>

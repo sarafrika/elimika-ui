@@ -11,7 +11,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
-import { formatDateTime, formatDuration, formatLabel, getInstanceStatus } from './new-class-page.utils';
+import {
+  formatDateTime,
+  formatDuration,
+  formatLabel,
+  getInstanceStatus,
+} from './new-class-page.utils';
 
 type ClassScheduleTabProps = {
   isLoading: boolean;
@@ -33,7 +38,9 @@ export function ClassScheduleTab({ isLoading, selectedClass }: ClassScheduleTabP
 
   const schedule = (selectedClass.schedule ?? [])
     .filter(instance => instance.status?.toUpperCase() !== 'CANCELLED')
-    .sort((left, right) => new Date(left.start_time).getTime() - new Date(right.start_time).getTime());
+    .sort(
+      (left, right) => new Date(left.start_time).getTime() - new Date(right.start_time).getTime()
+    );
 
   return (
     <Card className='border-border/70 bg-card shadow-sm'>
@@ -64,14 +71,18 @@ export function ClassScheduleTab({ isLoading, selectedClass }: ClassScheduleTabP
                     <TableCell>{formatDateTime(instance.start_time)}</TableCell>
                     <TableCell>{formatDuration(instance.start_time, instance.end_time)}</TableCell>
                     <TableCell>
-                      {instance.location_name || selectedClass.location_name || formatLabel(selectedClass.location_type)}
+                      {instance.location_name ||
+                        selectedClass.location_name ||
+                        formatLabel(selectedClass.location_type)}
                     </TableCell>
-                    <TableCell>{formatLabel(getInstanceStatus(instance.start_time, instance.end_time))}</TableCell>
+                    <TableCell>
+                      {formatLabel(getInstanceStatus(instance.start_time, instance.end_time))}
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className='py-10 text-center text-muted-foreground'>
+                  <TableCell colSpan={5} className='text-muted-foreground py-10 text-center'>
                     No scheduled sessions for this class yet.
                   </TableCell>
                 </TableRow>

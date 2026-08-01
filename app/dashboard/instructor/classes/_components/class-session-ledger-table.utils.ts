@@ -1,8 +1,5 @@
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
-import type {
-  ClassAssignmentSchedule,
-  ClassQuizSchedule,
-} from '@/services/client/types.gen';
+import type { ClassAssignmentSchedule, ClassQuizSchedule } from '@/services/client/types.gen';
 import { formatDuration } from './new-class-page.utils';
 
 export type ClassSessionLedgerRow = {
@@ -137,7 +134,8 @@ function resolveAttendanceValues(
   instance: NonNullable<InstructorClassWithSchedule['schedule']>[number],
   hasAssessments: boolean
 ) {
-  const duration = instance.duration_formatted || formatDuration(instance.start_time, instance.end_time);
+  const duration =
+    instance.duration_formatted || formatDuration(instance.start_time, instance.end_time);
   const actualAttendance = formatElapsedDuration(instance.started_at, instance.concluded_at);
   const startedOnlyAttendance = formatElapsedDuration(instance.started_at, null);
 
@@ -176,16 +174,13 @@ function resolveAttendanceValues(
   };
 }
 
-type EnrichedScheduleInstance =
-  NonNullable<
-    InstructorClassWithSchedule['schedule']
-  >[number] & {
-    enrollments?: {
-      uuid: string;
-      status?: string;
-      student_uuid?: string;
-    }[];
-  };
+type EnrichedScheduleInstance = NonNullable<InstructorClassWithSchedule['schedule']>[number] & {
+  enrollments?: {
+    uuid: string;
+    status?: string;
+    student_uuid?: string;
+  }[];
+};
 
 export function buildClassSessionLedgerRows({
   selectedClass,
@@ -227,10 +222,9 @@ export function buildClassSessionLedgerRows({
         ? formatCurrency(attendedCount * feePerHour * durationHours)
         : undefined;
 
-    const orderAmount =
-      showFinancialColumns
-        ? formatCurrency(enrolledCount * feePerHour * durationHours)
-        : undefined;
+    const orderAmount = showFinancialColumns
+      ? formatCurrency(enrolledCount * feePerHour * durationHours)
+      : undefined;
 
     return {
       id: instance.uuid ?? `${selectedClass.uuid ?? 'class'}-${index}`,
@@ -238,7 +232,8 @@ export function buildClassSessionLedgerRows({
       sessionDateTime:
         instance.time_range ||
         shortDateFormatter.format(new Date(instance.start_time ?? Date.now())),
-      classDuration: instance.duration_formatted || formatDuration(instance.start_time, instance.end_time),
+      classDuration:
+        instance.duration_formatted || formatDuration(instance.start_time, instance.end_time),
       trainerAttendance: attendanceValues.trainerAttendance,
       studentAttendance,
       training: attendanceValues.training,
@@ -251,7 +246,6 @@ export function buildClassSessionLedgerRows({
   });
 }
 
-
 // buildclasssessionledgerrows component
 // trainer attendance ... use the started at and concluded at data fields to calculate the number of hours instructor used to train a class (in hours and minutes)...
 // training -- check if instructor really trained a class (i.e. if instructor started and ended class within the alloted time frame of the class)
@@ -259,8 +253,7 @@ export function buildClassSessionLedgerRows({
 // also check if assignments/tasks can be assigned to a class-instance under a class
 // update the class-delivery-status-bar page too
 
-
-// newclasspage (instructor view) and studentclasspage (student view) component, 
+// newclasspage (instructor view) and studentclasspage (student view) component,
 // we need use the classhero UI (which was initially in the lessontabs) to be above the tablists on these 2 pages
 // on the newclasspage, the tabscontent for delivery should remain the same,
 // for the classoverviewtab component, remove the ClassSessionLedgerSection, and instead add a rich course overview page (class details which are currently there, course details etc)

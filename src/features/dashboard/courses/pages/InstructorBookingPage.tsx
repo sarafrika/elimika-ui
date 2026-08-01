@@ -196,19 +196,21 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
           </div>
 
           <div className='grid gap-3 sm:grid-cols-3 lg:min-w-[470px]'>
-            <Card className='rounded-[20px] border bg-background/85 p-4 shadow-none'>
+            <Card className='bg-background/85 rounded-[20px] border p-4 shadow-none'>
               <div className='flex items-center gap-3'>
                 <span className='bg-primary/10 text-primary inline-flex size-10 items-center justify-center rounded-xl'>
                   <Users className='h-4 w-4' />
                 </span>
                 <div>
                   <p className='text-muted-foreground text-xs font-medium'>Available instructors</p>
-                  <p className='text-foreground text-lg font-semibold'>{filteredInstructors.length}</p>
+                  <p className='text-foreground text-lg font-semibold'>
+                    {filteredInstructors.length}
+                  </p>
                 </div>
               </div>
             </Card>
 
-            <Card className='rounded-[20px] border bg-background/85 p-4 shadow-none'>
+            <Card className='bg-background/85 rounded-[20px] border p-4 shadow-none'>
               <div className='flex items-center gap-3'>
                 <span className='bg-success/10 text-success inline-flex size-10 items-center justify-center rounded-xl'>
                   <BookOpen className='h-4 w-4' />
@@ -220,7 +222,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
               </div>
             </Card>
 
-            <Card className='rounded-[20px] border bg-background/85 p-4 shadow-none'>
+            <Card className='bg-background/85 rounded-[20px] border p-4 shadow-none'>
               <div className='flex items-center gap-3'>
                 <span className='bg-warning/15 text-warning inline-flex size-10 items-center justify-center rounded-xl'>
                   <CalendarDays className='h-4 w-4' />

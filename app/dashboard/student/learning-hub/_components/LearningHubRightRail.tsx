@@ -33,25 +33,25 @@ export function LearningHubRightRail({
 
   return (
     <aside className='space-y-3'>
-      <Card className='rounded-[18px] border border-border/70 bg-background p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
+      <Card className='border-border/70 bg-background rounded-[18px] border p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
         <div className='flex items-center justify-between gap-3'>
-          <h2 className='text-[1rem] font-semibold text-foreground'>Class Invites</h2>
+          <h2 className='text-foreground text-[1rem] font-semibold'>Class Invites</h2>
 
-          <span className='inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[0.72rem] font-medium text-muted-foreground'>
+          <span className='border-border/70 bg-muted/40 text-muted-foreground inline-flex items-center rounded-full border px-2.5 py-1 text-[0.72rem] font-medium'>
             0
           </span>
         </div>
-        <div className='rounded-[12px] border border-dashed border-border/70 bg-background p-5 text-center'>
-          <p className='text-sm font-medium text-foreground'>No class invites yet</p>
-          <p className='mt-1 text-xs text-muted-foreground'>
+        <div className='border-border/70 bg-background rounded-[12px] border border-dashed p-5 text-center'>
+          <p className='text-foreground text-sm font-medium'>No class invites yet</p>
+          <p className='text-muted-foreground mt-1 text-xs'>
             Invite data will appear here once the endpoint is available.
           </p>
         </div>
       </Card>
 
-      <Card className='rounded-[18px] border border-border/70 bg-background p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
-        <h2 className='text-[1rem] font-semibold text-foreground'>Recommended Pathways</h2>
-        <div className='rounded-[12px] border border-border/70 bg-background p-3'>
+      <Card className='border-border/70 bg-background rounded-[18px] border p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
+        <h2 className='text-foreground text-[1rem] font-semibold'>Recommended Pathways</h2>
+        <div className='border-border/70 bg-background rounded-[12px] border p-3'>
           {loading ? (
             <>
               <div className='flex gap-3'>
@@ -74,19 +74,17 @@ export function LearningHubRightRail({
                 <div className='min-w-0'>
                   {hasPath ? (
                     <>
-                      <h3 className='text-[0.95rem] font-semibold leading-tight text-foreground'>
+                      <h3 className='text-foreground text-[0.95rem] leading-tight font-semibold'>
                         Discover Career Paths
                       </h3>
-                      <p className='mt-1 text-[0.72rem] text-muted-foreground'>
-                        Advanced
-                      </p>
+                      <p className='text-muted-foreground mt-1 text-[0.72rem]'>Advanced</p>
                     </>
                   ) : (
                     <>
-                      <h3 className='text-[0.95rem] font-semibold leading-tight text-foreground'>
+                      <h3 className='text-foreground text-[0.95rem] leading-tight font-semibold'>
                         No career path yet
                       </h3>
-                      <p className='mt-1 text-[0.72rem] text-muted-foreground'>
+                      <p className='text-muted-foreground mt-1 text-[0.72rem]'>
                         Start by exploring recommended paths
                       </p>
                     </>
@@ -94,17 +92,17 @@ export function LearningHubRightRail({
                 </div>
               </div>
 
-              <div className='mt-3 flex items-center gap-2 text-[0.72rem] text-muted-foreground'>
+              <div className='text-muted-foreground mt-3 flex items-center gap-2 text-[0.72rem]'>
                 {hasPath ? (
                   <>
                     <span>4 Steps Completed</span>
-                    <span className='size-1 rounded-full bg-border' />
+                    <span className='bg-border size-1 rounded-full' />
                     <span>14 h</span>
                   </>
                 ) : (
                   <>
                     <span>0 Steps Completed</span>
-                    <span className='size-1 rounded-full bg-border' />
+                    <span className='bg-border size-1 rounded-full' />
                     <span>—</span>
                   </>
                 )}
@@ -122,7 +120,7 @@ export function LearningHubRightRail({
                 <Link
                   prefetch
                   href='/dashboard/student/courses'
-                  className='mt-4 inline-flex w-full items-center justify-center rounded-[8px] bg-[color-mix(in_srgb,var(--primary)_12%,white)] px-4 py-2 text-[0.78rem] font-medium text-primary transition hover:opacity-95'
+                  className='text-primary mt-4 inline-flex w-full items-center justify-center rounded-[8px] bg-[color-mix(in_srgb,var(--primary)_12%,white)] px-4 py-2 text-[0.78rem] font-medium transition hover:opacity-95'
                 >
                   Explore Paths
                 </Link>
@@ -132,13 +130,13 @@ export function LearningHubRightRail({
         </div>
       </Card>
 
-      <Card className='rounded-[18px] border border-border/70 bg-background p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
-        <div className='flex flex-row items-center justify-between' >
-          <h2 className='text-[1rem] font-semibold text-foreground'>Recommended Courses</h2>
+      <Card className='border-border/70 bg-background rounded-[18px] border p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
+        <div className='flex flex-row items-center justify-between'>
+          <h2 className='text-foreground text-[1rem] font-semibold'>Recommended Courses</h2>
           <Link
             prefetch
             href='/dashboard/student/courses'
-            className='inline-flex items-center justify-center gap-1 bg-background px-4 py-2 text-[0.78rem] font-medium text-muted-foreground transition hover:text-primary'
+            className='bg-background text-muted-foreground hover:text-primary inline-flex items-center justify-center gap-1 px-4 py-2 text-[0.78rem] font-medium transition'
           >
             See All {recommendedCourses.length}
             <ChevronRight className='size-4' />
@@ -148,7 +146,7 @@ export function LearningHubRightRail({
           {(loading ? recommendationPlaceholders : displayedRecommendations).map(course => (
             <div
               key={course.id}
-              className='flex items-start gap-3 rounded-[10px] border border-border/50 p-2.5'
+              className='border-border/50 flex items-start gap-3 rounded-[10px] border p-2.5'
             >
               {loading ? (
                 <>
@@ -159,15 +157,20 @@ export function LearningHubRightRail({
                   </div>
                 </>
               ) : (
-                <Link href={`/dashboard/student/course/${course?.id}`} className='flex w-full min-w-0 flex-row items-center gap-3'>
-                  <div className='grid size-8 place-items-center rounded-full bg-[color-mix(in_srgb,var(--primary)_10%,white)] text-primary'>
+                <Link
+                  href={`/dashboard/student/course/${course?.id}`}
+                  className='flex w-full min-w-0 flex-row items-center gap-3'
+                >
+                  <div className='text-primary grid size-8 place-items-center rounded-full bg-[color-mix(in_srgb,var(--primary)_10%,white)]'>
                     ⊕
                   </div>
                   <div className='min-w-0 flex-1'>
-                    <h3 className='truncate text-[0.9rem] font-semibold text-foreground'>{course.title}</h3>
-                    <div className='mt-1 flex items-center gap-2 text-[0.72rem] text-muted-foreground'>
+                    <h3 className='text-foreground truncate text-[0.9rem] font-semibold'>
+                      {course.title}
+                    </h3>
+                    <div className='text-muted-foreground mt-1 flex items-center gap-2 text-[0.72rem]'>
                       <span>{course.level}</span>
-                      <span className='size-1 rounded-full bg-border' />
+                      <span className='bg-border size-1 rounded-full' />
                       <span>{course.duration}</span>
                     </div>
                   </div>
@@ -181,7 +184,7 @@ export function LearningHubRightRail({
           <button
             type='button'
             onClick={() => setVisibleRecommendations(current => current + 3)}
-            className='mt-3 inline-flex w-full items-center justify-center rounded-[10px] border border-border/70 px-4 py-2 text-[0.8rem] font-medium text-foreground transition hover:border-primary/40 hover:text-primary'
+            className='border-border/70 text-foreground hover:border-primary/40 hover:text-primary mt-3 inline-flex w-full items-center justify-center rounded-[10px] border px-4 py-2 text-[0.8rem] font-medium transition'
           >
             See More Recommended Courses
           </button>

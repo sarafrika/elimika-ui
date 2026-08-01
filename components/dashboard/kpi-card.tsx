@@ -73,11 +73,11 @@ export function KpiCard({
       )}
     >
       <CardHeader className='relative flex flex-row items-center justify-between pb-0'>
-        <span className='text-[13px] font-medium text-muted-foreground'>{title}</span>
+        <span className='text-muted-foreground text-[13px] font-medium'>{title}</span>
         <div className={cn('rounded-md p-1.5', iconVariants[v])}>{icon}</div>
       </CardHeader>
       <CardContent className='relative'>
-        <div className='text-2xl font-bold tracking-tight text-foreground'>{value}</div>
+        <div className='text-foreground text-2xl font-bold tracking-tight'>{value}</div>
         {(change || hint) && (
           <div className='mt-1 flex flex-wrap items-center gap-1.5'>
             {change && (
@@ -97,7 +97,7 @@ export function KpiCard({
                 {change}
               </span>
             )}
-            {hint ? <span className='text-[11px] text-muted-foreground'>{hint}</span> : null}
+            {hint ? <span className='text-muted-foreground text-[11px]'>{hint}</span> : null}
           </div>
         )}
       </CardContent>
@@ -106,7 +106,10 @@ export function KpiCard({
 
   if (href) {
     return (
-      <Link href={href} className='block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xl'>
+      <Link
+        href={href}
+        className='focus-visible:ring-ring block rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+      >
         {card}
       </Link>
     );
@@ -116,7 +119,9 @@ export function KpiCard({
 
 export function KpiCardSkeleton({ className }: { className?: string }) {
   return (
-    <Card className={cn('relative gap-1 overflow-hidden border-l-4 border-l-muted py-4', className)}>
+    <Card
+      className={cn('border-l-muted relative gap-1 overflow-hidden border-l-4 py-4', className)}
+    >
       <CardHeader className='flex flex-row items-center justify-between pb-0'>
         <Skeleton className='h-3.5 w-24' />
         <Skeleton className='h-8 w-8 rounded-md' />

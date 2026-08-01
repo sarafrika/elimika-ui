@@ -22,7 +22,7 @@ export type SchedulerEvent = {
   category: SchedulerCategory;
   students: string[];
   maxParticipants?: number;
-  classCode: string
+  classCode: string;
 };
 
 export type SchedulerFilterKey = 'course' | 'instructor' | 'location' | 'category';

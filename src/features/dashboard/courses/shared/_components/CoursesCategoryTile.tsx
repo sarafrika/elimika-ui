@@ -24,7 +24,7 @@ export function CoursesCategoryTile({
 }: CoursesCategoryTileProps) {
   return (
     <button
-      type="button"
+      type='button'
       onClick={onClick}
       className={cn(
         'border-border bg-card hover:bg-secondary/60 flex min-h-12 min-w-0 items-center gap-3 rounded-md border px-4 py-2 text-left transition-colors',
@@ -38,13 +38,10 @@ export function CoursesCategoryTile({
           toneClasses[tile.tone]
         )}
       >
-        <tile.icon className="size-4" />
+        <tile.icon className='size-4' />
       </span>
 
-      <span
-        className="text-foreground min-w-0 truncate text-sm font-semibold"
-        title={tile.title}
-      >
+      <span className='text-foreground min-w-0 truncate text-sm font-semibold' title={tile.title}>
         {tile.title}
       </span>
     </button>

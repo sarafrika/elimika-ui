@@ -19,7 +19,7 @@ export function SkillOverviewCard({
   skills,
   averageScore,
   levelLabel,
-  shareUrl
+  shareUrl,
 }: SkillOverviewCardProps) {
   const overviewSkills = skills.slice(0, 4);
   const levelNumber = Number(levelLabel.replace(/\D/g, '')) || 1;
@@ -56,8 +56,9 @@ export function SkillOverviewCard({
           {Array.from({ length: 5 }).map((_, i) => (
             <span
               key={i}
-              className={`h-1.5 rounded-full transition-all ${i < levelNumber ? 'bg-primary w-4' : 'bg-primary/20 w-1.5'
-                }`}
+              className={`h-1.5 rounded-full transition-all ${
+                i < levelNumber ? 'bg-primary w-4' : 'bg-primary/20 w-1.5'
+              }`}
             />
           ))}
         </div>
@@ -90,11 +91,15 @@ export function SkillOverviewCard({
 
         {/* CTAs */}
         <div className='mb-3 grid grid-cols-2 gap-2'>
-          <div className='flex items-center px-3 text-sm font-medium text-muted-foreground'>
+          <div className='text-muted-foreground flex items-center px-3 text-sm font-medium'>
             Contact Info
           </div>
 
-          <ProfileShareDialog profileName={profile.name} shareUrl={shareUrl ?? ''} triggerLabel='Share' />
+          <ProfileShareDialog
+            profileName={profile.name}
+            shareUrl={shareUrl ?? ''}
+            triggerLabel='Share'
+          />
         </div>
 
         {/* Profile facts */}

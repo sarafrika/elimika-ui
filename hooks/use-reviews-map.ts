@@ -35,9 +35,9 @@ export function useCourseReviewsMap(courseUuids: string[]) {
 
       map[uuid] = data
         ? {
-          reviews: data,
-          count: data.length ?? 0,
-        }
+            reviews: data,
+            count: data.length ?? 0,
+          }
         : null;
     });
 

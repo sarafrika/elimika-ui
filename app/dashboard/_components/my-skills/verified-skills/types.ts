@@ -1,9 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import type {
-  SharedCredentialSummary,
-  SharedSkill,
-  SharedTimelineItem,
-} from '../types';
+import type { SharedCredentialSummary, SharedSkill, SharedTimelineItem } from '../types';
 import type { CredentialsContent } from '@/components/profile-credentials/data';
 
 export type VerifiedSkillLevel = 'Beginner' | 'Intermediate' | 'Advanced';

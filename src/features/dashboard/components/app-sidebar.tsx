@@ -7,7 +7,7 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
-  useSidebar
+  useSidebar,
 } from '@/components/ui/sidebar';
 import type { UserDomain } from '@/lib/types';
 import menu, {
@@ -49,8 +49,7 @@ export function AppSidebar({
   const isAdmin = profile?.user_domain?.includes('admin');
   const isOrganisationDomain =
     activeDomain === 'organisation' || activeDomain === 'organisation_user';
-  const isUnverifiedOrganisation =
-    isOrganisationDomain && organisation?.admin_verified !== true;
+  const isUnverifiedOrganisation = isOrganisationDomain && organisation?.admin_verified !== true;
 
   // Helper to get menu items for a domain. Org nav is a MenuGroup[]; other
   // domains stay a flat MenuItem[].
@@ -75,21 +74,19 @@ export function AppSidebar({
     return domainItems.filter(isUnverifiedOrganisationMenuItem);
   };
 
-
-
   return (
     <Sidebar variant='inset' collapsible='icon' {...props} className='p-0'>
       <SidebarHeader className='pt-2'>
-        <div className='flex items-center gap-2 -ml-[6px]'>
+        <div className='-ml-[6px] flex items-center gap-2'>
           <div
-            className="shrink-0 cursor-pointer hover:bg-primary/5 p-1.5 rounded-sm"
+            className='hover:bg-primary/5 shrink-0 cursor-pointer rounded-sm p-1.5'
             onClick={() => toggleSidebar()}
           >
             <Menu size={20} />
           </div>
 
           <Link
-            className='flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-sidebar-accent group-data-[collapsible=icon]:hidden'
+            className='hover:bg-sidebar-accent flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 transition-colors group-data-[collapsible=icon]:hidden'
             prefetch
             href={buildWorkspaceAliasPath(activeDomain, '/dashboard/overview')}
           >
@@ -105,7 +102,7 @@ export function AppSidebar({
             </div>
 
             <div className='grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden'>
-              <span className='truncate font-bold capitalize text-[15px]'>
+              <span className='truncate text-[15px] font-bold capitalize'>
                 {organisation?.name || 'Elimika'}
               </span>
               {isOrganisationDomain && (
@@ -117,18 +114,7 @@ export function AppSidebar({
           </Link>
         </div>
       </SidebarHeader>
-      <SidebarContent
-        className="
-      overflow-y-auto
-      [scrollbar-width:thin]
-      [scrollbar-color:hsl(var(--border))_transparent]
-      [&::-webkit-scrollbar]:w-2
-      [&::-webkit-scrollbar-track]:bg-transparent
-      [&::-webkit-scrollbar-thumb]:rounded-full
-      [&::-webkit-scrollbar-thumb]:bg-border
-      [&::-webkit-scrollbar-thumb:hover]:bg-muted-foreground
-    "
-      >
+      <SidebarContent className='[&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb:hover]:bg-muted-foreground overflow-y-auto [scrollbar-color:hsl(var(--border))_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent'>
         {(() => {
           const navItems = getMenuItems(activeDomain);
           if (isMenuGroups(navItems)) {

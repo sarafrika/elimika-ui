@@ -105,135 +105,135 @@ function normaliseProfile(
   // API source fields are typed `| null` while SharedUserProfile uses `| undefined`.
   // Build the shape untyped and cast once, rather than per-field null coalescing.
   const built: unknown = (() => {
-  switch (domain) {
-    case 'instructor': {
-      const p = rawUser?.instructor;
+    switch (domain) {
+      case 'instructor': {
+        const p = rawUser?.instructor;
 
-      if (!p) return null;
-      return {
-        uuid: p.uuid ?? rawUser?.uuid ?? '',
-        active: rawUser?.active,
-        user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
-        full_name: getPreferredFullName(rawUser, p.full_name),
-        email: rawUser?.email,
-        phone: rawUser?.phone_number,
-        website: p.website,
-        dob: normalizeDob(rawUser?.dob),
-        bio: p.bio,
-        avatar_url: rawUser?.profile_image_url,
-        profile_image_url: rawUser?.profile_image_url,
-        is_online: true,
-        address: p.formatted_location,
-        latitude: p.latitude,
-        longitude: p.longitude,
-        professional_headline: p.professional_headline,
-        admin_verified: p.admin_verified,
-        is_profile_complete: p.is_profile_complete,
-        gender: rawUser?.gender,
-        user_no: rawUser?.user_no,
-      };
+        if (!p) return null;
+        return {
+          uuid: p.uuid ?? rawUser?.uuid ?? '',
+          active: rawUser?.active,
+          user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
+          full_name: getPreferredFullName(rawUser, p.full_name),
+          email: rawUser?.email,
+          phone: rawUser?.phone_number,
+          website: p.website,
+          dob: normalizeDob(rawUser?.dob),
+          bio: p.bio,
+          avatar_url: rawUser?.profile_image_url,
+          profile_image_url: rawUser?.profile_image_url,
+          is_online: true,
+          address: p.formatted_location,
+          latitude: p.latitude,
+          longitude: p.longitude,
+          professional_headline: p.professional_headline,
+          admin_verified: p.admin_verified,
+          is_profile_complete: p.is_profile_complete,
+          gender: rawUser?.gender,
+          user_no: rawUser?.user_no,
+        };
+      }
+
+      case 'student': {
+        const p = rawUser?.student;
+
+        if (!p) return null;
+        return {
+          uuid: p.uuid ?? rawUser?.uuid ?? '',
+          active: rawUser?.active,
+          user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
+          full_name: getPreferredFullName(rawUser, p.full_name),
+          email: rawUser?.email,
+          phone: rawUser?.phone_number,
+          dob: normalizeDob(rawUser?.dob),
+          avatar_url: rawUser?.avatar_url ?? rawUser?.profile_image_url,
+          profile_image_url: rawUser?.profile_image_url,
+          is_online: false,
+          address: p.formatted_location || p.address || '',
+          latitude: p.latitude,
+          longitude: p.longitude,
+          bio: p.bio,
+          professional_headline: p.professional_headline,
+          admin_verified: p.admin_verified,
+          is_profile_complete: p.is_profile_complete,
+          gender: rawUser?.gender,
+          student_profile: p,
+          user_no: rawUser?.user_no,
+          demographic_tag: p.demographic_tag,
+        };
+      }
+
+      case 'admin': {
+        const p = rawUser?.admin;
+        if (!p) return null;
+        return {
+          uuid: p.uuid ?? rawUser?.uuid ?? '',
+          active: rawUser?.active,
+          user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
+          full_name: getPreferredFullName(rawUser, p.full_name),
+          email: rawUser?.email,
+          phone: rawUser?.phone_number,
+          avatar_url: rawUser?.avatar_url ?? rawUser?.profile_image_url,
+          profile_image_url: rawUser?.profile_image_url,
+          address: p.formatted_location || '',
+          latitude: p.latitude,
+          longitude: p.longitude,
+          professional_headline: p.professional_headline,
+          admin_verified: p.admin_verified,
+          is_profile_complete: p.is_profile_complete,
+          gender: rawUser?.gender,
+          user_no: rawUser?.user_no,
+        };
+      }
+
+      case 'course_creator': {
+        const p = rawUser?.courseCreator;
+        const location = getLocationProfileFields(p);
+
+        if (!p) return null;
+        return {
+          uuid: p.uuid ?? rawUser?.uuid ?? '',
+          active: rawUser?.active,
+          user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
+          full_name: getPreferredFullName(rawUser, p.full_name),
+          email: rawUser?.email,
+          phone: rawUser?.phone_number,
+          avatar_url: rawUser?.profile_image_url,
+          bio: p.bio,
+          dob: normalizeDob(rawUser?.dob),
+          address: location?.formatted_location || location?.location || location?.address || '',
+          latitude: location?.latitude,
+          longitude: location?.longitude,
+          profile_image_url: rawUser?.profile_image_url,
+          username: rawUser?.username,
+          website: p.website,
+          professional_headline: p.professional_headline,
+          is_profile_complete: p.is_profile_complete,
+          is_online: true,
+          gender: rawUser?.gender,
+          user_no: rawUser?.user_no,
+        };
+      }
+
+      case 'organization': {
+        const organizations = rawUser?.organizations;
+        const p = Array.isArray(organizations) ? organizations[0] : rawUser?.organization;
+        if (!p) return null;
+        return {
+          uuid: p.uuid ?? rawUser?.uuid ?? '',
+          active: rawUser?.active,
+          user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
+          full_name: getPreferredFullName(rawUser, p.org_name, p.full_name),
+          email: rawUser?.email,
+          dob: normalizeDob(rawUser?.dob),
+          phone: rawUser?.phone_number,
+          avatar_url: rawUser?.avatar_url ?? rawUser?.profile_image_url,
+          address: p.formatted_location || '',
+          gender: rawUser?.gender,
+          user_no: rawUser?.user_no,
+        };
+      }
     }
-
-    case 'student': {
-      const p = rawUser?.student;
-
-      if (!p) return null;
-      return {
-        uuid: p.uuid ?? rawUser?.uuid ?? '',
-        active: rawUser?.active,
-        user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
-        full_name: getPreferredFullName(rawUser, p.full_name),
-        email: rawUser?.email,
-        phone: rawUser?.phone_number,
-        dob: normalizeDob(rawUser?.dob),
-        avatar_url: rawUser?.avatar_url ?? rawUser?.profile_image_url,
-        profile_image_url: rawUser?.profile_image_url,
-        is_online: false,
-        address: p.formatted_location || p.address || '',
-        latitude: p.latitude,
-        longitude: p.longitude,
-        bio: p.bio,
-        professional_headline: p.professional_headline,
-        admin_verified: p.admin_verified,
-        is_profile_complete: p.is_profile_complete,
-        gender: rawUser?.gender,
-        student_profile: p,
-        user_no: rawUser?.user_no,
-        demographic_tag: p.demographic_tag,
-      };
-    }
-
-    case 'admin': {
-      const p = rawUser?.admin;
-      if (!p) return null;
-      return {
-        uuid: p.uuid ?? rawUser?.uuid ?? '',
-        active: rawUser?.active,
-        user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
-        full_name: getPreferredFullName(rawUser, p.full_name),
-        email: rawUser?.email,
-        phone: rawUser?.phone_number,
-        avatar_url: rawUser?.avatar_url ?? rawUser?.profile_image_url,
-        profile_image_url: rawUser?.profile_image_url,
-        address: p.formatted_location || '',
-        latitude: p.latitude,
-        longitude: p.longitude,
-        professional_headline: p.professional_headline,
-        admin_verified: p.admin_verified,
-        is_profile_complete: p.is_profile_complete,
-        gender: rawUser?.gender,
-        user_no: rawUser?.user_no,
-      };
-    }
-
-    case 'course_creator': {
-      const p = rawUser?.courseCreator;
-      const location = getLocationProfileFields(p);
-
-      if (!p) return null;
-      return {
-        uuid: p.uuid ?? rawUser?.uuid ?? '',
-        active: rawUser?.active,
-        user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
-        full_name: getPreferredFullName(rawUser, p.full_name),
-        email: rawUser?.email,
-        phone: rawUser?.phone_number,
-        avatar_url: rawUser?.profile_image_url,
-        bio: p.bio,
-        dob: normalizeDob(rawUser?.dob),
-        address: location?.formatted_location || location?.location || location?.address || '',
-        latitude: location?.latitude,
-        longitude: location?.longitude,
-        profile_image_url: rawUser?.profile_image_url,
-        username: rawUser?.username,
-        website: p.website,
-        professional_headline: p.professional_headline,
-        is_profile_complete: p.is_profile_complete,
-        is_online: true,
-        gender: rawUser?.gender,
-        user_no: rawUser?.user_no,
-      };
-    }
-
-    case 'organization': {
-      const organizations = rawUser?.organizations;
-      const p = Array.isArray(organizations) ? organizations[0] : rawUser?.organization;
-      if (!p) return null;
-      return {
-        uuid: p.uuid ?? rawUser?.uuid ?? '',
-        active: rawUser?.active,
-        user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
-        full_name: getPreferredFullName(rawUser, p.org_name, p.full_name),
-        email: rawUser?.email,
-        dob: normalizeDob(rawUser?.dob),
-        phone: rawUser?.phone_number,
-        avatar_url: rawUser?.avatar_url ?? rawUser?.profile_image_url,
-        address: p.formatted_location || '',
-        gender: rawUser?.gender,
-        user_no: rawUser?.user_no,
-      };
-    }
-  }
   })();
 
   return built as SharedUserProfile | null;

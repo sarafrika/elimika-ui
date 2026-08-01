@@ -72,12 +72,12 @@ const socialShareActions: Array<{
   label: string;
   platform: SharePlatform;
 }> = [
-    { icon: Facebook, label: 'Facebook', platform: 'facebook' },
-    { icon: Twitter, label: 'Twitter', platform: 'twitter' },
-    { icon: Linkedin, label: 'LinkedIn', platform: 'linkedin' },
-    { icon: MessageCircle, label: 'WhatsApp', platform: 'whatsapp' },
-    { icon: Share2, label: 'Email', platform: 'email' },
-  ];
+  { icon: Facebook, label: 'Facebook', platform: 'facebook' },
+  { icon: Twitter, label: 'Twitter', platform: 'twitter' },
+  { icon: Linkedin, label: 'LinkedIn', platform: 'linkedin' },
+  { icon: MessageCircle, label: 'WhatsApp', platform: 'whatsapp' },
+  { icon: Share2, label: 'Email', platform: 'email' },
+];
 
 export default function ClassPreviewPage() {
   const router = useRouter();
@@ -279,7 +279,7 @@ export default function ClassPreviewPage() {
               <CheckCircle className='text-success h-4 w-4 shrink-0' />
 
               <div className='min-w-0'>
-                <h3 className='text-success text-sm font-semibold leading-none'>
+                <h3 className='text-success text-sm leading-none font-semibold'>
                   Class Published Successfully
                 </h3>
 
@@ -308,7 +308,7 @@ export default function ClassPreviewPage() {
               </svg>
 
               <div className='min-w-0'>
-                <h3 className='text-warning text-sm font-semibold leading-none'>
+                <h3 className='text-warning text-sm leading-none font-semibold'>
                   Class Currently Inactive
                 </h3>
 
@@ -344,7 +344,9 @@ export default function ClassPreviewPage() {
         </div>
 
         <Button
-          onClick={() => router.push(`/dashboard/instructor/trainings/create-new?id=${classData?.uuid}`)}
+          onClick={() =>
+            router.push(`/dashboard/instructor/trainings/create-new?id=${classData?.uuid}`)
+          }
           variant='outline'
           className='gap-2'
         >

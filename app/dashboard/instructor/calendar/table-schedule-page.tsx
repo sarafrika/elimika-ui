@@ -469,7 +469,9 @@ export default function InstructorClassPage() {
 
   const { data } = useQuery({
     ...getEnrollmentsForInstanceOptions({
-      path: { instanceUuid: selectedEvent?.eventType === 'booking_request' ? '' : selectedEvent?.id || '' },
+      path: {
+        instanceUuid: selectedEvent?.eventType === 'booking_request' ? '' : selectedEvent?.id || '',
+      },
     }),
     enabled: !!selectedEvent?.id && selectedEvent?.eventType !== 'booking_request',
   });
@@ -511,7 +513,9 @@ export default function InstructorClassPage() {
       { path: { bookingUuid: selectedEvent.id } },
       {
         onError: error => {
-          toast.error(error instanceof Error ? error.message : `Failed to ${action} booking request`);
+          toast.error(
+            error instanceof Error ? error.message : `Failed to ${action} booking request`
+          );
         },
         onSuccess: () => {
           toast.success(`Booking request ${action === 'accept' ? 'accepted' : 'declined'}`);
@@ -610,10 +614,12 @@ export default function InstructorClassPage() {
           <div className='border-border bg-muted/20 flex items-center justify-between gap-3 border-b px-4 py-2 text-xs md:px-6 md:text-sm'>
             <div className='text-muted-foreground flex flex-wrap items-center gap-3'>
               <span>
-                Timezone: <span className='text-foreground font-medium'>{preferences.timezone}</span>
+                Timezone:{' '}
+                <span className='text-foreground font-medium'>{preferences.timezone}</span>
               </span>
               <span>
-                Location: <span className='text-foreground font-medium'>{preferences.location}</span>
+                Location:{' '}
+                <span className='text-foreground font-medium'>{preferences.location}</span>
               </span>
               <span>
                 Default duration:{' '}
@@ -748,7 +754,10 @@ export default function InstructorClassPage() {
           </Sheet>
 
           <Sheet open={isSettingsSheetOpen} onOpenChange={setIsSettingsSheetOpen}>
-            <SheetContent side='right' className='w-full sm:min-w-2xl max-w-4xl overflow-y-auto px-3'>
+            <SheetContent
+              side='right'
+              className='w-full max-w-4xl overflow-y-auto px-3 sm:min-w-2xl'
+            >
               <SheetHeader className='border-border border-b px-0'>
                 <SheetTitle>Calendar settings</SheetTitle>
                 <SheetDescription>
@@ -969,7 +978,10 @@ export default function InstructorClassPage() {
           </Sheet>
 
           <Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
-            <SheetContent side='right' className='w-full sm:min-w-2xl lg:min-w-5xl max-w-6xl overflow-y-auto px-3'>
+            <SheetContent
+              side='right'
+              className='w-full max-w-6xl overflow-y-auto px-3 sm:min-w-2xl lg:min-w-5xl'
+            >
               <SheetHeader className='border-border border-b px-0'>
                 <SheetTitle>Create class from calendar slot</SheetTitle>
                 <SheetDescription>

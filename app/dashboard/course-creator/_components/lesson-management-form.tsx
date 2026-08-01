@@ -53,11 +53,7 @@ import {
   updateLessonContentMutation,
   uploadLessonMediaMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type {
-  CourseAssessment,
-  Lesson,
-  LessonContent
-} from '@/services/client/types.gen';
+import type { CourseAssessment, Lesson, LessonContent } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
@@ -1185,7 +1181,7 @@ function LessonContentForm({
   }, [draftKey]);
 
   const { setValue } = form;
-  const watchedValues = useWatch({ control: form.control, });
+  const watchedValues = useWatch({ control: form.control });
 
   const [draftSaved, setDraftSaved] = useState(false);
 
@@ -1199,7 +1195,7 @@ function LessonContentForm({
 
   const isEditMode = !!initialValues?.uuid;
 
-  const contentTypeUuid = useWatch({ control: form.control, name: 'content_type_uuid', });
+  const contentTypeUuid = useWatch({ control: form.control, name: 'content_type_uuid' });
 
   // GET COURSE CONTENT TYPES
   const { data: contentTypeList } = useQuery(
@@ -1412,7 +1408,7 @@ function LessonContentForm({
                       {contentTypeData.map(value => {
                         const Icon =
                           ContentTypeIcons[
-                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                            value.name.toUpperCase() as keyof typeof ContentTypeIcons
                           ];
                         return (
                           <SelectItem key={value.uuid} value={JSON.stringify(value)}>
@@ -1691,7 +1687,7 @@ function AssessmentCreationForm({
     return rubricsWithDetails || [];
   }, [rubricsWithDetails]);
 
-  const selectedRubricUuid = useWatch({ control: form.control, name: 'rubric_uuid', });
+  const selectedRubricUuid = useWatch({ control: form.control, name: 'rubric_uuid' });
 
   const [expandedRubricUuid, setExpandedRubricUuid] = useState<string | null>(null);
   const toggleExpand = (uuid: string) => {
@@ -1791,7 +1787,7 @@ function AssessmentCreationForm({
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   return (
@@ -2294,7 +2290,7 @@ function LessonDialog({
             className='px-6 pb-6'
             courseId={courseId}
             lessonId={lessonId}
-            refetch={refetch ?? (() => { })}
+            refetch={refetch ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -2375,7 +2371,7 @@ function EditLessonDialog({
             lessonId={lessonId}
             initialValues={initialValues}
             onCancel={() => onOpenChange(false)}
-            refetch={refetch ?? (() => { })}
+            refetch={refetch ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -2413,6 +2409,5 @@ export {
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  LessonList
+  LessonList,
 };
-

@@ -106,11 +106,11 @@ export default function CourseCreatorMySkillsPage() {
     website: getProfileString(creatorProfile, ['website']) ?? getProfileString(user, ['website']),
     joinedLabel:
       (getProfileString(user, ['created_date']) ??
-        getProfileString(creatorProfile, ['created_date']))
+      getProfileString(creatorProfile, ['created_date']))
         ? `Joined ${new Date(
-          (getProfileString(user, ['created_date']) ??
-            getProfileString(creatorProfile, ['created_date'])) as string
-        ).toLocaleDateString()}`
+            (getProfileString(user, ['created_date']) ??
+              getProfileString(creatorProfile, ['created_date'])) as string
+          ).toLocaleDateString()}`
         : undefined,
   };
 

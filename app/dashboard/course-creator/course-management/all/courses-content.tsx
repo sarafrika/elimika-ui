@@ -114,8 +114,7 @@ export default function CourseCreatorCoursesContent() {
     return courses.filter(course => {
       const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
       const matchesCategory =
-        selectedCategory === 'all' ||
-        course.category_names?.includes(selectedCategory) === true;
+        selectedCategory === 'all' || course.category_names?.includes(selectedCategory) === true;
 
       return matchesStatus && matchesCategory;
     });
@@ -131,7 +130,9 @@ export default function CourseCreatorCoursesContent() {
   };
 
   const handleEdit = (program: ProgramListItem) => {
-    router.push(`/dashboard/course-creator/course-management/create-new-program?id=${program?.uuid}`);
+    router.push(
+      `/dashboard/course-creator/course-management/create-new-program?id=${program?.uuid}`
+    );
   };
 
   const handlePreview = (programUuid: string) => {
@@ -164,7 +165,10 @@ export default function CourseCreatorCoursesContent() {
               </Button>
 
               <Button asChild>
-                <Link prefetch href='/dashboard/course-creator/course-management/create-new-program'>
+                <Link
+                  prefetch
+                  href='/dashboard/course-creator/course-management/create-new-program'
+                >
                   <PlusCircle className='mr-2 h-4 w-4' />
                   Bundle Course
                 </Link>
@@ -344,13 +348,15 @@ function CourseRow({ course }: { course: Course }) {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   return (
     <TableRow
       className='cursor-pointer'
-      onClick={() => router.push(`/dashboard/course-creator/course-management/preview/${course?.uuid}`)}
+      onClick={() =>
+        router.push(`/dashboard/course-creator/course-management/preview/${course?.uuid}`)
+      }
     >
       <TableCell>
         <div className='flex flex-col gap-1'>
@@ -389,7 +395,9 @@ function CourseRow({ course }: { course: Course }) {
       {/* Actions */}
       <TableCell className='text-muted-foreground text-sm' onClick={e => e.stopPropagation()}>
         <div className='flex flex-row items-center justify-center gap-3'>
-          <Link href={`/dashboard/course-creator/course-management/create-new-course?id=${course?.uuid}`}>
+          <Link
+            href={`/dashboard/course-creator/course-management/create-new-course?id=${course?.uuid}`}
+          >
             <Edit size={18} />
           </Link>
 

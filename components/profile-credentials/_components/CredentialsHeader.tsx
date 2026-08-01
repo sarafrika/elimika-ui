@@ -41,8 +41,10 @@ export function CredentialsHeader({
               aria-label='Search credentials'
               placeholder={searchPlaceholder}
               value={searchValue}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => onSearchChange?.(event.target.value)}
-              className='h-11 rounded-xl border-white/60 bg-background/90 pr-12 pl-11 shadow-sm backdrop-blur'
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                onSearchChange?.(event.target.value)
+              }
+              className='bg-background/90 h-11 rounded-xl border-white/60 pr-12 pl-11 shadow-sm backdrop-blur'
             />
             <ChevronDown className='text-muted-foreground absolute top-1/2 right-4 size-4 -translate-y-1/2' />
           </label>

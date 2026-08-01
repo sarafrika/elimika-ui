@@ -595,7 +595,9 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
           <DialogHeader>
             <h3 className='text-lg font-semibold'>Edit Course</h3>
             <p className='text-muted-foreground text-sm'>
-              Editing this course content will require re-approval before going live again. The current version will still be available to users until the new update is approved by the course creator.
+              Editing this course content will require re-approval before going live again. The
+              current version will still be available to users until the new update is approved by
+              the course creator.
             </p>
           </DialogHeader>
           <DialogFooter className='pt-4'>

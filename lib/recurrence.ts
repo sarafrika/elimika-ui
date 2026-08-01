@@ -225,7 +225,8 @@ export function fromClassRecurrence(recurrence?: ClassRecurrence): RecurrenceVal
  */
 export function estimateOccurrences(value: RecurrenceValue): number {
   if (value.frequency === 'NONE') return 1;
-  if (value.end.mode === 'after' && value.end.count) return Math.max(1, Math.trunc(value.end.count));
+  if (value.end.mode === 'after' && value.end.count)
+    return Math.max(1, Math.trunc(value.end.count));
   return 1;
 }
 

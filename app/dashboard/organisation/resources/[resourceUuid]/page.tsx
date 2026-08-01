@@ -120,7 +120,9 @@ function ruleFormFromRule(rule: ResourceAvailabilityRule): RuleFormState {
     days_of_week: rule.days_of_week ? rule.days_of_week.split(',').map(day => day.trim()) : [],
     start_time: rule.start_time ? rule.start_time.slice(0, 5) : '08:00',
     end_time: rule.end_time ? rule.end_time.slice(0, 5) : '18:00',
-    specific_start: rule.specific_start ? dayjs(rule.specific_start).format('YYYY-MM-DDTHH:mm') : '',
+    specific_start: rule.specific_start
+      ? dayjs(rule.specific_start).format('YYYY-MM-DDTHH:mm')
+      : '',
     specific_end: rule.specific_end ? dayjs(rule.specific_end).format('YYYY-MM-DDTHH:mm') : '',
     effective_start_date: rule.effective_start_date
       ? dayjs(rule.effective_start_date).format('YYYY-MM-DD')
@@ -211,10 +213,7 @@ export default function ResourceDetailPage() {
     ...getCalendarOptions(calendarRequestOptions),
     enabled: Boolean(organisationUuid && resourceUuid),
   });
-  const calendarEntries = useMemo(
-    () => calendarQuery.data?.data ?? [],
-    [calendarQuery.data]
-  );
+  const calendarEntries = useMemo(() => calendarQuery.data?.data ?? [], [calendarQuery.data]);
   const entriesByDay = useMemo(() => {
     const map = new Map<string, ResourceCalendarEntry[]>();
     for (const entry of calendarEntries) {
@@ -573,7 +572,10 @@ export default function ResourceDetailPage() {
           ) : (
             <div className='grid gap-3 md:grid-cols-2'>
               {rules.map(rule => (
-                <div key={rule.uuid} className='bg-card flex items-start justify-between rounded-lg border p-4'>
+                <div
+                  key={rule.uuid}
+                  className='bg-card flex items-start justify-between rounded-lg border p-4'
+                >
                   <div className='min-w-0 space-y-1'>
                     <Badge
                       variant='outline'
@@ -748,7 +750,9 @@ export default function ResourceDetailPage() {
           className='flex w-[min(98vw,520px)] max-w-none flex-col overflow-y-auto p-4 sm:max-w-none sm:p-6'
         >
           <SheetHeader className='space-y-2 pr-10 text-left'>
-            <SheetTitle>{editingRule ? 'Edit availability rule' : 'Add availability rule'}</SheetTitle>
+            <SheetTitle>
+              {editingRule ? 'Edit availability rule' : 'Add availability rule'}
+            </SheetTitle>
             <SheetDescription>
               Open-hours rules define when the resource may be booked; blackout rules block
               bookings, either on a recurring schedule or as a one-off window.
@@ -865,7 +869,9 @@ export default function ResourceDetailPage() {
                     <Input
                       type='date'
                       value={ruleForm.effective_start_date}
-                      onChange={event => updateRuleField('effective_start_date', event.target.value)}
+                      onChange={event =>
+                        updateRuleField('effective_start_date', event.target.value)
+                      }
                     />
                   </div>
                   <div className='grid gap-2'>

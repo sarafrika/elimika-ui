@@ -15,7 +15,7 @@ type PerformanceVideoCardProps = {
 
 export function PerformanceVideoCard({ item }: PerformanceVideoCardProps) {
   return (
-    <Card className='gap-3 rounded-[16px] border-white/60 bg-card/95 px-4 py-4 shadow-sm'>
+    <Card className='bg-card/95 gap-3 rounded-[16px] border-white/60 px-4 py-4 shadow-sm'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div className='flex min-w-0 items-center gap-3'>
           <span

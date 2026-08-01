@@ -160,7 +160,7 @@ export function ScheduleAndDelivery({
     },
   });
 
-  const trainingMode = useWatch({ control: form.control, name: 'trainingMode', });
+  const trainingMode = useWatch({ control: form.control, name: 'trainingMode' });
 
   const [leadTrainer, setLeadTrainer] = useState<Trainer | null>(data?.leadTrainer || null);
   const [supportTrainers, setSupportTrainers] = useState<Trainer[]>(data?.supportTrainers || []);

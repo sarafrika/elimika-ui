@@ -20,12 +20,12 @@ export function RubricsTable() {
         meta: { label: 'Rubric' },
         cell: ({ row }) => (
           <div className='flex items-center gap-3'>
-            <span className='flex size-9 items-center justify-center rounded-md border border-border/60 bg-muted/40'>
-              <ClipboardList className='size-4 text-muted-foreground' />
+            <span className='border-border/60 bg-muted/40 flex size-9 items-center justify-center rounded-md border'>
+              <ClipboardList className='text-muted-foreground size-4' />
             </span>
             <div className='min-w-0'>
-              <p className='truncate text-sm font-medium text-foreground'>{row.original.title}</p>
-              <p className='truncate text-xs text-muted-foreground'>
+              <p className='text-foreground truncate text-sm font-medium'>{row.original.title}</p>
+              <p className='text-muted-foreground truncate text-xs'>
                 {row.original.description || '—'}
               </p>
             </div>
@@ -58,7 +58,7 @@ export function RubricsTable() {
         header: 'Updated',
         meta: { label: 'Updated' },
         cell: ({ row }) => (
-          <span className='text-sm text-muted-foreground'>
+          <span className='text-muted-foreground text-sm'>
             {row.original.updated_date
               ? new Date(row.original.updated_date).toLocaleDateString(undefined, {
                   day: 'numeric',

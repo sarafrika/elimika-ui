@@ -105,8 +105,12 @@ export interface StudentActivity {
 
 export async function fetchStudentActivity(studentUuid: string): Promise<StudentActivity> {
   const [courseRes, classRes, certRes] = await Promise.all([
-    getCourseEnrollmentsForStudent({ path: { studentUuid }, query: { pageable: PAGEABLE } }).catch(() => null),
-    getClassEnrollmentsForStudent({ path: { studentUuid }, query: { pageable: PAGEABLE } }).catch(() => null),
+    getCourseEnrollmentsForStudent({ path: { studentUuid }, query: { pageable: PAGEABLE } }).catch(
+      () => null
+    ),
+    getClassEnrollmentsForStudent({ path: { studentUuid }, query: { pageable: PAGEABLE } }).catch(
+      () => null
+    ),
     getStudentCertificates({ path: { studentUuid } }).catch(() => null),
   ]);
 
@@ -132,7 +136,8 @@ export async function fetchStudentActivity(studentUuid: string): Promise<Student
     })),
     certificates: certRows.map(cert => ({
       uuid: cert.uuid,
-      title: cert.certificate_type || (cert.program_uuid ? 'Program certificate' : 'Course certificate'),
+      title:
+        cert.certificate_type || (cert.program_uuid ? 'Program certificate' : 'Course certificate'),
       number: cert.certificate_number,
       issuedDate: formatDate(cert.issued_date),
       completionDate: formatDate(cert.completion_date),

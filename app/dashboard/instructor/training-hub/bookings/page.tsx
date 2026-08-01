@@ -33,7 +33,11 @@ import {
   getInstructorBookingsQueryKey,
   getStudentByIdOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { BookingResponse, GetStudentByIdResponse, StatusEnum9 } from '@/services/client/types.gen';
+import type {
+  BookingResponse,
+  GetStudentByIdResponse,
+  StatusEnum9,
+} from '@/services/client/types.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   CalendarDays,

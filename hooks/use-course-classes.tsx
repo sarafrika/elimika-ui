@@ -3,24 +3,20 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import {
   getClassDefinitionsForCourseOptions,
+  getClassRatingSummaryOptions,
   getClassScheduleOptions,
   getCourseByUuidOptions,
+  getEnrollmentsForClassOptions,
   getInstructorByUuidOptions,
-  getStudentScheduleOptions,
   listCatalogItemsOptions,
 } from '../services/client/@tanstack/react-query.gen';
-import type {
-  ClassDefinition,
-  Course,
-  Instructor,
-  StudentSchedule,
-} from '../services/client/types.gen';
+import type { ClassDefinition, Course, Instructor } from '../services/client/types.gen';
 import type { BundledClass } from '../src/features/dashboard/courses/types';
 
 type StudentLike =
   | {
-    uuid?: string | null;
-  }
+      uuid?: string | null;
+    }
   | null
   | undefined;
 
@@ -59,8 +55,27 @@ function useBundledClassInfo(
   const scheduleQueries = useQueries({
     queries:
       classes.map(cls => ({
-        ...getClassScheduleOptions({ path: { uuid: cls.uuid as string }, query: { pageable: { size: 1000 } } }),
+        ...getClassScheduleOptions({
+          path: { uuid: cls.uuid as string },
+          query: { pageable: { size: 1000 } },
+        }),
         enabled: !!cls.course_uuid,
+      })) || [],
+  });
+
+  const classRatingSummaryQueries = useQueries({
+    queries:
+      classes.map(cls => ({
+        ...getClassRatingSummaryOptions({ path: { uuid: cls.uuid as string } }),
+        enabled: !!cls.uuid,
+      })) || [],
+  });
+
+  const classEnrolmentQueries = useQueries({
+    queries:
+      classes.map(cls => ({
+        ...getEnrollmentsForClassOptions({ path: { uuid: cls.uuid as string } }),
+        enabled: !!cls.uuid,
       })) || [],
   });
 
@@ -78,39 +93,30 @@ function useBundledClassInfo(
 
   // Build a lookup map for catalogue by class_definition_uuid
   const catalogueMap = useMemo(
-    () =>
-      Object.fromEntries(catalogueItems.map(item => [item.class_definition_uuid, item])),
+    () => Object.fromEntries(catalogueItems.map(item => [item.class_definition_uuid, item])),
     [catalogueItems]
   );
-
-  const { data: enrollmentsData } = useQuery({
-    ...getStudentScheduleOptions({
-      path: { studentUuid: studentUuid as string },
-      query: { start: scheduleRange.start, end: scheduleRange.end },
-    }),
-    enabled: !!studentUuid,
-  });
-  const enrollments: StudentSchedule[] = enrollmentsData?.data ?? [];
 
   const courses: Array<Course | null> = courseQueries.map(q => q.data?.data ?? null);
   const instructors: Array<Instructor | null> = instructorQueries.map(q => q.data ?? null);
   const schedules = scheduleQueries.map(q => q.data?.data?.content ?? []);
+  const classRatingSummary = classRatingSummaryQueries.map(q => q.data?.data ?? null);
+  const classEnrollments = classEnrolmentQueries.map(q => q.data?.data ?? null);
 
   const bundledClassInfo: BundledClass[] = useMemo(
     () =>
       classes.map((cls, i) => {
-        const classEnrollments = enrollments.filter(en => en.class_definition_uuid === cls.uuid);
-
         return {
           ...cls,
           course: courses[i] ?? null,
           instructor: instructors[i] ?? null,
           schedule: schedules[i] ?? [],
-          enrollments: classEnrollments,
+          enrollments: classEnrollments[i] ?? [],
           catalogue: cls.uuid ? (catalogueMap[cls.uuid] ?? null) : null,
+          classRating: classRatingSummary[i] ?? null,
         };
       }),
-    [catalogueMap, classes, courses, enrollments, instructors, schedules]
+    [catalogueMap, classes, courses, classEnrollments, instructors, schedules]
   );
 
   // Compute combined loading states

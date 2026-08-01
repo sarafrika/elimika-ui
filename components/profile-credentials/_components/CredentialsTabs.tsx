@@ -37,7 +37,7 @@ export function CredentialsTabs({
     >
       <TabsList
         className={cn(
-          'h-auto w-full flex-wrap justify-start gap-2 rounded-[16px] border bg-card/95 p-2 shadow-sm xl:w-fit',
+          'bg-card/95 h-auto w-full flex-wrap justify-start gap-2 rounded-[16px] border p-2 shadow-sm xl:w-fit',
           listClassName
         )}
       >
@@ -70,7 +70,9 @@ export function CredentialsTabs({
         })}
       </TabsList>
 
-      {rightSlot ? <div className='flex w-full justify-start xl:w-auto xl:justify-end'>{rightSlot}</div> : null}
+      {rightSlot ? (
+        <div className='flex w-full justify-start xl:w-auto xl:justify-end'>{rightSlot}</div>
+      ) : null}
     </div>
   );
 }

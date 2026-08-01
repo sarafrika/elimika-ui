@@ -56,14 +56,14 @@ export function VaultHighlights({
 
   return (
     <div className='flex flex-wrap gap-3'>
-      <Card className='min-w-[180px] flex-1 rounded-[16px] border-white/60 bg-card/95 px-5 py-4 shadow-sm'>
+      <Card className='bg-card/95 min-w-[180px] flex-1 rounded-[16px] border-white/60 px-5 py-4 shadow-sm'>
         <div className='flex items-center gap-2 text-base font-semibold'>
           <span className='text-primary'>⊞</span>
           {badges}
         </div>
       </Card>
 
-      <Card className='min-w-[240px] flex-[1.2] rounded-[16px] border-white/60 bg-card/95 px-5 py-4 shadow-sm'>
+      <Card className='bg-card/95 min-w-[240px] flex-[1.2] rounded-[16px] border-white/60 px-5 py-4 shadow-sm'>
         <div className='flex items-center justify-between gap-3'>
           <div className='flex items-center gap-2 text-base font-medium'>
             <Eye className='text-success size-4' />
@@ -73,14 +73,14 @@ export function VaultHighlights({
         </div>
       </Card>
 
-      <Card className='min-w-[220px] flex-1 rounded-[16px] border-white/60 bg-card/95 px-5 py-4 shadow-sm'>
+      <Card className='bg-card/95 min-w-[220px] flex-1 rounded-[16px] border-white/60 px-5 py-4 shadow-sm'>
         <div className='flex items-center gap-2 text-lg font-semibold'>
           <span className='text-primary'>⊟</span>
           {shares}
         </div>
       </Card>
 
-      <Card className='min-w-[220px] flex-1 rounded-[16px] border-white/60 bg-card/95 px-4 py-3 shadow-sm'>
+      <Card className='bg-card/95 min-w-[220px] flex-1 rounded-[16px] border-white/60 px-4 py-3 shadow-sm'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div className='flex items-center gap-2'>
             <div className='bg-primary/10 text-primary grid size-9 place-items-center rounded-full'>
@@ -99,8 +99,8 @@ export function VaultHighlights({
                 size='sm'
                 className={
                   statusFilter === 'all'
-                    ? 'rounded-xl border-white/70 bg-background/80'
-                    : 'rounded-xl border-primary/40 bg-primary/5 text-foreground'
+                    ? 'bg-background/80 rounded-xl border-white/70'
+                    : 'border-primary/40 bg-primary/5 text-foreground rounded-xl'
                 }
               >
                 <SlidersHorizontal className='size-4' />

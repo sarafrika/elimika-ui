@@ -185,9 +185,10 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
       })
     );
 
-
-    const creatorShare = useWatch({ control: form.control, name: 'creator_share_percentage', }) ?? [];
-    const instructorShare = useWatch({ control: form.control, name: 'instructor_share_percentage', }) ?? [];
+    const creatorShare =
+      useWatch({ control: form.control, name: 'creator_share_percentage' }) ?? [];
+    const instructorShare =
+      useWatch({ control: form.control, name: 'instructor_share_percentage' }) ?? [];
 
     useEffect(() => {
       if (typeof instructorShare === 'number' && instructorShare >= 0 && instructorShare <= 100) {
@@ -302,7 +303,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
       submit: () => form.handleSubmit(onSubmit)(),
     }));
 
-    const isFree = useWatch({ control: form.control, name: 'is_free', }) ?? [];
+    const isFree = useWatch({ control: form.control, name: 'is_free' }) ?? [];
 
     useEffect(() => {
       if (isFree) {

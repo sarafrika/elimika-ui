@@ -118,8 +118,6 @@ export default function ProfessionalExperienceSettings() {
     course_creator_uuid: courseCreator?.uuid!,
   };
 
-
-
   const passExperiences = (exp: CourseCreatorExperience) => ({
     ...defaultExperience,
     ...exp,
@@ -138,7 +136,7 @@ export default function ProfessionalExperienceSettings() {
     mode: 'onChange',
   });
 
-  const experiences = useWatch({ control: form.control, name: 'experiences', });
+  const experiences = useWatch({ control: form.control, name: 'experiences' });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,

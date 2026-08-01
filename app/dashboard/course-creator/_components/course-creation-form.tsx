@@ -151,11 +151,12 @@ function SavingOverlay({ stage }: { stage: SaveStage }) {
             return (
               <div
                 key={step.key}
-                className={`flex items-center gap-3 transition-opacity duration-300 ${isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
-                  }`}
+                className={`flex items-center gap-3 transition-opacity duration-300 ${
+                  isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
+                }`}
               >
                 {isDone ? (
-                  <CheckCircle2 className='h-4 w-4 shrink-0 text-success' />
+                  <CheckCircle2 className='text-success h-4 w-4 shrink-0' />
                 ) : isActive ? (
                   <Loader2 className='text-primary h-4 w-4 shrink-0 animate-spin' />
                 ) : (
@@ -212,8 +213,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       []
     );
     const controlledRequirementDrafts = requirementDrafts ?? createEmptyDraftsByProvider();
-    const controlledSetRequirementDrafts =
-      setRequirementDrafts ?? (() => undefined);
+    const controlledSetRequirementDrafts = setRequirementDrafts ?? (() => undefined);
     const controlledActiveRequirementProvider = activeRequirementProvider ?? null;
     const controlledSetActiveRequirementProvider =
       setActiveRequirementProvider ?? (() => undefined);
@@ -342,8 +342,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       getAllCategoriesOptions({ query: { pageable: { page: 0, size: 100 } } })
     );
 
-    const creatorShare = useWatch({ control: form.control, name: 'creator_share_percentage', }) ?? [];
-    const instructorShare = useWatch({ control: form.control, name: 'instructor_share_percentage', }) ?? [];
+    const creatorShare =
+      useWatch({ control: form.control, name: 'creator_share_percentage' }) ?? [];
+    const instructorShare =
+      useWatch({ control: form.control, name: 'instructor_share_percentage' }) ?? [];
 
     useEffect(() => {
       if (typeof instructorShare === 'number' && instructorShare >= 0 && instructorShare <= 100) {
@@ -516,7 +518,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
             setSaveStage('redirecting');
             setTimeout(() => {
-              router.replace(`/dashboard/course-creator/course-management/create-new-course?id=${newCourseUuid}`);
+              router.replace(
+                `/dashboard/course-creator/course-management/create-new-course?id=${newCourseUuid}`
+              );
             }, 600);
           },
         }
@@ -533,9 +537,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       submit: () => form.handleSubmit(onSubmit)(),
     }));
 
-
-    const isFree = useWatch({ control: form.control, name: 'is_free', }) ?? [];
-    const categoriesSelected = useWatch({ control: form.control, name: 'categories', }) ?? [];
+    const isFree = useWatch({ control: form.control, name: 'is_free' }) ?? [];
+    const categoriesSelected = useWatch({ control: form.control, name: 'categories' }) ?? [];
 
     useEffect(() => {
       if (isFree) {
@@ -619,8 +622,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                         {/* @ts-ignore */}
                         {(categories?.data?.content as CategoryItem[] | undefined)
                           ?.filter(
-                            (cat: CategoryItem) =>
-                              !categoriesSelected.includes(cat.uuid ?? '')
+                            (cat: CategoryItem) => !categoriesSelected.includes(cat.uuid ?? '')
                           )
                           .map((cat: CategoryItem) => (
                             <SelectItem key={cat.uuid} value={cat.uuid as string}>
@@ -684,21 +686,15 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
               <div className='flex flex-wrap gap-2'>
                 {categoriesSelected.map((uuid: string, index: number) => {
-                  const cat = categories?.data?.content?.find(
-                    (c: CategoryItem) => c.uuid === uuid
-                  );
+                  const cat = categories?.data?.content?.find((c: CategoryItem) => c.uuid === uuid);
 
                   if (!cat) return null;
 
                   return (
-                    <Badge key={uuid} variant="secondary" className="flex items-center gap-1">
+                    <Badge key={uuid} variant='secondary' className='flex items-center gap-1'>
                       {cat.name}
-                      <button
-                        type="button"
-                        className="ml-2"
-                        onClick={() => removeCategory(index)}
-                      >
-                        <XIcon className="h-3 w-3" />
+                      <button type='button' className='ml-2' onClick={() => removeCategory(index)}>
+                        <XIcon className='h-3 w-3' />
                       </button>
                     </Badge>
                   );

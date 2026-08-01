@@ -57,13 +57,13 @@ export const SkillsFundWalletCard = ({ wallet, user, role }: SkillsFundWalletCar
               {wallet.currency_code} ${wallet.balance_amount.toFixed(2)}
             </h2>
           </div>
-          <div className='rounded-lg bg-success/15 p-3'>
-            <Wallet className='h-6 w-6 text-success' />
+          <div className='bg-success/15 rounded-lg p-3'>
+            <Wallet className='text-success h-6 w-6' />
           </div>
         </div>
 
         {wallet.locked_balance_amount !== undefined && wallet.locked_balance_amount > 0 && (
-          <div className='border-t border-success/30 pt-3'>
+          <div className='border-success/30 border-t pt-3'>
             <p className='text-muted-foreground text-sm'>Locked Balance</p>
             <p className='text-orange-700'>
               {wallet.currency_code} ${wallet.locked_balance_amount.toFixed(2)}

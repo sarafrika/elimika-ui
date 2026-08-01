@@ -26,13 +26,13 @@ function ProgramsTableView({
         meta: { label: 'Program' },
         cell: ({ row }) => (
           <div className='flex items-start gap-3'>
-            <div className='flex h-12 w-16 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/40'>
-              <Layers className='size-5 text-muted-foreground' />
+            <div className='border-border/60 bg-muted/40 flex h-12 w-16 shrink-0 items-center justify-center rounded-md border'>
+              <Layers className='text-muted-foreground size-5' />
             </div>
-            <div className='min-w-0 max-w-md'>
-              <p className='truncate font-medium text-foreground'>{row.original.title}</p>
+            <div className='max-w-md min-w-0'>
+              <p className='text-foreground truncate font-medium'>{row.original.title}</p>
               {row.original.description ? (
-                <p className='mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground'>
+                <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs leading-relaxed'>
                   {row.original.description}
                 </p>
               ) : null}
@@ -55,7 +55,7 @@ function ProgramsTableView({
         header: 'Visibility',
         meta: { label: 'Visibility' },
         cell: ({ getValue }) => (
-          <Badge variant='outline' className='whitespace-nowrap text-xs'>
+          <Badge variant='outline' className='text-xs whitespace-nowrap'>
             {getValue() as string}
           </Badge>
         ),
@@ -66,7 +66,7 @@ function ProgramsTableView({
         header: 'Price',
         meta: { label: 'Price' },
         cell: ({ row }) => (
-          <span className='whitespace-nowrap text-sm text-muted-foreground'>
+          <span className='text-muted-foreground text-sm whitespace-nowrap'>
             {row.original.price != null ? Number(row.original.price).toLocaleString() : '—'}
           </span>
         ),

@@ -9,9 +9,9 @@ export function InitialsGroup({ initials }: { initials: string[] }) {
       {initials.map((value, index) => (
         <Avatar
           key={`${value}-${index + 1}`}
-          className='-ml-2 size-7 border-2 border-background first:ml-0'
+          className='border-background -ml-2 size-7 border-2 first:ml-0'
         >
-          <AvatarFallback className='bg-muted text-[0.63rem] font-semibold text-foreground'>
+          <AvatarFallback className='bg-muted text-foreground text-[0.63rem] font-semibold'>
             {value}
           </AvatarFallback>
         </Avatar>
@@ -36,7 +36,7 @@ export function ActionButton({
           'h-8 rounded-[6px] px-4 text-[0.82rem] font-medium',
           tone === 'primary' && 'bg-primary text-primary-foreground hover:bg-primary/90',
           tone === 'success' && 'bg-success text-success-foreground hover:bg-success/90',
-          tone === 'danger' && 'bg-destructive text-white hover:bg-destructive/90',
+          tone === 'danger' && 'bg-destructive hover:bg-destructive/90 text-white',
           tone === 'muted' && 'bg-muted text-foreground hover:bg-muted/80'
         )}
       >
@@ -61,8 +61,8 @@ export function PersonAvatar({
     .toUpperCase();
 
   return (
-    <Avatar className={cn(sizeClass, 'border border-border')}>
-      <AvatarFallback className='bg-muted text-xs font-semibold text-foreground'>
+    <Avatar className={cn(sizeClass, 'border-border border')}>
+      <AvatarFallback className='bg-muted text-foreground text-xs font-semibold'>
         {initials}
       </AvatarFallback>
     </Avatar>

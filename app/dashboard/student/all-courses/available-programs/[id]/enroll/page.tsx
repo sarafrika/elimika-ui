@@ -5,7 +5,10 @@ type StudentProgramEnrollRouteProps = {
   searchParams: Promise<{ id?: string }>;
 };
 
-export default async function StudentProgramEnrollRoute({ params, searchParams }: StudentProgramEnrollRouteProps) {
+export default async function StudentProgramEnrollRoute({
+  params,
+  searchParams,
+}: StudentProgramEnrollRouteProps) {
   const { id } = await params;
   const { id: classId = '' } = await searchParams;
   return <ProgramClassEnrollmentPage programId={id} classId={classId} />;

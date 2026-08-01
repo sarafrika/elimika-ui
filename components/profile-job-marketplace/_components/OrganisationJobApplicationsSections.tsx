@@ -24,7 +24,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { formatCurrency } from '@/lib/format-currency';
@@ -57,9 +63,7 @@ function formatDate(value?: string | Date | null) {
   if (!value) return 'Not provided';
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return 'Not provided';
-  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(
-    date
-  );
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }
 
 function shortId(value?: string | null) {
@@ -194,10 +198,13 @@ export function ApplicationsListSection({
         const notApprovedToTrain = trainingApproved === false;
 
         return (
-          <div key={application.uuid} className='rounded-md border border-border/70 bg-card p-5 shadow-sm'>
+          <div
+            key={application.uuid}
+            className='border-border/70 bg-card rounded-md border p-5 shadow-sm'
+          >
             <div className='flex flex-wrap items-start justify-between gap-3'>
               <div className='flex items-start gap-3'>
-                <div className='flex size-11 items-center justify-center rounded-md border border-primary/30 bg-primary/10 font-semibold text-primary'>
+                <div className='border-primary/30 bg-primary/10 text-primary flex size-11 items-center justify-center rounded-md border font-semibold'>
                   {initials}
                 </div>
                 <div className='space-y-1'>
@@ -209,7 +216,7 @@ export function ApplicationsListSection({
                       <StatusBadge status='pending' label='Unverified' />
                     ) : null}
                   </div>
-                  <div className='flex flex-col gap-1 text-sm text-muted-foreground'>
+                  <div className='text-muted-foreground flex flex-col gap-1 text-sm'>
                     {instructor?.professional_headline ? (
                       <span>{instructor.professional_headline}</span>
                     ) : null}
@@ -218,7 +225,7 @@ export function ApplicationsListSection({
                         href={instructor.website}
                         target='_blank'
                         rel='noopener noreferrer'
-                        className='text-primary underline hover:text-primary/80'
+                        className='text-primary hover:text-primary/80 underline'
                       >
                         {instructor.website}
                       </a>
@@ -233,8 +240,8 @@ export function ApplicationsListSection({
             </div>
 
             {notApprovedToTrain ? (
-              <div className='mt-3 flex items-center gap-2 rounded-md border border-warning/60 bg-warning/10 p-3 text-sm text-foreground'>
-                <TriangleAlert className='size-4 shrink-0 text-warning' />
+              <div className='border-warning/60 bg-warning/10 text-foreground mt-3 flex items-center gap-2 rounded-md border p-3 text-sm'>
+                <TriangleAlert className='text-warning size-4 shrink-0' />
                 <span>
                   This instructor is not approved to train this course or program yet, so they
                   cannot be approved or assigned.
@@ -259,7 +266,7 @@ export function ApplicationsListSection({
                 {typeof approvedRate === 'number' &&
                 typeof jobTrainingFee === 'number' &&
                 approvedRate !== jobTrainingFee ? (
-                  <Badge className='rounded-md border-warning/60 bg-warning/10 text-warning'>
+                  <Badge className='border-warning/60 bg-warning/10 text-warning rounded-md'>
                     Rate differs from job fee
                   </Badge>
                 ) : null}
@@ -327,10 +334,11 @@ export function ApplicationsListSection({
 
 function ApplicationNote({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div className='rounded-md border border-border/60 bg-muted/20 p-3'>
-      <div className='text-xs uppercase tracking-wide text-muted-foreground'>{label}</div>
-      <p className='mt-1 text-sm leading-6 text-foreground'>
-        {value || (label === 'Application note' ? 'No application note provided.' : 'No review notes yet.')}
+    <div className='border-border/60 bg-muted/20 rounded-md border p-3'>
+      <div className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</div>
+      <p className='text-foreground mt-1 text-sm leading-6'>
+        {value ||
+          (label === 'Application note' ? 'No application note provided.' : 'No review notes yet.')}
       </p>
     </div>
   );
@@ -384,12 +392,15 @@ export function JobOverviewPanel({
                 : 'Not specified',
           },
           { label: 'Course / program', value: contentLabel ?? 'Not available' },
-          { label: 'Organisation', value: job?.organisation_uuid ?? organisationUuid ?? 'Not available' },
+          {
+            label: 'Organisation',
+            value: job?.organisation_uuid ?? organisationUuid ?? 'Not available',
+          },
           {
             label: 'Location',
             value: (
               <span className='inline-flex items-center gap-2'>
-                <MapPin className='size-4 text-primary' />
+                <MapPin className='text-primary size-4' />
                 {job?.location_name || formatLabel(job?.location_type)}
               </span>
             ),
@@ -399,7 +410,7 @@ export function JobOverviewPanel({
             value: (
               <div className='space-y-0.5'>
                 <div>{formatDate(job?.default_start_time)}</div>
-                <div className='text-xs text-muted-foreground'>
+                <div className='text-muted-foreground text-xs'>
                   to {formatDate(job?.default_end_time)}
                 </div>
               </div>

@@ -6,7 +6,11 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { CredentialDocument, CredentialRecord, DomainVerification } from '@/services/admin/credential-review';
+import type {
+  CredentialDocument,
+  CredentialRecord,
+  DomainVerification,
+} from '@/services/admin/credential-review';
 import {
   unverifyCourseCreatorMutation,
   unverifyInstructorMutation,
@@ -37,16 +41,16 @@ function RecordList({
       <p className={adminTheme.sectionLabel}>{title}</p>
       <div className='space-y-3'>
         {records.map(record => (
-          <div key={record.id} className='rounded-md border border-border/60 bg-muted/20 p-3'>
+          <div key={record.id} className='border-border/60 bg-muted/20 rounded-md border p-3'>
             <div className='mb-2'>
-              <p className='text-sm font-medium text-foreground'>{record.title}</p>
+              <p className='text-foreground text-sm font-medium'>{record.title}</p>
               {record.subtitle ? (
-                <p className='text-xs text-muted-foreground'>{record.subtitle}</p>
+                <p className='text-muted-foreground text-xs'>{record.subtitle}</p>
               ) : null}
             </div>
             <DetailGrid items={record.details} columns={3} />
             {record.documents?.length ? (
-              <div className='mt-3 space-y-2 border-t border-border/60 pt-3'>
+              <div className='border-border/60 mt-3 space-y-2 border-t pt-3'>
                 <p className={adminTheme.sectionLabel}>Supporting certificate</p>
                 <div className='grid gap-3 sm:grid-cols-2'>
                   {record.documents.map(document => (
@@ -97,7 +101,9 @@ export function DomainVerificationSection({
         const mutation = verify ? verifyCreator : unverifyCreator;
         await mutation.mutateAsync({ path: { uuid: domain.profileUuid } });
       }
-      toast.success(verify ? `${domain.roleLabel} verified` : `${domain.roleLabel} verification revoked`);
+      toast.success(
+        verify ? `${domain.roleLabel} verified` : `${domain.roleLabel} verification revoked`
+      );
       onChanged();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Action failed');
@@ -110,7 +116,7 @@ export function DomainVerificationSection({
     <SectionCard
       title={
         <span className='flex items-center gap-2'>
-          <GraduationCap className='size-4 text-muted-foreground' />
+          <GraduationCap className='text-muted-foreground size-4' />
           {domain.roleLabel}
         </span>
       }
@@ -170,7 +176,7 @@ export function DomainVerificationSection({
               ))}
             </div>
           ) : (
-            <p className='flex items-center gap-2 rounded-md border border-dashed border-border/60 bg-muted/20 px-3 py-3 text-sm text-muted-foreground'>
+            <p className='border-border/60 bg-muted/20 text-muted-foreground flex items-center gap-2 rounded-md border border-dashed px-3 py-3 text-sm'>
               <ShieldCheck className='size-4' />
               No documents uploaded for this domain.
             </p>

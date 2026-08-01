@@ -119,7 +119,7 @@ export default function ProfessionalBodySettings() {
     mode: 'onChange',
   });
 
-  const professionalBodies = useWatch({ control: form.control, name: 'professional_bodies', });
+  const professionalBodies = useWatch({ control: form.control, name: 'professional_bodies' });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,

@@ -113,9 +113,7 @@ const toSubmissionTypes = (
   value: SubmissionTypesEnum | SubmissionTypesEnum[] | undefined
 ): string[] => (Array.isArray(value) ? value : value ? [value] : []);
 
-
 type AssignmentAction = 'save' | 'publish' | 'unpublish' | null;
-
 
 export const AssignmentCreationForm = ({
   courseId,
@@ -134,8 +132,7 @@ export const AssignmentCreationForm = ({
   const qc = useQueryClient();
   const creator = useCourseCreator();
 
-  const [assignmentAction, setAssignmentAction] =
-    useState<AssignmentAction>(null);
+  const [assignmentAction, setAssignmentAction] = useState<AssignmentAction>(null);
 
   // ── Rubrics ───────────────────────────────────────────────────────────────
   const { data: searchRubs, isLoading: isLoadingRubrics } = useQuery({
@@ -414,15 +411,11 @@ export const AssignmentCreationForm = ({
     );
   };
 
-  const isSaving =
-    assignmentAction === 'save' &&
-    (isPending || uploadAssignmentMut.isPending);
+  const isSaving = assignmentAction === 'save' && (isPending || uploadAssignmentMut.isPending);
 
-  const isPublishing =
-    assignmentAction === 'publish' && isPending;
+  const isPublishing = assignmentAction === 'publish' && isPending;
 
-  const isUnpublishing =
-    assignmentAction === 'unpublish' && isPending;
+  const isUnpublishing = assignmentAction === 'unpublish' && isPending;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -509,22 +502,22 @@ export const AssignmentCreationForm = ({
                 {assignments.data.content
                   .filter((a: Assignment) => Boolean(a.assignment_category && a.uuid))
                   .map((assignment: Assignment, idx: number) => {
-                    const isSelected = selectedAssignmentUuid === assignment.uuid
-                    const isDraft = !assignment.is_published
+                    const isSelected = selectedAssignmentUuid === assignment.uuid;
+                    const isDraft = !assignment.is_published;
 
                     return (
                       <div
                         key={assignment.uuid}
                         onClick={() => {
-                          if (!assignment.uuid) return
-                          setSelectedAssignmentUuid(assignment.uuid)
-                          handleAssignmentSelect(assignment.uuid)
+                          if (!assignment.uuid) return;
+                          setSelectedAssignmentUuid(assignment.uuid);
+                          handleAssignmentSelect(assignment.uuid);
                         }}
                         className={cn(
                           'flex cursor-pointer items-center justify-between gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-all',
                           isSelected
                             ? 'border-primary bg-primary/20 text-primary'
-                            : 'border-transparent bg-muted/40 hover:bg-muted'
+                            : 'bg-muted/40 hover:bg-muted border-transparent'
                         )}
                         title={assignment.title}
                       >
@@ -533,21 +526,16 @@ export const AssignmentCreationForm = ({
                         </span>
 
                         {isDraft ? (
-                          <Badge
-                            variant='destructive'
-                            className='text-[10px]'
-                          >
+                          <Badge variant='destructive' className='text-[10px]'>
                             Draft
                           </Badge>
                         ) : (
-                          <Badge
-                            className='bg-success/10 text-success border border-success/20 text-[10px]'
-                          >
+                          <Badge className='bg-success/10 text-success border-success/20 border text-[10px]'>
                             Published
                           </Badge>
                         )}
                       </div>
-                    )
+                    );
                   })}
               </div>
             ) : (
@@ -570,8 +558,9 @@ export const AssignmentCreationForm = ({
             <div className='flex flex-col gap-6'>
               <Separator />
               {!assignmentData?.is_published && assignmentData?.title && (
-                <div className='rounded-md border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive'>
-                  This assignment is in draft mode and is not visible to instructors until it is published.
+                <div className='border-destructive/20 bg-destructive/5 text-destructive rounded-md border p-3 text-sm'>
+                  This assignment is in draft mode and is not visible to instructors until it is
+                  published.
                 </div>
               )}
 
@@ -639,28 +628,26 @@ export const AssignmentCreationForm = ({
                     }
                   />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="text-foreground text-sm font-medium">
-                    Category (optional)
-                  </Label>
+                <div className='flex flex-col gap-2'>
+                  <Label className='text-foreground text-sm font-medium'>Category (optional)</Label>
 
                   <Select
-                    value={assignmentData.assignment_category || "__none__"}
-                    onValueChange={(value) =>
+                    value={assignmentData.assignment_category || '__none__'}
+                    onValueChange={value =>
                       handleAssignmentInputChange(
-                        "assignment_category",
-                        value === "__none__" ? "" : value
+                        'assignment_category',
+                        value === '__none__' ? '' : value
                       )
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select assignment category" />
+                      <SelectValue placeholder='Select assignment category' />
                     </SelectTrigger>
 
                     <SelectContent>
-                      <SelectItem value="__none__">None</SelectItem>
+                      <SelectItem value='__none__'>None</SelectItem>
 
-                      {ASSIGNMENT_CATEGORIES.map((category) => (
+                      {ASSIGNMENT_CATEGORIES.map(category => (
                         <SelectItem key={category.value} value={category.value}>
                           {category.label}
                         </SelectItem>
@@ -796,7 +783,6 @@ export const AssignmentCreationForm = ({
                 )}
               </div>
 
-
               {/* Active toggle */}
               {/* <div className='flex items-center gap-3'>
                 <Switch
@@ -909,9 +895,7 @@ export const AssignmentCreationForm = ({
                       type='button'
                       variant='secondary'
                       disabled={
-                        !mediaFile ||
-                        uploadAssignmentMut.isPending ||
-                        isCreatingNewAssignment
+                        !mediaFile || uploadAssignmentMut.isPending || isCreatingNewAssignment
                       }
                       onClick={handleAttachmentUpload}
                       className='bg-primary w-full max-w-fit text-white'
@@ -941,11 +925,11 @@ export const AssignmentCreationForm = ({
               </div>
 
               {/* Save / delete */}
-              <div className="flex items-end justify-end gap-4 pt-2">
+              <div className='flex items-end justify-end gap-4 pt-2'>
                 {assignmentUuid && (
                   <Button
-                    size="sm"
-                    variant="destructive"
+                    size='sm'
+                    variant='destructive'
                     onClick={handleDeleteAssignment}
                     disabled={isDeletingAssignment}
                   >
@@ -956,55 +940,53 @@ export const AssignmentCreationForm = ({
                 {assignmentUuid &&
                   (assignmentData.is_published ? (
                     <Button
-                      size="sm"
-                      variant="outline"
+                      size='sm'
+                      variant='outline'
                       className='min-w-[100px]'
                       onClick={handleUnpublishAssignment}
                       disabled={isPending}
                     >
                       {isUnpublishing ? (
                         <>
-                          <Spinner className="mr-2 h-4 w-4" />
+                          <Spinner className='mr-2 h-4 w-4' />
                         </>
                       ) : (
-                        "Unpublish"
+                        'Unpublish'
                       )}
                     </Button>
                   ) : (
                     <Button
-                      size="sm"
+                      size='sm'
                       className='min-w-[100px]'
                       onClick={handlePublishAssignment}
                       disabled={isPending}
                     >
                       {isPublishing ? (
                         <>
-                          <Spinner className="mr-2 h-4 w-4" />
+                          <Spinner className='mr-2 h-4 w-4' />
                         </>
                       ) : (
-                        "Publish"
+                        'Publish'
                       )}
                     </Button>
                   ))}
 
                 <Button
-                  size="sm"
+                  size='sm'
                   onClick={handleSaveAssignment}
                   disabled={isPending || uploadAssignmentMut.isPending}
                 >
                   {isSaving ? (
                     <>
-                      <Spinner className="mr-2 h-4 w-4" />
-                      {isSavingWithAttachment
-                        ? "Saving and uploading..."
-                        : "Saving..."}
+                      <Spinner className='mr-2 h-4 w-4' />
+                      {isSavingWithAttachment ? 'Saving and uploading...' : 'Saving...'}
                     </>
                   ) : assignmentUuid ? (
-                    "Update Assignment"
+                    'Update Assignment'
                   ) : isSavingWithAttachment ? (
-                    "Save Assignment and Upload Attachment"
+                    'Save Assignment and Upload Attachment'
                   ) : (
-                    "Save Assignment"
+                    'Save Assignment'
                   )}
                 </Button>
               </div>

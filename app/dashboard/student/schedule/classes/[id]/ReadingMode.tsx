@@ -124,7 +124,12 @@ export function ReadingMode({
             </div>
 
             <div className='flex items-center gap-1'>
-              <Button size='sm' variant='ghost' className='h-8 gap-1 px-3' onClick={handleOpenInNewTab}>
+              <Button
+                size='sm'
+                variant='ghost'
+                className='h-8 gap-1 px-3'
+                onClick={handleOpenInNewTab}
+              >
                 <FileText className='h-4 w-4' />
                 <span className='hidden text-xs sm:inline'>Open in new tab</span>
               </Button>
@@ -227,7 +232,12 @@ export function ReadingMode({
               </div>
 
               {/* Action Buttons */}
-              <Button size='sm' variant='ghost' className='h-9 w-9 p-0' onClick={handleOpenInNewTab}>
+              <Button
+                size='sm'
+                variant='ghost'
+                className='h-9 w-9 p-0'
+                onClick={handleOpenInNewTab}
+              >
                 <FileText className='h-4 w-4' />
               </Button>
 

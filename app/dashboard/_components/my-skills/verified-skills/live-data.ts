@@ -14,11 +14,7 @@ import {
 import { buildCredentialsContent } from '@/components/profile-credentials/live-data';
 import { useUserProfile } from '@/context/profile-context';
 import type { UserProfileType } from '@/lib/types';
-import type {
-  SharedCredentialSummary,
-  SharedSkill,
-  SharedTimelineItem,
-} from '../types';
+import type { SharedCredentialSummary, SharedSkill, SharedTimelineItem } from '../types';
 import type {
   Certificate,
   CourseCreatorDocumentDto,
@@ -57,7 +53,9 @@ import type {
 
 const PAGEABLE = { page: 0, size: 200, sort: ['desc'] };
 
-type LiveCredentialItem = ReturnType<typeof buildCredentialsContent>['credentialsByTab']['all'][number];
+type LiveCredentialItem = ReturnType<
+  typeof buildCredentialsContent
+>['credentialsByTab']['all'][number];
 
 function inferRole(profile: UserProfileType | undefined, role?: VerifiedSkillsRole) {
   if (role) return role;
@@ -84,7 +82,10 @@ function parseNumericScore(item: LiveCredentialItem) {
   }
 
   if (item.status.toLowerCase().includes('verified')) return 92;
-  if (item.status.toLowerCase().includes('pending') || item.status.toLowerCase().includes('review')) {
+  if (
+    item.status.toLowerCase().includes('pending') ||
+    item.status.toLowerCase().includes('review')
+  ) {
     return 62;
   }
   if (item.status.toLowerCase().includes('rejected')) return 34;
@@ -162,7 +163,12 @@ function getSkillIcon(bucket: string, role: VerifiedSkillsRole, index: number) {
   }
 }
 
-function toSkill(item: LiveCredentialItem, bucket: string, role: VerifiedSkillsRole, index: number): VerifiedSkill {
+function toSkill(
+  item: LiveCredentialItem,
+  bucket: string,
+  role: VerifiedSkillsRole,
+  index: number
+): VerifiedSkill {
   const score = parseNumericScore(item);
   const level = getLevelFromScore(score);
 
@@ -178,7 +184,10 @@ function toSkill(item: LiveCredentialItem, bucket: string, role: VerifiedSkillsR
   };
 }
 
-function buildCategories(items: LiveCredentialItem[], role: VerifiedSkillsRole): VerifiedSkillCategory[] {
+function buildCategories(
+  items: LiveCredentialItem[],
+  role: VerifiedSkillsRole
+): VerifiedSkillCategory[] {
   const verifiedItems = items.filter(isVerifiedItem);
   const buckets = new Map<string, LiveCredentialItem[]>();
 
@@ -190,9 +199,7 @@ function buildCategories(items: LiveCredentialItem[], role: VerifiedSkillsRole):
   });
 
   const orderedBuckets =
-    role === 'student'
-      ? ['certificates']
-      : ['education', 'membership', 'experience', 'documents'];
+    role === 'student' ? ['certificates'] : ['education', 'membership', 'experience', 'documents'];
 
   return orderedBuckets
     .map(bucket => {
@@ -349,7 +356,8 @@ function buildWalletSummary(
 ): SharedCredentialSummary {
   const verified = items.filter(item => item.status.toLowerCase().includes('verified'));
   const records = verified.filter(item => item.recordSummary || item.recordKind);
-  const certLike = role === 'student' ? verified : records.filter(item => item.recordKind !== 'experience');
+  const certLike =
+    role === 'student' ? verified : records.filter(item => item.recordKind !== 'experience');
 
   return {
     badgesEarned: verified.length,
@@ -448,9 +456,11 @@ export function useVerifiedSkillsContent(role?: VerifiedSkillsRole): VerifiedSki
 
     const membershipRecords =
       resolvedRole === 'instructor'
-        ? ((instructorMembershipQuery.data?.data?.content ?? []) as InstructorProfessionalMembership[])
+        ? ((instructorMembershipQuery.data?.data?.content ??
+            []) as InstructorProfessionalMembership[])
         : resolvedRole === 'course_creator'
-          ? ((courseCreatorMembershipQuery.data?.data?.content ?? []) as CourseCreatorProfessionalMembership[])
+          ? ((courseCreatorMembershipQuery.data?.data?.content ??
+              []) as CourseCreatorProfessionalMembership[])
           : [];
 
     const experienceRecords =

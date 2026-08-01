@@ -13,11 +13,7 @@ type ClassLessonsTabProps = {
   lessonModules: LessonModule[];
 };
 
-export function ClassLessonsTab({
-  isLoading,
-  classTitle,
-  lessonModules,
-}: ClassLessonsTabProps) {
+export function ClassLessonsTab({ isLoading, classTitle, lessonModules }: ClassLessonsTabProps) {
   if (isLoading) {
     return (
       <Card className='border-border/70 bg-card shadow-sm'>
@@ -54,11 +50,11 @@ export function ClassLessonsTab({
               return (
                 <div
                   key={module.lesson.uuid ?? `${moduleIndex}`}
-                  className='rounded-lg border border-border/70 bg-background/70 p-4'
+                  className='border-border/70 bg-background/70 rounded-lg border p-4'
                 >
                   <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                     <div className='min-w-0'>
-                      <p className='text-muted-foreground text-[11px] uppercase tracking-[0.16em]'>
+                      <p className='text-muted-foreground text-[11px] tracking-[0.16em] uppercase'>
                         {courseName}
                       </p>
                       <h4 className='text-foreground mt-1 text-base font-semibold'>
@@ -76,10 +72,10 @@ export function ClassLessonsTab({
                       {module.content?.data?.map((content, contentIndex) => (
                         <div
                           key={content.uuid ?? `${moduleIndex}-${contentIndex}`}
-                          className='flex items-center justify-between rounded-md border border-border/60 bg-card px-3 py-2'
+                          className='border-border/60 bg-card flex items-center justify-between rounded-md border px-3 py-2'
                         >
                           <div className='min-w-0'>
-                            <p className='truncate text-sm font-medium text-foreground'>
+                            <p className='text-foreground truncate text-sm font-medium'>
                               {content.title || 'Lesson content'}
                             </p>
                             <p className='text-muted-foreground text-xs'>
@@ -94,9 +90,9 @@ export function ClassLessonsTab({
                       ))}
                     </div>
                   ) : (
-                    <div className='mt-4 rounded-md border border-dashed border-border/70 px-4 py-5 text-center'>
+                    <div className='border-border/70 mt-4 rounded-md border border-dashed px-4 py-5 text-center'>
                       <BookOpen className='text-muted-foreground mx-auto mb-2 size-5' />
-                      <p className='text-sm font-medium text-foreground'>
+                      <p className='text-foreground text-sm font-medium'>
                         No lesson content attached yet
                       </p>
                     </div>
@@ -106,7 +102,7 @@ export function ClassLessonsTab({
             })}
           </div>
         ) : (
-          <div className='rounded-md border border-dashed border-border/70 px-4 py-10 text-center'>
+          <div className='border-border/70 rounded-md border border-dashed px-4 py-10 text-center'>
             <BookOpen className='text-muted-foreground mx-auto mb-3 size-6' />
             <p className='text-foreground text-sm font-semibold'>No lessons found</p>
             <p className='text-muted-foreground mt-1 text-sm'>

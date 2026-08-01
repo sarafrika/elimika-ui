@@ -8,7 +8,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Check, Filter, Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../../../../components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../../../../components/ui/dropdown-menu';
 import type { SubmissionStudent } from './assignment-types';
 
 type SubmissionStudentListProps = {
@@ -42,25 +47,21 @@ export function SubmissionStudentList({
   // filtered students
   const filteredStudents = useMemo(() => {
     return students.filter(student => {
-      const matchesSearch =
-        student.name.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase());
 
-      const matchesFilter =
-        filter === 'all' || student.insightLabel === filter;
+      const matchesFilter = filter === 'all' || student.insightLabel === filter;
 
       return matchesSearch && matchesFilter;
     });
   }, [students, search, filter]);
 
   return (
-    <div className='flex h-full min-h-0 flex-col border-r bg-background'>
+    <div className='bg-background flex h-full min-h-0 flex-col border-r'>
       <div className='space-y-3 border-b p-4'>
         <div className='flex items-center justify-between gap-3'>
           <div>
             <p className='text-lg font-semibold'>All Students</p>
-            <p className='text-muted-foreground text-sm'>
-              Select a submission to grade
-            </p>
+            <p className='text-muted-foreground text-sm'>Select a submission to grade</p>
           </div>
 
           {showCloseAction ? (
@@ -85,21 +86,21 @@ export function SubmissionStudentList({
           {/* FILTER BUTTON */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
+              <Button variant='outline' size='icon'>
+                <Filter className='h-4 w-4' />
               </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent className="w-48" align="end">
+            <DropdownMenuContent className='w-48' align='end'>
               <DropdownMenuItem
-                onClick={() => setFilter("all")}
+                onClick={() => setFilter('all')}
                 className={cn(
-                  "flex items-center justify-between",
-                  filter === "all" && "bg-muted font-medium"
+                  'flex items-center justify-between',
+                  filter === 'all' && 'bg-muted font-medium'
                 )}
               >
                 All Students
-                {filter === "all" && <Check className="h-4 w-4" />}
+                {filter === 'all' && <Check className='h-4 w-4' />}
               </DropdownMenuItem>
 
               {insightLabels.map(label => (
@@ -107,12 +108,12 @@ export function SubmissionStudentList({
                   key={label}
                   onClick={() => setFilter(label)}
                   className={cn(
-                    "flex items-center justify-between",
-                    filter === label && "bg-muted font-medium"
+                    'flex items-center justify-between',
+                    filter === label && 'bg-muted font-medium'
                   )}
                 >
                   {label}
-                  {filter === label && <Check className="h-4 w-4" />}
+                  {filter === label && <Check className='h-4 w-4' />}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -121,49 +122,41 @@ export function SubmissionStudentList({
       </div>
 
       {/* LIST */}
-      <ScrollArea className="flex-1 min-h-0 overflow-hidden">
+      <ScrollArea className='min-h-0 flex-1 overflow-hidden'>
         {filteredStudents.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-            <p className="text-muted-foreground text-sm">
-              No matching students found.
-            </p>
+          <div className='flex h-full flex-col items-center justify-center p-6 text-center'>
+            <p className='text-muted-foreground text-sm'>No matching students found.</p>
           </div>
         ) : (
-          <div className="space-y-2 p-1">
+          <div className='space-y-2 p-1'>
             {filteredStudents.map(student => {
               const isActive = student.id === selectedStudentId;
 
               return (
                 <button
                   key={student.id}
-                  type="button"
+                  type='button'
                   onClick={() => onSelect(student.id)}
                   className={cn(
-                    "w-full rounded-lg border px-2 py-3 text-left transition-colors",
-                    isActive
-                      ? "border-primary/20 bg-primary/10 shadow-sm"
-                      : "hover:bg-muted/40"
+                    'w-full rounded-lg border px-2 py-3 text-left transition-colors',
+                    isActive ? 'border-primary/20 bg-primary/10 shadow-sm' : 'hover:bg-muted/40'
                   )}
                 >
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-10 w-10 shrink-0">
-                      <AvatarFallback>
-                        {student.name.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
+                  <div className='flex items-start gap-3'>
+                    <Avatar className='h-10 w-10 shrink-0'>
+                      <AvatarFallback>{student.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
 
-                    <div className="min-w-0 flex-1 overflow-hidden">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate text-sm font-semibold">
-                          {student.name}
-                        </p>
+                    <div className='min-w-0 flex-1 overflow-hidden'>
+                      <div className='flex items-center gap-2'>
+                        <p className='truncate text-sm font-semibold'>{student.name}</p>
 
-                        <Badge variant="outline" className="shrink-0 text-[10px]">
+                        <Badge variant='outline' className='shrink-0 text-[10px]'>
                           {student.insightLabel}
                         </Badge>
                       </div>
 
-                      <p className="text-muted-foreground mt-1 truncate text-xs">
+                      <p className='text-muted-foreground mt-1 truncate text-xs'>
                         {student.submissionStatus}
                       </p>
                     </div>

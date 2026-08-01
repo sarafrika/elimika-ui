@@ -94,14 +94,7 @@ const SortableProgramCourseCard = ({
   isReordering,
   onRemove,
 }: SortableProgramCourseCardProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: course.uuid ?? `course-${index}`,
     disabled: isRemoving || isReordering,
   });
@@ -114,7 +107,7 @@ const SortableProgramCourseCard = ({
         transition,
       }}
       className={`border-border bg-muted flex items-center justify-between rounded-lg border p-4 ${
-        isDragging ? 'shadow-lg ring-primary/20 ring-2' : ''
+        isDragging ? 'ring-primary/20 shadow-lg ring-2' : ''
       }`}
     >
       <div className='flex items-center gap-4'>
@@ -435,7 +428,8 @@ const ProgramCourseManagement = ({
         body: {
           uuid: editingRequirementUuid,
           program_uuid: programUuid,
-          requirement_type: newRequirement.requirement_type as ProgramRequirement['requirement_type'],
+          requirement_type:
+            newRequirement.requirement_type as ProgramRequirement['requirement_type'],
           requirement_text: newRequirement.requirement_text,
           is_mandatory: newRequirement.is_mandatory,
           requirement_category: newRequirement.is_mandatory
@@ -474,8 +468,9 @@ const ProgramCourseManagement = ({
   const handleEditRequirement = (requirement: ProgramRequirement) => {
     setEditingRequirementUuid(requirement.uuid ?? null);
     setNewRequirement({
-      requirement_type:
-        normalizeRequirementType(requirement.requirement_type) as ProgramRequirementFormState['requirement_type'],
+      requirement_type: normalizeRequirementType(
+        requirement.requirement_type
+      ) as ProgramRequirementFormState['requirement_type'],
       requirement_text: requirement.requirement_text || '',
       is_mandatory: requirement.is_mandatory ?? !requirement.is_optional,
     });
@@ -578,9 +573,7 @@ const ProgramCourseManagement = ({
                   <Button
                     variant='outline'
                     onClick={() => handleEditRequirement(req)}
-                    disabled={
-                      updateRequirementMut.isPending || removeRequirementMut.isPending
-                    }
+                    disabled={updateRequirementMut.isPending || removeRequirementMut.isPending}
                     className='rounded px-3 py-1 text-sm font-medium'
                   >
                     Edit
@@ -588,8 +581,7 @@ const ProgramCourseManagement = ({
                   <Button
                     onClick={() => req.uuid && handleRemoveRequirement(req.uuid)}
                     disabled={
-                      removeRequirementMut.isPending &&
-                      removingRequirementUuid === req.uuid
+                      removeRequirementMut.isPending && removingRequirementUuid === req.uuid
                     }
                     className='bg-destructive/10 text-destructive hover:bg-destructive/20 rounded px-3 py-1 text-sm font-medium'
                   >
@@ -656,10 +648,11 @@ const ProgramCourseManagement = ({
                 <div
                   key={course.uuid}
                   onClick={() => setSelectedCourse(course)}
-                  className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${selectedCourse?.uuid === course.uuid
+                  className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${
+                    selectedCourse?.uuid === course.uuid
                       ? 'border-primary bg-primary/10'
                       : 'border-muted hover:border-muted/80'
-                    }`}
+                  }`}
                 >
                   <div className='font-medium'>{course.name}</div>
                 </div>
@@ -711,9 +704,7 @@ const ProgramCourseManagement = ({
                 </SelectTrigger>
 
                 <SelectContent>
-                  <SelectItem value={RequirementTypeValues.STUDENT}>
-                    Student Requirement
-                  </SelectItem>
+                  <SelectItem value={RequirementTypeValues.STUDENT}>Student Requirement</SelectItem>
                   <SelectItem value={RequirementTypeValues.INSTRUCTOR}>
                     Instructor Requirement
                   </SelectItem>

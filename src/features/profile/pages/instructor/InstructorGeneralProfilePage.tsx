@@ -133,8 +133,8 @@ export default function InstructorProfile() {
     },
   });
 
-  const instructorLatitude = useWatch({ control: form.control, name: 'instructor.latitude', });
-  const instructorLongitude = useWatch({ control: form.control, name: 'instructor.longitude', });
+  const instructorLatitude = useWatch({ control: form.control, name: 'instructor.latitude' });
+  const instructorLongitude = useWatch({ control: form.control, name: 'instructor.longitude' });
 
   const normalizeCoordinate = (value: unknown) => {
     if (typeof value === 'number' && Number.isFinite(value)) {
@@ -187,14 +187,14 @@ export default function InstructorProfile() {
           const manageInstructor = () =>
             instructor
               ? updateInstructor({
-                path: {
-                  uuid: instructor.uuid!,
-                },
-                body: updatedProfileData.instructor,
-              })
+                  path: {
+                    uuid: instructor.uuid!,
+                  },
+                  body: updatedProfileData.instructor,
+                })
               : createInstructor({
-                body: updatedProfileData.instructor,
-              });
+                  body: updatedProfileData.instructor,
+                });
 
           const response = await Promise.all([
             updateUser({

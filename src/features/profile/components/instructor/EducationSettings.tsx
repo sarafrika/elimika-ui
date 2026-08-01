@@ -131,7 +131,7 @@ export default function EducationSettings() {
     mode: 'onChange',
   });
 
-  const educations = useWatch({ control: form.control, name: 'educations', });
+  const educations = useWatch({ control: form.control, name: 'educations' });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -289,46 +289,45 @@ export default function EducationSettings() {
               </Button>
             }
           >
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {fields.map((field, index) => {
                 const edu = educations?.[index];
 
                 return (
                   <div
                     key={field.id}
-                    className="bg-card group hover:bg-accent/5 relative rounded-md border transition-all"
+                    className='bg-card group hover:bg-accent/5 relative rounded-md border transition-all'
                   >
-                    <div className="space-y-5 p-5">
-
+                    <div className='space-y-5 p-5'>
                       {/* Header */}
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-2">
-                          <Grip className="text-muted-foreground mt-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100" />
+                      <div className='flex items-start justify-between gap-4'>
+                        <div className='flex items-start gap-2'>
+                          <Grip className='text-muted-foreground mt-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100' />
 
                           <div>
-                            <h3 className="text-base font-medium">
+                            <h3 className='text-base font-medium'>
                               {edu?.school_name || 'New Institution'}
                             </h3>
 
-                            <p className="text-muted-foreground text-sm">
+                            <p className='text-muted-foreground text-sm'>
                               {edu?.qualification || '—'} in {edu?.field_of_study || '—'}
                             </p>
                           </div>
                         </div>
 
                         <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
+                          type='button'
+                          variant='ghost'
+                          size='icon'
                           onClick={() => onRemove(index)}
-                          className="hover:bg-destructive-foreground h-8 w-8 transition-colors"
+                          className='hover:bg-destructive-foreground h-8 w-8 transition-colors'
                         >
-                          <Trash2 className="text-destructive h-4 w-4" />
+                          <Trash2 className='text-destructive h-4 w-4' />
                         </Button>
                       </div>
 
                       {/* Row 1 */}
-                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
                         <FormField
                           control={form.control}
                           name={`educations.${index}.school_name`}
@@ -336,7 +335,7 @@ export default function EducationSettings() {
                             <FormItem>
                               <FormLabel>Institution</FormLabel>
                               <FormControl>
-                                <Input placeholder="e.g. University of Nairobi" {...field} />
+                                <Input placeholder='e.g. University of Nairobi' {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -352,7 +351,7 @@ export default function EducationSettings() {
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Select degree" />
+                                    <SelectValue placeholder='Select degree' />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
@@ -370,7 +369,7 @@ export default function EducationSettings() {
                       </div>
 
                       {/* Row 2 */}
-                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
                         <FormField
                           control={form.control}
                           name={`educations.${index}.field_of_study`}
@@ -378,7 +377,7 @@ export default function EducationSettings() {
                             <FormItem>
                               <FormLabel>Field of study</FormLabel>
                               <FormControl>
-                                <Input placeholder="e.g. Computer Science" {...field} />
+                                <Input placeholder='e.g. Computer Science' {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -393,7 +392,7 @@ export default function EducationSettings() {
                               <FormLabel>Certificate number</FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Enter certificate number"
+                                  placeholder='Enter certificate number'
                                   {...field}
                                   value={field.value ?? ''}
                                 />
@@ -417,26 +416,26 @@ export default function EducationSettings() {
 
                               <FormControl>
                                 <Input
-                                  type="number"
-                                  placeholder="YYYY"
+                                  type='number'
+                                  placeholder='YYYY'
                                   disabled={isCurrent}
                                   {...field}
                                 />
                               </FormControl>
 
-                              <div className="mt-2">
+                              <div className='mt-2'>
                                 <FormField
                                   control={form.control}
                                   name={`educations.${index}.is_recent_qualification`}
                                   render={({ field }) => (
-                                    <FormItem className="flex flex-row items-center space-x-2">
+                                    <FormItem className='flex flex-row items-center space-x-2'>
                                       <FormControl>
                                         <Checkbox
                                           checked={field.value}
                                           onCheckedChange={field.onChange}
                                         />
                                       </FormControl>
-                                      <FormLabel className="font-normal">
+                                      <FormLabel className='font-normal'>
                                         Currently studying here
                                       </FormLabel>
                                     </FormItem>
@@ -459,7 +458,7 @@ export default function EducationSettings() {
                             <FormLabel>Additional information</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="e.g. Honors, GPA, thesis title..."
+                                placeholder='e.g. Honors, GPA, thesis title...'
                                 {...field}
                                 value={field.value ?? ''}
                               />

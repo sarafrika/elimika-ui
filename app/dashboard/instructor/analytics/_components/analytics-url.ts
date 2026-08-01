@@ -52,7 +52,10 @@ export const parseAnalyticsFiltersFromSearchParams = (
       ? DEFAULT_ANALYTICS_FILTERS.statuses
       : rawStatuses === ''
         ? []
-        : rawStatuses.split(',').map((value) => value.trim()).filter(Boolean);
+        : rawStatuses
+            .split(',')
+            .map(value => value.trim())
+            .filter(Boolean);
 
   return normalizeAnalyticsFilters({
     dateFrom: searchParams.get('dateFrom') ?? '',
@@ -63,9 +66,7 @@ export const parseAnalyticsFiltersFromSearchParams = (
   });
 };
 
-export const parseAnalyticsTabFromSearchParams = (
-  searchParams: SearchParamsLike
-): AnalyticsTab => {
+export const parseAnalyticsTabFromSearchParams = (searchParams: SearchParamsLike): AnalyticsTab => {
   const rawTab = searchParams.get('tab');
 
   if (!rawTab) {

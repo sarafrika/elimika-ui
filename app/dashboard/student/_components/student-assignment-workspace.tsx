@@ -81,7 +81,8 @@ function getStatusTone(stateKey: string, dueTone: string) {
   if (stateKey === 'returned') return { accent: 'bg-warning', chip: 'bg-warning/10 text-warning' };
   if (stateKey === 'submitted') return { accent: 'bg-primary', chip: 'bg-primary/10 text-primary' };
   // pending — escalate with the deadline
-  if (dueTone === 'danger') return { accent: 'bg-destructive', chip: 'bg-destructive/10 text-destructive' };
+  if (dueTone === 'danger')
+    return { accent: 'bg-destructive', chip: 'bg-destructive/10 text-destructive' };
   if (dueTone === 'warning') return { accent: 'bg-warning', chip: 'bg-warning/10 text-warning' };
   return { accent: 'bg-primary', chip: 'bg-primary/10 text-primary' };
 }
@@ -109,15 +110,15 @@ function StatTile({
         : 'bg-primary/10 text-primary';
 
   return (
-    <div className='rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md'>
+    <div className='border-border/70 bg-card hover:border-primary/30 rounded-2xl border p-5 shadow-sm transition-all duration-200 hover:shadow-md'>
       <div className='flex items-center gap-4'>
         <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', chip)}>
           <Icon className='h-5 w-5' />
         </div>
         <div className='min-w-0'>
-          <p className='text-sm text-muted-foreground'>{label}</p>
-          <p className='text-2xl font-bold tracking-tight text-foreground'>{value}</p>
-          <p className='truncate text-xs text-muted-foreground'>{helper}</p>
+          <p className='text-muted-foreground text-sm'>{label}</p>
+          <p className='text-foreground text-2xl font-bold tracking-tight'>{value}</p>
+          <p className='text-muted-foreground truncate text-xs'>{helper}</p>
         </div>
       </div>
     </div>
@@ -143,32 +144,39 @@ function StudentAssignmentCard({
 
   const stat = (label: string, value: React.ReactNode, valueClass?: string) => (
     <div className='flex flex-col gap-0.5 px-3 py-2'>
-      <span className='text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
+      <span className='text-muted-foreground text-[10px] font-semibold tracking-wide uppercase'>
         {label}
       </span>
-      <span className={cn('text-sm font-semibold text-foreground', valueClass)}>{value}</span>
+      <span className={cn('text-foreground text-sm font-semibold', valueClass)}>{value}</span>
     </div>
   );
 
   return (
-    <article className='group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-md'>
+    <article className='group border-border/70 bg-card hover:border-primary/30 relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md'>
       <div className={cn('absolute inset-x-0 top-0 h-1', tone.accent)} />
 
       <div className='flex h-full flex-col gap-5 p-5 sm:p-6'>
         {/* Header */}
         <div className='flex items-start justify-between gap-3'>
           <div className='flex min-w-0 items-start gap-3'>
-            <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', tone.chip)}>
+            <div
+              className={cn(
+                'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+                tone.chip
+              )}
+            >
               <FileText className='h-5 w-5' />
             </div>
             <div className='min-w-0 space-y-1'>
-              <p className='truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground'>
+              <p className='text-muted-foreground truncate text-[11px] font-semibold tracking-wide uppercase'>
                 {row.classMeta.courseTitle}
               </p>
-              <h3 className='text-base font-semibold leading-snug text-foreground sm:text-lg'>
-                <span className='line-clamp-2'>{row.assignment?.title || 'Untitled assignment'}</span>
+              <h3 className='text-foreground text-base leading-snug font-semibold sm:text-lg'>
+                <span className='line-clamp-2'>
+                  {row.assignment?.title || 'Untitled assignment'}
+                </span>
               </h3>
-              <p className='flex items-center gap-1.5 truncate text-xs text-muted-foreground'>
+              <p className='text-muted-foreground flex items-center gap-1.5 truncate text-xs'>
                 <CalendarDays className='h-3.5 w-3.5 shrink-0' />
                 {row.classMeta.classTitle} · Due {formatDate(dueValue)}
               </p>
@@ -182,13 +190,13 @@ function StudentAssignmentCard({
 
         {/* Description preview */}
         {row.assignment?.description ? (
-          <div className='line-clamp-2 text-sm leading-relaxed text-muted-foreground [&_p]:leading-relaxed'>
+          <div className='text-muted-foreground line-clamp-2 text-sm leading-relaxed [&_p]:leading-relaxed'>
             <RichTextRenderer htmlString={row.assignment.description} maxChars={160} />
           </div>
         ) : null}
 
         {/* Meta grid */}
-        <div className='grid grid-cols-3 divide-x divide-border/60 rounded-xl border border-border/60 bg-background/60'>
+        <div className='divide-border/60 border-border/60 bg-background/60 grid grid-cols-3 divide-x rounded-xl border'>
           {stat('Points', row.assignment?.points_display || row.assignment?.max_points || '—')}
           {stat('Resources', row.attachments.length)}
           {stat(
@@ -199,10 +207,10 @@ function StudentAssignmentCard({
         </div>
 
         {/* Footer */}
-        <div className='mt-auto flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='border-border/60 mt-auto flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between'>
           <div className='min-w-0 space-y-0.5'>
-            <p className='text-sm font-medium text-foreground'>{state.helper}</p>
-            <p className='truncate text-xs text-muted-foreground'>
+            <p className='text-foreground text-sm font-medium'>{state.helper}</p>
+            <p className='text-muted-foreground truncate text-xs'>
               {hasSubmission
                 ? row.latestSubmission?.submitted_at
                   ? `Submitted ${formatDate(row.latestSubmission.submitted_at)}`
@@ -286,14 +294,21 @@ export function StudentAssignmentWorkspace({ embedded = false }: { embedded?: bo
         const matchesTab = activeTab === 'all' ? true : state.key === activeTab;
         const matchesSearch =
           !query ||
-          [row.assignment?.title, row.assignment?.description, row.classMeta.courseTitle, row.classMeta.classTitle]
+          [
+            row.assignment?.title,
+            row.assignment?.description,
+            row.classMeta.courseTitle,
+            row.classMeta.classTitle,
+          ]
             .filter(Boolean)
             .some(value => String(value).toLowerCase().includes(query));
         return matchesTab && matchesSearch;
       })
       .sort((a, b) => {
         if (sortBy === 'course') {
-          return (a.row.classMeta.courseTitle || '').localeCompare(b.row.classMeta.courseTitle || '');
+          return (a.row.classMeta.courseTitle || '').localeCompare(
+            b.row.classMeta.courseTitle || ''
+          );
         }
         if (sortBy === 'title') {
           return (a.row.assignment?.title || '').localeCompare(b.row.assignment?.title || '');
@@ -350,10 +365,34 @@ export function StudentAssignmentWorkspace({ embedded = false }: { embedded?: bo
   }
 
   const statTiles = [
-    { icon: Layers, label: 'Assignments', value: stats.total, helper: 'Across your classes', tone: 'primary' as const },
-    { icon: Clock3, label: 'Pending', value: stats.pending, helper: 'Awaiting your work', tone: 'warning' as const },
-    { icon: Send, label: 'Awaiting grade', value: stats.submitted + stats.returned, helper: 'Submitted or returned', tone: 'primary' as const },
-    { icon: GraduationCap, label: 'Average score', value: `${stats.averageScore}%`, helper: stats.graded > 0 ? 'From graded work' : 'No graded work yet', tone: 'success' as const },
+    {
+      icon: Layers,
+      label: 'Assignments',
+      value: stats.total,
+      helper: 'Across your classes',
+      tone: 'primary' as const,
+    },
+    {
+      icon: Clock3,
+      label: 'Pending',
+      value: stats.pending,
+      helper: 'Awaiting your work',
+      tone: 'warning' as const,
+    },
+    {
+      icon: Send,
+      label: 'Awaiting grade',
+      value: stats.submitted + stats.returned,
+      helper: 'Submitted or returned',
+      tone: 'primary' as const,
+    },
+    {
+      icon: GraduationCap,
+      label: 'Average score',
+      value: `${stats.averageScore}%`,
+      helper: stats.graded > 0 ? 'From graded work' : 'No graded work yet',
+      tone: 'success' as const,
+    },
   ];
 
   const filterTabs: { value: FilterTab; label: string; count: number }[] = [
@@ -368,10 +407,10 @@ export function StudentAssignmentWorkspace({ embedded = false }: { embedded?: bo
     <div className='space-y-6'>
       {!embedded && (
         <header className='space-y-1.5'>
-          <h1 className='text-2xl font-bold tracking-tight text-foreground sm:text-3xl'>
+          <h1 className='text-foreground text-2xl font-bold tracking-tight sm:text-3xl'>
             Assignments
           </h1>
-          <p className='max-w-2xl text-sm text-muted-foreground'>
+          <p className='text-muted-foreground max-w-2xl text-sm'>
             Review coursework, upload your submissions, and track grading feedback from your
             instructors.
           </p>
@@ -386,12 +425,12 @@ export function StudentAssignmentWorkspace({ embedded = false }: { embedded?: bo
       </section>
 
       {/* Progress + toolbar */}
-      <section className='space-y-4 rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6'>
+      <section className='border-border/70 bg-card space-y-4 rounded-2xl border p-5 shadow-sm sm:p-6'>
         <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
           <div className='min-w-0 space-y-1'>
             <div className='flex items-center gap-2'>
-              <ClipboardCheck className='h-4 w-4 text-primary' />
-              <p className='text-sm font-semibold text-foreground'>
+              <ClipboardCheck className='text-primary h-4 w-4' />
+              <p className='text-foreground text-sm font-semibold'>
                 {stats.progress}% of assigned work has a submission
               </p>
             </div>
@@ -400,7 +439,7 @@ export function StudentAssignmentWorkspace({ embedded = false }: { embedded?: bo
 
           <div className='flex w-full min-w-0 flex-col gap-3 lg:w-auto lg:flex-row lg:items-center'>
             <div className='relative min-w-0 flex-1 lg:w-72'>
-              <Search className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+              <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
               <Input
                 className='w-full pl-9 text-sm'
                 onChange={event => setSearchValue(event.target.value)}
@@ -410,7 +449,7 @@ export function StudentAssignmentWorkspace({ embedded = false }: { embedded?: bo
               {searchValue ? (
                 <button
                   aria-label='Clear search'
-                  className='absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground'
+                  className='text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition'
                   onClick={() => setSearchValue('')}
                   type='button'
                 >
@@ -430,12 +469,12 @@ export function StudentAssignmentWorkspace({ embedded = false }: { embedded?: bo
         </div>
 
         <Tabs onValueChange={value => setActiveTab(value as FilterTab)} value={activeTab}>
-          <div className='overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/70 [&::-webkit-scrollbar-track]:bg-transparent'>
+          <div className='[&::-webkit-scrollbar-thumb]:bg-border/70 overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent'>
             <TabsList className='inline-flex min-w-max gap-1'>
               {filterTabs.map(tab => (
                 <TabsTrigger key={tab.value} value={tab.value} className='gap-1.5'>
                   {tab.label}
-                  <span className='rounded-full bg-muted-foreground/15 px-1.5 text-[11px] font-semibold text-muted-foreground'>
+                  <span className='bg-muted-foreground/15 text-muted-foreground rounded-full px-1.5 text-[11px] font-semibold'>
                     {tab.count}
                   </span>
                 </TabsTrigger>

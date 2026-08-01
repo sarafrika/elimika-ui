@@ -32,9 +32,7 @@ export type InstructorClassWithSchedule = InstructorClass & {
   enrollments: unknown[];
 };
 
-export function useInstructorClassesWithSchedules(
-  instructorUuid?: string
-) {
+export function useInstructorClassesWithSchedules(instructorUuid?: string) {
   const classesQuery = useQuery({
     ...getClassDefinitionsForInstructorOptions({
       path: {
@@ -80,25 +78,15 @@ export function useInstructorClassesWithSchedules(
   }, [classes]);
 
   const uniqueCourseUuids = useMemo(() => {
-    return [...new Set(
-      uniqueClasses
-        .map(classItem => classItem.course_uuid)
-        .filter(Boolean)
-    )];
+    return [...new Set(uniqueClasses.map(classItem => classItem.course_uuid).filter(Boolean))];
   }, [uniqueClasses]);
 
   const uniqueProgramUuids = useMemo(() => {
-    return [...new Set(
-      uniqueClasses
-        .map(classItem => classItem.program_uuid)
-        .filter(Boolean)
-    )];
+    return [...new Set(uniqueClasses.map(classItem => classItem.program_uuid).filter(Boolean))];
   }, [uniqueClasses]);
 
   // One batched search per ~100 course ids instead of a request per course.
-  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(
-    uniqueCourseUuids as string[]
-  );
+  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(uniqueCourseUuids as string[]);
 
   const programCoursesQueries = useQueries({
     queries: uniqueProgramUuids.map(programUuid => ({
@@ -119,9 +107,7 @@ export function useInstructorClassesWithSchedules(
     })),
   });
 
-  const programCoursesMap = useMemo<
-    Record<string, ProgramCourseLike[]>
-  >(() => {
+  const programCoursesMap = useMemo<Record<string, ProgramCourseLike[]>>(() => {
     return Object.fromEntries(
       uniqueProgramUuids.map((uuid, index) => [
         uuid as string,
@@ -197,26 +183,17 @@ export function useInstructorClassesWithSchedules(
       uniqueClasses.map((classItem, index) => ({
         ...classItem,
 
-        course:
-          courseMap[classItem.course_uuid as string] ?? null,
+        course: courseMap[classItem.course_uuid as string] ?? null,
 
-        programCourses:
-          classItem.program_uuid
-            ? (programCoursesMap[classItem.program_uuid] ?? [])
-            : [],
+        programCourses: classItem.program_uuid
+          ? (programCoursesMap[classItem.program_uuid] ?? [])
+          : [],
 
         schedule: schedulesByClass.get(classItem.uuid ?? '') ?? [],
 
-        enrollments:
-          enrollmentQueries[index]?.data?.data ?? [],
+        enrollments: enrollmentQueries[index]?.data?.data ?? [],
       })),
-    [
-      uniqueClasses,
-      courseMap,
-      programCoursesMap,
-      schedulesByClass,
-      enrollmentQueries,
-    ]
+    [uniqueClasses, courseMap, programCoursesMap, schedulesByClass, enrollmentQueries]
   );
 
   const isLoading =

@@ -18,7 +18,7 @@ export function MarketplaceTabs({ tabs }: MarketplaceTabsProps) {
           <TabsTrigger
             key={tab.id}
             value={tab.id}
-            className='rounded-none border-b-2 border-transparent px-0 py-3 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none'
+            className='data-[state=active]:border-primary rounded-none border-b-2 border-transparent px-0 py-3 text-sm font-medium data-[state=active]:bg-transparent data-[state=active]:shadow-none'
           >
             <span className='flex items-center gap-2 px-1'>
               <Icon className='size-4' />

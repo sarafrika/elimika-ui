@@ -72,7 +72,7 @@ export function CourseProgramSection({
     const contentTypeName = contentTypeMap[uuid];
 
     if (isLocked) return <Lock className='text-muted-foreground h-4 w-4' />;
-    if (isCompleted) return <CheckCircle className='h-4 w-4 text-success' />;
+    if (isCompleted) return <CheckCircle className='text-success h-4 w-4' />;
 
     switch (contentTypeName) {
       case 'video':
@@ -112,7 +112,7 @@ export function CourseProgramSection({
                 >
                   <Card className='border-2 py-0'>
                     <CollapsibleTrigger asChild>
-                      <CardHeader className='hover:bg-muted cursor-pointer px-3 py-2 transition-colors sm:px-6 rounded-t-lg'>
+                      <CardHeader className='hover:bg-muted cursor-pointer rounded-t-lg px-3 py-2 transition-colors sm:px-6'>
                         <div className='flex items-center justify-between py-2'>
                           <div className='flex items-center gap-2'>
                             <h3 className='text-sm font-medium sm:text-base'>{moduleIndex + 1}.</h3>
@@ -130,7 +130,7 @@ export function CourseProgramSection({
                     </CollapsibleTrigger>
 
                     <CollapsibleContent>
-                      <CardContent className='px-3 pt-0 sm:px-6 mb-6'>
+                      <CardContent className='mb-6 px-3 pt-0 sm:px-6'>
                         <div className='space-y-2'>
                           {module.content.data.map(content => {
                             const isSelected = selectedLesson?.uuid === content.uuid;
@@ -140,15 +140,17 @@ export function CourseProgramSection({
                             return (
                               <div
                                 key={content.uuid}
-                                className={`flex w-full items-stretch justify-between gap-2 rounded-lg border-2 p-3 transition-all ${isSelected ? 'border-primary bg-primary/10' : 'border-muted'
-                                  } ${isLocked ? 'opacity-50' : 'hover:bg-muted/50'}`}
+                                className={`flex w-full items-stretch justify-between gap-2 rounded-lg border-2 p-3 transition-all ${
+                                  isSelected ? 'border-primary bg-primary/10' : 'border-muted'
+                                } ${isLocked ? 'opacity-50' : 'hover:bg-muted/50'}`}
                               >
                                 <button
                                   type='button'
                                   onClick={() => !isLocked && onLessonSelect(content)}
                                   disabled={isLocked}
-                                  className={`flex flex-1 items-center gap-3 text-left ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'
-                                    }`}
+                                  className={`flex flex-1 items-center gap-3 text-left ${
+                                    isLocked ? 'cursor-not-allowed' : 'cursor-pointer'
+                                  }`}
                                 >
                                   {getLessonIcon(content.content_type_uuid)}
 
@@ -183,7 +185,7 @@ export function CourseProgramSection({
                                 </Button>
 
                                 {isCompleted && (
-                                  <CheckCircle className='h-5 w-5 flex-shrink-0 text-success' />
+                                  <CheckCircle className='text-success h-5 w-5 flex-shrink-0' />
                                 )}
                               </div>
                             );

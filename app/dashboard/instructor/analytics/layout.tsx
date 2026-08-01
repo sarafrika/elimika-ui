@@ -3,5 +3,5 @@ interface AnalyticsLayoutProps {
 }
 
 export default function AnalyticsLayout({ children }: AnalyticsLayoutProps) {
-  return <div className='space-y-8 '>{children}</div>;
+  return <div className='space-y-8'>{children}</div>;
 }

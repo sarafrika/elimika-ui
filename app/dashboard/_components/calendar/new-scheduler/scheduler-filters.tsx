@@ -57,10 +57,10 @@ export function SchedulerFilters({
           aria-pressed={isAllActive}
           aria-label={isAllActive ? 'All filter, active' : 'Clear all filters'}
           className={cn(
-            'inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+            'focus-visible:ring-ring inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
             isAllActive
-              ? 'border-primary bg-primary/10 font-semibold text-primary shadow-sm'
-              : 'border-border bg-card font-medium text-foreground hover:bg-muted',
+              ? 'border-primary bg-primary/10 text-primary font-semibold shadow-sm'
+              : 'border-border bg-card text-foreground hover:bg-muted font-medium'
           )}
         >
           <LayoutGrid className='h-4 w-4 shrink-0' aria-hidden='true' />
@@ -111,10 +111,10 @@ function SchedulerFilterPill({
   return (
     <div
       className={cn(
-        'inline-flex h-9 shrink-0 items-center gap-2 rounded-full border text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'focus-visible:ring-ring inline-flex h-9 shrink-0 items-center gap-2 rounded-full border text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
         active
-          ? 'border-primary bg-primary/10 font-semibold text-primary shadow-sm'
-          : 'border-border bg-card font-medium text-foreground hover:bg-muted',
+          ? 'border-primary bg-primary/10 text-primary font-semibold shadow-sm'
+          : 'border-border bg-card text-foreground hover:bg-muted font-medium'
       )}
     >
       {/* Label — click resets just this filter, mirrors FilterPillWithDropdown from the calendar page */}
@@ -130,9 +130,9 @@ function SchedulerFilterPill({
         className='flex min-w-0 flex-1 items-center gap-2 px-3.5 text-sm focus-visible:outline-none'
       >
         <span
-          className="h-2 w-2 shrink-0 rounded-full"
+          className='h-2 w-2 shrink-0 rounded-full'
           style={{ backgroundColor: dotColor }}
-          aria-hidden="true"
+          aria-hidden='true'
         />
         <span className='max-w-[9rem] flex-1 truncate text-left'>
           {section.label}
@@ -157,40 +157,31 @@ function SchedulerFilterPill({
             aria-haspopup='menu'
             className={cn(
               'flex w-8 shrink-0 items-center justify-center border-l focus-visible:outline-none',
-              active ? 'border-primary/30 hover:bg-primary/15' : 'border-border hover:bg-muted',
+              active ? 'border-primary/30 hover:bg-primary/15' : 'border-border hover:bg-muted'
             )}
           >
             <ChevronDown className='h-4 w-4' aria-hidden='true' />
           </button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="start" side="bottom" collisionPadding={8} className="w-64 p-0">
-          <div className="border-b p-2">
-            <div className="relative">
-              <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+        <DropdownMenuContent align='start' side='bottom' collisionPadding={8} className='w-64 p-0'>
+          <div className='border-b p-2'>
+            <div className='relative'>
+              <Search className='text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2' />
               <Input
-                type="text"
+                type='text'
                 placeholder={`Search ${section.label.toLowerCase()}...`}
                 value={searchQuery}
                 onChange={event => onSearchChange(event.target.value)}
                 onKeyDown={event => event.stopPropagation()}
-                className="h-8 pl-8 text-xs"
+                className='h-8 pl-8 text-xs'
               />
             </div>
           </div>
 
-          <div
-            className="
-    max-h-64 overflow-y-auto p-1
-    [scrollbar-width:thin]
-    [&::-webkit-scrollbar]:w-px
-    [&::-webkit-scrollbar-track]:bg-transparent
-    [&::-webkit-scrollbar-thumb]:bg-border
-    [&::-webkit-scrollbar-thumb]:rounded-full
-  "
-          >
+          <div className='[&::-webkit-scrollbar-thumb]:bg-border max-h-64 overflow-y-auto p-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-px [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent'>
             {visibleItems.length === 0 && (
-              <div className="px-2 py-6 text-center text-xs text-muted-foreground">
+              <div className='text-muted-foreground px-2 py-6 text-center text-xs'>
                 No matches found.
               </div>
             )}
@@ -206,24 +197,24 @@ function SchedulerFilterPill({
                     event.preventDefault();
                     section.onItemClick(item.id);
                   }}
-                  className="flex items-start gap-2"
+                  className='flex items-start gap-2'
                 >
-                  <div className="min-w-0 flex-1">
+                  <div className='min-w-0 flex-1'>
                     <p
                       className={cn(
-                        'truncate text-[13px] font-medium leading-tight',
-                        isSelected ? 'text-primary' : 'text-foreground',
+                        'truncate text-[13px] leading-tight font-medium',
+                        isSelected ? 'text-primary' : 'text-foreground'
                       )}
                     >
                       {item.name}
                     </p>
                     {course ? (
-                      <p className="truncate text-[11px] text-muted-foreground">{course}</p>
+                      <p className='text-muted-foreground truncate text-[11px]'>{course}</p>
                     ) : null}
                   </div>
 
                   {isSelected && (
-                    <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                    <Check className='text-primary h-4 w-4 shrink-0' aria-hidden='true' />
                   )}
                 </DropdownMenuItem>
               );

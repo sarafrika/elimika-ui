@@ -57,5 +57,7 @@ export default function ClassInstanceDetailsRoute() {
     );
   }
 
-  return <ClassTrainingPage classId={selectedClass.uuid} requestedScheduleId={requestedScheduleId} />;
+  return (
+    <ClassTrainingPage classId={selectedClass.uuid} requestedScheduleId={requestedScheduleId} />
+  );
 }

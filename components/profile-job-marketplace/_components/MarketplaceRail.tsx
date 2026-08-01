@@ -35,16 +35,19 @@ export function MarketplaceRail({
 }: MarketplaceRailProps) {
   return (
     <aside className='space-y-4'>
-      <Card className='gap-4 rounded-[18px] border-border border-1 bg-transparent px-4 py-4 shadow-sm'>
+      <Card className='border-border gap-4 rounded-[18px] border-1 bg-transparent px-4 py-4 shadow-sm'>
         <h2 className='text-foreground text-lg font-semibold'>{coursesTitle}</h2>
         <div className='space-y-3'>
           {courses.map(course => (
-            <div key={course.id} className='flex items-center gap-3 rounded-xl border bg-background/70 p-3'>
+            <div
+              key={course.id}
+              className='bg-background/70 flex items-center gap-3 rounded-xl border p-3'
+            >
               <span
                 className={
                   course.accent === 'blue'
-                    ? 'grid size-10 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground text-sm font-semibold'
-                    : 'grid size-10 shrink-0 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--el-accent-azure)_30%,white)] text-primary text-sm font-semibold'
+                    ? 'bg-primary text-primary-foreground grid size-10 shrink-0 place-items-center rounded-lg text-sm font-semibold'
+                    : 'text-primary grid size-10 shrink-0 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--el-accent-azure)_30%,white)] text-sm font-semibold'
                 }
               >
                 {course.iconLabel}
@@ -66,9 +69,9 @@ export function MarketplaceRail({
         <Button className='rounded-xl'>{sendLabel}</Button>
       </Card>
 
-      <Card className='gap-4 rounded-[18px] border-border border-1 bg-transparent px-4 py-4 shadow-sm'>
+      <Card className='border-border gap-4 rounded-[18px] border-1 bg-transparent px-4 py-4 shadow-sm'>
         <h2 className='text-foreground text-lg font-semibold'>{insightsTitle}</h2>
-        <div className='rounded-xl border bg-background/70 p-4'>
+        <div className='bg-background/70 rounded-xl border p-4'>
           <div className='mb-4 flex items-center gap-2'>
             <span className='text-foreground text-3xl font-semibold'>{insightsCount}</span>
             <span className='text-primary font-medium'>Portfolio Entites</span>
@@ -89,15 +92,15 @@ export function MarketplaceRail({
         </div>
       </Card>
 
-      <Card className='gap-4 rounded-[18px] border-border border-1 bg-transparent px-4 py-4 shadow-sm'>
+      <Card className='border-border gap-4 rounded-[18px] border-1 bg-transparent px-4 py-4 shadow-sm'>
         <h2 className='text-foreground text-lg font-semibold'>{matchingTitle}</h2>
-        <div className='flex items-start gap-3 rounded-xl border bg-background/70 p-4'>
-          <span className='grid size-12 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--success)_18%,white)] text-success'>
+        <div className='bg-background/70 flex items-start gap-3 rounded-xl border p-4'>
+          <span className='text-success grid size-12 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--success)_18%,white)]'>
             🤖
           </span>
           <p className='text-muted-foreground text-sm leading-6'>{matchingDescription}</p>
         </div>
-        <Button variant='outline' className='rounded-xl border-border border-1 bg-background/80'>
+        <Button variant='outline' className='border-border bg-background/80 rounded-xl border-1'>
           {matchingAction}
         </Button>
       </Card>

@@ -2,14 +2,7 @@
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  ArrowRight,
-  CheckCircle2,
-  Heart,
-  MapPin,
-  MessageCircleMore,
-  Star,
-} from 'lucide-react';
+import { ArrowRight, CheckCircle2, Heart, MapPin, MessageCircleMore, Star } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,19 +49,29 @@ export function SearchInstructorCard({ instructor, courseId, selected, onSelect 
     enabled: !!instructor.uuid,
   });
 
-  const matchedCourse = appliedCourses?.data?.content?.find(course => course.course_uuid === courseId);
+  const matchedCourse = appliedCourses?.data?.content?.find(
+    course => course.course_uuid === courseId
+  );
   const rateCard = matchedCourse?.rate_card;
   const rates = rateCard ? Object.values(rateCard).filter(value => typeof value === 'number') : [];
   const minRate = rates.length ? Math.min(...rates) : null;
 
   const matchScore = useMemo(() => {
     const ratingScore = Math.min(20, Math.round((instructor.rating ?? 4.4) * 4));
-    const experienceScore = Math.min(10, Math.round((instructor.total_experience_years ?? 0) * 1.2));
+    const experienceScore = Math.min(
+      10,
+      Math.round((instructor.total_experience_years ?? 0) * 1.2)
+    );
     const verifiedScore = instructor.admin_verified ? 7 : 0;
     const profileScore = instructor.is_profile_complete ? 5 : 0;
 
     return Math.min(99, 60 + ratingScore + experienceScore + verifiedScore + profileScore);
-  }, [instructor.admin_verified, instructor.is_profile_complete, instructor.rating, instructor.total_experience_years]);
+  }, [
+    instructor.admin_verified,
+    instructor.is_profile_complete,
+    instructor.rating,
+    instructor.total_experience_years,
+  ]);
 
   const matchLabel =
     matchScore >= 92 ? 'Excellent match' : matchScore >= 82 ? 'Great match' : 'Good match';
@@ -82,7 +85,7 @@ export function SearchInstructorCard({ instructor, courseId, selected, onSelect 
   return (
     <Card
       className={[
-        'group h-full rounded-xl border bg-card p-4 shadow-none transition-colors hover:border-primary/50 hover:shadow-sm',
+        'group bg-card hover:border-primary/50 h-full rounded-xl border p-4 shadow-none transition-colors hover:shadow-sm',
         selected ? 'border-primary bg-primary/5' : 'border-border/70',
       ].join(' ')}
     >
@@ -96,13 +99,16 @@ export function SearchInstructorCard({ instructor, courseId, selected, onSelect 
             onSelect();
           }
         }}
-        className='flex h-full w-full flex-col text-left outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+        className='focus-visible:ring-primary/40 focus-visible:ring-offset-background flex h-full w-full flex-col text-left outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
       >
         <div className='flex items-start justify-between gap-3'>
           <div className='flex min-w-0 items-start gap-3'>
             <div className='relative'>
-              <Avatar className='size-14 border border-border/60'>
-                <AvatarImage src={instructor.profile_image_url ?? undefined} alt={instructor.full_name} />
+              <Avatar className='border-border/60 size-14 border'>
+                <AvatarImage
+                  src={instructor.profile_image_url ?? undefined}
+                  alt={instructor.full_name}
+                />
                 <AvatarFallback className='text-sm font-semibold'>
                   {instructor.full_name?.charAt(0) || 'I'}
                 </AvatarFallback>
@@ -210,10 +216,18 @@ export function SearchInstructorCard({ instructor, courseId, selected, onSelect 
             </div>
 
             <div className='flex flex-wrap items-center gap-2'>
-              <Button type='button' variant='outline' className='h-9 rounded-xl px-3 text-xs sm:text-sm'>
+              <Button
+                type='button'
+                variant='outline'
+                className='h-9 rounded-xl px-3 text-xs sm:text-sm'
+              >
                 View Profile
               </Button>
-              <Button type='button' variant='outline' className='h-9 rounded-xl px-3 text-xs sm:text-sm'>
+              <Button
+                type='button'
+                variant='outline'
+                className='h-9 rounded-xl px-3 text-xs sm:text-sm'
+              >
                 <MessageCircleMore className='size-4' />
                 Message
               </Button>

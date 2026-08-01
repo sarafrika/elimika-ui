@@ -9,13 +9,13 @@ import {
   getInstructorByUuidOptions,
   getPublishedCoursesOptions,
   getScheduledInstanceEnrollmentsForStudentOptions,
-  getStudentCertificatesOptions
+  getStudentCertificatesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
   AssignmentSubmission,
   Instructor,
-  ScheduledInstance
+  ScheduledInstance,
 } from '@/services/client/types.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQueries, useQuery } from '@tanstack/react-query';
@@ -335,7 +335,9 @@ export function useStudentLearningHubData(): LearningHubData {
             classDetails?.location_name ??
             classDetails?.title ??
             'Location pending',
-          href: schedule.uuid ? `/dashboard/student/schedule/classes/${schedule.uuid}` : '/dashboard/student/schedule',
+          href: schedule.uuid
+            ? `/dashboard/student/schedule/classes/${schedule.uuid}`
+            : '/dashboard/student/schedule',
         }));
     });
   }, [classDefinitions, enrolledScheduledInstanceUuids]);
@@ -388,21 +390,14 @@ export function useStudentLearningHubData(): LearningHubData {
     return map;
   }, [certificates]);
 
-
   const continueLearning = useMemo<LearningHubClass[]>(() => {
     return classDefinitions.map((item, index) => {
       const course = item?.course;
       const classDetails = item?.classDetails;
 
-      const rawProgress =
-        course?.uuid
-          ? item?.classDetails?.class_progress_percentage
-          : 0;
+      const rawProgress = course?.uuid ? item?.classDetails?.class_progress_percentage : 0;
 
-      const progress = Math.min(
-        100,
-        Math.max(0, Math.round(rawProgress ?? 0))
-      );
+      const progress = Math.min(100, Math.max(0, Math.round(rawProgress ?? 0)));
 
       const scheduleCount = item.schedules?.length ?? 0;
 
@@ -417,30 +412,23 @@ export function useStudentLearningHubData(): LearningHubData {
 
       return {
         id: item.uuid,
-        title: classDetails?.title ?? "",
-        courseName: course?.name ?? "",
+        title: classDetails?.title ?? '',
+        courseName: course?.name ?? '',
 
         statusLabel,
 
         scheduleLabel:
-          scheduleCount === 1
-            ? "1 scheduled session"
-            : `${scheduleCount} scheduled sessions`,
+          scheduleCount === 1 ? '1 scheduled session' : `${scheduleCount} scheduled sessions`,
 
         progress,
         isCompleted,
 
-        ctaLabel: isCompleted
-          ? "Class completed"
-          : progress > 0
-            ? "Resume class"
-            : "Start class",
+        ctaLabel: isCompleted ? 'Class completed' : progress > 0 ? 'Resume class' : 'Start class',
 
         href: `/dashboard/student/learning-hub/classes/${classDetails?.uuid}`,
         bannerUrl: item?.classDetails?.thumbnail_url ?? '',
 
-        accent:
-          index % 3 === 0 ? "blue" : index % 3 === 1 ? "slate" : "green",
+        accent: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
       };
     });
   }, [certificateMap, classDefinitions]);
@@ -498,7 +486,6 @@ export function useStudentLearningHubData(): LearningHubData {
             locationLabel: item.locationLabel,
             // href: item.href,
             href: `/dashboard/student/learning-hub/classes/${item?.uuid}`,
-
           };
         }),
     [instructorMap, now, upcomingClasses]
@@ -536,7 +523,6 @@ export function useStudentLearningHubData(): LearningHubData {
     [now, upcomingClasses]
   );
 
-
   const assignments = useMemo<LearningHubAssignment[]>(() => {
     const rows = assignmentSchedules
       .map(item => {
@@ -547,7 +533,9 @@ export function useStudentLearningHubData(): LearningHubData {
         if (!assignment) return null;
 
         const enrollmentUuids = new Set(
-          item.classInfo.classEnrollments.map(enrollment => enrollment.enrollment_uuid).filter(Boolean)
+          item.classInfo.classEnrollments
+            .map(enrollment => enrollment.enrollment_uuid)
+            .filter(Boolean)
         );
 
         const latestSubmission =
@@ -584,30 +572,18 @@ export function useStudentLearningHubData(): LearningHubData {
   }, [assignmentSchedules, assignmentsMap, submissionsMap]);
 
   const enrolledCourseIds = new Set(
-    classDefinitions
-      .map(item => item.course?.uuid)
-      .filter(Boolean)
+    classDefinitions.map(item => item.course?.uuid).filter(Boolean)
   );
 
   const recommendedCourses = useMemo(() => {
     return publishedCourses
-      .filter(
-        course =>
-          course?.name &&
-          !enrolledCourseIds.has(course.uuid)
-      )
+      .filter(course => course?.name && !enrolledCourseIds.has(course.uuid))
       .slice(0, 6)
       .map(course => ({
         id: course.uuid ?? course.name,
         title: course.name,
-        level:
-          (course.duration_hours ?? 0) >= 5
-            ? 'Intermediate'
-            : 'Beginner',
-        duration: formatHours(
-          (course.duration_hours ?? 0) * 60 +
-          (course.duration_minutes ?? 0)
-        ),
+        level: (course.duration_hours ?? 0) >= 5 ? 'Intermediate' : 'Beginner',
+        duration: formatHours((course.duration_hours ?? 0) * 60 + (course.duration_minutes ?? 0)),
       }));
   }, [publishedCourses, enrolledCourseIds]);
 
@@ -633,8 +609,8 @@ export function useStudentLearningHubData(): LearningHubData {
   const overallProgress =
     continueLearning.length > 0
       ? Math.round(
-        continueLearning.reduce((sum, item) => sum + item.progress, 0) / continueLearning.length
-      )
+          continueLearning.reduce((sum, item) => sum + item.progress, 0) / continueLearning.length
+        )
       : 0;
 
   const stats: LearningHubStat[] = [

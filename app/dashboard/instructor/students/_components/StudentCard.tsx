@@ -1,7 +1,7 @@
-import { Avatar } from "./Avatar";
-import { ProgressBar } from "./ProgressBar";
-import { StatusBadge } from "./StatusBadge";
-import type { StudentRosterEntry } from "../types";
+import { Avatar } from './Avatar';
+import { ProgressBar } from './ProgressBar';
+import { StatusBadge } from './StatusBadge';
+import type { StudentRosterEntry } from '../types';
 
 interface StudentCardProps {
   student: StudentRosterEntry;
@@ -9,46 +9,37 @@ interface StudentCardProps {
 
 export function StudentCard({ student }: StudentCardProps) {
   return (
-    <div className="bg-card border border-border rounded-lg p-4 space-y-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <Avatar
-            initials={student.student.initials}
-            colorClass={student.student.avatarColor}
-          />
+    <div className='bg-card border-border space-y-3 rounded-lg border p-4'>
+      <div className='flex items-start justify-between gap-2'>
+        <div className='flex items-center gap-2.5'>
+          <Avatar initials={student.student.initials} colorClass={student.student.avatarColor} />
           <div>
-            <p className="text-sm font-semibold text-foreground">
-              {student.student.full_name}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              ID: {student.student.uuid}
-            </p>
+            <p className='text-foreground text-sm font-semibold'>{student.student.full_name}</p>
+            <p className='text-muted-foreground text-xs'>ID: {student.student.uuid}</p>
           </div>
         </div>
 
         <StatusBadge status={student.status} />
       </div>
 
-      <div className="grid grid-cols-1 gap-2 text-xs">
+      <div className='grid grid-cols-1 gap-2 text-xs'>
         <div>
-          <span className="text-muted-foreground">Courses</span>
-          <p className="text-foreground font-medium">
+          <span className='text-muted-foreground'>Courses</span>
+          <p className='text-foreground font-medium'>
             {student.courses
-              .map((c) => c?.name)
+              .map(c => c?.name)
               .filter(Boolean)
-              .join(", ")}
+              .join(', ')}
           </p>
         </div>
 
         <div>
-          <span className="text-muted-foreground">Classes</span>
-          <p className="text-foreground font-medium">
-            {(student.classes ?? []).length}
-          </p>
+          <span className='text-muted-foreground'>Classes</span>
+          <p className='text-foreground font-medium'>{(student.classes ?? []).length}</p>
         </div>
 
         <div>
-          <span className="text-muted-foreground">Progress</span>
+          <span className='text-muted-foreground'>Progress</span>
           <ProgressBar value={student.progress} />
         </div>
       </div>

@@ -54,8 +54,12 @@ export function InstructorWaitingListPage() {
   const filteredWaitingList = useMemo(
     () =>
       waitingList.filter(student => {
-        const matchesSearch = [student.name, student.email, student.classTitle, student.scheduleLabel]
-          .some(value => value.toLowerCase().includes(normalizedSearch));
+        const matchesSearch = [
+          student.name,
+          student.email,
+          student.classTitle,
+          student.scheduleLabel,
+        ].some(value => value.toLowerCase().includes(normalizedSearch));
         const matchesClass =
           selectedClass === 'all' || !student.classId ? true : student.classId === selectedClass;
 
@@ -65,29 +69,29 @@ export function InstructorWaitingListPage() {
   );
 
   return (
-    <main className='mx-auto flex w-full max-w-[1280px] flex-col gap-5 bg-background px-3 py-4 sm:px-4 lg:px-5'>
-      <section className='flex flex-col gap-4 rounded-[14px] border border-border/50 bg-card p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-5'>
+    <main className='bg-background mx-auto flex w-full max-w-[1280px] flex-col gap-5 px-3 py-4 sm:px-4 lg:px-5'>
+      <section className='border-border/50 bg-card flex flex-col gap-4 rounded-[14px] border p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-5'>
         <div className='space-y-1'>
-          <h1 className='text-[1.6rem] font-semibold tracking-[-0.03em] text-foreground sm:text-[1.85rem]'>
+          <h1 className='text-foreground text-[1.6rem] font-semibold tracking-[-0.03em] sm:text-[1.85rem]'>
             Class Waiting List
           </h1>
-          <p className='text-sm text-muted-foreground sm:text-[0.95rem]'>
+          <p className='text-muted-foreground text-sm sm:text-[0.95rem]'>
             Students who enrolled after a class reached capacity appear here until a seat opens up.
           </p>
         </div>
 
         <Link
           href='/dashboard/instructor/training-hub'
-          className='inline-flex h-10 items-center justify-center rounded-[10px] border border-border px-4 text-sm font-medium text-foreground transition hover:border-primary/30 hover:text-primary'
+          className='border-border text-foreground hover:border-primary/30 hover:text-primary inline-flex h-10 items-center justify-center rounded-[10px] border px-4 text-sm font-medium transition'
         >
           Back to Training Hub
         </Link>
       </section>
 
-      <section className='rounded-[14px] border border-border/50 bg-card p-3 shadow-sm sm:p-4'>
+      <section className='border-border/50 bg-card rounded-[14px] border p-3 shadow-sm sm:p-4'>
         <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px]'>
-          <label className='flex h-11 items-center gap-2 rounded-[10px] border border-border/60 bg-background px-3'>
-            <Search className='size-4 text-muted-foreground' />
+          <label className='border-border/60 bg-background flex h-11 items-center gap-2 rounded-[10px] border px-3'>
+            <Search className='text-muted-foreground size-4' />
             <Input
               aria-label='Search waiting list'
               className='h-auto border-0 p-0 shadow-none focus-visible:ring-0'
@@ -98,7 +102,7 @@ export function InstructorWaitingListPage() {
           </label>
 
           <Select onValueChange={value => setSelectedClass(value)} value={selectedClass}>
-            <SelectTrigger className='h-11 rounded-[10px] border-border/60'>
+            <SelectTrigger className='border-border/60 h-11 rounded-[10px]'>
               <SelectValue placeholder='Filter by class' />
             </SelectTrigger>
             <SelectContent>
@@ -117,10 +121,10 @@ export function InstructorWaitingListPage() {
         {isLoading ? (
           <Card className='border-border/60'>
             <CardContent className='flex min-h-[280px] flex-col items-center justify-center gap-3 text-center'>
-              <Users className='size-8 text-muted-foreground' />
+              <Users className='text-muted-foreground size-8' />
               <div className='space-y-1'>
-                <h2 className='text-base font-semibold text-foreground'>Loading waiting list</h2>
-                <p className='text-sm text-muted-foreground'>
+                <h2 className='text-foreground text-base font-semibold'>Loading waiting list</h2>
+                <p className='text-muted-foreground text-sm'>
                   Fetching waitlisted students across {activeClassCount || classes.length} classes.
                 </p>
               </div>
@@ -129,10 +133,10 @@ export function InstructorWaitingListPage() {
         ) : filteredWaitingList.length === 0 ? (
           <Card className='border-border/60'>
             <CardContent className='flex min-h-[280px] flex-col items-center justify-center gap-3 text-center'>
-              <Users className='size-8 text-muted-foreground' />
+              <Users className='text-muted-foreground size-8' />
               <div className='space-y-1'>
-                <h2 className='text-base font-semibold text-foreground'>No waitlisted students</h2>
-                <p className='text-sm text-muted-foreground'>
+                <h2 className='text-foreground text-base font-semibold'>No waitlisted students</h2>
+                <p className='text-muted-foreground text-sm'>
                   {selectedClass === 'all'
                     ? 'Once a class reaches capacity, new enrollments with waitlist status will appear here.'
                     : 'This class does not have any waitlisted students right now.'}

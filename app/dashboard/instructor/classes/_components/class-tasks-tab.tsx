@@ -68,7 +68,8 @@ export function ClassTasksTab({
   const assignmentScheduleItems: AssignmentScheduleItem[] = (assignmentSchedules?.data ?? []).map(
     item => ({
       ...item,
-      assignment: assignmentOptions.find(assignment => assignment.uuid === item.assignment_uuid) ?? null,
+      assignment:
+        assignmentOptions.find(assignment => assignment.uuid === item.assignment_uuid) ?? null,
     })
   );
   const quizScheduleItems: QuizScheduleItem[] = (quizSchedules?.data ?? []).map(item => ({
@@ -155,7 +156,9 @@ export function ClassTasksTab({
             ) : null}
           </div>
           <Badge variant='outline' className='shrink-0'>
-            {hasTasks ? `${assignmentScheduleItems.length + quizScheduleItems.length} items` : 'No tasks'}
+            {hasTasks
+              ? `${assignmentScheduleItems.length + quizScheduleItems.length} items`
+              : 'No tasks'}
           </Badge>
         </div>
 
@@ -165,7 +168,7 @@ export function ClassTasksTab({
               key={item.label}
               className='border-border/70 bg-background/80 rounded-md border px-3 py-2'
             >
-              <p className='text-muted-foreground text-[11px] uppercase tracking-[0.14em]'>
+              <p className='text-muted-foreground text-[11px] tracking-[0.14em] uppercase'>
                 {item.label}
               </p>
               <p className='text-foreground mt-1 text-lg font-semibold'>{item.value}</p>
@@ -183,10 +186,12 @@ export function ClassTasksTab({
             {groupedTaskSections.map(section => (
               <div key={section.courseLabel} className='space-y-3'>
                 <div className='border-border/70 bg-background/80 rounded-md border px-3 py-2'>
-                  <p className='text-muted-foreground text-[11px] uppercase tracking-[0.14em]'>
+                  <p className='text-muted-foreground text-[11px] tracking-[0.14em] uppercase'>
                     Course
                   </p>
-                  <p className='text-foreground mt-1 text-sm font-semibold'>{section.courseLabel}</p>
+                  <p className='text-foreground mt-1 text-sm font-semibold'>
+                    {section.courseLabel}
+                  </p>
                 </div>
 
                 <div className='grid gap-3 lg:grid-cols-2'>
@@ -212,7 +217,8 @@ export function ClassTasksTab({
             <NotebookPen className='text-primary mx-auto mb-3 h-8 w-8' />
             <p className='text-foreground text-sm font-semibold'>No tasks are attached yet</p>
             <p className='text-muted-foreground mt-1 text-sm'>
-              Assignments and quizzes will appear here once they are linked to {classTitle ?? 'this class'}.
+              Assignments and quizzes will appear here once they are linked to{' '}
+              {classTitle ?? 'this class'}.
             </p>
           </div>
         )}
@@ -247,10 +253,7 @@ function AssignmentTaskGroup({
       <div className='mt-3 space-y-2'>
         {items.length > 0 ? (
           items.map(item => (
-            <article
-              key={item.uuid ?? item.assignment_uuid}
-              className='rounded-md border p-3'
-            >
+            <article key={item.uuid ?? item.assignment_uuid} className='rounded-md border p-3'>
               <div className='space-y-1'>
                 <p className='text-foreground text-sm font-medium'>
                   {item.assignment?.title || 'Assignment'}

@@ -233,18 +233,21 @@ export const ClassDetailsSection = ({
                     <button
                       key={option.value}
                       onClick={() => handleClassForChange(option.value as 'course' | 'program')}
-                      className={`flex flex-1 items-center gap-3 rounded-lg border-2 p-4 transition-all ${classFor === option.value
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50'
-                        }`}
+                      className={`flex flex-1 items-center gap-3 rounded-lg border-2 p-4 transition-all ${
+                        classFor === option.value
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}
                     >
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${classFor === option.value ? 'bg-primary/20' : 'bg-muted'
-                          }`}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                          classFor === option.value ? 'bg-primary/20' : 'bg-muted'
+                        }`}
                       >
                         <Icon
-                          className={`h-5 w-5 ${classFor === option.value ? 'text-primary' : 'text-muted-foreground'
-                            }`}
+                          className={`h-5 w-5 ${
+                            classFor === option.value ? 'text-primary' : 'text-muted-foreground'
+                          }`}
                         />
                       </div>
                       <div className='text-left'>
@@ -413,16 +416,16 @@ export const ClassDetailsSection = ({
               <span className='text-muted-foreground'>
                 ({selectedItem?.application?.rate_card?.currency || 'N/A'})
               </span>
-              <span className='text-muted-foreground'>
-                per hour per head</span>
+              <span className='text-muted-foreground'>per hour per head</span>
             </div>
             <p className='text-muted-foreground mt-2 text-xs'>
-              Class fee is automatically set from the approved {classFor === 'course' ? 'course' : 'program'} rate card once class type and lecture type are selected.
+              Class fee is automatically set from the approved{' '}
+              {classFor === 'course' ? 'course' : 'program'} rate card once class type and lecture
+              type are selected.
             </p>
           </div>
         </div>
       </div>
-
     </Card>
   );
 };

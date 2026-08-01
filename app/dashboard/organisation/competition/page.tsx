@@ -28,8 +28,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractList } from '@/lib/api-helpers';
 import type { Competition } from '@/services/client';
@@ -58,16 +71,18 @@ function CreateCompetitionDialog({ organisationUuid }: { organisationUuid: strin
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" /> New Competition
+          <Plus className='mr-2 h-4 w-4' /> New Competition
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className='max-w-lg'>
         <DialogHeader>
           <DialogTitle>Create competition</DialogTitle>
-          <DialogDescription>Schedule a competition or event for your organisation.</DialogDescription>
+          <DialogDescription>
+            Schedule a competition or event for your organisation.
+          </DialogDescription>
         </DialogHeader>
         <form
-          className="space-y-4"
+          className='space-y-4'
           onSubmit={e => {
             e.preventDefault();
             const f = e.currentTarget;
@@ -97,42 +112,49 @@ function CreateCompetitionDialog({ organisationUuid }: { organisationUuid: strin
                 onSuccess: async () => {
                   setOpen(false);
                   toast.success('Competition created', { description: name });
-                  await qc.invalidateQueries({ queryKey: listCompetitionsQueryKey({ path: { organisationUuid } }) });
+                  await qc.invalidateQueries({
+                    queryKey: listCompetitionsQueryKey({ path: { organisationUuid } }),
+                  });
                 },
                 onError: () => toast.error('Could not create competition.'),
               }
             );
           }}
         >
-          <div className="space-y-2">
-            <Label htmlFor="c-name">Name</Label>
-            <Input id="c-name" name="c-name" placeholder="e.g. Inter-School Robotics Cup" required />
+          <div className='space-y-2'>
+            <Label htmlFor='c-name'>Name</Label>
+            <Input
+              id='c-name'
+              name='c-name'
+              placeholder='e.g. Inter-School Robotics Cup'
+              required
+            />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="c-category">Category</Label>
-              <Input id="c-category" name="c-category" placeholder="e.g. STEM" />
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-2'>
+              <Label htmlFor='c-category'>Category</Label>
+              <Input id='c-category' name='c-category' placeholder='e.g. STEM' />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="c-venue">Venue</Label>
-              <Input id="c-venue" name="c-venue" placeholder="e.g. Auditorium" />
+            <div className='space-y-2'>
+              <Label htmlFor='c-venue'>Venue</Label>
+              <Input id='c-venue' name='c-venue' placeholder='e.g. Auditorium' />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="c-date">Date</Label>
-              <Input id="c-date" name="c-date" type="datetime-local" />
+            <div className='space-y-2'>
+              <Label htmlFor='c-date'>Date</Label>
+              <Input id='c-date' name='c-date' type='datetime-local' />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="c-capacity">Capacity (teams)</Label>
-              <Input id="c-capacity" name="c-capacity" type="number" min={0} placeholder="20" />
+            <div className='space-y-2'>
+              <Label htmlFor='c-capacity'>Capacity (teams)</Label>
+              <Input id='c-capacity' name='c-capacity' type='number' min={0} placeholder='20' />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="c-status">Status</Label>
+          <div className='space-y-2'>
+            <Label htmlFor='c-status'>Status</Label>
             <select
-              id="c-status"
-              name="c-status"
-              defaultValue="Upcoming"
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              id='c-status'
+              name='c-status'
+              defaultValue='Upcoming'
+              className='border-input bg-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1'
             >
               {STATUSES.map(s => (
                 <option key={s} value={s}>
@@ -142,10 +164,10 @@ function CreateCompetitionDialog({ organisationUuid }: { organisationUuid: strin
             </select>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type='button' variant='outline' onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={create.isPending}>
+            <Button type='submit' disabled={create.isPending}>
               {create.isPending ? 'Creating…' : 'Create'}
             </Button>
           </DialogFooter>
@@ -175,65 +197,78 @@ export default function CompetitionPage() {
     () =>
       competitions.filter(c => {
         if (status !== 'all' && c.status !== status) return false;
-        if (query && !`${c.name} ${c.category ?? ''} ${c.venue_name ?? ''}`.toLowerCase().includes(query.toLowerCase())) return false;
+        if (
+          query &&
+          !`${c.name} ${c.category ?? ''} ${c.venue_name ?? ''}`
+            .toLowerCase()
+            .includes(query.toLowerCase())
+        )
+          return false;
         return true;
       }),
     [competitions, status, query]
   );
 
   const kpis = useMemo(() => {
-    const upcoming = competitions.filter(c => c.status === 'Upcoming' || c.status === 'Registration Open').length;
+    const upcoming = competitions.filter(
+      c => c.status === 'Upcoming' || c.status === 'Registration Open'
+    ).length;
     const live = competitions.filter(c => c.status === 'In Progress').length;
     const teams = competitions.reduce((a, c) => a + Number(c.team_count ?? 0), 0);
     return { total: competitions.length, upcoming, live, teams };
   }, [competitions]);
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]">
+    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
-        title="Competition"
-        description="Organize and manage student competitions."
+        title='Competition'
+        description='Organize and manage student competitions.'
         action={<CreateCompetitionDialog organisationUuid={organisationUuid} />}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.total}</div>
-            <div className="text-xs text-muted-foreground">Total events</div>
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <Card className='border-l-primary border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.total}</div>
+            <div className='text-muted-foreground text-xs'>Total events</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-sky-500">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.upcoming}</div>
-            <div className="text-xs text-muted-foreground">Upcoming</div>
+        <Card className='border-l-4 border-l-sky-500'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.upcoming}</div>
+            <div className='text-muted-foreground text-xs'>Upcoming</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-warning">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.live}</div>
-            <div className="text-xs text-muted-foreground">In progress</div>
+        <Card className='border-l-warning border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.live}</div>
+            <div className='text-muted-foreground text-xs'>In progress</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-teal-400">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.teams}</div>
-            <div className="text-xs text-muted-foreground">Teams registered</div>
+        <Card className='border-l-4 border-l-teal-400'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.teams}</div>
+            <div className='text-muted-foreground text-xs'>Teams registered</div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search competitions, categories, or venues" value={query} onChange={e => setQuery(e.target.value)} className="pl-9" />
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
+        <div className='relative flex-1'>
+          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+          <Input
+            placeholder='Search competitions, categories, or venues'
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            className='pl-9'
+          />
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="sm:w-56">
-            <SelectValue placeholder="All statuses" />
+          <SelectTrigger className='sm:w-56'>
+            <SelectValue placeholder='All statuses' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value='all'>All statuses</SelectItem>
             {STATUSES.map(s => (
               <SelectItem key={s} value={s}>
                 {s}
@@ -244,86 +279,101 @@ export default function CompetitionPage() {
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className='p-0'>
           {competitionsQuery.isLoading ? (
-            <div className="space-y-2 p-4">
+            <div className='space-y-2 p-4'>
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-12 w-full animate-pulse rounded bg-muted" />
+                <div key={i} className='bg-muted h-12 w-full animate-pulse rounded' />
               ))}
             </div>
           ) : rows.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 p-12 text-center">
-              <Trophy className="h-8 w-8 text-muted-foreground" />
-              <div className="font-medium">{competitions.length === 0 ? 'No competitions yet' : 'No competitions match'}</div>
-              <p className="text-sm text-muted-foreground">
-                {competitions.length === 0 ? 'Create a competition to get started.' : 'Try adjusting your filters.'}
+            <div className='flex flex-col items-center justify-center gap-2 p-12 text-center'>
+              <Trophy className='text-muted-foreground h-8 w-8' />
+              <div className='font-medium'>
+                {competitions.length === 0 ? 'No competitions yet' : 'No competitions match'}
+              </div>
+              <p className='text-muted-foreground text-sm'>
+                {competitions.length === 0
+                  ? 'Create a competition to get started.'
+                  : 'Try adjusting your filters.'}
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table className="min-w-[820px]">
+            <div className='overflow-x-auto'>
+              <Table className='min-w-[820px]'>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap">Competition</TableHead>
-                    <TableHead className="whitespace-nowrap">Category</TableHead>
-                    <TableHead className="whitespace-nowrap">Date</TableHead>
-                    <TableHead className="whitespace-nowrap">Venue</TableHead>
-                    <TableHead className="whitespace-nowrap">Teams</TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
+                    <TableHead className='whitespace-nowrap'>Competition</TableHead>
+                    <TableHead className='whitespace-nowrap'>Category</TableHead>
+                    <TableHead className='whitespace-nowrap'>Date</TableHead>
+                    <TableHead className='whitespace-nowrap'>Venue</TableHead>
+                    <TableHead className='whitespace-nowrap'>Teams</TableHead>
+                    <TableHead className='whitespace-nowrap'>Status</TableHead>
+                    <TableHead className='text-right whitespace-nowrap'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.map(c => (
                     <TableRow key={c.uuid}>
-                      <TableCell className="whitespace-nowrap">
-                        <div className="font-medium">{c.name}</div>
-                        {c.description && <div className="max-w-xs truncate text-xs text-muted-foreground">{c.description}</div>}
+                      <TableCell className='whitespace-nowrap'>
+                        <div className='font-medium'>{c.name}</div>
+                        {c.description && (
+                          <div className='text-muted-foreground max-w-xs truncate text-xs'>
+                            {c.description}
+                          </div>
+                        )}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{c.category ?? '—'}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1">
-                          <Calendar className="h-3 w-3 text-muted-foreground" />
+                      <TableCell className='whitespace-nowrap'>{c.category ?? '—'}</TableCell>
+                      <TableCell className='whitespace-nowrap'>
+                        <span className='inline-flex items-center gap-1'>
+                          <Calendar className='text-muted-foreground h-3 w-3' />
                           {c.event_date ? dayjs(c.event_date).format('DD MMM YYYY') : '—'}
                         </span>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{c.venue_name ?? '—'}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1">
-                          <Users className="h-3 w-3 text-muted-foreground" />
+                      <TableCell className='whitespace-nowrap'>{c.venue_name ?? '—'}</TableCell>
+                      <TableCell className='whitespace-nowrap'>
+                        <span className='inline-flex items-center gap-1'>
+                          <Users className='text-muted-foreground h-3 w-3' />
                           {Number(c.team_count ?? 0)}
                           {c.capacity != null ? `/${c.capacity}` : ''}
                         </span>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <Badge className={STATUS_STYLE[c.status] ?? 'bg-muted text-foreground'} variant="secondary">
+                      <TableCell className='whitespace-nowrap'>
+                        <Badge
+                          className={STATUS_STYLE[c.status] ?? 'bg-muted text-foreground'}
+                          variant='secondary'
+                        >
                           {c.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right">
+                      <TableCell className='text-right whitespace-nowrap'>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
+                            <Button variant='ghost' size='icon' className='h-8 w-8'>
+                              <MoreHorizontal className='h-4 w-4' />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align='end'>
                             <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
+                              className='text-destructive focus:text-destructive'
                               onClick={() =>
                                 remove.mutate(
                                   { path: { competitionUuid: c.uuid } },
                                   {
                                     onSuccess: async () => {
                                       toast.success('Competition deleted', { description: c.name });
-                                      await qc.invalidateQueries({ queryKey: listCompetitionsQueryKey({ path: { organisationUuid } }) });
+                                      await qc.invalidateQueries({
+                                        queryKey: listCompetitionsQueryKey({
+                                          path: { organisationUuid },
+                                        }),
+                                      });
                                     },
                                     onError: () => toast.error('Could not delete competition.'),
                                   }
                                 )
                               }
                             >
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              <Trash2 className='mr-2 h-4 w-4' /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

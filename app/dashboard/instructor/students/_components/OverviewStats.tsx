@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface Stat {
   value: number;
@@ -13,18 +13,17 @@ interface OverviewStatsProps {
 
 export function OverviewStats({ stats }: OverviewStatsProps) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className='flex flex-wrap gap-2'>
       {stats.map((stat, i) => (
         <div
           key={i}
-          className={`flex-1 min-w-[90px] flex flex-col items-center justify-center rounded-xl py-3 px-2 border transition-colors ${stat.highlight
-            ? "bg-primary/5 border-primary/20"
-            : "bg-background border-border"
-            }`}
+          className={`flex min-w-[90px] flex-1 flex-col items-center justify-center rounded-xl border px-2 py-3 transition-colors ${
+            stat.highlight ? 'bg-primary/5 border-primary/20' : 'bg-background border-border'
+          }`}
         >
-          <div className="text-primary">{stat.icon}</div>
-          <p className="text-xl font-bold text-foreground">{stat.value}</p>
-          <p className="text-xs text-muted-foreground text-center leading-tight">{stat.label}</p>
+          <div className='text-primary'>{stat.icon}</div>
+          <p className='text-foreground text-xl font-bold'>{stat.value}</p>
+          <p className='text-muted-foreground text-center text-xs leading-tight'>{stat.label}</p>
         </div>
       ))}
     </div>

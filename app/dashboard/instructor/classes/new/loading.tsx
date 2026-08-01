@@ -6,7 +6,7 @@ export default function Loading() {
   return (
     <div className='bg-background px-3 py-4 sm:px-4 sm:py-6 lg:px-6'>
       <div className='mx-auto max-w-[1560px] animate-pulse space-y-6'>
-        <div className='flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between'>
+        <div className='border-border/60 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between'>
           <div className='space-y-2'>
             <div className='bg-muted h-9 w-64 rounded-md' />
             <div className='bg-muted h-4 w-48 rounded-md' />

@@ -6,7 +6,14 @@ import { Disc } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '../../../../components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '../../../../components/ui/sheet';
 import { Textarea } from '../../../../components/ui/textarea';
 import { getQuestionOptions } from '../../../../services/client';
 import {
@@ -46,12 +53,7 @@ const sampleQuestions = [
   'Sample question 5?',
 ];
 
-const sampleOptions = [
-  'Option A',
-  'Option B',
-  'Option C',
-  'Option D',
-];
+const sampleOptions = ['Option A', 'Option B', 'Option C', 'Option D'];
 
 const randomItem = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]!;
 
@@ -397,9 +399,9 @@ const AssessmentCreationForm = ({
           pairs:
             questionType === 'MATCHING'
               ? optionsData.map((pair: QuestionOptionApi) => ({
-                left: pair.left_text ?? '',
-                right: pair.right_text ?? '',
-              }))
+                  left: pair.left_text ?? '',
+                  right: pair.right_text ?? '',
+                }))
               : undefined,
           answer: questionType === 'ESSAY' || questionType === 'SHORT_ANSWER' ? '' : undefined,
         };
@@ -535,24 +537,19 @@ const AssessmentCreationForm = ({
 
   ///
   const [bulkSheetOpen, setBulkSheetOpen] = useState(false);
-  const [bulkText, setBulkText] = useState("");
+  const [bulkText, setBulkText] = useState('');
   const [isImporting, setIsImporting] = useState(false);
 
-
-  type QuestionType =
-    | "MULTIPLE_CHOICE"
-    | "TRUE_FALSE"
-    | "SHORT_ANSWER"
-    | "ESSAY";
+  type QuestionType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY';
 
   interface ParsedOption {
-    uuid: "";
+    uuid: '';
     text: string;
     isCorrect: boolean;
   }
 
   interface ParsedQuestion {
-    uuid: "";
+    uuid: '';
     text: string;
     type: QuestionType;
     points: number;
@@ -562,42 +559,42 @@ const AssessmentCreationForm = ({
 
   function parseQuestionBlock(block: string): ParsedQuestion {
     const lines = block
-      .split("\n")
+      .split('\n')
       .map(l => l.trim())
       .filter(Boolean);
 
-    let type: QuestionType = "MULTIPLE_CHOICE";
-    let questionText = "";
+    let type: QuestionType = 'MULTIPLE_CHOICE';
+    let questionText = '';
     let points = 1;
-    let explanation = "";
+    let explanation = '';
 
     const options: ParsedOption[] = [];
 
     for (const line of lines) {
-      if (line.startsWith("TYPE:")) {
-        type = line.replace("TYPE:", "").trim() as QuestionType;
+      if (line.startsWith('TYPE:')) {
+        type = line.replace('TYPE:', '').trim() as QuestionType;
         continue;
       }
 
-      if (line.startsWith("QUESTION:")) {
-        questionText = line.replace("QUESTION:", "").trim();
+      if (line.startsWith('QUESTION:')) {
+        questionText = line.replace('QUESTION:', '').trim();
         continue;
       }
 
-      if (line.startsWith("POINTS:")) {
-        points = Number(line.replace("POINTS:", "").trim());
+      if (line.startsWith('POINTS:')) {
+        points = Number(line.replace('POINTS:', '').trim());
         continue;
       }
 
-      if (line.startsWith("EXPLANATION:")) {
-        explanation = line.replace("EXPLANATION:", "").trim();
+      if (line.startsWith('EXPLANATION:')) {
+        explanation = line.replace('EXPLANATION:', '').trim();
         continue;
       }
 
-      if (line.startsWith("ANSWER:")) {
+      if (line.startsWith('ANSWER:')) {
         options.push({
-          uuid: "",
-          text: line.replace("ANSWER:", "").trim(),
+          uuid: '',
+          text: line.replace('ANSWER:', '').trim(),
           isCorrect: true,
         });
         continue;
@@ -606,15 +603,15 @@ const AssessmentCreationForm = ({
       // A. Option
       // B. Option *
       if (/^[A-Z]\./.test(line)) {
-        const isCorrect = line.endsWith("*");
+        const isCorrect = line.endsWith('*');
 
         const text = line
-          .replace(/^[A-Z]\.\s*/, "")
-          .replace(/\*$/, "")
+          .replace(/^[A-Z]\.\s*/, '')
+          .replace(/\*$/, '')
           .trim();
 
         options.push({
-          uuid: "",
+          uuid: '',
           text,
           isCorrect,
         });
@@ -622,7 +619,7 @@ const AssessmentCreationForm = ({
     }
 
     return {
-      uuid: "",
+      uuid: '',
       type,
       text: questionText,
       points,
@@ -656,19 +653,12 @@ const AssessmentCreationForm = ({
 
       await handleSaveQuizQuestions();
 
-      setBulkText("");
+      setBulkText('');
       setBulkSheetOpen(false);
 
-      toast.success(
-        `${parsedQuestions.length} questions imported successfully.`
-      );
-
+      toast.success(`${parsedQuestions.length} questions imported successfully.`);
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Unable to import questions."
-      );
+      toast.error(error instanceof Error ? error.message : 'Unable to import questions.');
     } finally {
       setIsImporting(false);
     }
@@ -840,7 +830,7 @@ const AssessmentCreationForm = ({
                     ),
                   });
                 }
-              } catch (optionErr) { }
+              } catch (optionErr) {}
             }
 
             qc.invalidateQueries({
@@ -1269,10 +1259,11 @@ const AssessmentCreationForm = ({
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`-mb-px border-b-2 px-4 py-2 transition-colors ${activeTab === tab
-              ? 'border-primary text-primary font-semibold'
-              : 'text-muted-foreground hover:text-foreground'
-              }`}
+            className={`-mb-px border-b-2 px-4 py-2 transition-colors ${
+              activeTab === tab
+                ? 'border-primary text-primary font-semibold'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
           >
             {tab}
           </button>
@@ -1338,24 +1329,24 @@ const AssessmentCreationForm = ({
               }}
               updateQuizForLesson={handleUpdateQuiz}
               deleteQuizForLesson={handleDeleteQuiz}
-              addQuizQuestion={async payload => { }}
-              addQuestionOption={async payload => { }}
+              addQuizQuestion={async payload => {}}
+              addQuestionOption={async payload => {}}
               isPending={createQuiz.isPending || updateQuiz.isPending}
               openBulkUploadSheet={() => setBulkSheetOpen(true)}
-            // createQuizForLesson={async (lessonId, payload) => {
-            //   // const res = await createQuiz.mutateAsync({
-            //   //     body: {
-            //   //         ...payload,
-            //   //         lesson_uuid: lessonId,
-            //   //     },
-            //   // });
-            //   // qc.invalidateQueries({
-            //   //     queryKey: searchQuizzesQueryKey({
-            //   //         query: { pageable: {}, searchParams: { lesson_uuid_eq: selectedLessonId as string } },
-            //   //     }),
-            //   // });
-            //   // return res?.data?.quiz_uuid || res?.quiz_uuid;
-            // }}
+              // createQuizForLesson={async (lessonId, payload) => {
+              //   // const res = await createQuiz.mutateAsync({
+              //   //     body: {
+              //   //         ...payload,
+              //   //         lesson_uuid: lessonId,
+              //   //     },
+              //   // });
+              //   // qc.invalidateQueries({
+              //   //     queryKey: searchQuizzesQueryKey({
+              //   //         query: { pageable: {}, searchParams: { lesson_uuid_eq: selectedLessonId as string } },
+              //   //     }),
+              //   // });
+              //   // return res?.data?.quiz_uuid || res?.quiz_uuid;
+              // }}
             />
 
             <div className='mt-4 flex justify-end self-end'>
@@ -1373,20 +1364,16 @@ const AssessmentCreationForm = ({
               >
                 <Disc className='mr-2 h-4 w-4' />
                 {addQuizQuestion.isPending ||
-                  addQuestionOption.isPending ||
-                  updateQuizQuestion.isPending ||
-                  updateQuestionOption.isPending
+                addQuestionOption.isPending ||
+                updateQuizQuestion.isPending ||
+                updateQuestionOption.isPending
                   ? 'Saving...'
                   : 'Save Questions'}
               </Button>
             </div>
 
-            <Sheet
-              open={bulkSheetOpen}
-              onOpenChange={setBulkSheetOpen}
-            >
-              <SheetContent className="sm:max-w-2xl overflow-y-auto">
-
+            <Sheet open={bulkSheetOpen} onOpenChange={setBulkSheetOpen}>
+              <SheetContent className='overflow-y-auto sm:max-w-2xl'>
                 <SheetHeader>
                   <SheetTitle>Paste Bulk Questions</SheetTitle>
 
@@ -1395,11 +1382,10 @@ const AssessmentCreationForm = ({
                   </SheetDescription>
                 </SheetHeader>
 
-                <div className="py-6">
-
+                <div className='py-6'>
                   <Textarea
                     value={bulkText}
-                    onChange={(e) => setBulkText(e.target.value)}
+                    onChange={e => setBulkText(e.target.value)}
                     placeholder={`---
 TYPE: MULTIPLE_CHOICE
 QUESTION: What is React?
@@ -1416,31 +1402,19 @@ QUESTION: React is developed by Meta.
 
 A. True *
 B. False`}
-                    className="min-h-[500px] font-mono text-sm"
+                    className='min-h-[500px] font-mono text-sm'
                   />
-
                 </div>
 
                 <SheetFooter>
-
-                  <Button
-                    variant="outline"
-                    onClick={() => setBulkSheetOpen(false)}
-                  >
+                  <Button variant='outline' onClick={() => setBulkSheetOpen(false)}>
                     Cancel
                   </Button>
 
-                  <Button
-                    disabled={isImporting || !bulkText.trim()}
-                    onClick={handleBulkImport}
-                  >
-                    {isImporting
-                      ? "Importing..."
-                      : "Import Questions"}
+                  <Button disabled={isImporting || !bulkText.trim()} onClick={handleBulkImport}>
+                    {isImporting ? 'Importing...' : 'Import Questions'}
                   </Button>
-
                 </SheetFooter>
-
               </SheetContent>
             </Sheet>
           </div>

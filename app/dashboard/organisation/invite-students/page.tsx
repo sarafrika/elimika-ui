@@ -36,7 +36,11 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 
 const categoryLabel = (cd: ClassDefinition) =>
-  cd.location_type === 'ONLINE' ? 'Virtual' : cd.location_type === 'HYBRID' ? 'Hybrid' : 'In-Person';
+  cd.location_type === 'ONLINE'
+    ? 'Virtual'
+    : cd.location_type === 'HYBRID'
+      ? 'Hybrid'
+      : 'In-Person';
 
 /** Days an invitation stays open before it lapses. Mirrors the backend default. */
 const EXPIRES_IN_DAYS = 14;
@@ -52,7 +56,7 @@ const TEMPLATES = [
     id: 'cohort',
     name: 'New cohort',
     subject: 'Your seat in the new cohort is ready',
-    body: "Hello {{student}},\n\nA new cohort is opening at {{school}} and we saved you a spot. Accept your invite to secure your place.\n\n{{sender}}",
+    body: 'Hello {{student}},\n\nA new cohort is opening at {{school}} and we saved you a spot. Accept your invite to secure your place.\n\n{{sender}}',
   },
   {
     id: 'reminder',
@@ -91,7 +95,8 @@ const STEPS = [
   { n: 3, label: 'Message & send', icon: Mail },
 ] as const;
 
-const toggle = (arr: string[], id: string) => (arr.includes(id) ? arr.filter(x => x !== id) : [...arr, id]);
+const toggle = (arr: string[], id: string) =>
+  arr.includes(id) ? arr.filter(x => x !== id) : [...arr, id];
 
 export default function InviteStudentsPage() {
   const organisation = useOrganisation();
@@ -123,7 +128,17 @@ export default function InviteStudentsPage() {
   const classTabItems = useMemo(
     () =>
       classes.flatMap(c =>
-        c.uuid ? [{ id: c.uuid, category: categoryLabel(c), subject: null, programType: null, title: c.title }] : []
+        c.uuid
+          ? [
+              {
+                id: c.uuid,
+                category: categoryLabel(c),
+                subject: null,
+                programType: null,
+                title: c.title,
+              },
+            ]
+          : []
       ),
     [classes]
   );
@@ -137,7 +152,10 @@ export default function InviteStudentsPage() {
     enabled: Boolean(organisationUuid),
   });
   const groups = useMemo(
-    () => (groupsQuery.data?.data ?? []).filter((g): g is StudentGroup & { uuid: string } => Boolean(g?.uuid)),
+    () =>
+      (groupsQuery.data?.data ?? []).filter((g): g is StudentGroup & { uuid: string } =>
+        Boolean(g?.uuid)
+      ),
     [groupsQuery.data]
   );
 
@@ -221,24 +239,24 @@ export default function InviteStudentsPage() {
     step === 1 ? true : step === 2 ? recipients.length > 0 || selectedGroups.length > 0 : true;
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]">
+    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
-        title="Invite Students"
-        description="Invite new students to your organisation and classes."
+        title='Invite Students'
+        description='Invite new students to your organisation and classes.'
       />
 
       {/* Stepper */}
       <div>
-        <ol className="flex items-center gap-2">
+        <ol className='flex items-center gap-2'>
           {STEPS.map((s, i) => {
             const Icon = s.icon;
             const active = step === s.n;
             const done = step > s.n;
             const clickable = s.n <= step || done;
             return (
-              <li key={s.n} className="flex flex-1 items-center gap-2">
+              <li key={s.n} className='flex flex-1 items-center gap-2'>
                 <button
-                  type="button"
+                  type='button'
                   disabled={!clickable}
                   onClick={() => clickable && setStep(s.n as 1 | 2 | 3)}
                   className={cn(
@@ -254,33 +272,38 @@ export default function InviteStudentsPage() {
                   <span
                     className={cn(
                       'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-medium',
-                      active || done ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/40'
+                      active || done
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-muted-foreground/40'
                     )}
                   >
-                    {done ? <Check className="h-3.5 w-3.5" /> : s.n}
+                    {done ? <Check className='h-3.5 w-3.5' /> : s.n}
                   </span>
-                  <span className="hidden truncate sm:inline">{s.label}</span>
-                  <Icon className="ml-auto h-4 w-4 sm:hidden" />
+                  <span className='hidden truncate sm:inline'>{s.label}</span>
+                  <Icon className='ml-auto h-4 w-4 sm:hidden' />
                 </button>
-                {i < STEPS.length - 1 && <span className="hidden h-px w-4 bg-border sm:block" />}
+                {i < STEPS.length - 1 && <span className='bg-border hidden h-px w-4 sm:block' />}
               </li>
             );
           })}
         </ol>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <div className='text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-xs'>
           {selectedClasses.length > 0 && (
-            <Badge variant="secondary" className="gap-1">
-              <Users className="h-3 w-3" /> {selectedClasses.length} class{selectedClasses.length === 1 ? '' : 'es'}
+            <Badge variant='secondary' className='gap-1'>
+              <Users className='h-3 w-3' /> {selectedClasses.length} class
+              {selectedClasses.length === 1 ? '' : 'es'}
             </Badge>
           )}
           {recipients.length > 0 && (
-            <Badge variant="secondary" className="gap-1">
-              <UsersRound className="h-3 w-3" /> {recipients.length} recipient{recipients.length === 1 ? '' : 's'}
+            <Badge variant='secondary' className='gap-1'>
+              <UsersRound className='h-3 w-3' /> {recipients.length} recipient
+              {recipients.length === 1 ? '' : 's'}
             </Badge>
           )}
           {selectedGroups.length > 0 && (
-            <Badge variant="secondary" className="gap-1">
-              <Users className="h-3 w-3" /> {selectedGroups.length} group{selectedGroups.length === 1 ? '' : 's'}
+            <Badge variant='secondary' className='gap-1'>
+              <Users className='h-3 w-3' /> {selectedGroups.length} group
+              {selectedGroups.length === 1 ? '' : 's'}
               {groupReach > 0 ? ` · ${groupReach}` : ''}
             </Badge>
           )}
@@ -291,27 +314,32 @@ export default function InviteStudentsPage() {
       {results ? (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <CheckCircle2 className="h-4 w-4 text-success" /> Invitations processed
+            <CardTitle className='flex items-center gap-2 text-base'>
+              <CheckCircle2 className='text-success h-4 w-4' /> Invitations processed
             </CardTitle>
-            <CardDescription>{results.filter(r => r.ok).length} of {results.length} invited successfully.</CardDescription>
+            <CardDescription>
+              {results.filter(r => r.ok).length} of {results.length} invited successfully.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className='space-y-2'>
             {results.map(r => (
-              <div key={r.email} className="flex items-center justify-between rounded-md border p-2.5 text-sm">
-                <span className="truncate">{r.email}</span>
+              <div
+                key={r.email}
+                className='flex items-center justify-between rounded-md border p-2.5 text-sm'
+              >
+                <span className='truncate'>{r.email}</span>
                 {r.ok ? (
-                  <Badge variant="secondary" className="gap-1 bg-success/10 text-success">
-                    <CheckCircle2 className="h-3 w-3" /> Invited
+                  <Badge variant='secondary' className='bg-success/10 text-success gap-1'>
+                    <CheckCircle2 className='h-3 w-3' /> Invited
                   </Badge>
                 ) : (
-                  <Badge variant="secondary" className="gap-1 bg-destructive/10 text-destructive">
-                    <XCircle className="h-3 w-3" /> {r.message ?? 'Failed'}
+                  <Badge variant='secondary' className='bg-destructive/10 text-destructive gap-1'>
+                    <XCircle className='h-3 w-3' /> {r.message ?? 'Failed'}
                   </Badge>
                 )}
               </div>
             ))}
-            <div className="flex justify-end pt-2">
+            <div className='flex justify-end pt-2'>
               <Button onClick={reset}>Invite more</Button>
             </div>
           </CardContent>
@@ -322,12 +350,14 @@ export default function InviteStudentsPage() {
           {step === 1 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Users className="h-4 w-4" /> Select classes
+                <CardTitle className='flex items-center gap-2 text-base'>
+                  <Users className='h-4 w-4' /> Select classes
                 </CardTitle>
-                <CardDescription>Pick the classes students will be invited to enroll in (optional).</CardDescription>
+                <CardDescription>
+                  Pick the classes students will be invited to enroll in (optional).
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className='space-y-4'>
                 {classes.length > 0 && (
                   <CategoryTabs
                     items={classTabItems}
@@ -337,11 +367,13 @@ export default function InviteStudentsPage() {
                     onSubjectChange={setSubjectByCategory}
                   />
                 )}
-                <ScrollArea className="h-[340px] pr-3">
+                <ScrollArea className='h-[340px] pr-3'>
                   {filteredClasses.length === 0 ? (
-                    <p className="py-12 text-center text-sm text-muted-foreground">No classes to select.</p>
+                    <p className='text-muted-foreground py-12 text-center text-sm'>
+                      No classes to select.
+                    </p>
                   ) : (
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className='grid gap-2 sm:grid-cols-2'>
                       {filteredClasses.map(item => {
                         const checked = selectedClasses.includes(item.id);
                         return (
@@ -352,10 +384,16 @@ export default function InviteStudentsPage() {
                               checked ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
                             )}
                           >
-                            <Checkbox checked={checked} onCheckedChange={() => setSelectedClasses(s => toggle(s, item.id))} className="mt-0.5" />
-                            <div className="min-w-0 flex-1">
-                              <div className="truncate text-sm font-medium">{item.title}</div>
-                              <div className="truncate text-xs text-muted-foreground">{item.category}</div>
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={() => setSelectedClasses(s => toggle(s, item.id))}
+                              className='mt-0.5'
+                            />
+                            <div className='min-w-0 flex-1'>
+                              <div className='truncate text-sm font-medium'>{item.title}</div>
+                              <div className='text-muted-foreground truncate text-xs'>
+                                {item.category}
+                              </div>
                             </div>
                           </label>
                         );
@@ -363,13 +401,19 @@ export default function InviteStudentsPage() {
                     </div>
                   )}
                 </ScrollArea>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{selectedClasses.length} of {filteredClasses.length} selected</span>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedClasses(filteredClasses.map(c => c.id))}>
+                <div className='text-muted-foreground flex items-center justify-between text-xs'>
+                  <span>
+                    {selectedClasses.length} of {filteredClasses.length} selected
+                  </span>
+                  <div className='flex gap-2'>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => setSelectedClasses(filteredClasses.map(c => c.id))}
+                    >
                       Select all
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedClasses([])}>
+                    <Button variant='ghost' size='sm' onClick={() => setSelectedClasses([])}>
                       Clear
                     </Button>
                   </div>
@@ -382,21 +426,21 @@ export default function InviteStudentsPage() {
           {step === 2 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <UsersRound className="h-4 w-4" /> Add recipients
+                <CardTitle className='flex items-center gap-2 text-base'>
+                  <UsersRound className='h-4 w-4' /> Add recipients
                 </CardTitle>
                 <CardDescription>
-                  Pick a student group, paste addresses, or both. Everyone is invited individually and
-                  decides for themselves.
+                  Pick a student group, paste addresses, or both. Everyone is invited individually
+                  and decides for themselves.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className='space-y-4'>
                 {groups.length > 0 && (
                   <div>
-                    <Label className="mb-2 block text-xs uppercase text-muted-foreground">
+                    <Label className='text-muted-foreground mb-2 block text-xs uppercase'>
                       Student groups
                     </Label>
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className='grid gap-2 sm:grid-cols-2'>
                       {groups.map(group => {
                         const checked = selectedGroups.includes(group.uuid);
                         return (
@@ -410,11 +454,11 @@ export default function InviteStudentsPage() {
                             <Checkbox
                               checked={checked}
                               onCheckedChange={() => setSelectedGroups(g => toggle(g, group.uuid))}
-                              className="mt-0.5"
+                              className='mt-0.5'
                             />
-                            <div className="min-w-0 flex-1">
-                              <div className="truncate text-sm font-medium">{group.name}</div>
-                              <div className="truncate text-xs text-muted-foreground">
+                            <div className='min-w-0 flex-1'>
+                              <div className='truncate text-sm font-medium'>{group.name}</div>
+                              <div className='text-muted-foreground truncate text-xs'>
                                 {Number(group.member_count ?? 0)} member
                                 {Number(group.member_count ?? 0) === 1 ? '' : 's'}
                                 {group.group_type ? ` · ${group.group_type}` : ''}
@@ -428,39 +472,43 @@ export default function InviteStudentsPage() {
                 )}
 
                 <div>
-                  <Label htmlFor="emails" className="mb-2 block text-xs uppercase text-muted-foreground">
+                  <Label
+                    htmlFor='emails'
+                    className='text-muted-foreground mb-2 block text-xs uppercase'
+                  >
                     Recipient emails
                   </Label>
                   <Textarea
-                    id="emails"
-                    placeholder="Jane Doe <jane@example.com>, sam@example.com"
+                    id='emails'
+                    placeholder='Jane Doe <jane@example.com>, sam@example.com'
                     value={emails}
                     onChange={e => setEmails(e.target.value)}
                     rows={6}
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    One per line or comma-separated. Optional name before the email (e.g. "Jane Doe &lt;jane@example.com&gt;").
+                  <p className='text-muted-foreground mt-1 text-xs'>
+                    One per line or comma-separated. Optional name before the email (e.g. "Jane Doe
+                    &lt;jane@example.com&gt;").
                   </p>
                 </div>
-                <div className="space-y-1.5 rounded-md bg-muted/50 p-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Valid addresses parsed</span>
-                    <span className="font-semibold tabular-nums">
+                <div className='bg-muted/50 space-y-1.5 rounded-md p-3 text-sm'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-muted-foreground'>Valid addresses parsed</span>
+                    <span className='font-semibold tabular-nums'>
                       {recipients.length} student{recipients.length === 1 ? '' : 's'}
                     </span>
                   </div>
                   {selectedGroups.length > 0 && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">
+                    <div className='flex items-center justify-between'>
+                      <span className='text-muted-foreground'>
                         From {selectedGroups.length} group{selectedGroups.length === 1 ? '' : 's'}
                       </span>
-                      <span className="font-semibold tabular-nums">
+                      <span className='font-semibold tabular-nums'>
                         {groupReach} student{groupReach === 1 ? '' : 's'}
                       </span>
                     </div>
                   )}
                   {selectedGroups.length > 0 && recipients.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className='text-muted-foreground text-xs'>
                       Anyone appearing in both is invited once.
                     </p>
                   )}
@@ -473,20 +521,25 @@ export default function InviteStudentsPage() {
           {step === 3 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Mail className="h-4 w-4" /> Message &amp; send
+                <CardTitle className='flex items-center gap-2 text-base'>
+                  <Mail className='h-4 w-4' /> Message &amp; send
                 </CardTitle>
-                <CardDescription>Pick a template, choose channels, and send {recipients.length} invitation{recipients.length === 1 ? '' : 's'}.</CardDescription>
+                <CardDescription>
+                  Pick a template, choose channels, and send {recipients.length} invitation
+                  {recipients.length === 1 ? '' : 's'}.
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className='space-y-4'>
                 <div>
-                  <Label className="mb-2 block text-xs uppercase text-muted-foreground">Template</Label>
-                  <div className="flex flex-wrap gap-2">
+                  <Label className='text-muted-foreground mb-2 block text-xs uppercase'>
+                    Template
+                  </Label>
+                  <div className='flex flex-wrap gap-2'>
                     {TEMPLATES.map(t => (
                       <Button
                         key={t.id}
-                        type="button"
-                        size="sm"
+                        type='button'
+                        size='sm'
                         variant={templateId === t.id ? 'default' : 'outline'}
                         onClick={() => {
                           setTemplateId(t.id);
@@ -500,34 +553,46 @@ export default function InviteStudentsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="message" className="mb-2 block text-xs uppercase text-muted-foreground">
+                  <Label
+                    htmlFor='message'
+                    className='text-muted-foreground mb-2 block text-xs uppercase'
+                  >
                     Message
                   </Label>
-                  <Textarea id="message" value={message} onChange={e => setMessage(e.target.value)} rows={7} />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Placeholders <code>{'{{student}}'}</code>, <code>{'{{school}}'}</code>, <code>{'{{sender}}'}</code> are filled per recipient.
+                  <Textarea
+                    id='message'
+                    value={message}
+                    onChange={e => setMessage(e.target.value)}
+                    rows={7}
+                  />
+                  <p className='text-muted-foreground mt-1 text-xs'>
+                    Placeholders <code>{'{{student}}'}</code>, <code>{'{{school}}'}</code>,{' '}
+                    <code>{'{{sender}}'}</code> are filled per recipient.
                   </p>
                 </div>
 
-                <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Ready to invite</span>
-                    <span className="font-semibold">{recipients.length} recipient{recipients.length === 1 ? '' : 's'}</span>
+                <div className='bg-muted/30 rounded-md border p-3 text-sm'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-muted-foreground'>Ready to invite</span>
+                    <span className='font-semibold'>
+                      {recipients.length} recipient{recipients.length === 1 ? '' : 's'}
+                    </span>
                   </div>
                   {selectedClasses.length > 0 && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {selectedClasses.length} class{selectedClasses.length === 1 ? '' : 'es'} will be shown to
-                      each student once they accept — they still enrol themselves.
+                    <p className='text-muted-foreground mt-1 text-xs'>
+                      {selectedClasses.length} class{selectedClasses.length === 1 ? '' : 'es'} will
+                      be shown to each student once they accept — they still enrol themselves.
                     </p>
                   )}
                 </div>
 
-                <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div className='border-primary/30 bg-primary/5 text-muted-foreground flex items-start gap-2 rounded-md border p-3 text-xs'>
+                  <ShieldCheck className='text-primary mt-0.5 h-4 w-4 shrink-0' />
                   <p>
-                    Each student gets their own private link and chooses whether to join. Nothing is created
-                    for them until they accept, and invitations lapse after {EXPIRES_IN_DAYS} days. Students
-                    under the age we can accept consent from will be asked for a parent or guardian instead.
+                    Each student gets their own private link and chooses whether to join. Nothing is
+                    created for them until they accept, and invitations lapse after{' '}
+                    {EXPIRES_IN_DAYS} days. Students under the age we can accept consent from will
+                    be asked for a parent or guardian instead.
                   </p>
                 </div>
               </CardContent>
@@ -535,17 +600,29 @@ export default function InviteStudentsPage() {
           )}
 
           {/* Nav */}
-          <div className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-between">
-            <Button type="button" variant="outline" onClick={() => setStep(s => Math.max(1, s - 1) as 1 | 2 | 3)} disabled={step === 1}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          <div className='flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-between'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => setStep(s => Math.max(1, s - 1) as 1 | 2 | 3)}
+              disabled={step === 1}
+            >
+              <ArrowLeft className='mr-2 h-4 w-4' /> Back
             </Button>
             {step < 3 ? (
-              <Button type="button" onClick={() => setStep(s => Math.min(3, s + 1) as 1 | 2 | 3)} disabled={!canNext}>
-                Next <ArrowRight className="ml-2 h-4 w-4" />
+              <Button
+                type='button'
+                onClick={() => setStep(s => Math.min(3, s + 1) as 1 | 2 | 3)}
+                disabled={!canNext}
+              >
+                Next <ArrowRight className='ml-2 h-4 w-4' />
               </Button>
             ) : (
-              <Button type="button" onClick={send} disabled={sending || recipients.length === 0}>
-                <Send className="mr-2 h-4 w-4" /> {sending ? 'Sending…' : `Send ${recipients.length} invitation${recipients.length === 1 ? '' : 's'}`}
+              <Button type='button' onClick={send} disabled={sending || recipients.length === 0}>
+                <Send className='mr-2 h-4 w-4' />{' '}
+                {sending
+                  ? 'Sending…'
+                  : `Send ${recipients.length} invitation${recipients.length === 1 ? '' : 's'}`}
               </Button>
             )}
           </div>

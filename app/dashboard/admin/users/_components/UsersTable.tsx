@@ -50,14 +50,16 @@ export function UsersTable({
           return (
             <div className='flex items-center gap-3'>
               <Avatar className='size-9'>
-                {user.profile_image_url ? <AvatarImage src={user.profile_image_url} alt='' /> : null}
+                {user.profile_image_url ? (
+                  <AvatarImage src={user.profile_image_url} alt='' />
+                ) : null}
                 <AvatarFallback className='text-xs'>{initials(user)}</AvatarFallback>
               </Avatar>
               <div className='min-w-0'>
-                <p className='truncate text-sm font-medium text-foreground'>
+                <p className='text-foreground truncate text-sm font-medium'>
                   {user.full_name || `${user.first_name} ${user.last_name}`}
                 </p>
-                <p className='truncate text-xs text-muted-foreground'>{user.email}</p>
+                <p className='text-muted-foreground truncate text-xs'>{user.email}</p>
               </div>
             </div>
           );
@@ -76,7 +78,7 @@ export function UsersTable({
         },
         cell: ({ row }) => {
           const domains = domainsOf(row.original);
-          if (!domains.length) return <span className='text-xs text-muted-foreground'>—</span>;
+          if (!domains.length) return <span className='text-muted-foreground text-xs'>—</span>;
           return (
             <div className='flex flex-wrap gap-1'>
               {domains.map(domain => (
@@ -95,9 +97,7 @@ export function UsersTable({
         meta: { label: 'Status' },
         filterFn: (row, id, value: string[]) =>
           !value?.length || value.includes(row.getValue(id) as string),
-        cell: ({ row }) => (
-          <StatusBadge status={row.original.active ? 'active' : 'inactive'} />
-        ),
+        cell: ({ row }) => <StatusBadge status={row.original.active ? 'active' : 'inactive'} />,
       },
       {
         id: 'created',
@@ -107,7 +107,7 @@ export function UsersTable({
         cell: ({ row }) => {
           const date = row.original.created_date;
           return (
-            <span className='text-sm text-muted-foreground'>
+            <span className='text-muted-foreground text-sm'>
               {date
                 ? new Date(date).toLocaleDateString(undefined, {
                     day: 'numeric',
@@ -132,13 +132,15 @@ export function UsersTable({
       getRowId={(user, index) => user.uuid ?? String(index)}
       onRowClick={user => user.uuid && router.push(`/dashboard/admin/users/${user.uuid}`)}
       facetedFilters={[
-        { columnId: 'status', title: 'Status', options: [
-          { label: 'Active', value: 'active' },
-          { label: 'Inactive', value: 'inactive' },
-        ] },
-        ...(hideRoleFilter
-          ? []
-          : [{ columnId: 'domains', title: 'Role', options: domainOptions }]),
+        {
+          columnId: 'status',
+          title: 'Status',
+          options: [
+            { label: 'Active', value: 'active' },
+            { label: 'Inactive', value: 'inactive' },
+          ],
+        },
+        ...(hideRoleFilter ? [] : [{ columnId: 'domains', title: 'Role', options: domainOptions }]),
       ]}
       pageSize={15}
       emptyTitle='No users found'

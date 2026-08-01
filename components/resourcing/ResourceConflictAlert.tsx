@@ -48,7 +48,8 @@ export function ResourceConflictAlert({
       </ul>
       {conflicts.length > 8 ? (
         <p className='text-muted-foreground mt-2 text-xs'>
-          …and {conflicts.length - 8} more conflicting session{conflicts.length - 8 === 1 ? '' : 's'}.
+          …and {conflicts.length - 8} more conflicting session
+          {conflicts.length - 8 === 1 ? '' : 's'}.
         </p>
       ) : null}
     </div>

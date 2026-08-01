@@ -1,11 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronRight, Info } from 'lucide-react';
-import type {
-  SkillsFundActivityEntry,
-  SkillsFundResource,
-  SkillsFundTrackerEntry,
-} from '../data';
+import type { SkillsFundActivityEntry, SkillsFundResource, SkillsFundTrackerEntry } from '../data';
 
 const iconToneClasses = {
   amber: 'bg-warning/10 text-warning',
@@ -28,16 +24,10 @@ type SkillsFundSidebarProps = {
   walletUtilizationPercent: number;
 };
 
-function SidebarSection({
-  children,
-  title,
-}: {
-  children: React.ReactNode;
-  title: string;
-}) {
+function SidebarSection({ children, title }: { children: React.ReactNode; title: string }) {
   return (
-    <section className='rounded-[12px] border border-border bg-muted/20 p-3'>
-      <h2 className='text-[1.05rem] font-semibold text-foreground'>{title}</h2>
+    <section className='border-border bg-muted/20 rounded-[12px] border p-3'>
+      <h2 className='text-foreground text-[1.05rem] font-semibold'>{title}</h2>
       <div className='mt-3'>{children}</div>
     </section>
   );
@@ -59,7 +49,7 @@ export function SkillsFundSidebar({
   return (
     <aside className='grid w-full gap-3 self-start sm:grid-cols-2 xl:ml-auto xl:max-w-[400px] xl:grid-cols-1'>
       <SidebarSection title='Application Tracker'>
-        <div className='rounded-[10px] border border-border bg-card p-3'>
+        <div className='border-border bg-card rounded-[10px] border p-3'>
           <div className='space-y-3'>
             {trackerEntries.map(entry => {
               const Icon = entry.icon;
@@ -75,8 +65,8 @@ export function SkillsFundSidebar({
                     <Icon className='size-4' />
                   </div>
                   <div className='min-w-0'>
-                    <p className='truncate text-sm font-semibold text-foreground'>{entry.title}</p>
-                    <p className='text-[0.82rem] text-muted-foreground'>
+                    <p className='text-foreground truncate text-sm font-semibold'>{entry.title}</p>
+                    <p className='text-muted-foreground text-[0.82rem]'>
                       {entry.amount} <span className='mx-1'>|</span> {entry.source}
                     </p>
                   </div>
@@ -85,52 +75,44 @@ export function SkillsFundSidebar({
             })}
           </div>
 
-          <Button
-            variant='outline'
-            className='mt-3 h-9 w-full rounded-[8px] text-sm'
-          >
+          <Button variant='outline' className='mt-3 h-9 w-full rounded-[8px] text-sm'>
             View All Applications
           </Button>
         </div>
       </SidebarSection>
 
       <SidebarSection title={walletTitle}>
-        <div className='rounded-[10px] border border-border bg-card p-3'>
+        <div className='border-border bg-card rounded-[10px] border p-3'>
           <div className='flex items-start justify-between gap-3'>
             <div>
-              <p className='text-[1.95rem] font-semibold leading-none text-foreground sm:text-[2.1rem]'>
+              <p className='text-foreground text-[1.95rem] leading-none font-semibold sm:text-[2.1rem]'>
                 {walletBalance}
               </p>
-              <p className='mt-1 text-sm text-muted-foreground'>{walletSubtitle}</p>
-              <p className='text-sm text-muted-foreground/80'>Total Limit: Ksh 50,000</p>
+              <p className='text-muted-foreground mt-1 text-sm'>{walletSubtitle}</p>
+              <p className='text-muted-foreground/80 text-sm'>Total Limit: Ksh 50,000</p>
             </div>
           </div>
 
           <div className='mt-4 space-y-2'>
-            <div className='flex items-center justify-between text-[0.85rem] font-semibold text-foreground'>
+            <div className='text-foreground flex items-center justify-between text-[0.85rem] font-semibold'>
               <span className='inline-flex items-center gap-1'>
                 Fund Utilization
-                <Info className='size-3.5 text-muted-foreground' />
+                <Info className='text-muted-foreground size-3.5' />
               </span>
               <span>{walletUtilizationLabel}</span>
             </div>
-            <div className='h-2 overflow-hidden rounded-full bg-muted'>
+            <div className='bg-muted h-2 overflow-hidden rounded-full'>
               <div
-                className='h-full rounded-full bg-primary'
+                className='bg-primary h-full rounded-full'
                 style={{ width: `${walletUtilizationPercent}%` }}
               />
             </div>
-            <p className='text-sm text-muted-foreground'>{walletRemaining}</p>
+            <p className='text-muted-foreground text-sm'>{walletRemaining}</p>
           </div>
 
           <div className='mt-4 space-y-2'>
-            <Button className='h-9 w-full rounded-[8px] text-sm'>
-              {walletActionLabel}
-            </Button>
-            <Button
-              variant='outline'
-              className='h-9 w-full rounded-[8px] text-sm'
-            >
+            <Button className='h-9 w-full rounded-[8px] text-sm'>{walletActionLabel}</Button>
+            <Button variant='outline' className='h-9 w-full rounded-[8px] text-sm'>
               {walletSecondaryActionLabel}
             </Button>
           </div>
@@ -138,7 +120,7 @@ export function SkillsFundSidebar({
       </SidebarSection>
 
       <SidebarSection title='Fund Activity'>
-        <div className='rounded-[10px] border border-border bg-card p-3'>
+        <div className='border-border bg-card rounded-[10px] border p-3'>
           <div className='space-y-3'>
             {activityEntries.map(entry => {
               const Icon = entry.icon;
@@ -154,8 +136,8 @@ export function SkillsFundSidebar({
                     <Icon className='size-4' />
                   </div>
                   <div className='min-w-0'>
-                    <p className='text-sm font-semibold text-foreground'>{entry.title}</p>
-                    <p className='text-[0.82rem] text-muted-foreground'>
+                    <p className='text-foreground text-sm font-semibold'>{entry.title}</p>
+                    <p className='text-muted-foreground text-[0.82rem]'>
                       {entry.amount} <span className='mx-1'>•</span> {entry.date}
                     </p>
                   </div>
@@ -164,17 +146,14 @@ export function SkillsFundSidebar({
             })}
           </div>
 
-          <Button
-            variant='outline'
-            className='mt-3 h-9 w-full rounded-[8px] text-sm'
-          >
+          <Button variant='outline' className='mt-3 h-9 w-full rounded-[8px] text-sm'>
             View Full History
           </Button>
         </div>
       </SidebarSection>
 
       <SidebarSection title='Top Funding Resources'>
-        <div className='rounded-[10px] border border-border bg-card p-3'>
+        <div className='border-border bg-card rounded-[10px] border p-3'>
           <div className='space-y-2.5'>
             {resources.map(resource => {
               const Icon = resource.icon;
@@ -182,12 +161,12 @@ export function SkillsFundSidebar({
               return (
                 <div
                   key={resource.id}
-                  className='flex items-center gap-3 rounded-[8px] border border-border/60 px-2.5 py-2'
+                  className='border-border/60 flex items-center gap-3 rounded-[8px] border px-2.5 py-2'
                 >
-                  <div className='flex h-7 w-7 items-center justify-center rounded-[7px] bg-primary/10 text-primary'>
+                  <div className='bg-primary/10 text-primary flex h-7 w-7 items-center justify-center rounded-[7px]'>
                     <Icon className='size-4' />
                   </div>
-                  <span className='text-sm font-medium text-foreground'>{resource.title}</span>
+                  <span className='text-foreground text-sm font-medium'>{resource.title}</span>
                 </div>
               );
             })}

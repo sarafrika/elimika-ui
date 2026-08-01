@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import type {
   GetAllClassDefinitionsResponse,
   GetCourseByUuidResponse,
-  GetInstructorByUuidResponse
+  GetInstructorByUuidResponse,
 } from '../services/client';
 import {
   getAllClassDefinitionsOptions,

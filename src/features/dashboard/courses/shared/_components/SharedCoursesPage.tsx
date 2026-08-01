@@ -23,6 +23,10 @@ import {
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
+import { useOrganisation } from '@/context/organisation-context';
+import { useUserProfile } from '@/context/profile-context';
+import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
+import { averageRating, useCourseReviewsMap } from '@/hooks/use-reviews-map';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import type { UserDomain } from '@/lib/types';
 import { ApplicantTypeEnum } from '@/services/client';
@@ -42,6 +46,26 @@ import {
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Category, CourseReview } from '@/services/client/types.gen';
+import {
+  type CoursesCatalogCardData,
+  type CoursesCatalogTab,
+  type CoursesFilterSection,
+  type CoursesRecommendationCardData,
+  formatDurationFromParts,
+  getApplyToTrainHref,
+  getCardPresentation,
+  getCategoryTilePresentation,
+  getContentHref,
+  getDurationBucket,
+  getEnrollHref,
+  getInstructorHref,
+  stripHtml,
+} from '@/src/features/dashboard/courses/shared/_components/courses-data';
+import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
+import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryFilters';
+import { CoursesCategoryTabs } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryTabs';
+import { CoursesRecommendationCard } from '@/src/features/dashboard/courses/shared/_components/CoursesRecommendationCard';
+import { StudentCoursesCard } from '@/src/features/dashboard/courses/shared/_components/StudentCoursesCard';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -59,29 +83,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { useOrganisation } from '@/context/organisation-context';
-import { useUserProfile } from '@/context/profile-context';
-import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
-import { averageRating, useCourseReviewsMap } from '@/hooks/use-reviews-map';
-import {
-  type CoursesCatalogCardData,
-  type CoursesCatalogTab,
-  type CoursesFilterSection,
-  type CoursesRecommendationCardData,
-  formatDurationFromParts,
-  getApplyToTrainHref,
-  getCardPresentation,
-  getCategoryTilePresentation,
-  getContentHref,
-  getDurationBucket,
-  getEnrollHref,
-  getInstructorHref,
-  stripHtml
-} from '@/src/features/dashboard/courses/shared/_components/courses-data';
-import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
-import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryFilters';
-import { CoursesCategoryTabs } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryTabs';
-import { CoursesRecommendationCard } from '@/src/features/dashboard/courses/shared/_components/CoursesRecommendationCard';
 
 type SharedCoursesPageProps = {
   domain: UserDomain;
@@ -111,9 +112,9 @@ export type UnifiedContentItem = {
   enrollmentCount?: number | undefined;
   imageTone?: string;
   icon?: LucideIcon | undefined;
-  category: string,
-  subject: string,
-  programType: string
+  category: string;
+  subject: string;
+  programType: string;
 };
 
 type FilterValues = Record<CoursesFilterSection['key'], string>;
@@ -187,7 +188,11 @@ const createCatalogCards = (
       ctaDisabled: isInstructorApplyCard
         ? isOrganisationDomain
           ? !canOrganisationApply ||
-          Boolean(applicationStatus && applicationStatus !== 'revoked' && applicationStatus !== 'approved')
+            Boolean(
+              applicationStatus &&
+                applicationStatus !== 'revoked' &&
+                applicationStatus !== 'approved'
+            )
           : Boolean(applicationStatus && applicationStatus !== 'revoked')
         : false,
       ctaKind: isInstructorApplyCard
@@ -220,7 +225,7 @@ const createCatalogCards = (
       certificateHref: '',
       category: '',
       subject: '',
-      programType: ''
+      programType: '',
     };
   });
 
@@ -264,7 +269,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const organisation = useOrganisation();
   const student = user?.student;
   const { classDefinitions, loading: studentCoursesLoading } = useStudentClassDefinitions(
-    domain === 'student' ? student ?? undefined : undefined
+    domain === 'student' ? (student ?? undefined) : undefined
   );
 
   const isInstructorDomain = domain === 'instructor';
@@ -285,7 +290,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const [filters, setFilters] = useState<FilterValues>(defaultFilterValues);
   const [currentCatalogPage, setCurrentCatalogPage] = useState(1);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
-  const [selectedApplicationCard, setSelectedApplicationCard] = useState<CoursesCatalogCardData | CoursesRecommendationCardData | null>(null);
+  const [selectedApplicationCard, setSelectedApplicationCard] = useState<
+    CoursesCatalogCardData | CoursesRecommendationCardData | null
+  >(null);
 
   const { data: coursesResponse, isLoading: coursesLoading } = useQuery({
     ...getPublishedCoursesOptions({
@@ -370,8 +377,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   );
 
   const difficultyMap = useMemo(
-    () =>
-      new Map((difficultiesResponse?.data ?? []).map(level => [level.uuid ?? '', level.name])),
+    () => new Map((difficultiesResponse?.data ?? []).map(level => [level.uuid ?? '', level.name])),
     [difficultiesResponse]
   );
 
@@ -427,7 +433,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           enrollmentCount: enrollments?.count,
           category: '',
           subject: '',
-          programType: ''
+          programType: '',
         };
       }),
     [categoryMap, courseEnrollmentMap, domain, programs, reviewMap]
@@ -444,9 +450,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           kind: 'course',
           title: course.name,
           description: stripHtml(course.description),
-          createdAt: course.created_date
-            ? new Date(course.created_date).getTime()
-            : 0,
+          createdAt: course.created_date ? new Date(course.created_date).getTime() : 0,
           durationMinutes: course.duration_hours * 60 + course.duration_minutes,
           durationLabel: formatDurationFromParts(
             course.duration_hours,
@@ -471,7 +475,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           enrollmentCount: enrollments?.count,
           category: '',
           subject: '',
-          programType: ''
+          programType: '',
         };
       }),
     [courseEnrollmentMap, courses, difficultyMap, domain, reviewMap]
@@ -481,7 +485,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     const ids = new Set<string>();
 
     instructorCourseApplications?.data?.content?.forEach(application => {
-      if (normalizeApplicationStatus(application.status) === 'approved' && application.course_uuid) {
+      if (
+        normalizeApplicationStatus(application.status) === 'approved' &&
+        application.course_uuid
+      ) {
         ids.add(application.course_uuid);
       }
     });
@@ -493,7 +500,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     const ids = new Set<string>();
 
     instructorProgramApplications?.data?.content?.forEach(application => {
-      if (normalizeApplicationStatus(application.status) === 'approved' && application.program_uuid) {
+      if (
+        normalizeApplicationStatus(application.status) === 'approved' &&
+        application.program_uuid
+      ) {
         ids.add(application.program_uuid);
       }
     });
@@ -505,7 +515,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     const ids = new Set<string>();
 
     organisationCourseApplications?.data?.content?.forEach(application => {
-      if (normalizeApplicationStatus(application.status) === 'approved' && application.course_uuid) {
+      if (
+        normalizeApplicationStatus(application.status) === 'approved' &&
+        application.course_uuid
+      ) {
         ids.add(application.course_uuid);
       }
     });
@@ -517,7 +530,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     const ids = new Set<string>();
 
     organisationProgramApplications?.data?.content?.forEach(application => {
-      if (normalizeApplicationStatus(application.status) === 'approved' && application.program_uuid) {
+      if (
+        normalizeApplicationStatus(application.status) === 'approved' &&
+        application.program_uuid
+      ) {
         ids.add(application.program_uuid);
       }
     });
@@ -575,7 +591,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           enrollmentCount: enrollments?.count,
           category: '',
           subject: '',
-          programType: ''
+          programType: '',
         });
       });
 
@@ -626,8 +642,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     () => categories.map((category, index) => getCategoryTilePresentation(category.name, index)),
     [categories]
   );
-
-
 
   const filterSections = useMemo<CoursesFilterSection[]>(
     () => [
@@ -693,12 +707,13 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     price: '',
   });
 
-  const [activeFilter, setActiveFilter] = useState<
-    CoursesFilterSection['key'] | null
-  >(filterSections[0]?.key ?? null);
+  const [activeFilter, setActiveFilter] = useState<CoursesFilterSection['key'] | null>(
+    filterSections[0]?.key ?? null
+  );
 
   const allCoursesFeed = useMemo(
-    () => [...mappedPrograms, ...mappedCourses].sort((left, right) => right.createdAt - left.createdAt),
+    () =>
+      [...mappedPrograms, ...mappedCourses].sort((left, right) => right.createdAt - left.createdAt),
     [mappedCourses, mappedPrograms]
   );
 
@@ -742,10 +757,12 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           );
 
         const matchesLevel =
-          filters.level === 'all' || item.levelLabel?.toLowerCase() === resolvedDifficultyLabel.toLowerCase();
+          filters.level === 'all' ||
+          item.levelLabel?.toLowerCase() === resolvedDifficultyLabel.toLowerCase();
 
         const matchesDuration =
-          filters.duration === 'all' || getDurationBucket(item.durationMinutes) === filters.duration;
+          filters.duration === 'all' ||
+          getDurationBucket(item.durationMinutes) === filters.duration;
 
         const matchesPrice =
           filters.price === 'all' ||
@@ -869,12 +886,19 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     }
 
     return allCoursesFeed.slice(0, 6);
-  }, [allCoursesFeed, instructorCourseApplicationMap, isInstructorDomain, recommendationsQuery.data]);
+  }, [
+    allCoursesFeed,
+    instructorCourseApplicationMap,
+    isInstructorDomain,
+    recommendationsQuery.data,
+  ]);
 
   const creatorIds = useMemo(
     () =>
       Array.from(
-        new Set([...filteredItems, ...recommendedBase].map(item => item.creatorUuid).filter(Boolean))
+        new Set(
+          [...filteredItems, ...recommendedBase].map(item => item.creatorUuid).filter(Boolean)
+        )
       ),
     [filteredItems, recommendedBase]
   );
@@ -901,7 +925,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
     return map;
   }, [creatorQuery.data]);
-
 
   const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
   const applyToTrainProgramMut = useMutation(submitProgramTrainingApplicationMutation());
@@ -1048,7 +1071,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const handleRecommendedApply = (card: CoursesRecommendationCardData) => {
     setSelectedApplicationCard(card);
     setApplyModalOpen(true);
-  }
+  };
 
   const handleApplyToTrain = (data: {
     notes: string;
@@ -1145,65 +1168,76 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           : 'Discover courses and programmes across the platform.';
 
   return (
-    <div className='mx-auto w-full max-w-[1680px] bg-background px-3 py-4 sm:px-4 lg:px-6 2xl:px-8'>
+    <div className='bg-background mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-4 lg:px-6 2xl:px-8'>
       <div className='space-y-6'>
-        <header className='border-border bg-card rounded-xl border p-4 sm:p-5'>
-          <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-            <div className='min-w-0'>
-              <h1 className='text-foreground text-[clamp(1.35rem,2vw,1.75rem)] font-semibold tracking-[-0.02em]'>
-                Course Catalogue
-              </h1>
-              <p className='text-muted-foreground mt-1 max-w-2xl text-sm sm:text-[0.95rem]'>
-                {catalogueSubtitle}
+        {isStudentDomain ? (
+          <div className=''>
+            <div className='mx-auto pb-4'>
+              <h1 className='text-2xl font-bold'>Start a Course</h1>
+              <p className='text-muted-foreground/60 text-sm'>
+                Choose how you want to learn — join a class or find an instructor.
               </p>
             </div>
+          </div>
+        ) : (
+          <header className='border-border bg-card rounded-xl border p-4 sm:p-5'>
+            <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+              <div className='min-w-0'>
+                <h1 className='text-foreground text-[clamp(1.35rem,2vw,1.75rem)] font-semibold tracking-[-0.02em]'>
+                  Course Catalogue
+                </h1>
+                <p className='text-muted-foreground mt-1 max-w-2xl text-sm sm:text-[0.95rem]'>
+                  {catalogueSubtitle}
+                </p>
+              </div>
 
-            <div className='flex flex-wrap gap-2'>
-              <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
-                <GraduationCap className='text-primary size-4' />
-                <span className='text-foreground text-sm font-semibold tabular-nums'>
-                  {mappedCourses.length}
+              <div className='flex flex-wrap gap-2'>
+                <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
+                  <GraduationCap className='text-primary size-4' />
+                  <span className='text-foreground text-sm font-semibold tabular-nums'>
+                    {mappedCourses.length}
+                  </span>
+                  <span className='text-muted-foreground text-xs'>Courses</span>
                 </span>
-                <span className='text-muted-foreground text-xs'>Courses</span>
-              </span>
-              <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
-                <Layers className='text-primary size-4' />
-                <span className='text-foreground text-sm font-semibold tabular-nums'>
-                  {mappedPrograms.length}
+                <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
+                  <Layers className='text-primary size-4' />
+                  <span className='text-foreground text-sm font-semibold tabular-nums'>
+                    {mappedPrograms.length}
+                  </span>
+                  <span className='text-muted-foreground text-xs'>Programmes</span>
                 </span>
-                <span className='text-muted-foreground text-xs'>Programmes</span>
-              </span>
-              <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
-                <Users className='text-primary size-4' />
-                <span className='text-foreground text-sm font-semibold tabular-nums'>
-                  {providerCount}
+                <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
+                  <Users className='text-primary size-4' />
+                  <span className='text-foreground text-sm font-semibold tabular-nums'>
+                    {providerCount}
+                  </span>
+                  <span className='text-muted-foreground text-xs'>Providers</span>
                 </span>
-                <span className='text-muted-foreground text-xs'>Providers</span>
-              </span>
+              </div>
             </div>
-          </div>
 
-          <div className='relative mt-4'>
-            <Search className='text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2' />
-            <Input
-              value={search}
-              onChange={event => setSearch(event.target.value)}
-              placeholder='Search courses, programmes, providers…'
-              className='h-11 pl-9 pr-9'
-              aria-label='Search the course catalogue'
-            />
-            {search ? (
-              <button
-                type='button'
-                onClick={() => setSearch('')}
-                aria-label='Clear search'
-                className='text-muted-foreground hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2'
-              >
-                <X className='size-4' />
-              </button>
-            ) : null}
-          </div>
-        </header>
+            <div className='relative mt-4'>
+              <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+              <Input
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+                placeholder='Search courses, programmes, providers…'
+                className='h-11 pr-9 pl-9'
+                aria-label='Search the course catalogue'
+              />
+              {search ? (
+                <button
+                  type='button'
+                  onClick={() => setSearch('')}
+                  aria-label='Clear search'
+                  className='text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2'
+                >
+                  <X className='size-4' />
+                </button>
+              ) : null}
+            </div>
+          </header>
+        )}
 
         <CoursesCategoryTabs
           activeFilter={activeFilter}
@@ -1220,17 +1254,19 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         <section className='space-y-2'>
           <div className=''>
             <div className='space-y-2'>
-              <div className='bg-card p-0 rounded-sm'>
-                <div className='border-border bg-card sticky top-0 z-10 flex flex-row items-center justify-between gap-3 border-b py-2.5'>
-                  <p className="text-muted-foreground text-xs font-medium sm:text-sm">
-                    <span className='text-foreground font-semibold tabular-nums'>{filteredItems.length}</span>{' '}
-                    result{filteredItems.length === 1 ? "" : "s"}
+              <div className='bg-card rounded-sm p-0'>
+                <div className='border-border bg-card sticky top-0 z-10 flex flex-row items-center justify-between gap-3 py-2.5'>
+                  <p className='text-muted-foreground text-xs font-medium sm:text-sm'>
+                    <span className='text-foreground font-semibold tabular-nums'>
+                      {filteredItems.length}
+                    </span>{' '}
+                    result{filteredItems.length === 1 ? '' : 's'}
                     {normalizedSearch ? (
                       <span className='text-muted-foreground'> for “{search.trim()}”</span>
                     ) : null}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className='flex flex-wrap items-center gap-2'>
                     {activeFilterCount > 0 || normalizedSearch ? (
                       <Button
                         variant='ghost'
@@ -1246,8 +1282,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                     ) : null}
                     <Sheet open={open} onOpenChange={setOpen}>
                       <SheetTrigger asChild>
-                        <Button variant="outline" size='sm' className='h-9 gap-2'>
-                          <SlidersHorizontal className="size-4" />
+                        <Button variant='outline' size='sm' className='h-9 gap-2'>
+                          <SlidersHorizontal className='size-4' />
                           <span className='text-sm font-semibold'>Filters</span>
                           {activeFilterCount > 0 ? (
                             <span className='bg-primary text-primary-foreground inline-flex size-5 items-center justify-center rounded-full text-[0.7rem] font-semibold tabular-nums'>
@@ -1257,18 +1293,18 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                         </Button>
                       </SheetTrigger>
 
-                      <SheetContent className="flex h-full flex-col">
-                        <SheetHeader className='pb-0' >
+                      <SheetContent className='flex h-full flex-col'>
+                        <SheetHeader className='pb-0'>
                           <SheetTitle>Filters</SheetTitle>
                         </SheetHeader>
 
                         <SheetDescription asChild>
-                          <div className='hidden' >
+                          <div className='hidden'>
                             Filter courses by category, level, and other criteria.
                           </div>
                         </SheetDescription>
 
-                        <div className="flex-1 overflow-y-auto pr-2 mb-4">
+                        <div className='mb-4 flex-1 overflow-y-auto pr-2'>
                           <CoursesCategoryFilters
                             sections={filterSections}
                             selectedValues={filters}
@@ -1285,36 +1321,44 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                 </div>
 
                 {isLoading ? (
-                  <div className='grid gap-4 grid-cols-[repeat(auto-fit,minmax(320px,1fr))]'>
+                  <div className='grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-4'>
                     {Array.from({ length: 6 }).map((_, index) => (
-                      <div
-                        key={index}
-                        className="rounded-2xl border p-4 space-y-4"
-                      >
-                        <Skeleton className="h-40 w-full rounded-xl" />
-                        <Skeleton className="h-6 w-3/4" />
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-5/6" />
+                      <div key={index} className='space-y-4 rounded-2xl border p-4'>
+                        <Skeleton className='h-40 w-full rounded-xl' />
+                        <Skeleton className='h-6 w-3/4' />
+                        <div className='space-y-2'>
+                          <Skeleton className='h-4 w-full' />
+                          <Skeleton className='h-4 w-5/6' />
                         </div>
-                        <div className="flex items-center justify-between pt-2">
-                          <Skeleton className="h-5 w-20" />
-                          <Skeleton className="h-10 w-28 rounded-lg" />
+                        <div className='flex items-center justify-between pt-2'>
+                          <Skeleton className='h-5 w-20' />
+                          <Skeleton className='h-10 w-28 rounded-lg' />
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : catalogCards.length > 0 ? (
                   <div className=''>
-                    <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">
-                      {catalogCards.map(card => (
-                        <CoursesCatalogCard
-                          type='general'
-                          key={card.id}
-                          card={card}
-                          onPrimaryAction={handleCatalogCardAction}
-                        />
-                      ))}
+                    <div className='grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-4'>
+                      {!isStudentDomain &&
+                        catalogCards.map(card => (
+                          <CoursesCatalogCard
+                            type='general'
+                            key={card.id}
+                            card={card}
+                            onPrimaryAction={handleCatalogCardAction}
+                          />
+                        ))}
+
+                      {isStudentDomain &&
+                        catalogCards.map(card => (
+                          <StudentCoursesCard
+                            type='general'
+                            key={card.id}
+                            card={card}
+                            onPrimaryAction={handleCatalogCardAction}
+                          />
+                        ))}
                     </div>
 
                     {totalCatalogPages > 1 ? (
@@ -1371,7 +1415,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                               href='#'
                               onClick={event => {
                                 event.preventDefault();
-                                setCurrentCatalogPage(current => Math.min(totalCatalogPages, current + 1));
+                                setCurrentCatalogPage(current =>
+                                  Math.min(totalCatalogPages, current + 1)
+                                );
                               }}
                             />
                           </PaginationItem>
@@ -1400,73 +1446,79 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           </div>
         </section>
 
-        <section className='space-y-4'>
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-            <h2 className='text-foreground text-[clamp(1.1rem,1.5vw,1.35rem)] font-semibold tracking-[-0.02em]'>
-              Recommended for You
-            </h2>
-            <Link
-              href={buildWorkspaceAliasPath(domain, '/dashboard/courses')}
-              className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-semibold sm:text-sm'
-            >
-              View All
-              <ArrowRight className='size-3.5' />
-            </Link>
-          </div>
-
-          {isLoading ? (
-            <div className='grid gap-4 grid-cols-[repeat(auto-fit,minmax(270px,270px))]'>
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="rounded-2xl border p-4 space-y-4"
+        {!isStudentDomain && (
+          <>
+            <section className='space-y-4'>
+              <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                <h2 className='text-foreground text-[clamp(1.1rem,1.5vw,1.35rem)] font-semibold tracking-[-0.02em]'>
+                  Recommended for You
+                </h2>
+                <Link
+                  href={buildWorkspaceAliasPath(domain, '/dashboard/courses')}
+                  className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-semibold sm:text-sm'
                 >
-                  <Skeleton className="h-28 w-full rounded-xl" />
-                  <Skeleton className="h-6 w-3/4" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-5/6" />
-                  </div>
-                  <div className="flex items-center justify-between pt-2">
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-10 w-28 rounded-lg" />
-                  </div>
-                </div>))}
-            </div>
-          ) : recommendationCards.length > 0 ? (
-            <div className='scrollbar-hidden flex gap-4 overflow-x-auto pb-2'>
-              {recommendationCards.map(card => (
-                <CoursesRecommendationCard
-                  onApplyToTrain={handleRecommendedApply}
-                  key={card.id} card={card} />
-              ))}
-            </div>
-          ) : null}
-        </section>
+                  View All
+                  <ArrowRight className='size-3.5' />
+                </Link>
+              </div>
 
-        <section className='border-border bg-primary text-primary-foreground flex flex-col gap-4 rounded-[12px] border px-4 py-4 sm:px-5 md:flex-row md:items-center md:justify-between'>
-          <div className='flex items-start gap-3'>
-            <span className='mt-1 inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-background/15'>
-              <SquareDashedMousePointer className='size-4' />
-            </span>
-            <div>
-              <h2 className='text-[clamp(1rem,1.3vw,1.2rem)] font-semibold tracking-[-0.02em]'>
-                Want a structured career path?
-              </h2>
-              <p className='mt-1 text-sm text-primary-foreground/85 sm:text-[0.95rem]'>
-                Apply for a certified training program with funding opportunities.
-              </p>
-            </div>
-          </div>
+              {isLoading ? (
+                <div className='grid grid-cols-[repeat(auto-fit,minmax(270px,270px))] gap-4'>
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className='space-y-4 rounded-2xl border p-4'>
+                      <Skeleton className='h-28 w-full rounded-xl' />
+                      <Skeleton className='h-6 w-3/4' />
+                      <div className='space-y-2'>
+                        <Skeleton className='h-4 w-full' />
+                        <Skeleton className='h-4 w-5/6' />
+                      </div>
+                      <div className='flex items-center justify-between pt-2'>
+                        <Skeleton className='h-5 w-20' />
+                        <Skeleton className='h-10 w-28 rounded-lg' />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : recommendationCards.length > 0 ? (
+                <div className='scrollbar-hidden flex gap-4 overflow-x-auto pb-2'>
+                  {recommendationCards.map(card => (
+                    <CoursesRecommendationCard
+                      onApplyToTrain={handleRecommendedApply}
+                      key={card.id}
+                      card={card}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </section>
 
-          <Button
-            asChild
-            variant='warning'
-            className='h-10 w-full rounded-xl px-5 text-sm font-semibold shadow-none sm:w-auto'
-          >
-            <Link href={buildWorkspaceAliasPath(domain, '/dashboard/skills-fund')}>Apply Now</Link>
-          </Button>
-        </section>
+            <section className='border-border bg-primary text-primary-foreground flex flex-col gap-4 rounded-[12px] border px-4 py-4 sm:px-5 md:flex-row md:items-center md:justify-between'>
+              <div className='flex items-start gap-3'>
+                <span className='bg-background/15 mt-1 inline-flex size-9 shrink-0 items-center justify-center rounded-xl'>
+                  <SquareDashedMousePointer className='size-4' />
+                </span>
+                <div>
+                  <h2 className='text-[clamp(1rem,1.3vw,1.2rem)] font-semibold tracking-[-0.02em]'>
+                    Want a structured career path?
+                  </h2>
+                  <p className='text-primary-foreground/85 mt-1 text-sm sm:text-[0.95rem]'>
+                    Apply for a certified training program with funding opportunities.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                asChild
+                variant='warning'
+                className='h-10 w-full rounded-xl px-5 text-sm font-semibold shadow-none sm:w-auto'
+              >
+                <Link href={buildWorkspaceAliasPath(domain, '/dashboard/skills-fund')}>
+                  Apply Now
+                </Link>
+              </Button>
+            </section>
+          </>
+        )}
       </div>
       {selectedApplicationCard ? (
         <NotesModal
@@ -1487,7 +1539,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
               <p>
                 You are applying to train the{' '}
                 {selectedApplicationCard.ctaKind === 'apply-program' ? 'program' : 'course'} titled{' '}
-                <span className='font-semibold'>&ldquo;{selectedApplicationCard.title}&rdquo;</span>.
+                <span className='font-semibold'>&ldquo;{selectedApplicationCard.title}&rdquo;</span>
+                .
               </p>
               <p>
                 Provider: <span className='font-medium'>{selectedApplicationCard.provider}</span>

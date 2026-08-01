@@ -163,7 +163,10 @@ export default function OrganisationCreateClassPage() {
     }
   }, [offerings, offering]);
 
-  const selectedOffering = useMemo(() => offerings.find(o => o.value === offering), [offerings, offering]);
+  const selectedOffering = useMemo(
+    () => offerings.find(o => o.value === offering),
+    [offerings, offering]
+  );
 
   // A course brings its own categories; a program has none per class, so the org picks one.
   const categoriesQuery = useQuery({
@@ -191,10 +194,15 @@ export default function OrganisationCreateClassPage() {
   const title = useMemo(() => selectedOffering?.label ?? 'New Class', [selectedOffering]);
 
   const instructorsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({ path: { uuid: organisationUuid, domainName: 'instructor' } }),
+    ...getUsersByOrganisationAndDomainOptions({
+      path: { uuid: organisationUuid, domainName: 'instructor' },
+    }),
     enabled: Boolean(organisationUuid),
   });
-  const instructors = useMemo(() => extractPage<User>(instructorsQuery.data).items, [instructorsQuery.data]);
+  const instructors = useMemo(
+    () => extractPage<User>(instructorsQuery.data).items,
+    [instructorsQuery.data]
+  );
   const [instructorUuid, setInstructorUuid] = useState('');
   const [onlyAvailable, setOnlyAvailable] = useState(true);
   useEffect(() => {
@@ -205,7 +213,10 @@ export default function OrganisationCreateClassPage() {
   const selectedInstructor = instructors.find(i => i.uuid === instructorUuid);
 
   const orgResourcesQuery = useQuery({
-    ...listResourcesOptions({ path: { organisationUuid }, query: { pageable: { page: 0, size: 100 }, active: true } }),
+    ...listResourcesOptions({
+      path: { organisationUuid },
+      query: { pageable: { page: 0, size: 100 }, active: true },
+    }),
     enabled: Boolean(organisationUuid),
   });
   const orgResources = useMemo(
@@ -269,7 +280,10 @@ export default function OrganisationCreateClassPage() {
   const [sessionDuration, setSessionDuration] = useState('2h');
   const [sessionStart, setSessionStart] = useState('10:00');
   const sessionEnd = sessionEndFor(sessionStart, sessionDuration);
-  const sortedPickedDates = useMemo(() => [...pickedDates].sort((a, b) => a.getTime() - b.getTime()), [pickedDates]);
+  const sortedPickedDates = useMemo(
+    () => [...pickedDates].sort((a, b) => a.getTime() - b.getTime()),
+    [pickedDates]
+  );
 
   const [academicPeriods, setAcademicPeriods] = useState<AcademicPeriod[]>([
     {
@@ -285,10 +299,25 @@ export default function OrganisationCreateClassPage() {
   useEffect(() => {
     if (mode !== 'pick' || pickedDates.length === 0) return;
     const sorted = [...pickedDates].sort((a, b) => a.getTime() - b.getTime());
-    const isoToKey: Record<number, DayKey> = { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
+    const isoToKey: Record<number, DayKey> = {
+      0: 'Sun',
+      1: 'Mon',
+      2: 'Tue',
+      3: 'Wed',
+      4: 'Thu',
+      5: 'Fri',
+      6: 'Sat',
+    };
     const next = {} as Record<DayKey, DayRow>;
-    for (const d of DAYS) next[d] = { active: false, start: sessionStart, end: sessionEnd, allDay: false };
-    for (const d of sorted) next[isoToKey[d.getDay()]] = { active: true, start: sessionStart, end: sessionEnd, allDay: false };
+    for (const d of DAYS)
+      next[d] = { active: false, start: sessionStart, end: sessionEnd, allDay: false };
+    for (const d of sorted)
+      next[isoToKey[d.getDay()]] = {
+        active: true,
+        start: sessionStart,
+        end: sessionEnd,
+        allDay: false,
+      };
     setDays(next);
     setStartDate(fmtDate(sorted[0]));
     setEndDate(fmtDate(sorted[sorted.length - 1]));
@@ -299,20 +328,31 @@ export default function OrganisationCreateClassPage() {
     const next = {} as Record<DayKey, DayRow>;
     for (const d of DAYS) next[d] = { active: false, start: '09:00', end: '10:00', allDay: false };
     for (const p of academicPeriods) {
-      for (const s of p.slots) next[s.day] = { active: true, start: s.start, end: s.end, allDay: false };
+      for (const s of p.slots)
+        next[s.day] = { active: true, start: s.start, end: s.end, allDay: false };
     }
     setDays(next);
-    const starts = academicPeriods.map(p => p.startDate).filter(Boolean).sort();
-    const ends = academicPeriods.map(p => p.endDate).filter(Boolean).sort();
+    const starts = academicPeriods
+      .map(p => p.startDate)
+      .filter(Boolean)
+      .sort();
+    const ends = academicPeriods
+      .map(p => p.endDate)
+      .filter(Boolean)
+      .sort();
     if (starts.length) setStartDate(starts[0]);
     if (ends.length) setEndDate(ends[ends.length - 1]);
   }, [mode, academicPeriods]);
 
   const activeDays = useMemo(() => DAYS.filter(d => days[d].active), [days]);
-  const upcomingSessions = useMemo(() => computeUpcomingSessions(startDate, endDate, days), [startDate, endDate, days]);
+  const upcomingSessions = useMemo(
+    () => computeUpcomingSessions(startDate, endDate, days),
+    [startDate, endDate, days]
+  );
   const totalSessions = upcomingSessions.length;
 
-  const updateDay = (d: DayKey, patch: Partial<DayRow>) => setDays(prev => ({ ...prev, [d]: { ...prev[d], ...patch } }));
+  const updateDay = (d: DayKey, patch: Partial<DayRow>) =>
+    setDays(prev => ({ ...prev, [d]: { ...prev[d], ...patch } }));
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const [resourceConflicts, setResourceConflicts] = useState<ConflictItem[]>([]);
@@ -419,8 +459,14 @@ export default function OrganisationCreateClassPage() {
       ...equipmentUuids.map(uuid => ({ resource_uuid: uuid, quantity: 1 })),
     ];
 
-    const apStarts = academicPeriods.map(p => p.startDate).filter(Boolean).sort();
-    const apEnds = academicPeriods.map(p => p.endDate).filter(Boolean).sort();
+    const apStarts = academicPeriods
+      .map(p => p.startDate)
+      .filter(Boolean)
+      .sort();
+    const apEnds = academicPeriods
+      .map(p => p.endDate)
+      .filter(Boolean)
+      .sort();
     const academicBounds =
       mode === 'academic' && apStarts.length > 0 && apEnds.length > 0
         ? {
@@ -431,7 +477,9 @@ export default function OrganisationCreateClassPage() {
 
     const payload: ClassMarketplaceJobRequest = {
       organisation_uuid: organisationUuid,
-      ...(offeringKind === 'program' ? { program_uuid: offeringUuid } : { course_uuid: offeringUuid }),
+      ...(offeringKind === 'program'
+        ? { program_uuid: offeringUuid }
+        : { course_uuid: offeringUuid }),
       title: title.trim(),
       class_visibility: 'PUBLIC',
       session_format: sessionFormat,
@@ -447,7 +495,9 @@ export default function OrganisationCreateClassPage() {
       ...(instructorUuid ? { preferred_instructor_uuid: instructorUuid } : {}),
       ...(targetGroupUuids.length > 0 ? { target_group_uuids: targetGroupUuids } : {}),
       // Courses inherit their categories from the course record; only programs carry a choice.
-      ...(offeringKind === 'program' && programCategoryUuid ? { category_uuid: programCategoryUuid } : {}),
+      ...(offeringKind === 'program' && programCategoryUuid
+        ? { category_uuid: programCategoryUuid }
+        : {}),
       remind_students: reminder.sendStudents,
       remind_instructor: reminder.sendInstructor,
       remind_via_email: reminder.email,
@@ -469,18 +519,22 @@ export default function OrganisationCreateClassPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6">
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <div className='mx-auto w-full max-w-[1200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
+      <form onSubmit={handleSubmit} className='space-y-6'>
         <PageHeader
-          title="Organisation — Create a class"
-          description="Configure course, instructor, location, and schedule, then publish. Naming an instructor assigns and schedules the class immediately (on their calendar and yours); leaving it unset posts the class for instructors to apply. The class belongs to your organisation."
+          title='Organisation — Create a class'
+          description='Configure course, instructor, location, and schedule, then publish. Naming an instructor assigns and schedules the class immediately (on their calendar and yours); leaving it unset posts the class for instructors to apply. The class belongs to your organisation.'
           action={
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={() => router.push('/dashboard/organisation/classes')}>
+            <div className='flex gap-2'>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => router.push('/dashboard/organisation/classes')}
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={createClass.isPending}>
-                {createClass.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+              <Button type='submit' disabled={createClass.isPending}>
+                {createClass.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
                 Publish Class
               </Button>
             </div>
@@ -594,7 +648,7 @@ export default function OrganisationCreateClassPage() {
         <UpcomingSessions sessions={upcomingSessions} />
 
         <ResourceConflictAlert
-          title="These sessions conflict with existing reservations"
+          title='These sessions conflict with existing reservations'
           conflicts={resourceConflicts}
         />
       </form>

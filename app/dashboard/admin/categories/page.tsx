@@ -41,7 +41,10 @@ export default function CategoriesPage() {
   const queryClient = useQueryClient();
   const listOptions = getAllCategoriesOptions({ query: { pageable: { page: 0, size: 200 } } });
   const { data, isLoading } = useQuery(listOptions);
-  const categories = useMemo(() => (data?.data?.content ?? []) as Category[], [data?.data?.content]);
+  const categories = useMemo(
+    () => (data?.data?.content ?? []) as Category[],
+    [data?.data?.content]
+  );
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
@@ -75,7 +78,11 @@ export default function CategoriesPage() {
 
   const submit = async () => {
     try {
-      const body: Category = { name: form.name, description: form.description || undefined, is_active: form.is_active };
+      const body: Category = {
+        name: form.name,
+        description: form.description || undefined,
+        is_active: form.is_active,
+      };
       if (editing?.uuid) {
         await update.mutateAsync({ path: { uuid: editing.uuid }, body: { ...editing, ...body } });
         toast.success('Category updated');
@@ -110,12 +117,12 @@ export default function CategoriesPage() {
         meta: { label: 'Category' },
         cell: ({ row }) => (
           <div className='flex items-center gap-3'>
-            <span className='flex size-9 items-center justify-center rounded-md border border-border/60 bg-muted/40'>
-              <FolderTree className='size-4 text-muted-foreground' />
+            <span className='border-border/60 bg-muted/40 flex size-9 items-center justify-center rounded-md border'>
+              <FolderTree className='text-muted-foreground size-4' />
             </span>
             <div className='min-w-0'>
-              <p className='truncate text-sm font-medium text-foreground'>{row.original.name}</p>
-              <p className='truncate text-xs text-muted-foreground'>
+              <p className='text-foreground truncate text-sm font-medium'>{row.original.name}</p>
+              <p className='text-muted-foreground truncate text-xs'>
                 {row.original.description || '—'}
               </p>
             </div>
@@ -152,7 +159,7 @@ export default function CategoriesPage() {
             <Button
               variant='ghost'
               size='icon'
-              className='size-8 text-destructive'
+              className='text-destructive size-8'
               disabled={remove.isPending}
               onClick={e => {
                 e.stopPropagation();
@@ -229,7 +236,7 @@ export default function CategoriesPage() {
                 className='min-h-20'
               />
             </div>
-            <div className='flex items-center justify-between rounded-md border border-border/70 bg-muted/30 px-4 py-3'>
+            <div className='border-border/70 bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3'>
               <Label htmlFor='is_active'>Active</Label>
               <Switch
                 id='is_active'

@@ -481,8 +481,8 @@ function SortablePracticeActivityCard({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`group flex w-full flex-col gap-4 rounded-2xl border border-border bg-card/80 p-4 shadow-lg dark:border-border/70 dark:bg-card/70 ${
-        isDragging ? 'ring-2 ring-primary/20 shadow-xl' : ''
+      className={`group border-border bg-card/80 dark:border-border/70 dark:bg-card/70 flex w-full flex-col gap-4 rounded-2xl border p-4 shadow-lg ${
+        isDragging ? 'ring-primary/20 shadow-xl ring-2' : ''
       }`}
     >
       <div className='flex items-start justify-between gap-4'>
@@ -700,8 +700,7 @@ export function PracticeActivityManager({
     practiceMetadata?.totalElements ?? practiceActivities.length
   );
   const hasPracticePrevious = practiceMetadata?.hasPrevious ?? practicePage > 0;
-  const hasPracticeNext =
-    practiceMetadata?.hasNext ?? practicePageNumber + 1 < practiceTotalPages;
+  const hasPracticeNext = practiceMetadata?.hasNext ?? practicePageNumber + 1 < practiceTotalPages;
 
   if (!enabled) {
     return (

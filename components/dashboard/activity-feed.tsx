@@ -32,10 +32,10 @@ export function ActivityFeed({
       <CardContent>
         {items.length === 0 ? (
           <div className='flex flex-col items-center justify-center gap-2 py-10 text-center'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground'>
+            <div className='bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-full'>
               <Activity className='h-5 w-5' />
             </div>
-            <p className='text-sm text-muted-foreground'>No recent activity yet.</p>
+            <p className='text-muted-foreground text-sm'>No recent activity yet.</p>
           </div>
         ) : (
           <ul className='space-y-3'>
@@ -51,7 +51,7 @@ export function ActivityFeed({
                 </div>
                 <div className='min-w-0 flex-1'>
                   <p className='text-sm font-medium'>{item.text}</p>
-                  <p className='text-xs text-muted-foreground'>{item.time}</p>
+                  <p className='text-muted-foreground text-xs'>{item.time}</p>
                 </div>
               </li>
             ))}

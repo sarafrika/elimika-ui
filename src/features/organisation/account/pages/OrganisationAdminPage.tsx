@@ -60,11 +60,7 @@ export default function AdminProfile() {
           <AdminCredentialsCard form={form} />
 
           <div className='flex justify-end pt-2'>
-            <Button
-              type='submit'
-              className='px-6'
-              disabled={form.formState.isSubmitting}
-            >
+            <Button type='submit' className='px-6' disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? (
                 <>
                   <Spinner />

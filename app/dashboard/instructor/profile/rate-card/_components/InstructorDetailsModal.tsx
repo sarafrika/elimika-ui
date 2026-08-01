@@ -12,7 +12,12 @@ import type { CourseTrainingApplication } from '@/services/client';
 
 type InstructorApplicationDetails = Pick<
   CourseTrainingApplication,
-  'applicant_uuid' | 'applicant_type' | 'application_notes' | 'review_notes' | 'status' | 'created_date'
+  | 'applicant_uuid'
+  | 'applicant_type'
+  | 'application_notes'
+  | 'review_notes'
+  | 'status'
+  | 'created_date'
 >;
 
 interface InstructorDetailsModalProps {

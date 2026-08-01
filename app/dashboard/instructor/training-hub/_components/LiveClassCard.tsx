@@ -20,10 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
-import {
-  isAuthenticatedMediaUrl,
-  toAuthenticatedMediaUrl
-} from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -38,17 +35,29 @@ import {
   Plus,
   Trash2,
   UserPlus,
-  Users
+  Users,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../../../../../components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '../../../../../components/ui/sheet';
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
 import { cn } from '../../../../../lib/utils';
-import { deactivateClassDefinitionMutation, getAllStudentsOptions, getClassDefinitionsForInstructorQueryKey, getCourseEnrollmentsOptions, getEnrollmentsForClassOptions } from '../../../../../services/client/@tanstack/react-query.gen';
+import {
+  deactivateClassDefinitionMutation,
+  getAllStudentsOptions,
+  getClassDefinitionsForInstructorQueryKey,
+  getCourseEnrollmentsOptions,
+  getEnrollmentsForClassOptions,
+} from '../../../../../services/client/@tanstack/react-query.gen';
 import { RichTextPreview } from '../../classes/class-training/[id]/_components/ClassTrainingPage';
 import type { TrainingHubLiveClass } from './training-hub-data';
 
@@ -56,11 +65,9 @@ type LiveClassCardProps = {
   liveClass: TrainingHubLiveClass;
 };
 
-export function LiveClassCard({
-  liveClass,
-}: LiveClassCardProps) {
-  const qc = useQueryClient()
-  const profile = useUserProfile()
+export function LiveClassCard({ liveClass }: LiveClassCardProps) {
+  const qc = useQueryClient();
+  const profile = useUserProfile();
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'enrolled' | 'not_enrolled'>('all');
@@ -68,19 +75,19 @@ export function LiveClassCard({
   const { data: courseEnrollments } = useQuery({
     ...getCourseEnrollmentsOptions({
       path: { courseUuid: liveClass?.class?.course_uuid as string },
-      query: { pageable: {} }
-    })
-  })
+      query: { pageable: {} },
+    }),
+  });
 
   const { data: classEnrollments } = useQuery({
     ...getEnrollmentsForClassOptions({
       path: { uuid: liveClass?.class?.uuid as string },
-    })
-  })
+    }),
+  });
 
   const { data: allStudents } = useQuery({
-    ...getAllStudentsOptions({ query: { pageable: {} } })
-  })
+    ...getAllStudentsOptions({ query: { pageable: {} } }),
+  });
 
   const studentUuids = useMemo(
     () =>
@@ -95,9 +102,7 @@ export function LiveClassCard({
   }, [studentUuids]);
 
   const classEnrolledSet = useMemo(() => {
-    return new Set(
-      (classEnrollments?.data ?? []).map(e => e.student_uuid)
-    );
+    return new Set((classEnrollments?.data ?? []).map(e => e.student_uuid));
   }, [classEnrollments]);
 
   const students = useMemo(() => {
@@ -121,9 +126,7 @@ export function LiveClassCard({
       .filter(student => {
         if (!search.trim()) return true;
 
-        return student.full_name
-          ?.toLowerCase()
-          .includes(search.toLowerCase());
+        return student.full_name?.toLowerCase().includes(search.toLowerCase());
       });
   }, [allStudents, enrolledSet, filter, search]);
 
@@ -167,7 +170,6 @@ export function LiveClassCard({
   //   },
   // });
 
-
   const imageUrl = toAuthenticatedMediaUrl(liveClass.imageUrl as string);
   const promotionalVideoUrl = toAuthenticatedMediaUrl(liveClass.promotionalVideoUrl as string);
 
@@ -186,10 +188,12 @@ export function LiveClassCard({
           setDeleteOpen(false);
 
           qc.invalidateQueries({
-            queryKey: getClassDefinitionsForInstructorQueryKey({ path: { instructorUuid: profile?.instructor?.uuid as string } })
-          })
+            queryKey: getClassDefinitionsForInstructorQueryKey({
+              path: { instructorUuid: profile?.instructor?.uuid as string },
+            }),
+          });
         },
-        onError: (error) => {
+        onError: error => {
           toast.error('Failed to delete class');
         },
       }
@@ -206,22 +210,18 @@ export function LiveClassCard({
   const statusConfig =
     liveClass.status === 'published'
       ? {
-        label: 'Published',
-        className:
-          'border-success/20 bg-success/10 text-success',
-      }
+          label: 'Published',
+          className: 'border-success/20 bg-success/10 text-success',
+        }
       : liveClass.status === 'draft'
         ? {
-          label: 'Draft',
-          className:
-            'border-warning/20 bg-warning/10 text-warning',
-        }
+            label: 'Draft',
+            className: 'border-warning/20 bg-warning/10 text-warning',
+          }
         : {
-          label: 'On-going',
-          className:
-            'border-primary/20 bg-primary/10 text-primary',
-        };
-
+            label: 'On-going',
+            className: 'border-primary/20 bg-primary/10 text-primary',
+          };
 
   const { difficultyMap } = useDifficultyLevels();
 
@@ -229,14 +229,14 @@ export function LiveClassCard({
   const sessionsRemaining =
     Number(liveClass?.sessions) - Number(liveClass?.class?.completed_session_count);
 
-  const completed = sessionsRemaining === 0
+  const completed = sessionsRemaining === 0;
 
   const formattedDate = liveClass?.class?.default_start_time
     ? new Date(liveClass.class.default_start_time).toLocaleDateString('en-KE', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
     : 'Not set';
 
   const bundledCourses = liveClass.programCourses ?? [];
@@ -244,10 +244,10 @@ export function LiveClassCard({
     new Set(
       [
         liveClass?.class?.course?.difficulty_uuid
-          ? difficultyMap[liveClass.class.course.difficulty_uuid] ?? 'General'
+          ? (difficultyMap[liveClass.class.course.difficulty_uuid] ?? 'General')
           : null,
         ...bundledCourses.map(course =>
-          course.difficulty_uuid ? difficultyMap[course.difficulty_uuid] ?? 'General' : 'General'
+          course.difficulty_uuid ? (difficultyMap[course.difficulty_uuid] ?? 'General') : 'General'
         ),
       ].filter((value): value is string => Boolean(value))
     )
@@ -260,26 +260,24 @@ export function LiveClassCard({
 
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  const timeHrsMinutes = `${hours} hrs ${minutes} mins`
+  const timeHrsMinutes = `${hours} hrs ${minutes} mins`;
 
   return (
-    <Card className='overflow-hidden p-0 rounded-md border border-border/60 bg-card shadow-sm'>
+    <Card className='border-border/60 bg-card overflow-hidden rounded-md border p-0 shadow-sm'>
       <CardContent className='p-0'>
         <div className='flex flex-col'>
           {/* TOP SECTION */}
           <div className='flex flex-col gap-4 p-4 lg:flex-row lg:items-start'>
             <div>
               {/* IMAGE */}
-              <div className='hidden lg:flex relative h-[120px] w-full overflow-hidden rounded-md bg-muted lg:w-[180px] lg:min-w-[180px]'>
+              <div className='bg-muted relative hidden h-[120px] w-full overflow-hidden rounded-md lg:flex lg:w-[180px] lg:min-w-[180px]'>
                 {imageUrl ? (
                   <Image
                     src={imageUrl}
                     alt={liveClass.title}
                     fill
                     className='object-cover'
-                    unoptimized={isAuthenticatedMediaUrl(
-                      imageUrl
-                    )}
+                    unoptimized={isAuthenticatedMediaUrl(imageUrl)}
                   />
                 ) : (
                   <div className='bg-primary/10 text-primary flex h-full w-full items-center justify-center'>
@@ -304,16 +302,15 @@ export function LiveClassCard({
                 </div>
 
                 {/* DROPDOWN */}
-                <div className='flex flex-row items-center gap-2' >
+                <div className='flex flex-row items-center gap-2'>
                   <Button
                     variant='ghost'
-                    className='border mt-2 text-primary'
+                    className='text-primary mt-2 border'
                     onClick={() => setInviteOpen(true)}
                   >
                     <UserPlus />
                     <p>Invite student</p>
                   </Button>
-
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -321,16 +318,13 @@ export function LiveClassCard({
                         aria-label='More options'
                         variant='ghost'
                         size='icon'
-                        className='h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                        className='text-muted-foreground hover:bg-muted/60 hover:text-foreground h-9 w-9 shrink-0 rounded-full'
                       >
                         <EllipsisVertical className='size-4' />
                       </Button>
                     </DropdownMenuTrigger>
 
-                    <DropdownMenuContent
-                      align='end'
-                      className='w-52'
-                    >
+                    <DropdownMenuContent align='end' className='w-52'>
                       <DropdownMenuItem asChild>
                         <Link
                           href={`/dashboard/instructor/classes/new?id=${liveClass?.classUuid}`}
@@ -373,21 +367,18 @@ export function LiveClassCard({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-
-
-
               </div>
 
-              <div className='flex flex-wrap items-center gap-2 mt-2'>
-                <span className='inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
+              <div className='mt-2 flex flex-wrap items-center gap-2'>
+                <span className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'>
                   {liveClass.provider}
                 </span>
 
-                <span className='inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
+                <span className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'>
                   {timeHrsMinutes}
                 </span>
 
-                <span className='inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
+                <span className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'>
                   {liveClass.fee} /hr/student
                 </span>
 
@@ -395,7 +386,7 @@ export function LiveClassCard({
                   {topDifficultyLabels.map(difficulty => (
                     <span
                       key={difficulty}
-                      className='inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'
+                      className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'
                     >
                       {difficulty}
                     </span>
@@ -405,14 +396,14 @@ export function LiveClassCard({
 
               {bundledCourses.length > 0 && (
                 <div className='mt-3 flex flex-wrap items-center gap-2'>
-                  <span className='text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground'>
+                  <span className='text-muted-foreground text-[11px] font-medium tracking-[0.08em] uppercase'>
                     Program courses:
                   </span>
 
                   {bundledCourses.map((course, index) => (
                     <div
                       key={course.uuid ?? `${course.name}-${index}`}
-                      className='inline-flex items-center rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted'
+                      className='border-border/60 bg-muted/40 text-foreground hover:bg-muted inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors'
                     >
                       {course.name}
                     </div>
@@ -421,7 +412,7 @@ export function LiveClassCard({
               )}
 
               {/* STATS */}
-              <div className='mt-5 flex flex-wrap items-center justify-evenly gap-3 border-t border-border/60 pt-4'>
+              <div className='border-border/60 mt-5 flex flex-wrap items-center justify-evenly gap-3 border-t pt-4'>
                 <StatItem
                   icon={<BookOpen className='size-4' />}
                   value={liveClass.classes}
@@ -445,69 +436,60 @@ export function LiveClassCard({
                     {liveClass?.class?.location_type}
                   </p>
 
-                  <p className='text-xs opacity-80'>
-                    {liveClass?.class?.class_visibility}
-                  </p>
+                  <p className='text-xs opacity-80'>{liveClass?.class?.class_visibility}</p>
                 </div>
               </div>
             </div>
           </div>
 
-
-
-
           {/* BOTTOM SECTION */}
-          {completed ?
-            <div className="flex flex-col gap-4 bg-success/5 p-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success">
-                  <CheckCircle2 className="h-7 w-7" />
+          {completed ? (
+            <div className='bg-success/5 flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between'>
+              <div className='flex items-start gap-4'>
+                <div className='bg-success/15 text-success flex h-12 w-12 items-center justify-center rounded-full'>
+                  <CheckCircle2 className='h-7 w-7' />
                 </div>
 
                 <div>
-                  <div className="mb-2 flex items-center gap-2">
-                    <h3 className="font-semibold text-foreground">
-                      Training Completed
-                    </h3>
+                  <div className='mb-2 flex items-center gap-2'>
+                    <h3 className='text-foreground font-semibold'>Training Completed</h3>
 
-                    <span className="rounded-full bg-success/15 px-2.5 py-1 text-xs font-medium text-success">
+                    <span className='bg-success/15 text-success rounded-full px-2.5 py-1 text-xs font-medium'>
                       Completed
                     </span>
                   </div>
 
-                  <p className="text-sm text-muted-foreground">
+                  <p className='text-muted-foreground text-sm'>
                     You've successfully delivered all scheduled sessions for this class.
                   </p>
                 </div>
               </div>
 
-              <div className="flex w-full max-w-md flex-col md:flex-row gap-3 lg:w-auto">
+              <div className='flex w-full max-w-md flex-col gap-3 md:flex-row lg:w-auto'>
                 <Link
                   href={`/dashboard/instructor/classes/class-training/${liveClass.classUuid}`}
-                  className="inline-flex h-10 w-full items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2 min-w-fit"
+                  className='bg-success text-success-foreground hover:bg-success/90 focus:ring-success inline-flex h-10 w-full min-w-fit items-center justify-center rounded-md px-5 text-sm font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none'
                 >
                   View Class
                 </Link>
 
                 <Link
                   href={`/dashboard/instructor/classes/class-training/${liveClass.classUuid}/award-certificates`}
-                  className="inline-flex h-10 w-full text-center items-center justify-center rounded-md bg-success px-5 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2 min-w-fit"
+                  className='bg-success text-success-foreground hover:bg-success/90 focus:ring-success inline-flex h-10 w-full min-w-fit items-center justify-center rounded-md px-5 text-center text-sm font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none'
                 >
                   Certificates
                 </Link>
               </div>
             </div>
-            :
-            <div className='border-t border-border/60 bg-muted/20 px-4 py-4'>
+          ) : (
+            <div className='border-border/60 bg-muted/20 border-t px-4 py-4'>
               <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
                 {/* PROGRESS */}
                 <div className='min-w-0 flex-1'>
                   <div className='mb-2 flex items-center justify-between gap-3'>
-                    <p className='text-sm font-medium text-foreground'>
-                      Overall Progress
-                    </p>
+                    <p className='text-foreground text-sm font-medium'>Overall Progress</p>
 
-                    <p className='text-sm font-semibold text-primary'>
+                    <p className='text-primary text-sm font-semibold'>
                       {sessionsRemaining} Sessions Remaining
                     </p>
                   </div>
@@ -518,9 +500,7 @@ export function LiveClassCard({
                     indicatorClassName='bg-primary'
                   />
 
-                  <p className='text-muted-foreground mt-2 text-sm'>
-                    {progress}% completed
-                  </p>
+                  <p className='text-muted-foreground mt-2 text-sm'>{progress}% completed</p>
                 </div>
 
                 {/* ACTIONS */}
@@ -529,171 +509,145 @@ export function LiveClassCard({
                     href={(() => {
                       return `/dashboard/instructor/classes/class-training/${liveClass.classUuid}`;
                     })()}
-                    className='inline-flex h-9 min-w-[120px] items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90'
+                    className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 min-w-[120px] items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold transition'
                   >
                     Open Class
                   </Link>
                 </div>
               </div>
-
             </div>
-          }
+          )}
         </div>
       </CardContent>
-
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Delete Class?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Delete Class?</AlertDialogTitle>
 
             <AlertDialogDescription>
               Are you sure you want to delete{' '}
-              <span className='font-medium'>
-                "{liveClass.title}"
-              </span>
-              ? This action cannot be undone.
+              <span className='font-medium'>"{liveClass.title}"</span>? This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
 
             <AlertDialogAction
               onClick={handleDeleteClass}
               disabled={deleteClassMut.isPending}
               className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
             >
-              {deleteClassMut.isPending
-                ? 'Deleting...'
-                : 'Delete Class'}
+              {deleteClassMut.isPending ? 'Deleting...' : 'Delete Class'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-
       <Sheet open={inviteOpen} onOpenChange={setInviteOpen}>
-        <SheetContent
-          side="right"
-          className="flex w-full flex-col p-0 sm:max-w-xl"
-        >
-          <div className="border-b px-3">
+        <SheetContent side='right' className='flex w-full flex-col p-0 sm:max-w-xl'>
+          <div className='border-b px-3'>
             <SheetHeader>
               <SheetTitle>Invite Students</SheetTitle>
 
-              <SheetDescription>
-                Invite students to join your live class.
-              </SheetDescription>
+              <SheetDescription>Invite students to join your live class.</SheetDescription>
             </SheetHeader>
           </div>
 
           {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="space-y-6 px-3">
+          <div className='flex-1 overflow-y-auto'>
+            <div className='space-y-6 px-3'>
               <div>
-                <h3 className="mb-3 text-sm font-medium">
-                  Select students
-                </h3>
+                <h3 className='mb-3 text-sm font-medium'>Select students</h3>
 
-                <div className="flex flex-row gap-2 mb-3">
+                <div className='mb-3 flex flex-row gap-2'>
                   <input
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search students..."
-                    className="h-9 w-full rounded-md border px-3 text-sm"
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder='Search students...'
+                    className='h-9 w-full rounded-md border px-3 text-sm'
                   />
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Filter className="h-4 w-4 mr-2" />
+                      <Button variant='outline' size='sm'>
+                        <Filter className='mr-2 h-4 w-4' />
                         Filter
                       </Button>
                     </DropdownMenuTrigger>
 
-                    <DropdownMenuContent className="w-48" align="start">
+                    <DropdownMenuContent className='w-48' align='start'>
                       <DropdownMenuItem
-                        onClick={() => setFilter("all")}
+                        onClick={() => setFilter('all')}
                         className={cn(
-                          "flex items-center justify-between",
-                          filter === "all" && "bg-muted font-medium"
+                          'flex items-center justify-between',
+                          filter === 'all' && 'bg-muted font-medium'
                         )}
                       >
                         All
-                        {filter === "all" && <Check className="h-4 w-4" />}
+                        {filter === 'all' && <Check className='h-4 w-4' />}
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
-                        onClick={() => setFilter("enrolled")}
+                        onClick={() => setFilter('enrolled')}
                         className={cn(
-                          "flex items-center justify-between",
-                          filter === "enrolled" && "bg-muted font-medium"
+                          'flex items-center justify-between',
+                          filter === 'enrolled' && 'bg-muted font-medium'
                         )}
                       >
                         Enrolled
-                        {filter === "enrolled" && <Check className="h-4 w-4" />}
+                        {filter === 'enrolled' && <Check className='h-4 w-4' />}
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
-                        onClick={() => setFilter("not_enrolled")}
+                        onClick={() => setFilter('not_enrolled')}
                         className={cn(
-                          "flex items-center justify-between",
-                          filter === "not_enrolled" && "bg-muted font-medium"
+                          'flex items-center justify-between',
+                          filter === 'not_enrolled' && 'bg-muted font-medium'
                         )}
                       >
                         Not enrolled
-                        {filter === "not_enrolled" && <Check className="h-4 w-4" />}
+                        {filter === 'not_enrolled' && <Check className='h-4 w-4' />}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
 
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   {filteredStudents.map(student => {
-                    const selected = selectedStudentUuids.includes(
-                      student?.uuid as string
-                    );
+                    const selected = selectedStudentUuids.includes(student?.uuid as string);
 
                     return (
                       <button
                         key={student?.uuid}
-                        type="button"
+                        type='button'
                         onClick={() => toggleStudent(student?.uuid as string)}
                         className={cn(
-                          "flex w-full items-start justify-between rounded-lg border p-3 text-left transition-colors",
-                          selected &&
-                          "border-primary bg-primary/5"
+                          'flex w-full items-start justify-between rounded-lg border p-3 text-left transition-colors',
+                          selected && 'border-primary bg-primary/5'
                         )}
                       >
-                        <div className="min-w-0 w-full flex flex-row items-center justify-between">
-                          <p className="truncate font-medium text-sm">
-                            {student?.full_name}
-                          </p>
+                        <div className='flex w-full min-w-0 flex-row items-center justify-between'>
+                          <p className='truncate text-sm font-medium'>{student?.full_name}</p>
 
-
-                          <div className='flex flex-row items-center gapp-2' >
-                            <p className="truncate font-medium flex items-center gap-2">
+                          <div className='gapp-2 flex flex-row items-center'>
+                            <p className='flex items-center gap-2 truncate font-medium'>
                               {classEnrolledSet.has(student?.uuid as string) && (
-                                <span className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary">
+                                <span className='bg-primary/10 text-primary rounded px-2 py-0.5 text-[10px]'>
                                   Enrolled
                                 </span>
                               )}
                             </p>
                             <CircleCheck
                               className={cn(
-                                "h-5 w-5 transition-colors",
-                                selected ? "text-primary" : "hidden"
+                                'h-5 w-5 transition-colors',
+                                selected ? 'text-primary' : 'hidden'
                               )}
                             />
                           </div>
-
                         </div>
-
                       </button>
                     );
                   })}
@@ -742,9 +696,9 @@ export function LiveClassCard({
           </div>
 
           {/* Fixed footer */}
-          <div className="bg-background border-t p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-muted-foreground text-sm">
+          <div className='bg-background border-t p-4'>
+            <div className='flex items-center justify-between'>
+              <p className='text-muted-foreground text-sm'>
                 {selectedStudentUuids.length} selected
               </p>
 
@@ -756,9 +710,7 @@ export function LiveClassCard({
               // onClick={() => inviteStudentsMutation.mutate()}
               >
                 Send invite
-                {selectedStudentUuids.length > 0
-                  ? ` (${selectedStudentUuids.length})`
-                  : ""}
+                {selectedStudentUuids.length > 0 ? ` (${selectedStudentUuids.length})` : ''}
               </Button>
             </div>
           </div>
@@ -768,29 +720,15 @@ export function LiveClassCard({
   );
 }
 
-function StatItem({
-  icon,
-  value,
-  label,
-}: {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-}) {
+function StatItem({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (
-    <div className='flex items-start gap-2 border-border/50 md:border-r md:pr-3 last:border-r-0'>
-      <div className='text-muted-foreground mt-0.5 shrink-0'>
-        {icon}
-      </div>
+    <div className='border-border/50 flex items-start gap-2 last:border-r-0 md:border-r md:pr-3'>
+      <div className='text-muted-foreground mt-0.5 shrink-0'>{icon}</div>
 
       <div className='min-w-0'>
-        <p className='text-foreground truncate text-sm font-semibold'>
-          {value}
-        </p>
+        <p className='text-foreground truncate text-sm font-semibold'>{value}</p>
 
-        <p className='text-muted-foreground text-xs'>
-          {label}
-        </p>
+        <p className='text-muted-foreground text-xs'>{label}</p>
       </div>
     </div>
   );

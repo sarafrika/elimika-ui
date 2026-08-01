@@ -118,8 +118,7 @@ export default function ProfessionalExperienceSettings() {
     mode: 'onChange',
   });
 
-
-  const experiences = useWatch({ control: form.control, name: 'experiences', });
+  const experiences = useWatch({ control: form.control, name: 'experiences' });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -299,46 +298,45 @@ export default function ProfessionalExperienceSettings() {
               </Button>
             }
           >
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {fields.map((field, index) => {
                 const exp = experiences?.[index];
 
                 return (
                   <div
                     key={field.id}
-                    className="bg-card group hover:bg-accent/5 relative rounded-md border transition-all"
+                    className='bg-card group hover:bg-accent/5 relative rounded-md border transition-all'
                   >
-                    <div className="space-y-5 p-5">
-
+                    <div className='space-y-5 p-5'>
                       {/* Header */}
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-3">
-                          <Grip className="text-muted-foreground mt-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100" />
+                      <div className='flex items-start justify-between gap-4'>
+                        <div className='flex items-start gap-3'>
+                          <Grip className='text-muted-foreground mt-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100' />
 
                           <div>
-                            <h3 className="text-base font-medium">
+                            <h3 className='text-base font-medium'>
                               {exp?.organisation_name || 'New experience'}
                             </h3>
 
-                            <p className="text-muted-foreground text-sm">
+                            <p className='text-muted-foreground text-sm'>
                               {exp?.position || 'Role not set'}
                             </p>
                           </div>
                         </div>
 
                         <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="hover:bg-destructive-foreground h-8 w-8"
+                          type='button'
+                          variant='ghost'
+                          size='icon'
+                          className='hover:bg-destructive-foreground h-8 w-8'
                           onClick={() => onDelete(index)}
                         >
-                          <Trash2 className="text-destructive h-4 w-4" />
+                          <Trash2 className='text-destructive h-4 w-4' />
                         </Button>
                       </div>
 
                       {/* Row 1 */}
-                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
                         <FormField
                           control={form.control}
                           name={`experiences.${index}.organisation_name`}
@@ -346,7 +344,7 @@ export default function ProfessionalExperienceSettings() {
                             <FormItem>
                               <FormLabel>Organisation</FormLabel>
                               <FormControl>
-                                <Input placeholder="e.g. WHO" {...field} />
+                                <Input placeholder='e.g. WHO' {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -360,7 +358,7 @@ export default function ProfessionalExperienceSettings() {
                             <FormItem>
                               <FormLabel>Job title</FormLabel>
                               <FormControl>
-                                <Input placeholder="e.g. Analyst" {...field} />
+                                <Input placeholder='e.g. Analyst' {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -369,7 +367,7 @@ export default function ProfessionalExperienceSettings() {
                       </div>
 
                       {/* Row 2 */}
-                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
                         <FormField
                           control={form.control}
                           name={`experiences.${index}.start_date`}
@@ -377,7 +375,7 @@ export default function ProfessionalExperienceSettings() {
                             <FormItem>
                               <FormLabel>Start date</FormLabel>
                               <FormControl>
-                                <Input type="month" {...field} />
+                                <Input type='month' {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -395,19 +393,15 @@ export default function ProfessionalExperienceSettings() {
                                 <FormLabel>End date</FormLabel>
 
                                 <FormControl>
-                                  <Input
-                                    type="month"
-                                    disabled={isCurrent}
-                                    {...field}
-                                  />
+                                  <Input type='month' disabled={isCurrent} {...field} />
                                 </FormControl>
 
-                                <div className="mt-2 flex items-center space-x-2">
+                                <div className='mt-2 flex items-center space-x-2'>
                                   <FormField
                                     control={form.control}
                                     name={`experiences.${index}.is_current_position`}
                                     render={({ field }) => (
-                                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                      <FormItem className='flex flex-row items-start space-y-0 space-x-3'>
                                         <FormControl>
                                           <Checkbox
                                             checked={field.value}
@@ -436,8 +430,8 @@ export default function ProfessionalExperienceSettings() {
                             <FormLabel>Work description</FormLabel>
                             <FormControl>
                               <Textarea
-                                placeholder="Responsibilities, accomplishments…"
-                                className="min-h-24 resize-y"
+                                placeholder='Responsibilities, accomplishments…'
+                                className='min-h-24 resize-y'
                                 {...field}
                               />
                             </FormControl>

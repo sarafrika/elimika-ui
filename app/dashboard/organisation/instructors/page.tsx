@@ -30,9 +30,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractList } from '@/lib/api-helpers';
 import type { OrgInstructorSummary } from '@/services/client';
@@ -98,40 +111,46 @@ export default function InstructorsPage() {
   const selected = instructors.find(i => i.user_uuid === selectedUuid);
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]">
+    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
-        title="Instructors & Staff"
-        description="Onboard instructors, assign courses, and track performance."
+        title='Instructors & Staff'
+        description='Onboard instructors, assign courses, and track performance.'
         action={
-          <Button onClick={() => toast.info('Post a job', { description: 'Create an instructor job from a course to receive applications.' })}>
-            <Briefcase className="mr-2 h-4 w-4" /> Post a job
+          <Button
+            onClick={() =>
+              toast.info('Post a job', {
+                description: 'Create an instructor job from a course to receive applications.',
+              })
+            }
+          >
+            <Briefcase className='mr-2 h-4 w-4' /> Post a job
           </Button>
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.total}</div>
-            <div className="text-xs text-muted-foreground">Instructors</div>
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <Card className='border-l-primary border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.total}</div>
+            <div className='text-muted-foreground text-xs'>Instructors</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-success">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.totalClasses}</div>
-            <div className="text-xs text-muted-foreground">Assigned classes</div>
+        <Card className='border-l-success border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.totalClasses}</div>
+            <div className='text-muted-foreground text-xs'>Assigned classes</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-teal-400">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.rated}</div>
-            <div className="text-xs text-muted-foreground">With reviews</div>
+        <Card className='border-l-4 border-l-teal-400'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.rated}</div>
+            <div className='text-muted-foreground text-xs'>With reviews</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-warning">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{kpis.avgRating}</div>
-            <div className="text-xs text-muted-foreground">Avg. rating</div>
+        <Card className='border-l-warning border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{kpis.avgRating}</div>
+            <div className='text-muted-foreground text-xs'>Avg. rating</div>
           </CardContent>
         </Card>
       </div>
@@ -147,94 +166,135 @@ export default function InstructorsPage() {
       )}
 
       {summariesQuery.isLoading ? (
-        <div className="space-y-2">
+        <div className='space-y-2'>
           {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full" />
+            <Skeleton key={i} className='h-14 w-full' />
           ))}
         </div>
       ) : instructors.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-12 text-center">
-          <GraduationCap className="mx-auto h-8 w-8 text-muted-foreground" />
-          <div className="mt-2 font-medium">No instructors yet</div>
-          <p className="text-sm text-muted-foreground">Invite instructors to your organisation to see them here.</p>
+        <div className='rounded-lg border border-dashed p-12 text-center'>
+          <GraduationCap className='text-muted-foreground mx-auto h-8 w-8' />
+          <div className='mt-2 font-medium'>No instructors yet</div>
+          <p className='text-muted-foreground text-sm'>
+            Invite instructors to your organisation to see them here.
+          </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <Table className="min-w-[760px]">
+        <div className='overflow-x-auto rounded-lg border'>
+          <Table className='min-w-[760px]'>
             <TableHeader>
               <TableRow>
-                <TableHead className="whitespace-nowrap">Instructor</TableHead>
-                <TableHead className="min-w-[140px] whitespace-nowrap">
+                <TableHead className='whitespace-nowrap'>Instructor</TableHead>
+                <TableHead className='min-w-[140px] whitespace-nowrap'>
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    className="-ml-2 h-8 gap-1 px-2 font-medium"
-                    onClick={() => setLevelSort(s => (s === null ? 'desc' : s === 'desc' ? 'asc' : null))}
+                    variant='ghost'
+                    size='sm'
+                    className='-ml-2 h-8 gap-1 px-2 font-medium'
+                    onClick={() =>
+                      setLevelSort(s => (s === null ? 'desc' : s === 'desc' ? 'asc' : null))
+                    }
                   >
                     Level of study
                     {levelSort === 'asc' ? (
-                      <ArrowUp className="h-3.5 w-3.5" />
+                      <ArrowUp className='h-3.5 w-3.5' />
                     ) : levelSort === 'desc' ? (
-                      <ArrowDown className="h-3.5 w-3.5" />
+                      <ArrowDown className='h-3.5 w-3.5' />
                     ) : (
-                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      <ArrowUpDown className='text-muted-foreground h-3.5 w-3.5' />
                     )}
                   </Button>
                 </TableHead>
-                <TableHead className="min-w-[120px] whitespace-nowrap">Subject</TableHead>
-                <TableHead className="whitespace-nowrap">Status</TableHead>
-                <TableHead className="whitespace-nowrap text-center">Classes</TableHead>
-                <TableHead className="whitespace-nowrap">Rating</TableHead>
-                <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
+                <TableHead className='min-w-[120px] whitespace-nowrap'>Subject</TableHead>
+                <TableHead className='whitespace-nowrap'>Status</TableHead>
+                <TableHead className='text-center whitespace-nowrap'>Classes</TableHead>
+                <TableHead className='whitespace-nowrap'>Rating</TableHead>
+                <TableHead className='text-right whitespace-nowrap'>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sorted.map(i => (
-                <TableRow key={i.user_uuid} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedUuid(i.user_uuid ?? null)}>
-                  <TableCell className="whitespace-nowrap">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">{initials(i.full_name)}</AvatarFallback>
+                <TableRow
+                  key={i.user_uuid}
+                  className='hover:bg-muted/50 cursor-pointer'
+                  onClick={() => setSelectedUuid(i.user_uuid ?? null)}
+                >
+                  <TableCell className='whitespace-nowrap'>
+                    <div className='flex items-center gap-3'>
+                      <Avatar className='h-8 w-8 shrink-0'>
+                        <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
+                          {initials(i.full_name)}
+                        </AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{i.full_name}</span>
+                      <span className='font-medium'>{i.full_name}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="min-w-[120px] whitespace-nowrap">
-                    {i.highest_qualification ? <Badge variant="secondary">{i.highest_qualification}</Badge> : <span className="text-muted-foreground">—</span>}
+                  <TableCell className='min-w-[120px] whitespace-nowrap'>
+                    {i.highest_qualification ? (
+                      <Badge variant='secondary'>{i.highest_qualification}</Badge>
+                    ) : (
+                      <span className='text-muted-foreground'>—</span>
+                    )}
                   </TableCell>
-                  <TableCell className="min-w-[120px] whitespace-nowrap text-muted-foreground">{i.top_skill ?? i.field_of_study ?? '—'}</TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    <Badge variant="default">Active</Badge>
+                  <TableCell className='text-muted-foreground min-w-[120px] whitespace-nowrap'>
+                    {i.top_skill ?? i.field_of_study ?? '—'}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-center">{i.class_count ?? 0}</TableCell>
-                  <TableCell className="whitespace-nowrap font-medium">
+                  <TableCell className='whitespace-nowrap'>
+                    <Badge variant='default'>Active</Badge>
+                  </TableCell>
+                  <TableCell className='text-center whitespace-nowrap'>
+                    {i.class_count ?? 0}
+                  </TableCell>
+                  <TableCell className='font-medium whitespace-nowrap'>
                     {i.average_rating != null ? (
-                      <span className="inline-flex items-center gap-1">
-                        <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+                      <span className='inline-flex items-center gap-1'>
+                        <Star className='fill-warning text-warning h-3.5 w-3.5' />
                         {Number(i.average_rating).toFixed(1)}
-                        <span className="text-xs font-normal text-muted-foreground">({i.review_count ?? 0})</span>
+                        <span className='text-muted-foreground text-xs font-normal'>
+                          ({i.review_count ?? 0})
+                        </span>
                       </span>
                     ) : (
                       '—'
                     )}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-right">
+                  <TableCell className='text-right whitespace-nowrap'>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={e => e.stopPropagation()}>
-                          <MoreHorizontal className="h-4 w-4" />
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          className='h-8 w-8'
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className='h-4 w-4' />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={e => { e.stopPropagation(); toast.info('Message', { description: `Messaging ${i.full_name}.` }); }}>
-                          <MessageSquare className="mr-2 h-4 w-4" /> Message
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuItem
+                          onClick={e => {
+                            e.stopPropagation();
+                            toast.info('Message', { description: `Messaging ${i.full_name}.` });
+                          }}
+                        >
+                          <MessageSquare className='mr-2 h-4 w-4' /> Message
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={e => { e.stopPropagation(); toast.warning('Suspend', { description: `${i.full_name} suspended.` }); }}>
-                          <UserX className="mr-2 h-4 w-4" /> Suspend
+                        <DropdownMenuItem
+                          onClick={e => {
+                            e.stopPropagation();
+                            toast.warning('Suspend', { description: `${i.full_name} suspended.` });
+                          }}
+                        >
+                          <UserX className='mr-2 h-4 w-4' /> Suspend
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={e => { e.stopPropagation(); toast.error('Remove', { description: `${i.full_name} removed.` }); }}>
-                          <Trash2 className="mr-2 h-4 w-4" /> Remove
+                        <DropdownMenuItem
+                          className='text-destructive focus:text-destructive'
+                          onClick={e => {
+                            e.stopPropagation();
+                            toast.error('Remove', { description: `${i.full_name} removed.` });
+                          }}
+                        >
+                          <Trash2 className='mr-2 h-4 w-4' /> Remove
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -247,31 +307,42 @@ export default function InstructorsPage() {
       )}
 
       <Sheet open={selected != null} onOpenChange={o => !o && setSelectedUuid(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+        <SheetContent className='w-full overflow-y-auto sm:max-w-md'>
           {selected ? (
             <>
               <SheetHeader>
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-14 w-14">
-                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">{initials(selected.full_name)}</AvatarFallback>
+                <div className='flex items-center gap-4'>
+                  <Avatar className='h-14 w-14'>
+                    <AvatarFallback className='bg-primary/10 text-primary font-semibold'>
+                      {initials(selected.full_name)}
+                    </AvatarFallback>
                   </Avatar>
-                  <div className="min-w-0">
-                    <SheetTitle className="truncate">{selected.full_name}</SheetTitle>
-                    <SheetDescription>{selected.top_skill ?? selected.field_of_study ?? 'Instructor'}</SheetDescription>
-                    <div className="mt-2">
-                      <Badge variant="default">Active</Badge>
+                  <div className='min-w-0'>
+                    <SheetTitle className='truncate'>{selected.full_name}</SheetTitle>
+                    <SheetDescription>
+                      {selected.top_skill ?? selected.field_of_study ?? 'Instructor'}
+                    </SheetDescription>
+                    <div className='mt-2'>
+                      <Badge variant='default'>Active</Badge>
                     </div>
                   </div>
                 </div>
               </SheetHeader>
-              <div className="mt-6 space-y-4 text-sm">
-                <Detail label="Email" value={selected.email ?? '—'} />
-                <Detail label="Highest qualification" value={selected.highest_qualification ?? '—'} />
-                <Detail label="Field of study" value={selected.field_of_study ?? '—'} />
-                <Detail label="Assigned classes" value={String(selected.class_count ?? 0)} />
+              <div className='mt-6 space-y-4 text-sm'>
+                <Detail label='Email' value={selected.email ?? '—'} />
                 <Detail
-                  label="Rating"
-                  value={selected.average_rating != null ? `${Number(selected.average_rating).toFixed(1)} (${selected.review_count ?? 0} reviews)` : 'No reviews yet'}
+                  label='Highest qualification'
+                  value={selected.highest_qualification ?? '—'}
+                />
+                <Detail label='Field of study' value={selected.field_of_study ?? '—'} />
+                <Detail label='Assigned classes' value={String(selected.class_count ?? 0)} />
+                <Detail
+                  label='Rating'
+                  value={
+                    selected.average_rating != null
+                      ? `${Number(selected.average_rating).toFixed(1)} (${selected.review_count ?? 0} reviews)`
+                      : 'No reviews yet'
+                  }
                 />
               </div>
             </>
@@ -284,9 +355,9 @@ export default function InstructorsPage() {
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b pb-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-right font-medium">{value}</span>
+    <div className='flex items-start justify-between gap-4 border-b pb-3'>
+      <span className='text-muted-foreground'>{label}</span>
+      <span className='text-right font-medium'>{value}</span>
     </div>
   );
 }

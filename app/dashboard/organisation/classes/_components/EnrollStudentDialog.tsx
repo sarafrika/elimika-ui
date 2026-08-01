@@ -66,9 +66,7 @@ export function EnrollStudentDialog({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add student</DialogTitle>
-            <DialogDescription>
-              Enroll a registered student into “{classTitle}”.
-            </DialogDescription>
+            <DialogDescription>Enroll a registered student into “{classTitle}”.</DialogDescription>
           </DialogHeader>
           <div className='relative'>
             <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
@@ -81,16 +79,16 @@ export function EnrollStudentDialog({
           </div>
           <div className='max-h-72 space-y-1 overflow-y-auto'>
             {studentsQuery.isLoading ? (
-              <p className='py-4 text-center text-sm text-muted-foreground'>Loading…</p>
+              <p className='text-muted-foreground py-4 text-center text-sm'>Loading…</p>
             ) : students.length === 0 ? (
-              <p className='py-4 text-center text-sm text-muted-foreground'>No students found.</p>
+              <p className='text-muted-foreground py-4 text-center text-sm'>No students found.</p>
             ) : (
               students.map(student => (
                 <div
                   key={student.uuid}
-                  className='flex items-center justify-between gap-3 rounded-md border border-border/60 px-3 py-2'
+                  className='border-border/60 flex items-center justify-between gap-3 rounded-md border px-3 py-2'
                 >
-                  <span className='truncate text-sm text-foreground'>
+                  <span className='text-foreground truncate text-sm'>
                     {student.full_name ?? 'Unnamed student'}
                   </span>
                   <Button

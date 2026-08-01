@@ -59,7 +59,11 @@ export function AsyncSection({
   }
   if (empty) {
     return (
-      <>{emptyState ?? <SectionEmpty title={emptyTitle} description={emptyDescription} className={className} />}</>
+      <>
+        {emptyState ?? (
+          <SectionEmpty title={emptyTitle} description={emptyDescription} className={className} />
+        )}
+      </>
     );
   }
   return <>{children}</>;
@@ -77,7 +81,9 @@ export function SectionError({
   className?: string;
 }) {
   const message =
-    typeof error === 'object' && error !== null && typeof (error as { message?: string }).message === 'string'
+    typeof error === 'object' &&
+    error !== null &&
+    typeof (error as { message?: string }).message === 'string'
       ? (error as { message?: string }).message
       : undefined;
   return (

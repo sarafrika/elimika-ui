@@ -10,7 +10,7 @@ export const useStudentsMap = (studentUuids: string[]) => {
       if (!studentUuids?.length) return {};
 
       const results = await Promise.all(
-        studentUuids.map(async (uuid) => {
+        studentUuids.map(async uuid => {
           const res = await getStudentById({ path: { uuid } });
           return res?.data ?? null;
         })

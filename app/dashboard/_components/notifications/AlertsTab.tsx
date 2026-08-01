@@ -166,7 +166,7 @@ function NotificationLoadingList() {
 
 export function AlertsTab() {
   const [activeTab, setActiveTab] = useState<NotificationTab>('all');
-  const { activeDomain, setActiveDomain } = useUserDomain()
+  const { activeDomain, setActiveDomain } = useUserDomain();
   const domain = activeDomain ?? undefined;
   const [page, setPage] = useState(0);
   const queryParams = { ...getQueryParams(activeTab, page), domain };
@@ -232,7 +232,7 @@ export function AlertsTab() {
   };
 
   return (
-    <section className='space-y-5 bg-background'>
+    <section className='bg-background space-y-5'>
       <Tabs
         value={activeTab}
         onValueChange={value => {
@@ -320,11 +320,15 @@ export function AlertsTab() {
             />
           ) : (
             <div className='space-y-4'>
-              <div className='flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between'>
+              <div className='text-muted-foreground flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between'>
                 <p>
                   Showing {firstItem}-{lastItem} of {totalItems}
                 </p>
-                {totalPages > 1 ? <p>Page {currentPage + 1} of {totalPages}</p> : null}
+                {totalPages > 1 ? (
+                  <p>
+                    Page {currentPage + 1} of {totalPages}
+                  </p>
+                ) : null}
               </div>
 
               <div className='space-y-3'>
@@ -338,7 +342,7 @@ export function AlertsTab() {
                       key={notification.uuid}
                       className={cn(
                         'p-4 transition-colors',
-                        unread ? 'border-l-4 border-l-primary bg-primary/5' : 'bg-card'
+                        unread ? 'border-l-primary bg-primary/5 border-l-4' : 'bg-card'
                       )}
                     >
                       <div className='flex gap-4'>
@@ -360,9 +364,11 @@ export function AlertsTab() {
                                 <h3 className='truncate text-sm font-semibold'>
                                   {notification.title}
                                 </h3>
-                                {unread ? <div className='h-2 w-2 rounded-full bg-primary' /> : null}
+                                {unread ? (
+                                  <div className='bg-primary h-2 w-2 rounded-full' />
+                                ) : null}
                               </div>
-                              <p className='mt-1 text-xs text-muted-foreground'>
+                              <p className='text-muted-foreground mt-1 text-xs'>
                                 {notificationTypeLabel(notification.type)}
                               </p>
                             </div>
@@ -385,7 +391,7 @@ export function AlertsTab() {
                             </div>
                           </div>
 
-                          <p className='mb-3 text-sm leading-6 text-muted-foreground'>
+                          <p className='text-muted-foreground mb-3 text-sm leading-6'>
                             {notification.body}
                           </p>
 
@@ -393,7 +399,10 @@ export function AlertsTab() {
                             <Badge variant='outline' className='text-xs'>
                               {notification.status}
                             </Badge>
-                            <Badge variant={priorityVariant(notification.priority)} className='text-xs'>
+                            <Badge
+                              variant={priorityVariant(notification.priority)}
+                              className='text-xs'
+                            >
                               {notification.priority}
                             </Badge>
                             {notification.category ? (
@@ -404,11 +413,11 @@ export function AlertsTab() {
                           </div>
 
                           {details.length > 0 ? (
-                            <dl className='mb-3 grid gap-2 rounded-md border border-border bg-muted/40 p-3 text-xs sm:grid-cols-2'>
+                            <dl className='border-border bg-muted/40 mb-3 grid gap-2 rounded-md border p-3 text-xs sm:grid-cols-2'>
                               {details.map(([label, value]) => (
                                 <div key={label} className='min-w-0'>
                                   <dt className='text-muted-foreground'>{label}</dt>
-                                  <dd className='truncate font-medium text-foreground'>{value}</dd>
+                                  <dd className='text-foreground truncate font-medium'>{value}</dd>
                                 </div>
                               ))}
                             </dl>
@@ -416,7 +425,7 @@ export function AlertsTab() {
 
                           <div className='flex flex-wrap items-center justify-between gap-2'>
                             <p
-                              className='flex items-center gap-1 text-xs text-muted-foreground'
+                              className='text-muted-foreground flex items-center gap-1 text-xs'
                               title={notificationExactTime(notification)}
                             >
                               <CalendarClock className='h-3 w-3' />
@@ -438,11 +447,7 @@ export function AlertsTab() {
                               ) : null}
 
                               {notification.urlPath ? (
-                                <Button
-                                  asChild
-                                  size='sm'
-                                  onClick={() => handleOpen(notification)}
-                                >
+                                <Button asChild size='sm' onClick={() => handleOpen(notification)}>
                                   <Link href={notification.urlPath}>
                                     <ExternalLink className='h-4 w-4' />
                                     Open

@@ -44,9 +44,9 @@ function getLiveClassCompletionRate(liveClass: {
     typeof liveClass.class?.completed_session_count === 'number'
       ? liveClass.class.completed_session_count
       : countableSessions.filter(
-        instance =>
-          instance.status?.toUpperCase() === 'COMPLETED' || Boolean(instance.concluded_at)
-      ).length;
+          instance =>
+            instance.status?.toUpperCase() === 'COMPLETED' || Boolean(instance.concluded_at)
+        ).length;
 
   return totalSessions ? Math.round((completedSessions / totalSessions) * 100) : 0;
 }
@@ -105,7 +105,8 @@ function matchesClassTag(
   liveClass: { title?: string; provider?: string; level?: string },
   tag: string
 ) {
-  const haystack = `${liveClass.title ?? ''} ${liveClass.provider ?? ''} ${liveClass.level ?? ''}`.toLowerCase();
+  const haystack =
+    `${liveClass.title ?? ''} ${liveClass.provider ?? ''} ${liveClass.level ?? ''}`.toLowerCase();
   return haystack.includes(tag);
 }
 
@@ -115,13 +116,8 @@ export function InstructorTrainingHubPage() {
     'all' | 'today' | 'upcoming' | 'incomplete' | 'remedial' | 'make-up' | 'cancelled' | 'completed'
   >('all');
 
-  const {
-    liveClasses,
-    upcomingBookings,
-    waitingList,
-    isLoading,
-    classes
-  } = useInstructorTrainingHubData();
+  const { liveClasses, upcomingBookings, waitingList, isLoading, classes } =
+    useInstructorTrainingHubData();
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -169,8 +165,7 @@ export function InstructorTrainingHubPage() {
           const isRemedial = matchesClassTag(liveClass, 'remedial');
 
           const isMakeUp =
-            matchesClassTag(liveClass, 'make-up') ||
-            matchesClassTag(liveClass, 'makeup');
+            matchesClassTag(liveClass, 'make-up') || matchesClassTag(liveClass, 'makeup');
 
           const typeMatch =
             selectedType === 'all' ||
@@ -186,8 +181,7 @@ export function InstructorTrainingHubPage() {
         })
         .sort(
           (a, b) =>
-            new Date(b.class?.created_date).getTime() -
-            new Date(a.class?.created_date).getTime()
+            new Date(b.class?.created_date).getTime() - new Date(a.class?.created_date).getTime()
         ),
     [liveClasses, normalizedSearch, selectedType]
   );
@@ -213,7 +207,7 @@ export function InstructorTrainingHubPage() {
   );
 
   return (
-    <main className='mx-auto flex w-full flex-col gap-4 bg-background px-3 py-3 sm:px-4 sm:py-4 lg:px-5'>
+    <main className='bg-background mx-auto flex w-full flex-col gap-4 px-3 py-3 sm:px-4 sm:py-4 lg:px-5'>
       <TrainingHubToolbar
         onSearchTermChange={setSearchTerm}
         onTypeChange={setSelectedType}
@@ -221,7 +215,7 @@ export function InstructorTrainingHubPage() {
         selectedType={selectedType}
       />
 
-      <section className='grid w-full min-w-0 max-w-full gap-4 overflow-hidden xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]'>
+      <section className='grid w-full max-w-full min-w-0 gap-4 overflow-hidden xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]'>
         <div className='min-w-0 space-y-3 overflow-hidden'>
           <TrainingHubSectionHeader
             actionLabel={``}
@@ -236,7 +230,7 @@ export function InstructorTrainingHubPage() {
 
             {!isLoading && filteredLiveClasses.length === 0 && (
               <Card className='border-border/60 shadow-sm'>
-                <CardContent className='py-10 text-center text-sm text-muted-foreground'>
+                <CardContent className='text-muted-foreground py-10 text-center text-sm'>
                   No created classes matched your search.
                 </CardContent>
               </Card>
@@ -244,7 +238,7 @@ export function InstructorTrainingHubPage() {
 
             {isLoading && (
               <Card className='border-border/60 shadow-sm'>
-                <CardContent className='py-10 text-center text-sm text-muted-foreground'>
+                <CardContent className='text-muted-foreground py-10 text-center text-sm'>
                   Loading classes...
                 </CardContent>
               </Card>
@@ -267,10 +261,12 @@ export function InstructorTrainingHubPage() {
                 ))}
               </div>
             ) : (
-              <div className='mx-auto flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center'>
-                <p className='text-sm font-medium text-foreground'>No students on the waiting list</p>
+              <div className='border-border bg-muted/30 mx-auto flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed px-4 py-8 text-center'>
+                <p className='text-foreground text-sm font-medium'>
+                  No students on the waiting list
+                </p>
 
-                <p className='mt-1 text-sm text-muted-foreground'>
+                <p className='text-muted-foreground mt-1 text-sm'>
                   New waiting list requests will appear here.
                 </p>
               </div>
@@ -291,10 +287,10 @@ export function InstructorTrainingHubPage() {
                 ))}
               </div>
             ) : (
-              <div className='flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center'>
-                <p className='text-sm font-medium text-foreground'>No upcoming bookings</p>
+              <div className='border-border bg-muted/30 flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed px-4 py-8 text-center'>
+                <p className='text-foreground text-sm font-medium'>No upcoming bookings</p>
 
-                <p className='mt-1 text-sm text-muted-foreground'>
+                <p className='text-muted-foreground mt-1 text-sm'>
                   Upcoming bookings will appear here.
                 </p>
               </div>
@@ -303,7 +299,7 @@ export function InstructorTrainingHubPage() {
 
           <Button
             type='button'
-            className='flex w-full items-center justify-center gap-3 rounded-[10px] bg-primary px-4 py-3 text-center text-[0.96rem] font-medium text-primary-foreground transition-colors hover:bg-primary/90'
+            className='bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center gap-3 rounded-[10px] px-4 py-3 text-center text-[0.96rem] font-medium transition-colors'
           >
             <CalendarDays className='size-4 shrink-0' />
             <span className='truncate'>Invite Past Students</span>

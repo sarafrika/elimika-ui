@@ -6,7 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { AdminPageHeader, adminTheme, SectionCard, StatusBadge } from '@/app/dashboard/admin/_components/ui';
+import {
+  AdminPageHeader,
+  adminTheme,
+  SectionCard,
+  StatusBadge,
+} from '@/app/dashboard/admin/_components/ui';
 import { InstructorReviewProfile } from '@/components/instructor-review/InstructorReviewProfile';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -80,7 +85,9 @@ export function JobApplicantReviewPage({
         query: { pageable: { page: 0, size: 100 } },
       }),
     });
-    await queryClient.invalidateQueries({ queryKey: listJobsQueryKey({ query: { pageable: {} } }) });
+    await queryClient.invalidateQueries({
+      queryKey: listJobsQueryKey({ query: { pageable: {} } }),
+    });
   };
 
   const reviewMutation = useMutation({
@@ -137,7 +144,7 @@ export function JobApplicantReviewPage({
         <Button
           variant='ghost'
           size='sm'
-          className='w-fit px-0 text-muted-foreground'
+          className='text-muted-foreground w-fit px-0'
           onClick={() => router.back()}
         >
           <ArrowLeft className='mr-2 size-4' />
@@ -156,7 +163,7 @@ export function JobApplicantReviewPage({
           </div>
         ) : !application ? (
           <div className={adminTheme.cardPadded}>
-            <p className='text-sm text-muted-foreground'>
+            <p className='text-muted-foreground text-sm'>
               This application could not be found. It may have been withdrawn or the job may have
               been cancelled.
             </p>
@@ -186,7 +193,10 @@ export function JobApplicantReviewPage({
               <SectionCard title='Application'>
                 <div className='space-y-3 text-sm'>
                   <div className='flex flex-wrap items-center gap-2'>
-                    <StatusBadge status={application.status} label={formatLabel(application.status)} />
+                    <StatusBadge
+                      status={application.status}
+                      label={formatLabel(application.status)}
+                    />
                     {application.instructor_admin_verified ? (
                       <StatusBadge status='verified' label='Verified' />
                     ) : application.instructor_admin_verified === false ? (
@@ -195,8 +205,8 @@ export function JobApplicantReviewPage({
                   </div>
 
                   {notApprovedToTrain ? (
-                    <div className='flex items-center gap-2 rounded-md border border-warning/60 bg-warning/10 p-3 text-foreground'>
-                      <TriangleAlert className='size-4 shrink-0 text-warning' />
+                    <div className='border-warning/60 bg-warning/10 text-foreground flex items-center gap-2 rounded-md border p-3'>
+                      <TriangleAlert className='text-warning size-4 shrink-0' />
                       <span>
                         Not approved to train this course or program yet — approval and assignment
                         are blocked.
@@ -205,7 +215,7 @@ export function JobApplicantReviewPage({
                   ) : null}
 
                   <div>
-                    <div className='text-xs uppercase tracking-wide text-muted-foreground'>
+                    <div className='text-muted-foreground text-xs tracking-wide uppercase'>
                       Applied
                     </div>
                     <p className='mt-0.5'>{formatDate(application.created_date)}</p>
@@ -213,7 +223,7 @@ export function JobApplicantReviewPage({
 
                   {application.reviewed_at ? (
                     <div>
-                      <div className='text-xs uppercase tracking-wide text-muted-foreground'>
+                      <div className='text-muted-foreground text-xs tracking-wide uppercase'>
                         Reviewed
                       </div>
                       <p className='mt-0.5'>
@@ -224,20 +234,20 @@ export function JobApplicantReviewPage({
                   ) : null}
 
                   <div>
-                    <div className='text-xs uppercase tracking-wide text-muted-foreground'>
+                    <div className='text-muted-foreground text-xs tracking-wide uppercase'>
                       Application note
                     </div>
-                    <p className='mt-0.5 whitespace-pre-line leading-6'>
+                    <p className='mt-0.5 leading-6 whitespace-pre-line'>
                       {application.application_note || 'No application note provided.'}
                     </p>
                   </div>
 
                   {application.review_notes ? (
                     <div>
-                      <div className='text-xs uppercase tracking-wide text-muted-foreground'>
+                      <div className='text-muted-foreground text-xs tracking-wide uppercase'>
                         Review notes
                       </div>
-                      <p className='mt-0.5 whitespace-pre-line leading-6'>
+                      <p className='mt-0.5 leading-6 whitespace-pre-line'>
                         {application.review_notes}
                       </p>
                     </div>
@@ -292,7 +302,7 @@ export function JobApplicantReviewPage({
                   </div>
 
                   {!canReview && !canAssign ? (
-                    <p className='text-xs text-muted-foreground'>
+                    <p className='text-muted-foreground text-xs'>
                       This application has already been finalised and can no longer be actioned.
                     </p>
                   ) : null}

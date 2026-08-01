@@ -241,91 +241,93 @@ export default function PublishedCoursesComponent({
                       </TableHeader>
 
                       <TableBody>
-                        {(publishedCourses as unknown as PublishedCourseItem[])?.map((course: PublishedCourseItem) => (
-                          <TableRow key={course.uuid}>
-                            {/* <TableHead>
+                        {(publishedCourses as unknown as PublishedCourseItem[])?.map(
+                          (course: PublishedCourseItem) => (
+                            <TableRow key={course.uuid}>
+                              {/* <TableHead>
                     <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                   </TableHead> */}
 
-                            <TableCell className='py-1'>
-                              <Image
-                                src={
-                                  toAuthenticatedMediaUrl(course?.thumbnail_url) ||
-                                  '/illustration.png'
-                                }
-                                alt='thumbnail'
-                                width={48}
-                                height={48}
-                                className='bg-muted-foreground/30 min-h-12 min-w-12 rounded-md'
-                                unoptimized={isAuthenticatedMediaUrl(
-                                  toAuthenticatedMediaUrl(course?.thumbnail_url)
-                                )}
-                              />
-                            </TableCell>
+                              <TableCell className='py-1'>
+                                <Image
+                                  src={
+                                    toAuthenticatedMediaUrl(course?.thumbnail_url) ||
+                                    '/illustration.png'
+                                  }
+                                  alt='thumbnail'
+                                  width={48}
+                                  height={48}
+                                  className='bg-muted-foreground/30 min-h-12 min-w-12 rounded-md'
+                                  unoptimized={isAuthenticatedMediaUrl(
+                                    toAuthenticatedMediaUrl(course?.thumbnail_url)
+                                  )}
+                                />
+                              </TableCell>
 
-                            <TableCell className='font-medium'>
-                              <div>
-                                <h1 className='max-w-[270px] truncate'>{course.name}</h1>
-                                <div className='text-muted-foreground text-xs'>
-                                  <RichTextRenderer
-                                    htmlString={course?.description ?? ''}
-                                    maxChars={42}
-                                  />
+                              <TableCell className='font-medium'>
+                                <div>
+                                  <h1 className='max-w-[270px] truncate'>{course.name}</h1>
+                                  <div className='text-muted-foreground text-xs'>
+                                    <RichTextRenderer
+                                      htmlString={course?.description ?? ''}
+                                      maxChars={42}
+                                    />
+                                  </div>
                                 </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className='flex max-w-[250px] flex-wrap gap-1'>
-                                {Array.isArray(course.category_names) &&
-                                  course.category_names.map((name: string) => (
-                                    <Badge
-                                      key={name}
-                                      className='bg-muted/70 rounded-full text-black capitalize dark:text-white'
+                              </TableCell>
+                              <TableCell>
+                                <div className='flex max-w-[250px] flex-wrap gap-1'>
+                                  {Array.isArray(course.category_names) &&
+                                    course.category_names.map((name: string) => (
+                                      <Badge
+                                        key={name}
+                                        className='bg-muted/70 rounded-full text-black capitalize dark:text-white'
+                                      >
+                                        {name}
+                                      </Badge>
+                                    ))}
+                                </div>
+                              </TableCell>
+                              <TableCell>{course.class_limit || 'Unlimited'}</TableCell>
+                              <TableCell>
+                                {formatCourseDate(
+                                  typeof course.updated_date === 'string'
+                                    ? course.updated_date
+                                    : course.updated_date?.toISOString()
+                                )}
+                              </TableCell>
+                              <TableCell className='text-center'>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant='ghost' size='icon'>
+                                      <span className='sr-only'>Open menu</span>
+                                      <MoreVertical className='h-4 w-4' />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align='end'>
+                                    <DropdownMenuItem>
+                                      <Link
+                                        href={`/dashboard/course-creator/course-management/preview/${course.uuid}`}
+                                        className='flex w-full items-center'
+                                      >
+                                        <EyeIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
+                                        View
+                                      </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      variant='destructive'
+                                      onClick={() => course.uuid && handleUnpublish(course.uuid)}
                                     >
-                                      {name}
-                                    </Badge>
-                                  ))}
-                              </div>
-                            </TableCell>
-                            <TableCell>{course.class_limit || 'Unlimited'}</TableCell>
-                            <TableCell>
-                              {formatCourseDate(
-                                typeof course.updated_date === 'string'
-                                  ? course.updated_date
-                                  : course.updated_date?.toISOString()
-                              )}
-                            </TableCell>
-                            <TableCell className='text-center'>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant='ghost' size='icon'>
-                                    <span className='sr-only'>Open menu</span>
-                                    <MoreVertical className='h-4 w-4' />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align='end'>
-                                  <DropdownMenuItem>
-                                    <Link
-                                      href={`/dashboard/course-creator/course-management/preview/${course.uuid}`}
-                                      className='flex w-full items-center'
-                                    >
-                                      <EyeIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
-                                      View
-                                    </Link>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    variant='destructive'
-                                    onClick={() => course.uuid && handleUnpublish(course.uuid)}
-                                  >
-                                    <TrashIcon className='mr-2 h-4 w-4' />
-                                    Unpublish
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                                      <TrashIcon className='mr-2 h-4 w-4' />
+                                      Unpublish
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )}
                       </TableBody>
                     </Table>
                   </div>

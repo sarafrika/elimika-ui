@@ -18,5 +18,5 @@ export function useInstructor() {
   const instructor = useContext(InstructrorContext);
   const profile = useUserProfile();
 
-  return instructor ?? ((profile?.instructor as Instructor | null) ?? null);
+  return instructor ?? (profile?.instructor as Instructor | null) ?? null;
 }

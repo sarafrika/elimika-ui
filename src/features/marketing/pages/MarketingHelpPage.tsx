@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,19 +41,17 @@ function ScrollHelpSection() {
           <Button
             className='rounded-full px-6'
             onClick={() => {
-              document
-                .getElementById('contact-support')
-                ?.scrollIntoView({ behavior: 'smooth' });
+              document.getElementById('contact-support')?.scrollIntoView({ behavior: 'smooth' });
             }}
           >
             Contact support
           </Button>
           <a
-            href="mailto:support@yourapp.com?subject=Help%20Request"
-            className="inline-flex items-center justify-center rounded-full border border-border bg-background p-2 text-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Send support email"
+            href='mailto:support@yourapp.com?subject=Help%20Request'
+            className='border-border bg-background text-foreground hover:bg-muted hover:text-foreground inline-flex items-center justify-center rounded-full border p-2 transition-colors'
+            aria-label='Send support email'
           >
-            <Send className="size-4" />
+            <Send className='size-4' />
           </a>
         </div>
       </div>
@@ -118,13 +116,13 @@ export function MarketingHelpPage() {
           </p>
 
           <p className='text-foreground mt-2 text-base'>
-            Reach out with context on your account, the page you were on, and any error
-            messages you saw.
+            Reach out with context on your account, the page you were on, and any error messages you
+            saw.
           </p>
 
           <p className='text-muted-foreground mt-2 text-sm'>
-            Our team responds during business hours and prioritises issues affecting
-            access to courses and funding.
+            Our team responds during business hours and prioritises issues affecting access to
+            courses and funding.
           </p>
 
           <div className='mt-6'>

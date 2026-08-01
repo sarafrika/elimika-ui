@@ -113,7 +113,9 @@ function InvitesPage() {
                       {invite.organisation_name ?? 'An organisation'}
                     </CardTitle>
                     <CardDescription>
-                      {invite.inviter_name ? `${invite.inviter_name} invited you ` : 'You were invited '}
+                      {invite.inviter_name
+                        ? `${invite.inviter_name} invited you `
+                        : 'You were invited '}
                       to join as a {invite.domain_name ?? 'student'}.
                     </CardDescription>
                   </div>
@@ -127,15 +129,16 @@ function InvitesPage() {
 
               <CardContent className='space-y-4'>
                 {invite.message ? (
-                  <blockquote className='border-l-2 border-muted-foreground/30 pl-3 text-sm italic text-muted-foreground'>
+                  <blockquote className='border-muted-foreground/30 text-muted-foreground border-l-2 pl-3 text-sm italic'>
                     {invite.message}
                   </blockquote>
                 ) : null}
 
-                <div className='flex flex-wrap items-center gap-3 text-xs text-muted-foreground'>
+                <div className='text-muted-foreground flex flex-wrap items-center gap-3 text-xs'>
                   {invite.class_count ? (
                     <span>
-                      {invite.class_count} class{invite.class_count === 1 ? '' : 'es'} shared with you
+                      {invite.class_count} class{invite.class_count === 1 ? '' : 'es'} shared with
+                      you
                     </span>
                   ) : null}
                   {invite.expires_at ? (
@@ -146,14 +149,14 @@ function InvitesPage() {
                   ) : null}
                 </div>
 
-                <p className='rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground'>
+                <p className='border-primary/30 bg-primary/5 text-muted-foreground rounded-md border p-3 text-xs'>
                   They will only see your enrolment and performance in{' '}
                   <strong>their own courses and classes</strong> — nothing else on your account, and
                   nothing from other institutions.
                 </p>
 
                 {awaitingGuardian ? (
-                  <p className='text-sm text-muted-foreground'>
+                  <p className='text-muted-foreground text-sm'>
                     We are waiting on your parent or guardian to approve this.
                   </p>
                 ) : (

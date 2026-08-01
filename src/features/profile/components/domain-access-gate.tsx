@@ -148,7 +148,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       {state.notice ? (
         <Alert
           className={cn(
-            'border-warning/30 bg-warning/10 mx-auto mb-4 w-full max-w-5xl text-foreground shadow-sm'
+            'border-warning/30 bg-warning/10 text-foreground mx-auto mb-4 w-full max-w-5xl shadow-sm'
           )}
         >
           <ShieldAlert className='text-warning col-start-1 self-start' />

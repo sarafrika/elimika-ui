@@ -10,10 +10,22 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractList, extractPage } from '@/lib/api-helpers';
-import type { ClassDefinition, ClassEnrolmentCountDto, StudentEnrolmentSummaryDto, User } from '@/services/client';
+import type {
+  ClassDefinition,
+  ClassEnrolmentCountDto,
+  StudentEnrolmentSummaryDto,
+  User,
+} from '@/services/client';
 import {
   getClassEnrolmentCountsOptions,
   getClassDefinitionsForOrganisationOptions,
@@ -26,11 +38,15 @@ export default function ReportsPage() {
   const organisationUuid = organisation?.uuid ?? '';
 
   const studentsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({ path: { uuid: organisationUuid, domainName: 'student' } }),
+    ...getUsersByOrganisationAndDomainOptions({
+      path: { uuid: organisationUuid, domainName: 'student' },
+    }),
     enabled: Boolean(organisationUuid),
   });
   const instructorsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({ path: { uuid: organisationUuid, domainName: 'instructor' } }),
+    ...getUsersByOrganisationAndDomainOptions({
+      path: { uuid: organisationUuid, domainName: 'instructor' },
+    }),
     enabled: Boolean(organisationUuid),
   });
   const classesQuery = useQuery({
@@ -97,29 +113,47 @@ export default function ReportsPage() {
 
   const kpis = [
     { label: 'Total students', value: students.length, icon: Users, border: 'border-l-primary' },
-    { label: 'Instructors', value: instructors.length, icon: GraduationCap, border: 'border-l-success' },
-    { label: 'Total enrolments', value: totalEnrolments, icon: BookOpen, border: 'border-l-teal-400' },
-    { label: 'Avg. completion', value: `${avgCompletion}%`, icon: TrendingUp, border: 'border-l-warning' },
+    {
+      label: 'Instructors',
+      value: instructors.length,
+      icon: GraduationCap,
+      border: 'border-l-success',
+    },
+    {
+      label: 'Total enrolments',
+      value: totalEnrolments,
+      icon: BookOpen,
+      border: 'border-l-teal-400',
+    },
+    {
+      label: 'Avg. completion',
+      value: `${avgCompletion}%`,
+      icon: TrendingUp,
+      border: 'border-l-warning',
+    },
   ];
 
   const loading = classesQuery.isLoading || countsQuery.isLoading;
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]">
-      <PageHeader title="Reports" description="Organisation performance — enrolments, completion and top classes." />
+    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+      <PageHeader
+        title='Reports'
+        description='Organisation performance — enrolments, completion and top classes.'
+      />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
         {kpis.map(k => {
           const Icon = k.icon;
           return (
             <Card key={k.label} className={`border-l-4 ${k.border}`}>
-              <CardContent className="flex items-center gap-4 p-6">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Icon className="h-5 w-5" />
+              <CardContent className='flex items-center gap-4 p-6'>
+                <div className='bg-primary/10 text-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-full'>
+                  <Icon className='h-5 w-5' />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold">{k.value}</div>
-                  <div className="text-xs text-muted-foreground">{k.label}</div>
+                  <div className='text-2xl font-bold'>{k.value}</div>
+                  <div className='text-muted-foreground text-xs'>{k.label}</div>
                 </div>
               </CardContent>
             </Card>
@@ -128,44 +162,46 @@ export default function ReportsPage() {
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Top classes by enrolment</CardTitle>
+        <CardHeader className='pb-3'>
+          <CardTitle className='text-base'>Top classes by enrolment</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className='p-0'>
           {loading ? (
-            <div className="space-y-2 p-4">
+            <div className='space-y-2 p-4'>
               {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+                <Skeleton key={i} className='h-12 w-full' />
               ))}
             </div>
           ) : topClasses.length === 0 ? (
-            <div className="p-12 text-center text-sm text-muted-foreground">No class data yet.</div>
+            <div className='text-muted-foreground p-12 text-center text-sm'>No class data yet.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table className="min-w-[640px]">
+            <div className='overflow-x-auto'>
+              <Table className='min-w-[640px]'>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-12 whitespace-nowrap">Rank</TableHead>
-                    <TableHead className="whitespace-nowrap">Class</TableHead>
-                    <TableHead className="whitespace-nowrap text-center">Enrolments</TableHead>
-                    <TableHead className="whitespace-nowrap text-center">Capacity</TableHead>
-                    <TableHead className="min-w-[160px] whitespace-nowrap">Completion</TableHead>
+                    <TableHead className='w-12 whitespace-nowrap'>Rank</TableHead>
+                    <TableHead className='whitespace-nowrap'>Class</TableHead>
+                    <TableHead className='text-center whitespace-nowrap'>Enrolments</TableHead>
+                    <TableHead className='text-center whitespace-nowrap'>Capacity</TableHead>
+                    <TableHead className='min-w-[160px] whitespace-nowrap'>Completion</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {topClasses.map((c, idx) => (
                     <TableRow key={c.uuid}>
-                      <TableCell className="whitespace-nowrap">
-                        <Badge variant="secondary">{idx + 1}</Badge>
+                      <TableCell className='whitespace-nowrap'>
+                        <Badge variant='secondary'>{idx + 1}</Badge>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap font-medium">{c.title}</TableCell>
-                      <TableCell className="whitespace-nowrap text-center">{c.enrolled}</TableCell>
-                      <TableCell className="whitespace-nowrap text-center text-muted-foreground">{c.capacity ?? '—'}</TableCell>
-                      <TableCell className="min-w-[160px]">
-                        <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+                      <TableCell className='font-medium whitespace-nowrap'>{c.title}</TableCell>
+                      <TableCell className='text-center whitespace-nowrap'>{c.enrolled}</TableCell>
+                      <TableCell className='text-muted-foreground text-center whitespace-nowrap'>
+                        {c.capacity ?? '—'}
+                      </TableCell>
+                      <TableCell className='min-w-[160px]'>
+                        <div className='text-muted-foreground mb-1 flex justify-between text-xs'>
                           <span>{c.completion}%</span>
                         </div>
-                        <Progress value={c.completion} className="h-2" />
+                        <Progress value={c.completion} className='h-2' />
                       </TableCell>
                     </TableRow>
                   ))}

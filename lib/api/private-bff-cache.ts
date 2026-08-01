@@ -66,11 +66,7 @@ const REFERENCE_PATH_PATTERNS = [
   '/levels',
 ];
 
-const PRIVATE_HEADER_BLOCKLIST = new Set([
-  'content-encoding',
-  'content-length',
-  'set-cookie',
-]);
+const PRIVATE_HEADER_BLOCKLIST = new Set(['content-encoding', 'content-length', 'set-cookie']);
 
 function byteLength(value: string) {
   return textEncoder.encode(value).byteLength;

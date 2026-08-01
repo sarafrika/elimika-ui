@@ -17,7 +17,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className='flex items-start justify-between gap-3 text-sm'>
       <span className='text-muted-foreground'>{label}</span>
-      <span className='text-right font-medium text-foreground'>{value ?? '—'}</span>
+      <span className='text-foreground text-right font-medium'>{value ?? '—'}</span>
     </div>
   );
 }
@@ -55,7 +55,7 @@ export function ReviewSidebar({
             // The course is approved and live, but the decision here is about the creator's
             // proposed edit, not about the published course.
             <>
-              <p className='text-sm text-muted-foreground'>
+              <p className='text-muted-foreground text-sm'>
                 This course stays published either way. Approving replaces the live content;
                 rejecting discards the changes.
               </p>
@@ -70,7 +70,7 @@ export function ReviewSidebar({
             </>
           ) : approved ? (
             <>
-              <p className='text-sm text-muted-foreground'>
+              <p className='text-muted-foreground text-sm'>
                 This course is approved and can accept enrollments.
               </p>
               <Button variant='outline' onClick={onRevoke} disabled={isPending}>
@@ -102,16 +102,20 @@ export function ReviewSidebar({
           <Separator className='my-1' />
           <Row
             label='Creator share'
-            value={course.creator_share_percentage != null ? `${course.creator_share_percentage}%` : '—'}
+            value={
+              course.creator_share_percentage != null ? `${course.creator_share_percentage}%` : '—'
+            }
           />
           <Row
             label='Instructor share'
             value={
-              course.instructor_share_percentage != null ? `${course.instructor_share_percentage}%` : '—'
+              course.instructor_share_percentage != null
+                ? `${course.instructor_share_percentage}%`
+                : '—'
             }
           />
           {course.revenue_share_notes ? (
-            <p className='rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs leading-relaxed text-muted-foreground'>
+            <p className='border-border/60 bg-muted/30 text-muted-foreground rounded-md border px-3 py-2 text-xs leading-relaxed'>
               {course.revenue_share_notes}
             </p>
           ) : null}
@@ -128,10 +132,7 @@ export function ReviewSidebar({
             label='Age range'
             value={`${course.age_lower_limit ?? '—'} – ${course.age_upper_limit ?? '—'}`}
           />
-          <Row
-            label='Enrollment'
-            value={course.accepts_new_enrollments ? 'Open' : 'Closed'}
-          />
+          <Row label='Enrollment' value={course.accepts_new_enrollments ? 'Open' : 'Closed'} />
           {introVideo ? (
             <Row
               label='Intro video'
@@ -140,7 +141,7 @@ export function ReviewSidebar({
                   href={introVideo}
                   target='_blank'
                   rel='noreferrer'
-                  className='inline-flex items-center gap-1 text-primary hover:underline'
+                  className='text-primary inline-flex items-center gap-1 hover:underline'
                 >
                   Watch <ExternalLink className='size-3.5' />
                 </a>
@@ -150,9 +151,9 @@ export function ReviewSidebar({
             <Row label='Intro video' value='Not provided' />
           )}
           <Separator className='my-1' />
-          <div className='text-xs text-muted-foreground'>
-            <span className='font-medium uppercase tracking-wide'>UUID</span>
-            <p className='mt-0.5 break-all font-mono'>{course.uuid}</p>
+          <div className='text-muted-foreground text-xs'>
+            <span className='font-medium tracking-wide uppercase'>UUID</span>
+            <p className='mt-0.5 font-mono break-all'>{course.uuid}</p>
           </div>
         </div>
       </div>

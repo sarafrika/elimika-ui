@@ -92,7 +92,7 @@ export function NextClassCard({
                   )}
 
                   {locationNote && !joinHref && (
-                    <div className='bg-background/80 border-border/60 rounded-2xl border px-3 py-2 text-xs leading-5 text-muted-foreground'>
+                    <div className='bg-background/80 border-border/60 text-muted-foreground rounded-2xl border px-3 py-2 text-xs leading-5'>
                       {locationNote}
                     </div>
                   )}

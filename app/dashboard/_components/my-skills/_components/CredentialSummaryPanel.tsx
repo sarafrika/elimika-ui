@@ -10,10 +10,7 @@ type CredentailSummaryPanelProps = {
   timeline: SharedTimelineItem[];
 };
 
-export function CredentailSummaryPanel({
-  summary,
-  timeline,
-}: CredentailSummaryPanelProps) {
+export function CredentailSummaryPanel({ summary, timeline }: CredentailSummaryPanelProps) {
   const values = [
     { label: 'Skill Badges', value: summary.badgesEarned },
     { label: 'Certificates', value: summary.certificatesEarned },
@@ -30,9 +27,7 @@ export function CredentailSummaryPanel({
           {values.map(item => (
             <div key={item.label} className='bg-muted/50 rounded-md px-2 py-3 text-center'>
               <p className='text-primary text-lg font-semibold sm:text-xl'>{item.value}</p>
-              <p className='text-muted-foreground text-[10px] sm:text-xs'>
-                {item.label}
-              </p>
+              <p className='text-muted-foreground text-[10px] sm:text-xs'>{item.label}</p>
             </div>
           ))}
         </div>
@@ -59,7 +54,7 @@ export function CredentailSummaryPanel({
             size='sm'
             className='h-auto justify-between py-2 text-xs'
           >
-            <Link href="/dashboard/my-skills/verified-skills">
+            <Link href='/dashboard/my-skills/verified-skills'>
               View Details
               <ExternalLink className='size-3.5' />
             </Link>
@@ -83,27 +78,19 @@ export function CredentailSummaryPanel({
                 </span>
 
                 <div className='min-w-0'>
-                  <p className='text-foreground truncate text-xs font-medium'>
-                    {item.provider}
-                  </p>
-                  <p className='text-muted-foreground truncate text-[10px]'>
-                    {item.description}
-                  </p>
+                  <p className='text-foreground truncate text-xs font-medium'>{item.provider}</p>
+                  <p className='text-muted-foreground truncate text-[10px]'>{item.description}</p>
                 </div>
 
                 {item.metric ? (
-                  <span className='text-muted-foreground text-[10px]'>
-                    {item.metric}
-                  </span>
+                  <span className='text-muted-foreground text-[10px]'>{item.metric}</span>
                 ) : null}
               </div>
             ))}
           </div>
         ) : (
           <div className='border-border/60 bg-background rounded-md border border-dashed px-4 py-6 text-center'>
-            <p className='text-foreground text-xs font-medium'>
-              No portfolio activity yet
-            </p>
+            <p className='text-foreground text-xs font-medium'>No portfolio activity yet</p>
             <p className='text-muted-foreground mt-1 text-[10px]'>
               Your achievements and updates will appear here as your portfolio grows.
             </p>

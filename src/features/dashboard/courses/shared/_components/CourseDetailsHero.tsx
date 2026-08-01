@@ -56,21 +56,17 @@ export default function CourseDetailsHero({
   );
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  const totalDuration = `${hours}h${minutes ? ` ${minutes}m` : ""}`;
+  const totalDuration = `${hours}h${minutes ? ` ${minutes}m` : ''}`;
 
   function getNumberOfWeeks(schedule: ClassDetailsScheduleItem[]) {
     if (!schedule?.length) return 0;
 
-    const timestamps = schedule.map(item =>
-      new Date(item.start_time).getTime()
-    );
+    const timestamps = schedule.map(item => new Date(item.start_time).getTime());
 
     const earliest = Math.min(...timestamps);
     const latest = Math.max(...timestamps);
 
-    const diffDays = Math.floor(
-      (latest - earliest) / (1000 * 60 * 60 * 24)
-    );
+    const diffDays = Math.floor((latest - earliest) / (1000 * 60 * 60 * 24));
 
     return Math.floor(diffDays / 7) + 1;
   }
@@ -79,40 +75,33 @@ export default function CourseDetailsHero({
 
   const uniqueEnrollments = Array.from(
     new Map(
-      (classData?.enrollments || []).map(enrollment => [
-        enrollment.student_uuid,
-        enrollment,
-      ])
+      (classData?.enrollments || []).map(enrollment => [enrollment.student_uuid, enrollment])
     ).values()
   );
 
-  const isCourse = type === "course";
+  const isCourse = type === 'course';
 
   const videoUrl = isCourse
     ? toAuthenticatedMediaUrl(course?.intro_video_url)
-    : toAuthenticatedMediaUrl(classData?.class?.promotional_video_url ?? "");
+    : toAuthenticatedMediaUrl(classData?.class?.promotional_video_url ?? '');
 
   const imageUrl = isCourse
     ? toAuthenticatedMediaUrl(course?.thumbnail_url)
-    : toAuthenticatedMediaUrl(classData?.class?.thumbnail_url ?? "");
+    : toAuthenticatedMediaUrl(classData?.class?.thumbnail_url ?? '');
 
-  const hasVideo = isCourse
-    ? !!course?.intro_video_url
-    : !!classData?.class?.promotional_video_url;
+  const hasVideo = isCourse ? !!course?.intro_video_url : !!classData?.class?.promotional_video_url;
 
   const title = isCourse ? course?.name : classData?.class?.title;
-  const category = isCourse
-    ? course?.category_names?.[0]?.toUpperCase()
-    : '';
+  const category = isCourse ? course?.category_names?.[0]?.toUpperCase() : '';
 
   return (
     <div className='flex flex-col gap-4 sm:gap-6'>
-      <div className="bg-primary text-primary-foreground group relative aspect-video overflow-hidden rounded-xl shadow-lg">
+      <div className='bg-primary text-primary-foreground group relative aspect-video overflow-hidden rounded-xl shadow-lg'>
         {hasVideo ? (
           <video
             src={videoUrl as string}
             controls
-            className="h-full w-full object-cover"
+            className='h-full w-full object-cover'
             poster={imageUrl as string}
           />
         ) : (
@@ -121,50 +110,48 @@ export default function CourseDetailsHero({
                 icon/title overlay below when the media is missing (404). */}
             <ImageWithFallback
               src={imageUrl as string | undefined}
-              alt={title ?? "Preview"}
+              alt={title ?? 'Preview'}
               fill
               unoptimized
-              className="absolute inset-0 h-full w-full object-cover"
+              className='absolute inset-0 h-full w-full object-cover'
               fallback={null}
             />
 
             {/* Optional dark overlay */}
-            <div className="absolute inset-0 bg-black/40" />
+            <div className='absolute inset-0 bg-black/40' />
 
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center">
-                <div className="mb-3 flex items-center justify-center">
-                  <BookOpen className="h-16 w-16 drop-shadow-lg sm:h-20 sm:w-20 lg:h-24 lg:w-24" />
+            <div className='absolute inset-0 flex items-center justify-center'>
+              <div className='text-center'>
+                <div className='mb-3 flex items-center justify-center'>
+                  <BookOpen className='h-16 w-16 drop-shadow-lg sm:h-20 sm:w-20 lg:h-24 lg:w-24' />
                 </div>
 
-                <p className="text-lg font-black tracking-tight drop-shadow sm:text-xl lg:text-2xl">
-                  {category || (isCourse ? "COURSE" : "CLASS")}
+                <p className='text-lg font-black tracking-tight drop-shadow sm:text-xl lg:text-2xl'>
+                  {category || (isCourse ? 'COURSE' : 'CLASS')}
                 </p>
 
-                <p className="text-base font-bold sm:text-lg lg:text-xl">
-                  {title}
-                </p>
+                <p className='text-base font-bold sm:text-lg lg:text-xl'>{title}</p>
 
-                <p className="text-primary-foreground/80 text-xs sm:text-sm">
-                  {difficultyName || "Live details"}
+                <p className='text-primary-foreground/80 text-xs sm:text-sm'>
+                  {difficultyName || 'Live details'}
                 </p>
               </div>
             </div>
 
-            <div className="bg-background/20 text-primary-foreground absolute right-3 top-3 flex items-center gap-1 rounded-md px-2 py-1 text-xs backdrop-blur-sm">
-              <Play className="h-3 w-3 fill-current" />
+            <div className='bg-background/20 text-primary-foreground absolute top-3 right-3 flex items-center gap-1 rounded-md px-2 py-1 text-xs backdrop-blur-sm'>
+              <Play className='h-3 w-3 fill-current' />
               Preview
             </div>
 
-            <div className="bg-background/20 absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
-              <div className="bg-background flex h-14 w-14 items-center justify-center rounded-full shadow-2xl sm:h-16 sm:w-16">
-                <Play className="text-primary ml-0.5 h-6 w-6 sm:h-8 sm:w-8" />
+            <div className='bg-background/20 absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
+              <div className='bg-background flex h-14 w-14 items-center justify-center rounded-full shadow-2xl sm:h-16 sm:w-16'>
+                <Play className='text-primary ml-0.5 h-6 w-6 sm:h-8 sm:w-8' />
               </div>
             </div>
 
-            <div className="absolute inset-0 flex items-center justify-center transition-opacity group-hover:opacity-0">
-              <div className="bg-background/20 flex h-12 w-12 items-center justify-center rounded-full border border-current/30 backdrop-blur-sm sm:h-14 sm:w-14">
-                <Play className="text-primary-foreground ml-0.5 h-5 w-5 sm:h-6 sm:w-6" />
+            <div className='absolute inset-0 flex items-center justify-center transition-opacity group-hover:opacity-0'>
+              <div className='bg-background/20 flex h-12 w-12 items-center justify-center rounded-full border border-current/30 backdrop-blur-sm sm:h-14 sm:w-14'>
+                <Play className='text-primary-foreground ml-0.5 h-5 w-5 sm:h-6 sm:w-6' />
               </div>
             </div>
           </>
@@ -172,26 +159,23 @@ export default function CourseDetailsHero({
       </div>
 
       <div className='flex flex-col gap-3 sm:gap-4'>
-        {isCourse ?
-          <h1 className='text-foreground text-xl font-black leading-tight sm:text-2xl lg:text-3xl'>
+        {isCourse ? (
+          <h1 className='text-foreground text-xl leading-tight font-black sm:text-2xl lg:text-3xl'>
             {course.name}
           </h1>
-          :
+        ) : (
           <div>
-            <h1 className='text-foreground text-xl font-black leading-tight sm:text-2xl lg:text-3xl'>
+            <h1 className='text-foreground text-xl leading-tight font-black sm:text-2xl lg:text-3xl'>
               {classData?.class?.title}
             </h1>
-            <p className="text-base font-bold sm:text-lg lg:text-xl">
-              {course.name}
-            </p>
-          </div>}
+            <p className='text-base font-bold sm:text-lg lg:text-xl'>{course.name}</p>
+          </div>
+        )}
 
         <div className='flex flex-wrap items-center gap-2'>
           <span className='bg-success/5 text-success border-border flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold sm:text-sm'>
             <Award className='h-3.5 w-3.5' />
-            {course.status === 'published'
-              ? 'Published Course'
-              : 'Certificate Course'}
+            {course.status === 'published' ? 'Published Course' : 'Certificate Course'}
           </span>
 
           <span className='bg-secondary text-secondary-foreground border-border flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold sm:text-sm'>
@@ -200,67 +184,50 @@ export default function CourseDetailsHero({
           </span>
         </div>
 
-        <StarRating
-          rating={displayRating || 0}
-          reviewCount={reviewCount}
-          size='md'
-        />
+        <StarRating rating={displayRating || 0} reviewCount={reviewCount} size='md' />
 
         <div className='text-muted-foreground text-sm leading-relaxed sm:text-base'>
           <HTMLTextPreview htmlContent={course.description || ''} />
         </div>
 
-        {isCourse ?
-          (<div className='flex flex-wrap items-center gap-12 w-full text-sm'>
+        {isCourse ? (
+          <div className='flex w-full flex-wrap items-center gap-12 text-sm'>
             <div className='flex items-start gap-2'>
               <div className='bg-muted flex h-8 w-8 items-center justify-center rounded-full'>
                 <User className='text-muted-foreground h-4 w-4' />
               </div>
               <div>
-                <p className='text-muted-foreground text-xs'>
-                  Course Creator
-                </p>
-                <p className='text-foreground text-xs font-semibold sm:text-sm'>
-                  {creatorName}
-                </p>
-
+                <p className='text-muted-foreground text-xs'>Course Creator</p>
+                <p className='text-foreground text-xs font-semibold sm:text-sm'>{creatorName}</p>
               </div>
             </div>
 
             <div className='flex flex-col items-start gap-1.5'>
               <div className='flex gap-2'>
                 <Clock className='text-muted-foreground h-4 w-4 shrink-0' />
-                <p className='text-muted-foreground text-xs'>
-                  Instructors
-                </p>
+                <p className='text-muted-foreground text-xs'>Instructors</p>
               </div>
 
-              <p className='text-foreground text-xs font-semibold sm:text-sm'>
-                {"0 | 5"} active
-              </p>
+              <p className='text-foreground text-xs font-semibold sm:text-sm'>{'0 | 5'} active</p>
             </div>
 
             <div className='flex flex-col items-start gap-1.5'>
               <div className='flex gap-2'>
                 <Users className='text-muted-foreground h-4 w-4 shrink-0' />
-                <p className='text-muted-foreground text-xs'>
-                  Students
-                </p>
+                <p className='text-muted-foreground text-xs'>Students</p>
               </div>
 
               <p className='text-foreground text-xs font-semibold sm:text-sm'>
                 {course.class_limit ?? 0} Enrolled
               </p>
             </div>
-          </div>)
-          :
-          (<div className='flex flex-wrap items-center gap-12 w-full text-sm'>
+          </div>
+        ) : (
+          <div className='flex w-full flex-wrap items-center gap-12 text-sm'>
             <div className='flex flex-col items-start gap-1.5'>
               <div className='flex gap-2'>
                 <Clock className='text-muted-foreground h-4 w-4 shrink-0' />
-                <p className='text-muted-foreground text-xs'>
-                  Schedule
-                </p>
+                <p className='text-muted-foreground text-xs'>Schedule</p>
               </div>
 
               <p className='text-foreground text-xs font-semibold sm:text-sm'>
@@ -271,9 +238,7 @@ export default function CourseDetailsHero({
             <div className='flex flex-col items-start gap-1.5'>
               <div className='flex gap-2'>
                 <BarChart className='text-muted-foreground h-4 w-4 shrink-0' />
-                <p className='text-muted-foreground text-xs'>
-                  Duration
-                </p>
+                <p className='text-muted-foreground text-xs'>Duration</p>
               </div>
 
               <p className='text-foreground text-xs font-semibold sm:text-sm'>
@@ -284,64 +249,56 @@ export default function CourseDetailsHero({
             <div className='flex flex-col items-start gap-1.5'>
               <div className='flex gap-2'>
                 <Users className='text-muted-foreground h-4 w-4 shrink-0' />
-                <p className='text-muted-foreground text-xs'>
-                  Students
-                </p>
+                <p className='text-muted-foreground text-xs'>Students</p>
               </div>
 
               <p className='text-foreground text-xs font-semibold sm:text-sm'>
                 {uniqueEnrollments?.length ?? 0} Enrolled / {0} waiting list
               </p>
             </div>
-          </div>)
-        }
+          </div>
+        )}
       </div>
 
-      <div className="border-border flex flex-wrap gap-6 border-y py-3 sm:gap-12 sm:py-4">
+      <div className='border-border flex flex-wrap gap-6 border-y py-3 sm:gap-12 sm:py-4'>
         {[
           {
-            icon: <BookOpen className="h-4 w-4 text-primary" />,
+            icon: <BookOpen className='text-primary h-4 w-4' />,
             label: `${lessonCount}`,
             sub: 'Lessons',
             bg: 'bg-primary/5',
           },
           {
-            icon: <FileCheck className="h-4 w-4 text-success" />,
+            icon: <FileCheck className='text-success h-4 w-4' />,
             label: `${totalAssessments}`,
             sub: 'Assessments',
             bg: 'bg-success/5',
           },
           {
-            icon: <MonitorPlay className="h-4 w-4 text-warning" />,
+            icon: <MonitorPlay className='text-warning h-4 w-4' />,
             label: 'Hands-on',
             sub: 'Projects',
             bg: 'bg-warning/5',
           },
           {
-            icon: <Award className="h-4 w-4 text-balance" />,
+            icon: <Award className='h-4 w-4 text-balance' />,
             label: 'Certificate',
             sub: 'of Completion',
             bg: 'bg-muted/50',
           },
           {
-            icon: <Globe className="h-4 w-4 text-accent" />,
+            icon: <Globe className='text-accent h-4 w-4' />,
             label: 'English',
             sub: 'Language',
             bg: 'bg-accent/5',
           },
         ].map((item, i) => (
-          <div key={i} className="flex flex-row min-w-fit items-center gap-2">
-            <div className={`${item.bg} p-2 rounded-full`}>
-              {item.icon}
-            </div>
+          <div key={i} className='flex min-w-fit flex-row items-center gap-2'>
+            <div className={`${item.bg} rounded-full p-2`}>{item.icon}</div>
 
-            <div className="flex flex-col">
-              <span className="text-foreground text-xs font-bold sm:text-sm">
-                {item.label}
-              </span>
-              <span className="text-muted-foreground text-xs -mt-1">
-                {item.sub}
-              </span>
+            <div className='flex flex-col'>
+              <span className='text-foreground text-xs font-bold sm:text-sm'>{item.label}</span>
+              <span className='text-muted-foreground -mt-1 text-xs'>{item.sub}</span>
             </div>
           </div>
         ))}

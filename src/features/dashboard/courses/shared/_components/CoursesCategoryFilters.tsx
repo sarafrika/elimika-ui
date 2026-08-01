@@ -45,10 +45,7 @@ export function CoursesCategoryFilters({
         const isCollapsed = visibleState[section.key];
 
         return (
-          <section
-            key={section.key}
-            className='border-border border-b px-4 py-3.5 last:border-b-0'
-          >
+          <section key={section.key} className='border-border border-b px-4 py-3.5 last:border-b-0'>
             <button
               type='button'
               onClick={() => toggleSection(section.key)}

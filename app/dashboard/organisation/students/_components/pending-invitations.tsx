@@ -70,8 +70,8 @@ export function PendingInvitations({ organisationUuid }: { organisationUuid: str
           <MailCheck className='h-4 w-4' /> Awaiting a response
         </CardTitle>
         <CardDescription>
-          These people have been invited but have not joined yet. They become students only once they
-          accept.
+          These people have been invited but have not joined yet. They become students only once
+          they accept.
         </CardDescription>
       </CardHeader>
 
@@ -102,7 +102,7 @@ export function PendingInvitations({ organisationUuid }: { organisationUuid: str
                     <p className='truncate text-sm font-medium'>
                       {invite.recipient_name || invite.recipient_email}
                     </p>
-                    <p className='truncate text-xs text-muted-foreground'>
+                    <p className='text-muted-foreground truncate text-xs'>
                       {invite.recipient_email}
                       {invite.expires_at
                         ? ` · expires ${new Date(invite.expires_at).toLocaleDateString()}`

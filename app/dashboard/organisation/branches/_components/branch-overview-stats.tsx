@@ -54,10 +54,11 @@ export default function BranchOverviewStats({
   branchUuid: string;
 }) {
   const enabled = Boolean(organisationUuid && branchUuid);
-  const { branchClasses, venueUuids, isLoading: joinLoading } = useBranchClasses(
-    organisationUuid,
-    branchUuid
-  );
+  const {
+    branchClasses,
+    venueUuids,
+    isLoading: joinLoading,
+  } = useBranchClasses(organisationUuid, branchUuid);
 
   const equipmentQuery = useQuery({
     ...listResourcesOptions({

@@ -2,8 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 
-import { trainingHubTypeFilters, } from './training-hub-data';
-
+import { trainingHubTypeFilters } from './training-hub-data';
 
 type TrainingHubToolbarProps = {
   searchTerm: string;
@@ -47,7 +46,7 @@ export function TrainingHubToolbar({
         </div>
       </div> */}
 
-      <div className='space-y-3 my-3'>
+      <div className='my-3 space-y-3'>
         <div className='flex flex-wrap gap-2'>
           {trainingHubTypeFilters.map(filter => {
             const isActive = filter.value === selectedType;

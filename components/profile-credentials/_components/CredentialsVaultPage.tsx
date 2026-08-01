@@ -22,7 +22,7 @@ import {
   getInstructorExperienceOptions,
   getInstructorMembershipsOptions,
   getStudentCertificatesOptions,
-  listDocumentTypesOptions
+  listDocumentTypesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Certificate,
@@ -58,7 +58,9 @@ type CredentialsVaultPageProps = {
 };
 
 const PAGEABLE = { page: 0, size: 200 };
-type CredentialListItem = ReturnType<typeof buildCredentialsContent>['credentialsByTab'][CredentialsTabId][number];
+type CredentialListItem = ReturnType<
+  typeof buildCredentialsContent
+>['credentialsByTab'][CredentialsTabId][number];
 type OptionalGeneratedQueryOptions = {
   queryKey: readonly unknown[];
   queryFn?: unknown;
@@ -142,9 +144,9 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const instructorMembershipsOptions =
     role === 'instructor' && profileUuid
       ? getInstructorMembershipsOptions({
-        path: { instructorUuid: profileUuid },
-        query: { pageable: PAGEABLE },
-      })
+          path: { instructorUuid: profileUuid },
+          query: { pageable: PAGEABLE },
+        })
       : null;
   const instructorMembershipsQuery = useOptionalGeneratedQuery(instructorMembershipsOptions, [
     'credentials',
@@ -154,9 +156,9 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const instructorExperienceOptions =
     role === 'instructor' && profileUuid
       ? getInstructorExperienceOptions({
-        path: { instructorUuid: profileUuid },
-        query: { pageable: PAGEABLE },
-      })
+          path: { instructorUuid: profileUuid },
+          query: { pageable: PAGEABLE },
+        })
       : null;
   const instructorExperienceQuery = useOptionalGeneratedQuery(instructorExperienceOptions, [
     'credentials',
@@ -167,9 +169,9 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const courseCreatorEducationOptions =
     role === 'course_creator' && profileUuid
       ? getCourseCreatorEducationOptions({
-        path: { courseCreatorUuid: profileUuid },
-        query: { pageable: PAGEABLE },
-      })
+          path: { courseCreatorUuid: profileUuid },
+          query: { pageable: PAGEABLE },
+        })
       : null;
   const courseCreatorEducationQuery = useOptionalGeneratedQuery(courseCreatorEducationOptions, [
     'credentials',
@@ -179,9 +181,9 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const courseCreatorMembershipsOptions =
     role === 'course_creator' && profileUuid
       ? getCourseCreatorMembershipsOptions({
-        path: { courseCreatorUuid: profileUuid },
-        query: { pageable: PAGEABLE },
-      })
+          path: { courseCreatorUuid: profileUuid },
+          query: { pageable: PAGEABLE },
+        })
       : null;
   const courseCreatorMembershipsQuery = useOptionalGeneratedQuery(courseCreatorMembershipsOptions, [
     'credentials',
@@ -191,9 +193,9 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const courseCreatorExperienceOptions =
     role === 'course_creator' && profileUuid
       ? getCourseCreatorExperienceOptions({
-        path: { courseCreatorUuid: profileUuid },
-        query: { pageable: PAGEABLE },
-      })
+          path: { courseCreatorUuid: profileUuid },
+          query: { pageable: PAGEABLE },
+        })
       : null;
   const courseCreatorExperienceQuery = useOptionalGeneratedQuery(courseCreatorExperienceOptions, [
     'credentials',
@@ -224,9 +226,7 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const certificates =
     role === 'student' ? extractList<Certificate>(studentCertificatesQuery.data) : [];
   const instructorEducations =
-    role === 'instructor'
-      ? extractList<InstructorEducation>(instructorEducationQuery.data)
-      : [];
+    role === 'instructor' ? extractList<InstructorEducation>(instructorEducationQuery.data) : [];
   const instructorMemberships =
     role === 'instructor'
       ? extractPage<InstructorProfessionalMembership>(instructorMembershipsQuery.data).items
@@ -250,26 +250,20 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
 
   const documentTypes = extractList<DocumentTypeOption>(documentTypesQuery.data);
 
-
   const courseIds: string[] = [
     ...new Set(
-      (certificates ?? [])
-        .map(cert => cert.course_uuid)
-        .filter((id): id is string => id != null)
+      (certificates ?? []).map(cert => cert.course_uuid).filter((id): id is string => id != null)
     ),
   ];
 
   const programIds: string[] = [
     ...new Set(
-      (certificates ?? [])
-        .map(cert => cert.program_uuid)
-        .filter((id): id is string => id != null)
+      (certificates ?? []).map(cert => cert.program_uuid).filter((id): id is string => id != null)
     ),
   ];
 
   const { courseMap } = useCoursesByIds(courseIds);
-  const { programMap } = useProgramsByIds(programIds)
-
+  const { programMap } = useProgramsByIds(programIds);
 
   const content = buildCredentialsContent({
     role,
@@ -278,12 +272,9 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
     courseMap,
     programMap,
     certificates,
-    educationRecords:
-      role === 'instructor' ? instructorEducations : courseCreatorEducations,
-    membershipRecords:
-      role === 'instructor' ? instructorMemberships : courseCreatorMemberships,
-    experienceRecords:
-      role === 'instructor' ? instructorExperiences : courseCreatorExperiences,
+    educationRecords: role === 'instructor' ? instructorEducations : courseCreatorEducations,
+    membershipRecords: role === 'instructor' ? instructorMemberships : courseCreatorMemberships,
+    experienceRecords: role === 'instructor' ? instructorExperiences : courseCreatorExperiences,
     documentTypes,
     searchValue,
     statusFilter,
@@ -506,8 +497,7 @@ function CredentialsPanel({
         </div>
       </section>
 
-      <GrowthTimelineSection items={timeline} ownerName={profile?.full_name as string}
-      />
+      <GrowthTimelineSection items={timeline} ownerName={profile?.full_name as string} />
     </>
   );
 }

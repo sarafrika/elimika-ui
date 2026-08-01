@@ -205,99 +205,101 @@ export default function ClassroomPage({ classDefinitions, loading, scheduleInsta
       >
         <section className='grid gap-6 xl:grid-cols-2'>
           {roomsWithLocation.map(record => (
-          <Card key={record.uuid} className={cx(getCardClasses(), 'p-5 sm:p-6')}>
-            <CardContent className='space-y-5 p-0'>
-              <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
-                <div className='space-y-2'>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <h3 className='text-foreground text-xl font-semibold'>{record.classTitle}</h3>
-                    <Badge variant='outline'>
-                      {humanizeEnum(record.locationType) || 'Classroom'}
-                    </Badge>
+            <Card key={record.uuid} className={cx(getCardClasses(), 'p-5 sm:p-6')}>
+              <CardContent className='space-y-5 p-0'>
+                <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
+                  <div className='space-y-2'>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <h3 className='text-foreground text-xl font-semibold'>{record.classTitle}</h3>
+                      <Badge variant='outline'>
+                        {humanizeEnum(record.locationType) || 'Classroom'}
+                      </Badge>
+                    </div>
+                    {record.courseName && (
+                      <p className='text-muted-foreground text-sm'>{record.courseName}</p>
+                    )}
                   </div>
-                  {record.courseName && (
-                    <p className='text-muted-foreground text-sm'>{record.courseName}</p>
+
+                  {record.nextSession?.meetingUrl && (
+                    <Button onClick={() => openMeetingLink(record.nextSession?.meetingUrl)}>
+                      Launch next class
+                      <ExternalLink className='ml-2 h-4 w-4' />
+                    </Button>
                   )}
                 </div>
 
-                {record.nextSession?.meetingUrl && (
-                  <Button onClick={() => openMeetingLink(record.nextSession?.meetingUrl)}>
-                    Launch next class
-                    <ExternalLink className='ml-2 h-4 w-4' />
-                  </Button>
-                )}
-              </div>
-
-              <div className='grid gap-3 md:grid-cols-2'>
-                <div className='border-border/60 bg-muted/30 rounded-2xl border p-4'>
-                  <p className='text-muted-foreground text-xs font-medium tracking-[0.2em] uppercase'>
-                    Classroom
-                  </p>
-                  <p className='text-foreground mt-2 text-sm font-medium'>{record.baseLocation}</p>
-                </div>
-
-                <div className='border-border/60 bg-muted/30 rounded-2xl border p-4'>
-                  <p className='text-muted-foreground text-xs font-medium tracking-[0.2em] uppercase'>
-                    Next session
-                  </p>
-                  <p className='text-foreground mt-2 text-sm font-medium'>
-                    {record.nextSession
-                      ? `${format(new Date(record.nextSession.startTime), 'EEE, MMM d')} · ${record.nextSession.locationLabel}`
-                      : 'No upcoming session'}
-                  </p>
-                </div>
-              </div>
-
-              <div className='space-y-3'>
-                <div className='flex items-center justify-between'>
-                  <h4 className='text-foreground text-sm font-semibold'>Scheduled instances</h4>
-                  <Badge variant='secondary'>{record.schedules.length}</Badge>
-                </div>
-
-                <ScrollArea className='border-border/60 h-[260px] rounded-2xl border'>
-                  <div className='space-y-3 p-3'>
-                    {record.schedules.length > 0 ? (
-                      record.schedules.map(schedule => (
-                        <div
-                          key={schedule.uuid}
-                          className='border-border/60 bg-background rounded-2xl border p-4'
-                        >
-                          <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-                            <div className='space-y-1'>
-                              <p className='text-foreground font-medium'>{schedule.title}</p>
-                              <p className='text-muted-foreground text-sm'>
-                                {format(new Date(schedule.startTime), 'EEEE, MMM d · h:mm a')}
-                              </p>
-                              <p className='text-muted-foreground text-sm'>
-                                <span className='text-foreground font-medium'>Classroom:</span>{' '}
-                                {schedule.locationLabel}
-                              </p>
-                            </div>
-
-                            {schedule.meetingUrl && (
-                              <Button
-                                size='sm'
-                                variant='outline'
-                                onClick={() => openMeetingLink(schedule.meetingUrl ?? undefined)}
-                              >
-                                Open link
-                                <ExternalLink className='ml-2 h-3.5 w-3.5' />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className='border-border/60 text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm'>
-                        No schedule instances added yet for this class.
-                      </div>
-                    )}
+                <div className='grid gap-3 md:grid-cols-2'>
+                  <div className='border-border/60 bg-muted/30 rounded-2xl border p-4'>
+                    <p className='text-muted-foreground text-xs font-medium tracking-[0.2em] uppercase'>
+                      Classroom
+                    </p>
+                    <p className='text-foreground mt-2 text-sm font-medium'>
+                      {record.baseLocation}
+                    </p>
                   </div>
-                </ScrollArea>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+
+                  <div className='border-border/60 bg-muted/30 rounded-2xl border p-4'>
+                    <p className='text-muted-foreground text-xs font-medium tracking-[0.2em] uppercase'>
+                      Next session
+                    </p>
+                    <p className='text-foreground mt-2 text-sm font-medium'>
+                      {record.nextSession
+                        ? `${format(new Date(record.nextSession.startTime), 'EEE, MMM d')} · ${record.nextSession.locationLabel}`
+                        : 'No upcoming session'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className='space-y-3'>
+                  <div className='flex items-center justify-between'>
+                    <h4 className='text-foreground text-sm font-semibold'>Scheduled instances</h4>
+                    <Badge variant='secondary'>{record.schedules.length}</Badge>
+                  </div>
+
+                  <ScrollArea className='border-border/60 h-[260px] rounded-2xl border'>
+                    <div className='space-y-3 p-3'>
+                      {record.schedules.length > 0 ? (
+                        record.schedules.map(schedule => (
+                          <div
+                            key={schedule.uuid}
+                            className='border-border/60 bg-background rounded-2xl border p-4'
+                          >
+                            <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+                              <div className='space-y-1'>
+                                <p className='text-foreground font-medium'>{schedule.title}</p>
+                                <p className='text-muted-foreground text-sm'>
+                                  {format(new Date(schedule.startTime), 'EEEE, MMM d · h:mm a')}
+                                </p>
+                                <p className='text-muted-foreground text-sm'>
+                                  <span className='text-foreground font-medium'>Classroom:</span>{' '}
+                                  {schedule.locationLabel}
+                                </p>
+                              </div>
+
+                              {schedule.meetingUrl && (
+                                <Button
+                                  size='sm'
+                                  variant='outline'
+                                  onClick={() => openMeetingLink(schedule.meetingUrl ?? undefined)}
+                                >
+                                  Open link
+                                  <ExternalLink className='ml-2 h-3.5 w-3.5' />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className='border-border/60 text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm'>
+                          No schedule instances added yet for this class.
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </section>
       </AsyncSection>
     </div>

@@ -738,7 +738,7 @@ export function TrainingRequirementsSection({
                                       {isSavingEdit ? (
                                         <Loader2 className='h-3.5 w-3.5 animate-spin' />
                                       ) : (
-                                        <Save className='h-3.5 w-3.5 text-success' />
+                                        <Save className='text-success h-3.5 w-3.5' />
                                       )}
                                     </Button>
                                     <Button
@@ -990,7 +990,7 @@ export function TrainingRequirementsSection({
                                     {isSavingEdit ? (
                                       <Loader2 className='h-3.5 w-3.5 animate-spin' />
                                     ) : (
-                                      <Save className='h-3.5 w-3.5 text-success' />
+                                      <Save className='text-success h-3.5 w-3.5' />
                                     )}
                                   </Button>
 

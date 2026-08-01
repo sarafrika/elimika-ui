@@ -25,7 +25,7 @@ import {
   getAllClassDefinitionsQueryKey,
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
-  updateClassDefinitionMutation
+  updateClassDefinitionMutation,
 } from '../../../../../services/client/@tanstack/react-query.gen';
 import { ClassDetailsSection } from './ClassDetailsSection';
 import { ClassInformationSection } from './ClassInfoSection';
@@ -424,7 +424,7 @@ const ClassBuilderPage = ({
         days:
           prev.timetable.days && prev.timetable.days.length > 0
             ? prev.timetable.days
-            : [DAY_NAMES[normalizedWeekday]] as unknown as string[],
+            : ([DAY_NAMES[normalizedWeekday]] as unknown as string[]),
         time: {
           ...prev.timetable.time,
           duration:
@@ -705,39 +705,39 @@ const ClassBuilderPage = ({
       const sessionTemplates: CreateClassDefinitionMultipartData['body']['session_templates'] =
         scheduleMode === 'custom'
           ? sortedCustomSessions.map(session => ({
-            start_time: new Date(buildUtcIsoDateTime(session.date, session.startTime)),
-            end_time: new Date(buildUtcIsoDateTime(session.date, session.endTime)),
-            conflict_resolution: 'FAIL',
-          }))
+              start_time: new Date(buildUtcIsoDateTime(session.date, session.startTime)),
+              end_time: new Date(buildUtcIsoDateTime(session.date, session.endTime)),
+              conflict_resolution: 'FAIL',
+            }))
           : (() => {
-            const startTime = scheduleSettings.allDay
-              ? '00:00'
-              : (scheduleSettings.startClass.startTime as string);
-            const endTime = scheduleSettings.allDay
-              ? '23:59'
-              : (scheduleSettings.startClass.endTime as string);
-            const startTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, startTime);
-            const endTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, endTime);
-            const selectedDays = scheduleSettings.repeat.days || [];
-            const days_of_week = selectedDays
-              .sort()
-              .map(dayIndex => DAY_NAMES[dayIndex])
-              .join(',');
+              const startTime = scheduleSettings.allDay
+                ? '00:00'
+                : (scheduleSettings.startClass.startTime as string);
+              const endTime = scheduleSettings.allDay
+                ? '23:59'
+                : (scheduleSettings.startClass.endTime as string);
+              const startTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, startTime);
+              const endTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, endTime);
+              const selectedDays = scheduleSettings.repeat.days || [];
+              const days_of_week = selectedDays
+                .sort()
+                .map(dayIndex => DAY_NAMES[dayIndex])
+                .join(',');
 
-            return [
-              {
-                start_time: new Date(startTimeIso),
-                end_time: new Date(endTimeIso),
-                recurrence: {
-                  recurrence_type: RECURRENCE_TYPE_MAP[scheduleSettings.repeat.unit],
-                  interval_value: scheduleSettings.repeat.interval,
-                  days_of_week: days_of_week || undefined,
-                  occurrence_count: occurrenceCount,
+              return [
+                {
+                  start_time: new Date(startTimeIso),
+                  end_time: new Date(endTimeIso),
+                  recurrence: {
+                    recurrence_type: RECURRENCE_TYPE_MAP[scheduleSettings.repeat.unit],
+                    interval_value: scheduleSettings.repeat.interval,
+                    days_of_week: days_of_week || undefined,
+                    occurrence_count: occurrenceCount,
+                  },
+                  conflict_resolution: 'FAIL',
                 },
-                conflict_resolution: 'FAIL',
-              },
-            ];
-          })();
+              ];
+            })();
 
       const payload: CreateClassDefinitionMultipartData['body'] = {
         course_uuid: classDetails.course_uuid ?? undefined,
@@ -759,29 +759,29 @@ const ClassBuilderPage = ({
         default_start_time:
           scheduleMode === 'custom'
             ? new Date(
-              buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].startTime)
-            )
-            : new Date(
-              buildUtcIsoDateTime(
-                scheduleSettings.startClass.date,
-                scheduleSettings.allDay
-                  ? '00:00'
-                  : (scheduleSettings.startClass.startTime as string)
+                buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].startTime)
               )
-            ),
+            : new Date(
+                buildUtcIsoDateTime(
+                  scheduleSettings.startClass.date,
+                  scheduleSettings.allDay
+                    ? '00:00'
+                    : (scheduleSettings.startClass.startTime as string)
+                )
+              ),
         default_end_time:
           scheduleMode === 'custom'
             ? new Date(
-              buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].endTime)
-            )
-            : new Date(
-              buildUtcIsoDateTime(
-                scheduleSettings.startClass.date,
-                scheduleSettings.allDay
-                  ? '23:59'
-                  : (scheduleSettings.startClass.endTime as string)
+                buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].endTime)
               )
-            ),
+            : new Date(
+                buildUtcIsoDateTime(
+                  scheduleSettings.startClass.date,
+                  scheduleSettings.allDay
+                    ? '23:59'
+                    : (scheduleSettings.startClass.endTime as string)
+                )
+              ),
         meeting_link: meetingLinkAllowed ? trimToUndefined(classDetails.meeting_link) : undefined,
         session_templates: sessionTemplates,
       };
@@ -891,7 +891,10 @@ const ClassBuilderPage = ({
                     Close
                   </Button>
                 ) : (
-                  <Button variant={'outline'} onClick={() => router.push('/dashboard/instructor/trainings')}>
+                  <Button
+                    variant={'outline'}
+                    onClick={() => router.push('/dashboard/instructor/trainings')}
+                  >
                     <ArrowLeft />
                     Back
                   </Button>

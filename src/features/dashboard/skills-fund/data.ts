@@ -1,14 +1,8 @@
-import {
-  type LucideIcon
-} from 'lucide-react';
+import { type LucideIcon } from 'lucide-react';
 
 export type SkillsFundRole = 'student' | 'instructor';
 
-export type SkillsFundTabId =
-  | 'bursaries'
-  | 'sponsorships'
-  | 'scholarships'
-  | 'apprenticeships';
+export type SkillsFundTabId = 'bursaries' | 'sponsorships' | 'scholarships' | 'apprenticeships';
 
 export type SkillsFundSortValue = 'best-match' | 'highest-support' | 'recommended';
 
@@ -316,10 +310,7 @@ const sharedResources: SkillsFundResource[] = [];
 
 const sharedBottomCards: SkillsFundMiniCard[] = [];
 
-export function getSkillsFundContent(
-  role: SkillsFundRole,
-  profileName: string
-): SkillsFundContent {
+export function getSkillsFundContent(role: SkillsFundRole, profileName: string): SkillsFundContent {
   return {
     title: 'Skills Funding Hub',
     profileName,
@@ -340,17 +331,11 @@ export function getSkillsFundContent(
 
     walletTitle: 'Skills Fund Wallet',
     walletBalance: 'Ksh 0',
-    walletSubtitle:
-      role === 'instructor'
-        ? 'Available for mentoring and training'
-        : 'Available',
+    walletSubtitle: role === 'instructor' ? 'Available for mentoring and training' : 'Available',
     walletUtilizationLabel: '0% Used',
     walletUtilizationPercent: 0,
     walletRemaining: 'Ksh 0 remaining',
-    walletActionLabel:
-      role === 'instructor'
-        ? 'Apply for Facilitation'
-        : 'Apply for Support',
+    walletActionLabel: role === 'instructor' ? 'Apply for Facilitation' : 'Apply for Support',
     walletSecondaryActionLabel: 'View Full Wallet',
 
     activityEntries: sharedActivityEntries,

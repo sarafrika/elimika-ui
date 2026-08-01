@@ -11,7 +11,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../../components/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -22,7 +28,12 @@ import {
 } from '../../../../components/ui/sheet';
 import Spinner from '../../../../components/ui/spinner';
 import { Switch } from '../../../../components/ui/switch';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../../components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../../../../components/ui/tooltip';
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import {
   addCourseAssessmentMutation,
@@ -184,9 +195,9 @@ export function LabelInfo({ text }: { text: string }) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Info className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground transition-colors" />
+          <Info className='text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer transition-colors' />
         </TooltipTrigger>
-        <TooltipContent className="max-w-xs">
+        <TooltipContent className='max-w-xs'>
           <p>{text}</p>
         </TooltipContent>
       </Tooltip>
@@ -374,28 +385,26 @@ function AssessmentSheet({
             </div>
 
             {/* Type + Weight */}
-            <div className="flex w-full gap-4">
-              <div className="flex w-full gap-4">
-                <div className="flex flex-1 flex-col gap-1.5">
-                  <Label className="flex items-center gap-1 text-sm font-medium">
+            <div className='flex w-full gap-4'>
+              <div className='flex w-full gap-4'>
+                <div className='flex flex-1 flex-col gap-1.5'>
+                  <Label className='flex items-center gap-1 text-sm font-medium'>
                     Assessment Type
-                    <span className="text-destructive">*</span>
-
-                    <LabelInfo text="Select the type of assessment, such as Quiz, Exam, Assignment, or Project. This helps instructors organize and manage their assessments." />
+                    <span className='text-destructive'>*</span>
+                    <LabelInfo text='Select the type of assessment, such as Quiz, Exam, Assignment, or Project. This helps instructors organize and manage their assessments.' />
                   </Label>
 
                   <Select
                     value={form.assessment_type}
-                    onValueChange={(v) => set("assessment_type", v)}
+                    onValueChange={v => set('assessment_type', v)}
                   >
                     <SelectTrigger
-                      className={`w-full ${errors.assessment_type ? "border-destructive" : ""
-                        }`}
+                      className={`w-full ${errors.assessment_type ? 'border-destructive' : ''}`}
                     >
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder='Select type' />
                     </SelectTrigger>
                     <SelectContent>
-                      {ASSESSMENT_TYPES.map((t) => (
+                      {ASSESSMENT_TYPES.map(t => (
                         <SelectItem key={t} value={t}>
                           {t}
                         </SelectItem>
@@ -403,30 +412,28 @@ function AssessmentSheet({
                     </SelectContent>
                   </Select>
                   {errors.assessment_type && (
-                    <p className="text-destructive text-xs">{errors.assessment_type}</p>
+                    <p className='text-destructive text-xs'>{errors.assessment_type}</p>
                   )}
                 </div>
 
-                <div className="flex flex-1 flex-col gap-1.5">
-                  <Label className="flex items-center gap-1 text-sm font-medium">
+                <div className='flex flex-1 flex-col gap-1.5'>
+                  <Label className='flex items-center gap-1 text-sm font-medium'>
                     Assessment Category
-                    <span className="text-destructive">*</span>
-                    <LabelInfo text="Select the category of assessment. This helps instructors organize and manage their assessments." />
+                    <span className='text-destructive'>*</span>
+                    <LabelInfo text='Select the category of assessment. This helps instructors organize and manage their assessments.' />
                   </Label>
-
 
                   <Select
                     value={form.assessment_category}
-                    onValueChange={(v) => set("assessment_category", v)}
+                    onValueChange={v => set('assessment_category', v)}
                   >
                     <SelectTrigger
-                      className={`w-full ${errors.assessment_category ? "border-destructive" : ""
-                        }`}
+                      className={`w-full ${errors.assessment_category ? 'border-destructive' : ''}`}
                     >
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder='Select category' />
                     </SelectTrigger>
                     <SelectContent>
-                      {ASSESSMENT_CATEGORIES.map((t) => (
+                      {ASSESSMENT_CATEGORIES.map(t => (
                         <SelectItem key={t} value={t}>
                           {t}
                         </SelectItem>
@@ -434,9 +441,7 @@ function AssessmentSheet({
                     </SelectContent>
                   </Select>
                   {errors.assessment_category && (
-                    <p className="text-destructive text-xs">
-                      {errors.assessment_category}
-                    </p>
+                    <p className='text-destructive text-xs'>{errors.assessment_category}</p>
                   )}
                 </div>
               </div>
@@ -464,9 +469,9 @@ function AssessmentSheet({
 
             {/* Rubric */}
             <div className='flex flex-col gap-1.5'>
-              <Label className="flex items-center gap-1 text-sm font-medium">
+              <Label className='flex items-center gap-1 text-sm font-medium'>
                 Rubric
-                <LabelInfo text="Attach a grading rubric to define the assessment criteria and scoring to be used for this assessment evaluation. This helps ensure consistent and transparent evaluation of submissions for all students." />
+                <LabelInfo text='Attach a grading rubric to define the assessment criteria and scoring to be used for this assessment evaluation. This helps ensure consistent and transparent evaluation of submissions for all students.' />
               </Label>
 
               <p className='text-muted-foreground text-xs'>
@@ -830,10 +835,11 @@ export const CourseAssessmentStructure = ({
                           {a.weight_percentage}% (0–{a.weight_percentage})
                         </span>
                         <span
-                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
-                            ? 'bg-success/10 text-success/70'
-                            : 'bg-muted-foreground/10 text-muted-foreground'
-                            }`}
+                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            a.is_required
+                              ? 'bg-success/10 text-success/70'
+                              : 'bg-muted-foreground/10 text-muted-foreground'
+                          }`}
                         >
                           {a.is_required ? 'Required' : 'Not required'}
                         </span>

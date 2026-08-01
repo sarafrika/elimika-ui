@@ -36,7 +36,7 @@ import {
   getAllCoursesOptions,
   scheduleClassMutation,
   updateClassDefinitionMutation,
-  updateScheduledInstanceStatusMutation
+  updateScheduledInstanceStatusMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { LocationTypeEnum, type StatusEnum3 } from '@/services/client/types.gen';
 import type { RecurrenceValue } from '@/lib/recurrence';
@@ -448,9 +448,9 @@ function RecurrencForm({
       days_of_week:
         typeof data?.days_of_week === 'string'
           ? data.days_of_week
-            .split(',')
-            .map(day => day.trim())
-            .filter(isDayOfWeek)
+              .split(',')
+              .map(day => day.trim())
+              .filter(isDayOfWeek)
           : (data?.days_of_week ?? []),
       end_date: data?.end_date ? new Date(data.end_date).toISOString().split('T')[0] : '',
     };
@@ -564,7 +564,7 @@ function RecurrencForm({
           <Button
             type='submit'
             className='flex min-w-[120px] items-center justify-center gap-2'
-          // disabled={createClassRecurrence.isPending || updateClassRecurrence.isPending}
+            // disabled={createClassRecurrence.isPending || updateClassRecurrence.isPending}
           >
             {/* {(createClassRecurrence.isPending || updateClassRecurrence.isPending) && <Spinner />} */}
             {initialValues ? 'Update Recurrence' : 'Create Recurrence'}
@@ -694,7 +694,7 @@ function ScheduleForm({
           <Button
             type='submit'
             className='flex min-w-[120px] items-center justify-center gap-2'
-          // disabled={createClassSchedule.isPending || updateClassSchedule.isPending}
+            // disabled={createClassSchedule.isPending || updateClassSchedule.isPending}
           >
             {/* {(createClassSchedule.isPending || updateClassSchedule.isPending) && <Spinner />} */}
             {initialValues ? 'Update Schedule' : 'Create Schedule'}
@@ -902,7 +902,7 @@ function ClassDialog({
             initialValues={initialValues}
             className='px-6 pb-6'
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -945,7 +945,7 @@ function RecurrenceDialog({
             initialValues={initialValues}
             className='px-6 pb-6'
             recurrenceId={editingRecurrenceId}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -995,7 +995,7 @@ function ScheduleDialog({
             className='px-6 pb-6'
             scheduleId={editingScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -1047,7 +1047,7 @@ function TimetableScheduleDialog({
             className='px-6 pb-6'
             timetableScheduleId={timetableScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
             status={status}
           />
         </ScrollArea>

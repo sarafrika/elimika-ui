@@ -14,7 +14,13 @@ export type Service = {
 
 export const SERVICES: Service[] = [
   { key: '1on1', title: '1-on-1 Session', unit: 'session', format: 'INDIVIDUAL' },
-  { key: 'group', title: 'Group Session', subtitle: '(2–5 people)', unit: 'person', format: 'GROUP' },
+  {
+    key: 'group',
+    title: 'Group Session',
+    subtitle: '(2–5 people)',
+    unit: 'person',
+    format: 'GROUP',
+  },
   { key: 'online', title: 'Online Course', unit: 'course', format: 'GROUP' },
   { key: 'private-online', title: 'Private Online Class', unit: 'class', format: 'INDIVIDUAL' },
 ];
@@ -55,7 +61,10 @@ export const serviceFormat = (key: ServiceKey): 'INDIVIDUAL' | 'GROUP' =>
   SERVICES.find(s => s.key === key)?.format ?? 'GROUP';
 
 /** Map the UI service key onto the backend ServiceTypeEnum value. */
-export const SERVICE_TYPE_ENUM: Record<ServiceKey, 'ONE_ON_ONE' | 'GROUP' | 'ONLINE' | 'PRIVATE_ONLINE'> = {
+export const SERVICE_TYPE_ENUM: Record<
+  ServiceKey,
+  'ONE_ON_ONE' | 'GROUP' | 'ONLINE' | 'PRIVATE_ONLINE'
+> = {
   '1on1': 'ONE_ON_ONE',
   group: 'GROUP',
   online: 'ONLINE',
@@ -67,7 +76,15 @@ export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
 export type DayKey = (typeof DAYS)[number];
 export type DayRow = { active: boolean; start: string; end: string; allDay: boolean };
 
-export const DAY_TO_ISO: Record<DayKey, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0 };
+export const DAY_TO_ISO: Record<DayKey, number> = {
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+  Sun: 0,
+};
 export const DAY_TOKEN: Record<DayKey, string> = {
   Mon: 'MONDAY',
   Tue: 'TUESDAY',
@@ -109,7 +126,13 @@ export const TIMEZONES = ['EAT East Africa Time', 'UTC', 'GMT', 'CAT Central Afr
 
 export type ScheduleMode = 'standard' | 'pick' | 'academic';
 export type PeriodSlot = { day: DayKey; start: string; end: string };
-export type AcademicPeriod = { id: string; name: string; startDate: string; endDate: string; slots: PeriodSlot[] };
+export type AcademicPeriod = {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  slots: PeriodSlot[];
+};
 
 export type ReminderState = {
   window: string;
@@ -148,7 +171,8 @@ export const firstOccurrenceOnOrAfter = (startDate: string, dayKey: DayKey): Dat
   return cursor;
 };
 
-export const toDateTime = (dateISO: string, hhmm: string): Date => new Date(`${dateISO}T${hhmm}:00`);
+export const toDateTime = (dateISO: string, hhmm: string): Date =>
+  new Date(`${dateISO}T${hhmm}:00`);
 
 export const num = (value: string): number | undefined => {
   const trimmed = value.trim();
@@ -179,7 +203,11 @@ export function computeUpcomingSessions(
       meetingAt.setHours(h || 0, m || 0, 0, 0);
       out.push({
         date: meetingAt,
-        label: meetingAt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
+        label: meetingAt.toLocaleDateString(undefined, {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        }),
         time: row.allDay ? 'All day' : `${row.start}–${row.end}`,
       });
     }
@@ -198,7 +226,14 @@ export function fmtTime12(hhmm: string) {
 
 export function sessionEndFor(sessionStart: string, sessionDuration: string): string {
   const [h, m] = sessionStart.split(':').map(Number);
-  const mins: Record<string, number> = { '30m': 30, '1h': 60, '1.5h': 90, '2h': 120, '3h': 180, '4h': 240 };
+  const mins: Record<string, number> = {
+    '30m': 30,
+    '1h': 60,
+    '1.5h': 90,
+    '2h': 120,
+    '3h': 180,
+    '4h': 240,
+  };
   const total = (h || 0) * 60 + (m || 0) + (mins[sessionDuration] ?? 120);
   return `${String(Math.floor((total / 60) % 24)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
@@ -221,7 +256,8 @@ export function fmtShortDate(iso: string) {
 
 export const instructorInitials = (u?: User) =>
   u
-    ? `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase() || (u.email?.[0] ?? '?').toUpperCase()
+    ? `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase() ||
+      (u.email?.[0] ?? '?').toUpperCase()
     : '?';
 export const instructorName = (u?: User) =>
   u ? `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email || 'Instructor' : 'Unassigned';

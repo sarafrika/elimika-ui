@@ -23,7 +23,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { GuardianDetailsRequest, GuardianRelationshipTypeEnum } from '@/services/client';
 import {
@@ -143,23 +149,24 @@ export function InvitationContent() {
           </CardTitle>
           <CardDescription>
             {invitation?.inviter_name ? `${invitation.inviter_name} invited ` : 'You were invited '}
-            {invitation?.masked_recipient_email} to join as a {invitation?.domain_name ?? 'student'}.
+            {invitation?.masked_recipient_email} to join as a {invitation?.domain_name ?? 'student'}
+            .
           </CardDescription>
         </CardHeader>
 
         <CardContent className='space-y-5'>
           {invitation?.message ? (
-            <blockquote className='border-l-2 border-muted-foreground/30 pl-3 text-sm italic text-muted-foreground'>
+            <blockquote className='border-muted-foreground/30 text-muted-foreground border-l-2 pl-3 text-sm italic'>
               {invitation.message}
             </blockquote>
           ) : null}
 
           {invitation?.class_count ? (
-            <div className='flex items-center gap-2 rounded-md border bg-muted/30 p-3 text-sm'>
-              <GraduationCap className='h-4 w-4 text-muted-foreground' />
+            <div className='bg-muted/30 flex items-center gap-2 rounded-md border p-3 text-sm'>
+              <GraduationCap className='text-muted-foreground h-4 w-4' />
               <span>
-                {invitation.class_count} class{invitation.class_count === 1 ? '' : 'es'} will be shown to you
-                once you accept — you still choose which to enrol in.
+                {invitation.class_count} class{invitation.class_count === 1 ? '' : 'es'} will be
+                shown to you once you accept — you still choose which to enrol in.
               </span>
             </div>
           ) : null}
@@ -167,14 +174,14 @@ export function InvitationContent() {
           <ScopeDisclosure organisationName={invitation?.organisation_name} />
 
           {invitation?.expires_at ? (
-            <p className='flex items-center gap-1.5 text-xs text-muted-foreground'>
+            <p className='text-muted-foreground flex items-center gap-1.5 text-xs'>
               <CalendarClock className='h-3.5 w-3.5' />
               This invitation expires on {new Date(invitation.expires_at).toLocaleDateString()}.
             </p>
           ) : null}
 
           {!invitation?.actionable ? (
-            <p className='rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive'>
+            <p className='border-destructive/30 bg-destructive/5 text-destructive rounded-md border p-3 text-sm'>
               This invitation is no longer open.
             </p>
           ) : needsGuardian ? (
@@ -215,25 +222,28 @@ export function InvitationContent() {
 function ScopeDisclosure({ organisationName }: { organisationName?: string }) {
   const name = organisationName ?? 'This organisation';
   return (
-    <div className='rounded-md border border-primary/30 bg-primary/5 p-4'>
+    <div className='border-primary/30 bg-primary/5 rounded-md border p-4'>
       <p className='mb-2 flex items-center gap-2 text-sm font-semibold'>
-        <ShieldCheck className='h-4 w-4 text-primary' /> What {name} will be able to see
+        <ShieldCheck className='text-primary h-4 w-4' /> What {name} will be able to see
       </p>
-      <ul className='space-y-1.5 text-sm text-muted-foreground'>
+      <ul className='text-muted-foreground space-y-1.5 text-sm'>
         <li className='flex gap-2'>
-          <CheckCircle2 className='mt-0.5 h-3.5 w-3.5 shrink-0 text-primary' />
-          Your enrolment, attendance and performance in <strong>its own courses and classes</strong>.
+          <CheckCircle2 className='text-primary mt-0.5 h-3.5 w-3.5 shrink-0' />
+          Your enrolment, attendance and performance in <strong>its own courses and classes</strong>
+          .
         </li>
         <li className='flex gap-2'>
-          <XCircle className='mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground' />
+          <XCircle className='text-muted-foreground mt-0.5 h-3.5 w-3.5 shrink-0' />
           Not your learning with any other institution on Elimika.
         </li>
         <li className='flex gap-2'>
-          <XCircle className='mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground' />
+          <XCircle className='text-muted-foreground mt-0.5 h-3.5 w-3.5 shrink-0' />
           Not your wallet, payments or anything else on your account.
         </li>
       </ul>
-      <p className='mt-2 text-xs text-muted-foreground'>You can leave the organisation at any time.</p>
+      <p className='text-muted-foreground mt-2 text-xs'>
+        You can leave the organisation at any time.
+      </p>
     </div>
   );
 }
@@ -249,7 +259,7 @@ function SignInPrompt({
 }) {
   return (
     <div className='space-y-3 border-t pt-4'>
-      <p className='text-sm text-muted-foreground'>
+      <p className='text-muted-foreground text-sm'>
         {existingUser
           ? 'Sign in to your Elimika account to accept or decline this invitation.'
           : 'Create your Elimika account to accept this invitation. Signing up on its own does not join you to the organisation — you will come back here and decide.'}
@@ -285,7 +295,7 @@ function AcceptControls({
   return (
     <div className='space-y-4 border-t pt-4'>
       <div className='space-y-2'>
-        <Label htmlFor='dob' className='text-xs uppercase text-muted-foreground'>
+        <Label htmlFor='dob' className='text-muted-foreground text-xs uppercase'>
           Date of birth
         </Label>
         <Input
@@ -296,9 +306,9 @@ function AcceptControls({
           max={new Date().toISOString().slice(0, 10)}
           className='sm:max-w-xs'
         />
-        <p className='text-xs text-muted-foreground'>
-          Only needed if we do not already have it. It is never shared with the organisation — we use it
-          to check whether a parent or guardian needs to approve this.
+        <p className='text-muted-foreground text-xs'>
+          Only needed if we do not already have it. It is never shared with the organisation — we
+          use it to check whether a parent or guardian needs to approve this.
         </p>
       </div>
 
@@ -339,11 +349,11 @@ function GuardianForm({
   const ready = value.guardian_email.trim() !== '' && value.guardian_name.trim() !== '';
   return (
     <div className='space-y-4 border-t pt-4'>
-      <div className='rounded-md border border-warning/30 bg-warning/5 p-3 text-sm'>
+      <div className='border-warning/30 bg-warning/5 rounded-md border p-3 text-sm'>
         <p className='font-medium'>We need a parent or guardian to approve this</p>
-        <p className='mt-1 text-muted-foreground'>
-          You are under the age we can accept consent from directly. Tell us who to ask and we will email
-          them their own link. Nothing is set up until they approve.
+        <p className='text-muted-foreground mt-1'>
+          You are under the age we can accept consent from directly. Tell us who to ask and we will
+          email them their own link. Nothing is set up until they approve.
         </p>
       </div>
 
@@ -361,7 +371,9 @@ function GuardianForm({
           <Label htmlFor='g-rel'>Relationship to you</Label>
           <Select
             value={value.guardian_relationship_type}
-            onValueChange={v => onChange({ ...value, guardian_relationship_type: v as GuardianRelationshipTypeEnum })}
+            onValueChange={v =>
+              onChange({ ...value, guardian_relationship_type: v as GuardianRelationshipTypeEnum })
+            }
           >
             <SelectTrigger id='g-rel'>
               <SelectValue />
@@ -406,22 +418,28 @@ function GuardianForm({
   );
 }
 
-function OutcomePanel({ outcome, organisationName }: { outcome: Outcome; organisationName?: string }) {
+function OutcomePanel({
+  outcome,
+  organisationName,
+}: {
+  outcome: Outcome;
+  organisationName?: string;
+}) {
   const copy = {
     accepted: {
-      icon: <CheckCircle2 className='h-8 w-8 text-success' />,
+      icon: <CheckCircle2 className='text-success h-8 w-8' />,
       title: `You have joined ${organisationName ?? 'the organisation'}`,
       body: 'Any classes they shared with you are now available in your dashboard. You still choose which ones to enrol in.',
       cta: { href: '/dashboard/student', label: 'Go to my dashboard' },
     },
     declined: {
-      icon: <XCircle className='h-8 w-8 text-muted-foreground' />,
+      icon: <XCircle className='text-muted-foreground h-8 w-8' />,
       title: 'Invitation declined',
       body: 'Nothing was shared and no account changes were made. The organisation can send a fresh invitation if you change your mind.',
       cta: { href: '/', label: 'Back to Elimika' },
     },
     'guardian-requested': {
-      icon: <ShieldCheck className='h-8 w-8 text-primary' />,
+      icon: <ShieldCheck className='text-primary h-8 w-8' />,
       title: 'We have asked your parent or guardian',
       body: 'They will get an email with their own link. Nothing is set up until they approve it.',
       cta: { href: '/', label: 'Back to Elimika' },
@@ -434,7 +452,7 @@ function OutcomePanel({ outcome, organisationName }: { outcome: Outcome; organis
         {copy.icon}
         <div className='space-y-1.5'>
           <h2 className='text-xl font-semibold'>{copy.title}</h2>
-          <p className='mx-auto max-w-md text-sm text-muted-foreground'>{copy.body}</p>
+          <p className='text-muted-foreground mx-auto max-w-md text-sm'>{copy.body}</p>
         </div>
         <Button asChild>
           <a href={copy.cta.href}>{copy.cta.label}</a>

@@ -8,7 +8,7 @@ import {
   getQuizSchedulesOptions,
   getStudentCertificatesOptions,
   searchAttemptsOptions,
-  searchSubmissionsOptions
+  searchSubmissionsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Certificate,
@@ -21,7 +21,7 @@ import type {
   Organisation,
   StudentClassEnrollmentSummary,
   StudentCourseEnrollmentSummary,
-  TrainingProgram
+  TrainingProgram,
 } from '@/services/client/types.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQueries, useQuery } from '@tanstack/react-query';
@@ -81,7 +81,6 @@ export type CertificateDetails = Certificate & {
   program: TrainingProgram | null;
 };
 
-
 export type StudentOverviewEnrolledClassCourse = {
   id: string;
   classId: string;
@@ -121,7 +120,6 @@ const DEFAULT_PAGE_SIZE = 100;
 const FALLBACK_PROGRESS = [60, 45, 72, 55];
 const ASSESSMENT_PAGE_SIZE = 1000;
 
-
 const formatDateLabel = (value?: Date | string) => {
   if (!value) {
     return 'Next session soon';
@@ -148,7 +146,10 @@ const humanizeStatus = (value?: string | null) => {
 };
 
 const buildCourseSubtitle = (course?: StudentCourseEnrollmentSummary) => {
-  const parts = [humanizeStatus(course?.enrollment_status), course?.updated_date ? `Updated ${formatDateLabel(course.updated_date)}` : '']
+  const parts = [
+    humanizeStatus(course?.enrollment_status),
+    course?.updated_date ? `Updated ${formatDateLabel(course.updated_date)}` : '',
+  ]
     .filter(Boolean)
     .join(' · ');
 
@@ -172,7 +173,9 @@ const isActiveCourseEnrollment = (course?: StudentCourseEnrollmentSummary) => {
   return !['CANCELLED', 'COMPLETED', 'DROPPED', 'WITHDRAWN', 'ARCHIVED'].includes(status);
 };
 
-const isActiveClassEnrollment = (status?: StudentClassEnrollmentSummary['latest_enrollment_status']) => {
+const isActiveClassEnrollment = (
+  status?: StudentClassEnrollmentSummary['latest_enrollment_status']
+) => {
   if (!status) {
     return true;
   }
@@ -276,7 +279,9 @@ export function useStudentOverviewData(): StudentOverviewData {
   const certificates = certificatesResponse?.data ?? [];
   const programIds = useMemo(
     () =>
-      Array.from(new Set(certificates.map(certificate => certificate.program_uuid).filter(Boolean))),
+      Array.from(
+        new Set(certificates.map(certificate => certificate.program_uuid).filter(Boolean))
+      ),
     [certificates]
   );
   const certificateCourseIds = useMemo(
@@ -290,7 +295,9 @@ export function useStudentOverviewData(): StudentOverviewData {
       Array.from(
         new Set(
           enrolledClasses
-            .filter(classEnrollment => isActiveClassEnrollment(classEnrollment.latest_enrollment_status))
+            .filter(classEnrollment =>
+              isActiveClassEnrollment(classEnrollment.latest_enrollment_status)
+            )
             .map(classEnrollment => classEnrollment.class_definition_uuid)
             .filter(Boolean)
         )
@@ -298,9 +305,8 @@ export function useStudentOverviewData(): StudentOverviewData {
     [enrolledClasses]
   );
 
-  const { classDefinitionMap, isLoading: isLoadingClassDefinitions } = useClassesByIds(
-    classDefinitionIds
-  );
+  const { classDefinitionMap, isLoading: isLoadingClassDefinitions } =
+    useClassesByIds(classDefinitionIds);
 
   const courseIdsFromClasses = useMemo(
     () =>
@@ -317,11 +323,13 @@ export function useStudentOverviewData(): StudentOverviewData {
   const courseIds = useMemo(
     () =>
       Array.from(
-        new Set([
-          ...enrolledCourses.map(courseEnrollment => courseEnrollment.course_uuid),
-          ...certificateCourseIds,
-          ...courseIdsFromClasses,
-        ].filter(Boolean))
+        new Set(
+          [
+            ...enrolledCourses.map(courseEnrollment => courseEnrollment.course_uuid),
+            ...certificateCourseIds,
+            ...courseIdsFromClasses,
+          ].filter(Boolean)
+        )
       ),
     [courseIdsFromClasses, certificateCourseIds, enrolledCourses]
   );
@@ -332,17 +340,14 @@ export function useStudentOverviewData(): StudentOverviewData {
     () =>
       Array.from(
         new Set(
-          courseIds
-            .map((courseUuid) => courseMap[courseUuid]?.course_creator_uuid)
-            .filter(Boolean)
+          courseIds.map(courseUuid => courseMap[courseUuid]?.course_creator_uuid).filter(Boolean)
         )
       ),
     [courseIds, courseMap]
   );
 
-  const { courseCreatorMap, isLoading: isLoadingCourseCreators } = useCourseCreatorsByIds(
-    courseCreatorIds
-  );
+  const { courseCreatorMap, isLoading: isLoadingCourseCreators } =
+    useCourseCreatorsByIds(courseCreatorIds);
 
   const instructorIds = useMemo(
     () =>
@@ -356,7 +361,9 @@ export function useStudentOverviewData(): StudentOverviewData {
     [classDefinitionIds, classDefinitionMap]
   );
 
-  const { instructorMap, isLoading: isLoadingInstructors } = useInstructorsByIds(instructorIds as string[]);
+  const { instructorMap, isLoading: isLoadingInstructors } = useInstructorsByIds(
+    instructorIds as string[]
+  );
 
   const organisationIds = useMemo(
     () =>
@@ -380,8 +387,8 @@ export function useStudentOverviewData(): StudentOverviewData {
     () =>
       certificates.map(certificate => ({
         ...certificate,
-        course: certificate.course_uuid ? courseMap[certificate.course_uuid] ?? null : null,
-        program: certificate.program_uuid ? programMap[certificate.program_uuid] ?? null : null,
+        course: certificate.course_uuid ? (courseMap[certificate.course_uuid] ?? null) : null,
+        program: certificate.program_uuid ? (programMap[certificate.program_uuid] ?? null) : null,
       })),
     [certificates, courseMap, programMap]
   );
@@ -424,7 +431,8 @@ export function useStudentOverviewData(): StudentOverviewData {
       const course = courseUuid ? courseMap[courseUuid] : undefined;
       const courseEnrollment = courseUuid ? courseEnrollmentMap.get(courseUuid) : undefined;
       const nextSchedule =
-        classEnrollment.latest_scheduled_instance_start_time ?? classEnrollment.latest_activity_date;
+        classEnrollment.latest_scheduled_instance_start_time ??
+        classEnrollment.latest_activity_date;
 
       rows.push({
         id: classId,
@@ -451,7 +459,15 @@ export function useStudentOverviewData(): StudentOverviewData {
     return rows
       .sort((a, b) => a.sortValue - b.sortValue)
       .map(({ sortValue: _sortValue, ...item }) => item);
-  }, [classDefinitionMap, courseCreatorMap, courseEnrollmentMap, courseMap, enrolledClasses, instructorMap, organisationMap]);
+  }, [
+    classDefinitionMap,
+    courseCreatorMap,
+    courseEnrollmentMap,
+    courseMap,
+    enrolledClasses,
+    instructorMap,
+    organisationMap,
+  ]);
 
   const activeCourses = useMemo<StudentOverviewActiveCourse[]>(() => {
     const resolvedCourses = enrolledCourses
@@ -479,7 +495,9 @@ export function useStudentOverviewData(): StudentOverviewData {
           sortValue: updatedDate?.getTime() ?? 0,
         };
       })
-      .filter((course): course is StudentOverviewActiveCourse & { sortValue: number } => course !== null)
+      .filter(
+        (course): course is StudentOverviewActiveCourse & { sortValue: number } => course !== null
+      )
       .reduce<Map<string, StudentOverviewActiveCourse & { sortValue: number }>>((map, course) => {
         const existing = map.get(course.id);
 
@@ -519,7 +537,10 @@ export function useStudentOverviewData(): StudentOverviewData {
   });
 
   const assignmentSchedules = useMemo(
-    () => assignmentScheduleQueries.flatMap(query => (query.data?.data ?? []) as ClassAssignmentSchedule[]),
+    () =>
+      assignmentScheduleQueries.flatMap(
+        query => (query.data?.data ?? []) as ClassAssignmentSchedule[]
+      ),
     [assignmentScheduleQueries]
   );
 
@@ -529,7 +550,10 @@ export function useStudentOverviewData(): StudentOverviewData {
   );
 
   const assignmentIds = useMemo(
-    () => Array.from(new Set(assignmentSchedules.map(schedule => schedule.assignment_uuid).filter(Boolean))),
+    () =>
+      Array.from(
+        new Set(assignmentSchedules.map(schedule => schedule.assignment_uuid).filter(Boolean))
+      ),
     [assignmentSchedules]
   );
   const quizIds = useMemo(
@@ -537,7 +561,9 @@ export function useStudentOverviewData(): StudentOverviewData {
     [quizSchedules]
   );
 
-  const { assignmentMap, isLoading: isLoadingAssignmentDetails } = useAssignmentsByIds(assignmentIds as string[]);
+  const { assignmentMap, isLoading: isLoadingAssignmentDetails } = useAssignmentsByIds(
+    assignmentIds as string[]
+  );
   const { quizMap, isLoading: isLoadingQuizDetails } = useQuizzesByIds(quizIds as string[]);
 
   const relevantEnrollmentIds = useMemo(
@@ -675,7 +701,9 @@ export function useStudentOverviewData(): StudentOverviewData {
         classTitle: classDefinition?.title ?? 'Class quiz',
         courseTitle: course?.name ?? null,
         dueLabel: formatAssessmentDueLabel(dueDate),
-        href: classUuid ? `/dashboard/assignment/quiz_${quizUuid}?classId=${classUuid}` : `/dashboard/assignment/quiz_${quizUuid}`,
+        href: classUuid
+          ? `/dashboard/assignment/quiz_${quizUuid}?classId=${classUuid}`
+          : `/dashboard/assignment/quiz_${quizUuid}`,
         badgeLabel: 'Quiz',
         sortValue: dueDate ? new Date(dueDate).getTime() : Number.MAX_SAFE_INTEGER,
       });

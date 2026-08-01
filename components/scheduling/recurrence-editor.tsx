@@ -94,9 +94,7 @@ export function RecurrenceEditor({
   const toggleDay = (day: RecurrenceDay) => {
     const active = value.daysOfWeek.includes(day);
     set({
-      daysOfWeek: active
-        ? value.daysOfWeek.filter(d => d !== day)
-        : [...value.daysOfWeek, day],
+      daysOfWeek: active ? value.daysOfWeek.filter(d => d !== day) : [...value.daysOfWeek, day],
     });
   };
 
@@ -125,7 +123,7 @@ export function RecurrenceEditor({
       </div>
 
       {isRepeating ? (
-        <div className='space-y-4 rounded-md border border-border/60 bg-muted/20 p-4'>
+        <div className='border-border/60 bg-muted/20 space-y-4 rounded-md border p-4'>
           <div className='flex items-center gap-2'>
             <Label htmlFor={`${idPrefix}-interval`} className='shrink-0'>
               Repeat every
@@ -138,7 +136,7 @@ export function RecurrenceEditor({
               value={value.interval}
               onChange={event => set({ interval: Math.max(1, Number(event.target.value) || 1) })}
             />
-            <span className='text-sm text-muted-foreground'>
+            <span className='text-muted-foreground text-sm'>
               {unit}
               {value.interval > 1 ? 's' : ''}
             </span>
@@ -178,29 +176,31 @@ export function RecurrenceEditor({
 
                   {value.perDayTimes && value.daysOfWeek.length > 0 ? (
                     <div className='space-y-2'>
-                      {RECURRENCE_WEEK_DAYS.filter(day => value.daysOfWeek.includes(day)).map(day => {
-                        const times = value.dayTimes?.[day];
-                        return (
-                          <div key={day} className='flex items-center gap-2'>
-                            <span className='w-10 shrink-0 text-sm text-muted-foreground'>
-                              {RECURRENCE_DAY_SHORT[day]}
-                            </span>
-                            <Input
-                              type='time'
-                              className='w-32'
-                              value={times?.start ?? defaultStartTime}
-                              onChange={event => setDayTime(day, { start: event.target.value })}
-                            />
-                            <span className='text-sm text-muted-foreground'>to</span>
-                            <Input
-                              type='time'
-                              className='w-32'
-                              value={times?.end ?? defaultEndTime}
-                              onChange={event => setDayTime(day, { end: event.target.value })}
-                            />
-                          </div>
-                        );
-                      })}
+                      {RECURRENCE_WEEK_DAYS.filter(day => value.daysOfWeek.includes(day)).map(
+                        day => {
+                          const times = value.dayTimes?.[day];
+                          return (
+                            <div key={day} className='flex items-center gap-2'>
+                              <span className='text-muted-foreground w-10 shrink-0 text-sm'>
+                                {RECURRENCE_DAY_SHORT[day]}
+                              </span>
+                              <Input
+                                type='time'
+                                className='w-32'
+                                value={times?.start ?? defaultStartTime}
+                                onChange={event => setDayTime(day, { start: event.target.value })}
+                              />
+                              <span className='text-muted-foreground text-sm'>to</span>
+                              <Input
+                                type='time'
+                                className='w-32'
+                                value={times?.end ?? defaultEndTime}
+                                onChange={event => setDayTime(day, { end: event.target.value })}
+                              />
+                            </div>
+                          );
+                        }
+                      )}
                     </div>
                   ) : null}
                 </div>
@@ -229,63 +229,63 @@ export function RecurrenceEditor({
                   });
                 }}
               />
-              <span className='text-sm text-muted-foreground'>of the month</span>
+              <span className='text-muted-foreground text-sm'>of the month</span>
             </div>
           ) : null}
 
           {showEnd ? (
-          <div className='space-y-2'>
-            <Label>Ends</Label>
-            <RadioGroup
-              value={value.end.mode}
-              onValueChange={mode => setEnd({ mode: mode as RecurrenceEndMode })}
-              className='gap-3'
-            >
-              <div className='flex items-center gap-2'>
-                <RadioGroupItem value='never' id={`${idPrefix}-ends-never`} />
-                <Label htmlFor={`${idPrefix}-ends-never`} className='font-normal'>
-                  Never
-                </Label>
-              </div>
+            <div className='space-y-2'>
+              <Label>Ends</Label>
+              <RadioGroup
+                value={value.end.mode}
+                onValueChange={mode => setEnd({ mode: mode as RecurrenceEndMode })}
+                className='gap-3'
+              >
+                <div className='flex items-center gap-2'>
+                  <RadioGroupItem value='never' id={`${idPrefix}-ends-never`} />
+                  <Label htmlFor={`${idPrefix}-ends-never`} className='font-normal'>
+                    Never
+                  </Label>
+                </div>
 
-              <div className='flex items-center gap-2'>
-                <RadioGroupItem value='on' id={`${idPrefix}-ends-on`} />
-                <Label htmlFor={`${idPrefix}-ends-on`} className='font-normal'>
-                  On
-                </Label>
-                <Input
-                  type='date'
-                  className='w-44'
-                  disabled={value.end.mode !== 'on'}
-                  value={value.end.date ?? ''}
-                  onChange={event => setEnd({ mode: 'on', date: event.target.value })}
-                />
-              </div>
+                <div className='flex items-center gap-2'>
+                  <RadioGroupItem value='on' id={`${idPrefix}-ends-on`} />
+                  <Label htmlFor={`${idPrefix}-ends-on`} className='font-normal'>
+                    On
+                  </Label>
+                  <Input
+                    type='date'
+                    className='w-44'
+                    disabled={value.end.mode !== 'on'}
+                    value={value.end.date ?? ''}
+                    onChange={event => setEnd({ mode: 'on', date: event.target.value })}
+                  />
+                </div>
 
-              <div className='flex items-center gap-2'>
-                <RadioGroupItem value='after' id={`${idPrefix}-ends-after`} />
-                <Label htmlFor={`${idPrefix}-ends-after`} className='font-normal'>
-                  After
-                </Label>
-                <Input
-                  type='number'
-                  min={1}
-                  className='w-20'
-                  disabled={value.end.mode !== 'after'}
-                  value={value.end.count ?? ''}
-                  onChange={event =>
-                    setEnd({ mode: 'after', count: Math.max(1, Number(event.target.value) || 1) })
-                  }
-                />
-                <span className='text-sm text-muted-foreground'>occurrences</span>
-              </div>
-            </RadioGroup>
-          </div>
+                <div className='flex items-center gap-2'>
+                  <RadioGroupItem value='after' id={`${idPrefix}-ends-after`} />
+                  <Label htmlFor={`${idPrefix}-ends-after`} className='font-normal'>
+                    After
+                  </Label>
+                  <Input
+                    type='number'
+                    min={1}
+                    className='w-20'
+                    disabled={value.end.mode !== 'after'}
+                    value={value.end.count ?? ''}
+                    onChange={event =>
+                      setEnd({ mode: 'after', count: Math.max(1, Number(event.target.value) || 1) })
+                    }
+                  />
+                  <span className='text-muted-foreground text-sm'>occurrences</span>
+                </div>
+              </RadioGroup>
+            </div>
           ) : null}
         </div>
       ) : null}
 
-      <p className='text-sm text-muted-foreground'>{summarizeRecurrence(value)}</p>
+      <p className='text-muted-foreground text-sm'>{summarizeRecurrence(value)}</p>
     </div>
   );
 }

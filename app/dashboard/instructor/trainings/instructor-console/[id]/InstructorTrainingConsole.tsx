@@ -21,7 +21,7 @@ import {
   Radio,
   Search,
   Users,
-  Video
+  Video,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -45,10 +45,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
-import {
-  type ClassDetailsScheduleItem,
-  useClassDetails,
-} from '@/hooks/use-class-details';
+import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
 import { type RosterEntry, useClassRoster } from '@/hooks/use-class-roster';
 import {
   type CourseLesson,
@@ -151,10 +148,7 @@ function getSubmissionVariant(status: 'submitted' | 'review' | 'missing') {
 function getScheduleState(schedule?: { start_time?: string | Date; end_time?: string | Date }) {
   if (!schedule?.start_time || !schedule?.end_time) return 'upcoming' as const;
 
-  if (
-    dayjs(schedule.start_time).isBefore(dayjs()) &&
-    dayjs(schedule.end_time).isAfter(dayjs())
-  ) {
+  if (dayjs(schedule.start_time).isBefore(dayjs()) && dayjs(schedule.end_time).isAfter(dayjs())) {
     return 'live' as const;
   }
 
@@ -191,7 +185,7 @@ function getYouTubeEmbedUrl(source: string) {
       const videoId = url.searchParams.get('v');
       return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     }
-  } catch { }
+  } catch {}
 
   return '';
 }
@@ -419,7 +413,8 @@ export default function InstructorTrainingConsole() {
     }
   }, [activeScheduleId, sortedSchedules]);
 
-  const activeSchedule = sortedSchedules.find(schedule => schedule.uuid === activeScheduleId) ?? null;
+  const activeSchedule =
+    sortedSchedules.find(schedule => schedule.uuid === activeScheduleId) ?? null;
 
   useEffect(() => {
     if (!assignmentDueAt && activeSchedule?.end_time) {
@@ -503,7 +498,9 @@ export default function InstructorTrainingConsole() {
     null;
 
   const progress = useMemo(() => {
-    const completed = sortedSchedules.filter(schedule => dayjs(schedule.end_time).isBefore(dayjs())).length;
+    const completed = sortedSchedules.filter(schedule =>
+      dayjs(schedule.end_time).isBefore(dayjs())
+    ).length;
     const total = sortedSchedules.length;
 
     return {
@@ -811,7 +808,7 @@ export default function InstructorTrainingConsole() {
 
   return (
     <main className={elimikaDesignSystem.components.pageContainer}>
-      <div className='-mt-6 sm:-mt-10' >
+      <div className='-mt-6 sm:-mt-10'>
         <Button asChild variant='outline' className='gap-2'>
           <Link href='/dashboard/instructor/trainings'>
             <ArrowLeft className='h-4 w-4' />
@@ -983,7 +980,10 @@ export default function InstructorTrainingConsole() {
             {rosterPending && filteredRoster.length === 0 ? (
               <div className='space-y-2 p-3'>
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className='flex items-start gap-3 rounded-2xl border border-border/60 p-3'>
+                  <div
+                    key={i}
+                    className='border-border/60 flex items-start gap-3 rounded-2xl border p-3'
+                  >
                     <Skeleton className='size-10 rounded-full' />
                     <div className='flex-1 space-y-2'>
                       <Skeleton className='h-3.5 w-3/4' />
@@ -993,61 +993,61 @@ export default function InstructorTrainingConsole() {
                 ))}
               </div>
             ) : (
-            <div className='space-y-2 p-3'>
-              {filteredRoster.map((entry: RosterEntry) => {
-                const isActive = selectedStudent?.user?.uuid === entry.user?.uuid;
-                const attendanceState = getStudentAttendanceState(entry);
+              <div className='space-y-2 p-3'>
+                {filteredRoster.map((entry: RosterEntry) => {
+                  const isActive = selectedStudent?.user?.uuid === entry.user?.uuid;
+                  const attendanceState = getStudentAttendanceState(entry);
 
-                return (
-                  <button
-                    key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
-                    type='button'
-                    onClick={() => setSelectedStudentId(entry.user?.uuid ?? '')}
-                    className={cx(
-                      'w-full rounded-2xl border p-3 text-left transition',
-                      isActive
-                        ? 'border-primary/40 bg-primary/5'
-                        : 'border-border/60 bg-background hover:border-primary/30 hover:bg-accent/30'
-                    )}
-                  >
-                    <div className='flex items-start gap-3'>
-                      <Avatar className='border-border/60 size-10 border'>
-                        <AvatarFallback>{getInitials(entry.user?.full_name)}</AvatarFallback>
-                      </Avatar>
-                      <div className='min-w-0 flex-1 space-y-1'>
-                        <div className='flex items-center justify-between gap-3'>
-                          <p className='truncate text-sm font-semibold'>
-                            {entry.user?.full_name || 'Unknown student'}
+                  return (
+                    <button
+                      key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
+                      type='button'
+                      onClick={() => setSelectedStudentId(entry.user?.uuid ?? '')}
+                      className={cx(
+                        'w-full rounded-2xl border p-3 text-left transition',
+                        isActive
+                          ? 'border-primary/40 bg-primary/5'
+                          : 'border-border/60 bg-background hover:border-primary/30 hover:bg-accent/30'
+                      )}
+                    >
+                      <div className='flex items-start gap-3'>
+                        <Avatar className='border-border/60 size-10 border'>
+                          <AvatarFallback>{getInitials(entry.user?.full_name)}</AvatarFallback>
+                        </Avatar>
+                        <div className='min-w-0 flex-1 space-y-1'>
+                          <div className='flex items-center justify-between gap-3'>
+                            <p className='truncate text-sm font-semibold'>
+                              {entry.user?.full_name || 'Unknown student'}
+                            </p>
+                            <Badge
+                              variant={
+                                attendanceState === 'present'
+                                  ? 'success'
+                                  : attendanceState === 'absent'
+                                    ? 'destructive'
+                                    : 'secondary'
+                              }
+                            >
+                              {attendanceState}
+                            </Badge>
+                          </div>
+                          <p className='text-muted-foreground truncate text-xs'>
+                            {entry.user?.email || formatEnum(entry.enrollment?.status)}
                           </p>
-                          <Badge
-                            variant={
-                              attendanceState === 'present'
-                                ? 'success'
-                                : attendanceState === 'absent'
-                                  ? 'destructive'
-                                  : 'secondary'
-                            }
-                          >
-                            {attendanceState}
-                          </Badge>
                         </div>
-                        <p className='text-muted-foreground truncate text-xs'>
-                          {entry.user?.email || formatEnum(entry.enrollment?.status)}
-                        </p>
                       </div>
-                    </div>
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
 
-              {filteredRoster.length === 0 && (
-                <div className='text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm'>
-                  {activeSchedule
-                    ? 'No learners are attached to this class instance yet.'
-                    : 'Select a class instance to load the correct roster.'}
-                </div>
-              )}
-            </div>
+                {filteredRoster.length === 0 && (
+                  <div className='text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm'>
+                    {activeSchedule
+                      ? 'No learners are attached to this class instance yet.'
+                      : 'Select a class instance to load the correct roster.'}
+                  </div>
+                )}
+              </div>
             )}
           </ScrollArea>
         </Card>
@@ -1394,7 +1394,7 @@ export default function InstructorTrainingConsole() {
                         const isBusy =
                           markAttendanceMut.isPending &&
                           markAttendanceMut.variables?.path?.enrollmentUuid ===
-                          entry.enrollment?.uuid;
+                            entry.enrollment?.uuid;
 
                         return (
                           <div

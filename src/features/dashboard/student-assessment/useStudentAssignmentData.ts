@@ -29,21 +29,16 @@ type ResolvedClassDetails = {
   uuid?: string;
 };
 
-export type StudentAssignmentFilterTab =
-  | 'all'
-  | 'pending'
-  | 'submitted'
-  | 'graded'
-  | 'returned';
+export type StudentAssignmentFilterTab = 'all' | 'pending' | 'submitted' | 'graded' | 'returned';
 
 export type StudentAssignmentClassMeta = {
   classUuid: string;
   classTitle: string;
   courseTitle: string;
   courseUuid: string;
-  studentUuid?: string
+  studentUuid?: string;
   enrollmentUuid?: string;
-  courseEnrollmentUuid?: string
+  courseEnrollmentUuid?: string;
 };
 
 export type StudentAssignmentRow = {
@@ -62,7 +57,7 @@ type StudentAssignmentClassItem = {
   courseUuid: string;
   studentUuid?: string;
   enrollmentUuid?: string;
-  courseEnrollmentUuid?: string
+  courseEnrollmentUuid?: string;
 };
 
 function getClassTitle(classDetails?: ResolvedClassDetails) {
@@ -129,17 +124,15 @@ export function getDueSummary(value?: string | Date | null) {
 
 export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
   const rawStatus = row.latestSubmission?.status;
-  const status = String(rawStatus ?? '').trim().toUpperCase();
+  const status = String(rawStatus ?? '')
+    .trim()
+    .toUpperCase();
 
-  const dueSummary = getDueSummary(
-    row.schedule?.due_at ?? row.assignment?.due_date
-  );
+  const dueSummary = getDueSummary(row.schedule?.due_at ?? row.assignment?.due_date);
 
   const hasSubmission = row.submissions?.length > 0;
 
-  const isGraded =
-    status === 'GRADED' ||
-    row.latestSubmission?.percentage != null;
+  const isGraded = status === 'GRADED' || row.latestSubmission?.percentage != null;
 
   const isReturned = status === 'RETURNED';
 
@@ -153,30 +146,25 @@ export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
           : dueSummary.tone === 'warning'
             ? ('warning' as const)
             : ('secondary' as const),
-      helper:
-        dueSummary.label === 'Overdue'
-          ? 'Past due date'
-          : 'Awaiting your submission',
+      helper: dueSummary.label === 'Overdue' ? 'Past due date' : 'Awaiting your submission',
     };
   }
 
   if (isReturned) {
     return {
-      key: "returned" as const,
-      label: "Returned",
-      variant: "warning" as const,
-      helper: "Requires revision and resubmission",
+      key: 'returned' as const,
+      label: 'Returned',
+      variant: 'warning' as const,
+      helper: 'Requires revision and resubmission',
     };
   }
 
   if (isGraded) {
     return {
-      key: "graded" as const,
-      label: "Graded",
-      variant: "success" as const,
-      helper:
-        row.latestSubmission?.grade_display ??
-        "Instructor feedback available",
+      key: 'graded' as const,
+      label: 'Graded',
+      variant: 'success' as const,
+      helper: row.latestSubmission?.grade_display ?? 'Instructor feedback available',
     };
   }
 
@@ -189,13 +177,12 @@ export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
 }
 
 export function useStudentAssignmentData() {
-  const profile = useUserProfile()
-  const student = profile?.student
+  const profile = useUserProfile();
+  const student = profile?.student;
 
-  const {
-    classDefinitions,
-    loading: classDefinitionsLoading,
-  } = useStudentClassDefinitions(student ?? undefined);
+  const { classDefinitions, loading: classDefinitionsLoading } = useStudentClassDefinitions(
+    student ?? undefined
+  );
 
   /**
    * Normalize class items
@@ -203,54 +190,37 @@ export function useStudentAssignmentData() {
   const classItems = useMemo(
     () =>
       (classDefinitions ?? [])
-        .map(
-          (
-            classDefinition: StudentClassDefinitionRow
-          ): StudentAssignmentClassItem | null => {
-            const classDetails =
-              classDefinition.classDetails as
-              | ResolvedClassDetails
-              | undefined;
+        .map((classDefinition: StudentClassDefinitionRow): StudentAssignmentClassItem | null => {
+          const classDetails = classDefinition.classDetails as ResolvedClassDetails | undefined;
 
-            const classUuid =
-              classDefinition.uuid ||
-              classDetails?.uuid ||
-              classDetails?.class_definition?.uuid;
+          const classUuid =
+            classDefinition.uuid || classDetails?.uuid || classDetails?.class_definition?.uuid;
 
-            if (!classUuid) return null;
-            const studentUuid = student?.uuid;
+          if (!classUuid) return null;
+          const studentUuid = student?.uuid;
 
-            const enrollmentUuid =
-              classDefinition.courseEnrollments.find(
-                enrollment =>
-                  enrollment.student_uuid === student?.uuid &&
-                  enrollment.status !== 'ACTIVE'
-              )?.uuid;
+          const enrollmentUuid = classDefinition.courseEnrollments.find(
+            enrollment =>
+              enrollment.student_uuid === student?.uuid && enrollment.status !== 'ACTIVE'
+          )?.uuid;
 
-            const courseEnrollmentUuid =
-              classDefinition.courseEnrollments.find(
-                enrollment =>
-                  enrollment.student_uuid === student?.uuid &&
-                  enrollment.status === 'ACTIVE'
-              )?.uuid;
+          const courseEnrollmentUuid = classDefinition.courseEnrollments.find(
+            enrollment =>
+              enrollment.student_uuid === student?.uuid && enrollment.status === 'ACTIVE'
+          )?.uuid;
 
-            return {
-              classTitle: getClassTitle(classDetails),
-              classUuid,
-              courseTitle:
-                classDefinition.course?.name as string ||
-                classDetails?.course_name as string,
-              studentUuid,
-              courseUuid: classDefinition?.course?.uuid as string,
-              enrollmentUuid,
-              courseEnrollmentUuid
-            };
-          }
-        )
-        .filter(
-          (x): x is StudentAssignmentClassItem =>
-            Boolean(x)
-        ),
+          return {
+            classTitle: getClassTitle(classDetails),
+            classUuid,
+            courseTitle:
+              (classDefinition.course?.name as string) || (classDetails?.course_name as string),
+            studentUuid,
+            courseUuid: classDefinition?.course?.uuid as string,
+            enrollmentUuid,
+            courseEnrollmentUuid,
+          };
+        })
+        .filter((x): x is StudentAssignmentClassItem => Boolean(x)),
     [classDefinitions]
   );
 
@@ -274,16 +244,12 @@ export function useStudentAssignmentData() {
   const scheduleRows = useMemo(
     () =>
       classItems.flatMap((classItem, index) => {
-        const schedules =
-          assignmentScheduleQueries[index]?.data?.data ??
-          [];
+        const schedules = assignmentScheduleQueries[index]?.data?.data ?? [];
 
-        return schedules.map(
-          (schedule: ClassAssignmentSchedule) => ({
-            classMeta: classItem,
-            schedule,
-          })
-        );
+        return schedules.map((schedule: ClassAssignmentSchedule) => ({
+          classMeta: classItem,
+          schedule,
+        }));
       }),
     [assignmentScheduleQueries, classItems]
   );
@@ -296,15 +262,8 @@ export function useStudentAssignmentData() {
       Array.from(
         new Set(
           scheduleRows
-            .map(
-              r =>
-                r.schedule.assignment_uuid as
-                | string
-                | undefined
-            )
-            .filter(
-              (x): x is string => Boolean(x)
-            )
+            .map(r => r.schedule.assignment_uuid as string | undefined)
+            .filter((x): x is string => Boolean(x))
         )
       ),
     [scheduleRows]
@@ -359,8 +318,7 @@ export function useStudentAssignmentData() {
     const map = new Map<string, Assignment>();
 
     assignmentUuids.forEach((uuid, i) => {
-      const assignment =
-        assignmentDetailQueries[i]?.data?.data;
+      const assignment = assignmentDetailQueries[i]?.data?.data;
 
       if (assignment) {
         map.set(uuid, assignment);
@@ -371,43 +329,27 @@ export function useStudentAssignmentData() {
   }, [assignmentDetailQueries, assignmentUuids]);
 
   const attachmentsMap = useMemo(() => {
-    const map = new Map<
-      string,
-      AssignmentAttachment[]
-    >();
+    const map = new Map<string, AssignmentAttachment[]>();
 
     assignmentUuids.forEach((uuid, i) => {
-      map.set(
-        uuid,
-        assignmentAttachmentQueries[i]?.data?.data ??
-        []
-      );
+      map.set(uuid, assignmentAttachmentQueries[i]?.data?.data ?? []);
     });
 
     return map;
   }, [assignmentAttachmentQueries, assignmentUuids]);
 
-
   const studentEnrollmentUuids = new Set(
-    classItems
-      .map(item => item.courseEnrollmentUuid ?? item.enrollmentUuid)
-      .filter(Boolean)
+    classItems.map(item => item.courseEnrollmentUuid ?? item.enrollmentUuid).filter(Boolean)
   );
 
   const submissionMap = useMemo(() => {
-    const map = new Map<
-      string,
-      AssignmentSubmission[]
-    >();
+    const map = new Map<string, AssignmentSubmission[]>();
 
     assignmentUuids.forEach((uuid, i) => {
-      const submissions =
-        assignmentSubmissionQueries[i]?.data?.data ?? [];
+      const submissions = assignmentSubmissionQueries[i]?.data?.data ?? [];
 
       const filtered = submissions
-        .filter(sub =>
-          studentEnrollmentUuids.has(sub.enrollment_uuid)
-        )
+        .filter(sub => studentEnrollmentUuids.has(sub.enrollment_uuid))
         .sort((a, b) => {
           const at = new Date(a.submitted_at ?? a.updated_date ?? a.created_date ?? 0).getTime();
           const bt = new Date(b.submitted_at ?? b.updated_date ?? b.created_date ?? 0).getTime();
@@ -418,11 +360,7 @@ export function useStudentAssignmentData() {
     });
 
     return map;
-  }, [
-    assignmentSubmissionQueries,
-    assignmentUuids,
-    studentEnrollmentUuids,
-  ]);
+  }, [assignmentSubmissionQueries, assignmentUuids, studentEnrollmentUuids]);
 
   /**
    * Final rows
@@ -431,18 +369,15 @@ export function useStudentAssignmentData() {
     () =>
       scheduleRows
         .map(({ classMeta, schedule }) => {
-          const assignmentUuid =
-            schedule.assignment_uuid;
+          const assignmentUuid = schedule.assignment_uuid;
 
           if (!assignmentUuid) return null;
 
-          const assignment =
-            assignmentMap.get(assignmentUuid);
+          const assignment = assignmentMap.get(assignmentUuid);
 
           if (!assignment) return null;
 
-          const submissions =
-            submissionMap.get(assignmentUuid) ?? [];
+          const submissions = submissionMap.get(assignmentUuid) ?? [];
 
           const latestSubmission =
             submissions.find(s => s.enrollment_uuid === classMeta.courseEnrollmentUuid) ??
@@ -451,19 +386,14 @@ export function useStudentAssignmentData() {
 
           return {
             assignment,
-            attachments:
-              attachmentsMap.get(assignmentUuid) ??
-              [],
+            attachments: attachmentsMap.get(assignmentUuid) ?? [],
             classMeta,
             schedule,
             submissions,
             latestSubmission,
           };
         })
-        .filter(
-          (x): x is StudentAssignmentRow =>
-            Boolean(x)
-        ),
+        .filter((x): x is StudentAssignmentRow => Boolean(x)),
     [scheduleRows, assignmentMap, attachmentsMap, submissionMap]
   );
 
@@ -472,18 +402,10 @@ export function useStudentAssignmentData() {
    */
   const isLoading =
     classDefinitionsLoading ||
-    assignmentScheduleQueries.some(
-      q => q.isLoading
-    ) ||
-    assignmentDetailQueries.some(
-      q => q.isLoading
-    ) ||
-    assignmentAttachmentQueries.some(
-      q => q.isLoading
-    ) ||
-    assignmentSubmissionQueries.some(
-      q => q.isLoading
-    );
+    assignmentScheduleQueries.some(q => q.isLoading) ||
+    assignmentDetailQueries.some(q => q.isLoading) ||
+    assignmentAttachmentQueries.some(q => q.isLoading) ||
+    assignmentSubmissionQueries.some(q => q.isLoading);
 
   return {
     assignmentRows,

@@ -10,15 +10,12 @@ type LearningHubClassInviteProps = {
   loading?: boolean;
 };
 
-export function LearningHubClassInvite({
-  invite,
-  loading = false,
-}: LearningHubClassInviteProps) {
+export function LearningHubClassInvite({ invite, loading = false }: LearningHubClassInviteProps) {
   if (loading) {
     return (
-      <Card className='rounded-[18px] border border-border/70 bg-background p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
+      <Card className='border-border/70 bg-background rounded-[18px] border p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
         <Skeleton className='h-5 w-32' />
-        <div className='mt-3 rounded-[12px] border border-border/70 bg-background p-3'>
+        <div className='border-border/70 bg-background mt-3 rounded-[12px] border p-3'>
           <div className='space-y-2'>
             <Skeleton className='h-5 w-44' />
             <Skeleton className='h-4 w-36' />
@@ -35,12 +32,12 @@ export function LearningHubClassInvite({
   }
 
   return (
-    <Card className='rounded-[18px] border border-border/70 bg-background p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
-      <h2 className='text-[1rem] font-semibold text-foreground'>Class Invites (0)</h2>
-      <div className='mt-3 rounded-[12px] border border-border/70 bg-background p-3'>
-        <h3 className='text-[0.96rem] font-semibold text-foreground'>{invite.title}</h3>
-        <p className='mt-1 text-[0.78rem] text-muted-foreground'>{invite.subtitle}</p>
-        <p className='mt-2 text-[0.74rem] text-muted-foreground'>{invite.timeLabel}</p>
+    <Card className='border-border/70 bg-background rounded-[18px] border p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
+      <h2 className='text-foreground text-[1rem] font-semibold'>Class Invites (0)</h2>
+      <div className='border-border/70 bg-background mt-3 rounded-[12px] border p-3'>
+        <h3 className='text-foreground text-[0.96rem] font-semibold'>{invite.title}</h3>
+        <p className='text-muted-foreground mt-1 text-[0.78rem]'>{invite.subtitle}</p>
+        <p className='text-muted-foreground mt-2 text-[0.74rem]'>{invite.timeLabel}</p>
         <Link
           prefetch
           href={invite.href}

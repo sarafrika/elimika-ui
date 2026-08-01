@@ -20,7 +20,10 @@ export interface AlertItem {
   onAction?: () => void;
 }
 
-const severityStyles: Record<AlertSeverity, { chip: string; icon: string; bar: string; label: string }> = {
+const severityStyles: Record<
+  AlertSeverity,
+  { chip: string; icon: string; bar: string; label: string }
+> = {
   high: {
     chip: 'bg-destructive/10 text-destructive border-destructive/20',
     icon: 'bg-destructive/15 text-destructive',
@@ -57,7 +60,7 @@ export function AlertPanel({
         <div className='flex items-center justify-between'>
           <CardTitle className='text-base font-semibold'>{title}</CardTitle>
           {alerts.length > 0 && (
-            <span className='rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-semibold text-destructive'>
+            <span className='bg-destructive/10 text-destructive rounded-full px-2 py-0.5 text-[11px] font-semibold'>
               {alerts.length} new
             </span>
           )}
@@ -66,10 +69,10 @@ export function AlertPanel({
       <CardContent className='space-y-2'>
         {alerts.length === 0 ? (
           <div className='flex flex-col items-center justify-center gap-2 py-10 text-center'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground'>
+            <div className='bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-full'>
               <BellOff className='h-5 w-5' />
             </div>
-            <p className='text-sm text-muted-foreground'>You&apos;re all caught up.</p>
+            <p className='text-muted-foreground text-sm'>You&apos;re all caught up.</p>
           </div>
         ) : (
           alerts.map(alert => {
@@ -77,7 +80,7 @@ export function AlertPanel({
             return (
               <div
                 key={alert.id}
-                className='group relative flex items-start gap-3 overflow-hidden rounded-lg border bg-card p-2.5 pl-3.5 transition-colors hover:bg-muted/40'
+                className='group bg-card hover:bg-muted/40 relative flex items-start gap-3 overflow-hidden rounded-lg border p-2.5 pl-3.5 transition-colors'
               >
                 <span className={cn('absolute inset-y-0 left-0 w-1', s.bar)} aria-hidden />
                 <div
@@ -92,12 +95,15 @@ export function AlertPanel({
                   <div className='flex flex-wrap items-center gap-2'>
                     <p className='text-sm font-semibold'>{alert.title}</p>
                     <span
-                      className={cn('rounded-full border px-1.5 py-0.5 text-[10px] font-medium', s.chip)}
+                      className={cn(
+                        'rounded-full border px-1.5 py-0.5 text-[10px] font-medium',
+                        s.chip
+                      )}
                     >
                       {s.label}
                     </span>
                   </div>
-                  <p className='text-xs text-muted-foreground'>{alert.description}</p>
+                  <p className='text-muted-foreground text-xs'>{alert.description}</p>
                 </div>
                 {alert.actionLabel && (
                   <AlertAction

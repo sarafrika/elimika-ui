@@ -54,10 +54,7 @@ function isSameCalendarDay(left: Date, right: Date) {
 }
 
 function isSameMonth(left: Date, right: Date) {
-  return (
-    left.getFullYear() === right.getFullYear() &&
-    left.getMonth() === right.getMonth()
-  );
+  return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth();
 }
 
 function getCalendarKey(date: Date) {
@@ -69,11 +66,7 @@ function getCalendarKey(date: Date) {
 }
 
 function getMonthDays(currentDate: Date) {
-  const firstOfMonth = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth(),
-    1
-  );
+  const firstOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
 
   const gridStart = getWeekStart(firstOfMonth);
 
@@ -87,21 +80,14 @@ function getMonthDays(currentDate: Date) {
 function getMonthEvents(events: SchedulerEvent[], monthDate: Date) {
   return events
     .filter(event => isSameMonth(event.startTime, monthDate))
-    .sort(
-      (left, right) =>
-        left.startTime.getTime() - right.startTime.getTime()
-    );
+    .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
 }
 
 function getDayEvents(events: SchedulerEvent[], day: Date) {
   return events
     .filter(event => isSameCalendarDay(event.startTime, day))
-    .sort(
-      (left, right) =>
-        left.startTime.getTime() - right.startTime.getTime()
-    );
+    .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
 }
-
 
 function getEventTop(event: SchedulerEvent) {
   const hours = event.startTime.getHours();
@@ -111,9 +97,7 @@ function getEventTop(event: SchedulerEvent) {
 }
 
 function getEventHeight(event: SchedulerEvent) {
-  const durationMs =
-    new Date(event.endTime).getTime() -
-    new Date(event.startTime).getTime();
+  const durationMs = new Date(event.endTime).getTime() - new Date(event.startTime).getTime();
 
   const durationMinutes = durationMs / (1000 * 60);
 
@@ -136,11 +120,7 @@ function getCurrentTimeOffset(currentTime: Date) {
   return (currentTime.getMinutes() / 60) * rowHeight;
 }
 
-function CurrentTimeIndicator({
-  currentTime,
-}: {
-  currentTime: Date;
-}) {
+function CurrentTimeIndicator({ currentTime }: { currentTime: Date }) {
   return (
     <div
       className='pointer-events-none absolute right-0 left-0 z-30 flex items-center'
@@ -166,7 +146,7 @@ function EventBlock({
     <button
       type='button'
       className={cn(
-        'cursor-pointer focus-visible:ring-ring absolute inset-x-0 overflow-hidden rounded-md border border-l-4 px-1 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none sm:px-1.5 lg:p-2',
+        'focus-visible:ring-ring absolute inset-x-0 cursor-pointer overflow-hidden rounded-md border border-l-4 px-1 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none sm:px-1.5 lg:p-2',
         getEventStyles(event)
       )}
       style={{
@@ -178,9 +158,7 @@ function EventBlock({
         onClick?.(event);
       }}
     >
-      <p className='truncate text-[9px] font-semibold sm:text-[10px] lg:text-xs'>
-        {event.title}
-      </p>
+      <p className='truncate text-[9px] font-semibold sm:text-[10px] lg:text-xs'>{event.title}</p>
 
       <p className='hidden truncate text-[9px] opacity-80 sm:block lg:text-[11px]'>
         {event.instructor}
@@ -193,15 +171,11 @@ function EventBlock({
       <div className='mt-1 hidden items-center gap-1 lg:flex'>
         {event.students.slice(0, 3).map(student => (
           <Avatar key={student} className='h-5 w-5 border'>
-            <AvatarFallback className='text-[8px]'>
-              {student}
-            </AvatarFallback>
+            <AvatarFallback className='text-[8px]'>{student}</AvatarFallback>
           </Avatar>
         ))}
 
-        <span className='text-[10px] opacity-75'>
-          +{event.students.length + 7}
-        </span>
+        <span className='text-[10px] opacity-75'>+{event.students.length + 7}</span>
       </div>
     </button>
   );
@@ -218,7 +192,7 @@ function WeekEventBlock({
     <button
       type='button'
       className={cn(
-        'cursor-pointer focus-visible:ring-ring w-full overflow-hidden rounded-md border border-l-4 px-2 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none',
+        'focus-visible:ring-ring w-full cursor-pointer overflow-hidden rounded-md border border-l-4 px-2 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none',
         getEventStyles(event)
       )}
       style={{
@@ -229,9 +203,7 @@ function WeekEventBlock({
         onClick?.(event);
       }}
     >
-      <p className='truncate text-[10px] font-semibold sm:text-[11px]'>
-        {event.title}
-      </p>
+      <p className='truncate text-[10px] font-semibold sm:text-[11px]'>{event.title}</p>
 
       <p className='truncate text-[9px] opacity-75'>
         {event.startTime.toLocaleTimeString('en-US', {
@@ -245,9 +217,7 @@ function WeekEventBlock({
         })}
       </p>
 
-      <p className='hidden truncate text-[9px] opacity-75 sm:block'>
-        {event.location}
-      </p>
+      <p className='hidden truncate text-[9px] opacity-75 sm:block'>{event.location}</p>
     </button>
   );
 }
@@ -299,10 +269,7 @@ function DayGrid({
 }) {
   const dayEvents = getDayEvents(events, currentDate);
 
-  const shouldShowCurrentTime = isSameCalendarDay(
-    currentDate,
-    currentTime
-  );
+  const shouldShowCurrentTime = isSameCalendarDay(currentDate, currentTime);
 
   // Empty-slot click -> class creation modal. Only wired up for roles that
   // are allowed to create classes (instructors / organisation profiles);
@@ -328,25 +295,14 @@ function DayGrid({
           {/* LEFT SCHEDULE */}
           <div className='bg-background min-w-0 overflow-hidden rounded-md border'>
             <div className='bg-muted/40 grid grid-cols-[72px_1fr] border-b'>
-              <div className='px-2 py-2 text-center text-[10px] font-semibold sm:text-xs'>
-                Time
-              </div>
+              <div className='px-2 py-2 text-center text-[10px] font-semibold sm:text-xs'>Time</div>
 
               <div className='px-2 py-2 text-center text-[10px] font-semibold sm:text-xs'>
                 Schedule
               </div>
             </div>
 
-            <div
-              className="
-    max-h-[640px] overflow-y-auto
-    [scrollbar-width:thin]
-    [&::-webkit-scrollbar]:w-px
-    [&::-webkit-scrollbar-track]:bg-transparent
-    [&::-webkit-scrollbar-thumb]:bg-border
-    [&::-webkit-scrollbar-thumb]:rounded-full
-  "
-            >
+            <div className='[&::-webkit-scrollbar-thumb]:bg-border max-h-[640px] overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-px [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent'>
               <div
                 className='relative'
                 style={{
@@ -369,7 +325,7 @@ function DayGrid({
                     <div
                       className={cn(
                         'relative border-l select-none',
-                        canCreateClass || onEmptySlotClick ? 'cursor-pointer' : 'cursor-default',
+                        canCreateClass || onEmptySlotClick ? 'cursor-pointer' : 'cursor-default'
                       )}
                       onClick={() =>
                         handleSlotClick({
@@ -396,8 +352,7 @@ function DayGrid({
                         })
                       }
                     >
-                      {shouldShowCurrentTime &&
-                        currentTime.getHours() === hour ? (
+                      {shouldShowCurrentTime && currentTime.getHours() === hour ? (
                         <CurrentTimeIndicator currentTime={currentTime} />
                       ) : null}
                     </div>
@@ -411,15 +366,12 @@ function DayGrid({
                   {dayEvents.map(event => (
                     <div
                       key={event.id}
-                      className='pointer-events-auto absolute left-2 right-2'
+                      className='pointer-events-auto absolute right-2 left-2'
                       style={{
                         top: `${getEventTop(event)}px`,
                       }}
                     >
-                      <EventBlock
-                        event={event}
-                        onClick={onEventClick}
-                      />
+                      <EventBlock event={event} onClick={onEventClick} />
                     </div>
                   ))}
                 </div>
@@ -433,21 +385,14 @@ function DayGrid({
               <div className='mb-2 flex items-center justify-between gap-2'>
                 <h3 className='text-sm font-semibold'>Events</h3>
 
-                <span className='text-muted-foreground text-xs'>
-                  {dayEvents.length} items
-                </span>
+                <span className='text-muted-foreground text-xs'>{dayEvents.length} items</span>
               </div>
 
               <div className='space-y-2'>
                 {dayEvents.length ? (
                   dayEvents.map(event => (
-                    <div
-                      key={event.id}
-                      className='bg-muted/30 rounded-md border p-2'
-                    >
-                      <p className='text-foreground text-sm font-semibold'>
-                        {event.title}
-                      </p>
+                    <div key={event.id} className='bg-muted/30 rounded-md border p-2'>
+                      <p className='text-foreground text-sm font-semibold'>{event.title}</p>
 
                       <p className='text-muted-foreground text-xs'>
                         {event.startTime.toLocaleTimeString('en-US', {
@@ -475,9 +420,7 @@ function DayGrid({
             </div>
 
             <div className='bg-background rounded-md border p-3'>
-              <h3 className='mb-2 text-sm font-semibold'>
-                Summary
-              </h3>
+              <h3 className='mb-2 text-sm font-semibold'>Summary</h3>
 
               <p className='text-muted-foreground text-xs'>
                 {dayEvents.length} scheduled session
@@ -497,10 +440,10 @@ function DayGrid({
           prefill={
             createSlot
               ? {
-                date: createSlot.date,
-                startTime: createSlot.startTime,
-                endTime: createSlot.endTime,
-              }
+                  date: createSlot.date,
+                  startTime: createSlot.startTime,
+                  endTime: createSlot.endTime,
+                }
               : null
           }
           onCreated={() => {
@@ -547,22 +490,13 @@ function WeekGrid({
 
   return (
     <>
-      <section className='bg-card flex min-w-0 w-full flex-col overflow-hidden rounded-md ring-1 ring-border/60 shadow-sm'>
-        <div className='bg-background max-h-[720px] overflow-auto
-    [scrollbar-width:thin]
-    [&::-webkit-scrollbar]:w-px
-    [&::-webkit-scrollbar-track]:bg-transparent
-    [&::-webkit-scrollbar-thumb]:bg-border
-    [&::-webkit-scrollbar-thumb]:rounded-full
-        
-        '>
+      <section className='bg-card ring-border/60 flex w-full min-w-0 flex-col overflow-hidden rounded-md shadow-sm ring-1'>
+        <div className='bg-background [&::-webkit-scrollbar-thumb]:bg-border max-h-[720px] overflow-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-px [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent'>
           <div className='relative w-full min-w-0'>
             {/* HEADER */}
-            <div className='sticky top-0 z-20 bg-muted/40'>
+            <div className='bg-muted/40 sticky top-0 z-20'>
               <div className={cn('grid border-b', weekColumnClass)}>
-                <div className='px-2 py-2 text-center text-xs font-semibold'>
-                  Time
-                </div>
+                <div className='px-2 py-2 text-center text-xs font-semibold'>Time</div>
 
                 {schedulerDays.map(day => (
                   <div
@@ -571,8 +505,7 @@ function WeekGrid({
                   >
                     {day.toLocaleDateString('en-US', {
                       weekday: 'short',
-                    })}
-                    {' '}
+                    })}{' '}
                     {day.getDate()}
                   </div>
                 ))}
@@ -589,10 +522,7 @@ function WeekGrid({
               {schedulerHours.map(hour => (
                 <div
                   key={hour}
-                  className={cn(
-                    'grid border-b last:border-b-0',
-                    weekColumnClass
-                  )}
+                  className={cn('grid border-b last:border-b-0', weekColumnClass)}
                   style={{
                     height: `${rowHeight}px`,
                   }}
@@ -606,7 +536,7 @@ function WeekGrid({
                       key={`${day.toISOString()}-${hour}`}
                       className={cn(
                         'relative border-l select-none',
-                        canCreateClass || onEmptySlotClick ? 'cursor-pointer' : 'cursor-default',
+                        canCreateClass || onEmptySlotClick ? 'cursor-pointer' : 'cursor-default'
                       )}
                       onClick={() =>
                         handleSlotClick({
@@ -633,11 +563,8 @@ function WeekGrid({
                         })
                       }
                     >
-                      {isSameCalendarDay(day, currentTime) &&
-                        currentTime.getHours() === hour ? (
-                        <CurrentTimeIndicator
-                          currentTime={currentTime}
-                        />
+                      {isSameCalendarDay(day, currentTime) && currentTime.getHours() === hour ? (
+                        <CurrentTimeIndicator currentTime={currentTime} />
                       ) : null}
                     </div>
                   ))}
@@ -648,36 +575,23 @@ function WeekGrid({
                   day column lets clicks on empty space pass through to the
                   hour-slot handlers underneath; each event block re-enables
                   pointer events for itself. */}
-              <div
-                className={cn(
-                  'pointer-events-none absolute inset-0 grid',
-                  weekColumnClass
-                )}
-              >
+              <div className={cn('pointer-events-none absolute inset-0 grid', weekColumnClass)}>
                 <div />
 
                 {schedulerDays.map(day => {
-                  const dayEvents = events.filter(event =>
-                    isSameCalendarDay(event.startTime, day)
-                  );
+                  const dayEvents = events.filter(event => isSameCalendarDay(event.startTime, day));
 
                   return (
-                    <div
-                      key={day.toISOString()}
-                      className='pointer-events-none relative'
-                    >
+                    <div key={day.toISOString()} className='pointer-events-none relative'>
                       {dayEvents.map(event => (
                         <div
                           key={event.id}
-                          className='pointer-events-auto absolute left-1 right-1'
+                          className='pointer-events-auto absolute right-1 left-1'
                           style={{
                             top: `${getEventTop(event)}px`,
                           }}
                         >
-                          <WeekEventBlock
-                            event={event}
-                            onClick={onEventClick}
-                          />
+                          <WeekEventBlock event={event} onClick={onEventClick} />
                         </div>
                       ))}
                     </div>
@@ -698,10 +612,10 @@ function WeekGrid({
           prefill={
             createSlot
               ? {
-                date: createSlot.date,
-                startTime: createSlot.startTime,
-                endTime: createSlot.endTime,
-              }
+                  date: createSlot.date,
+                  startTime: createSlot.startTime,
+                  endTime: createSlot.endTime,
+                }
               : null
           }
           onCreated={() => {
@@ -748,11 +662,11 @@ function MonthGrid({
   }
 
   return (
-    <section className='bg-card min-w-0 w-full overflow-hidden rounded-md border shadow-sm'>
+    <section className='bg-card w-full min-w-0 overflow-hidden rounded-md border shadow-sm'>
       <div className='border-b px-3 py-3 sm:px-4'>
         <div className='flex items-center justify-between gap-2'>
           <div>
-            <p className='text-muted-foreground text-xs font-semibold uppercase tracking-wide'>
+            <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
               Month view
             </p>
             <h2 className='text-foreground text-base font-semibold sm:text-lg'>
@@ -786,7 +700,7 @@ function MonthGrid({
               <div
                 key={day.toISOString()}
                 className={cn(
-                  'min-h-28 border-r border-b p-2 last:border-r-0 sm:min-h-32 cursor-pointer',
+                  'min-h-28 cursor-pointer border-r border-b p-2 last:border-r-0 sm:min-h-32',
                   !isSameMonth(day, currentDate) && 'bg-muted/20 text-muted-foreground'
                 )}
                 role='button'
@@ -805,12 +719,12 @@ function MonthGrid({
                     className={cn(
                       'flex h-6 w-6 items-center justify-center rounded text-xs font-semibold',
                       isSameCalendarDay(day, today) &&
-                      (hasCancelledEvents
-                        ? 'bg-destructive text-destructive-foreground'
-                        : 'bg-primary text-primary-foreground'),
+                        (hasCancelledEvents
+                          ? 'bg-destructive text-destructive-foreground'
+                          : 'bg-primary text-primary-foreground'),
                       dayEvents.length > 0 &&
-                      !isSameCalendarDay(day, today) &&
-                      (hasCancelledEvents ? 'bg-destructive/10' : 'bg-primary/10')
+                        !isSameCalendarDay(day, today) &&
+                        (hasCancelledEvents ? 'bg-destructive/10' : 'bg-primary/10')
                     )}
                   >
                     {day.getDate()}
@@ -819,7 +733,7 @@ function MonthGrid({
                     <span className='text-muted-foreground text-[10px]'>{dayEvents.length}</span>
                   ) : null}
                 </div>
-                <div className='space-y-1 cursor-pointer'>
+                <div className='cursor-pointer space-y-1'>
                   {dayEvents.slice(0, 3).map(event => (
                     <CompactEvent key={event.id} event={event} onClick={onEventClick} />
                   ))}
@@ -855,7 +769,7 @@ function YearGrid({
   );
 
   return (
-    <section className='bg-card grid min-w-0 w-full gap-3 overflow-hidden rounded-md border p-3 shadow-sm sm:grid-cols-2 xl:grid-cols-3'>
+    <section className='bg-card grid w-full min-w-0 gap-3 overflow-hidden rounded-md border p-3 shadow-sm sm:grid-cols-2 xl:grid-cols-3'>
       {months.map(month => {
         const monthEvents = getMonthEvents(events, month);
 
@@ -868,26 +782,18 @@ function YearGrid({
         );
 
         return (
-          <div
-            key={month.toISOString()}
-            className='bg-background rounded-md border p-3'
-          >
+          <div key={month.toISOString()} className='bg-background rounded-md border p-3'>
             <div className='mb-3 flex items-center justify-between gap-2'>
               <h3 className='text-foreground text-sm font-semibold'>
                 {month.toLocaleDateString('en-US', { month: 'long' })}
               </h3>
 
-              <span className='text-muted-foreground text-xs'>
-                {monthEvents.length} sessions
-              </span>
+              <span className='text-muted-foreground text-xs'>{monthEvents.length} sessions</span>
             </div>
 
-            <div className='mb-2 grid grid-cols-7 text-[10px] font-semibold text-muted-foreground'>
+            <div className='text-muted-foreground mb-2 grid grid-cols-7 text-[10px] font-semibold'>
               {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((label, index) => (
-                <span
-                  key={`${month.toISOString()}-${label}-${index}`}
-                  className='text-center'
-                >
+                <span key={`${month.toISOString()}-${label}-${index}`} className='text-center'>
                   {label}
                 </span>
               ))}
@@ -911,19 +817,17 @@ function YearGrid({
                     type='button'
                     aria-label={`Go to the week of ${day.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}`}
                     className={cn(
-                      'relative flex aspect-square cursor-pointer items-center justify-center rounded text-[11px] font-semibold transition-colors hover:bg-muted',
-                      inMonth
-                        ? 'text-foreground'
-                        : 'text-muted-foreground/50',
+                      'hover:bg-muted relative flex aspect-square cursor-pointer items-center justify-center rounded text-[11px] font-semibold transition-colors',
+                      inMonth ? 'text-foreground' : 'text-muted-foreground/50',
                       isSameCalendarDay(day, today) &&
-                      (hasCancelledEvents
-                        ? 'bg-destructive text-destructive-foreground'
-                        : 'bg-primary text-primary-foreground'),
+                        (hasCancelledEvents
+                          ? 'bg-destructive text-destructive-foreground'
+                          : 'bg-primary text-primary-foreground'),
                       hasEvents &&
-                      !isSameCalendarDay(day, today) &&
-                      (hasCancelledEvents
-                        ? 'bg-destructive/10 ring-1 ring-destructive/30'
-                        : 'bg-primary/10 ring-1 ring-primary/30')
+                        !isSameCalendarDay(day, today) &&
+                        (hasCancelledEvents
+                          ? 'bg-destructive/10 ring-destructive/30 ring-1'
+                          : 'bg-primary/10 ring-primary/30 ring-1')
                     )}
                     onClick={e => {
                       e.stopPropagation();
@@ -948,7 +852,7 @@ function YearGrid({
                     ) : null}
 
                     {dayEvents.length > 1 ? (
-                      <span className='bg-background absolute right-0.5 top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full border px-1 text-[8px] font-bold leading-none'>
+                      <span className='bg-background absolute top-0.5 right-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full border px-1 text-[8px] leading-none font-bold'>
                         {dayEvents.length}
                       </span>
                     ) : null}
@@ -1021,13 +925,7 @@ export function SchedulerGrid({
   }
 
   if (view === 'year') {
-    return (
-      <YearGrid
-        currentDate={currentDate}
-        events={events}
-        onSelectDate={onSelectDate}
-      />
-    );
+    return <YearGrid currentDate={currentDate} events={events} onSelectDate={onSelectDate} />;
   }
 
   return (

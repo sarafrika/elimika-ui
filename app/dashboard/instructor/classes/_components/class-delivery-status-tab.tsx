@@ -98,20 +98,14 @@ export function ClassDeliveryStatusTab(props: ClassDeliveryStatusTabProps) {
       quizSchedules,
       showFinancialColumns,
     });
-  }, [
-    assignmentSchedules,
-    quizSchedules,
-    selectedClass,
-    showFinancialColumns,
-    visibleInstances,
-  ]);
+  }, [assignmentSchedules, quizSchedules, selectedClass, showFinancialColumns, visibleInstances]);
 
   if (isLoadingClasses || !selectedClass) {
     return <DeliverySkeleton />;
   }
 
   const difficultyLabel = selectedClass.course?.difficulty_uuid
-    ? mergedDifficultyMap[selectedClass.course.difficulty_uuid] ?? 'General'
+    ? (mergedDifficultyMap[selectedClass.course.difficulty_uuid] ?? 'General')
     : 'General';
 
   const filterLabel =

@@ -56,25 +56,17 @@ export function PortfolioSidebar() {
                   key={item.label}
                   className='bg-background/70 rounded-lg border px-3 py-2 text-center'
                 >
-                  <p className='text-foreground text-xl font-semibold'>
-                    {item.value}
-                  </p>
-                  <p className='text-muted-foreground mt-1 text-[11px] leading-4'>
-                    {item.label}
-                  </p>
+                  <p className='text-foreground text-xl font-semibold'>{item.value}</p>
+                  <p className='text-muted-foreground mt-1 text-[11px] leading-4'>{item.label}</p>
                 </div>
               ))}
             </div>
 
             <div className='mt-4 space-y-3'>
               <div className='flex items-center justify-between text-sm'>
-                <span className='text-muted-foreground'>
-                  Total Evidence
-                </span>
+                <span className='text-muted-foreground'>Total Evidence</span>
 
-                <span className='text-foreground font-semibold'>
-                  8 Verified
-                </span>
+                <span className='text-foreground font-semibold'>8 Verified</span>
               </div>
 
               <div className='bg-muted flex h-2 overflow-hidden rounded-full'>
@@ -86,21 +78,13 @@ export function PortfolioSidebar() {
 
               <div className='grid grid-cols-2 gap-3 text-sm'>
                 <div className='bg-background/60 rounded-lg border p-2'>
-                  <p className='text-muted-foreground text-[11px] uppercase'>
-                    Pending
-                  </p>
-                  <p className='text-foreground mt-1 font-semibold'>
-                    1
-                  </p>
+                  <p className='text-muted-foreground text-[11px] uppercase'>Pending</p>
+                  <p className='text-foreground mt-1 font-semibold'>1</p>
                 </div>
 
                 <div className='bg-background/60 rounded-lg border p-2'>
-                  <p className='text-muted-foreground text-[11px] uppercase'>
-                    Verified
-                  </p>
-                  <p className='text-foreground mt-1 font-semibold'>
-                    7
-                  </p>
+                  <p className='text-muted-foreground text-[11px] uppercase'>Verified</p>
+                  <p className='text-foreground mt-1 font-semibold'>7</p>
                 </div>
               </div>
             </div>
@@ -123,9 +107,7 @@ export function PortfolioSidebar() {
                 </span>
 
                 <div className='min-w-0 flex-1'>
-                  <h3 className='text-foreground truncate text-sm font-semibold'>
-                    {item.title}
-                  </h3>
+                  <h3 className='text-foreground truncate text-sm font-semibold'>{item.title}</h3>
 
                   <div className='mt-1'>
                     <Rating value={item.rating} />
@@ -150,13 +132,9 @@ export function PortfolioSidebar() {
             </span>
 
             <div>
-              <p className='text-foreground text-sm font-semibold'>
-                Portfolio Badge
-              </p>
+              <p className='text-foreground text-sm font-semibold'>Portfolio Badge</p>
 
-              <p className='text-muted-foreground text-xs'>
-                Recognition status
-              </p>
+              <p className='text-muted-foreground text-xs'>Recognition status</p>
             </div>
           </div>
 
@@ -179,20 +157,12 @@ export function PortfolioSidebar() {
 
             <div className='space-y-2'>
               <div className='flex items-center justify-between text-xs'>
-                <span className='text-muted-foreground'>
-                  Completion
-                </span>
+                <span className='text-muted-foreground'>Completion</span>
 
-                <span className='text-foreground font-medium'>
-                  78%
-                </span>
+                <span className='text-foreground font-medium'>78%</span>
               </div>
 
-              <Progress
-                value={78}
-                className='bg-muted h-2'
-                indicatorClassName='bg-success'
-              />
+              <Progress value={78} className='bg-muted h-2' indicatorClassName='bg-success' />
             </div>
           </div>
         </div>

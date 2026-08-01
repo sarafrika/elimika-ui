@@ -33,7 +33,10 @@ const num = (value?: bigint | number | null): string =>
 const money = (value?: number | null): string =>
   value === undefined || value === null
     ? '—'
-    : Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    : Number(value).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
 
 const fullName = (user?: User): string =>
   [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim() || (user?.email ?? '—');
@@ -41,9 +44,9 @@ const fullName = (user?: User): string =>
 /** Labelled figure inside a section card. */
 function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-lg border bg-muted/20 px-3 py-2.5">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="mt-1 text-sm font-medium text-foreground">{value ?? '—'}</div>
+    <div className='bg-muted/20 rounded-lg border px-3 py-2.5'>
+      <p className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</p>
+      <div className='text-foreground mt-1 text-sm font-medium'>{value ?? '—'}</div>
     </div>
   );
 }
@@ -62,11 +65,11 @@ function Section({
 }) {
   return (
     <Card>
-      <CardContent className="space-y-4 p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1">
-            <h2 className="text-base font-semibold text-foreground">{title}</h2>
-            <p className="text-sm text-muted-foreground">{description}</p>
+      <CardContent className='space-y-4 p-6'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div className='space-y-1'>
+            <h2 className='text-foreground text-base font-semibold'>{title}</h2>
+            <p className='text-muted-foreground text-sm'>{description}</p>
           </div>
           {action}
         </div>
@@ -104,7 +107,8 @@ export default function OrganisationOverviewPage() {
     enabled,
   });
 
-  const profile = extractEntity<Organisation>(profileQuery.data) ?? (organisation as Organisation | undefined);
+  const profile =
+    extractEntity<Organisation>(profileQuery.data) ?? (organisation as Organisation | undefined);
   const stats = statsQuery.data?.data;
 
   const classes = useMemo(
@@ -119,7 +123,12 @@ export default function OrganisationOverviewPage() {
       .map(c => (c.training_fee == null ? null : Number(c.training_fee)))
       .filter((f): f is number => f != null && !Number.isNaN(f));
     if (fees.length === 0)
-      return { count: 0, min: null as number | null, max: null as number | null, avg: null as number | null };
+      return {
+        count: 0,
+        min: null as number | null,
+        max: null as number | null,
+        avg: null as number | null,
+      };
     const min = Math.min(...fees);
     const max = Math.max(...fees);
     const avg = fees.reduce((s, f) => s + f, 0) / fees.length;
@@ -144,7 +153,9 @@ export default function OrganisationOverviewPage() {
       toast.success('Submitted for verification', {
         description: 'An admin will review your organisation shortly.',
       });
-      qc.invalidateQueries({ queryKey: getOrganisationByUuidQueryKey({ path: { uuid: organisationUuid } }) });
+      qc.invalidateQueries({
+        queryKey: getOrganisationByUuidQueryKey({ path: { uuid: organisationUuid } }),
+      });
     },
     onError: error =>
       toast.error(error instanceof Error ? error.message : 'Unable to submit for verification.'),
@@ -157,14 +168,14 @@ export default function OrganisationOverviewPage() {
       : 'Not submitted';
 
   return (
-    <OrgPage className="space-y-6">
+    <OrgPage className='space-y-6'>
       <PageHeader
         title={profile?.name || 'Organisation'}
-        description="A complete view of your organisation — profile, people, branches and fees."
+        description='A complete view of your organisation — profile, people, branches and fees.'
         action={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className='flex flex-wrap items-center gap-2'>
             <Badge
-              variant="outline"
+              variant='outline'
               className={cn(
                 'rounded-md px-2.5 py-0.5 text-xs font-medium',
                 isVerified
@@ -178,12 +189,14 @@ export default function OrganisationOverviewPage() {
             </Badge>
             {!isVerified ? (
               <Button
-                size="sm"
+                size='sm'
                 variant={awaitingReview ? 'outline' : 'default'}
                 disabled={requestVerification.isPending || !organisationUuid}
                 onClick={() => requestVerification.mutate({ path: { uuid: organisationUuid } })}
               >
-                {requestVerification.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                {requestVerification.isPending ? (
+                  <Loader2 className='mr-2 size-4 animate-spin' />
+                ) : null}
                 {awaitingReview ? 'Resubmit for verification' : 'Submit for verification'}
               </Button>
             ) : null}
@@ -191,37 +204,57 @@ export default function OrganisationOverviewPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
         {kpiLoading ? (
           Array.from({ length: 4 }).map((_, i) => <KpiCardSkeleton key={i} />)
         ) : (
           <>
-            <KpiCard title="Students" value={num(stats?.total_students)} icon={<GraduationCap className="h-5 w-5" />} variant="green" />
-            <KpiCard title="Instructors" value={num(stats?.total_instructors)} icon={<Briefcase className="h-5 w-5" />} variant="primary" />
-            <KpiCard title="Administrators" value={num(stats?.total_admins)} icon={<Users className="h-5 w-5" />} variant="indigo" />
-            <KpiCard title="Branches" value={num(stats?.total_branches)} icon={<Building className="h-5 w-5" />} variant="amber" />
+            <KpiCard
+              title='Students'
+              value={num(stats?.total_students)}
+              icon={<GraduationCap className='h-5 w-5' />}
+              variant='green'
+            />
+            <KpiCard
+              title='Instructors'
+              value={num(stats?.total_instructors)}
+              icon={<Briefcase className='h-5 w-5' />}
+              variant='primary'
+            />
+            <KpiCard
+              title='Administrators'
+              value={num(stats?.total_admins)}
+              icon={<Users className='h-5 w-5' />}
+              variant='indigo'
+            />
+            <KpiCard
+              title='Branches'
+              value={num(stats?.total_branches)}
+              icon={<Building className='h-5 w-5' />}
+              variant='amber'
+            />
           </>
         )}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className='grid gap-4 xl:grid-cols-2'>
         <Section
-          title="Profile"
-          description="Registered organisation details"
+          title='Profile'
+          description='Registered organisation details'
           action={
-            <Button asChild size="sm" variant="outline">
-              <Link href="/dashboard/account/training-center">Edit</Link>
+            <Button asChild size='sm' variant='outline'>
+              <Link href='/dashboard/account/training-center'>Edit</Link>
             </Button>
           }
         >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Detail label="Name" value={profile?.name ?? '—'} />
-            <Detail label="Licence no." value={profile?.licence_no ?? '—'} />
-            <Detail label="Location" value={profile?.location ?? '—'} />
-            <Detail label="Country" value={profile?.country ?? '—'} />
-            <Detail label="Status" value={profile?.active ? 'Active' : 'Inactive'} />
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <Detail label='Name' value={profile?.name ?? '—'} />
+            <Detail label='Licence no.' value={profile?.licence_no ?? '—'} />
+            <Detail label='Location' value={profile?.location ?? '—'} />
+            <Detail label='Country' value={profile?.country ?? '—'} />
+            <Detail label='Status' value={profile?.active ? 'Active' : 'Inactive'} />
             <Detail
-              label="Verification"
+              label='Verification'
               value={
                 isVerified
                   ? 'Verified'
@@ -234,52 +267,54 @@ export default function OrganisationOverviewPage() {
         </Section>
 
         <Section
-          title="Training fees"
-          description="Per-session fees across your classes"
+          title='Training fees'
+          description='Per-session fees across your classes'
           action={
-            <Button asChild size="sm" variant="outline">
-              <Link href="/dashboard/account/fees-scheduling">Manage</Link>
+            <Button asChild size='sm' variant='outline'>
+              <Link href='/dashboard/account/fees-scheduling'>Manage</Link>
             </Button>
           }
         >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Detail label="Classes with a fee" value={num(feeSummary.count)} />
-            <Detail label="Average fee / session" value={money(feeSummary.avg)} />
-            <Detail label="Lowest fee" value={money(feeSummary.min)} />
-            <Detail label="Highest fee" value={money(feeSummary.max)} />
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <Detail label='Classes with a fee' value={num(feeSummary.count)} />
+            <Detail label='Average fee / session' value={money(feeSummary.avg)} />
+            <Detail label='Lowest fee' value={money(feeSummary.min)} />
+            <Detail label='Highest fee' value={money(feeSummary.max)} />
           </div>
         </Section>
       </div>
 
       <Section
-        title="Administrators"
-        description="People who manage this organisation"
+        title='Administrators'
+        description='People who manage this organisation'
         action={
-          <Button asChild size="sm" variant="outline">
-            <Link href="/dashboard/account/admin">Manage</Link>
+          <Button asChild size='sm' variant='outline'>
+            <Link href='/dashboard/account/admin'>Manage</Link>
           </Button>
         }
       >
         {adminsQuery.isLoading ? (
-          <div className="space-y-2">
+          <div className='space-y-2'>
             {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full" />
+              <Skeleton key={i} className='h-10 w-full' />
             ))}
           </div>
         ) : admins.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No administrators found.</p>
+          <p className='text-muted-foreground text-sm'>No administrators found.</p>
         ) : (
-          <ul className="divide-y">
+          <ul className='divide-y'>
             {admins.map(admin => (
               <li
                 key={admin.uuid ?? admin.email}
-                className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                className='flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0'
               >
-                <span className="inline-flex min-w-0 items-center gap-2">
-                  <ShieldCheck className="size-4 shrink-0 text-primary" />
-                  <span className="truncate text-sm font-medium text-foreground">{fullName(admin)}</span>
+                <span className='inline-flex min-w-0 items-center gap-2'>
+                  <ShieldCheck className='text-primary size-4 shrink-0' />
+                  <span className='text-foreground truncate text-sm font-medium'>
+                    {fullName(admin)}
+                  </span>
                 </span>
-                <span className="truncate text-xs text-muted-foreground">{admin.email ?? ''}</span>
+                <span className='text-muted-foreground truncate text-xs'>{admin.email ?? ''}</span>
               </li>
             ))}
           </ul>

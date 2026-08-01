@@ -4,7 +4,7 @@ export default function OrganizationClassJobsLoading() {
   return (
     <main className='mx-auto w-full max-w-[1520px] px-3 py-4 sm:px-5 lg:px-7'>
       <div className='flex w-full flex-col gap-4'>
-        <div className='rounded-md border border-border/70 bg-card px-5 py-5 shadow-sm'>
+        <div className='border-border/70 bg-card rounded-md border px-5 py-5 shadow-sm'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div className='space-y-2'>
               <Skeleton className='h-8 w-56 rounded-md' />

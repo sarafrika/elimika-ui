@@ -24,17 +24,17 @@ export function SettingsToggleRow({
   return (
     <div
       className={cn(
-        'flex items-start justify-between gap-4 rounded-xl border border-border/70 p-4',
+        'border-border/70 flex items-start justify-between gap-4 rounded-xl border p-4',
         className
       )}
     >
       <div className='min-w-0 space-y-1'>
         <div className='flex flex-wrap items-center gap-2'>
-          <h3 className='text-sm font-semibold text-foreground'>{title}</h3>
+          <h3 className='text-foreground text-sm font-semibold'>{title}</h3>
           {badgeLabel ? (
             <Badge
               variant='outline'
-              className='rounded-full px-2 py-0 text-[10px] uppercase tracking-wide'
+              className='rounded-full px-2 py-0 text-[10px] tracking-wide uppercase'
             >
               {badgeLabel}
             </Badge>

@@ -19,13 +19,5 @@ export type { GettingStartedStep } from './getting-started';
 export { CourseRail, CourseRailSkeleton } from './course-rail';
 export type { CourseRailItem } from './course-rail';
 
-export {
-  FundUtilizationChart,
-  EnrollmentTrendsChart,
-  TodayGrowthChart,
-} from './charts';
-export type {
-  FundUtilizationPoint,
-  EnrollmentTrendSeries,
-  TodayGrowthSeries,
-} from './charts';
+export { FundUtilizationChart, EnrollmentTrendsChart, TodayGrowthChart } from './charts';
+export type { FundUtilizationPoint, EnrollmentTrendSeries, TodayGrowthSeries } from './charts';

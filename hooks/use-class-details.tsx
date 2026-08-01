@@ -69,9 +69,7 @@ async function fetchClassRelated(params: {
 
   const [course, lessons, pCourses, program, instructorWithProfile] = await Promise.all([
     courseUuid ? getCourseByUuid({ path: { uuid: courseUuid } }) : null,
-    courseUuid
-      ? getCourseLessons({ path: { courseUuid }, query: { pageable: {} } })
-      : null,
+    courseUuid ? getCourseLessons({ path: { courseUuid }, query: { pageable: {} } }) : null,
     programUuid ? getProgramCourses({ path: { programUuid } }) : null,
     programUuid ? getTrainingProgramByUuid({ path: { uuid: programUuid } }) : null,
     (async () => {

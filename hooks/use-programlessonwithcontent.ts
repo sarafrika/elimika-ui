@@ -101,12 +101,10 @@ export function useProgramLessonsWithContent({
   });
 
   // Fetch content types (same as course hook)
-  const { data: contentTypeList, isFetching: contentTypeFetching } = useQuery(
-    {
-      ...getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }),
-      enabled: isEnabled,
-    }
-  );
+  const { data: contentTypeList, isFetching: contentTypeFetching } = useQuery({
+    ...getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }),
+    enabled: isEnabled,
+  });
 
   const contentTypeData = useMemo(() => {
     const content = contentTypeList?.data?.content;

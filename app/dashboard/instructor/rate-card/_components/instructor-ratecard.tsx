@@ -475,7 +475,9 @@ export function InstructorRateCard() {
                           variant='outline'
                           size='icon'
                           onClick={() => {
-                            const newFeatures = editingCard.features.filter((_: string, i: number) => i !== index);
+                            const newFeatures = editingCard.features.filter(
+                              (_: string, i: number) => i !== index
+                            );
                             setEditingCard({ ...editingCard, features: newFeatures });
                           }}
                         >
@@ -536,7 +538,9 @@ export function InstructorRateCard() {
                             variant='outline'
                             size='icon'
                             onClick={() => {
-                              const newExtras = editingCard.extras.filter((_: RateCardExtra, i: number) => i !== index);
+                              const newExtras = editingCard.extras.filter(
+                                (_: RateCardExtra, i: number) => i !== index
+                              );
                               setEditingCard({ ...editingCard, extras: newExtras });
                             }}
                           >

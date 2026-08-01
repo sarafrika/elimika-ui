@@ -340,13 +340,13 @@ function AssignmentForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {SUBMISSION_TYPES
-                        .filter(type => !submissionTypes.includes(type))
-                        .map(type => (
+                      {SUBMISSION_TYPES.filter(type => !submissionTypes.includes(type)).map(
+                        type => (
                           <SelectItem key={type} value={type}>
                             {type}
                           </SelectItem>
-                        ))}
+                        )
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -458,7 +458,7 @@ function AssignmentDialog({
             className='px-6 pb-6'
             assignmentId={editingAssignmetId}
             courseId={courseId as string}
-            onSuccess={onSuccess ?? (() => { })}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>

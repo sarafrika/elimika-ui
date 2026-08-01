@@ -34,7 +34,6 @@ export function useCourseEnrollmentsMap(courseUuids: string[]) {
     })),
   });
 
-
   const courseEnrollmentMap = useMemo<EnrollmentMap>(() => {
     const map: EnrollmentMap = {};
 
@@ -44,9 +43,9 @@ export function useCourseEnrollmentsMap(courseUuids: string[]) {
 
       map[uuid] = content
         ? {
-          enrollments: content,
-          count: Number(page?.metadata?.totalElements ?? content.length ?? 0),
-        }
+            enrollments: content,
+            count: Number(page?.metadata?.totalElements ?? content.length ?? 0),
+          }
         : null;
     });
 

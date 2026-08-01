@@ -126,13 +126,9 @@ export function ClassSessionLedgerSection({
           <div className='border-border/70 border-b px-4 py-4 sm:px-5'>
             <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
               <div className='space-y-1'>
-                <h3 className='text-foreground text-lg font-semibold'>
-                  {tableTitle}
-                </h3>
+                <h3 className='text-foreground text-lg font-semibold'>{tableTitle}</h3>
 
-                <p className='text-muted-foreground text-sm'>
-                  {tableDescription}
-                </p>
+                <p className='text-muted-foreground text-sm'>{tableDescription}</p>
               </div>
 
               <div className='flex flex-col items-start gap-2 sm:items-end'>
@@ -141,7 +137,7 @@ export function ClassSessionLedgerSection({
                 </p>
 
                 <div className='bg-primary/5 border-primary/10 inline-flex items-center gap-2 rounded-full border px-3 py-1.5'>
-                  <span className='text-muted-foreground text-[11px] font-medium uppercase tracking-wide'>
+                  <span className='text-muted-foreground text-[11px] font-medium tracking-wide uppercase'>
                     Amount / Hr / Student
                   </span>
 

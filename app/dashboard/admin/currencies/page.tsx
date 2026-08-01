@@ -129,9 +129,11 @@ export default function CurrenciesPage() {
         meta: { label: 'Code' },
         cell: ({ row }) => (
           <div className='flex items-center gap-2'>
-            <span className='font-mono text-sm font-medium text-foreground'>{row.original.code}</span>
+            <span className='text-foreground font-mono text-sm font-medium'>
+              {row.original.code}
+            </span>
             {row.original.defaultCurrency ? (
-              <Star className='size-3.5 fill-warning text-warning' />
+              <Star className='fill-warning text-warning size-3.5' />
             ) : null}
           </div>
         ),
@@ -148,7 +150,9 @@ export default function CurrenciesPage() {
         accessorFn: row => row.symbol ?? '',
         header: 'Symbol',
         meta: { label: 'Symbol' },
-        cell: ({ row }) => <span className='text-sm text-muted-foreground'>{row.original.symbol || '—'}</span>,
+        cell: ({ row }) => (
+          <span className='text-muted-foreground text-sm'>{row.original.symbol || '—'}</span>
+        ),
       },
       {
         id: 'status',
@@ -281,7 +285,7 @@ export default function CurrenciesPage() {
                 />
               </div>
             </div>
-            <div className='flex items-center justify-between rounded-md border border-border/70 bg-muted/30 px-4 py-3'>
+            <div className='border-border/70 bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3'>
               <Label htmlFor='active'>Active</Label>
               <Switch
                 id='active'
@@ -290,7 +294,7 @@ export default function CurrenciesPage() {
               />
             </div>
             {!editing ? (
-              <div className='flex items-center justify-between rounded-md border border-border/70 bg-muted/30 px-4 py-3'>
+              <div className='border-border/70 bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3'>
                 <Label htmlFor='default_currency'>Set as default</Label>
                 <Switch
                   id='default_currency'

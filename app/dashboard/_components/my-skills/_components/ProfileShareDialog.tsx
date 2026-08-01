@@ -1,6 +1,15 @@
 'use client';
 
-import { Check, Copy, Facebook, Linkedin, Mail, MessageCircle, Share2, Twitter } from 'lucide-react';
+import {
+  Check,
+  Copy,
+  Facebook,
+  Linkedin,
+  Mail,
+  MessageCircle,
+  Share2,
+  Twitter,
+} from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -30,12 +39,12 @@ const SHARE_PLATFORMS: Array<{
   label: string;
   platform: SharePlatform;
 }> = [
-    { icon: MessageCircle, label: 'WhatsApp', platform: 'whatsapp' },
-    { icon: Twitter, label: 'X / Twitter', platform: 'twitter' },
-    { icon: Facebook, label: 'Facebook', platform: 'facebook' },
-    { icon: Linkedin, label: 'LinkedIn', platform: 'linkedin' },
-    { icon: Mail, label: 'Email', platform: 'email' },
-  ];
+  { icon: MessageCircle, label: 'WhatsApp', platform: 'whatsapp' },
+  { icon: Twitter, label: 'X / Twitter', platform: 'twitter' },
+  { icon: Facebook, label: 'Facebook', platform: 'facebook' },
+  { icon: Linkedin, label: 'LinkedIn', platform: 'linkedin' },
+  { icon: Mail, label: 'Email', platform: 'email' },
+];
 
 function writeTextFallback(text: string) {
   const input = document.createElement('input');
@@ -116,7 +125,11 @@ export function ProfileShareDialog({
   );
 
   const handleNativeShare = React.useCallback(async () => {
-    if (!normalizedUrl || typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
+    if (
+      !normalizedUrl ||
+      typeof navigator === 'undefined' ||
+      typeof navigator.share !== 'function'
+    ) {
       await handleCopy();
       return;
     }
@@ -145,7 +158,8 @@ export function ProfileShareDialog({
         <DialogHeader>
           <DialogTitle>Share profile</DialogTitle>
           <DialogDescription>
-            Add a short message, copy the link, or share this profile through your preferred channel.
+            Add a short message, copy the link, or share this profile through your preferred
+            channel.
           </DialogDescription>
         </DialogHeader>
 
@@ -171,7 +185,7 @@ export function ProfileShareDialog({
             />
           </div>
 
-          <div className='flex justify-end flex-wrap gap-2'>
+          <div className='flex flex-wrap justify-end gap-2'>
             <Button type='button' variant='outline' onClick={handleCopy} disabled={!normalizedUrl}>
               {isCopied ? <Check className='h-4 w-4' /> : <Copy className='h-4 w-4' />}
               {isCopied ? 'Copied' : 'Copy link'}

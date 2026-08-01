@@ -16,10 +16,7 @@ export function AssessmentsSection({ courseUuid }: { courseUuid: string }) {
   const assessments: CourseAssessment[] = data?.data?.content ?? [];
 
   return (
-    <SectionCard
-      title='Assessments'
-      description='How learners are evaluated in this course.'
-    >
+    <SectionCard title='Assessments' description='How learners are evaluated in this course.'>
       {isLoading ? (
         <div className='space-y-2'>
           {Array.from({ length: 2 }).map((_, index) => (
@@ -27,7 +24,7 @@ export function AssessmentsSection({ courseUuid }: { courseUuid: string }) {
           ))}
         </div>
       ) : assessments.length === 0 ? (
-        <p className='rounded-md border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground'>
+        <p className='border-border/70 text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
           No assessments defined for this course.
         </p>
       ) : (
@@ -35,20 +32,20 @@ export function AssessmentsSection({ courseUuid }: { courseUuid: string }) {
           {assessments.map(assessment => (
             <div
               key={assessment.uuid}
-              className='rounded-md border border-border/60 bg-muted/20 px-4 py-3'
+              className='border-border/60 bg-muted/20 rounded-md border px-4 py-3'
             >
               <div className='flex items-center gap-2'>
-                <BookOpenCheck className='size-4 text-primary' />
-                <h3 className='text-sm font-semibold text-foreground'>
+                <BookOpenCheck className='text-primary size-4' />
+                <h3 className='text-foreground text-sm font-semibold'>
                   {assessment.title ?? 'Untitled assessment'}
                 </h3>
               </div>
               {assessment.description ? (
-                <div className='mt-1 text-sm text-muted-foreground'>
+                <div className='text-muted-foreground mt-1 text-sm'>
                   <RichTextRenderer htmlString={assessment.description} />
                 </div>
               ) : null}
-              <div className='mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground'>
+              <div className='text-muted-foreground mt-2 flex flex-wrap gap-4 text-xs'>
                 {assessment.weight_percentage != null ? (
                   <span className='inline-flex items-center gap-1'>
                     <Scale className='size-3.5' />

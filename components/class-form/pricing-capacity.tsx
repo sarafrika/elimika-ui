@@ -25,32 +25,41 @@ export function PricingCapacity({
 }) {
   const totalFee = approvedFee !== undefined ? approvedFee * Math.max(totalSessions, 1) : undefined;
   return (
-    <div className="grid gap-4 rounded-lg border p-4 sm:grid-cols-3">
-      <div className="space-y-2">
-        <Label className="flex items-center gap-1.5">
-          <Coins className="size-3.5" /> Fee per session
-          <span className="text-[11px] font-normal text-muted-foreground">(approved rate)</span>
+    <div className='grid gap-4 rounded-lg border p-4 sm:grid-cols-3'>
+      <div className='space-y-2'>
+        <Label className='flex items-center gap-1.5'>
+          <Coins className='size-3.5' /> Fee per session
+          <span className='text-muted-foreground text-[11px] font-normal'>(approved rate)</span>
         </Label>
-        <div className="flex h-9 items-center gap-2 rounded-md border bg-muted/40 px-3">
-          <Lock className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate text-sm font-medium">{formatMoney(approvedFee, currency)}</span>
+        <div className='bg-muted/40 flex h-9 items-center gap-2 rounded-md border px-3'>
+          <Lock className='text-muted-foreground size-3.5 shrink-0' />
+          <span className='truncate text-sm font-medium'>{formatMoney(approvedFee, currency)}</span>
         </div>
-        <p className="text-[11px] text-muted-foreground">
+        <p className='text-muted-foreground text-[11px]'>
           {approvedFee === undefined
             ? 'The course creator has not approved a rate for this format and delivery mode.'
             : `Approved by the course creator. ${totalSessions} session${totalSessions === 1 ? '' : 's'} × ${approvedFee.toLocaleString()} = `}
           {totalFee !== undefined ? (
-            <span className="font-semibold text-foreground">{totalFee.toLocaleString()}</span>
+            <span className='text-foreground font-semibold'>{totalFee.toLocaleString()}</span>
           ) : null}
         </p>
       </div>
-      <div className="space-y-2">
+      <div className='space-y-2'>
         <Label>Max participants</Label>
-        <Input type="number" min={1} value={maxParticipants} onChange={e => onMaxChange(e.target.value)} />
+        <Input
+          type='number'
+          min={1}
+          value={maxParticipants}
+          onChange={e => onMaxChange(e.target.value)}
+        />
       </div>
-      <div className="flex items-end gap-2 pb-1">
-        <Switch id="allow-waitlist" checked={allowWaitlist} onCheckedChange={onAllowWaitlistChange} />
-        <Label htmlFor="allow-waitlist" className="font-normal">
+      <div className='flex items-end gap-2 pb-1'>
+        <Switch
+          id='allow-waitlist'
+          checked={allowWaitlist}
+          onCheckedChange={onAllowWaitlistChange}
+        />
+        <Label htmlFor='allow-waitlist' className='font-normal'>
           Allow waitlist
         </Label>
       </div>

@@ -28,8 +28,8 @@ export function MarketplaceSidebar({
 }: MarketplaceSidebarProps) {
   return (
     <aside className='space-y-4'>
-      <div className='space-y-4 rounded-md border border-border/70 bg-card px-4 py-4 shadow-sm'>
-        <div className='border-b border-border/60 pb-4'>
+      <div className='border-border/70 bg-card space-y-4 rounded-md border px-4 py-4 shadow-sm'>
+        <div className='border-border/60 border-b pb-4'>
           <h2 className='text-foreground text-base font-semibold'>{heading}</h2>
           <p className='text-muted-foreground mt-1 text-sm'>{count}</p>
         </div>
@@ -38,8 +38,11 @@ export function MarketplaceSidebar({
           const GroupIcon = group.icon;
 
           return (
-            <section key={group.title} className='space-y-2 border-b border-border/60 pb-4 last:border-b-0 last:pb-0'>
-              <div className='text-muted-foreground text-xs font-medium uppercase tracking-wide flex items-center gap-2'>
+            <section
+              key={group.title}
+              className='border-border/60 space-y-2 border-b pb-4 last:border-b-0 last:pb-0'
+            >
+              <div className='text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase'>
                 <GroupIcon className='text-primary size-4' />
                 {group.title}
               </div>
@@ -65,14 +68,20 @@ export function MarketplaceSidebar({
                             : 'border-muted-foreground/40 size-3.5 rounded-full border-2'
                         }
                       />
-                      <span className={item.active ? 'text-foreground text-sm font-medium' : 'text-muted-foreground text-sm'}>
+                      <span
+                        className={
+                          item.active
+                            ? 'text-foreground text-sm font-medium'
+                            : 'text-muted-foreground text-sm'
+                        }
+                      >
                         {item.label}
                       </span>
                     </span>
                     {item.count ? (
                       <Badge
                         variant='outline'
-                        className='rounded-md border-border/70 bg-muted/40 px-2 py-0.5 text-xs tabular-nums text-muted-foreground'
+                        className='border-border/70 bg-muted/40 text-muted-foreground rounded-md px-2 py-0.5 text-xs tabular-nums'
                       >
                         {item.count}
                       </Badge>

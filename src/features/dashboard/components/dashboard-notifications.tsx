@@ -37,7 +37,7 @@ import { toast } from 'sonner';
 
 type DashboardNotificationsProps = {
   notificationHref: string;
-  activeDomain: string | null
+  activeDomain: string | null;
 };
 
 const iconByType: Array<[RegExp, LucideIcon]> = [
@@ -74,7 +74,7 @@ function NotificationRow({
     <Link
       href={href}
       onClick={() => onRead(notification)}
-      className='hover:bg-muted/60 focus-visible:ring-ring block rounded-md px-3 py-3 outline-none transition focus-visible:ring-2'
+      className='hover:bg-muted/60 focus-visible:ring-ring block rounded-md px-3 py-3 transition outline-none focus-visible:ring-2'
     >
       <div className='flex gap-3'>
         <div
@@ -108,10 +108,9 @@ function NotificationRow({
   );
 }
 
-
 export const getNotificationUrlPath = (
   notification: UserNotification,
-  activeDomain: string,
+  activeDomain: string
 ): string => {
   const { type, metadata, action_url } = notification;
 
@@ -208,8 +207,10 @@ export const getNotificationUrlPath = (
   }
 };
 
-
-export function DashboardNotifications({ notificationHref, activeDomain }: DashboardNotificationsProps) {
+export function DashboardNotifications({
+  notificationHref,
+  activeDomain,
+}: DashboardNotificationsProps) {
   const [open, setOpen] = useState(false);
   const shownPopupIds = useRef<Set<string>>(new Set());
   const domain = activeDomain ?? undefined;
@@ -246,7 +247,10 @@ export function DashboardNotifications({ notificationHref, activeDomain }: Dashb
   const unreadCount = countsQuery.data?.unread_count ?? 0;
   const recentNotifications = recentQuery.data?.items ?? [];
   const popupNotifications = popupQuery.data?.items ?? [];
-  const normalizedNotifications = normalizeNotifications(recentNotifications, activeDomain as string);
+  const normalizedNotifications = normalizeNotifications(
+    recentNotifications,
+    activeDomain as string
+  );
 
   useEffect(() => {
     for (const notification of popupNotifications) {
@@ -259,11 +263,11 @@ export function DashboardNotifications({ notificationHref, activeDomain }: Dashb
         description: notification.body,
         action: notification.action_url
           ? {
-            label: 'Open',
-            onClick: () => {
-              window.location.href = notification.action_url || notificationHref;
-            },
-          }
+              label: 'Open',
+              onClick: () => {
+                window.location.href = notification.action_url || notificationHref;
+              },
+            }
           : undefined,
       });
       actionMutation.mutate({ uuid: notification.uuid, action: 'popup_seen' });
@@ -294,15 +298,10 @@ export function DashboardNotifications({ notificationHref, activeDomain }: Dashb
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent
-        align='end'
-        className='flex h-[480px] w-[min(92vw,380px)] flex-col p-0'
-      >
+      <DropdownMenuContent align='end' className='flex h-[480px] w-[min(92vw,380px)] flex-col p-0'>
         {/* Header */}
-        <div className='flex items-center justify-between px-4 py-3 shrink-0'>
-          <DropdownMenuLabel className='p-0 text-sm font-semibold'>
-            Notifications
-          </DropdownMenuLabel>
+        <div className='flex shrink-0 items-center justify-between px-4 py-3'>
+          <DropdownMenuLabel className='p-0 text-sm font-semibold'>Notifications</DropdownMenuLabel>
 
           <div className='flex items-center gap-2'>
             {unreadCount > 0 ? (
@@ -330,12 +329,8 @@ export function DashboardNotifications({ notificationHref, activeDomain }: Dashb
               {normalizedNotifications.length === 0 ? (
                 <div className='px-4 py-8 text-center'>
                   <Bell className='text-muted-foreground mx-auto h-8 w-8' />
-                  <p className='text-foreground mt-3 text-sm font-medium'>
-                    No notifications
-                  </p>
-                  <p className='text-muted-foreground mt-1 text-xs'>
-                    You are all caught up.
-                  </p>
+                  <p className='text-foreground mt-3 text-sm font-medium'>No notifications</p>
+                  <p className='text-muted-foreground mt-1 text-xs'>You are all caught up.</p>
                 </div>
               ) : (
                 normalizedNotifications.map(notification => (
@@ -351,16 +346,9 @@ export function DashboardNotifications({ notificationHref, activeDomain }: Dashb
         </div>
 
         {/* Sticky footer */}
-        <div className='border-t bg-background p-2 shrink-0'>
-          <Button
-            asChild
-            variant='ghost'
-            className='w-full justify-center text-sm'
-          >
-            <Link
-              href={notificationHref}
-              onClick={() => setOpen(false)}
-            >
+        <div className='bg-background shrink-0 border-t p-2'>
+          <Button asChild variant='ghost' className='w-full justify-center text-sm'>
+            <Link href={notificationHref} onClick={() => setOpen(false)}>
               View all notifications
             </Link>
           </Button>

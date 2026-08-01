@@ -1,8 +1,5 @@
-
 const ClassEmptyPage = () => {
-    return (
-        <div />
-    )
-}
+  return <div />;
+};
 
-export default ClassEmptyPage
+export default ClassEmptyPage;

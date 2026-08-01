@@ -152,7 +152,11 @@ export function ScheduleDetailsDialog({
                     </a>
                   </Button>
                 ) : (
-                  <Button className='w-full gap-2' size='lg' onClick={() => onJoinClass?.(schedule)}>
+                  <Button
+                    className='w-full gap-2'
+                    size='lg'
+                    onClick={() => onJoinClass?.(schedule)}
+                  >
                     <MapPin className='h-5 w-5' />
                     {joinLabel ?? 'View Location'}
                   </Button>
@@ -163,9 +167,7 @@ export function ScheduleDetailsDialog({
 
           {!isPast && schedule.status === 'SCHEDULED' && !joinHref && locationNote && (
             <div className='bg-muted/50 rounded-lg p-3 sm:p-4'>
-              <p className='text-muted-foreground text-sm leading-6'>
-                {locationNote}
-              </p>
+              <p className='text-muted-foreground text-sm leading-6'>{locationNote}</p>
             </div>
           )}
 

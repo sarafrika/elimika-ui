@@ -17,7 +17,10 @@ import { getTrainingBranchesByOrganisationOptions } from '@/services/client/@tan
 
 const prettify = (value?: string | null) =>
   value
-    ? value.toString().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    ? value
+        .toString()
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase())
     : '';
 
 export default function VenuesPage() {
@@ -54,41 +57,41 @@ export default function VenuesPage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]">
+    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
-        title="Venues & Resources"
-        description="Classrooms, fields, studios, booking calendar, and resource allocation."
+        title='Venues & Resources'
+        description='Classrooms, fields, studios, booking calendar, and resource allocation.'
         action={
           <Button>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className='mr-2 h-4 w-4' />
             Add Venue
           </Button>
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{total}</div>
-            <div className="text-xs text-muted-foreground">Total Venues</div>
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <Card className='border-l-primary border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{total}</div>
+            <div className='text-muted-foreground text-xs'>Total Venues</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-success">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{available}</div>
-            <div className="text-xs text-muted-foreground">Available</div>
+        <Card className='border-l-success border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{available}</div>
+            <div className='text-muted-foreground text-xs'>Available</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-warning">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">—</div>
-            <div className="text-xs text-muted-foreground">Booked Today</div>
+        <Card className='border-l-warning border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>—</div>
+            <div className='text-muted-foreground text-xs'>Booked Today</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-primary/60">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">—</div>
-            <div className="text-xs text-muted-foreground">Usage Rate</div>
+        <Card className='border-l-primary/60 border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>—</div>
+            <div className='text-muted-foreground text-xs'>Usage Rate</div>
           </CardContent>
         </Card>
       </div>
@@ -101,41 +104,41 @@ export default function VenuesPage() {
         onSubjectChange={setSubjectByCategory}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
         {visibleVenues.map(venue => (
-          <Card key={venue.id} className="overflow-hidden py-0">
-            <div className="relative flex h-32 items-center justify-center bg-gradient-to-br from-teal-600 via-teal-600 to-primary">
-              <MapPin className="h-10 w-10 text-white/90" />
+          <Card key={venue.id} className='overflow-hidden py-0'>
+            <div className='to-primary relative flex h-32 items-center justify-center bg-gradient-to-br from-teal-600 via-teal-600'>
+              <MapPin className='h-10 w-10 text-white/90' />
             </div>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
+            <CardContent className='p-4'>
+              <div className='flex items-start justify-between'>
                 <div>
-                  <h3 className="font-semibold">{venue.name}</h3>
-                  <p className="text-xs text-muted-foreground">{venue.floor}</p>
+                  <h3 className='font-semibold'>{venue.name}</h3>
+                  <p className='text-muted-foreground text-xs'>{venue.floor}</p>
                 </div>
                 <Badge variant={venue.status === 'Available' ? 'default' : 'secondary'}>
                   {venue.status}
                 </Badge>
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Users className="h-3.5 w-3.5" />
+              <div className='text-muted-foreground mt-3 flex flex-wrap items-center gap-4 text-xs'>
+                <span className='flex items-center gap-1'>
+                  <Users className='h-3.5 w-3.5' />
                   {venue.capacity != null ? venue.capacity : '—'}
                 </span>
-                <span className="flex items-center gap-1">
-                  <Wrench className="h-3.5 w-3.5" />—
+                <span className='flex items-center gap-1'>
+                  <Wrench className='h-3.5 w-3.5' />—
                 </span>
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" />
+                <span className='flex items-center gap-1'>
+                  <MapPin className='h-3.5 w-3.5' />
                   {prettify(venue.type)}
                 </span>
               </div>
-              <div className="mt-4 flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1">
+              <div className='mt-4 flex gap-2'>
+                <Button variant='outline' size='sm' className='flex-1'>
                   Manage
                 </Button>
-                <Button size="sm" className="flex-1" disabled={venue.status !== 'Available'}>
-                  <Calendar className="mr-1 h-3.5 w-3.5" />
+                <Button size='sm' className='flex-1' disabled={venue.status !== 'Available'}>
+                  <Calendar className='mr-1 h-3.5 w-3.5' />
                   Book
                 </Button>
               </div>

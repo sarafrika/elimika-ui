@@ -44,7 +44,13 @@ export function AcademicPeriodsPanel({
   const addPeriod = () =>
     onChange([
       ...periods,
-      { id: `ap-${Date.now()}`, name: `Academic Period ${periods.length + 1}`, startDate: '', endDate: '', slots: [] },
+      {
+        id: `ap-${Date.now()}`,
+        name: `Academic Period ${periods.length + 1}`,
+        startDate: '',
+        endDate: '',
+        slots: [],
+      },
     ]);
   const addSlot = (id: string) => {
     const p = periods.find(x => x.id === id);
@@ -63,39 +69,48 @@ export function AcademicPeriodsPanel({
   };
 
   return (
-    <div className="space-y-3">
+    <div className='space-y-3'>
       {periods.map(p => {
         const status = periodStatus(p);
         return (
-          <div key={p.id} className="relative overflow-hidden rounded-xl border bg-card p-4 pl-5">
-            <span className={cn('absolute left-0 top-0 h-full w-1.5', accentStyles[status])} />
-            <div className="grid gap-4 md:grid-cols-[1.4fr_1fr_1fr_auto_auto] md:items-start">
-              <div className="space-y-2">
+          <div key={p.id} className='bg-card relative overflow-hidden rounded-xl border p-4 pl-5'>
+            <span className={cn('absolute top-0 left-0 h-full w-1.5', accentStyles[status])} />
+            <div className='grid gap-4 md:grid-cols-[1.4fr_1fr_1fr_auto_auto] md:items-start'>
+              <div className='space-y-2'>
                 <Input
                   value={p.name}
                   onChange={e => updatePeriod(p.id, { name: e.target.value })}
-                  className="h-8 border-0 bg-transparent px-0 text-base font-semibold shadow-none focus-visible:ring-0"
+                  className='h-8 border-0 bg-transparent px-0 text-base font-semibold shadow-none focus-visible:ring-0'
                 />
-                <div className="space-y-1.5">
-                  <div className="text-xs text-muted-foreground">Recurring Lesson Schedule</div>
-                  <div className="flex flex-wrap gap-2">
+                <div className='space-y-1.5'>
+                  <div className='text-muted-foreground text-xs'>Recurring Lesson Schedule</div>
+                  <div className='flex flex-wrap gap-2'>
                     {p.slots.map((slot, idx) => (
-                      <div key={idx} className="flex items-center gap-1.5 rounded-md border bg-background p-1 pl-2 text-xs">
+                      <div
+                        key={idx}
+                        className='bg-background flex items-center gap-1.5 rounded-md border p-1 pl-2 text-xs'
+                      >
                         <Popover>
                           <PopoverTrigger asChild>
-                            <button type="button" className={cn('rounded px-2 py-0.5 text-xs font-medium', chipStyles[status])}>
+                            <button
+                              type='button'
+                              className={cn(
+                                'rounded px-2 py-0.5 text-xs font-medium',
+                                chipStyles[status]
+                              )}
+                            >
                               {DAY_FULL[slot.day]}
                             </button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-40 p-1" align="start">
-                            <div className="grid grid-cols-2 gap-1">
+                          <PopoverContent className='w-40 p-1' align='start'>
+                            <div className='grid grid-cols-2 gap-1'>
                               {DAYS.map(d => (
                                 <button
                                   key={d}
-                                  type="button"
+                                  type='button'
                                   onClick={() => updateSlot(p.id, idx, { day: d })}
                                   className={cn(
-                                    'rounded px-2 py-1 text-left text-xs hover:bg-muted',
+                                    'hover:bg-muted rounded px-2 py-1 text-left text-xs',
                                     slot.day === d && 'bg-muted font-medium'
                                   )}
                                 >
@@ -105,73 +120,73 @@ export function AcademicPeriodsPanel({
                             </div>
                           </PopoverContent>
                         </Popover>
-                        <div className="flex items-center gap-1 rounded border bg-background px-1.5 py-0.5">
-                          <Clock className="h-3 w-3 text-muted-foreground" />
+                        <div className='bg-background flex items-center gap-1 rounded border px-1.5 py-0.5'>
+                          <Clock className='text-muted-foreground h-3 w-3' />
                           <Input
-                            type="time"
+                            type='time'
                             value={slot.start}
                             onChange={e => updateSlot(p.id, idx, { start: e.target.value })}
-                            className="h-5 w-[80px] border-0 p-0 text-[11px] shadow-none focus-visible:ring-0"
+                            className='h-5 w-[80px] border-0 p-0 text-[11px] shadow-none focus-visible:ring-0'
                           />
-                          <span className="text-muted-foreground">–</span>
+                          <span className='text-muted-foreground'>–</span>
                           <Input
-                            type="time"
+                            type='time'
                             value={slot.end}
                             onChange={e => updateSlot(p.id, idx, { end: e.target.value })}
-                            className="h-5 w-[80px] border-0 p-0 text-[11px] shadow-none focus-visible:ring-0"
+                            className='h-5 w-[80px] border-0 p-0 text-[11px] shadow-none focus-visible:ring-0'
                           />
                         </div>
                         <button
-                          type="button"
+                          type='button'
                           onClick={() => removeSlot(p.id, idx)}
-                          className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-destructive"
-                          aria-label="Remove slot"
+                          className='text-muted-foreground hover:bg-muted hover:text-destructive rounded p-0.5'
+                          aria-label='Remove slot'
                         >
-                          <X className="h-3 w-3" />
+                          <X className='h-3 w-3' />
                         </button>
                       </div>
                     ))}
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => addSlot(p.id)}
-                      className="inline-flex items-center gap-1 rounded-md border border-dashed px-2 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary"
+                      className='text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1 rounded-md border border-dashed px-2 py-1 text-xs'
                     >
-                      <Plus className="h-3 w-3" /> Add slot
+                      <Plus className='h-3 w-3' /> Add slot
                     </button>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-[11px] text-muted-foreground">Start Date</Label>
-                <div className="relative">
-                  <CalendarDays className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <div className='space-y-1'>
+                <Label className='text-muted-foreground text-[11px]'>Start Date</Label>
+                <div className='relative'>
+                  <CalendarDays className='text-muted-foreground pointer-events-none absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2' />
                   <Input
-                    type="date"
+                    type='date'
                     value={p.startDate}
                     onChange={e => updatePeriod(p.id, { startDate: e.target.value })}
-                    className="h-9 pl-7 text-sm"
+                    className='h-9 pl-7 text-sm'
                   />
                 </div>
-                <div className="text-[11px] text-muted-foreground">{fmtShortDate(p.startDate)}</div>
+                <div className='text-muted-foreground text-[11px]'>{fmtShortDate(p.startDate)}</div>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-[11px] text-muted-foreground">End Date</Label>
-                <div className="relative">
-                  <CalendarDays className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <div className='space-y-1'>
+                <Label className='text-muted-foreground text-[11px]'>End Date</Label>
+                <div className='relative'>
+                  <CalendarDays className='text-muted-foreground pointer-events-none absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2' />
                   <Input
-                    type="date"
+                    type='date'
                     value={p.endDate}
                     onChange={e => updatePeriod(p.id, { endDate: e.target.value })}
-                    className="h-9 pl-7 text-sm"
+                    className='h-9 pl-7 text-sm'
                   />
                 </div>
-                <div className="text-[11px] text-muted-foreground">{fmtShortDate(p.endDate)}</div>
+                <div className='text-muted-foreground text-[11px]'>{fmtShortDate(p.endDate)}</div>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-[11px] text-muted-foreground">Status</Label>
+              <div className='space-y-1'>
+                <Label className='text-muted-foreground text-[11px]'>Status</Label>
                 <div
                   className={cn(
                     'inline-flex h-9 items-center rounded-md border px-3 text-sm font-medium capitalize',
@@ -182,20 +197,24 @@ export function AcademicPeriodsPanel({
                 </div>
               </div>
 
-              <div className="pt-5">
+              <div className='pt-5'>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" className="rounded p-1 text-muted-foreground hover:bg-muted" aria-label="Period options">
-                      <MoreVertical className="h-4 w-4" />
+                    <button
+                      type='button'
+                      className='text-muted-foreground hover:bg-muted rounded p-1'
+                      aria-label='Period options'
+                    >
+                      <MoreVertical className='h-4 w-4' />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-36 p-1" align="end">
+                  <PopoverContent className='w-36 p-1' align='end'>
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => removePeriod(p.id)}
-                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+                      className='text-destructive hover:bg-destructive/10 flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm'
                     >
-                      <Trash2 className="h-3.5 w-3.5" /> Remove period
+                      <Trash2 className='h-3.5 w-3.5' /> Remove period
                     </button>
                   </PopoverContent>
                 </Popover>
@@ -203,7 +222,7 @@ export function AcademicPeriodsPanel({
             </div>
 
             {p.slots.some(s => s.start >= s.end) && (
-              <div className="mt-3 rounded-md bg-destructive/10 px-3 py-1.5 text-[11px] text-destructive">
+              <div className='bg-destructive/10 text-destructive mt-3 rounded-md px-3 py-1.5 text-[11px]'>
                 One or more slots have an end time before the start time.
               </div>
             )}
@@ -211,14 +230,14 @@ export function AcademicPeriodsPanel({
         );
       })}
 
-      <div className="flex justify-end">
+      <div className='flex justify-end'>
         <Button
-          type="button"
-          variant="outline"
+          type='button'
+          variant='outline'
           onClick={addPeriod}
-          className="border-primary/40 text-primary hover:bg-primary/5"
+          className='border-primary/40 text-primary hover:bg-primary/5'
         >
-          <Plus className="mr-1 h-4 w-4" /> Add Academic Period
+          <Plus className='mr-1 h-4 w-4' /> Add Academic Period
         </Button>
       </div>
     </div>
