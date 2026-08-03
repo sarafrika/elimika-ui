@@ -15,7 +15,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import Spinner from '@/components/ui/spinner';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import type { User } from '@/services/client';
@@ -43,7 +42,6 @@ import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
 import ManageProfileActions from '../../../profile/add-profile/components/ManageProfileActions';
 import { SettingsField } from '../_components/settings-field';
 import { SettingsPageHeader } from '../_components/settings-page-header';
-import { SettingsToggleRow } from '../_components/settings-toggle-row';
 import { TimezoneSetting } from '../_components/timezone-setting';
 import { AcademicGroupsPanel } from '../panels/academic-groups-panel';
 import { BranchesPanel } from '../panels/branches-panel';
@@ -288,15 +286,6 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
     params.set('tab', nextTab);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
-
-  const [toggles, setToggles] = useState(() => ({
-    profileVisibility: true,
-    emailAlerts: true,
-    // phoneAlerts: Boolean(profile?.phone_number),
-    phoneAlerts: false,
-    dataSharing: variant !== 'student',
-    twoFactor: variant === 'admin',
-  }));
 
   const roleLabel = String(normalizeUserDomainValue(profile?.user_domain) ?? variant).replace(
     /_/g,
@@ -944,44 +933,6 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                         </div>
                       ))}
                     </div>
-
-                    <Separator className='bg-border/70' />
-
-                    <div className='space-y-3'>
-                      <SettingsToggleRow
-                        title='Email updates'
-                        description='Receive inbox updates for activity, approvals, and account changes.'
-                        enabled={toggles.emailAlerts}
-                        onToggle={next => setToggles(prev => ({ ...prev, emailAlerts: next }))}
-                      />
-                      <SettingsToggleRow
-                        title='Phone alerts'
-                        description='Allow SMS or phone-based reminders when your profile includes a mobile number.'
-                        enabled={toggles.phoneAlerts}
-                        onToggle={next => setToggles(prev => ({ ...prev, phoneAlerts: next }))}
-                      />
-                      <SettingsToggleRow
-                        title='Profile visibility'
-                        description='Show this account in internal directories and collaboration lists.'
-                        enabled={toggles.profileVisibility}
-                        onToggle={next =>
-                          setToggles(prev => ({ ...prev, profileVisibility: next }))
-                        }
-                      />
-                      <SettingsToggleRow
-                        title='Data sharing'
-                        description='Share profile details with connected workspace tools and approved collaborators.'
-                        enabled={toggles.dataSharing}
-                        onToggle={next => setToggles(prev => ({ ...prev, dataSharing: next }))}
-                      />
-                      <SettingsToggleRow
-                        title='Two-factor authentication'
-                        description='Add an extra login step for stronger account protection.'
-                        enabled={toggles.twoFactor}
-                        badgeLabel='Security'
-                        onToggle={next => setToggles(prev => ({ ...prev, twoFactor: next }))}
-                      />
-                    </div>
                   </CardContent>
                 </Card>
 
@@ -1076,60 +1027,24 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                 </CardContent>
               </Card>
 
-              <div className='flex flex-col gap-4'>
-                <Card className='border-border/70 rounded-md p-0 shadow-sm'>
-                  <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                    <CardTitle className='text-base font-semibold sm:text-lg'>
-                      Security snapshot
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
-                    <div className='border-border/70 flex items-center justify-between rounded-[16px] border px-4 py-3'>
-                      <div>
-                        <p className='text-foreground text-sm font-semibold'>Two-factor auth</p>
-                        <p className='text-muted-foreground text-xs sm:text-sm'>
-                          Recommended for all accounts.
-                        </p>
-                      </div>
-                      <Switch
-                        checked={toggles.twoFactor}
-                        onCheckedChange={next => setToggles(prev => ({ ...prev, twoFactor: next }))}
-                      />
-                    </div>
-                    <div className='border-border/70 flex items-center justify-between rounded-[16px] border px-4 py-3'>
-                      <div>
-                        <p className='text-foreground text-sm font-semibold'>Email updates</p>
-                        <p className='text-muted-foreground text-xs sm:text-sm'>
-                          Stay informed on account changes.
-                        </p>
-                      </div>
-                      <Switch
-                        checked={toggles.emailAlerts}
-                        onCheckedChange={next =>
-                          setToggles(prev => ({ ...prev, emailAlerts: next }))
-                        }
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className='border-border/70 rounded-md p-0 shadow-sm'>
-                  <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                    <CardTitle className='text-base font-semibold sm:text-lg'>
-                      Support widget preview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className='px-4 py-5 sm:px-5'>
-                    <div className='border-border/70 rounded-[18px] border border-dashed p-4'>
-                      <p className='text-foreground text-sm font-semibold'>Need Help?</p>
-                      <p className='text-muted-foreground mt-1 text-sm leading-6'>
-                        The sidebar widget mirrors this support entry point so help is always close
-                        at hand.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <Card className='border-border/70 rounded-md p-0 shadow-sm'>
+                <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
+                  <CardTitle className='text-base font-semibold sm:text-lg'>Get help</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
+                  <p className='text-muted-foreground text-sm leading-6'>
+                    The sidebar &ldquo;Need Help?&rdquo; widget opens the same place, so support is
+                    always close at hand.
+                  </p>
+                  <Button
+                    asChild
+                    variant='outline'
+                    className='h-10 w-full rounded-md text-sm font-medium'
+                  >
+                    <Link href={config.supportHref}>Contact support</Link>
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
@@ -1148,28 +1063,7 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                       <SettingsField
                         label='Language'
                         value='English'
-                        helperText='Controls the interface language for this profile.'
-                      />
-                    </div>
-
-                    <div className='grid gap-3'>
-                      <SettingsToggleRow
-                        title='Weekly digest'
-                        description='Receive a weekly summary of activity and important updates.'
-                        enabled
-                        onToggle={() => undefined}
-                      />
-                      <SettingsToggleRow
-                        title='Preview mode'
-                        description='Keep draft changes visible only to you until you publish them.'
-                        enabled={variant !== 'student'}
-                        onToggle={() => undefined}
-                      />
-                      <SettingsToggleRow
-                        title='Data export reminders'
-                        description='Show reminders when account exports or compliance actions are available.'
-                        enabled={variant === 'admin' || variant === 'organisation'}
-                        onToggle={() => undefined}
+                        helperText='The interface is currently available in English only.'
                       />
                     </div>
                   </CardContent>
@@ -1203,24 +1097,30 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                     </CardContent>
                   </Card>
 
-                  <Card className='border-border/70 rounded-md p-0 shadow-sm'>
-                    <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                      <CardTitle className='text-base font-semibold sm:text-lg'>
-                        Recovery actions
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
-                      <Button
-                        variant='outline'
-                        className='h-10 w-full rounded-md border-dashed text-sm'
-                      >
-                        Reset advanced preferences
-                      </Button>
-                      <Button variant='outline' className='h-10 w-full rounded-md text-sm'>
-                        View account activity
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  {variant === 'admin' && profile?.uuid ? (
+                    <Card className='border-border/70 rounded-md p-0 shadow-sm'>
+                      <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
+                        <CardTitle className='text-base font-semibold sm:text-lg'>
+                          Account activity
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
+                        <p className='text-muted-foreground text-sm leading-6'>
+                          Review the audit trail of requests you made and admin actions taken
+                          against your account.
+                        </p>
+                        <Button
+                          asChild
+                          variant='outline'
+                          className='h-10 w-full rounded-md text-sm'
+                        >
+                          <Link href={`/dashboard/admin/users/${profile.uuid}?tab=audit`}>
+                            View account activity
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ) : null}
                 </div>
               </div>
 
