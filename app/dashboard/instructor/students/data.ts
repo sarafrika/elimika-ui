@@ -13,7 +13,7 @@ import type {
   User,
 } from '@/services/client';
 import { useUserProfile } from '../../../../context/profile-context';
-import { useStudentsByIds, useUsersByIds } from '../../../../hooks/use-batched-lookups';
+import { useStudentsByIds, useUsersWithContactByIds } from '../../../../hooks/use-batched-lookups';
 import { useDifficultyLevels } from '../../../../hooks/use-difficultyLevels';
 import useInstructorClassesWithDetails, {
   type InstructorClassWithDetails,
@@ -149,7 +149,7 @@ export function useInstructorStudentsData() {
         .filter(Boolean) as string[],
     [studentMap]
   );
-  const { userMap, isLoading: userIsLoading } = useUsersByIds(userIds);
+  const { userMap, isLoading: userIsLoading } = useUsersWithContactByIds(userIds);
 
   // TODO(backend): a batch "enrollment overview for N students" endpoint
   // would collapse these S requests into one. Until then keep them small:

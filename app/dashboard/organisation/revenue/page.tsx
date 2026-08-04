@@ -255,7 +255,14 @@ export default function OrganisationEarningsPage() {
                 </TableHeader>
                 <TableBody>
                   {payables.map(payable => (
-                    <TableRow key={payable.instructor_uuid}>
+                    // Keyed by instructor *and* currency: the backend groups obligations by both, so
+                    // one instructor owed in two currencies is two rows, not one. The cast goes away
+                    // at the next client regen — `currency_code` is already on the deployed DTO.
+                    <TableRow
+                      key={`${payable.instructor_uuid}-${
+                        (payable as { currency_code?: string }).currency_code ?? ''
+                      }`}
+                    >
                       <TableCell className='font-medium whitespace-nowrap'>
                         {instructorName(payable.instructor_uuid)}
                       </TableCell>

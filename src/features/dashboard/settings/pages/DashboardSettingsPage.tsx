@@ -15,7 +15,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import Spinner from '@/components/ui/spinner';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import type { User } from '@/services/client';
@@ -32,8 +31,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -42,8 +42,11 @@ import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
 import ManageProfileActions from '../../../profile/add-profile/components/ManageProfileActions';
 import { SettingsField } from '../_components/settings-field';
 import { SettingsPageHeader } from '../_components/settings-page-header';
-import { SettingsToggleRow } from '../_components/settings-toggle-row';
 import { TimezoneSetting } from '../_components/timezone-setting';
+import { AcademicGroupsPanel } from '../panels/academic-groups-panel';
+import { BranchesPanel } from '../panels/branches-panel';
+import { InstitutionProfilePanel } from '../panels/institution-profile-panel';
+import { RolesPermissionsPanel } from '../panels/roles-permissions-panel';
 import {
   type DashboardSettingsVariant,
   formatDate,
@@ -100,8 +103,32 @@ const supportCopyByVariant: Record<DashboardSettingsVariant, string> = {
   student: 'Learning account, privacy, and billing help',
 };
 
+/**
+ * `DashboardSettingsPageBody` reads `?tab=` via `useSearchParams`, which Next
+ * requires to sit under a Suspense boundary. The boundary lives here so every
+ * route that renders this component inherits it.
+ */
 export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
+  return (
+    <Suspense fallback={<SettingsPageFallback />}>
+      <DashboardSettingsPageBody variant={variant} />
+    </Suspense>
+  );
+}
+
+function SettingsPageFallback() {
+  return (
+    <div className='mb-8 flex w-full max-w-[1500px] justify-center px-2 py-10'>
+      <Spinner className='h-6 w-6' />
+    </div>
+  );
+}
+
+function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
   const qc = useQueryClient();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const profile = useUserProfile();
   const organisation = useOrganisation();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -246,14 +273,19 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
     [variant, profile, organisation]
   );
 
-  const [toggles, setToggles] = useState(() => ({
-    profileVisibility: true,
-    emailAlerts: true,
-    // phoneAlerts: Boolean(profile?.phone_number),
-    phoneAlerts: false,
-    dataSharing: variant !== 'student',
-    twoFactor: variant === 'admin',
-  }));
+  // Tabs are URL-driven so panels can be deep-linked (e.g. the retired
+  // /branches route redirects to `?tab=branches`).
+  const defaultTab = config.tabs[0]?.value ?? 'profile';
+  const requestedTab = searchParams.get('tab');
+  const activeTab = config.tabs.some(tab => tab.value === requestedTab)
+    ? (requestedTab as string)
+    : defaultTab;
+
+  const handleTabChange = (nextTab: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', nextTab);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const roleLabel = String(normalizeUserDomainValue(profile?.user_domain) ?? variant).replace(
     /_/g,
@@ -452,7 +484,8 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
       'Keep your creator profile ready for publishing, collaboration, and verification.',
   };
 
-  const accessActionHref = variant === 'admin' ? '/dashboard/system-config' : config.supportHref;
+  const accessActionHref =
+    variant === 'admin' ? '/dashboard/admin/system-config' : config.supportHref;
 
   return (
     <div className='mb-8 w-full max-w-[1500px] overflow-x-clip px-2 py-3 sm:px-3 sm:py-4 lg:px-4'>
@@ -465,7 +498,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
           initials={profileInitials}
         />
 
-        <Tabs defaultValue='profile' className='space-y-4'>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className='space-y-4'>
           <TabsList className='bg-card/80 border-border/70 h-auto w-full flex-wrap justify-start rounded-[16px] border p-1.5'>
             {config.tabs.map(tab => (
               <TabsTrigger
@@ -479,13 +512,16 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
           </TabsList>
 
           <TabsContent value='profile' className='mt-0'>
+            {variant === 'organisation' ? (
+              <InstitutionProfilePanel />
+            ) : (
             <div className='grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.72fr)_minmax(320px,0.88fr)]'>
               <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                 <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                   <div className='flex flex-wrap items-start justify-between gap-4'>
                     <div className='min-w-0 space-y-1'>
                       <CardTitle className='text-base font-semibold sm:text-lg'>
-                        {variant === 'organisation' ? 'Organisation Profile' : 'Profile Details'}
+                        Profile Details
                       </CardTitle>
                       <div className='text-muted-foreground sm:text-md text-sm leading-6'>
                         <RichTextRenderer htmlString={descriptionByVariant[variant]} />
@@ -694,7 +730,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                           </div>
                         )}
 
-                        {isEditing && variant !== 'admin' && variant !== 'organisation' ? (
+                        {isEditing && variant !== 'admin' ? (
                           <div className='grid gap-4 sm:grid-cols-2'>
                             <FormField
                               control={form.control}
@@ -773,7 +809,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                               </>
                             )}
                           </div>
-                        ) : variant !== 'admin' && variant !== 'organisation' ? (
+                        ) : variant !== 'admin' ? (
                           <div className='space-y-4'>
                             <SettingsField
                               label={variant === 'student' ? 'Bio' : 'Profile bio'}
@@ -795,13 +831,11 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
 
                       <Separator />
 
-                      {variant !== 'organisation' ? (
-                        <SettingsField
-                          label='Username'
-                          value={profile?.username ?? 'Not set'}
-                          helperText='Your unique login handle.'
-                        />
-                      ) : null}
+                      <SettingsField
+                        label='Username'
+                        value={profile?.username ?? 'Not set'}
+                        helperText='Your unique login handle.'
+                      />
 
                       <div className='grid gap-4 sm:grid-cols-2'>
                         {roleFields[variant].map(field => (
@@ -896,47 +930,8 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                               {item.value}
                             </p>
                           </div>
-                          <ChevronRight className='text-muted-foreground mt-0.5 size-4 shrink-0' />
                         </div>
                       ))}
-                    </div>
-
-                    <Separator className='bg-border/70' />
-
-                    <div className='space-y-3'>
-                      <SettingsToggleRow
-                        title='Email updates'
-                        description='Receive inbox updates for activity, approvals, and account changes.'
-                        enabled={toggles.emailAlerts}
-                        onToggle={next => setToggles(prev => ({ ...prev, emailAlerts: next }))}
-                      />
-                      <SettingsToggleRow
-                        title='Phone alerts'
-                        description='Allow SMS or phone-based reminders when your profile includes a mobile number.'
-                        enabled={toggles.phoneAlerts}
-                        onToggle={next => setToggles(prev => ({ ...prev, phoneAlerts: next }))}
-                      />
-                      <SettingsToggleRow
-                        title='Profile visibility'
-                        description='Show this account in internal directories and collaboration lists.'
-                        enabled={toggles.profileVisibility}
-                        onToggle={next =>
-                          setToggles(prev => ({ ...prev, profileVisibility: next }))
-                        }
-                      />
-                      <SettingsToggleRow
-                        title='Data sharing'
-                        description='Share profile details with connected workspace tools and approved collaborators.'
-                        enabled={toggles.dataSharing}
-                        onToggle={next => setToggles(prev => ({ ...prev, dataSharing: next }))}
-                      />
-                      <SettingsToggleRow
-                        title='Two-factor authentication'
-                        description='Add an extra login step for stronger account protection.'
-                        enabled={toggles.twoFactor}
-                        badgeLabel='Security'
-                        onToggle={next => setToggles(prev => ({ ...prev, twoFactor: next }))}
-                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -945,9 +940,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <CardTitle className='flex items-center gap-2 text-base font-semibold sm:text-lg'>
                       <ShieldCheck className='text-primary size-4 sm:size-5' />
-                      {variant === 'admin' || variant === 'organisation'
-                        ? 'Roles & Permissions'
-                        : 'Quick Links'}
+                      {variant === 'admin' ? 'Roles & Permissions' : 'Quick Links'}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
@@ -992,6 +985,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                 </Card>
               </div>
             </div>
+            )}
           </TabsContent>
 
           <TabsContent value='rate' className='mt-0'>
@@ -1000,18 +994,16 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
             </div>
           </TabsContent>
 
-          <TabsContent value='access' className='mt-0'>
-            <Card className='border-border/70 rounded-md p-0 shadow-sm'>
-              <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                <CardTitle className='text-base font-semibold sm:text-lg'>Access</CardTitle>
-              </CardHeader>
+          <TabsContent value='branches' className='mt-0'>
+            <BranchesPanel />
+          </TabsContent>
 
-              <CardContent className='px-4 py-5 sm:px-5'>
-                <div className='border-border/70 bg-muted/20 flex min-h-[320px] items-center justify-center rounded-[16px] border border-dashed'>
-                  <p className='text-muted-foreground text-sm'>No access settings available yet.</p>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value='groups' className='mt-0'>
+            <AcademicGroupsPanel />
+          </TabsContent>
+
+          <TabsContent value='roles' className='mt-0'>
+            <RolesPermissionsPanel />
           </TabsContent>
 
           <TabsContent value='support' className='mt-0'>
@@ -1035,60 +1027,24 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                 </CardContent>
               </Card>
 
-              <div className='flex flex-col gap-4'>
-                <Card className='border-border/70 rounded-md p-0 shadow-sm'>
-                  <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                    <CardTitle className='text-base font-semibold sm:text-lg'>
-                      Security snapshot
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
-                    <div className='border-border/70 flex items-center justify-between rounded-[16px] border px-4 py-3'>
-                      <div>
-                        <p className='text-foreground text-sm font-semibold'>Two-factor auth</p>
-                        <p className='text-muted-foreground text-xs sm:text-sm'>
-                          Recommended for all accounts.
-                        </p>
-                      </div>
-                      <Switch
-                        checked={toggles.twoFactor}
-                        onCheckedChange={next => setToggles(prev => ({ ...prev, twoFactor: next }))}
-                      />
-                    </div>
-                    <div className='border-border/70 flex items-center justify-between rounded-[16px] border px-4 py-3'>
-                      <div>
-                        <p className='text-foreground text-sm font-semibold'>Email updates</p>
-                        <p className='text-muted-foreground text-xs sm:text-sm'>
-                          Stay informed on account changes.
-                        </p>
-                      </div>
-                      <Switch
-                        checked={toggles.emailAlerts}
-                        onCheckedChange={next =>
-                          setToggles(prev => ({ ...prev, emailAlerts: next }))
-                        }
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className='border-border/70 rounded-md p-0 shadow-sm'>
-                  <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                    <CardTitle className='text-base font-semibold sm:text-lg'>
-                      Support widget preview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className='px-4 py-5 sm:px-5'>
-                    <div className='border-border/70 rounded-[18px] border border-dashed p-4'>
-                      <p className='text-foreground text-sm font-semibold'>Need Help?</p>
-                      <p className='text-muted-foreground mt-1 text-sm leading-6'>
-                        The sidebar widget mirrors this support entry point so help is always close
-                        at hand.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <Card className='border-border/70 rounded-md p-0 shadow-sm'>
+                <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
+                  <CardTitle className='text-base font-semibold sm:text-lg'>Get help</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
+                  <p className='text-muted-foreground text-sm leading-6'>
+                    The sidebar &ldquo;Need Help?&rdquo; widget opens the same place, so support is
+                    always close at hand.
+                  </p>
+                  <Button
+                    asChild
+                    variant='outline'
+                    className='h-10 w-full rounded-md text-sm font-medium'
+                  >
+                    <Link href={config.supportHref}>Contact support</Link>
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
@@ -1107,28 +1063,7 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                       <SettingsField
                         label='Language'
                         value='English'
-                        helperText='Controls the interface language for this profile.'
-                      />
-                    </div>
-
-                    <div className='grid gap-3'>
-                      <SettingsToggleRow
-                        title='Weekly digest'
-                        description='Receive a weekly summary of activity and important updates.'
-                        enabled
-                        onToggle={() => undefined}
-                      />
-                      <SettingsToggleRow
-                        title='Preview mode'
-                        description='Keep draft changes visible only to you until you publish them.'
-                        enabled={variant !== 'student'}
-                        onToggle={() => undefined}
-                      />
-                      <SettingsToggleRow
-                        title='Data export reminders'
-                        description='Show reminders when account exports or compliance actions are available.'
-                        enabled={variant === 'admin' || variant === 'organisation'}
-                        onToggle={() => undefined}
+                        helperText='The interface is currently available in English only.'
                       />
                     </div>
                   </CardContent>
@@ -1162,24 +1097,30 @@ export function DashboardSettingsPage({ variant }: DashboardSettingsPageProps) {
                     </CardContent>
                   </Card>
 
-                  <Card className='border-border/70 rounded-md p-0 shadow-sm'>
-                    <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                      <CardTitle className='text-base font-semibold sm:text-lg'>
-                        Recovery actions
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
-                      <Button
-                        variant='outline'
-                        className='h-10 w-full rounded-md border-dashed text-sm'
-                      >
-                        Reset advanced preferences
-                      </Button>
-                      <Button variant='outline' className='h-10 w-full rounded-md text-sm'>
-                        View account activity
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  {variant === 'admin' && profile?.uuid ? (
+                    <Card className='border-border/70 rounded-md p-0 shadow-sm'>
+                      <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
+                        <CardTitle className='text-base font-semibold sm:text-lg'>
+                          Account activity
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
+                        <p className='text-muted-foreground text-sm leading-6'>
+                          Review the audit trail of requests you made and admin actions taken
+                          against your account.
+                        </p>
+                        <Button
+                          asChild
+                          variant='outline'
+                          className='h-10 w-full rounded-md text-sm'
+                        >
+                          <Link href={`/dashboard/admin/users/${profile.uuid}?tab=audit`}>
+                            View account activity
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ) : null}
                 </div>
               </div>
 

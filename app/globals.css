@@ -101,7 +101,6 @@
   --el-warning-500: #f97316;
   --el-danger-500: #ef2f4b;
 
-  --color-brand: #6366f1;
   --color-azure: #0ea5e9;
   --color-amber: #f59e0b;
   --color-iris: #8b5cf6;
@@ -142,11 +141,20 @@
   --input: var(--el-neutral-200);
   --ring: var(--el-brand-500);
 
+  /*
+   * Chart series. `--chart-1` is the brand, which is re-hued per dashboard domain
+   * (see the [data-dashboard-domain] blocks below). Azure sits at ~227deg and the
+   * organisation brand sits at 195deg, so an azure `--chart-2` would collapse into
+   * `--chart-1` on that dashboard. The light ramp therefore uses the same rotation
+   * dark mode already used: iris / amber / jade / blush, which clears every domain
+   * brand hue by >=30deg except student (265 vs iris 285); no student route charts
+   * today, so that pair is unexercised — re-check before adding one.
+   */
   --chart-1: var(--el-brand-600);
-  --chart-2: var(--el-accent-azure);
+  --chart-2: var(--el-accent-iris);
   --chart-3: var(--el-accent-amber);
-  --chart-4: var(--el-accent-iris);
-  --chart-5: var(--el-accent-jade);
+  --chart-4: var(--el-accent-jade);
+  --chart-5: var(--el-accent-blush);
 
   --sidebar: var(--el-neutral-0);
   --sidebar-foreground: var(--el-neutral-900);
@@ -200,10 +208,153 @@
   --sidebar-foreground: var(--el-neutral-100);
   --sidebar-primary: var(--el-brand-400);
   --sidebar-primary-foreground: var(--el-neutral-950);
-  --sidebar-accent: color-mix(in oklch, var(--el-highlight-500) 55%, var(--el-neutral-900) 45%);
+  /*
+   * Neutral, not tinted: `--el-highlight-*` is a teal ramp, and the organisation
+   * dashboard's brand is also teal, so the old highlight-tinted hover produced a
+   * teal-on-teal sidebar there. The rest of the `--el-highlight-*` ramp is unused
+   * and should be retired separately.
+   */
+  --sidebar-accent: color-mix(in oklch, var(--el-neutral-700) 55%, var(--el-neutral-900) 45%);
   --sidebar-accent-foreground: var(--el-neutral-50);
   --sidebar-border: color-mix(in oklch, var(--el-neutral-700) 70%, black);
   --sidebar-ring: var(--el-brand-400);
+}
+
+/* ---------------------------------------------------------------------------
+ * Per-dashboard brand theming
+ *
+ * Every brand-derived token (--primary, --accent, --ring, --sidebar-primary,
+ * --sidebar-ring, --chart-1, and the dark --secondary mix) already resolves from
+ * the --el-brand-* ramp, so re-pointing the ramp re-themes the whole dashboard
+ * with no component changes.
+ *
+ * Why `:root:has(...)` rather than a descendant selector on the dashboard
+ * wrapper: custom properties are substituted where they are *declared*, not where
+ * they are used. `--primary: var(--el-brand-600)` is declared on `:root` (and
+ * `--primary: var(--el-brand-400)` on `.dark`, which next-themes puts on <html>),
+ * so overriding the ramp further down the tree would never reach them. Hoisting
+ * the override onto :root also covers Radix portals (dropdowns, dialogs, sheets,
+ * toasts), which render into document.body and are therefore outside the
+ * dashboard subtree.
+ *
+ * `data-dashboard-domain` is server-rendered by app/dashboard/layout.tsx via
+ * DashboardClientLayout, so the correct ramp is in the first painted HTML and
+ * there is no theme flash. Routes outside /dashboard carry no such attribute and
+ * keep the default ramp.
+ *
+ * Ramp construction: the lightness curve of the original blue ramp is preserved
+ * exactly at every step (0.9658 -> 0.2142) so contrast behaviour is unchanged;
+ * only hue varies, with chroma following the same relative curve scaled to what
+ * each hue can reach inside sRGB (capped at 0.15 at step 600 so no domain reads
+ * as louder than another). Hues are kept >=30deg away from --chart-2..5
+ * (iris 285, amber 78, jade 165, blush 348) so brand-vs-series stays readable.
+ * ------------------------------------------------------------------------- */
+
+/* Student — 265deg. The legacy Elimika blue sat at 261deg, so the highest-traffic
+ * dashboard keeps the incumbent brand hue. */
+:root:has([data-dashboard-domain='student']) {
+  --el-brand-50: oklch(0.9658 0.0104 265);
+  --el-brand-100: oklch(0.9283 0.0222 265);
+  --el-brand-200: oklch(0.8577 0.0453 265);
+  --el-brand-300: oklch(0.7732 0.0747 265);
+  --el-brand-400: oklch(0.674 0.1116 265);
+  --el-brand-500: oklch(0.5941 0.1437 265);
+  --el-brand-600: oklch(0.55 0.15 265);
+  --el-brand-700: oklch(0.4854 0.1401 265);
+  --el-brand-800: oklch(0.4031 0.1114 265);
+  --el-brand-900: oklch(0.3127 0.0758 265);
+  --el-brand-950: oklch(0.2142 0.0484 265);
+}
+
+/* Instructor — 122deg. Green reads as teaching/growth; 38deg off --success (160)
+ * and 43deg off chart jade (165) so a green primary never reads as a success badge. */
+:root:has([data-dashboard-domain='instructor']) {
+  --el-brand-50: oklch(0.9658 0.0089 122);
+  --el-brand-100: oklch(0.9283 0.019 122);
+  --el-brand-200: oklch(0.8577 0.0387 122);
+  --el-brand-300: oklch(0.7732 0.0638 122);
+  --el-brand-400: oklch(0.674 0.0953 122);
+  --el-brand-500: oklch(0.5941 0.1227 122);
+  --el-brand-600: oklch(0.55 0.1281 122);
+  --el-brand-700: oklch(0.4854 0.1142 122);
+  --el-brand-800: oklch(0.4031 0.0949 122);
+  --el-brand-900: oklch(0.3127 0.0648 122);
+  --el-brand-950: oklch(0.2142 0.0413 122);
+}
+
+/* Admin — 232deg. A cooler, steelier blue than the student ramp; admin is the one
+ * charting-heavy dashboard that is neither teal nor green, and 232 clears every
+ * chart accent by >50deg. */
+:root:has([data-dashboard-domain='admin']) {
+  --el-brand-50: oklch(0.9658 0.0075 232);
+  --el-brand-100: oklch(0.9283 0.016 232);
+  --el-brand-200: oklch(0.8577 0.0325 232);
+  --el-brand-300: oklch(0.7732 0.0536 232);
+  --el-brand-400: oklch(0.674 0.0801 232);
+  --el-brand-500: oklch(0.5941 0.1032 232);
+  --el-brand-600: oklch(0.55 0.1077 232);
+  --el-brand-700: oklch(0.4854 0.0961 232);
+  --el-brand-800: oklch(0.4031 0.0798 232);
+  --el-brand-900: oklch(0.3127 0.0545 232);
+  --el-brand-950: oklch(0.2142 0.0347 232);
+}
+
+/* Parent — 34deg. Warm terracotta. It is the closest ramp to --destructive
+ * (20deg), but it sits 0.07 lower in lightness and well below it in chroma, so a
+ * rust primary stays legibly apart from the bright destructive red. */
+:root:has([data-dashboard-domain='parent']) {
+  --el-brand-50: oklch(0.9658 0.0104 34);
+  --el-brand-100: oklch(0.9283 0.0222 34);
+  --el-brand-200: oklch(0.8577 0.0453 34);
+  --el-brand-300: oklch(0.7732 0.0747 34);
+  --el-brand-400: oklch(0.674 0.1116 34);
+  --el-brand-500: oklch(0.5941 0.1437 34);
+  --el-brand-600: oklch(0.55 0.15 34);
+  --el-brand-700: oklch(0.4854 0.1401 34);
+  --el-brand-800: oklch(0.4031 0.1114 34);
+  --el-brand-900: oklch(0.3127 0.0758 34);
+  --el-brand-950: oklch(0.2142 0.0484 34);
+}
+
+/* Course creator — 316deg. Orchid sits in the only free gap between chart iris
+ * (285) and chart blush (348), 31deg and 32deg clear respectively. */
+:root:has([data-dashboard-domain='course_creator']) {
+  --el-brand-50: oklch(0.9658 0.0104 316);
+  --el-brand-100: oklch(0.9283 0.0222 316);
+  --el-brand-200: oklch(0.8577 0.0453 316);
+  --el-brand-300: oklch(0.7732 0.0747 316);
+  --el-brand-400: oklch(0.674 0.1116 316);
+  --el-brand-500: oklch(0.5941 0.1437 316);
+  --el-brand-600: oklch(0.55 0.15 316);
+  --el-brand-700: oklch(0.4854 0.1401 316);
+  --el-brand-800: oklch(0.4031 0.1114 316);
+  --el-brand-900: oklch(0.3127 0.0758 316);
+  --el-brand-950: oklch(0.2142 0.0484 316);
+}
+
+/* Organisation — 195deg, matching the reference design's teal.
+ * The design-mandated step 600 is oklch(0.55 0.11 195). It sits outside sRGB
+ * (max chroma at this hue/lightness is 0.094), so browsers gamut-map it
+ * regardless — Chrome renders #008585, measuring 4.47:1 against white
+ * --primary-foreground, which misses the 4.5:1 AA floor for normal-size text on
+ * a filled primary surface. Lightness is therefore nudged to 0.545, rendering
+ * #008384 at 4.59:1. Hue and chroma are untouched and the shift is
+ * imperceptible — well inside the approximation the gamut mapping already
+ * imposes, so the design match is preserved and body text passes AA.
+ * `organisation_user` shares the organisation dashboard and its theme. */
+:root:has([data-dashboard-domain='organisation']),
+:root:has([data-dashboard-domain='organisation_user']) {
+  --el-brand-50: oklch(0.9658 0.0076 195);
+  --el-brand-100: oklch(0.9283 0.0163 195);
+  --el-brand-200: oklch(0.8577 0.0332 195);
+  --el-brand-300: oklch(0.7732 0.0548 195);
+  --el-brand-400: oklch(0.674 0.0818 195);
+  --el-brand-500: oklch(0.5941 0.0983 195);
+  --el-brand-600: oklch(0.545 0.11 195);
+  --el-brand-700: oklch(0.4854 0.0803 195);
+  --el-brand-800: oklch(0.4031 0.0667 195);
+  --el-brand-900: oklch(0.3127 0.0518 195);
+  --el-brand-950: oklch(0.2142 0.0355 195);
 }
 
 @layer base {

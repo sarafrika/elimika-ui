@@ -7,8 +7,11 @@ import { useUserDomain } from '@/src/features/dashboard/context/user-domain-cont
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useMemo } from 'react';
 import { creatorTabs } from './course-creator-tab';
+import CourseCreatorProfilePage from './course-creator-profile-page';
+import InstructorProfilePage from './instructor-profile-page';
 import { instructorTabs } from './instructors-tab';
 import { ProfilePage } from './profile-page';
+import StudentProfilePage from './student-profile-page';
 import { studentTabs } from './students-tab';
 import type { SharedUserProfile, TabDefinition, UserDomain } from './types';
 
@@ -131,6 +134,7 @@ function normaliseProfile(
           is_profile_complete: p.is_profile_complete,
           gender: rawUser?.gender,
           user_no: rawUser?.user_no,
+          created_date: p.created_date,
         };
       }
 
@@ -160,6 +164,7 @@ function normaliseProfile(
           student_profile: p,
           user_no: rawUser?.user_no,
           demographic_tag: p.demographic_tag,
+          created_date: p.created_date,
         };
       }
 
@@ -212,6 +217,7 @@ function normaliseProfile(
           is_online: true,
           gender: rawUser?.gender,
           user_no: rawUser?.user_no,
+          created_date: p.created_date,
         };
       }
 
@@ -324,13 +330,31 @@ export default function UserProfilePage() {
     );
   }
 
-  return (
-    <ProfilePage
-      tabs={tabs}
-      profile={profile}
-      domain={domain}
-      profileSource={user}
-      headerBadge={<DomainBadge domain={domain} user={user} />}
-    />
-  );
+  const badge = <DomainBadge domain={domain} user={user} />;
+
+  // Each domain owns its own profile page so it can run its own queries and pass
+  // the shared layout finished stats / sidebar cards.
+  switch (domain) {
+    case 'instructor':
+      return (
+        <InstructorProfilePage profile={profile} profileSource={user} headerBadge={badge} />
+      );
+    case 'student':
+      return <StudentProfilePage profile={profile} profileSource={user} headerBadge={badge} />;
+    case 'course_creator':
+      return (
+        <CourseCreatorProfilePage profile={profile} profileSource={user} headerBadge={badge} />
+      );
+    default:
+      // admin / organization still ride the placeholder tab aliases.
+      return (
+        <ProfilePage
+          tabs={tabs}
+          profile={profile}
+          domain={domain}
+          profileSource={user}
+          headerBadge={badge}
+        />
+      );
+  }
 }

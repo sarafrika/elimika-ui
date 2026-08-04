@@ -1,13 +1,9 @@
 import OrganisationProvider from '@/context/organisation-context';
 import { getCourseCreatorDashboardData } from '@/services/course-creator/data';
-import type { Organisation, User, UserOrganisationAffiliationDto } from '@/services/client';
-import {
-  getOrganisationByUuid,
-  search,
-  type ApiResponse,
-  type SearchResponse,
-} from '@/services/client';
+import type { Organisation, UserOrganisationAffiliationDto } from '@/services/client';
+import { getOrganisationByUuid, type ApiResponse } from '@/services/client';
 import { auth } from '@/services/auth';
+import { fetchCurrentUser } from '@/services/user/current-user';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { assertRoleAccess } from '@/src/features/dashboard/server/entry-target';
@@ -18,15 +14,8 @@ async function fetchOrganisationForUser(): Promise<Organisation | null> {
   const email = session?.user?.email;
   if (!email) return null;
 
-  const userResp = await search({
-    query: {
-      searchParams: { email_eq: email },
-      pageable: { page: 0, size: 1 },
-    },
-  });
+  const user = await fetchCurrentUser();
 
-  const userData = userResp.data as SearchResponse;
-  const user = userData?.data?.content?.[0] as User | undefined;
   const affiliation: UserOrganisationAffiliationDto | undefined =
     user?.organisation_affiliations?.find(org => org.active) ??
     user?.organisation_affiliations?.[0];

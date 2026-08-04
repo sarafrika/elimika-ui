@@ -127,14 +127,17 @@ export function UserDetailView({
   uuid,
   backHref = '/dashboard/admin/users',
   backLabel = 'Back to users',
+  initialTab = 'overview',
 }: {
   uuid: string;
   backHref?: string;
   backLabel?: string;
+  /** Lets callers deep-link a section, e.g. `?tab=audit` from Settings → Account activity. */
+  initialTab?: string;
 }) {
   const admin = useUserProfile();
   const verifier = admin?.email || admin?.full_name || 'admin';
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState(initialTab);
 
   const userQuery = useQuery(getUserByUuidOptions({ path: { uuid } }));
   const user = userQuery.data?.data;

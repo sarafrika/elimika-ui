@@ -2,7 +2,8 @@ import 'server-only';
 
 import type { UserDomain } from '@/lib/types';
 import { auth } from '@/services/auth';
-import { type SearchResponse, search, type User } from '@/services/client';
+import type { User } from '@/services/client';
+import { fetchCurrentUser } from '@/services/user/current-user';
 import {
   buildDashboardSwitchPath,
   normalizeStoredUserDomain,
@@ -24,6 +25,10 @@ type DashboardGuardResolution = {
 };
 
 async function getServerDashboardUser() {
+  // The session check stays: with no session there is no bearer token to send, and a
+  // tokenless /me is a guaranteed 401 round trip. Identity itself now comes from the
+  // token rather than from the session email — `fetchCurrentUser` runs through the
+  // generated client, whose config attaches the access token on server-side calls.
   const session = await auth();
 
   if (!session?.user?.email) {
@@ -31,29 +36,7 @@ async function getServerDashboardUser() {
   }
 
   try {
-    const { data, error } = await search({
-      query: {
-        searchParams: {
-          email_eq: session.user.email,
-        },
-        pageable: {
-          page: 0,
-          size: 1,
-        },
-      },
-    });
-
-    if (error || !data) {
-      return null;
-    }
-
-    const payload = data as SearchResponse;
-    const content = payload.data?.content;
-    if (!Array.isArray(content) || content.length === 0) {
-      return null;
-    }
-
-    return (content[0] as User) ?? null;
+    return await fetchCurrentUser();
   } catch {
     return null;
   }

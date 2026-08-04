@@ -122,38 +122,42 @@ export function getSettingsVariantConfig(
       'Update your creator profile, publishing preferences, and account details so your workspace stays in sync.',
   };
 
-  const supportHref = variant === 'admin' ? '/dashboard/support' : '/help';
+  // Admin help lives under the admin role segment; the bare `/dashboard/support`
+  // path bypasses `buildWorkspaceAliasPath` and 404s.
+  const supportHref = variant === 'admin' ? '/dashboard/admin/support' : '/help';
   const roleLabel = formatDomain(normalizeUserDomainValue(profile?.user_domain) ?? variant);
 
+  // The `access` tab was dropped everywhere: under four different labels
+  // ("Platform Access" / "Learning Preferences" / "Teaching Settings" /
+  // "Publishing Rules") it rendered the same permanent
+  // "No access settings available yet." placeholder.
   const tabsByVariant: Record<DashboardSettingsVariant, SettingsTabConfig[]> = {
     admin: [
       { value: 'profile', label: 'Profile' },
-      { value: 'access', label: 'Platform Access' },
       { value: 'support', label: 'Support' },
       { value: 'advanced-settings', label: 'Advanced Settings' },
     ],
     student: [
       { value: 'profile', label: 'Profile' },
-      { value: 'access', label: 'Learning Preferences' },
       { value: 'support', label: 'Support' },
       { value: 'advanced-settings', label: 'Advanced Settings' },
     ],
     instructor: [
       { value: 'profile', label: 'Profile' },
       { value: 'rate', label: 'Rate Card' },
-      { value: 'access', label: 'Teaching Settings' },
       { value: 'support', label: 'Support' },
       { value: 'advanced-settings', label: 'Advanced Settings' },
     ],
     organisation: [
-      { value: 'profile', label: 'Profile' },
-      { value: 'access', label: 'Workspace Rules' },
+      { value: 'profile', label: 'Institution Profile' },
+      { value: 'branches', label: 'Branches' },
+      { value: 'groups', label: 'Academic Groups' },
+      { value: 'roles', label: 'Roles & Permissions' },
       { value: 'support', label: 'Support' },
       { value: 'advanced-settings', label: 'Advanced Settings' },
     ],
     course_creator: [
       { value: 'profile', label: 'Profile' },
-      { value: 'access', label: 'Publishing Rules' },
       { value: 'support', label: 'Support' },
       { value: 'advanced-settings', label: 'Advanced Settings' },
     ],
@@ -164,7 +168,7 @@ export function getSettingsVariantConfig(
       {
         title: 'System rules',
         description: 'Manage platform-wide access and configuration controls.',
-        href: '/dashboard/system-config',
+        href: '/dashboard/admin/system-config',
       },
       {
         title: 'User governance',

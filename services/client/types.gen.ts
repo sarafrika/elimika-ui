@@ -299,6 +299,101 @@ export type Student = {
 };
 
 /**
+ * Payload to replace an organisation student group's editable attributes.
+ */
+export type UpdateStudentGroupRequest = {
+  /**
+   * Group name.
+   */
+  name: string;
+  /**
+   * Optional description. Omit to clear.
+   */
+  description?: string | null;
+  /**
+   * Stream label within the branch and tier. Omit to clear.
+   */
+  group_type?: string | null;
+  /**
+   * Training branch running the group. Must belong to the same organisation.
+   */
+  branch_uuid?: string | null;
+  /**
+   * Academic tier (schooling level) the group sits at.
+   */
+  tier_uuid?: string | null;
+  /**
+   * Intended size of the group. Advisory only.
+   */
+  capacity?: number | null;
+};
+
+export type ApiResponseStudentGroup = {
+  success?: boolean;
+  data?: StudentGroup;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * An organisation-scoped named collection of students.
+ */
+export type StudentGroup = {
+  /**
+   * Unique identifier.
+   */
+  readonly uuid?: string;
+  /**
+   * Owning organisation UUID.
+   */
+  organisation_uuid?: string;
+  /**
+   * Group name.
+   */
+  name?: string;
+  /**
+   * Optional description.
+   */
+  description?: string | null;
+  /**
+   * Stream label within the branch and tier, e.g. "Stream A".
+   */
+  group_type?: string | null;
+  /**
+   * Training branch (campus) running the group. Null for unassigned legacy groups.
+   */
+  branch_uuid?: string | null;
+  /**
+   * Academic tier (schooling level). Null for unassigned legacy groups.
+   */
+  tier_uuid?: string | null;
+  /**
+   * Name of the academic tier, denormalised for filter pills.
+   */
+  readonly tier?: string | null;
+  /**
+   * Intended size of the group. Advisory: enrolment above it is reported, not blocked.
+   */
+  capacity?: number | null;
+  /**
+   * Name of the branch, denormalised so the group list needs no second fetch.
+   */
+  readonly branch_name?: string | null;
+  /**
+   * Sort position of the academic tier, denormalised so pills sort without a second fetch.
+   */
+  readonly tier_order?: number | null;
+  /**
+   * Number of students in the group.
+   */
+  readonly member_count?: bigint;
+  /**
+   * When the group was created.
+   */
+  readonly created_date?: Date;
+};
+
+/**
  * Assessment rubric with evaluation criteria and grading standards
  */
 export type AssessmentRubric = {
@@ -442,10 +537,6 @@ export type RubricScoringLevel = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display name combining level name and points for UI.
-   */
-  readonly display_name?: string;
-  /**
    * **[READ-ONLY]** Performance classification based on level order and passing status.
    */
   readonly performance_indicator?: string;
@@ -457,6 +548,10 @@ export type RubricScoringLevel = {
    * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
    */
   readonly is_highest_level?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted display name combining level name and points for UI.
+   */
+  readonly display_name?: string;
 };
 
 export type ApiResponseRubricScoringLevel = {
@@ -836,13 +931,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -901,13 +996,13 @@ export type QuizQuestionOption = {
    */
   readonly is_incorrect?: boolean;
   /**
-   * **[READ-ONLY]** Status description indicating whether this option is correct or incorrect.
-   */
-  readonly correctness_status?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the option's position within the question.
    */
   readonly position_display?: string;
+  /**
+   * **[READ-ONLY]** Status description indicating whether this option is correct or incorrect.
+   */
+  readonly correctness_status?: string;
   /**
    * **[READ-ONLY]** Comprehensive summary of the option including correctness and position.
    */
@@ -1020,9 +1115,9 @@ export type QuizAttempt = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
+   * **[READ-ONLY]** Formatted display of the grade information.
    */
-  readonly is_completed?: boolean;
+  readonly grade_display?: string;
   /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
@@ -1036,9 +1131,9 @@ export type QuizAttempt = {
    */
   readonly performance_summary?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
+   * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
    */
-  readonly grade_display?: string;
+  readonly is_completed?: boolean;
 };
 
 /**
@@ -1637,13 +1732,13 @@ export type Instructor = {
    */
   readonly is_profile_complete?: boolean;
   /**
-   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
-   */
-  readonly formatted_location?: string | null;
-  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
+   */
+  readonly formatted_location?: string | null;
 };
 
 /**
@@ -1680,17 +1775,17 @@ export type InstructorSkill = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted skill name for display in UI components.
+   * **[READ-ONLY]** Brief summary of the skill for display in skill lists.
    */
-  readonly display_name?: string;
+  readonly summary?: string;
   /**
    * **[READ-ONLY]** Human-readable description of the proficiency level.
    */
   readonly proficiency_description?: string;
   /**
-   * **[READ-ONLY]** Brief summary of the skill for display in skill lists.
+   * **[READ-ONLY]** Formatted skill name for display in UI components.
    */
-  readonly summary?: string;
+  readonly display_name?: string;
 };
 
 export type ApiResponseInstructorSkill = {
@@ -1749,17 +1844,22 @@ export type InstructorProfessionalMembership = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the membership is currently valid and active.
+   * **[READ-ONLY]** Brief summary of the membership for display in listings.
    */
-  readonly is_valid?: boolean;
+  readonly summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
   /**
-   * **[READ-ONLY]** Brief summary of the membership for display in listings.
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
-  readonly summary?: string;
+  readonly membership_duration_months?: number | null;
+  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -1782,14 +1882,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   * **[READ-ONLY]** Indicates if the membership is currently valid and active.
    */
-  readonly membership_duration_months?: number | null;
-  membership_status?: MembershipStatusEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
+  readonly is_valid?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1856,6 +1951,18 @@ export type InstructorExperience = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Brief summary of the experience for display in listings.
+   */
+  readonly summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   */
+  readonly duration_in_months?: number | null;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration of employment.
    */
   readonly formatted_duration?: string | null;
@@ -1880,18 +1987,6 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number | null;
-  /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
-   */
-  readonly duration_in_months?: number | null;
-  /**
-   * **[READ-ONLY]** Brief summary of the experience for display in listings.
-   */
-  readonly summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1954,14 +2049,9 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Number of years since the qualification was completed.
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
-  readonly years_since_completion?: number | null;
-  education_level?: EducationLevelEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
-   */
-  readonly has_certificate_number?: boolean;
+  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
@@ -1971,9 +2061,14 @@ export type InstructorEducation = {
    */
   readonly formatted_completion?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   * **[READ-ONLY]** Number of years since the qualification was completed.
    */
-  readonly is_complete?: boolean;
+  readonly years_since_completion?: number | null;
+  education_level?: EducationLevelEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
+   */
+  readonly has_certificate_number?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -2085,10 +2180,6 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
@@ -2109,6 +2200,10 @@ export type InstructorDocument = {
    */
   readonly has_expiry_date?: boolean;
   verification_status?: VerificationStatusEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
 };
 
 export type ApiResponseInstructorDocument = {
@@ -2224,8 +2319,6 @@ export type ApiResponseAvailabilitySlot = {
  * Complete course with metadata, content organization, and publication status supporting multiple categories
  */
 export type Course = {
-  level: ReactNode;
-  age_group: ReactNode;
   /**
    * **[READ-ONLY]** Unique system identifier for the course. Auto-generated by the system.
    */
@@ -2344,13 +2437,13 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
-   */
-  readonly accepts_new_enrollments?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
+   */
+  readonly accepts_new_enrollments?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the course is still in draft mode.
    */
@@ -2585,7 +2678,6 @@ export type CourseRubricAssociation = {
  * Course prerequisites and participation requirements
  */
 export type CourseRequirement = {
-  provided_by: any;
   /**
    * **[READ-ONLY]** Unique system identifier for the course requirement. Auto-generated by the system.
    */
@@ -2750,13 +2842,13 @@ export type LessonPracticeActivity = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable estimated duration.
-   */
-  readonly estimated_duration?: string;
-  /**
    * **[READ-ONLY]** Whether the activity is published.
    */
   readonly is_published?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable estimated duration.
+   */
+  readonly estimated_duration?: string;
 };
 
 export type ApiResponseLessonPracticeActivity = {
@@ -3098,8 +3190,8 @@ export type CourseCreatorSkill = {
   readonly created_by?: string;
   readonly updated_date?: Date;
   readonly updated_by?: string;
-  readonly display_name?: string;
   readonly proficiency_description?: string;
+  readonly display_name?: string;
 };
 
 export type ApiResponseCourseCreatorSkill = {
@@ -3214,10 +3306,6 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
@@ -3238,6 +3326,10 @@ export type CourseCreatorDocumentDto = {
    */
   readonly has_expiry_date?: boolean;
   verification_status?: VerificationStatusEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
 };
 
 export type ApiResponseCourseCreatorDocumentDto = {
@@ -3361,13 +3453,13 @@ export type DifficultyLevel = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display name including level order for UI presentation.
-   */
-  readonly display_name?: string;
-  /**
    * **[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.
    */
   readonly is_entry_level?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted display name including level order for UI presentation.
+   */
+  readonly display_name?: string;
 };
 
 export type ApiResponseDifficultyLevel = {
@@ -3864,21 +3956,21 @@ export type ClassDefinition = {
    */
   readonly marketplace_job_uuid?: string | null;
   /**
-   * **[READ-ONLY]** Indicates if this is a standalone class not associated with any course.
-   */
-  readonly is_standalone?: boolean;
-  /**
    * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
   readonly duration_minutes?: bigint;
+  /**
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   */
+  readonly capacity_info?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
   /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   * **[READ-ONLY]** Indicates if this is a standalone class not associated with any course.
    */
-  readonly capacity_info?: string;
+  readonly is_standalone?: boolean;
 };
 
 /**
@@ -4987,50 +5079,21 @@ export type CreateStudentGroupRequest = {
    */
   description?: string | null;
   /**
-   * Optional free-form group type / stream label.
-   */
-  group_type?: string | null;
-};
-
-export type ApiResponseStudentGroup = {
-  success?: boolean;
-  data?: StudentGroup;
-  message?: string;
-  error?: unknown;
-};
-
-/**
- * An organisation-scoped named collection of students.
- */
-export type StudentGroup = {
-  /**
-   * Unique identifier.
-   */
-  readonly uuid?: string;
-  /**
-   * Owning organisation UUID.
-   */
-  organisation_uuid?: string;
-  /**
-   * Group name.
-   */
-  name?: string;
-  /**
-   * Optional description.
-   */
-  description?: string | null;
-  /**
-   * Optional free-form group type / stream label.
+   * Stream label within the branch and tier, e.g. "Stream A".
    */
   group_type?: string | null;
   /**
-   * Number of students in the group.
+   * Training branch running the group. Must belong to the same organisation.
    */
-  readonly member_count?: bigint;
+  branch_uuid?: string | null;
   /**
-   * When the group was created.
+   * Academic tier (schooling level) the group sits at.
    */
-  readonly created_date?: Date;
+  tier_uuid?: string | null;
+  /**
+   * Intended size of the group. Advisory only.
+   */
+  capacity?: number | null;
 };
 
 /**
@@ -5786,10 +5849,6 @@ export type Enrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).
-   */
-  readonly is_active?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
@@ -5805,6 +5864,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).
+   */
+  readonly is_active?: boolean;
 };
 
 export type ApiResponse = {
@@ -7352,6 +7415,52 @@ export type PagedDtoUser = {
   links?: PageLinks;
 };
 
+export type ApiResponseListUserSummary = {
+  success?: boolean;
+  data?: Array<UserSummary>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Reduced user projection for directory lookups: display identity only, no contact details
+ */
+export type UserSummary = {
+  /**
+   * **[READ-ONLY]** Unique system identifier for the user.
+   */
+  readonly uuid?: string;
+  /**
+   * **[READ-ONLY]** Unique numeric identifier used for payments and admissions.
+   */
+  readonly user_no?: string;
+  /**
+   * **[READ-ONLY]** User's given/first name.
+   */
+  readonly first_name?: string;
+  /**
+   * **[READ-ONLY]** User's middle name or initial. Null when not recorded.
+   */
+  readonly middle_name?: string | null;
+  /**
+   * **[READ-ONLY]** User's family/last name.
+   */
+  readonly last_name?: string;
+  /**
+   * **[READ-ONLY]** Public URL of the user's avatar. Null when no image has been uploaded.
+   */
+  readonly profile_image_url?: string | null;
+  gender?: GenderEnum;
+  /**
+   * **[READ-ONLY]** Display name for UI purposes: first and last name only.
+   */
+  readonly display_name?: string;
+  /**
+   * **[READ-ONLY]** Full name including the middle name when one is recorded.
+   */
+  readonly full_name?: string;
+};
+
 export type ApiResponsePagedDtoTrainingBranch = {
   success?: boolean;
   data?: PagedDtoTrainingBranch;
@@ -7490,6 +7599,7 @@ export type PagedDtoBookingResponse = {
 export type Page = {
   totalElements?: bigint;
   totalPages?: number;
+  pageable?: PageableObject;
   first?: boolean;
   last?: boolean;
   size?: number;
@@ -7497,23 +7607,22 @@ export type Page = {
   number?: number;
   sort?: SortObject;
   numberOfElements?: number;
-  pageable?: PageableObject;
   empty?: boolean;
 };
 
 export type PageableObject = {
-  offset?: bigint;
-  sort?: SortObject;
   paged?: boolean;
   pageNumber?: number;
   pageSize?: number;
   unpaged?: boolean;
+  offset?: bigint;
+  sort?: SortObject;
 };
 
 export type SortObject = {
-  empty?: boolean;
   sorted?: boolean;
   unsorted?: boolean;
+  empty?: boolean;
 };
 
 export type ApiResponsePagedDtoAssessmentRubric = {
@@ -8032,10 +8141,6 @@ export type ProgramEnrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
-   */
-  readonly is_active?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
@@ -8051,6 +8156,10 @@ export type ProgramEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
+   */
+  readonly is_active?: boolean;
 };
 
 export type ApiResponseListCourse = {
@@ -8159,6 +8268,69 @@ export type ApiResponseListStudentGroup = {
   data?: Array<StudentGroup>;
   message?: string;
   error?: unknown;
+};
+
+export type ApiResponsePagedDtoStudentGroupRosterEntry = {
+  success?: boolean;
+  data?: PagedDtoStudentGroupRosterEntry;
+  message?: string;
+  error?: unknown;
+};
+
+export type PagedDtoStudentGroupRosterEntry = {
+  content?: Array<StudentGroupRosterEntry>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+/**
+ * A student's roster row: identity, contact details and the group they sit in.
+ */
+export type StudentGroupRosterEntry = {
+  /**
+   * The student's user UUID.
+   */
+  student_uuid?: string;
+  /**
+   * Group the student belongs to.
+   */
+  group_uuid?: string;
+  /**
+   * Name of the group.
+   */
+  group_name?: string;
+  /**
+   * Academic tier name of the group, or null when the group is unassigned.
+   */
+  tier?: string | null;
+  /**
+   * Stream label of the group (student_groups.group_type).
+   */
+  stream_label?: string | null;
+  /**
+   * Student's full name.
+   */
+  full_name?: string;
+  /**
+   * Student's email address.
+   */
+  email?: string | null;
+  /**
+   * Student's phone number.
+   */
+  phone_number?: string | null;
+  /**
+   * Date of birth. Age is derived client-side from this.
+   */
+  dob?: Date | null;
+  /**
+   * Profile image URL.
+   */
+  profile_image_url?: string | null;
+  /**
+   * When the student joined the group.
+   */
+  joined_date?: Date;
 };
 
 export type ApiResponseListSkillsFundTransaction = {
@@ -9439,6 +9611,10 @@ export type CourseAssessmentScore = {
    */
   readonly is_passing?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the score based on performance level.
    */
   readonly score_category?: string;
@@ -9450,10 +9626,6 @@ export type CourseAssessmentScore = {
    * **[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.
    */
   readonly feedback_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 /**
@@ -9530,10 +9702,6 @@ export type CourseEnrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
-   */
-  readonly is_active?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
@@ -9549,6 +9717,10 @@ export type CourseEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
+   */
+  readonly is_active?: boolean;
 };
 
 export type PagedDtoCourseEnrollment = {
@@ -10610,6 +10782,47 @@ export type PagedDtoCoursePendingEdit = {
 };
 
 /**
+ * An ordered schooling level that student groups are filed under.
+ */
+export type AcademicTier = {
+  /**
+   * Unique identifier.
+   */
+  readonly uuid?: string;
+  /**
+   * Display name of the level, e.g. "Grade 7".
+   */
+  name?: string;
+  /**
+   * Sort position. Gapped by tens so levels can be inserted without renumbering.
+   */
+  tier_order?: number;
+  /**
+   * Curriculum the level belongs to, e.g. "KE".
+   */
+  education_system?: string;
+  /**
+   * Owning organisation, or null for the shared platform catalogue.
+   */
+  organisation_uuid?: string | null;
+  /**
+   * Whether the level is offered in pickers.
+   */
+  active?: boolean;
+  /**
+   * Optional description.
+   */
+  description?: string | null;
+};
+
+export type ApiResponseListAcademicTier = {
+  success?: boolean;
+  data?: Array<AcademicTier>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
  * Valid African phone number in international or local format
  */
 export type AfricanPhoneNumber = unknown;
@@ -10978,6 +11191,21 @@ export const ProficiencyLevelEnum = {
 export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
 
 /**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
+
+/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const OrganisationTypeEnum = {
@@ -10993,21 +11221,6 @@ export const OrganisationTypeEnum = {
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export type OrganisationTypeEnum = (typeof OrganisationTypeEnum)[keyof typeof OrganisationTypeEnum];
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.
@@ -13141,6 +13354,68 @@ export type UpdateStudentResponses = {
 
 export type UpdateStudentResponse = UpdateStudentResponses[keyof UpdateStudentResponses];
 
+export type DeleteGroupData = {
+  body?: never;
+  path: {
+    groupUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/student-groups/{groupUuid}';
+};
+
+export type DeleteGroupErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteGroupError = DeleteGroupErrors[keyof DeleteGroupErrors];
+
+export type DeleteGroupResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeleteGroupResponse = DeleteGroupResponses[keyof DeleteGroupResponses];
+
+export type UpdateGroupData = {
+  body: UpdateStudentGroupRequest;
+  path: {
+    groupUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/student-groups/{groupUuid}';
+};
+
+export type UpdateGroupErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateGroupError = UpdateGroupErrors[keyof UpdateGroupErrors];
+
+export type UpdateGroupResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseStudentGroup;
+};
+
+export type UpdateGroupResponse = UpdateGroupResponses[keyof UpdateGroupResponses];
+
 export type DeleteAssessmentRubricData = {
   body?: never;
   path: {
@@ -13746,8 +14021,8 @@ export type SaveQuizResponsesData = {
     quizUuid: string;
     attemptUuid: string;
   };
-  query: {
-    enrollment_uuid: string;
+  query?: {
+    enrollment_uuid?: string;
   };
   url: '/api/v1/quizzes/{quizUuid}/attempts/{attemptUuid}/responses';
 };
@@ -18552,8 +18827,8 @@ export type StartQuizAttemptData = {
   path: {
     quizUuid: string;
   };
-  query: {
-    enrollment_uuid: string;
+  query?: {
+    enrollment_uuid?: string;
   };
   url: '/api/v1/quizzes/{quizUuid}/attempts';
 };
@@ -18590,8 +18865,8 @@ export type SubmitQuizAttemptData = {
     quizUuid: string;
     attemptUuid: string;
   };
-  query: {
-    enrollment_uuid: string;
+  query?: {
+    enrollment_uuid?: string;
   };
   url: '/api/v1/quizzes/{quizUuid}/attempts/{attemptUuid}/submit';
 };
@@ -19316,7 +19591,10 @@ export type ListGroupsData = {
   path: {
     organisationUuid: string;
   };
-  query?: never;
+  query?: {
+    branchUuid?: string;
+    tierUuid?: string;
+  };
   url: '/api/v1/organisations/{organisationUuid}/student-groups';
 };
 
@@ -25892,6 +26170,10 @@ export type SearchData = {
 
 export type SearchErrors = {
   /**
+   * Caller is not a platform administrator
+   */
+  403: ApiResponsePagedDtoUser;
+  /**
    * Not Found
    */
   404: ResponseDtoVoid;
@@ -25945,6 +26227,81 @@ export type GetProfileImageResponses = {
 };
 
 export type GetProfileImageResponse = GetProfileImageResponses[keyof GetProfileImageResponses];
+
+export type GetCurrentUserData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/users/me';
+};
+
+export type GetCurrentUserErrors = {
+  /**
+   * No authenticated caller
+   */
+  401: ApiResponseUser;
+  /**
+   * Authenticated caller has no user record
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCurrentUserError = GetCurrentUserErrors[keyof GetCurrentUserErrors];
+
+export type GetCurrentUserResponses = {
+  /**
+   * Current user retrieved successfully
+   */
+  200: ApiResponseUser;
+};
+
+export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
+
+export type GetUserDirectoryData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Comma-separated user UUIDs to resolve. At most 100 per request; chunk larger lists client-side.
+     */
+    uuid_in: Array<string>;
+  };
+  url: '/api/v1/users/directory';
+};
+
+export type GetUserDirectoryErrors = {
+  /**
+   * More than 100 UUIDs requested, or a value that is not a UUID
+   */
+  400: ApiResponseListUserSummary;
+  /**
+   * No authenticated caller
+   */
+  401: ApiResponseListUserSummary;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetUserDirectoryError = GetUserDirectoryErrors[keyof GetUserDirectoryErrors];
+
+export type GetUserDirectoryResponses = {
+  /**
+   * Directory summaries for the UUIDs that matched an existing user
+   */
+  200: ApiResponseListUserSummary;
+};
+
+export type GetUserDirectoryResponse = GetUserDirectoryResponses[keyof GetUserDirectoryResponses];
 
 export type Search1Data = {
   body?: never;
@@ -27143,8 +27500,8 @@ export type GetStudentQuizViewData = {
   path: {
     quizUuid: string;
   };
-  query: {
-    enrollment_uuid: string;
+  query?: {
+    enrollment_uuid?: string;
   };
   url: '/api/v1/quizzes/{quizUuid}/student-view';
 };
@@ -27211,8 +27568,8 @@ export type GetStudentQuizReviewData = {
     quizUuid: string;
     attemptUuid: string;
   };
-  query: {
-    enrollment_uuid: string;
+  query?: {
+    enrollment_uuid?: string;
   };
   url: '/api/v1/quizzes/{quizUuid}/attempts/{attemptUuid}/review';
 };
@@ -28113,6 +28470,42 @@ export type GetOrganisationStatisticsResponses = {
 
 export type GetOrganisationStatisticsResponse =
   GetOrganisationStatisticsResponses[keyof GetOrganisationStatisticsResponses];
+
+export type ListRosterData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query: {
+    branchUuid?: string;
+    tierUuid?: string;
+    groupUuid?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/student-group-members';
+};
+
+export type ListRosterErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListRosterError = ListRosterErrors[keyof ListRosterErrors];
+
+export type ListRosterResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoStudentGroupRosterEntry;
+};
+
+export type ListRosterResponse = ListRosterResponses[keyof ListRosterResponses];
 
 export type GetSummaryData = {
   body?: never;
@@ -33006,16 +33399,16 @@ export type ListPendingCourseEditsResponses = {
 export type ListPendingCourseEditsResponse =
   ListPendingCourseEditsResponses[keyof ListPendingCourseEditsResponses];
 
-export type DeleteGroupData = {
+export type ListTiersData = {
   body?: never;
-  path: {
-    groupUuid: string;
+  path?: never;
+  query?: {
+    education_system?: string;
   };
-  query?: never;
-  url: '/api/v1/student-groups/{groupUuid}';
+  url: '/api/v1/academic-tiers';
 };
 
-export type DeleteGroupErrors = {
+export type ListTiersErrors = {
   /**
    * Not Found
    */
@@ -33026,16 +33419,16 @@ export type DeleteGroupErrors = {
   500: ResponseDtoVoid;
 };
 
-export type DeleteGroupError = DeleteGroupErrors[keyof DeleteGroupErrors];
+export type ListTiersError = ListTiersErrors[keyof ListTiersErrors];
 
-export type DeleteGroupResponses = {
+export type ListTiersResponses = {
   /**
    * OK
    */
-  200: ApiResponseVoid;
+  200: ApiResponseListAcademicTier;
 };
 
-export type DeleteGroupResponse = DeleteGroupResponses[keyof DeleteGroupResponses];
+export type ListTiersResponse = ListTiersResponses[keyof ListTiersResponses];
 
 export type RemoveMemberData = {
   body?: never;
