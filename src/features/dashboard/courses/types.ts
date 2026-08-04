@@ -46,7 +46,7 @@ export type SearchInstructor = Instructor & {
   courses?: string[];
   rating?: number;
   review_count?: number;
-  reviews?: InstructorReview[];
+  reviews?: InstructorReview[] | undefined | null;
   location?: {
     city?: string;
   } | null;

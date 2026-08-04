@@ -2,18 +2,19 @@
 'use client';
 
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
-import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import useBundledClassInfo from '@/hooks/use-course-classes';
-import { useScheduleStats } from '@/hooks/use-schedule-stats';
 import {
   addItemMutation,
   createCartMutation,
   enrollStudentMutation,
   getCartQueryKey,
   getClassEnrollmentsForStudentQueryKey,
+  getCourseTrainingRequirementsOptions,
   getEnrollmentsForClassOptions,
   getEnrollmentsForClassQueryKey,
   getStudentScheduleQueryKey,
@@ -26,28 +27,41 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
   AlertCircle,
-  Armchair,
+  AlertTriangle,
   ArrowLeft,
-  BookOpen,
+  Building2,
   Calendar,
+  CheckCircle2,
   Clock,
-  Layers,
+  GraduationCap,
+  Languages,
   MapPin,
-  User,
+  ShieldCheck,
   Users,
+  Wallet
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useUserProfile } from '../../../profile/context/profile-context';
+import { formatSessionSchedule } from '../components/availability-listing-layout';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
 import { type BundledClass, getErrorMessage } from '../types';
+import PaymentMethodPicker, { formatKES } from './PaymentMethodPicker';
 
 const STUDENT_SCHEDULE_START = new Date('2024-10-10');
 const STUDENT_SCHEDULE_END = new Date('2030-10-10');
 const ACTIVE_ENROLLMENT_STATUSES = new Set(['ENROLLED', 'ATTENDED', 'ABSENT']);
 
-// ─── Shared InfoRow (same as ClassInviteContent) ───────────────────────────
+// Renders a field's value, or a muted "Not available" note when the current
+// data model doesn't expose that field.
+function FieldValue({ value }: { value: React.ReactNode }) {
+  if (value === null || value === undefined || value === '') {
+    return <span className='text-muted-foreground text-sm italic'>Not available</span>;
+  }
+  return <>{value}</>;
+}
+
 function InfoRow({
   icon,
   label,
@@ -58,14 +72,21 @@ function InfoRow({
   value: React.ReactNode;
 }) {
   return (
-    <div className='flex items-start gap-3'>
-      <div className='text-primary mt-0.5'>{icon}</div>
-      <div className='space-y-0.5'>
-        <div className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</div>
-        <div className='text-sm font-medium'>{value}</div>
-      </div>
+    <div className='inline-flex items-start gap-2 text-sm'>
+      <span className='text-muted-foreground mt-0.5'>{icon}</span>
+      <span>
+        <span className='sr-only'>{label}: </span>
+        <FieldValue value={value} />
+      </span>
     </div>
   );
+}
+
+function formatAgeRange(lower?: number | null, upper?: number | null): string | null {
+  if (lower == null && upper == null) return null;
+  if (lower != null && upper != null) return `${lower}–${upper} years`;
+  if (lower != null) return `${lower}+ years`;
+  return `Up to ${upper} years`;
 }
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
@@ -83,6 +104,13 @@ export default function ClassEnrollmentPage({
   const student = user?.student;
 
   const [enrollmentError, setEnrollmentError] = useState(false);
+  const [ageOk, setAgeOk] = useState(false);
+  const [termsOk, setTermsOk] = useState(false);
+  const [paymentOk, setPaymentOk] = useState(false);
+  const [requirementsChecked, setRequirementsChecked] = useState<Record<string, boolean>>({});
+  const [method, setMethod] = useState<PaymentMethod>('personal_wallet');
+  const [accountId, setAccountId] = useState<string | null>(null);
+
   // ── Data fetching ──────────────────────────────────────────────────────
   const { classes = [], loading } = useBundledClassInfo(courseId, undefined, undefined, student);
 
@@ -132,31 +160,34 @@ export default function ClassEnrollmentPage({
     ];
   }) as unknown as Parameters<typeof ClassScheduleCalendar>[0]['schedules'];
 
-  const scheduleStats = useScheduleStats(
-    schedule.map(item => ({ duration_minutes: Number(item.duration_minutes ?? 0) }))
+  const activeEnrollments = useMemo(
+    () =>
+      (classEnrollmentsResponse?.data ?? []).filter(e =>
+        ACTIVE_ENROLLMENT_STATUSES.has(String(e.status ?? 'ENROLLED').toUpperCase())
+      ),
+    [classEnrollmentsResponse?.data]
   );
 
   const enrolledCount = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          (classEnrollmentsResponse?.data ?? [])
-            .filter(e =>
-              ACTIVE_ENROLLMENT_STATUSES.has(String(e.status ?? 'ENROLLED').toUpperCase())
-            )
-            .map(e => e.student_uuid)
-            .filter(Boolean)
-        )
-      ).length,
-    [classEnrollmentsResponse?.data]
+    () => Array.from(new Set(activeEnrollments.map(e => e.student_uuid).filter(Boolean))).length,
+    [activeEnrollments]
+  );
+
+  // Derived from the enrollments already fetched for this class — no new
+  // endpoint required, just a client-side membership check.
+  const alreadyEnrolled = useMemo(
+    () => (student?.uuid ? activeEnrollments.some(e => e.student_uuid === student.uuid) : false),
+    [activeEnrollments, student?.uuid]
   );
 
   const maxParticipants = enrollingClass?.max_participants ?? 0;
   const isClassFull = maxParticipants > 0 && enrolledCount >= maxParticipants;
   const availableSeats = Math.max(0, maxParticipants - enrolledCount);
+  const occupancyPercentage = maxParticipants > 0 ? (enrolledCount / maxParticipants) * 100 : 0;
+  const isAlmostFull = !isClassFull && occupancyPercentage >= 75;
 
-  const { formattedStart, formattedEnd } = useMemo(() => {
-    if (!enrollingClass) return { formattedStart: '', formattedEnd: '' };
+  const { formattedDates } = useMemo(() => {
+    if (!enrollingClass) return { formattedDates: '' };
     try {
       const start = enrollingClass.default_start_time
         ? new Date(enrollingClass.default_start_time)
@@ -165,13 +196,48 @@ export default function ClassEnrollmentPage({
         ? new Date(enrollingClass.default_end_time)
         : null;
       return {
-        formattedStart: start ? format(start, 'MMM dd, yyyy • hh:mm a') : 'N/A',
-        formattedEnd: end ? format(end, 'MMM dd, yyyy • hh:mm a') : 'N/A',
+        formattedDates:
+          start && end ? `${format(start, 'dd/MM/yyyy')} → ${format(end, 'dd/MM/yyyy')}` : 'N/A',
       };
     } catch {
-      return { formattedStart: 'N/A', formattedEnd: 'N/A' };
+      return { formattedDates: 'N/A' };
     }
   }, [enrollingClass]);
+
+  // ── Age & material requirements (real course data) ─────────────────────
+  const ageRange = formatAgeRange(
+    enrollingClass?.course?.age_lower_limit,
+    enrollingClass?.course?.age_upper_limit
+  );
+  const hasAgeRequirement = ageRange !== null;
+
+  const { data: courseReqResp } = useQuery({
+    ...getCourseTrainingRequirementsOptions({
+      path: { courseUuid: enrollingClass?.course?.uuid ?? '' },
+    }),
+    enabled: Boolean(enrollingClass?.course?.uuid),
+  });
+
+  // Requirements the student is expected to supply themselves (e.g. materials).
+  const studentRequirements = (courseReqResp?.data?.content ?? []).filter(
+    requirement => requirement.provided_by?.toLowerCase() === 'student'
+  );
+  const mandatoryRequirements = studentRequirements.filter(r => r.is_mandatory);
+  const allMandatoryRequirementsChecked = mandatoryRequirements.every(
+    r => requirementsChecked[r.uuid]
+  );
+
+  const toggleRequirement = (uuid: string, checked: boolean) =>
+    setRequirementsChecked(prev => ({ ...prev, [uuid]: checked }));
+
+  const trainingFee = enrollingClass?.training_fee;
+  const hasFee = typeof trainingFee === 'number' ? trainingFee > 0 : Boolean(trainingFee);
+  const feeDisplay =
+    typeof trainingFee === 'number'
+      ? `KES ${trainingFee.toLocaleString()} / hr`
+      : trainingFee
+        ? `KES ${trainingFee} / hr`
+        : 'Free';
 
   // ── Cart mutations ─────────────────────────────────────────────────────
   const { cartId: savedCartId, setCartId } = useCartStore();
@@ -340,202 +406,242 @@ export default function ClassEnrollmentPage({
   }
 
   const isPending = enrollStudent.isPending || waitlistStudent.isPending;
-
+  const canSubmit =
+    !isPending &&
+    !enrollmentError &&
+    !alreadyEnrolled &&
+    (!hasAgeRequirement || ageOk) &&
+    termsOk &&
+    allMandatoryRequirementsChecked &&
+    paymentOk
   // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className='w-full max-w-6xl space-y-6 px-6 pt-4 pb-12'>
-      {/* Back button */}
+    <div className='w-full max-w-7xl space-y-4 px-6 pt-4 pb-12'>
       <Button variant='ghost' onClick={handleCancel} className='-ml-2 gap-2'>
         <ArrowLeft className='h-4 w-4' />
         Back to Classes
       </Button>
 
-      {/* Main card */}
-      <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
-        {/* ── Card header: badges + title + description ── */}
-        <CardHeader className='space-y-4'>
-          <div className='flex items-center justify-between gap-4'>
-            <div className='flex flex-wrap gap-2'>
-              {enrollingClass.session_format && (
-                <Badge className='rounded-full'>{enrollingClass.session_format}</Badge>
-              )}
-              {enrollingClass.class_visibility && (
-                <Badge variant='outline' className='rounded-full'>
-                  {enrollingClass.class_visibility}
-                </Badge>
-              )}
-              {enrollingClass.duration_formatted && (
-                <Badge
-                  variant='outline'
-                  className='border-primary/30 bg-primary/10 text-primary rounded-full'
-                >
-                  {enrollingClass.duration_formatted}
-                </Badge>
-              )}
-            </div>
+      <h1 className='text-2xl font-semibold'>Join Class</h1>
+      <p className='text-muted-foreground text-sm'>
+        Confirm details before enrolling in {enrollingClass.course?.name ?? enrollingClass.title}
+      </p>
 
-            <span className='text-on-primary bg-primary rounded-full px-3 py-1 text-xs font-semibold shadow-sm'>
-              COURSE
-            </span>
-          </div>
-
-          <CardTitle className='text-3xl font-semibold'>
+      {/* Summary */}
+      <Card className='rounded-[28px]'>
+        <CardHeader className='pb-3'>
+          <CardTitle className='text-lg'>
             {enrollingClass.course?.name || enrollingClass.title || 'Class Enrollment'}
           </CardTitle>
-
-          <CardDescription className='text-muted-foreground max-w-2xl'>
-            Review the class details below before confirming your enrollment.
-          </CardDescription>
+          <div className='mt-1 flex flex-wrap gap-2 text-xs'>
+            {enrollingClass.session_format && (
+              <Badge variant='secondary' className='capitalize'>
+                {enrollingClass.session_format}
+              </Badge>
+            )}
+            {enrollingClass.class_visibility && (
+              <Badge variant='outline' className='capitalize'>
+                {enrollingClass.class_visibility}
+              </Badge>
+            )}
+            {enrollingClass.duration_formatted && (
+              <Badge variant='outline'>{enrollingClass.duration_formatted}</Badge>
+            )}
+          </div>
         </CardHeader>
 
-        {/* ── Course description (rich text) ── */}
-        {enrollingClass.course?.description && (
-          <CardContent>
-            <div className='bg-muted/30 border-border/60 rounded-2xl border p-4'>
-              <RichTextRenderer htmlString={enrollingClass.course.description} />
-            </div>
-          </CardContent>
-        )}
+        <CardContent className='grid gap-2 sm:grid-cols-2'>
+          {/* Institution name is not part of the current class/course data model. */}
+          <InfoRow icon={<Building2 className='h-4 w-4' />} label='Institution' value={null} />
 
-        {/* ── InfoRow grid ── */}
-        <CardContent className='space-y-6'>
-          <div className='grid gap-4 sm:grid-cols-2'>
-            <InfoRow
-              icon={<Clock className='h-4 w-4' />}
-              label='Class Begins'
-              value={`${formattedStart} – ${formattedEnd}`}
-            />
+          <InfoRow
+            icon={<Users className='h-4 w-4' />}
+            label='Instructor'
+            value={enrollingClass.instructor?.data?.full_name}
+          />
+          {/* No discrete "academic period" field is exposed for this class. */}
+          <InfoRow icon={<Calendar className='h-4 w-4' />} label='Academic period' value={null} />
+          <InfoRow
+            icon={<Clock className='h-4 w-4' />}
+            label='Session duration'
+            value={formatSessionSchedule(enrollingClass.session_templates)}
+          />
 
-            <InfoRow
-              icon={<MapPin className='h-4 w-4' />}
-              label='Location'
-              value={
-                enrollingClass.location_type === 'ONLINE'
-                  ? 'Online'
-                  : (enrollingClass.location_name ?? enrollingClass.location_type ?? 'N/A')
-              }
-            />
+          <InfoRow icon={<Calendar className='h-4 w-4' />} label='Dates' value={formattedDates} />
 
-            <InfoRow
-              icon={<User className='h-4 w-4' />}
-              label='Instructor'
-              value={enrollingClass.instructor?.data?.full_name || 'N/A'}
-            />
-
-            <InfoRow
-              icon={<Layers className='h-4 w-4' />}
-              label='Training Fee'
-              value={
-                typeof enrollingClass.training_fee === 'number'
-                  ? `KES ${enrollingClass.training_fee.toLocaleString()} / hr`
-                  : enrollingClass.training_fee
-                    ? `KES ${enrollingClass.training_fee} / hr`
-                    : 'Free'
-              }
-            />
-
-            <InfoRow
-              icon={<Calendar className='h-4 w-4' />}
-              label='Session Duration'
-              value={`${scheduleStats.mostCommonDuration} · ${schedule.length} class instance${schedule.length !== 1 ? 's' : ''}`}
-            />
-
-            <InfoRow
-              icon={<Clock className='h-4 w-4' />}
-              label='Total Duration'
-              value={scheduleStats.totalHours}
-            />
-
-            <InfoRow
-              icon={<Users className='h-4 w-4' />}
-              label='Capacity'
-              value={`${maxParticipants} students`}
-            />
-
-            <InfoRow
-              icon={<Armchair className='h-4 w-4' />}
-              label='Available Seats'
-              value={
-                <div className='space-y-0.5'>
-                  <span>
-                    {availableSeats} of {maxParticipants}
-                  </span>
-                  {isClassFull && (
-                    <p className='text-xs text-yellow-700 dark:text-yellow-300'>
-                      Class is full — you&apos;ll be added to the waitlist.
-                    </p>
-                  )}
-                </div>
-              }
-            />
-          </div>
+          <InfoRow
+            icon={<MapPin className='h-4 w-4' />}
+            label='Location'
+            value={
+              enrollingClass.location_type === 'ONLINE'
+                ? 'Online'
+                : (enrollingClass.location_name ?? enrollingClass.meeting_link ?? null)
+            }
+          />
+          {/* Language of instruction is not tracked on this class record. */}
+          <InfoRow icon={<Languages className='h-4 w-4' />} label='Language' value={null} />
+          {/* No level-of-study field is exposed on this class/course. */}
+          <InfoRow icon={<GraduationCap className='h-4 w-4' />} label='Level of study' value={null} />
         </CardContent>
-
-        {/* ── What You'll Get (benefits) ── */}
-        <CardContent>
-          <div className='bg-primary/5 border-primary/15 rounded-2xl border p-4'>
-            <h3 className='mb-3 font-semibold'>What You&apos;ll Get</h3>
-            <ul className='text-muted-foreground space-y-2 text-sm'>
-              <li className='flex items-start gap-2'>
-                <BookOpen className='text-primary mt-0.5 h-4 w-4 shrink-0' />
-                <span>Access to all course materials and resources</span>
-              </li>
-              <li className='flex items-start gap-2'>
-                <BookOpen className='text-primary mt-0.5 h-4 w-4 shrink-0' />
-                <span>Real-time session updates and notifications</span>
-              </li>
-              <li className='flex items-start gap-2'>
-                <BookOpen className='text-primary mt-0.5 h-4 w-4 shrink-0' />
-                <span>Assessments and assignments to track your progress</span>
-              </li>
-            </ul>
-          </div>
-        </CardContent>
-
-        {/* ── Important notice ── */}
-        <CardContent>
-          <div className='rounded-2xl border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900 dark:bg-yellow-950'>
-            <div className='flex gap-3'>
-              <AlertCircle className='h-5 w-5 flex-shrink-0 text-yellow-600 dark:text-yellow-400' />
-              <div className='space-y-1'>
-                <p className='font-medium text-yellow-900 dark:text-yellow-100'>Important Notice</p>
-                <p className='text-sm text-yellow-800 dark:text-yellow-200'>
-                  Once enrolled, you may need to contact your instructor or administrator to
-                  withdraw from this class.
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-
-        {/* ── Schedule calendar ── */}
-        <CardContent>
-          <ClassScheduleCalendar schedules={calendarSchedule} />
-        </CardContent>
-
-        {/* ── CTA footer (mirrors ClassInviteContent) ── */}
-        <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 pb-6 sm:flex-row sm:items-center sm:justify-between'>
-          <div className='text-muted-foreground text-sm'>
-            {isClassFull ? 'Class is full • Waitlist available' : 'Limited seats remaining'}
-          </div>
-
-          <div className='flex items-center gap-3'>
-            <Button variant='outline' onClick={handleCancel} className='rounded-full px-6'>
-              Cancel
-            </Button>
-
-            <Button
-              onClick={handleEnrollStudent}
-              disabled={isPending || enrollmentError}
-              size='lg'
-              className='rounded-full px-10 disabled:cursor-not-allowed disabled:opacity-60'
-              variant='success'
-            >
-              {isPending ? 'Processing…' : isClassFull ? 'Join Waitlist' : 'Yes, Enroll Me'}
-            </Button>
-          </div>
-        </div>
       </Card>
+
+      {/* Seats */}
+      <Card>
+        <CardContent className='flex items-center justify-between py-4'>
+          <div>
+            <div className='text-sm font-medium'>Seat availability</div>
+            <div className='text-muted-foreground text-xs'>
+              {availableSeats} of {maxParticipants || '?'} seats left
+            </div>
+          </div>
+
+          {isClassFull ? (
+            <Badge variant='destructive'>Full</Badge>
+          ) : isAlmostFull ? (
+            <Badge className='bg-amber-100 text-amber-800 hover:bg-amber-100'>Almost full</Badge>
+          ) : (
+            <Badge className='bg-emerald-100 text-emerald-800 hover:bg-emerald-100'>Open</Badge>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Eligibility checks */}
+      <Card>
+        <CardHeader className='pb-2'>
+          <CardTitle className='text-base'>Eligibility checks</CardTitle>
+        </CardHeader>
+        <CardContent className='space-y-4'>
+          {/* Age requirement — backed by course.age_lower_limit / age_upper_limit when present. */}
+          <div className='flex items-start gap-3'>
+            {!hasAgeRequirement ? (
+              <AlertTriangle className='mt-0.5 h-5 w-5 text-slate-400' />
+            ) : (
+              <CheckCircle2 className='mt-0.5 h-5 w-5 text-emerald-600' />
+            )}
+            <div className='flex-1'>
+              <div className='text-sm font-medium'>
+                Age requirement: {ageRange ?? 'Any'}
+              </div>
+              {hasAgeRequirement ? (
+                <label className='mt-2 flex items-center gap-2 text-sm'>
+                  <Checkbox checked={ageOk} onCheckedChange={v => setAgeOk(!!v)} />
+                  I confirm I meet the age requirement for this class.
+                </label>
+              ) : (
+                <div className='text-muted-foreground text-xs italic'>
+                  No age restriction on file for this class.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Materials / items the student needs to supply, from course training requirements. */}
+          <div className='flex items-start gap-3'>
+            <ShieldCheck className='mt-0.5 h-5 w-5 text-slate-500' />
+            <div className='flex-1'>
+              <div className='text-sm font-medium'>Things you'll need to bring</div>
+              {studentRequirements.length === 0 ? (
+                <div className='text-muted-foreground mt-1 text-xs italic'>
+                  No student-provided items listed for this course.
+                </div>
+              ) : (
+                <div className='mt-2 space-y-2'>
+                  {studentRequirements.map(requirement => (
+                    <label key={requirement.uuid} className='flex items-start gap-2 text-sm'>
+                      <Checkbox
+                        checked={!!requirementsChecked[requirement.uuid]}
+                        onCheckedChange={v => toggleRequirement(requirement.uuid, !!v)}
+                      />
+                      <span>
+                        {requirement.name}
+                        {requirement.quantity ? ` (${requirement.quantity} ${requirement.unit ?? ''})` : ''}
+                        {requirement.is_mandatory && (
+                          <span className='text-rose-600'> · required</span>
+                        )}
+                        {requirement.description && (
+                          <span className='text-muted-foreground block text-xs'>
+                            {requirement.description}
+                          </span>
+                        )}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className='flex items-start gap-3'>
+            <ShieldCheck className='mt-0.5 h-5 w-5 text-slate-500' />
+            <div className='flex-1'>
+              <div className='text-sm font-medium'>Tuition &amp; terms</div>
+              <div className='text-muted-foreground text-xs'>Training fee: {feeDisplay}</div>
+              <label className='mt-2 flex items-center gap-2 text-sm'>
+                <Checkbox checked={termsOk} onCheckedChange={v => setTermsOk(!!v)} />
+                I agree to the class schedule and tuition terms.
+              </label>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Payment */}
+      <Card>
+        <CardHeader className='pb-2'>
+          <div className='flex items-center justify-between gap-2'>
+            <CardTitle className='flex items-center gap-2 text-base'>
+              <Wallet className='h-4 w-4 text-primary' /> Payment method
+            </CardTitle>
+            <div className='text-right'>
+              <div className='text-muted-foreground text-xs'>Amount due</div>
+              <div className='text-primary text-base font-semibold'>{formatKES(enrollingClass?.catalogue?.unit_amount)}</div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!hasFee ? (
+            <p className='text-sm text-muted-foreground'>
+              This class is free — no payment required.
+            </p>
+          ) : !student ? (
+            <p className='text-sm text-muted-foreground'>Sign in to choose a payment method.</p>
+          ) : (
+            <PaymentMethodPicker />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Notices */}
+      {alreadyEnrolled && (
+        <div className='rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800'>
+          You're already enrolled in this class.
+        </div>
+      )}
+      {isClassFull && !alreadyEnrolled && (
+        <div className='rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800'>
+          This class is full. You'll be added to the waitlist instead of being enrolled directly.
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className='flex flex-wrap items-center justify-end gap-2 pt-2'>
+        <Button variant='outline' onClick={handleCancel} className='rounded-full px-6'>
+          Cancel
+        </Button>
+        <Button
+          onClick={handleEnrollStudent}
+          disabled={!canSubmit}
+          size='lg'
+          className='rounded-full px-10 disabled:cursor-not-allowed disabled:opacity-60'
+          variant='success'
+        >
+          {isPending ? 'Processing…' : isClassFull ? 'Join Waitlist' : 'Yes, Enroll Me'}
+        </Button>
+      </div>
     </div>
   );
 }

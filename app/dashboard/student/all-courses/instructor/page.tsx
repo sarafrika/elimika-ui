@@ -1,4 +1,4 @@
-import StudentInstructorSearchPage from './_components/student-instructor-search-page';
+import StudentInstructorSearchPage from "../../../../../src/features/dashboard/courses/shared/instructor/_components/student-instructor-search-page";
 
 export default function StudentInstructorSearchRoute() {
   return <StudentInstructorSearchPage />;

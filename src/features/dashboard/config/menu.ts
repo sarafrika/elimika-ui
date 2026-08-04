@@ -285,6 +285,11 @@ export default {
       icon: '',
       items: [
         {
+          title: 'Wallet',
+          url: '/dashboard/wallet',
+          icon: Wallet,
+        },
+        {
           title: 'Skills Fund',
           url: '/dashboard/skills-fund',
           icon: Wallet,

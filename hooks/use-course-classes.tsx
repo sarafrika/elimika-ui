@@ -15,8 +15,8 @@ import type { BundledClass } from '../src/features/dashboard/courses/types';
 
 type StudentLike =
   | {
-      uuid?: string | null;
-    }
+    uuid?: string | null;
+  }
   | null
   | undefined;
 
