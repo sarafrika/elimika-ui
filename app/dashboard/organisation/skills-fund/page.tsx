@@ -52,12 +52,33 @@ const money = (v?: number | string | null) => {
   return `KSh ${n.toLocaleString()}`;
 };
 
+/**
+ * The API now returns a constrained upper-case enum (`PENDING`, `ALLOCATED`, `APPROVED`,
+ * `DISBURSED`) where it used to return whatever free-form string had been stored. Keyed on the enum,
+ * with the legacy spellings kept so rows already sitting in a persisted query cache still render
+ * rather than falling through to the grey default.
+ */
 const STATUS_STYLE: Record<string, string> = {
+  DISBURSED: 'bg-success/10 text-success',
+  APPROVED: 'bg-info/10 text-info',
+  ALLOCATED: 'bg-primary/10 text-primary',
+  PENDING: 'bg-warning/10 text-warning',
   Completed: 'bg-success/10 text-success',
-  Approved: 'bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-200',
+  Approved: 'bg-info/10 text-info',
   Allocated: 'bg-primary/10 text-primary',
   Pending: 'bg-warning/10 text-warning',
 };
+
+/** `DISBURSED` reads as shouting in a table cell — the enum is the contract, this is the label. */
+const STATUS_LABEL: Record<string, string> = {
+  DISBURSED: 'Disbursed',
+  APPROVED: 'Approved',
+  ALLOCATED: 'Allocated',
+  PENDING: 'Pending',
+};
+
+const isDisbursed = (status?: string) => status === 'DISBURSED' || status === 'Completed';
+const isPending = (status?: string) => status === 'PENDING' || status === 'Pending';
 
 function AddSourceDialog({ organisationUuid }: { organisationUuid: string }) {
   const qc = useQueryClient();
@@ -223,12 +244,15 @@ function AddTransactionDialog({ organisationUuid }: { organisationUuid: string }
               <select
                 id='t-status'
                 name='t-status'
-                defaultValue='Pending'
+                defaultValue='PENDING'
                 className='border-input bg-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1'
               >
-                {['Pending', 'Allocated', 'Approved', 'Completed'].map(s => (
+                {/* Values are the API enum; labels are what a person should read. Sending
+                    "Completed" would still be accepted and folded to DISBURSED, but the round-trip
+                    would then display something the user never chose. */}
+                {(['PENDING', 'ALLOCATED', 'APPROVED', 'DISBURSED'] as const).map(s => (
                   <option key={s} value={s}>
-                    {s}
+                    {STATUS_LABEL[s]}
                   </option>
                 ))}
               </select>
@@ -371,7 +395,14 @@ export default function SkillsFundPage() {
                                     queryKey: getSummaryQueryKey({ path: { organisationUuid } }),
                                   });
                                 },
-                                onError: () => toast.error('Could not remove source.'),
+                                // The API refuses removal with a 409 when the surviving sources
+                                // could no longer cover what has already been disbursed. That
+                                // explanation is the whole value of the error — don't swallow it.
+                                onError: (error: unknown) =>
+                                  toast.error(
+                                    (error as { message?: string })?.message ??
+                                      'Could not remove source.'
+                                  ),
                               }
                             )
                           }
@@ -444,9 +475,9 @@ export default function SkillsFundPage() {
                             className={STATUS_STYLE[t.status] ?? 'bg-muted text-foreground'}
                             variant='secondary'
                           >
-                            {t.status === 'Completed' && <CheckCircle className='mr-1 h-3 w-3' />}
-                            {t.status === 'Pending' && <Clock className='mr-1 h-3 w-3' />}
-                            {t.status}
+                            {isDisbursed(t.status) && <CheckCircle className='mr-1 h-3 w-3' />}
+                            {isPending(t.status) && <Clock className='mr-1 h-3 w-3' />}
+                            {STATUS_LABEL[t.status] ?? t.status}
                           </Badge>
                         </TableCell>
                       </TableRow>
