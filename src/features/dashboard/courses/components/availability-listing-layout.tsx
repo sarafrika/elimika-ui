@@ -68,7 +68,7 @@ function formatTime(date: string) {
     .toLowerCase();
 }
 
-function formatSessionSchedule(sessionTemplates: SessionTemplate[]) {
+export function formatSessionSchedule(sessionTemplates: SessionTemplate[]) {
   if (!sessionTemplates.length) {
     return 'Sessions not available';
   }

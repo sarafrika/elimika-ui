@@ -3,8 +3,16 @@
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserProfile } from '@/context/profile-context';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { cn } from '@/lib/utils';
 import { getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
+import {
+  formatDurationFromParts,
+  getCardPresentation,
+  type CoursesCatalogCardData,
+} from '@/src/features/dashboard/courses/shared/_components/courses-data';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useQueries } from '@tanstack/react-query';
 import {
@@ -24,14 +32,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { useUserProfile } from '@/context/profile-context';
-import { cn } from '@/lib/utils';
-import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
-import {
-  formatDurationFromParts,
-  getCardPresentation,
-  type CoursesCatalogCardData,
-} from '@/src/features/dashboard/courses/shared/_components/courses-data';
 
 type CourseStatus = 'in_progress' | 'completed' | 'not_started';
 
@@ -56,11 +56,10 @@ function FilterPill({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-        active
+      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${active
           ? 'bg-primary text-white shadow-sm'
           : 'bg-muted text-muted-foreground hover:bg-muted/80'
-      }`}
+        }`}
     >
       {label === 'In Progress' && <Clock className='size-3.5' />}
       {label === 'Completed' && <CheckCircle2 className='size-3.5' />}
@@ -143,9 +142,8 @@ function MilestoneItem({
   return (
     <div className='flex items-start gap-3'>
       <div
-        className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
-          icon === 'award' ? 'bg-accent/20' : 'bg-primary/10'
-        }`}
+        className={`flex size-9 shrink-0 items-center justify-center rounded-full ${icon === 'award' ? 'bg-accent/20' : 'bg-primary/10'
+          }`}
       >
         {icon === 'award' ? (
           <Award className='text-accent-foreground size-5' />
@@ -162,9 +160,8 @@ function MilestoneItem({
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`size-3 ${
-                  i < rating ? 'fill-primary text-primary' : 'text-muted-foreground'
-                }`}
+                className={`size-3 ${i < rating ? 'fill-primary text-primary' : 'text-muted-foreground'
+                  }`}
               />
             ))}
           </div>
@@ -339,7 +336,7 @@ export function StudentMyCoursesPage() {
             variant='outline'
             className='border-primary text-primary hover:bg-primary/90 h-9 gap-1.5 rounded-sm px-4 text-sm font-semibold'
           >
-            <Link href='/dashboard/learning-hub'>
+            <Link href='/dashboard/student/learning-hub'>
               <Plus className='size-4' />
               My Classes
             </Link>

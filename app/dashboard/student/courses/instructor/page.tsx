@@ -1,4 +1,4 @@
-import StudentInstructorSearchPage from './_components/student-instructor-search-page';
+import StudentInstructorSearchPage from "../../../../../src/features/dashboard/courses/shared/instructor/_components/student-instructor-search-page";
 
 type WorkspaceInstructorSearchPageProps = {
   params: Promise<{ domain: string }>;

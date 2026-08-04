@@ -669,8 +669,8 @@ export function useStudentOverviewData(): StudentOverviewData {
         courseTitle: course?.name ?? null,
         dueLabel: formatAssessmentDueLabel(dueDate),
         href: classUuid
-          ? `/dashboard/assignment/assignment_${assignmentUuid}?classId=${classUuid}`
-          : `/dashboard/assignment/assignment_${assignmentUuid}`,
+          ? `/dashboard/student/assignment/assignment/${assignmentUuid}?classId=${classUuid}`
+          : `/dashboard/student/assignment/assignment/${assignmentUuid}`,
         badgeLabel: 'Assignment',
         sortValue: dueDate ? new Date(dueDate).getTime() : Number.MAX_SAFE_INTEGER,
       });
@@ -702,8 +702,8 @@ export function useStudentOverviewData(): StudentOverviewData {
         courseTitle: course?.name ?? null,
         dueLabel: formatAssessmentDueLabel(dueDate),
         href: classUuid
-          ? `/dashboard/assignment/quiz_${quizUuid}?classId=${classUuid}`
-          : `/dashboard/assignment/quiz_${quizUuid}`,
+          ? `/dashboard/student/assignment/quiz/${quizUuid}?classId=${classUuid}`
+          : `/dashboard/student/assignment/quiz/${quizUuid}`,
         badgeLabel: 'Quiz',
         sortValue: dueDate ? new Date(dueDate).getTime() : Number.MAX_SAFE_INTEGER,
       });

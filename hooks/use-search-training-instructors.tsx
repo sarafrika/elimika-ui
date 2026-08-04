@@ -2,8 +2,9 @@ import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAllInstructorsOptions,
   getInstructorRatingSummaryOptions,
+  getInstructorReviewsOptions,
   searchExperienceOptions,
-  searchSkillsOptions,
+  searchSkillsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Instructor,
@@ -29,7 +30,7 @@ function useSearchTrainingInstructors() {
     isFetching,
   } = useQuery({
     ...getAllInstructorsOptions({
-      query: { pageable: { page: 0, size: 20 } },
+      query: { pageable: {} },
     }),
   });
   const instructors: Instructor[] = useMemo(() => data?.data?.content ?? [], [data]);
@@ -107,6 +108,17 @@ function useSearchTrainingInstructors() {
   });
   const ratingSummaries = ratingSummaryQueries.map(q => q.data?.data ?? null);
 
+  const reviewsQueries = useQueries({
+    queries: instructors.map(instructor => ({
+      ...getInstructorReviewsOptions({
+        path: { instructorUuid: instructor.uuid as string },
+      }),
+      enabled: !!instructor.uuid,
+      staleTime: STALE_TIMES.entity,
+    })),
+  });
+  const reviews = reviewsQueries.map(q => q.data?.data ?? null);
+
   const instructorsWithProfiles: SearchInstructor[] = instructors.map((instructor, i) => {
     const profile = instructor.user_uuid ? (userMap[instructor.user_uuid] ?? null) : null;
     const expArray = experienceByInstructor.get(instructor.uuid ?? '') ?? [];
@@ -115,6 +127,7 @@ function useSearchTrainingInstructors() {
       0
     );
     const ratingSummary = ratingSummaries[i];
+    const review = reviews[i];
     const reviewCount = ratingSummary?.review_count ? Number(ratingSummary.review_count) : 0;
     const averageRating =
       typeof ratingSummary?.average_rating === 'number'
@@ -146,7 +159,7 @@ function useSearchTrainingInstructors() {
       skill_categories: skillCategories,
       rating: averageRating ?? (instructor as Instructor & { rating?: number }).rating ?? 0,
       review_count: reviewCount,
-      reviews: [],
+      reviews: review,
     };
   });
 

@@ -26,6 +26,7 @@ import {
   SheetTrigger,
 } from '../../../../../components/ui/sheet';
 import { Skeleton } from '../../../../../components/ui/skeleton';
+import Spinner from '../../../../../components/ui/spinner';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { buildWorkspaceAliasPath } from '../../lib/active-domain-storage';
 import { CourseDetailsSheet } from '../shared/_components/CourseDetailsSheet';
@@ -106,7 +107,10 @@ export default function AvailableClassesPage({
       <div className='mt-3 flex items-center justify-between'>
         <div>
           <h2 className='text-xl font-semibold'>Available Classes</h2>
-          <p className='text-muted-foreground text-sm'>{course?.name || ''}</p>
+
+          {loading ? <Spinner className='mt-1 h-4 w-4' /> :
+            <p className='text-muted-foreground text-sm'>{course?.name || ''}</p>
+          }
         </div>
 
         <div className='flex items-center gap-2'>
@@ -188,31 +192,31 @@ export default function AvailableClassesPage({
       <div className='space-y-4'>
         {loading
           ? Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className='space-y-3 rounded-xl border p-4'>
-                <Skeleton className='h-6 w-2/3' />
-                <Skeleton className='h-4 w-1/2' />
-                <Skeleton className='h-4 w-full' />
-                <div className='flex items-center justify-between pt-2'>
-                  <Skeleton className='h-8 w-24' />
-                  <Skeleton className='h-8 w-20' />
-                </div>
+            <div key={index} className='space-y-3 rounded-xl border p-4'>
+              <Skeleton className='h-6 w-2/3' />
+              <Skeleton className='h-4 w-1/2' />
+              <Skeleton className='h-4 w-full' />
+              <div className='flex items-center justify-between pt-2'>
+                <Skeleton className='h-8 w-24' />
+                <Skeleton className='h-8 w-20' />
               </div>
-            ))
+            </div>
+          ))
           : filteredClasses.map(item => (
-              <AvailabilityClassCard
-                key={item.uuid}
-                cls={item}
-                // onEnroll={() => toast.message("Enroll")}
-                onViewCourse={() => setCourseDetailsOpen(true)}
-                onViewClass={() => setClassDetailsOpen(true)}
-                onEnroll={selectedClass => {
-                  window.location.href = buildWorkspaceAliasPath(
-                    activeDomain,
-                    `/dashboard/courses/available-classes/${courseId}/enroll?id=${selectedClass.uuid}`
-                  );
-                }}
-              />
-            ))}
+            <AvailabilityClassCard
+              key={item.uuid}
+              cls={item}
+              // onEnroll={() => toast.message("Enroll")}
+              onViewCourse={() => setCourseDetailsOpen(true)}
+              onViewClass={() => setClassDetailsOpen(true)}
+              onEnroll={selectedClass => {
+                window.location.href = buildWorkspaceAliasPath(
+                  activeDomain,
+                  `/dashboard/courses/available-classes/${courseId}/enroll?id=${selectedClass.uuid}`
+                );
+              }}
+            />
+          ))}
       </div>
 
       <CourseDetailsSheet
