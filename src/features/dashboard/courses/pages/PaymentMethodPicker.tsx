@@ -62,12 +62,12 @@ export default function PaymentMethodPicker() {
                             onClick={() => setSelectedMethod(method.id)}
                             className={`flex items-start gap-3 rounded-lg border p-4 text-left transition
                 ${active
-                                    ? "border-[#0f4c81] bg-[#0f4c81]/5"
-                                    : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border hover:border-primary/40 hover:bg-muted"
                                 }`}
                         >
                             <Icon
-                                className={`mt-0.5 h-5 w-5 shrink-0 ${active ? "text-[#0f4c81]" : "text-slate-400"
+                                className={`mt-0.5 h-5 w-5 shrink-0 ${active ? "text-primary" : "text-muted-foreground"
                                     }`}
                             />
 
@@ -76,12 +76,12 @@ export default function PaymentMethodPicker() {
                                     {method.label}
                                 </div>
 
-                                <div className="text-xs text-slate-500">
+                                <div className="text-xs text-muted-foreground">
                                     {method.description}
                                 </div>
 
                                 {"balance" in method && method.balance !== undefined && (
-                                    <div className="mt-1 text-xs font-medium text-slate-700">
+                                    <div className="mt-1 text-xs font-medium text-foreground">
                                         {formatKES(method.balance)} available
                                     </div>
                                 )}
@@ -91,8 +91,8 @@ export default function PaymentMethodPicker() {
                 })}
             </div>
 
-            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
-                <p className="text-sm text-emerald-800">
+            <div className="rounded-md border border-success/30 bg-success/10 p-3">
+                <p className="text-sm text-success">
                     Selected payment method:
                     <span className="ml-1 font-semibold">
                         {

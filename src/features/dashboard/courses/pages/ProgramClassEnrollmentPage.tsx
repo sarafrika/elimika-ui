@@ -49,13 +49,12 @@ import { useUserProfile } from '../../../profile/context/profile-context';
 import { formatSessionSchedule } from '../components/availability-listing-layout';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
 import { getErrorMessage, type ProgramBundledClass } from '../types';
+import PaymentMethodPicker, { formatKES } from './PaymentMethodPicker';
 
 const STUDENT_SCHEDULE_START = new Date('2024-10-10');
 const STUDENT_SCHEDULE_END = new Date('2030-10-10');
 const ACTIVE_ENROLLMENT_STATUSES = new Set(['ENROLLED', 'ATTENDED', 'ABSENT']);
 
-// Renders a field's value, or a muted "Not available" note when the current
-// data model doesn't expose that field.
 function FieldValue({ value }: { value: React.ReactNode }) {
   if (value === null || value === undefined || value === '') {
     return <span className='text-muted-foreground text-sm italic'>Not available</span>;
@@ -90,8 +89,6 @@ function formatAgeRange(lower?: number | null, upper?: number | null): string | 
   return `Up to ${upper} years`;
 }
 
-// Combines age limits across every course bundled in the program. If the
-// courses disagree, we surface that rather than guessing a single number.
 function combineAgeRanges(courses: Array<{ age_lower_limit?: number | null; age_upper_limit?: number | null }>) {
   const withLimits = courses.filter(c => c.age_lower_limit != null || c.age_upper_limit != null);
   if (withLimits.length === 0) return { label: null, varies: false };
@@ -151,10 +148,6 @@ export default function ProgramClassEnrollmentPage({
     [classes, classId]
   );
 
-  // enrollingClass.course is an array of bundled courses, for the age requirements, we need check each course's age_lower_limit, and age_upper_limit to determine whether a student is eligible to enroll in the program. If any of the courses have an age requirement that the student does not meet, then the student is not eligible to enroll in the program.
-
-  console.log(enrollingClass, 'enrollingClass');
-
   const ageLimits = useMemo(() => {
     if (!enrollingClass?.course?.length) {
       return { minAge: null, maxAge: null };
@@ -169,18 +162,10 @@ export default function ProgramClassEnrollmentPage({
       .filter((v): v is number => v != null);
 
     return {
-      // Strictest lower limit
       minAge: lowerLimits.length ? Math.max(...lowerLimits) : null,
-
-      // Strictest upper limit
       maxAge: upperLimits.length ? Math.min(...upperLimits) : null,
     };
   }, [enrollingClass]);
-
-  console.log(
-    `Eligible age: ${ageLimits.minAge ?? '-'} - ${ageLimits.maxAge ?? '-'} years`
-  );
-
 
   const schedule = enrollingClass?.schedule ?? [];
 
@@ -459,7 +444,7 @@ export default function ProgramClassEnrollmentPage({
 
   if (!enrollingClass) {
     return (
-      <div className='mx-auto w-full max-w-6xl space-y-4 px-6 py-12 lg:py-16'>
+      <div className='mx-auto w-full max-w-7xl space-y-4 px-6 py-12 lg:py-16'>
         <Button variant='ghost' onClick={handleCancel} className='gap-2'>
           <ArrowLeft className='h-4 w-4' />
           Back to Classes
@@ -487,7 +472,7 @@ export default function ProgramClassEnrollmentPage({
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className='mx-auto w-full max-w-3xl space-y-4 px-6 py-12 lg:py-16'>
+    <div className='w-full max-w-7xl space-y-4 px-6 py-12 lg:py-16'>
       <Button variant='ghost' onClick={handleCancel} className='-ml-2 gap-2'>
         <ArrowLeft className='h-4 w-4' />
         Back to Classes
@@ -532,7 +517,7 @@ export default function ProgramClassEnrollmentPage({
         )}
         <CardContent className='grid gap-2 sm:grid-cols-2'>
           {/* Institution name is not part of the current program/class data model. */}
-          <InfoRow icon={<Building2 className='h-4 w-4' />} label='Institution' value={"Institution"} />
+          <InfoRow icon={<Building2 className='h-4 w-4' />} label='Institution' value={null} />
 
           <InfoRow
             icon={<Users className='h-4 w-4' />}
@@ -540,7 +525,7 @@ export default function ProgramClassEnrollmentPage({
             value={enrollingClass.instructor?.data?.full_name}
           />
           {/* No discrete "academic period" field is exposed for this class. */}
-          <InfoRow icon={<Calendar className='h-4 w-4' />} label='Academic period' value={"Academic Period"} />
+          <InfoRow icon={<Calendar className='h-4 w-4' />} label='Academic period' value={null} />
           <InfoRow
             icon={<Clock className='h-4 w-4' />}
             label='Session duration'
@@ -557,8 +542,8 @@ export default function ProgramClassEnrollmentPage({
             }
           />
 
-          <InfoRow icon={<Languages className='h-4 w-4' />} label='Language' value={"English"} />
-          <InfoRow icon={<GraduationCap className='h-4 w-4' />} label='Level of study' value={"Certificate"} />
+          <InfoRow icon={<Languages className='h-4 w-4' />} label='Language' value={null} />
+          <InfoRow icon={<GraduationCap className='h-4 w-4' />} label='Level of study' value={null} />
         </CardContent>
       </Card>
 
@@ -575,9 +560,9 @@ export default function ProgramClassEnrollmentPage({
           {isClassFull ? (
             <Badge variant='destructive'>Full</Badge>
           ) : isAlmostFull ? (
-            <Badge className='bg-amber-100 text-amber-800 hover:bg-amber-100'>Almost full</Badge>
+            <Badge className='bg-warning/15 text-warning hover:bg-warning/15'>Almost full</Badge>
           ) : (
-            <Badge className='bg-emerald-100 text-emerald-800 hover:bg-emerald-100'>Open</Badge>
+            <Badge className='bg-success/15 text-success hover:bg-success/15'>Open</Badge>
           )}
         </CardContent>
       </Card>
@@ -591,9 +576,9 @@ export default function ProgramClassEnrollmentPage({
           {/* Age requirement — combined across every course bundled in this program. */}
           <div className='flex items-start gap-3'>
             {!hasAgeRequirement ? (
-              <AlertTriangle className='mt-0.5 h-5 w-5 text-slate-400' />
+              <AlertTriangle className='mt-0.5 h-5 w-5 text-muted-foreground' />
             ) : (
-              <CheckCircle2 className='mt-0.5 h-5 w-5 text-emerald-600' />
+              <CheckCircle2 className='mt-0.5 h-5 w-5 text-success' />
             )}
             <div className='flex-1'>
               <div className="text-sm font-medium">
@@ -615,7 +600,7 @@ export default function ProgramClassEnrollmentPage({
 
           {/* Materials / items the student needs to supply, merged across all bundled courses. */}
           <div className='flex items-start gap-3'>
-            <ShieldCheck className='mt-0.5 h-5 w-5 text-slate-500' />
+            <ShieldCheck className='mt-0.5 h-5 w-5 text-muted-foreground' />
             <div className='flex-1'>
               <div className='text-sm font-medium'>Things you'll need to bring</div>
               {studentRequirements.length === 0 ? (
@@ -634,7 +619,7 @@ export default function ProgramClassEnrollmentPage({
                         {requirement.name}
                         {requirement.quantity ? ` (${requirement.quantity} ${requirement.unit ?? ''})` : ''}
                         {requirement.is_mandatory && (
-                          <span className='text-rose-600'> · required</span>
+                          <span className='text-destructive'> · required</span>
                         )}
                         {requirement.description && (
                           <span className='text-muted-foreground block text-xs'>
@@ -652,7 +637,7 @@ export default function ProgramClassEnrollmentPage({
           <Separator />
 
           <div className='flex items-start gap-3'>
-            <ShieldCheck className='mt-0.5 h-5 w-5 text-slate-500' />
+            <ShieldCheck className='mt-0.5 h-5 w-5 text-muted-foreground' />
             <div className='flex-1'>
               <div className='text-sm font-medium'>Tuition &amp; terms</div>
               <div className="text-muted-foreground text-xs">
@@ -672,37 +657,36 @@ export default function ProgramClassEnrollmentPage({
         <CardHeader className='pb-2'>
           <div className='flex items-center justify-between gap-2'>
             <CardTitle className='flex items-center gap-2 text-base'>
-              <Wallet className='h-4 w-4 text-primary' /> Payment
+              <Wallet className='h-4 w-4 text-primary' /> Payment method
             </CardTitle>
             <div className='text-right'>
-              <div className='text-muted-foreground text-xs'>Rate</div>
-              <div className='text-primary text-base font-semibold'>{feeDisplay}</div>
+              <div className='text-muted-foreground text-xs'>Amount due</div>
+              <div className='text-primary text-base font-semibold'>{formatKES(enrollingClass?.training_fee)}</div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {!hasFee ? (
             <p className='text-sm text-muted-foreground'>
-              This program is free — no payment required.
+              This class is free — no payment required.
             </p>
+          ) : !student ? (
+            <p className='text-sm text-muted-foreground'>Sign in to choose a payment method.</p>
           ) : (
-            <p className='text-muted-foreground text-sm'>
-              A payment-method (wallet) selector isn't part of this enrollment flow. If a paid
-              checkout is required, confirming below will add the program to your cart so you can
-              complete payment there.
-            </p>
+            <PaymentMethodPicker />
           )}
         </CardContent>
       </Card>
 
+
       {/* Notices */}
       {alreadyEnrolled && (
-        <div className='rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800'>
+        <div className='rounded-md border border-success/30 bg-success/10 p-3 text-sm text-success'>
           You're already enrolled in this class.
         </div>
       )}
       {isClassFull && !alreadyEnrolled && (
-        <div className='rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800'>
+        <div className='rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning'>
           This class is full. You'll be added to the waitlist instead of being enrolled directly.
         </div>
       )}

@@ -498,9 +498,9 @@ export default function ClassEnrollmentPage({
           {isClassFull ? (
             <Badge variant='destructive'>Full</Badge>
           ) : isAlmostFull ? (
-            <Badge className='bg-amber-100 text-amber-800 hover:bg-amber-100'>Almost full</Badge>
+            <Badge className='bg-warning/15 text-warning hover:bg-warning/15'>Almost full</Badge>
           ) : (
-            <Badge className='bg-emerald-100 text-emerald-800 hover:bg-emerald-100'>Open</Badge>
+            <Badge className='bg-success/15 text-success hover:bg-success/15'>Open</Badge>
           )}
         </CardContent>
       </Card>
@@ -514,9 +514,9 @@ export default function ClassEnrollmentPage({
           {/* Age requirement — backed by course.age_lower_limit / age_upper_limit when present. */}
           <div className='flex items-start gap-3'>
             {!hasAgeRequirement ? (
-              <AlertTriangle className='mt-0.5 h-5 w-5 text-slate-400' />
+              <AlertTriangle className='mt-0.5 h-5 w-5 text-muted-foreground' />
             ) : (
-              <CheckCircle2 className='mt-0.5 h-5 w-5 text-emerald-600' />
+              <CheckCircle2 className='mt-0.5 h-5 w-5 text-success' />
             )}
             <div className='flex-1'>
               <div className='text-sm font-medium'>
@@ -539,7 +539,7 @@ export default function ClassEnrollmentPage({
 
           {/* Materials / items the student needs to supply, from course training requirements. */}
           <div className='flex items-start gap-3'>
-            <ShieldCheck className='mt-0.5 h-5 w-5 text-slate-500' />
+            <ShieldCheck className='mt-0.5 h-5 w-5 text-muted-foreground' />
             <div className='flex-1'>
               <div className='text-sm font-medium'>Things you'll need to bring</div>
               {studentRequirements.length === 0 ? (
@@ -558,7 +558,7 @@ export default function ClassEnrollmentPage({
                         {requirement.name}
                         {requirement.quantity ? ` (${requirement.quantity} ${requirement.unit ?? ''})` : ''}
                         {requirement.is_mandatory && (
-                          <span className='text-rose-600'> · required</span>
+                          <span className='text-destructive'> · required</span>
                         )}
                         {requirement.description && (
                           <span className='text-muted-foreground block text-xs'>
@@ -576,7 +576,7 @@ export default function ClassEnrollmentPage({
           <Separator />
 
           <div className='flex items-start gap-3'>
-            <ShieldCheck className='mt-0.5 h-5 w-5 text-slate-500' />
+            <ShieldCheck className='mt-0.5 h-5 w-5 text-muted-foreground' />
             <div className='flex-1'>
               <div className='text-sm font-medium'>Tuition &amp; terms</div>
               <div className='text-muted-foreground text-xs'>Training fee: {feeDisplay}</div>
@@ -617,12 +617,12 @@ export default function ClassEnrollmentPage({
 
       {/* Notices */}
       {alreadyEnrolled && (
-        <div className='rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800'>
+        <div className='rounded-md border border-success/30 bg-success/10 p-3 text-sm text-success'>
           You're already enrolled in this class.
         </div>
       )}
       {isClassFull && !alreadyEnrolled && (
-        <div className='rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800'>
+        <div className='rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning'>
           This class is full. You'll be added to the waitlist instead of being enrolled directly.
         </div>
       )}

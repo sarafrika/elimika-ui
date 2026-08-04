@@ -172,11 +172,11 @@ const PAY_METHODS: PaymentMethod[] = ["personal_wallet", "skills_fund", "rewards
 const TOPUP_METHODS: PaymentMethod[] = ["mobile_money", "card", "bank"];
 
 const STATUS_TINT: Record<string, string> = {
-    completed: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20",
-    pending: "bg-amber-500/10 text-amber-700 border-amber-500/20",
+    completed: "bg-success/10 text-success border-success/20",
+    pending: "bg-warning/10 text-warning border-warning/20",
     failed: "bg-destructive/10 text-destructive border-destructive/20",
-    reversed: "bg-slate-500/10 text-slate-700 border-slate-500/20",
-    refunded: "bg-sky-500/10 text-sky-700 border-sky-500/20",
+    reversed: "bg-muted text-muted-foreground border-border",
+    refunded: "bg-primary/10 text-primary border-primary/20",
 };
 
 const TABS = [
@@ -642,11 +642,11 @@ function ToastStack({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: st
             {toasts.map((t) => (
                 <div
                     key={t.id}
-                    className={`rounded-lg border p-3 shadow-lg text-sm bg-background ${t.type === "success" ? "border-emerald-500/30" : "border-destructive/30"
+                    className={`rounded-lg border p-3 shadow-lg text-sm bg-background ${t.type === "success" ? "border-success/30" : "border-destructive/30"
                         }`}
                 >
                     <div className="flex items-start justify-between gap-2">
-                        <p className={`font-medium ${t.type === "success" ? "text-emerald-700" : "text-destructive"}`}>{t.message}</p>
+                        <p className={`font-medium ${t.type === "success" ? "text-success" : "text-destructive"}`}>{t.message}</p>
                         <button onClick={() => onDismiss(t.id)} className="text-muted-foreground hover:text-foreground">
                             <X className="h-3.5 w-3.5" />
                         </button>
@@ -676,7 +676,7 @@ function TxnRow({ txn, action }: { txn: WalletTransaction; action?: ReactNode })
         <div className="flex items-center justify-between gap-3 py-3">
             <div className="flex items-center gap-3 min-w-0">
                 <span
-                    className={`h-8 w-8 shrink-0 rounded-full grid place-items-center ${credit ? "bg-emerald-500/10 text-emerald-600" : "bg-orange-500/10 text-orange-600"
+                    className={`h-8 w-8 shrink-0 rounded-full grid place-items-center ${credit ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
                         }`}
                 >
                     {credit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
@@ -690,7 +690,7 @@ function TxnRow({ txn, action }: { txn: WalletTransaction; action?: ReactNode })
             </div>
             <div className="flex items-center gap-2 shrink-0">
                 <div className="flex flex-col gap-1.5 text-right">
-                    <p className={`text-sm font-semibold ${credit ? "text-emerald-600" : ""}`}>
+                    <p className={`text-sm font-semibold ${credit ? "text-success" : ""}`}>
                         {credit ? "+" : "−"} {fmtKES(txn.amount_kes)}
                     </p>
                     <StatusBadge status={txn.status} />
@@ -722,7 +722,7 @@ function DashboardTab({ onNavigate }: { onNavigate: (tab: TabId) => void }) {
     return (
         <div className="space-y-5">
             {lowBalance && (
-                <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-800">
+                <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
                     <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
                     <span>Low balance alert — your unrestricted balance is below KES 5,000. Top up to avoid missed payments.</span>
                 </div>
@@ -730,12 +730,12 @@ function DashboardTab({ onNavigate }: { onNavigate: (tab: TabId) => void }) {
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {stats.map((s) => (
-                    <Card key={s.label} className={s.tone === "primary" ? "rounded-md bg-gradient-to-br from-[#0f4c81] to-[#14b8a6] text-white border-0" : "rounded-md"}>
+                    <Card key={s.label} className={s.tone === "primary" ? "rounded-md bg-gradient-to-br from-primary to-accent text-primary-foreground border-0" : "rounded-md"}>
                         <CardHeader className="pb-0">
-                            <CardDescription className={s.tone === "primary" ? "text-white/80" : ""}>{s.label}</CardDescription>
+                            <CardDescription className={s.tone === "primary" ? "text-primary-foreground/80" : ""}>{s.label}</CardDescription>
                             <CardTitle className="text-2xl">{s.value}</CardTitle>
                         </CardHeader>
-                        <CardContent className={`text-[11px] ${s.tone === "primary" ? "text-white/85" : "text-muted-foreground"}`}>{s.hint}</CardContent>
+                        <CardContent className={`text-[11px] ${s.tone === "primary" ? "text-primary-foreground/85" : "text-muted-foreground"}`}>{s.hint}</CardContent>
                     </Card>
                 ))}
             </div>
@@ -795,7 +795,7 @@ function AccountsTab() {
                         <CardDescription>Available to spend</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-semibold text-emerald-600">{fmtKES(breakdown.available)}</p>
+                        <p className="text-2xl font-semibold text-success">{fmtKES(breakdown.available)}</p>
                         <p className="text-xs text-muted-foreground">No purpose restrictions</p>
                     </CardContent>
                 </Card>
@@ -804,7 +804,7 @@ function AccountsTab() {
                         <CardDescription>Restricted</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-semibold text-amber-600">{fmtKES(breakdown.restricted)}</p>
+                        <p className="text-2xl font-semibold text-warning">{fmtKES(breakdown.restricted)}</p>
                         <p className="text-xs text-muted-foreground">Usable only for permitted purposes</p>
                     </CardContent>
                 </Card>
@@ -838,7 +838,7 @@ function AccountsTab() {
                                         {restricted ? (
                                             <Badge
                                                 variant="outline"
-                                                className="gap-1 border-amber-500/30 bg-amber-500/10 text-amber-700"
+                                                className="gap-1 border-warning/30 bg-warning/10 text-warning"
                                             >
                                                 <Lock className="h-3 w-3" />
                                                 Restricted
@@ -873,7 +873,7 @@ function AccountsTab() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <p className="text-[11px] text-emerald-600">Usable for any Elimika payment</p>
+                                    <p className="text-[11px] text-success">Usable for any Elimika payment</p>
                                 )}
 
                                 <div className="flex flex-wrap gap-3 pt-1 text-[11px] text-muted-foreground">
@@ -1077,7 +1077,7 @@ function PayDialog({ open, payment, accounts, onClose }: { open: boolean; paymen
                             )}
                         </div>
                     ) : (
-                        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-800">
+                        <p className="rounded-lg border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning">
                             No {METHOD_LABEL[method].toLowerCase()} balance may be used for {itemType.toLowerCase()}.
                         </p>
                     )}
@@ -1104,7 +1104,7 @@ function PayDialog({ open, payment, accounts, onClose }: { open: boolean; paymen
                         )}
                     </div>
 
-                    <div className={`rounded-lg border p-2.5 text-xs ${check.ok ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700" : "border-destructive/30 bg-destructive/10 text-destructive"}`}>
+                    <div className={`rounded-lg border p-2.5 text-xs ${check.ok ? "border-success/30 bg-success/10 text-success" : "border-destructive/30 bg-destructive/10 text-destructive"}`}>
                         {check.message}
                     </div>
                 </div>
@@ -1291,11 +1291,11 @@ function RefundsTab() {
         <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-3">
                 <Card>
-                    <CardHeader className="pb-2"><CardDescription>Available balance</CardDescription><CardTitle className="text-xl text-emerald-700">{fmtKES(breakdown.available)}</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardDescription>Available balance</CardDescription><CardTitle className="text-xl text-success">{fmtKES(breakdown.available)}</CardTitle></CardHeader>
                     <CardContent className="pt-0 text-xs text-muted-foreground">Refunds of unrestricted spend land here</CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="pb-2"><CardDescription>Restricted balance</CardDescription><CardTitle className="text-xl text-amber-700">{fmtKES(breakdown.restricted)}</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardDescription>Restricted balance</CardDescription><CardTitle className="text-xl text-warning">{fmtKES(breakdown.restricted)}</CardTitle></CardHeader>
                     <CardContent className="pt-0 text-xs text-muted-foreground">Skills Fund & marketplace credits keep their funder rules after a refund</CardContent>
                 </Card>
                 <Card>
@@ -1323,7 +1323,7 @@ function RefundsTab() {
                                     />
                                     <div className="flex flex-wrap items-center gap-2 pb-3 text-xs text-muted-foreground">
                                         <Badge variant="outline" className="font-normal">Returns to {route.account?.label ?? "Refund Balance"}</Badge>
-                                        <Badge variant="outline" className={route.restricted ? "border-amber-500/30 bg-amber-500/10 font-normal text-amber-700" : "border-emerald-500/30 bg-emerald-500/10 font-normal text-emerald-700"}>
+                                        <Badge variant="outline" className={route.restricted ? "border-warning/30 bg-warning/10 font-normal text-warning" : "border-success/30 bg-success/10 font-normal text-success"}>
                                             {route.restricted ? "Stays restricted" : "Available to spend"}
                                         </Badge>
                                         {route.rerouted && <span>{route.reason}</span>}
@@ -1346,7 +1346,7 @@ function RefundsTab() {
                                 <TxnRow txn={t} />
                                 <div className="flex flex-wrap items-center gap-2 pb-3 text-xs">
                                     <Badge variant="outline" className="font-normal">{BUCKET_META[t.bucket]?.label ?? t.bucket}</Badge>
-                                    <Badge variant="outline" className={BUCKET_RULES[t.bucket]?.restricted ? "border-amber-500/30 bg-amber-500/10 font-normal text-amber-700" : "border-emerald-500/30 bg-emerald-500/10 font-normal text-emerald-700"}>
+                                    <Badge variant="outline" className={BUCKET_RULES[t.bucket]?.restricted ? "border-warning/30 bg-warning/10 font-normal text-warning" : "border-success/30 bg-success/10 font-normal text-success"}>
                                         {BUCKET_RULES[t.bucket]?.restricted ? "Restricted" : "Available"}
                                     </Badge>
                                 </div>
@@ -1389,14 +1389,14 @@ function RefundPreviewDialog({
                                 <p className="text-sm font-medium truncate">{txn.description}</p>
                                 <p className="text-[11px] text-muted-foreground">Paid from {txn.source ?? BUCKET_META[txn.bucket].label}</p>
                             </div>
-                            <span className="text-sm font-semibold text-emerald-600 whitespace-nowrap">+ {fmtKES(txn.amount_kes)}</span>
+                            <span className="text-sm font-semibold text-success whitespace-nowrap">+ {fmtKES(txn.amount_kes)}</span>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 text-xs">
                             <Badge variant="outline" className="font-normal">{route.account ? BUCKET_META[route.account.bucket].label : "Refund Balance"}</Badge>
-                            <Badge variant="outline" className={route.restricted ? "border-amber-500/30 bg-amber-500/10 font-normal text-amber-700" : "border-emerald-500/30 bg-emerald-500/10 font-normal text-emerald-700"}>
+                            <Badge variant="outline" className={route.restricted ? "border-warning/30 bg-warning/10 font-normal text-warning" : "border-success/30 bg-success/10 font-normal text-success"}>
                                 {route.restricted ? "Restricted" : "Available"}
                             </Badge>
-                            {route.rerouted && <Badge variant="outline" className="border-sky-500/30 bg-sky-500/10 font-normal text-sky-700">Re-routed</Badge>}
+                            {route.rerouted && <Badge variant="outline" className="border-primary/30 bg-primary/10 font-normal text-primary">Re-routed</Badge>}
                         </div>
                         <p className="text-[11px] text-muted-foreground">{route.reason}</p>
                     </div>
@@ -1421,12 +1421,12 @@ function RewardsTab() {
 
     return (
         <div className="space-y-4">
-            <Card className="bg-gradient-to-br from-[#0f4c81] to-[#14b8a6] text-white border-0">
+            <Card className="bg-gradient-to-br from-primary to-accent text-primary-foreground border-0">
                 <CardHeader className="pb-2">
-                    <CardDescription className="text-white/80">Total rewards earned</CardDescription>
+                    <CardDescription className="text-primary-foreground/80">Total rewards earned</CardDescription>
                     <CardTitle className="text-2xl">{fmtKES(total)}</CardTitle>
                 </CardHeader>
-                <CardContent className="text-xs text-white/85">Rewards can be spent on courses, assessments, marketplace items and tickets.</CardContent>
+                <CardContent className="text-xs text-primary-foreground/85">Rewards can be spent on courses, assessments, marketplace items and tickets.</CardContent>
             </Card>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -1449,7 +1449,7 @@ function RewardsTab() {
                                                 Earned {fmtDate(r.earned_at)}{r.expires_at ? ` · expires ${fmtDate(r.expires_at)}` : ""}
                                             </p>
                                         </div>
-                                        <span className="text-sm font-semibold text-emerald-600">+ {fmtKES(r.amount_kes)}</span>
+                                        <span className="text-sm font-semibold text-success">+ {fmtKES(r.amount_kes)}</span>
                                     </div>
                                 ))}
                                 {rows.length === 0 && <p className="py-3 text-sm text-muted-foreground">None yet.</p>}
@@ -1495,8 +1495,8 @@ function StatementsTab() {
                     <CardContent className="space-y-3">
                         <p className="text-sm text-muted-foreground">{fmtDate(st.period_start)} — {fmtDate(st.period_end)}</p>
                         <div className="flex gap-4 text-sm">
-                            <span className="text-emerald-600">In {fmtKES(st.total_in_kes)}</span>
-                            <span className="text-orange-600">Out {fmtKES(st.total_out_kes)}</span>
+                            <span className="text-success">In {fmtKES(st.total_in_kes)}</span>
+                            <span className="text-warning">Out {fmtKES(st.total_out_kes)}</span>
                         </div>
                         <Button size="sm" variant="outline" className="w-full" onClick={() => download(st)}>
                             <Download className="h-4 w-4 mr-1.5" /> Download CSV
