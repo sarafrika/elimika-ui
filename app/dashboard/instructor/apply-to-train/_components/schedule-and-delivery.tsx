@@ -43,6 +43,11 @@ type ScheduleAndDeliveryData = {
   max_students?: unknown;
   leadTrainer?: Trainer | null;
   supportTrainers?: Trainer[];
+  rateCurrency?: string;
+  privateOnlineRate?: number;
+  privateInpersonRate?: number;
+  groupOnlineRate?: number;
+  groupInpersonRate?: number;
 } | null;
 
 type InstructorProfile = {
@@ -58,6 +63,11 @@ type SelectedCourse = {
   total_duration_display?: string;
   class_limit?: number | string | null;
 } | null;
+
+const rateField = z.preprocess(
+  val => (val === '' || val == null ? undefined : typeof val === 'number' ? val : Number(val)),
+  z.number({ required_error: 'Rate is required' }).min(0, { message: 'Rate cannot be negative' })
+);
 
 // ✅ Zod Schema
 const scheduleSchema = z
@@ -81,6 +91,12 @@ const scheduleSchema = z
 
     allowOneOnOne: z.boolean().optional(),
     max_students: z.unknown(),
+
+    rateCurrency: z.string().regex(/^[A-Za-z]{3}$/, { message: 'Use a 3-letter ISO code' }),
+    privateOnlineRate: rateField,
+    privateInpersonRate: rateField,
+    groupOnlineRate: rateField,
+    groupInpersonRate: rateField,
   })
   .superRefine((data, ctx) => {
     if (data.trainingMode === 'IN_PERSON' || data.trainingMode === 'HYBRID') {
@@ -157,6 +173,11 @@ export function ScheduleAndDelivery({
       minStudents: typeof data?.minStudents === 'number' ? data.minStudents : undefined,
       allowOneOnOne: data?.allowOneOnOne || false,
       max_students: courseDetails?.data?.class_limit ?? '',
+      rateCurrency: (data?.rateCurrency as string) || 'KES',
+      privateOnlineRate: data?.privateOnlineRate,
+      privateInpersonRate: data?.privateInpersonRate,
+      groupOnlineRate: data?.groupOnlineRate,
+      groupInpersonRate: data?.groupInpersonRate,
     },
   });
 
@@ -442,6 +463,61 @@ export function ScheduleAndDelivery({
                 </FormItem>
               )}
             />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Rates</CardTitle>
+            <p className='text-muted-foreground text-sm'>
+              The rate you charge per session for each delivery combination. The course creator
+              approves these, and the approved figure is what organisations pay you.
+            </p>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <FormField
+              control={form.control}
+              name='rateCurrency'
+              render={({ field }) => (
+                <FormItem className='max-w-40'>
+                  <FormLabel>Currency</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder='KES' maxLength={3} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className='grid gap-4 sm:grid-cols-2'>
+              {[
+                { name: 'groupInpersonRate' as const, label: 'Group · In person' },
+                { name: 'groupOnlineRate' as const, label: 'Group · Online' },
+                { name: 'privateInpersonRate' as const, label: 'One-on-one · In person' },
+                { name: 'privateOnlineRate' as const, label: 'One-on-one · Online' },
+              ].map(rate => (
+                <FormField
+                  key={rate.name}
+                  control={form.control}
+                  name={rate.name}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{rate.label}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='number'
+                          min={0}
+                          step='0.01'
+                          placeholder='0.00'
+                          {...field}
+                          value={field.value ?? ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
+            </div>
           </CardContent>
         </Card>
 
