@@ -267,7 +267,7 @@ export default function CoursesPage() {
               displayName: effectiveTiers.length > 1 ? `${name} — ${tier.method}` : name,
               subjectLabel: subject ?? '—',
               method: tier.method,
-              amount: tier.key ? Number(app.rate_card?.[tier.key] ?? 0) : (cd?.training_fee ?? 0),
+              amount: tier.key ? Number(app.rate_card?.[tier.key] ?? 0) : (cd?.sale_price ?? 0),
               lessons: cd ? Number(cd.scheduled_session_count ?? 0) : 0,
               instructor: instructorsByUuid.get(cd?.default_instructor_uuid ?? ''),
               image,

@@ -149,7 +149,7 @@ export default function ClassPreviewPage() {
       })),
     [classData?.title, classId, schedules]
   );
-  const totalAmount = (classData?.training_fee! * scheduleStats?.totalHours) as number;
+  const totalAmount = (classData?.sale_price! * scheduleStats?.totalHours) as number;
   const amountPayable = totalAmount;
 
   // Format dates

@@ -228,8 +228,8 @@ function ClassInviteContent() {
                     icon={<Layers className='h-4 w-4' />}
                     label='Fee'
                     value={
-                      typeof data?.training_fee === 'number'
-                        ? `KES ${data?.training_fee.toLocaleString()}`
+                      typeof data?.sale_price === 'number'
+                        ? `KES ${data?.sale_price.toLocaleString()}`
                         : 'Free'
                     }
                   />
@@ -343,8 +343,8 @@ function ClassInviteContent() {
                     icon={<Layers className='h-4 w-4' />}
                     label='Fee'
                     value={
-                      typeof data?.training_fee === 'number'
-                        ? `KES ${data?.training_fee.toLocaleString()}`
+                      typeof data?.sale_price === 'number'
+                        ? `KES ${data?.sale_price.toLocaleString()}`
                         : 'Free'
                     }
                   />

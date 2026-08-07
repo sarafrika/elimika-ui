@@ -358,8 +358,8 @@ function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
           label: 'Pay per session',
           value: (
             <span className='text-primary text-base font-bold'>
-              {typeof job.training_fee === 'number'
-                ? formatCurrency(job.training_fee)
+              {typeof job.instructor_pay === 'number'
+                ? formatCurrency(job.instructor_pay)
                 : 'Not specified'}
             </span>
           ),
@@ -677,16 +677,16 @@ function JobDetailsSheet({
           ) : (
             <div className={cn('space-y-3', adminTheme.cardPadded)}>
               <p className='border-primary/30 bg-primary/10 text-foreground rounded-md border p-3 text-sm'>
-                {typeof job.training_fee === 'number' ? (
+                {typeof job.instructor_pay === 'number' ? (
                   <>
                     You will be paid{' '}
                     <span className='text-primary font-bold'>
-                      {formatCurrency(job.training_fee)} per session
+                      {formatCurrency(job.instructor_pay)} per session
                     </span>{' '}
                     for this engagement.
                   </>
                 ) : (
-                  'The organisation has not specified a fee for this posting.'
+                  'The organisation has not specified instructor pay for this posting.'
                 )}
               </p>
 

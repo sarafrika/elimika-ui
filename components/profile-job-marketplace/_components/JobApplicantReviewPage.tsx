@@ -140,6 +140,10 @@ export function JobApplicantReviewPage({
   const notApprovedToTrain = application?.training_approved === false;
   const canReview = application?.status === 'pending';
   const canAssign = application?.status === 'approved';
+  const payBelowApprovedRate =
+    typeof job?.instructor_pay === 'number' &&
+    typeof application?.approved_rate === 'number' &&
+    job.instructor_pay < application.approved_rate;
 
   return (
     <div className={adminTheme.page}>
@@ -183,9 +187,20 @@ export function JobApplicantReviewPage({
                       Approved rate: {formatCurrency(application.approved_rate)} / session
                     </Badge>
                   ) : null}
-                  {typeof job?.training_fee === 'number' ? (
+                  {typeof job?.sale_price === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Job fee: {formatCurrency(job.training_fee)} / session
+                      Sale price: {formatCurrency(job.sale_price)} / session
+                    </Badge>
+                  ) : null}
+                  {typeof job?.instructor_pay === 'number' ? (
+                    <Badge variant='outline' className='rounded-md'>
+                      Instructor pay: {formatCurrency(job.instructor_pay)} / session
+                    </Badge>
+                  ) : null}
+                  {typeof job?.sale_price === 'number' &&
+                  typeof job?.instructor_pay === 'number' ? (
+                    <Badge variant='outline' className='rounded-md'>
+                      Margin: {formatCurrency(job.sale_price - job.instructor_pay)} / session
                     </Badge>
                   ) : null}
                 </>
@@ -213,6 +228,17 @@ export function JobApplicantReviewPage({
                       <span>
                         Not approved to train this course or program yet — approval and assignment
                         are blocked.
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {payBelowApprovedRate ? (
+                    <div className='border-warning/60 bg-warning/10 text-foreground flex items-center gap-2 rounded-md border p-3'>
+                      <TriangleAlert className='text-warning size-4 shrink-0' />
+                      <span>
+                        This job pays {formatCurrency(job?.instructor_pay)} per session, below the{' '}
+                        {formatCurrency(application.approved_rate)} on this instructor’s rate card.
+                        Assignment will be refused until you raise the instructor pay.
                       </span>
                     </div>
                   ) : null}

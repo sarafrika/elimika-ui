@@ -311,7 +311,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                 isInstructorsLoading={isInstructorsLoading}
                 isReviewPending={reviewMutation.isPending}
                 isAssignPending={assignMutation.isPending}
-                jobTrainingFee={job?.training_fee}
+                jobInstructorPay={job?.instructor_pay}
                 onApprove={application => openReviewDialog(application, 'APPROVE')}
                 onReject={application => openReviewDialog(application, 'REJECT')}
                 onAssign={handleAssign}

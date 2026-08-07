@@ -234,12 +234,27 @@ export default function OrganisationCreateClassPage() {
   const [meetingLink, setMeetingLink] = useState('');
   const [venueUuid, setVenueUuid] = useState('');
 
-  // Never user-entered: the fee is whatever the course creator approved for this
-  // session format and delivery mode. The backend rejects anything else.
   const approvedFee = useMemo(
     () => approvedRateFor(selectedOffering?.rateCard, sessionFormat, delivery),
     [selectedOffering, sessionFormat, delivery]
   );
+  const [salePrice, setSalePrice] = useState('');
+  const [instructorPay, setInstructorPay] = useState('');
+  const [feesDirty, setFeesDirty] = useState(false);
+  useEffect(() => {
+    if (feesDirty) return;
+    const suggested = approvedFee === undefined ? '' : String(approvedFee);
+    setSalePrice(suggested);
+    setInstructorPay(suggested);
+  }, [approvedFee, feesDirty]);
+  const handleSalePriceChange = (value: string) => {
+    setFeesDirty(true);
+    setSalePrice(value);
+  };
+  const handleInstructorPayChange = (value: string) => {
+    setFeesDirty(true);
+    setInstructorPay(value);
+  };
   const [maxParticipants, setMaxParticipants] = useState('20');
   const [allowWaitlist, setAllowWaitlist] = useState(true);
 
@@ -436,6 +451,17 @@ export default function OrganisationCreateClassPage() {
         'The course creator has not approved a rate for this session format and delivery mode.'
       );
     }
+    const saleValue = num(salePrice);
+    const payValue = num(instructorPay);
+    if (saleValue === undefined || saleValue < 0) {
+      return toast.error('Enter the sale price learners are charged per session.');
+    }
+    if (payValue === undefined || payValue < 0) {
+      return toast.error('Enter the pay the instructor receives per session.');
+    }
+    if (payValue > saleValue) {
+      return toast.error('Instructor pay cannot exceed the sale price.');
+    }
     const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';
     const requiresLink = delivery === 'ONLINE' || delivery === 'HYBRID';
     if (requiresPhysical && !locationName.trim() && !venueUuid) {
@@ -483,7 +509,8 @@ export default function OrganisationCreateClassPage() {
       meeting_link: requiresLink ? meetingLink.trim() || undefined : undefined,
       max_participants: num(maxParticipants),
       allow_waitlist: allowWaitlist,
-      ...(approvedFee !== undefined ? { training_fee: approvedFee } : {}),
+      sale_price: saleValue,
+      instructor_pay: payValue,
       class_reminder_minutes: REMINDER_MINUTES[reminder.window],
       ...(continuousReg
         ? {}
@@ -550,6 +577,10 @@ export default function OrganisationCreateClassPage() {
         <PricingCapacity
           approvedFee={approvedFee}
           currency={selectedOffering?.rateCard?.currency}
+          salePrice={salePrice}
+          onSalePriceChange={handleSalePriceChange}
+          instructorPay={instructorPay}
+          onInstructorPayChange={handleInstructorPayChange}
           maxParticipants={maxParticipants}
           onMaxChange={setMaxParticipants}
           allowWaitlist={allowWaitlist}

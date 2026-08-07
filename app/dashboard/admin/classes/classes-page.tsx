@@ -77,7 +77,7 @@ export default function AdminClassPage() {
           endTime: new Date(scheduleItem.end_time),
           color,
           maxParticipants: classDef.max_participants || 0,
-          trainingFee: classDef.training_fee || 0,
+          trainingFee: classDef.sale_price || 0,
           sessionFormat: classDef.session_format || '',
         });
       });

@@ -28,7 +28,7 @@ export interface ClassDefinition {
   location_longitude?: number;
   max_participants: number;
   session_format: string;
-  training_fee: number;
+  sale_price: number;
   schedule: ClassSchedule[];
   allow_waitlist: boolean;
   is_active: boolean;

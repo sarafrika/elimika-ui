@@ -50,7 +50,8 @@ function buildUpdateBody(
     organisation_uuid: c.organisation_uuid ?? undefined,
     course_uuid: c.course_uuid ?? undefined,
     program_uuid: c.program_uuid ?? undefined,
-    training_fee: c.training_fee ?? undefined,
+    sale_price: c.sale_price ?? undefined,
+    instructor_pay: c.instructor_pay ?? undefined,
     class_visibility: c.class_visibility,
     session_format: c.session_format,
     default_start_time: c.default_start_time,
@@ -80,7 +81,10 @@ function FeeRow({
 }) {
   const qc = useQueryClient();
   const [fee, setFee] = useState(
-    classDefinition.training_fee != null ? String(classDefinition.training_fee) : ''
+    classDefinition.sale_price != null ? String(classDefinition.sale_price) : ''
+  );
+  const [pay, setPay] = useState(
+    classDefinition.instructor_pay != null ? String(classDefinition.instructor_pay) : ''
   );
   const [sessionFormat, setSessionFormat] = useState<SessionFormatEnum>(
     classDefinition.session_format
@@ -101,16 +105,27 @@ function FeeRow({
 
   const save = () => {
     if (!classDefinition.uuid) return;
-    const trimmed = fee.trim();
-    const parsed = trimmed ? Number(trimmed) : undefined;
-    if (trimmed && Number.isNaN(parsed)) {
-      toast.error('Enter a valid fee amount.');
+    const trimmedFee = fee.trim();
+    const parsedFee = trimmedFee ? Number(trimmedFee) : undefined;
+    if (trimmedFee && Number.isNaN(parsedFee)) {
+      toast.error('Enter a valid sale price.');
+      return;
+    }
+    const trimmedPay = pay.trim();
+    const parsedPay = trimmedPay ? Number(trimmedPay) : undefined;
+    if (trimmedPay && Number.isNaN(parsedPay)) {
+      toast.error('Enter a valid instructor pay amount.');
+      return;
+    }
+    if (parsedFee !== undefined && parsedPay !== undefined && parsedPay > parsedFee) {
+      toast.error('Instructor pay cannot exceed the sale price.');
       return;
     }
     update.mutate({
       path: { uuid: classDefinition.uuid },
       body: buildUpdateBody(classDefinition, {
-        training_fee: parsed,
+        sale_price: parsedFee,
+        instructor_pay: parsedPay,
         session_format: sessionFormat,
         location_type: locationType,
       }),
@@ -118,7 +133,7 @@ function FeeRow({
   };
 
   return (
-    <div className='grid items-end gap-3 border-b py-4 last:border-b-0 md:grid-cols-[minmax(0,2fr)_1fr_1fr_1fr_auto]'>
+    <div className='grid items-end gap-3 border-b py-4 last:border-b-0 md:grid-cols-[minmax(0,2fr)_1fr_1fr_1fr_1fr_auto]'>
       <div className='min-w-0'>
         <p className='text-foreground truncate text-sm font-medium'>{classDefinition.title}</p>
         <p className='text-muted-foreground truncate text-xs'>{offering}</p>
@@ -160,13 +175,24 @@ function FeeRow({
         </Select>
       </div>
       <div className='space-y-1'>
-        <Label className='text-xs'>Fee / session</Label>
+        <Label className='text-xs'>Sale price / session</Label>
         <Input
           type='number'
           min={0}
           step='0.01'
           value={fee}
           onChange={e => setFee(e.target.value)}
+          placeholder='0.00'
+        />
+      </div>
+      <div className='space-y-1'>
+        <Label className='text-xs'>Instructor pay / session</Label>
+        <Input
+          type='number'
+          min={0}
+          step='0.01'
+          value={pay}
+          onChange={e => setPay(e.target.value)}
           placeholder='0.00'
         />
       </div>

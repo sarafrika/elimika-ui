@@ -218,7 +218,7 @@ export default function EnrollSidebar({
               </p>
 
               <p className='text-foreground mb-4 text-xl font-black sm:text-2xl lg:text-3xl'>
-                From Ksh {classData?.class?.training_fee}
+                From Ksh {classData?.class?.sale_price}
               </p>
 
               <div className='flex flex-col gap-2.5 sm:gap-3'>

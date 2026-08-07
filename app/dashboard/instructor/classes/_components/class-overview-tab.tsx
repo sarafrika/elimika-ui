@@ -273,8 +273,8 @@ export function ClassHero({
             <div className='text-muted-foreground mt-5 grid gap-3 text-[12px] sm:grid-cols-2'>
               <p>{selectedClass?.max_participants ?? 0} students</p>
               <p>
-                {selectedClass?.training_fee
-                  ? `$${selectedClass?.training_fee}`
+                {selectedClass?.sale_price
+                  ? `$${selectedClass?.sale_price}`
                   : 'Class fee not set'}
               </p>
             </div>
@@ -647,7 +647,7 @@ function UpcomingClassesPanel({
                   </p>
                 </div>
                 <p className='text-foreground font-semibold whitespace-nowrap'>
-                  {selectedClass.training_fee ? `$${selectedClass.training_fee}` : ''}
+                  {selectedClass.sale_price ? `$${selectedClass.sale_price}` : ''}
                 </p>
                 <p className='text-muted-foreground col-span-2 text-sm'>
                   {formatDateOnly(session.start_time)} |{' '}
@@ -1073,7 +1073,7 @@ export function ClassOverviewTab(props: ClassOverviewTabProps) {
                     <OverviewMetaCard
                       label='Class fee'
                       value={
-                        selectedClass.training_fee ? `KSh ${selectedClass.training_fee}` : 'Not set'
+                        selectedClass.sale_price ? `KSh ${selectedClass.sale_price}` : 'Not set'
                       }
                       icon={<Award className='h-4 w-4' />}
                     />

@@ -304,7 +304,7 @@ export function useInstructorTrainingHubData() {
           'General',
         students: `${students} student${students === 1 ? '' : 's'}`,
         classes: `${classSchedules.length} class${classSchedules.length === 1 ? '' : 'es'}`,
-        fee: formatCurrency(classItem.training_fee),
+        fee: formatCurrency(classItem.sale_price),
         sessions: `${classSchedules.length}`,
         status: nextSession ? 'scheduled' : 'draft',
         href: classItem.uuid

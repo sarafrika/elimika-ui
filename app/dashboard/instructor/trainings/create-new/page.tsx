@@ -529,7 +529,7 @@ const ClassBuilderPage = ({
             ? [classData.categories]
             : [],
         class_type: classData.class_visibility || '',
-        rate_card: classData.rate_card || classData?.training_fee,
+        rate_card: classData.rate_card || classData?.sale_price,
         location_type: normalizeLocationType(classData.location_type),
         location_name: classData.location_name || '',
         class_limit: classData.max_participants || 0,

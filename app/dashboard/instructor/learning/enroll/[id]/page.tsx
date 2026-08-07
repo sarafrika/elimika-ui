@@ -189,7 +189,7 @@ const EnrollmentPage = () => {
             </p>
 
             <p>
-              <strong>Training Fee:{'  '} </strong>KES {enrollingClass?.training_fee}
+              <strong>Training Fee:{'  '} </strong>KES {enrollingClass?.sale_price}
             </p>
 
             <p className='font-medium text-yellow-600'>

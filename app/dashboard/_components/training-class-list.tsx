@@ -474,7 +474,7 @@ export function TrainingClassList({
                       {/* Footer */}
                       <div className='border-border flex items-center justify-between border-t pt-2'>
                         <div className='flex items-center gap-1.5'>
-                          <span className='text-lg'>KES {cls?.training_fee || 'N/A'}</span>
+                          <span className='text-lg'>KES {cls?.sale_price || 'N/A'}</span>
                         </div>
                       </div>
 

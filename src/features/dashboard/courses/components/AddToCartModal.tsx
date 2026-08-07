@@ -81,7 +81,7 @@ export default function AddToCartModal({
             <div className='mt-4 flex flex-row items-center gap-2'>
               <div className='text-muted-foreground text-sm'>Price</div>
               <div className='text-foreground text-lg font-semibold'>
-                {cls?.training_fee ? `KES ${cls.training_fee}` : 'Free'}
+                {cls?.sale_price ? `KES ${cls.sale_price}` : 'Free'}
               </div>
               <span className='text-sm'>(per hour per head)</span>
             </div>

@@ -471,7 +471,7 @@ export default function EnrollCourseCard({
         {/* ── Price + CTA ── */}
         <div className='flex flex-wrap items-center justify-between gap-2 px-0.5 py-1'>
           <span className='text-foreground text-[0.85rem] font-semibold'>
-            {cls?.training_fee ? `From Ksh ${cls.training_fee}` : 'Free'}
+            {cls?.sale_price ? `From Ksh ${cls.sale_price}` : 'Free'}
           </span>
 
           {instructorView ? (

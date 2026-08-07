@@ -689,7 +689,7 @@ const ClassCreationPage = () => {
 
   const totalAmount =
     Math.max(ratePerHour * totalHours, 0) ||
-    Math.max(Number(classData?.training_fee) * totalHours) | 0;
+    Math.max(Number(classData?.sale_price) * totalHours) | 0;
 
   const firstSessionTimeLabel = useMemo(() => {
     if (scheduleSettings.allDay) return 'All Day';
@@ -815,7 +815,7 @@ const ClassCreationPage = () => {
       categories?: string[] | string | null;
       rate_card?: string | null;
       targetAudience?: string | null;
-      training_fee?: string | null;
+      sale_price?: string | null;
       meeting_link?: string | null;
       allow_waitlist?: boolean | null;
       location_latitude?: number | null;
@@ -847,7 +847,7 @@ const ClassCreationPage = () => {
           : [],
       class_type: classRecord.class_visibility || 'PUBLIC',
       location_type: normalizeLocationType(classRecord.location_type),
-      rate_card: classRecord.rate_card || classRecord.training_fee || '',
+      rate_card: classRecord.rate_card || classRecord.sale_price || '',
       class_limit: classRecord.max_participants || 0,
       targetAudience: classRecord.targetAudience || '',
       location_name: classRecord.location_name || '',
@@ -1321,7 +1321,8 @@ const ClassCreationPage = () => {
       scheduled_session_count: totalSessions,
       class_reminder_minutes: reminderToMinutes(notificationSettings.reminder),
       duration_minutes: totalHoursInMinutes,
-      training_fee: ratePerHour,
+      sale_price: ratePerHour,
+      instructor_pay: ratePerHour,
       allow_waitlist: true,
       is_active: !isDraft,
       default_start_time: new Date(buildUtcIsoDateTime(payloadRefDate, payloadStartTime)),

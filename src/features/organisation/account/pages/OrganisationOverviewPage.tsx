@@ -123,7 +123,7 @@ export default function OrganisationOverviewPage() {
   );
   const feeSummary = useMemo(() => {
     const fees = classes
-      .map(c => (c.training_fee == null ? null : Number(c.training_fee)))
+      .map(c => (c.sale_price == null ? null : Number(c.sale_price)))
       .filter((f): f is number => f != null && !Number.isNaN(f));
     if (fees.length === 0)
       return {

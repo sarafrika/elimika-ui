@@ -252,6 +252,23 @@ export default function OrganisationPostJobPage() {
     () => approvedRateFor(selectedOffering?.rateCard, sessionFormat, delivery),
     [selectedOffering, sessionFormat, delivery]
   );
+  const [salePrice, setSalePrice] = useState('');
+  const [instructorPay, setInstructorPay] = useState('');
+  const [feesDirty, setFeesDirty] = useState(false);
+  useEffect(() => {
+    if (feesDirty) return;
+    const suggested = approvedFee === undefined ? '' : String(approvedFee);
+    setSalePrice(suggested);
+    setInstructorPay(suggested);
+  }, [approvedFee, feesDirty]);
+  const handleSalePriceChange = (value: string) => {
+    setFeesDirty(true);
+    setSalePrice(value);
+  };
+  const handleInstructorPayChange = (value: string) => {
+    setFeesDirty(true);
+    setInstructorPay(value);
+  };
   const [maxParticipants, setMaxParticipants] = useState('20');
   const [allowWaitlist, setAllowWaitlist] = useState(true);
 
@@ -367,6 +384,13 @@ export default function OrganisationPostJobPage() {
       setMaxParticipants(String(editingJob.max_participants));
     }
     if (editingJob.allow_waitlist != null) setAllowWaitlist(editingJob.allow_waitlist);
+    if (editingJob.sale_price != null || editingJob.instructor_pay != null) {
+      setFeesDirty(true);
+      if (editingJob.sale_price != null) setSalePrice(String(editingJob.sale_price));
+      if (editingJob.instructor_pay != null) {
+        setInstructorPay(String(editingJob.instructor_pay));
+      }
+    }
 
     const jobResources = editingJob.resources ?? [];
     const venue = jobResources.find(r =>
@@ -576,6 +600,17 @@ export default function OrganisationPostJobPage() {
         'The course creator has not approved a rate for this session format and delivery mode.'
       );
     }
+    const saleValue = num(salePrice);
+    const payValue = num(instructorPay);
+    if (saleValue === undefined || saleValue < 0) {
+      return toast.error('Enter the sale price learners are charged per session.');
+    }
+    if (payValue === undefined || payValue < 0) {
+      return toast.error('Enter the pay the instructor receives per session.');
+    }
+    if (payValue > saleValue) {
+      return toast.error('Instructor pay cannot exceed the sale price.');
+    }
 
     const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';
     const requiresLink = delivery === 'ONLINE' || delivery === 'HYBRID';
@@ -642,6 +677,8 @@ export default function OrganisationPostJobPage() {
       meeting_link: requiresLink ? meetingLink.trim() || undefined : undefined,
       max_participants: num(maxParticipants),
       allow_waitlist: allowWaitlist,
+      sale_price: saleValue,
+      instructor_pay: payValue,
       service_type: SERVICE_TYPE_ENUM[service],
       ...(targetGroupUuids.length > 0 ? { target_group_uuids: targetGroupUuids } : {}),
       ...(offeringKind === 'program' && programCategoryUuid
@@ -734,6 +771,10 @@ export default function OrganisationPostJobPage() {
         <PricingCapacity
           approvedFee={approvedFee}
           currency={selectedOffering?.rateCard?.currency}
+          salePrice={salePrice}
+          onSalePriceChange={handleSalePriceChange}
+          instructorPay={instructorPay}
+          onInstructorPayChange={handleInstructorPayChange}
           maxParticipants={maxParticipants}
           onMaxChange={setMaxParticipants}
           allowWaitlist={allowWaitlist}

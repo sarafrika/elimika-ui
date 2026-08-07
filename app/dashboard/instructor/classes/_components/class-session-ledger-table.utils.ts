@@ -211,7 +211,8 @@ export function buildClassSessionLedgerRows({
         ? 'Pending'
         : `${Math.round((attendedCount / enrolledCount) * 100)}%`;
 
-    const feePerHour = selectedClass.training_fee ?? 0;
+    const salePerHour = selectedClass.sale_price ?? 0;
+    const payPerHour = selectedClass.instructor_pay ?? salePerHour;
     const start = new Date(instance.start_time);
     const end = new Date(instance.end_time);
 
@@ -219,11 +220,11 @@ export function buildClassSessionLedgerRows({
 
     const payableAmount =
       showFinancialColumns && statusLabel === 'Completed'
-        ? formatCurrency(attendedCount * feePerHour * durationHours)
+        ? formatCurrency(attendedCount * payPerHour * durationHours)
         : undefined;
 
     const orderAmount = showFinancialColumns
-      ? formatCurrency(enrolledCount * feePerHour * durationHours)
+      ? formatCurrency(enrolledCount * salePerHour * durationHours)
       : undefined;
 
     return {

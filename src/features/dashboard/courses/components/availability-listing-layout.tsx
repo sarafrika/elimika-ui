@@ -264,7 +264,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
             </div>
 
             <div className='text-foreground inline-flex items-center gap-1.5 font-semibold'>
-              KES {Number(cls.training_fee ?? 0).toLocaleString()}
+              KES {Number(cls.sale_price ?? 0).toLocaleString()}
             </div>
           </div>
 

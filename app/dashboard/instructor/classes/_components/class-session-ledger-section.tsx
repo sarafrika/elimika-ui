@@ -142,7 +142,7 @@ export function ClassSessionLedgerSection({
                   </span>
 
                   <span className='text-primary text-sm font-semibold'>
-                    KSh {selectedClass?.training_fee}
+                    KSh {selectedClass?.sale_price}
                   </span>
                 </div>
               </div>
