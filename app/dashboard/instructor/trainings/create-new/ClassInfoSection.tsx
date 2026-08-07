@@ -1,11 +1,16 @@
 'use client';
 
+import { Check, Copy } from 'lucide-react';
+import { useState } from 'react';
+import LocationInput from '@/components/locationInput';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { normalizeLocationType, requiresPhysicalLocation } from '@/lib/location-types';
-import { Check, Copy } from 'lucide-react';
-import { useState } from 'react';
+import {
+  coordinatesFromPlace,
+  normalizeLocationType,
+  requiresPhysicalLocation,
+} from '@/lib/location-types';
 import { ClassDetails } from './page';
 
 export const ClassInformationSection = ({
@@ -42,10 +47,22 @@ export const ClassInformationSection = ({
             <TableRow className='border-b hover:bg-transparent'>
               <TableCell className='bg-muted/30 py-4 font-semibold'>Class Location</TableCell>
               <TableCell className='bg-card py-4'>
-                <Input
+                <LocationInput
                   value={data.location_name}
-                  onChange={e => onChange({ location_name: e.target.value })}
-                  placeholder='Enter Class Location or Room Name'
+                  onChange={value => onChange({ location_name: value })}
+                  placeholder='Search for the venue — e.g. Sarit Centre, Nairobi'
+                  coordinates={{
+                    latitude: data.location_latitude,
+                    longitude: data.location_longitude,
+                  }}
+                  onSuggest={response => {
+                    const { latitude, longitude } = coordinatesFromPlace(response);
+                    onChange({
+                      ...(latitude !== undefined ? { location_latitude: String(latitude) } : {}),
+                      ...(longitude !== undefined ? { location_longitude: String(longitude) } : {}),
+                    });
+                    return response;
+                  }}
                 />
               </TableCell>
             </TableRow>

@@ -1,5 +1,15 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import type React from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +23,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Separator } from '@/components/ui/separator';
 import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,16 +38,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import type React from 'react';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
 import ManageProfileActions from '../../../profile/add-profile/components/ManageProfileActions';
@@ -710,9 +711,9 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                               <FormItem className='space-y-2 sm:max-w-[calc(50%-0.5rem)]'>
                                 <FormLabel>Phone number</FormLabel>
                                 <FormControl>
-                                  <Input
-                                    placeholder='Phone number'
+                                  <PhoneInput
                                     {...field}
+                                    placeholder='Phone number'
                                     className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
                                   />
                                 </FormControl>

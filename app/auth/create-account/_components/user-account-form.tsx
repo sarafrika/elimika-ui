@@ -1,8 +1,13 @@
 'use client';
 
-import { z } from 'zod';
-import { useForm, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
+import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import { type UseFormReturn, useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -13,11 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
-import Link from 'next/link';
-import { format } from 'date-fns';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 export const ProfessionalBodySchema = z.object({
   id: z.string().nullish(),
@@ -193,7 +194,7 @@ export function UserAccountForm({
                 Phone Number <span className='text-destructive'>*</span>
               </FormLabel>
               <FormControl>
-                <Input placeholder='+1234567890' {...field} />
+                <PhoneInput {...field} placeholder='+254 712 345678' />
               </FormControl>
               <FormMessage />
             </FormItem>

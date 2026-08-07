@@ -199,6 +199,8 @@ export const zTrainingBranch = z
       .max(200)
       .describe('**[REQUIRED]** Name of the training branch or location. Must not be blank.'),
     address: z.union([z.string(), z.null()]).optional(),
+    latitude: z.union([z.number(), z.null()]).optional(),
+    longitude: z.union([z.number(), z.null()]).optional(),
     poc_name: z
       .string()
       .min(0)
@@ -375,8 +377,8 @@ export const zStudent = z
       ])
       .optional(),
     bio: z.union([z.string().min(0).max(2000), z.null()]).optional(),
-    secondaryGuardianContact: z.string().optional(),
     primaryGuardianContact: z.string().optional(),
+    secondaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
     full_name: z
       .string()
@@ -703,16 +705,16 @@ export const zRubricScoringLevel = z
       .describe('**[READ-ONLY]** Formatted display name combining level name and points for UI.')
       .readonly()
       .optional(),
-    css_color_class: z
-      .string()
-      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
-      .readonly()
-      .optional(),
     performance_indicator: z
       .string()
       .describe(
         '**[READ-ONLY]** Performance classification based on level order and passing status.'
       )
+      .readonly()
+      .optional(),
+    css_color_class: z
+      .string()
+      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
       .readonly()
       .optional(),
     is_highest_level: z
@@ -1213,16 +1215,16 @@ export const zQuizQuestion = z
       )
       .readonly()
       .optional(),
+    question_category: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable category of the question type.')
+      .readonly()
+      .optional(),
     requires_options: z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if this question type requires predefined answer options.'
       )
-      .readonly()
-      .optional(),
-    question_category: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
     points_display: z
@@ -2184,6 +2186,7 @@ export const zInstructor = z
       .describe(
         '**[REQUIRED]** Reference to the base user account UUID. Links instructor profile to user authentication and personal details.'
       ),
+    location_name: z.union([z.string(), z.null()]).optional(),
     latitude: z.union([z.number().gte(-90).lte(90), z.null()]).optional(),
     longitude: z.union([z.number().gte(-180).lte(180), z.null()]).optional(),
     website: z.union([z.string().url().min(0).max(255), z.null()]).optional(),
@@ -4109,6 +4112,9 @@ export const zCourseCreator = z
       .describe(
         '**[REQUIRED]** Complete name of the course creator. Used in course authorship and creator profiles.'
       ),
+    location_name: z.union([z.string(), z.null()]).optional(),
+    latitude: z.union([z.number(), z.null()]).optional(),
+    longitude: z.union([z.number(), z.null()]).optional(),
     bio: z.union([z.string().min(0).max(2000), z.null()]).optional(),
     professional_headline: z.union([z.string().min(0).max(500), z.null()]).optional(),
     website: z.union([z.string().url().min(0).max(500), z.null()]).optional(),
@@ -7077,14 +7083,14 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
     status_description: z

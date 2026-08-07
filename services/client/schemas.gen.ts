@@ -313,6 +313,18 @@ export const TrainingBranchSchema = {
       description: '**[OPTIONAL]** Physical address of the training branch.',
       example: '123 University Way, Nairobi',
     },
+    latitude: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Latitude of the branch address, resolved when the address was searched.',
+      example: -1.2921,
+    },
+    longitude: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Longitude of the branch address, resolved when the address was searched.',
+      example: 36.8219,
+    },
     poc_name: {
       type: 'string',
       description: '**[REQUIRED]** Name of the point of contact for this branch.',
@@ -615,10 +627,10 @@ export const StudentSchema = {
       maxLength: 2000,
       minLength: 0,
     },
-    secondaryGuardianContact: {
+    primaryGuardianContact: {
       type: 'string',
     },
-    primaryGuardianContact: {
+    secondaryGuardianContact: {
       type: 'string',
     },
     allGuardianContacts: {
@@ -1093,17 +1105,17 @@ export const RubricScoringLevelSchema = {
       example: 'Excellent (4.0 pts)',
       readOnly: true,
     },
-    css_color_class: {
-      type: 'string',
-      description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
-      example: 'level-green',
-      readOnly: true,
-    },
     performance_indicator: {
       type: 'string',
       description:
         '**[READ-ONLY]** Performance classification based on level order and passing status.',
       example: 'Exceeds Expectations',
+      readOnly: true,
+    },
+    css_color_class: {
+      type: 'string',
+      description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
+      example: 'level-green',
       readOnly: true,
     },
     is_highest_level: {
@@ -1864,17 +1876,17 @@ export const QuizQuestionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    question_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable category of the question type.',
+      example: 'Multiple Choice Question',
+      readOnly: true,
+    },
     requires_options: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if this question type requires predefined answer options.',
       example: true,
-      readOnly: true,
-    },
-    question_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable category of the question type.',
-      example: 'Multiple Choice Question',
       readOnly: true,
     },
     points_display: {
@@ -3313,6 +3325,12 @@ export const InstructorSchema = {
       description:
         '**[REQUIRED]** Reference to the base user account UUID. Links instructor profile to user authentication and personal details.',
       example: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
+    },
+    location_name: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Name of the place the instructor searched for, stored alongside the coordinates so their location reads back as a place rather than a coordinate pair.',
+      example: 'Sarit Centre, Nairobi, Kenya',
     },
     latitude: {
       type: ['number', 'null'],
@@ -6427,6 +6445,23 @@ export const CourseCreatorSchema = {
       example: 'Alice Johnson',
       maxLength: 255,
       minLength: 1,
+    },
+    location_name: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Name of the place the course creator searched for, stored alongside the coordinates so their location reads back as a place rather than a coordinate pair.',
+      example: 'Sarit Centre, Nairobi, Kenya',
+    },
+    latitude: {
+      type: ['number', 'null'],
+      description: "**[OPTIONAL]** Geographical latitude of the course creator's primary location.",
+      example: -1.2921,
+    },
+    longitude: {
+      type: ['number', 'null'],
+      description:
+        "**[OPTIONAL]** Geographical longitude of the course creator's primary location.",
+      example: 36.8219,
     },
     bio: {
       type: ['string', 'null'],
@@ -11861,15 +11896,15 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
       example: false,
       readOnly: true,
     },

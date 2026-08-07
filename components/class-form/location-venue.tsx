@@ -2,6 +2,7 @@
 'use client';
 
 import { MapPin, Presentation } from 'lucide-react';
+import LocationInput from '@/components/locationInput';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -79,28 +80,37 @@ export function LocationVenue({
             placeholder='https://meet.…'
           />
         ) : null}
-        {requiresPhysical ? (
+        {requiresPhysical && onLocationLatitudeChange && onLocationLongitudeChange ? (
+          <>
+            <LocationInput
+              value={locationName}
+              onChange={onLocationNameChange}
+              placeholder='Search for the venue — e.g. Nairobi Campus, Lab 2'
+              coordinates={{ latitude: locationLatitude, longitude: locationLongitude }}
+              onSuggest={response => {
+                const place = response.features?.[0];
+                if (!place) return response;
+                const latitude =
+                  place.properties?.coordinates?.latitude ?? place.geometry?.coordinates?.[1];
+                const longitude =
+                  place.properties?.coordinates?.longitude ?? place.geometry?.coordinates?.[0];
+                if (latitude !== undefined) onLocationLatitudeChange(String(latitude));
+                if (longitude !== undefined) onLocationLongitudeChange(String(longitude));
+                return response;
+              }}
+            />
+            <p className='text-muted-foreground text-xs'>
+              {locationLatitude && locationLongitude
+                ? `Pinned at ${Number(locationLatitude).toFixed(5)}, ${Number(locationLongitude).toFixed(5)}.`
+                : 'Pick a result to place this class on the map — the coordinates fill in automatically.'}
+            </p>
+          </>
+        ) : requiresPhysical ? (
           <Input
             value={locationName}
             onChange={e => onLocationNameChange(e.target.value)}
             placeholder='Location name — e.g. Nairobi Campus, Lab 2'
           />
-        ) : null}
-        {requiresPhysical && onLocationLatitudeChange && onLocationLongitudeChange ? (
-          <div className='grid grid-cols-2 gap-2'>
-            <Input
-              value={locationLatitude ?? ''}
-              onChange={e => onLocationLatitudeChange(e.target.value)}
-              placeholder='Latitude — e.g. -1.292066'
-              inputMode='decimal'
-            />
-            <Input
-              value={locationLongitude ?? ''}
-              onChange={e => onLocationLongitudeChange(e.target.value)}
-              placeholder='Longitude — e.g. 36.821945'
-              inputMode='decimal'
-            />
-          </div>
         ) : null}
       </div>
       {showVenue ? (

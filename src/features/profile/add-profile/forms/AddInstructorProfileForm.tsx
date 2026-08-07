@@ -189,8 +189,6 @@ export default function AddInstructorProfileForm() {
               <InstructorLocationFields
                 form={form}
                 onUseCurrentLocation={handleGetCurrentLocation}
-                latitudePlaceholder='e.g., -1.286389'
-                longitudePlaceholder='e.g., 36.817223'
                 buttonLabel='Detect Current Location'
                 buttonClassName='w-full'
                 buttonIcon={MapPin}

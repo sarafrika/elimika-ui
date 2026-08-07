@@ -134,6 +134,14 @@ export type TrainingBranch = {
    */
   address?: string | null;
   /**
+   * **[OPTIONAL]** Latitude of the branch address, resolved when the address was searched.
+   */
+  latitude?: number | null;
+  /**
+   * **[OPTIONAL]** Longitude of the branch address, resolved when the address was searched.
+   */
+  longitude?: number | null;
+  /**
    * **[REQUIRED]** Name of the point of contact for this branch.
    */
   poc_name: string;
@@ -273,8 +281,8 @@ export type Student = {
    * **[OPTIONAL]** Short biography or notes about the student. Used in student profiles.
    */
   bio?: string | null;
-  secondaryGuardianContact?: string;
   primaryGuardianContact?: string;
+  secondaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
@@ -541,13 +549,13 @@ export type RubricScoringLevel = {
    */
   readonly display_name?: string;
   /**
-   * **[READ-ONLY]** CSS-safe color class name derived from the color code.
-   */
-  readonly css_color_class?: string;
-  /**
    * **[READ-ONLY]** Performance classification based on level order and passing status.
    */
   readonly performance_indicator?: string;
+  /**
+   * **[READ-ONLY]** CSS-safe color class name derived from the color code.
+   */
+  readonly css_color_class?: string;
   /**
    * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
    */
@@ -923,13 +931,13 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
-   */
-  readonly requires_options?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable category of the question type.
    */
   readonly question_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
+   */
+  readonly requires_options?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
@@ -1683,6 +1691,10 @@ export type Instructor = {
    * **[REQUIRED]** Reference to the base user account UUID. Links instructor profile to user authentication and personal details.
    */
   user_uuid: string;
+  /**
+   * **[OPTIONAL]** Name of the place the instructor searched for, stored alongside the coordinates so their location reads back as a place rather than a coordinate pair.
+   */
+  location_name?: string | null;
   /**
    * **[OPTIONAL]** Geographical latitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations.
    */
@@ -3140,6 +3152,18 @@ export type CourseCreator = {
    * **[REQUIRED]** Complete name of the course creator. Used in course authorship and creator profiles.
    */
   full_name: string;
+  /**
+   * **[OPTIONAL]** Name of the place the course creator searched for, stored alongside the coordinates so their location reads back as a place rather than a coordinate pair.
+   */
+  location_name?: string | null;
+  /**
+   * **[OPTIONAL]** Geographical latitude of the course creator's primary location.
+   */
+  latitude?: number | null;
+  /**
+   * **[OPTIONAL]** Geographical longitude of the course creator's primary location.
+   */
+  longitude?: number | null;
   /**
    * **[OPTIONAL]** Professional biography describing course creator's background, expertise, and content creation philosophy. Used in creator profiles and course descriptions.
    */
@@ -5984,13 +6008,13 @@ export type Enrollment = {
    */
   readonly can_be_cancelled?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
   /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */

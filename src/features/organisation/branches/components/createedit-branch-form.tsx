@@ -29,8 +29,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Switch } from '@/components/ui/switch';
 import { extractEntity } from '@/lib/api-helpers';
+import { coordinatesFromPlace } from '@/lib/location-types';
 import type { TrainingBranch } from '@/services/client';
 import {
   createTrainingBranch1Mutation,
@@ -46,6 +48,8 @@ import { useOrganisation } from '@/src/features/organisation/context/organisatio
 const branchFormSchema = z.object({
   branch_name: z.string().trim().min(1, 'Branch name is required').max(200),
   address: z.string().trim().max(500).optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
   poc_name: z.string().trim().min(1, 'Point of contact name is required').max(200),
   poc_email: z.string().trim().email('Enter a valid email address').max(320),
   poc_telephone: z.string().trim().min(1, 'Point of contact phone is required').max(50),
@@ -64,6 +68,8 @@ function toFormValues(branch?: TrainingBranch): BranchFormValues {
   return {
     branch_name: branch?.branch_name ?? '',
     address: branch?.address ?? '',
+    latitude: branch?.latitude ?? undefined,
+    longitude: branch?.longitude ?? undefined,
     poc_name: branch?.poc_name ?? '',
     poc_email: branch?.poc_email ?? '',
     poc_telephone: branch?.poc_telephone ?? '',
@@ -119,6 +125,8 @@ export default function CreateEditBranchform({
       organisation_uuid: organisationUuid,
       branch_name: values.branch_name,
       address: values.address || null,
+      latitude: values.latitude ?? null,
+      longitude: values.longitude ?? null,
       poc_name: values.poc_name,
       poc_email: values.poc_email,
       poc_telephone: values.poc_telephone,
@@ -188,7 +196,17 @@ export default function CreateEditBranchform({
                 value={field.value ?? ''}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
-                placeholder='e.g. 123 Waiyaki Way'
+                placeholder='Search for the address — e.g. 123 Waiyaki Way'
+                coordinates={{
+                  latitude: form.watch('latitude'),
+                  longitude: form.watch('longitude'),
+                }}
+                onSuggest={response => {
+                  const { latitude, longitude } = coordinatesFromPlace(response);
+                  if (latitude !== undefined) form.setValue('latitude', latitude);
+                  if (longitude !== undefined) form.setValue('longitude', longitude);
+                  return response;
+                }}
               />
             </FormControl>
             <FormMessage />
@@ -232,7 +250,7 @@ export default function CreateEditBranchform({
             <FormItem>
               <FormLabel>Point of contact phone</FormLabel>
               <FormControl>
-                <Input placeholder='+254 700 000 000' {...field} />
+                <PhoneInput {...field} placeholder='+254 700 000 000' />
               </FormControl>
               <FormMessage />
             </FormItem>

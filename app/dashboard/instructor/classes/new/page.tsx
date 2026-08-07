@@ -1,21 +1,8 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  useInstructorClassesWithSchedules,
-  type InstructorClassWithSchedule,
-} from '@/hooks/use-instructor-classes-with-schedules';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import {
   AlertTriangle,
   BellRing,
@@ -28,12 +15,25 @@ import {
   Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { ClassMediaUpload, type MediaFile } from './_components/class-media-upload';
-import { ServiceTypeSelector, type ServiceType } from './_components/service-type-selector';
-
-import { format } from 'date-fns';
+import LocationInput from '@/components/locationInput';
+import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  type InstructorClassWithSchedule,
+  useInstructorClassesWithSchedules,
+} from '@/hooks/use-instructor-classes-with-schedules';
+import { defaultRecurrenceValue, type RecurrenceValue, toClassRecurrence } from '@/lib/recurrence';
 import { Button } from '../../../../../components/ui/button';
 import { Calendar } from '../../../../../components/ui/calendar';
 import { Checkbox } from '../../../../../components/ui/checkbox';
@@ -41,8 +41,10 @@ import { useUserProfile } from '../../../../../context/profile-context';
 import { useCoursesByIds, useProgramsByIds } from '../../../../../hooks/use-batched-lookups';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
+  coordinatesFromPlace,
   normalizeLocationType,
   requiresPhysicalLocation,
+  toCoordinate,
   trimToUndefined,
 } from '../../../../../lib/location-types';
 import {
@@ -64,8 +66,6 @@ import {
   SessionFormatEnum,
 } from '../../../../../services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
-import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
-import { defaultRecurrenceValue, type RecurrenceValue, toClassRecurrence } from '@/lib/recurrence';
 import { CLASS_COLOR_OPTIONS } from '../../../_components/class-colors';
 import {
   ClassDetails,
@@ -74,9 +74,11 @@ import {
 } from '../../trainings/create-new/page';
 import { ClassCreationHeader } from './_components/class-creation-header';
 import {
-  ClassCreationPreviewRail,
   type ClassCreationPreviewData,
+  ClassCreationPreviewRail,
 } from './_components/class-creation-preview-rail';
+import { ClassMediaUpload, type MediaFile } from './_components/class-media-upload';
+import { type ServiceType, ServiceTypeSelector } from './_components/service-type-selector';
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new-class-creation';
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
@@ -1309,8 +1311,8 @@ const ClassCreationPage = () => {
           : SessionFormatEnum.GROUP,
       location_type: LocationTypeEnum[locationType as keyof typeof LocationTypeEnum],
       location_name: trimToUndefined(classDetails.location_name),
-      location_latitude: -1.292066,
-      location_longitude: 36.821945,
+      location_latitude: toCoordinate(locationLatitude),
+      location_longitude: toCoordinate(locationLongitude),
       max_participants: classDetails.class_limit > 0 ? classDetails.class_limit : undefined,
       classroom: trimToUndefined(classDetails.classroom),
       class_color: trimToUndefined(CLASS_COLOR_OPTIONS?.[0]?.value || classDetails.class_color),
@@ -1935,12 +1937,22 @@ const ClassCreationPage = () => {
                   <div className='mt-4 flex flex-col gap-4 md:flex-row'>
                     <div className='flex-1'>
                       <FieldGroup label='Location *'>
-                        <Input
+                        <LocationInput
                           value={classDetails.location_name}
-                          onChange={e =>
-                            setClassDetails(prev => ({ ...prev, location_name: e.target.value }))
+                          onChange={value =>
+                            setClassDetails(prev => ({ ...prev, location_name: value }))
                           }
-                          placeholder='Nairobi, Kenya'
+                          placeholder='Search for the venue — e.g. Sarit Centre, Nairobi'
+                          coordinates={{
+                            latitude: locationLatitude,
+                            longitude: locationLongitude,
+                          }}
+                          onSuggest={response => {
+                            const { latitude, longitude } = coordinatesFromPlace(response);
+                            if (latitude !== undefined) setLocationLatitude(String(latitude));
+                            if (longitude !== undefined) setLocationLongitude(String(longitude));
+                            return response;
+                          }}
                         />
                       </FieldGroup>
                     </div>

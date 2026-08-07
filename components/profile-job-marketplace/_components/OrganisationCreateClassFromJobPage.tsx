@@ -96,7 +96,13 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
     `/dashboard/opportunities/${jobUuid}`
   );
 
-  const sessions = useMemo(() => job?.session_templates ?? [], [job?.session_templates]);
+  const sessions = useMemo(
+    () =>
+      [...(job?.session_templates ?? [])].sort(
+        (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+      ),
+    [job?.session_templates]
+  );
 
   const createClass = useMutation({
     ...createClassForJobMutation(),
@@ -274,7 +280,10 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
                       },
                       {
                         label: 'Academic period',
-                        value: `${formatDate(job?.academic_period_start_date)} — ${formatDate(job?.academic_period_end_date)}`,
+                        value:
+                          job?.academic_period_start_date || job?.academic_period_end_date
+                            ? `${formatDate(job?.academic_period_start_date)} — ${formatDate(job?.academic_period_end_date)}`
+                            : 'Not set — this job uses a recurring schedule',
                       },
                     ]}
                   />

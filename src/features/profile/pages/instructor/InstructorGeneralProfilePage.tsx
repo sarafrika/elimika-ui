@@ -1,6 +1,14 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import ImageSelector, { type ImageType } from '@/components/image-selector';
 import LocationInput from '@/components/locationInput';
@@ -18,6 +26,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
@@ -46,14 +55,6 @@ import {
 } from '@/src/features/profile/components/profile-view-field';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 
 const generalProfileSchema = z.object({
   user: zUser
@@ -381,7 +382,7 @@ export default function InstructorProfile() {
                     <FormItem>
                       <FormLabel>Phone number</FormLabel>
                       <FormControl>
-                        <Input type='tel' placeholder='+254712345678' {...field} />
+                        <PhoneInput {...field} placeholder='+254 712 345678' />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -61,6 +61,20 @@ const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const SUGGEST_ENDPOINT = 'https://api.mapbox.com/search/searchbox/v1/suggest';
 const RETRIEVE_ENDPOINT = 'https://api.mapbox.com/search/searchbox/v1/retrieve';
 
+/**
+ * The searched place is what gets stored, so the label has to name it. Mapbox
+ * returns the place in `name` and only its surrounding context in
+ * `place_formatted`, so a POI like "Sarit Centre" formats as "Nairobi, Kenya" —
+ * keeping just that would save the city and lose the venue.
+ */
+function composePlaceLabel(name?: string | null, placeFormatted?: string | null) {
+  const place = name?.trim();
+  const context = placeFormatted?.trim();
+  if (!place) return context ?? null;
+  if (!context || context === place || context.startsWith(`${place},`)) return place;
+  return `${place}, ${context}`;
+}
+
 export default function LocationInput({
   value,
   onChange,
@@ -174,7 +188,7 @@ export default function LocationInput({
 
   const handleSelect = useCallback(
     async (suggestion: MapboxSuggestFeature) => {
-      const label = suggestion.place_formatted ?? suggestion.name ?? null;
+      const label = composePlaceLabel(suggestion.name, suggestion.place_formatted);
       setQuery(label ?? '');
       onChange?.(label ?? '');
       setIsOpen(false);
@@ -380,7 +394,9 @@ export default function LocationInput({
                     {selectedFeature?.name ?? selectedPlaceLabel ?? 'Selected location'}
                   </p>
                   <p className='text-muted-foreground text-xs'>
-                    {selectedFeature?.place_formatted ?? selectedPlaceLabel ?? query}
+                    {composePlaceLabel(selectedFeature?.name, selectedFeature?.place_formatted) ??
+                      selectedPlaceLabel ??
+                      query}
                   </p>
                 </div>
                 {hasCoordinates ? (

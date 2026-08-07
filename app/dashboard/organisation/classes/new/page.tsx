@@ -8,17 +8,17 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  AcademicPeriodsPanel,
-  addDays,
   type AcademicPeriod,
+  AcademicPeriodsPanel,
   type ApprovedRateCard,
+  addDays,
   approvedRateFor,
   computeUpcomingSessions,
   DAY_TOKEN,
   DAYS,
-  DEFAULT_DAYS,
   type DayKey,
   type DayRow,
+  DEFAULT_DAYS,
   type Delivery,
   firstOccurrenceOnOrAfter,
   fmtDate,
@@ -31,13 +31,13 @@ import {
   REMINDER_MINUTES,
   ReminderOptions,
   type ReminderState,
-  ScheduleModeCards,
   type ScheduleMode,
+  ScheduleModeCards,
   ServiceCards,
-  serviceFormat,
   type ServiceKey,
-  sessionEndFor,
   StandardSchedule,
+  serviceFormat,
+  sessionEndFor,
   toDateTime,
   UpcomingSessions,
 } from '@/components/class-form';
@@ -48,6 +48,7 @@ import { Button } from '@/components/ui/button';
 import { useOrganisation } from '@/context/organisation-context';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import { extractPage } from '@/lib/api-helpers';
+import { toCoordinate } from '@/lib/location-types';
 import { STALE_TIMES } from '@/lib/query-client';
 import type {
   Category,
@@ -231,6 +232,8 @@ export default function OrganisationCreateClassPage() {
 
   const [delivery, setDelivery] = useState<Delivery>('IN_PERSON');
   const [locationName, setLocationName] = useState('');
+  const [locationLatitude, setLocationLatitude] = useState('');
+  const [locationLongitude, setLocationLongitude] = useState('');
   const [meetingLink, setMeetingLink] = useState('');
   const [venueUuid, setVenueUuid] = useState('');
 
@@ -506,6 +509,8 @@ export default function OrganisationCreateClassPage() {
       default_end_time: earliest.end_time,
       location_type: delivery,
       location_name: requiresPhysical ? locationName.trim() || undefined : undefined,
+      location_latitude: requiresPhysical ? toCoordinate(locationLatitude) : undefined,
+      location_longitude: requiresPhysical ? toCoordinate(locationLongitude) : undefined,
       meeting_link: requiresLink ? meetingLink.trim() || undefined : undefined,
       max_participants: num(maxParticipants),
       allow_waitlist: allowWaitlist,
@@ -595,6 +600,10 @@ export default function OrganisationCreateClassPage() {
           onMeetingLinkChange={setMeetingLink}
           locationName={locationName}
           onLocationNameChange={setLocationName}
+          locationLatitude={locationLatitude}
+          onLocationLatitudeChange={setLocationLatitude}
+          locationLongitude={locationLongitude}
+          onLocationLongitudeChange={setLocationLongitude}
           venueUuid={venueUuid}
           onVenueChange={setVenueUuid}
           venueResources={venueResources}

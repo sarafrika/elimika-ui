@@ -22,6 +22,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
@@ -464,7 +465,7 @@ export default function StudentProfileGeneralForm() {
                   <FormItem>
                     <FormLabel>Phone number</FormLabel>
                     <FormControl>
-                      <Input type='tel' placeholder='+254712345678' {...field} />
+                      <PhoneInput {...field} placeholder='+254 712 345678' />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
