@@ -153,7 +153,6 @@ export function OfferingPicker({
   selectedInstructor?: User;
   onlyAvailable?: boolean;
   onOnlyAvailableChange?: (v: boolean) => void;
-  /** A job has no instructor yet — hide the picker entirely. */
   showInstructor?: boolean;
   titleLabel?: string;
   titleHint?: string;

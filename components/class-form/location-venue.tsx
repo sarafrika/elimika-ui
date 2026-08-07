@@ -45,18 +45,10 @@ export function LocationVenue({
   venueResources: OrganisationResource[];
   onlyAvailable: boolean;
   onOnlyAvailableChange: (v: boolean) => void;
-  /**
-   * The backend requires coordinates alongside a location name for IN_PERSON and
-   * HYBRID. Omit these props to keep the fields hidden.
-   */
   locationLatitude?: string;
   onLocationLatitudeChange?: (v: string) => void;
   locationLongitude?: string;
   onLocationLongitudeChange?: (v: string) => void;
-  /**
-   * Venue reservation belongs to the job flow — ClassDefinitionCreateRequest carries
-   * no resources, so the class form hides the picker rather than show a dead control.
-   */
   showVenue?: boolean;
 }) {
   const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';

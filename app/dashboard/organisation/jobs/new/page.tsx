@@ -109,8 +109,6 @@ export default function OrganisationPostJobPage() {
       ),
     [approvedCoursesQuery.data]
   );
-  // The application row carries the rate card its course creator approved — the only
-  // fee this organisation may advertise, and the one the backend will enforce.
   const rateCardByOffering = useMemo(() => {
     const map = new Map<string, ApprovedRateCard>();
     for (const row of approvedCoursesQuery.data?.data?.content ?? []) {
@@ -160,7 +158,6 @@ export default function OrganisationPostJobPage() {
     [approvedCourseUuids, approvedProgramUuids, courseMap, programMap, rateCardByOffering]
   );
 
-  // Editing an existing posting reuses this page: ?jobUuid=…
   const editingJobUuid = searchParams.get('jobUuid')?.trim() ?? '';
   const isEditMode = Boolean(editingJobUuid);
   const editingJobQuery = useQuery({
@@ -169,7 +166,6 @@ export default function OrganisationPostJobPage() {
   });
   const editingJob = editingJobQuery.data?.data ?? null;
 
-  // Deep link from a course row: /dashboard/organisation/jobs/new?courseUuid=…
   const prefillValue = useMemo(() => {
     const courseUuid = searchParams.get('courseUuid')?.trim();
     if (courseUuid) return `course:${courseUuid}`;
@@ -182,7 +178,6 @@ export default function OrganisationPostJobPage() {
   const [prefillApplied, setPrefillApplied] = useState(false);
   useEffect(() => {
     if (offerings.length === 0) return;
-    // Editing hydrates the offering from the job itself; don't race it.
     if (isEditMode) return;
     if (!prefillApplied && prefillValue && offerings.some(o => o.value === prefillValue)) {
       setOffering(prefillValue);
@@ -253,9 +248,6 @@ export default function OrganisationPostJobPage() {
   const [equipmentUuids, setEquipmentUuids] = useState<string[]>([]);
   const [targetGroupUuids, setTargetGroupUuids] = useState<string[]>([]);
 
-  // Never user-entered. applyTrainingFee resolves the approved rate from the rate card
-  // keyed on (offering, org, session_format, location_type) and rejects any mismatch,
-  // so the figure is displayed and omitted from the payload rather than typed.
   const approvedFee = useMemo(
     () => approvedRateFor(selectedOffering?.rateCard, sessionFormat, delivery),
     [selectedOffering, sessionFormat, delivery]
@@ -354,13 +346,9 @@ export default function OrganisationPostJobPage() {
     if (ends.length) setEndDate(ends[ends.length - 1]);
   }, [mode, academicPeriods]);
 
-  // Reverse of buildSessionTemplates: recurring templates carry one weekday token each,
-  // so they rebuild the standard grid; non-recurring ones are individually picked dates.
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     if (!isEditMode || hydrated || !editingJob) return;
-    // The venue/equipment lists decide which stored resource is which, so hydrating
-    // before they resolve would silently drop the job's reservations.
     if (!orgResourcesQuery.isFetched) return;
 
     if (editingJob.course_uuid) setOffering(`course:${editingJob.course_uuid}`);
@@ -478,8 +466,6 @@ export default function OrganisationPostJobPage() {
   const updateDay = (d: DayKey, patch: Partial<DayRow>) =>
     setDays(prev => ({ ...prev, [d]: { ...prev[d], ...patch } }));
 
-  // The windows the job will hold its resources for — same occurrences the server
-  // expands in holdJobResources.
   const previewWindows: PreviewWindow[] = useMemo(
     () => computeSessionWindows(startDate, endDate, days),
     [startDate, endDate, days]

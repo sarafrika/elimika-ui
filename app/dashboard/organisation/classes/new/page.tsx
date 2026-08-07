@@ -467,8 +467,6 @@ export default function OrganisationCreateClassPage() {
           }
         : {};
 
-    // Resources are reserved by the job that precedes the class — ClassDefinitionCreateRequest
-    // carries no resources field, so nothing is attached here.
     const payload: ClassDefinitionCreateRequest = {
       organisation_uuid: organisationUuid,
       default_instructor_uuid: instructorUuid,

@@ -37,14 +37,6 @@ function overlaps(a: PreviewWindow, b: { start: Date; end: Date }) {
   return a.start < b.end && b.start < a.end;
 }
 
-/**
- * Warns before submitting that a resource is already spoken for.
- *
- * There is no server-side dry-run: ResourceBookingService.validateBookings has no
- * controller, so the only authoritative signal is the 409 on POST. This overlays the
- * projected occurrences on each resource's own calendar to catch the common cases
- * first. Equipment quantity arithmetic is server-only and is not reproduced here.
- */
 export function ResourceAvailabilityPreview({
   organisationUuid,
   resources,
@@ -54,10 +46,6 @@ export function ResourceAvailabilityPreview({
   organisationUuid: string;
   resources: OrganisationResource[];
   windows: PreviewWindow[];
-  /**
-   * When editing, the job's own holds must not count against it — mirrors
-   * Exclusions.forJob(jobUuid) in ResourceBookingServiceImpl.
-   */
   excludeJobUuid?: string;
 }) {
   const range = useMemo(() => {
@@ -73,7 +61,6 @@ export function ResourceAvailabilityPreview({
     queries: resources.map(resource => ({
       ...getCalendarOptions({
         path: { organisationUuid, resourceUuid: resource.uuid ?? '' },
-        // The endpoint binds LocalDate via ISO.DATE — a full timestamp is a 400.
         query: {
           start_date: localDate(range?.start ?? new Date()),
           end_date: localDate(range?.end ?? new Date()),
@@ -122,8 +109,6 @@ export function ResourceAvailabilityPreview({
           }
         }
 
-        // A resource with no open-hours rules at all is treated as always open,
-        // matching ResourceBookingServiceImpl.checkOpenHours.
         if (open.length > 0) {
           const inside = open.some(entry => {
             if (!entry.start_time || !entry.end_time) return false;
@@ -156,7 +141,6 @@ export function ResourceAvailabilityPreview({
     );
   }
 
-  // Never imply the resources are free when the check itself did not run.
   if (failed) {
     return (
       <div className='text-muted-foreground rounded-lg border border-dashed p-4 text-xs'>

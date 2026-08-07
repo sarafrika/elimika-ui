@@ -12,7 +12,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Save, UserCheck } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -121,6 +121,10 @@ export default function ApplyToTrain() {
 
   const progress = (currentStep / STEPS.length) * 100;
   const CurrentStepComponent = STEPS.find(step => step.id === currentStep)?.component;
+  const stepData = useMemo(
+    () => ({ ...instructor, ...applicationData }),
+    [instructor, applicationData]
+  );
 
   const handleNext = () => {
     if (currentStep < STEPS.length) {
@@ -138,10 +142,17 @@ export default function ApplyToTrain() {
     setCurrentStep(stepId);
   };
 
-  const handleDataChange = (stepData: StepData) => {
-    if (!stepData) return;
-    setApplicationData(prev => ({ ...prev, ...stepData }));
-  };
+  const handleDataChange = useCallback((incoming: StepData) => {
+    if (!incoming) return;
+    setApplicationData(prev => {
+      const next = { ...prev, ...incoming };
+      try {
+        return JSON.stringify(next) === JSON.stringify(prev) ? prev : next;
+      } catch {
+        return next;
+      }
+    });
+  }, []);
 
   const handleSaveDraft = () => {
     if (typeof window === 'undefined') return;
@@ -267,7 +278,7 @@ export default function ApplyToTrain() {
           <CardContent>
             {CurrentStepComponent && (
               <CurrentStepComponent
-                data={{ ...instructor, ...applicationData }}
+                data={stepData}
                 // @ts-expect-error
                 skills={instructor?.skills || []}
                 // @ts-expect-error

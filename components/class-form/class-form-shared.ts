@@ -219,11 +219,6 @@ export function computeUpcomingSessions(
 
 export type SessionWindow = { start: Date; end: Date };
 
-/**
- * The concrete start/end pairs the schedule expands to. `computeUpcomingSessions`
- * returns display rows; this returns the windows a resource is actually reserved
- * for, matching what the server expands in holdJobResources.
- */
 export function computeSessionWindows(
   startDate: string,
   endDate: string,
