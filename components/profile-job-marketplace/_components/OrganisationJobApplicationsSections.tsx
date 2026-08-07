@@ -40,6 +40,8 @@ import type {
   Instructor,
   StatusEnum12,
 } from '@/services/client';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 export type ApplicationStatusFilter = 'ALL' | StatusEnum12;
 
@@ -376,6 +378,8 @@ export function JobOverviewPanel({
   organisationUuid?: string | null;
   isLoading: boolean;
 }) {
+  const { activeDomain } = useUserDomain();
+
   if (isLoading) return <JobOverviewSkeleton />;
 
   return (
@@ -421,7 +425,9 @@ export function JobOverviewPanel({
 
       <div className='mt-4 flex flex-wrap gap-2'>
         <Button variant='outline' size='sm' asChild>
-          <Link href='/dashboard/opportunities'>Back to opportunities</Link>
+          <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities')}>
+            Back to opportunities
+          </Link>
         </Button>
       </div>
     </SectionCard>

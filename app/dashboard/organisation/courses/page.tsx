@@ -113,10 +113,14 @@ function CourseActions({
   status,
   onArchive,
   onView,
+  onPostJob,
+  onCreateClass,
 }: {
   status: string;
   onArchive: () => void;
   onView: () => void;
+  onPostJob: () => void;
+  onCreateClass: () => void;
 }) {
   return (
     <DropdownMenu>
@@ -135,18 +139,10 @@ function CourseActions({
           <Pencil className='mr-2 h-4 w-4' /> Edit
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() =>
-            toast.info('Post a job', { description: 'Drafting an instructor job for this course.' })
-          }
-        >
+        <DropdownMenuItem onClick={onPostJob}>
           <Briefcase className='mr-2 h-4 w-4' /> Post a job
         </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() =>
-            toast.info('Create class', { description: 'Starting a new class from this course.' })
-          }
-        >
+        <DropdownMenuItem onClick={onCreateClass}>
           <PlusSquare className='mr-2 h-4 w-4' /> Create class
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -164,6 +160,10 @@ export default function CoursesPage() {
   const organisationUuid = organisation?.uuid ?? '';
   const goToCourse = (uuid?: string) =>
     uuid && router.push(`/dashboard/organisation/courses/${uuid}`);
+  const postJobForCourse = (uuid?: string) =>
+    uuid &&
+    router.push(`/dashboard/organisation/opportunities?create=1&type=course&id=${uuid}`);
+  const goToNewClass = () => router.push('/dashboard/organisation/classes/new');
 
   // Approved/engaged courses the org is running come from its training applications (which carry the rate card).
   const applicationsQuery = useQuery({
@@ -389,6 +389,8 @@ export default function CoursesPage() {
                             <CourseActions
                               status={row.status}
                               onView={() => goToCourse(row.courseUuid)}
+                              onPostJob={() => postJobForCourse(row.courseUuid)}
+                              onCreateClass={goToNewClass}
                               onArchive={() =>
                                 handleArchive(row.rowKey.split('-')[0], row.displayName)
                               }
@@ -470,6 +472,8 @@ export default function CoursesPage() {
                             <CourseActions
                               status={row.status}
                               onView={() => goToCourse(row.courseUuid)}
+                              onPostJob={() => postJobForCourse(row.courseUuid)}
+                              onCreateClass={goToNewClass}
                               onArchive={() =>
                                 handleArchive(row.rowKey.split('-')[0], row.displayName)
                               }

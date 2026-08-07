@@ -980,7 +980,11 @@ export default function CourseDetailPage() {
                     <Button
                       variant='outline'
                       className='justify-start'
-                      onClick={() => router.push('/dashboard/organisation/instructors')}
+                      onClick={() =>
+                        router.push(
+                          `/dashboard/organisation/opportunities?create=1&type=course&id=${courseId}`
+                        )
+                      }
                     >
                       <Briefcase className='mr-2 h-4 w-4' /> Post a job
                     </Button>
@@ -1037,7 +1041,11 @@ export default function CourseDetailPage() {
               <Button
                 variant='outline'
                 className='mt-2 w-full border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white'
-                onClick={() => router.push('/dashboard/organisation/instructors')}
+                onClick={() =>
+                        router.push(
+                          `/dashboard/organisation/opportunities?create=1&type=course&id=${courseId}`
+                        )
+                      }
               >
                 <Briefcase className='mr-2 h-4 w-4' /> Post a job
               </Button>

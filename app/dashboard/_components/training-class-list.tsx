@@ -45,6 +45,8 @@ import type { Enrollment } from '@/services/client';
 import { getEnrollmentsForClassOptions } from '@/services/client/@tanstack/react-query.gen';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type { DashboardClass } from './types';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 export const getLocationBadgeColor = (location: string) => {
   switch (location) {
@@ -90,6 +92,7 @@ export function TrainingClassList({
   loading,
 }: TrainingClassListProps) {
   const router = useRouter();
+  const { activeDomain } = useUserDomain();
   const _instructor = useInstructor();
   const { difficultyMap } = useDifficultyLevels();
 
@@ -353,7 +356,7 @@ export function TrainingClassList({
                           <DropdownMenuContent align='end'>
                             <DropdownMenuItem asChild>
                               <Link
-                                href={`/dashboard/trainings/overview/${cls.uuid}`}
+                                href={buildWorkspaceAliasPath(activeDomain, `/dashboard/trainings/overview/${cls.uuid}`)}
                                 className='flex w-full items-center'
                               >
                                 <EyeIcon className='mr-2 h-4 w-4' />
@@ -362,7 +365,7 @@ export function TrainingClassList({
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
-                                router.push(`/dashboard/trainings/create-new?id=${cls.uuid}`)
+                                router.push(buildWorkspaceAliasPath(activeDomain, `/dashboard/trainings/create-new?id=${cls.uuid}`))
                               }
                               className='flex w-full cursor-pointer items-center'
                             >
@@ -478,7 +481,7 @@ export function TrainingClassList({
                       <div className='flex flex-row items-center justify-between'>
                         <Button
                           onClick={() =>
-                            router.push(`/dashboard/trainings/instructor-console/${cls?.uuid}`)
+                            router.push(buildWorkspaceAliasPath(activeDomain, `/dashboard/trainings/instructor-console/${cls?.uuid}`))
                           }
                         >
                           {' '}

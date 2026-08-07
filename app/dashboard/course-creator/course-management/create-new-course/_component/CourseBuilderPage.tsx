@@ -199,7 +199,7 @@ export default function CourseBuilderPage() {
             queryClient.invalidateQueries({
               queryKey: publishCourseQueryKey({ path: { uuid: course?.data?.uuid as string } }),
             });
-            router.push('/dashboard/course-creator/courses');
+            router.push('/dashboard/course-creator/course-management');
           },
         }
       );

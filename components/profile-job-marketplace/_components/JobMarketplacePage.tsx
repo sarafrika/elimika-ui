@@ -96,6 +96,8 @@ import { ResourceTypeEnum } from '@/services/client/types.gen';
 import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
 import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
@@ -588,6 +590,7 @@ function JobDetailsSheet({
   myApplicationsHref?: string;
 }) {
   const queryClient = useQueryClient();
+  const { activeDomain } = useUserDomain();
   const [applicationNote, setApplicationNote] = useState('');
   const [showAllSessions, setShowAllSessions] = useState(false);
   const alreadyApplied = Boolean(application);
@@ -861,7 +864,12 @@ function JobDetailsSheet({
                   </p>
                   {eligibility && !eligibility.training_approved && job.course_uuid ? (
                     <Button asChild variant='outline' size='sm'>
-                      <Link href={`/dashboard/apply-to-train/${job.course_uuid}`}>
+                      <Link
+                        href={buildWorkspaceAliasPath(
+                          activeDomain,
+                          `/dashboard/apply-to-train/${job.course_uuid}`
+                        )}
+                      >
                         Apply to train this course
                       </Link>
                     </Button>
@@ -1135,6 +1143,28 @@ function JobFormSheet({
     if (form.session_days_of_week.length === 0) {
       toast.error('Please select at least one weekday for the session schedule.');
       return;
+    }
+
+    if (form.location_type !== 'ONLINE') {
+      if (!form.location_name.trim()) {
+        toast.error('Please enter a location name for in-person or hybrid classes.');
+        return;
+      }
+
+      const latitude = parseNumber(form.location_latitude);
+      const longitude = parseNumber(form.location_longitude);
+      if (latitude === undefined || longitude === undefined) {
+        toast.error('Please enter both latitude and longitude for in-person or hybrid classes.');
+        return;
+      }
+      if (latitude < -90 || latitude > 90) {
+        toast.error('Latitude must be between -90 and 90 degrees.');
+        return;
+      }
+      if (longitude < -180 || longitude > 180) {
+        toast.error('Longitude must be between -180 and 180 degrees.');
+        return;
+      }
     }
 
     setResourceConflicts([]);
@@ -1635,6 +1665,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const config = getJobMarketplaceRoleConfig(role);
+  const { activeDomain } = useUserDomain();
   const organisation = useOrganisation();
   const profile = useUserProfile();
   const queryClient = useQueryClient();
@@ -1682,8 +1713,12 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   };
 
   useEffect(() => {
-    if (!canCreateJob || !organisationUuid) return;
     if (createJobParam !== '1') return;
+    if (canManageJobs && !isOrgVerified) {
+      toast.error('Your organisation must be verified before posting class jobs.');
+      return;
+    }
+    if (!canCreateJob || !organisationUuid) return;
 
     const contentType: MarketplaceContentType =
       createContentTypeParam === 'program' ? 'program' : 'course';
@@ -1694,9 +1729,11 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     setFormOpen(true);
   }, [
     canCreateJob,
+    canManageJobs,
     createContentIdParam,
     createContentTypeParam,
     createJobParam,
+    isOrgVerified,
     organisationUuid,
   ]);
 
@@ -1767,7 +1804,6 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         searchParams: {
           applicant_uuid_eq: organisationUuid,
           applicant_type_eq: 'organisation',
-          status_eq: 'approved',
         },
         pageable: { page: 0, size: LOOKUP_PAGE_SIZE },
       },
@@ -1779,6 +1815,10 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       Array.from(
         new Set(
           (approvedTrainingQuery.data?.data?.content ?? [])
+            .filter(row => {
+              const status = (row.status ?? '').toLowerCase();
+              return status === 'approved' || status === 'accepted';
+            })
             .map(row => row.course_uuid)
             .filter((uuid): uuid is string => Boolean(uuid))
         )
@@ -2080,7 +2120,9 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
             <>
               {!isOrganizationView ? (
                 <Button variant='outline' asChild>
-                  <Link href='/dashboard/opportunities/my-applications'>My applications</Link>
+                  <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities/my-applications')}>
+                    My applications
+                  </Link>
                 </Button>
               ) : null}
               {config.showCreateAction && canManageJobs ? (
@@ -2120,7 +2162,13 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 applicationsLabel='My Applications'
                 onApplicationsClick={
                   !isOrganizationView
-                    ? () => router.push('/dashboard/opportunities/my-applications')
+                    ? () =>
+                        router.push(
+                          buildWorkspaceAliasPath(
+                            activeDomain,
+                            '/dashboard/opportunities/my-applications'
+                          )
+                        )
                     : undefined
                 }
               />
@@ -2159,7 +2207,13 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                         applicationsLabel='My Applications'
                         onApplicationsClick={
                           !isOrganizationView
-                            ? () => router.push('/dashboard/opportunities/my-applications')
+                            ? () =>
+                        router.push(
+                          buildWorkspaceAliasPath(
+                            activeDomain,
+                            '/dashboard/opportunities/my-applications'
+                          )
+                        )
                             : undefined
                         }
                       />
@@ -2368,7 +2422,9 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
           selectedJob ? (applicationByJobUuid.get(selectedJob.uuid ?? '') ?? null) : null
         }
         myApplicationsHref={
-          !isOrganizationView ? '/dashboard/opportunities/my-applications' : undefined
+          !isOrganizationView
+            ? buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities/my-applications')
+            : undefined
         }
       />
 

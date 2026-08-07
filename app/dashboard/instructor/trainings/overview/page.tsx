@@ -79,7 +79,7 @@ export default function TrainingsPage({
   return (
     <div className='mb-20 space-y-6'>
       <Link
-        href='/dashboard/instructor/new-class'
+        href='/dashboard/instructor/classes/new'
         className={cx(
           elimikaDesignSystem.components.header.badge,
           'inline-flex cursor-pointer items-center gap-2 transition-opacity hover:opacity-80'

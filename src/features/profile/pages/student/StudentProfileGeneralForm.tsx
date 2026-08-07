@@ -75,7 +75,7 @@ export default function StudentProfileGeneralForm() {
       {
         id: 'general-info',
         title: 'General Information',
-        url: '/dashboard/profile/genera',
+        url: '/dashboard/profile/general',
         isLast: true,
       },
     ]);

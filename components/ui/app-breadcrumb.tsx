@@ -98,14 +98,16 @@ export function AppBreadcrumb({ className, showHome = true }: AppBreadcrumbProps
           </>
         )}
 
-        {displayBreadcrumbs.map(crumb => (
+        {displayBreadcrumbs.map(crumb => {
+          const crumbHref = crumb.url ? buildWorkspaceAliasPath(resolvedDomain, crumb.url) : '';
+          return (
           <Fragment key={crumb.id}>
             <BreadcrumbItem className='hidden md:block'>
               {crumb.isLast ? (
                 <BreadcrumbPage>{crumb.title}</BreadcrumbPage>
               ) : crumb.url ? (
-                <BreadcrumbLink href={crumb.url} asChild>
-                  <Link href={crumb.url}>{crumb.title}</Link>
+                <BreadcrumbLink href={crumbHref} asChild>
+                  <Link href={crumbHref}>{crumb.title}</Link>
                 </BreadcrumbLink>
               ) : (
                 <BreadcrumbPage>{crumb.title}</BreadcrumbPage>
@@ -113,7 +115,8 @@ export function AppBreadcrumb({ className, showHome = true }: AppBreadcrumbProps
             </BreadcrumbItem>
             {!crumb.isLast && <BreadcrumbSeparator className='hidden md:block' />}
           </Fragment>
-        ))}
+          );
+        })}
 
         {displayBreadcrumbs.length > 0 && (
           <BreadcrumbItem className='md:hidden'>

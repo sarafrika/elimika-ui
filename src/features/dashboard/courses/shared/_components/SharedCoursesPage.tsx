@@ -1055,7 +1055,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         type: card.contentKind,
         id: card.id,
       });
-      router.push(`/dashboard/opportunities?${params.toString()}`);
+      router.push(buildWorkspaceAliasPath(domain, `/dashboard/opportunities?${params.toString()}`));
       return;
     }
 

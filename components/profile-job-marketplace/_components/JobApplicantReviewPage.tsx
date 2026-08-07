@@ -29,6 +29,8 @@ import {
   listJobsQueryKey,
   reviewApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 function formatLabel(value?: string | null) {
   if (!value) return 'Not provided';
@@ -53,6 +55,7 @@ export function JobApplicantReviewPage({
   applicationUuid: string;
 }) {
   const router = useRouter();
+  const { activeDomain } = useUserDomain();
   const queryClient = useQueryClient();
   const [reviewNotes, setReviewNotes] = useState('');
 
@@ -107,7 +110,7 @@ export function JobApplicantReviewPage({
     onSuccess: async () => {
       toast.success('Instructor assigned and class created.');
       await invalidate();
-      router.push(`/dashboard/opportunities/${jobUuid}`);
+      router.push(buildWorkspaceAliasPath(activeDomain, `/dashboard/opportunities/${jobUuid}`));
     },
     onError: error => {
       toast.error(error instanceof Error ? error.message : 'Unable to assign this instructor.');

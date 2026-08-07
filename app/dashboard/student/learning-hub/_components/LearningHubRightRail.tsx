@@ -158,7 +158,7 @@ export function LearningHubRightRail({
                 </>
               ) : (
                 <Link
-                  href={`/dashboard/student/course/${course?.id}`}
+                  href={`/dashboard/student/learning-hub/classes/${course?.id}`}
                   className='flex w-full min-w-0 flex-row items-center gap-3'
                 >
                   <div className='text-primary grid size-8 place-items-center rounded-full bg-[color-mix(in_srgb,var(--primary)_10%,white)]'>

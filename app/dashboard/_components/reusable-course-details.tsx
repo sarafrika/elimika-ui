@@ -385,7 +385,7 @@ export default function ReusableCourseDetailsPage({
                 </div>
               ) : (
                 <Link
-                  href={`/dashboard/instructor/courses/${courseData?.uuid}/my-classes`}
+                  href='/dashboard/instructor/classes'
                   className='w-full rounded-xl font-semibold'
                 >
                   <Button className='w-full rounded-xl font-semibold' size='lg'>

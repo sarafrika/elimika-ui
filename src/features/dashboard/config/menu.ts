@@ -371,7 +371,7 @@ export default {
       items: [
         {
           title: 'Courses',
-          url: '/dashboard/courses',
+          url: '/dashboard/all-courses',
           icon: GraduationCap,
         },
         {
@@ -522,7 +522,7 @@ export default {
       items: [
         {
           title: 'Courses',
-          url: '/dashboard/courses',
+          url: '/dashboard/all-courses',
           icon: GraduationCap,
         },
         {
@@ -540,11 +540,6 @@ export default {
           url: '/dashboard/instructors',
           // url: '/dashboard/training-applications',
           icon: Users,
-        },
-        {
-          title: 'Portfolio',
-          url: '/dashboard/portfolio',
-          icon: Briefcase,
         },
         // {
         //   title: 'Library',
@@ -787,7 +782,7 @@ export default {
       items: [
         {
           title: 'Home - All courses',
-          url: '/dashboard/courses',
+          url: '/dashboard/all-courses',
           icon: School,
         },
         {

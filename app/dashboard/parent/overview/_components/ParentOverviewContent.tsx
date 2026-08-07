@@ -212,11 +212,6 @@ export function ParentOverviewContent() {
                 />
                 Refresh data
               </Button>
-              {canLinkLearners && (
-                <Button asChild variant='ghost' size='sm'>
-                  <Link href='/dashboard/parent/students?view=links'>Link another learner</Link>
-                </Button>
-              )}
             </div>
           </div>
           <div className='flex flex-col gap-3 lg:min-w-[360px]'>

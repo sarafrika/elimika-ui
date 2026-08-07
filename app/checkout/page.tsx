@@ -231,7 +231,7 @@ export default function CheckoutPage() {
     if (mpesaStatus !== 'success') return;
     toast.success('Payment received! Your courses are unlocked.');
     clearCart();
-    const timer = setTimeout(() => router.push('/dashboard/my-classes'), 1500);
+    const timer = setTimeout(() => router.push('/dashboard/student/learning-hub'), 1500);
     return () => clearTimeout(timer);
   }, [mpesaStatus, clearCart, router]);
 
@@ -354,7 +354,7 @@ export default function CheckoutPage() {
       toast.success('Order placed successfully!');
 
       // Redirect to order confirmation or courses
-      router.push('/dashboard/my-classes');
+      router.push('/dashboard/student/learning-hub');
     } catch (_error) {
       toast.error('Failed to complete checkout. Please try again.');
     } finally {

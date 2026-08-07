@@ -46,6 +46,8 @@ import {
   ApplicationsListSection,
   JobOverviewPanel,
 } from './OrganisationJobApplicationsSections';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 type JobApplicationsPageProps = {
   jobUuid: string;
@@ -68,6 +70,7 @@ function getJobProgramUuid(job?: ClassMarketplaceJobWithProgram | null) {
 }
 
 export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPageProps) {
+  const { activeDomain } = useUserDomain();
   const router = useRouter();
   const queryClient = useQueryClient();
   const organisation = useOrganisation();
@@ -251,7 +254,9 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
           description='An active organisation profile is required before class job applications can be reviewed.'
           action={
             <Button asChild variant='outline'>
-              <Link href='/dashboard/opportunities'>View class jobs</Link>
+              <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities')}>
+                View class jobs
+              </Link>
             </Button>
           }
           variant='card'
@@ -313,7 +318,10 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                 onViewProfile={application => {
                   if (application.uuid) {
                     router.push(
-                      `/dashboard/opportunities/${jobUuid}/applications/${application.uuid}`
+                      buildWorkspaceAliasPath(
+                        activeDomain,
+                        `/dashboard/opportunities/${jobUuid}/applications/${application.uuid}`
+                      )
                     );
                   }
                 }}

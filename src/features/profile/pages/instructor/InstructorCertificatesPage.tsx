@@ -110,9 +110,9 @@ export default function CertificatesPage() {
     replaceBreadcrumbs([
       { id: 'profile', title: 'Profile', url: '/dashboard/profile' },
       {
-        id: 'certifciates',
-        title: 'Certifciates',
-        url: '/dashboard/profile/certifciates',
+        id: 'certificates',
+        title: 'Certificates',
+        url: '/dashboard/profile/certificates',
         isLast: true,
       },
     ]);

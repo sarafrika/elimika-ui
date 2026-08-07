@@ -89,7 +89,7 @@ const EnrollmentPage = () => {
             });
             setOpenEnrollModal(false);
             toast.success(data?.message || 'Student enrolled successfully');
-            router.replace('/dashboard/instructor/courses');
+            router.replace('/dashboard/instructor/learning');
           },
           onError: error => {
             toast.error(

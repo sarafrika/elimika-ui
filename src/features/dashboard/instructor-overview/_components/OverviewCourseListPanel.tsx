@@ -42,12 +42,12 @@ function SkillsProgressCard({ summary }: { summary: OverviewCourseSummary }) {
         <ActionButton
           label={summary.primaryActionLabel}
           tone='muted'
-          href={'/dashboard/training-hub'}
+          href={'/dashboard/instructor/training-hub'}
         />
         <ActionButton
           label={summary.secondaryActionLabel}
           tone='muted'
-          href={'/dashboard/assignment'}
+          href={'/dashboard/instructor/assignment'}
         />
       </div>
     </div>

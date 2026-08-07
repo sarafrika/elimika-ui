@@ -699,7 +699,7 @@ export default function ClassCourseDetailsPage({
               }
               onInviteStudents={() => setInviteOpen(true)}
               onApplyForFunding={() => {
-                router.push('/dashboard/skills-fund');
+                router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/skills-fund'));
               }}
             />
 
