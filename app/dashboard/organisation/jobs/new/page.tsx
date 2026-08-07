@@ -359,6 +359,9 @@ export default function OrganisationPostJobPage() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     if (!isEditMode || hydrated || !editingJob) return;
+    // The venue/equipment lists decide which stored resource is which, so hydrating
+    // before they resolve would silently drop the job's reservations.
+    if (!orgResourcesQuery.isFetched) return;
 
     if (editingJob.course_uuid) setOffering(`course:${editingJob.course_uuid}`);
     else if (editingJob.program_uuid) setOffering(`program:${editingJob.program_uuid}`);
@@ -456,7 +459,14 @@ export default function OrganisationPostJobPage() {
     }));
 
     setHydrated(true);
-  }, [isEditMode, hydrated, editingJob, venueResources, equipmentResources]);
+  }, [
+    isEditMode,
+    hydrated,
+    editingJob,
+    venueResources,
+    equipmentResources,
+    orgResourcesQuery.isFetched,
+  ]);
 
   const activeDays = useMemo(() => DAYS.filter(d => days[d].active), [days]);
   const upcomingSessions = useMemo(
