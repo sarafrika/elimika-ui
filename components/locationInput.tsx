@@ -62,6 +62,18 @@ const SUGGEST_ENDPOINT = 'https://api.mapbox.com/search/searchbox/v1/suggest';
 const RETRIEVE_ENDPOINT = 'https://api.mapbox.com/search/searchbox/v1/retrieve';
 
 /**
+ * The Search Box API bills a suggest→retrieve pair as one session and rejects
+ * either call without a token, so the same UUID has to span the pair and be
+ * retired once the user picks a result.
+ */
+function createSessionToken() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
+}
+
+/**
  * The searched place is what gets stored, so the label has to name it. Mapbox
  * returns the place in `name` and only its surrounding context in
  * `place_formatted`, so a POI like "Sarit Centre" formats as "Nairobi, Kenya" —
@@ -101,6 +113,13 @@ export default function LocationInput({
   }>({});
   const [selectedPlaceLabel, setSelectedPlaceLabel] = useState<string | null>(null);
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionToken = useRef<string | null>(null);
+  const ensureSessionToken = useCallback(() => {
+    if (!sessionToken.current) {
+      sessionToken.current = createSessionToken();
+    }
+    return sessionToken.current;
+  }, []);
 
   useEffect(() => {
     setQuery(value ?? '');
@@ -154,6 +173,7 @@ export default function LocationInput({
           q: query,
           limit: '6',
           language: 'en',
+          session_token: ensureSessionToken(),
           access_token: mapboxToken,
         });
         const response = await fetch(`${SUGGEST_ENDPOINT}?${params.toString()}`, {
@@ -184,7 +204,7 @@ export default function LocationInput({
       controller.abort();
       clearTimeout(debounce);
     };
-  }, [query]);
+  }, [query, ensureSessionToken]);
 
   const handleSelect = useCallback(
     async (suggestion: MapboxSuggestFeature) => {
@@ -205,6 +225,7 @@ export default function LocationInput({
       try {
         const params = new URLSearchParams({
           mapbox_id: suggestion.mapbox_id,
+          session_token: ensureSessionToken(),
           access_token: mapboxToken,
         });
         const response = await fetch(`${RETRIEVE_ENDPOINT}?${params.toString()}`);
@@ -237,13 +258,14 @@ export default function LocationInput({
         }
 
         onSuggest?.({ ...data, features });
+        sessionToken.current = null;
       } catch (_err) {
         setError('Unable to retrieve location details.');
       } finally {
         setIsLoading(false);
       }
     },
-    [onChange, onSuggest]
+    [ensureSessionToken, onChange, onSuggest]
   );
 
   const _handleClose = useCallback(() => {
