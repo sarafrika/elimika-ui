@@ -30,35 +30,6 @@ export type FilterGroup = {
   items: FilterItem[];
 };
 
-export type JobCardItem = {
-  id: string;
-  title: string;
-  company: string;
-  locationOrMeta: string;
-  description: string;
-  ctaLabel: string;
-  rating: number;
-  accent: 'blue' | 'teal' | 'gold';
-  type: 'image' | 'video';
-  duration?: string;
-  matchLabel?: string;
-};
-
-export type CourseRecommendation = {
-  id: string;
-  iconLabel: string;
-  title: string;
-  subtitle: string;
-  hours: string;
-  accent: 'blue' | 'teal' | 'gold';
-};
-
-export type PortfolioInsight = {
-  label: string;
-  value: string;
-  icon: LucideIcon;
-};
-
 export type JobMarketplaceRoleConfig = {
   title: string;
   description: string;

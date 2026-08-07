@@ -982,7 +982,7 @@ export default function CourseDetailPage() {
                       className='justify-start'
                       onClick={() =>
                         router.push(
-                          `/dashboard/organisation/opportunities?create=1&type=course&id=${courseId}`
+                          `/dashboard/organisation/jobs/new?courseUuid=${courseId}`
                         )
                       }
                     >
@@ -1043,7 +1043,7 @@ export default function CourseDetailPage() {
                 className='mt-2 w-full border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white'
                 onClick={() =>
                         router.push(
-                          `/dashboard/organisation/opportunities?create=1&type=course&id=${courseId}`
+                          `/dashboard/organisation/jobs/new?courseUuid=${courseId}`
                         )
                       }
               >

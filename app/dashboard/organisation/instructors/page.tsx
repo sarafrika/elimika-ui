@@ -119,7 +119,7 @@ export default function InstructorsPage() {
         description='Onboard instructors, assign courses, and track performance.'
         action={
           <Button
-            onClick={() => router.push('/dashboard/organisation/opportunities?create=1')}
+            onClick={() => router.push('/dashboard/organisation/jobs/new')}
           >
             <Briefcase className='mr-2 h-4 w-4' /> Post a job
           </Button>

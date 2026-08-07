@@ -217,6 +217,44 @@ export function computeUpcomingSessions(
   return out.sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
+export type SessionWindow = { start: Date; end: Date };
+
+/**
+ * The concrete start/end pairs the schedule expands to. `computeUpcomingSessions`
+ * returns display rows; this returns the windows a resource is actually reserved
+ * for, matching what the server expands in holdJobResources.
+ */
+export function computeSessionWindows(
+  startDate: string,
+  endDate: string,
+  days: Record<DayKey, DayRow>
+): SessionWindow[] {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T23:59:59`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return [];
+
+  const out: SessionWindow[] = [];
+  const cursor = new Date(start);
+  while (cursor.getTime() <= end.getTime()) {
+    const iso = cursor.getDay();
+    for (const d of DAYS) {
+      if (DAY_TO_ISO[d] !== iso) continue;
+      const row = days[d];
+      if (!row?.active) continue;
+      const [sh, sm] = (row.allDay ? '00:00' : row.start).split(':').map(Number);
+      const [eh, em] = (row.allDay ? '23:59' : row.end).split(':').map(Number);
+      const windowStart = new Date(cursor);
+      windowStart.setHours(sh || 0, sm || 0, 0, 0);
+      const windowEnd = new Date(cursor);
+      windowEnd.setHours(eh || 0, em || 0, 0, 0);
+      if (windowEnd > windowStart) out.push({ start: windowStart, end: windowEnd });
+    }
+    cursor.setDate(cursor.getDate() + 1);
+    if (out.length > 500) break;
+  }
+  return out.sort((a, b) => a.start.getTime() - b.start.getTime());
+}
+
 export function fmtTime12(hhmm: string) {
   const [h, m] = hhmm.split(':').map(Number);
   const period = (h || 0) >= 12 ? 'PM' : 'AM';

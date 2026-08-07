@@ -133,6 +133,9 @@ export function OfferingPicker({
   selectedInstructor,
   onlyAvailable,
   onOnlyAvailableChange,
+  showInstructor = true,
+  titleLabel = 'Class title',
+  titleHint = 'Auto-generated from the approved offering. This is what appears on the classes list.',
 }: {
   loading: boolean;
   offerings: Offering[];
@@ -144,17 +147,21 @@ export function OfferingPicker({
   programCategoryUuid: string;
   onProgramCategoryChange: (v: string) => void;
   title: string;
-  instructors: User[];
-  instructorUuid: string;
-  onInstructorChange: (v: string) => void;
+  instructors?: User[];
+  instructorUuid?: string;
+  onInstructorChange?: (v: string) => void;
   selectedInstructor?: User;
-  onlyAvailable: boolean;
-  onOnlyAvailableChange: (v: boolean) => void;
+  onlyAvailable?: boolean;
+  onOnlyAvailableChange?: (v: boolean) => void;
+  /** A job has no instructor yet — hide the picker entirely. */
+  showInstructor?: boolean;
+  titleLabel?: string;
+  titleHint?: string;
 }) {
   return (
     <>
       {/* Offering + Instructor */}
-      <div className='grid gap-4 sm:grid-cols-2'>
+      <div className={showInstructor ? 'grid gap-4 sm:grid-cols-2' : 'grid gap-4'}>
         <div className='min-w-0 space-y-2'>
           <Label>
             Select Course or Program <span className='text-destructive'>*</span>
@@ -205,13 +212,14 @@ export function OfferingPicker({
             </p>
           ) : null}
         </div>
+        {showInstructor ? (
         <div className='space-y-2'>
           <div className='flex items-center justify-between gap-2'>
             <Label>Instructor</Label>
             <label className='text-muted-foreground flex cursor-pointer items-center gap-1.5 text-[11px]'>
               <Checkbox
                 checked={onlyAvailable}
-                onCheckedChange={v => onOnlyAvailableChange(v === true)}
+                onCheckedChange={v => onOnlyAvailableChange?.(v === true)}
                 className='h-3.5 w-3.5'
               />
               Only available
@@ -233,12 +241,12 @@ export function OfferingPicker({
               </div>
             </SelectTrigger>
             <SelectContent>
-              {instructors.length === 0 ? (
+              {(instructors ?? []).length === 0 ? (
                 <div className='text-muted-foreground px-2 py-1.5 text-xs'>
                   No instructors in your organisation yet
                 </div>
               ) : (
-                instructors.map(i => (
+                (instructors ?? []).map(i => (
                   <SelectItem key={i.uuid} value={i.uuid ?? ''}>
                     {instructorName(i)}
                   </SelectItem>
@@ -252,6 +260,7 @@ export function OfferingPicker({
             instead.
           </p>
         </div>
+        ) : null}
       </div>
 
       {/* Category — auto for courses, chosen for programs */}
@@ -266,12 +275,10 @@ export function OfferingPicker({
       {/* Derived class title preview */}
       <div className='rounded-lg border border-dashed border-teal-600/40 bg-teal-50/60 px-3 py-2.5 dark:bg-teal-950/20'>
         <div className='text-[11px] font-medium tracking-wide text-teal-700 uppercase dark:text-teal-400'>
-          Class title
+          {titleLabel}
         </div>
         <div className='text-foreground mt-0.5 truncate text-sm font-semibold'>{title}</div>
-        <div className='text-muted-foreground text-[11px]'>
-          Auto-generated from the approved offering. This is what appears on the classes list.
-        </div>
+        <div className='text-muted-foreground text-[11px]'>{titleHint}</div>
       </div>
     </>
   );

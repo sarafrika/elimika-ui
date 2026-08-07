@@ -15,3 +15,4 @@ export { PickDatesPanel } from './pick-dates-panel';
 export { AcademicPeriodsPanel } from './academic-periods-panel';
 export { ReminderOptions } from './reminder-options';
 export { UpcomingSessions } from './upcoming-sessions';
+export { ResourceAvailabilityPreview, type PreviewWindow } from './resource-availability-preview';

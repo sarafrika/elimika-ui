@@ -162,7 +162,7 @@ export default function CoursesPage() {
     uuid && router.push(`/dashboard/organisation/courses/${uuid}`);
   const postJobForCourse = (uuid?: string) =>
     uuid &&
-    router.push(`/dashboard/organisation/opportunities?create=1&type=course&id=${uuid}`);
+    router.push(`/dashboard/organisation/jobs/new?courseUuid=${uuid}`);
   const goToNewClass = () => router.push('/dashboard/organisation/classes/new');
 
   // Approved/engaged courses the org is running come from its training applications (which carry the rate card).

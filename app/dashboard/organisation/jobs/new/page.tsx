@@ -1,9 +1,9 @@
-// @ts-nocheck -- 1:1 Lovable port of create-class; @hey-api generated-client type drift
+// @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -13,6 +13,7 @@ import {
   type AcademicPeriod,
   type ApprovedRateCard,
   approvedRateFor,
+  computeSessionWindows,
   computeUpcomingSessions,
   DAY_TOKEN,
   DAYS,
@@ -20,6 +21,7 @@ import {
   type DayKey,
   type DayRow,
   type Delivery,
+  EquipmentTarget,
   firstOccurrenceOnOrAfter,
   fmtDate,
   LocationVenue,
@@ -27,11 +29,14 @@ import {
   type Offering,
   OfferingPicker,
   PickDatesPanel,
+  type PreviewWindow,
   PricingCapacity,
   REMINDER_MINUTES,
   ReminderOptions,
   type ReminderState,
+  ResourceAvailabilityPreview,
   ScheduleModeCards,
+  SERVICE_TYPE_ENUM,
   type ScheduleMode,
   ServiceCards,
   serviceFormat,
@@ -51,27 +56,29 @@ import { extractPage } from '@/lib/api-helpers';
 import { STALE_TIMES } from '@/lib/query-client';
 import type {
   Category,
-  ClassDefinitionCreateRequest,
+  ClassMarketplaceJobRequest,
+  ClassMarketplaceJobResource,
   ClassSessionTemplate,
   OrganisationResource,
-  User,
 } from '@/services/client';
 import { RecurrenceTypeEnum, ResourceTypeEnum } from '@/services/client';
 import {
-  createClassDefinitionMultipartMutation,
+  createJobMutation,
   getAllCategoriesOptions,
-  getUsersByOrganisationAndDomainOptions,
+  getJobOptions,
   listResourcesOptions,
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
+  updateJobMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 
-export default function OrganisationCreateClassPage() {
+export default function OrganisationPostJobPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
+  const isOrgVerified = Boolean(organisation?.admin_verified);
 
-  // ── Real data: approved offerings, org instructors, bookable resources ──────
   const approvedSearchParams = {
     applicant_uuid_eq: organisationUuid,
     applicant_type_eq: 'organisation',
@@ -103,7 +110,7 @@ export default function OrganisationCreateClassPage() {
     [approvedCoursesQuery.data]
   );
   // The application row carries the rate card its course creator approved — the only
-  // fees this organisation may advertise the class at.
+  // fee this organisation may advertise, and the one the backend will enforce.
   const rateCardByOffering = useMemo(() => {
     const map = new Map<string, ApprovedRateCard>();
     for (const row of approvedCoursesQuery.data?.data?.content ?? []) {
@@ -153,19 +160,43 @@ export default function OrganisationCreateClassPage() {
     [approvedCourseUuids, approvedProgramUuids, courseMap, programMap, rateCardByOffering]
   );
 
+  // Editing an existing posting reuses this page: ?jobUuid=…
+  const editingJobUuid = searchParams.get('jobUuid')?.trim() ?? '';
+  const isEditMode = Boolean(editingJobUuid);
+  const editingJobQuery = useQuery({
+    ...getJobOptions({ path: { jobUuid: editingJobUuid } }),
+    enabled: isEditMode,
+  });
+  const editingJob = editingJobQuery.data?.data ?? null;
+
+  // Deep link from a course row: /dashboard/organisation/jobs/new?courseUuid=…
+  const prefillValue = useMemo(() => {
+    const courseUuid = searchParams.get('courseUuid')?.trim();
+    if (courseUuid) return `course:${courseUuid}`;
+    const programUuid = searchParams.get('programUuid')?.trim();
+    if (programUuid) return `program:${programUuid}`;
+    return '';
+  }, [searchParams]);
+
   const [offering, setOffering] = useState('');
+  const [prefillApplied, setPrefillApplied] = useState(false);
   useEffect(() => {
-    if (offerings.length > 0 && !offerings.some(o => o.value === offering)) {
-      setOffering(offerings[0].value);
+    if (offerings.length === 0) return;
+    // Editing hydrates the offering from the job itself; don't race it.
+    if (isEditMode) return;
+    if (!prefillApplied && prefillValue && offerings.some(o => o.value === prefillValue)) {
+      setOffering(prefillValue);
+      setPrefillApplied(true);
+      return;
     }
-  }, [offerings, offering]);
+    if (!offerings.some(o => o.value === offering)) setOffering(offerings[0].value);
+  }, [offerings, offering, prefillValue, prefillApplied, isEditMode]);
 
   const selectedOffering = useMemo(
     () => offerings.find(o => o.value === offering),
     [offerings, offering]
   );
 
-  // A course brings its own categories; a program has none per class, so the org picks one.
   const categoriesQuery = useQuery({
     ...getAllCategoriesOptions({ query: { pageable: { page: 0, size: 100 } } }),
     enabled: selectedOffering?.kind === 'Program',
@@ -178,7 +209,6 @@ export default function OrganisationCreateClassPage() {
   const [programCategoryUuid, setProgramCategoryUuid] = useState('');
   useEffect(() => {
     if (selectedOffering?.kind !== 'Program') return;
-    // Seed from the program's own category when it has one, else the first available.
     if (selectedOffering.categoryUuid) {
       setProgramCategoryUuid(selectedOffering.categoryUuid);
       return;
@@ -188,26 +218,7 @@ export default function OrganisationCreateClassPage() {
     }
   }, [selectedOffering, categories, programCategoryUuid]);
 
-  const title = useMemo(() => selectedOffering?.label ?? 'New Class', [selectedOffering]);
-
-  const instructorsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({
-      path: { uuid: organisationUuid, domainName: 'instructor' },
-    }),
-    enabled: Boolean(organisationUuid),
-  });
-  const instructors = useMemo(
-    () => extractPage<User>(instructorsQuery.data).items,
-    [instructorsQuery.data]
-  );
-  const [instructorUuid, setInstructorUuid] = useState('');
-  const [onlyAvailable, setOnlyAvailable] = useState(true);
-  useEffect(() => {
-    if (instructors.length > 0 && !instructors.some(i => i.uuid === instructorUuid)) {
-      setInstructorUuid(instructors[0].uuid ?? '');
-    }
-  }, [instructors, instructorUuid]);
-  const selectedInstructor = instructors.find(i => i.uuid === instructorUuid);
+  const title = useMemo(() => selectedOffering?.label ?? 'New job', [selectedOffering]);
 
   const orgResourcesQuery = useQuery({
     ...listResourcesOptions({
@@ -224,18 +235,27 @@ export default function OrganisationCreateClassPage() {
     () => orgResources.filter(r => r.resource_type === ResourceTypeEnum.VENUE),
     [orgResources]
   );
+  const equipmentResources = useMemo(
+    () => orgResources.filter(r => r.resource_type === ResourceTypeEnum.EQUIPMENT_POOL),
+    [orgResources]
+  );
 
-  // ── Form state ──────────────────────────────────────────────────────────────
   const [service, setService] = useState<ServiceKey>('group');
   const sessionFormat = serviceFormat(service);
 
   const [delivery, setDelivery] = useState<Delivery>('IN_PERSON');
   const [locationName, setLocationName] = useState('');
+  const [locationLatitude, setLocationLatitude] = useState('');
+  const [locationLongitude, setLocationLongitude] = useState('');
   const [meetingLink, setMeetingLink] = useState('');
   const [venueUuid, setVenueUuid] = useState('');
+  const [onlyAvailable, setOnlyAvailable] = useState(true);
+  const [equipmentUuids, setEquipmentUuids] = useState<string[]>([]);
+  const [targetGroupUuids, setTargetGroupUuids] = useState<string[]>([]);
 
-  // Never user-entered: the fee is whatever the course creator approved for this
-  // session format and delivery mode. The backend rejects anything else.
+  // Never user-entered. applyTrainingFee resolves the approved rate from the rate card
+  // keyed on (offering, org, session_format, location_type) and rejects any mismatch,
+  // so the figure is displayed and omitted from the payload rather than typed.
   const approvedFee = useMemo(
     () => approvedRateFor(selectedOffering?.rateCard, sessionFormat, delivery),
     [selectedOffering, sessionFormat, delivery]
@@ -253,7 +273,7 @@ export default function OrganisationCreateClassPage() {
   const [endDate, setEndDate] = useState(fmtDate(addDays(today, 42)));
   const [regStart, setRegStart] = useState(fmtDate(today));
   const [regEnd, setRegEnd] = useState(fmtDate(addDays(today, 7)));
-  const [continuousReg, setContinuousReg] = useState(true);
+  const [continuousReg, setContinuousReg] = useState(false);
   const [timezone, setTimezone] = useState('EAT East Africa Time');
 
   const [reminder, setReminder] = useState<ReminderState>({
@@ -286,7 +306,6 @@ export default function OrganisationCreateClassPage() {
     },
   ]);
 
-  // Project pick / academic selections into days+dates so the preview stays uniform.
   useEffect(() => {
     if (mode !== 'pick' || pickedDates.length === 0) return;
     const sorted = [...pickedDates].sort((a, b) => a.getTime() - b.getTime());
@@ -335,6 +354,110 @@ export default function OrganisationCreateClassPage() {
     if (ends.length) setEndDate(ends[ends.length - 1]);
   }, [mode, academicPeriods]);
 
+  // Reverse of buildSessionTemplates: recurring templates carry one weekday token each,
+  // so they rebuild the standard grid; non-recurring ones are individually picked dates.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    if (!isEditMode || hydrated || !editingJob) return;
+
+    if (editingJob.course_uuid) setOffering(`course:${editingJob.course_uuid}`);
+    else if (editingJob.program_uuid) setOffering(`program:${editingJob.program_uuid}`);
+
+    if (editingJob.location_type) setDelivery(editingJob.location_type as Delivery);
+    if (editingJob.location_name) setLocationName(editingJob.location_name);
+    if (editingJob.location_latitude != null) {
+      setLocationLatitude(String(editingJob.location_latitude));
+    }
+    if (editingJob.location_longitude != null) {
+      setLocationLongitude(String(editingJob.location_longitude));
+    }
+    if (editingJob.meeting_link) setMeetingLink(editingJob.meeting_link);
+    if (editingJob.max_participants != null) {
+      setMaxParticipants(String(editingJob.max_participants));
+    }
+    if (editingJob.allow_waitlist != null) setAllowWaitlist(editingJob.allow_waitlist);
+
+    const jobResources = editingJob.resources ?? [];
+    const venue = jobResources.find(r =>
+      venueResources.some(v => v.uuid === r.resource_uuid)
+    );
+    if (venue?.resource_uuid) setVenueUuid(venue.resource_uuid);
+    setEquipmentUuids(
+      jobResources
+        .map(r => r.resource_uuid)
+        .filter(
+          (uuid): uuid is string =>
+            Boolean(uuid) && equipmentResources.some(e => e.uuid === uuid)
+        )
+    );
+
+    const templates = editingJob.session_templates ?? [];
+    const recurring = templates.filter(t => t.recurrence?.recurrence_type);
+    const oneOff = templates.filter(t => !t.recurrence?.recurrence_type);
+
+    if (recurring.length > 0) {
+      setMode('standard');
+      const next = {} as Record<DayKey, DayRow>;
+      for (const d of DAYS) next[d] = { ...DEFAULT_DAYS[d], active: false };
+      for (const template of recurring) {
+        const token = (template.recurrence?.days_of_week ?? '').split(',')[0]?.trim();
+        const dayKey = DAYS.find(d => DAY_TOKEN[d] === token);
+        if (!dayKey || !template.start_time || !template.end_time) continue;
+        const start = new Date(template.start_time);
+        const end = new Date(template.end_time);
+        next[dayKey] = {
+          active: true,
+          start: `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`,
+          end: `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`,
+          allDay: false,
+        };
+      }
+      setDays(next);
+      const interval = recurring[0]?.recurrence?.interval_value;
+      if (interval) setRepeatEvery(String(interval));
+      const earliest = recurring
+        .map(t => (t.start_time ? new Date(t.start_time) : null))
+        .filter((d): d is Date => d !== null)
+        .sort((a, b) => a.getTime() - b.getTime())[0];
+      if (earliest) setStartDate(fmtDate(earliest));
+      const seriesEnd = recurring[0]?.recurrence?.end_date;
+      if (seriesEnd) setEndDate(fmtDate(new Date(seriesEnd)));
+    } else if (oneOff.length > 0) {
+      setMode('pick');
+      setPickedDates(
+        oneOff
+          .map(t => (t.start_time ? new Date(t.start_time) : null))
+          .filter((d): d is Date => d !== null)
+      );
+      const first = oneOff[0];
+      if (first?.start_time) {
+        const start = new Date(first.start_time);
+        setSessionStart(
+          `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
+        );
+      }
+    }
+
+    if (editingJob.registration_period_start_date && editingJob.registration_period_end_date) {
+      setContinuousReg(false);
+      setRegStart(fmtDate(new Date(editingJob.registration_period_start_date)));
+      setRegEnd(fmtDate(new Date(editingJob.registration_period_end_date)));
+    } else {
+      setContinuousReg(true);
+    }
+
+    setReminder(r => ({
+      ...r,
+      sendStudents: editingJob.remind_students ?? r.sendStudents,
+      sendInstructor: editingJob.remind_instructor ?? r.sendInstructor,
+      email: editingJob.remind_via_email ?? r.email,
+      sms: editingJob.remind_via_sms ?? r.sms,
+      push: editingJob.remind_via_push ?? r.push,
+    }));
+
+    setHydrated(true);
+  }, [isEditMode, hydrated, editingJob, venueResources, equipmentResources]);
+
   const activeDays = useMemo(() => DAYS.filter(d => days[d].active), [days]);
   const upcomingSessions = useMemo(
     () => computeUpcomingSessions(startDate, endDate, days),
@@ -345,24 +468,48 @@ export default function OrganisationCreateClassPage() {
   const updateDay = (d: DayKey, patch: Partial<DayRow>) =>
     setDays(prev => ({ ...prev, [d]: { ...prev[d], ...patch } }));
 
-  // ── Submit ────────────────────────────────────────────────────────────────
+  // The windows the job will hold its resources for — same occurrences the server
+  // expands in holdJobResources.
+  const previewWindows: PreviewWindow[] = useMemo(
+    () => computeSessionWindows(startDate, endDate, days),
+    [startDate, endDate, days]
+  );
+  const selectedResources = useMemo(
+    () =>
+      orgResources.filter(r => r.uuid === venueUuid || equipmentUuids.includes(r.uuid ?? '')),
+    [orgResources, venueUuid, equipmentUuids]
+  );
+
   const [resourceConflicts, setResourceConflicts] = useState<ConflictItem[]>([]);
-  const createClass = useMutation({
-    ...createClassDefinitionMultipartMutation(),
+  const onMutationError = (error: unknown, fallback: string) => {
+    const report = parseConflictError(error);
+    if (report) {
+      setResourceConflicts(report.conflicts);
+      toast.error(report.message);
+      return;
+    }
+    toast.error(error instanceof Error ? error.message : fallback);
+  };
+
+  const postJob = useMutation({
+    ...createJobMutation(),
     onSuccess: () => {
-      toast.success('Class created and scheduled.');
-      router.push('/dashboard/organisation/classes');
+      toast.success('Job posted. Instructors can now apply.');
+      router.push('/dashboard/organisation/opportunities');
     },
-    onError: error => {
-      const report = parseConflictError(error);
-      if (report) {
-        setResourceConflicts(report.conflicts);
-        toast.error(report.message);
-        return;
-      }
-      toast.error(error instanceof Error ? error.message : 'Unable to create the class.');
-    },
+    onError: error => onMutationError(error, 'Unable to post the job.'),
   });
+
+  const saveJob = useMutation({
+    ...updateJobMutation(),
+    onSuccess: () => {
+      toast.success('Job updated. Resource holds were re-evaluated.');
+      router.push('/dashboard/organisation/opportunities');
+    },
+    onError: error => onMutationError(error, 'Unable to update the job.'),
+  });
+
+  const isSubmitting = postJob.isPending || saveJob.isPending;
 
   const buildSessionTemplates = (): ClassSessionTemplate[] => {
     const interval = Math.max(1, Math.trunc(Number(repeatEvery) || 1));
@@ -395,7 +542,6 @@ export default function OrganisationCreateClassPage() {
       }
       return templates;
     }
-    // standard
     const endBoundary = new Date(`${endDate}T23:59:59`);
     const templates: ClassSessionTemplate[] = [];
     for (const d of activeDays) {
@@ -422,12 +568,10 @@ export default function OrganisationCreateClassPage() {
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (!organisationUuid) return toast.error('No active organisation.');
-    if (!offering) return toast.error('Select an approved course or program.');
-    if (!instructorUuid) {
-      return toast.error(
-        'Pick the instructor who will teach this class. To advertise it instead, post a job.'
-      );
+    if (!isOrgVerified) {
+      return toast.error('Your organisation must be verified before posting class jobs.');
     }
+    if (!offering) return toast.error('Select an approved course or program.');
     if (selectedOffering?.kind === 'Program' && !programCategoryUuid) {
       return toast.error('Pick the category these program classes fall under.');
     }
@@ -436,10 +580,24 @@ export default function OrganisationCreateClassPage() {
         'The course creator has not approved a rate for this session format and delivery mode.'
       );
     }
+
     const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';
     const requiresLink = delivery === 'ONLINE' || delivery === 'HYBRID';
-    if (requiresPhysical && !locationName.trim() && !venueUuid) {
-      return toast.error('Add a location name or pick a venue for in-person / hybrid classes.');
+    if (requiresPhysical) {
+      if (!locationName.trim() && !venueUuid) {
+        return toast.error('Add a location name or pick a venue for in-person / hybrid classes.');
+      }
+      const latitude = num(locationLatitude);
+      const longitude = num(locationLongitude);
+      if (latitude === undefined || longitude === undefined) {
+        return toast.error('Add latitude and longitude for in-person / hybrid classes.');
+      }
+      if (latitude < -90 || latitude > 90) {
+        return toast.error('Latitude must be between -90 and 90 degrees.');
+      }
+      if (longitude < -180 || longitude > 180) {
+        return toast.error('Longitude must be between -180 and 180 degrees.');
+      }
     }
 
     const sessionTemplates = buildSessionTemplates();
@@ -450,6 +608,10 @@ export default function OrganisationCreateClassPage() {
 
     setResourceConflicts([]);
     const [offeringKind, offeringUuid] = offering.split(':');
+    const resources: ClassMarketplaceJobResource[] = [
+      ...(venueUuid ? [{ resource_uuid: venueUuid, quantity: 1 }] : []),
+      ...equipmentUuids.map(uuid => ({ resource_uuid: uuid, quantity: 1 })),
+    ];
 
     const apStarts = academicPeriods
       .map(p => p.startDate)
@@ -467,11 +629,8 @@ export default function OrganisationCreateClassPage() {
           }
         : {};
 
-    // Resources are reserved by the job that precedes the class — ClassDefinitionCreateRequest
-    // carries no resources field, so nothing is attached here.
-    const payload: ClassDefinitionCreateRequest = {
+    const payload: ClassMarketplaceJobRequest = {
       organisation_uuid: organisationUuid,
-      default_instructor_uuid: instructorUuid,
       ...(offeringKind === 'program'
         ? { program_uuid: offeringUuid }
         : { course_uuid: offeringUuid }),
@@ -482,10 +641,21 @@ export default function OrganisationCreateClassPage() {
       default_end_time: earliest.end_time,
       location_type: delivery,
       location_name: requiresPhysical ? locationName.trim() || undefined : undefined,
+      location_latitude: requiresPhysical ? num(locationLatitude) : undefined,
+      location_longitude: requiresPhysical ? num(locationLongitude) : undefined,
       meeting_link: requiresLink ? meetingLink.trim() || undefined : undefined,
       max_participants: num(maxParticipants),
       allow_waitlist: allowWaitlist,
-      ...(approvedFee !== undefined ? { training_fee: approvedFee } : {}),
+      service_type: SERVICE_TYPE_ENUM[service],
+      ...(targetGroupUuids.length > 0 ? { target_group_uuids: targetGroupUuids } : {}),
+      ...(offeringKind === 'program' && programCategoryUuid
+        ? { category_uuid: programCategoryUuid }
+        : {}),
+      remind_students: reminder.sendStudents,
+      remind_instructor: reminder.sendInstructor,
+      remind_via_email: reminder.email,
+      remind_via_sms: reminder.sms,
+      remind_via_push: reminder.push,
       class_reminder_minutes: REMINDER_MINUTES[reminder.window],
       ...(continuousReg
         ? {}
@@ -495,33 +665,52 @@ export default function OrganisationCreateClassPage() {
           }),
       ...academicBounds,
       session_templates: sessionTemplates,
+      ...(resources.length > 0 ? { resources } : {}),
     };
 
-    createClass.mutate({ body: payload, query: { formFields: {} } });
+    if (isEditMode) {
+      saveJob.mutate({ path: { jobUuid: editingJobUuid }, body: payload });
+      return;
+    }
+    postJob.mutate({ body: payload });
   };
 
   return (
-    <div className='mx-auto w-full max-w-[1200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
+    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <form onSubmit={handleSubmit} className='space-y-6'>
         <PageHeader
-          title='Create a class'
-          description='For an offering you already have an instructor for. The class is scheduled immediately on their calendar and yours. To advertise an opening instead, post a job — resources are reserved there, and the class is created once the job is filled.'
+          title={isEditMode ? 'Edit job' : 'Post a job'}
+          description={
+            isEditMode
+              ? 'Changing the schedule or resources releases the existing holds and re-evaluates them. If the new windows clash, nothing is saved.'
+              : 'Advertise an approved course or program for instructors to apply to. The sessions you schedule here reserve your venue and equipment for those exact windows — the class itself is created once you assign an instructor.'
+          }
           action={
             <div className='flex gap-2'>
               <Button
                 type='button'
                 variant='outline'
-                onClick={() => router.push('/dashboard/organisation/classes')}
+                onClick={() => router.push('/dashboard/organisation/opportunities')}
               >
                 Cancel
               </Button>
-              <Button type='submit' disabled={createClass.isPending}>
-                {createClass.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                Publish Class
+              <Button type='submit' disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                {isEditMode ? 'Save changes' : 'Post job'}
               </Button>
             </div>
           }
         />
+
+        {!isOrgVerified ? (
+          <div className='border-warning/40 bg-warning/5 rounded-lg border p-4 text-sm'>
+            <div className='font-semibold'>Your organisation is not verified yet</div>
+            <p className='text-muted-foreground mt-0.5 text-xs'>
+              Class jobs can be drafted here, but posting stays blocked until an administrator
+              verifies your organisation.
+            </p>
+          </div>
+        ) : null}
 
         <OfferingPicker
           loading={loading}
@@ -534,12 +723,9 @@ export default function OrganisationCreateClassPage() {
           onOfferingChange={setOffering}
           selectedOffering={selectedOffering}
           title={title}
-          instructors={instructors}
-          instructorUuid={instructorUuid}
-          onInstructorChange={setInstructorUuid}
-          selectedInstructor={selectedInstructor}
-          onlyAvailable={onlyAvailable}
-          onOnlyAvailableChange={setOnlyAvailable}
+          showInstructor={false}
+          titleLabel='Job title'
+          titleHint='Auto-generated from the approved offering. This is what instructors see in the marketplace.'
         />
 
         <ServiceCards
@@ -571,7 +757,19 @@ export default function OrganisationCreateClassPage() {
           venueResources={venueResources}
           onlyAvailable={onlyAvailable}
           onOnlyAvailableChange={setOnlyAvailable}
-          showVenue={false}
+          locationLatitude={locationLatitude}
+          onLocationLatitudeChange={setLocationLatitude}
+          locationLongitude={locationLongitude}
+          onLocationLongitudeChange={setLocationLongitude}
+        />
+
+        <EquipmentTarget
+          equipmentResources={equipmentResources}
+          equipmentUuids={equipmentUuids}
+          onEquipmentChange={setEquipmentUuids}
+          organisationUuid={organisationUuid}
+          targetGroupUuids={targetGroupUuids}
+          onTargetGroupsChange={setTargetGroupUuids}
         />
 
         <ScheduleModeCards value={mode} onChange={setMode} />
@@ -617,9 +815,22 @@ export default function OrganisationCreateClassPage() {
           />
         )}
 
+        {continuousReg ? (
+          <p className='text-muted-foreground text-xs'>
+            Continuous registration leaves no closing date, so this job will never auto-expire and
+            its resource holds stay in place until it is filled or cancelled.
+          </p>
+        ) : null}
+
         <ReminderOptions value={reminder} onChange={patchReminder} />
 
         <UpcomingSessions sessions={upcomingSessions} />
+
+        <ResourceAvailabilityPreview
+          organisationUuid={organisationUuid}
+          resources={selectedResources}
+          windows={previewWindows}
+        />
 
         <ResourceConflictAlert
           title='These sessions conflict with existing reservations'

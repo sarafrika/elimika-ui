@@ -28,6 +28,11 @@ export function LocationVenue({
   venueResources,
   onlyAvailable,
   onOnlyAvailableChange,
+  locationLatitude,
+  onLocationLatitudeChange,
+  locationLongitude,
+  onLocationLongitudeChange,
+  showVenue = true,
 }: {
   delivery: Delivery;
   onDeliveryChange: (v: Delivery) => void;
@@ -40,11 +45,24 @@ export function LocationVenue({
   venueResources: OrganisationResource[];
   onlyAvailable: boolean;
   onOnlyAvailableChange: (v: boolean) => void;
+  /**
+   * The backend requires coordinates alongside a location name for IN_PERSON and
+   * HYBRID. Omit these props to keep the fields hidden.
+   */
+  locationLatitude?: string;
+  onLocationLatitudeChange?: (v: string) => void;
+  locationLongitude?: string;
+  onLocationLongitudeChange?: (v: string) => void;
+  /**
+   * Venue reservation belongs to the job flow — ClassDefinitionCreateRequest carries
+   * no resources, so the class form hides the picker rather than show a dead control.
+   */
+  showVenue?: boolean;
 }) {
   const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';
   const requiresLink = delivery === 'ONLINE' || delivery === 'HYBRID';
   return (
-    <div className='grid gap-4 sm:grid-cols-2'>
+    <div className={showVenue ? 'grid gap-4 sm:grid-cols-2' : 'grid gap-4'}>
       <div className='space-y-2'>
         <Label>
           Location <span className='text-destructive'>*</span>
@@ -76,7 +94,24 @@ export function LocationVenue({
             placeholder='Location name — e.g. Nairobi Campus, Lab 2'
           />
         ) : null}
+        {requiresPhysical && onLocationLatitudeChange && onLocationLongitudeChange ? (
+          <div className='grid grid-cols-2 gap-2'>
+            <Input
+              value={locationLatitude ?? ''}
+              onChange={e => onLocationLatitudeChange(e.target.value)}
+              placeholder='Latitude — e.g. -1.292066'
+              inputMode='decimal'
+            />
+            <Input
+              value={locationLongitude ?? ''}
+              onChange={e => onLocationLongitudeChange(e.target.value)}
+              placeholder='Longitude — e.g. 36.821945'
+              inputMode='decimal'
+            />
+          </div>
+        ) : null}
       </div>
+      {showVenue ? (
       <div className='space-y-2'>
         <div className='flex items-center justify-between gap-2'>
           <Label>Classroom / Venue</Label>
@@ -110,6 +145,7 @@ export function LocationVenue({
           </SelectContent>
         </Select>
       </div>
+      ) : null}
     </div>
   );
 }
