@@ -6,6 +6,7 @@ import { CalendarCheck2, CalendarX2, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { Badge } from '@/components/ui/badge';
+import { localDate } from '@/lib/date';
 import type { OrganisationResource, ResourceCalendarEntry } from '@/services/client';
 import { getCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
 
@@ -66,13 +67,18 @@ export function ResourceAvailabilityPreview({
     queries: resources.map(resource => ({
       ...getCalendarOptions({
         path: { organisationUuid, resourceUuid: resource.uuid ?? '' },
-        query: { start_date: range?.start as Date, end_date: range?.end as Date },
+        // The endpoint binds LocalDate via ISO.DATE — a full timestamp is a 400.
+        query: {
+          start_date: localDate(range?.start ?? new Date()),
+          end_date: localDate(range?.end ?? new Date()),
+        },
       }),
       enabled: enabled && Boolean(resource.uuid),
     })),
   });
 
   const isLoading = calendars.some(q => q.isLoading);
+  const failed = calendars.some(q => q.isError);
 
   const clashes = useMemo(() => {
     const rows: Array<{
@@ -136,6 +142,16 @@ export function ResourceAvailabilityPreview({
       <div className='text-muted-foreground flex items-center gap-2 rounded-lg border p-4 text-xs'>
         <Loader2 className='size-4 animate-spin' />
         Checking resource availability…
+      </div>
+    );
+  }
+
+  // Never imply the resources are free when the check itself did not run.
+  if (failed) {
+    return (
+      <div className='text-muted-foreground rounded-lg border border-dashed p-4 text-xs'>
+        Could not check resource availability. Posting will still be validated server-side, and a
+        clash will be reported then.
       </div>
     );
   }
