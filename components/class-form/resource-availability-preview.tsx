@@ -49,10 +49,16 @@ export function ResourceAvailabilityPreview({
   organisationUuid,
   resources,
   windows,
+  excludeJobUuid,
 }: {
   organisationUuid: string;
   resources: OrganisationResource[];
   windows: PreviewWindow[];
+  /**
+   * When editing, the job's own holds must not count against it — mirrors
+   * Exclusions.forJob(jobUuid) in ResourceBookingServiceImpl.
+   */
+  excludeJobUuid?: string;
 }) {
   const range = useMemo(() => {
     if (windows.length === 0) return null;
@@ -93,7 +99,11 @@ export function ResourceAvailabilityPreview({
       if (entries.length === 0) return;
 
       const busy = entries.filter(
-        e => e.entry_type === 'HOLD' || e.entry_type === 'CONFIRMED' || e.entry_type === 'BLACKOUT'
+        e =>
+          (e.entry_type === 'HOLD' ||
+            e.entry_type === 'CONFIRMED' ||
+            e.entry_type === 'BLACKOUT') &&
+          !(excludeJobUuid && e.job_uuid === excludeJobUuid)
       );
       const open = entries.filter(e => e.entry_type === 'OPEN_HOURS');
 
@@ -133,7 +143,7 @@ export function ResourceAvailabilityPreview({
     });
 
     return rows;
-  }, [calendars, resources, windows]);
+  }, [calendars, resources, windows, excludeJobUuid]);
 
   if (!enabled) return null;
 

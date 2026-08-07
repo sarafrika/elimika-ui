@@ -840,6 +840,7 @@ export default function OrganisationPostJobPage() {
           organisationUuid={organisationUuid}
           resources={selectedResources}
           windows={previewWindows}
+          excludeJobUuid={editingJobUuid || undefined}
         />
 
         <ResourceConflictAlert
