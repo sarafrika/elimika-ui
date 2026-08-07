@@ -36,6 +36,8 @@ import {
   listJobsQueryKey,
   reviewApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import {
   ApplicationListSkeleton,
@@ -46,8 +48,6 @@ import {
   ApplicationsListSection,
   JobOverviewPanel,
 } from './OrganisationJobApplicationsSections';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 type JobApplicationsPageProps = {
   jobUuid: string;
@@ -145,14 +145,20 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
     },
   });
 
+  const createClassHref = buildWorkspaceAliasPath(
+    activeDomain,
+    `/dashboard/opportunities/${jobUuid}/create-class`
+  );
+
   const assignMutation = useMutation({
     ...assignInstructorMutation(),
     onSuccess: async () => {
-      toast.success('Instructor assigned and class created.');
+      toast.success('Instructor assigned. Create the class to confirm the reserved bookings.');
       await queryClient.invalidateQueries({
         queryKey: listJobApplicationsQueryKey(applicationsListOptions),
       });
       await queryClient.invalidateQueries({ queryKey: listJobsQueryKey(jobsListOptions) });
+      router.push(createClassHref);
     },
     onError: error => {
       toast.error(error instanceof Error ? error.message : 'Unable to assign this instructor.');
@@ -284,6 +290,21 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
           }
           description='Review applicants, approve or reject submissions, then assign an approved instructor.'
         />
+
+        {(job?.status as string | undefined) === 'awaiting_class' ? (
+          <div className='border-primary/40 bg-primary/5 flex flex-wrap items-center gap-3 rounded-md border p-4'>
+            <BriefcaseBusiness className='text-primary size-5 shrink-0' />
+            <div className='min-w-0 text-sm'>
+              <div className='text-foreground font-medium'>An instructor is assigned</div>
+              <p className='text-muted-foreground'>
+                The venue and equipment are still only reserved. Create the class to confirm them.
+              </p>
+            </div>
+            <Button asChild size='sm' className='ml-auto'>
+              <Link href={createClassHref}>Create the class</Link>
+            </Button>
+          </div>
+        ) : null}
 
         <ApplicationStatsCards isLoading={isApplicationsLoading} stats={stats} />
 

@@ -152,6 +152,8 @@ import type {
   SendOrganisationInvitationsResponse,
   RevokeOrganisationInvitationResponse,
   ResendOrganisationInvitationResponse,
+  SettleObligationResponse,
+  CancelObligationResponse,
   ListCompetitionsResponse,
   CreateCompetitionResponse,
   ListNotificationsResponse,
@@ -258,6 +260,7 @@ import type {
   ListJobsResponse,
   CreateJobResponse,
   UploadJobThumbnailResponse,
+  CreateClassForJobResponse,
   CancelJobResponse,
   AssignInstructorResponse,
   ListJobApplicationsResponse,
@@ -353,6 +356,7 @@ import type {
   ListRosterResponse,
   GetCalendarResponse,
   ListBookingsResponse,
+  ListObligationsResponse,
   Search2Response,
   GetCountsResponse,
   GetInvitationByTokenResponse,
@@ -360,6 +364,8 @@ import type {
   GetInstructorRatingSummaryResponse,
   GetInstructorBookingsResponse,
   GetInstructorCalendarResponse,
+  GetStatementResponse,
+  ListInstructorObligationsResponse,
   SearchSkillsResponse,
   SearchInstructorsResponse,
   GetOrganisationInstructorSummariesResponse,
@@ -3179,6 +3185,37 @@ export const resendOrganisationInvitationResponseTransformer = async (
   return data;
 };
 
+const instructorObligationSchemaResponseTransformer = (data: any) => {
+  if (data.accrued_at) {
+    data.accrued_at = new Date(data.accrued_at);
+  }
+  if (data.settled_at) {
+    data.settled_at = new Date(data.settled_at);
+  }
+  return data;
+};
+
+const apiResponseInstructorObligationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = instructorObligationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const settleObligationResponseTransformer = async (
+  data: any
+): Promise<SettleObligationResponse> => {
+  data = apiResponseInstructorObligationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const cancelObligationResponseTransformer = async (
+  data: any
+): Promise<CancelObligationResponse> => {
+  data = apiResponseInstructorObligationSchemaResponseTransformer(data);
+  return data;
+};
+
 const competitionSchemaResponseTransformer = (data: any) => {
   if (data.event_date) {
     data.event_date = new Date(data.event_date);
@@ -4778,6 +4815,20 @@ export const uploadJobThumbnailResponseTransformer = async (
   return data;
 };
 
+const apiResponseClassDefinitionSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = classDefinitionSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const createClassForJobResponseTransformer = async (
+  data: any
+): Promise<CreateClassForJobResponse> => {
+  data = apiResponseClassDefinitionSchemaResponseTransformer(data);
+  return data;
+};
+
 export const cancelJobResponseTransformer = async (data: any): Promise<CancelJobResponse> => {
   data = apiResponseClassMarketplaceJobSchemaResponseTransformer(data);
   return data;
@@ -4786,9 +4837,6 @@ export const cancelJobResponseTransformer = async (data: any): Promise<CancelJob
 const classMarketplaceJobAssignmentResponseSchemaResponseTransformer = (data: any) => {
   if (data.job) {
     data.job = classMarketplaceJobSchemaResponseTransformer(data.job);
-  }
-  if (data.class_definition) {
-    data.class_definition = classDefinitionSchemaResponseTransformer(data.class_definition);
   }
   return data;
 };
@@ -6089,6 +6137,32 @@ export const listBookingsResponseTransformer = async (data: any): Promise<ListBo
   return data;
 };
 
+const pagedDtoInstructorObligationSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return instructorObligationSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoInstructorObligationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoInstructorObligationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listObligationsResponseTransformer = async (
+  data: any
+): Promise<ListObligationsResponse> => {
+  data = apiResponsePagedDtoInstructorObligationSchemaResponseTransformer(data);
+  return data;
+};
+
 export const search2ResponseTransformer = async (data: any): Promise<Search2Response> => {
   data = apiResponsePagedDtoOrganisationSchemaResponseTransformer(data);
   return data;
@@ -6200,6 +6274,44 @@ export const getInstructorCalendarResponseTransformer = async (
   data: any
 ): Promise<GetInstructorCalendarResponse> => {
   data = apiResponseListInstructorCalendarEntrySchemaResponseTransformer(data);
+  return data;
+};
+
+const instructorStatementLineSchemaResponseTransformer = (data: any) => {
+  if (data.session_count) {
+    data.session_count = BigInt(data.session_count.toString());
+  }
+  if (data.outstanding_session_count) {
+    data.outstanding_session_count = BigInt(data.outstanding_session_count.toString());
+  }
+  return data;
+};
+
+const instructorStatementSchemaResponseTransformer = (data: any) => {
+  if (data.lines) {
+    data.lines = data.lines.map((item: any) => {
+      return instructorStatementLineSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseInstructorStatementSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = instructorStatementSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getStatementResponseTransformer = async (data: any): Promise<GetStatementResponse> => {
+  data = apiResponseInstructorStatementSchemaResponseTransformer(data);
+  return data;
+};
+
+export const listInstructorObligationsResponseTransformer = async (
+  data: any
+): Promise<ListInstructorObligationsResponse> => {
+  data = apiResponsePagedDtoInstructorObligationSchemaResponseTransformer(data);
   return data;
 };
 
@@ -7204,6 +7316,9 @@ const organisationInstructorPayableSchemaResponseTransformer = (data: any) => {
   }
   if (data.session_count) {
     data.session_count = BigInt(data.session_count.toString());
+  }
+  if (data.outstanding_session_count) {
+    data.outstanding_session_count = BigInt(data.outstanding_session_count.toString());
   }
   return data;
 };

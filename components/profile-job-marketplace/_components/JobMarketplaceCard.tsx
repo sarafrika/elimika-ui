@@ -116,6 +116,7 @@ export function JobCard({
   applicationStatus,
   hasApplied,
   applicationsHref,
+  createClassHref,
 }: {
   job: ClassMarketplaceJobWithProgram;
   onView: () => void;
@@ -128,6 +129,7 @@ export function JobCard({
   applicationStatus?: string | null;
   hasApplied?: boolean;
   applicationsHref?: string;
+  createClassHref?: string;
 }) {
   const title = job.title ?? 'Untitled job';
   const applicationLabel = getApplicationStatusLabel(applicationStatus);
@@ -192,6 +194,11 @@ export function JobCard({
           {isManagementView && applicationsHref ? (
             <Button asChild variant='secondary' size='sm'>
               <Link href={applicationsHref}>View applications</Link>
+            </Button>
+          ) : null}
+          {isManagementView && createClassHref && (job.status as string) === 'awaiting_class' ? (
+            <Button asChild size='sm'>
+              <Link href={createClassHref}>Create the class</Link>
             </Button>
           ) : null}
           {isManagementView && onEdit ? (

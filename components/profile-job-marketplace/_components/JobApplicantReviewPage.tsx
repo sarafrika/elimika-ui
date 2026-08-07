@@ -108,9 +108,11 @@ export function JobApplicantReviewPage({
   const assignMutation = useMutation({
     ...assignInstructorMutation(),
     onSuccess: async () => {
-      toast.success('Instructor assigned and class created.');
+      toast.success('Instructor assigned. Create the class to confirm the reserved bookings.');
       await invalidate();
-      router.push(buildWorkspaceAliasPath(activeDomain, `/dashboard/opportunities/${jobUuid}`));
+      router.push(
+        buildWorkspaceAliasPath(activeDomain, `/dashboard/opportunities/${jobUuid}/create-class`)
+      );
     },
     onError: error => {
       toast.error(error instanceof Error ? error.message : 'Unable to assign this instructor.');
@@ -326,7 +328,7 @@ export function JobApplicantReviewPage({
                       disabled={!canAssign || notApprovedToTrain || assignMutation.isPending}
                     >
                       {assignMutation.isPending ? <Spinner className='mr-2 size-4' /> : null}
-                      Assign & create class
+                      Assign instructor
                     </Button>
                   </div>
 

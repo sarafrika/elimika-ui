@@ -631,6 +631,12 @@ import type {
   ResendOrganisationInvitationData,
   ResendOrganisationInvitationResponses,
   ResendOrganisationInvitationErrors,
+  SettleObligationData,
+  SettleObligationResponses,
+  SettleObligationErrors,
+  CancelObligationData,
+  CancelObligationResponses,
+  CancelObligationErrors,
   ListCompetitionsData,
   ListCompetitionsResponses,
   ListCompetitionsErrors,
@@ -991,6 +997,9 @@ import type {
   UploadJobThumbnailData,
   UploadJobThumbnailResponses,
   UploadJobThumbnailErrors,
+  CreateClassForJobData,
+  CreateClassForJobResponses,
+  CreateClassForJobErrors,
   CancelJobData,
   CancelJobResponses,
   CancelJobErrors,
@@ -1357,6 +1366,9 @@ import type {
   ListBookingsData,
   ListBookingsResponses,
   ListBookingsErrors,
+  ListObligationsData,
+  ListObligationsResponses,
+  ListObligationsErrors,
   Search2Data,
   Search2Responses,
   Search2Errors,
@@ -1384,6 +1396,12 @@ import type {
   GetInstructorCalendarData,
   GetInstructorCalendarResponses,
   GetInstructorCalendarErrors,
+  GetStatementData,
+  GetStatementResponses,
+  GetStatementErrors,
+  ListInstructorObligationsData,
+  ListInstructorObligationsResponses,
+  ListInstructorObligationsErrors,
   SearchSkillsData,
   SearchSkillsResponses,
   SearchSkillsErrors,
@@ -1964,6 +1982,8 @@ import {
   sendOrganisationInvitationsResponseTransformer,
   revokeOrganisationInvitationResponseTransformer,
   resendOrganisationInvitationResponseTransformer,
+  settleObligationResponseTransformer,
+  cancelObligationResponseTransformer,
   listCompetitionsResponseTransformer,
   createCompetitionResponseTransformer,
   listNotificationsResponseTransformer,
@@ -2070,6 +2090,7 @@ import {
   listJobsResponseTransformer,
   createJobResponseTransformer,
   uploadJobThumbnailResponseTransformer,
+  createClassForJobResponseTransformer,
   cancelJobResponseTransformer,
   assignInstructorResponseTransformer,
   listJobApplicationsResponseTransformer,
@@ -2165,6 +2186,7 @@ import {
   listRosterResponseTransformer,
   getCalendarResponseTransformer,
   listBookingsResponseTransformer,
+  listObligationsResponseTransformer,
   search2ResponseTransformer,
   getCountsResponseTransformer,
   getInvitationByTokenResponseTransformer,
@@ -2172,6 +2194,8 @@ import {
   getInstructorRatingSummaryResponseTransformer,
   getInstructorBookingsResponseTransformer,
   getInstructorCalendarResponseTransformer,
+  getStatementResponseTransformer,
+  listInstructorObligationsResponseTransformer,
   searchSkillsResponseTransformer,
   searchInstructorsResponseTransformer,
   getOrganisationInstructorSummariesResponseTransformer,
@@ -8428,6 +8452,70 @@ export const resendOrganisationInvitation = <ThrowOnError extends boolean = fals
 };
 
 /**
+ * Record that an obligation has been paid
+ * Marks a single obligation settled against the organisation's own payment reference. The platform does not move the money; this records that the organisation did.
+ */
+export const settleObligation = <ThrowOnError extends boolean = false>(
+  options: Options<SettleObligationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SettleObligationResponses,
+    SettleObligationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: settleObligationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/instructor-obligations/{obligationUuid}/settle',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Withdraw an obligation that should never have accrued
+ * Excludes the obligation from what is owed while keeping the row and the reason. An already-settled obligation cannot be withdrawn.
+ */
+export const cancelObligation = <ThrowOnError extends boolean = false>(
+  options: Options<CancelObligationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CancelObligationResponses,
+    CancelObligationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: cancelObligationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/instructor-obligations/{obligationUuid}/cancel',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * List competitions for an organisation
  * Returns all competitions for the organisation with team counts.
  */
@@ -12137,6 +12225,33 @@ export const uploadJobThumbnail = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Create the class for a job whose instructor has been assigned
+ */
+export const createClassForJob = <ThrowOnError extends boolean = false>(
+  options: Options<CreateClassForJobData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateClassForJobResponses,
+    CreateClassForJobErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createClassForJobResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/class',
+    ...options,
+  });
+};
+
+/**
  * Cancel a marketplace class job
  */
 export const cancelJob = <ThrowOnError extends boolean = false>(
@@ -15647,6 +15762,34 @@ export const listBookings = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List an organisation's instructor obligations
+ * One row per delivered session, at the rate that stood when the session completed. Optionally narrowed to a single instructor and/or status.
+ */
+export const listObligations = <ThrowOnError extends boolean = false>(
+  options: Options<ListObligationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListObligationsResponses,
+    ListObligationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listObligationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/instructor-obligations',
+    ...options,
+  });
+};
+
+/**
  * Search organisations
  * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting. Available filters include:
  * - `name` - Filter by organisation name (partial match)
@@ -15895,6 +16038,62 @@ export const getInstructorCalendar = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/instructors/{instructorUuid}/availability/calendar',
+    ...options,
+  });
+};
+
+/**
+ * An instructor's statement of what they are owed
+ * Per-organisation summary of outstanding and settled pay for delivered sessions.
+ */
+export const getStatement = <ThrowOnError extends boolean = false>(
+  options: Options<GetStatementData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetStatementResponses,
+    GetStatementErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getStatementResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/users/{instructorUserUuid}/obligation-statement',
+    ...options,
+  });
+};
+
+/**
+ * An instructor's own obligation rows
+ * The session-by-session detail behind the statement, newest first.
+ */
+export const listInstructorObligations = <ThrowOnError extends boolean = false>(
+  options: Options<ListInstructorObligationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListInstructorObligationsResponses,
+    ListInstructorObligationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listInstructorObligationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/users/{instructorUserUuid}/instructor-obligations',
     ...options,
   });
 };
@@ -18274,7 +18473,7 @@ export const getClassDefinitionsForOrganisation = <ThrowOnError extends boolean 
 
 /**
  * Get what an organisation owes each instructor
- * Payables per instructor = sum(per-class training_fee x completed sessions) across the organisation's classes assigned to that instructor.
+ * Aggregated from the instructor obligation ledger: one row was written per delivered session at the training fee that stood on the day, so re-rating a class does not change what has already been earned. Settled sessions move from amount_owed to amount_settled. Use /api/v1/organisations/{organisationUuid}/instructor-obligations for the row-level detail.
  */
 export const getInstructorPayablesForOrganisation = <ThrowOnError extends boolean = false>(
   options: Options<GetInstructorPayablesForOrganisationData, ThrowOnError>

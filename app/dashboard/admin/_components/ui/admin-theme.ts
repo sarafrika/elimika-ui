@@ -47,7 +47,15 @@ export function resolveStatusTone(status?: string | null): { tone: StatusTone; l
   const label = raw.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 
   const success = ['verified', 'active', 'published', 'approved', 'completed', 'paid', 'true'];
-  const warning = ['pending', 'in_review', 'pending_review', 'draft', 'processing', 'submitted'];
+  const warning = [
+    'pending',
+    'in_review',
+    'pending_review',
+    'draft',
+    'processing',
+    'submitted',
+    'awaiting_class',
+  ];
   const destructive = [
     'rejected',
     'inactive',

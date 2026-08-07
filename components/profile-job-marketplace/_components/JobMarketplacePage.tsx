@@ -9,6 +9,7 @@ import {
   Building2,
   CalendarDays,
   CheckCircle2,
+  Clock,
   Filter,
   Globe2,
   GraduationCap,
@@ -34,9 +35,11 @@ import {
   StatCardSkeleton,
   StatusBadge,
 } from '@/app/dashboard/admin/_components/ui';
-import { PageHeader as AdminPageHeader } from '@/components/dashboard';
 import DeleteModal from '@/components/custom-modals/delete-modal';
+import { PageHeader as AdminPageHeader } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
+import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
+import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -60,6 +63,7 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { formatCurrency } from '@/lib/format-currency';
 import { cn } from '@/lib/utils';
 import {
@@ -93,9 +97,6 @@ import type {
   TrainingProgram,
 } from '@/services/client/types.gen';
 import { ResourceTypeEnum } from '@/services/client/types.gen';
-import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
-import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
-import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
@@ -156,6 +157,7 @@ const sessionFormatOptions: SessionFormatEnum[] = ['INDIVIDUAL', 'GROUP'];
 const statusOptions: Array<{ label: string; value: JobFilter }> = [
   { label: 'All', value: 'all' },
   { label: 'Open', value: 'open' },
+  { label: 'Awaiting class', value: 'awaiting_class' as JobFilter },
   { label: 'Filled', value: 'filled' },
   { label: 'Cancelled', value: 'cancelled' },
   { label: 'Expired', value: 'expired' },
@@ -1043,6 +1045,12 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         },
         { label: 'Open', value: openCount, icon: CheckCircle2, tone: 'success' as const },
         {
+          label: 'Awaiting class',
+          value: jobs.filter(job => (job.status as string) === 'awaiting_class').length,
+          icon: Clock,
+          tone: 'warning' as const,
+        },
+        {
           label: 'Filled',
           value: jobs.filter(job => job.status === 'filled').length,
           icon: Users,
@@ -1423,6 +1431,14 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                                   ? buildWorkspaceAliasPath(
                                       activeDomain,
                                       `/dashboard/opportunities/${job.uuid}`
+                                    )
+                                  : undefined
+                              }
+                              createClassHref={
+                                isOrganizationView && job.uuid
+                                  ? buildWorkspaceAliasPath(
+                                      activeDomain,
+                                      `/dashboard/opportunities/${job.uuid}/create-class`
                                     )
                                   : undefined
                               }
