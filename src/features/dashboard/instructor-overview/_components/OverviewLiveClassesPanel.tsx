@@ -74,7 +74,7 @@ export function OverviewLiveClassesPanel({ liveClasses }: OverviewLiveClassesPan
     <OverviewSectionShell
       title='Live Classes'
       onActionLabel='See All'
-      onActionHref='/dashboard/classes'
+      onActionHref='/dashboard/instructor/classes'
     >
       {liveClasses.length ? (
         <div className='space-y-3'>

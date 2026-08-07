@@ -45,7 +45,7 @@ export function OverviewUpcomingClassesPanel({
     <OverviewSectionShell
       title='Upcoming Classes'
       onActionLabel='See All'
-      onActionHref='/dashboard/calendar'
+      onActionHref='/dashboard/instructor/calendar'
     >
       {upcomingClasses.length ? (
         <div className='border-border bg-card rounded-[10px] border px-2 py-1 shadow-sm'>

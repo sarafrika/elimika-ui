@@ -128,7 +128,7 @@ export function OverviewCourseListPanel({ courses, summary }: OverviewCourseList
       <OverviewSectionShell
         title='Active Courses'
         onActionLabel='See All'
-        onActionHref='/dashboard/instructor/courses'
+        onActionHref='/dashboard/instructor/all-courses'
       >
         {courses.length ? (
           <div className='w-full min-w-0 space-y-3 overflow-hidden'>

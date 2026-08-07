@@ -121,7 +121,7 @@ function scan(files, routes) {
   const barePath = [];
 
   const nav =
-    '(?:href=\\{?|(?:router|Router)\\.(?:push|replace|prefetch)\\(\\s*|\\bredirect\\(\\s*|\\bpermanentRedirect\\(\\s*)';
+    '(?:[A-Za-z]*[Hh]ref\\s*=\\s*\\{?\\s*|(?:router|Router)\\.(?:push|replace|prefetch)\\(\\s*|\\bredirect\\(\\s*|\\bpermanentRedirect\\(\\s*)';
   const navigation = new RegExp(
     `${nav}(?:'(\\/dashboard[^']*)'|"(\\/dashboard[^"]*)"|\`(\\/dashboard(?:[^\`$]|\\$\\{[^}]*\\})*)\`)`,
     'g'

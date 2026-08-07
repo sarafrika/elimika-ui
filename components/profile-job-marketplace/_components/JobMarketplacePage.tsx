@@ -1420,7 +1420,10 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                               hasApplied={Boolean(application)}
                               applicationsHref={
                                 isOrganizationView && job.uuid
-                                  ? `/dashboard/opportunities/${job.uuid}`
+                                  ? buildWorkspaceAliasPath(
+                                      activeDomain,
+                                      `/dashboard/opportunities/${job.uuid}`
+                                    )
                                   : undefined
                               }
                             />

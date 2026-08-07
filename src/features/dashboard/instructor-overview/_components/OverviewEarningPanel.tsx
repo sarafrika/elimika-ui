@@ -50,7 +50,7 @@ export function OverviewEarningPanel({ earningOverview }: OverviewEarningPanelPr
     <OverviewSectionShell
       title='Earning Overview'
       onActionLabel='See All'
-      onActionHref='/dashboard/revenue'
+      onActionHref='/dashboard/instructor/revenue'
     >
       {earningOverview.length ? (
         <div className='space-y-3'>
