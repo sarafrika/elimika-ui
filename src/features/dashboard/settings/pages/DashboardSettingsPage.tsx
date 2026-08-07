@@ -37,6 +37,8 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
+import { ElimikaUserId } from '../../../../../app/dashboard/_components/elimika-user-id';
+import { useProfileShareUrl } from '../../../../../app/dashboard/_components/my-skills/use-profile-share-url';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
 import ManageProfileActions from '../../../profile/add-profile/components/ManageProfileActions';
@@ -229,6 +231,8 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
       website: roleProfileWebsite,
     },
   });
+
+  const shareUrl = useProfileShareUrl(profile?.uuid, 'student');
 
   const profileFormSnapshot = [
     profile?.uuid ?? '',
@@ -515,271 +519,106 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
             {variant === 'organisation' ? (
               <InstitutionProfilePanel />
             ) : (
-            <div className='grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.72fr)_minmax(320px,0.88fr)]'>
-              <Card className='border-border/70 rounded-md p-0 shadow-sm'>
-                <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                  <div className='flex flex-wrap items-start justify-between gap-4'>
-                    <div className='min-w-0 space-y-1'>
-                      <CardTitle className='text-base font-semibold sm:text-lg'>
-                        Profile Details
-                      </CardTitle>
-                      <div className='text-muted-foreground sm:text-md text-sm leading-6'>
-                        <RichTextRenderer htmlString={descriptionByVariant[variant]} />
-                      </div>
-                    </div>
-                    <Badge
-                      variant='outline'
-                      className='rounded-md px-3 py-1 text-[10px] tracking-[0.16em] uppercase'
-                    >
-                      {roleLabel}
-                    </Badge>
-                  </div>
-                </CardHeader>
-
-                <CardContent className='space-y-5 px-4 py-5 sm:px-5'>
-                  <div className='flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between'>
-                    <div className='flex min-w-0 items-center gap-4'>
-                      <Avatar className='border-border/70 size-20 border sm:size-24'>
-                        <AvatarImage
-                          src={toAuthenticatedMediaUrl(profileImage) as string}
-                          alt={profileName}
-                        />
-                        <AvatarFallback className='bg-primary/10 text-primary text-xl font-semibold'>
-                          {profileInitials}
-                        </AvatarFallback>
-                      </Avatar>
-
+              <div className='grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.72fr)_minmax(320px,0.88fr)]'>
+                <Card className='border-border/70 rounded-md p-0 shadow-sm'>
+                  <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
+                    <div className='flex flex-wrap items-start justify-between gap-4'>
                       <div className='min-w-0 space-y-1'>
-                        <h2 className='text-foreground truncate text-xl font-semibold sm:text-2xl'>
-                          {profileName}
-                        </h2>
-                        <p className='text-muted-foreground truncate text-sm sm:text-base'>
-                          {profile?.courseCreator?.professional_headline ??
-                            profile?.instructor?.professional_headline ??
-                            organisation?.description ??
-                            profile?.email}
-                        </p>
-
-                        <div className='flex flex-wrap gap-2 pt-1'>
-                          <Badge variant='secondary' className='rounded-md px-3 py-1 text-xs'>
-                            {roleLabel}
-                          </Badge>
-                          <Badge variant='outline' className='rounded-md px-3 py-1 text-xs'>
-                            Joined {joinedDate}
-                          </Badge>
+                        <CardTitle className='text-base font-semibold sm:text-lg'>
+                          Profile Details
+                        </CardTitle>
+                        <div className='text-muted-foreground sm:text-md text-sm leading-6'>
+                          <RichTextRenderer htmlString={descriptionByVariant[variant]} />
                         </div>
                       </div>
-                    </div>
-
-                    <div className='flex flex-wrap gap-2'>
-                      <Button
-                        type='button'
+                      <Badge
                         variant='outline'
-                        className='h-10 rounded-md px-4 text-sm font-medium shadow-sm'
-                        onClick={handleStartEditing}
-                        disabled={isEditing || !profile?.uuid}
+                        className='rounded-md px-3 py-1 text-[10px] tracking-[0.16em] uppercase'
                       >
-                        Edit details
-                      </Button>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        className='h-10 rounded-md px-4 text-sm font-medium shadow-sm'
-                        onClick={openProfileImagePicker}
-                        disabled={!profile?.uuid || uploadProfileImage.isPending}
-                      >
-                        {uploadProfileImage.isPending ? 'Uploading...' : 'Upload New'}
-                      </Button>
+                        {roleLabel}
+                      </Badge>
                     </div>
-                    <input
-                      ref={fileInputRef}
-                      type='file'
-                      accept='image/*'
-                      className='hidden'
-                      onChange={handleProfileImageUpload}
-                    />
-                  </div>
+                  </CardHeader>
 
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSaveProfile)} className='space-y-5'>
-                      <div className='space-y-4'>
-                        <div className='grid gap-4 sm:grid-cols-2'>
-                          {isEditing ? (
-                            <>
-                              <FormField
-                                control={form.control}
-                                name='first_name'
-                                render={({ field }) => (
-                                  <FormItem className='space-y-2'>
-                                    <FormLabel>First name</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder='First name'
-                                        {...field}
-                                        className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name='middle_name'
-                                render={({ field }) => (
-                                  <FormItem className='space-y-2'>
-                                    <FormLabel>Middle name</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder='Middle name'
-                                        {...field}
-                                        className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name='last_name'
-                                render={({ field }) => (
-                                  <FormItem className='space-y-2'>
-                                    <FormLabel>Last name</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder='Last name'
-                                        {...field}
-                                        className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name='email'
-                                render={({ field }) => (
-                                  <FormItem className='space-y-2'>
-                                    <FormLabel>Email</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder='Email address'
-                                        type='email'
-                                        {...field}
-                                        className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </>
-                          ) : (
-                            <>
-                              <SettingsField
-                                label='First name'
-                                value={form.getValues('first_name') || 'Not set'}
-                                helperText='Primary display name from your current profile.'
-                              />
-                              <SettingsField
-                                label='Middle name'
-                                value={form.getValues('middle_name') || 'Not set'}
-                                helperText='Optional middle name or initial.'
-                              />
-                              <SettingsField
-                                label='Last name'
-                                value={form.getValues('last_name') || 'Not set'}
-                                helperText='Family name shown in your account.'
-                              />
-                              <SettingsField
-                                label='Email'
-                                value={form.getValues('email') || 'Not set'}
-                                helperText='Used for sign in and system notifications.'
-                              />
-                            </>
-                          )}
-                        </div>
-
-                        {isEditing ? (
-                          <FormField
-                            control={form.control}
-                            name='phone_number'
-                            render={({ field }) => (
-                              <FormItem className='space-y-2 sm:max-w-[calc(50%-0.5rem)]'>
-                                <FormLabel>Phone number</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder='Phone number'
-                                    {...field}
-                                    className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
+                  <CardContent className='space-y-5 px-4 py-5 sm:px-5'>
+                    <div className='flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between'>
+                      <div className='flex min-w-0 items-center gap-4'>
+                        <Avatar className='border-border/70 size-20 border sm:size-24'>
+                          <AvatarImage
+                            src={toAuthenticatedMediaUrl(profileImage) as string}
+                            alt={profileName}
                           />
-                        ) : (
-                          <div className='sm:max-w-[calc(50%-0.5rem)]'>
-                            <SettingsField
-                              label='Phone number'
-                              value={form.getValues('phone_number') || 'Not set'}
-                              helperText='Shown for contact and recovery purposes.'
-                            />
+                          <AvatarFallback className='bg-primary/10 text-primary text-xl font-semibold'>
+                            {profileInitials}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className='min-w-0 space-y-1'>
+                          <h2 className='text-foreground truncate text-xl font-semibold sm:text-2xl'>
+                            {profileName}
+                          </h2>
+                          <p className='text-muted-foreground truncate text-sm sm:text-base'>
+                            {profile?.courseCreator?.professional_headline ??
+                              profile?.instructor?.professional_headline ??
+                              organisation?.description ??
+                              profile?.email}
+                          </p>
+
+                          <div className='flex flex-wrap gap-2 pt-1'>
+                            <Badge variant='secondary' className='rounded-md px-3 py-1 text-xs'>
+                              {roleLabel}
+                            </Badge>
+                            <Badge variant='outline' className='rounded-md px-3 py-1 text-xs'>
+                              Joined {joinedDate}
+                            </Badge>
                           </div>
-                        )}
+                        </div>
+                      </div>
 
-                        {isEditing && variant !== 'admin' ? (
+                      <div className='flex flex-wrap gap-2'>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          className='h-10 rounded-md px-4 text-sm font-medium shadow-sm'
+                          onClick={handleStartEditing}
+                          disabled={isEditing || !profile?.uuid}
+                        >
+                          Edit details
+                        </Button>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          className='h-10 rounded-md px-4 text-sm font-medium shadow-sm'
+                          onClick={openProfileImagePicker}
+                          disabled={!profile?.uuid || uploadProfileImage.isPending}
+                        >
+                          {uploadProfileImage.isPending ? 'Uploading...' : 'Upload New'}
+                        </Button>
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type='file'
+                        accept='image/*'
+                        className='hidden'
+                        onChange={handleProfileImageUpload}
+                      />
+                    </div>
+
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(handleSaveProfile)} className='space-y-5'>
+                        <div className='space-y-4'>
                           <div className='grid gap-4 sm:grid-cols-2'>
-                            <FormField
-                              control={form.control}
-                              name='bio'
-                              render={({ field }) => (
-                                <FormItem className='space-y-2 sm:col-span-2'>
-                                  <FormLabel>Bio</FormLabel>
-                                  <FormControl>
-                                    <Textarea
-                                      placeholder='Write a short bio about yourself'
-                                      rows={4}
-                                      {...field}
-                                      className='border-border/70 bg-background/70 rounded-md text-sm shadow-none'
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            {variant === 'student' ? (
-                              <FormField
-                                control={form.control}
-                                name='demographic_tag'
-                                render={({ field }) => (
-                                  <FormItem className='space-y-2 sm:col-span-2 sm:max-w-[calc(50%-0.5rem)]'>
-                                    <FormLabel>Demographic tag</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder='e.g. Nairobi, Kenya'
-                                        {...field}
-                                        className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            ) : (
+                            {isEditing ? (
                               <>
                                 <FormField
                                   control={form.control}
-                                  name='professional_headline'
+                                  name='first_name'
                                   render={({ field }) => (
-                                    <FormItem className='space-y-2 sm:col-span-2'>
-                                      <FormLabel>Professional headline</FormLabel>
+                                    <FormItem className='space-y-2'>
+                                      <FormLabel>First name</FormLabel>
                                       <FormControl>
                                         <Input
-                                          placeholder='e.g. Senior Software Engineer & AI Instructor'
+                                          placeholder='First name'
                                           {...field}
                                           className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
                                         />
@@ -788,16 +627,50 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                                     </FormItem>
                                   )}
                                 />
-
                                 <FormField
                                   control={form.control}
-                                  name='website'
+                                  name='middle_name'
                                   render={({ field }) => (
-                                    <FormItem className='space-y-2 sm:col-span-2'>
-                                      <FormLabel>Website</FormLabel>
+                                    <FormItem className='space-y-2'>
+                                      <FormLabel>Middle name</FormLabel>
                                       <FormControl>
                                         <Input
-                                          placeholder='https://yourwebsite.com'
+                                          placeholder='Middle name'
+                                          {...field}
+                                          className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name='last_name'
+                                  render={({ field }) => (
+                                    <FormItem className='space-y-2'>
+                                      <FormLabel>Last name</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder='Last name'
+                                          {...field}
+                                          className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name='email'
+                                  render={({ field }) => (
+                                    <FormItem className='space-y-2'>
+                                      <FormLabel>Email</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder='Email address'
+                                          type='email'
                                           {...field}
                                           className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
                                         />
@@ -807,184 +680,317 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                                   )}
                                 />
                               </>
+                            ) : (
+                              <>
+                                <SettingsField
+                                  label='First name'
+                                  value={form.getValues('first_name') || 'Not set'}
+                                  helperText='Primary display name from your current profile.'
+                                />
+                                <SettingsField
+                                  label='Middle name'
+                                  value={form.getValues('middle_name') || 'Not set'}
+                                  helperText='Optional middle name or initial.'
+                                />
+                                <SettingsField
+                                  label='Last name'
+                                  value={form.getValues('last_name') || 'Not set'}
+                                  helperText='Family name shown in your account.'
+                                />
+                                <SettingsField
+                                  label='Email'
+                                  value={form.getValues('email') || 'Not set'}
+                                  helperText='Used for sign in and system notifications.'
+                                />
+                              </>
                             )}
                           </div>
-                        ) : variant !== 'admin' ? (
-                          <div className='space-y-4'>
-                            <SettingsField
-                              label={variant === 'student' ? 'Bio' : 'Profile bio'}
-                              value={roleProfileBio || 'Not set'}
-                              helperText='A short summary shown on your profile.'
-                              multiline
-                            />
 
-                            {isEditing && variant === 'student' ? (
+                          {isEditing ? (
+                            <FormField
+                              control={form.control}
+                              name='phone_number'
+                              render={({ field }) => (
+                                <FormItem className='space-y-2 sm:max-w-[calc(50%-0.5rem)]'>
+                                  <FormLabel>Phone number</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder='Phone number'
+                                      {...field}
+                                      className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          ) : (
+                            <div className='sm:max-w-[calc(50%-0.5rem)]'>
                               <SettingsField
-                                label='Demographic tag'
-                                value={roleProfileLocation || 'Not set'}
-                                helperText='A location-style tag used on your student profile.'
+                                label='Phone number'
+                                value={form.getValues('phone_number') || 'Not set'}
+                                helperText='Shown for contact and recovery purposes.'
                               />
-                            ) : null}
-                          </div>
-                        ) : null}
+                            </div>
+                          )}
+
+                          {isEditing && variant !== 'admin' ? (
+                            <div className='grid gap-4 sm:grid-cols-2'>
+                              <FormField
+                                control={form.control}
+                                name='bio'
+                                render={({ field }) => (
+                                  <FormItem className='space-y-2 sm:col-span-2'>
+                                    <FormLabel>Bio</FormLabel>
+                                    <FormControl>
+                                      <Textarea
+                                        placeholder='Write a short bio about yourself'
+                                        rows={4}
+                                        {...field}
+                                        className='border-border/70 bg-background/70 rounded-md text-sm shadow-none'
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              {variant === 'student' ? (
+                                <FormField
+                                  control={form.control}
+                                  name='demographic_tag'
+                                  render={({ field }) => (
+                                    <FormItem className='space-y-2 sm:col-span-2 sm:max-w-[calc(50%-0.5rem)]'>
+                                      <FormLabel>Demographic tag</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder='e.g. Nairobi, Kenya'
+                                          {...field}
+                                          className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              ) : (
+                                <>
+                                  <FormField
+                                    control={form.control}
+                                    name='professional_headline'
+                                    render={({ field }) => (
+                                      <FormItem className='space-y-2 sm:col-span-2'>
+                                        <FormLabel>Professional headline</FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            placeholder='e.g. Senior Software Engineer & AI Instructor'
+                                            {...field}
+                                            className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+
+                                  <FormField
+                                    control={form.control}
+                                    name='website'
+                                    render={({ field }) => (
+                                      <FormItem className='space-y-2 sm:col-span-2'>
+                                        <FormLabel>Website</FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            placeholder='https://yourwebsite.com'
+                                            {...field}
+                                            className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </>
+                              )}
+                            </div>
+                          ) : variant !== 'admin' ? (
+                            <div className='space-y-4'>
+                              <SettingsField
+                                label={variant === 'student' ? 'Bio' : 'Profile bio'}
+                                value={roleProfileBio || 'Not set'}
+                                helperText='A short summary shown on your profile.'
+                                multiline
+                              />
+
+                              {isEditing && variant === 'student' ? (
+                                <SettingsField
+                                  label='Demographic tag'
+                                  value={roleProfileLocation || 'Not set'}
+                                  helperText='A location-style tag used on your student profile.'
+                                />
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <Separator />
+
+                        <SettingsField
+                          label='Username'
+                          value={profile?.username ?? 'Not set'}
+                          helperText='Your unique login handle.'
+                        />
+
+                        <div className='grid gap-4 sm:grid-cols-2'>
+                          {roleFields[variant].map(field => (
+                            <SettingsField
+                              key={field.label}
+                              label={field.label}
+                              value={field.value}
+                            />
+                          ))}
+                        </div>
+
+                        <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-end'>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            className='h-10 min-w-[140px] rounded-md px-4 text-sm'
+                            onClick={handleCancelEditing}
+                            disabled={!isEditing}
+                          >
+                            Cancel
+                          </Button>
+
+                          <Button
+                            type='submit'
+                            className='h-10 min-w-[140px] rounded-md px-4 text-sm'
+                            disabled={
+                              !isEditing ||
+                              updateUser.isPending ||
+                              isSubmitting ||
+                              updateStudentProfile.isPending ||
+                              updateInstructorProfile.isPending ||
+                              updateCourseCreatorProfile.isPending
+                            }
+                          >
+                            {updateUser.isPending ||
+                              updateStudentProfile.isPending ||
+                              updateInstructorProfile.isPending ||
+                              updateCourseCreatorProfile.isPending ||
+                              isSubmitting ? (
+                              <span className='flex items-center gap-2'>
+                                <Spinner className='h-4 w-4' />
+                                Saving...
+                              </span>
+                            ) : (
+                              'Save Changes'
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+
+                <div className='flex min-w-0 flex-col gap-4'>
+                  <ElimikaUserId fullName={profile?.full_name!} studentNumber={profile?.user_no!} photoUrl={profileImage} shareUrl={shareUrl} status={profile?.active} issuedAt={profile?.created_date} nationality={'Nationality'} />
+
+                  <Card className='border-border/70 rounded-md p-0 shadow-sm'>
+                    <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
+                      <CardTitle className='flex items-center gap-2 text-base font-semibold sm:text-lg'>
+                        <Wallet className='text-primary size-4 sm:size-5' />
+                        {variant === 'admin' ? 'Wallet Rules & Limits' : 'Account Access'}
+                      </CardTitle>
+                    </CardHeader>
+
+                    <CardContent className='space-y-4 px-4 py-5 sm:px-5'>
+                      <div className='border-border/70 flex items-center justify-between gap-4 rounded-[16px] border p-4'>
+                        <div className='min-w-0'>
+                          <p className='text-foreground text-sm font-semibold'>Current status</p>
+                          <p className='text-muted-foreground text-xs sm:text-sm'>
+                            {profile?.active
+                              ? 'Your account is active and ready to use.'
+                              : 'Your account is currently inactive.'}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={profile?.active ? 'success' : 'secondary'}
+                          className='rounded-md px-3 py-1 text-xs'
+                        >
+                          {profile?.active ? 'Active' : 'Inactive'}
+                        </Badge>
                       </div>
 
-                      <Separator />
-
-                      <SettingsField
-                        label='Username'
-                        value={profile?.username ?? 'Not set'}
-                        helperText='Your unique login handle.'
-                      />
-
-                      <div className='grid gap-4 sm:grid-cols-2'>
-                        {roleFields[variant].map(field => (
-                          <SettingsField
-                            key={field.label}
-                            label={field.label}
-                            value={field.value}
-                          />
+                      <div className='grid gap-3'>
+                        {summaryItems.map(item => (
+                          <div
+                            key={item.label}
+                            className='border-border/70 flex items-start justify-between gap-4 rounded-[16px] border px-4 py-3.5'
+                          >
+                            <div className='min-w-0'>
+                              <p className='text-muted-foreground text-[0.78rem] font-medium sm:text-sm'>
+                                {item.label}
+                              </p>
+                              <p className='text-foreground text-sm font-semibold sm:text-base'>
+                                {item.value}
+                              </p>
+                            </div>
+                          </div>
                         ))}
                       </div>
+                    </CardContent>
+                  </Card>
 
-                      <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-end'>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className='h-10 min-w-[140px] rounded-md px-4 text-sm'
-                          onClick={handleCancelEditing}
-                          disabled={!isEditing}
-                        >
-                          Cancel
-                        </Button>
-
-                        <Button
-                          type='submit'
-                          className='h-10 min-w-[140px] rounded-md px-4 text-sm'
-                          disabled={
-                            !isEditing ||
-                            updateUser.isPending ||
-                            isSubmitting ||
-                            updateStudentProfile.isPending ||
-                            updateInstructorProfile.isPending ||
-                            updateCourseCreatorProfile.isPending
-                          }
-                        >
-                          {updateUser.isPending ||
-                          updateStudentProfile.isPending ||
-                          updateInstructorProfile.isPending ||
-                          updateCourseCreatorProfile.isPending ||
-                          isSubmitting ? (
-                            <span className='flex items-center gap-2'>
-                              <Spinner className='h-4 w-4' />
-                              Saving...
-                            </span>
-                          ) : (
-                            'Save Changes'
-                          )}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-
-              <div className='flex min-w-0 flex-col gap-4'>
-                <Card className='border-border/70 rounded-md p-0 shadow-sm'>
-                  <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                    <CardTitle className='flex items-center gap-2 text-base font-semibold sm:text-lg'>
-                      <Wallet className='text-primary size-4 sm:size-5' />
-                      {variant === 'admin' ? 'Wallet Rules & Limits' : 'Account Access'}
-                    </CardTitle>
-                  </CardHeader>
-
-                  <CardContent className='space-y-4 px-4 py-5 sm:px-5'>
-                    <div className='border-border/70 flex items-center justify-between gap-4 rounded-[16px] border p-4'>
-                      <div className='min-w-0'>
-                        <p className='text-foreground text-sm font-semibold'>Current status</p>
-                        <p className='text-muted-foreground text-xs sm:text-sm'>
-                          {profile?.active
-                            ? 'Your account is active and ready to use.'
-                            : 'Your account is currently inactive.'}
-                        </p>
-                      </div>
-                      <Badge
-                        variant={profile?.active ? 'success' : 'secondary'}
-                        className='rounded-md px-3 py-1 text-xs'
-                      >
-                        {profile?.active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </div>
-
-                    <div className='grid gap-3'>
-                      {summaryItems.map(item => (
+                  <Card className='border-border/70 rounded-md p-0 shadow-sm'>
+                    <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
+                      <CardTitle className='flex items-center gap-2 text-base font-semibold sm:text-lg'>
+                        <ShieldCheck className='text-primary size-4 sm:size-5' />
+                        {variant === 'admin' ? 'Roles & Permissions' : 'Quick Links'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
+                      {config.accessItems.map(item => (
                         <div
-                          key={item.label}
+                          key={item.title}
                           className='border-border/70 flex items-start justify-between gap-4 rounded-[16px] border px-4 py-3.5'
                         >
                           <div className='min-w-0'>
-                            <p className='text-muted-foreground text-[0.78rem] font-medium sm:text-sm'>
-                              {item.label}
-                            </p>
-                            <p className='text-foreground text-sm font-semibold sm:text-base'>
-                              {item.value}
+                            <p className='text-foreground text-sm font-semibold'>{item.title}</p>
+                            <p className='text-muted-foreground text-xs leading-5 sm:text-sm'>
+                              {item.description}
                             </p>
                           </div>
+                          {item.href ? (
+                            <Button
+                              asChild
+                              size='icon'
+                              variant='ghost'
+                              className='shrink-0 rounded-md'
+                            >
+                              <Link href={item.href}>
+                                <ChevronRight className='size-4' />
+                              </Link>
+                            </Button>
+                          ) : (
+                            <LayoutPanelLeft className='text-muted-foreground mt-1 size-4 shrink-0' />
+                          )}
                         </div>
                       ))}
-                    </div>
-                  </CardContent>
-                </Card>
 
-                <Card className='border-border/70 rounded-md p-0 shadow-sm'>
-                  <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                    <CardTitle className='flex items-center gap-2 text-base font-semibold sm:text-lg'>
-                      <ShieldCheck className='text-primary size-4 sm:size-5' />
-                      {variant === 'admin' ? 'Roles & Permissions' : 'Quick Links'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className='space-y-3 px-4 py-5 sm:px-5'>
-                    {config.accessItems.map(item => (
-                      <div
-                        key={item.title}
-                        className='border-border/70 flex items-start justify-between gap-4 rounded-[16px] border px-4 py-3.5'
+                      <Button
+                        asChild
+                        variant='outline'
+                        className='mt-2 h-10 w-full rounded-md border-dashed text-sm font-medium'
                       >
-                        <div className='min-w-0'>
-                          <p className='text-foreground text-sm font-semibold'>{item.title}</p>
-                          <p className='text-muted-foreground text-xs leading-5 sm:text-sm'>
-                            {item.description}
-                          </p>
-                        </div>
-                        {item.href ? (
-                          <Button
-                            asChild
-                            size='icon'
-                            variant='ghost'
-                            className='shrink-0 rounded-md'
-                          >
-                            <Link href={item.href}>
-                              <ChevronRight className='size-4' />
-                            </Link>
-                          </Button>
-                        ) : (
-                          <LayoutPanelLeft className='text-muted-foreground mt-1 size-4 shrink-0' />
-                        )}
-                      </div>
-                    ))}
-
-                    <Button
-                      asChild
-                      variant='outline'
-                      className='mt-2 h-10 w-full rounded-md border-dashed text-sm font-medium'
-                    >
-                      <Link href={accessActionHref}>
-                        Open {variant === 'admin' ? 'system config' : 'help center'}
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
+                        <Link href={accessActionHref}>
+                          Open {variant === 'admin' ? 'system config' : 'help center'}
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-            </div>
             )}
           </TabsContent>
 

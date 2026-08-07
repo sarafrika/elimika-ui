@@ -41,8 +41,8 @@ const PAYMENT_METHODS = [
     },
 ];
 
-export const formatKES = (amount: number) =>
-    `KES ${amount.toLocaleString()}`;
+export const formatKES = (amount: number | string) =>
+    `KES ${amount?.toLocaleString()}`;
 
 export default function PaymentMethodPicker() {
     const [selectedMethod, setSelectedMethod] =

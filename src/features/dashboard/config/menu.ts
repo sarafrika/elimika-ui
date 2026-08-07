@@ -42,7 +42,7 @@ import {
   UsersIcon,
   UsersRound,
   Wallet,
-  Wrench,
+  Wrench
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -195,6 +195,11 @@ export default {
           url: '/dashboard/my-skills',
           icon: BadgeCheck,
         },
+        {
+          title: 'Skills Wallet',
+          url: '/dashboard/skills-wallet',
+          icon: BadgeCheck,
+        },
         // {
         //   title: 'Profile',
         //   url: '/dashboard/profile',
@@ -292,7 +297,7 @@ export default {
         {
           title: 'Skills Fund',
           url: '/dashboard/skills-fund',
-          icon: Wallet,
+          icon: PiggyBank,
         },
         {
           title: 'Payments',
@@ -444,7 +449,7 @@ export default {
         {
           title: 'Skills Fund',
           url: '/dashboard/skills-fund',
-          icon: Wallet,
+          icon: PiggyBank,
         },
         {
           title: 'Revenue',

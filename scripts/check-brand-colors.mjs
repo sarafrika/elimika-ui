@@ -31,6 +31,7 @@ const FAIL_PATTERNS = [
       // when the lib/color-themes palette is empty.
       'src/features/profile/landing/course-creator-tab.tsx',
       'src/features/profile/landing/instructors-tab.tsx',
+      'app/dashboard/_components/color-charts.tsx',
       'app/dashboard/_components/class-colors.ts',
       'app/dashboard/_components/certificate/CertificatePage.tsx',
       'app/dashboard/_components/certificate/CertificatePDF.tsx',

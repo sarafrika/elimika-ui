@@ -617,7 +617,7 @@ const getStatusFromType = (type: string): 'completed' | 'pending' | 'failed' => 
 export type WalletTransaction = {
   uuid: string;
   wallet_uuid: string;
-  transaction_type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER' | 'PAYMENT';
+  transaction_type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER' | 'PAYMENT' | "SALE" | "TRANSFER_IN" | 'TRANSFER_OUT';
   amount: number;
   currency_code: string;
   balance_before: number;

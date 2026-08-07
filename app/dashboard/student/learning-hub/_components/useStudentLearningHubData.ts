@@ -84,7 +84,7 @@ export type LearningHubInvite = {
   href: string;
 };
 
-type LearningHubData = {
+export type LearningHubData = {
   studentName: string;
   firstName: string;
   stats: LearningHubStat[];
@@ -609,8 +609,8 @@ export function useStudentLearningHubData(): LearningHubData {
   const overallProgress =
     continueLearning.length > 0
       ? Math.round(
-          continueLearning.reduce((sum, item) => sum + item.progress, 0) / continueLearning.length
-        )
+        continueLearning.reduce((sum, item) => sum + item.progress, 0) / continueLearning.length
+      )
       : 0;
 
   const stats: LearningHubStat[] = [
