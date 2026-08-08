@@ -68,7 +68,7 @@ function formatTime(date: string) {
     .toLowerCase();
 }
 
-export function formatSessionSchedule(sessionTemplates: SessionTemplate[]) {
+export function formatSessionSchedule(sessionTemplates: SessionTemplate[] | ClassSessionTemplate[] | undefined) {
   if (!sessionTemplates.length) {
     return 'Sessions not available';
   }
@@ -401,6 +401,7 @@ import { Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Checkbox } from '../../../../../components/ui/checkbox';
 import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
+import { ClassSessionTemplate } from '../../../../../services/client';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { ClassDetailSheet } from '../shared/_components/ClassDetailsSheet';

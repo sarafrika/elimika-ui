@@ -173,7 +173,6 @@ function ClassCard({
   classDefinitionMap: ClassDefinitionMap;
 }) {
   const classObj = classDefinitionMap?.[item.class_definition_uuid];
-
   const upcoming = isUpcoming(item, classDefinitionMap);
   const completed = isCompleted(item, classDefinitionMap);
   const active = isActive(item, classDefinitionMap)
@@ -249,9 +248,8 @@ function ClassCard({
 
             <span
               className="min-w-0 line-clamp-2 text-sm leading-5"
-              title={formatSessionSchedule(classObj?.session_templates)}
             >
-              {formatSessionSchedule(classObj?.session_templates)}
+              {classObj?.session_templates ? formatSessionSchedule(classObj?.session_templates) : 'Sessions not available'}
             </span>
           </div>
 

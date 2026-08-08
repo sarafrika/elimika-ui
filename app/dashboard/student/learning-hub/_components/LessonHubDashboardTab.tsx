@@ -1,6 +1,7 @@
 'use client';
 
 import { Progress } from '@radix-ui/react-progress';
+import type { LucideIcon } from 'lucide-react';
 import {
     AlertCircle,
     ArrowRight,
@@ -17,16 +18,15 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState, type ComponentType, type ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react';
 
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
     getDueSummary,
     getStudentAssignmentSubmissionState,
     useStudentAssignmentData,
     type StudentAssignmentRow,
 } from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { Badge } from '../../../../../components/ui/badge';
 import { Button } from '../../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../../components/ui/card';

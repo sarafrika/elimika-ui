@@ -42,6 +42,7 @@ import { useProfileShareUrl } from '../../../../../app/dashboard/_components/my-
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
 import ManageProfileActions from '../../../profile/add-profile/components/ManageProfileActions';
+import { useUserDomain } from '../../context/user-domain-context';
 import { SettingsField } from '../_components/settings-field';
 import { SettingsPageHeader } from '../_components/settings-page-header';
 import { TimezoneSetting } from '../_components/timezone-setting';
@@ -131,6 +132,7 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { activeDomain } = useUserDomain()
   const profile = useUserProfile();
   const organisation = useOrganisation();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -894,7 +896,13 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                 </Card>
 
                 <div className='flex min-w-0 flex-col gap-4'>
-                  <ElimikaUserId fullName={profile?.full_name!} studentNumber={profile?.user_no!} photoUrl={profileImage} shareUrl={shareUrl} status={profile?.active} issuedAt={profile?.created_date} nationality={'Nationality'} />
+                  <ElimikaUserId
+                    profile={profile}
+                    activeDomain={activeDomain}
+                    photoUrl={profileImage}
+                    shareUrl={shareUrl}
+                    nationality={'Nationality'}
+                  />
 
                   <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                     <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>

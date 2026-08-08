@@ -16,6 +16,7 @@ import {
 type Params = {
   courseUuid?: string;
   enabled?: boolean;
+  includeContent?: boolean;
 };
 
 export type CourseLesson = NonNullable<
@@ -29,7 +30,11 @@ export type CourseLessonWithContent = {
   content: GetLessonContentResponse | undefined;
 };
 
-export function useCourseLessonsWithContent({ courseUuid, enabled = true }: Params) {
+export function useCourseLessonsWithContent({
+  courseUuid,
+  enabled = true,
+  includeContent = false,
+}: Params) {
   const { activeDomain } = useUserDomain();
   const isEnabled = enabled && !!courseUuid;
 
@@ -58,7 +63,7 @@ export function useCourseLessonsWithContent({ courseUuid, enabled = true }: Para
             lessonUuid: lesson.uuid as string,
           },
         }),
-        enabled: isEnabled && !!lesson.uuid && activeDomain !== 'student',
+        enabled: isEnabled && !!lesson.uuid && (includeContent || activeDomain !== 'student'),
         staleTime: 10 * 60 * 1000,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
