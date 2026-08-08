@@ -18,6 +18,12 @@ export type VerificationRow = {
     status?: string | null;
 };
 
+type JsPdfWithAutoTable = jsPDF & {
+    lastAutoTable?: {
+        finalY?: number;
+    };
+};
+
 const fmt = (d?: string | null) => (d ? new Date(d).toLocaleDateString() : "—");
 const cap = (s?: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "—");
 
@@ -61,7 +67,7 @@ export function exportCredentialsPdf(opts: {
         margin: { left: 40, right: 40 },
     });
 
-    const afterCreds = (doc as any).lastAutoTable?.finalY ?? 200;
+    const afterCreds = (doc as JsPdfWithAutoTable).lastAutoTable?.finalY ?? 200;
 
     // Verification proofs
     doc.setFontSize(13);

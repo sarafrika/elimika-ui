@@ -22,6 +22,38 @@ import Link from "next/link";
 import { formatKES } from "../../../../src/features/dashboard/courses/pages/PaymentMethodPicker";
 import { Bucket, METHOD_LABEL, PaymentMethod } from "../wallet/page";
 
+type PaymentClass = {
+    uuid: string;
+    title: string;
+    institution_name: string;
+    class_type: string;
+    delivery_mode: string;
+    academic_period: string;
+    weekly_schedule: string;
+    starts_at: string;
+    ends_at: string;
+    venue: string;
+    language: string;
+    level_of_study: string;
+    location?: string | null;
+    instructor?: {
+        name: string;
+        photo_url?: string | null;
+    } | null;
+};
+
+type PaymentCourse = {
+    uuid: string;
+    title: string;
+    category: string;
+};
+
+type PaymentEnrollment = {
+    uuid: string;
+    status: string;
+    enrolled_at: string;
+};
+
 const ICONS: Record<string, React.ElementType> = {
     personal_wallet: Wallet,
     skills_fund: PiggyBank,
@@ -39,7 +71,11 @@ export function PaymentConfirmationPage() {
     const amount = 25000;
     const status = "confirmed";
 
-    const data = {
+    const data: {
+        course: PaymentCourse;
+        cls: PaymentClass;
+        enrollment: PaymentEnrollment;
+    } = {
         course: {
             uuid: courseId,
             title: "Advanced Data Analytics with Python",
@@ -74,10 +110,10 @@ export function PaymentConfirmationPage() {
         },
     };
 
-    const isLoading = false
+    const isLoading = false;
 
-    const cls = data?.cls as any;
-    const course = data?.course as any;
+    const cls = data.cls;
+    const course = data.course;
     const enrollment = data?.enrollment;
 
     const paid = Number(amount ?? 0);
@@ -87,7 +123,7 @@ export function PaymentConfirmationPage() {
 
     if (isLoading) {
         return (
-            <div className="max-w-6xl px-4 py-10 text-sm text-slate-500">
+            <div className="text-muted-foreground max-w-6xl px-4 py-10 text-sm">
                 Loading confirmation…
             </div>
         );
@@ -95,7 +131,7 @@ export function PaymentConfirmationPage() {
 
     if (!cls) {
         return (
-            <div className="max-w-6xl px-4 py-10 text-sm text-slate-500">
+            <div className="text-muted-foreground max-w-6xl px-4 py-10 text-sm">
                 Class not found.
             </div>
         );
@@ -105,13 +141,13 @@ export function PaymentConfirmationPage() {
         <div className="mx-auto max-w-6xl px-4 py-6">
             {/* Success header */}
             <div className="text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-                    <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+                <div className="bg-success/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full">
+                    <CheckCircle2 className="text-success h-8 w-8" />
                 </div>
-                <h1 className="mt-4 text-2xl font-semibold text-slate-900">
+                <h1 className="text-foreground mt-4 text-2xl font-semibold">
                     {paid > 0 ? "Payment confirmed" : "Enrolment confirmed"}
                 </h1>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="text-muted-foreground mt-1 text-sm">
                     {paid > 0
                         ? `Your payment of ${formatKES(paid)} has been received and your enrolment is active.`
                         : "You have successfully enrolled in this class."}
@@ -119,43 +155,43 @@ export function PaymentConfirmationPage() {
             </div>
 
             {/* Reservation / payment status */}
-            <Card className="mt-6 border-emerald-200 bg-emerald-50/50">
+            <Card className="border-success/20 bg-success/5 mt-6">
                 <CardHeader className="pb-3">
                     <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-emerald-700" />
-                        <CardTitle className="text-base text-emerald-900">Reservation status</CardTitle>
+                        <FileText className="text-success h-4 w-4" />
+                        <CardTitle className="text-foreground text-base">Reservation status</CardTitle>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600">Status</span>
-                        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 capitalize">
+                        <span className="text-muted-foreground text-sm">Status</span>
+                        <Badge className="bg-success/10 text-success hover:bg-success/10 capitalize">
                             {status}
                         </Badge>
                     </div>
                     {reference && (
                         <div className="flex items-center justify-between">
-                            <span className="text-sm text-slate-600">Reference</span>
-                            <span className="font-mono text-sm text-slate-900">{reference}</span>
+                            <span className="text-muted-foreground text-sm">Reference</span>
+                            <span className="text-foreground font-mono text-sm">{reference}</span>
                         </div>
                     )}
                     <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600">Payment method</span>
-                        <span className="flex items-center gap-1.5 text-sm font-medium text-slate-900">
-                            <PaymentIcon className="h-4 w-4 text-slate-500" />
+                        <span className="text-muted-foreground text-sm">Payment method</span>
+                        <span className="text-foreground flex items-center gap-1.5 text-sm font-medium">
+                            <PaymentIcon className="text-muted-foreground h-4 w-4" />
                             {METHOD_LABEL[paymentMethod] ?? paymentMethod}
                         </span>
                     </div>
                     {paid > 0 && (
                         <>
-                            <Separator className="bg-emerald-200/60" />
+                            <Separator className="bg-success/10" />
                             <div className="flex items-center justify-between">
-                                <span className="text-sm text-slate-600">Amount paid</span>
-                                <span className="text-base font-semibold text-emerald-800">{formatKES(paid)}</span>
+                                <span className="text-muted-foreground text-sm">Amount paid</span>
+                                <span className="text-success text-base font-semibold">{formatKES(paid)}</span>
                             </div>
                             <div className="flex items-center justify-between">
-                                <span className="text-sm text-slate-600">Source bucket</span>
-                                <span className="text-sm capitalize text-slate-900">{paymentBucket.replace(/_/g, " ")}</span>
+                                <span className="text-muted-foreground text-sm">Source bucket</span>
+                                <span className="text-foreground text-sm capitalize">{paymentBucket.replace(/_/g, " ")}</span>
                             </div>
                         </>
                     )}
@@ -187,7 +223,7 @@ export function PaymentConfirmationPage() {
                                     </Badge>
                                 )}
                                 {enrollment && (
-                                    <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                                    <Badge className="bg-success/10 text-success hover:bg-success/10">
                                         Enrolled
                                     </Badge>
                                 )}
@@ -195,42 +231,42 @@ export function PaymentConfirmationPage() {
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+                <CardContent className="text-foreground grid gap-2 text-sm sm:grid-cols-2">
                     <div className="inline-flex items-center gap-2">
-                        <BookOpen className="h-4 w-4 text-slate-400" />
+                        <BookOpen className="text-muted-foreground h-4 w-4" />
                         {course?.title ?? "—"}
                     </div>
                     <div className="inline-flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-slate-400" />
+                        <Building2 className="text-muted-foreground h-4 w-4" />
                         {cls.institution_name ?? "—"}
                     </div>
                     <div className="inline-flex items-center gap-2">
-                        <Users className="h-4 w-4 text-slate-400" />
+                        <Users className="text-muted-foreground h-4 w-4" />
                         {cls.instructor?.name ?? "—"}
                     </div>
                     <div className="inline-flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-slate-400" />
+                        <Calendar className="text-muted-foreground h-4 w-4" />
                         {cls.academic_period ?? "—"}
                     </div>
                     <div className="inline-flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-slate-400" />
+                        <Clock className="text-muted-foreground h-4 w-4" />
                         {cls.weekly_schedule ?? "—"}
                     </div>
                     <div className="inline-flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-slate-400" />
+                        <Calendar className="text-muted-foreground h-4 w-4" />
                         {cls.starts_at ? new Date(cls.starts_at).toLocaleDateString() : "TBD"} →{" "}
                         {cls.ends_at ? new Date(cls.ends_at).toLocaleDateString() : "TBD"}
                     </div>
                     <div className="inline-flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-slate-400" />
+                        <MapPin className="text-muted-foreground h-4 w-4" />
                         {cls.venue ?? cls.location ?? "Online"}
                     </div>
                     <div className="inline-flex items-center gap-2">
-                        <Languages className="h-4 w-4 text-slate-400" />
+                        <Languages className="text-muted-foreground h-4 w-4" />
                         {cls.language ?? "—"}
                     </div>
                     <div className="inline-flex items-center gap-2">
-                        <GraduationCap className="h-4 w-4 text-slate-400" />
+                        <GraduationCap className="text-muted-foreground h-4 w-4" />
                         {cls.level_of_study ?? "—"}
                     </div>
                 </CardContent>

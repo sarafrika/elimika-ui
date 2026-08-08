@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState, type ComponentType, type ReactNode } from 'react';
+import type { LucideIcon } from 'lucide-react';
 
 import {
     getDueSummary,
@@ -196,7 +197,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     label='Active Courses'
                     value={active.length}
                     icon={BookOpen}
-                    tint='bg-blue-50 text-blue-700'
+                    tint='bg-primary/5 text-primary'
                     href='/learning-hub'
                     query={{ tab: 'my-courses' }}
                 />
@@ -204,7 +205,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     label='Upcoming Classes'
                     value={upcomingView.length}
                     icon={CalendarIcon}
-                    tint='bg-indigo-50 text-indigo-700'
+                    tint='bg-secondary text-secondary-foreground'
                     href='/learning-hub'
                     query={{ tab: 'my-classes' }}
                 />
@@ -212,7 +213,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     label='Assignments Due'
                     value={pendingAssignments}
                     icon={ClipboardList}
-                    tint='bg-orange-50 text-orange-700'
+                    tint='bg-warning/5 text-warning'
                     href='/learning-hub'
                     query={{ tab: 'assignments' }}
                 />
@@ -220,7 +221,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     label='Completed Courses'
                     value={completedCourses}
                     icon={Award}
-                    tint='bg-emerald-50 text-emerald-700'
+                    tint='bg-success/5 text-success'
                     href='/learning-hub'
                     query={{ tab: 'certificates' }}
                 />
@@ -233,7 +234,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                             <CardTitle className='text-base'>Continue Learning</CardTitle>
                             <CardDescription>Pick up from your last active course</CardDescription>
                         </div>
-                        <Button asChild variant='ghost' size='sm' className='text-[#0f4c81]'>
+                        <Button asChild variant='ghost' size='sm' className='text-primary'>
                             <Link href={{ pathname: '/learning-hub', query: { tab: 'my-courses' } }}>
                                 View all <ArrowRight className='ml-1 h-3.5 w-3.5' />
                             </Link>
@@ -248,7 +249,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                                     <Link
                                         key={item.id}
                                         href={item.href}
-                                        className='block rounded-lg border p-4 transition-colors hover:border-[#0f4c81]'
+                                        className='block rounded-lg border p-4 transition-colors hover:border-primary'
                                     >
                                         <div className='flex items-start justify-between gap-3'>
                                             <div className='min-w-0'>
@@ -280,7 +281,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                 <Card>
                     <CardHeader className=''>
                         <CardTitle className='flex items-center gap-2 text-base'>
-                            <Clock className='h-4 w-4 text-[#0f4c81]' /> Next Class
+                            <Clock className='text-primary h-4 w-4' /> Next Class
                         </CardTitle>
                     </CardHeader>
                     <CardContent className='space-y-3'>
@@ -315,12 +316,12 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-3'>
                         <div>
                             <CardTitle className='flex items-center gap-2 text-base'>
-                                <BookOpen className='h-4 w-4 text-[#0f4c81]' /> Active Courses
+                                <BookOpen className='text-primary h-4 w-4' /> Active Courses
                             </CardTitle>
                             <CardDescription>Your currently enrolled programmes</CardDescription>
                         </div>
                         {/* // switch to tab my-courses */}
-                        <Button asChild variant='ghost' size='sm' className='rounded-sm text-[#0f4c81]'>
+                        <Button asChild variant='ghost' size='sm' className='rounded-sm text-primary'>
                             <Link href='/learning-hub'>
                                 Manage <ArrowRight className='ml-1 h-3.5 w-3.5' />
                             </Link>
@@ -376,7 +377,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                                 <Link
                                     key={enrollment.id}
                                     href='/learning-hub'
-                                    className='flex items-center justify-between rounded-md border p-3 transition-colors hover:border-[#0f4c81]'
+                                    className='flex items-center justify-between rounded-md border p-3 transition-colors hover:border-primary'
                                 >
                                     <div className='min-w-0'>
                                         <p className='truncate text-sm font-medium'>{enrollment.course?.title}</p>
@@ -397,11 +398,11 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-3'>
                         <div>
                             <CardTitle className='flex items-center gap-2 text-base'>
-                                <CalendarIcon className='h-4 w-4 text-[#0f4c81]' /> Upcoming Classes
+                                <CalendarIcon className='text-primary h-4 w-4' /> Upcoming Classes
                             </CardTitle>
                             <CardDescription>Next scheduled sessions</CardDescription>
                         </div>
-                        <Button asChild variant='ghost' size='sm' className='rounded-sm text-[#0f4c81]'>
+                        <Button asChild variant='ghost' size='sm' className='rounded-sm text-primary'>
                             <Link href='/dashboard/student/calendar'>
                                 Calendar <ArrowRight className='ml-1 h-3.5 w-3.5' />
                             </Link>
@@ -453,7 +454,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                             upcomingView.slice(0, 5).map(item => (
                                 <div
                                     key={item.id}
-                                    className='flex items-center justify-between gap-3 rounded-md border p-3 transition-colors hover:border-[#0f4c81]'
+                                    className='flex items-center justify-between gap-3 rounded-md border p-3 transition-colors hover:border-primary'
                                 >
                                     <Link href={item.href} className='min-w-0 flex-1'>
                                         <p className='truncate text-sm font-medium'>{item.title}</p>
@@ -476,7 +477,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                 <SummaryCard
                     title='Assignments'
                     icon={ClipboardList}
-                    tint='bg-amber-50 text-amber-700'
+                    tint='bg-warning/5 text-warning'
                     primary={String(assignmentRowsSorted.length)}
                     secondary={
                         pendingAssignments > 0
@@ -490,7 +491,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                 <SummaryCard
                     title='Assessments'
                     icon={FileCheck2}
-                    tint='bg-violet-50 text-violet-700'
+                    tint='bg-secondary text-secondary-foreground'
                     primary={learningHubData.stats.find(stat => stat.id === 'overall-progress')?.value ?? '0%'}
                     secondary='Overall progress'
                     ctaLabel='View Assessments'
@@ -500,7 +501,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                 <SummaryCard
                     title='Certificates'
                     icon={Award}
-                    tint='bg-emerald-50 text-emerald-700'
+                    tint='bg-success/5 text-success'
                     primary={String(completedCourses)}
                     secondary={completedCourses ? 'Ready to download' : 'Complete a course to earn one'}
                     ctaLabel='View Certificates'
@@ -522,7 +523,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                 <Card>
                     <CardHeader className='pb-3'>
                         <CardTitle className='flex items-center gap-2 text-base'>
-                            <Flame className='h-4 w-4 text-orange-500' /> Learning Streak
+                            <Flame className='text-warning h-4 w-4' /> Learning Streak
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -545,7 +546,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                 <Card>
                     <CardHeader className='pb-3'>
                         <CardTitle className='flex items-center gap-2 text-base'>
-                            <Sparkles className='h-4 w-4 text-[#0f4c81]' /> AI Recommendations
+                            <Sparkles className='text-primary h-4 w-4' /> AI Recommendations
                         </CardTitle>
                         <CardDescription>Personalised to your interests</CardDescription>
                     </CardHeader>
@@ -667,7 +668,7 @@ function RemindersWidget({
     // Semantic color tokens per reminder state, instead of hardcoded palette classes.
     const STATE_STYLES: Record<
         'overdue' | 'awaiting_grading' | 'upcoming' | 'class',
-        { badge: string; icon: any; openVariant: 'default' | 'outline' | 'destructive' }
+        { badge: string; icon: LucideIcon; openVariant: 'default' | 'outline' | 'destructive' }
     > = {
         overdue: { badge: 'bg-destructive/10 text-destructive', icon: AlertCircle, openVariant: 'destructive' },
         awaiting_grading: { badge: 'bg-warning/10 text-warning', icon: Clock, openVariant: 'outline' },
@@ -764,7 +765,7 @@ function StatCard({
     query?: Record<string, string>;
 }) {
     const body = (
-        <Card className={href ? 'cursor-pointer transition-colors hover:border-[#0f4c81]' : ''}>
+        <Card className={href ? 'cursor-pointer transition-colors hover:border-primary' : ''}>
             <CardContent className='flex items-center gap-3'>
                 <div className={`grid h-10 w-10 place-items-center rounded-lg ${tint}`}>
                     <Icon className='h-5 w-5' />
@@ -817,7 +818,7 @@ function SummaryCard({
     query,
 }: {
     title: string;
-    icon: any;
+    icon: LucideIcon;
     tint: string;
     primary: string;
     secondary: string;

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import type { LucideIcon } from "lucide-react";
 
 type EnrolCourse = {
     id: string;
@@ -24,7 +25,49 @@ type EnrolCourse = {
     class?: { id: string; title: string | null; starts_at: string | null; meeting_link: string | null } | null;
 };
 
-const MOCK_MODULES: { id: string; course_id: string; title: string; position: number }[] = [
+type LearningModule = {
+    id: string;
+    course_id: string;
+    title: string;
+    position: number;
+};
+
+type LearningAssessment = {
+    id: string;
+    course_id: string;
+    title: string;
+};
+
+type LearningAttempt = {
+    id: string;
+    assessment_id: string;
+    status: string;
+    score: number | null;
+};
+
+type LearningCertificate = {
+    id: string;
+    course_id: string;
+    code: string;
+    revoked: boolean;
+};
+
+type LearningBooking = {
+    id: string;
+    slot: { course_id: string; starts_at: string };
+};
+
+type LearningAction = {
+    key: string;
+    label: string;
+    icon: LucideIcon;
+    href?: string;
+    query?: Record<string, string>;
+    external?: string;
+    primary?: boolean;
+};
+
+const MOCK_MODULES: LearningModule[] = [
     { id: "m1-1", course_id: "course-1", title: "HTML, CSS & the Modern Web", position: 1 },
     { id: "m1-2", course_id: "course-1", title: "JavaScript Fundamentals", position: 2 },
     { id: "m1-3", course_id: "course-1", title: "Building UIs with React", position: 3 },
@@ -44,23 +87,23 @@ const MOCK_MODULES: { id: string; course_id: string; title: string; position: nu
     { id: "m3-4", course_id: "course-3", title: "Campaign Capstone", position: 4 },
 ];
 
-const MOCK_ASSESSMENTS = [
+const MOCK_ASSESSMENTS: LearningAssessment[] = [
     { id: "as-1", course_id: "course-1", title: "JavaScript Fundamentals Quiz" },
     { id: "as-2", course_id: "course-1", title: "React Practical Exam" },
     { id: "as-3", course_id: "course-2", title: "Pandas Skills Check" },
     { id: "as-4", course_id: "course-3", title: "SEO Strategy Review" },
 ];
 
-const MOCK_ATTEMPTS = [
+const MOCK_ATTEMPTS: LearningAttempt[] = [
     { id: "att-1", assessment_id: "as-1", status: "submitted", score: 88 },
     { id: "att-2", assessment_id: "as-3", status: "in_progress", score: null },
 ];
 
-const MOCK_CERTS = [
+const MOCK_CERTS: LearningCertificate[] = [
     { id: "cert-1", course_id: "course-3", code: "ELM-CERT-3391", revoked: false },
 ];
 
-const MOCK_BOOKINGS = [
+const MOCK_BOOKINGS: LearningBooking[] = [
     {
         id: "bk-1",
         slot: { course_id: "course-1", starts_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() },
@@ -108,10 +151,10 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
         );
     }
 
-    const modulesByCourse = new Map<string, { id: string; title: string; position: number }[]>();
+    const modulesByCourse = new Map<string, LearningModule[]>();
     for (const m of data.modules) {
         const arr = modulesByCourse.get(m.course_id) ?? [];
-        arr.push(m as any);
+        arr.push(m);
         modulesByCourse.set(m.course_id, arr);
     }
     const perCourse = active.map((e) => {
@@ -141,7 +184,7 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
     const nextModule = selected.modules[selected.done] ?? null;
     const isComplete = selected.pct >= 100;
 
-    const actions: { key: string; label: string; icon: any; href?: string; query?: Record<string, string>; external?: string; primary?: boolean }[] = [];
+    const actions: LearningAction[] = [];
     if (isComplete && !cert) {
         actions.push({ key: "cert-claim", label: "Claim your certificate", icon: Award, href: "/learning-hub", query: { tab: "certificates" }, primary: true });
     } else if (nextModule) {
@@ -208,16 +251,16 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
                             <button
                                 key={enrolment.id}
                                 onClick={() => setSelectedId(cid ?? null)}
-                                className={`w-full rounded-md border p-2 text-left transition-colors ${isSelected ? "border-[#0f4c81] bg-[#0f4c81]/5" : "border-transparent hover:border-slate-200 hover:bg-slate-50"
+                                className={`w-full rounded-md border p-2 text-left transition-colors ${isSelected ? "border-primary/20 bg-primary/5" : "border-transparent hover:border-border hover:bg-muted/50"
                                     }`}
                             >
                                 <div className="flex items-start gap-2">
-                                    <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-[#0f4c81]" />
+                                    <BookOpen className="text-primary mt-0.5 h-4 w-4 shrink-0" />
                                     <div className="min-w-0 flex-1">
-                                        <div className="truncate text-sm font-medium text-slate-900">{enrolment.course?.title ?? "Course"}</div>
+                                        <div className="text-foreground truncate text-sm font-medium">{enrolment.course?.title ?? "Course"}</div>
                                         <div className="mt-0.5 flex items-center gap-2">
                                             <Progress value={pct} className="h-1 flex-1" />
-                                            <span className="text-[10px] tabular-nums text-slate-500">{done}/{total}</span>
+                                            <span className="text-muted-foreground text-[10px] tabular-nums">{done}/{total}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -229,11 +272,11 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
                 {/* Details */}
                 <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-sm font-semibold text-slate-900">{selected.enrolment.course?.title}</h3>
+                        <h3 className="text-foreground text-sm font-semibold">{selected.enrolment.course?.title}</h3>
                         {selected.enrolment.course?.level && <Badge variant="outline" className="text-[10px]">{selected.enrolment.course.level}</Badge>}
                         {selected.enrolment.course?.category && <Badge variant="outline" className="text-[10px]">{selected.enrolment.course.category}</Badge>}
                         <Badge
-                            className={`text-[10px] ${isComplete ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : "bg-amber-100 text-amber-700 hover:bg-amber-100"
+                            className={`text-[10px] ${isComplete ? "bg-success/10 text-success hover:bg-success/10" : "bg-warning/10 text-warning hover:bg-warning/10"
                                 }`}
                         >
                             {isComplete ? "Ready for certificate" : `${selected.pct}% complete`}
@@ -241,7 +284,7 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
                     </div>
 
                     <div>
-                        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Lessons</div>
+                        <div className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">Lessons</div>
                         {selected.modules.length === 0 ? (
                             <p className="text-xs text-muted-foreground">No lessons published yet.</p>
                         ) : (
@@ -252,17 +295,17 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
                                     return (
                                         <li
                                             key={m.id}
-                                            className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm ${isNext ? "bg-[#0f4c81]/5 font-medium text-slate-900" : "text-slate-700"
+                                            className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm ${isNext ? "bg-primary/5 font-medium text-foreground" : "text-foreground"
                                                 }`}
                                         >
                                             {done ? (
-                                                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                                                <CheckCircle2 className="text-success h-4 w-4 shrink-0" />
                                             ) : (
-                                                <Circle className={`h-4 w-4 shrink-0 ${isNext ? "text-[#0f4c81]" : "text-slate-300"}`} />
+                                                <Circle className={`h-4 w-4 shrink-0 ${isNext ? "text-primary" : "text-muted-foreground"}`} />
                                             )}
                                             <span className="flex-1 truncate">{i + 1}. {m.title}</span>
-                                            {done && <span className="text-[10px] uppercase tracking-wide text-emerald-600">Done</span>}
-                                            {isNext && <span className="text-[10px] uppercase tracking-wide text-[#0f4c81]">Up next</span>}
+                                            {done && <span className="text-success text-[10px] uppercase tracking-wide">Done</span>}
+                                            {isNext && <span className="text-primary text-[10px] uppercase tracking-wide">Up next</span>}
                                         </li>
                                     );
                                 })}
@@ -271,7 +314,7 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
                     </div>
 
                     <div>
-                        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Next recommended actions</div>
+                        <div className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">Next recommended actions</div>
                         <div className="space-y-1.5">
                             {actions.length === 0 ? (
                                 <p className="text-xs text-muted-foreground">You’re all caught up.</p>
@@ -281,8 +324,8 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
                                     const content = (
                                         <div
                                             className={`flex items-center gap-2 rounded-md border p-2 text-sm transition-colors ${a.primary
-                                                ? "border-[#0f4c81] bg-[#0f4c81] text-white hover:bg-[#0f4c81]/90"
-                                                : "border-slate-200 hover:border-[#0f4c81] hover:text-[#0f4c81]"
+                                                ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+                                                : "border-border hover:border-primary hover:text-primary"
                                                 }`}
                                         >
                                             <Icon className="h-4 w-4 shrink-0" />
