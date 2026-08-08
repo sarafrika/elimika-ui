@@ -40,6 +40,8 @@ import type {
   Instructor,
   StatusEnum12,
 } from '@/services/client';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 export type ApplicationStatusFilter = 'ALL' | StatusEnum12;
 
@@ -159,7 +161,7 @@ export function ApplicationsListSection({
   isInstructorsLoading,
   isReviewPending,
   isAssignPending,
-  jobTrainingFee,
+  jobInstructorPay,
   onApprove,
   onReject,
   onAssign,
@@ -170,7 +172,7 @@ export function ApplicationsListSection({
   isInstructorsLoading: boolean;
   isReviewPending: boolean;
   isAssignPending: boolean;
-  jobTrainingFee?: number | null;
+  jobInstructorPay?: number | null;
   onApprove: (application: ClassMarketplaceJobApplication) => void;
   onReject: (application: ClassMarketplaceJobApplication) => void;
   onAssign: (application: ClassMarketplaceJobApplication) => void;
@@ -249,7 +251,7 @@ export function ApplicationsListSection({
               </div>
             ) : null}
 
-            {typeof approvedRate === 'number' || typeof jobTrainingFee === 'number' ? (
+            {typeof approvedRate === 'number' || typeof jobInstructorPay === 'number' ? (
               <div className='mt-3 flex flex-wrap items-center gap-2 text-sm'>
                 <Badge variant='outline' className='rounded-md'>
                   Approved rate:{' '}
@@ -258,16 +260,16 @@ export function ApplicationsListSection({
                     : 'Not on rate card'}
                 </Badge>
                 <Badge variant='outline' className='rounded-md'>
-                  Job fee:{' '}
-                  {typeof jobTrainingFee === 'number'
-                    ? `${formatCurrency(jobTrainingFee)} / session`
+                  Instructor pay:{' '}
+                  {typeof jobInstructorPay === 'number'
+                    ? `${formatCurrency(jobInstructorPay)} / session`
                     : 'Not specified'}
                 </Badge>
                 {typeof approvedRate === 'number' &&
-                typeof jobTrainingFee === 'number' &&
-                approvedRate !== jobTrainingFee ? (
+                typeof jobInstructorPay === 'number' &&
+                jobInstructorPay < approvedRate ? (
                   <Badge className='border-warning/60 bg-warning/10 text-warning rounded-md'>
-                    Rate differs from job fee
+                    Instructor pay is below the approved rate
                   </Badge>
                 ) : null}
               </div>
@@ -376,6 +378,8 @@ export function JobOverviewPanel({
   organisationUuid?: string | null;
   isLoading: boolean;
 }) {
+  const { activeDomain } = useUserDomain();
+
   if (isLoading) return <JobOverviewSkeleton />;
 
   return (
@@ -385,11 +389,23 @@ export function JobOverviewPanel({
         items={[
           { label: 'Job title', value: job?.title ?? 'Not found' },
           {
-            label: 'Pay per session',
+            label: 'Sale price per session',
             value:
-              typeof job?.training_fee === 'number'
-                ? formatCurrency(job.training_fee)
+              typeof job?.sale_price === 'number' ? formatCurrency(job.sale_price) : 'Not specified',
+          },
+          {
+            label: 'Instructor pay per session',
+            value:
+              typeof job?.instructor_pay === 'number'
+                ? formatCurrency(job.instructor_pay)
                 : 'Not specified',
+          },
+          {
+            label: 'Margin per session',
+            value:
+              typeof job?.sale_price === 'number' && typeof job?.instructor_pay === 'number'
+                ? formatCurrency(job.sale_price - job.instructor_pay)
+                : 'Not available',
           },
           { label: 'Course / program', value: contentLabel ?? 'Not available' },
           {
@@ -421,7 +437,9 @@ export function JobOverviewPanel({
 
       <div className='mt-4 flex flex-wrap gap-2'>
         <Button variant='outline' size='sm' asChild>
-          <Link href='/dashboard/opportunities'>Back to opportunities</Link>
+          <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities')}>
+            Back to opportunities
+          </Link>
         </Button>
       </div>
     </SectionCard>

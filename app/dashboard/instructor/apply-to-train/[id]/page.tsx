@@ -8,12 +8,14 @@ import {
   getCourseByUuidOptions,
   getInstructorDocumentsOptions,
   getUserByUuidOptions,
+  submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Save, UserCheck } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
 import { ComplianceRequirements } from '../_components/compliance-requirement';
 import { CourseProposal } from '../_components/course-proposal';
@@ -68,6 +70,34 @@ export default function ApplyToTrain() {
   }, [replaceBreadcrumbs, courseId]);
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [applicationData, setApplicationData] = useState<Record<string, unknown>>({});
+  const draftKey = `apply-to-train-draft:${courseId}`;
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !courseId) return;
+    const stored = window.localStorage.getItem(draftKey);
+    if (!stored) return;
+    try {
+      setApplicationData(JSON.parse(stored));
+    } catch {
+      window.localStorage.removeItem(draftKey);
+    }
+  }, [courseId, draftKey]);
+
+  const router = useRouter();
+  const submitApplication = useMutation({
+    ...submitTrainingApplicationMutation(),
+    onSuccess: () => {
+      if (typeof window !== 'undefined') window.localStorage.removeItem(draftKey);
+      toast.success('Application submitted. The course creator will review it.');
+      router.push('/dashboard/instructor/opportunities');
+    },
+    onError: error => {
+      toast.error(
+        error instanceof Error ? error.message : 'Unable to submit your training application.'
+      );
+    },
+  });
 
   const instructor = useInstructor();
   const { data: course } = useQuery({
@@ -91,6 +121,10 @@ export default function ApplyToTrain() {
 
   const progress = (currentStep / STEPS.length) * 100;
   const CurrentStepComponent = STEPS.find(step => step.id === currentStep)?.component;
+  const stepData = useMemo(
+    () => ({ ...instructor, ...applicationData }),
+    [instructor, applicationData]
+  );
 
   const handleNext = () => {
     if (currentStep < STEPS.length) {
@@ -108,18 +142,64 @@ export default function ApplyToTrain() {
     setCurrentStep(stepId);
   };
 
-  const handleDataChange = (_stepData: StepData) => {
-    // setApplicationData(prev => ({ ...prev, ...stepData }));
-  };
+  const handleDataChange = useCallback((incoming: StepData) => {
+    if (!incoming) return;
+    setApplicationData(prev => {
+      const next = { ...prev, ...incoming };
+      try {
+        return JSON.stringify(next) === JSON.stringify(prev) ? prev : next;
+      } catch {
+        return next;
+      }
+    });
+  }, []);
 
   const handleSaveDraft = () => {
-    // console.log('Saving draft...', applicationData);
-    // Implement save draft functionality
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(draftKey, JSON.stringify(applicationData));
+    toast.success('Draft saved on this device.');
   };
 
   const handleSubmit = () => {
-    // console.log('Submitting application...', applicationData);
-    // Implement submit functionality
+    if (!instructor?.uuid) {
+      toast.error('No instructor profile is active.');
+      return;
+    }
+
+    const rate = (key: string) => {
+      const value = Number(applicationData[key]);
+      return Number.isFinite(value) ? value : null;
+    };
+    const privateOnline = rate('privateOnlineRate');
+    const privateInperson = rate('privateInpersonRate');
+    const groupOnline = rate('groupOnlineRate');
+    const groupInperson = rate('groupInpersonRate');
+
+    if (
+      privateOnline === null ||
+      privateInperson === null ||
+      groupOnline === null ||
+      groupInperson === null
+    ) {
+      toast.error('Add all four session rates on the Schedule & Delivery step before submitting.');
+      return;
+    }
+
+    submitApplication.mutate({
+      path: { courseUuid: courseId },
+      body: {
+        applicant_type: 'instructor',
+        applicant_uuid: instructor.uuid,
+        rate_card: {
+          currency: ((applicationData.rateCurrency as string) || 'KES').toUpperCase(),
+          private_online_rate: privateOnline,
+          private_inperson_rate: privateInperson,
+          group_online_rate: groupOnline,
+          group_inperson_rate: groupInperson,
+        },
+        application_notes: (applicationData.applicationNotes as string) || undefined,
+      },
+    });
   };
 
   return (
@@ -198,7 +278,7 @@ export default function ApplyToTrain() {
           <CardContent>
             {CurrentStepComponent && (
               <CurrentStepComponent
-                data={instructor}
+                data={stepData}
                 // @ts-expect-error
                 skills={instructor?.skills || []}
                 // @ts-expect-error
@@ -225,7 +305,9 @@ export default function ApplyToTrain() {
                 <Button variant='outline' onClick={handleSaveDraft}>
                   Save Draft
                 </Button>
-                <Button onClick={handleSubmit}>Submit Application</Button>
+                <Button onClick={handleSubmit} disabled={submitApplication.isPending}>
+                  {submitApplication.isPending ? 'Submitting…' : 'Submit Application'}
+                </Button>
               </>
             ) : (
               <Button onClick={handleNext}>

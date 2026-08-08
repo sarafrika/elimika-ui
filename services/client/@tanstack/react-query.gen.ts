@@ -211,6 +211,8 @@ import {
   sendOrganisationInvitations,
   revokeOrganisationInvitation,
   resendOrganisationInvitation,
+  settleObligation,
+  cancelObligation,
   listCompetitions,
   createCompetition,
   listNotifications,
@@ -331,6 +333,7 @@ import {
   listJobs,
   createJob,
   uploadJobThumbnail,
+  createClassForJob,
   cancelJob,
   assignInstructor,
   listJobApplications,
@@ -453,6 +456,7 @@ import {
   getSummary,
   getCalendar,
   listBookings,
+  listObligations,
   search2,
   getCounts,
   getInvitationByToken,
@@ -462,6 +466,8 @@ import {
   getInstructorBookings,
   checkAvailability,
   getInstructorCalendar,
+  getStatement,
+  listInstructorObligations,
   searchSkills,
   searchInstructors,
   getOrganisationInstructorSummaries,
@@ -1143,6 +1149,12 @@ import type {
   ResendOrganisationInvitationData,
   ResendOrganisationInvitationError,
   ResendOrganisationInvitationResponse,
+  SettleObligationData,
+  SettleObligationError,
+  SettleObligationResponse,
+  CancelObligationData,
+  CancelObligationError,
+  CancelObligationResponse,
   ListCompetitionsData,
   CreateCompetitionData,
   CreateCompetitionError,
@@ -1473,6 +1485,9 @@ import type {
   UploadJobThumbnailData,
   UploadJobThumbnailError,
   UploadJobThumbnailResponse,
+  CreateClassForJobData,
+  CreateClassForJobError,
+  CreateClassForJobResponse,
   CancelJobData,
   CancelJobError,
   CancelJobResponse,
@@ -1769,6 +1784,9 @@ import type {
   ListBookingsData,
   ListBookingsError,
   ListBookingsResponse,
+  ListObligationsData,
+  ListObligationsError,
+  ListObligationsResponse,
   Search2Data,
   Search2Error,
   Search2Response,
@@ -1784,6 +1802,10 @@ import type {
   CheckAvailabilityError,
   CheckAvailabilityResponse,
   GetInstructorCalendarData,
+  GetStatementData,
+  ListInstructorObligationsData,
+  ListInstructorObligationsError,
+  ListInstructorObligationsResponse,
   SearchSkillsData,
   SearchSkillsError,
   SearchSkillsResponse,
@@ -9371,6 +9393,106 @@ export const resendOrganisationInvitationMutation = (
   return mutationOptions;
 };
 
+export const settleObligationQueryKey = (options: Options<SettleObligationData>) =>
+  createQueryKey('settleObligation', options);
+
+/**
+ * Record that an obligation has been paid
+ * Marks a single obligation settled against the organisation's own payment reference. The platform does not move the money; this records that the organisation did.
+ */
+export const settleObligationOptions = (options: Options<SettleObligationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await settleObligation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: settleObligationQueryKey(options),
+  });
+};
+
+/**
+ * Record that an obligation has been paid
+ * Marks a single obligation settled against the organisation's own payment reference. The platform does not move the money; this records that the organisation did.
+ */
+export const settleObligationMutation = (
+  options?: Partial<Options<SettleObligationData>>
+): UseMutationOptions<
+  SettleObligationResponse,
+  SettleObligationError,
+  Options<SettleObligationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SettleObligationResponse,
+    SettleObligationError,
+    Options<SettleObligationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await settleObligation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const cancelObligationQueryKey = (options: Options<CancelObligationData>) =>
+  createQueryKey('cancelObligation', options);
+
+/**
+ * Withdraw an obligation that should never have accrued
+ * Excludes the obligation from what is owed while keeping the row and the reason. An already-settled obligation cannot be withdrawn.
+ */
+export const cancelObligationOptions = (options: Options<CancelObligationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await cancelObligation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: cancelObligationQueryKey(options),
+  });
+};
+
+/**
+ * Withdraw an obligation that should never have accrued
+ * Excludes the obligation from what is owed while keeping the row and the reason. An already-settled obligation cannot be withdrawn.
+ */
+export const cancelObligationMutation = (
+  options?: Partial<Options<CancelObligationData>>
+): UseMutationOptions<
+  CancelObligationResponse,
+  CancelObligationError,
+  Options<CancelObligationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CancelObligationResponse,
+    CancelObligationError,
+    Options<CancelObligationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await cancelObligation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const listCompetitionsQueryKey = (options: Options<ListCompetitionsData>) =>
   createQueryKey('listCompetitions', options);
 
@@ -15631,6 +15753,54 @@ export const uploadJobThumbnailMutation = (
   return mutationOptions;
 };
 
+export const createClassForJobQueryKey = (options: Options<CreateClassForJobData>) =>
+  createQueryKey('createClassForJob', options);
+
+/**
+ * Create the class for a job whose instructor has been assigned
+ */
+export const createClassForJobOptions = (options: Options<CreateClassForJobData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createClassForJob({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createClassForJobQueryKey(options),
+  });
+};
+
+/**
+ * Create the class for a job whose instructor has been assigned
+ */
+export const createClassForJobMutation = (
+  options?: Partial<Options<CreateClassForJobData>>
+): UseMutationOptions<
+  CreateClassForJobResponse,
+  CreateClassForJobError,
+  Options<CreateClassForJobData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateClassForJobResponse,
+    CreateClassForJobError,
+    Options<CreateClassForJobData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createClassForJob({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const cancelJobQueryKey = (options: Options<CancelJobData>) =>
   createQueryKey('cancelJob', options);
 
@@ -21397,6 +21567,71 @@ export const listBookingsInfiniteOptions = (options: Options<ListBookingsData>) 
   );
 };
 
+export const listObligationsQueryKey = (options: Options<ListObligationsData>) =>
+  createQueryKey('listObligations', options);
+
+/**
+ * List an organisation's instructor obligations
+ * One row per delivered session, at the rate that stood when the session completed. Optionally narrowed to a single instructor and/or status.
+ */
+export const listObligationsOptions = (options: Options<ListObligationsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listObligations({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listObligationsQueryKey(options),
+  });
+};
+
+export const listObligationsInfiniteQueryKey = (
+  options: Options<ListObligationsData>
+): QueryKey<Options<ListObligationsData>> => createQueryKey('listObligations', options, true);
+
+/**
+ * List an organisation's instructor obligations
+ * One row per delivered session, at the rate that stood when the session completed. Optionally narrowed to a single instructor and/or status.
+ */
+export const listObligationsInfiniteOptions = (options: Options<ListObligationsData>) => {
+  return infiniteQueryOptions<
+    ListObligationsResponse,
+    ListObligationsError,
+    InfiniteData<ListObligationsResponse>,
+    QueryKey<Options<ListObligationsData>>,
+    number | Pick<QueryKey<Options<ListObligationsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListObligationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listObligations({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listObligationsInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const search2QueryKey = (options: Options<Search2Data>) =>
   createQueryKey('search2', options);
 
@@ -21752,6 +21987,103 @@ export const getInstructorCalendarOptions = (options: Options<GetInstructorCalen
     },
     queryKey: getInstructorCalendarQueryKey(options),
   });
+};
+
+export const getStatementQueryKey = (options: Options<GetStatementData>) =>
+  createQueryKey('getStatement', options);
+
+/**
+ * An instructor's statement of what they are owed
+ * Per-organisation summary of outstanding and settled pay for delivered sessions.
+ */
+export const getStatementOptions = (options: Options<GetStatementData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStatement({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStatementQueryKey(options),
+  });
+};
+
+export const listInstructorObligationsQueryKey = (
+  options: Options<ListInstructorObligationsData>
+) => createQueryKey('listInstructorObligations', options);
+
+/**
+ * An instructor's own obligation rows
+ * The session-by-session detail behind the statement, newest first.
+ */
+export const listInstructorObligationsOptions = (
+  options: Options<ListInstructorObligationsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listInstructorObligations({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listInstructorObligationsQueryKey(options),
+  });
+};
+
+export const listInstructorObligationsInfiniteQueryKey = (
+  options: Options<ListInstructorObligationsData>
+): QueryKey<Options<ListInstructorObligationsData>> =>
+  createQueryKey('listInstructorObligations', options, true);
+
+/**
+ * An instructor's own obligation rows
+ * The session-by-session detail behind the statement, newest first.
+ */
+export const listInstructorObligationsInfiniteOptions = (
+  options: Options<ListInstructorObligationsData>
+) => {
+  return infiniteQueryOptions<
+    ListInstructorObligationsResponse,
+    ListInstructorObligationsError,
+    InfiniteData<ListInstructorObligationsResponse>,
+    QueryKey<Options<ListInstructorObligationsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListInstructorObligationsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListInstructorObligationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listInstructorObligations({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listInstructorObligationsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchSkillsQueryKey = (options: Options<SearchSkillsData>) =>
@@ -25550,7 +25882,7 @@ export const getInstructorPayablesForOrganisationQueryKey = (
 
 /**
  * Get what an organisation owes each instructor
- * Payables per instructor = sum(per-class training_fee x completed sessions) across the organisation's classes assigned to that instructor.
+ * Aggregated from the instructor obligation ledger: one row was written per delivered session at the training fee that stood on the day, so re-rating a class does not change what has already been earned. Settled sessions move from amount_owed to amount_settled. Use /api/v1/organisations/{organisationUuid}/instructor-obligations for the row-level detail.
  */
 export const getInstructorPayablesForOrganisationOptions = (
   options: Options<GetInstructorPayablesForOrganisationData>

@@ -16,6 +16,8 @@ import {
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
+import { useUserDomain } from "@/src/features/dashboard/context/user-domain-context";
+import { buildWorkspaceAliasPath } from "@/src/features/dashboard/lib/active-domain-storage";
 
 type EnrolCourse = {
     id: string;
@@ -131,6 +133,7 @@ function completedCount(courseId: string, total: number): number {
 }
 
 export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolCourse[] }) {
+    const { activeDomain } = useUserDomain();
     const active = useMemo(() => enrollments.filter((e) => e.status === "active"), [enrollments]);
     const [selectedId, setSelectedId] = useState<string | null>(active[0]?.course?.id ?? null);
     const selectedCourseId = selectedId ?? active[0]?.course?.id ?? null;
@@ -219,7 +222,7 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
             key: "book",
             label: "Book a session with an instructor",
             icon: Sparkles,
-            href: "/start-course",
+            href: buildWorkspaceAliasPath(activeDomain, "/dashboard/courses"),
         });
     }
     if (cert) {

@@ -471,12 +471,12 @@ export default function EnrollCourseCard({
         {/* ── Price + CTA ── */}
         <div className='flex flex-wrap items-center justify-between gap-2 px-0.5 py-1'>
           <span className='text-foreground text-[0.85rem] font-semibold'>
-            {cls?.training_fee ? `From Ksh ${cls.training_fee}` : 'Free'}
+            {cls?.sale_price ? `From Ksh ${cls.sale_price}` : 'Free'}
           </span>
 
           {instructorView ? (
             <Link
-              href='/dashboard/classes'
+              href='/dashboard/instructor/classes'
               className='bg-primary text-primary-foreground inline-flex items-center justify-center gap-1.5 rounded-[7px] px-3.5 py-1.5 text-[0.78rem] font-medium transition hover:opacity-90'
             >
               View Schedule

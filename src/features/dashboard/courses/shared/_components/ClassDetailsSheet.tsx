@@ -153,7 +153,7 @@ export function ClassDetailSheet({
                   <InfoRow
                     icon={<Wallet className='h-4 w-4' />}
                     label='Training Fee'
-                    value={`KES ${Number(detail.training_fee ?? 0).toLocaleString()}`}
+                    value={`KES ${Number(detail.sale_price ?? 0).toLocaleString()}`}
                   />
 
                   <InfoRow

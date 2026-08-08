@@ -48,6 +48,10 @@ type ReviewData = {
   registrationNumber?: string;
   skills?: string[];
   trainingMode?: string;
+  privateOnlineRate?: number | string;
+  privateInpersonRate?: number | string;
+  groupOnlineRate?: number | string;
+  groupInpersonRate?: number | string;
   minStudents?: number | string;
   maxStudents?: number | string;
   trainingCity?: string;
@@ -121,6 +125,15 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
       {
         label: 'Training Mode',
         isComplete: Boolean(data?.trainingMode),
+      },
+      {
+        label: 'Session Rates',
+        isComplete: [
+          data?.privateOnlineRate,
+          data?.privateInpersonRate,
+          data?.groupOnlineRate,
+          data?.groupInpersonRate,
+        ].every(rate => Number.isFinite(Number(rate))),
       },
       {
         label: 'Confirmed Accuracy',

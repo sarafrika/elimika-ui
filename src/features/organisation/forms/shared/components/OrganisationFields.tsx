@@ -1,5 +1,6 @@
 import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 import LocationInput from '@/components/locationInput';
+import { CountrySelect } from '@/components/ui/country-select';
 import {
   FormControl,
   FormDescription,
@@ -163,7 +164,7 @@ export function OrganisationCountryField<TFieldValues extends FieldValues>({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input placeholder={placeholder} {...field} />
+            <CountrySelect {...field} placeholder={placeholder} />
           </FormControl>
           {description ? <FormDescription>{description}</FormDescription> : null}
           <FormMessage />

@@ -25,6 +25,8 @@ import {
     useStudentAssignmentData,
     type StudentAssignmentRow,
 } from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { Badge } from '../../../../../components/ui/badge';
 import { Button } from '../../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../../components/ui/card';
@@ -65,6 +67,7 @@ interface LearningHubDataProps {
 
 export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps) {
     const { assignmentRows, isLoading: assignmentsLoading } = useStudentAssignmentData();
+    const { activeDomain } = useUserDomain();
 
     const activeCourses = learningHubData.activeCourses;
     const upcomingClasses = learningHubData.upcomingClasses;
@@ -792,7 +795,7 @@ function EmptyBrowse() {
         <div className='flex flex-col items-center gap-3 py-8 text-center'>
             <p className='text-sm text-muted-foreground'>You aren't enrolled in any courses yet.</p>
             <Button asChild>
-                <Link href='/dashboard/student/start-course'>Browse courses</Link>
+                <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/courses')}>Browse courses</Link>
             </Button>
         </div>
     );

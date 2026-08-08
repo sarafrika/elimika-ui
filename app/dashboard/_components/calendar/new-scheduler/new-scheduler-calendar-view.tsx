@@ -242,7 +242,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     const instanceUuid = event.instanceUuid || event.id;
     if (!instanceUuid) return;
 
-    router.push(`/dashboard/class-instance/${instanceUuid}`);
+    router.push(buildWorkspaceAliasPath(activeDomain, `/dashboard/class-instance/${instanceUuid}`));
   };
 
   const handleCreateSession = (slot?: { date: Date; startTime: Date; endTime: Date }) => {
@@ -259,7 +259,12 @@ export function SchedulerCalendarView({ profile, data }: Props) {
       params.set('endTime', getTimeValue(slot.endTime));
     }
 
-    router.push(`/dashboard/classes/new${params.toString() ? `?${params.toString()}` : ''}`);
+    router.push(
+      buildWorkspaceAliasPath(
+        activeDomain,
+        `/dashboard/classes/new${params.toString() ? `?${params.toString()}` : ''}`
+      )
+    );
   };
 
   // Note: SchedulerGrid only calls this when `canCreateClass` is false for the

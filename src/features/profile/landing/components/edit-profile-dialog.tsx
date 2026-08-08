@@ -1,5 +1,6 @@
 'use client';
 
+import LocationInput from '@/components/locationInput';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { coordinatesFromPlace } from '@/lib/location-types';
 
 export type EditableProfileDetails = {
   first_name: string;
@@ -20,6 +22,7 @@ export type EditableProfileDetails = {
   professional_headline: string;
   website: string;
   bio: string;
+  location_name: string;
   latitude: string;
   longitude: string;
 };
@@ -125,33 +128,26 @@ export function EditProfileDialog({
               </div>
 
               <div className='space-y-2'>
-                <Label htmlFor='profile-latitude'>Latitude</Label>
-                <Input
-                  id='profile-latitude'
-                  type='number'
-                  inputMode='decimal'
-                  step='any'
-                  value={values.latitude}
-                  onChange={event => onChange('latitude', event.target.value)}
-                  placeholder='-1.292100'
+                <Label htmlFor='profile-location'>Where you are based</Label>
+                <LocationInput
+                  id='profile-location'
+                  value={values.location_name}
+                  onChange={value => onChange('location_name', value)}
+                  placeholder='Search for a place — e.g. Sarit Centre, Nairobi'
+                  coordinates={{ latitude: values.latitude, longitude: values.longitude }}
+                  onSuggest={response => {
+                    const { latitude, longitude } = coordinatesFromPlace(response);
+                    if (latitude !== undefined) onChange('latitude', String(latitude));
+                    if (longitude !== undefined) onChange('longitude', String(longitude));
+                    return response;
+                  }}
                 />
-                <p className='text-muted-foreground text-xs'>Use a value between -90 and 90.</p>
-                <FieldError message={errors.latitude} />
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='profile-longitude'>Longitude</Label>
-                <Input
-                  id='profile-longitude'
-                  type='number'
-                  inputMode='decimal'
-                  step='any'
-                  value={values.longitude}
-                  onChange={event => onChange('longitude', event.target.value)}
-                  placeholder='36.821900'
-                />
-                <p className='text-muted-foreground text-xs'>Use a value between -180 and 180.</p>
-                <FieldError message={errors.longitude} />
+                <p className='text-muted-foreground text-xs'>
+                  {values.latitude && values.longitude
+                    ? `Pinned at ${Number(values.latitude).toFixed(5)}, ${Number(values.longitude).toFixed(5)}.`
+                    : 'Pick a result and the coordinates fill in automatically.'}
+                </p>
+                <FieldError message={errors.latitude ?? errors.longitude} />
               </div>
             </div>
           )}

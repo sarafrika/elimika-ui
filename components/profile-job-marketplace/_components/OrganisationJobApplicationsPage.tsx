@@ -36,6 +36,8 @@ import {
   listJobsQueryKey,
   reviewApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import {
   ApplicationListSkeleton,
@@ -68,6 +70,7 @@ function getJobProgramUuid(job?: ClassMarketplaceJobWithProgram | null) {
 }
 
 export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPageProps) {
+  const { activeDomain } = useUserDomain();
   const router = useRouter();
   const queryClient = useQueryClient();
   const organisation = useOrganisation();
@@ -142,14 +145,20 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
     },
   });
 
+  const createClassHref = buildWorkspaceAliasPath(
+    activeDomain,
+    `/dashboard/opportunities/${jobUuid}/create-class`
+  );
+
   const assignMutation = useMutation({
     ...assignInstructorMutation(),
     onSuccess: async () => {
-      toast.success('Instructor assigned and class created.');
+      toast.success('Instructor assigned. Create the class to confirm the reserved bookings.');
       await queryClient.invalidateQueries({
         queryKey: listJobApplicationsQueryKey(applicationsListOptions),
       });
       await queryClient.invalidateQueries({ queryKey: listJobsQueryKey(jobsListOptions) });
+      router.push(createClassHref);
     },
     onError: error => {
       toast.error(error instanceof Error ? error.message : 'Unable to assign this instructor.');
@@ -251,7 +260,9 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
           description='An active organisation profile is required before class job applications can be reviewed.'
           action={
             <Button asChild variant='outline'>
-              <Link href='/dashboard/opportunities'>View class jobs</Link>
+              <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities')}>
+                View class jobs
+              </Link>
             </Button>
           }
           variant='card'
@@ -280,6 +291,21 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
           description='Review applicants, approve or reject submissions, then assign an approved instructor.'
         />
 
+        {(job?.status as string | undefined) === 'awaiting_class' ? (
+          <div className='border-primary/40 bg-primary/5 flex flex-wrap items-center gap-3 rounded-md border p-4'>
+            <BriefcaseBusiness className='text-primary size-5 shrink-0' />
+            <div className='min-w-0 text-sm'>
+              <div className='text-foreground font-medium'>An instructor is assigned</div>
+              <p className='text-muted-foreground'>
+                The venue and equipment are still only reserved. Create the class to confirm them.
+              </p>
+            </div>
+            <Button asChild size='sm' className='ml-auto'>
+              <Link href={createClassHref}>Create the class</Link>
+            </Button>
+          </div>
+        ) : null}
+
         <ApplicationStatsCards isLoading={isApplicationsLoading} stats={stats} />
 
         <div className='grid gap-4 md:grid-cols-[minmax(0,1fr)_320px]'>
@@ -306,14 +332,17 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                 isInstructorsLoading={isInstructorsLoading}
                 isReviewPending={reviewMutation.isPending}
                 isAssignPending={assignMutation.isPending}
-                jobTrainingFee={job?.training_fee}
+                jobInstructorPay={job?.instructor_pay}
                 onApprove={application => openReviewDialog(application, 'APPROVE')}
                 onReject={application => openReviewDialog(application, 'REJECT')}
                 onAssign={handleAssign}
                 onViewProfile={application => {
                   if (application.uuid) {
                     router.push(
-                      `/dashboard/opportunities/${jobUuid}/applications/${application.uuid}`
+                      buildWorkspaceAliasPath(
+                        activeDomain,
+                        `/dashboard/opportunities/${jobUuid}/applications/${application.uuid}`
+                      )
                     );
                   }
                 }}

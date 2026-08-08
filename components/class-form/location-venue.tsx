@@ -2,6 +2,7 @@
 'use client';
 
 import { MapPin, Presentation } from 'lucide-react';
+import LocationInput from '@/components/locationInput';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +29,11 @@ export function LocationVenue({
   venueResources,
   onlyAvailable,
   onOnlyAvailableChange,
+  locationLatitude,
+  onLocationLatitudeChange,
+  locationLongitude,
+  onLocationLongitudeChange,
+  showVenue = true,
 }: {
   delivery: Delivery;
   onDeliveryChange: (v: Delivery) => void;
@@ -40,11 +46,16 @@ export function LocationVenue({
   venueResources: OrganisationResource[];
   onlyAvailable: boolean;
   onOnlyAvailableChange: (v: boolean) => void;
+  locationLatitude?: string;
+  onLocationLatitudeChange?: (v: string) => void;
+  locationLongitude?: string;
+  onLocationLongitudeChange?: (v: string) => void;
+  showVenue?: boolean;
 }) {
   const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';
   const requiresLink = delivery === 'ONLINE' || delivery === 'HYBRID';
   return (
-    <div className='grid gap-4 sm:grid-cols-2'>
+    <div className={showVenue ? 'grid gap-4 sm:grid-cols-2' : 'grid gap-4'}>
       <div className='space-y-2'>
         <Label>
           Location <span className='text-destructive'>*</span>
@@ -69,7 +80,32 @@ export function LocationVenue({
             placeholder='https://meet.…'
           />
         ) : null}
-        {requiresPhysical ? (
+        {requiresPhysical && onLocationLatitudeChange && onLocationLongitudeChange ? (
+          <>
+            <LocationInput
+              value={locationName}
+              onChange={onLocationNameChange}
+              placeholder='Search for the venue — e.g. Nairobi Campus, Lab 2'
+              coordinates={{ latitude: locationLatitude, longitude: locationLongitude }}
+              onSuggest={response => {
+                const place = response.features?.[0];
+                if (!place) return response;
+                const latitude =
+                  place.properties?.coordinates?.latitude ?? place.geometry?.coordinates?.[1];
+                const longitude =
+                  place.properties?.coordinates?.longitude ?? place.geometry?.coordinates?.[0];
+                if (latitude !== undefined) onLocationLatitudeChange(String(latitude));
+                if (longitude !== undefined) onLocationLongitudeChange(String(longitude));
+                return response;
+              }}
+            />
+            <p className='text-muted-foreground text-xs'>
+              {locationLatitude && locationLongitude
+                ? `Pinned at ${Number(locationLatitude).toFixed(5)}, ${Number(locationLongitude).toFixed(5)}.`
+                : 'Pick a result to place this class on the map — the coordinates fill in automatically.'}
+            </p>
+          </>
+        ) : requiresPhysical ? (
           <Input
             value={locationName}
             onChange={e => onLocationNameChange(e.target.value)}
@@ -77,6 +113,7 @@ export function LocationVenue({
           />
         ) : null}
       </div>
+      {showVenue ? (
       <div className='space-y-2'>
         <div className='flex items-center justify-between gap-2'>
           <Label>Classroom / Venue</Label>
@@ -110,6 +147,7 @@ export function LocationVenue({
           </SelectContent>
         </Select>
       </div>
+      ) : null}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
+import LocationInput from '@/components/locationInput';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { CountrySelect } from '@/components/ui/country-select';
 import {
   Form,
   FormControl,
@@ -28,6 +30,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { coordinatesFromPlace } from '@/lib/location-types';
 import type { Organisation } from '@/services/client';
 import { updateOrganisationMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
@@ -44,6 +47,8 @@ const institutionProfileSchema = z.object({
   licence_no: z.string().trim().max(100).optional(),
   country: z.string().trim().max(100).optional(),
   location: z.string().trim().max(200).optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
   description: z.string().trim().max(2000).optional(),
 });
 
@@ -55,6 +60,8 @@ function toFormValues(organisation: Organisation | null): InstitutionProfileForm
     licence_no: organisation?.licence_no ?? '',
     country: organisation?.country ?? '',
     location: organisation?.location ?? '',
+    latitude: organisation?.latitude ?? undefined,
+    longitude: organisation?.longitude ?? undefined,
     description: organisation?.description ?? '',
   };
 }
@@ -100,6 +107,8 @@ export function InstitutionProfilePanel() {
           licence_no: values.licence_no || null,
           country: values.country || null,
           location: values.location || null,
+          latitude: values.latitude ?? null,
+          longitude: values.longitude ?? null,
           description: values.description || null,
         },
       });
@@ -162,7 +171,20 @@ export function InstitutionProfilePanel() {
                     <FormItem>
                       <FormLabel>Physical address</FormLabel>
                       <FormControl>
-                        <Input placeholder='e.g. Waiyaki Way, Westlands' {...field} />
+                        <LocationInput
+                          {...field}
+                          placeholder='Search for your address — e.g. Waiyaki Way, Westlands'
+                          coordinates={{
+                            latitude: form.watch('latitude'),
+                            longitude: form.watch('longitude'),
+                          }}
+                          onSuggest={response => {
+                            const { latitude, longitude } = coordinatesFromPlace(response);
+                            if (latitude !== undefined) form.setValue('latitude', latitude);
+                            if (longitude !== undefined) form.setValue('longitude', longitude);
+                            return response;
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -176,7 +198,7 @@ export function InstitutionProfilePanel() {
                     <FormItem>
                       <FormLabel>Country</FormLabel>
                       <FormControl>
-                        <Input placeholder='e.g. Kenya' {...field} />
+                        <CountrySelect {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

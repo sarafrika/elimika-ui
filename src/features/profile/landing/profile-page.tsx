@@ -1,5 +1,10 @@
 'use client';
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Camera, Upload, X } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,11 +22,6 @@ import type {
   UpdateUserData,
   User,
 } from '@/services/client/types.gen';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Camera, Upload, X } from 'lucide-react';
-import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import {
   type EditableProfileDetails,
   type EditableProfileErrors,
@@ -63,6 +63,7 @@ function getProfileDetailsDefaults(profile: ProfilePageProps['profile']): Editab
     professional_headline: profile.professional_headline ?? '',
     website: profile.website ?? '',
     bio: profile.bio ?? profile.student_profile?.bio ?? '',
+    location_name: profile.location_name ?? '',
     latitude:
       typeof profile.latitude === 'number' && Number.isFinite(profile.latitude)
         ? String(profile.latitude)
@@ -228,6 +229,7 @@ export function ProfilePage({
         bio: normalizeOptionalString(values.bio),
         professional_headline: normalizeOptionalString(values.professional_headline),
         website: normalizeOptionalString(values.website),
+        location_name: normalizeOptionalString(values.location_name),
         latitude: parseCoordinate(values.latitude),
         longitude: parseCoordinate(values.longitude),
       };

@@ -144,9 +144,9 @@ const getHourlyRate = (
   classItem: InstructorClassWithSchedule,
   approvedRateCards: Map<string, { currency?: string; [key: string]: unknown }>
 ) => {
-  if (typeof classItem.training_fee === 'number' && classItem.training_fee > 0) {
+  if (typeof classItem.instructor_pay === 'number' && classItem.instructor_pay > 0) {
     return {
-      amount: classItem.training_fee,
+      amount: classItem.instructor_pay,
       currencyCode: approvedRateCards.get(classItem.course_uuid ?? '')?.currency ?? 'KES',
     };
   }

@@ -285,7 +285,7 @@ export default function ProgramClassEnrollmentPage({
   const toggleRequirement = (uuid: string, checked: boolean) =>
     setRequirementsChecked(prev => ({ ...prev, [uuid]: checked }));
 
-  const trainingFee = enrollingClass?.training_fee;
+  const trainingFee = enrollingClass?.sale_price;
   const hasFee = typeof trainingFee === 'number' ? trainingFee > 0 : Boolean(trainingFee);
   const feeDisplay =
     typeof trainingFee === 'number'

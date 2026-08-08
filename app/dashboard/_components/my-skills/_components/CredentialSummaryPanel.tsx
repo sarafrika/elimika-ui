@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 
 import Link from 'next/link';
 import type { SharedCredentialSummary, SharedTimelineItem } from '../types';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 type CredentailSummaryPanelProps = {
   summary: SharedCredentialSummary;
@@ -11,6 +13,7 @@ type CredentailSummaryPanelProps = {
 };
 
 export function CredentailSummaryPanel({ summary, timeline }: CredentailSummaryPanelProps) {
+  const { activeDomain } = useUserDomain();
   const values = [
     { label: 'Skill Badges', value: summary.badgesEarned },
     { label: 'Certificates', value: summary.certificatesEarned },
@@ -54,7 +57,7 @@ export function CredentailSummaryPanel({ summary, timeline }: CredentailSummaryP
             size='sm'
             className='h-auto justify-between py-2 text-xs'
           >
-            <Link href='/dashboard/my-skills/verified-skills'>
+            <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/my-skills/verified-skills')}>
               View Details
               <ExternalLink className='size-3.5' />
             </Link>

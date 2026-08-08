@@ -64,14 +64,6 @@ export function GuardianLearnerSummary({
             View attendance
           </Link>
         </Button>
-        {shareScope !== 'ATTENDANCE' && (
-          <Button asChild variant='ghost' className='gap-2'>
-            <Link href='/dashboard/parent/reports'>
-              <FileDown className='size-4' />
-              Download report card
-            </Link>
-          </Button>
-        )}
       </CardContent>
     </Card>
   );

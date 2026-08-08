@@ -6,6 +6,7 @@ import { MoreHorizontal, Package, Plus, Search, Trash2, Wrench } from 'lucide-re
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import LocationInput from '@/components/locationInput';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ import {
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractPage } from '@/lib/api-helpers';
+import { coordinatesFromPlace, toCoordinate } from '@/lib/location-types';
 import type { OrganisationResource } from '@/services/client';
 import {
   createResourceMutation,
@@ -48,6 +50,9 @@ import {
 function AddEquipmentDialog({ organisationUuid }: { organisationUuid: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [location, setLocation] = useState('');
+  const [locationLatitude, setLocationLatitude] = useState('');
+  const [locationLongitude, setLocationLongitude] = useState('');
   const create = useMutation(createResourceMutation());
   const listKey = listResourcesQueryKey({
     path: { organisationUuid },
@@ -76,7 +81,6 @@ function AddEquipmentDialog({ organisationUuid }: { organisationUuid: string }) 
             const name = (f.elements.namedItem('e-name') as HTMLInputElement)?.value.trim();
             const description = (f.elements.namedItem('e-desc') as HTMLInputElement)?.value.trim();
             const quantity = (f.elements.namedItem('e-qty') as HTMLInputElement)?.value;
-            const location = (f.elements.namedItem('e-loc') as HTMLInputElement)?.value.trim();
             if (!name) return toast.error('Equipment name is required.');
             create.mutate(
               {
@@ -87,7 +91,9 @@ function AddEquipmentDialog({ organisationUuid }: { organisationUuid: string }) 
                   name,
                   description: description || undefined,
                   total_quantity: quantity ? Number(quantity) : 1,
-                  location_name: location || undefined,
+                  location_name: location.trim() || undefined,
+                  location_latitude: toCoordinate(locationLatitude),
+                  location_longitude: toCoordinate(locationLongitude),
                   is_active: true,
                 },
               },
@@ -117,7 +123,20 @@ function AddEquipmentDialog({ organisationUuid }: { organisationUuid: string }) 
             </div>
             <div className='space-y-2'>
               <Label htmlFor='e-loc'>Location / classroom</Label>
-              <Input id='e-loc' name='e-loc' placeholder='e.g. Lab B' />
+              <LocationInput
+                id='e-loc'
+                name='e-loc'
+                value={location}
+                onChange={setLocation}
+                placeholder='Search for where it lives — e.g. Lab B'
+                coordinates={{ latitude: locationLatitude, longitude: locationLongitude }}
+                onSuggest={response => {
+                  const { latitude, longitude } = coordinatesFromPlace(response);
+                  if (latitude !== undefined) setLocationLatitude(String(latitude));
+                  if (longitude !== undefined) setLocationLongitude(String(longitude));
+                  return response;
+                }}
+              />
             </div>
           </div>
           <DialogFooter>

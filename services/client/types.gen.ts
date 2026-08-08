@@ -134,6 +134,14 @@ export type TrainingBranch = {
    */
   address?: string | null;
   /**
+   * **[OPTIONAL]** Latitude of the branch address, resolved when the address was searched.
+   */
+  latitude?: number | null;
+  /**
+   * **[OPTIONAL]** Longitude of the branch address, resolved when the address was searched.
+   */
+  longitude?: number | null;
+  /**
    * **[REQUIRED]** Name of the point of contact for this branch.
    */
   poc_name: string;
@@ -537,6 +545,10 @@ export type RubricScoringLevel = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted display name combining level name and points for UI.
+   */
+  readonly display_name?: string;
+  /**
    * **[READ-ONLY]** Performance classification based on level order and passing status.
    */
   readonly performance_indicator?: string;
@@ -548,10 +560,6 @@ export type RubricScoringLevel = {
    * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
    */
   readonly is_highest_level?: boolean;
-  /**
-   * **[READ-ONLY]** Formatted display name combining level name and points for UI.
-   */
-  readonly display_name?: string;
 };
 
 export type ApiResponseRubricScoringLevel = {
@@ -923,13 +931,13 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
-   */
-  readonly requires_options?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable category of the question type.
    */
   readonly question_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
+   */
+  readonly requires_options?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
@@ -1115,6 +1123,10 @@ export type QuizAttempt = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
+   */
+  readonly is_completed?: boolean;
+  /**
    * **[READ-ONLY]** Formatted display of the grade information.
    */
   readonly grade_display?: string;
@@ -1130,10 +1142,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
-   */
-  readonly is_completed?: boolean;
 };
 
 /**
@@ -1684,6 +1692,10 @@ export type Instructor = {
    */
   user_uuid: string;
   /**
+   * **[OPTIONAL]** Name of the place the instructor searched for, stored alongside the coordinates so their location reads back as a place rather than a coordinate pair.
+   */
+  location_name?: string | null;
+  /**
    * **[OPTIONAL]** Geographical latitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations.
    */
   latitude?: number | null;
@@ -1775,6 +1787,10 @@ export type InstructorSkill = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted skill name for display in UI components.
+   */
+  readonly display_name?: string;
+  /**
    * **[READ-ONLY]** Brief summary of the skill for display in skill lists.
    */
   readonly summary?: string;
@@ -1782,10 +1798,6 @@ export type InstructorSkill = {
    * **[READ-ONLY]** Human-readable description of the proficiency level.
    */
   readonly proficiency_description?: string;
-  /**
-   * **[READ-ONLY]** Formatted skill name for display in UI components.
-   */
-  readonly display_name?: string;
 };
 
 export type ApiResponseInstructorSkill = {
@@ -1844,6 +1856,10 @@ export type InstructorProfessionalMembership = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the membership is currently valid and active.
+   */
+  readonly is_valid?: boolean;
+  /**
    * **[READ-ONLY]** Brief summary of the membership for display in listings.
    */
   readonly summary?: string;
@@ -1855,10 +1871,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
-  /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
-   */
-  readonly membership_duration_months?: number | null;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -1882,9 +1894,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the membership is currently valid and active.
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
-  readonly is_valid?: boolean;
+  readonly membership_duration_months?: number | null;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2180,6 +2192,10 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
+  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
@@ -2200,10 +2216,6 @@ export type InstructorDocument = {
    */
   readonly has_expiry_date?: boolean;
   verification_status?: VerificationStatusEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
 };
 
 export type ApiResponseInstructorDocument = {
@@ -3141,6 +3153,18 @@ export type CourseCreator = {
    */
   full_name: string;
   /**
+   * **[OPTIONAL]** Name of the place the course creator searched for, stored alongside the coordinates so their location reads back as a place rather than a coordinate pair.
+   */
+  location_name?: string | null;
+  /**
+   * **[OPTIONAL]** Geographical latitude of the course creator's primary location.
+   */
+  latitude?: number | null;
+  /**
+   * **[OPTIONAL]** Geographical longitude of the course creator's primary location.
+   */
+  longitude?: number | null;
+  /**
    * **[OPTIONAL]** Professional biography describing course creator's background, expertise, and content creation philosophy. Used in creator profiles and course descriptions.
    */
   bio?: string | null;
@@ -3190,8 +3214,8 @@ export type CourseCreatorSkill = {
   readonly created_by?: string;
   readonly updated_date?: Date;
   readonly updated_by?: string;
-  readonly proficiency_description?: string;
   readonly display_name?: string;
+  readonly proficiency_description?: string;
 };
 
 export type ApiResponseCourseCreatorSkill = {
@@ -3306,6 +3330,10 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
+  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
@@ -3326,10 +3354,6 @@ export type CourseCreatorDocumentDto = {
    */
   readonly has_expiry_date?: boolean;
   verification_status?: VerificationStatusEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
 };
 
 export type ApiResponseCourseCreatorDocumentDto = {
@@ -3453,13 +3477,13 @@ export type DifficultyLevel = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.
-   */
-  readonly is_entry_level?: boolean;
-  /**
    * **[READ-ONLY]** Formatted display name including level order for UI presentation.
    */
   readonly display_name?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.
+   */
+  readonly is_entry_level?: boolean;
 };
 
 export type ApiResponseDifficultyLevel = {
@@ -3725,7 +3749,11 @@ export type ClassDefinitionUpdateRequest = {
   /**
    * **[OPTIONAL]** Training fee for the class.
    */
-  training_fee?: number;
+  sale_price?: number;
+  /**
+   * **[OPTIONAL]** Per-session pay owed to the instructor.
+   */
+  instructor_pay?: number;
   class_visibility: ClassVisibilityEnum;
   session_format: SessionFormatEnum;
   /**
@@ -3841,7 +3869,11 @@ export type ClassDefinition = {
   /**
    * **[OPTIONAL]** Training fee charged for sessions created from this class definition. Must match the approved training rate for linked courses or training programs.
    */
-  training_fee?: number | null;
+  sale_price?: number | null;
+  /**
+   * **[OPTIONAL]** Per-session pay owed to the instructor. The difference between this and the sale price is the organisation's margin.
+   */
+  instructor_pay?: number | null;
   class_visibility: ClassVisibilityEnum;
   session_format: SessionFormatEnum;
   /**
@@ -3956,21 +3988,21 @@ export type ClassDefinition = {
    */
   readonly marketplace_job_uuid?: string | null;
   /**
+   * **[READ-ONLY]** Indicates if this is a standalone class not associated with any course.
+   */
+  readonly is_standalone?: boolean;
+  /**
    * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
   readonly duration_minutes?: bigint;
-  /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
-   */
-  readonly capacity_info?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
   /**
-   * **[READ-ONLY]** Indicates if this is a standalone class not associated with any course.
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
-  readonly is_standalone?: boolean;
+  readonly capacity_info?: string;
 };
 
 /**
@@ -4117,9 +4149,13 @@ export type ClassMarketplaceJobRequest = {
    */
   allow_waitlist?: boolean | null;
   /**
-   * **[OPTIONAL]** Fee paid to the instructor per session for the advertised class (carried onto the class when an instructor is assigned).
+   * **[OPTIONAL]** Price per session a learner will be charged once the class exists. Defaults to the organisation's approved rate when omitted. Must be at least the course minimum training fee.
    */
-  training_fee?: number | null;
+  sale_price?: number | null;
+  /**
+   * **[OPTIONAL]** Per-session pay offered to the eventual instructor. An applicant is assignable only when this is at least their approved rate. Defaults to the sale price when omitted, leaving no margin.
+   */
+  instructor_pay?: number | null;
   /**
    * **[REQUIRED]** Session templates that will be used when the class is assigned and created.
    */
@@ -4200,7 +4236,11 @@ export type ClassMarketplaceJob = {
   readonly organisation_uuid?: string;
   readonly course_uuid?: string;
   readonly program_uuid?: string;
-  readonly training_fee?: number;
+  readonly sale_price?: number;
+  /**
+   * **[READ-ONLY]** Per-session pay offered to the eventual instructor.
+   */
+  readonly instructor_pay?: number;
   class_visibility?: ClassVisibilityEnum;
   session_format?: SessionFormatEnum;
   readonly default_start_time?: Date;
@@ -5101,16 +5141,24 @@ export type CreateStudentGroupRequest = {
  */
 export type CreateSkillsFundTransactionRequest = {
   description?: string;
+  /**
+   * Display label for the recipient. Kept for rendering; it does not identify anyone.
+   */
   target_name?: string;
+  /**
+   * The platform user this movement is for. Required for anything that will later be paid out; optional for allocations and adjustments with no individual recipient.
+   */
+  beneficiary_user_uuid?: string;
   amount?: number;
+  /**
+   * ISO-4217 currency the amount is denominated in. Defaults to the platform currency (KES).
+   */
+  currency_code?: string;
   /**
    * Type: Allocation, Disbursement, Adjustment. Defaults to Allocation.
    */
   transaction_type?: string;
-  /**
-   * Status. Defaults to Pending.
-   */
-  status?: string;
+  status?: StatusEnum10;
   transaction_date?: Date;
 };
 
@@ -5132,21 +5180,26 @@ export type SkillsFundTransaction = {
    */
   description?: string | null;
   /**
-   * Recipient / target of the movement.
+   * Display label for the recipient. Not an identity — never resolve money against this.
    */
   target_name?: string | null;
+  /**
+   * The platform user this movement is for. Null on rows recorded before beneficiaries were identifiable, and on movements with no individual recipient.
+   */
+  beneficiary_user_uuid?: string | null;
   /**
    * Amount.
    */
   amount?: number;
   /**
+   * ISO-4217 currency the amount is denominated in, e.g. KES.
+   */
+  currency_code?: string;
+  /**
    * Type: Allocation, Disbursement, Adjustment.
    */
   transaction_type?: string;
-  /**
-   * Status: Pending, Allocated, Approved, Completed.
-   */
-  status?: string;
+  status?: StatusEnum10;
   transaction_date?: Date | null;
   readonly created_date?: Date;
 };
@@ -5158,6 +5211,10 @@ export type CreateSkillsFundSourceRequest = {
   name: string;
   source_type?: string;
   amount?: number;
+  /**
+   * ISO-4217 currency the amount is denominated in. Defaults to the platform currency (KES).
+   */
+  currency_code?: string;
 };
 
 export type ApiResponseSkillsFundSource = {
@@ -5185,6 +5242,10 @@ export type SkillsFundSource = {
    * Amount contributed.
    */
   amount?: number;
+  /**
+   * ISO-4217 currency the amount is denominated in, e.g. KES.
+   */
+  currency_code?: string;
   readonly created_date?: Date;
 };
 
@@ -5355,6 +5416,96 @@ export type ApiResponseOrganisationInvitation = {
 };
 
 /**
+ * Evidence that an organisation has paid an instructor outside the platform
+ */
+export type InstructorObligationSettlementRequest = {
+  /**
+   * The organisation's own reference for the payment: bank reference, mobile money code, payroll run id
+   */
+  settlement_reference: string;
+  /**
+   * Optional note about the payment
+   */
+  note?: string;
+};
+
+export type ApiResponseInstructorObligation = {
+  success?: boolean;
+  data?: InstructorObligation;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A single session's pay owed by an organisation to an instructor, at the rate snapshotted when the session completed
+ */
+export type InstructorObligation = {
+  /**
+   * UUID of the obligation
+   */
+  uuid?: string;
+  /**
+   * Organisation that owes the money
+   */
+  organisation_uuid?: string;
+  /**
+   * Instructor profile owed
+   */
+  instructor_uuid?: string;
+  /**
+   * Platform user behind the instructor profile, resolved at accrual
+   */
+  instructor_user_uuid?: string;
+  /**
+   * Class whose session was delivered
+   */
+  class_definition_uuid?: string;
+  /**
+   * Scheduled session that was delivered
+   */
+  session_uuid?: string;
+  /**
+   * Per-session fee as it stood when the session completed; never recomputed
+   */
+  rate_amount?: number;
+  /**
+   * Currency the obligation was accrued in
+   */
+  currency_code?: string;
+  status?: SchemaEnum6;
+  /**
+   * When the session completed and the obligation arose (UTC)
+   */
+  accrued_at?: Date;
+  /**
+   * When the organisation recorded that it had paid (UTC)
+   */
+  settled_at?: Date;
+  /**
+   * The organisation's own reference for the payment it made off-platform
+   */
+  settlement_reference?: string;
+  /**
+   * User who recorded the settlement
+   */
+  settled_by?: string;
+  /**
+   * Free-text reason accompanying a settlement, cancellation or dispute
+   */
+  status_note?: string;
+};
+
+/**
+ * Reason for withdrawing an obligation that should never have accrued
+ */
+export type InstructorObligationCancellationRequest = {
+  /**
+   * Why this obligation is being withdrawn
+   */
+  reason: string;
+};
+
+/**
  * Payload to create an organisation competition.
  */
 export type CreateCompetitionRequest = {
@@ -5472,7 +5623,7 @@ export type NotificationDto = {
   category?: CategoryEnum;
   priority?: PriorityEnum;
   presentation?: PresentationEnum;
-  status?: StatusEnum10;
+  status?: StatusEnum11;
   title?: string;
   body?: string;
   action_url?: string;
@@ -5710,7 +5861,7 @@ export type GuardianStudentLink = {
   guardianDisplayName?: string;
   relationshipType?: GuardianRelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum11;
+  status?: StatusEnum12;
   primaryGuardian?: boolean;
   linkedDate?: Date;
   revokedDate?: Date;
@@ -5827,7 +5978,7 @@ export type Enrollment = {
    * **[REQUIRED]** Reference to the student UUID who is enrolling.
    */
   student_uuid: string;
-  status?: StatusEnum12;
+  status?: StatusEnum13;
   /**
    * **[OPTIONAL]** Timestamp when attendance was marked for this enrollment.
    */
@@ -5849,6 +6000,10 @@ export type Enrollment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).
+   */
+  readonly is_active?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
@@ -5864,10 +6019,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).
-   */
-  readonly is_active?: boolean;
 };
 
 export type ApiResponse = {
@@ -6312,7 +6463,11 @@ export type ClassDefinitionCreateRequest = {
   /**
    * **[OPTIONAL]** Training fee for the class.
    */
-  training_fee?: number;
+  sale_price?: number;
+  /**
+   * **[OPTIONAL]** Per-session pay owed to the instructor.
+   */
+  instructor_pay?: number;
   class_visibility: ClassVisibilityEnum;
   session_format: SessionFormatEnum;
   /**
@@ -6664,6 +6819,13 @@ export type ApiResponseClassAssignmentSchedule = {
   error?: unknown;
 };
 
+export type ApiResponseClassDefinition = {
+  success?: boolean;
+  data?: ClassDefinition;
+  message?: string;
+  error?: unknown;
+};
+
 /**
  * Selects an approved instructor application and creates the actual class
  */
@@ -6679,11 +6841,10 @@ export type ApiResponseClassMarketplaceJobAssignmentResponse = {
 };
 
 /**
- * Result of assigning an instructor to a marketplace class job
+ * Result of assigning an instructor to a marketplace class job. The job moves to AWAITING_CLASS and its resource holds stay reserved until the class is created.
  */
 export type ClassMarketplaceJobAssignmentResponse = {
   job?: ClassMarketplaceJob;
-  class_definition?: ClassDefinition;
 };
 
 /**
@@ -6708,7 +6869,7 @@ export type ApiResponseClassMarketplaceJobApplication = {
  */
 export type ClassMarketplaceJobApplication = {
   readonly uuid?: string;
-  status?: StatusEnum13;
+  status?: StatusEnum14;
   readonly job_uuid?: string;
   readonly instructor_uuid?: string;
   readonly application_note?: string;
@@ -6813,7 +6974,7 @@ export type BookingResponse = {
    * End time for the session
    */
   end_time: Date;
-  status: StatusEnum14;
+  status: StatusEnum15;
   /**
    * Price amount agreed for the booking
    */
@@ -6957,7 +7118,7 @@ export type AssignmentSubmission = {
    * **[OPTIONAL]** Timestamp when the submission was made by the student.
    */
   submitted_at?: Date;
-  status: StatusEnum15;
+  status: StatusEnum16;
   /**
    * **[OPTIONAL]** Score awarded to this submission by the instructor.
    */
@@ -7160,7 +7321,7 @@ export type AssignmentAttachment = {
  * Admin domain assignment request containing domain type, reason, and effective date
  */
 export type AdminDomainAssignmentRequest = {
-  domain_name: SchemaEnum7;
+  domain_name: SchemaEnum8;
   assignment_type: AssignmentTypeEnum;
   /**
    * Reason for assigning admin privileges
@@ -7599,7 +7760,6 @@ export type PagedDtoBookingResponse = {
 export type Page = {
   totalElements?: bigint;
   totalPages?: number;
-  pageable?: PageableObject;
   first?: boolean;
   last?: boolean;
   size?: number;
@@ -7607,22 +7767,23 @@ export type Page = {
   number?: number;
   sort?: SortObject;
   numberOfElements?: number;
+  pageable?: PageableObject;
   empty?: boolean;
 };
 
 export type PageableObject = {
+  offset?: bigint;
+  sort?: SortObject;
   paged?: boolean;
   pageNumber?: number;
   pageSize?: number;
   unpaged?: boolean;
-  offset?: bigint;
-  sort?: SortObject;
 };
 
 export type SortObject = {
+  empty?: boolean;
   sorted?: boolean;
   unsorted?: boolean;
-  empty?: boolean;
 };
 
 export type ApiResponsePagedDtoAssessmentRubric = {
@@ -7994,7 +8155,7 @@ export type StudentQuizReview = {
   quiz_uuid?: string;
   attempt_uuid?: string;
   enrollment_uuid?: string;
-  status?: StatusEnum16;
+  status?: StatusEnum17;
   score?: number;
   max_score?: number;
   percentage?: number;
@@ -8115,7 +8276,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum17;
+  status: StatusEnum18;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -8141,6 +8302,10 @@ export type ProgramEnrollment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
+   */
+  readonly is_active?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
@@ -8156,10 +8321,6 @@ export type ProgramEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
-   */
-  readonly is_active?: boolean;
 };
 
 export type ApiResponseListCourse = {
@@ -8356,11 +8517,11 @@ export type SkillsFundSummary = {
    */
   total_balance?: number;
   /**
-   * Amount allocated (approved/allocated transactions).
+   * Amount committed against the fund — allocated, approved or already disbursed. Cumulative: money that has gone out was committed first, so it is counted here too.
    */
   allocated?: number;
   /**
-   * Amount disbursed (completed transactions).
+   * Amount that has actually left the fund (DISBURSED movements).
    */
   disbursed?: number;
   /**
@@ -8371,6 +8532,10 @@ export type SkillsFundSummary = {
    * Remaining = total balance − disbursed.
    */
   remaining?: number;
+  /**
+   * ISO-4217 currency every figure above is denominated in. A fund holds exactly one currency; these totals are meaningless without it.
+   */
+  currency_code?: string;
 };
 
 export type ApiResponseListSkillsFundSource = {
@@ -8468,7 +8633,7 @@ export type ResourceBooking = {
    * Organisation owning the resource
    */
   organisation_uuid?: string;
-  status?: StatusEnum18;
+  status?: StatusEnum19;
   /**
    * Units reserved (1 for venues)
    */
@@ -8516,6 +8681,19 @@ export type ApiResponseListOrganisationInvitation = {
   data?: Array<OrganisationInvitation>;
   message?: string;
   error?: unknown;
+};
+
+export type ApiResponsePagedDtoInstructorObligation = {
+  success?: boolean;
+  data?: PagedDtoInstructorObligation;
+  message?: string;
+  error?: unknown;
+};
+
+export type PagedDtoInstructorObligation = {
+  content?: Array<InstructorObligation>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
 };
 
 export type ApiResponseListCompetition = {
@@ -8757,6 +8935,61 @@ export type InstructorCalendarEntry = {
   source?: string;
 };
 
+export type ApiResponseInstructorStatement = {
+  success?: boolean;
+  data?: InstructorStatement;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Per-organisation summary of what an instructor is owed and what has been settled
+ */
+export type InstructorStatement = {
+  /**
+   * Platform user the statement belongs to
+   */
+  instructor_user_uuid?: string;
+  /**
+   * One line per organisation and currency
+   */
+  lines?: Array<InstructorStatementLine>;
+};
+
+/**
+ * What one organisation owes this instructor in one currency
+ */
+export type InstructorStatementLine = {
+  /**
+   * Organisation that owes the money
+   */
+  organisation_uuid?: string;
+  /**
+   * Currency the obligations were accrued in
+   */
+  currency_code?: string;
+  /**
+   * Still owed: accrued, not settled, not cancelled, not disputed
+   */
+  amount_outstanding?: number;
+  /**
+   * Recorded as paid off-platform by the organisation
+   */
+  amount_settled?: number;
+  /**
+   * Lifetime total: outstanding plus settled
+   */
+  amount_accrued?: number;
+  /**
+   * Sessions that generated these obligations
+   */
+  session_count?: bigint;
+  /**
+   * Of those, the sessions still unpaid
+   */
+  outstanding_session_count?: bigint;
+};
+
 export type ApiResponseListOrgInstructorSummary = {
   success?: boolean;
   data?: Array<OrgInstructorSummary>;
@@ -8840,7 +9073,7 @@ export type GuardianStudentDashboardDto = {
   studentUuid?: string;
   studentName?: string;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum11;
+  status?: StatusEnum12;
   courseProgress?: Array<LearnerCourseProgressView>;
   programProgress?: Array<LearnerProgramProgressView>;
 };
@@ -8876,7 +9109,7 @@ export type GuardianStudentSummaryDto = {
   studentName?: string;
   relationshipType?: GuardianRelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum11;
+  status?: StatusEnum12;
   primaryGuardian?: boolean;
 };
 
@@ -8989,7 +9222,7 @@ export type StudentClassEnrollmentSummary = {
    * Most recent scheduled-instance enrollment identifier for this class
    */
   latest_enrollment_uuid?: string;
-  latest_enrollment_status?: StatusEnum12;
+  latest_enrollment_status?: StatusEnum13;
   /**
    * Number of scheduled-instance enrollments aggregated under this class
    */
@@ -9342,7 +9575,7 @@ export type CoursePendingEdit = {
    * **[READ-ONLY]** Unique identifier for the pending edit.
    */
   readonly uuid?: string;
-  status?: StatusEnum19;
+  status?: StatusEnum20;
   /**
    * **[READ-ONLY]** The live course this edit applies to.
    */
@@ -9676,7 +9909,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum17;
+  status: StatusEnum18;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -9702,6 +9935,10 @@ export type CourseEnrollment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
+   */
+  readonly is_active?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
@@ -9717,10 +9954,6 @@ export type CourseEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
-   */
-  readonly is_active?: boolean;
 };
 
 export type PagedDtoCourseEnrollment = {
@@ -10139,17 +10372,33 @@ export type OrganisationInstructorPayable = {
    */
   instructor_uuid?: string;
   /**
-   * Total amount owed = sum(training_fee x completed sessions)
+   * Still outstanding: delivered sessions that have not been settled
    */
   amount_owed?: number;
   /**
-   * Number of the organisation's classes assigned to this instructor
+   * Number of the organisation's classes that generated these obligations
    */
   class_count?: bigint;
   /**
-   * Total completed sessions across those classes
+   * Total delivered sessions behind these obligations, settled or not
    */
   session_count?: bigint;
+  /**
+   * Currency the obligations were accrued in
+   */
+  currency_code?: string;
+  /**
+   * Already recorded as paid off-platform by the organisation
+   */
+  amount_settled?: number;
+  /**
+   * Lifetime total earned: outstanding plus settled
+   */
+  amount_accrued?: number;
+  /**
+   * Of the delivered sessions, the ones still unpaid
+   */
+  outstanding_session_count?: bigint;
 };
 
 export type ApiResponsePagedDtoClassMarketplaceJob = {
@@ -10944,19 +11193,28 @@ export const SchemaEnum5 = {
 export type SchemaEnum5 = (typeof SchemaEnum5)[keyof typeof SchemaEnum5];
 
 export const SchemaEnum6 = {
-  ACTOR: 'actor',
-  TARGET: 'target',
-  ALL: 'all',
+  ACCRUED: 'ACCRUED',
+  SETTLED: 'SETTLED',
+  CANCELLED: 'CANCELLED',
+  DISPUTED: 'DISPUTED',
 } as const;
 
 export type SchemaEnum6 = (typeof SchemaEnum6)[keyof typeof SchemaEnum6];
 
 export const SchemaEnum7 = {
+  ACTOR: 'actor',
+  TARGET: 'target',
+  ALL: 'all',
+} as const;
+
+export type SchemaEnum7 = (typeof SchemaEnum7)[keyof typeof SchemaEnum7];
+
+export const SchemaEnum8 = {
   ADMIN: 'admin',
   ORGANISATION_USER: 'organisation_user',
 } as const;
 
-export type SchemaEnum7 = (typeof SchemaEnum7)[keyof typeof SchemaEnum7];
+export type SchemaEnum8 = (typeof SchemaEnum8)[keyof typeof SchemaEnum8];
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -11527,6 +11785,7 @@ export type ServiceTypeEnum = (typeof ServiceTypeEnum)[keyof typeof ServiceTypeE
 
 export const StatusEnum8 = {
   OPEN: 'open',
+  AWAITING_CLASS: 'awaiting_class',
   FILLED: 'filled',
   CANCELLED: 'cancelled',
   EXPIRED: 'expired',
@@ -11590,6 +11849,21 @@ export const StatusEnum9 = {
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
 export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
+
+/**
+ * PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.
+ */
+export const StatusEnum10 = {
+  PENDING: 'PENDING',
+  ALLOCATED: 'ALLOCATED',
+  APPROVED: 'APPROVED',
+  DISBURSED: 'DISBURSED',
+} as const;
+
+/**
+ * PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.
+ */
+export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
 
 export const TypeEnum = {
   COURSE_ENROLLMENT_WELCOME: 'COURSE_ENROLLMENT_WELCOME',
@@ -11669,13 +11943,13 @@ export const PresentationEnum = {
 
 export type PresentationEnum = (typeof PresentationEnum)[keyof typeof PresentationEnum];
 
-export const StatusEnum10 = {
+export const StatusEnum11 = {
   UNREAD: 'UNREAD',
   READ: 'READ',
   ARCHIVED: 'ARCHIVED',
 } as const;
 
-export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
+export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
 
 /**
  * **[REQUIRED]** Nature of the relationship.
@@ -11700,13 +11974,13 @@ export const ShareScopeEnum = {
 
 export type ShareScopeEnum = (typeof ShareScopeEnum)[keyof typeof ShareScopeEnum];
 
-export const StatusEnum11 = {
+export const StatusEnum12 = {
   PENDING: 'PENDING',
   ACTIVE: 'ACTIVE',
   REVOKED: 'REVOKED',
 } as const;
 
-export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
+export type StatusEnum12 = (typeof StatusEnum12)[keyof typeof StatusEnum12];
 
 /**
  * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
@@ -11725,7 +11999,7 @@ export type ShareScopeEnum2 = (typeof ShareScopeEnum2)[keyof typeof ShareScopeEn
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum12 = {
+export const StatusEnum13 = {
   ENROLLED: 'ENROLLED',
   WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
@@ -11736,7 +12010,7 @@ export const StatusEnum12 = {
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export type StatusEnum12 = (typeof StatusEnum12)[keyof typeof StatusEnum12];
+export type StatusEnum13 = (typeof StatusEnum13)[keyof typeof StatusEnum13];
 
 /**
  * How the platform fee was configured
@@ -11765,7 +12039,7 @@ export const ReleaseStrategyEnum = {
  */
 export type ReleaseStrategyEnum = (typeof ReleaseStrategyEnum)[keyof typeof ReleaseStrategyEnum];
 
-export const StatusEnum13 = {
+export const StatusEnum14 = {
   PENDING: 'pending',
   SHORTLISTED: 'shortlisted',
   INTERVIEWING: 'interviewing',
@@ -11776,12 +12050,12 @@ export const StatusEnum13 = {
   NOT_SELECTED: 'not_selected',
 } as const;
 
-export type StatusEnum13 = (typeof StatusEnum13)[keyof typeof StatusEnum13];
+export type StatusEnum14 = (typeof StatusEnum14)[keyof typeof StatusEnum14];
 
 /**
  * Current status of the booking
  */
-export const StatusEnum14 = {
+export const StatusEnum15 = {
   PAYMENT_REQUIRED: 'payment_required',
   CONFIRMED: 'confirmed',
   CANCELLED: 'cancelled',
@@ -11795,7 +12069,7 @@ export const StatusEnum14 = {
 /**
  * Current status of the booking
  */
-export type StatusEnum14 = (typeof StatusEnum14)[keyof typeof StatusEnum14];
+export type StatusEnum15 = (typeof StatusEnum15)[keyof typeof StatusEnum15];
 
 /**
  * Payment status reported by the engine
@@ -11813,7 +12087,7 @@ export type PaymentStatusEnum = (typeof PaymentStatusEnum)[keyof typeof PaymentS
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const StatusEnum15 = {
+export const StatusEnum16 = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -11824,7 +12098,7 @@ export const StatusEnum15 = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum15 = (typeof StatusEnum15)[keyof typeof StatusEnum15];
+export type StatusEnum16 = (typeof StatusEnum16)[keyof typeof StatusEnum16];
 
 /**
  * Type of assignment - global or organization-specific
@@ -11923,18 +12197,18 @@ export const QuestionTypeEnum2 = {
 
 export type QuestionTypeEnum2 = (typeof QuestionTypeEnum2)[keyof typeof QuestionTypeEnum2];
 
-export const StatusEnum16 = {
+export const StatusEnum17 = {
   IN_PROGRESS: 'in_progress',
   SUBMITTED: 'submitted',
   GRADED: 'graded',
 } as const;
 
-export type StatusEnum16 = (typeof StatusEnum16)[keyof typeof StatusEnum16];
+export type StatusEnum17 = (typeof StatusEnum17)[keyof typeof StatusEnum17];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum17 = {
+export const StatusEnum18 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -11944,7 +12218,7 @@ export const StatusEnum17 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum17 = (typeof StatusEnum17)[keyof typeof StatusEnum17];
+export type StatusEnum18 = (typeof StatusEnum18)[keyof typeof StatusEnum18];
 
 /**
  * Entry kind
@@ -11964,7 +12238,7 @@ export type EntryTypeEnum = (typeof EntryTypeEnum)[keyof typeof EntryTypeEnum];
 /**
  * Booking lifecycle state
  */
-export const StatusEnum18 = {
+export const StatusEnum19 = {
   HOLD: 'HOLD',
   CONFIRMED: 'CONFIRMED',
   RELEASED: 'RELEASED',
@@ -11974,7 +12248,7 @@ export const StatusEnum18 = {
 /**
  * Booking lifecycle state
  */
-export type StatusEnum18 = (typeof StatusEnum18)[keyof typeof StatusEnum18];
+export type StatusEnum19 = (typeof StatusEnum19)[keyof typeof StatusEnum19];
 
 /**
  * What created the booking
@@ -12007,7 +12281,7 @@ export type EntryTypeEnum2 = (typeof EntryTypeEnum2)[keyof typeof EntryTypeEnum2
 /**
  * **[READ-ONLY]** Review state of the edit.
  */
-export const StatusEnum19 = {
+export const StatusEnum20 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -12017,7 +12291,7 @@ export const StatusEnum19 = {
 /**
  * **[READ-ONLY]** Review state of the edit.
  */
-export type StatusEnum19 = (typeof StatusEnum19)[keyof typeof StatusEnum19];
+export type StatusEnum20 = (typeof StatusEnum20)[keyof typeof StatusEnum20];
 
 /**
  * **[READ-ONLY]** Type of the moderated content.
@@ -12156,19 +12430,28 @@ export const SchemaEnum5Writable = {
 export type SchemaEnum5Writable = (typeof SchemaEnum5Writable)[keyof typeof SchemaEnum5Writable];
 
 export const SchemaEnum6Writable = {
-  ACTOR: 'actor',
-  TARGET: 'target',
-  ALL: 'all',
+  ACCRUED: 'ACCRUED',
+  SETTLED: 'SETTLED',
+  CANCELLED: 'CANCELLED',
+  DISPUTED: 'DISPUTED',
 } as const;
 
 export type SchemaEnum6Writable = (typeof SchemaEnum6Writable)[keyof typeof SchemaEnum6Writable];
 
 export const SchemaEnum7Writable = {
+  ACTOR: 'actor',
+  TARGET: 'target',
+  ALL: 'all',
+} as const;
+
+export type SchemaEnum7Writable = (typeof SchemaEnum7Writable)[keyof typeof SchemaEnum7Writable];
+
+export const SchemaEnum8Writable = {
   ADMIN: 'admin',
   ORGANISATION_USER: 'organisation_user',
 } as const;
 
-export type SchemaEnum7Writable = (typeof SchemaEnum7Writable)[keyof typeof SchemaEnum7Writable];
+export type SchemaEnum8Writable = (typeof SchemaEnum8Writable)[keyof typeof SchemaEnum8Writable];
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -12624,6 +12907,21 @@ export const StatusEnum9Writable = {
  */
 export type StatusEnum9Writable = (typeof StatusEnum9Writable)[keyof typeof StatusEnum9Writable];
 
+/**
+ * PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.
+ */
+export const StatusEnum10Writable = {
+  PENDING: 'PENDING',
+  ALLOCATED: 'ALLOCATED',
+  APPROVED: 'APPROVED',
+  DISBURSED: 'DISBURSED',
+} as const;
+
+/**
+ * PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.
+ */
+export type StatusEnum10Writable = (typeof StatusEnum10Writable)[keyof typeof StatusEnum10Writable];
+
 export const TypeEnumWritable = {
   COURSE_ENROLLMENT_WELCOME: 'COURSE_ENROLLMENT_WELCOME',
   COURSE_COMPLETION_CERTIFICATE: 'COURSE_COMPLETION_CERTIFICATE',
@@ -12703,13 +13001,13 @@ export const PresentationEnumWritable = {
 export type PresentationEnumWritable =
   (typeof PresentationEnumWritable)[keyof typeof PresentationEnumWritable];
 
-export const StatusEnum10Writable = {
+export const StatusEnum11Writable = {
   UNREAD: 'UNREAD',
   READ: 'READ',
   ARCHIVED: 'ARCHIVED',
 } as const;
 
-export type StatusEnum10Writable = (typeof StatusEnum10Writable)[keyof typeof StatusEnum10Writable];
+export type StatusEnum11Writable = (typeof StatusEnum11Writable)[keyof typeof StatusEnum11Writable];
 
 /**
  * **[REQUIRED]** Nature of the relationship.
@@ -12735,13 +13033,13 @@ export const ShareScopeEnumWritable = {
 export type ShareScopeEnumWritable =
   (typeof ShareScopeEnumWritable)[keyof typeof ShareScopeEnumWritable];
 
-export const StatusEnum11Writable = {
+export const StatusEnum12Writable = {
   PENDING: 'PENDING',
   ACTIVE: 'ACTIVE',
   REVOKED: 'REVOKED',
 } as const;
 
-export type StatusEnum11Writable = (typeof StatusEnum11Writable)[keyof typeof StatusEnum11Writable];
+export type StatusEnum12Writable = (typeof StatusEnum12Writable)[keyof typeof StatusEnum12Writable];
 
 /**
  * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
@@ -12761,7 +13059,7 @@ export type ShareScopeEnum2Writable =
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum12Writable = {
+export const StatusEnum13Writable = {
   ENROLLED: 'ENROLLED',
   WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
@@ -12772,7 +13070,7 @@ export const StatusEnum12Writable = {
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export type StatusEnum12Writable = (typeof StatusEnum12Writable)[keyof typeof StatusEnum12Writable];
+export type StatusEnum13Writable = (typeof StatusEnum13Writable)[keyof typeof StatusEnum13Writable];
 
 /**
  * How the platform fee was configured
@@ -12805,7 +13103,7 @@ export type ReleaseStrategyEnumWritable =
 /**
  * Current status of the booking
  */
-export const StatusEnum14Writable = {
+export const StatusEnum15Writable = {
   PAYMENT_REQUIRED: 'payment_required',
   CONFIRMED: 'confirmed',
   CANCELLED: 'cancelled',
@@ -12819,7 +13117,7 @@ export const StatusEnum14Writable = {
 /**
  * Current status of the booking
  */
-export type StatusEnum14Writable = (typeof StatusEnum14Writable)[keyof typeof StatusEnum14Writable];
+export type StatusEnum15Writable = (typeof StatusEnum15Writable)[keyof typeof StatusEnum15Writable];
 
 /**
  * Payment status reported by the engine
@@ -12838,7 +13136,7 @@ export type PaymentStatusEnumWritable =
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const StatusEnum15Writable = {
+export const StatusEnum16Writable = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -12849,7 +13147,7 @@ export const StatusEnum15Writable = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum15Writable = (typeof StatusEnum15Writable)[keyof typeof StatusEnum15Writable];
+export type StatusEnum16Writable = (typeof StatusEnum16Writable)[keyof typeof StatusEnum16Writable];
 
 /**
  * Type of assignment - global or organization-specific
@@ -12906,18 +13204,18 @@ export const QuestionTypeEnum2Writable = {
 export type QuestionTypeEnum2Writable =
   (typeof QuestionTypeEnum2Writable)[keyof typeof QuestionTypeEnum2Writable];
 
-export const StatusEnum16Writable = {
+export const StatusEnum17Writable = {
   IN_PROGRESS: 'in_progress',
   SUBMITTED: 'submitted',
   GRADED: 'graded',
 } as const;
 
-export type StatusEnum16Writable = (typeof StatusEnum16Writable)[keyof typeof StatusEnum16Writable];
+export type StatusEnum17Writable = (typeof StatusEnum17Writable)[keyof typeof StatusEnum17Writable];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum17Writable = {
+export const StatusEnum18Writable = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -12927,7 +13225,7 @@ export const StatusEnum17Writable = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum17Writable = (typeof StatusEnum17Writable)[keyof typeof StatusEnum17Writable];
+export type StatusEnum18Writable = (typeof StatusEnum18Writable)[keyof typeof StatusEnum18Writable];
 
 /**
  * Entry kind
@@ -12948,7 +13246,7 @@ export type EntryTypeEnumWritable =
 /**
  * Booking lifecycle state
  */
-export const StatusEnum18Writable = {
+export const StatusEnum19Writable = {
   HOLD: 'HOLD',
   CONFIRMED: 'CONFIRMED',
   RELEASED: 'RELEASED',
@@ -12958,7 +13256,7 @@ export const StatusEnum18Writable = {
 /**
  * Booking lifecycle state
  */
-export type StatusEnum18Writable = (typeof StatusEnum18Writable)[keyof typeof StatusEnum18Writable];
+export type StatusEnum19Writable = (typeof StatusEnum19Writable)[keyof typeof StatusEnum19Writable];
 
 /**
  * What created the booking
@@ -20070,6 +20368,82 @@ export type ResendOrganisationInvitationResponses = {
 export type ResendOrganisationInvitationResponse =
   ResendOrganisationInvitationResponses[keyof ResendOrganisationInvitationResponses];
 
+export type SettleObligationData = {
+  body: InstructorObligationSettlementRequest;
+  path: {
+    /**
+     * UUID of the organisation that paid
+     */
+    organisationUuid: string;
+    /**
+     * UUID of the obligation being settled
+     */
+    obligationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/instructor-obligations/{obligationUuid}/settle';
+};
+
+export type SettleObligationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SettleObligationError = SettleObligationErrors[keyof SettleObligationErrors];
+
+export type SettleObligationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseInstructorObligation;
+};
+
+export type SettleObligationResponse = SettleObligationResponses[keyof SettleObligationResponses];
+
+export type CancelObligationData = {
+  body: InstructorObligationCancellationRequest;
+  path: {
+    /**
+     * UUID of the organisation
+     */
+    organisationUuid: string;
+    /**
+     * UUID of the obligation being withdrawn
+     */
+    obligationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/instructor-obligations/{obligationUuid}/cancel';
+};
+
+export type CancelObligationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CancelObligationError = CancelObligationErrors[keyof CancelObligationErrors];
+
+export type CancelObligationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseInstructorObligation;
+};
+
+export type CancelObligationResponse = CancelObligationResponses[keyof CancelObligationResponses];
+
 export type ListCompetitionsData = {
   body?: never;
   path: {
@@ -24218,6 +24592,38 @@ export type UploadJobThumbnailResponses = {
 
 export type UploadJobThumbnailResponse =
   UploadJobThumbnailResponses[keyof UploadJobThumbnailResponses];
+
+export type CreateClassForJobData = {
+  body?: never;
+  path: {
+    jobUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/jobs/{jobUuid}/class';
+};
+
+export type CreateClassForJobErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateClassForJobError = CreateClassForJobErrors[keyof CreateClassForJobErrors];
+
+export type CreateClassForJobResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassDefinition;
+};
+
+export type CreateClassForJobResponse =
+  CreateClassForJobResponses[keyof CreateClassForJobResponses];
 
 export type CancelJobData = {
   body?: never;
@@ -28610,6 +29016,50 @@ export type ListBookingsResponses = {
 
 export type ListBookingsResponse = ListBookingsResponses[keyof ListBookingsResponses];
 
+export type ListObligationsData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation
+     */
+    organisationUuid: string;
+  };
+  query: {
+    /**
+     * Narrow to a single instructor profile
+     */
+    instructorUuid?: string;
+    /**
+     * Narrow to ACCRUED, SETTLED, CANCELLED or DISPUTED
+     */
+    status?: SchemaEnum6Writable;
+    pageable: Pageable;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/instructor-obligations';
+};
+
+export type ListObligationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListObligationsError = ListObligationsErrors[keyof ListObligationsErrors];
+
+export type ListObligationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoInstructorObligation;
+};
+
+export type ListObligationsResponse = ListObligationsResponses[keyof ListObligationsResponses];
+
 export type Search2Data = {
   body?: never;
   path?: never;
@@ -28941,6 +29391,78 @@ export type GetInstructorCalendarResponses = {
 
 export type GetInstructorCalendarResponse =
   GetInstructorCalendarResponses[keyof GetInstructorCalendarResponses];
+
+export type GetStatementData = {
+  body?: never;
+  path: {
+    /**
+     * Platform user UUID of the instructor
+     */
+    instructorUserUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/instructors/users/{instructorUserUuid}/obligation-statement';
+};
+
+export type GetStatementErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetStatementError = GetStatementErrors[keyof GetStatementErrors];
+
+export type GetStatementResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseInstructorStatement;
+};
+
+export type GetStatementResponse = GetStatementResponses[keyof GetStatementResponses];
+
+export type ListInstructorObligationsData = {
+  body?: never;
+  path: {
+    /**
+     * Platform user UUID of the instructor
+     */
+    instructorUserUuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/instructors/users/{instructorUserUuid}/instructor-obligations';
+};
+
+export type ListInstructorObligationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListInstructorObligationsError =
+  ListInstructorObligationsErrors[keyof ListInstructorObligationsErrors];
+
+export type ListInstructorObligationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoInstructorObligation;
+};
+
+export type ListInstructorObligationsResponse =
+  ListInstructorObligationsResponses[keyof ListInstructorObligationsResponses];
 
 export type SearchSkillsData = {
   body?: never;
@@ -32777,7 +33299,7 @@ export type GetUserActivityData = {
     /**
      * Audit scope to return
      */
-    scope?: SchemaEnum6Writable;
+    scope?: SchemaEnum7Writable;
     /**
      * Optional endpoint category filter
      */
@@ -33885,7 +34407,7 @@ export type RemoveAdminDomainData = {
     /**
      * Domain name to remove
      */
-    domain: SchemaEnum7Writable;
+    domain: SchemaEnum8Writable;
   };
   query?: {
     /**

@@ -8,19 +8,18 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  AcademicPeriodsPanel,
-  addDays,
   type AcademicPeriod,
+  AcademicPeriodsPanel,
   type ApprovedRateCard,
+  addDays,
   approvedRateFor,
   computeUpcomingSessions,
   DAY_TOKEN,
   DAYS,
-  DEFAULT_DAYS,
   type DayKey,
   type DayRow,
+  DEFAULT_DAYS,
   type Delivery,
-  EquipmentTarget,
   firstOccurrenceOnOrAfter,
   fmtDate,
   LocationVenue,
@@ -32,14 +31,13 @@ import {
   REMINDER_MINUTES,
   ReminderOptions,
   type ReminderState,
-  ScheduleModeCards,
-  SERVICE_TYPE_ENUM,
   type ScheduleMode,
+  ScheduleModeCards,
   ServiceCards,
-  serviceFormat,
   type ServiceKey,
-  sessionEndFor,
   StandardSchedule,
+  serviceFormat,
+  sessionEndFor,
   toDateTime,
   UpcomingSessions,
 } from '@/components/class-form';
@@ -50,18 +48,18 @@ import { Button } from '@/components/ui/button';
 import { useOrganisation } from '@/context/organisation-context';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import { extractPage } from '@/lib/api-helpers';
+import { toCoordinate } from '@/lib/location-types';
 import { STALE_TIMES } from '@/lib/query-client';
 import type {
   Category,
-  ClassMarketplaceJobRequest,
-  ClassMarketplaceJobResource,
+  ClassDefinitionCreateRequest,
   ClassSessionTemplate,
   OrganisationResource,
   User,
 } from '@/services/client';
 import { RecurrenceTypeEnum, ResourceTypeEnum } from '@/services/client';
 import {
-  createJobMutation,
+  createClassDefinitionMultipartMutation,
   getAllCategoriesOptions,
   getUsersByOrganisationAndDomainOptions,
   listResourcesOptions,
@@ -227,10 +225,6 @@ export default function OrganisationCreateClassPage() {
     () => orgResources.filter(r => r.resource_type === ResourceTypeEnum.VENUE),
     [orgResources]
   );
-  const equipmentResources = useMemo(
-    () => orgResources.filter(r => r.resource_type === ResourceTypeEnum.EQUIPMENT_POOL),
-    [orgResources]
-  );
 
   // ── Form state ──────────────────────────────────────────────────────────────
   const [service, setService] = useState<ServiceKey>('group');
@@ -238,17 +232,32 @@ export default function OrganisationCreateClassPage() {
 
   const [delivery, setDelivery] = useState<Delivery>('IN_PERSON');
   const [locationName, setLocationName] = useState('');
+  const [locationLatitude, setLocationLatitude] = useState('');
+  const [locationLongitude, setLocationLongitude] = useState('');
   const [meetingLink, setMeetingLink] = useState('');
   const [venueUuid, setVenueUuid] = useState('');
-  const [equipmentUuids, setEquipmentUuids] = useState<string[]>([]);
-  const [targetGroupUuids, setTargetGroupUuids] = useState<string[]>([]);
 
-  // Never user-entered: the fee is whatever the course creator approved for this
-  // session format and delivery mode. The backend rejects anything else.
   const approvedFee = useMemo(
     () => approvedRateFor(selectedOffering?.rateCard, sessionFormat, delivery),
     [selectedOffering, sessionFormat, delivery]
   );
+  const [salePrice, setSalePrice] = useState('');
+  const [instructorPay, setInstructorPay] = useState('');
+  const [feesDirty, setFeesDirty] = useState(false);
+  useEffect(() => {
+    if (feesDirty) return;
+    const suggested = approvedFee === undefined ? '' : String(approvedFee);
+    setSalePrice(suggested);
+    setInstructorPay(suggested);
+  }, [approvedFee, feesDirty]);
+  const handleSalePriceChange = (value: string) => {
+    setFeesDirty(true);
+    setSalePrice(value);
+  };
+  const handleInstructorPayChange = (value: string) => {
+    setFeesDirty(true);
+    setInstructorPay(value);
+  };
   const [maxParticipants, setMaxParticipants] = useState('20');
   const [allowWaitlist, setAllowWaitlist] = useState(true);
 
@@ -357,9 +366,9 @@ export default function OrganisationCreateClassPage() {
   // ── Submit ────────────────────────────────────────────────────────────────
   const [resourceConflicts, setResourceConflicts] = useState<ConflictItem[]>([]);
   const createClass = useMutation({
-    ...createJobMutation(),
+    ...createClassDefinitionMultipartMutation(),
     onSuccess: () => {
-      toast.success('Class posted. Instructors can now apply.');
+      toast.success('Class created and scheduled.');
       router.push('/dashboard/organisation/classes');
     },
     onError: error => {
@@ -432,6 +441,11 @@ export default function OrganisationCreateClassPage() {
     event.preventDefault();
     if (!organisationUuid) return toast.error('No active organisation.');
     if (!offering) return toast.error('Select an approved course or program.');
+    if (!instructorUuid) {
+      return toast.error(
+        'Pick the instructor who will teach this class. To advertise it instead, post a job.'
+      );
+    }
     if (selectedOffering?.kind === 'Program' && !programCategoryUuid) {
       return toast.error('Pick the category these program classes fall under.');
     }
@@ -439,6 +453,17 @@ export default function OrganisationCreateClassPage() {
       return toast.error(
         'The course creator has not approved a rate for this session format and delivery mode.'
       );
+    }
+    const saleValue = num(salePrice);
+    const payValue = num(instructorPay);
+    if (saleValue === undefined || saleValue < 0) {
+      return toast.error('Enter the sale price learners are charged per session.');
+    }
+    if (payValue === undefined || payValue < 0) {
+      return toast.error('Enter the pay the instructor receives per session.');
+    }
+    if (payValue > saleValue) {
+      return toast.error('Instructor pay cannot exceed the sale price.');
     }
     const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';
     const requiresLink = delivery === 'ONLINE' || delivery === 'HYBRID';
@@ -454,10 +479,6 @@ export default function OrganisationCreateClassPage() {
 
     setResourceConflicts([]);
     const [offeringKind, offeringUuid] = offering.split(':');
-    const resources: ClassMarketplaceJobResource[] = [
-      ...(venueUuid ? [{ resource_uuid: venueUuid, quantity: 1 }] : []),
-      ...equipmentUuids.map(uuid => ({ resource_uuid: uuid, quantity: 1 })),
-    ];
 
     const apStarts = academicPeriods
       .map(p => p.startDate)
@@ -475,8 +496,9 @@ export default function OrganisationCreateClassPage() {
           }
         : {};
 
-    const payload: ClassMarketplaceJobRequest = {
+    const payload: ClassDefinitionCreateRequest = {
       organisation_uuid: organisationUuid,
+      default_instructor_uuid: instructorUuid,
       ...(offeringKind === 'program'
         ? { program_uuid: offeringUuid }
         : { course_uuid: offeringUuid }),
@@ -487,22 +509,13 @@ export default function OrganisationCreateClassPage() {
       default_end_time: earliest.end_time,
       location_type: delivery,
       location_name: requiresPhysical ? locationName.trim() || undefined : undefined,
+      location_latitude: requiresPhysical ? toCoordinate(locationLatitude) : undefined,
+      location_longitude: requiresPhysical ? toCoordinate(locationLongitude) : undefined,
       meeting_link: requiresLink ? meetingLink.trim() || undefined : undefined,
       max_participants: num(maxParticipants),
       allow_waitlist: allowWaitlist,
-      ...(approvedFee !== undefined ? { training_fee: approvedFee } : {}),
-      service_type: SERVICE_TYPE_ENUM[service],
-      ...(instructorUuid ? { preferred_instructor_uuid: instructorUuid } : {}),
-      ...(targetGroupUuids.length > 0 ? { target_group_uuids: targetGroupUuids } : {}),
-      // Courses inherit their categories from the course record; only programs carry a choice.
-      ...(offeringKind === 'program' && programCategoryUuid
-        ? { category_uuid: programCategoryUuid }
-        : {}),
-      remind_students: reminder.sendStudents,
-      remind_instructor: reminder.sendInstructor,
-      remind_via_email: reminder.email,
-      remind_via_sms: reminder.sms,
-      remind_via_push: reminder.push,
+      sale_price: saleValue,
+      instructor_pay: payValue,
       class_reminder_minutes: REMINDER_MINUTES[reminder.window],
       ...(continuousReg
         ? {}
@@ -512,18 +525,17 @@ export default function OrganisationCreateClassPage() {
           }),
       ...academicBounds,
       session_templates: sessionTemplates,
-      ...(resources.length > 0 ? { resources } : {}),
     };
 
-    createClass.mutate({ body: payload });
+    createClass.mutate({ body: payload, query: { formFields: {} } });
   };
 
   return (
     <div className='mx-auto w-full max-w-[1200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
       <form onSubmit={handleSubmit} className='space-y-6'>
         <PageHeader
-          title='Organisation — Create a class'
-          description='Configure course, instructor, location, and schedule, then publish. Naming an instructor assigns and schedules the class immediately (on their calendar and yours); leaving it unset posts the class for instructors to apply. The class belongs to your organisation.'
+          title='Create a class'
+          description='For an offering you already have an instructor for. The class is scheduled immediately on their calendar and yours. To advertise an opening instead, post a job — resources are reserved there, and the class is created once the job is filled.'
           action={
             <div className='flex gap-2'>
               <Button
@@ -570,6 +582,10 @@ export default function OrganisationCreateClassPage() {
         <PricingCapacity
           approvedFee={approvedFee}
           currency={selectedOffering?.rateCard?.currency}
+          salePrice={salePrice}
+          onSalePriceChange={handleSalePriceChange}
+          instructorPay={instructorPay}
+          onInstructorPayChange={handleInstructorPayChange}
           maxParticipants={maxParticipants}
           onMaxChange={setMaxParticipants}
           allowWaitlist={allowWaitlist}
@@ -584,20 +600,16 @@ export default function OrganisationCreateClassPage() {
           onMeetingLinkChange={setMeetingLink}
           locationName={locationName}
           onLocationNameChange={setLocationName}
+          locationLatitude={locationLatitude}
+          onLocationLatitudeChange={setLocationLatitude}
+          locationLongitude={locationLongitude}
+          onLocationLongitudeChange={setLocationLongitude}
           venueUuid={venueUuid}
           onVenueChange={setVenueUuid}
           venueResources={venueResources}
           onlyAvailable={onlyAvailable}
           onOnlyAvailableChange={setOnlyAvailable}
-        />
-
-        <EquipmentTarget
-          equipmentResources={equipmentResources}
-          equipmentUuids={equipmentUuids}
-          onEquipmentChange={setEquipmentUuids}
-          organisationUuid={organisationUuid}
-          targetGroupUuids={targetGroupUuids}
-          onTargetGroupsChange={setTargetGroupUuids}
+          showVenue={false}
         />
 
         <ScheduleModeCards value={mode} onChange={setMode} />

@@ -624,7 +624,7 @@ export function StudentMyCoursesPage() {
                   size='sm'
                   className='bg-primary/60 hover:bg-primary/70 mt-4 w-full rounded-xl text-xs font-semibold text-white shadow-none'
                 >
-                  <Link href='/dashboard/student/report'>
+                  <Link href='/dashboard/student/analytics'>
                     View Report
                     <ArrowRight className='size-3.5' />
                   </Link>

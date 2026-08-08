@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import { Eye, LayoutList, MoreHorizontal, PauseCircle, Plus, Send, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
@@ -34,10 +34,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
+import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { extractList, extractPage } from '@/lib/api-helpers';
 import type {
   ClassDefinition,
   ClassEnrolmentCountDto,
+  Instructor,
   TrainingBranch,
   User,
 } from '@/services/client';
@@ -55,13 +57,19 @@ const categoryLabel = (cd: ClassDefinition) =>
     : cd.location_type === 'HYBRID'
       ? 'Hybrid'
       : 'In-Person';
-const instructorInitials = (u?: User) =>
-  u
-    ? `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase() ||
-      (u.email?.[0] ?? '?').toUpperCase()
+type ClassInstructor = { name: string; imageUrl?: string | null } | undefined;
+
+const instructorInitials = (i: ClassInstructor) =>
+  i
+    ? i.name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part[0])
+        .join('')
+        .toUpperCase() || '?'
     : '?';
-const instructorName = (u?: User) =>
-  u ? `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email || 'Instructor' : '—';
+const instructorName = (i: ClassInstructor) => i?.name ?? '—';
 
 export default function ClassesPage() {
   const organisation = useOrganisation();
@@ -104,11 +112,34 @@ export default function ClassesPage() {
       if (c.class_definition_uuid) map.set(c.class_definition_uuid, Number(c.enrolled ?? 0));
     return map;
   }, [countsQuery.data]);
-  const instructorsByUuid = useMemo(() => {
+  const orgUsersByUuid = useMemo(() => {
     const map = new Map<string, User>();
     for (const u of extractPage<User>(instructorsQuery.data).items) if (u.uuid) map.set(u.uuid, u);
     return map;
   }, [instructorsQuery.data]);
+  const classInstructorUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(classDefinitions.map(cd => cd.default_instructor_uuid).filter(Boolean) as string[])
+      ),
+    [classDefinitions]
+  );
+  const { instructorMap } = useInstructorsByIds(classInstructorUuids);
+  const resolveInstructor = useCallback(
+    (instructorUuid?: string | null): ClassInstructor => {
+      if (!instructorUuid) return undefined;
+      const profile: Instructor | undefined = instructorMap[instructorUuid];
+      const user = orgUsersByUuid.get(profile?.user_uuid ?? instructorUuid);
+      const name =
+        profile?.full_name?.trim() ||
+        `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim() ||
+        user?.email ||
+        '';
+      if (!name) return undefined;
+      return { name, imageUrl: user?.profile_image_url };
+    },
+    [instructorMap, orgUsersByUuid]
+  );
   const venuesByUuid = useMemo(() => {
     const map = new Map<string, TrainingBranch>();
     for (const v of extractPage<TrainingBranch>(venuesQuery.data).items)
@@ -128,7 +159,7 @@ export default function ClassesPage() {
           category: categoryLabel(cd),
           subject: null as string | null,
           programType: null,
-          instructor: instructorsByUuid.get(cd.default_instructor_uuid ?? ''),
+          instructor: resolveInstructor(cd.default_instructor_uuid),
           venueName:
             venue?.branch_name ??
             cd.location_name ??
@@ -140,7 +171,7 @@ export default function ClassesPage() {
           status: cd.is_active === false ? 'Inactive' : 'Active',
         };
       }),
-    [classDefinitions, enrolledByClass, instructorsByUuid, venuesByUuid]
+    [classDefinitions, enrolledByClass, resolveInstructor, venuesByUuid]
   );
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
@@ -349,9 +380,9 @@ export default function ClassesPage() {
                       <TableCell className='whitespace-nowrap'>
                         <div className='flex items-center gap-2'>
                           <Avatar className='h-7 w-7 shrink-0'>
-                            {r.instructor?.profile_image_url && (
+                            {r.instructor?.imageUrl && (
                               <AvatarImage
-                                src={r.instructor.profile_image_url}
+                                src={r.instructor.imageUrl}
                                 alt={instructorName(r.instructor)}
                               />
                             )}

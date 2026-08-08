@@ -1,12 +1,12 @@
 'use client';
 
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
-
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import ImageSelector, { type ImageType } from '@/components/image-selector';
 import LocationInput from '@/components/locationInput';
@@ -26,6 +26,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
@@ -35,6 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { cn, profilePicSvg } from '@/lib/utils';
 import {
@@ -43,8 +45,6 @@ import {
   uploadProfileImageMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { UserDomainEnum } from '@/services/client/types.gen';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { CalendarIcon } from 'lucide-react';
 
 const generalProfileSchema = z.object({
   username: z.string().min(1, 'Username is required'),
@@ -326,7 +326,7 @@ export default function CourseCreatorProfile() {
                     <FormItem>
                       <FormLabel>Phone number</FormLabel>
                       <FormControl>
-                        <Input type='tel' placeholder='+254712345678' {...field} />
+                        <PhoneInput {...field} placeholder='+254 712 345678' />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

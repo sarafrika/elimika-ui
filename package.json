@@ -9,8 +9,9 @@
     "emails:export": "tsx emails/export.tsx",
     "start": "next start",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "biome lint . && node scripts/check-brand-colors.mjs",
+    "lint": "biome lint . && node scripts/check-brand-colors.mjs && node scripts/check-dashboard-links.mjs",
     "lint:palette": "node scripts/check-brand-colors.mjs",
+    "lint:links": "node scripts/check-dashboard-links.mjs",
     "check:dates": "node scripts/check-datetime.mjs",
     "format": "prettier --write \"./**/*.{ts,tsx,js,jsx,json,css,yaml,yml}\"",
     "format:file": "prettier --write"
@@ -85,6 +86,7 @@
     "react-hotkeys-hook": "^5.1.0",
     "react-is": "^19.2.7",
     "react-multi-date-picker": "^4.5.2",
+    "react-phone-number-input": "^3.4.17",
     "recharts": "^3.0.2",
     "sonner": "^2.0.1",
     "tailwind-merge": "^3.0.2",

@@ -41,9 +41,6 @@ export function GuardianEnrollmentNotice({ notice }: GuardianEnrollmentNoticePro
             </p>
           ) : null}
           <div className='flex flex-wrap gap-2 pt-2'>
-            <Button asChild size='sm' variant='outline'>
-              <Link href='/dashboard/parent/profile'>Confirm date of birth</Link>
-            </Button>
             <Button
               asChild
               size='sm'
@@ -51,7 +48,7 @@ export function GuardianEnrollmentNotice({ notice }: GuardianEnrollmentNoticePro
               className='bg-primary/10 text-primary hover:bg-primary/20'
             >
               <Link
-                href={`/dashboard/parent/courses?age=${notice.student_age ?? ''}`}
+                href={`/dashboard/parent/all-courses?age=${notice.student_age ?? ''}`}
                 prefetch={false}
               >
                 Find age-appropriate courses

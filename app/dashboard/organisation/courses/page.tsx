@@ -12,7 +12,7 @@ import {
   PlusSquare,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
@@ -38,15 +38,22 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
+import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { extractEntity } from '@/lib/api-helpers';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import type { ClassDefinition, Course, CourseTrainingApplication, User } from '@/services/client';
+import type {
+  ClassDefinition,
+  Course,
+  CourseTrainingApplication,
+  Instructor,
+  User,
+} from '@/services/client';
 import {
   getClassDefinitionsForOrganisationOptions,
   getCourseByUuidOptions,
   getUsersByOrganisationAndDomainOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 const currency = new Intl.NumberFormat('en-KE', {
   style: 'currency',
@@ -90,13 +97,19 @@ const normStatus = (s?: string): string => {
   return 'Pending';
 };
 
-const instructorInitials = (u?: User) =>
-  u
-    ? `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase() ||
-      (u.email?.[0] ?? '?').toUpperCase()
+type ClassInstructor = { name: string; imageUrl?: string | null } | undefined;
+
+const instructorInitials = (i: ClassInstructor) =>
+  i
+    ? i.name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part[0])
+        .join('')
+        .toUpperCase() || '?'
     : '?';
-const instructorName = (u?: User) =>
-  u ? `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email || 'Instructor' : '—';
+const instructorName = (i: ClassInstructor) => i?.name ?? '—';
 
 function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
   if (src) {
@@ -113,10 +126,14 @@ function CourseActions({
   status,
   onArchive,
   onView,
+  onPostJob,
+  onCreateClass,
 }: {
   status: string;
   onArchive: () => void;
   onView: () => void;
+  onPostJob: () => void;
+  onCreateClass: () => void;
 }) {
   return (
     <DropdownMenu>
@@ -135,18 +152,10 @@ function CourseActions({
           <Pencil className='mr-2 h-4 w-4' /> Edit
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() =>
-            toast.info('Post a job', { description: 'Drafting an instructor job for this course.' })
-          }
-        >
+        <DropdownMenuItem onClick={onPostJob}>
           <Briefcase className='mr-2 h-4 w-4' /> Post a job
         </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() =>
-            toast.info('Create class', { description: 'Starting a new class from this course.' })
-          }
-        >
+        <DropdownMenuItem onClick={onCreateClass}>
           <PlusSquare className='mr-2 h-4 w-4' /> Create class
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -164,6 +173,10 @@ export default function CoursesPage() {
   const organisationUuid = organisation?.uuid ?? '';
   const goToCourse = (uuid?: string) =>
     uuid && router.push(`/dashboard/organisation/courses/${uuid}`);
+  const postJobForCourse = (uuid?: string) =>
+    uuid &&
+    router.push(`/dashboard/organisation/jobs/new?courseUuid=${uuid}`);
+  const goToNewClass = () => router.push('/dashboard/organisation/classes/new');
 
   // Approved/engaged courses the org is running come from its training applications (which carry the rate card).
   const applicationsQuery = useQuery({
@@ -198,11 +211,38 @@ export default function CoursesPage() {
     }),
     enabled: Boolean(organisationUuid),
   });
-  const instructorsByUuid = useMemo(() => {
+  const orgUsersByUuid = useMemo(() => {
     const map = new Map<string, User>();
     for (const u of (instructorsQuery.data?.data ?? []) as User[]) if (u.uuid) map.set(u.uuid, u);
     return map;
   }, [instructorsQuery.data]);
+  const classInstructorUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          Array.from(classDefByKey.values())
+            .map(cd => cd.default_instructor_uuid)
+            .filter(Boolean) as string[]
+        )
+      ),
+    [classDefByKey]
+  );
+  const { instructorMap } = useInstructorsByIds(classInstructorUuids);
+  const resolveInstructor = useCallback(
+    (instructorUuid?: string | null): ClassInstructor => {
+      if (!instructorUuid) return undefined;
+      const profile: Instructor | undefined = instructorMap[instructorUuid];
+      const user = orgUsersByUuid.get(profile?.user_uuid ?? instructorUuid);
+      const name =
+        profile?.full_name?.trim() ||
+        `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim() ||
+        user?.email ||
+        '';
+      if (!name) return undefined;
+      return { name, imageUrl: user?.profile_image_url };
+    },
+    [instructorMap, orgUsersByUuid]
+  );
 
   // Resolve each linked course once for name / subject-area / image.
   const distinctCourseUuids = useMemo(
@@ -267,15 +307,15 @@ export default function CoursesPage() {
               displayName: effectiveTiers.length > 1 ? `${name} — ${tier.method}` : name,
               subjectLabel: subject ?? '—',
               method: tier.method,
-              amount: tier.key ? Number(app.rate_card?.[tier.key] ?? 0) : (cd?.training_fee ?? 0),
+              amount: tier.key ? Number(app.rate_card?.[tier.key] ?? 0) : (cd?.sale_price ?? 0),
               lessons: cd ? Number(cd.scheduled_session_count ?? 0) : 0,
-              instructor: instructorsByUuid.get(cd?.default_instructor_uuid ?? ''),
+              instructor: resolveInstructor(cd?.default_instructor_uuid),
               image,
               status: baseStatus,
             };
           });
         }),
-    [applications, courseByUuid, classDefByKey, instructorsByUuid, archived]
+    [applications, courseByUuid, classDefByKey, resolveInstructor, archived]
   );
 
   const filteredRows = useMemo(
@@ -372,9 +412,9 @@ export default function CoursesPage() {
                           <div className='flex items-center justify-between gap-2'>
                             <div className='flex min-w-0 items-center gap-2'>
                               <Avatar className='h-6 w-6 shrink-0'>
-                                {row.instructor?.profile_image_url && (
+                                {row.instructor?.imageUrl && (
                                   <AvatarImage
-                                    src={row.instructor.profile_image_url}
+                                    src={row.instructor.imageUrl}
                                     alt={instructorName(row.instructor)}
                                   />
                                 )}
@@ -389,6 +429,8 @@ export default function CoursesPage() {
                             <CourseActions
                               status={row.status}
                               onView={() => goToCourse(row.courseUuid)}
+                              onPostJob={() => postJobForCourse(row.courseUuid)}
+                              onCreateClass={goToNewClass}
                               onArchive={() =>
                                 handleArchive(row.rowKey.split('-')[0], row.displayName)
                               }
@@ -470,6 +512,8 @@ export default function CoursesPage() {
                             <CourseActions
                               status={row.status}
                               onView={() => goToCourse(row.courseUuid)}
+                              onPostJob={() => postJobForCourse(row.courseUuid)}
+                              onCreateClass={goToNewClass}
                               onArchive={() =>
                                 handleArchive(row.rowKey.split('-')[0], row.displayName)
                               }

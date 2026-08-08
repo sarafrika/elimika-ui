@@ -182,8 +182,6 @@ export function InstructorOnboardingForm() {
               <InstructorLocationFields
                 form={form}
                 onUseCurrentLocation={handleGetCurrentLocation}
-                latitudePlaceholder='-1.2921'
-                longitudePlaceholder='36.8219'
                 buttonLabel='Use Current Location'
                 fieldsWrapperClassName='grid grid-cols-1 gap-4 md:grid-cols-2'
                 buttonClassName='mx-auto flex'

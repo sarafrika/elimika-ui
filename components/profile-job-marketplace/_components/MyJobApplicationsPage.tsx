@@ -34,6 +34,8 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useBreadcrumb } from '../../../context/breadcrumb-provider';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 function formatDate(value?: string | Date | null) {
   if (!value) return 'Not provided';
@@ -51,6 +53,7 @@ function formatLabel(value?: string | null) {
 }
 
 export function MyJobApplicationsPage() {
+  const { activeDomain } = useUserDomain();
   const profile = useUserProfile();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<
@@ -70,7 +73,7 @@ export function MyJobApplicationsPage() {
       {
         id: 'applications',
         title: 'Applications',
-        url: '/dashboard/opportunities/applications',
+        url: '/dashboard/opportunities/my-applications',
         isLast: true,
       },
     ]);
@@ -306,7 +309,7 @@ export function MyJobApplicationsPage() {
 
                       <div className='ml-auto flex flex-wrap gap-2'>
                         <Button asChild variant='outline' size='sm'>
-                          <Link href='/dashboard/opportunities'>
+                          <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities')}>
                             View opportunities
                             <ArrowRight className='ml-2 size-4' />
                           </Link>

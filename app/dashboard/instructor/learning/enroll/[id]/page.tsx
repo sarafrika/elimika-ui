@@ -89,7 +89,7 @@ const EnrollmentPage = () => {
             });
             setOpenEnrollModal(false);
             toast.success(data?.message || 'Student enrolled successfully');
-            router.replace('/dashboard/instructor/courses');
+            router.replace('/dashboard/instructor/learning');
           },
           onError: error => {
             toast.error(
@@ -189,7 +189,7 @@ const EnrollmentPage = () => {
             </p>
 
             <p>
-              <strong>Training Fee:{'  '} </strong>KES {enrollingClass?.training_fee}
+              <strong>Training Fee:{'  '} </strong>KES {enrollingClass?.sale_price}
             </p>
 
             <p className='font-medium text-yellow-600'>

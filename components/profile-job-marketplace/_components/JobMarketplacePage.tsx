@@ -9,6 +9,7 @@ import {
   Building2,
   CalendarDays,
   CheckCircle2,
+  Clock,
   Filter,
   Globe2,
   GraduationCap,
@@ -34,9 +35,11 @@ import {
   StatCardSkeleton,
   StatusBadge,
 } from '@/app/dashboard/admin/_components/ui';
-import { PageHeader as AdminPageHeader } from '@/components/dashboard';
 import DeleteModal from '@/components/custom-modals/delete-modal';
+import { PageHeader as AdminPageHeader } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
+import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
+import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -60,6 +63,7 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { formatCurrency } from '@/lib/format-currency';
 import { cn } from '@/lib/utils';
 import {
@@ -93,9 +97,8 @@ import type {
   TrainingProgram,
 } from '@/services/client/types.gen';
 import { ResourceTypeEnum } from '@/services/client/types.gen';
-import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
-import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
-import { useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
@@ -122,36 +125,6 @@ type ClassMarketplaceJobWithProgram = ClassMarketplaceJob & {
 type ClassMarketplaceJobRequestWithProgram = Omit<ClassMarketplaceJobRequest, 'course_uuid'> & {
   course_uuid?: string | null;
   program_uuid?: string | null;
-};
-
-type JobFormState = {
-  organisation_uuid: string;
-  content_type: MarketplaceContentType;
-  course_uuid: string;
-  program_uuid: string;
-  title: string;
-  description: string;
-  class_visibility: ClassVisibilityEnum;
-  session_format: SessionFormatEnum;
-  default_start_time: string;
-  default_end_time: string;
-  academic_period_start_date: string;
-  academic_period_end_date: string;
-  registration_period_start_date: string;
-  registration_period_end_date: string;
-  class_reminder_minutes: string;
-  location_type: LocationTypeEnum;
-  location_name: string;
-  location_latitude: string;
-  location_longitude: string;
-  meeting_link: string;
-  max_participants: string;
-  allow_waitlist: boolean;
-  training_fee: string;
-  session_days_of_week: string[];
-  session_start_time: string;
-  session_end_time: string;
-  job_resources: Array<{ resource_uuid: string; quantity: string }>;
 };
 
 const JOB_PAGE_SIZE = 50;
@@ -184,6 +157,7 @@ const sessionFormatOptions: SessionFormatEnum[] = ['INDIVIDUAL', 'GROUP'];
 const statusOptions: Array<{ label: string; value: JobFilter }> = [
   { label: 'All', value: 'all' },
   { label: 'Open', value: 'open' },
+  { label: 'Awaiting class', value: 'awaiting_class' as JobFilter },
   { label: 'Filled', value: 'filled' },
   { label: 'Cancelled', value: 'cancelled' },
   { label: 'Expired', value: 'expired' },
@@ -361,70 +335,6 @@ function getDisplayContentLabel(
   return 'Course or program';
 }
 
-function getInitialFormState(
-  organisationUuid: string,
-  job?: ClassMarketplaceJobWithProgram | null,
-  initialContent?: JobContentPrefill | null
-): JobFormState {
-  const defaultStart = job?.default_start_time ? new Date(job.default_start_time) : new Date();
-  const defaultEnd = job?.default_end_time
-    ? new Date(job.default_end_time)
-    : new Date(defaultStart.getTime() + 60 * 60 * 1000);
-  const sessionTemplate = job?.session_templates?.[0];
-  const templateRecurrence = sessionTemplate?.recurrence;
-  const weeklyDays =
-    templateRecurrence?.recurrence_type === 'WEEKLY' && templateRecurrence.days_of_week
-      ? templateRecurrence.days_of_week
-          .split(',')
-          .map(day => day.trim().toUpperCase())
-          .filter(Boolean)
-      : [];
-  const sessionStart = sessionTemplate?.start_time
-    ? new Date(sessionTemplate.start_time)
-    : defaultStart;
-  const sessionEnd = sessionTemplate?.end_time ? new Date(sessionTemplate.end_time) : defaultEnd;
-  const trainingEnd = templateRecurrence?.end_date
-    ? new Date(templateRecurrence.end_date)
-    : defaultEnd;
-  const jobProgramUuid = job ? getJobProgramUuid(job) : null;
-  const contentType = job ? getJobContentType(job) : (initialContent?.type ?? 'course');
-
-  return {
-    organisation_uuid: job?.organisation_uuid ?? organisationUuid,
-    content_type: contentType,
-    course_uuid: job?.course_uuid ?? (initialContent?.type === 'course' ? initialContent.id : ''),
-    program_uuid: jobProgramUuid ?? (initialContent?.type === 'program' ? initialContent.id : ''),
-    title: job?.title ?? '',
-    description: job?.description ?? '',
-    class_visibility: job?.class_visibility ?? 'PUBLIC',
-    session_format: job?.session_format ?? 'GROUP',
-    default_start_time: formatDateValue(job?.default_start_time ?? defaultStart),
-    default_end_time: formatDateValue(trainingEnd),
-    academic_period_start_date: formatDateValue(job?.academic_period_start_date ?? ''),
-    academic_period_end_date: formatDateValue(job?.academic_period_end_date ?? ''),
-    registration_period_start_date: formatDateValue(job?.registration_period_start_date ?? ''),
-    registration_period_end_date: formatDateValue(job?.registration_period_end_date ?? ''),
-    class_reminder_minutes: job?.class_reminder_minutes ? String(job.class_reminder_minutes) : '30',
-    location_type: job?.location_type ?? 'ONLINE',
-    location_name: job?.location_name ?? '',
-    location_latitude:
-      typeof job?.location_latitude === 'number' ? String(job.location_latitude) : '',
-    location_longitude:
-      typeof job?.location_longitude === 'number' ? String(job.location_longitude) : '',
-    meeting_link: job?.meeting_link ?? '',
-    max_participants: typeof job?.max_participants === 'number' ? String(job.max_participants) : '',
-    allow_waitlist: Boolean(job?.allow_waitlist ?? true),
-    training_fee: typeof job?.training_fee === 'number' ? String(job.training_fee) : '',
-    session_days_of_week: weeklyDays,
-    session_start_time: formatTimeInputValue(sessionStart),
-    session_end_time: formatTimeInputValue(sessionEnd),
-    job_resources: (job?.resources ?? []).map(resource => ({
-      resource_uuid: resource.resource_uuid ?? '',
-      quantity: resource.quantity != null ? String(resource.quantity) : '1',
-    })),
-  };
-}
-
 function parseNumber(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return undefined;
@@ -441,78 +351,6 @@ function parseDate(value: string) {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 }
 
-function buildJobPayload(form: JobFormState): ClassMarketplaceJobRequestWithProgram {
-  const hasWeeklyRecurrence = form.session_days_of_week.length > 0;
-  const firstSessionDate = hasWeeklyRecurrence
-    ? (firstSessionDateOnOrAfter(form.default_start_time, form.session_days_of_week) ??
-      form.default_start_time)
-    : form.default_start_time;
-  const sessionStart = combineDateAndTime(firstSessionDate, form.session_start_time);
-  const firstSessionEnd = combineDateAndTime(firstSessionDate, form.session_end_time);
-  const trainingEndDate = combineDateAndTime(form.default_end_time, '00:00');
-  const trainingEndAtSessionEnd = combineDateAndTime(form.default_end_time, form.session_end_time);
-
-  const payload: ClassMarketplaceJobRequestWithProgram = {
-    organisation_uuid: form.organisation_uuid,
-    title: form.title.trim(),
-    description: form.description.trim() || undefined,
-    class_visibility: form.class_visibility,
-    session_format: form.session_format,
-    default_start_time: sessionStart ?? new Date(),
-    default_end_time: trainingEndAtSessionEnd ?? new Date(),
-    training_fee: parseNumber(form.training_fee),
-    academic_period_start_date: parseDate(form.academic_period_start_date),
-    academic_period_end_date: parseDate(form.academic_period_end_date),
-    registration_period_start_date: parseDate(form.registration_period_start_date),
-    registration_period_end_date: parseDate(form.registration_period_end_date),
-    class_reminder_minutes: parseNumber(form.class_reminder_minutes),
-    location_type: form.location_type,
-    location_name: form.location_name.trim() || undefined,
-    location_latitude: parseNumber(form.location_latitude),
-    location_longitude: parseNumber(form.location_longitude),
-    meeting_link: form.meeting_link.trim() || undefined,
-    max_participants: parseNumber(form.max_participants),
-    allow_waitlist: form.allow_waitlist,
-    session_templates: [
-      hasWeeklyRecurrence
-        ? {
-            start_time: sessionStart ?? new Date(),
-            end_time: firstSessionEnd ?? new Date(),
-            recurrence: {
-              recurrence_type: 'WEEKLY',
-              interval_value: 1,
-              days_of_week: form.session_days_of_week.join(','),
-              end_date: trainingEndDate,
-            },
-            conflict_resolution: 'FAIL',
-          }
-        : {
-            start_time: sessionStart ?? new Date(),
-            end_time: trainingEndAtSessionEnd ?? new Date(),
-            conflict_resolution: 'FAIL',
-          },
-    ],
-  };
-
-  const resources: ClassMarketplaceJobResource[] = form.job_resources
-    .filter(entry => entry.resource_uuid)
-    .map(entry => ({
-      resource_uuid: entry.resource_uuid,
-      quantity: parseNumber(entry.quantity) ?? 1,
-    }));
-  if (resources.length > 0) {
-    payload.resources = resources;
-  }
-
-  if (form.content_type === 'program') {
-    payload.program_uuid = form.program_uuid;
-  } else {
-    payload.course_uuid = form.course_uuid;
-  }
-
-  return payload;
-}
-
 function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
   return (
     <DetailGrid
@@ -522,8 +360,8 @@ function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
           label: 'Pay per session',
           value: (
             <span className='text-primary text-base font-bold'>
-              {typeof job.training_fee === 'number'
-                ? formatCurrency(job.training_fee)
+              {typeof job.instructor_pay === 'number'
+                ? formatCurrency(job.instructor_pay)
                 : 'Not specified'}
             </span>
           ),
@@ -588,6 +426,7 @@ function JobDetailsSheet({
   myApplicationsHref?: string;
 }) {
   const queryClient = useQueryClient();
+  const { activeDomain } = useUserDomain();
   const [applicationNote, setApplicationNote] = useState('');
   const [showAllSessions, setShowAllSessions] = useState(false);
   const alreadyApplied = Boolean(application);
@@ -840,16 +679,16 @@ function JobDetailsSheet({
           ) : (
             <div className={cn('space-y-3', adminTheme.cardPadded)}>
               <p className='border-primary/30 bg-primary/10 text-foreground rounded-md border p-3 text-sm'>
-                {typeof job.training_fee === 'number' ? (
+                {typeof job.instructor_pay === 'number' ? (
                   <>
                     You will be paid{' '}
                     <span className='text-primary font-bold'>
-                      {formatCurrency(job.training_fee)} per session
+                      {formatCurrency(job.instructor_pay)} per session
                     </span>{' '}
                     for this engagement.
                   </>
                 ) : (
-                  'The organisation has not specified a fee for this posting.'
+                  'The organisation has not specified instructor pay for this posting.'
                 )}
               </p>
 
@@ -861,7 +700,12 @@ function JobDetailsSheet({
                   </p>
                   {eligibility && !eligibility.training_approved && job.course_uuid ? (
                     <Button asChild variant='outline' size='sm'>
-                      <Link href={`/dashboard/apply-to-train/${job.course_uuid}`}>
+                      <Link
+                        href={buildWorkspaceAliasPath(
+                          activeDomain,
+                          `/dashboard/apply-to-train/${job.course_uuid}`
+                        )}
+                      >
                         Apply to train this course
                       </Link>
                     </Button>
@@ -917,724 +761,9 @@ function JobDetailsSheet({
   );
 }
 
-function JobFormSheet({
-  open,
-  onOpenChange,
-  job,
-  organisationUuid,
-  approvedCourses,
-  programs,
-  initialContent,
-  onSaved,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  job: ClassMarketplaceJobWithProgram | null;
-  organisationUuid: string;
-  approvedCourses: Course[];
-  programs: TrainingProgram[];
-  initialContent: JobContentPrefill | null;
-  onSaved: () => void;
-}) {
-  const queryClient = useQueryClient();
-  const isEditMode = Boolean(job?.uuid);
-  const [form, setForm] = useState<JobFormState>(() =>
-    getInitialFormState(organisationUuid, job, initialContent)
-  );
-  // The organisation may only post jobs for courses it has been approved to deliver.
-  const availableCourses = useMemo(
-    () => approvedCourses.filter(course => course.active !== false),
-    [approvedCourses]
-  );
-  const availablePrograms = useMemo(
-    () =>
-      programs.filter(
-        program =>
-          program.active === true && program.published === true && program.admin_approved === true
-      ),
-    [programs]
-  );
-  const [resourceConflicts, setResourceConflicts] = useState<ConflictItem[]>([]);
-
-  const orgResourcesQuery = useQuery({
-    ...listResourcesOptions({
-      path: { organisationUuid },
-      query: { pageable: { page: 0, size: 100 }, active: true },
-    }),
-    enabled: open && Boolean(organisationUuid),
-  });
-  const orgResources = useMemo(
-    () => extractPage<OrganisationResource>(orgResourcesQuery.data).items,
-    [orgResourcesQuery.data]
-  );
-  const venueResources = useMemo(
-    () => orgResources.filter(resource => resource.resource_type === ResourceTypeEnum.VENUE),
-    [orgResources]
-  );
-  const equipmentResources = useMemo(
-    () =>
-      orgResources.filter(resource => resource.resource_type === ResourceTypeEnum.EQUIPMENT_POOL),
-    [orgResources]
-  );
-  const venueUuids = useMemo(
-    () => new Set(venueResources.map(resource => resource.uuid)),
-    [venueResources]
-  );
-  const selectedVenueUuid =
-    form.job_resources.find(entry => venueUuids.has(entry.resource_uuid))?.resource_uuid ?? '';
-  const equipmentEntries = form.job_resources.filter(entry => !venueUuids.has(entry.resource_uuid));
-
-  const setJobResources = (
-    venueUuid: string,
-    equipment: Array<{ resource_uuid: string; quantity: string }>
-  ) => {
-    setForm(previous => ({
-      ...previous,
-      job_resources: [
-        ...(venueUuid ? [{ resource_uuid: venueUuid, quantity: '1' }] : []),
-        ...equipment,
-      ],
-    }));
-  };
-
-  const createMutation = useMutation({
-    ...createJobMutation(),
-    onSuccess: async () => {
-      toast.success('Job posting created successfully.');
-      onOpenChange(false);
-      onSaved();
-      await queryClient.invalidateQueries({
-        queryKey: listJobsQueryKey({
-          query: {
-            pageable: { page: 0, size: JOB_PAGE_SIZE },
-            organisation_uuid: organisationUuid,
-          },
-        }),
-      });
-    },
-    onError: error => {
-      const report = parseConflictError(error);
-      if (report) {
-        setResourceConflicts(report.conflicts);
-        toast.error(report.message);
-        return;
-      }
-      toast.error(error instanceof Error ? error.message : 'Unable to create the job posting.');
-    },
-  });
-  const updateMutation = useMutation({
-    ...updateJobMutation(),
-    onSuccess: async () => {
-      toast.success('Job posting updated successfully.');
-      onOpenChange(false);
-      onSaved();
-      await queryClient.invalidateQueries({
-        queryKey: listJobsQueryKey({
-          query: {
-            pageable: { page: 0, size: JOB_PAGE_SIZE },
-            organisation_uuid: organisationUuid,
-          },
-        }),
-      });
-    },
-    onError: error => {
-      const report = parseConflictError(error);
-      if (report) {
-        setResourceConflicts(report.conflicts);
-        toast.error(report.message);
-        return;
-      }
-      toast.error(error instanceof Error ? error.message : 'Unable to update the job posting.');
-    },
-  });
-
-  useEffect(() => {
-    if (!open) return;
-    setForm(getInitialFormState(organisationUuid, job, initialContent));
-    setResourceConflicts([]);
-  }, [initialContent, job, open, organisationUuid]);
-
-  const updateField = <K extends keyof JobFormState>(key: K, value: JobFormState[K]) => {
-    setForm(previous => ({ ...previous, [key]: value }));
-  };
-
-  const toggleSessionDay = (day: string) => {
-    setForm(previous => ({
-      ...previous,
-      session_days_of_week: previous.session_days_of_week.includes(day)
-        ? previous.session_days_of_week.filter(value => value !== day)
-        : [...previous.session_days_of_week, day],
-    }));
-  };
-
-  const handleContentTypeChange = (value: MarketplaceContentType) => {
-    setForm(previous => ({
-      ...previous,
-      content_type: value,
-      course_uuid: value === 'course' ? previous.course_uuid : '',
-      program_uuid: value === 'program' ? previous.program_uuid : '',
-    }));
-  };
-
-  const handleContentChange = (value: string) => {
-    if (form.content_type === 'program') {
-      updateField('program_uuid', value);
-      return;
-    }
-
-    updateField('course_uuid', value);
-  };
-
-  const handleSubmit = () => {
-    if (!organisationUuid) {
-      toast.error('No organisation is available for this job posting.');
-      return;
-    }
-
-    if (!form.title.trim()) {
-      toast.error('Please enter a job title.');
-      return;
-    }
-
-    if (form.content_type === 'course' && !form.course_uuid) {
-      toast.error('Please choose a course.');
-      return;
-    }
-
-    if (form.content_type === 'program' && !form.program_uuid) {
-      toast.error('Please choose a program.');
-      return;
-    }
-
-    const trainingFee = parseNumber(form.training_fee);
-    if (trainingFee === undefined || trainingFee < 0) {
-      toast.error('Please enter the training fee paid per session.');
-      return;
-    }
-
-    if (!form.default_start_time || !form.default_end_time) {
-      toast.error('Please choose valid training start and end dates.');
-      return;
-    }
-
-    if (form.default_end_time < form.default_start_time) {
-      toast.error('Training end date must be on or after the training start date.');
-      return;
-    }
-
-    if (!form.session_start_time || !form.session_end_time) {
-      toast.error('Please choose session start and end times.');
-      return;
-    }
-
-    if (form.session_end_time <= form.session_start_time) {
-      toast.error('Session end time must be after the session start time.');
-      return;
-    }
-
-    if (form.session_days_of_week.length === 0) {
-      toast.error('Please select at least one weekday for the session schedule.');
-      return;
-    }
-
-    setResourceConflicts([]);
-    const payload = buildJobPayload({
-      ...form,
-      organisation_uuid: organisationUuid,
-    });
-
-    if (isEditMode && job?.uuid) {
-      updateMutation.mutate({
-        path: { jobUuid: job.uuid },
-        body: payload as ClassMarketplaceJobRequest,
-      });
-      return;
-    }
-
-    createMutation.mutate({
-      body: payload as ClassMarketplaceJobRequest,
-    });
-  };
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side='right'
-        className='flex w-[min(98vw,700px)] max-w-none flex-col overflow-y-auto p-3 sm:max-w-none sm:p-6'
-      >
-        <div className='space-y-6'>
-          <SheetHeader className='space-y-3 pr-10 text-left'>
-            <div className='flex items-center gap-2'>
-              <Badge
-                variant='outline'
-                className='border-primary/30 bg-primary/10 text-primary rounded-md px-2.5 py-0.5 text-xs font-medium'
-              >
-                {isEditMode ? 'Edit job' : 'Create job'}
-              </Badge>
-              <Badge variant='outline' className='rounded-md px-2.5 py-0.5 text-xs font-medium'>
-                {formatEnumLabel(form.location_type)}
-              </Badge>
-            </div>
-            <SheetTitle className='text-2xl tracking-tight'>
-              {isEditMode ? 'Edit job posting' : 'Create a new job posting'}
-            </SheetTitle>
-            <SheetDescription>
-              Use the class creation layout to publish a job advert.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className='grid gap-4'>
-            <SectionShell title='Basic details'>
-              <div className='grid gap-4 md:grid-cols-3'>
-                <Field label='Job title *'>
-                  <Input
-                    value={form.title}
-                    onChange={event => updateField('title', event.target.value)}
-                  />
-                </Field>
-                <Field label='Content type *'>
-                  <Select
-                    value={form.content_type}
-                    onValueChange={value =>
-                      handleContentTypeChange(value as MarketplaceContentType)
-                    }
-                    disabled={isEditMode}
-                  >
-                    <SelectTrigger className='w-full min-w-0'>
-                      <SelectValue placeholder='Choose type' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='course'>Course</SelectItem>
-                      <SelectItem value='program'>Program</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label={form.content_type === 'program' ? 'Program *' : 'Course *'}>
-                  <Select
-                    value={form.content_type === 'program' ? form.program_uuid : form.course_uuid}
-                    onValueChange={handleContentChange}
-                    disabled={isEditMode}
-                  >
-                    <SelectTrigger className='w-full min-w-0'>
-                      <SelectValue
-                        placeholder={
-                          form.content_type === 'program' ? 'Choose program' : 'Choose course'
-                        }
-                        className='min-w-0 truncate'
-                      />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {form.content_type === 'program'
-                        ? availablePrograms.map(program => (
-                            <SelectItem key={program.uuid} value={program.uuid ?? ''}>
-                              {program.title}
-                            </SelectItem>
-                          ))
-                        : availableCourses.map(course => (
-                            <SelectItem key={course.uuid} value={course.uuid ?? ''}>
-                              {course.name}
-                            </SelectItem>
-                          ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
-
-              <Field label='Description'>
-                <Textarea
-                  value={form.description}
-                  onChange={event => updateField('description', event.target.value)}
-                  className='min-h-32'
-                  placeholder='Add a short summary of the job posting.'
-                />
-              </Field>
-
-              <div className='grid gap-4 md:grid-cols-3'>
-                <Field label='Visibility'>
-                  <Select
-                    value={form.class_visibility}
-                    onValueChange={value =>
-                      updateField('class_visibility', value as ClassVisibilityEnum)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classVisibilityOptions.map(value => (
-                        <SelectItem key={value} value={value}>
-                          {formatEnumLabel(value)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label='Session format'>
-                  <Select
-                    value={form.session_format}
-                    onValueChange={value =>
-                      updateField('session_format', value as SessionFormatEnum)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sessionFormatOptions.map(value => (
-                        <SelectItem key={value} value={value}>
-                          {formatEnumLabel(value)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label='Reminder minutes'>
-                  <Input
-                    type='number'
-                    value={form.class_reminder_minutes}
-                    onChange={event => updateField('class_reminder_minutes', event.target.value)}
-                    placeholder='30'
-                  />
-                </Field>
-              </div>
-
-              <Field label='Training fee (per session) *'>
-                <Input
-                  type='number'
-                  min={0}
-                  value={form.training_fee}
-                  onChange={event => updateField('training_fee', event.target.value)}
-                  placeholder='e.g. 2400'
-                />
-                <p className='text-muted-foreground mt-1 text-xs'>
-                  Amount the instructor is paid per session; carried onto the class when an
-                  instructor is assigned.
-                </p>
-              </Field>
-            </SectionShell>
-
-            <SectionShell title='Schedule'>
-              <div className='grid gap-4 md:grid-cols-2'>
-                <Field label='Training start date *'>
-                  <Input
-                    type='date'
-                    value={form.default_start_time}
-                    onChange={event => updateField('default_start_time', event.target.value)}
-                  />
-                </Field>
-                <Field label='Training end date *'>
-                  <Input
-                    type='date'
-                    value={form.default_end_time}
-                    onChange={event => updateField('default_end_time', event.target.value)}
-                  />
-                </Field>
-                <Field label='Session start time *'>
-                  <Input
-                    type='time'
-                    value={form.session_start_time}
-                    onChange={event => updateField('session_start_time', event.target.value)}
-                  />
-                </Field>
-                <Field label='Session end time *'>
-                  <Input
-                    type='time'
-                    value={form.session_end_time}
-                    onChange={event => updateField('session_end_time', event.target.value)}
-                  />
-                </Field>
-              </div>
-
-              <Field label='Session days *'>
-                <div className='flex flex-wrap gap-2'>
-                  {weekdayOptions.map(day => {
-                    const active = form.session_days_of_week.includes(day.value);
-                    return (
-                      <Button
-                        key={day.value}
-                        type='button'
-                        size='sm'
-                        variant={active ? 'default' : 'outline'}
-                        onClick={() => toggleSessionDay(day.value)}
-                      >
-                        {day.label}
-                      </Button>
-                    );
-                  })}
-                </div>
-                <p className='text-muted-foreground mt-1 text-xs'>
-                  Sessions repeat weekly on the selected days between the training dates.
-                </p>
-              </Field>
-
-              <div className='grid gap-4 md:grid-cols-2'>
-                <Field label='Academic period start'>
-                  <Input
-                    type='date'
-                    value={form.academic_period_start_date}
-                    onChange={event =>
-                      updateField('academic_period_start_date', event.target.value)
-                    }
-                  />
-                </Field>
-                <Field label='Academic period end'>
-                  <Input
-                    type='date'
-                    value={form.academic_period_end_date}
-                    onChange={event => updateField('academic_period_end_date', event.target.value)}
-                  />
-                </Field>
-                <Field label='Registration start'>
-                  <Input
-                    type='date'
-                    value={form.registration_period_start_date}
-                    onChange={event =>
-                      updateField('registration_period_start_date', event.target.value)
-                    }
-                  />
-                </Field>
-                <Field label='Registration end'>
-                  <Input
-                    type='date'
-                    value={form.registration_period_end_date}
-                    onChange={event =>
-                      updateField('registration_period_end_date', event.target.value)
-                    }
-                  />
-                </Field>
-              </div>
-            </SectionShell>
-
-            <SectionShell title='Location & capacity'>
-              <div className='grid gap-4 md:grid-cols-2'>
-                <Field label='Location type'>
-                  <Select
-                    value={form.location_type}
-                    onValueChange={value => updateField('location_type', value as LocationTypeEnum)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locationTypeOptions.map(value => (
-                        <SelectItem key={value} value={value}>
-                          {formatEnumLabel(value)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label='Location name'>
-                  <Input
-                    value={form.location_name}
-                    onChange={event => updateField('location_name', event.target.value)}
-                    placeholder='Campus / venue / room'
-                  />
-                </Field>
-                <Field label='Latitude'>
-                  <Input
-                    type='number'
-                    value={form.location_latitude}
-                    onChange={event => updateField('location_latitude', event.target.value)}
-                    placeholder={`${DEFAULT_LOCATION_LATITUDE}`}
-                  />
-                </Field>
-                <Field label='Longitude'>
-                  <Input
-                    type='number'
-                    value={form.location_longitude}
-                    onChange={event => updateField('location_longitude', event.target.value)}
-                    placeholder={`${DEFAULT_LOCATION_LONGITUDE}`}
-                  />
-                </Field>
-                <Field label='Meeting link'>
-                  <Input
-                    value={form.meeting_link}
-                    onChange={event => updateField('meeting_link', event.target.value)}
-                    placeholder='https://...'
-                  />
-                </Field>
-                <Field label='Maximum participants'>
-                  <Input
-                    type='number'
-                    value={form.max_participants}
-                    onChange={event => updateField('max_participants', event.target.value)}
-                    placeholder='24'
-                  />
-                </Field>
-              </div>
-
-              <label className='border-border/70 bg-muted/20 flex items-center gap-3 rounded-md border px-4 py-3 text-sm'>
-                <Checkbox
-                  checked={form.allow_waitlist}
-                  onCheckedChange={checked => updateField('allow_waitlist', checked === true)}
-                />
-                <span>Allow waitlist</span>
-              </label>
-            </SectionShell>
-
-            <SectionShell title='Venue & equipment'>
-              <p className='text-muted-foreground text-sm'>
-                Attached resources are reserved for every session while you recruit, so no other
-                posting or class can double-book them. Posting fails with a conflict report if a
-                resource is unavailable.
-              </p>
-              <div className='mt-3 grid gap-4'>
-                <Field label='Venue'>
-                  <Select
-                    value={selectedVenueUuid || 'none'}
-                    onValueChange={value =>
-                      setJobResources(value === 'none' ? '' : value, equipmentEntries)
-                    }
-                  >
-                    <SelectTrigger className='w-full min-w-0'>
-                      <SelectValue placeholder='No venue' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='none'>No venue</SelectItem>
-                      {venueResources.map(venue => (
-                        <SelectItem key={venue.uuid} value={venue.uuid ?? ''}>
-                          {venue.name}
-                          {venue.seat_capacity != null ? ` · ${venue.seat_capacity} seats` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <div className='space-y-2'>
-                  <Label className='text-sm'>Equipment</Label>
-                  {equipmentEntries.map((entry, index) => (
-                    <div
-                      key={`${entry.resource_uuid}-${index}`}
-                      className='flex items-center gap-2'
-                    >
-                      <Select
-                        value={entry.resource_uuid || undefined}
-                        onValueChange={value => {
-                          setJobResources(
-                            selectedVenueUuid,
-                            equipmentEntries.map((item, i) =>
-                              i === index ? { ...item, resource_uuid: value } : item
-                            )
-                          );
-                        }}
-                      >
-                        <SelectTrigger className='w-full min-w-0'>
-                          <SelectValue placeholder='Choose equipment' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {equipmentResources.map(pool => (
-                            <SelectItem key={pool.uuid} value={pool.uuid ?? ''}>
-                              {pool.name}
-                              {pool.total_quantity != null ? ` · ${pool.total_quantity} units` : ''}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        type='number'
-                        min={1}
-                        className='w-24'
-                        value={entry.quantity}
-                        onChange={event => {
-                          setJobResources(
-                            selectedVenueUuid,
-                            equipmentEntries.map((item, i) =>
-                              i === index ? { ...item, quantity: event.target.value } : item
-                            )
-                          );
-                        }}
-                      />
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='icon'
-                        className='h-9 w-9 shrink-0'
-                        onClick={() =>
-                          setJobResources(
-                            selectedVenueUuid,
-                            equipmentEntries.filter((_, i) => i !== index)
-                          )
-                        }
-                      >
-                        <Trash2 className='h-4 w-4' />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    disabled={equipmentResources.length === 0}
-                    onClick={() =>
-                      setJobResources(selectedVenueUuid, [
-                        ...equipmentEntries,
-                        { resource_uuid: '', quantity: '1' },
-                      ])
-                    }
-                  >
-                    Add equipment
-                  </Button>
-                  {equipmentResources.length === 0 && venueResources.length === 0 ? (
-                    <p className='text-muted-foreground text-xs'>
-                      No bookable resources registered yet. Add them under Resources in the sidebar.
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            </SectionShell>
-          </div>
-
-          <ResourceConflictAlert
-            title='These sessions conflict with existing reservations'
-            conflicts={resourceConflicts}
-          />
-
-          <div className='border-border/60 flex flex-wrap gap-2 border-t pt-4'>
-            <Button
-              onClick={handleSubmit}
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              {createMutation.isPending || updateMutation.isPending
-                ? 'Saving...'
-                : isEditMode
-                  ? 'Update job'
-                  : 'Create job'}
-            </Button>
-            <Button variant='outline' onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-function SectionShell({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className='border-border/70 bg-card rounded-md border p-5 shadow-sm'>
-      <div className='mb-4 flex items-center justify-between gap-3'>
-        <h3 className='text-foreground text-base font-semibold'>{title}</h3>
-      </div>
-      <div className='space-y-4'>{children}</div>
-    </section>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className='space-y-2'>
-      <Label className='text-sm font-medium'>{label}</Label>
-      {children}
-    </div>
-  );
-}
-
 export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const config = getJobMarketplaceRoleConfig(role);
+  const { activeDomain } = useUserDomain();
   const organisation = useOrganisation();
   const profile = useUserProfile();
   const queryClient = useQueryClient();
@@ -1667,9 +796,6 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const [pendingCancelJob, setPendingCancelJob] = useState<ClassMarketplaceJobWithProgram | null>(
     null
   );
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingJob, setEditingJob] = useState<ClassMarketplaceJobWithProgram | null>(null);
-  const [initialContent, setInitialContent] = useState<JobContentPrefill | null>(null);
   const canLoadJobs = !isOrganizationView || Boolean(organisationUuid);
   const jobsListOptions = {
     query: {
@@ -1681,24 +807,17 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     },
   };
 
+  // Legacy ?create=1 links now resolve to the dedicated posting page.
   useEffect(() => {
-    if (!canCreateJob || !organisationUuid) return;
-    if (createJobParam !== '1') return;
-
-    const contentType: MarketplaceContentType =
-      createContentTypeParam === 'program' ? 'program' : 'course';
+    if (createJobParam !== '1' || !canManageJobs) return;
     const contentId = createContentIdParam?.trim();
-
-    setEditingJob(null);
-    setInitialContent(contentId ? { type: contentType, id: contentId } : null);
-    setFormOpen(true);
-  }, [
-    canCreateJob,
-    createContentIdParam,
-    createContentTypeParam,
-    createJobParam,
-    organisationUuid,
-  ]);
+    const key = createContentTypeParam === 'program' ? 'programUuid' : 'courseUuid';
+    router.replace(
+      contentId
+        ? `/dashboard/organisation/jobs/new?${key}=${contentId}`
+        : '/dashboard/organisation/jobs/new'
+    );
+  }, [canManageJobs, createContentIdParam, createContentTypeParam, createJobParam, router]);
 
   const {
     data: jobsResponse,
@@ -1758,41 +877,6 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
 
   const courses = coursesResponse?.data?.content ?? [];
   const programs = programsResponse?.data?.content ?? [];
-
-  // Courses the organisation is APPROVED to deliver (affiliation), resolved from approved
-  // training applications — mirrors the org "create class" form so both pickers show the same set.
-  const approvedTrainingQuery = useQuery({
-    ...searchTrainingApplicationsOptions({
-      query: {
-        searchParams: {
-          applicant_uuid_eq: organisationUuid,
-          applicant_type_eq: 'organisation',
-          status_eq: 'approved',
-        },
-        pageable: { page: 0, size: LOOKUP_PAGE_SIZE },
-      },
-    }),
-    enabled: isOrganizationView && Boolean(organisationUuid),
-  });
-  const approvedCourseUuids = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          (approvedTrainingQuery.data?.data?.content ?? [])
-            .map(row => row.course_uuid)
-            .filter((uuid): uuid is string => Boolean(uuid))
-        )
-      ),
-    [approvedTrainingQuery.data]
-  );
-  const { courseMap: approvedCourseMap } = useCoursesByIds(approvedCourseUuids);
-  const approvedCourses = useMemo(
-    () =>
-      approvedCourseUuids
-        .map(uuid => approvedCourseMap[uuid])
-        .filter((course): course is Course => Boolean(course)),
-    [approvedCourseUuids, approvedCourseMap]
-  );
 
   const organisations = extractPage<Organisation>(organisationsResponse).items;
   const myApplications = myApplicationsQuery.data?.data?.content ?? [];
@@ -1961,6 +1045,12 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         },
         { label: 'Open', value: openCount, icon: CheckCircle2, tone: 'success' as const },
         {
+          label: 'Awaiting class',
+          value: jobs.filter(job => (job.status as string) === 'awaiting_class').length,
+          icon: Clock,
+          tone: 'warning' as const,
+        },
+        {
           label: 'Filled',
           value: jobs.filter(job => job.status === 'filled').length,
           icon: Users,
@@ -2015,19 +1105,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   });
 
   const handleEdit = (job: ClassMarketplaceJobWithProgram) => {
-    setEditingJob(job);
-    setInitialContent(null);
-    setFormOpen(true);
-  };
-
-  const handleCreate = () => {
-    if (!canCreateJob) {
-      toast.error('Your organisation must be verified before posting class jobs.');
-      return;
-    }
-    setEditingJob(null);
-    setInitialContent(null);
-    setFormOpen(true);
+    router.push(`/dashboard/organisation/jobs/new?jobUuid=${job.uuid ?? ''}`);
   };
 
   if (!canLoadJobs) {
@@ -2080,13 +1158,17 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
             <>
               {!isOrganizationView ? (
                 <Button variant='outline' asChild>
-                  <Link href='/dashboard/opportunities/my-applications'>My applications</Link>
+                  <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities/my-applications')}>
+                    My applications
+                  </Link>
                 </Button>
               ) : null}
               {config.showCreateAction && canManageJobs ? (
-                <Button onClick={handleCreate}>
-                  <Plus className='mr-2 size-4' />
-                  Create job
+                <Button asChild>
+                  <Link href='/dashboard/organisation/jobs/new'>
+                    <Plus className='mr-2 size-4' />
+                    Post a job
+                  </Link>
                 </Button>
               ) : null}
             </>
@@ -2120,7 +1202,13 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 applicationsLabel='My Applications'
                 onApplicationsClick={
                   !isOrganizationView
-                    ? () => router.push('/dashboard/opportunities/my-applications')
+                    ? () =>
+                        router.push(
+                          buildWorkspaceAliasPath(
+                            activeDomain,
+                            '/dashboard/opportunities/my-applications'
+                          )
+                        )
                     : undefined
                 }
               />
@@ -2159,7 +1247,13 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                         applicationsLabel='My Applications'
                         onApplicationsClick={
                           !isOrganizationView
-                            ? () => router.push('/dashboard/opportunities/my-applications')
+                            ? () =>
+                        router.push(
+                          buildWorkspaceAliasPath(
+                            activeDomain,
+                            '/dashboard/opportunities/my-applications'
+                          )
+                        )
                             : undefined
                         }
                       />
@@ -2334,7 +1428,18 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                               hasApplied={Boolean(application)}
                               applicationsHref={
                                 isOrganizationView && job.uuid
-                                  ? `/dashboard/opportunities/${job.uuid}`
+                                  ? buildWorkspaceAliasPath(
+                                      activeDomain,
+                                      `/dashboard/opportunities/${job.uuid}`
+                                    )
+                                  : undefined
+                              }
+                              createClassHref={
+                                isOrganizationView && job.uuid
+                                  ? buildWorkspaceAliasPath(
+                                      activeDomain,
+                                      `/dashboard/opportunities/${job.uuid}/create-class`
+                                    )
                                   : undefined
                               }
                             />
@@ -2368,33 +1473,11 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
           selectedJob ? (applicationByJobUuid.get(selectedJob.uuid ?? '') ?? null) : null
         }
         myApplicationsHref={
-          !isOrganizationView ? '/dashboard/opportunities/my-applications' : undefined
+          !isOrganizationView
+            ? buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities/my-applications')
+            : undefined
         }
       />
-
-      <div className='w-full'>
-        {organisationUuid ? (
-          <JobFormSheet
-            open={formOpen}
-            onOpenChange={open => {
-              setFormOpen(open);
-              if (!open) {
-                setEditingJob(null);
-                setInitialContent(null);
-              }
-            }}
-            job={editingJob}
-            organisationUuid={organisationUuid}
-            approvedCourses={approvedCourses}
-            programs={programs}
-            initialContent={initialContent}
-            onSaved={() => {
-              setEditingJob(null);
-              setInitialContent(null);
-            }}
-          />
-        ) : null}
-      </div>
 
       <DeleteModal
         open={Boolean(pendingCancelJob)}

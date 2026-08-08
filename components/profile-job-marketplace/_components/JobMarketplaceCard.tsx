@@ -88,12 +88,12 @@ function JobBadgeRow({
 }) {
   return (
     <div className='flex flex-wrap items-center gap-2'>
-      {typeof job.training_fee === 'number' ? (
+      {typeof job.instructor_pay === 'number' ? (
         <Badge className='border-primary/30 bg-primary/10 text-primary rounded-md px-2.5 py-0.5 text-xs font-semibold'>
-          {formatCurrency(job.training_fee)} / session
+          {formatCurrency(job.instructor_pay)} / session
         </Badge>
       ) : (
-        <MetaBadge>Fee not specified</MetaBadge>
+        <MetaBadge>Pay not specified</MetaBadge>
       )}
       <MetaBadge>{formatEnumLabel(job.class_visibility)}</MetaBadge>
       <MetaBadge>{formatEnumLabel(job.session_format)}</MetaBadge>
@@ -116,6 +116,7 @@ export function JobCard({
   applicationStatus,
   hasApplied,
   applicationsHref,
+  createClassHref,
 }: {
   job: ClassMarketplaceJobWithProgram;
   onView: () => void;
@@ -128,6 +129,7 @@ export function JobCard({
   applicationStatus?: string | null;
   hasApplied?: boolean;
   applicationsHref?: string;
+  createClassHref?: string;
 }) {
   const title = job.title ?? 'Untitled job';
   const applicationLabel = getApplicationStatusLabel(applicationStatus);
@@ -192,6 +194,11 @@ export function JobCard({
           {isManagementView && applicationsHref ? (
             <Button asChild variant='secondary' size='sm'>
               <Link href={applicationsHref}>View applications</Link>
+            </Button>
+          ) : null}
+          {isManagementView && createClassHref && (job.status as string) === 'awaiting_class' ? (
+            <Button asChild size='sm'>
+              <Link href={createClassHref}>Create the class</Link>
             </Button>
           ) : null}
           {isManagementView && onEdit ? (

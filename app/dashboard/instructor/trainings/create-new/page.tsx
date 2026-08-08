@@ -1,6 +1,11 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Save } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -10,14 +15,10 @@ import {
 import {
   normalizeLocationType,
   requiresPhysicalLocation,
+  toCoordinate,
   trimToUndefined,
 } from '@/lib/location-types';
 import type { CreateClassDefinitionMultipartData } from '@/services/client/types.gen';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Save } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
@@ -55,6 +56,8 @@ export interface ClassDetails {
   class_limit: number;
   targetAudience: string;
   location_name: string;
+  location_latitude?: string;
+  location_longitude?: string;
   startDate: string;
   endDate: string;
   allDay: boolean;
@@ -529,7 +532,7 @@ const ClassBuilderPage = ({
             ? [classData.categories]
             : [],
         class_type: classData.class_visibility || '',
-        rate_card: classData.rate_card || classData?.training_fee,
+        rate_card: classData.rate_card || classData?.sale_price,
         location_type: normalizeLocationType(classData.location_type),
         location_name: classData.location_name || '',
         class_limit: classData.max_participants || 0,
@@ -751,8 +754,12 @@ const ClassBuilderPage = ({
         location_name: physicalLocationRequired
           ? trimToUndefined(classDetails.location_name)
           : undefined,
-        location_latitude: physicalLocationRequired ? -1.292066 : undefined,
-        location_longitude: physicalLocationRequired ? 36.821945 : undefined,
+        location_latitude: physicalLocationRequired
+          ? toCoordinate(classDetails.location_latitude)
+          : undefined,
+        location_longitude: physicalLocationRequired
+          ? toCoordinate(classDetails.location_longitude)
+          : undefined,
         max_participants: classDetails.class_limit,
         allow_waitlist: true,
         is_active: !isDraft,

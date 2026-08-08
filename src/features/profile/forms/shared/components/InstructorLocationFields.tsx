@@ -1,16 +1,15 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 import type { LucideIcon } from 'lucide-react';
 import type { UseFormReturn } from 'react-hook-form';
+import LocationInput from '@/components/locationInput';
 import { Button } from '@/components/ui/button';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { coordinatesFromPlace } from '@/lib/location-types';
 import type { InstructorProfileFormData } from '@/src/features/profile/forms/shared/instructor-profile';
 
 type InstructorLocationFieldsProps = {
   form: UseFormReturn<InstructorProfileFormData>;
   onUseCurrentLocation: () => void;
-  latitudePlaceholder: string;
-  longitudePlaceholder: string;
   buttonLabel: string;
   buttonClassName?: string;
   buttonIcon?: LucideIcon;
@@ -21,54 +20,38 @@ type InstructorLocationFieldsProps = {
 export function InstructorLocationFields({
   form,
   onUseCurrentLocation,
-  latitudePlaceholder,
-  longitudePlaceholder,
   buttonLabel,
   buttonClassName,
   buttonIcon: ButtonIcon,
   fieldsWrapperClassName,
   fieldItemClassName,
 }: InstructorLocationFieldsProps) {
+  const latitude = form.watch('latitude');
+  const longitude = form.watch('longitude');
+
   return (
     <>
       <div className={fieldsWrapperClassName}>
         <FormField
           control={form.control}
-          name='latitude'
+          name='location_name'
           render={({ field }) => (
             <FormItem className={fieldItemClassName}>
-              <FormLabel>Latitude</FormLabel>
+              <FormLabel>Where you teach</FormLabel>
               <FormControl>
-                <Input
-                  type='number'
-                  step='any'
-                  placeholder={latitudePlaceholder}
-                  {...field}
-                  onChange={e =>
-                    field.onChange(e.target.value ? Number.parseFloat(e.target.value) : undefined)
-                  }
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='longitude'
-          render={({ field }) => (
-            <FormItem className={fieldItemClassName}>
-              <FormLabel>Longitude</FormLabel>
-              <FormControl>
-                <Input
-                  type='number'
-                  step='any'
-                  placeholder={longitudePlaceholder}
-                  {...field}
-                  onChange={e =>
-                    field.onChange(e.target.value ? Number.parseFloat(e.target.value) : undefined)
-                  }
+                <LocationInput
+                  name={field.name}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  placeholder='Search for a place — e.g. Sarit Centre, Nairobi'
+                  coordinates={{ latitude, longitude }}
+                  onSuggest={response => {
+                    const place = coordinatesFromPlace(response);
+                    if (place.latitude !== undefined) form.setValue('latitude', place.latitude);
+                    if (place.longitude !== undefined) form.setValue('longitude', place.longitude);
+                    return response;
+                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -76,6 +59,12 @@ export function InstructorLocationFields({
           )}
         />
       </div>
+
+      <p className='text-muted-foreground text-xs'>
+        {latitude != null && longitude != null
+          ? `Pinned at ${Number(latitude).toFixed(5)}, ${Number(longitude).toFixed(5)}.`
+          : 'Pick a result to place yourself on the map — the coordinates fill in automatically.'}
+      </p>
 
       <Button
         type='button'

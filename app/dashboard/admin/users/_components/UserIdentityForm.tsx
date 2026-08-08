@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import {
   Select,
   SelectContent,
@@ -171,7 +172,7 @@ export function UserIdentityForm({ user }: { user: User }) {
               <FormItem>
                 <FormLabel>Phone number</FormLabel>
                 <FormControl>
-                  <Input placeholder='+254712345678' {...field} value={field.value ?? ''} />
+                  <PhoneInput {...field} placeholder='+254 712 345678' />
                 </FormControl>
                 <FormMessage />
               </FormItem>

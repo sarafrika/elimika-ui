@@ -313,6 +313,18 @@ export const TrainingBranchSchema = {
       description: '**[OPTIONAL]** Physical address of the training branch.',
       example: '123 University Way, Nairobi',
     },
+    latitude: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Latitude of the branch address, resolved when the address was searched.',
+      example: -1.2921,
+    },
+    longitude: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Longitude of the branch address, resolved when the address was searched.',
+      example: 36.8219,
+    },
     poc_name: {
       type: 'string',
       description: '**[REQUIRED]** Name of the point of contact for this branch.',
@@ -1087,6 +1099,12 @@ export const RubricScoringLevelSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    display_name: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display name combining level name and points for UI.',
+      example: 'Excellent (4.0 pts)',
+      readOnly: true,
+    },
     performance_indicator: {
       type: 'string',
       description:
@@ -1105,12 +1123,6 @@ export const RubricScoringLevelSchema = {
       description:
         '**[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).',
       example: true,
-      readOnly: true,
-    },
-    display_name: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display name combining level name and points for UI.',
-      example: 'Excellent (4.0 pts)',
       readOnly: true,
     },
   },
@@ -1864,17 +1876,17 @@ export const QuizQuestionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    question_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable category of the question type.',
+      example: 'Multiple Choice Question',
+      readOnly: true,
+    },
     requires_options: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if this question type requires predefined answer options.',
       example: true,
-      readOnly: true,
-    },
-    question_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable category of the question type.',
-      example: 'Multiple Choice Question',
       readOnly: true,
     },
     points_display: {
@@ -2238,6 +2250,13 @@ export const QuizAttemptSchema = {
       example: 'system@sarafrika.com',
       readOnly: true,
     },
+    is_completed: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).',
+      example: true,
+      readOnly: true,
+    },
     grade_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the grade information.',
@@ -2260,13 +2279,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    is_completed: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).',
-      example: true,
       readOnly: true,
     },
   },
@@ -3314,6 +3326,12 @@ export const InstructorSchema = {
         '**[REQUIRED]** Reference to the base user account UUID. Links instructor profile to user authentication and personal details.',
       example: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
     },
+    location_name: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Name of the place the instructor searched for, stored alongside the coordinates so their location reads back as a place rather than a coordinate pair.',
+      example: 'Sarit Centre, Nairobi, Kenya',
+    },
     latitude: {
       type: ['number', 'null'],
       description:
@@ -3503,6 +3521,12 @@ export const InstructorSkillSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
+    display_name: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted skill name for display in UI components.',
+      example: 'Java Programming (Expert)',
+      readOnly: true,
+    },
     summary: {
       type: 'string',
       description: '**[READ-ONLY]** Brief summary of the skill for display in skill lists.',
@@ -3513,12 +3537,6 @@ export const InstructorSkillSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the proficiency level.',
       example: 'Expert level with 7+ years of experience',
-      readOnly: true,
-    },
-    display_name: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted skill name for display in UI components.',
-      example: 'Java Programming (Expert)',
       readOnly: true,
     },
   },
@@ -3648,6 +3666,12 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
+    is_valid: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the membership is currently valid and active.',
+      example: true,
+      readOnly: true,
+    },
     summary: {
       type: 'string',
       description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
@@ -3665,14 +3689,6 @@ export const InstructorProfessionalMembershipSchema = {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
       example: '4 years, 3 months',
-      readOnly: true,
-    },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
       readOnly: true,
     },
     membership_status: {
@@ -3715,10 +3731,12 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    is_valid: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the membership is currently valid and active.',
-      example: true,
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
   },
@@ -4341,6 +4359,13 @@ export const InstructorDocumentSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
+    },
     file_url: {
       type: 'string',
       description:
@@ -4377,13 +4402,6 @@ export const InstructorDocumentSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum',
-    },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
     },
   },
   required: ['document_type_uuid', 'instructor_uuid', 'original_filename', 'title'],
@@ -6428,6 +6446,23 @@ export const CourseCreatorSchema = {
       maxLength: 255,
       minLength: 1,
     },
+    location_name: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Name of the place the course creator searched for, stored alongside the coordinates so their location reads back as a place rather than a coordinate pair.',
+      example: 'Sarit Centre, Nairobi, Kenya',
+    },
+    latitude: {
+      type: ['number', 'null'],
+      description: "**[OPTIONAL]** Geographical latitude of the course creator's primary location.",
+      example: -1.2921,
+    },
+    longitude: {
+      type: ['number', 'null'],
+      description:
+        "**[OPTIONAL]** Geographical longitude of the course creator's primary location.",
+      example: 36.8219,
+    },
     bio: {
       type: ['string', 'null'],
       description:
@@ -6552,11 +6587,11 @@ export const CourseCreatorSkillSchema = {
       type: 'string',
       readOnly: true,
     },
-    proficiency_description: {
+    display_name: {
       type: 'string',
       readOnly: true,
     },
-    display_name: {
+    proficiency_description: {
       type: 'string',
       readOnly: true,
     },
@@ -6966,6 +7001,13 @@ export const CourseCreatorDocumentDTOSchema = {
       type: 'string',
       readOnly: true,
     },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
+    },
     file_url: {
       type: 'string',
       description:
@@ -7002,13 +7044,6 @@ export const CourseCreatorDocumentDTOSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum',
-    },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
     },
   },
   required: ['course_creator_uuid', 'document_type_uuid', 'original_filename'],
@@ -7320,17 +7355,17 @@ export const DifficultyLevelSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    is_entry_level: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.',
-      example: false,
-      readOnly: true,
-    },
     display_name: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted display name including level order for UI presentation.',
       example: 'Level 3: Intermediate',
+      readOnly: true,
+    },
+    is_entry_level: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.',
+      example: false,
       readOnly: true,
     },
   },
@@ -7770,9 +7805,14 @@ export const ClassDefinitionUpdateRequestSchema = {
       format: 'uuid',
       description: '**[OPTIONAL]** Program UUID for program-scoped classes.',
     },
-    training_fee: {
+    sale_price: {
       type: 'number',
       description: '**[OPTIONAL]** Training fee for the class.',
+      minimum: 0,
+    },
+    instructor_pay: {
+      type: 'number',
+      description: '**[OPTIONAL]** Per-session pay owed to the instructor.',
       minimum: 0,
     },
     class_visibility: {
@@ -8014,11 +8054,18 @@ export const ClassDefinitionSchema = {
         '**[OPTIONAL]** Reference to the training program UUID if this class is part of a training programme.',
       example: 'program123-4567-89ab-cdef-123456789abc',
     },
-    training_fee: {
+    sale_price: {
       type: ['number', 'null'],
       description:
         '**[OPTIONAL]** Training fee charged for sessions created from this class definition. Must match the approved training rate for linked courses or training programs.',
       example: 220,
+      minimum: 0,
+    },
+    instructor_pay: {
+      type: ['number', 'null'],
+      description:
+        "**[OPTIONAL]** Per-session pay owed to the instructor. The difference between this and the sale price is the organisation's margin.",
+      example: 180,
       minimum: 0,
     },
     class_visibility: {
@@ -8212,6 +8259,13 @@ conflict_resolution per template:
         '**[READ-ONLY]** Marketplace job this class was created from at instructor assignment. Null for directly created classes.',
       readOnly: true,
     },
+    is_standalone: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if this is a standalone class not associated with any course.',
+      example: false,
+      readOnly: true,
+    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
@@ -8220,24 +8274,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
-    capacity_info: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
-      example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
       example: '1h 30m',
       readOnly: true,
     },
-    is_standalone: {
-      type: 'boolean',
+    capacity_info: {
+      type: 'string',
       description:
-        '**[READ-ONLY]** Indicates if this is a standalone class not associated with any course.',
-      example: false,
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
+      example: 'Max 25 participants (waitlist enabled)',
       readOnly: true,
     },
   },
@@ -8479,11 +8526,17 @@ export const ClassMarketplaceJobRequestSchema = {
       type: ['boolean', 'null'],
       description: 'Optional waitlist toggle for the eventual class.',
     },
-    training_fee: {
+    sale_price: {
       type: ['number', 'null'],
       description:
-        '**[OPTIONAL]** Fee paid to the instructor per session for the advertised class (carried onto the class when an instructor is assigned).',
+        "**[OPTIONAL]** Price per session a learner will be charged once the class exists. Defaults to the organisation's approved rate when omitted. Must be at least the course minimum training fee.",
       example: 240,
+    },
+    instructor_pay: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Per-session pay offered to the eventual instructor. An applicant is assignable only when this is at least their approved rate. Defaults to the sale price when omitted, leaving no margin.',
+      example: 180,
     },
     session_templates: {
       type: 'array',
@@ -8648,8 +8701,13 @@ export const ClassMarketplaceJobSchema = {
       format: 'uuid',
       readOnly: true,
     },
-    training_fee: {
+    sale_price: {
       type: 'number',
+      readOnly: true,
+    },
+    instructor_pay: {
+      type: 'number',
+      description: '**[READ-ONLY]** Per-session pay offered to the eventual instructor.',
       readOnly: true,
     },
     class_visibility: {
@@ -10375,17 +10433,29 @@ export const CreateSkillsFundTransactionRequestSchema = {
     },
     target_name: {
       type: 'string',
+      description:
+        'Display label for the recipient. Kept for rendering; it does not identify anyone.',
+    },
+    beneficiary_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        'The platform user this movement is for. Required for anything that will later be paid out; optional for allocations and adjustments with no individual recipient.',
     },
     amount: {
       type: 'number',
+    },
+    currency_code: {
+      type: 'string',
+      description:
+        'ISO-4217 currency the amount is denominated in. Defaults to the platform currency (KES).',
     },
     transaction_type: {
       type: 'string',
       description: 'Type: Allocation, Disbursement, Adjustment. Defaults to Allocation.',
     },
     status: {
-      type: 'string',
-      description: 'Status. Defaults to Pending.',
+      $ref: '#/components/schemas/StatusEnum10',
     },
     transaction_date: {
       type: 'string',
@@ -10429,19 +10499,29 @@ export const SkillsFundTransactionSchema = {
     },
     target_name: {
       type: ['string', 'null'],
-      description: 'Recipient / target of the movement.',
+      description:
+        'Display label for the recipient. Not an identity — never resolve money against this.',
+    },
+    beneficiary_user_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        'The platform user this movement is for. Null on rows recorded before beneficiaries were identifiable, and on movements with no individual recipient.',
     },
     amount: {
       type: 'number',
       description: 'Amount.',
+    },
+    currency_code: {
+      type: 'string',
+      description: 'ISO-4217 currency the amount is denominated in, e.g. KES.',
     },
     transaction_type: {
       type: 'string',
       description: 'Type: Allocation, Disbursement, Adjustment.',
     },
     status: {
-      type: 'string',
-      description: 'Status: Pending, Allocated, Approved, Completed.',
+      $ref: '#/components/schemas/StatusEnum10',
     },
     transaction_date: {
       type: ['string', 'null'],
@@ -10468,6 +10548,11 @@ export const CreateSkillsFundSourceRequestSchema = {
     },
     amount: {
       type: 'number',
+    },
+    currency_code: {
+      type: 'string',
+      description:
+        'ISO-4217 currency the amount is denominated in. Defaults to the platform currency (KES).',
     },
   },
   required: ['name'],
@@ -10513,6 +10598,10 @@ export const SkillsFundSourceSchema = {
     amount: {
       type: 'number',
       description: 'Amount contributed.',
+    },
+    currency_code: {
+      type: 'string',
+      description: 'ISO-4217 currency the amount is denominated in, e.g. KES.',
     },
     created_date: {
       type: 'string',
@@ -10774,6 +10863,127 @@ export const ApiResponseOrganisationInvitationSchema = {
   },
 } as const;
 
+export const InstructorObligationSettlementRequestSchema = {
+  type: 'object',
+  description: 'Evidence that an organisation has paid an instructor outside the platform',
+  properties: {
+    settlement_reference: {
+      type: 'string',
+      description:
+        "The organisation's own reference for the payment: bank reference, mobile money code, payroll run id",
+      example: 'MPESA-QGH7XK2P1L',
+      maxLength: 128,
+      minLength: 0,
+    },
+    note: {
+      type: 'string',
+      description: 'Optional note about the payment',
+    },
+  },
+  required: ['settlement_reference'],
+} as const;
+
+export const ApiResponseInstructorObligationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorObligation',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const InstructorObligationSchema = {
+  type: 'object',
+  description:
+    "A single session's pay owed by an organisation to an instructor, at the rate snapshotted when the session completed",
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'UUID of the obligation',
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Organisation that owes the money',
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Instructor profile owed',
+    },
+    instructor_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Platform user behind the instructor profile, resolved at accrual',
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Class whose session was delivered',
+    },
+    session_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Scheduled session that was delivered',
+    },
+    rate_amount: {
+      type: 'number',
+      description: 'Per-session fee as it stood when the session completed; never recomputed',
+    },
+    currency_code: {
+      type: 'string',
+      description: 'Currency the obligation was accrued in',
+    },
+    status: {
+      $ref: '#/components/schemas/SchemaEnum6',
+    },
+    accrued_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the session completed and the obligation arose (UTC)',
+    },
+    settled_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the organisation recorded that it had paid (UTC)',
+    },
+    settlement_reference: {
+      type: 'string',
+      description: "The organisation's own reference for the payment it made off-platform",
+    },
+    settled_by: {
+      type: 'string',
+      description: 'User who recorded the settlement',
+    },
+    status_note: {
+      type: 'string',
+      description: 'Free-text reason accompanying a settlement, cancellation or dispute',
+    },
+  },
+} as const;
+
+export const InstructorObligationCancellationRequestSchema = {
+  type: 'object',
+  description: 'Reason for withdrawing an obligation that should never have accrued',
+  properties: {
+    reason: {
+      type: 'string',
+      description: 'Why this obligation is being withdrawn',
+      example: 'Session was marked complete in error and has been rescheduled',
+      minLength: 1,
+    },
+  },
+  required: ['reason'],
+} as const;
+
 export const CreateCompetitionRequestSchema = {
   type: 'object',
   description: 'Payload to create an organisation competition.',
@@ -10961,7 +11171,7 @@ export const NotificationDTOSchema = {
       $ref: '#/components/schemas/PresentationEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum10',
+      $ref: '#/components/schemas/StatusEnum11',
     },
     title: {
       type: 'string',
@@ -11378,7 +11588,7 @@ export const GuardianStudentLinkSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum12',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -11637,7 +11847,7 @@ export const EnrollmentSchema = {
       example: 'st123456-7890-abcd-ef01-234567890abc',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum12',
+      $ref: '#/components/schemas/StatusEnum13',
     },
     attendance_marked_at: {
       type: ['string', 'null'],
@@ -11674,6 +11884,12 @@ export const EnrollmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    is_active: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).',
+      example: true,
+      readOnly: true,
+    },
     can_be_cancelled: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
@@ -11696,12 +11912,6 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
-    is_active: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).',
-      example: true,
       readOnly: true,
     },
   },
@@ -12379,9 +12589,14 @@ export const ClassDefinitionCreateRequestSchema = {
       format: 'uuid',
       description: '**[OPTIONAL]** Program UUID for program-scoped classes.',
     },
-    training_fee: {
+    sale_price: {
       type: 'number',
       description: '**[OPTIONAL]** Training fee for the class.',
+      minimum: 0,
+    },
+    instructor_pay: {
+      type: 'number',
+      description: '**[OPTIONAL]** Per-session pay owed to the instructor.',
       minimum: 0,
     },
     class_visibility: {
@@ -12995,6 +13210,22 @@ export const ApiResponseClassAssignmentScheduleSchema = {
   },
 } as const;
 
+export const ApiResponseClassDefinitionSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassDefinition',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ClassMarketplaceJobAssignmentRequestSchema = {
   type: 'object',
   description: 'Selects an approved instructor application and creates the actual class',
@@ -13025,13 +13256,11 @@ export const ApiResponseClassMarketplaceJobAssignmentResponseSchema = {
 
 export const ClassMarketplaceJobAssignmentResponseSchema = {
   type: 'object',
-  description: 'Result of assigning an instructor to a marketplace class job',
+  description:
+    'Result of assigning an instructor to a marketplace class job. The job moves to AWAITING_CLASS and its resource holds stay reserved until the class is created.',
   properties: {
     job: {
       $ref: '#/components/schemas/ClassMarketplaceJob',
-    },
-    class_definition: {
-      $ref: '#/components/schemas/ClassDefinition',
     },
   },
 } as const;
@@ -13075,7 +13304,7 @@ export const ClassMarketplaceJobApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum13',
+      $ref: '#/components/schemas/StatusEnum14',
     },
     job_uuid: {
       type: 'string',
@@ -13257,7 +13486,7 @@ export const BookingResponseSchema = {
       description: 'End time for the session',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum14',
+      $ref: '#/components/schemas/StatusEnum15',
     },
     price_amount: {
       type: 'number',
@@ -13502,7 +13731,7 @@ export const AssignmentSubmissionSchema = {
       example: '2024-04-10T14:30:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum15',
+      $ref: '#/components/schemas/StatusEnum16',
     },
     score: {
       type: 'number',
@@ -13863,7 +14092,7 @@ export const AdminDomainAssignmentRequestSchema = {
   description: 'Admin domain assignment request containing domain type, reason, and effective date',
   properties: {
     domain_name: {
-      $ref: '#/components/schemas/SchemaEnum7',
+      $ref: '#/components/schemas/SchemaEnum8',
     },
     assignment_type: {
       $ref: '#/components/schemas/AssignmentTypeEnum',
@@ -14744,9 +14973,6 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
-    pageable: {
-      $ref: '#/components/schemas/PageableObject',
-    },
     first: {
       type: 'boolean',
     },
@@ -14772,6 +14998,9 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
+    pageable: {
+      $ref: '#/components/schemas/PageableObject',
+    },
     empty: {
       type: 'boolean',
     },
@@ -14781,6 +15010,13 @@ export const PageSchema = {
 export const PageableObjectSchema = {
   type: 'object',
   properties: {
+    offset: {
+      type: 'integer',
+      format: 'int64',
+    },
+    sort: {
+      $ref: '#/components/schemas/SortObject',
+    },
     paged: {
       type: 'boolean',
     },
@@ -14795,26 +15031,19 @@ export const PageableObjectSchema = {
     unpaged: {
       type: 'boolean',
     },
-    offset: {
-      type: 'integer',
-      format: 'int64',
-    },
-    sort: {
-      $ref: '#/components/schemas/SortObject',
-    },
   },
 } as const;
 
 export const SortObjectSchema = {
   type: 'object',
   properties: {
+    empty: {
+      type: 'boolean',
+    },
     sorted: {
       type: 'boolean',
     },
     unsorted: {
-      type: 'boolean',
-    },
-    empty: {
       type: 'boolean',
     },
   },
@@ -15838,7 +16067,7 @@ export const StudentQuizReviewSchema = {
       format: 'uuid',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum16',
+      $ref: '#/components/schemas/StatusEnum17',
     },
     score: {
       type: 'number',
@@ -16136,7 +16365,7 @@ export const ProgramEnrollmentSchema = {
       example: '2024-06-30T16:45:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum17',
+      $ref: '#/components/schemas/StatusEnum18',
     },
     progress_percentage: {
       type: 'number',
@@ -16182,6 +16411,12 @@ export const ProgramEnrollmentSchema = {
       example: 'system@sarafrika.com',
       readOnly: true,
     },
+    is_active: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.',
+      example: false,
+      readOnly: true,
+    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
@@ -16206,12 +16441,6 @@ export const ProgramEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed program with final grade of 87.25',
-      readOnly: true,
-    },
-    is_active: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.',
-      example: false,
       readOnly: true,
     },
   },
@@ -16586,11 +16815,12 @@ export const SkillsFundSummarySchema = {
     },
     allocated: {
       type: 'number',
-      description: 'Amount allocated (approved/allocated transactions).',
+      description:
+        'Amount committed against the fund — allocated, approved or already disbursed. Cumulative: money that has gone out was committed first, so it is counted here too.',
     },
     disbursed: {
       type: 'number',
-      description: 'Amount disbursed (completed transactions).',
+      description: 'Amount that has actually left the fund (DISBURSED movements).',
     },
     pending: {
       type: 'number',
@@ -16599,6 +16829,11 @@ export const SkillsFundSummarySchema = {
     remaining: {
       type: 'number',
       description: 'Remaining = total balance − disbursed.',
+    },
+    currency_code: {
+      type: 'string',
+      description:
+        'ISO-4217 currency every figure above is denominated in. A fund holds exactly one currency; these totals are meaningless without it.',
     },
   },
 } as const;
@@ -16780,7 +17015,7 @@ export const ResourceBookingSchema = {
       description: 'Organisation owning the resource',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum18',
+      $ref: '#/components/schemas/StatusEnum19',
     },
     quantity: {
       type: 'integer',
@@ -16863,6 +17098,40 @@ export const ApiResponseListOrganisationInvitationSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOInstructorObligationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOInstructorObligation',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOInstructorObligationSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorObligation',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
   },
 } as const;
 
@@ -17363,6 +17632,79 @@ export const InstructorCalendarEntrySchema = {
   },
 } as const;
 
+export const ApiResponseInstructorStatementSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorStatement',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const InstructorStatementSchema = {
+  type: 'object',
+  description: 'Per-organisation summary of what an instructor is owed and what has been settled',
+  properties: {
+    instructor_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Platform user the statement belongs to',
+    },
+    lines: {
+      type: 'array',
+      description: 'One line per organisation and currency',
+      items: {
+        $ref: '#/components/schemas/InstructorStatementLine',
+      },
+    },
+  },
+} as const;
+
+export const InstructorStatementLineSchema = {
+  type: 'object',
+  description: 'What one organisation owes this instructor in one currency',
+  properties: {
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Organisation that owes the money',
+    },
+    currency_code: {
+      type: 'string',
+      description: 'Currency the obligations were accrued in',
+    },
+    amount_outstanding: {
+      type: 'number',
+      description: 'Still owed: accrued, not settled, not cancelled, not disputed',
+    },
+    amount_settled: {
+      type: 'number',
+      description: 'Recorded as paid off-platform by the organisation',
+    },
+    amount_accrued: {
+      type: 'number',
+      description: 'Lifetime total: outstanding plus settled',
+    },
+    session_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Sessions that generated these obligations',
+    },
+    outstanding_session_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Of those, the sessions still unpaid',
+    },
+  },
+} as const;
+
 export const ApiResponseListOrgInstructorSummarySchema = {
   type: 'object',
   properties: {
@@ -17528,7 +17870,7 @@ export const GuardianStudentDashboardDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum12',
     },
     courseProgress: {
       type: 'array',
@@ -17639,7 +17981,7 @@ export const GuardianStudentSummaryDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum12',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -17844,7 +18186,7 @@ export const StudentClassEnrollmentSummarySchema = {
       description: 'Most recent scheduled-instance enrollment identifier for this class',
     },
     latest_enrollment_status: {
-      $ref: '#/components/schemas/StatusEnum12',
+      $ref: '#/components/schemas/StatusEnum13',
     },
     scheduled_instance_count: {
       type: 'integer',
@@ -18475,7 +18817,7 @@ The proposed content lives on the draft course referenced by \`draft_course_uuid
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum19',
+      $ref: '#/components/schemas/StatusEnum20',
     },
     course_uuid: {
       type: 'string',
@@ -19186,7 +19528,7 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-30T16:45:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum17',
+      $ref: '#/components/schemas/StatusEnum18',
     },
     progress_percentage: {
       type: 'number',
@@ -19232,6 +19574,12 @@ export const CourseEnrollmentSchema = {
       example: 'system@sarafrika.com',
       readOnly: true,
     },
+    is_active: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.',
+      example: false,
+      readOnly: true,
+    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
@@ -19256,12 +19604,6 @@ export const CourseEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed with final grade of 85.50',
-      readOnly: true,
-    },
-    is_active: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.',
-      example: false,
       readOnly: true,
     },
   },
@@ -20240,17 +20582,35 @@ export const OrganisationInstructorPayableSchema = {
     },
     amount_owed: {
       type: 'number',
-      description: 'Total amount owed = sum(training_fee x completed sessions)',
+      description: 'Still outstanding: delivered sessions that have not been settled',
     },
     class_count: {
       type: 'integer',
       format: 'int64',
-      description: "Number of the organisation's classes assigned to this instructor",
+      description: "Number of the organisation's classes that generated these obligations",
     },
     session_count: {
       type: 'integer',
       format: 'int64',
-      description: 'Total completed sessions across those classes',
+      description: 'Total delivered sessions behind these obligations, settled or not',
+    },
+    currency_code: {
+      type: 'string',
+      description: 'Currency the obligations were accrued in',
+      example: 'KES',
+    },
+    amount_settled: {
+      type: 'number',
+      description: 'Already recorded as paid off-platform by the organisation',
+    },
+    amount_accrued: {
+      type: 'number',
+      description: 'Lifetime total earned: outstanding plus settled',
+    },
+    outstanding_session_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Of the delivered sessions, the ones still unpaid',
     },
   },
 } as const;
@@ -21671,10 +22031,15 @@ export const SchemaEnum5Schema = {
 
 export const SchemaEnum6Schema = {
   type: 'string',
-  enum: ['actor', 'target', 'all'],
+  enum: ['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED'],
 } as const;
 
 export const SchemaEnum7Schema = {
+  type: 'string',
+  enum: ['actor', 'target', 'all'],
+} as const;
+
+export const SchemaEnum8Schema = {
   type: 'string',
   enum: ['admin', 'organisation_user'],
 } as const;
@@ -21987,7 +22352,7 @@ export const ServiceTypeEnumSchema = {
 
 export const StatusEnum8Schema = {
   type: 'string',
-  enum: ['open', 'filled', 'cancelled', 'expired'],
+  enum: ['open', 'awaiting_class', 'filled', 'cancelled', 'expired'],
   readOnly: true,
 } as const;
 
@@ -22019,6 +22384,13 @@ export const StatusEnum9Schema = {
   description: '**[OPTIONAL]** Current status of the scheduled instance.',
   enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'],
   example: 'SCHEDULED',
+} as const;
+
+export const StatusEnum10Schema = {
+  type: 'string',
+  description:
+    "PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.",
+  enum: ['PENDING', 'ALLOCATED', 'APPROVED', 'DISBURSED'],
 } as const;
 
 export const TypeEnumSchema = {
@@ -22095,7 +22467,7 @@ export const PresentationEnumSchema = {
   enum: ['POPUP', 'INBOX'],
 } as const;
 
-export const StatusEnum10Schema = {
+export const StatusEnum11Schema = {
   type: 'string',
   enum: ['UNREAD', 'READ', 'ARCHIVED'],
 } as const;
@@ -22114,7 +22486,7 @@ export const ShareScopeEnumSchema = {
   enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
 } as const;
 
-export const StatusEnum11Schema = {
+export const StatusEnum12Schema = {
   type: 'string',
   enum: ['PENDING', 'ACTIVE', 'REVOKED'],
 } as const;
@@ -22128,7 +22500,7 @@ export const ShareScopeEnum2Schema = {
   pattern: '(?i)FULL|ACADEMICS|ATTENDANCE',
 } as const;
 
-export const StatusEnum12Schema = {
+export const StatusEnum13Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
@@ -22150,7 +22522,7 @@ export const ReleaseStrategyEnumSchema = {
   example: 'CUSTOM',
 } as const;
 
-export const StatusEnum13Schema = {
+export const StatusEnum14Schema = {
   type: 'string',
   enum: [
     'pending',
@@ -22165,7 +22537,7 @@ export const StatusEnum13Schema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum14Schema = {
+export const StatusEnum15Schema = {
   type: 'string',
   description: 'Current status of the booking',
   enum: [
@@ -22188,7 +22560,7 @@ export const PaymentStatusEnumSchema = {
   pattern: '^(succeeded|failed)$',
 } as const;
 
-export const StatusEnum15Schema = {
+export const StatusEnum16Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -22246,12 +22618,12 @@ export const QuestionTypeEnum2Schema = {
   enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
 } as const;
 
-export const StatusEnum16Schema = {
+export const StatusEnum17Schema = {
   type: 'string',
   enum: ['in_progress', 'submitted', 'graded'],
 } as const;
 
-export const StatusEnum17Schema = {
+export const StatusEnum18Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -22265,7 +22637,7 @@ export const EntryTypeEnumSchema = {
   example: 'HOLD',
 } as const;
 
-export const StatusEnum18Schema = {
+export const StatusEnum19Schema = {
   type: 'string',
   description: 'Booking lifecycle state',
   enum: ['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'],
@@ -22286,7 +22658,7 @@ export const EntryTypeEnum2Schema = {
   example: 'SCHEDULED_INSTANCE',
 } as const;
 
-export const StatusEnum19Schema = {
+export const StatusEnum20Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Review state of the edit.',
   enum: ['pending', 'approved', 'rejected', 'withdrawn'],
@@ -22429,10 +22801,15 @@ export const SchemaEnum5WritableSchema = {
 
 export const SchemaEnum6WritableSchema = {
   type: 'string',
-  enum: ['actor', 'target', 'all'],
+  enum: ['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED'],
 } as const;
 
 export const SchemaEnum7WritableSchema = {
+  type: 'string',
+  enum: ['actor', 'target', 'all'],
+} as const;
+
+export const SchemaEnum8WritableSchema = {
   type: 'string',
   enum: ['admin', 'organisation_user'],
 } as const;
@@ -22660,6 +23037,13 @@ export const StatusEnum9WritableSchema = {
   example: 'SCHEDULED',
 } as const;
 
+export const StatusEnum10WritableSchema = {
+  type: 'string',
+  description:
+    "PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.",
+  enum: ['PENDING', 'ALLOCATED', 'APPROVED', 'DISBURSED'],
+} as const;
+
 export const TypeEnumWritableSchema = {
   type: 'string',
   enum: [
@@ -22734,7 +23118,7 @@ export const PresentationEnumWritableSchema = {
   enum: ['POPUP', 'INBOX'],
 } as const;
 
-export const StatusEnum10WritableSchema = {
+export const StatusEnum11WritableSchema = {
   type: 'string',
   enum: ['UNREAD', 'READ', 'ARCHIVED'],
 } as const;
@@ -22753,7 +23137,7 @@ export const ShareScopeEnumWritableSchema = {
   enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
 } as const;
 
-export const StatusEnum11WritableSchema = {
+export const StatusEnum12WritableSchema = {
   type: 'string',
   enum: ['PENDING', 'ACTIVE', 'REVOKED'],
 } as const;
@@ -22767,7 +23151,7 @@ export const ShareScopeEnum2WritableSchema = {
   pattern: '(?i)FULL|ACADEMICS|ATTENDANCE',
 } as const;
 
-export const StatusEnum12WritableSchema = {
+export const StatusEnum13WritableSchema = {
   type: 'string',
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
@@ -22789,7 +23173,7 @@ export const ReleaseStrategyEnumWritableSchema = {
   example: 'CUSTOM',
 } as const;
 
-export const StatusEnum14WritableSchema = {
+export const StatusEnum15WritableSchema = {
   type: 'string',
   description: 'Current status of the booking',
   enum: [
@@ -22812,7 +23196,7 @@ export const PaymentStatusEnumWritableSchema = {
   pattern: '^(succeeded|failed)$',
 } as const;
 
-export const StatusEnum15WritableSchema = {
+export const StatusEnum16WritableSchema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -22846,12 +23230,12 @@ export const QuestionTypeEnum2WritableSchema = {
   enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
 } as const;
 
-export const StatusEnum16WritableSchema = {
+export const StatusEnum17WritableSchema = {
   type: 'string',
   enum: ['in_progress', 'submitted', 'graded'],
 } as const;
 
-export const StatusEnum17WritableSchema = {
+export const StatusEnum18WritableSchema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -22865,7 +23249,7 @@ export const EntryTypeEnumWritableSchema = {
   example: 'HOLD',
 } as const;
 
-export const StatusEnum18WritableSchema = {
+export const StatusEnum19WritableSchema = {
   type: 'string',
   description: 'Booking lifecycle state',
   enum: ['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'],

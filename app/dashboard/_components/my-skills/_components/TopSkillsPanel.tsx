@@ -4,12 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 
 import type { SharedSkill } from '../types';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 type TopSkillsPanelProps = {
   skills: SharedSkill[];
 };
 
 export function TopSkillsPanel({ skills }: TopSkillsPanelProps) {
+  const { activeDomain } = useUserDomain();
   const topSkills = skills.slice(0, 5);
 
   return (
@@ -46,7 +49,7 @@ export function TopSkillsPanel({ skills }: TopSkillsPanelProps) {
         </div>
 
         <Button asChild variant='outline' size='sm' className='h-8 w-full rounded-md text-xs'>
-          <Link href='/dashboard/my-skills/verified-skills'>View Verified Skills</Link>
+          <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/my-skills/verified-skills')}>View Verified Skills</Link>
         </Button>
       </div>
     </article>

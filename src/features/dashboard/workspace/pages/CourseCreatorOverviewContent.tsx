@@ -24,8 +24,11 @@ import type {
   CourseCreatorVerificationStatus,
 } from '@/lib/types/course-creator';
 import PurchasableCatalogue from '@/src/features/dashboard/components/PurchasableCatalogue';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 export default function CourseCreatorOverviewContent() {
+  const { activeDomain } = useUserDomain();
   const { data, profile } = useCourseCreator();
 
   const analytics = data.analytics;
@@ -50,7 +53,7 @@ export default function CourseCreatorOverviewContent() {
       }}
       actions={
         <Button asChild>
-          <Link prefetch href='/dashboard/course-management/create-new-course'>
+          <Link prefetch href={buildWorkspaceAliasPath(activeDomain, '/dashboard/course-management/create-new-course')}>
             Launch new course
           </Link>
         </Button>
@@ -169,7 +172,7 @@ function MonetizationCard({ monetization }: { monetization: CourseCreatorMonetiz
           </div>
         </div>
         <Button variant='outline' size='sm' asChild>
-          <Link prefetch href='/dashboard/course-management'>
+          <Link prefetch href={buildWorkspaceAliasPath(activeDomain, '/dashboard/course-management')}>
             Update pricing controls
             <ArrowRight className='ml-2 h-4 w-4' />
           </Link>
@@ -202,7 +205,7 @@ function TrainingRequirementsCard({
           <RequirementStat label='Optional' value={trainingRequirements.optionalRequirements} />
         </div>
         <Button variant='outline' size='sm' asChild>
-          <Link prefetch href='/dashboard/course-management'>
+          <Link prefetch href={buildWorkspaceAliasPath(activeDomain, '/dashboard/course-management')}>
             Manage requirements
             <ArrowRight className='ml-2 h-4 w-4' />
           </Link>
@@ -271,23 +274,23 @@ function QuickActionsCard() {
         <ActionTile
           title='Provision instructors'
           description='Invite mentors and outline their revenue share.'
-          href='/dashboard/instructors'
+          href={buildWorkspaceAliasPath(activeDomain, '/dashboard/instructors')}
         />
         <ActionTile
           title='Share assets'
           description='Upload brand kits and curriculum collateral.'
           href='#'
-          // href='/dashboard/libraries'
+          // href={buildWorkspaceAliasPath(activeDomain, '/dashboard/library')}
         />
         <ActionTile
           title='Create syllabus'
           description='Use guided steps to structure lessons and assessments.'
-          href='/dashboard/course-management/create-new-course'
+          href={buildWorkspaceAliasPath(activeDomain, '/dashboard/course-management/create-new-course')}
         />
         <ActionTile
           title='Check analytics'
           description='Monitor engagement, throughput, and monetisation.'
-          href='/dashboard/analytics'
+          href={buildWorkspaceAliasPath(activeDomain, '/dashboard/analytics')}
         />
       </CardContent>
     </Card>

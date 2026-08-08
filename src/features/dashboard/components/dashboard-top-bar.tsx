@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Label } from '../../../../components/ui/label';
 import { DashboardNotifications } from './dashboard-notifications';
 
@@ -89,7 +89,6 @@ const getInitials = (name: string) =>
 
 export default function DashboardTopBar() {
   const router = useRouter();
-  const pathname = usePathname();
   const profile = useUserProfile();
   const domain = useUserDomain();
   const logout = useLogout();
@@ -139,7 +138,7 @@ export default function DashboardTopBar() {
     }
 
     domain.setActiveDomain(nextDomain);
-    router.push(buildDashboardSwitchPath(nextDomain, pathname || '/dashboard/overview'));
+    router.push(buildDashboardSwitchPath(nextDomain, '/dashboard/overview'));
   };
 
   const notificationHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/notifications');

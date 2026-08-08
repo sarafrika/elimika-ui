@@ -9,6 +9,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
@@ -126,7 +127,7 @@ export function AdminPersonalInformationCard({ form }: AdminProfileSectionsProps
               <FormItem>
                 <FormLabel>Phone Number</FormLabel>
                 <FormControl>
-                  <Input placeholder='+1 (555) 000-0000' {...field} />
+                  <PhoneInput {...field} placeholder='+254 712 345678' />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -14,6 +14,7 @@ import {
   Trash2,
   UserX,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -60,6 +61,7 @@ const initials = (name?: string) =>
     .toUpperCase() || '?';
 
 export default function InstructorsPage() {
+  const router = useRouter();
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
 
@@ -117,11 +119,7 @@ export default function InstructorsPage() {
         description='Onboard instructors, assign courses, and track performance.'
         action={
           <Button
-            onClick={() =>
-              toast.info('Post a job', {
-                description: 'Create an instructor job from a course to receive applications.',
-              })
-            }
+            onClick={() => router.push('/dashboard/organisation/jobs/new')}
           >
             <Briefcase className='mr-2 h-4 w-4' /> Post a job
           </Button>
