@@ -1673,6 +1673,14 @@ export const zCourseTrainingRateCard = z.object({
     .number()
     .gte(0)
     .describe('Group session rate when delivered in person, per learner per hour.'),
+  private_online_session_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  private_inperson_session_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  group_online_session_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  group_inperson_session_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  private_online_daily_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  private_inperson_daily_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  group_online_daily_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  group_inperson_daily_rate: z.union([z.number().gte(0), z.null()]).optional(),
 });
 
 /**
@@ -3925,6 +3933,16 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    assessment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
+      .readonly()
+      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -3940,16 +3958,6 @@ export const zCourseAssessment = z
       .describe(
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
       )
-      .readonly()
-      .optional(),
-    assessment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -4918,6 +4926,15 @@ export const zClassDefinitionUpdateRequest = z
   );
 
 /**
+ * **[READ-ONLY]** Unit the sale price and instructor pay are quoted in, carried over from the job that contracted this class.
+ */
+export const zRateBasisEnum = z
+  .enum(['per_hour', 'per_session', 'per_day'])
+  .describe(
+    '**[READ-ONLY]** Unit the sale price and instructor pay are quoted in, carried over from the job that contracted this class.'
+  );
+
+/**
  * Recurrence type to apply for the session template
  */
 export const zRecurrenceTypeEnum = z
@@ -5050,6 +5067,7 @@ export const zClassDefinition = z
       .optional(),
     venue_resource_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     category_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    rate_basis: zRateBasisEnum.optional(),
     session_templates: z
       .array(zClassSessionTemplate)
       .describe(
@@ -5119,16 +5137,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
+      .readonly()
+      .optional(),
     capacity_info: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
-      .readonly()
-      .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
   })
@@ -5209,6 +5227,7 @@ export const zClassMarketplaceJobRequest = z
     allow_waitlist: z.union([z.boolean(), z.null()]).optional(),
     sale_price: z.union([z.number(), z.null()]).optional(),
     instructor_pay: z.union([z.number(), z.null()]).optional(),
+    rate_basis: zRateBasisEnum.optional(),
     session_templates: z
       .array(zClassSessionTemplate)
       .min(1)
@@ -5232,6 +5251,8 @@ export const zClassMarketplaceJobRequest = z
 
 export const zStatusEnum8 = z.enum(['open', 'awaiting_class', 'filled', 'cancelled', 'expired']);
 
+export const zRateBasisEnum2 = z.enum(['per_hour', 'per_session', 'per_day']);
+
 export const zServiceTypeEnum2 = z.enum(['ONE_ON_ONE', 'GROUP', 'ONLINE', 'PRIVATE_ONLINE']);
 
 /**
@@ -5253,6 +5274,7 @@ export const zClassMarketplaceJob = z
       .describe('**[READ-ONLY]** Per-session pay offered to the eventual instructor.')
       .readonly()
       .optional(),
+    rate_basis: zRateBasisEnum2.optional(),
     class_visibility: zClassVisibilityEnum.optional(),
     session_format: zSessionFormatEnum.optional(),
     default_start_time: z.string().datetime().readonly().optional(),
@@ -5946,21 +5968,6 @@ export const zScheduledInstance = z
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-    can_be_started: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
-      .readonly()
-      .optional(),
-    can_be_ended: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
-      .readonly()
-      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -5976,6 +5983,21 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
+      .readonly()
+      .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -7083,6 +7105,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
@@ -7091,11 +7118,6 @@ export const zEnrollment = z
     can_be_cancelled: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
-      .readonly()
-      .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
   })
@@ -7219,6 +7241,22 @@ export const zCompetitionTeam = z
 export const zApiResponseCompetitionTeam = z.object({
   success: z.boolean().optional(),
   data: zCompetitionTeam.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Current payment status of an order
+ */
+export const zPaymentStatusResponse = z
+  .object({
+    status: z.string().describe('Payment status').optional(),
+  })
+  .describe('Current payment status of an order');
+
+export const zApiResponsePaymentStatusResponse = z.object({
+  success: z.boolean().optional(),
+  data: zPaymentStatusResponse.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -8847,14 +8885,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    is_upcoming: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended this class.')
+      .readonly()
+      .optional(),
+    is_upcoming: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
       .readonly()
       .optional(),
   })
@@ -10261,6 +10299,13 @@ export const zApiResponsePagedDtoEnrollment = z.object({
 });
 
 /**
+ * Most recent scheduled-instance enrollment status for this class
+ */
+export const zLatestEnrollmentStatusEnum = z
+  .enum(['RESERVED', 'ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
+  .describe('Most recent scheduled-instance enrollment status for this class');
+
+/**
  * Overall class enrollment summary for a student, grouped by class definition
  */
 export const zStudentClassEnrollmentSummary = z
@@ -10272,7 +10317,7 @@ export const zStudentClassEnrollmentSummary = z
       .uuid()
       .describe('Most recent scheduled-instance enrollment identifier for this class')
       .optional(),
-    latest_enrollment_status: zStatusEnum13.optional(),
+    latest_enrollment_status: zLatestEnrollmentStatusEnum.optional(),
     scheduled_instance_count: z
       .number()
       .int()
@@ -11414,15 +11459,6 @@ export const zApiResponseListCompetitionTeam = z.object({
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
-
-/**
- * Current payment status of an order
- */
-export const zPaymentStatusResponse = z
-  .object({
-    status: z.string().describe('Payment status').optional(),
-  })
-  .describe('Current payment status of an order');
 
 export const zApiResponseListCommerceCatalogueItem = z.object({
   success: z.boolean().optional(),
@@ -12870,6 +12906,13 @@ export const zSourceTypeEnumWritable = z
 export const zEntryTypeEnum2Writable = z
   .enum(['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'])
   .describe('Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE');
+
+/**
+ * Most recent scheduled-instance enrollment status for this class
+ */
+export const zLatestEnrollmentStatusEnumWritable = z
+  .enum(['RESERVED', 'ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
+  .describe('Most recent scheduled-instance enrollment status for this class');
 
 export const zDeleteUserData = z.object({
   body: z.never().optional(),
@@ -17094,6 +17137,19 @@ export const zAddTeamData = z.object({
  */
 export const zAddTeamResponse = zApiResponseCompetitionTeam;
 
+export const zPaymentCallbackData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    orderId: z.string().describe('Order the payment belongs to'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zPaymentCallbackResponse = zApiResponsePaymentStatusResponse;
+
 export const zPayWithMpesaData = z.object({
   body: zMpesaPaymentRequest,
   path: z.object({
@@ -17681,7 +17737,7 @@ export const zRequestPaymentData = z.object({
  */
 export const zRequestPaymentResponse = zApiResponseBookingPaymentSession;
 
-export const zPaymentCallbackData = z.object({
+export const zPaymentCallback1Data = z.object({
   body: zBookingPaymentUpdateRequest,
   path: z.object({
     bookingUuid: z.string().uuid().describe('Booking UUID'),
@@ -17692,7 +17748,7 @@ export const zPaymentCallbackData = z.object({
 /**
  * OK
  */
-export const zPaymentCallbackResponse = zApiResponseBookingResponse;
+export const zPaymentCallback1Response = zApiResponseBookingResponse;
 
 export const zDeclineBookingData = z.object({
   body: z.never().optional(),

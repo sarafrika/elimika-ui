@@ -1259,6 +1259,38 @@ export type CourseTrainingRateCard = {
    * Group session rate when delivered in person, per learner per hour.
    */
   group_inperson_hourly_rate: number;
+  /**
+   * 1:1 private session rate when delivered online, per learner per session, whatever its length. Required for new and updated cards; null on cards created before per-session pricing existed.
+   */
+  private_online_session_rate?: number | null;
+  /**
+   * 1:1 private session rate when delivered in person, per learner per session, whatever its length. Required for new and updated cards; null on cards created before per-session pricing existed.
+   */
+  private_inperson_session_rate?: number | null;
+  /**
+   * Group session rate when delivered online, per learner per session, whatever its length. Required for new and updated cards; null on cards created before per-session pricing existed.
+   */
+  group_online_session_rate?: number | null;
+  /**
+   * Group session rate when delivered in person, per learner per session, whatever its length. Required for new and updated cards; null on cards created before per-session pricing existed.
+   */
+  group_inperson_session_rate?: number | null;
+  /**
+   * 1:1 private session rate when delivered online, per learner per calendar day, however many sessions fall in it. Required for new and updated cards; null on cards created before per-daily pricing existed.
+   */
+  private_online_daily_rate?: number | null;
+  /**
+   * 1:1 private session rate when delivered in person, per learner per calendar day, however many sessions fall in it. Required for new and updated cards; null on cards created before per-daily pricing existed.
+   */
+  private_inperson_daily_rate?: number | null;
+  /**
+   * Group session rate when delivered online, per learner per calendar day, however many sessions fall in it. Required for new and updated cards; null on cards created before per-daily pricing existed.
+   */
+  group_online_daily_rate?: number | null;
+  /**
+   * Group session rate when delivered in person, per learner per calendar day, however many sessions fall in it. Required for new and updated cards; null on cards created before per-daily pricing existed.
+   */
+  group_inperson_daily_rate?: number | null;
 };
 
 /**
@@ -3009,6 +3041,14 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -3020,14 +3060,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
-  /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -3945,6 +3977,7 @@ export type ClassDefinition = {
    * **[OPTIONAL]** Category the class falls under. Courses supply their own categories, so this carries the category chosen for program-backed classes.
    */
   category_uuid?: string | null;
+  rate_basis?: RateBasisEnum;
   /**
    * **[READ-ONLY]** Persisted session templates originally used to generate scheduled class instances.
    * Legacy classes created before template persistence may return an empty list.
@@ -3996,13 +4029,13 @@ export type ClassDefinition = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
-   */
-  readonly capacity_info?: string;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   */
+  readonly capacity_info?: string;
 };
 
 /**
@@ -4156,6 +4189,7 @@ export type ClassMarketplaceJobRequest = {
    * **[OPTIONAL]** Per-session pay offered to the eventual instructor. An applicant is assignable only when this is at least their approved rate. Defaults to the sale price when omitted, leaving no margin.
    */
   instructor_pay?: number | null;
+  rate_basis?: RateBasisEnum;
   /**
    * **[REQUIRED]** Session templates that will be used when the class is assigned and created.
    */
@@ -4241,6 +4275,7 @@ export type ClassMarketplaceJob = {
    * **[READ-ONLY]** Per-session pay offered to the eventual instructor.
    */
   readonly instructor_pay?: number;
+  rate_basis?: RateBasisEnum2;
   class_visibility?: ClassVisibilityEnum;
   session_format?: SessionFormatEnum;
   readonly default_start_time?: Date;
@@ -4835,18 +4870,6 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
-   */
-  readonly can_be_started?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
-   */
-  readonly can_be_ended?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -4858,6 +4881,18 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
+   */
+  readonly can_be_started?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
+   */
+  readonly can_be_ended?: boolean;
 };
 
 /**
@@ -6008,6 +6043,10 @@ export type Enrollment = {
    */
   readonly is_attendance_marked?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
@@ -6015,10 +6054,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
 };
 
 export type ApiResponse = {
@@ -6148,6 +6183,23 @@ export type ApiResponseCompetitionTeam = {
   data?: CompetitionTeam;
   message?: string;
   error?: unknown;
+};
+
+export type ApiResponsePaymentStatusResponse = {
+  success?: boolean;
+  data?: PaymentStatusResponse;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Current payment status of an order
+ */
+export type PaymentStatusResponse = {
+  /**
+   * Payment status
+   */
+  status?: string;
 };
 
 /**
@@ -7706,13 +7758,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if this class is upcoming.
-   */
-  readonly is_upcoming?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended this class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if this class is upcoming.
+   */
+  readonly is_upcoming?: boolean;
 };
 
 export type ApiResponseListScheduledInstance = {
@@ -9226,7 +9278,7 @@ export type StudentClassEnrollmentSummary = {
    * Most recent scheduled-instance enrollment identifier for this class
    */
   latest_enrollment_uuid?: string;
-  latest_enrollment_status?: StatusEnum13;
+  latest_enrollment_status?: LatestEnrollmentStatusEnum;
   /**
    * Number of scheduled-instance enrollments aggregated under this class
    */
@@ -10279,16 +10331,6 @@ export type ApiResponseListCompetitionTeam = {
   data?: Array<CompetitionTeam>;
   message?: string;
   error?: unknown;
-};
-
-/**
- * Current payment status of an order
- */
-export type PaymentStatusResponse = {
-  /**
-   * Payment status
-   */
-  status?: string;
 };
 
 export type ApiResponseListCommerceCatalogueItem = {
@@ -11793,6 +11835,20 @@ export const LocationTypeEnum = {
 export type LocationTypeEnum = (typeof LocationTypeEnum)[keyof typeof LocationTypeEnum];
 
 /**
+ * **[READ-ONLY]** Unit the sale price and instructor pay are quoted in, carried over from the job that contracted this class.
+ */
+export const RateBasisEnum = {
+  PER_HOUR: 'per_hour',
+  PER_SESSION: 'per_session',
+  PER_DAY: 'per_day',
+} as const;
+
+/**
+ * **[READ-ONLY]** Unit the sale price and instructor pay are quoted in, carried over from the job that contracted this class.
+ */
+export type RateBasisEnum = (typeof RateBasisEnum)[keyof typeof RateBasisEnum];
+
+/**
  * Recurrence type to apply for the session template
  */
 export const RecurrenceTypeEnum = {
@@ -11845,6 +11901,14 @@ export const StatusEnum8 = {
 } as const;
 
 export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
+
+export const RateBasisEnum2 = {
+  PER_HOUR: 'per_hour',
+  PER_SESSION: 'per_session',
+  PER_DAY: 'per_day',
+} as const;
+
+export type RateBasisEnum2 = (typeof RateBasisEnum2)[keyof typeof RateBasisEnum2];
 
 export const ServiceTypeEnum2 = {
   ONE_ON_ONE: 'ONE_ON_ONE',
@@ -12330,6 +12394,24 @@ export const EntryTypeEnum2 = {
  * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
  */
 export type EntryTypeEnum2 = (typeof EntryTypeEnum2)[keyof typeof EntryTypeEnum2];
+
+/**
+ * Most recent scheduled-instance enrollment status for this class
+ */
+export const LatestEnrollmentStatusEnum = {
+  RESERVED: 'RESERVED',
+  ENROLLED: 'ENROLLED',
+  WAITLISTED: 'WAITLISTED',
+  ATTENDED: 'ATTENDED',
+  ABSENT: 'ABSENT',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * Most recent scheduled-instance enrollment status for this class
+ */
+export type LatestEnrollmentStatusEnum =
+  (typeof LatestEnrollmentStatusEnum)[keyof typeof LatestEnrollmentStatusEnum];
 
 /**
  * **[READ-ONLY]** Review state of the edit.
@@ -13340,6 +13422,24 @@ export const EntryTypeEnum2Writable = {
  */
 export type EntryTypeEnum2Writable =
   (typeof EntryTypeEnum2Writable)[keyof typeof EntryTypeEnum2Writable];
+
+/**
+ * Most recent scheduled-instance enrollment status for this class
+ */
+export const LatestEnrollmentStatusEnumWritable = {
+  RESERVED: 'RESERVED',
+  ENROLLED: 'ENROLLED',
+  WAITLISTED: 'WAITLISTED',
+  ATTENDED: 'ATTENDED',
+  ABSENT: 'ABSENT',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * Most recent scheduled-instance enrollment status for this class
+ */
+export type LatestEnrollmentStatusEnumWritable =
+  (typeof LatestEnrollmentStatusEnumWritable)[keyof typeof LatestEnrollmentStatusEnumWritable];
 
 export type DeleteUserData = {
   body?: never;
@@ -23755,6 +23855,40 @@ export type AddTeamResponses = {
 
 export type AddTeamResponse = AddTeamResponses[keyof AddTeamResponses];
 
+export type PaymentCallbackData = {
+  body?: never;
+  path: {
+    /**
+     * Order the payment belongs to
+     */
+    orderId: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/orders/{orderId}/payment-callback';
+};
+
+export type PaymentCallbackErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type PaymentCallbackError = PaymentCallbackErrors[keyof PaymentCallbackErrors];
+
+export type PaymentCallbackResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePaymentStatusResponse;
+};
+
+export type PaymentCallbackResponse = PaymentCallbackResponses[keyof PaymentCallbackResponses];
+
 export type PayWithMpesaData = {
   body: MpesaPaymentRequest;
   path: {
@@ -25216,7 +25350,7 @@ export type RequestPaymentResponses = {
 
 export type RequestPaymentResponse = RequestPaymentResponses[keyof RequestPaymentResponses];
 
-export type PaymentCallbackData = {
+export type PaymentCallback1Data = {
   body: BookingPaymentUpdateRequest;
   path: {
     /**
@@ -25228,7 +25362,7 @@ export type PaymentCallbackData = {
   url: '/api/v1/bookings/{bookingUuid}/payment-callback';
 };
 
-export type PaymentCallbackErrors = {
+export type PaymentCallback1Errors = {
   /**
    * Not Found
    */
@@ -25239,16 +25373,16 @@ export type PaymentCallbackErrors = {
   500: ResponseDtoVoid;
 };
 
-export type PaymentCallbackError = PaymentCallbackErrors[keyof PaymentCallbackErrors];
+export type PaymentCallback1Error = PaymentCallback1Errors[keyof PaymentCallback1Errors];
 
-export type PaymentCallbackResponses = {
+export type PaymentCallback1Responses = {
   /**
    * OK
    */
   200: ApiResponseBookingResponse;
 };
 
-export type PaymentCallbackResponse = PaymentCallbackResponses[keyof PaymentCallbackResponses];
+export type PaymentCallback1Response = PaymentCallback1Responses[keyof PaymentCallback1Responses];
 
 export type DeclineBookingData = {
   body?: never;

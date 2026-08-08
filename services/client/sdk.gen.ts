@@ -922,6 +922,9 @@ import type {
   AddTeamData,
   AddTeamResponses,
   AddTeamErrors,
+  PaymentCallbackData,
+  PaymentCallbackResponses,
+  PaymentCallbackErrors,
   PayWithMpesaData,
   PayWithMpesaResponses,
   PayWithMpesaErrors,
@@ -1048,9 +1051,9 @@ import type {
   RequestPaymentData,
   RequestPaymentResponses,
   RequestPaymentErrors,
-  PaymentCallbackData,
-  PaymentCallbackResponses,
-  PaymentCallbackErrors,
+  PaymentCallback1Data,
+  PaymentCallback1Responses,
+  PaymentCallback1Errors,
   DeclineBookingData,
   DeclineBookingResponses,
   DeclineBookingErrors,
@@ -2109,7 +2112,7 @@ import {
   generateCourseCertificateResponseTransformer,
   createBookingResponseTransformer,
   requestPaymentResponseTransformer,
-  paymentCallbackResponseTransformer,
+  paymentCallback1ResponseTransformer,
   declineBookingResponseTransformer,
   cancelBookingResponseTransformer,
   acceptBookingResponseTransformer,
@@ -11489,6 +11492,33 @@ export const addTeam = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * M-Pesa payment callback
+ * Called by the daraja gateway when a payment resolves, so capture no longer depends on the buyer keeping their browser open. Settles the order the same way the polling path does and is safe to receive more than once.
+ */
+export const paymentCallback = <ThrowOnError extends boolean = false>(
+  options: Options<PaymentCallbackData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    PaymentCallbackResponses,
+    PaymentCallbackErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/orders/{orderId}/payment-callback',
+    ...options,
+  });
+};
+
+/**
  * Pay an order via M-Pesa
  * Initiates an M-Pesa STK Push for an order that is awaiting payment
  */
@@ -12735,15 +12765,15 @@ export const requestPayment = <ThrowOnError extends boolean = false>(
 /**
  * Payment callback to update booking status
  */
-export const paymentCallback = <ThrowOnError extends boolean = false>(
-  options: Options<PaymentCallbackData, ThrowOnError>
+export const paymentCallback1 = <ThrowOnError extends boolean = false>(
+  options: Options<PaymentCallback1Data, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).post<
-    PaymentCallbackResponses,
-    PaymentCallbackErrors,
+    PaymentCallback1Responses,
+    PaymentCallback1Errors,
     ThrowOnError
   >({
-    responseTransformer: paymentCallbackResponseTransformer,
+    responseTransformer: paymentCallback1ResponseTransformer,
     security: [
       {
         scheme: 'bearer',
