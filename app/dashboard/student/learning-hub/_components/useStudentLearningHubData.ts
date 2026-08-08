@@ -6,6 +6,7 @@ import {
   getAssignmentByUuidOptions,
   getAssignmentSchedulesOptions,
   getAssignmentSubmissionsOptions,
+  getEnrollmentOverviewForStudentOptions,
   getInstructorByUuidOptions,
   getPublishedCoursesOptions,
   getScheduledInstanceEnrollmentsForStudentOptions,
@@ -16,6 +17,8 @@ import type {
   AssignmentSubmission,
   Instructor,
   ScheduledInstance,
+  StudentClassEnrollmentSummary,
+  StudentCourseEnrollmentSummary,
 } from '@/services/client/types.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQueries, useQuery } from '@tanstack/react-query';
@@ -41,6 +44,16 @@ export type LearningHubClass = {
   accent: 'blue' | 'green' | 'slate';
 };
 
+export type LearningHubActiveCourse = {
+  id: string;
+  title: string;
+  category: string;
+  level: string;
+  duration: string;
+  classCount: number;
+  href: string;
+};
+
 export type LearningHubLiveClass = {
   id: string;
   title: string;
@@ -51,6 +64,10 @@ export type LearningHubLiveClass = {
   href: string;
 };
 
+export type LearningHubNextClass = LearningHubUpcomingClass & {
+  instructor: string;
+};
+
 export type LearningHubUpcomingClass = {
   id: string;
   title: string;
@@ -58,6 +75,7 @@ export type LearningHubUpcomingClass = {
   timeLabel: string;
   locationLabel: string;
   href: string;
+  startMs?: number;
 };
 
 export type LearningHubAssignment = {
@@ -88,13 +106,39 @@ export type LearningHubData = {
   studentName: string;
   firstName: string;
   stats: LearningHubStat[];
+  courseEnrollments: LearningHubCourseEnrollment[];
+  classEnrollments: LearningHubClassEnrollment[];
+  courseEnrollmentCount: number;
+  classEnrollmentCount: number;
+  activeCourses: LearningHubActiveCourse[];
   continueLearning: LearningHubClass[];
   liveClasses: LearningHubLiveClass[];
   upcomingClasses: LearningHubUpcomingClass[];
+  nextClass: LearningHubNextClass | null;
   assignments: LearningHubAssignment[];
   recommendedCourses: LearningHubRecommendedCourse[];
   invite: LearningHubInvite | null;
   loading: boolean;
+};
+
+export type LearningHubCourseEnrollment = StudentCourseEnrollmentSummary & {
+  id: string;
+  statusLabel: string;
+  progressLabel: string;
+  updatedLabel: string;
+  href: string;
+  ctaLabel: string;
+  tone: 'blue' | 'green' | 'slate';
+};
+
+export type LearningHubClassEnrollment = StudentClassEnrollmentSummary & {
+  id: string;
+  statusLabel: string;
+  sessionCountLabel: string;
+  latestActivityLabel: string;
+  latestStartLabel: string;
+  href: string;
+  tone: 'blue' | 'green' | 'slate';
 };
 
 const MOCK_RECOMMENDED_COURSES: LearningHubRecommendedCourse[] = [
@@ -186,6 +230,29 @@ const getClassStatusLabel = (
   return 'In progress';
 };
 
+const getCourseStatusLabel = (status?: string | null, progress?: number | null) => {
+  const normalized = String(status ?? '').trim().toLowerCase();
+
+  if (normalized === 'completed' || normalized === 'completed_course') return 'Completed';
+  if (normalized === 'cancelled' || normalized === 'dropped') return 'Cancelled';
+  if (normalized === 'waitlisted') return 'Waiting list';
+  if ((progress ?? 0) >= 100) return 'Completed';
+  if ((progress ?? 0) > 0) return 'In progress';
+
+  return 'Not started';
+};
+
+const getClassEnrollmentStatusLabel = (status?: string | null, latestStart?: Date | string | null) => {
+  const normalized = String(status ?? '').trim().toLowerCase();
+
+  if (normalized === 'attended' || normalized === 'completed') return 'Completed';
+  if (normalized === 'cancelled') return 'Cancelled';
+  if (normalized === 'waitlisted') return 'Waiting list';
+  if (latestStart) return getClassStatusLabel(latestStart, latestStart);
+
+  return 'Enrolled';
+};
+
 export function useStudentLearningHubData(): LearningHubData {
   const profile = useUserProfile();
   const student = profile?.student;
@@ -208,6 +275,19 @@ export function useStudentLearningHubData(): LearningHubData {
   const { data: studentCertificatesResponse, isLoading: certificatesLoading } = useQuery({
     ...getStudentCertificatesOptions({ path: { studentUuid: student?.uuid as string } }),
     enabled: Boolean(student?.uuid),
+  });
+
+  const {
+    data: enrollmentOverviewResponse,
+    isLoading: enrollmentOverviewLoading,
+  } = useQuery({
+    ...getEnrollmentOverviewForStudentOptions({
+      path: { studentUuid: student?.uuid as string },
+      query: { pageable: { page: 0, size: 24 } },
+    }),
+    enabled: Boolean(student?.uuid),
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: publishedCoursesResponse, isLoading: publishedCoursesLoading } = useQuery({
@@ -304,6 +384,17 @@ export function useStudentLearningHubData(): LearningHubData {
   const publishedCourses = publishedCoursesResponse?.data?.content ?? [];
   const scheduledInstanceEnrollments =
     studentScheduledInstanceEnrollmentsResponse?.data?.content ?? [];
+  const courseEnrollmentSummaries =
+    enrollmentOverviewResponse?.data?.course_enrollments?.content ?? [];
+  const classEnrollmentSummaries =
+    enrollmentOverviewResponse?.data?.class_enrollments?.content ?? [];
+  const courseEnrollmentCount =
+    Number(enrollmentOverviewResponse?.data?.course_enrollments?.metadata?.totalElements ?? 0);
+  const classEnrollmentCount =
+    Number(enrollmentOverviewResponse?.data?.class_enrollments?.metadata?.totalElements ?? 0);
+
+
+
 
   const enrolledScheduledInstanceUuids = useMemo(
     () =>
@@ -341,6 +432,106 @@ export function useStudentLearningHubData(): LearningHubData {
         }));
     });
   }, [classDefinitions, enrolledScheduledInstanceUuids]);
+
+  const activeCourses = useMemo<LearningHubActiveCourse[]>(() => {
+    const courseGroups = new Map<
+      string,
+      {
+        category: string;
+        classCount: number;
+        duration: string;
+        href: string;
+        level: string;
+        title: string;
+      }
+    >();
+
+    classDefinitions.forEach(item => {
+      const course = item.course;
+      const courseUuid = course?.uuid;
+
+      if (!courseUuid || courseGroups.has(courseUuid)) {
+        if (courseUuid && courseGroups.has(courseUuid)) {
+          const current = courseGroups.get(courseUuid);
+          if (current) {
+            current.classCount += 1;
+          }
+        }
+        return;
+      }
+
+      const durationMinutes =
+        (course?.duration_hours ?? 0) * 60 + (course?.duration_minutes ?? 0);
+
+      courseGroups.set(courseUuid, {
+        title: course?.name ?? 'Untitled course',
+        category: course?.category ?? 'General',
+        level: (course?.duration_hours ?? 0) >= 8 ? 'Intermediate' : 'Beginner',
+        duration: formatHours(durationMinutes),
+        classCount: 1,
+        href: `/dashboard/student/courses/${courseUuid}`,
+      });
+    });
+
+    return Array.from(courseGroups.entries()).map(([id, course]) => ({
+      id,
+      title: course.title,
+      category: course.category,
+      level: course.level,
+      duration: course.duration,
+      classCount: course.classCount,
+      href: course.href,
+    }));
+  }, [classDefinitions]);
+
+  const courseEnrollments = useMemo<LearningHubCourseEnrollment[]>(
+    () =>
+      courseEnrollmentSummaries.map((item, index) => {
+        const progress = Math.min(100, Math.max(0, Math.round(item.progress_percentage ?? 0)));
+
+        return {
+          ...item,
+          id: item.course_uuid,
+          statusLabel: getCourseStatusLabel(item.enrollment_status, progress),
+          progressLabel: `${progress}%`,
+          updatedLabel: item.updated_date ? formatDate(item.updated_date) : 'Recently updated',
+          href: `/dashboard/student/courses/${item.course_uuid}`,
+          ctaLabel:
+            progress >= 100
+              ? 'Review course'
+              : progress > 0
+                ? 'Continue learning'
+                : 'Start course',
+          tone: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
+        };
+      }),
+    [courseEnrollmentSummaries]
+  );
+
+  const classEnrollments = useMemo<LearningHubClassEnrollment[]>(
+    () =>
+      classEnrollmentSummaries.map((item, index) => {
+        const latestStart = item.latest_scheduled_instance_start_time ?? null;
+        const statusLabel = getClassEnrollmentStatusLabel(item.latest_enrollment_status, latestStart);
+
+        return {
+          ...item,
+          id: item.class_definition_uuid,
+          statusLabel,
+          sessionCountLabel:
+            item.scheduled_instance_count === 1
+              ? '1 scheduled session'
+              : `${item.scheduled_instance_count ?? 0} scheduled sessions`,
+          latestActivityLabel: item.latest_activity_date
+            ? `Updated ${formatDate(item.latest_activity_date)}`
+            : 'No recent activity',
+          latestStartLabel: latestStart ? `Starts ${formatDate(latestStart)}` : 'Start time pending',
+          href: `/dashboard/student/learning-hub/classes/${item.class_definition_uuid}`,
+          tone: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
+        };
+      }),
+    [classEnrollmentSummaries]
+  );
 
   const instructorUuids = useMemo(
     () =>
@@ -434,7 +625,7 @@ export function useStudentLearningHubData(): LearningHubData {
   }, [certificateMap, classDefinitions]);
 
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-  const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const TWO_WEEKS_MS = 30 * ONE_DAY_MS;
   const now = Date.now();
 
   const upcomingClasses = useMemo(
@@ -447,14 +638,42 @@ export function useStudentLearningHubData(): LearningHubData {
 
           const diff = start.getTime() - now;
 
-          // classes happening within the next 7 days
-          return diff >= 0 && diff <= ONE_WEEK_MS;
+          // classes happening within the next 14 days
+          return diff >= 0 && diff <= TWO_WEEKS_MS;
         })
         .sort(
           (a, b) => new Date(a.start_time ?? 0).getTime() - new Date(b.start_time ?? 0).getTime()
         ),
     [now, studentScheduledInstances]
   );
+
+  const nextClass = useMemo<LearningHubNextClass | null>(() => {
+    const item = upcomingClasses[0];
+
+    if (!item) {
+      return null;
+    }
+
+    const start = item.start_time ? new Date(item.start_time) : null;
+    const end = item.end_time ? new Date(item.end_time) : null;
+
+    const instructor = instructorMap.get(item.instructorUuid);
+
+    return {
+      id: item.uuid ?? item.classDefinitionUuid,
+      title: item.title ?? item.classTitle ?? 'Upcoming class',
+      dateLabel: formatDate(start, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
+      locationLabel: item.locationLabel,
+      href: item.href,
+      instructor: instructor?.full_name ?? 'Instructor',
+      startMs: start?.getTime(),
+    };
+  }, [instructorMap, upcomingClasses]);
 
   const liveClasses = useMemo<LearningHubLiveClass[]>(
     () =>
@@ -491,21 +710,13 @@ export function useStudentLearningHubData(): LearningHubData {
     [instructorMap, now, upcomingClasses]
   );
 
-  const upcomingClassesPreview = useMemo<LearningHubUpcomingClass[]>(
+  const upcomingClassesList = useMemo<LearningHubUpcomingClass[]>(
     () =>
       upcomingClasses
-        .filter(item => {
-          const start = item.start_time ? new Date(item.start_time) : null;
-
-          if (!start) return false;
-
-          const diff = start.getTime() - now;
-
-          return diff > ONE_DAY_MS && diff <= ONE_WEEK_MS;
-        })
         .map(item => {
           const start = item.start_time ? new Date(item.start_time) : null;
           const end = item.end_time ? new Date(item.end_time) : null;
+          const startMs = start?.getTime();
 
           return {
             id: item.uuid ?? item.classDefinitionUuid,
@@ -518,9 +729,10 @@ export function useStudentLearningHubData(): LearningHubData {
             timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
             locationLabel: item.locationLabel,
             href: item.href,
+            startMs: typeof startMs === 'number' && !Number.isNaN(startMs) ? startMs : undefined,
           };
         }),
-    [now, upcomingClasses]
+    [upcomingClasses]
   );
 
   const assignments = useMemo<LearningHubAssignment[]>(() => {
@@ -588,7 +800,7 @@ export function useStudentLearningHubData(): LearningHubData {
   }, [publishedCourses, enrolledCourseIds]);
 
   const invite = useMemo<LearningHubInvite | null>(() => {
-    const item = upcomingClassesPreview[1] ?? upcomingClassesPreview[0];
+    const item = upcomingClassesList[1] ?? upcomingClassesList[0];
     if (!item) return MOCK_INVITE;
 
     return {
@@ -598,13 +810,13 @@ export function useStudentLearningHubData(): LearningHubData {
       timeLabel: `${item.dateLabel} · ${item.timeLabel}`,
       href: item.href ?? '/dashboard/student/schedule',
     };
-  }, [upcomingClassesPreview]);
+  }, [upcomingClassesList]);
 
   const weeklyMinutes = upcomingClasses
     .slice(0, 7)
     .reduce((sum, item) => sum + toMinutes(item.duration_minutes), 0);
 
-  const activeClassesCount = classDefinitions.length;
+  const activeClassesCount = activeCourses.length;
   const assignmentsDueCount = assignments.length;
   const overallProgress =
     continueLearning.length > 0
@@ -617,7 +829,7 @@ export function useStudentLearningHubData(): LearningHubData {
     {
       id: 'active-classes',
       value: String(activeClassesCount),
-      label: 'Active Classes',
+      label: 'Active Courses',
       tone: 'blue',
     },
     {
@@ -647,9 +859,15 @@ export function useStudentLearningHubData(): LearningHubData {
         : 'Sarah Otieno',
     firstName: profile?.first_name ?? 'Emma',
     stats,
+    courseEnrollments,
+    classEnrollments,
+    courseEnrollmentCount: courseEnrollmentCount || courseEnrollments.length,
+    classEnrollmentCount: classEnrollmentCount || classEnrollments.length,
+    activeCourses,
     continueLearning,
     liveClasses,
-    upcomingClasses: upcomingClassesPreview,
+    upcomingClasses: upcomingClassesList,
+    nextClass,
     assignments,
     recommendedCourses,
     invite,
@@ -657,6 +875,7 @@ export function useStudentLearningHubData(): LearningHubData {
       classDefinitionsLoading ||
       scheduledInstanceEnrollmentsLoading ||
       certificatesLoading ||
+      enrollmentOverviewLoading ||
       publishedCoursesLoading ||
       instructorQueries.some(query => query.isLoading) ||
       assignmentScheduleQueries.some(query => query.isLoading) ||

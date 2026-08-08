@@ -24,17 +24,6 @@ type EnrolCourse = {
     class?: { id: string; title: string | null; starts_at: string | null; meeting_link: string | null } | null;
 };
 
-// ============================================================================
-// MOCK DATA
-// ----------------------------------------------------------------------------
-// The original file destructured `data.modules`, `data.assessments`, etc. from
-// an empty `const data = {}`, which meant every lookup silently resolved to
-// `undefined`. Below is sample data shaped the way a real query would return
-// it, keyed to the same course ids used in the mock enrollments passed down
-// from LessonHubDashboardTab (course-1, course-2, course-3). Swap
-// `MOCK_LEARNING_DATA` for a real query result whenever a backend exists.
-// ============================================================================
-
 const MOCK_MODULES: { id: string; course_id: string; title: string; position: number }[] = [
     { id: "m1-1", course_id: "course-1", title: "HTML, CSS & the Modern Web", position: 1 },
     { id: "m1-2", course_id: "course-1", title: "JavaScript Fundamentals", position: 2 },

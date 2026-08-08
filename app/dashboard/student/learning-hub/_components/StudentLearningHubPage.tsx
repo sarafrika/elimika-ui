@@ -2,13 +2,9 @@
 
 import { Award, BookOpen, CalendarIcon, ChevronLeft, ChevronRight, ClipboardList, FileCheck2, LayoutDashboard, Mail, PlayCircle, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { LearningHubAssignments } from './LearningHubAssignments';
-import { LearningHubContinueLearning } from './LearningHubContinueLearning';
-import { LearningHubHero } from './LearningHubHero';
-import { LearningHubLiveClasses } from './LearningHubLiveClasses';
-import { LearningHubRightRail } from './LearningHubRightRail';
 import { LessonHubDashboardTab } from './LessonHubDashboardTab';
-import LessonHubMyCoursesTab from './LessonHubMyCoursesTab';
+import { LessonHubMyClassesTab } from './LessonHubMyClassesTab';
+import { LessonHubMyCoursesTab } from './LessonHubMyCoursesTab';
 import { useStudentLearningHubData } from './useStudentLearningHubData';
 
 const TABS = [
@@ -48,8 +44,8 @@ export function StudentLearningHubPage() {
   return (
     <main className='w-full py-3 sm:py-4'>
       <div className="px-4 pb-5">
-        <h1 className="text-2xl font-bold text-slate-900">Learning Hub</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-foreground text-2xl font-bold">Learning Hub</h1>
+        <p className="text-muted-foreground text-sm">
           Discover, enrol, and complete learning programmes — all in one place.
         </p>
 
@@ -59,7 +55,7 @@ export function StudentLearningHubPage() {
             type="button"
             aria-label="Scroll tabs left"
             onClick={() => scrollTabs("left")}
-            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -85,8 +81,8 @@ export function StudentLearningHubPage() {
                   type="button"
                   onClick={() => setTab(t.id)}
                   className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm transition-colors ${active
-                    ? "border-[#0f4c81] bg-[#0f4c81] text-white"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-[#0f4c81] hover:text-[#0f4c81]"
+                    ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                    : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground'
                     }`}
                 >
                   <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -100,7 +96,7 @@ export function StudentLearningHubPage() {
             type="button"
             aria-label="Scroll tabs right"
             onClick={() => scrollTabs("right")}
-            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -109,8 +105,8 @@ export function StudentLearningHubPage() {
 
       <div className="px-4 py-6">
         {tab === "dashboard" && <LessonHubDashboardTab learningHubData={data} />}
-        {tab === "my-courses" && <LessonHubMyCoursesTab />}
-        {/* {tab === "my-classes" && <MyClassesTab />} */}
+        {tab === "my-courses" && <LessonHubMyCoursesTab learningHubData={data} />}
+        {tab === "my-classes" && <LessonHubMyClassesTab learningHubData={data} />}
         {/* {tab === "class-invites" && <ClassInvitesTab highlightId={invite} />} */}
 
 
@@ -122,27 +118,8 @@ export function StudentLearningHubPage() {
       </div>
 
       <div className='space-y-4'>
-        <LearningHubHero
-          firstName={data.firstName}
-          studentName={data.studentName}
-          stats={data.stats}
-          loading={data.loading}
-        />
-
-        <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_350px]'>
-          <div className='space-y-4'>
-            <LearningHubContinueLearning classes={data.continueLearning} loading={data.loading} />
-            <LearningHubLiveClasses liveClasses={data.liveClasses} loading={data.loading} />
-            <LearningHubAssignments assignments={data.assignments} loading={data.loading} />
-          </div>
-
-          <div>
-            <LearningHubRightRail
-              recommendedCourses={data.recommendedCourses}
-              loading={data.loading}
-            />
-          </div>
-        </div>
+        {/* <LearningHubContinueLearning classes={data.continueLearning} loading={data.loading} /> */}
+        {/* <LearningHubAssignments assignments={data.assignments} loading={data.loading} /> */}
       </div>
     </main>
   );
