@@ -143,7 +143,7 @@ export type ReminderState = {
   push: boolean;
 };
 
-export type UpcomingSession = { date: Date; label: string; time: string };
+export type UpcomingSession = { date: Date; label: string; time: string; minutes: number };
 
 // ─── Date / number helpers ─────────────────────────────────────────────────────
 export const fmtDate = (d: Date): string => {
@@ -181,6 +181,15 @@ export const num = (value: string): number | undefined => {
   return Number.isNaN(parsed) ? undefined : parsed;
 };
 
+
+/** Length of a HH:mm–HH:mm window, used to price per-hour rates. */
+function minutesBetween(start: string, end: string): number {
+  const [sh = NaN, sm = NaN] = start.split(':').map(Number);
+  const [eh = NaN, em = NaN] = end.split(':').map(Number);
+  if ([sh, sm, eh, em].some(value => Number.isNaN(value))) return 0;
+  return Math.max(0, eh * 60 + em - (sh * 60 + sm));
+}
+
 export function computeUpcomingSessions(
   startDate: string,
   endDate: string,
@@ -209,6 +218,7 @@ export function computeUpcomingSessions(
           day: 'numeric',
         }),
         time: row.allDay ? 'All day' : `${row.start}–${row.end}`,
+        minutes: row.allDay ? 0 : minutesBetween(row.start, row.end),
       });
     }
     cursor.setDate(cursor.getDate() + 1);

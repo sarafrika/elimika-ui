@@ -90,7 +90,7 @@ function JobBadgeRow({
     <div className='flex flex-wrap items-center gap-2'>
       {typeof job.instructor_pay === 'number' ? (
         <Badge className='border-primary/30 bg-primary/10 text-primary rounded-md px-2.5 py-0.5 text-xs font-semibold'>
-          {formatCurrency(job.instructor_pay)} / session
+          {formatCurrency(job.instructor_pay)} / hr
         </Badge>
       ) : (
         <MetaBadge>Pay not specified</MetaBadge>

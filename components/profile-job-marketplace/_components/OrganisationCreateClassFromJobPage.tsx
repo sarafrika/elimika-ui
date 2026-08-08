@@ -364,7 +364,7 @@ function MoneyRow({
           emphasis ? 'text-lg font-semibold' : 'text-base font-medium'
         )}
       >
-        {value === null ? 'Not specified' : `${formatCurrency(value)} / session`}
+        {value === null ? 'Not specified' : `${formatCurrency(value)} / hr`}
       </div>
     </div>
   );

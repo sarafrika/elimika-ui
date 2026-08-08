@@ -486,6 +486,7 @@ export default function OrganisationPostJobPage() {
     [startDate, endDate, days]
   );
   const totalSessions = upcomingSessions.length;
+  const totalMinutes = upcomingSessions.reduce((sum, session) => sum + (session.minutes ?? 0), 0);
 
   const updateDay = (d: DayKey, patch: Partial<DayRow>) =>
     setDays(prev => ({ ...prev, [d]: { ...prev[d], ...patch } }));
@@ -603,10 +604,10 @@ export default function OrganisationPostJobPage() {
     const saleValue = num(salePrice);
     const payValue = num(instructorPay);
     if (saleValue === undefined || saleValue < 0) {
-      return toast.error('Enter the sale price learners are charged per session.');
+      return toast.error('Enter the sale price learners are charged per hour.');
     }
     if (payValue === undefined || payValue < 0) {
-      return toast.error('Enter the pay the instructor receives per session.');
+      return toast.error('Enter the pay the instructor receives per hour.');
     }
     if (payValue > saleValue) {
       return toast.error('Instructor pay cannot exceed the sale price.');
@@ -762,6 +763,7 @@ export default function OrganisationPostJobPage() {
           allowWaitlist={allowWaitlist}
           onAllowWaitlistChange={setAllowWaitlist}
           totalSessions={totalSessions}
+          totalMinutes={totalMinutes}
         />
 
         <LocationVenue

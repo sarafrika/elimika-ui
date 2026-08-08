@@ -186,23 +186,23 @@ export function JobApplicantReviewPage({
                 <>
                   {typeof application.approved_rate === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Approved rate: {formatCurrency(application.approved_rate)} / session
+                      Approved rate: {formatCurrency(application.approved_rate)} / hr
                     </Badge>
                   ) : null}
                   {typeof job?.sale_price === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Sale price: {formatCurrency(job.sale_price)} / session
+                      Sale price: {formatCurrency(job.sale_price)} / hr
                     </Badge>
                   ) : null}
                   {typeof job?.instructor_pay === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Instructor pay: {formatCurrency(job.instructor_pay)} / session
+                      Instructor pay: {formatCurrency(job.instructor_pay)} / hr
                     </Badge>
                   ) : null}
                   {typeof job?.sale_price === 'number' &&
                   typeof job?.instructor_pay === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Margin: {formatCurrency(job.sale_price - job.instructor_pay)} / session
+                      Margin: {formatCurrency(job.sale_price - job.instructor_pay)} / hr
                     </Badge>
                   ) : null}
                 </>
@@ -238,7 +238,7 @@ export function JobApplicantReviewPage({
                     <div className='border-warning/60 bg-warning/10 text-foreground flex items-center gap-2 rounded-md border p-3'>
                       <TriangleAlert className='text-warning size-4 shrink-0' />
                       <span>
-                        This job pays {formatCurrency(job?.instructor_pay)} per session, below the{' '}
+                        This job pays {formatCurrency(job?.instructor_pay)} per hour, below the{' '}
                         {formatCurrency(application.approved_rate)} on this instructor’s rate card.
                         Assignment will be refused until you raise the instructor pay.
                       </span>

@@ -25,6 +25,7 @@ export function PricingCapacity({
   allowWaitlist,
   onAllowWaitlistChange,
   totalSessions,
+  totalMinutes,
 }: {
   approvedFee?: number;
   currency?: string | null;
@@ -37,12 +38,15 @@ export function PricingCapacity({
   allowWaitlist: boolean;
   onAllowWaitlistChange: (v: boolean) => void;
   totalSessions: number;
+  totalMinutes?: number;
 }) {
   const sale = parseAmount(salePrice);
   const pay = parseAmount(instructorPay);
   const margin = sale !== undefined && pay !== undefined ? sale - pay : undefined;
-  const sessions = Math.max(totalSessions, 1);
-  const totalMargin = margin !== undefined ? margin * sessions : undefined;
+  // Both prices are per hour, so the total follows scheduled time, not the number of sessions.
+  const hours = totalMinutes && totalMinutes > 0 ? totalMinutes / 60 : Math.max(totalSessions, 1);
+  const totalMargin = margin !== undefined ? margin * hours : undefined;
+  const hoursLabel = Number.isInteger(hours) ? String(hours) : hours.toFixed(2);
   const overpaid = margin !== undefined && margin < 0;
 
   return (
@@ -50,7 +54,7 @@ export function PricingCapacity({
       <div className='grid gap-4 sm:grid-cols-4'>
         <div className='space-y-2'>
           <Label htmlFor='sale-price' className='flex items-center gap-1.5'>
-            <Coins className='size-3.5' /> Sale price per session
+            <Coins className='size-3.5' /> Sale price per hour
           </Label>
           <Input
             id='sale-price'
@@ -69,7 +73,7 @@ export function PricingCapacity({
 
         <div className='space-y-2'>
           <Label htmlFor='instructor-pay' className='flex items-center gap-1.5'>
-            <Wallet className='size-3.5' /> Instructor pay per session
+            <Wallet className='size-3.5' /> Instructor pay per hour
           </Label>
           <Input
             id='instructor-pay'
@@ -112,10 +116,10 @@ export function PricingCapacity({
         {margin === undefined ? (
           'Enter a sale price and an instructor pay to see the margin.'
         ) : overpaid ? (
-          `Instructor pay exceeds the sale price by ${formatMoney(Math.abs(margin), currency)} per session. Lower it to at most ${formatMoney(sale, currency)}.`
+          `Instructor pay exceeds the sale price by ${formatMoney(Math.abs(margin), currency)} per hour. Lower it to at most ${formatMoney(sale, currency)}.`
         ) : (
           <>
-            {`Margin ${formatMoney(margin, currency)} per session × ${sessions} session${sessions === 1 ? '' : 's'} = `}
+            {`Margin ${formatMoney(margin, currency)} per hour × ${hoursLabel} h = `}
             <span className='text-foreground font-semibold'>
               {formatMoney(totalMargin, currency)}
             </span>

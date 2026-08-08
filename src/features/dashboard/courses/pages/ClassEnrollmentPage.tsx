@@ -1,6 +1,26 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowLeft,
+  Building2,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  GraduationCap,
+  Languages,
+  MapPin,
+  ShieldCheck,
+  Users,
+  Wallet
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,27 +43,6 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import {
-  AlertCircle,
-  AlertTriangle,
-  ArrowLeft,
-  Building2,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  GraduationCap,
-  Languages,
-  MapPin,
-  ShieldCheck,
-  Users,
-  Wallet
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import { PaymentConfirmationPage } from '../../../../../app/dashboard/student/courses/payment-confirmation-page';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { formatSessionSchedule } from '../components/availability-listing-layout';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
@@ -104,7 +103,6 @@ export default function ClassEnrollmentPage({
   const user = useUserProfile();
   const student = user?.student;
 
-  const [paymentConfirmed, setPaymentConfirmed] = useState(false)
   const [enrollmentError, setEnrollmentError] = useState(false);
   const [ageOk, setAgeOk] = useState(false);
   const [termsOk, setTermsOk] = useState(false);
@@ -266,7 +264,7 @@ export default function ClassEnrollmentPage({
         },
         {
           onSuccess: data => {
-            const cartId = data?.id || null;
+            const cartId = data?.data?.id ?? null;
             if (cartId) setCartId(cartId);
             qc.invalidateQueries({
               queryKey: getCartQueryKey({ path: { cartId: cartId as string } }),
@@ -357,23 +355,26 @@ export default function ClassEnrollmentPage({
       return;
     }
 
-    setPaymentConfirmed(true)
+    // A paid class has to be bought before the seat exists: the backend enrols the student itself
+    // once the payment is captured. Enrolling directly here would be refused by the paywall.
+    if (hasFee) {
+      handleCreateCartAndPay(enrollingClass);
+      return;
+    }
 
-    // enrollStudent.mutate(
-    //   { body: { class_definition_uuid: classId, student_uuid: student.uuid } },
-    //   {
-    //     onSuccess: data => handleEnrollmentSuccess(data, 'Student enrolled successfully'),
-    //     onError: err => {
-    //       if (isCapacityError(err)) {
-    //         handleWaitlist();
-    //         return;
-    //       }
-    //       toast.error(getErrorMessage(err, 'Failed to enroll in class'));
-    //       setPaymentConfirmed(true)
-    //       handleCreateCartAndPay(enrollingClass);
-    //     },
-    //   }
-    // );
+    enrollStudent.mutate(
+      { body: { class_definition_uuid: classId, student_uuid: student.uuid } },
+      {
+        onSuccess: data => handleEnrollmentSuccess(data, 'You are enrolled in this class'),
+        onError: err => {
+          if (isCapacityError(err)) {
+            handleWaitlist();
+            return;
+          }
+          toast.error(getErrorMessage(err, 'Failed to enroll in class'));
+        },
+      }
+    );
   };
 
   const handleCancel = () => {
@@ -427,13 +428,7 @@ export default function ClassEnrollmentPage({
         Back to Classes
       </Button>
 
-      {paymentConfirmed ? (
-        <>
-          <PaymentConfirmationPage />
-        </>
-      ) : (
-        <>
-          <h1 className='text-2xl font-semibold'>Join Class</h1>
+      <h1 className='text-2xl font-semibold'>Join Class</h1>
           <p className='text-muted-foreground text-sm'>
             Confirm details before enrolling in {enrollingClass.course?.name ?? enrollingClass.title}
           </p>
@@ -653,8 +648,6 @@ export default function ClassEnrollmentPage({
               {isPending ? 'Processing…' : isClassFull ? 'Join Waitlist' : 'Yes, Enroll Me'}
             </Button>
           </div>
-        </>
-      )}
     </div>
   );
 }

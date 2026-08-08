@@ -357,7 +357,7 @@ function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
       columns={3}
       items={[
         {
-          label: 'Pay per session',
+          label: 'Pay per hour',
           value: (
             <span className='text-primary text-base font-bold'>
               {typeof job.instructor_pay === 'number'
@@ -683,7 +683,7 @@ function JobDetailsSheet({
                   <>
                     You will be paid{' '}
                     <span className='text-primary font-bold'>
-                      {formatCurrency(job.instructor_pay)} per session
+                      {formatCurrency(job.instructor_pay)} per hour
                     </span>{' '}
                     for this engagement.
                   </>
