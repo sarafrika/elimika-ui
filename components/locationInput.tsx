@@ -67,6 +67,30 @@ const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const SUGGEST_ENDPOINT = 'https://api.mapbox.com/search/searchbox/v1/suggest';
 const RETRIEVE_ENDPOINT = 'https://api.mapbox.com/search/searchbox/v1/retrieve';
 const DEFAULT_SEARCH_COUNTRY = 'KE';
+const GEOCODE_ENDPOINT = 'https://api.mapbox.com/search/geocode/v6/forward';
+
+/**
+ * `/retrieve` only resolves POI ids; a locality suggestion (`urn:mbxplc:`)
+ * 404s there. Kenyan results are mostly localities, so the label is forward
+ * geocoded instead to still land a pin.
+ */
+async function geocodePlaceLabel(label: string, country: string | undefined, token: string) {
+  const params = new URLSearchParams({ q: label, limit: '1', access_token: token });
+  if (country) {
+    params.set('country', country);
+  }
+  const response = await fetch(`${GEOCODE_ENDPOINT}?${params.toString()}`);
+  if (!response.ok) {
+    return null;
+  }
+  const data = await response.json();
+  const feature = data.features?.[0];
+  const [longitude, latitude] = feature?.geometry?.coordinates ?? [undefined, undefined];
+  if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+    return null;
+  }
+  return { latitude, longitude };
+}
 
 /**
  * The Search Box API bills a suggest→retrieve pair as one session and rejects
@@ -239,7 +263,22 @@ export default function LocationInput({
         });
         const response = await fetch(`${RETRIEVE_ENDPOINT}?${params.toString()}`);
         if (!response.ok) {
-          throw new Error(await response.text());
+          const geocoded = label ? await geocodePlaceLabel(label, country, mapboxToken) : null;
+          if (!geocoded) {
+            throw new Error(await response.text());
+          }
+          setSelectedCoordinates(geocoded);
+          const geocodedFeature: MapboxRetrieveFeature = {
+            mapbox_id: suggestion.mapbox_id,
+            name: suggestion.name,
+            place_formatted: suggestion.place_formatted,
+            geometry: { coordinates: [geocoded.longitude, geocoded.latitude] },
+            properties: { coordinates: geocoded },
+          };
+          setSelectedFeature(geocodedFeature);
+          onSuggest?.({ features: [geocodedFeature] });
+          sessionToken.current = null;
+          return;
         }
         const data: MapboxRetrieveResponse = await response.json();
         const features = (data.features ?? []).map(feature => {
@@ -274,7 +313,7 @@ export default function LocationInput({
         setIsLoading(false);
       }
     },
-    [ensureSessionToken, onChange, onSuggest]
+    [country, ensureSessionToken, onChange, onSuggest]
   );
 
   const _handleClose = useCallback(() => {
