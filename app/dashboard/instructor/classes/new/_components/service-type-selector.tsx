@@ -34,7 +34,7 @@ export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSe
         description: '1 student, online',
         classType: 'PRIVATE',
         locationType: 'ONLINE',
-        key: 'private_online_rate',
+        key: 'private_online_hourly_rate',
       },
       {
         label: 'Group Session (2–5)',
@@ -42,7 +42,7 @@ export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSe
         description: 'Small group learning, online',
         classType: 'GROUP',
         locationType: 'ONLINE',
-        key: 'group_online_rate',
+        key: 'group_online_hourly_rate',
       },
       {
         label: 'Online Course',
@@ -50,7 +50,7 @@ export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSe
         description: 'Structured course delivery, in-person',
         classType: 'GROUP',
         locationType: 'IN_PERSON',
-        key: 'group_inperson_rate',
+        key: 'group_inperson_hourly_rate',
       },
       {
         label: 'Private In-Person Class',
@@ -58,7 +58,7 @@ export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSe
         description: '1-on-1 physical session',
         classType: 'PRIVATE',
         locationType: 'IN_PERSON',
-        key: 'private_inperson_rate',
+        key: 'private_inperson_hourly_rate',
       },
       // {
       //   label: 'Private Hybrid Session',

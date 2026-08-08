@@ -25,33 +25,61 @@ export const SERVICES: Service[] = [
   { key: 'private-online', title: 'Private Online Class', unit: 'class', format: 'INDIVIDUAL' },
 ];
 
+export type RateBasis = 'per_hour' | 'per_session' | 'per_day';
+
+export const RATE_BASES: { value: RateBasis; label: string; unit: string; short: string }[] = [
+  { value: 'per_hour', label: 'Per hour', unit: 'hour', short: 'hr' },
+  { value: 'per_session', label: 'Per session', unit: 'session', short: 'session' },
+  { value: 'per_day', label: 'Per day', unit: 'day', short: 'day' },
+];
+
+export const DEFAULT_RATE_BASIS: RateBasis = 'per_hour';
+
+const basisEntry = (basis?: RateBasis | null) =>
+  RATE_BASES.find(b => b.value === basis) ?? RATE_BASES[0];
+
+export const rateBasisUnit = (basis?: RateBasis | null) => basisEntry(basis).unit;
+export const rateBasisShort = (basis?: RateBasis | null) => basisEntry(basis).short;
+export const rateBasisLabel = (basis?: RateBasis | null) => basisEntry(basis).label;
+
 /**
- * The rate card the course creator approved on the training application. These four
- * values are the only fees an organisation may advertise a class at.
+ * The rate card the course creator approved on the training application, in each of the three
+ * bases a job can be contracted in. These are the only fees an organisation may advertise at.
  */
 export type ApprovedRateCard = {
   currency?: string | null;
-  private_online_rate?: number;
-  private_inperson_rate?: number;
-  group_online_rate?: number;
-  group_inperson_rate?: number;
+  private_online_hourly_rate?: number;
+  private_inperson_hourly_rate?: number;
+  group_online_hourly_rate?: number;
+  group_inperson_hourly_rate?: number;
+  private_online_session_rate?: number;
+  private_inperson_session_rate?: number;
+  group_online_session_rate?: number;
+  group_inperson_session_rate?: number;
+  private_online_daily_rate?: number;
+  private_inperson_daily_rate?: number;
+  group_online_daily_rate?: number;
+  group_inperson_daily_rate?: number;
 };
 
 /**
- * Picks the approved rate for a session format and delivery mode. Mirrors the backend's
- * `extractRate`: online delivery uses the online rates, in-person and hybrid use in-person.
+ * Picks the approved rate for a session format, delivery mode and contracted basis. Mirrors the
+ * backend's `resolveRate`: online delivery uses the online rates, in-person and hybrid use
+ * in-person. Undefined means the instructor has not priced that basis — not that it is free.
  */
 export const approvedRateFor = (
   rateCard: ApprovedRateCard | undefined,
   format: 'INDIVIDUAL' | 'GROUP',
-  delivery: 'IN_PERSON' | 'ONLINE' | 'HYBRID'
+  delivery: 'IN_PERSON' | 'ONLINE' | 'HYBRID',
+  basis: RateBasis = DEFAULT_RATE_BASIS
 ): number | undefined => {
   if (!rateCard) return undefined;
   const online = delivery === 'ONLINE';
-  if (format === 'INDIVIDUAL') {
-    return online ? rateCard.private_online_rate : rateCard.private_inperson_rate;
-  }
-  return online ? rateCard.group_online_rate : rateCard.group_inperson_rate;
+  const scope = format === 'INDIVIDUAL' ? 'private' : 'group';
+  const mode = online ? 'online' : 'inperson';
+  const suffix =
+    basis === 'per_session' ? 'session_rate' : basis === 'per_day' ? 'daily_rate' : 'hourly_rate';
+  return rateCard[`${scope}_${mode}_${suffix}` as keyof ApprovedRateCard] as number | undefined;
 };
 
 export const formatMoney = (amount?: number, currency?: string | null) =>

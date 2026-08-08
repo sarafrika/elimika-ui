@@ -417,10 +417,10 @@ export default function ClassCourseDetailsPage({
 
   const handleApplyToTrain = (data: {
     notes: string;
-    private_online_rate: number;
-    private_inperson_rate: number;
-    group_online_rate: number;
-    group_inperson_rate: number;
+    private_online_hourly_rate: number;
+    private_inperson_hourly_rate: number;
+    group_online_hourly_rate: number;
+    group_inperson_hourly_rate: number;
     rate_currency: string;
   }) => {
     if (!course?.uuid) {
@@ -443,10 +443,10 @@ export default function ClassCourseDetailsPage({
           applicant_uuid: submitterUuid,
           rate_card: {
             currency: data.rate_currency,
-            private_online_rate: data.private_online_rate,
-            private_inperson_rate: data.private_inperson_rate,
-            group_online_rate: data.group_online_rate,
-            group_inperson_rate: data.group_inperson_rate,
+            private_online_hourly_rate: data.private_online_hourly_rate,
+            private_inperson_hourly_rate: data.private_inperson_hourly_rate,
+            group_online_hourly_rate: data.group_online_hourly_rate,
+            group_inperson_hourly_rate: data.group_inperson_hourly_rate,
           },
           application_notes: data.notes,
         },

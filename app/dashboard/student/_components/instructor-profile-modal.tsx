@@ -55,7 +55,7 @@ type Props = {
 
 type RateKey = keyof Pick<
   CourseTrainingRateCard,
-  'group_inperson_rate' | 'group_online_rate' | 'private_inperson_rate' | 'private_online_rate'
+  'group_inperson_hourly_rate' | 'group_online_hourly_rate' | 'private_inperson_hourly_rate' | 'private_online_hourly_rate'
 >;
 
 export const InstructorProfileComponent: React.FC<Props> = ({
@@ -133,7 +133,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
     course => course.course_uuid === courseId
   );
 
-  const [selectedRateKey, setSelectedRateKey] = useState<RateKey>('private_online_rate');
+  const [selectedRateKey, setSelectedRateKey] = useState<RateKey>('private_online_hourly_rate');
   const [totalAmount, setTotalAmount] = useState(0);
   const bookingRates = matchedCourse?.rate_card
     ? {
@@ -400,7 +400,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                     </div>
                     <p className='text-2xl'>
                       {matchedCourse?.rate_card?.currency}{' '}
-                      {matchedCourse?.rate_card?.group_inperson_rate}
+                      {matchedCourse?.rate_card?.group_inperson_hourly_rate}
                     </p>
                   </div>
 
@@ -411,7 +411,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                     </div>
                     <p className='text-2xl'>
                       {matchedCourse?.rate_card?.currency}{' '}
-                      {matchedCourse?.rate_card?.group_online_rate}
+                      {matchedCourse?.rate_card?.group_online_hourly_rate}
                     </p>
                   </div>
 
@@ -422,7 +422,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                     </div>
                     <p className='text-2xl'>
                       {matchedCourse?.rate_card?.currency}{' '}
-                      {matchedCourse?.rate_card?.private_inperson_rate}
+                      {matchedCourse?.rate_card?.private_inperson_hourly_rate}
                     </p>
                   </div>
 
@@ -433,7 +433,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                     </div>
                     <p className='text-2xl'>
                       {matchedCourse?.rate_card?.currency}{' '}
-                      {matchedCourse?.rate_card?.private_online_rate}
+                      {matchedCourse?.rate_card?.private_online_hourly_rate}
                     </p>
                   </div>
                 </div>

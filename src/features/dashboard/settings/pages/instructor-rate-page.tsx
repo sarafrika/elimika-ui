@@ -226,7 +226,7 @@ export default function InstructorRateCard() {
         colorClass: 'online-group',
         badgeLabel: 'Group Session • Online',
         badgeType: 'group-online',
-        rate: rateCard.group_online_rate ?? 0,
+        rate: rateCard.group_online_hourly_rate ?? 0,
         currency: 'KSh', //rateCard.currency
         sessionType: 'Group Session',
         locationType: 'Online',
@@ -243,7 +243,7 @@ export default function InstructorRateCard() {
         colorClass: 'online-private',
         badgeLabel: 'Private Session • Online',
         badgeType: 'private-online',
-        rate: rateCard.private_online_rate ?? 0,
+        rate: rateCard.private_online_hourly_rate ?? 0,
         currency: 'KSh', //rateCard.currency
         sessionType: 'Private Session',
         locationType: 'Online',
@@ -260,7 +260,7 @@ export default function InstructorRateCard() {
         colorClass: 'group-inperson',
         badgeLabel: 'Group Session • In-Person',
         badgeType: 'group-inperson',
-        rate: rateCard.group_inperson_rate ?? 0,
+        rate: rateCard.group_inperson_hourly_rate ?? 0,
         currency: 'KSh', //rateCard.currency
         sessionType: 'Group Session',
         locationType: 'In-Person',
@@ -277,7 +277,7 @@ export default function InstructorRateCard() {
         colorClass: 'private-inperson',
         badgeLabel: 'Private Session • In-Person',
         badgeType: 'private-inperson',
-        rate: rateCard.private_inperson_rate ?? 0,
+        rate: rateCard.private_inperson_hourly_rate ?? 0,
         currency: 'KSh', //rateCard.currency
         sessionType: 'Private Session',
         locationType: 'In-Person',

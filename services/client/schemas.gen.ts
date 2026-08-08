@@ -2500,25 +2500,25 @@ export const CourseTrainingRateCardSchema = {
       maxLength: 3,
       pattern: '^[A-Za-z]{3}$',
     },
-    private_online_rate: {
+    private_online_hourly_rate: {
       type: 'number',
       description: '1:1 private session rate when delivered online, per learner per hour.',
       example: 3500,
       minimum: 0,
     },
-    private_inperson_rate: {
+    private_inperson_hourly_rate: {
       type: 'number',
       description: '1:1 private session rate when delivered in person, per learner per hour.',
       example: 3600,
       minimum: 0,
     },
-    group_online_rate: {
+    group_online_hourly_rate: {
       type: 'number',
       description: 'Group session rate when delivered online, per learner per hour.',
       example: 2800,
       minimum: 0,
     },
-    group_inperson_rate: {
+    group_inperson_hourly_rate: {
       type: 'number',
       description: 'Group session rate when delivered in person, per learner per hour.',
       example: 3000,
@@ -2526,10 +2526,10 @@ export const CourseTrainingRateCardSchema = {
     },
   },
   required: [
-    'group_inperson_rate',
-    'group_online_rate',
-    'private_inperson_rate',
-    'private_online_rate',
+    'group_inperson_hourly_rate',
+    'group_online_hourly_rate',
+    'private_inperson_hourly_rate',
+    'private_online_hourly_rate',
   ],
 } as const;
 
@@ -2540,10 +2540,10 @@ export const ProgramTrainingApplicationUpdateRequestSchema = {
   example: {
     rate_card: {
       currency: 'KES',
-      private_online_rate: 3500,
-      private_inperson_rate: 3600,
-      group_online_rate: 2800,
-      group_inperson_rate: 3000,
+      private_online_hourly_rate: 3500,
+      private_inperson_hourly_rate: 3600,
+      group_online_hourly_rate: 2800,
+      group_inperson_hourly_rate: 3000,
     },
     application_notes: 'Updated availability for the January cohort.',
   },
@@ -2590,10 +2590,10 @@ export const ProgramTrainingApplicationSchema = {
     status: 'pending',
     rate_card: {
       currency: 'KES',
-      private_online_rate: 3500,
-      private_inperson_rate: 3600,
-      group_online_rate: 2800,
-      group_inperson_rate: 3000,
+      private_online_hourly_rate: 3500,
+      private_inperson_hourly_rate: 3600,
+      group_online_hourly_rate: 2800,
+      group_inperson_hourly_rate: 3000,
     },
     application_notes: 'We already deliver this program for other cohorts.',
     review_notes: null,
@@ -5110,10 +5110,10 @@ export const CourseTrainingApplicationUpdateRequestSchema = {
   example: {
     rate_card: {
       currency: 'KES',
-      private_online_rate: 3500,
-      private_inperson_rate: 3600,
-      group_online_rate: 2800,
-      group_inperson_rate: 3000,
+      private_online_hourly_rate: 3500,
+      private_inperson_hourly_rate: 3600,
+      group_online_hourly_rate: 2800,
+      group_inperson_hourly_rate: 3000,
     },
     application_notes: 'Updated availability for the January cohort.',
   },
@@ -5160,10 +5160,10 @@ export const CourseTrainingApplicationSchema = {
     status: 'pending',
     rate_card: {
       currency: 'KES',
-      private_online_rate: 3500,
-      private_inperson_rate: 3600,
-      group_online_rate: 2800,
-      group_inperson_rate: 3000,
+      private_online_hourly_rate: 3500,
+      private_inperson_hourly_rate: 3600,
+      group_online_hourly_rate: 2800,
+      group_inperson_hourly_rate: 3000,
     },
     application_notes: 'I have delivered similar courses for 5 years.',
     review_notes: null,
@@ -10170,10 +10170,10 @@ export const ProgramTrainingApplicationRequestSchema = {
     applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
     rate_card: {
       currency: 'KES',
-      private_online_rate: 3500,
-      private_inperson_rate: 3600,
-      group_online_rate: 2800,
-      group_inperson_rate: 3000,
+      private_online_hourly_rate: 3500,
+      private_inperson_hourly_rate: 3600,
+      group_online_hourly_rate: 2800,
+      group_inperson_hourly_rate: 3000,
     },
     application_notes: 'We already deliver this curriculum for other cohorts.',
   },
@@ -11940,10 +11940,10 @@ export const CourseTrainingApplicationRequestSchema = {
     applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
     rate_card: {
       currency: 'KES',
-      private_online_rate: 3500,
-      private_inperson_rate: 3600,
-      group_online_rate: 2800,
-      group_inperson_rate: 3000,
+      private_online_hourly_rate: 3500,
+      private_inperson_hourly_rate: 3600,
+      group_online_hourly_rate: 2800,
+      group_inperson_hourly_rate: 3000,
     },
     application_notes: 'I hold the vendor certification required for this course.',
   },

@@ -35,6 +35,7 @@ import {
   StatCardSkeleton,
   StatusBadge,
 } from '@/app/dashboard/admin/_components/ui';
+import { type RateBasis, rateBasisUnit } from '@/components/class-form';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { PageHeader as AdminPageHeader } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
@@ -357,7 +358,7 @@ function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
       columns={3}
       items={[
         {
-          label: 'Pay per hour',
+          label: `Pay per ${rateBasisUnit(job.rate_basis as RateBasis)}`,
           value: (
             <span className='text-primary text-base font-bold'>
               {typeof job.instructor_pay === 'number'
@@ -683,7 +684,8 @@ function JobDetailsSheet({
                   <>
                     You will be paid{' '}
                     <span className='text-primary font-bold'>
-                      {formatCurrency(job.instructor_pay)} per hour
+                      {formatCurrency(job.instructor_pay)} per{' '}
+                      {rateBasisUnit(job.rate_basis as RateBasis)}
                     </span>{' '}
                     for this engagement.
                   </>

@@ -78,15 +78,15 @@ const RATE_TIERS: {
   loc: string;
   key: keyof NonNullable<CourseTrainingApplication['rate_card']>;
 }[] = [
-  { method: 'Group In-Person', fmt: 'GROUP', loc: 'IN_PERSON', key: 'group_inperson_rate' },
-  { method: 'Group Virtual', fmt: 'GROUP', loc: 'ONLINE', key: 'group_online_rate' },
+  { method: 'Group In-Person', fmt: 'GROUP', loc: 'IN_PERSON', key: 'group_inperson_hourly_rate' },
+  { method: 'Group Virtual', fmt: 'GROUP', loc: 'ONLINE', key: 'group_online_hourly_rate' },
   {
     method: 'Private In-Person',
     fmt: 'INDIVIDUAL',
     loc: 'IN_PERSON',
-    key: 'private_inperson_rate',
+    key: 'private_inperson_hourly_rate',
   },
-  { method: 'Private Virtual', fmt: 'INDIVIDUAL', loc: 'ONLINE', key: 'private_online_rate' },
+  { method: 'Private Virtual', fmt: 'INDIVIDUAL', loc: 'ONLINE', key: 'private_online_hourly_rate' },
 ];
 
 const normStatus = (s?: string): string => {

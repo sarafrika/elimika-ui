@@ -69,10 +69,10 @@ const statusTone = (status?: string) => {
 };
 
 const RATE_TIERS: { method: string; key: string }[] = [
-  { method: 'Group In-Person', key: 'group_inperson_rate' },
-  { method: 'Group Virtual', key: 'group_online_rate' },
-  { method: 'Private In-Person', key: 'private_inperson_rate' },
-  { method: 'Private Virtual', key: 'private_online_rate' },
+  { method: 'Group In-Person', key: 'group_inperson_hourly_rate' },
+  { method: 'Group Virtual', key: 'group_online_hourly_rate' },
+  { method: 'Private In-Person', key: 'private_inperson_hourly_rate' },
+  { method: 'Private Virtual', key: 'private_online_hourly_rate' },
 ];
 
 export default function ApplicationDetailPage() {

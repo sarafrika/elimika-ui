@@ -5,7 +5,10 @@ import { cn } from '@/lib/utils';
 import {
   type ApprovedRateCard,
   approvedRateFor,
+  DEFAULT_RATE_BASIS,
   formatMoney,
+  type RateBasis,
+  rateBasisUnit,
   SERVICES,
   type ServiceKey,
 } from './class-form-shared';
@@ -15,19 +18,22 @@ export function ServiceCards({
   onChange,
   rateCard,
   delivery,
+  rateBasis = DEFAULT_RATE_BASIS,
 }: {
   value: ServiceKey;
   onChange: (v: ServiceKey) => void;
   rateCard?: ApprovedRateCard;
   delivery: 'IN_PERSON' | 'ONLINE' | 'HYBRID';
+  rateBasis?: RateBasis;
 }) {
+  const unit = rateBasisUnit(rateBasis);
   return (
     <div className='space-y-3'>
       <Label className='text-sm font-medium'>Select Service</Label>
       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
         {SERVICES.map(s => {
           const selected = value === s.key;
-          const rate = approvedRateFor(rateCard, s.format, delivery);
+          const rate = approvedRateFor(rateCard, s.format, delivery, rateBasis);
           return (
             <button
               key={s.key}
@@ -58,7 +64,7 @@ export function ServiceCards({
                 <span className='text-foreground font-medium'>
                   {formatMoney(rate, rateCard?.currency)}
                 </span>{' '}
-                / {s.unit}
+                / {unit}
               </div>
             </button>
           );
@@ -66,7 +72,7 @@ export function ServiceCards({
       </div>
       <p className='text-muted-foreground text-[11px]'>
         {rateCard
-          ? 'Rates are the ones the course creator approved for your organisation, for your selected delivery mode.'
+          ? `Rates are the ones the course creator approved for your organisation, for your selected delivery mode and a per-${unit} contract.`
           : 'Select an approved course or program to see the rates its creator approved.'}
       </p>
     </div>

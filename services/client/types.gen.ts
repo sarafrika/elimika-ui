@@ -1246,19 +1246,19 @@ export type CourseTrainingRateCard = {
   /**
    * 1:1 private session rate when delivered online, per learner per hour.
    */
-  private_online_rate: number;
+  private_online_hourly_rate: number;
   /**
    * 1:1 private session rate when delivered in person, per learner per hour.
    */
-  private_inperson_rate: number;
+  private_inperson_hourly_rate: number;
   /**
    * Group session rate when delivered online, per learner per hour.
    */
-  group_online_rate: number;
+  group_online_hourly_rate: number;
   /**
    * Group session rate when delivered in person, per learner per hour.
    */
-  group_inperson_rate: number;
+  group_inperson_hourly_rate: number;
 };
 
 /**

@@ -22,6 +22,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
+import { type RateBasis, rateBasisShort } from '@/components/class-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -261,11 +262,12 @@ export default function ClassEnrollmentPage({
 
   const trainingFee = enrollingClass?.sale_price;
   const hasFee = typeof trainingFee === 'number' ? trainingFee > 0 : Boolean(trainingFee);
+  const feeUnit = rateBasisShort(enrollingClass?.rate_basis as RateBasis);
   const feeDisplay =
     typeof trainingFee === 'number'
-      ? `KES ${trainingFee.toLocaleString()} / hr`
+      ? `KES ${trainingFee.toLocaleString()} / ${feeUnit}`
       : trainingFee
-        ? `KES ${trainingFee} / hr`
+        ? `KES ${trainingFee} / ${feeUnit}`
         : 'Free';
 
   // ── Cart mutations ─────────────────────────────────────────────────────

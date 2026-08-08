@@ -22,6 +22,7 @@ import {
   SectionCard,
   StatusBadge,
 } from '@/app/dashboard/admin/_components/ui';
+import { type RateBasis, rateBasisShort } from '@/components/class-form';
 import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -297,17 +298,20 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
                       label='Sold to learners at'
                       value={salePrice}
                       accent='border-l-primary'
+                      rateBasis={job?.rate_basis as RateBasis}
                     />
                     <MoneyRow
                       label='Instructor is paid'
                       value={instructorPay}
                       accent='border-l-warning'
+                      rateBasis={job?.rate_basis as RateBasis}
                     />
                     <MoneyRow
                       label='Your margin'
                       value={margin}
                       accent='border-l-success'
                       emphasis
+                      rateBasis={job?.rate_basis as RateBasis}
                     />
                   </div>
                   <p className='text-muted-foreground mt-3 flex items-start gap-2 text-xs'>
@@ -354,6 +358,7 @@ function MoneyRow({
   value: number | null;
   accent: string;
   emphasis?: boolean;
+  rateBasis?: RateBasis;
 }) {
   return (
     <div className={cn('bg-muted/20 rounded-md border-l-4 px-3 py-2', accent)}>
@@ -364,7 +369,7 @@ function MoneyRow({
           emphasis ? 'text-lg font-semibold' : 'text-base font-medium'
         )}
       >
-        {value === null ? 'Not specified' : `${formatCurrency(value)} / hr`}
+        {value === null ? 'Not specified' : `${formatCurrency(value)} / ${rateBasisShort(rateBasis)}`}
       </div>
     </div>
   );

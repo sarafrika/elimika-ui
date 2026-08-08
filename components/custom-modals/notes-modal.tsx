@@ -1,5 +1,7 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -18,18 +20,16 @@ import {
 } from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
-import {
-  CoursesCatalogCardData,
-  CoursesRecommendationCardData,
-} from '../../src/features/dashboard/courses/shared/_components/courses-data';
 import { useUserDomain } from '../../context/user-domain-context';
 import { CourseTrainingRequirement } from '../../services/client';
 import {
   getCourseTrainingRequirementsOptions,
   getProgramRequirementsOptions,
 } from '../../services/client/@tanstack/react-query.gen';
+import {
+  CoursesCatalogCardData,
+  CoursesRecommendationCardData,
+} from '../../src/features/dashboard/courses/shared/_components/courses-data';
 import { Checkbox } from '../ui/checkbox';
 
 interface NotesModalProps {
@@ -40,10 +40,10 @@ interface NotesModalProps {
   placeholder?: string;
   onSave: (data: {
     notes: string;
-    private_online_rate: number;
-    private_inperson_rate: number;
-    group_online_rate: number;
-    group_inperson_rate: number;
+    private_online_hourly_rate: number;
+    private_inperson_hourly_rate: number;
+    group_online_hourly_rate: number;
+    group_inperson_hourly_rate: number;
     rate_currency: string;
   }) => void;
   isLoading?: boolean;
@@ -96,10 +96,10 @@ export default function NotesModal({
   const handleSave = () => {
     onSave({
       notes,
-      private_online_rate: Number(privateOnlineRate),
-      private_inperson_rate: Number(privateInpersonRate),
-      group_online_rate: Number(groupOnlineRate),
-      group_inperson_rate: Number(groupInpersonRate),
+      private_online_hourly_rate: Number(privateOnlineRate),
+      private_inperson_hourly_rate: Number(privateInpersonRate),
+      group_online_hourly_rate: Number(groupOnlineRate),
+      group_inperson_hourly_rate: Number(groupInpersonRate),
       rate_currency: currency,
     });
     resetForm();

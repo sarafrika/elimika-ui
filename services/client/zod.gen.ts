@@ -1657,19 +1657,19 @@ export const zCourseTrainingRateCard = z.object({
       z.null(),
     ])
     .optional(),
-  private_online_rate: z
+  private_online_hourly_rate: z
     .number()
     .gte(0)
     .describe('1:1 private session rate when delivered online, per learner per hour.'),
-  private_inperson_rate: z
+  private_inperson_hourly_rate: z
     .number()
     .gte(0)
     .describe('1:1 private session rate when delivered in person, per learner per hour.'),
-  group_online_rate: z
+  group_online_hourly_rate: z
     .number()
     .gte(0)
     .describe('Group session rate when delivered online, per learner per hour.'),
-  group_inperson_rate: z
+  group_inperson_hourly_rate: z
     .number()
     .gte(0)
     .describe('Group session rate when delivered in person, per learner per hour.'),

@@ -4,6 +4,7 @@ import { BriefcaseBusiness, CalendarDays, MapPin, Pencil, ShieldCheck, Trash2 } 
 import Link from 'next/link';
 
 import { StatusBadge } from '@/app/dashboard/admin/_components/ui';
+import { type RateBasis, rateBasisShort } from '@/components/class-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/format-currency';
@@ -90,7 +91,7 @@ function JobBadgeRow({
     <div className='flex flex-wrap items-center gap-2'>
       {typeof job.instructor_pay === 'number' ? (
         <Badge className='border-primary/30 bg-primary/10 text-primary rounded-md px-2.5 py-0.5 text-xs font-semibold'>
-          {formatCurrency(job.instructor_pay)} / hr
+          {formatCurrency(job.instructor_pay)} / {rateBasisShort(job.rate_basis as RateBasis)}
         </Badge>
       ) : (
         <MetaBadge>Pay not specified</MetaBadge>

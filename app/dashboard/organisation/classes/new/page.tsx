@@ -19,6 +19,7 @@ import {
   type DayKey,
   type DayRow,
   DEFAULT_DAYS,
+  DEFAULT_RATE_BASIS,
   type Delivery,
   firstOccurrenceOnOrAfter,
   fmtDate,
@@ -28,9 +29,12 @@ import {
   OfferingPicker,
   PickDatesPanel,
   PricingCapacity,
+  type RateBasis,
   REMINDER_MINUTES,
   ReminderOptions,
   type ReminderState,
+  rateBasisLabel,
+  rateBasisUnit,
   type ScheduleMode,
   ScheduleModeCards,
   ServiceCards,
@@ -237,8 +241,9 @@ export default function OrganisationCreateClassPage() {
   const [meetingLink, setMeetingLink] = useState('');
   const [venueUuid, setVenueUuid] = useState('');
 
+  const [rateBasis, setRateBasis] = useState<RateBasis>(DEFAULT_RATE_BASIS);
   const approvedFee = useMemo(
-    () => approvedRateFor(selectedOffering?.rateCard, sessionFormat, delivery),
+    () => approvedRateFor(selectedOffering?.rateCard, sessionFormat, delivery, rateBasis),
     [selectedOffering, sessionFormat, delivery]
   );
   const [salePrice, setSalePrice] = useState('');
@@ -360,6 +365,10 @@ export default function OrganisationCreateClassPage() {
   );
   const totalSessions = upcomingSessions.length;
   const totalMinutes = upcomingSessions.reduce((sum, session) => sum + (session.minutes ?? 0), 0);
+  const totalDays = useMemo(
+    () => new Set(upcomingSessions.map(session => session.date.toDateString())).size,
+    [upcomingSessions]
+  );
 
   const updateDay = (d: DayKey, patch: Partial<DayRow>) =>
     setDays(prev => ({ ...prev, [d]: { ...prev[d], ...patch } }));
@@ -452,16 +461,18 @@ export default function OrganisationCreateClassPage() {
     }
     if (approvedFee === undefined) {
       return toast.error(
-        'The course creator has not approved a rate for this session format and delivery mode.'
+        `The course creator has not approved a ${rateBasisLabel(rateBasis).toLowerCase()} rate for this session format and delivery mode.`
       );
     }
     const saleValue = num(salePrice);
     const payValue = num(instructorPay);
     if (saleValue === undefined || saleValue < 0) {
-      return toast.error('Enter the sale price learners are charged per hour.');
+      return toast.error(
+        `Enter the sale price learners are charged per ${rateBasisUnit(rateBasis)}.`
+      );
     }
     if (payValue === undefined || payValue < 0) {
-      return toast.error('Enter the pay the instructor receives per hour.');
+      return toast.error(`Enter the pay the instructor receives per ${rateBasisUnit(rateBasis)}.`);
     }
     if (payValue > saleValue) {
       return toast.error('Instructor pay cannot exceed the sale price.');
@@ -517,6 +528,7 @@ export default function OrganisationCreateClassPage() {
       allow_waitlist: allowWaitlist,
       sale_price: saleValue,
       instructor_pay: payValue,
+      rate_basis: rateBasis,
       class_reminder_minutes: REMINDER_MINUTES[reminder.window],
       ...(continuousReg
         ? {}
@@ -563,6 +575,7 @@ export default function OrganisationCreateClassPage() {
           onChange={setService}
           rateCard={selectedOffering?.rateCard}
           delivery={delivery}
+          rateBasis={rateBasis}
         />
 
         <PricingCapacity
@@ -578,6 +591,9 @@ export default function OrganisationCreateClassPage() {
           onAllowWaitlistChange={setAllowWaitlist}
           totalSessions={totalSessions}
           totalMinutes={totalMinutes}
+          totalDays={totalDays}
+          rateBasis={rateBasis}
+          onRateBasisChange={setRateBasis}
         />
 
         <LocationVenue
