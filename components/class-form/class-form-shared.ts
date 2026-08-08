@@ -48,18 +48,18 @@ export const rateBasisLabel = (basis?: RateBasis | null) => basisEntry(basis).la
  */
 export type ApprovedRateCard = {
   currency?: string | null;
-  private_online_hourly_rate?: number;
-  private_inperson_hourly_rate?: number;
-  group_online_hourly_rate?: number;
-  group_inperson_hourly_rate?: number;
-  private_online_session_rate?: number;
-  private_inperson_session_rate?: number;
-  group_online_session_rate?: number;
-  group_inperson_session_rate?: number;
-  private_online_daily_rate?: number;
-  private_inperson_daily_rate?: number;
-  group_online_daily_rate?: number;
-  group_inperson_daily_rate?: number;
+  private_online_hourly_rate?: number | null;
+  private_inperson_hourly_rate?: number | null;
+  group_online_hourly_rate?: number | null;
+  group_inperson_hourly_rate?: number | null;
+  private_online_session_rate?: number | null;
+  private_inperson_session_rate?: number | null;
+  group_online_session_rate?: number | null;
+  group_inperson_session_rate?: number | null;
+  private_online_daily_rate?: number | null;
+  private_inperson_daily_rate?: number | null;
+  group_online_daily_rate?: number | null;
+  group_inperson_daily_rate?: number | null;
 };
 
 /**
@@ -79,11 +79,12 @@ export const approvedRateFor = (
   const mode = online ? 'online' : 'inperson';
   const suffix =
     basis === 'per_session' ? 'session_rate' : basis === 'per_day' ? 'daily_rate' : 'hourly_rate';
-  return rateCard[`${scope}_${mode}_${suffix}` as keyof ApprovedRateCard] as number | undefined;
+  const value = rateCard[`${scope}_${mode}_${suffix}` as keyof ApprovedRateCard];
+  return typeof value === 'number' ? value : undefined;
 };
 
-export const formatMoney = (amount?: number, currency?: string | null) =>
-  amount === undefined ? '—' : `${currency ?? 'KES'} ${amount.toLocaleString()}`;
+export const formatMoney = (amount?: number | null, currency?: string | null) =>
+  typeof amount === 'number' ? `${currency ?? 'KES'} ${amount.toLocaleString()}` : '—';
 
 export const serviceFormat = (key: ServiceKey): 'INDIVIDUAL' | 'GROUP' =>
   SERVICES.find(s => s.key === key)?.format ?? 'GROUP';
