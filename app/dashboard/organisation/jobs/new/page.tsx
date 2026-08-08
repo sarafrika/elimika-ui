@@ -8,18 +8,18 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  AcademicPeriodsPanel,
-  addDays,
   type AcademicPeriod,
+  AcademicPeriodsPanel,
   type ApprovedRateCard,
+  addDays,
   approvedRateFor,
   computeSessionWindows,
   computeUpcomingSessions,
   DAY_TOKEN,
   DAYS,
-  DEFAULT_DAYS,
   type DayKey,
   type DayRow,
+  DEFAULT_DAYS,
   type Delivery,
   EquipmentTarget,
   firstOccurrenceOnOrAfter,
@@ -35,14 +35,14 @@ import {
   ReminderOptions,
   type ReminderState,
   ResourceAvailabilityPreview,
+  type ScheduleMode,
   ScheduleModeCards,
   SERVICE_TYPE_ENUM,
-  type ScheduleMode,
   ServiceCards,
-  serviceFormat,
   type ServiceKey,
-  sessionEndFor,
   StandardSchedule,
+  serviceFormat,
+  sessionEndFor,
   toDateTime,
   UpcomingSessions,
 } from '@/components/class-form';
@@ -620,13 +620,10 @@ export default function OrganisationPostJobPage() {
       }
       const latitude = num(locationLatitude);
       const longitude = num(locationLongitude);
-      if (latitude === undefined || longitude === undefined) {
-        return toast.error('Add latitude and longitude for in-person / hybrid classes.');
-      }
-      if (latitude < -90 || latitude > 90) {
+      if (latitude !== undefined && (latitude < -90 || latitude > 90)) {
         return toast.error('Latitude must be between -90 and 90 degrees.');
       }
-      if (longitude < -180 || longitude > 180) {
+      if (longitude !== undefined && (longitude < -180 || longitude > 180)) {
         return toast.error('Longitude must be between -180 and 180 degrees.');
       }
     }

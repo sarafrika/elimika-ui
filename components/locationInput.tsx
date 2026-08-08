@@ -55,11 +55,18 @@ type LocationInputProps = {
   coordinates?: CoordinatesInput;
   showMapPreview?: boolean;
   mapZoom?: number;
+  /**
+   * ISO 3166-1 alpha-2 country the search is restricted to. Defaults to Kenya so
+   * a search never offers a same-named place on another continent, which would
+   * otherwise be one click away from being saved as the venue.
+   */
+  country?: string;
 };
 
 const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const SUGGEST_ENDPOINT = 'https://api.mapbox.com/search/searchbox/v1/suggest';
 const RETRIEVE_ENDPOINT = 'https://api.mapbox.com/search/searchbox/v1/retrieve';
+const DEFAULT_SEARCH_COUNTRY = 'KE';
 
 /**
  * The Search Box API bills a suggest→retrieve pair as one session and rejects
@@ -100,6 +107,7 @@ export default function LocationInput({
   coordinates,
   showMapPreview = true,
   mapZoom = 13,
+  country = DEFAULT_SEARCH_COUNTRY,
 }: LocationInputProps) {
   const [query, setQuery] = useState(value ?? '');
   const [suggestions, setSuggestions] = useState<MapboxSuggestFeature[]>([]);
@@ -175,6 +183,7 @@ export default function LocationInput({
           language: 'en',
           session_token: ensureSessionToken(),
           access_token: mapboxToken,
+          ...(country ? { country } : {}),
         });
         const response = await fetch(`${SUGGEST_ENDPOINT}?${params.toString()}`, {
           signal: controller.signal,
@@ -184,7 +193,7 @@ export default function LocationInput({
         }
         const data: MapboxSuggestResponse = await response.json();
         setSuggestions(data.suggestions ?? []);
-        setIsOpen((data.suggestions ?? []).length > 0);
+        setIsOpen(true);
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
           setError('Unable to fetch suggestions.');
@@ -204,7 +213,7 @@ export default function LocationInput({
       controller.abort();
       clearTimeout(debounce);
     };
-  }, [query, ensureSessionToken]);
+  }, [query, country, ensureSessionToken]);
 
   const handleSelect = useCallback(
     async (suggestion: MapboxSuggestFeature) => {
@@ -393,7 +402,8 @@ export default function LocationInput({
 
       {isOpen && !isLoading && suggestions.length === 0 && query.length >= 3 ? (
         <div className='border-border bg-popover text-muted-foreground absolute z-30 mt-1 w-full rounded-md border px-3 py-2 text-sm shadow-lg'>
-          No matches found.
+          No match on the map. Your own venue name is kept exactly as typed — it just
+          won&apos;t carry coordinates.
         </div>
       ) : null}
 
