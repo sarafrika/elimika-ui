@@ -47,6 +47,7 @@ jobs:
           sed -i "s|__KEYCLOAK_REALM__|${{ secrets.KEYCLOAK_REALM }}|g" .env.local
           sed -i "s|__NEXT_PUBLIC_SITE_URL__|${{ secrets.NEXT_PUBLIC_SITE_URL || secrets.NEXTAUTH_URL }}|g" .env.local
           sed -i "s|__NEXT_PUBLIC_MAPBOX_TOKEN__|${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}|g" .env.local
+          sed -i "s|__NEXT_PUBLIC_GEOCODER_URL__|${{ secrets.NEXT_PUBLIC_GEOCODER_URL || 'https://photon.komoot.io/api/' }}|g" .env.local
 
           echo "✅ .env.local file created from template!"
 
