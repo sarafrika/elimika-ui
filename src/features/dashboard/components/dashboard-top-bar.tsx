@@ -235,10 +235,6 @@ export default function DashboardTopBar() {
               </div>
 
               <div className='flex min-w-0 flex-col justify-center leading-tight'>
-                <div className='text-muted-foreground text-[10px] font-medium tracking-wide uppercase'>
-                  Skills Wallet
-                </div>
-
                 <div className='text-foreground truncate text-sm leading-none font-semibold'>
                   {walletBalance}
                 </div>
