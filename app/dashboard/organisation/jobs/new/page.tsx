@@ -715,21 +715,6 @@ export default function OrganisationPostJobPage() {
               ? 'Changing the schedule or resources releases the existing holds and re-evaluates them. If the new windows clash, nothing is saved.'
               : 'Advertise an approved course or program for instructors to apply to. The sessions you schedule here reserve your venue and equipment for those exact windows — the class itself is created once you assign an instructor.'
           }
-          action={
-            <div className='flex gap-2'>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() => router.push('/dashboard/organisation/opportunities')}
-              >
-                Cancel
-              </Button>
-              <Button type='submit' disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                {isEditMode ? 'Save changes' : 'Post job'}
-              </Button>
-            </div>
-          }
         />
 
         {!isOrgVerified ? (
@@ -871,6 +856,20 @@ export default function OrganisationPostJobPage() {
           title='These sessions conflict with existing reservations'
           conflicts={resourceConflicts}
         />
+
+        <div className='border-border/70 flex flex-wrap justify-end gap-2 border-t pt-4'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => router.push('/dashboard/organisation/opportunities')}
+          >
+            Cancel
+          </Button>
+          <Button type='submit' disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+            {isEditMode ? 'Save changes' : 'Post job'}
+          </Button>
+        </div>
       </form>
     </div>
   );
