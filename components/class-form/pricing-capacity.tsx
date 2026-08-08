@@ -171,7 +171,7 @@ export function PricingCapacity({
           `Instructor pay exceeds the sale price by ${formatMoney(Math.abs(margin), currency)} per ${unit}. Lower it to at most ${formatMoney(sale, currency)}.`
         ) : (
           <>
-            {`Margin ${formatMoney(margin, currency)} per ${unit} × ${unitsLabel} ${short} = `}
+            {`Margin ${formatMoney(margin, currency)} per ${unit} × ${unitsLabel} ${units === 1 || short === 'hr' ? short : `${short}s`} = `}
             <span className='text-foreground font-semibold'>
               {formatMoney(totalMargin, currency)}
             </span>
