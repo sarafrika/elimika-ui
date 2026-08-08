@@ -14,11 +14,9 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Props = {
   cls: BundledClass;
@@ -55,17 +53,39 @@ const DAY_LABELS: Record<(typeof DAY_ORDER)[number], string> = {
   SUNDAY: 'Sun',
 };
 
+/**
+ * Renders in the viewer's zone, like every other timestamp on the card. This used to be pinned to
+ * UTC, so a class entered as 2pm EAT advertised itself as 11am on the same card that showed its
+ * start time correctly as 2pm.
+ */
 function formatTime(date: string) {
-  return new Intl.DateTimeFormat('en-GB', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-    timeZone: 'UTC', // Change if you want local timezone
-  })
-    .format(new Date(date))
+  return formatTimeInZone(date, { fallback: '' })
     .replace(':00', '')
     .replace(' ', '')
     .toLowerCase();
+}
+
+
+/**
+ * `duration_minutes` is computed from the class's first session alone, so a class whose Wednesdays
+ * run two hours and Fridays one advertised itself as "60 min / session". Reads the templates and
+ * shows a range when they genuinely differ.
+ */
+function formatSessionLength(cls: { duration_minutes?: number; session_templates?: SessionTemplate[] }) {
+  const lengths = (cls.session_templates ?? [])
+    .map(t =>
+      t.start_time && t.end_time
+        ? Math.round((new Date(t.end_time).getTime() - new Date(t.start_time).getTime()) / 60000)
+        : Number.NaN
+    )
+    .filter(n => Number.isFinite(n) && n > 0);
+
+  if (!lengths.length) {
+    return cls.duration_minutes ? `${cls.duration_minutes} min / session` : 'Duration not set';
+  }
+  const min = Math.min(...lengths);
+  const max = Math.max(...lengths);
+  return min === max ? `${min} min / session` : `${min}–${max} min / session`;
 }
 
 export function formatSessionSchedule(sessionTemplates: SessionTemplate[]) {
@@ -208,7 +228,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
 
             <Badge variant='outline' className='bg-primary/5 text-primary gap-1'>
               <Timer className='h-3 w-3' />
-              {cls.duration_minutes} min / session
+              {formatSessionLength(cls)}
             </Badge>
 
             <Badge variant='outline' className='bg-primary/5 text-primary gap-1'>
@@ -331,142 +351,3 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
   );
 }
 
-export const mockRecommendedClasses = [
-  {
-    id: 'mock-1',
-    title: 'Digital Marketing Fundamentals',
-    institution_name: 'Nairobi Skills Academy',
-    instructor_name: 'Jane Wanjiku',
-    language: 'English',
-    level_of_study: 'Certificate',
-    tuition_fee_kes: 45000,
-    skills_fund_eligible: true,
-    match: 94,
-    why: 'Matches your preferred language, budget and career goals.',
-    breakdown: [
-      {
-        label: 'Career fit',
-        score: 20,
-        max: 20,
-      },
-      {
-        label: 'Budget',
-        score: 15,
-        max: 15,
-      },
-      {
-        label: 'Schedule',
-        score: 12,
-        max: 15,
-      },
-      {
-        label: 'Location',
-        score: 15,
-        max: 15,
-      },
-    ],
-  },
-  {
-    id: 'mock-2',
-    title: 'Data Analysis with Excel',
-    institution_name: 'TechBridge Institute',
-    instructor_name: 'Peter Mwangi',
-    language: 'English',
-    level_of_study: 'Diploma',
-    tuition_fee_kes: 60000,
-    skills_fund_eligible: false,
-    match: 87,
-    why: 'Strong match based on your skill interests and availability.',
-    breakdown: [
-      {
-        label: 'Career fit',
-        score: 18,
-        max: 20,
-      },
-      {
-        label: 'Budget',
-        score: 12,
-        max: 15,
-      },
-      {
-        label: 'Schedule',
-        score: 15,
-        max: 15,
-      },
-    ],
-  },
-];
-
-import { Sparkles } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { Checkbox } from '../../../../../components/ui/checkbox';
-import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
-import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
-import { useUserProfile } from '../../../profile/context/profile-context';
-import { ClassDetailSheet } from '../shared/_components/ClassDetailsSheet';
-import { BundledClass } from '../types';
-
-type RecommendedClassCardProps = {
-  item: BundledClass;
-};
-
-export function RecommendedClassCard({ item }: RecommendedClassCardProps) {
-  return (
-    <button className='border-primary/30 from-primary/5 hover:border-primary rounded-xl border bg-gradient-to-br to-transparent p-4 text-left transition'>
-      <div className='flex flex-wrap gap-2'>
-        <Badge className='bg-primary text-primary-foreground'>{item.match}% match</Badge>
-
-        {item.skills_fund_eligible && (
-          <Badge className='bg-success/10 text-success'>Fund eligible</Badge>
-        )}
-      </div>
-
-      <div className='mt-3'>
-        <h3 className='text-foreground font-semibold'>{item.title}</h3>
-
-        <p className='text-muted-foreground text-xs'>{item.institution_name}</p>
-      </div>
-
-      <div className='text-muted-foreground mt-3 flex flex-wrap gap-2 text-xs'>
-        <span>{item.language}</span>
-        <span>• {item.level_of_study}</span>
-      </div>
-
-      <p className='text-primary mt-2 font-semibold'>KES {item.tuition_fee_kes.toLocaleString()}</p>
-
-      <div className='bg-primary/5 mt-3 rounded-md p-3'>
-        <div className='text-primary flex items-center gap-1 text-xs font-semibold'>
-          <Sparkles className='h-3 w-3' />
-          Why recommended
-        </div>
-
-        <p className='text-muted-foreground mt-1 text-xs'>{item.why}</p>
-      </div>
-
-      <div className='mt-3 space-y-2'>
-        {item.breakdown.map((b: unknown) => {
-          const percent = Math.round((b.score / b.max) * 100);
-
-          return (
-            <div key={b.label} className='flex items-center gap-2 text-xs'>
-              <span className='text-muted-foreground w-20'>{b.label}</span>
-
-              <div className='bg-muted h-1.5 flex-1 overflow-hidden rounded'>
-                <div
-                  className='bg-primary h-full'
-                  style={{
-                    width: `${percent}%`,
-                  }}
-                />
-              </div>
-
-              <span>
-                {b.score}/{b.max}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </button>
-  );
-}

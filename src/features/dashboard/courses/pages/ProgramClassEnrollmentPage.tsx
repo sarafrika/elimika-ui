@@ -236,15 +236,33 @@ export default function ProgramClassEnrollmentPage({
   const { formattedDates } = useMemo(() => {
     if (!enrollingClass) return { formattedDates: '' };
     try {
-      const start = enrollingClass.default_start_time
-        ? new Date(enrollingClass.default_start_time)
-        : null;
-      const end = enrollingClass.default_end_time
-        ? new Date(enrollingClass.default_end_time)
-        : null;
+      // default_start_time / default_end_time bound the FIRST session, not the class. Using them as
+      // a range printed the same date twice for every recurring class.
+      const templates = enrollingClass.session_templates ?? [];
+      const starts = templates
+        .map(t => (t.start_time ? new Date(t.start_time).getTime() : Number.NaN))
+        .filter(n => !Number.isNaN(n));
+      const seriesEnds = templates
+        .map(t => (t.recurrence?.end_date ? new Date(t.recurrence.end_date).getTime() : Number.NaN))
+        .filter(n => !Number.isNaN(n));
+
+      const start = starts.length
+        ? new Date(Math.min(...starts))
+        : enrollingClass.default_start_time
+          ? new Date(enrollingClass.default_start_time)
+          : null;
+      const end = seriesEnds.length
+        ? new Date(Math.max(...seriesEnds))
+        : enrollingClass.academic_period_end_date
+          ? new Date(enrollingClass.academic_period_end_date)
+          : null;
+
+      if (!start) return { formattedDates: 'N/A' };
+      if (!end || format(start, 'dd/MM/yyyy') === format(end, 'dd/MM/yyyy')) {
+        return { formattedDates: format(start, 'dd/MM/yyyy') };
+      }
       return {
-        formattedDates:
-          start && end ? `${format(start, 'dd/MM/yyyy')} → ${format(end, 'dd/MM/yyyy')}` : 'N/A',
+        formattedDates: `${format(start, 'dd/MM/yyyy')} → ${format(end, 'dd/MM/yyyy')}`,
       };
     } catch {
       return { formattedDates: 'N/A' };
