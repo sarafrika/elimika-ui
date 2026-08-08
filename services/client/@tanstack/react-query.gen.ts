@@ -494,6 +494,7 @@ import {
   getEnrollmentsForInstance,
   getEnrollmentCount,
   hasCapacityForEnrollment,
+  getClassEnrolmentEligibility,
   listDocumentTypes,
   listCurrencies,
   getDefaultCurrency,
@@ -1856,6 +1857,7 @@ import type {
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
   HasCapacityForEnrollmentData,
+  GetClassEnrolmentEligibilityData,
   ListDocumentTypesData,
   ListCurrenciesData,
   ListCurrenciesError,
@@ -23425,6 +23427,30 @@ export const hasCapacityForEnrollmentOptions = (options: Options<HasCapacityForE
       return data;
     },
     queryKey: hasCapacityForEnrollmentQueryKey(options),
+  });
+};
+
+export const getClassEnrolmentEligibilityQueryKey = (
+  options: Options<GetClassEnrolmentEligibilityData>
+) => createQueryKey('getClassEnrolmentEligibility', options);
+
+/**
+ * Check whether a student may join a class before they pay for it
+ */
+export const getClassEnrolmentEligibilityOptions = (
+  options: Options<GetClassEnrolmentEligibilityData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassEnrolmentEligibility({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassEnrolmentEligibilityQueryKey(options),
   });
 };
 

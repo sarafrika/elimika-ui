@@ -1215,16 +1215,16 @@ export const zQuizQuestion = z
       )
       .readonly()
       .optional(),
-    question_category: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable category of the question type.')
-      .readonly()
-      .optional(),
     requires_options: z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if this question type requires predefined answer options.'
       )
+      .readonly()
+      .optional(),
+    question_category: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
     points_display: z
@@ -5119,16 +5119,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
     capacity_info: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
+      .readonly()
+      .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
   })
@@ -5946,6 +5946,21 @@ export const zScheduledInstance = z
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
+      .readonly()
+      .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -5961,21 +5976,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-    can_be_started: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
-      .readonly()
-      .optional(),
-    can_be_ended: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -7078,24 +7078,24 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
-      .readonly()
-      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
   })
@@ -7301,6 +7301,7 @@ export const zOrderResponse = z
   .object({
     id: z.string().describe('Unique identifier of the order').optional(),
     display_id: z.string().describe('Human friendly order number').optional(),
+    user_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     payment_status: z.string().describe('Payment status').optional(),
     currency_code: z.string().describe('Currency code associated to the order totals').optional(),
     subtotal: z.number().describe('Subtotal with up to 4 decimal places').optional(),
@@ -8846,14 +8847,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
-      .readonly()
-      .optional(),
     is_upcoming: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
       .readonly()
       .optional(),
   })
@@ -10452,6 +10453,49 @@ export const zApiResponseListClassEnrolmentCountDto = z.object({
 export const zApiResponseLong = z.object({
   success: z.boolean().optional(),
   data: z.coerce.bigint().optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Whether a student may join a class, decided from the records the platform already holds rather than from anything the learner declares about themselves.
+ */
+export const zClassEnrolmentEligibility = z
+  .object({
+    eligible: z
+      .boolean()
+      .describe('**[READ-ONLY]** True when every check below passes and the seat can be bought.')
+      .optional(),
+    student_age: z.union([z.number().int(), z.null()]).optional(),
+    minimum_age: z.union([z.number().int(), z.null()]).optional(),
+    maximum_age: z.union([z.number().int(), z.null()]).optional(),
+    date_of_birth_on_file: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** False when a date of birth is needed to judge age but none is recorded.'
+      )
+      .optional(),
+    age_requirement_met: z
+      .boolean()
+      .describe("**[READ-ONLY]** True when the recorded age satisfies the course's limits.")
+      .optional(),
+    seats_available: z
+      .boolean()
+      .describe('**[READ-ONLY]** True when at least one scheduled session still has a free seat.')
+      .optional(),
+    already_enrolled: z
+      .boolean()
+      .describe('**[READ-ONLY]** True when the student already holds a seat in this class.')
+      .optional(),
+    reason: z.union([z.string(), z.null()]).optional(),
+  })
+  .describe(
+    'Whether a student may join a class, decided from the records the platform already holds rather than from anything the learner declares about themselves.'
+  );
+
+export const zApiResponseClassEnrolmentEligibility = z.object({
+  success: z.boolean().optional(),
+  data: zClassEnrolmentEligibility.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -19758,6 +19802,20 @@ export const zHasCapacityForEnrollmentData = z.object({
  * Capacity check completed
  */
 export const zHasCapacityForEnrollmentResponse = zApiResponseBoolean;
+
+export const zGetClassEnrolmentEligibilityData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    classDefinitionUuid: z.string().uuid().describe('UUID of the class definition'),
+    studentUuid: z.string().uuid().describe('UUID of the student'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Eligibility resolved
+ */
+export const zGetClassEnrolmentEligibilityResponse = zApiResponseClassEnrolmentEligibility;
 
 export const zListDocumentTypesData = z.object({
   body: z.never().optional(),

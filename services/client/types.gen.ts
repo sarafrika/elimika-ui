@@ -931,13 +931,13 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable category of the question type.
-   */
-  readonly question_category?: string;
-  /**
    * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
    */
   readonly requires_options?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable category of the question type.
+   */
+  readonly question_category?: string;
   /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
@@ -3996,13 +3996,13 @@ export type ClassDefinition = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
 };
 
 /**
@@ -4149,7 +4149,7 @@ export type ClassMarketplaceJobRequest = {
    */
   allow_waitlist?: boolean | null;
   /**
-   * **[OPTIONAL]** Price per session a learner will be charged once the class exists. Defaults to the organisation's approved rate when omitted. Must be at least the course minimum training fee.
+   * **[OPTIONAL]** Price per learner per hour, charged once the class exists. Defaults to the organisation's approved rate when omitted. Must be at least the course minimum training fee.
    */
   sale_price?: number | null;
   /**
@@ -4835,18 +4835,6 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
-   * **[READ-ONLY]** Human-readable date and time range.
-   */
-  readonly time_range?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
-   */
-  readonly is_currently_active?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
@@ -4858,6 +4846,18 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
    */
   readonly can_be_ended?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable date and time range.
+   */
+  readonly time_range?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
+   */
+  readonly is_currently_active?: boolean;
 };
 
 /**
@@ -6004,21 +6004,21 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponse = {
@@ -6226,6 +6226,10 @@ export type OrderResponse = {
    * Human friendly order number
    */
   display_id?: string;
+  /**
+   * User who placed the order. Carried through so the buyer is still known when a payment is captured asynchronously and no checkout request is available.
+   */
+  user_uuid?: string | null;
   /**
    * Payment status
    */
@@ -7702,13 +7706,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the student attended this class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
   readonly is_upcoming?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended this class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponseListScheduledInstance = {
@@ -9433,6 +9437,55 @@ export type ApiResponseLong = {
   data?: bigint;
   message?: string;
   error?: unknown;
+};
+
+export type ApiResponseClassEnrolmentEligibility = {
+  success?: boolean;
+  data?: ClassEnrolmentEligibility;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Whether a student may join a class, decided from the records the platform already holds rather than from anything the learner declares about themselves.
+ */
+export type ClassEnrolmentEligibility = {
+  /**
+   * **[READ-ONLY]** True when every check below passes and the seat can be bought.
+   */
+  eligible?: boolean;
+  /**
+   * **[READ-ONLY]** The student's age from their recorded date of birth, or null when none is on file.
+   */
+  student_age?: number | null;
+  /**
+   * **[READ-ONLY]** Minimum age the course requires, when it sets one.
+   */
+  minimum_age?: number | null;
+  /**
+   * **[READ-ONLY]** Maximum age the course allows, when it sets one.
+   */
+  maximum_age?: number | null;
+  /**
+   * **[READ-ONLY]** False when a date of birth is needed to judge age but none is recorded.
+   */
+  date_of_birth_on_file?: boolean;
+  /**
+   * **[READ-ONLY]** True when the recorded age satisfies the course's limits.
+   */
+  age_requirement_met?: boolean;
+  /**
+   * **[READ-ONLY]** True when at least one scheduled session still has a free seat.
+   */
+  seats_available?: boolean;
+  /**
+   * **[READ-ONLY]** True when the student already holds a seat in this class.
+   */
+  already_enrolled?: boolean;
+  /**
+   * **[READ-ONLY]** Why the student cannot join, phrased for them to read. Null when eligible.
+   */
+  reason?: string | null;
 };
 
 export type ApiResponseListDocumentTypeOption = {
@@ -30415,6 +30468,46 @@ export type HasCapacityForEnrollmentResponses = {
 
 export type HasCapacityForEnrollmentResponse =
   HasCapacityForEnrollmentResponses[keyof HasCapacityForEnrollmentResponses];
+
+export type GetClassEnrolmentEligibilityData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the class definition
+     */
+    classDefinitionUuid: string;
+    /**
+     * UUID of the student
+     */
+    studentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/enrollment/eligibility/{classDefinitionUuid}/student/{studentUuid}';
+};
+
+export type GetClassEnrolmentEligibilityErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetClassEnrolmentEligibilityError =
+  GetClassEnrolmentEligibilityErrors[keyof GetClassEnrolmentEligibilityErrors];
+
+export type GetClassEnrolmentEligibilityResponses = {
+  /**
+   * Eligibility resolved
+   */
+  200: ApiResponseClassEnrolmentEligibility;
+};
+
+export type GetClassEnrolmentEligibilityResponse =
+  GetClassEnrolmentEligibilityResponses[keyof GetClassEnrolmentEligibilityResponses];
 
 export type ListDocumentTypesData = {
   body?: never;

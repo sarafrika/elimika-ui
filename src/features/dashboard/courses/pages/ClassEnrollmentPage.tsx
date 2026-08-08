@@ -34,6 +34,7 @@ import {
   enrollStudentMutation,
   getCartQueryKey,
   getClassEnrollmentsForStudentQueryKey,
+  getClassEnrolmentEligibilityOptions,
   getCourseTrainingRequirementsOptions,
   getEnrollmentsForClassOptions,
   getEnrollmentsForClassQueryKey,
@@ -104,7 +105,6 @@ export default function ClassEnrollmentPage({
   const student = user?.student;
 
   const [enrollmentError, setEnrollmentError] = useState(false);
-  const [ageOk, setAgeOk] = useState(false);
   const [termsOk, setTermsOk] = useState(false);
   const [paymentOk, setPaymentOk] = useState(false);
   const [requirementsChecked, setRequirementsChecked] = useState<Record<string, boolean>>({});
@@ -113,6 +113,18 @@ export default function ClassEnrollmentPage({
 
   // ── Data fetching ──────────────────────────────────────────────────────
   const { classes = [], loading } = useBundledClassInfo(courseId, undefined, undefined, student);
+
+  // The platform already knows the learner's date of birth and the course's limits, so it decides
+  // this rather than asking them to vouch for themselves. Checkout enforces the same rule.
+  const eligibilityQuery = useQuery({
+    ...getClassEnrolmentEligibilityOptions({
+      path: { classDefinitionUuid: classId, studentUuid: student?.uuid as string },
+    }),
+    enabled: Boolean(classId && student?.uuid),
+  });
+  const eligibility = eligibilityQuery.data?.data ?? null;
+  const eligibilityKnown = Boolean(eligibility);
+  const eligibleToJoin = eligibility?.eligible ?? false;
 
   const { data: classEnrollmentsResponse } = useQuery({
     ...getEnrollmentsForClassOptions({ path: { uuid: classId } }),
@@ -209,7 +221,6 @@ export default function ClassEnrollmentPage({
     enrollingClass?.course?.age_lower_limit,
     enrollingClass?.course?.age_upper_limit
   );
-  const hasAgeRequirement = ageRange !== null;
 
   const { data: courseReqResp } = useQuery({
     ...getCourseTrainingRequirementsOptions({
@@ -416,7 +427,7 @@ export default function ClassEnrollmentPage({
     !isPending &&
     !enrollmentError &&
     !alreadyEnrolled &&
-    (!hasAgeRequirement || ageOk) &&
+    eligibleToJoin &&
     termsOk &&
     allMandatoryRequirementsChecked
 
@@ -519,20 +530,23 @@ export default function ClassEnrollmentPage({
             <CardContent className='space-y-4'>
               {/* Age requirement — backed by course.age_lower_limit / age_upper_limit when present. */}
               <div className='flex items-start gap-3'>
-                {!hasAgeRequirement ? (
-                  <AlertTriangle className='mt-0.5 h-5 w-5 text-muted-foreground' />
+                {eligibilityKnown && !eligibleToJoin ? (
+                  <AlertTriangle className='text-destructive mt-0.5 h-5 w-5' />
                 ) : (
-                  <CheckCircle2 className='mt-0.5 h-5 w-5 text-success' />
+                  <CheckCircle2 className='text-success mt-0.5 h-5 w-5' />
                 )}
                 <div className='flex-1'>
-                  <div className='text-sm font-medium'>
-                    Age requirement: {ageRange ?? 'Any'}
-                  </div>
-                  {hasAgeRequirement ? (
-                    <label className='mt-2 flex items-center gap-2 text-sm'>
-                      <Checkbox checked={ageOk} onCheckedChange={v => setAgeOk(!!v)} />
-                      I confirm I meet the age requirement for this class.
-                    </label>
+                  <div className='text-sm font-medium'>Age requirement: {ageRange ?? 'Any'}</div>
+                  {eligibilityQuery.isLoading ? (
+                    <div className='text-muted-foreground text-xs italic'>
+                      Checking your profile…
+                    </div>
+                  ) : eligibility && !eligibility.eligible ? (
+                    <div className='text-destructive mt-1 text-sm'>{eligibility.reason}</div>
+                  ) : eligibility?.student_age != null ? (
+                    <div className='text-muted-foreground text-xs'>
+                      Your profile says you are {eligibility.student_age}. You meet this requirement.
+                    </div>
                   ) : (
                     <div className='text-muted-foreground text-xs italic'>
                       No age restriction on file for this class.
