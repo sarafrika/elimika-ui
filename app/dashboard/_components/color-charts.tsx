@@ -135,5 +135,3 @@ export const TOKEN = {
     chart4: "#22c55e",
     chart5: "#3b82f6",
 } as const;
-
-
