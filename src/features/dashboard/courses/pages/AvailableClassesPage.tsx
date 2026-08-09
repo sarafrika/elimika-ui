@@ -1,14 +1,5 @@
 'use client';
 
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import useBundledClassInfo from '@/hooks/use-course-classes';
-import { listCatalogItemsOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import AvailabilityClassCard, {
-  mockRecommendedClasses,
-  RecommendedClassCard,
-} from '@/src/features/dashboard/courses/components/availability-listing-layout';
-import { useDateRangeFilter } from '@/src/features/dashboard/courses/hooks/use-date-range-filter';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ArrowLeft, BookOpen, CalendarRange, Sparkles } from 'lucide-react';
@@ -16,6 +7,13 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import { Calendar } from 'react-multi-date-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import useBundledClassInfo from '@/hooks/use-course-classes';
+import { listCatalogItemsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import AvailabilityClassCard, {
+} from '@/src/features/dashboard/courses/components/availability-listing-layout';
+import { useDateRangeFilter } from '@/src/features/dashboard/courses/hooks/use-date-range-filter';
 import { Badge } from '../../../../../components/ui/badge';
 import { Button } from '../../../../../components/ui/button';
 import {
@@ -172,22 +170,6 @@ export default function AvailableClassesPage({
           </Popover>
         </div>
       </div>
-
-      <section className='space-y-3'>
-        <div className='flex items-center gap-2'>
-          <Sparkles className='text-primary h-4 w-4' />
-
-          <h2 className='text-lg font-semibold'>Recommended Classes for You</h2>
-
-          <Badge variant='secondary'>AI matched</Badge>
-        </div>
-
-        <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-3'>
-          {mockRecommendedClasses.map(item => (
-            <RecommendedClassCard key={item.id} item={item} />
-          ))}
-        </div>
-      </section>
 
       <div className='space-y-4'>
         {loading

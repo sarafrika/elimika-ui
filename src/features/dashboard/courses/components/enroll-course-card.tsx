@@ -266,7 +266,7 @@ export default function EnrollCourseCard({
         },
         {
           onSuccess: data => {
-            const cartId = data?.id || null;
+            const cartId = data?.data?.id ?? null;
             if (cartId) setCartId(cartId);
             qc.invalidateQueries({
               queryKey: getCartQueryKey({ path: { cartId: cartId as string } }),

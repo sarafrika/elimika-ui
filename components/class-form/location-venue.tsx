@@ -102,7 +102,7 @@ export function LocationVenue({
             <p className='text-muted-foreground text-xs'>
               {locationLatitude && locationLongitude
                 ? `Pinned at ${Number(locationLatitude).toFixed(5)}, ${Number(locationLongitude).toFixed(5)}.`
-                : 'Pick a result to place this class on the map — the coordinates fill in automatically.'}
+                : 'Search to pin this class on the map, or just type your own venue name.'}
             </p>
           </>
         ) : requiresPhysical ? (

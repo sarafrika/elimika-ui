@@ -2,9 +2,15 @@
 
 import { Award, BookOpen, CalendarIcon, ChevronLeft, ChevronRight, ClipboardList, FileCheck2, LayoutDashboard, Mail, PlayCircle, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import LessonHubAssessmentsTab from './LessonHubAssessmentsTab';
+import LessonHubAssignmentsTab from './LessonHubAssignmentsTab';
+import LessonHubCertificatesTab from './LessonHubCertificatesTab';
+import { LessonHubClassInvitesTab } from './LessonHubClassInvitesTab';
 import { LessonHubDashboardTab } from './LessonHubDashboardTab';
+import { LessonHubLessonsTab } from './LessonHubLessonsTab';
 import { LessonHubMyClassesTab } from './LessonHubMyClassesTab';
 import { LessonHubMyCoursesTab } from './LessonHubMyCoursesTab';
+import LessonHubQuizzesTab from './LessonHubQuizzesTab';
 import { useStudentLearningHubData } from './useStudentLearningHubData';
 
 const TABS = [
@@ -14,6 +20,7 @@ const TABS = [
   { id: "class-invites", label: "Class Invites", icon: Mail },
   { id: "lessons", label: "Lessons", icon: PlayCircle },
   { id: "assignments", label: "Assignments", icon: ClipboardList },
+  { id: "quizzes", label: "Quizzes", icon: ClipboardList },
   { id: "assessments", label: "Assessments", icon: FileCheck2 },
   { id: "certificates", label: "Certificates", icon: Award },
   { id: "calendar", label: "Learning Calendar", icon: CalendarIcon },
@@ -107,14 +114,14 @@ export function StudentLearningHubPage() {
         {tab === "dashboard" && <LessonHubDashboardTab learningHubData={data} />}
         {tab === "my-courses" && <LessonHubMyCoursesTab learningHubData={data} />}
         {tab === "my-classes" && <LessonHubMyClassesTab learningHubData={data} />}
-        {/* {tab === "class-invites" && <ClassInvitesTab highlightId={invite} />} */}
+        {tab === "class-invites" && <LessonHubClassInvitesTab />}
+        {tab === "lessons" && <LessonHubLessonsTab learningHubData={data} />}
+        {tab === "assignments" && <LessonHubAssignmentsTab />}
+        {tab === "quizzes" && <LessonHubQuizzesTab />}
+        {tab === "assessments" && <LessonHubAssessmentsTab />}
+        {tab === "certificates" && <LessonHubCertificatesTab learningHubData={data} />}
 
-
-        {/* {tab === "lessons" && <LessonsTab />}
-        {tab === "assignments" && <AssignmentsTab />}
-        {tab === "assessments" && <AssessmentsTab />}
-        {tab === "certificates" && <CertificatesTab />}
-        {tab === "calendar" && <PlaceholderTab title="Learning Calendar" description="Classes, deadlines, and events unified in one calendar." />} */}
+        {/* {tab === "calendar" && <PlaceholderTab title="Learning Calendar" description="Classes, deadlines, and events unified in one calendar." />} */}
       </div>
 
       <div className='space-y-4'>

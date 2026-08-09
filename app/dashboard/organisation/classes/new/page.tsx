@@ -359,6 +359,7 @@ export default function OrganisationCreateClassPage() {
     [startDate, endDate, days]
   );
   const totalSessions = upcomingSessions.length;
+  const totalMinutes = upcomingSessions.reduce((sum, session) => sum + (session.minutes ?? 0), 0);
 
   const updateDay = (d: DayKey, patch: Partial<DayRow>) =>
     setDays(prev => ({ ...prev, [d]: { ...prev[d], ...patch } }));
@@ -457,10 +458,10 @@ export default function OrganisationCreateClassPage() {
     const saleValue = num(salePrice);
     const payValue = num(instructorPay);
     if (saleValue === undefined || saleValue < 0) {
-      return toast.error('Enter the sale price learners are charged per session.');
+      return toast.error('Enter the sale price learners are charged per hour.');
     }
     if (payValue === undefined || payValue < 0) {
-      return toast.error('Enter the pay the instructor receives per session.');
+      return toast.error('Enter the pay the instructor receives per hour.');
     }
     if (payValue > saleValue) {
       return toast.error('Instructor pay cannot exceed the sale price.');
@@ -536,21 +537,6 @@ export default function OrganisationCreateClassPage() {
         <PageHeader
           title='Create a class'
           description='For an offering you already have an instructor for. The class is scheduled immediately on their calendar and yours. To advertise an opening instead, post a job — resources are reserved there, and the class is created once the job is filled.'
-          action={
-            <div className='flex gap-2'>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() => router.push('/dashboard/organisation/classes')}
-              >
-                Cancel
-              </Button>
-              <Button type='submit' disabled={createClass.isPending}>
-                {createClass.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                Publish Class
-              </Button>
-            </div>
-          }
         />
 
         <OfferingPicker
@@ -591,6 +577,7 @@ export default function OrganisationCreateClassPage() {
           allowWaitlist={allowWaitlist}
           onAllowWaitlistChange={setAllowWaitlist}
           totalSessions={totalSessions}
+          totalMinutes={totalMinutes}
         />
 
         <LocationVenue
@@ -663,6 +650,20 @@ export default function OrganisationCreateClassPage() {
           title='These sessions conflict with existing reservations'
           conflicts={resourceConflicts}
         />
+
+        <div className='border-border/70 flex flex-wrap justify-end gap-2 border-t pt-4'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => router.push('/dashboard/organisation/classes')}
+          >
+            Cancel
+          </Button>
+          <Button type='submit' disabled={createClass.isPending}>
+            {createClass.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+            Publish Class
+          </Button>
+        </div>
       </form>
     </div>
   );

@@ -15,6 +15,7 @@ import {
 import type {
   Assignment,
   AssignmentSubmission,
+  Certificate,
   Instructor,
   ScheduledInstance,
   StudentClassEnrollmentSummary,
@@ -108,6 +109,7 @@ export type LearningHubData = {
   stats: LearningHubStat[];
   courseEnrollments: LearningHubCourseEnrollment[];
   classEnrollments: LearningHubClassEnrollment[];
+  certificates: Certificate[];
   courseEnrollmentCount: number;
   classEnrollmentCount: number;
   activeCourses: LearningHubActiveCourse[];
@@ -861,6 +863,7 @@ export function useStudentLearningHubData(): LearningHubData {
     stats,
     courseEnrollments,
     classEnrollments,
+    certificates,
     courseEnrollmentCount: courseEnrollmentCount || courseEnrollments.length,
     classEnrollmentCount: classEnrollmentCount || classEnrollments.length,
     activeCourses,

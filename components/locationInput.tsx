@@ -10,10 +10,8 @@ type MapboxSuggestFeature = {
   name: string;
   mapbox_id: string;
   place_formatted?: string;
-};
-
-type MapboxSuggestResponse = {
-  suggestions: MapboxSuggestFeature[];
+  latitude: number;
+  longitude: number;
 };
 
 type MapboxRetrieveFeature = {
@@ -55,29 +53,71 @@ type LocationInputProps = {
   coordinates?: CoordinatesInput;
   showMapPreview?: boolean;
   mapZoom?: number;
+  /**
+   * ISO 3166-1 alpha-2 country the search is restricted to. Defaults to Kenya so
+   * a search never offers a same-named place on another continent, which would
+   * otherwise be one click away from being saved as the venue.
+   */
+  country?: string;
 };
 
 const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-const SUGGEST_ENDPOINT = 'https://api.mapbox.com/search/searchbox/v1/suggest';
-const RETRIEVE_ENDPOINT = 'https://api.mapbox.com/search/searchbox/v1/retrieve';
+const GEOCODER_URL = process.env.NEXT_PUBLIC_GEOCODER_URL ?? 'https://photon.komoot.io/api/';
+const DEFAULT_SEARCH_COUNTRY = 'KE';
+const SEARCH_BIAS = { latitude: -1.286389, longitude: 36.817223 };
+
+type PhotonFeature = {
+  geometry?: { coordinates?: [number, number] };
+  properties?: {
+    name?: string;
+    street?: string;
+    housenumber?: string;
+    district?: string;
+    city?: string;
+    county?: string;
+    state?: string;
+    country?: string;
+    countrycode?: string;
+    osm_id?: number;
+    osm_key?: string;
+  };
+};
 
 /**
- * The Search Box API bills a suggest→retrieve pair as one session and rejects
- * either call without a token, so the same UUID has to span the pair and be
- * retired once the user picks a result.
+ * OpenStreetMap indexes Kenyan venues that Mapbox Search does not — Sarit Centre,
+ * Westgate, Yaya, Strathmore all resolve here and none of them resolve there.
+ * Mapbox is still used for the static map preview.
  */
-function createSessionToken() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
+function toSuggestion(feature: PhotonFeature): MapboxSuggestFeature | null {
+  const p = feature.properties ?? {};
+  const coords = feature.geometry?.coordinates;
+  if (!p.name || !coords) {
+    return null;
   }
-  return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
+  const context = [
+    [p.housenumber, p.street].filter(Boolean).join(' '),
+    p.district,
+    p.city ?? p.county,
+    p.country,
+  ]
+    .filter(Boolean)
+    .filter((part, index, all) => all.indexOf(part) === index)
+    .join(', ');
+
+  return {
+    name: p.name,
+    place_formatted: context || undefined,
+    mapbox_id: `${p.osm_key ?? 'place'}:${p.osm_id ?? p.name}`,
+    latitude: coords[1],
+    longitude: coords[0],
+  };
 }
 
+
 /**
- * The searched place is what gets stored, so the label has to name it. Mapbox
- * returns the place in `name` and only its surrounding context in
- * `place_formatted`, so a POI like "Sarit Centre" formats as "Nairobi, Kenya" —
- * keeping just that would save the city and lose the venue.
+ * The searched place is what gets stored, so the label has to name it. The
+ * geocoder returns the place in `name` and its surrounding address separately,
+ * so keeping only the context would save the city and lose the venue.
  */
 function composePlaceLabel(name?: string | null, placeFormatted?: string | null) {
   const place = name?.trim();
@@ -100,6 +140,7 @@ export default function LocationInput({
   coordinates,
   showMapPreview = true,
   mapZoom = 13,
+  country = DEFAULT_SEARCH_COUNTRY,
 }: LocationInputProps) {
   const [query, setQuery] = useState(value ?? '');
   const [suggestions, setSuggestions] = useState<MapboxSuggestFeature[]>([]);
@@ -113,13 +154,6 @@ export default function LocationInput({
   }>({});
   const [selectedPlaceLabel, setSelectedPlaceLabel] = useState<string | null>(null);
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sessionToken = useRef<string | null>(null);
-  const ensureSessionToken = useCallback(() => {
-    if (!sessionToken.current) {
-      sessionToken.current = createSessionToken();
-    }
-    return sessionToken.current;
-  }, []);
 
   useEffect(() => {
     setQuery(value ?? '');
@@ -151,12 +185,6 @@ export default function LocationInput({
   }, [coordinates?.latitude, coordinates?.longitude]);
 
   useEffect(() => {
-    if (!mapboxToken) {
-      setSuggestions([]);
-      setIsOpen(false);
-      return;
-    }
-
     if (!query || query.length < 3) {
       setSuggestions([]);
       setIsOpen(false);
@@ -171,20 +199,25 @@ export default function LocationInput({
       try {
         const params = new URLSearchParams({
           q: query,
-          limit: '6',
-          language: 'en',
-          session_token: ensureSessionToken(),
-          access_token: mapboxToken,
+          limit: '8',
+          lang: 'en',
+          lat: String(SEARCH_BIAS.latitude),
+          lon: String(SEARCH_BIAS.longitude),
         });
-        const response = await fetch(`${SUGGEST_ENDPOINT}?${params.toString()}`, {
+        const response = await fetch(`${GEOCODER_URL}?${params.toString()}`, {
           signal: controller.signal,
         });
         if (!response.ok) {
           throw new Error(await response.text());
         }
-        const data: MapboxSuggestResponse = await response.json();
-        setSuggestions(data.suggestions ?? []);
-        setIsOpen((data.suggestions ?? []).length > 0);
+        const data: { features?: PhotonFeature[] } = await response.json();
+        const matches = (data.features ?? [])
+          .filter(feature => !country || feature.properties?.countrycode === country)
+          .map(toSuggestion)
+          .filter((item): item is MapboxSuggestFeature => item !== null)
+          .slice(0, 6);
+        setSuggestions(matches);
+        setIsOpen(true);
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
           setError('Unable to fetch suggestions.');
@@ -204,68 +237,32 @@ export default function LocationInput({
       controller.abort();
       clearTimeout(debounce);
     };
-  }, [query, ensureSessionToken]);
+  }, [query, country]);
 
   const handleSelect = useCallback(
-    async (suggestion: MapboxSuggestFeature) => {
+    (suggestion: MapboxSuggestFeature) => {
       const label = composePlaceLabel(suggestion.name, suggestion.place_formatted);
       setQuery(label ?? '');
       onChange?.(label ?? '');
       setIsOpen(false);
       setSuggestions([]);
       setSelectedPlaceLabel(label);
-
-      if (!mapboxToken) {
-        return;
-      }
-
-      setIsLoading(true);
       setError(null);
 
-      try {
-        const params = new URLSearchParams({
-          mapbox_id: suggestion.mapbox_id,
-          session_token: ensureSessionToken(),
-          access_token: mapboxToken,
-        });
-        const response = await fetch(`${RETRIEVE_ENDPOINT}?${params.toString()}`);
-        if (!response.ok) {
-          throw new Error(await response.text());
-        }
-        const data: MapboxRetrieveResponse = await response.json();
-        const features = (data.features ?? []).map(feature => {
-          const [longitude, latitude] = feature.geometry?.coordinates ?? [undefined, undefined];
-          return {
-            ...feature,
-            properties: {
-              ...feature.properties,
-              coordinates: {
-                latitude,
-                longitude,
-                ...(feature.properties?.coordinates ?? {}),
-              },
-            },
-          };
-        });
+      const coordinates = { latitude: suggestion.latitude, longitude: suggestion.longitude };
+      setSelectedCoordinates(coordinates);
 
-        const primary = features[0] ?? null;
-        setSelectedFeature(primary);
-        if (primary?.properties?.coordinates) {
-          const { latitude, longitude } = primary.properties.coordinates;
-          if (typeof latitude === 'number' && typeof longitude === 'number') {
-            setSelectedCoordinates({ latitude, longitude });
-          }
-        }
-
-        onSuggest?.({ ...data, features });
-        sessionToken.current = null;
-      } catch (_err) {
-        setError('Unable to retrieve location details.');
-      } finally {
-        setIsLoading(false);
-      }
+      const feature: MapboxRetrieveFeature = {
+        mapbox_id: suggestion.mapbox_id,
+        name: suggestion.name,
+        place_formatted: suggestion.place_formatted,
+        geometry: { coordinates: [suggestion.longitude, suggestion.latitude] },
+        properties: { coordinates },
+      };
+      setSelectedFeature(feature);
+      onSuggest?.({ features: [feature] });
     },
-    [ensureSessionToken, onChange, onSuggest]
+    [onChange, onSuggest]
   );
 
   const _handleClose = useCallback(() => {
@@ -296,11 +293,7 @@ export default function LocationInput({
 
   const helperMessage = useMemo(() => {
     if (disabled) return null;
-    if (!mapboxToken) {
-      return 'Add NEXT_PUBLIC_MAPBOX_TOKEN to enable location search.';
-    }
-    if (error) return error;
-    return null;
+    return error;
   }, [disabled, error]);
 
   const hasCoordinates =
@@ -355,8 +348,8 @@ export default function LocationInput({
           onBlur?.();
         }}
         placeholder={placeholder}
-        disabled={disabled || !mapboxToken}
-        className={cn(className, !mapboxToken ? 'bg-muted text-muted-foreground' : undefined)}
+        disabled={disabled}
+        className={className}
         autoComplete='off'
       />
 
@@ -393,7 +386,8 @@ export default function LocationInput({
 
       {isOpen && !isLoading && suggestions.length === 0 && query.length >= 3 ? (
         <div className='border-border bg-popover text-muted-foreground absolute z-30 mt-1 w-full rounded-md border px-3 py-2 text-sm shadow-lg'>
-          No matches found.
+          No match on the map. Your own venue name is kept exactly as typed — it just
+          won&apos;t carry coordinates.
         </div>
       ) : null}
 
@@ -433,11 +427,11 @@ export default function LocationInput({
                 ) : null}
               </div>
             </div>
-          ) : mapboxToken ? (
+          ) : (
             <p className='text-muted-foreground text-xs'>
               Select a suggestion to preview it on the map and capture coordinates.
             </p>
-          ) : null}
+          )}
         </div>
       ) : null}
     </div>

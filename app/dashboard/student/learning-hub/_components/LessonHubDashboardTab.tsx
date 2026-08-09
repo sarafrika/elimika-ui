@@ -245,7 +245,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     </CardHeader>
                     <CardContent className='space-y-3'>
                         {active.length === 0 ? (
-                            <EmptyBrowse />
+                            <EmptyBrowse activeDomain={activeDomain} />
                         ) : (
                             continueLearning.slice(0, 3).map(item => {
                                 return (
@@ -790,7 +790,7 @@ function StatCard({
     );
 }
 
-function EmptyBrowse() {
+function EmptyBrowse({ activeDomain }: { activeDomain: UserDomain | null }) {
     return (
         <div className='flex flex-col items-center gap-3 py-8 text-center'>
             <p className='text-sm text-muted-foreground'>You aren't enrolled in any courses yet.</p>
@@ -857,6 +857,7 @@ function SummaryCard({
 
 
 import { Skeleton } from '../../../../../components/ui/skeleton';
+import { UserDomain } from '../../../../../lib/types';
 
 function LessonHubDashboardSkeleton() {
     return (

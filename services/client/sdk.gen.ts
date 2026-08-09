@@ -1480,6 +1480,9 @@ import type {
   HasCapacityForEnrollmentData,
   HasCapacityForEnrollmentResponses,
   HasCapacityForEnrollmentErrors,
+  GetClassEnrolmentEligibilityData,
+  GetClassEnrolmentEligibilityResponses,
+  GetClassEnrolmentEligibilityErrors,
   ListDocumentTypesData,
   ListDocumentTypesResponses,
   ListDocumentTypesErrors,
@@ -16930,6 +16933,32 @@ export const hasCapacityForEnrollment = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/enrollment/instance/{instanceUuid}/capacity',
+    ...options,
+  });
+};
+
+/**
+ * Check whether a student may join a class before they pay for it
+ */
+export const getClassEnrolmentEligibility = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassEnrolmentEligibilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassEnrolmentEligibilityResponses,
+    GetClassEnrolmentEligibilityErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/eligibility/{classDefinitionUuid}/student/{studentUuid}',
     ...options,
   });
 };

@@ -1,28 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { ClassScheduleCalendar } from '@/app/class-invite/page';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
-import useBundledClassInfo from '@/hooks/use-course-classes';
-import {
-  addItemMutation,
-  createCartMutation,
-  enrollStudentMutation,
-  getCartQueryKey,
-  getClassEnrollmentsForStudentQueryKey,
-  getCourseTrainingRequirementsOptions,
-  getEnrollmentsForClassOptions,
-  getEnrollmentsForClassQueryKey,
-  getStudentScheduleQueryKey,
-  joinWaitlistMutation,
-} from '@/services/client/@tanstack/react-query.gen';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useCartStore } from '@/store/cart-store';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
@@ -43,7 +21,29 @@ import {
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { PaymentConfirmationPage } from '../../../../../app/dashboard/student/courses/payment-confirmation-page';
+import { ClassScheduleCalendar } from '@/app/class-invite/page';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import useBundledClassInfo from '@/hooks/use-course-classes';
+import {
+  addItemMutation,
+  createCartMutation,
+  enrollStudentMutation,
+  getCartQueryKey,
+  getClassEnrollmentsForStudentQueryKey,
+  getClassEnrolmentEligibilityOptions,
+  getCourseTrainingRequirementsOptions,
+  getEnrollmentsForClassOptions,
+  getEnrollmentsForClassQueryKey,
+  getStudentScheduleQueryKey,
+  joinWaitlistMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useCartStore } from '@/store/cart-store';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { formatSessionSchedule } from '../components/availability-listing-layout';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
@@ -104,9 +104,7 @@ export default function ClassEnrollmentPage({
   const user = useUserProfile();
   const student = user?.student;
 
-  const [paymentConfirmed, setPaymentConfirmed] = useState(false)
   const [enrollmentError, setEnrollmentError] = useState(false);
-  const [ageOk, setAgeOk] = useState(false);
   const [termsOk, setTermsOk] = useState(false);
   const [paymentOk, setPaymentOk] = useState(false);
   const [requirementsChecked, setRequirementsChecked] = useState<Record<string, boolean>>({});
@@ -115,6 +113,18 @@ export default function ClassEnrollmentPage({
 
   // ── Data fetching ──────────────────────────────────────────────────────
   const { classes = [], loading } = useBundledClassInfo(courseId, undefined, undefined, student);
+
+  // The platform already knows the learner's date of birth and the course's limits, so it decides
+  // this rather than asking them to vouch for themselves. Checkout enforces the same rule.
+  const eligibilityQuery = useQuery({
+    ...getClassEnrolmentEligibilityOptions({
+      path: { classDefinitionUuid: classId, studentUuid: student?.uuid as string },
+    }),
+    enabled: Boolean(classId && student?.uuid),
+  });
+  const eligibility = eligibilityQuery.data?.data ?? null;
+  const eligibilityKnown = Boolean(eligibility);
+  const eligibleToJoin = eligibility?.eligible ?? false;
 
   const { data: classEnrollmentsResponse } = useQuery({
     ...getEnrollmentsForClassOptions({ path: { uuid: classId } }),
@@ -191,15 +201,33 @@ export default function ClassEnrollmentPage({
   const { formattedDates } = useMemo(() => {
     if (!enrollingClass) return { formattedDates: '' };
     try {
-      const start = enrollingClass.default_start_time
-        ? new Date(enrollingClass.default_start_time)
-        : null;
-      const end = enrollingClass.default_end_time
-        ? new Date(enrollingClass.default_end_time)
-        : null;
+      // default_start_time / default_end_time bound the FIRST session, not the class. Using them as
+      // a range printed the same date twice for every recurring class.
+      const templates = enrollingClass.session_templates ?? [];
+      const starts = templates
+        .map(t => (t.start_time ? new Date(t.start_time).getTime() : Number.NaN))
+        .filter(n => !Number.isNaN(n));
+      const seriesEnds = templates
+        .map(t => (t.recurrence?.end_date ? new Date(t.recurrence.end_date).getTime() : Number.NaN))
+        .filter(n => !Number.isNaN(n));
+
+      const start = starts.length
+        ? new Date(Math.min(...starts))
+        : enrollingClass.default_start_time
+          ? new Date(enrollingClass.default_start_time)
+          : null;
+      const end = seriesEnds.length
+        ? new Date(Math.max(...seriesEnds))
+        : enrollingClass.academic_period_end_date
+          ? new Date(enrollingClass.academic_period_end_date)
+          : null;
+
+      if (!start) return { formattedDates: 'N/A' };
+      if (!end || format(start, 'dd/MM/yyyy') === format(end, 'dd/MM/yyyy')) {
+        return { formattedDates: format(start, 'dd/MM/yyyy') };
+      }
       return {
-        formattedDates:
-          start && end ? `${format(start, 'dd/MM/yyyy')} → ${format(end, 'dd/MM/yyyy')}` : 'N/A',
+        formattedDates: `${format(start, 'dd/MM/yyyy')} → ${format(end, 'dd/MM/yyyy')}`,
       };
     } catch {
       return { formattedDates: 'N/A' };
@@ -211,7 +239,6 @@ export default function ClassEnrollmentPage({
     enrollingClass?.course?.age_lower_limit,
     enrollingClass?.course?.age_upper_limit
   );
-  const hasAgeRequirement = ageRange !== null;
 
   const { data: courseReqResp } = useQuery({
     ...getCourseTrainingRequirementsOptions({
@@ -266,7 +293,7 @@ export default function ClassEnrollmentPage({
         },
         {
           onSuccess: data => {
-            const cartId = data?.id || null;
+            const cartId = data?.data?.id ?? null;
             if (cartId) setCartId(cartId);
             qc.invalidateQueries({
               queryKey: getCartQueryKey({ path: { cartId: cartId as string } }),
@@ -357,23 +384,26 @@ export default function ClassEnrollmentPage({
       return;
     }
 
-    setPaymentConfirmed(true)
+    // A paid class has to be bought before the seat exists: the backend enrols the student itself
+    // once the payment is captured. Enrolling directly here would be refused by the paywall.
+    if (hasFee) {
+      handleCreateCartAndPay(enrollingClass);
+      return;
+    }
 
-    // enrollStudent.mutate(
-    //   { body: { class_definition_uuid: classId, student_uuid: student.uuid } },
-    //   {
-    //     onSuccess: data => handleEnrollmentSuccess(data, 'Student enrolled successfully'),
-    //     onError: err => {
-    //       if (isCapacityError(err)) {
-    //         handleWaitlist();
-    //         return;
-    //       }
-    //       toast.error(getErrorMessage(err, 'Failed to enroll in class'));
-    //       setPaymentConfirmed(true)
-    //       handleCreateCartAndPay(enrollingClass);
-    //     },
-    //   }
-    // );
+    enrollStudent.mutate(
+      { body: { class_definition_uuid: classId, student_uuid: student.uuid } },
+      {
+        onSuccess: data => handleEnrollmentSuccess(data, 'You are enrolled in this class'),
+        onError: err => {
+          if (isCapacityError(err)) {
+            handleWaitlist();
+            return;
+          }
+          toast.error(getErrorMessage(err, 'Failed to enroll in class'));
+        },
+      }
+    );
   };
 
   const handleCancel = () => {
@@ -415,7 +445,7 @@ export default function ClassEnrollmentPage({
     !isPending &&
     !enrollmentError &&
     !alreadyEnrolled &&
-    (!hasAgeRequirement || ageOk) &&
+    eligibleToJoin &&
     termsOk &&
     allMandatoryRequirementsChecked
 
@@ -427,13 +457,7 @@ export default function ClassEnrollmentPage({
         Back to Classes
       </Button>
 
-      {paymentConfirmed ? (
-        <>
-          <PaymentConfirmationPage />
-        </>
-      ) : (
-        <>
-          <h1 className='text-2xl font-semibold'>Join Class</h1>
+      <h1 className='text-2xl font-semibold'>Join Class</h1>
           <p className='text-muted-foreground text-sm'>
             Confirm details before enrolling in {enrollingClass.course?.name ?? enrollingClass.title}
           </p>
@@ -524,20 +548,23 @@ export default function ClassEnrollmentPage({
             <CardContent className='space-y-4'>
               {/* Age requirement — backed by course.age_lower_limit / age_upper_limit when present. */}
               <div className='flex items-start gap-3'>
-                {!hasAgeRequirement ? (
-                  <AlertTriangle className='mt-0.5 h-5 w-5 text-muted-foreground' />
+                {eligibilityKnown && !eligibleToJoin ? (
+                  <AlertTriangle className='text-destructive mt-0.5 h-5 w-5' />
                 ) : (
-                  <CheckCircle2 className='mt-0.5 h-5 w-5 text-success' />
+                  <CheckCircle2 className='text-success mt-0.5 h-5 w-5' />
                 )}
                 <div className='flex-1'>
-                  <div className='text-sm font-medium'>
-                    Age requirement: {ageRange ?? 'Any'}
-                  </div>
-                  {hasAgeRequirement ? (
-                    <label className='mt-2 flex items-center gap-2 text-sm'>
-                      <Checkbox checked={ageOk} onCheckedChange={v => setAgeOk(!!v)} />
-                      I confirm I meet the age requirement for this class.
-                    </label>
+                  <div className='text-sm font-medium'>Age requirement: {ageRange ?? 'Any'}</div>
+                  {eligibilityQuery.isLoading ? (
+                    <div className='text-muted-foreground text-xs italic'>
+                      Checking your profile…
+                    </div>
+                  ) : eligibility && !eligibility.eligible ? (
+                    <div className='text-destructive mt-1 text-sm'>{eligibility.reason}</div>
+                  ) : eligibility?.student_age != null ? (
+                    <div className='text-muted-foreground text-xs'>
+                      Your profile says you are {eligibility.student_age}. You meet this requirement.
+                    </div>
                   ) : (
                     <div className='text-muted-foreground text-xs italic'>
                       No age restriction on file for this class.
@@ -653,8 +680,6 @@ export default function ClassEnrollmentPage({
               {isPending ? 'Processing…' : isClassFull ? 'Join Waitlist' : 'Yes, Enroll Me'}
             </Button>
           </div>
-        </>
-      )}
     </div>
   );
 }

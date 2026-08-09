@@ -1876,17 +1876,17 @@ export const QuizQuestionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    question_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable category of the question type.',
-      example: 'Multiple Choice Question',
-      readOnly: true,
-    },
     requires_options: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if this question type requires predefined answer options.',
       example: true,
+      readOnly: true,
+    },
+    question_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable category of the question type.',
+      example: 'Multiple Choice Question',
       readOnly: true,
     },
     points_display: {
@@ -8274,17 +8274,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -8529,7 +8529,7 @@ export const ClassMarketplaceJobRequestSchema = {
     sale_price: {
       type: ['number', 'null'],
       description:
-        "**[OPTIONAL]** Price per session a learner will be charged once the class exists. Defaults to the organisation's approved rate when omitted. Must be at least the course minimum training fee.",
+        "**[OPTIONAL]** Price per learner per hour, charged once the class exists. Defaults to the organisation's approved rate when omitted. Must be at least the course minimum training fee.",
       example: 240,
     },
     instructor_pay: {
@@ -9904,25 +9904,6 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
-    time_range: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable date and time range.',
-      example: '2024-09-15 09:00 - 10:30',
-      readOnly: true,
-    },
-    is_currently_active: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
-      example: false,
-      readOnly: true,
-    },
     can_be_cancelled: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
@@ -9939,6 +9920,25 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
+      example: false,
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
+    time_range: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable date and time range.',
+      example: '2024-09-15 09:00 - 10:30',
+      readOnly: true,
+    },
+    is_currently_active: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
       readOnly: true,
     },
@@ -11890,21 +11890,9 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
-      example: false,
-      readOnly: true,
-    },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
       example: false,
       readOnly: true,
     },
@@ -11912,6 +11900,18 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -12252,6 +12252,13 @@ export const OrderResponseSchema = {
       type: 'string',
       description: 'Human friendly order number',
       example: '100012',
+    },
+    user_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        'User who placed the order. Carried through so the buyer is still known when a payment is captured asynchronously and no checkout request is available.',
+      example: '9c1f2f4e-4d9d-4b1a-9f0e-2f8a1b7c3d5e',
     },
     payment_status: {
       type: 'string',
@@ -14826,16 +14833,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
-      readOnly: true,
-    },
     is_upcoming: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this class is upcoming.',
       example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -18528,6 +18535,73 @@ export const ApiResponseLongSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const ApiResponseClassEnrolmentEligibilitySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassEnrolmentEligibility',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassEnrolmentEligibilitySchema = {
+  type: 'object',
+  description:
+    'Whether a student may join a class, decided from the records the platform already holds rather than from anything the learner declares about themselves.',
+  properties: {
+    eligible: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** True when every check below passes and the seat can be bought.',
+    },
+    student_age: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        "**[READ-ONLY]** The student's age from their recorded date of birth, or null when none is on file.",
+    },
+    minimum_age: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[READ-ONLY]** Minimum age the course requires, when it sets one.',
+    },
+    maximum_age: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[READ-ONLY]** Maximum age the course allows, when it sets one.',
+    },
+    date_of_birth_on_file: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** False when a date of birth is needed to judge age but none is recorded.',
+    },
+    age_requirement_met: {
+      type: 'boolean',
+      description: "**[READ-ONLY]** True when the recorded age satisfies the course's limits.",
+    },
+    seats_available: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** True when at least one scheduled session still has a free seat.',
+    },
+    already_enrolled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** True when the student already holds a seat in this class.',
+    },
+    reason: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** Why the student cannot join, phrased for them to read. Null when eligible.',
+    },
   },
 } as const;
 

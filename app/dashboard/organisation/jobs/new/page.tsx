@@ -8,18 +8,18 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  AcademicPeriodsPanel,
-  addDays,
   type AcademicPeriod,
+  AcademicPeriodsPanel,
   type ApprovedRateCard,
+  addDays,
   approvedRateFor,
   computeSessionWindows,
   computeUpcomingSessions,
   DAY_TOKEN,
   DAYS,
-  DEFAULT_DAYS,
   type DayKey,
   type DayRow,
+  DEFAULT_DAYS,
   type Delivery,
   EquipmentTarget,
   firstOccurrenceOnOrAfter,
@@ -35,14 +35,14 @@ import {
   ReminderOptions,
   type ReminderState,
   ResourceAvailabilityPreview,
+  type ScheduleMode,
   ScheduleModeCards,
   SERVICE_TYPE_ENUM,
-  type ScheduleMode,
   ServiceCards,
-  serviceFormat,
   type ServiceKey,
-  sessionEndFor,
   StandardSchedule,
+  serviceFormat,
+  sessionEndFor,
   toDateTime,
   UpcomingSessions,
 } from '@/components/class-form';
@@ -486,6 +486,7 @@ export default function OrganisationPostJobPage() {
     [startDate, endDate, days]
   );
   const totalSessions = upcomingSessions.length;
+  const totalMinutes = upcomingSessions.reduce((sum, session) => sum + (session.minutes ?? 0), 0);
 
   const updateDay = (d: DayKey, patch: Partial<DayRow>) =>
     setDays(prev => ({ ...prev, [d]: { ...prev[d], ...patch } }));
@@ -603,10 +604,10 @@ export default function OrganisationPostJobPage() {
     const saleValue = num(salePrice);
     const payValue = num(instructorPay);
     if (saleValue === undefined || saleValue < 0) {
-      return toast.error('Enter the sale price learners are charged per session.');
+      return toast.error('Enter the sale price learners are charged per hour.');
     }
     if (payValue === undefined || payValue < 0) {
-      return toast.error('Enter the pay the instructor receives per session.');
+      return toast.error('Enter the pay the instructor receives per hour.');
     }
     if (payValue > saleValue) {
       return toast.error('Instructor pay cannot exceed the sale price.');
@@ -620,13 +621,10 @@ export default function OrganisationPostJobPage() {
       }
       const latitude = num(locationLatitude);
       const longitude = num(locationLongitude);
-      if (latitude === undefined || longitude === undefined) {
-        return toast.error('Add latitude and longitude for in-person / hybrid classes.');
-      }
-      if (latitude < -90 || latitude > 90) {
+      if (latitude !== undefined && (latitude < -90 || latitude > 90)) {
         return toast.error('Latitude must be between -90 and 90 degrees.');
       }
-      if (longitude < -180 || longitude > 180) {
+      if (longitude !== undefined && (longitude < -180 || longitude > 180)) {
         return toast.error('Longitude must be between -180 and 180 degrees.');
       }
     }
@@ -718,21 +716,6 @@ export default function OrganisationPostJobPage() {
               ? 'Changing the schedule or resources releases the existing holds and re-evaluates them. If the new windows clash, nothing is saved.'
               : 'Advertise an approved course or program for instructors to apply to. The sessions you schedule here reserve your venue and equipment for those exact windows — the class itself is created once you assign an instructor.'
           }
-          action={
-            <div className='flex gap-2'>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() => router.push('/dashboard/organisation/opportunities')}
-              >
-                Cancel
-              </Button>
-              <Button type='submit' disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                {isEditMode ? 'Save changes' : 'Post job'}
-              </Button>
-            </div>
-          }
         />
 
         {!isOrgVerified ? (
@@ -780,6 +763,7 @@ export default function OrganisationPostJobPage() {
           allowWaitlist={allowWaitlist}
           onAllowWaitlistChange={setAllowWaitlist}
           totalSessions={totalSessions}
+          totalMinutes={totalMinutes}
         />
 
         <LocationVenue
@@ -874,6 +858,20 @@ export default function OrganisationPostJobPage() {
           title='These sessions conflict with existing reservations'
           conflicts={resourceConflicts}
         />
+
+        <div className='border-border/70 flex flex-wrap justify-end gap-2 border-t pt-4'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => router.push('/dashboard/organisation/opportunities')}
+          >
+            Cancel
+          </Button>
+          <Button type='submit' disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+            {isEditMode ? 'Save changes' : 'Post job'}
+          </Button>
+        </div>
       </form>
     </div>
   );
