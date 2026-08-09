@@ -55,10 +55,10 @@ type SessionType = 'online' | 'physical';
 type PaymentMethod = 'skills-fund' | 'm-pesa' | 'card';
 
 type BookingRateKey =
-  | 'private_online_rate'
-  | 'private_inperson_rate'
-  | 'group_online_rate'
-  | 'group_inperson_rate';
+  | 'private_online_hourly_rate'
+  | 'private_inperson_hourly_rate'
+  | 'group_online_hourly_rate'
+  | 'group_inperson_hourly_rate';
 
 const serviceOptions: Array<{
   id: BookingService;
@@ -157,10 +157,10 @@ function formatMoney(amount: number, currency?: string) {
 
 function resolveRateKey(service: BookingService, sessionType: SessionType): BookingRateKey {
   if (service === 'private') {
-    return sessionType === 'online' ? 'private_online_rate' : 'private_inperson_rate';
+    return sessionType === 'online' ? 'private_online_hourly_rate' : 'private_inperson_hourly_rate';
   }
 
-  return sessionType === 'online' ? 'group_online_rate' : 'group_inperson_rate';
+  return sessionType === 'online' ? 'group_online_hourly_rate' : 'group_inperson_hourly_rate';
 }
 
 function combineDateAndTime(date: Date, timeLabel: string) {

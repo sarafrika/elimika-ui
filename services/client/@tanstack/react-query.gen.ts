@@ -308,6 +308,7 @@ import {
   createCategory,
   listTeams,
   addTeam,
+  paymentCallback,
   payWithMpesa,
   completeCheckout,
   listCatalogItems,
@@ -350,7 +351,7 @@ import {
   generateCourseCertificate,
   createBooking,
   requestPayment,
-  paymentCallback,
+  paymentCallback1,
   declineBooking,
   cancelBooking,
   acceptBooking,
@@ -1419,6 +1420,9 @@ import type {
   AddTeamData,
   AddTeamError,
   AddTeamResponse,
+  PaymentCallbackData,
+  PaymentCallbackError,
+  PaymentCallbackResponse,
   PayWithMpesaData,
   PayWithMpesaError,
   PayWithMpesaResponse,
@@ -1537,9 +1541,9 @@ import type {
   RequestPaymentData,
   RequestPaymentError,
   RequestPaymentResponse,
-  PaymentCallbackData,
-  PaymentCallbackError,
-  PaymentCallbackResponse,
+  PaymentCallback1Data,
+  PaymentCallback1Error,
+  PaymentCallback1Response,
   DeclineBookingData,
   DeclineBookingError,
   DeclineBookingResponse,
@@ -14605,6 +14609,56 @@ export const addTeamMutation = (
   return mutationOptions;
 };
 
+export const paymentCallbackQueryKey = (options: Options<PaymentCallbackData>) =>
+  createQueryKey('paymentCallback', options);
+
+/**
+ * M-Pesa payment callback
+ * Called by the daraja gateway when a payment resolves, so capture no longer depends on the buyer keeping their browser open. Settles the order the same way the polling path does and is safe to receive more than once.
+ */
+export const paymentCallbackOptions = (options: Options<PaymentCallbackData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await paymentCallback({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: paymentCallbackQueryKey(options),
+  });
+};
+
+/**
+ * M-Pesa payment callback
+ * Called by the daraja gateway when a payment resolves, so capture no longer depends on the buyer keeping their browser open. Settles the order the same way the polling path does and is safe to receive more than once.
+ */
+export const paymentCallbackMutation = (
+  options?: Partial<Options<PaymentCallbackData>>
+): UseMutationOptions<
+  PaymentCallbackResponse,
+  PaymentCallbackError,
+  Options<PaymentCallbackData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    PaymentCallbackResponse,
+    PaymentCallbackError,
+    Options<PaymentCallbackData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await paymentCallback({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const payWithMpesaQueryKey = (options: Options<PayWithMpesaData>) =>
   createQueryKey('payWithMpesa', options);
 
@@ -16652,16 +16706,16 @@ export const requestPaymentMutation = (
   return mutationOptions;
 };
 
-export const paymentCallbackQueryKey = (options: Options<PaymentCallbackData>) =>
-  createQueryKey('paymentCallback', options);
+export const paymentCallback1QueryKey = (options: Options<PaymentCallback1Data>) =>
+  createQueryKey('paymentCallback1', options);
 
 /**
  * Payment callback to update booking status
  */
-export const paymentCallbackOptions = (options: Options<PaymentCallbackData>) => {
+export const paymentCallback1Options = (options: Options<PaymentCallback1Data>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await paymentCallback({
+      const { data } = await paymentCallback1({
         ...options,
         ...queryKey[0],
         signal,
@@ -16669,27 +16723,27 @@ export const paymentCallbackOptions = (options: Options<PaymentCallbackData>) =>
       });
       return data;
     },
-    queryKey: paymentCallbackQueryKey(options),
+    queryKey: paymentCallback1QueryKey(options),
   });
 };
 
 /**
  * Payment callback to update booking status
  */
-export const paymentCallbackMutation = (
-  options?: Partial<Options<PaymentCallbackData>>
+export const paymentCallback1Mutation = (
+  options?: Partial<Options<PaymentCallback1Data>>
 ): UseMutationOptions<
-  PaymentCallbackResponse,
-  PaymentCallbackError,
-  Options<PaymentCallbackData>
+  PaymentCallback1Response,
+  PaymentCallback1Error,
+  Options<PaymentCallback1Data>
 > => {
   const mutationOptions: UseMutationOptions<
-    PaymentCallbackResponse,
-    PaymentCallbackError,
-    Options<PaymentCallbackData>
+    PaymentCallback1Response,
+    PaymentCallback1Error,
+    Options<PaymentCallback1Data>
   > = {
     mutationFn: async localOptions => {
-      const { data } = await paymentCallback({
+      const { data } = await paymentCallback1({
         ...options,
         ...localOptions,
         throwOnError: true,

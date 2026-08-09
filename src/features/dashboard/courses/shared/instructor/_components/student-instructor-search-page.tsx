@@ -827,9 +827,9 @@ export default function StudentInstructorSearchPage() {
                           </div>
                           <div>Teaching: Not available</div>
                           <div>Modes: {getDeliveryModesLabel(instructor)}</div>
-                          <div>Hourly: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.group_inperson_rate ?? 'Not available'}</div>
-                          <div>Group: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.group_inperson_rate ?? 'Not available'}</div>
-                          <div>Private: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.private_inperson_rate ?? 'Not available'}</div>
+                          <div>Hourly: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.group_inperson_hourly_rate ?? 'Not available'}</div>
+                          <div>Group: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.group_inperson_hourly_rate ?? 'Not available'}</div>
+                          <div>Private: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.private_inperson_hourly_rate ?? 'Not available'}</div>
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">

@@ -25,6 +25,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+  DEFAULT_RATE_BASIS,
+  RATE_BASES,
+  type RateBasis,
+  rateBasisLabel,
+} from '@/components/class-form';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +38,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
@@ -59,7 +72,13 @@ type EquipmentAnswer = {
   items: EquipmentItem[];
   acquisition?: 'lease' | 'hire';
 };
-type PriceTier = { id: string; method: TrainingMethod | ''; duration: string; amount: string };
+type PriceTier = {
+  id: string;
+  method: TrainingMethod | '';
+  duration: string;
+  amount: string;
+  basis: RateBasis;
+};
 
 type State = {
   step: number;
@@ -118,7 +137,10 @@ function reducer(state: State, action: Action): State {
         ? state.pricing.filter(p => p.method !== action.method)
         : state.pricing.some(p => p.method === action.method)
           ? state.pricing
-          : [...state.pricing, { id: uid(), method: action.method, duration: '', amount: '' }];
+          : [
+            ...state.pricing,
+            { id: uid(), method: action.method, duration: '', amount: '', basis: DEFAULT_RATE_BASIS },
+          ];
       return { ...state, methods, pricing };
     }
     case 'classroomCount': {
@@ -223,7 +245,13 @@ function reducer(state: State, action: Action): State {
         ...state,
         pricing: [
           ...state.pricing,
-          { id: uid(), method: state.methods[0] ?? '', duration: '', amount: '' },
+          {
+            id: uid(),
+            method: state.methods[0] ?? '',
+            duration: '',
+            amount: '',
+            basis: DEFAULT_RATE_BASIS,
+          },
         ],
       };
     case 'priceRemove':
@@ -319,25 +347,34 @@ const METHOD_OPTIONS: {
   { value: 'hybrid', title: 'Hybrid', description: 'Mix of in-person and virtual.', icon: Layers },
 ];
 
-/** Maps the wizard's method pricing into the backend's fixed 4-cell rate card. */
+/**
+ * Maps the wizard's method pricing into the backend's 4 modalities × 3 bases rate card. A tier
+ * prices one modality in the basis it was quoted in; bases nobody quoted stay unset, which makes
+ * the organisation ineligible for jobs contracted that way rather than guessing a figure.
+ */
 function buildRateCard(pricing: PriceTier[]) {
-  const rate: Record<string, number> = {
-    private_online_rate: 0,
-    private_inperson_rate: 0,
-    group_online_rate: 0,
-    group_inperson_rate: 0,
-  };
-  const field: Record<TrainingMethod, string | null> = {
-    'private-virtual': 'private_online_rate',
-    'private-in-person': 'private_inperson_rate',
-    'group-virtual': 'group_online_rate',
-    'group-in-person': 'group_inperson_rate',
+  const modality: Record<TrainingMethod, string | null> = {
+    'private-virtual': 'private_online',
+    'private-in-person': 'private_inperson',
+    'group-virtual': 'group_online',
+    'group-in-person': 'group_inperson',
     hybrid: null,
   };
+  const suffix: Record<RateBasis, string> = {
+    per_hour: 'hourly_rate',
+    per_session: 'session_rate',
+    per_day: 'daily_rate',
+  };
+  const rate: Record<string, number> = {
+    private_online_hourly_rate: 0,
+    private_inperson_hourly_rate: 0,
+    group_online_hourly_rate: 0,
+    group_inperson_hourly_rate: 0,
+  };
   for (const tier of pricing) {
-    const key = tier.method ? field[tier.method] : null;
+    const cell = tier.method ? modality[tier.method] : null;
     const amt = parseFloat(tier.amount);
-    if (key && Number.isFinite(amt)) rate[key] = amt;
+    if (cell && Number.isFinite(amt)) rate[`${cell}_${suffix[tier.basis ?? DEFAULT_RATE_BASIS]}`] = amt;
   }
   return { currency: 'KES', ...rate };
 }
@@ -1389,6 +1426,33 @@ function StepPricing({ state, dispatch }: { state: State; dispatch: React.Dispat
                 </div>
 
                 <div className='space-y-1'>
+                  <Label htmlFor={`p-basis-${tier.id}`} className='text-muted-foreground text-xs'>
+                    Charged per
+                  </Label>
+                  <Select
+                    value={tier.basis ?? DEFAULT_RATE_BASIS}
+                    onValueChange={value =>
+                      dispatch({
+                        type: 'priceUpdate',
+                        id: tier.id,
+                        patch: { basis: value as RateBasis },
+                      })
+                    }
+                  >
+                    <SelectTrigger id={`p-basis-${tier.id}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RATE_BASES.map(b => (
+                        <SelectItem key={b.value} value={b.value}>
+                          {b.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className='space-y-1'>
                   <Label htmlFor={`p-amount-${tier.id}`} className='text-muted-foreground text-xs'>
                     Amount (KES / student) <span className='text-destructive'>*</span>
                   </Label>
@@ -1616,6 +1680,7 @@ function StepReview({
                 <tr>
                   <th className='px-3 py-2 text-left font-medium'>Training method</th>
                   <th className='px-3 py-2 text-left font-medium'>Session duration</th>
+                  <th className='px-3 py-2 text-left font-medium'>Charged per</th>
                   <th className='px-3 py-2 text-right font-medium'>Fee / student (KES)</th>
                 </tr>
               </thead>
@@ -1632,6 +1697,7 @@ function StepReview({
                         </span>
                       </td>
                       <td className='px-3 py-2'>{p.duration || '—'}</td>
+                      <td className='px-3 py-2'>{rateBasisLabel(p.basis)}</td>
                       <td className='px-3 py-2 text-right font-mono'>
                         {Number.isFinite(amt) ? amt.toLocaleString() : '—'}
                       </td>

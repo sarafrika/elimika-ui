@@ -2500,36 +2500,92 @@ export const CourseTrainingRateCardSchema = {
       maxLength: 3,
       pattern: '^[A-Za-z]{3}$',
     },
-    private_online_rate: {
+    private_online_hourly_rate: {
       type: 'number',
       description: '1:1 private session rate when delivered online, per learner per hour.',
       example: 3500,
       minimum: 0,
     },
-    private_inperson_rate: {
+    private_inperson_hourly_rate: {
       type: 'number',
       description: '1:1 private session rate when delivered in person, per learner per hour.',
       example: 3600,
       minimum: 0,
     },
-    group_online_rate: {
+    group_online_hourly_rate: {
       type: 'number',
       description: 'Group session rate when delivered online, per learner per hour.',
       example: 2800,
       minimum: 0,
     },
-    group_inperson_rate: {
+    group_inperson_hourly_rate: {
       type: 'number',
       description: 'Group session rate when delivered in person, per learner per hour.',
       example: 3000,
       minimum: 0,
     },
+    private_online_session_rate: {
+      type: ['number', 'null'],
+      description:
+        '1:1 private session rate when delivered online, per learner per session, whatever its length. Required for new and updated cards; null on cards created before per-session pricing existed.',
+      example: 3500,
+      minimum: 0,
+    },
+    private_inperson_session_rate: {
+      type: ['number', 'null'],
+      description:
+        '1:1 private session rate when delivered in person, per learner per session, whatever its length. Required for new and updated cards; null on cards created before per-session pricing existed.',
+      example: 3500,
+      minimum: 0,
+    },
+    group_online_session_rate: {
+      type: ['number', 'null'],
+      description:
+        'Group session rate when delivered online, per learner per session, whatever its length. Required for new and updated cards; null on cards created before per-session pricing existed.',
+      example: 3500,
+      minimum: 0,
+    },
+    group_inperson_session_rate: {
+      type: ['number', 'null'],
+      description:
+        'Group session rate when delivered in person, per learner per session, whatever its length. Required for new and updated cards; null on cards created before per-session pricing existed.',
+      example: 3500,
+      minimum: 0,
+    },
+    private_online_daily_rate: {
+      type: ['number', 'null'],
+      description:
+        '1:1 private session rate when delivered online, per learner per calendar day, however many sessions fall in it. Required for new and updated cards; null on cards created before per-daily pricing existed.',
+      example: 3500,
+      minimum: 0,
+    },
+    private_inperson_daily_rate: {
+      type: ['number', 'null'],
+      description:
+        '1:1 private session rate when delivered in person, per learner per calendar day, however many sessions fall in it. Required for new and updated cards; null on cards created before per-daily pricing existed.',
+      example: 3500,
+      minimum: 0,
+    },
+    group_online_daily_rate: {
+      type: ['number', 'null'],
+      description:
+        'Group session rate when delivered online, per learner per calendar day, however many sessions fall in it. Required for new and updated cards; null on cards created before per-daily pricing existed.',
+      example: 3500,
+      minimum: 0,
+    },
+    group_inperson_daily_rate: {
+      type: ['number', 'null'],
+      description:
+        'Group session rate when delivered in person, per learner per calendar day, however many sessions fall in it. Required for new and updated cards; null on cards created before per-daily pricing existed.',
+      example: 3500,
+      minimum: 0,
+    },
   },
   required: [
-    'group_inperson_rate',
-    'group_online_rate',
-    'private_inperson_rate',
-    'private_online_rate',
+    'group_inperson_hourly_rate',
+    'group_online_hourly_rate',
+    'private_inperson_hourly_rate',
+    'private_online_hourly_rate',
   ],
 } as const;
 
@@ -6021,6 +6077,18 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -6038,18 +6106,6 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
-      readOnly: true,
-    },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -8186,6 +8242,9 @@ export const ClassDefinitionSchema = {
       description:
         '**[OPTIONAL]** Category the class falls under. Courses supply their own categories, so this carries the category chosen for program-backed classes.',
     },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum',
+    },
     session_templates: {
       type: 'array',
       description: `**[READ-ONLY]** Persisted session templates originally used to generate scheduled class instances.
@@ -8274,17 +8333,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -8538,6 +8597,9 @@ export const ClassMarketplaceJobRequestSchema = {
         '**[OPTIONAL]** Per-session pay offered to the eventual instructor. An applicant is assignable only when this is at least their approved rate. Defaults to the sale price when omitted, leaving no margin.',
       example: 180,
     },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum',
+    },
     session_templates: {
       type: 'array',
       description:
@@ -8709,6 +8771,9 @@ export const ClassMarketplaceJobSchema = {
       type: 'number',
       description: '**[READ-ONLY]** Per-session pay offered to the eventual instructor.',
       readOnly: true,
+    },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum2',
     },
     class_visibility: {
       $ref: '#/components/schemas/ClassVisibilityEnum',
@@ -9904,25 +9969,6 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_started: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_ended: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
-      example: false,
-      readOnly: true,
-    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -9939,6 +9985,25 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
+      example: false,
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_started: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_ended: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
       example: false,
       readOnly: true,
     },
@@ -11896,6 +11961,12 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
+      readOnly: true,
+    },
     status_description: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
@@ -11906,12 +11977,6 @@ export const EnrollmentSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
       example: true,
-      readOnly: true,
-    },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
       readOnly: true,
     },
   },
@@ -12156,6 +12221,34 @@ export const ApiResponseCompetitionTeamSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const ApiResponsePaymentStatusResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PaymentStatusResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PaymentStatusResponseSchema = {
+  type: 'object',
+  description: 'Current payment status of an order',
+  properties: {
+    status: {
+      type: 'string',
+      description: 'Payment status',
+      example: 'CAPTURED',
+    },
   },
 } as const;
 
@@ -14833,16 +14926,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    is_upcoming: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
-      example: true,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended this class.',
       example: false,
+      readOnly: true,
+    },
+    is_upcoming: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
+      example: true,
       readOnly: true,
     },
   },
@@ -18193,7 +18286,7 @@ export const StudentClassEnrollmentSummarySchema = {
       description: 'Most recent scheduled-instance enrollment identifier for this class',
     },
     latest_enrollment_status: {
-      $ref: '#/components/schemas/StatusEnum13',
+      $ref: '#/components/schemas/LatestEnrollmentStatusEnum',
     },
     scheduled_instance_count: {
       type: 'integer',
@@ -20321,18 +20414,6 @@ export const ApiResponseListCompetitionTeamSchema = {
   },
 } as const;
 
-export const PaymentStatusResponseSchema = {
-  type: 'object',
-  description: 'Current payment status of an order',
-  properties: {
-    status: {
-      type: 'string',
-      description: 'Payment status',
-      example: 'CAPTURED',
-    },
-  },
-} as const;
-
 export const ApiResponseListCommerceCatalogueItemSchema = {
   type: 'object',
   properties: {
@@ -22403,6 +22484,15 @@ export const LocationTypeEnumSchema = {
   enum: ['ONLINE', 'IN_PERSON', 'HYBRID'],
 } as const;
 
+export const RateBasisEnumSchema = {
+  type: ['string', 'null'],
+  description:
+    '**[READ-ONLY]** Unit the sale price and instructor pay are quoted in, carried over from the job that contracted this class.',
+  enum: ['per_hour', 'per_session', 'per_day'],
+  example: 'per_hour',
+  readOnly: true,
+} as const;
+
 export const RecurrenceTypeEnumSchema = {
   type: 'string',
   description: 'Recurrence type to apply for the session template',
@@ -22427,6 +22517,12 @@ export const ServiceTypeEnumSchema = {
 export const StatusEnum8Schema = {
   type: 'string',
   enum: ['open', 'awaiting_class', 'filled', 'cancelled', 'expired'],
+  readOnly: true,
+} as const;
+
+export const RateBasisEnum2Schema = {
+  type: 'string',
+  enum: ['per_hour', 'per_session', 'per_day'],
   readOnly: true,
 } as const;
 
@@ -22730,6 +22826,12 @@ export const EntryTypeEnum2Schema = {
   description: 'Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE',
   enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'],
   example: 'SCHEDULED_INSTANCE',
+} as const;
+
+export const LatestEnrollmentStatusEnumSchema = {
+  type: 'string',
+  description: 'Most recent scheduled-instance enrollment status for this class',
+  enum: ['RESERVED', 'ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
 } as const;
 
 export const StatusEnum20Schema = {
@@ -23342,4 +23444,10 @@ export const EntryTypeEnum2WritableSchema = {
   description: 'Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE',
   enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'],
   example: 'SCHEDULED_INSTANCE',
+} as const;
+
+export const LatestEnrollmentStatusEnumWritableSchema = {
+  type: 'string',
+  description: 'Most recent scheduled-instance enrollment status for this class',
+  enum: ['RESERVED', 'ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
 } as const;

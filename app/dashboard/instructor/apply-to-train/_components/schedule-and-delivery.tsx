@@ -1,5 +1,11 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
+import { Globe, MapPin, Monitor, Plus, Search, X } from 'lucide-react';
+import { useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { z } from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,12 +24,6 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { getCourseByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
-import { Globe, MapPin, Monitor, Plus, Search, X } from 'lucide-react';
-import { useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
-import { z } from 'zod';
 
 type Trainer = {
   id: string;
@@ -44,10 +44,18 @@ type ScheduleAndDeliveryData = {
   leadTrainer?: Trainer | null;
   supportTrainers?: Trainer[];
   rateCurrency?: string;
-  privateOnlineRate?: number;
-  privateInpersonRate?: number;
-  groupOnlineRate?: number;
-  groupInpersonRate?: number;
+  groupInpersonHourlyRate?: number;
+  groupInpersonSessionRate?: number;
+  groupInpersonDailyRate?: number;
+  groupOnlineHourlyRate?: number;
+  groupOnlineSessionRate?: number;
+  groupOnlineDailyRate?: number;
+  privateInpersonHourlyRate?: number;
+  privateInpersonSessionRate?: number;
+  privateInpersonDailyRate?: number;
+  privateOnlineHourlyRate?: number;
+  privateOnlineSessionRate?: number;
+  privateOnlineDailyRate?: number;
 } | null;
 
 type InstructorProfile = {
@@ -64,9 +72,39 @@ type SelectedCourse = {
   class_limit?: number | string | null;
 } | null;
 
+const RATE_MODALITIES = [
+  { prefix: 'groupInperson', label: 'Group · In person' },
+  { prefix: 'groupOnline', label: 'Group · Online' },
+  { prefix: 'privateInperson', label: 'One-on-one · In person' },
+  { prefix: 'privateOnline', label: 'One-on-one · Online' },
+] as const;
+
+const RATE_BASIS_GROUPS = [
+  {
+    suffix: 'Hourly',
+    title: 'Per hour',
+    hint: 'Required. What you charge for an hour of teaching.',
+  },
+  {
+    suffix: 'Session',
+    title: 'Per session',
+    hint: 'Optional. What you charge for a single session, whatever its length. Leave blank and you cannot be assigned to jobs contracted per session.',
+  },
+  {
+    suffix: 'Daily',
+    title: 'Per day',
+    hint: 'Optional. What you charge for a calendar day, however many sessions fall in it. Leave blank and you cannot be assigned to jobs contracted per day.',
+  },
+] as const;
+
 const rateField = z.preprocess(
   val => (val === '' || val == null ? undefined : typeof val === 'number' ? val : Number(val)),
   z.number({ required_error: 'Rate is required' }).min(0, { message: 'Rate cannot be negative' })
+);
+
+const optionalRateField = z.preprocess(
+  val => (val === '' || val == null ? undefined : typeof val === 'number' ? val : Number(val)),
+  z.number().min(0, { message: 'Rate cannot be negative' }).optional()
 );
 
 // ✅ Zod Schema
@@ -93,10 +131,18 @@ const scheduleSchema = z
     max_students: z.unknown(),
 
     rateCurrency: z.string().regex(/^[A-Za-z]{3}$/, { message: 'Use a 3-letter ISO code' }),
-    privateOnlineRate: rateField,
-    privateInpersonRate: rateField,
-    groupOnlineRate: rateField,
-    groupInpersonRate: rateField,
+    groupInpersonHourlyRate: rateField,
+    groupOnlineHourlyRate: rateField,
+    privateInpersonHourlyRate: rateField,
+    privateOnlineHourlyRate: rateField,
+    groupInpersonSessionRate: optionalRateField,
+    groupInpersonDailyRate: optionalRateField,
+    groupOnlineSessionRate: optionalRateField,
+    groupOnlineDailyRate: optionalRateField,
+    privateInpersonSessionRate: optionalRateField,
+    privateInpersonDailyRate: optionalRateField,
+    privateOnlineSessionRate: optionalRateField,
+    privateOnlineDailyRate: optionalRateField,
   })
   .superRefine((data, ctx) => {
     if (data.trainingMode === 'IN_PERSON' || data.trainingMode === 'HYBRID') {
@@ -174,10 +220,18 @@ export function ScheduleAndDelivery({
       allowOneOnOne: data?.allowOneOnOne || false,
       max_students: courseDetails?.data?.class_limit ?? '',
       rateCurrency: (data?.rateCurrency as string) || 'KES',
-      privateOnlineRate: data?.privateOnlineRate,
-      privateInpersonRate: data?.privateInpersonRate,
-      groupOnlineRate: data?.groupOnlineRate,
-      groupInpersonRate: data?.groupInpersonRate,
+      groupInpersonHourlyRate: data?.groupInpersonHourlyRate,
+      groupInpersonSessionRate: data?.groupInpersonSessionRate,
+      groupInpersonDailyRate: data?.groupInpersonDailyRate,
+      groupOnlineHourlyRate: data?.groupOnlineHourlyRate,
+      groupOnlineSessionRate: data?.groupOnlineSessionRate,
+      groupOnlineDailyRate: data?.groupOnlineDailyRate,
+      privateInpersonHourlyRate: data?.privateInpersonHourlyRate,
+      privateInpersonSessionRate: data?.privateInpersonSessionRate,
+      privateInpersonDailyRate: data?.privateInpersonDailyRate,
+      privateOnlineHourlyRate: data?.privateOnlineHourlyRate,
+      privateOnlineSessionRate: data?.privateOnlineSessionRate,
+      privateOnlineDailyRate: data?.privateOnlineDailyRate,
     },
   });
 
@@ -470,8 +524,9 @@ export function ScheduleAndDelivery({
           <CardHeader>
             <CardTitle>Your Rates</CardTitle>
             <p className='text-muted-foreground text-sm'>
-              The rate you charge per session for each delivery combination. The course creator
-              approves these, and the approved figure is what organisations pay you.
+              What you charge for each delivery combination, in each unit a job can be contracted
+              in. The course creator approves these, and the approved figure is what organisations
+              pay you.
             </p>
           </CardHeader>
           <CardContent className='space-y-4'>
@@ -488,36 +543,42 @@ export function ScheduleAndDelivery({
                 </FormItem>
               )}
             />
-            <div className='grid gap-4 sm:grid-cols-2'>
-              {[
-                { name: 'groupInpersonRate' as const, label: 'Group · In person' },
-                { name: 'groupOnlineRate' as const, label: 'Group · Online' },
-                { name: 'privateInpersonRate' as const, label: 'One-on-one · In person' },
-                { name: 'privateOnlineRate' as const, label: 'One-on-one · Online' },
-              ].map(rate => (
-                <FormField
-                  key={rate.name}
-                  control={form.control}
-                  name={rate.name}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{rate.label}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='number'
-                          min={0}
-                          step='0.01'
-                          placeholder='0.00'
-                          {...field}
-                          value={field.value ?? ''}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
-            </div>
+            {RATE_BASIS_GROUPS.map(group => (
+              <div key={group.suffix} className='space-y-3'>
+                <div>
+                  <h4 className='text-sm font-medium'>{group.title}</h4>
+                  <p className='text-muted-foreground text-xs'>{group.hint}</p>
+                </div>
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  {RATE_MODALITIES.map(modality => {
+                    const name = `${modality.prefix}${group.suffix}Rate` as const;
+                    return (
+                      <FormField
+                        key={name}
+                        control={form.control}
+                        name={name}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{modality.label}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type='number'
+                                min={0}
+                                step='0.01'
+                                placeholder='0.00'
+                                {...field}
+                                value={field.value ?? ''}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 

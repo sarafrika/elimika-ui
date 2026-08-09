@@ -81,8 +81,8 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { client } from '@/services/client/client.gen';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { absoluteUrl, publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 const currency = new Intl.NumberFormat('en-KE', {
   style: 'currency',
@@ -161,15 +161,15 @@ const kindColor = {
 };
 
 const RATE_TIERS: { method: string; fmt: string; loc: string; key: string }[] = [
-  { method: 'Group In-Person', fmt: 'GROUP', loc: 'IN_PERSON', key: 'group_inperson_rate' },
-  { method: 'Group Virtual', fmt: 'GROUP', loc: 'ONLINE', key: 'group_online_rate' },
+  { method: 'Group In-Person', fmt: 'GROUP', loc: 'IN_PERSON', key: 'group_inperson_hourly_rate' },
+  { method: 'Group Virtual', fmt: 'GROUP', loc: 'ONLINE', key: 'group_online_hourly_rate' },
   {
     method: 'Private In-Person',
     fmt: 'INDIVIDUAL',
     loc: 'IN_PERSON',
-    key: 'private_inperson_rate',
+    key: 'private_inperson_hourly_rate',
   },
-  { method: 'Private Virtual', fmt: 'INDIVIDUAL', loc: 'ONLINE', key: 'private_online_rate' },
+  { method: 'Private Virtual', fmt: 'INDIVIDUAL', loc: 'ONLINE', key: 'private_online_hourly_rate' },
 ];
 
 const instructorName = (u?: User) =>

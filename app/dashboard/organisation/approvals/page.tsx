@@ -90,11 +90,63 @@ type RequestRow = {
 
 type EditForm = {
   currency: string;
-  privateOnline: string;
-  privateInperson: string;
-  groupOnline: string;
-  groupInperson: string;
+  privateOnlineHourly: string;
+  privateOnlineSession: string;
+  privateOnlineDaily: string;
+  privateInpersonHourly: string;
+  privateInpersonSession: string;
+  privateInpersonDaily: string;
+  groupOnlineHourly: string;
+  groupOnlineSession: string;
+  groupOnlineDaily: string;
+  groupInpersonHourly: string;
+  groupInpersonSession: string;
+  groupInpersonDaily: string;
   notes: string;
+};
+
+const RATE_MODALITIES = [
+  { prefix: 'privateOnline', label: 'Private · online' },
+  { prefix: 'privateInperson', label: 'Private · in-person' },
+  { prefix: 'groupOnline', label: 'Group · online' },
+  { prefix: 'groupInperson', label: 'Group · in-person' },
+] as const;
+
+const RATE_BASIS_GROUPS = [
+  { suffix: 'Hourly', title: 'Per hour', hint: 'Required. The rate for an hour of teaching.' },
+  {
+    suffix: 'Session',
+    title: 'Per session',
+    hint: 'Optional. Leave blank and this applicant cannot take jobs contracted per session.',
+  },
+  {
+    suffix: 'Daily',
+    title: 'Per day',
+    hint: 'Optional. A calendar day, however many sessions fall in it.',
+  },
+] as const;
+
+const RATE_CARD_KEY: Record<string, Record<string, keyof CourseTrainingRateCard>> = {
+  privateOnline: {
+    Hourly: 'private_online_hourly_rate',
+    Session: 'private_online_session_rate',
+    Daily: 'private_online_daily_rate',
+  },
+  privateInperson: {
+    Hourly: 'private_inperson_hourly_rate',
+    Session: 'private_inperson_session_rate',
+    Daily: 'private_inperson_daily_rate',
+  },
+  groupOnline: {
+    Hourly: 'group_online_hourly_rate',
+    Session: 'group_online_session_rate',
+    Daily: 'group_online_daily_rate',
+  },
+  groupInperson: {
+    Hourly: 'group_inperson_hourly_rate',
+    Session: 'group_inperson_session_rate',
+    Daily: 'group_inperson_daily_rate',
+  },
 };
 
 const num = (value: string): number => {
@@ -102,12 +154,21 @@ const num = (value: string): number => {
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
+// Blank stays blank: applyRateCard overwrites every cell, so sending 0 for an unpriced basis would
+// advertise free work rather than leaving the applicant ineligible for jobs contracted that way.
+const optionalNum = (value: string): number | undefined => {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const parsed = Number(trimmed);
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
+
 const formatDate = (value?: string | Date | null): string =>
   value ? dayjs.utc(value).format('DD MMM YYYY') : '—';
 
 const formatRate = (rateCard?: CourseTrainingRateCard): string => {
   if (!rateCard) return '—';
-  const rate = rateCard.group_online_rate ?? rateCard.private_online_rate;
+  const rate = rateCard.group_online_hourly_rate ?? rateCard.private_online_hourly_rate;
   if (rate === undefined || rate === null) return '—';
   return `${rateCard.currency ?? ''} ${Number(rate).toLocaleString()}`.trim();
 };
@@ -274,10 +335,18 @@ export default function OrganisationApprovalsPage() {
     setEditRow(row);
     setForm({
       currency: row.rateCard?.currency ?? 'KES',
-      privateOnline: String(row.rateCard?.private_online_rate ?? ''),
-      privateInperson: String(row.rateCard?.private_inperson_rate ?? ''),
-      groupOnline: String(row.rateCard?.group_online_rate ?? ''),
-      groupInperson: String(row.rateCard?.group_inperson_rate ?? ''),
+      privateOnlineHourly: String(row.rateCard?.private_online_hourly_rate ?? ''),
+      privateOnlineSession: String(row.rateCard?.private_online_session_rate ?? ''),
+      privateOnlineDaily: String(row.rateCard?.private_online_daily_rate ?? ''),
+      privateInpersonHourly: String(row.rateCard?.private_inperson_hourly_rate ?? ''),
+      privateInpersonSession: String(row.rateCard?.private_inperson_session_rate ?? ''),
+      privateInpersonDaily: String(row.rateCard?.private_inperson_daily_rate ?? ''),
+      groupOnlineHourly: String(row.rateCard?.group_online_hourly_rate ?? ''),
+      groupOnlineSession: String(row.rateCard?.group_online_session_rate ?? ''),
+      groupOnlineDaily: String(row.rateCard?.group_online_daily_rate ?? ''),
+      groupInpersonHourly: String(row.rateCard?.group_inperson_hourly_rate ?? ''),
+      groupInpersonSession: String(row.rateCard?.group_inperson_session_rate ?? ''),
+      groupInpersonDaily: String(row.rateCard?.group_inperson_daily_rate ?? ''),
       notes: row.applicationNotes ?? '',
     });
   };
@@ -293,10 +362,18 @@ export default function OrganisationApprovalsPage() {
     const body = {
       rate_card: {
         currency: form.currency.trim() || undefined,
-        private_online_rate: num(form.privateOnline),
-        private_inperson_rate: num(form.privateInperson),
-        group_online_rate: num(form.groupOnline),
-        group_inperson_rate: num(form.groupInperson),
+        private_online_hourly_rate: num(form.privateOnlineHourly),
+        private_inperson_hourly_rate: num(form.privateInpersonHourly),
+        group_online_hourly_rate: num(form.groupOnlineHourly),
+        group_inperson_hourly_rate: num(form.groupInpersonHourly),
+        private_online_session_rate: optionalNum(form.privateOnlineSession),
+        private_online_daily_rate: optionalNum(form.privateOnlineDaily),
+        private_inperson_session_rate: optionalNum(form.privateInpersonSession),
+        private_inperson_daily_rate: optionalNum(form.privateInpersonDaily),
+        group_online_session_rate: optionalNum(form.groupOnlineSession),
+        group_online_daily_rate: optionalNum(form.groupOnlineDaily),
+        group_inperson_session_rate: optionalNum(form.groupInpersonSession),
+        group_inperson_daily_rate: optionalNum(form.groupInpersonDaily),
       },
       application_notes: form.notes.trim() || undefined,
     };
@@ -514,19 +591,18 @@ export default function OrganisationApprovalsPage() {
             <div className='grid gap-3 sm:grid-cols-2'>
               <Detail label='Status' value={<StatusPill status={viewRow.status} />} />
               <Detail label='Currency' value={viewRow.rateCard?.currency ?? '—'} />
-              <Detail
-                label='Private · online'
-                value={viewRow.rateCard?.private_online_rate ?? '—'}
-              />
-              <Detail
-                label='Private · in-person'
-                value={viewRow.rateCard?.private_inperson_rate ?? '—'}
-              />
-              <Detail label='Group · online' value={viewRow.rateCard?.group_online_rate ?? '—'} />
-              <Detail
-                label='Group · in-person'
-                value={viewRow.rateCard?.group_inperson_rate ?? '—'}
-              />
+              {RATE_BASIS_GROUPS.map(group =>
+                RATE_MODALITIES.map(modality => {
+                  const cell = RATE_CARD_KEY[modality.prefix][group.suffix];
+                  return (
+                    <Detail
+                      key={cell}
+                      label={`${modality.label} · ${group.title.toLowerCase()}`}
+                      value={viewRow.rateCard?.[cell] ?? '—'}
+                    />
+                  );
+                })
+              )}
               <Detail label='Submitted' value={formatDate(viewRow.createdDate)} />
               <Detail label='Reviewed' value={formatDate(viewRow.reviewedAt)} />
               <Detail label='Application notes' value={viewRow.applicationNotes ?? '—'} />
@@ -558,48 +634,31 @@ export default function OrganisationApprovalsPage() {
                   placeholder='KES'
                 />
               </div>
-              <div className='grid gap-4 sm:grid-cols-2'>
-                <div className='space-y-2'>
-                  <Label>Private · online rate</Label>
-                  <Input
-                    type='number'
-                    min={0}
-                    step='0.01'
-                    value={form.privateOnline}
-                    onChange={event => setForm({ ...form, privateOnline: event.target.value })}
-                  />
+              {RATE_BASIS_GROUPS.map(group => (
+                <div key={group.suffix} className='space-y-3'>
+                  <div>
+                    <h4 className='text-sm font-medium'>{group.title}</h4>
+                    <p className='text-muted-foreground text-xs'>{group.hint}</p>
+                  </div>
+                  <div className='grid gap-4 sm:grid-cols-2'>
+                    {RATE_MODALITIES.map(modality => {
+                      const key = `${modality.prefix}${group.suffix}` as keyof EditForm;
+                      return (
+                        <div key={key} className='space-y-2'>
+                          <Label>{modality.label} rate</Label>
+                          <Input
+                            type='number'
+                            min={0}
+                            step='0.01'
+                            value={form[key]}
+                            onChange={event => setForm({ ...form, [key]: event.target.value })}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className='space-y-2'>
-                  <Label>Private · in-person rate</Label>
-                  <Input
-                    type='number'
-                    min={0}
-                    step='0.01'
-                    value={form.privateInperson}
-                    onChange={event => setForm({ ...form, privateInperson: event.target.value })}
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label>Group · online rate</Label>
-                  <Input
-                    type='number'
-                    min={0}
-                    step='0.01'
-                    value={form.groupOnline}
-                    onChange={event => setForm({ ...form, groupOnline: event.target.value })}
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label>Group · in-person rate</Label>
-                  <Input
-                    type='number'
-                    min={0}
-                    step='0.01'
-                    value={form.groupInperson}
-                    onChange={event => setForm({ ...form, groupInperson: event.target.value })}
-                  />
-                </div>
-              </div>
+              ))}
               <div className='space-y-2'>
                 <Label>Application notes</Label>
                 <Textarea

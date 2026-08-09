@@ -20,6 +20,7 @@ import {
   type DayKey,
   type DayRow,
   DEFAULT_DAYS,
+  DEFAULT_RATE_BASIS,
   type Delivery,
   EquipmentTarget,
   firstOccurrenceOnOrAfter,
@@ -31,10 +32,13 @@ import {
   PickDatesPanel,
   type PreviewWindow,
   PricingCapacity,
+  type RateBasis,
   REMINDER_MINUTES,
   ReminderOptions,
   type ReminderState,
   ResourceAvailabilityPreview,
+  rateBasisLabel,
+  rateBasisUnit,
   type ScheduleMode,
   ScheduleModeCards,
   SERVICE_TYPE_ENUM,
@@ -248,9 +252,10 @@ export default function OrganisationPostJobPage() {
   const [equipmentUuids, setEquipmentUuids] = useState<string[]>([]);
   const [targetGroupUuids, setTargetGroupUuids] = useState<string[]>([]);
 
+  const [rateBasis, setRateBasis] = useState<RateBasis>(DEFAULT_RATE_BASIS);
   const approvedFee = useMemo(
-    () => approvedRateFor(selectedOffering?.rateCard, sessionFormat, delivery),
-    [selectedOffering, sessionFormat, delivery]
+    () => approvedRateFor(selectedOffering?.rateCard, sessionFormat, delivery, rateBasis),
+    [selectedOffering, sessionFormat, delivery, rateBasis]
   );
   const [salePrice, setSalePrice] = useState('');
   const [instructorPay, setInstructorPay] = useState('');
@@ -384,6 +389,7 @@ export default function OrganisationPostJobPage() {
       setMaxParticipants(String(editingJob.max_participants));
     }
     if (editingJob.allow_waitlist != null) setAllowWaitlist(editingJob.allow_waitlist);
+    if (editingJob.rate_basis) setRateBasis(editingJob.rate_basis as RateBasis);
     if (editingJob.sale_price != null || editingJob.instructor_pay != null) {
       setFeesDirty(true);
       if (editingJob.sale_price != null) setSalePrice(String(editingJob.sale_price));
@@ -487,6 +493,10 @@ export default function OrganisationPostJobPage() {
   );
   const totalSessions = upcomingSessions.length;
   const totalMinutes = upcomingSessions.reduce((sum, session) => sum + (session.minutes ?? 0), 0);
+  const totalDays = useMemo(
+    () => new Set(upcomingSessions.map(session => session.date.toDateString())).size,
+    [upcomingSessions]
+  );
 
   const updateDay = (d: DayKey, patch: Partial<DayRow>) =>
     setDays(prev => ({ ...prev, [d]: { ...prev[d], ...patch } }));
@@ -598,16 +608,18 @@ export default function OrganisationPostJobPage() {
     }
     if (approvedFee === undefined) {
       return toast.error(
-        'The course creator has not approved a rate for this session format and delivery mode.'
+        `The course creator has not approved a ${rateBasisLabel(rateBasis).toLowerCase()} rate for this session format and delivery mode.`
       );
     }
     const saleValue = num(salePrice);
     const payValue = num(instructorPay);
     if (saleValue === undefined || saleValue < 0) {
-      return toast.error('Enter the sale price learners are charged per hour.');
+      return toast.error(
+        `Enter the sale price learners are charged per ${rateBasisUnit(rateBasis)}.`
+      );
     }
     if (payValue === undefined || payValue < 0) {
-      return toast.error('Enter the pay the instructor receives per hour.');
+      return toast.error(`Enter the pay the instructor receives per ${rateBasisUnit(rateBasis)}.`);
     }
     if (payValue > saleValue) {
       return toast.error('Instructor pay cannot exceed the sale price.');
@@ -677,6 +689,7 @@ export default function OrganisationPostJobPage() {
       allow_waitlist: allowWaitlist,
       sale_price: saleValue,
       instructor_pay: payValue,
+      rate_basis: rateBasis,
       service_type: SERVICE_TYPE_ENUM[service],
       ...(targetGroupUuids.length > 0 ? { target_group_uuids: targetGroupUuids } : {}),
       ...(offeringKind === 'program' && programCategoryUuid
@@ -749,6 +762,7 @@ export default function OrganisationPostJobPage() {
           onChange={setService}
           rateCard={selectedOffering?.rateCard}
           delivery={delivery}
+          rateBasis={rateBasis}
         />
 
         <PricingCapacity
@@ -764,6 +778,9 @@ export default function OrganisationPostJobPage() {
           onAllowWaitlistChange={setAllowWaitlist}
           totalSessions={totalSessions}
           totalMinutes={totalMinutes}
+          totalDays={totalDays}
+          rateBasis={rateBasis}
+          onRateBasisChange={setRateBasis}
         />
 
         <LocationVenue

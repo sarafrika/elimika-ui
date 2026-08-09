@@ -1075,10 +1075,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   const handleApplyToTrain = (data: {
     notes: string;
-    private_online_rate: number;
-    private_inperson_rate: number;
-    group_online_rate: number;
-    group_inperson_rate: number;
+    private_online_hourly_rate: number;
+    private_inperson_hourly_rate: number;
+    group_online_hourly_rate: number;
+    group_inperson_hourly_rate: number;
     rate_currency: string;
   }) => {
     if (!selectedApplicationCard || !applicantUuid) return;
@@ -1088,10 +1088,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       applicant_uuid: applicantUuid,
       rate_card: {
         currency: data.rate_currency,
-        private_online_rate: data.private_online_rate,
-        private_inperson_rate: data.private_inperson_rate,
-        group_online_rate: data.group_online_rate,
-        group_inperson_rate: data.group_inperson_rate,
+        private_online_hourly_rate: data.private_online_hourly_rate,
+        private_inperson_hourly_rate: data.private_inperson_hourly_rate,
+        group_online_hourly_rate: data.group_online_hourly_rate,
+        group_inperson_hourly_rate: data.group_inperson_hourly_rate,
       },
       application_notes: data.notes,
     };

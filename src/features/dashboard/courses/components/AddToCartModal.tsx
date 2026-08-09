@@ -1,5 +1,6 @@
 'use client';
 
+import { type RateBasis, rateBasisUnit } from '@/components/class-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -83,7 +84,9 @@ export default function AddToCartModal({
               <div className='text-foreground text-lg font-semibold'>
                 {cls?.sale_price ? `KES ${cls.sale_price}` : 'Free'}
               </div>
-              <span className='text-sm'>(per hour per head)</span>
+              <span className='text-sm'>
+                (per {rateBasisUnit(cls?.rate_basis as RateBasis)} per head)
+              </span>
             </div>
 
             <div className='mt-3 flex flex-wrap items-center gap-2'>

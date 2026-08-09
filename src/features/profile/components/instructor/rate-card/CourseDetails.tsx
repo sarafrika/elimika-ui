@@ -84,7 +84,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 <h3 className='text-lg font-semibold'>Private Online</h3>
                 <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
                 <p className='mt-2 text-xl font-bold'>
-                  {rates?.currency} {rates?.private_online_rate}
+                  {rates?.currency} {rates?.private_online_hourly_rate}
                 </p>
               </div>
 
@@ -93,7 +93,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 <h3 className='text-lg font-semibold'>Private In-person</h3>
                 <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
                 <p className='mt-2 text-xl font-bold'>
-                  {rates?.currency} {rates?.private_inperson_rate}
+                  {rates?.currency} {rates?.private_inperson_hourly_rate}
                 </p>
               </div>
 
@@ -102,7 +102,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 <h3 className='text-lg font-semibold'>Group Online</h3>
                 <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
                 <p className='mt-2 text-xl font-bold'>
-                  {rates?.currency} {rates?.group_online_rate}
+                  {rates?.currency} {rates?.group_online_hourly_rate}
                 </p>
               </div>
 
@@ -111,7 +111,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 <h3 className='text-lg font-semibold'>Group In-person</h3>
                 <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
                 <p className='mt-2 text-xl font-bold'>
-                  {rates?.currency} {rates?.group_inperson_rate}
+                  {rates?.currency} {rates?.group_inperson_hourly_rate}
                 </p>
               </div>
             </div>

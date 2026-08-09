@@ -276,7 +276,7 @@ import type {
   GenerateCourseCertificateResponse,
   CreateBookingResponse,
   RequestPaymentResponse,
-  PaymentCallbackResponse,
+  PaymentCallback1Response,
   DeclineBookingResponse,
   CancelBookingResponse,
   AcceptBookingResponse,
@@ -5057,9 +5057,9 @@ export const requestPaymentResponseTransformer = async (
   return data;
 };
 
-export const paymentCallbackResponseTransformer = async (
+export const paymentCallback1ResponseTransformer = async (
   data: any
-): Promise<PaymentCallbackResponse> => {
+): Promise<PaymentCallback1Response> => {
   data = apiResponseBookingResponseSchemaResponseTransformer(data);
   return data;
 };

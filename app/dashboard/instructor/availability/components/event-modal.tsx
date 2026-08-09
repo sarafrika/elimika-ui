@@ -50,10 +50,10 @@ import Spinner from '../../../../../components/ui/spinner';
 import type { CalendarEvent } from './types';
 
 type RateKey =
-  | 'private_online_rate'
-  | 'private_inperson_rate'
-  | 'group_online_rate'
-  | 'group_inperson_rate';
+  | 'private_online_hourly_rate'
+  | 'private_inperson_hourly_rate'
+  | 'group_online_hourly_rate'
+  | 'group_inperson_hourly_rate';
 
 type Rates = {
   currency: string;
@@ -323,22 +323,22 @@ export function EventModal({
       (
         [
           {
-            key: 'private_online_rate',
+            key: 'private_online_hourly_rate',
             label: 'Private online',
             description: 'One learner, virtual delivery',
           },
           {
-            key: 'private_inperson_rate',
+            key: 'private_inperson_hourly_rate',
             label: 'Private in person',
             description: 'One learner, onsite delivery',
           },
           {
-            key: 'group_online_rate',
+            key: 'group_online_hourly_rate',
             label: 'Group online',
             description: 'Multiple learners, virtual delivery',
           },
           {
-            key: 'group_inperson_rate',
+            key: 'group_inperson_hourly_rate',
             label: 'Group in person',
             description: 'Multiple learners, onsite delivery',
           },

@@ -12,6 +12,7 @@ import {
   SectionCard,
   StatusBadge,
 } from '@/app/dashboard/admin/_components/ui';
+import { type RateBasis, rateBasisShort, rateBasisUnit } from '@/components/class-form';
 import { InstructorReviewProfile } from '@/components/instructor-review/InstructorReviewProfile';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,8 @@ export function JobApplicantReviewPage({
     enabled: Boolean(jobUuid),
   });
   const job = jobQuery.data?.data ?? null;
+  const basisShort = rateBasisShort(job?.rate_basis as RateBasis);
+  const basisUnit = rateBasisUnit(job?.rate_basis as RateBasis);
 
   const applicationsQuery = useQuery({
     ...listJobApplicationsOptions({
@@ -186,23 +189,23 @@ export function JobApplicantReviewPage({
                 <>
                   {typeof application.approved_rate === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Approved rate: {formatCurrency(application.approved_rate)} / hr
+                      Approved rate: {formatCurrency(application.approved_rate)} / {basisShort}
                     </Badge>
                   ) : null}
                   {typeof job?.sale_price === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Sale price: {formatCurrency(job.sale_price)} / hr
+                      Sale price: {formatCurrency(job.sale_price)} / {basisShort}
                     </Badge>
                   ) : null}
                   {typeof job?.instructor_pay === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Instructor pay: {formatCurrency(job.instructor_pay)} / hr
+                      Instructor pay: {formatCurrency(job.instructor_pay)} / {basisShort}
                     </Badge>
                   ) : null}
                   {typeof job?.sale_price === 'number' &&
                   typeof job?.instructor_pay === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Margin: {formatCurrency(job.sale_price - job.instructor_pay)} / hr
+                      Margin: {formatCurrency(job.sale_price - job.instructor_pay)} / {basisShort}
                     </Badge>
                   ) : null}
                 </>
@@ -238,7 +241,7 @@ export function JobApplicantReviewPage({
                     <div className='border-warning/60 bg-warning/10 text-foreground flex items-center gap-2 rounded-md border p-3'>
                       <TriangleAlert className='text-warning size-4 shrink-0' />
                       <span>
-                        This job pays {formatCurrency(job?.instructor_pay)} per hour, below the{' '}
+                        This job pays {formatCurrency(job?.instructor_pay)} per {basisUnit}, below the{' '}
                         {formatCurrency(application.approved_rate)} on this instructor’s rate card.
                         Assignment will be refused until you raise the instructor pay.
                       </span>

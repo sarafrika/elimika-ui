@@ -1,11 +1,3 @@
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import {
   AlertTriangle,
   BookOpen,
@@ -21,6 +13,14 @@ import {
   User,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
 import { getTotalExperienceYears } from './apply-to-train';
@@ -48,10 +48,18 @@ type ReviewData = {
   registrationNumber?: string;
   skills?: string[];
   trainingMode?: string;
-  privateOnlineRate?: number | string;
-  privateInpersonRate?: number | string;
-  groupOnlineRate?: number | string;
-  groupInpersonRate?: number | string;
+  privateOnlineHourlyRate?: number | string;
+  privateOnlineSessionRate?: number | string;
+  privateOnlineDailyRate?: number | string;
+  privateInpersonHourlyRate?: number | string;
+  privateInpersonSessionRate?: number | string;
+  privateInpersonDailyRate?: number | string;
+  groupOnlineHourlyRate?: number | string;
+  groupOnlineSessionRate?: number | string;
+  groupOnlineDailyRate?: number | string;
+  groupInpersonHourlyRate?: number | string;
+  groupInpersonSessionRate?: number | string;
+  groupInpersonDailyRate?: number | string;
   minStudents?: number | string;
   maxStudents?: number | string;
   trainingCity?: string;
@@ -127,12 +135,12 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
         isComplete: Boolean(data?.trainingMode),
       },
       {
-        label: 'Session Rates',
+        label: 'Hourly Rates',
         isComplete: [
-          data?.privateOnlineRate,
-          data?.privateInpersonRate,
-          data?.groupOnlineRate,
-          data?.groupInpersonRate,
+          data?.privateOnlineHourlyRate,
+          data?.privateInpersonHourlyRate,
+          data?.groupOnlineHourlyRate,
+          data?.groupInpersonHourlyRate,
         ].every(rate => Number.isFinite(Number(rate))),
       },
       {

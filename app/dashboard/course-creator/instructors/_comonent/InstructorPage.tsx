@@ -306,14 +306,14 @@ function ApplicationCard({
                 <span className='text-muted-foreground'>Private online:</span>
                 <p className='text-foreground font-medium'>
                   {application.rate_card.currency || 'KES'}{' '}
-                  {application.rate_card.private_online_rate || 0}
+                  {application.rate_card.private_online_hourly_rate || 0}
                 </p>
               </div>
               <div>
                 <span className='text-muted-foreground'>Group online:</span>
                 <p className='text-foreground font-medium'>
                   {application.rate_card.currency || 'KES'}{' '}
-                  {application.rate_card.group_online_rate || 0}
+                  {application.rate_card.group_online_hourly_rate || 0}
                 </p>
               </div>
             </div>

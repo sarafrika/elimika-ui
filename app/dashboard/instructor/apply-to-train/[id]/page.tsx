@@ -1,5 +1,10 @@
 'use client';
 
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { ArrowLeft, ArrowRight, Save, UserCheck } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -10,12 +15,6 @@ import {
   getUserByUuidOptions,
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, Save, UserCheck } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-
-import { useParams, useRouter } from 'next/navigation';
 import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
 import { ComplianceRequirements } from '../_components/compliance-requirement';
 import { CourseProposal } from '../_components/course-proposal';
@@ -170,18 +169,13 @@ export default function ApplyToTrain() {
       const value = Number(applicationData[key]);
       return Number.isFinite(value) ? value : null;
     };
-    const privateOnline = rate('privateOnlineRate');
-    const privateInperson = rate('privateInpersonRate');
-    const groupOnline = rate('groupOnlineRate');
-    const groupInperson = rate('groupInpersonRate');
+    const privateOnlineHourly = rate('privateOnlineHourlyRate');
+    const privateInpersonHourly = rate('privateInpersonHourlyRate');
+    const groupOnlineHourly = rate('groupOnlineHourlyRate');
+    const groupInpersonHourly = rate('groupInpersonHourlyRate');
 
-    if (
-      privateOnline === null ||
-      privateInperson === null ||
-      groupOnline === null ||
-      groupInperson === null
-    ) {
-      toast.error('Add all four session rates on the Schedule & Delivery step before submitting.');
+    if ([privateOnlineHourly, privateInpersonHourly, groupOnlineHourly, groupInpersonHourly].some(value => value === null)) {
+      toast.error('Add all four hourly rates on the Schedule & Delivery step before submitting.');
       return;
     }
 
@@ -192,10 +186,18 @@ export default function ApplyToTrain() {
         applicant_uuid: instructor.uuid,
         rate_card: {
           currency: ((applicationData.rateCurrency as string) || 'KES').toUpperCase(),
-          private_online_rate: privateOnline,
-          private_inperson_rate: privateInperson,
-          group_online_rate: groupOnline,
-          group_inperson_rate: groupInperson,
+          private_online_hourly_rate: privateOnlineHourly,
+          private_inperson_hourly_rate: privateInpersonHourly,
+          group_online_hourly_rate: groupOnlineHourly,
+          group_inperson_hourly_rate: groupInpersonHourly,
+          private_online_session_rate: rate('privateOnlineSessionRate') ?? undefined,
+          private_online_daily_rate: rate('privateOnlineDailyRate') ?? undefined,
+          private_inperson_session_rate: rate('privateInpersonSessionRate') ?? undefined,
+          private_inperson_daily_rate: rate('privateInpersonDailyRate') ?? undefined,
+          group_online_session_rate: rate('groupOnlineSessionRate') ?? undefined,
+          group_online_daily_rate: rate('groupOnlineDailyRate') ?? undefined,
+          group_inperson_session_rate: rate('groupInpersonSessionRate') ?? undefined,
+          group_inperson_daily_rate: rate('groupInpersonDailyRate') ?? undefined,
         },
         application_notes: (applicationData.applicationNotes as string) || undefined,
       },
