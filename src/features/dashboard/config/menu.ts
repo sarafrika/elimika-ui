@@ -242,11 +242,11 @@ export default {
           url: '/dashboard/calendar',
           icon: Calendar,
         },
-        {
-          title: 'Portfolio',
-          url: '/dashboard/portfolio',
-          icon: Briefcase,
-        },
+        // {
+        //   title: 'Portfolio',
+        //   url: '/dashboard/portfolio',
+        //   icon: Briefcase,
+        // },
         // {
         //   title: 'Contacts',
         //   url: '/dashboard/contacts',
@@ -268,21 +268,21 @@ export default {
       title: 'Assessment',
       icon: ClipboardList,
       items: [
-        {
-          title: 'Assignment',
-          url: '/dashboard/assignment',
-          icon: FileText,
-        },
+        // {
+        //   title: 'Assignment',
+        //   url: '/dashboard/assignment',
+        //   icon: FileText,
+        // },
         {
           title: 'Assessment',
           url: '/dashboard/assessment',
           icon: BarChart3,
         },
-        {
-          title: 'Credentials Vault',
-          url: '/dashboard/credentials',
-          icon: Award,
-        },
+        // {
+        //   title: 'Credentials Vault',
+        //   url: '/dashboard/credentials',
+        //   icon: Award,
+        // },
       ],
     },
     {
@@ -299,11 +299,11 @@ export default {
           url: '/dashboard/skills-fund',
           icon: PiggyBank,
         },
-        {
-          title: 'Payments',
-          url: '/dashboard/payments',
-          icon: DollarSign,
-        },
+        // {
+        //   title: 'Payments',
+        //   url: '/dashboard/payments',
+        //   icon: DollarSign,
+        // },
       ],
     },
     {
@@ -315,11 +315,11 @@ export default {
           url: '/dashboard/notifications',
           icon: Bell,
         },
-        {
-          title: 'Analytics',
-          url: '/dashboard/analytics',
-          icon: LineChart,
-        },
+        // {
+        //   title: 'Analytics',
+        //   url: '/dashboard/analytics',
+        //   icon: LineChart,
+        // },
         {
           title: 'Settings',
           url: '/dashboard/settings',
