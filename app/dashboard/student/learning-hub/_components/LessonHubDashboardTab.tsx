@@ -1,6 +1,7 @@
 'use client';
 
 import { Progress } from '@radix-ui/react-progress';
+import type { LucideIcon } from 'lucide-react';
 import {
     AlertCircle,
     ArrowRight,
@@ -17,16 +18,15 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState, type ComponentType, type ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react';
 
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
     getDueSummary,
     getStudentAssignmentSubmissionState,
     useStudentAssignmentData,
     type StudentAssignmentRow,
 } from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { Badge } from '../../../../../components/ui/badge';
 import { Button } from '../../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../../components/ui/card';
@@ -245,7 +245,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     </CardHeader>
                     <CardContent className='space-y-3'>
                         {active.length === 0 ? (
-                            <EmptyBrowse />
+                            <EmptyBrowse activeDomain={activeDomain} />
                         ) : (
                             continueLearning.slice(0, 3).map(item => {
                                 return (
@@ -297,7 +297,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                                     className='space-y-1'
                                 >
                                     <p className='text-sm font-medium'>{nextClass.title}</p>
-                                    <p className='text-muted-foreground text-xs'>{nextClass.locationLabel}</p>
+                                    <p className='text-muted-foreground text-xs'>{nextClass.courseName}</p>
                                     <p className='text-muted-foreground text-xs'>
                                         {nextClass.dateLabel} · {nextClass.timeLabel}
                                     </p>
@@ -459,11 +459,20 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                                     key={item.id}
                                     className='flex items-center justify-between gap-3 rounded-md border p-3 transition-colors hover:border-primary'
                                 >
-                                    <Link href={item.href} className='min-w-0 flex-1'>
-                                        <p className='truncate text-sm font-medium'>{item.title}</p>
-                                        <p className='text-muted-foreground text-xs'>
-                                            {item.dateLabel} · {item.timeLabel}
-                                            {item.locationLabel ? ` · ${item.locationLabel}` : ''}
+                                    <Link
+                                        href={item.href}
+                                        className="group min-w-0 flex-1 space-y-1"
+                                    >
+                                        <p className="text-foreground truncate text-sm font-semibold leading-tight group-hover:text-primary">
+                                            {item.title}
+                                        </p>
+                                        <p className="text-muted-foreground truncate text-xs leading-tight">
+                                            {item.courseName}
+                                        </p>
+                                        <p className="text-muted-foreground/80 text-xs leading-tight">
+                                            {item.dateLabel}
+                                            <span className="mx-1">·</span>
+                                            {item.timeLabel}
                                         </p>
                                     </Link>
                                     <Button asChild size='sm' variant='outline'>
@@ -790,7 +799,7 @@ function StatCard({
     );
 }
 
-function EmptyBrowse() {
+function EmptyBrowse({ activeDomain }: { activeDomain: UserDomain | null }) {
     return (
         <div className='flex flex-col items-center gap-3 py-8 text-center'>
             <p className='text-sm text-muted-foreground'>You aren't enrolled in any courses yet.</p>
@@ -857,6 +866,7 @@ function SummaryCard({
 
 
 import { Skeleton } from '../../../../../components/ui/skeleton';
+import { UserDomain } from '../../../../../lib/types';
 
 function LessonHubDashboardSkeleton() {
     return (

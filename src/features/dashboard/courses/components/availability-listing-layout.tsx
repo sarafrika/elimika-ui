@@ -1,3 +1,7 @@
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@radix-ui/react-checkbox';
 import {
   Bookmark,
   BookOpen,
@@ -14,9 +18,13 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useMemo, useState } from 'react';
+import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
+import { ClassSessionTemplate } from '../../../../../services/client';
+import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
+import { useUserProfile } from '../../../profile/context/profile-context';
+import { ClassDetailSheet } from '../shared/_components/ClassDetailsSheet';
+import { BundledClass } from '../types';
 
 type Props = {
   cls: BundledClass;
@@ -25,13 +33,13 @@ type Props = {
   onViewClass: (cls: BundledClass) => void;
 };
 
-type SessionTemplate = {
-  start_time: string;
-  end_time: string;
-  recurrence: {
-    days_of_week: string;
-  };
-};
+// type SessionTemplate = {
+//   start_time: string;
+//   end_time: string;
+//   recurrence: {
+//     days_of_week: string;
+//   };
+// };
 
 const DAY_ORDER = [
   'MONDAY',
@@ -58,7 +66,7 @@ const DAY_LABELS: Record<(typeof DAY_ORDER)[number], string> = {
  * UTC, so a class entered as 2pm EAT advertised itself as 11am on the same card that showed its
  * start time correctly as 2pm.
  */
-function formatTime(date: string) {
+function formatTime(date: Date | string) {
   return formatTimeInZone(date, { fallback: '' })
     .replace(':00', '')
     .replace(' ', '')
@@ -71,7 +79,7 @@ function formatTime(date: string) {
  * run two hours and Fridays one advertised itself as "60 min / session". Reads the templates and
  * shows a range when they genuinely differ.
  */
-function formatSessionLength(cls: { duration_minutes?: number; session_templates?: SessionTemplate[] }) {
+function formatSessionLength(cls: { duration_minutes?: number; session_templates?: ClassSessionTemplate[] }) {
   const lengths = (cls.session_templates ?? [])
     .map(t =>
       t.start_time && t.end_time
@@ -88,7 +96,7 @@ function formatSessionLength(cls: { duration_minutes?: number; session_templates
   return min === max ? `${min} min / session` : `${min}–${max} min / session`;
 }
 
-export function formatSessionSchedule(sessionTemplates: SessionTemplate[]) {
+export function formatSessionSchedule(sessionTemplates: ClassSessionTemplate[]) {
   if (!sessionTemplates.length) {
     return 'Sessions not available';
   }
@@ -96,9 +104,9 @@ export function formatSessionSchedule(sessionTemplates: SessionTemplate[]) {
   const grouped = new Map<string, { day: string; order: number }[]>();
 
   for (const session of sessionTemplates) {
-    const timeRange = `${formatTime(session.start_time)}–${formatTime(session.end_time)}`;
+    const timeRange = `${formatTime(session?.start_time)}–${formatTime(session.end_time)}`;
 
-    const day = session.recurrence.days_of_week;
+    const day = session?.recurrence?.days_of_week;
     const order = DAY_ORDER.indexOf(day as (typeof DAY_ORDER)[number]);
 
     if (!grouped.has(timeRange)) {
@@ -349,5 +357,22 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
       />
     </div>
   );
+}
+
+function formatTimeInZone(date: string, arg1: { fallback: string; }) {
+  const { fallback } = arg1;
+  if (!date) {
+    return fallback;
+  }
+
+  const parsedDate = new Date(date);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return fallback;
+  }
+
+  return parsedDate.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 

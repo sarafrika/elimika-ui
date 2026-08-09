@@ -19,6 +19,7 @@ import {
   type TrainingProgram,
   type User,
   type UserSummary,
+  searchCourses,
 } from '@/services/client';
 import {
   getClassDefinitionOptions,
@@ -26,7 +27,7 @@ import {
   getUserByUuidOptions,
   getUserDirectoryOptions,
   searchAssignmentsOptions,
-  searchCoursesOptions,
+  searchCoursesQueryKey,
   searchEnrollmentsOptions,
   searchInstructorsOptions,
   search2Options,
@@ -265,11 +266,59 @@ export function useUsersWithContactByIds(ids: string[]) {
 }
 
 export function useCoursesByIds(ids: string[]) {
-  const { map, isLoading } = useSearchByIds<Course>(
-    ids,
-    searchCoursesOptions,
-    STALE_TIMES.reference
+  const uniqueIds = useMemo(
+    () => Array.from(new Set(ids.filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [ids]
   );
+
+  const idChunks = useMemo(() => chunk(uniqueIds, CHUNK_SIZE), [uniqueIds]);
+
+  const { map, isLoading } = useQueries({
+    queries: idChunks.map(idChunk => {
+      const query = {
+        searchParams: { uuid_in: idChunk.join(',') },
+        pageable: { page: 0, size: idChunk.length },
+      };
+
+      return {
+        queryKey: searchCoursesQueryKey({ query }),
+        enabled: typeof window !== 'undefined',
+        queryFn: async () => {
+          const { data, error, response } = await searchCourses({ query });
+
+          if (error) {
+            if (response.status === 400 || response.status === 404) {
+              return { data: { content: [] } };
+            }
+
+            throw error;
+          }
+
+          return data;
+        },
+        staleTime: STALE_TIMES.reference,
+      };
+    }),
+    combine: results => {
+      const map: Record<string, Course> = {};
+      const wanted = new Set(uniqueIds);
+
+      for (const result of results) {
+        const content = result.data?.data?.content ?? [];
+        for (const item of content) {
+          if (item.uuid && wanted.has(item.uuid)) {
+            map[item.uuid] = item;
+          }
+        }
+      }
+
+      return {
+        map,
+        isLoading: results.some(result => result.isLoading),
+      };
+    },
+  });
+
   return { courseMap: map, isLoading };
 }
 

@@ -468,7 +468,7 @@ export default function StudentQuizSubmissionPage() {
           variant='ghost'
           size='sm'
           className='mb-2 -ml-2 rounded-full'
-          onClick={() => router.push('/dashboard/student/assignment')}
+          onClick={() => router.push('/dashboard/student/learning-hub')}
         >
           <ArrowLeft className='mr-2 h-4 w-4' />
           All quizzes
@@ -736,8 +736,8 @@ export default function StudentQuizSubmissionPage() {
                                     'flex w-full items-start gap-3 rounded-2xl border p-3',
                                     isCorrect && 'border-success/40 bg-success/5',
                                     isSelected &&
-                                      !isCorrect &&
-                                      'border-destructive/40 bg-destructive/5'
+                                    !isCorrect &&
+                                    'border-destructive/40 bg-destructive/5'
                                   )}
                                 >
                                   {isCorrect ? (

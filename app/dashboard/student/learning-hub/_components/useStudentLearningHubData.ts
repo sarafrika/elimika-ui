@@ -15,6 +15,7 @@ import {
 import type {
   Assignment,
   AssignmentSubmission,
+  Certificate,
   Instructor,
   ScheduledInstance,
   StudentClassEnrollmentSummary,
@@ -71,6 +72,7 @@ export type LearningHubNextClass = LearningHubUpcomingClass & {
 export type LearningHubUpcomingClass = {
   id: string;
   title: string;
+  courseName: string;
   dateLabel: string;
   timeLabel: string;
   locationLabel: string;
@@ -108,6 +110,7 @@ export type LearningHubData = {
   stats: LearningHubStat[];
   courseEnrollments: LearningHubCourseEnrollment[];
   classEnrollments: LearningHubClassEnrollment[];
+  certificates: Certificate[];
   courseEnrollmentCount: number;
   classEnrollmentCount: number;
   activeCourses: LearningHubActiveCourse[];
@@ -661,12 +664,13 @@ export function useStudentLearningHubData(): LearningHubData {
 
     return {
       id: item.uuid ?? item.classDefinitionUuid,
-      title: item.title ?? item.classTitle ?? 'Upcoming class',
+      title: item.classTitle ?? '',
       dateLabel: formatDate(start, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
       }),
+      courseName: item.courseName,
       timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
       locationLabel: item.locationLabel,
       href: item.href,
@@ -720,7 +724,8 @@ export function useStudentLearningHubData(): LearningHubData {
 
           return {
             id: item.uuid ?? item.classDefinitionUuid,
-            title: item.title ?? item.classTitle ?? 'Upcoming class',
+            title: item.classTitle ?? '',
+            courseName: item.courseName,
             dateLabel: formatDate(start, {
               month: 'short',
               day: 'numeric',
@@ -861,6 +866,7 @@ export function useStudentLearningHubData(): LearningHubData {
     stats,
     courseEnrollments,
     classEnrollments,
+    certificates,
     courseEnrollmentCount: courseEnrollmentCount || courseEnrollments.length,
     classEnrollmentCount: classEnrollmentCount || classEnrollments.length,
     activeCourses,
