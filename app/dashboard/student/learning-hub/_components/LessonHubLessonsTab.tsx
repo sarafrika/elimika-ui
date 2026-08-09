@@ -5,13 +5,15 @@ import {
     Bookmark,
     BookmarkCheck,
     BookOpen,
+    ChevronLeft,
+    ChevronRight,
     Download,
     FileText,
     PlayCircle,
     StickyNote,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -111,6 +113,31 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
     const [activeLesson, setActiveLesson] = useState<LessonModule | null>(null);
     const [bookmarks, setBookmarks] = useState<Set<string>>(() => new Set());
     const [notesByLesson, setNotesByLesson] = useState<LessonNotes>({});
+
+    const classRowRef = useRef<HTMLDivElement>(null);
+
+    const classButtonRefs = useRef(
+        new Map<string, HTMLButtonElement>()
+    );
+
+    const scrollClasses = (direction: 'left' | 'right') => {
+        classRowRef.current?.scrollBy({
+            left: direction === 'left' ? -280 : 280,
+            behavior: 'smooth',
+        });
+    };
+
+    useEffect(() => {
+        if (classFilter === 'all') {
+            return;
+        }
+
+        classButtonRefs.current.get(classFilter)?.scrollIntoView({
+            behavior: 'smooth',
+            inline: 'center',
+            block: 'nearest',
+        });
+    }, [classFilter]);
 
     const classDefinitionUuids = useMemo(
         () =>
@@ -352,34 +379,66 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
 
     return (
         <div className='space-y-4'>
-            <div className='flex flex-wrap items-center gap-2'>
-                <div className='flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1'>
+            <div className="flex items-center gap-1">
+                {/* Scroll left */}
+                <button
+                    type="button"
+                    aria-label="Scroll classes left"
+                    onClick={() => scrollClasses('left')}
+                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                    <ChevronLeft className="h-4 w-4" />
+                </button>
+
+                {/* Class/course list */}
+                <div
+                    ref={classRowRef}
+                    className="flex min-w-0 flex-1 flex-nowrap gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [touch-action:pan-x] [&::-webkit-scrollbar]:hidden"
+                >
                     <Button
-                        size='sm'
+                        size="sm"
                         variant={classFilter === 'all' ? 'default' : 'outline'}
                         onClick={() => setClassFilter('all')}
-                        className={cn('shrink-0', classFilter === 'all' && 'bg-primary hover:bg-primary/90')}
+                        className={cn(
+                            'shrink-0 whitespace-nowrap rounded-sm',
+                            classFilter === 'all' && 'bg-primary hover:bg-primary/90'
+                        )}
                     >
                         All classes
                     </Button>
 
                     {classRows.map(classRow => {
-                        const active = classFilter === classRow.classDefinitionUuid;
+                        const active =
+                            classFilter === classRow.classDefinitionUuid;
 
                         return (
                             <Button
                                 key={classRow.classDefinitionUuid}
-                                size='sm'
+                                ref={el => {
+                                    if (el) {
+                                        classButtonRefs.current.set(
+                                            classRow.classDefinitionUuid,
+                                            el
+                                        );
+                                    } else {
+                                        classButtonRefs.current.delete(
+                                            classRow.classDefinitionUuid
+                                        );
+                                    }
+                                }}
+                                size="sm"
                                 variant={active ? 'default' : 'outline'}
-                                onClick={() => setClassFilter(classRow.classDefinitionUuid)}
+                                onClick={() =>
+                                    setClassFilter(classRow.classDefinitionUuid)
+                                }
                                 title={classRow.classTitle}
                                 className={cn(
-                                    'group relative shrink-0 overflow-visible transition-all duration-200',
-                                    'max-w-[180px] hover:z-20 hover:max-w-[320px]',
+                                    'group relative shrink-0 overflow-visible whitespace-nowrap transition-all duration-200 rounded-sm',
+                                    'max-w-[180px] hover:z-20 hover:max-w-[450px]',
                                     active && 'bg-primary hover:bg-primary/90'
                                 )}
                             >
-                                <span className='block truncate group-hover:overflow-visible group-hover:whitespace-normal'>
+                                <span className="block truncate group-hover:overflow-visible group-hover:whitespace-normal">
                                     {classRow.classTitle}
                                 </span>
                             </Button>
@@ -387,14 +446,28 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
                     })}
                 </div>
 
-                <div className='shrink-0'>
+                {/* Scroll right */}
+                <button
+                    type="button"
+                    aria-label="Scroll classes right"
+                    onClick={() => scrollClasses('right')}
+                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                    <ChevronRight className="h-4 w-4" />
+                </button>
+
+                {/* Bookmarks */}
+                <div className="ml-1 shrink-0">
                     <Button
-                        size='sm'
+                        size="sm"
                         variant={onlyBookmarked ? 'default' : 'outline'}
                         onClick={() => setOnlyBookmarked(value => !value)}
-                        className={cn('whitespace-nowrap', onlyBookmarked && 'bg-warning/50 hover:bg-warning/60')}
+                        className={cn(
+                            'whitespace-nowrap',
+                            onlyBookmarked && 'bg-warning/50 hover:bg-warning/60'
+                        )}
                     >
-                        <BookmarkCheck className='mr-1 h-4 w-4' />
+                        <BookmarkCheck className="mr-1 h-4 w-4" />
                         Bookmarked ({bookmarks.size})
                     </Button>
                 </div>

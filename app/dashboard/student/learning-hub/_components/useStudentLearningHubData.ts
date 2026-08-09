@@ -72,6 +72,7 @@ export type LearningHubNextClass = LearningHubUpcomingClass & {
 export type LearningHubUpcomingClass = {
   id: string;
   title: string;
+  courseName: string;
   dateLabel: string;
   timeLabel: string;
   locationLabel: string;
@@ -663,12 +664,13 @@ export function useStudentLearningHubData(): LearningHubData {
 
     return {
       id: item.uuid ?? item.classDefinitionUuid,
-      title: item.title ?? item.classTitle ?? 'Upcoming class',
+      title: item.classTitle ?? '',
       dateLabel: formatDate(start, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
       }),
+      courseName: item.courseName,
       timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
       locationLabel: item.locationLabel,
       href: item.href,
@@ -722,7 +724,8 @@ export function useStudentLearningHubData(): LearningHubData {
 
           return {
             id: item.uuid ?? item.classDefinitionUuid,
-            title: item.title ?? item.classTitle ?? 'Upcoming class',
+            title: item.classTitle ?? '',
+            courseName: item.courseName,
             dateLabel: formatDate(start, {
               month: 'short',
               day: 'numeric',

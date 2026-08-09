@@ -1,6 +1,6 @@
 'use client';
 
-import { Award, BookOpen, CalendarIcon, ChevronLeft, ChevronRight, ClipboardList, FileCheck2, LayoutDashboard, Mail, PlayCircle, Users } from 'lucide-react';
+import { Award, BookOpen, ChevronLeft, ChevronRight, ClipboardList, FileCheck2, LayoutDashboard, Mail, PlayCircle, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import LessonHubAssessmentsTab from './LessonHubAssessmentsTab';
 import LessonHubAssignmentsTab from './LessonHubAssignmentsTab';
@@ -23,7 +23,7 @@ const TABS = [
   { id: "quizzes", label: "Quizzes", icon: ClipboardList },
   { id: "assessments", label: "Assessments", icon: FileCheck2 },
   { id: "certificates", label: "Certificates", icon: Award },
-  { id: "calendar", label: "Learning Calendar", icon: CalendarIcon },
+  // { id: "calendar", label: "Learning Calendar", icon: CalendarIcon },
 ] as const;
 
 export function StudentLearningHubPage() {
@@ -120,7 +120,6 @@ export function StudentLearningHubPage() {
         {tab === "quizzes" && <LessonHubQuizzesTab />}
         {tab === "assessments" && <LessonHubAssessmentsTab />}
         {tab === "certificates" && <LessonHubCertificatesTab learningHubData={data} />}
-
         {/* {tab === "calendar" && <PlaceholderTab title="Learning Calendar" description="Classes, deadlines, and events unified in one calendar." />} */}
       </div>
 

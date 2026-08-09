@@ -297,7 +297,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                                     className='space-y-1'
                                 >
                                     <p className='text-sm font-medium'>{nextClass.title}</p>
-                                    <p className='text-muted-foreground text-xs'>{nextClass.locationLabel}</p>
+                                    <p className='text-muted-foreground text-xs'>{nextClass.courseName}</p>
                                     <p className='text-muted-foreground text-xs'>
                                         {nextClass.dateLabel} · {nextClass.timeLabel}
                                     </p>
@@ -459,11 +459,20 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                                     key={item.id}
                                     className='flex items-center justify-between gap-3 rounded-md border p-3 transition-colors hover:border-primary'
                                 >
-                                    <Link href={item.href} className='min-w-0 flex-1'>
-                                        <p className='truncate text-sm font-medium'>{item.title}</p>
-                                        <p className='text-muted-foreground text-xs'>
-                                            {item.dateLabel} · {item.timeLabel}
-                                            {item.locationLabel ? ` · ${item.locationLabel}` : ''}
+                                    <Link
+                                        href={item.href}
+                                        className="group min-w-0 flex-1 space-y-1"
+                                    >
+                                        <p className="text-foreground truncate text-sm font-semibold leading-tight group-hover:text-primary">
+                                            {item.title}
+                                        </p>
+                                        <p className="text-muted-foreground truncate text-xs leading-tight">
+                                            {item.courseName}
+                                        </p>
+                                        <p className="text-muted-foreground/80 text-xs leading-tight">
+                                            {item.dateLabel}
+                                            <span className="mx-1">·</span>
+                                            {item.timeLabel}
                                         </p>
                                     </Link>
                                     <Button asChild size='sm' variant='outline'>
