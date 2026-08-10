@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
+import { useCourseClasses } from '@/hooks/use-batched-lookups';
 import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
 import { averageRating, useCourseReviewsMap } from '@/hooks/use-reviews-map';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
@@ -34,9 +35,12 @@ import {
   getAllCategoriesOptions,
   getAllDifficultyLevelsOptions,
   getAllTrainingProgramsOptions,
+  getClassDefinitionsForProgramOptions,
   getCourseRecommendationsOptions,
   getCourseReviewsOptions,
   getPublishedCoursesOptions,
+  getProgramCoursesOptions,
+  getProgramEnrollmentsOptions,
   searchCourseCreatorsOptions,
   searchProgramTrainingApplicationsOptions,
   searchProgramTrainingApplicationsQueryKey,
@@ -145,20 +149,28 @@ const createCatalogCards = (
   isOrganisationDomain: boolean,
   canOrganisationApply: boolean,
   instructorCourseApplicationMap: Map<string, { status?: string | null }>,
-  instructorProgramApplicationMap: Map<string, { status?: string | null }>
+  instructorProgramApplicationMap: Map<string, { status?: string | null }>,
+  courseClassesMap: Record<string, ClassDefinition[]>,
+  programClassesMap: Record<string, ClassDefinition[]>,
+  programCoursesMap: Record<string, Course[]>,
+  programLearnerCountMap: Record<string, number>
 ): CoursesCatalogCardData[] =>
   items.map((item, index) => {
     const presentation = getCardPresentation(index);
+
     const isInstructorApplyCard = canApplyToTrain;
+
     const application =
       item.kind === 'program'
         ? instructorProgramApplicationMap.get(item.id)
         : instructorCourseApplicationMap.get(item.id);
-    const applicationStatus = normalizeApplicationStatus(application?.status);
+
+    const applicationStatus = normalizeApplicationStatus(
+      application?.status
+    );
+
     const ctaLabel = !isInstructorApplyCard
-      ? item.kind === 'program'
-        ? 'Enroll Classes'
-        : 'Enroll Classes'
+      ? 'Enroll Classes'
       : isOrganisationDomain && !canOrganisationApply
         ? 'Verify Organisation'
         : isOrganisationDomain && applicationStatus === 'approved'
@@ -171,35 +183,85 @@ const createCatalogCards = (
                 ? 'Reapply to Train'
                 : 'Apply to Train';
 
+    const classDefinitions =
+      item.kind === 'program' ? programClassesMap[item.id] ?? [] : courseClassesMap[item.id] ?? [];
+    const activeClasses = classDefinitions;
+    const activeClassesInstructors = new Set(
+      activeClasses
+        .map(cls => cls.default_instructor_uuid)
+        .filter((uuid): uuid is string => Boolean(uuid))
+    );
+
+    const programAgeRange = (() => {
+      if (item.kind !== 'program') {
+        return { minAge: item.minAge ?? null, maxAge: item.maxAge ?? null };
+      }
+
+      const youngestCourse = (programCoursesMap[item.id] ?? [])
+        .filter(course => course.age_lower_limit != null || course.age_upper_limit != null)
+        .sort((left, right) => {
+          const leftLower = left.age_lower_limit ?? Number.POSITIVE_INFINITY;
+          const rightLower = right.age_lower_limit ?? Number.POSITIVE_INFINITY;
+          if (leftLower !== rightLower) {
+            return leftLower - rightLower;
+          }
+
+          const leftUpper = left.age_upper_limit ?? Number.POSITIVE_INFINITY;
+          const rightUpper = right.age_upper_limit ?? Number.POSITIVE_INFINITY;
+          return leftUpper - rightUpper;
+        })[0];
+
+      return {
+        minAge: youngestCourse?.age_lower_limit ?? youngestCourse?.age_upper_limit ?? null,
+        maxAge: youngestCourse?.age_upper_limit ?? youngestCourse?.age_lower_limit ?? null,
+      };
+    })();
+
     return {
       id: item.id,
       contentKind: item.kind,
       title: item.title,
-      provider: creatorMap.get(item.creatorUuid) ?? item.creatorName ?? 'Course Creator',
+
+      provider:
+        creatorMap.get(item.creatorUuid) ??
+        item.creatorName ??
+        'Course Creator',
+
       duration: item.durationLabel,
-      enrolledClasses: 1,
+
+      enrolledClasses: activeClasses.length,
+
       secondaryMeta:
         item.secondaryMeta ||
         item.levelLabel ||
         item.categoryLabels[0] ||
-        (item.kind === 'program' ? 'Training Program' : 'Course'),
+        (item.kind === 'program'
+          ? 'Training Program'
+          : 'Course'),
+
       applicationStatus,
       ctaLabel,
+
       ctaDisabled: isInstructorApplyCard
         ? isOrganisationDomain
           ? !canOrganisationApply ||
-            Boolean(
-              applicationStatus &&
-                applicationStatus !== 'revoked' &&
-                applicationStatus !== 'approved'
-            )
-          : Boolean(applicationStatus && applicationStatus !== 'revoked')
+          Boolean(
+            applicationStatus &&
+            applicationStatus !== 'revoked' &&
+            applicationStatus !== 'approved'
+          )
+          : Boolean(
+            applicationStatus &&
+            applicationStatus !== 'revoked'
+          )
         : false,
+
       ctaKind: isInstructorApplyCard
         ? item.kind === 'program'
           ? 'apply-program'
           : 'apply-course'
         : 'link',
+
       ctaTone: isInstructorApplyCard
         ? applicationStatus === 'approved'
           ? 'approved'
@@ -209,23 +271,49 @@ const createCatalogCards = (
               ? 'revoked'
               : 'default'
         : 'default',
+
       minimumRate: item.minimumRate,
+
       showInstructorCta: !isInstructorApplyCard,
-      detailsHref: buildWorkspaceAliasPath(domain, item.href),
+
+      detailsHref: buildWorkspaceAliasPath(
+        domain,
+        item.href
+      ),
+
       enrollHref: isInstructorApplyCard
         ? getApplyToTrainHref(item.id)
-        : buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
-      instructorHref: buildWorkspaceAliasPath(domain, getInstructorHref(domain, item.id)),
+        : buildWorkspaceAliasPath(
+          domain,
+          getEnrollHref(domain, item.kind, item.id)
+        ),
+
+      instructorHref: buildWorkspaceAliasPath(
+        domain,
+        getInstructorHref(domain, item.id)
+      ),
+
       icon: presentation.icon,
       imageTone: presentation.imageTone,
       imageUrl: item.imageUrl,
+
       rating: item.rating,
       reviewCount: item.reviewCount,
-      enrollmentCount: item.enrollmentCount,
+      enrollmentCount:
+        item.kind === 'program'
+          ? programLearnerCountMap[item.id] ?? item.enrollmentCount
+          : item.enrollmentCount,
+
       certificateHref: '',
       category: '',
       subject: '',
       programType: '',
+      minAge: programAgeRange.minAge ?? item.minAge ?? undefined,
+      maxAge: programAgeRange.maxAge ?? item.maxAge ?? undefined,
+
+      // Actual number of active classes
+      activeClasses: activeClasses.length,
+      instructorCount: activeClassesInstructors.size,
     };
   });
 
@@ -434,6 +522,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           category: '',
           subject: '',
           programType: '',
+          minAge: program.age_lower_limit,
+          maxAge: program.age_upper_limit
         };
       }),
     [categoryMap, courseEnrollmentMap, domain, programs, reviewMap]
@@ -476,10 +566,13 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           category: '',
           subject: '',
           programType: '',
+          minAge: course.age_lower_limit,
+          maxAge: course.age_upper_limit
         };
       }),
     [courseEnrollmentMap, courses, difficultyMap, domain, reviewMap]
   );
+
 
   const approvedInstructorCourseIds = useMemo(() => {
     const ids = new Set<string>();
@@ -589,9 +682,12 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           reviewCount: Number(reviews?.count) ?? 0,
           rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
           enrollmentCount: enrollments?.count,
+          activeClasses: classCount,
           category: '',
           subject: '',
           programType: '',
+          minAge: course.age_lower_limit,
+          maxAge: course.age_upper_limit
         });
       });
 
@@ -963,6 +1059,107 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     return map;
   }, [recommendationReviewQueries, recommendedBase]);
 
+
+  const courseUuids = useMemo(
+    () =>
+      paginatedItems
+        .filter(item => item.kind === 'course')
+        .map(item => item.id)
+        .filter(Boolean),
+    [paginatedItems]
+  );
+
+  const {
+    courseClassesMap,
+    isLoading: courseClassesLoading,
+  } = useCourseClasses(courseUuids);
+
+  const programUuids = useMemo(
+    () =>
+      paginatedItems
+        .filter(item => item.kind === 'program')
+        .map(item => item.id)
+        .filter(Boolean),
+    [paginatedItems]
+  );
+
+  const programClassDefinitionsQueries = useQueries({
+    queries: programUuids.map(programUuid => ({
+      ...getClassDefinitionsForProgramOptions({
+        path: { programUuid },
+        query: { pageable: { page: 0, size: 200 } },
+      }),
+      enabled: Boolean(programUuid),
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    })),
+  });
+
+  const programCoursesQueries = useQueries({
+    queries: programUuids.map(programUuid => ({
+      ...getProgramCoursesOptions({
+        path: { programUuid },
+      }),
+      enabled: Boolean(programUuid),
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    })),
+  });
+
+  const programEnrollmentQueries = useQueries({
+    queries: programUuids.map(programUuid => ({
+      ...getProgramEnrollmentsOptions({
+        path: { programUuid },
+        query: { pageable: { page: 0, size: 1 } },
+      }),
+      enabled: Boolean(programUuid),
+      staleTime: 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    })),
+  });
+
+  const programClassesMap = useMemo<Record<string, ClassDefinition[]>>(() => {
+    const map: Record<string, ClassDefinition[]> = {};
+
+    programUuids.forEach((programUuid, index) => {
+      map[programUuid] =
+        programClassDefinitionsQueries[index]?.data?.data
+          ?.map(item => item.class_definition)
+          .filter((definition): definition is ClassDefinition => Boolean(definition)) ?? [];
+    });
+
+    return map;
+  }, [programClassDefinitionsQueries, programUuids]);
+
+  const programCoursesMap = useMemo<Record<string, Course[]>>(() => {
+    const map: Record<string, Course[]> = {};
+
+    programUuids.forEach((programUuid, index) => {
+      map[programUuid] = programCoursesQueries[index]?.data?.data ?? [];
+    });
+
+    return map;
+  }, [programCoursesQueries, programUuids]);
+
+  const programLearnerCountMap = useMemo<Record<string, number>>(() => {
+    const map: Record<string, number> = {};
+
+    programUuids.forEach((programUuid, index) => {
+      const response = programEnrollmentQueries[index]?.data?.data;
+      const totalElements = Number(response?.metadata?.totalElements ?? 0);
+      map[programUuid] = totalElements || (response?.content?.length ?? 0);
+    });
+
+    return map;
+  }, [programEnrollmentQueries, programUuids]);
+
+
   const catalogCards = useMemo(
     () =>
       createCatalogCards(
@@ -972,18 +1169,26 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         canApplyToTrain,
         isOrganisationDomain,
         canOrganisationApply,
-        activeCourseApplicationMap,
-        activeProgramApplicationMap
+        instructorCourseApplicationMap,
+        instructorProgramApplicationMap,
+        courseClassesMap,
+        programClassesMap,
+        programCoursesMap,
+        programLearnerCountMap
       ),
     [
-      activeCourseApplicationMap,
-      activeProgramApplicationMap,
-      canApplyToTrain,
-      canOrganisationApply,
-      creatorMap,
-      domain,
-      isOrganisationDomain,
       paginatedItems,
+      domain,
+      creatorMap,
+      canApplyToTrain,
+      isOrganisationDomain,
+      canOrganisationApply,
+      instructorCourseApplicationMap,
+      instructorProgramApplicationMap,
+      courseClassesMap,
+      programClassesMap,
+      programCoursesMap,
+      programLearnerCountMap,
     ]
   );
 
@@ -1005,7 +1210,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     programsLoading ||
     categoriesLoading ||
     difficultiesLoading ||
-    (isStudentDomain && studentCoursesLoading);
+    (isStudentDomain && studentCoursesLoading) ||
+    courseClassesLoading ||
+    programClassDefinitionsQueries.some(query => query.isLoading || query.isFetching) ||
+    programCoursesQueries.some(query => query.isLoading || query.isFetching) ||
+    programEnrollmentQueries.some(query => query.isLoading || query.isFetching);
 
   const setFilterValue = (key: CoursesFilterSection['key'], value: string) => {
     setFilters(current => ({

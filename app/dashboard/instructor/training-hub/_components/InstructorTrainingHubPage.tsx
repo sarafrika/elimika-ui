@@ -44,9 +44,9 @@ function getLiveClassCompletionRate(liveClass: {
     typeof liveClass.class?.completed_session_count === 'number'
       ? liveClass.class.completed_session_count
       : countableSessions.filter(
-          instance =>
-            instance.status?.toUpperCase() === 'COMPLETED' || Boolean(instance.concluded_at)
-        ).length;
+        instance =>
+          instance.status?.toUpperCase() === 'COMPLETED' || Boolean(instance.concluded_at)
+      ).length;
 
   return totalSessions ? Math.round((completedSessions / totalSessions) * 100) : 0;
 }

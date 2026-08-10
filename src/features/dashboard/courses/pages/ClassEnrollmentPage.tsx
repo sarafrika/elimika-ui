@@ -1,26 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import {
-  AlertCircle,
-  AlertTriangle,
-  ArrowLeft,
-  Building2,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  GraduationCap,
-  Languages,
-  MapPin,
-  ShieldCheck,
-  Users,
-  Wallet
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
 import { type RateBasis, rateBasisShort } from '@/components/class-form';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +25,26 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowLeft,
+  Building2,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  GraduationCap,
+  Languages,
+  MapPin,
+  ShieldCheck,
+  Users,
+  Wallet
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { formatSessionSchedule } from '../components/availability-listing-layout';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
@@ -460,228 +460,229 @@ export default function ClassEnrollmentPage({
       </Button>
 
       <h1 className='text-2xl font-semibold'>Join Class</h1>
-          <p className='text-muted-foreground text-sm'>
-            Confirm details before enrolling in {enrollingClass.course?.name ?? enrollingClass.title}
-          </p>
+      <p className='text-muted-foreground text-sm'>
+        Confirm details before enrolling in {enrollingClass.course?.name ?? enrollingClass.title}
+      </p>
 
-          {/* Summary */}
-          <Card className='rounded-[28px]'>
-            <CardHeader className='pb-3'>
-              <CardTitle className='text-lg'>
-                {enrollingClass.course?.name || enrollingClass.title || 'Class Enrollment'}
-              </CardTitle>
-              <div className='mt-1 flex flex-wrap gap-2 text-xs'>
-                {enrollingClass.session_format && (
-                  <Badge variant='secondary' className='capitalize'>
-                    {enrollingClass.session_format}
-                  </Badge>
-                )}
-                {enrollingClass.class_visibility && (
-                  <Badge variant='outline' className='capitalize'>
-                    {enrollingClass.class_visibility}
-                  </Badge>
-                )}
-                {enrollingClass.duration_formatted && (
-                  <Badge variant='outline'>{enrollingClass.duration_formatted}</Badge>
-                )}
-              </div>
-            </CardHeader>
-
-            <CardContent className='grid gap-2 sm:grid-cols-2'>
-              {/* Institution name is not part of the current class/course data model. */}
-              <InfoRow icon={<Building2 className='h-4 w-4' />} label='Institution' value={null} />
-
-              <InfoRow
-                icon={<Users className='h-4 w-4' />}
-                label='Instructor'
-                value={enrollingClass.instructor?.data?.full_name}
-              />
-              {/* No discrete "academic period" field is exposed for this class. */}
-              <InfoRow icon={<Calendar className='h-4 w-4' />} label='Academic period' value={null} />
-              <InfoRow
-                icon={<Clock className='h-4 w-4' />}
-                label='Session duration'
-                value={formatSessionSchedule(enrollingClass.session_templates)}
-              />
-
-              <InfoRow icon={<Calendar className='h-4 w-4' />} label='Dates' value={formattedDates} />
-
-              <InfoRow
-                icon={<MapPin className='h-4 w-4' />}
-                label='Location'
-                value={
-                  enrollingClass.location_type === 'ONLINE'
-                    ? 'Online'
-                    : (enrollingClass.location_name ?? enrollingClass.meeting_link ?? null)
-                }
-              />
-              {/* Language of instruction is not tracked on this class record. */}
-              <InfoRow icon={<Languages className='h-4 w-4' />} label='Language' value={null} />
-              {/* No level-of-study field is exposed on this class/course. */}
-              <InfoRow icon={<GraduationCap className='h-4 w-4' />} label='Level of study' value={null} />
-            </CardContent>
-          </Card>
-
-          {/* Seats */}
-          <Card>
-            <CardContent className='flex items-center justify-between py-4'>
-              <div>
-                <div className='text-sm font-medium'>Seat availability</div>
-                <div className='text-muted-foreground text-xs'>
-                  {availableSeats} of {maxParticipants || '?'} seats left
-                </div>
-              </div>
-
-              {isClassFull ? (
-                <Badge variant='destructive'>Full</Badge>
-              ) : isAlmostFull ? (
-                <Badge className='bg-warning/15 text-warning hover:bg-warning/15'>Almost full</Badge>
-              ) : (
-                <Badge className='bg-success/15 text-success hover:bg-success/15'>Open</Badge>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Eligibility checks */}
-          <Card>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-base'>Eligibility checks</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              {/* Age requirement — backed by course.age_lower_limit / age_upper_limit when present. */}
-              <div className='flex items-start gap-3'>
-                {eligibilityKnown && !eligibleToJoin ? (
-                  <AlertTriangle className='text-destructive mt-0.5 h-5 w-5' />
-                ) : (
-                  <CheckCircle2 className='text-success mt-0.5 h-5 w-5' />
-                )}
-                <div className='flex-1'>
-                  <div className='text-sm font-medium'>Age requirement: {ageRange ?? 'Any'}</div>
-                  {eligibilityQuery.isLoading ? (
-                    <div className='text-muted-foreground text-xs italic'>
-                      Checking your profile…
-                    </div>
-                  ) : eligibility && !eligibility.eligible ? (
-                    <div className='text-destructive mt-1 text-sm'>{eligibility.reason}</div>
-                  ) : eligibility?.student_age != null ? (
-                    <div className='text-muted-foreground text-xs'>
-                      Your profile says you are {eligibility.student_age}. You meet this requirement.
-                    </div>
-                  ) : (
-                    <div className='text-muted-foreground text-xs italic'>
-                      No age restriction on file for this class.
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Materials / items the student needs to supply, from course training requirements. */}
-              <div className='flex items-start gap-3'>
-                <ShieldCheck className='mt-0.5 h-5 w-5 text-muted-foreground' />
-                <div className='flex-1'>
-                  <div className='text-sm font-medium'>Things you'll need to bring</div>
-                  {studentRequirements.length === 0 ? (
-                    <div className='text-muted-foreground mt-1 text-xs italic'>
-                      No student-provided items listed for this course.
-                    </div>
-                  ) : (
-                    <div className='mt-2 space-y-2'>
-                      {studentRequirements.map(requirement => (
-                        <label key={requirement.uuid} className='flex items-start gap-2 text-sm'>
-                          <Checkbox
-                            checked={!!requirementsChecked[requirement.uuid]}
-                            onCheckedChange={v => toggleRequirement(requirement.uuid, !!v)}
-                          />
-                          <span>
-                            {requirement.name}
-                            {requirement.quantity ? ` (${requirement.quantity} ${requirement.unit ?? ''})` : ''}
-                            {requirement.is_mandatory && (
-                              <span className='text-destructive'> · required</span>
-                            )}
-                            {requirement.description && (
-                              <span className='text-muted-foreground block text-xs'>
-                                {requirement.description}
-                              </span>
-                            )}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className='flex items-start gap-3'>
-                <ShieldCheck className='mt-0.5 h-5 w-5 text-muted-foreground' />
-                <div className='flex-1'>
-                  <div className='text-sm font-medium'>Tuition &amp; terms</div>
-                  <div className='text-muted-foreground text-xs'>Training fee: {feeDisplay}</div>
-                  <label className='mt-2 flex items-center gap-2 text-sm'>
-                    <Checkbox checked={termsOk} onCheckedChange={v => setTermsOk(!!v)} />
-                    I agree to the class schedule and tuition terms.
-                  </label>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Payment */}
-          <Card>
-            <CardHeader className='pb-2'>
-              <div className='flex items-center justify-between gap-2'>
-                <CardTitle className='flex items-center gap-2 text-base'>
-                  <Wallet className='h-4 w-4 text-primary' /> Payment method
-                </CardTitle>
-                <div className='text-right'>
-                  <div className='text-muted-foreground text-xs'>Amount due</div>
-                  <div className='text-primary text-base font-semibold'>{formatKES(enrollingClass?.catalogue?.unit_amount)}</div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {!hasFee ? (
-                <p className='text-sm text-muted-foreground'>
-                  This class is free — no payment required.
-                </p>
-              ) : !student ? (
-                <p className='text-sm text-muted-foreground'>Sign in to choose a payment method.</p>
-              ) : (
-                <PaymentMethodPicker />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Notices */}
-          {alreadyEnrolled && (
-            <div className='rounded-md border border-success/30 bg-success/10 p-3 text-sm text-success'>
-              You're already enrolled in this class.
-            </div>
-          )}
-          {isClassFull && !alreadyEnrolled && (
-            <div className='rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning'>
-              This class is full. You'll be added to the waitlist instead of being enrolled directly.
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className='flex flex-wrap items-center justify-end gap-2 pt-2'>
-            <Button variant='outline' onClick={handleCancel} className='rounded-full px-6'>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleEnrollStudent}
-              disabled={!canSubmit}
-              size='lg'
-              className='rounded-full px-10 disabled:cursor-not-allowed disabled:opacity-60'
-              variant='success'
-            >
-              {isPending ? 'Processing…' : isClassFull ? 'Join Waitlist' : 'Yes, Enroll Me'}
-            </Button>
+      {/* Summary */}
+      <Card className='rounded-[28px]'>
+        <CardHeader className='pb-3'>
+          <CardTitle className='text-lg'>
+            {enrollingClass.course?.name || enrollingClass.title || 'Class Enrollment'}
+          </CardTitle>
+          <div className='mt-1 flex flex-wrap gap-2 text-xs'>
+            {enrollingClass.session_format && (
+              <Badge variant='secondary' className='capitalize'>
+                {enrollingClass.session_format}
+              </Badge>
+            )}
+            {enrollingClass.class_visibility && (
+              <Badge variant='outline' className='capitalize'>
+                {enrollingClass.class_visibility}
+              </Badge>
+            )}
+            {enrollingClass.duration_formatted && (
+              <Badge variant='outline'>{enrollingClass.duration_formatted}</Badge>
+            )}
           </div>
+        </CardHeader>
+
+        <CardContent className='grid gap-2 sm:grid-cols-2'>
+          {/* Institution name is not part of the current class/course data model. */}
+          <InfoRow icon={<Building2 className='h-4 w-4' />} label='Institution' value={null} />
+
+          <InfoRow
+            icon={<Users className='h-4 w-4' />}
+            label='Instructor'
+            value={enrollingClass.instructor?.data?.full_name}
+          />
+          {/* No discrete "academic period" field is exposed for this class. */}
+          <InfoRow icon={<Calendar className='h-4 w-4' />} label='Academic period' value={null} />
+          <InfoRow
+            icon={<Clock className='h-4 w-4' />}
+            label='Session duration'
+            value={formatSessionSchedule(enrollingClass.session_templates)}
+          />
+
+          <InfoRow icon={<Calendar className='h-4 w-4' />} label='Dates' value={formattedDates} />
+
+          <InfoRow
+            icon={<MapPin className='h-4 w-4' />}
+            label='Location'
+            value={
+              enrollingClass.location_type === 'ONLINE'
+                ? 'Online'
+                : (enrollingClass.location_name ?? enrollingClass.meeting_link ?? null)
+            }
+          />
+          {/* Language of instruction is not tracked on this class record. */}
+          <InfoRow icon={<Languages className='h-4 w-4' />} label='Language' value={null} />
+          {/* No level-of-study field is exposed on this class/course. */}
+          <InfoRow icon={<GraduationCap className='h-4 w-4' />} label='Level of study' value={null} />
+        </CardContent>
+      </Card>
+
+      {/* Seats */}
+      <Card>
+        <CardContent className='flex items-center justify-between py-4'>
+          <div>
+            <div className='text-sm font-medium'>Seat availability</div>
+            <div className='text-muted-foreground text-xs'>
+              {availableSeats} of {maxParticipants || '?'} seats left
+            </div>
+          </div>
+
+          {isClassFull ? (
+            <Badge variant='destructive'>Full</Badge>
+          ) : isAlmostFull ? (
+            <Badge className='bg-warning/15 text-warning hover:bg-warning/15'>Almost full</Badge>
+          ) : (
+            <Badge className='bg-success/15 text-success hover:bg-success/15'>Open</Badge>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Eligibility checks */}
+      <Card>
+        <CardHeader className='pb-2'>
+          <CardTitle className='text-base'>Eligibility checks</CardTitle>
+        </CardHeader>
+        <CardContent className='space-y-4'>
+          {/* Age requirement — backed by course.age_lower_limit / age_upper_limit when present. */}
+          <div className='flex items-start gap-3'>
+            {eligibilityKnown && !eligibleToJoin ? (
+              <AlertTriangle className='text-destructive mt-0.5 h-5 w-5' />
+            ) : (
+              <CheckCircle2 className='text-success mt-0.5 h-5 w-5' />
+            )}
+            <div className='flex-1'>
+              <div className='text-sm font-medium'>Age requirement: {ageRange ?? 'Any'}</div>
+              {eligibilityQuery.isLoading ? (
+                <div className='text-muted-foreground text-xs italic'>
+                  Checking your profile…
+                </div>
+              ) : eligibility && !eligibility.eligible ? (
+                <div className='text-destructive mt-1 text-sm'>{eligibility.reason}</div>
+              ) : eligibility?.student_age != null ? (
+                <div className='text-muted-foreground text-xs'>
+                  Your profile says you are {eligibility.student_age}. You meet this requirement.
+                </div>
+              ) : (
+                <div className='text-muted-foreground text-xs italic'>
+                  No age restriction on file for this class.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Materials / items the student needs to supply, from course training requirements. */}
+          <div className='flex items-start gap-3'>
+            <ShieldCheck className='mt-0.5 h-5 w-5 text-muted-foreground' />
+            <div className='flex-1'>
+              <div className='text-sm font-medium'>Things you'll need to bring</div>
+              {studentRequirements.length === 0 ? (
+                <div className='text-muted-foreground mt-1 text-xs italic'>
+                  No student-provided items listed for this course.
+                </div>
+              ) : (
+                <div className='mt-2 space-y-2'>
+                  {studentRequirements.map(requirement => (
+                    <label key={requirement.uuid} className='flex items-start gap-2 text-sm'>
+                      <Checkbox
+                        checked={!!requirementsChecked[requirement.uuid]}
+                        onCheckedChange={v => toggleRequirement(requirement.uuid, !!v)}
+                      />
+                      <span>
+                        {requirement.name}
+                        {requirement.quantity ? ` (${requirement.quantity} ${requirement.unit ?? ''})` : ''}
+                        {requirement.is_mandatory && (
+                          <span className='text-destructive'> · required</span>
+                        )}
+                        {requirement.description && (
+                          <span className='text-muted-foreground block text-xs'>
+                            {requirement.description}
+                          </span>
+                        )}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className='flex items-start gap-3'>
+            <ShieldCheck className='mt-0.5 h-5 w-5 text-muted-foreground' />
+            <div className='flex-1'>
+              <div className='text-sm font-medium'>Tuition &amp; terms</div>
+              <div className='text-muted-foreground text-xs'>Training fee: {feeDisplay}</div>
+              <label className='mt-2 flex items-center gap-2 text-sm'>
+                <Checkbox checked={termsOk} onCheckedChange={v => setTermsOk(!!v)} />
+                I agree to the class schedule and tuition terms.
+              </label>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Payment */}
+      <Card>
+        <CardHeader className='pb-2'>
+          <div className='flex items-center justify-between gap-2'>
+            <CardTitle className='flex items-center gap-2 text-base'>
+              <Wallet className='h-4 w-4 text-primary' /> Payment method
+            </CardTitle>
+            <div className='text-right'>
+              <div className='text-muted-foreground text-xs'>Amount due</div>
+              <div className='text-primary text-base font-semibold'>{formatKES(enrollingClass?.catalogue?.unit_amount)}</div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!hasFee ? (
+            <p className='text-sm text-muted-foreground'>
+              This class is free — no payment required.
+            </p>
+          ) : !student ? (
+            <p className='text-sm text-muted-foreground'>Sign in to choose a payment method.</p>
+          ) : (
+            <PaymentMethodPicker />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Notices */}
+      {alreadyEnrolled && (
+        <div className='rounded-md border border-success/30 bg-success/10 p-3 text-sm text-success'>
+          You're already enrolled in this class.
+        </div>
+      )}
+
+      {isClassFull && !alreadyEnrolled && (
+        <div className='rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning'>
+          This class is full. You'll be added to the waitlist instead of being enrolled directly.
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className='flex flex-wrap items-center justify-end gap-2 pt-2'>
+        <Button variant='outline' onClick={handleCancel} className='rounded-full px-6'>
+          Cancel
+        </Button>
+        <Button
+          onClick={handleEnrollStudent}
+          disabled={!canSubmit}
+          size='lg'
+          className='rounded-full px-10 disabled:cursor-not-allowed disabled:opacity-60'
+          variant='success'
+        >
+          {isPending ? 'Processing…' : isClassFull ? 'Join Waitlist' : 'Yes, Enroll Me'}
+        </Button>
+      </div>
     </div>
   );
 }

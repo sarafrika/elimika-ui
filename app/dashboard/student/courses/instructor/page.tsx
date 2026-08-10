@@ -7,8 +7,6 @@ type WorkspaceInstructorSearchPageProps = {
 export default async function StudentInstructorSearchRoute({
   params,
 }: WorkspaceInstructorSearchPageProps) {
-  //   const { domain } = await params;
-  //   const normalizedDomain = normalizeStoredUserDomain(domain);
 
   return <StudentInstructorSearchPage />;
 }

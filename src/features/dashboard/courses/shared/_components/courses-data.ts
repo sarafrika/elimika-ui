@@ -67,6 +67,10 @@ export type CoursesCatalogCardData = {
   rating?: number;
   reviewCount?: number;
   enrollmentCount?: number | undefined;
+  activeClasses?: number;
+  minAge?: number;
+  maxAge?: number;
+  instructorCount?: number
 };
 
 export type CoursesRecommendationCardData = {

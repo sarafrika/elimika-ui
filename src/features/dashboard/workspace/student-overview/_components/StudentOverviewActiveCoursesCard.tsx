@@ -32,7 +32,7 @@ export function StudentOverviewActiveCoursesCard({
             <CardTitle className='text-base'>Active Courses</CardTitle>
             <CardDescription>Pick up where you left off</CardDescription>
           </div>
-          <Button variant='ghost' size='sm' className='text-primary'>
+          <Button asChild variant='ghost' size='sm' className='text-primary'>
             <Link
               prefetch
               href='/dashboard/student/courses/my-courses'
@@ -66,7 +66,7 @@ export function StudentOverviewActiveCoursesCard({
 
                 <Link
                   prefetch
-                  href={c.href}
+                  href='/dashboard/student/courses/my-courses'
                   className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex shrink-0 items-center gap-1 rounded-[8px] px-2.5 py-1.5 text-[0.7rem] font-medium transition'
                 >
                   {c.buttonLabel}

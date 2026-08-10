@@ -6,10 +6,11 @@ import {
   ClassDefinition,
   CourseAssessment,
   CourseTrainingApplication,
-  type CourseCreator,
   ProgramTrainingApplication,
+  searchCourses,
   type Assignment,
   type Course,
+  type CourseCreator,
   type Enrollment,
   type Instructor,
   type Organisation,
@@ -19,22 +20,22 @@ import {
   type TrainingProgram,
   type User,
   type UserSummary,
-  searchCourses,
 } from '@/services/client';
 import {
   getClassDefinitionOptions,
+  getClassDefinitionsForCourseOptions,
   getCourseAssessmentsOptions,
   getUserByUuidOptions,
   getUserDirectoryOptions,
+  search2Options,
   searchAssignmentsOptions,
+  searchCourseCreatorsOptions,
   searchCoursesQueryKey,
   searchEnrollmentsOptions,
   searchInstructorsOptions,
-  search2Options,
   searchProgramTrainingApplicationsOptions,
   searchQuizzesOptions,
   searchStudentsOptions,
-  searchCourseCreatorsOptions,
   searchTrainingApplicationsOptions,
   searchTrainingProgramsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -508,3 +509,46 @@ export function useClassesByIds(classUuids: string[]) {
     },
   });
 }
+
+export function useCourseClasses(courseUuids: string[]) {
+  const uniqueCourseUuids = useMemo(
+    () => [...new Set(courseUuids.filter(Boolean))].sort(),
+    [courseUuids]
+  );
+
+  return useQueries({
+    queries: uniqueCourseUuids.map(uuid => ({
+      ...getClassDefinitionsForCourseOptions({
+        path: { courseUuid: uuid },
+        query: { pageable: {} },
+      }),
+      enabled: Boolean(uuid),
+      staleTime: STALE_TIMES.entity,
+    })),
+
+    combine: results => {
+      const courseClassesMap: Record<string, ClassDefinition[]> = {};
+
+      results.forEach((result, index) => {
+        const courseUuid = uniqueCourseUuids[index];
+
+        const classDefinitions =
+          result.data?.data
+            ?.map(item => item.class_definition)
+            .filter(Boolean) ?? [];
+
+        if (courseUuid) {
+          courseClassesMap[courseUuid] = classDefinitions;
+        }
+      });
+
+      return {
+        courseClassesMap,
+        items: Object.values(courseClassesMap).flat(),
+        isLoading: results.some(result => result.isLoading),
+      };
+    },
+  });
+}
+
+
