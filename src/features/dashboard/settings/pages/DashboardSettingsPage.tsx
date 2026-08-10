@@ -38,7 +38,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import { ElimikaUserId } from '../../../../../app/dashboard/_components/elimika-user-id';
-import { useProfileShareUrl } from '../../../../../app/dashboard/_components/my-skills/use-profile-share-url';
+import { useProfileShareUrl } from '../../../../../app/dashboard/_components/skills-wallet/use-profile-share-url';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
 import ManageProfileActions from '../../../profile/add-profile/components/ManageProfileActions';

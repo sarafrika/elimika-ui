@@ -1,6 +1,5 @@
 'use client';
 
-import { createElement, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Award,
@@ -10,11 +9,11 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
+import { createElement, useMemo } from 'react';
 
 import { buildCredentialsContent } from '@/components/profile-credentials/live-data';
 import { useUserProfile } from '@/context/profile-context';
 import type { UserProfileType } from '@/lib/types';
-import type { SharedCredentialSummary, SharedSkill, SharedTimelineItem } from '../types';
 import type {
   Certificate,
   CourseCreatorDocumentDto,
@@ -39,17 +38,7 @@ import {
   getStudentCertificatesOptions,
   listDocumentTypesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-
-import type {
-  SuggestedSkill,
-  VerifiedSkill,
-  VerifiedSkillCategory,
-  VerifiedSkillGroup,
-  VerifiedSkillLevel,
-  VerifiedSkillsContent,
-  VerifiedSkillsRole,
-  VerifiedSkillRecord,
-} from './types';
+import { SharedCredentialSummary, SharedSkill, SharedTimelineItem, SuggestedSkill, VerifiedSkill, VerifiedSkillCategory, VerifiedSkillGroup, VerifiedSkillLevel, VerifiedSkillRecord, VerifiedSkillsContent, VerifiedSkillsRole } from './types';
 
 const PAGEABLE = { page: 0, size: 200, sort: ['desc'] };
 
@@ -457,10 +446,10 @@ export function useVerifiedSkillsContent(role?: VerifiedSkillsRole): VerifiedSki
     const membershipRecords =
       resolvedRole === 'instructor'
         ? ((instructorMembershipQuery.data?.data?.content ??
-            []) as InstructorProfessionalMembership[])
+          []) as InstructorProfessionalMembership[])
         : resolvedRole === 'course_creator'
           ? ((courseCreatorMembershipQuery.data?.data?.content ??
-              []) as CourseCreatorProfessionalMembership[])
+            []) as CourseCreatorProfessionalMembership[])
           : [];
 
     const experienceRecords =

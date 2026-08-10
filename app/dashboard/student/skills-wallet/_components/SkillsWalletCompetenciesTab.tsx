@@ -53,7 +53,7 @@ export function SkillsWalletCompetenciesTab({ data }: SkillsWalletCompetenciesTa
       <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-5'>
         <Card className='rounded-sm p-0'>
           <CardContent className='flex items-center gap-4 p-4'>
-            <Donut value={average} size={96} stroke={10} label='Avg. mastery' sub={`${competencies.length} badges`} />
+            <Donut value={average} size={105} stroke={10} label='OVERALL' sub={`${competencies.length} badges`} />
             <div>
               <p className='text-sm text-muted-foreground'>Competency Average</p>
               <p className='mt-1 text-xs text-muted-foreground'>Across completed classes and assessments</p>
@@ -112,7 +112,7 @@ export function SkillsWalletCompetenciesTab({ data }: SkillsWalletCompetenciesTa
                         <Badge className='max-w-full truncate border-0 bg-success/10 text-xs text-success'>
                           {record.level}
                         </Badge>
-                        <Badge className='max-w-full truncate border-0 bg-primary/10 text-xs text-primary'>
+                        <Badge className='text-start max-w-full truncate border-0 bg-primary/10 text-xs text-primary'>
                           {record.badge}
                         </Badge>
                       </div>

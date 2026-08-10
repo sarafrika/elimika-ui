@@ -1,77 +1,102 @@
 'use client';
 
-import { Plus, Share2, Trophy, CheckCircle2, Clock, BookOpen, Star } from 'lucide-react';
+import { ArrowUpRight, Award, Flame, Plus, Share2, Star, Trophy } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
-import { StatCard } from './SkillsWalletShared';
-
-const ACHIEVEMENTS = [
-  { id: 'a1', name: 'Fast Learner', description: 'Completed 5 courses in a single month.', points: 250, achieved_at: '2026-07-15', status: 'Completed' as const, color_key: 'bg-primary', progress: null },
-  { id: 'a2', name: 'Top Contributor', description: 'Ranked in the top 10 on the leaderboard.', points: 400, achieved_at: '2026-06-28', status: 'Completed' as const, color_key: 'bg-secondary', progress: null },
-  { id: 'a3', name: 'Certification Streak', description: 'Earned 3 credentials back to back.', points: 300, achieved_at: '2026-07-01', status: 'Completed' as const, color_key: 'bg-success', progress: null },
-  { id: 'a4', name: 'Mentor in Training', description: 'Guide 10 peers through course material.', points: 150, achieved_at: null, status: 'In Progress' as const, color_key: 'bg-warning', progress: 60 },
-];
+import { StatCard, type AchievementRecord } from './SkillsWalletShared';
 
 const fmtDate = (value?: string | null) =>
   value ? new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
-export function SkillsWalletAchievementsTab() {
-  const completed = ACHIEVEMENTS.filter(item => item.status === 'Completed');
-  const totalPts = completed.reduce((sum, item) => sum + item.points, 0);
+type SkillsWalletAchievementsTabProps = {
+  achievements?: AchievementRecord[];
+  title?: string;
+  description?: string;
+  onAddAchievement?: () => void;
+};
+
+export function SkillsWalletAchievementsTab({
+  achievements = [],
+  title = 'Achievements',
+  description = 'Celebrate your milestones and track your progress on your learning journey.',
+  onAddAchievement,
+}: SkillsWalletAchievementsTabProps) {
+  const data = achievements;
+  const completed = data.filter(a => a.status === 'Completed');
+  const totalPts = completed.reduce((sum, a) => sum + (a.points ?? 0), 0);
 
   const stats = [
-    { icon: Trophy, label: 'Total Achievements', value: ACHIEVEMENTS.length, sub: 'All badges', tint: 'bg-primary/10 text-primary' },
-    { icon: CheckCircle2, label: 'Completed', value: completed.length, sub: 'Earned', tint: 'bg-success/10 text-success' },
-    { icon: Clock, label: 'In Progress', value: ACHIEVEMENTS.filter(item => item.status === 'In Progress').length, sub: 'Active goals', tint: 'bg-warning/10 text-warning' },
-    { icon: BookOpen, label: 'Total Points', value: totalPts, sub: 'Points earned', tint: 'bg-secondary text-secondary-foreground' },
-    { icon: Star, label: 'Top Score', value: 100, sub: 'Peak performance', tint: 'bg-muted text-foreground' },
+    { icon: Trophy, label: 'Total Achievements', value: data.length, sub: 'Across all categories', tint: 'bg-primary/10 text-primary' },
+    { icon: Star, label: 'Milestones Reached', value: completed.length, sub: '+20% this month', tint: 'bg-success/10 text-success' },
+    { icon: Flame, label: 'Streak', value: 15, sub: 'Days in a row 🔥', tint: 'bg-warning/10 text-warning' },
+    { icon: Award, label: 'Points Earned', value: totalPts.toLocaleString(), sub: '+180 this month', tint: 'bg-muted text-foreground' },
   ];
+
+  const badges = data.map(a => ({
+    name: a.name,
+    desc: a.description ?? '',
+    pts: a.points,
+    date: a.status === 'In Progress' ? 'In progress' : fmtDate(a.achieved_at),
+    color: a.color_key ?? 'bg-primary',
+    status: a.status,
+    progress: a.progress ?? undefined,
+  }));
 
   return (
     <div className='space-y-6'>
-      <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+      <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3'>
         <div>
-          <h2 className='text-xl font-semibold'>My Achievements</h2>
-          <p className='text-sm text-muted-foreground'>Earn badges and recognition for your learning milestones.</p>
+          <h2 className='text-xl font-semibold'>{title}</h2>
+          <p className='text-sm text-muted-foreground'>{description}</p>
         </div>
         <div className='flex items-center gap-2'>
-          <Button className='bg-primary hover:bg-primary/90'>
-            <Plus className='mr-2 h-4 w-4' /> Add Achievement
-          </Button>
-          <Button variant='outline'>
-            <Share2 className='mr-2 h-4 w-4' /> Share Achievements
-          </Button>
+          <Button variant='outline'><Share2 className='h-4 w-4 mr-2' /> Share Achievements</Button>
+          <Button className='bg-primary hover:bg-primary/90' onClick={onAddAchievement}><Plus className='h-4 w-4 mr-2' /> Add Achievement</Button>
         </div>
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-5'>
-        {stats.map(stat => (
-          <StatCard key={stat.label} {...stat} />
-        ))}
+      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+        {stats.map(s => <StatCard key={s.label} {...s} />)}
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-        {ACHIEVEMENTS.map(item => (
-          <Card key={item.id}>
-            <CardContent className='p-5'>
-              <div className='flex items-start justify-between gap-2'>
-                <div>
-                  <p className='font-semibold'>{item.name}</p>
-                  <p className='mt-1 text-sm text-muted-foreground'>{item.description}</p>
+      {badges.length > 0 ? (
+        <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+          {badges.map(b => (
+            <Card key={b.name} className='overflow-hidden'>
+              <CardContent className='p-4'>
+                <div className='flex items-start justify-between'>
+                  <div className={`h-14 w-14 ${b.color} text-primary-foreground rounded-xl grid place-items-center`}>
+                    <Trophy className='h-7 w-7' />
+                  </div>
+                  <Badge className={b.status === 'Completed' ? 'bg-success/10 text-success border-0' : 'bg-warning/10 text-warning border-0'}>{b.status}</Badge>
                 </div>
-                <Badge variant='outline'>{item.points} pts</Badge>
-              </div>
-              <div className='mt-3 flex items-center justify-between text-xs text-muted-foreground'>
-                <span>{item.status}</span>
-                <span>{fmtDate(item.achieved_at)}</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <p className='font-semibold mt-3'>{b.name}</p>
+                <p className='text-xs text-muted-foreground mt-1 min-h-8'>{b.desc}</p>
+                {b.progress != null && (
+                  <div className='mt-2'>
+                    <Progress value={b.progress} className='h-1.5' />
+                  </div>
+                )}
+                <div className='flex items-center justify-between mt-3 text-xs'>
+                  <Badge variant='outline' className='text-[10px]'>+{b.pts} Points</Badge>
+                  <span className='text-muted-foreground'>{b.date}</span>
+                </div>
+                <Button variant='ghost' size='sm' className='w-full mt-2 text-primary'>View Details <ArrowUpRight className='h-3 w-3 ml-1' /></Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className='p-8 text-center text-sm text-muted-foreground'>
+            No live achievements are available yet.
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

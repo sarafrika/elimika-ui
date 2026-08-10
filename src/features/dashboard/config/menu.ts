@@ -191,11 +191,6 @@ export default {
           icon: LayoutDashboard,
         },
         {
-          title: 'My Skills',
-          url: '/dashboard/my-skills',
-          icon: BadgeCheck,
-        },
-        {
           title: 'Skills Wallet',
           url: '/dashboard/skills-wallet',
           icon: BadgeCheck,
@@ -343,8 +338,8 @@ export default {
           icon: LayoutDashboard,
         },
         {
-          title: 'My Skills',
-          url: '/dashboard/my-skills',
+          title: 'Skills Wallet',
+          url: '/dashboard/skills-wallet',
           icon: BadgeCheck,
         },
         // {
@@ -489,8 +484,8 @@ export default {
           icon: LayoutDashboard,
         },
         {
-          title: 'My Skills',
-          url: '/dashboard/my-skills',
+          title: 'Skills Wallet',
+          url: '/dashboard/skills-wallet',
           icon: BadgeCheck,
         },
         // {

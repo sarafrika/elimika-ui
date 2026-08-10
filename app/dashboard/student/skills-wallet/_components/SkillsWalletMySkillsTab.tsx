@@ -21,8 +21,7 @@ import { TOKEN } from '../../../_components/color-charts';
 import {
   ICON_MAP,
   StatCard,
-  WalletIdCard,
-  type SkillsWalletData,
+  type SkillsWalletData
 } from './SkillsWalletShared';
 
 const VIEW_TABS = ['All Skills', 'By Category', 'In Progress', 'Completed', 'Bookmarked'] as const;
@@ -154,7 +153,6 @@ export function SkillsWalletMySkillsTab({ data }: SkillsWalletMySkillsTabProps) 
           </p>
         </div>
         <div className='flex items-center gap-3'>
-          <WalletIdCard label='Skills Wallet ID' />
           <Button className='bg-primary hover:bg-primary/90'>
             <Plus className='mr-2 h-4 w-4' /> Add Skill
           </Button>

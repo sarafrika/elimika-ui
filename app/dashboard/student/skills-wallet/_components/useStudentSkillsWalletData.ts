@@ -25,10 +25,13 @@ import type {
 
 import type {
   CredentialRecord,
+  AchievementRecord,
   CompetencyRecord,
+  ExperienceRecord,
   PortfolioRecord,
   SkillRecord,
   SkillsWalletData,
+  VerificationEventRecord,
 } from './SkillsWalletShared';
 import { ICON_MAP, fmtMonth } from './SkillsWalletShared';
 
@@ -94,6 +97,57 @@ const getLevelNumber = (level: string) => {
   if (normalized.includes('advanced')) return 'L3';
   if (normalized.includes('intermediate')) return 'L2';
   return 'L1';
+};
+
+const clampPct = (value?: number | null) => Math.max(0, Math.min(100, Math.round(value ?? 0)));
+
+const getDateTimeValue = (value?: Date | string | null) => {
+  if (!value) return 0;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+};
+
+const inferExperienceCategory = (label: string) => {
+  const normalized = label.toLowerCase();
+
+  if (normalized.includes('intern')) return 'internship' as const;
+  if (normalized.includes('volunteer') || normalized.includes('community')) return 'volunteer' as const;
+  if (
+    normalized.includes('job') ||
+    normalized.includes('role') ||
+    normalized.includes('career') ||
+    normalized.includes('work')
+  ) {
+    return 'work' as const;
+  }
+
+  return 'project' as const;
+};
+
+const inferExperienceTags = (parts: Array<string | null | undefined>) =>
+  unique(parts.map(part => part?.trim()).filter((value): value is string => Boolean(value)));
+
+const inferVerificationSource = (title: string, category?: string | null) => {
+  const normalized = `${title} ${category ?? ''}`.toLowerCase();
+  if (
+    normalized.includes('hackathon') ||
+    normalized.includes('competition') ||
+    normalized.includes('contest') ||
+    normalized.includes('challenge')
+  ) {
+    return 'competition' as const;
+  }
+
+  if (
+    normalized.includes('review') ||
+    normalized.includes('evaluation') ||
+    normalized.includes('instructor') ||
+    normalized.includes('class')
+  ) {
+    return 'instructor_evaluation' as const;
+  }
+
+  return 'assessment' as const;
 };
 
 export function useStudentSkillsWalletData() {
@@ -483,6 +537,201 @@ export function useStudentSkillsWalletData() {
 
   const externalCertificates: CredentialRecord[] = [];
 
+  const experiences = useMemo(() => {
+    const records = new Map<string, ExperienceRecord>();
+    const classCourseUuids = new Set(
+      Array.from(classDefinitionMap.values())
+        .map(definition => definition.course_uuid)
+        .filter((value): value is string => Boolean(value))
+    );
+
+    classEnrollments.forEach(enrollment => {
+      const classDefinition = classDefinitionMap.get(enrollment.class_definition_uuid);
+      const courseUuid = classDefinition?.course_uuid;
+      const course = courseUuid ? courseMap.get(courseUuid) : undefined;
+      if (!course) return;
+
+      const certificate = certificatesByCourse.get(course.uuid ?? courseUuid);
+      const classAverageProgress = courseProgressByClassAverage.get(courseUuid);
+      const progress = clampPct(
+        classAverageProgress ??
+          classDefinition?.class_progress_percentage ??
+          (enrollment.latest_enrollment_status ? 70 : 0)
+      );
+      const role = classDefinition?.title ?? enrollment.class_title ?? course.name;
+      const sortKey = getDateTimeValue(
+        enrollment.latest_activity_date ?? enrollment.latest_scheduled_instance_start_time ?? certificate?.completion_date
+      );
+      const label = role || course.name;
+      const category = inferExperienceCategory(label);
+
+      records.set(`class-${enrollment.class_definition_uuid}`, {
+        id: `class-${enrollment.class_definition_uuid}`,
+        role,
+        org: course.category_uuids?.length ? (categoryMap.get(course.category_uuids[0] ?? '')?.name ?? 'Elimika Learning Journey') : 'Elimika Learning Journey',
+        start_date: (enrollment.latest_scheduled_instance_start_time ?? enrollment.latest_activity_date ?? certificate?.completion_date ?? new Date()).toString(),
+        end_date: certificate?.completion_date ? certificate.completion_date.toString() : null,
+        is_current: !certificate || progress < 100,
+        description: certificate
+          ? `Class progress ${progress}% with a verified completion record.`
+          : `Class progress ${progress}% tracked from your live enrolment activity.`,
+        tags: inferExperienceTags([
+          course.category_uuids?.length ? categoryMap.get(course.category_uuids[0] ?? '')?.name : undefined,
+          course.difficulty_uuid ? getLevelLabel(difficultyLevelMap.get(course.difficulty_uuid)) : undefined,
+          certificate ? 'Verified' : 'In progress',
+        ]),
+        category,
+        sort_order: sortKey,
+      });
+    });
+
+    courseEnrollments.forEach(enrollment => {
+      const course = courseMap.get(enrollment.course_uuid);
+      if (!course || classCourseUuids.has(course.uuid ?? enrollment.course_uuid)) return;
+
+      const certificate = certificatesByCourse.get(course.uuid ?? enrollment.course_uuid);
+      const categoryUuid = course.category_uuids?.[0];
+      const category = categoryUuid ? categoryMap.get(categoryUuid) : undefined;
+      const progress = clampPct(
+        certificate?.final_grade ??
+          enrollment.progress_percentage ??
+          (certificate ? 100 : enrollment.enrollment_status ? 70 : 0)
+      );
+      const label = course.name;
+      const sortKey = getDateTimeValue(enrollment.updated_date ?? certificate?.issued_date ?? certificate?.completion_date);
+
+      records.set(`course-${enrollment.enrollment_uuid ?? enrollment.course_uuid}`, {
+        id: `course-${enrollment.enrollment_uuid ?? enrollment.course_uuid}`,
+        role: label,
+        org: category?.name ?? 'Elimika Learning Journey',
+        start_date: (enrollment.updated_date ?? certificate?.completion_date ?? new Date()).toString(),
+        end_date: certificate?.completion_date ? certificate.completion_date.toString() : null,
+        is_current: !certificate || progress < 100,
+        description: certificate
+          ? `Completed from a live course enrolment with ${progress}% final performance.`
+          : `Course enrolment progress currently at ${progress}%.`,
+        tags: inferExperienceTags([
+          category?.name,
+          getLevelLabel(course.difficulty_uuid ? difficultyLevelMap.get(course.difficulty_uuid) : undefined),
+          certificate ? 'Certificate earned' : 'Learning',
+        ]),
+        category: inferExperienceCategory(label),
+        sort_order: sortKey,
+      });
+    });
+
+    return Array.from(records.values()).sort((a, b) => b.sort_order - a.sort_order);
+  }, [
+    certificatesByCourse,
+    categoryMap,
+    classDefinitionMap,
+    classEnrollments,
+    courseEnrollments,
+    courseMap,
+    difficultyLevelMap,
+  ]);
+
+  const achievements = useMemo<AchievementRecord[]>(() => {
+    const certificateAchievements = validCertificates.map((certificate, index) => {
+      const course = certificate.course_uuid ? courseMap.get(certificate.course_uuid) : undefined;
+      const categoryUuid = course?.category_uuids?.[0];
+      const category = categoryUuid ? categoryMap.get(categoryUuid) : undefined;
+      const points = clampPct(certificate.final_grade ?? 100);
+
+      return {
+        id: certificate.uuid ?? `achievement-${index}`,
+        name: course?.name ?? certificate.certificate_type ?? 'Learning Milestone',
+        description: course
+          ? `Completed ${course.name}${certificate.final_grade != null ? ` with a ${certificate.final_grade}% grade` : ''}.`
+          : `Issued on ${fmtMonth(certificate.issued_date ?? certificate.completion_date)}.`,
+        points,
+        achieved_at: certificate.completion_date?.toString() ?? certificate.issued_date?.toString() ?? null,
+        status: 'Completed' as const,
+        color_key:
+          category?.name?.toLowerCase().includes('design')
+            ? 'bg-secondary'
+            : category?.name?.toLowerCase().includes('data')
+              ? 'bg-primary'
+              : category?.name?.toLowerCase().includes('cloud')
+                ? 'bg-success'
+                : 'bg-warning',
+        progress: null,
+      } satisfies AchievementRecord;
+    });
+
+    const progressPct = overviewMetrics.totalSkills
+      ? Math.round((overviewMetrics.completedSkills / overviewMetrics.totalSkills) * 100)
+      : null;
+
+    const journeyAchievement = overviewMetrics.totalSkills > 0 || overviewMetrics.courseEnrollments > 0
+      ? [{
+        id: 'learning-journey',
+        name: 'Learning Journey',
+        description: `${overviewMetrics.completedSkills} of ${overviewMetrics.totalSkills} skills completed across ${overviewMetrics.courseEnrollments} live course enrolments.`,
+        points: overviewMetrics.completedSkills * 25,
+        achieved_at: null,
+        status: overviewMetrics.totalSkills > 0 && overviewMetrics.completedSkills === overviewMetrics.totalSkills ? 'Completed' as const : 'In Progress' as const,
+        color_key: 'bg-primary',
+        progress: progressPct,
+      } satisfies AchievementRecord]
+      : [];
+
+    return [...certificateAchievements, ...journeyAchievement];
+  }, [categoryMap, courseMap, overviewMetrics.completedSkills, overviewMetrics.courseEnrollments, overviewMetrics.totalSkills, validCertificates]);
+
+  const verificationEvents = useMemo<VerificationEventRecord[]>(() => {
+    const records: VerificationEventRecord[] = [];
+
+    validCertificates.forEach((certificate, index) => {
+      const course = certificate.course_uuid ? courseMap.get(certificate.course_uuid) : undefined;
+      const categoryUuid = course?.category_uuids?.[0];
+      const category = categoryUuid ? categoryMap.get(categoryUuid) : undefined;
+      const title = course?.name ?? certificate.certificate_type ?? 'Certificate';
+      const source = inferVerificationSource(title, category?.name);
+
+      records.push({
+        id: `cert-${certificate.uuid ?? index}`,
+        source,
+        title,
+        skill: category?.name ?? course?.name ?? 'General',
+        change: certificate.final_grade != null
+          ? `Final grade ${certificate.final_grade}% · Certificate issued`
+          : 'Certificate issued from live completion data',
+        date: (certificate.issued_date ?? certificate.completion_date).toString(),
+        status: certificate.is_valid === false ? 'failed' : 'verified',
+      });
+    });
+
+    classEnrollments.forEach((enrollment, index) => {
+      const classDefinition = classDefinitionMap.get(enrollment.class_definition_uuid);
+      const courseUuid = classDefinition?.course_uuid;
+      const course = courseUuid ? courseMap.get(courseUuid) : undefined;
+      if (!course) return;
+
+      const classAverageProgress = courseProgressByClassAverage.get(courseUuid);
+      const progress = clampPct(
+        classAverageProgress ??
+          classDefinition?.class_progress_percentage ??
+          (enrollment.latest_enrollment_status ? 70 : 0)
+      );
+      const isVerified = progress >= 100 || enrollment.latest_enrollment_status?.toString().toLowerCase().includes('complete');
+
+      records.push({
+        id: `class-${enrollment.class_definition_uuid}-${index}`,
+        source: 'instructor_evaluation',
+        title: classDefinition?.title ?? enrollment.class_title ?? course.name,
+        skill: course.name,
+        change: isVerified
+          ? `Instructor sign-off confirmed at ${progress}% completion`
+          : `Instructor review pending at ${progress}% completion`,
+        date: (enrollment.latest_activity_date ?? enrollment.latest_scheduled_instance_start_time ?? new Date()).toString(),
+        status: isVerified ? 'verified' : 'pending',
+      });
+    });
+
+    return records.sort((a, b) => getDateTimeValue(b.date) - getDateTimeValue(a.date));
+  }, [categoryMap, classDefinitionMap, classEnrollments, courseMap, validCertificates]);
+
   const portfolio: PortfolioRecord[] = [];
 
   const isLoading =
@@ -503,6 +752,9 @@ export function useStudentSkillsWalletData() {
     categoryCounts,
     credentials,
     externalCertificates,
+    experiences,
+    achievements,
+    verificationEvents,
     portfolio,
     isLoading,
     certificates: validCertificates,
