@@ -1,19 +1,17 @@
 'use client';
 
-import { format } from 'date-fns';
-import { ArrowLeft, BookOpen, CalendarRange, Sparkles } from 'lucide-react';
-import Link from 'next/link';
-import { useState } from 'react';
-import { DateRange } from 'react-day-picker';
-import { Calendar } from 'react-multi-date-picker';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
 import useProgramBundledClassInfo from '@/hooks/use-program-classes';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import AvailabilityClassCard, {
-} from '@/src/features/dashboard/courses/components/availability-listing-layout';
+import AvailabilityClassCard from '@/src/features/dashboard/courses/components/availability-listing-layout';
 import { useDateRangeFilter } from '@/src/features/dashboard/courses/hooks/use-date-range-filter';
-import { Badge } from '../../../../../components/ui/badge';
+import { format } from 'date-fns';
+import { ArrowLeft, BookOpen, CalendarRange } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
+import { DateRange } from 'react-day-picker';
+import { Calendar } from 'react-multi-date-picker';
 import { Button } from '../../../../../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../../../../../components/ui/popover';
 import {
@@ -75,10 +73,12 @@ export default function AvailableProgramsPage({
     setSelected(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]));
   }
 
-  const cardClasses: BundledClass[] = classes.map(cls => ({
-    ...cls,
-    course: cls.course?.[0] ?? null,
-  }));
+  const cardClasses: BundledClass[] = classes
+    .filter(cls => cls.is_active)
+    .map(cls => ({
+      ...cls,
+      course: cls.course?.[0] ?? null,
+    }));
 
   return (
     <div className='space-y-4 p-4'>
@@ -157,24 +157,25 @@ export default function AvailableProgramsPage({
         </div>
       </div>
 
-      <div className='space-y-4'>
-        {loading
-          ? Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className='space-y-3 rounded-xl border p-4'>
-              <Skeleton className='h-6 w-2/3' />
-              <Skeleton className='h-4 w-1/2' />
-              <Skeleton className='h-4 w-full' />
-              <div className='flex items-center justify-between pt-2'>
-                <Skeleton className='h-8 w-24' />
-                <Skeleton className='h-8 w-20' />
+      <div className="space-y-4">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="space-y-3 rounded-xl border p-4">
+              <Skeleton className="h-6 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-full" />
+
+              <div className="flex items-center justify-between pt-2">
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-8 w-20" />
               </div>
             </div>
           ))
-          : cardClasses.map(item => (
+        ) : cardClasses.length > 0 ? (
+          cardClasses.map(item => (
             <AvailabilityClassCard
               key={item.uuid}
               cls={item}
-              // onEnroll={() => toast.message("Enroll")}
               onViewCourse={() => setCourseDetailsOpen(true)}
               onViewClass={() => setClassDetailsOpen(true)}
               onEnroll={selectedClass => {
@@ -184,7 +185,17 @@ export default function AvailableProgramsPage({
                 );
               }}
             />
-          ))}
+          ))
+        ) : (
+          <div className="rounded-xl border border-dashed p-8 text-center">
+            <p className="text-sm font-medium text-foreground">
+              No active classes available
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              There are currently no active classes available for this program.
+            </p>
+          </div>
+        )}
       </div>
 
       <CourseDetailsSheet

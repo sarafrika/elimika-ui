@@ -103,7 +103,7 @@ export function StudentCoursesCard({
 
         <CardHeader className='pb-2'>
           <div className='flex flex-wrap items-center gap-1.5'>
-            <Badge variant='secondary'>{card.category || 'Not available'}</Badge>
+            <Badge variant='secondary'>{card.category ?? ""}</Badge>
 
             <Badge
               variant='outline'
@@ -111,7 +111,7 @@ export function StudentCoursesCard({
                 levelStyles[card.secondaryMeta?.toLowerCase()] ?? 'bg-muted text-muted-foreground'
               )}
             >
-              {card.secondaryMeta || 'Not available'}
+              {card.secondaryMeta ?? ""}
             </Badge>
 
             {card.skillsFundEligible && (
@@ -125,7 +125,7 @@ export function StudentCoursesCard({
           <CardTitle className='mt-2 text-lg'>{card.title || 'Untitled Course'}</CardTitle>
 
           <CardDescription className='line-clamp-2'>
-            {card.description || 'Not available'}
+            {card.description ?? ""}
           </CardDescription>
         </CardHeader>
 
@@ -143,7 +143,7 @@ export function StudentCoursesCard({
 
             <div className='flex items-center gap-1'>
               <GraduationCap className='h-3.5 w-3.5' />
-              {card.ageGroup || 'Not available'}
+              {card.minAge || 'Not available'}+
             </div>
 
             <div className='flex items-center gap-1'>
@@ -158,7 +158,7 @@ export function StudentCoursesCard({
 
             <div className='flex items-center gap-1'>
               <CalendarDays className='h-3.5 w-3.5' />
-              {card.activeClasses ?? 0} classes
+              {(card.activeClasses ?? card.bundledCourseCount ?? 0)} classes
             </div>
 
             <div className='flex items-center gap-1'>

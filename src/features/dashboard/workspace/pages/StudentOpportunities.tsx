@@ -65,8 +65,11 @@ const StudentOpportunities = ({ opportunities, classInvites, data }: StudentOppo
             </CardTitle>
             <CardDescription>Ranked by AI match score</CardDescription>
           </div>
-          <Button variant='ghost' size='sm' className='text-primary'>
-            Browse all <ArrowUpRight className='ml-1 h-3.5 w-3.5' />
+          <Button asChild variant='ghost' size='sm' className='text-primary'>
+            <Link href='/dashboard/student/opportunities' className='flex items-center'>
+              Browse all
+              <ArrowUpRight className='ml-1 h-3.5 w-3.5' />
+            </Link>
           </Button>
         </CardHeader>
         <CardContent className='space-y-3'>
@@ -173,8 +176,9 @@ const StudentOpportunities = ({ opportunities, classInvites, data }: StudentOppo
               />
             )}
 
-            <Button variant='outline' className='mt-3 w-full'>
-              <Link href={'/dashboard/student/credentials'}>Open vault</Link>
+            {/* // this page should route to student's my skills page, tab credential */}
+            <Button asChild variant='outline' className='mt-3 w-full'>
+              <Link href='/dashboard/student/credentials'>Open vault</Link>
             </Button>
           </CardContent>
         </Card>

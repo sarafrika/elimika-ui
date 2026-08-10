@@ -35,12 +35,8 @@ export type InstructorClassWithSchedule = InstructorClass & {
 export function useInstructorClassesWithSchedules(instructorUuid?: string) {
   const classesQuery = useQuery({
     ...getClassDefinitionsForInstructorOptions({
-      path: {
-        instructorUuid: instructorUuid as string,
-      },
-      query: {
-        activeOnly: true,
-      },
+      path: { instructorUuid: instructorUuid as string, },
+      query: { activeOnly: true },
     }),
 
     enabled: !!instructorUuid,
@@ -123,6 +119,7 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
       ...getEnrollmentsForClassOptions({
         path: {
           uuid: classItem.uuid as string,
+
         },
       }),
 

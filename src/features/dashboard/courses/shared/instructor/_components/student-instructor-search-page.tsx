@@ -41,7 +41,6 @@ import {
   Navigation,
   PiggyBank,
   PlayCircle,
-  Sparkles,
   Star,
   User,
   Wallet
@@ -498,7 +497,7 @@ export default function StudentInstructorSearchPage() {
         <InstructorEmptyState activeView={activeView} onReset={resetFilters} />
       ) : (
         <>
-          {activeView === 'search' && recommended.length > 0 && (
+          {/* {activeView === 'search' && recommended.length > 0 && (
             <section className="mt-4">
               <div className="mb-2 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -548,7 +547,7 @@ export default function StudentInstructorSearchPage() {
                 ))}
               </div>
             </section>
-          )}
+          )} */}
 
           <div className="mt-4 grid gap-4 lg:grid-cols-[280px_1fr]">
             {activeView === 'search' && (
@@ -958,7 +957,7 @@ export default function StudentInstructorSearchPage() {
               </TabsContent>
 
               <TabsContent value="portfolio" className="pt-3 text-sm text-muted-foreground">
-                Not available
+                No portfolio provided.
               </TabsContent>
 
               <TabsContent value="reviews" className="pt-3 text-sm">

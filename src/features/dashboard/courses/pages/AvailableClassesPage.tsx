@@ -1,20 +1,18 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { ArrowLeft, BookOpen, CalendarRange, Sparkles } from 'lucide-react';
-import Link from 'next/link';
-import { useState } from 'react';
-import { DateRange } from 'react-day-picker';
-import { Calendar } from 'react-multi-date-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import useBundledClassInfo from '@/hooks/use-course-classes';
 import { listCatalogItemsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import AvailabilityClassCard, {
-} from '@/src/features/dashboard/courses/components/availability-listing-layout';
+import AvailabilityClassCard from '@/src/features/dashboard/courses/components/availability-listing-layout';
 import { useDateRangeFilter } from '@/src/features/dashboard/courses/hooks/use-date-range-filter';
-import { Badge } from '../../../../../components/ui/badge';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { ArrowLeft, BookOpen, CalendarRange } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
+import { DateRange } from 'react-day-picker';
+import { Calendar } from 'react-multi-date-picker';
 import { Button } from '../../../../../components/ui/button';
 import {
   Sheet,
@@ -81,8 +79,12 @@ export default function AvailableClassesPage({
 
   const course = classes[0]?.course;
 
-  const filteredClasses = classes.filter(cls =>
-    catalogues?.data?.some(cat => cat.class_definition_uuid === cls.uuid)
+  const filteredClasses = classes.filter(
+    cls =>
+      cls.is_active &&
+      catalogues?.data?.some(
+        cat => cat.class_definition_uuid === cls.uuid
+      )
   );
 
   const instructorFilteredClasses = filteredClasses.filter(
@@ -171,24 +173,25 @@ export default function AvailableClassesPage({
         </div>
       </div>
 
-      <div className='space-y-4'>
-        {loading
-          ? Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className='space-y-3 rounded-xl border p-4'>
-              <Skeleton className='h-6 w-2/3' />
-              <Skeleton className='h-4 w-1/2' />
-              <Skeleton className='h-4 w-full' />
-              <div className='flex items-center justify-between pt-2'>
-                <Skeleton className='h-8 w-24' />
-                <Skeleton className='h-8 w-20' />
+      <div className="space-y-4">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="space-y-3 rounded-xl border p-4">
+              <Skeleton className="h-6 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-full" />
+
+              <div className="flex items-center justify-between pt-2">
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-8 w-20" />
               </div>
             </div>
           ))
-          : filteredClasses.map(item => (
+        ) : filteredClasses.length > 0 ? (
+          filteredClasses.map(item => (
             <AvailabilityClassCard
               key={item.uuid}
               cls={item}
-              // onEnroll={() => toast.message("Enroll")}
               onViewCourse={() => setCourseDetailsOpen(true)}
               onViewClass={() => setClassDetailsOpen(true)}
               onEnroll={selectedClass => {
@@ -198,7 +201,17 @@ export default function AvailableClassesPage({
                 );
               }}
             />
-          ))}
+          ))
+        ) : (
+          <div className="rounded-xl border border-dashed p-8 text-center">
+            <p className="text-sm font-medium text-foreground">
+              No classes available
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              There are currently no active classes available for this course.
+            </p>
+          </div>
+        )}
       </div>
 
       <CourseDetailsSheet

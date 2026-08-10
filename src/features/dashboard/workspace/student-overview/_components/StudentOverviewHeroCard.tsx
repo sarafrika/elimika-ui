@@ -3,10 +3,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@radix-ui/react-avatar';
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
-import { ArrowUpRight, Download, QrCode, Sparkles, Wallet } from 'lucide-react';
+import { ArrowUpRight, Download, QrCode, Wallet } from 'lucide-react';
+import { useState } from 'react';
+import { useProfileShareUrl } from '../../../../../../app/dashboard/_components/skills-wallet/use-profile-share-url';
+import { socialShareActions } from '../../../../../../app/dashboard/instructor/classes/overview/[id]/page';
+import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
 import { AvatarImage } from '../../../../../../components/ui/avatar';
 import { Badge } from '../../../../../../components/ui/badge';
 import { Button } from '../../../../../../components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../../components/ui/dialog';
+import { buildSocialShareUrl, openShareWindow } from '../../../../../../lib/share';
 import { UserProfileType } from '../../../../../../lib/types';
 import { ApiResponseWallet } from '../../../../../../services/client';
 import { getWalletOptions } from '../../../../../../services/client/@tanstack/react-query.gen';
@@ -16,10 +22,10 @@ import { StudentOverviewData } from '../useStudentOverviewData';
 
 type ProfileType =
   | (Partial<UserProfileType> & {
-      isLoading: boolean;
-      invalidateQuery: () => void;
-      clearProfile: () => void;
-    })
+    isLoading: boolean;
+    invalidateQuery: () => void;
+    clearProfile: () => void;
+  })
   | null;
 
 interface StudentOverviewHeroCardProps {
@@ -81,6 +87,10 @@ function ProgressRing({
 }
 
 export function StudentOverviewHeroCard({ profile, data }: StudentOverviewHeroCardProps) {
+  const [shareOpen, setShareOpen] = useState(false);
+  const userName = profile?.full_name!
+  const skillsWalletShareLink = useProfileShareUrl(profile?.uuid, 'student');
+
   const initials = profile?.full_name
     ?.split(' ')
     .map(name => name[0])
@@ -134,13 +144,10 @@ export function StudentOverviewHeroCard({ profile, data }: StudentOverviewHeroCa
             </p>
             <div className='mt-4 flex flex-wrap gap-2'>
               <Badge className='bg-primary-foreground/15 hover:bg-primary-foreground/20 text-primary-foreground border-0'>
-                Level 4 · Advanced
+                Level 1 · Prep
               </Badge>
               <Badge className='bg-primary-foreground/15 hover:bg-primary-foreground/20 text-primary-foreground border-0'>
                 {data?.verifiedSkills} Portfolio Entries
-              </Badge>
-              <Badge className='bg-warning hover:bg-warning/90 text-warning-foreground border-0'>
-                <Sparkles className='mr-1 h-3 w-3' /> AI recommendations ready
               </Badge>
             </div>
             <div className='mt-5 flex flex-wrap gap-2'>
@@ -151,6 +158,9 @@ export function StudentOverviewHeroCard({ profile, data }: StudentOverviewHeroCa
                 size='sm'
                 variant='outline'
                 className='text-primary-foreground border-primary-foreground/40 hover:bg-primary-foreground/10 hover:text-primary-foreground bg-transparent'
+                onClick={() => {
+                  setShareOpen(true);
+                }}
               >
                 <QrCode className='mr-2 h-4 w-4' /> Share Profile
               </Button>
@@ -193,6 +203,54 @@ export function StudentOverviewHeroCard({ profile, data }: StudentOverviewHeroCa
           </Button>
         </CardContent>
       </Card>
+
+
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent className='sm:max-w-lg'>
+          <DialogHeader>
+            <DialogTitle>Share Profile</DialogTitle>
+            <DialogDescription>
+              Share your professional profile, skills, achievements, certifications,
+              and learning progress with employers, instructors, or other learners.
+            </DialogDescription>
+          </DialogHeader>
+
+          <LinkShareCard
+            title='Profile Link'
+            description='Copy or share your profile link.'
+            url={skillsWalletShareLink}
+            footer={
+              <div className='space-y-3'>
+                <h4 className='text-sm font-medium'>Share via</h4>
+
+                <div className='flex flex-wrap gap-2'>
+                  {socialShareActions.map(({ icon: Icon, label, platform }) => (
+                    <Button
+                      key={label}
+                      size='sm'
+                      variant='outline'
+                      className='gap-2'
+                      disabled={!skillsWalletShareLink}
+                      onClick={() =>
+                        openShareWindow(
+                          buildSocialShareUrl(platform, {
+                            title: `${userName}'s Skills Wallet`,
+                            url: skillsWalletShareLink,
+                            description: `Check out ${userName}'s profile.`,
+                          })
+                        )
+                      }
+                    >
+                      <Icon className='h-4 w-4' />
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            }
+          />
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

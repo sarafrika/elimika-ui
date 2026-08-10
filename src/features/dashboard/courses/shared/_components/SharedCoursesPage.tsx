@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
+import { useCourseClasses } from '@/hooks/use-batched-lookups';
 import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
 import { averageRating, useCourseReviewsMap } from '@/hooks/use-reviews-map';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
@@ -145,20 +146,25 @@ const createCatalogCards = (
   isOrganisationDomain: boolean,
   canOrganisationApply: boolean,
   instructorCourseApplicationMap: Map<string, { status?: string | null }>,
-  instructorProgramApplicationMap: Map<string, { status?: string | null }>
+  instructorProgramApplicationMap: Map<string, { status?: string | null }>,
+  courseClassesMap: Record<string, ClassDefinition[]>
 ): CoursesCatalogCardData[] =>
   items.map((item, index) => {
     const presentation = getCardPresentation(index);
+
     const isInstructorApplyCard = canApplyToTrain;
+
     const application =
       item.kind === 'program'
         ? instructorProgramApplicationMap.get(item.id)
         : instructorCourseApplicationMap.get(item.id);
-    const applicationStatus = normalizeApplicationStatus(application?.status);
+
+    const applicationStatus = normalizeApplicationStatus(
+      application?.status
+    );
+
     const ctaLabel = !isInstructorApplyCard
-      ? item.kind === 'program'
-        ? 'Enroll Classes'
-        : 'Enroll Classes'
+      ? 'Enroll Classes'
       : isOrganisationDomain && !canOrganisationApply
         ? 'Verify Organisation'
         : isOrganisationDomain && applicationStatus === 'approved'
@@ -171,35 +177,57 @@ const createCatalogCards = (
                 ? 'Reapply to Train'
                 : 'Apply to Train';
 
+    const activeClasses = (courseClassesMap[item.id] ?? []).filter(
+      cls => cls.is_active
+    );
+    // each of the activeclasses has default_instructor_uuid, we need to get the array of instructors who have created classes under a course, (an instructor can create 2 or more classes, so we just pick one instance in that case)
+    const activeClassesInstructors = []
+
     return {
       id: item.id,
       contentKind: item.kind,
       title: item.title,
-      provider: creatorMap.get(item.creatorUuid) ?? item.creatorName ?? 'Course Creator',
+
+      provider:
+        creatorMap.get(item.creatorUuid) ??
+        item.creatorName ??
+        'Course Creator',
+
       duration: item.durationLabel,
+
       enrolledClasses: 1,
+
       secondaryMeta:
         item.secondaryMeta ||
         item.levelLabel ||
         item.categoryLabels[0] ||
-        (item.kind === 'program' ? 'Training Program' : 'Course'),
+        (item.kind === 'program'
+          ? 'Training Program'
+          : 'Course'),
+
       applicationStatus,
       ctaLabel,
+
       ctaDisabled: isInstructorApplyCard
         ? isOrganisationDomain
           ? !canOrganisationApply ||
-            Boolean(
-              applicationStatus &&
-                applicationStatus !== 'revoked' &&
-                applicationStatus !== 'approved'
-            )
-          : Boolean(applicationStatus && applicationStatus !== 'revoked')
+          Boolean(
+            applicationStatus &&
+            applicationStatus !== 'revoked' &&
+            applicationStatus !== 'approved'
+          )
+          : Boolean(
+            applicationStatus &&
+            applicationStatus !== 'revoked'
+          )
         : false,
+
       ctaKind: isInstructorApplyCard
         ? item.kind === 'program'
           ? 'apply-program'
           : 'apply-course'
         : 'link',
+
       ctaTone: isInstructorApplyCard
         ? applicationStatus === 'approved'
           ? 'approved'
@@ -209,23 +237,46 @@ const createCatalogCards = (
               ? 'revoked'
               : 'default'
         : 'default',
+
       minimumRate: item.minimumRate,
+
       showInstructorCta: !isInstructorApplyCard,
-      detailsHref: buildWorkspaceAliasPath(domain, item.href),
+
+      detailsHref: buildWorkspaceAliasPath(
+        domain,
+        item.href
+      ),
+
       enrollHref: isInstructorApplyCard
         ? getApplyToTrainHref(item.id)
-        : buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
-      instructorHref: buildWorkspaceAliasPath(domain, getInstructorHref(domain, item.id)),
+        : buildWorkspaceAliasPath(
+          domain,
+          getEnrollHref(domain, item.kind, item.id)
+        ),
+
+      instructorHref: buildWorkspaceAliasPath(
+        domain,
+        getInstructorHref(domain, item.id)
+      ),
+
       icon: presentation.icon,
       imageTone: presentation.imageTone,
       imageUrl: item.imageUrl,
+
       rating: item.rating,
       reviewCount: item.reviewCount,
       enrollmentCount: item.enrollmentCount,
+
       certificateHref: '',
       category: '',
       subject: '',
       programType: '',
+      minAge: item.minAge ?? "N?A",
+      maxAge: item.maxAge ?? "N?A",
+
+      // Actual number of active classes
+      activeClasses: activeClasses.length,
+      instructorCount: activeClassesInstructors.length
     };
   });
 
@@ -339,6 +390,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const programs = useMemo(() => programsResponse?.data?.content ?? [], [programsResponse]);
   const categories = useMemo(() => categoriesResponse?.data?.content ?? [], [categoriesResponse]);
 
+  console.log(courses, "CSSS")
+
   const { data: instructorCourseApplications } = useQuery({
     ...searchTrainingApplicationsOptions({
       query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
@@ -434,6 +487,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           category: '',
           subject: '',
           programType: '',
+          minAge: program.age_lower_limit,
+          maxAge: program.age_upper_limit
         };
       }),
     [categoryMap, courseEnrollmentMap, domain, programs, reviewMap]
@@ -476,10 +531,13 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           category: '',
           subject: '',
           programType: '',
+          minAge: course.age_lower_limit,
+          maxAge: course.age_upper_limit
         };
       }),
     [courseEnrollmentMap, courses, difficultyMap, domain, reviewMap]
   );
+
 
   const approvedInstructorCourseIds = useMemo(() => {
     const ids = new Set<string>();
@@ -589,9 +647,12 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           reviewCount: Number(reviews?.count) ?? 0,
           rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
           enrollmentCount: enrollments?.count,
+          activeClasses: classCount,
           category: '',
           subject: '',
           programType: '',
+          minAge: course.age_lower_limit,
+          maxAge: course.age_upper_limit
         });
       });
 
@@ -804,6 +865,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     [currentCatalogPage, filteredItems]
   );
 
+  console.log(paginatedItems, "PAG IT")
+
   const instructorCourseApplicationMap = useMemo(() => {
     const map = new Map<string, { status?: string | null }>();
     instructorCourseApplications?.data?.content?.forEach(application => {
@@ -963,6 +1026,22 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     return map;
   }, [recommendationReviewQueries, recommendedBase]);
 
+
+  const courseUuids = useMemo(
+    () =>
+      paginatedItems
+        .filter(item => item.kind === 'course')
+        .map(item => item.id)
+        .filter(Boolean),
+    [paginatedItems]
+  );
+
+  const {
+    courseClassesMap,
+    isLoading: courseClassesLoading,
+  } = useCourseClasses(courseUuids);
+
+
   const catalogCards = useMemo(
     () =>
       createCatalogCards(
@@ -972,20 +1051,24 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         canApplyToTrain,
         isOrganisationDomain,
         canOrganisationApply,
-        activeCourseApplicationMap,
-        activeProgramApplicationMap
+        instructorCourseApplicationMap,
+        instructorProgramApplicationMap,
+        courseClassesMap
       ),
     [
-      activeCourseApplicationMap,
-      activeProgramApplicationMap,
-      canApplyToTrain,
-      canOrganisationApply,
-      creatorMap,
-      domain,
-      isOrganisationDomain,
       paginatedItems,
+      domain,
+      creatorMap,
+      canApplyToTrain,
+      isOrganisationDomain,
+      canOrganisationApply,
+      instructorCourseApplicationMap,
+      instructorProgramApplicationMap,
+      courseClassesMap,
     ]
   );
+
+  console.log(catalogCards, "CAT CAEDS")
 
   const recommendationCards = useMemo(
     () =>

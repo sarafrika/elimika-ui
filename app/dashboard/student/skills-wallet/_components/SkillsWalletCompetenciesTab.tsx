@@ -5,6 +5,7 @@ import {
   BookOpen,
   ClipboardCheck,
   Medal,
+  QrCode,
   Star
 } from 'lucide-react';
 
@@ -14,6 +15,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Progress } from '@/components/ui/progress';
 
+import { useState } from 'react';
+import { LinkShareCard } from '../../../../../components/shared/link-share-card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../components/ui/dialog';
+import { buildSocialShareUrl, openShareWindow } from '../../../../../lib/share';
+import { socialShareActions } from '../../../instructor/classes/overview/[id]/page';
 import { Donut, StatCard, type SkillsWalletData } from './SkillsWalletShared';
 
 type SkillsWalletCompetenciesTabProps = {
@@ -21,6 +27,11 @@ type SkillsWalletCompetenciesTabProps = {
 };
 
 export function SkillsWalletCompetenciesTab({ data }: SkillsWalletCompetenciesTabProps) {
+  const [shareOpen, setShareOpen] = useState(false);
+
+  const skillsWalletShareLink = `https://`
+  const userName = data?.studentName!
+
   const competencies = data.competencies;
   const total = competencies.length || 1;
   const completedCourses = competencies.filter(record => record.source === 'class').length;
@@ -44,8 +55,12 @@ export function SkillsWalletCompetenciesTab({ data }: SkillsWalletCompetenciesTa
           <Button className='bg-primary hover:bg-primary/90'>
             <ArrowUpRight className='h-3 w-3' /> Add Evidence
           </Button>
-          <Button variant='outline'>
-            <ArrowUpRight className='h-3 w-3' /> Share Profile
+          <Button variant='outline'
+            onClick={() => {
+              setShareOpen(true);
+            }}
+          >
+            <QrCode className='h-3 w-3' /> Share Profile
           </Button>
         </div>
       </div>
@@ -162,6 +177,53 @@ export function SkillsWalletCompetenciesTab({ data }: SkillsWalletCompetenciesTa
           }
         />
       )}
+
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent className='sm:max-w-lg'>
+          <DialogHeader>
+            <DialogTitle>Share Skills Wallet</DialogTitle>
+            <DialogDescription>
+              Share your full skills wallet — every skill, achievement, and certification you've
+              earned — with other learners, instructors, or employers.
+            </DialogDescription>
+          </DialogHeader>
+
+          <LinkShareCard
+            title='Skills Wallet Link'
+            description='Copy or share your skills wallet link.'
+            url={skillsWalletShareLink}
+            footer={
+              <div className='space-y-3'>
+                <h4 className='text-sm font-medium'>Share via</h4>
+
+                <div className='flex flex-wrap gap-2'>
+                  {socialShareActions.map(({ icon: Icon, label, platform }) => (
+                    <Button
+                      key={label}
+                      size='sm'
+                      variant='outline'
+                      className='gap-2'
+                      disabled={!skillsWalletShareLink}
+                      onClick={() =>
+                        openShareWindow(
+                          buildSocialShareUrl(platform, {
+                            title: `${userName}'s Skills Wallet`,
+                            url: skillsWalletShareLink,
+                            description: `Check out ${userName}'s skills, achievements, and certifications — ${data?.topSkills?.length} skills and counting.`,
+                          })
+                        )
+                      }
+                    >
+                      <Icon className='h-4 w-4' />
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            }
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

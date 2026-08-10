@@ -89,8 +89,7 @@ export function useInstructorTrainingHubData() {
   const instructor = useInstructor();
   const instructorUuid = instructor?.uuid;
 
-  const { classes, isLoading: isLoadingClasses } =
-    useInstructorClassesWithSchedules(instructorUuid);
+  const { classes, isLoading: isLoadingClasses } = useInstructorClassesWithSchedules(instructorUuid);
 
   const { data: coursesResponse, isLoading: isLoadingCourses } = useQuery({
     ...getAllCoursesOptions({
@@ -446,9 +445,8 @@ export function useInstructorTrainingHubData() {
           subtitle: booking.purpose || formatDateTime(booking.start_time),
           status: normalizeStatusLabel(booking.status || 'confirmed'),
           statusTone: getBookingStatusTone(booking.status),
-          meta: `${formatTimeRange(booking.start_time, booking.end_time)} • ${
-            booking.currency ? formatCurrency(booking.price_amount, booking.currency) : 'Booking'
-          }`,
+          meta: `${formatTimeRange(booking.start_time, booking.end_time)} • ${booking.currency ? formatCurrency(booking.price_amount, booking.currency) : 'Booking'
+            }`,
           actionLabel: 'View booking',
           actionTone: 'primary',
           href: '/dashboard/instructor/training-hub/bookings',
