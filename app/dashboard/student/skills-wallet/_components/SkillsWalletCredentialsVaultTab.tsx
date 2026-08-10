@@ -10,9 +10,13 @@ import { fmtDate, StatCard, type SkillsWalletData } from './SkillsWalletShared';
 
 type SkillsWalletCredentialsVaultTabProps = {
   data: Pick<SkillsWalletData, 'credentials' | 'externalCertificates' | 'studentName'>;
+  onAddCredential?: () => void;
 };
 
-export function SkillsWalletCredentialsVaultTab({ data }: SkillsWalletCredentialsVaultTabProps) {
+export function SkillsWalletCredentialsVaultTab({
+  data,
+  onAddCredential,
+}: SkillsWalletCredentialsVaultTabProps) {
   const rows = [...data.credentials, ...data.externalCertificates];
   const verified = rows.filter(item => item.status === 'Verified').length;
   const pending = rows.filter(item => item.status === 'Pending').length;
@@ -64,7 +68,7 @@ export function SkillsWalletCredentialsVaultTab({ data }: SkillsWalletCredential
             Export PDF
           </Button>
 
-          <Button className='bg-primary hover:bg-primary/90'>
+          <Button className='bg-primary hover:bg-primary/90' onClick={onAddCredential}>
             <Plus className='h-3 w-3' /> Add Credential
           </Button>
         </div>

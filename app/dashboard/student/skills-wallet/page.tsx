@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import {
   BadgeCheck,
   Briefcase,
@@ -8,9 +7,10 @@ import {
   LayoutDashboard,
   ShieldCheck,
   Sparkles,
-  Trophy,
   Target,
+  Trophy,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import { SkillsWalletAchievementsTab } from './_components/SkillsWalletAchievementsTab';
 import { SkillsWalletCompetenciesTab } from './_components/SkillsWalletCompetenciesTab';
@@ -19,6 +19,7 @@ import { SkillsWalletExperienceTab } from './_components/SkillsWalletExperienceT
 import { SkillsWalletMySkillsTab } from './_components/SkillsWalletMySkillsTab';
 import { SkillsWalletOverviewTab } from './_components/SkillsWalletOverviewTab';
 import { SkillsWalletPortfolioTab } from './_components/SkillsWalletPortfolioTab';
+import { WalletIdCard } from './_components/SkillsWalletShared';
 import { SkillsWalletTabs } from './_components/SkillsWalletTabs';
 import { SkillsWalletVerficationTab } from './_components/SkillsWalletVerficationTab';
 import { useStudentSkillsWalletData } from './_components/useStudentSkillsWalletData';
@@ -44,10 +45,16 @@ export default function SkillsWallet() {
     <div className='min-h-screen'>
       <div className='border-b'>
         <div className='mx-auto px-4 py-5'>
-          <h1 className='text-foreground text-2xl font-bold'>Skills Wallet</h1>
-          <p className='text-muted-foreground text-sm'>
-            Your verified record of skills, competencies, achievements and credentials.
-          </p>
+          <div className='flex flex-row items-center justify-between' >
+            <div>
+              <h1 className='text-foreground text-2xl font-bold'>Skills Wallet</h1>
+              <p className='text-muted-foreground text-sm'>
+                Your verified record of skills, competencies, achievements and credentials.
+              </p>
+            </div>
+            <WalletIdCard />
+          </div>
+
           <SkillsWalletTabs tabs={TABS} activeTab={tab} onTabChange={value => setTab(value as TabId)} />
         </div>
       </div>
@@ -60,9 +67,9 @@ export default function SkillsWallet() {
         {tab === 'portfolio' ? <SkillsWalletPortfolioTab data={data} /> : null}
         {tab === 'credentials' ? <SkillsWalletCredentialsVaultTab data={data} /> : null}
         {tab === 'competencies' ? <SkillsWalletCompetenciesTab data={data} /> : null}
-        {tab === 'experience' ? <SkillsWalletExperienceTab /> : null}
-        {tab === 'achievements' ? <SkillsWalletAchievementsTab /> : null}
-        {tab === 'verification' ? <SkillsWalletVerficationTab /> : null}
+        {tab === 'experience' ? <SkillsWalletExperienceTab experiences={data.experiences} /> : null}
+        {tab === 'achievements' ? <SkillsWalletAchievementsTab achievements={data.achievements} /> : null}
+        {tab === 'verification' ? <SkillsWalletVerficationTab events={data.verificationEvents} /> : null}
       </div>
     </div>
   );

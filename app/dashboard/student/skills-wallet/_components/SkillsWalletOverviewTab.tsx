@@ -80,7 +80,6 @@ export function SkillsWalletOverviewTab({ data, onNavigateToTab }: SkillsWalletO
           </Badge>
         </div>
         <div className='flex items-center gap-3'>
-          <WalletIdCard />
           <Button className='bg-primary hover:bg-primary/90'>
             <ArrowUpRight className='mr-2 h-4 w-4' /> Share Wallet
           </Button>

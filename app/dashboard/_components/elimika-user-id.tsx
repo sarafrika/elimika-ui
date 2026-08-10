@@ -9,7 +9,7 @@ import {
 import { Download, IdCard } from "lucide-react"
 import { UserDomain, UserProfileType } from "../../../lib/types"
 import { toAuthenticatedMediaUrl } from "../../../src/lib/media-url"
-import { ProfileQrCode } from "./my-skills/_components/ProfileQrCode"
+import { ProfileQrCode } from "./skills-wallet/ProfileQrCode"
 
 export interface ElimikaUserIdProps {
     profile: (Partial<UserProfileType> & {

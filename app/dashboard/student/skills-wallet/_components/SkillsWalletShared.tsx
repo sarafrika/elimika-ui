@@ -152,6 +152,9 @@ export type SkillsWalletData = {
   categoryCounts: Array<{ name: string; count: number; colorClass: string }>;
   credentials: CredentialRecord[];
   externalCertificates: CredentialRecord[];
+  experiences: ExperienceRecord[];
+  achievements: AchievementRecord[];
+  verificationEvents: VerificationEventRecord[];
   portfolio: PortfolioRecord[];
   certificates: Certificate[];
   studentName: string;
@@ -171,13 +174,19 @@ export function fmtMonth(value?: string | Date | null) {
   return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
 
-export function WalletIdCard({ label = 'Your Skills Wallet ID' }: { label?: string }) {
+export function WalletIdCard({
+  label = 'Your Skills Wallet ID',
+  walletId = WALLET_ID,
+}: {
+  label?: string;
+  walletId?: string;
+}) {
   return (
     <div className='flex flex-col items-end'>
       <p className='text-muted-foreground text-xs'>{label}</p>
       <div className='mt-1 flex items-center gap-2'>
         <div className='bg-background rounded-md border px-3 py-1.5 font-mono text-sm'>
-          {WALLET_ID}
+          {walletId}
         </div>
         <Button size='icon' variant='outline' className='h-8 w-8'>
           <Copy className='h-3.5 w-3.5' />
